@@ -15,7 +15,7 @@ def test_delta_market_down():
     delta = sim.exposure_delta(spec_init=spec_init, spec_final=spec_final)
     assert delta == -500
 
-def test_leveraged_position_value():
+def test_get_leveraged_position():
     c_matrix = 60
     spec_init = sim.SpeculativeAssetState(amt=c_matrix, price_usd=10)
     spec_final = sim.SpeculativeAssetState(amt=c_matrix, price_usd=12)
@@ -25,12 +25,12 @@ def test_leveraged_position_value():
 
     with pytest.raises(ValueError):
         c_cover = 70
-        la_position = sim.leveraged_position_value(
+        la_position = sim.get_leveraged_position(
             LA_amt=c_LA, cover_amt=c_cover ,protocol=matrix, 
             spec_init=spec_init, spec_final=spec_final)
 
     c_cover = 60
-    la_position = sim.leveraged_position_value(
+    la_position = sim.get_leveraged_position(
         LA_amt=c_LA, cover_amt=c_cover ,protocol=matrix, 
         spec_init=spec_init, spec_final=spec_final)
     assert la_position.value == 20
@@ -40,7 +40,7 @@ def test_leveraged_position_value():
 
     spec_init = sim.SpeculativeAssetState(amt=c_matrix, price_usd=10)
     spec_final = sim.SpeculativeAssetState(amt=c_matrix, price_usd=13)
-    la_position = sim.leveraged_position_value(
+    la_position = sim.get_leveraged_position(
         LA_amt=c_LA, cover_amt=c_cover ,protocol=matrix, 
         spec_init=spec_init, spec_final=spec_final)
     position_value = (
