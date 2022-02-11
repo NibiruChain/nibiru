@@ -61,6 +61,7 @@ la_osmo_revenue = la_osmo_exposure * daily_funding
 ```
 
 Increasing the number of daily epochs and, thus, funding frequency lessens the impact of the collateral volatility on the protocol. This funding rate piece solves the scaling issue that we would've had for handling, say, \$10 billion in the protocol. Without this short hedge, more collateral in the protocol would mean more impact from volatility on liquidations and PnL. 
+
 ##### funding rate payment is freq in a bearish regime
 
 for the short —> Insurance fund () + leverage agents pay funding rate
@@ -93,7 +94,7 @@ Start
 The main incentive that an LA has to come to Matrix is that they can take a long  perp position with zero funding rate.
 
 
-OSMO goes to 15 $
+#### `osmo_price` goes to 15 $
 - PROTOCOL PNL : 50,000 USD
 - LA : 10,000 -> 100% pnl
 - IF =  40,000 —> incentive pendulum —> governance token would vote for the split
@@ -103,21 +104,21 @@ IA : over-collateteralize —> yield from the matrix protocol….
 Market goes down the LAs would not come to the protocol…..
 
 Derivative protocol : 
+- IF would take the short side and pay the LAs a funding rate in the down-term 
+- Every hour there is a funding rate of 100 bps —> IF pays that (Matrix protocol) —> funding rate —> funding rate model —> make the LAs lose 30-40% of their money rather than 100%
 
-IF would take the short side and pay the LAs a funding rate in the down-term 
-
-Every hour there is a funding rate of 100 bps —> IF pays that (Matrix protocol) —> funding rate —> funding rate model —> make the LAs lose 30-40% of their money rather than 100%
-
-OSMO price = 9$
-
-Protocol exposure = 90,000$
+#### `osmo_price` goes to 9$ over the course of 6 hours.
+- Protocol exposure = 90,000$
 
 10% -> 6 hours 
+```
+from typing import Sequence
 
-t_1 = 100,000 * 100 * 1e-4 = 1000
-t_2 = 1000
-….
-t_6 = 1000
+amt_osmo = 10e3
+osmo_prices: Sequence[float] = np.linspace(10, 9, 6)
+matrix_osmo_exposure: Sequence[float] = osmo_prices * amt_osmo
+funding_payments = [basis_points(100) * expo for expo in matrix_osmo_exposure]
+```
 
 LA_losses = 4000 or 40%
 
@@ -167,23 +168,24 @@ Bearish scenario
 Leverage mult is a linear function parameterized by two variables: $\ell \sim \eta(c_{LA}, c_{cover})$ 
 Similarly, la_position_value: $V \sim f(c_{LA}, c_{cover})$, which means I should be able to write $V\sim f(c_{LA}, \eta)$ or $V\sim f(\eta, c_{cover})$.
 
-
+Let $\boxed{\ell := \dfrac{c_{\text{cov}}}{c_{LA}} }$, $\boxed{\eta := \dfrac{c_{\text{cov}} + c_{LA}}{c_{\text{cov}}} }$, and $\Delta_{\text{pct\_p}} = \dfrac{p_f - p_i}{p_f} = \left(1 - \dfrac{p_i}{p_f}\right)$.
 $$\begin{align}
-\ell &= \frac{c_{\text{cov}}}{c_{LA}}  \quad\quad \eta = \frac{c_{\text{cov}} + c_{LA}}{c_{\text{cov}}}\\ 
-\psi &= c_{\text{cov}} \cdot (\%\Delta_p) + c_{LA} \\
-\psi &= c_{\text{cov}}  \cdot \left(1 - \frac{p_i}{p_f}\right) + c_{LA} \\
-  &= c_{\text{cov}}\cdot 1  -  c_{\text{cov}} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
+\psi &= c_{\text{cov}} \cdot \Delta_{\text{pct\_p}} + c_{LA}  \\
+  &= c_{\text{cov}}  \cdot \left(1 - \frac{p_i}{p_f}\right) + c_{LA} 
+    = c_{\text{cov}}\cdot 1  -  c_{\text{cov}} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
   &= c_{\text{cov}} + c_{LA}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
   &= \eta \cdot c_{\text{cov}}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
-  &= c_{\text{cov}} \left(\eta - \frac{p_i}{p_f} \right) \\
+  & \therefore \quad \boxed{ \psi = c_{\text{cov}} \left(\eta - \frac{p_i}{p_f} \right) } \\
 \end{align}$$
 
+We can similarly derive the leveraged position value, $\psi$ in terms of $\ell$. Starting again from equation 1, 
+
 $$\begin{align}
-\ell &= \frac{c_{\text{cov}}}{c_{LA}}  \quad\quad \eta = \frac{c_{\text{cov}} + c_{LA}}{c_{\text{cov}}}\\ 
-\psi &= c_{\text{cov}}  \cdot \left(1 - \frac{p_i}{p_f}\right) + c_{LA} \\
-  &= c_{\text{cov}} + c_{LA}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
-  &= c_{\text{cov}}\cdot 1  -  c_{\text{cov}} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
-  &= \ell\cdot c_{LA}  -  \ell\cdot c_{LA} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
-  &= c_{LA} \left[\ell\left(1 - \frac{p_i}{p_f}\right) + 1\right] \\
-  &\boxed{\psi = c_{LA} \left[\ell\cdot \%\Delta_p + 1\right] }\\
+\psi &= c_{\text{cov}} \cdot \Delta_{\text{pct\_p}} + c_{LA}
+    = c_{\text{cov}}  \cdot \left(1 - \frac{p_i}{p_f}\right) + c_{LA} \\
+  &= c_{\text{cov}} + c_{LA}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) 
+    = c_{\text{cov}}  -  \left[c_{\text{cov}} \left(\frac{p_i}{p_f}\right)\right] + c_{LA} \\
+  &= \ell\cdot c_{LA}  -  \ell\cdot c_{LA} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} 
+    = c_{LA} \left[\ell\left(1 - \frac{p_i}{p_f}\right) + 1\right] \\
+  &\boxed{\psi = c_{LA} \left[\ell \cdot \Delta_{\text{pct\_p}} + 1\right] }\\
 \end{align}$$
