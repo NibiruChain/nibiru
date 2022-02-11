@@ -48,7 +48,6 @@ In the bear case, the funding payments offset the losses from the fact that the 
 A **basis point** is a term used in finance to refer to an incrememnt of 0.01%, e.g. 5 basis points means 0.05%. If an interest rate increases from 5% to 5.25%, that represents an upward move of 25 basis points.
 - You could think of "basis points" as an operator that multiplies the number by `1e-4`.
 
-
 Let the LA OSMO exposure be \$100M with 24 funding payments per day (hourly). Then, 
 ```python
 la_osmo_exposure = 100e6
@@ -62,15 +61,23 @@ la_osmo_revenue = la_osmo_exposure * daily_funding
 ```
 
 Increasing the number of daily epochs and, thus, funding frequency lessens the impact of the collateral volatility on the protocol. This funding rate piece solves the scaling issue that we would've had for handling, say, \$10 billion in the protocol. Without this short hedge, more collateral in the protocol would mean more impact from volatility on liquidations and PnL. 
+##### funding rate payment is freq in a bearish regime
 
-
-
-
-# funding rate payment is freq in a bearish regime
-
-# for the short —> Insurance fund () + leverage agents pay funding rate
-funding_rate_LA = funding_rate = 5E-3
+for the short —> Insurance fund () + leverage agents pay funding rate
+funding_rate_LA = funding_rate = 5E-3  
 funding_rate_IF = 10 * 1e-4 # this number has to be higher and higher = 1E-3
+
+- All the fees in the protocol outside of the derivatives platform goes to the Insurance fund to set the funding rate
+- we solved this assuming 1:1 mapping CV : LA
+- CV will be divided between LA and IA (Incentive pendulum based on fees )
+
+References: 
+- Basis Points. Investopedia. https://www.investopedia.com/terms/b/basispoint.asp
+- . 
+
+---
+
+# Solution for the Matrix Simulator
 
 # all the fees in the protocol outside of the derivatives platform goes to the Insurance fund to set the funding rate
 
