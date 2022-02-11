@@ -69,9 +69,13 @@ def example_1():
     protocol_pnl = exposure_delta(spec_init=spec_init, spec_final=spec_1)
     assert protocol_pnl == 5e4
 
-def compute_funding_payment(bps: int, input_amt, ):
-
+def compute_funding_payment(bps: int, 
+                            spec: types.SpeculativeAssetState) -> float:
     funding_rate: float = basis_points(bps)
+    exposure: float = exposure_in_spec(spec=spec)
+    funding_payment = funding_rate * exposure
+    return funding_payment
+
 
 def distribute_funding_payment(protocol: types.ProtocolState, 
                                price: float, 
