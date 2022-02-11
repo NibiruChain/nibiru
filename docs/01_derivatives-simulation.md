@@ -79,11 +79,111 @@ References:
 
 # Solution for the Matrix Simulator
 
-# all the fees in the protocol outside of the derivatives platform goes to the Insurance fund to set the funding rate
+Date: 2022-02-10
 
-# we solved this assuming 1:1 mapping CV : LA
-# CV will be divided between LA and IA (Incentive pendulum based on fees )
 
-References: 
-- Basis Points. Investopedia. https://www.investopedia.com/terms/b/basispoint.asp
-- . 
+Derivatives Ex. 1
+
+Start 
+- There's 10000 OSMO at a price of $10.
+- Mint —> USDM 
+- Matrix = 100,000 USD vol
+- LA = 10,000 USD —> leverage = 10
+
+The main incentive that an LA has to come to Matrix is that they can take a long  perp position with zero funding rate.
+
+
+OSMO goes to 15 $
+- PROTOCOL PNL : 50,000 USD
+- LA : 10,000 -> 100% pnl
+- IF =  40,000 —> incentive pendulum —> governance token would vote for the split
+
+IA : over-collateteralize —> yield from the matrix protocol….
+
+Market goes down the LAs would not come to the protocol…..
+
+Derivative protocol : 
+
+IF would take the short side and pay the LAs a funding rate in the down-term 
+
+Every hour there is a funding rate of 100 bps —> IF pays that (Matrix protocol) —> funding rate —> funding rate model —> make the LAs lose 30-40% of their money rather than 100%
+
+OSMO price = 9$
+
+Protocol exposure = 90,000$
+
+10% -> 6 hours 
+
+t_1 = 100,000 * 100 * 1e-4 = 1000
+t_2 = 1000
+….
+t_6 = 1000
+
+LA_losses = 4000 or 40%
+
+#### Extension for clarification
+
+Let:
+
+```python
+"""
+Args:
+    protocol_exposure (float): Collateral exposure of Matrix in USD.
+    amt_stables_mintes (float): number of stable coins minted
+"""
+```
+
+1:1 mapping ⇔ LAs cover all of the protocol volatility
+
+```python
+"""
+Args:
+    leverage_multiplier (float): # ex. 10 
+    la_exposure (float): USD exposure brought by LAs
+    funding_hourly (float): Hourly funding payment from the Insurance Fund (IF) 
+        based on the funding rate.
+"""
+```
+
+If:
+- Total supply = 1 billion
+- IF = 8% of the total supply at genesis
+
+
+Bullish scenario 
+
+1. What is the pnl of the LA and the protocol
+
+Bearish scenario 
+
+2. What is the pnl for the LA, funding rate payments by the IF
+
+3. If the bearish regime lasts what is the time before the IF goes bankrupt (days)k
+
+
+---
+
+
+Leverage mult is a linear function parameterized by two variables: $\ell \sim \eta(c_{LA}, c_{cover})$ 
+Similarly, la_position_value: $V \sim f(c_{LA}, c_{cover})$, which means I should be able to write $V\sim f(c_{LA}, \eta)$ or $V\sim f(\eta, c_{cover})$.
+
+
+$$\begin{align}
+\ell &= \frac{c_{\text{cov}}}{c_{LA}}  \quad\quad \eta = \frac{c_{\text{cov}} + c_{LA}}{c_{\text{cov}}}\\ 
+\psi &= c_{\text{cov}} \cdot (\%\Delta_p) + c_{LA} \\
+\psi &= c_{\text{cov}}  \cdot \left(1 - \frac{p_i}{p_f}\right) + c_{LA} \\
+  &= c_{\text{cov}}\cdot 1  -  c_{\text{cov}} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
+  &= c_{\text{cov}} + c_{LA}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
+  &= \eta \cdot c_{\text{cov}}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
+  &= c_{\text{cov}} \left(\eta - \frac{p_i}{p_f} \right) \\
+\end{align}$$
+
+$$\begin{align}
+\ell &= \frac{c_{\text{cov}}}{c_{LA}}  \quad\quad \eta = \frac{c_{\text{cov}} + c_{LA}}{c_{\text{cov}}}\\ 
+\psi &= c_{\text{cov}}  \cdot \left(1 - \frac{p_i}{p_f}\right) + c_{LA} \\
+  &= c_{\text{cov}} + c_{LA}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
+  &= c_{\text{cov}}\cdot 1  -  c_{\text{cov}} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
+  &= \ell\cdot c_{LA}  -  \ell\cdot c_{LA} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
+  &= c_{LA} \left[\ell\left(1 - \frac{p_i}{p_f}\right) + 1\right] \\
+  &\boxed{\psi = c_{LA} \left[\ell\cdot \%\Delta_p + 1\right] }\\
+\end{align}$$
