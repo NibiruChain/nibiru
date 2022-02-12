@@ -83,25 +83,29 @@ References:
 Date: 2022-02-10
 
 
-Derivatives Ex. 1
+### Assume there's no derivatives protocol in Matrix. 
 
-Start 
-- There's 10000 OSMO at a price of $10.
-- Mint —> USDM 
-- Matrix = 100,000 USD vol
-- LA = 10,000 USD —> leverage = 10
+#### Example.start()
 
-The main incentive that an LA has to come to Matrix is that they can take a long  perp position with zero funding rate.
+- `amt_osmo` is 10000 and `osmo_price` is \$10.
+- When users deposit OSMO (collateral) into Matrix, they mint USDM.
+- Matrix has \$100,000 USD vol because `protocol_exposure = amt_osmo * osmo_price`. Here, protocol volatility and protocol exposure are used synonymously.
+- Suppose that LAs bring \$10,000 in collateral exposure and choose to cover 100\% of protocol's volatility. This would imply that LAs have 10x leverage, or a `leverage_mult` of 10.
 
 
-#### `osmo_price` goes to 15 $
+The main incentive that an LA has to come to Matrix is that they can take long leveraged positions. LAs essentially have a long perpetual position with zero funding payment costs.
+
+#### Example.case1(): `osmo_price` goes to 15 $
+
+`osmo_price = 15`
+
 - PROTOCOL PNL : 50,000 USD
 - LA : 10,000 -> 100% pnl
 - IF =  40,000 —> incentive pendulum —> governance token would vote for the split
 
-IA : over-collateteralize —> yield from the matrix protocol….
+IAs receive yield from the matrix protocol when it's over-collateteralized.
 
-Market goes down the LAs would not come to the protocol…..
+If the market (price of the collateral) goes down, new LAs would not want to come to the protocol.
 
 Derivative protocol : 
 - IF would take the short side and pay the LAs a funding rate in the down-term 
@@ -146,7 +150,7 @@ Args:
 """
 ```
 
-If:
+Let:
 - Total supply = 1 billion
 - IF = 8% of the total supply at genesis
 
@@ -164,18 +168,23 @@ Bearish scenario
 
 ---
 
+# Derivation of re-parameterized LA position equation
 
-Leverage mult is a linear function parameterized by two variables: $\ell \sim \eta(c_{LA}, c_{cover})$ 
-Similarly, la_position_value: $V \sim f(c_{LA}, c_{cover})$, which means I should be able to write $V\sim f(c_{LA}, \eta)$ or $V\sim f(\eta, c_{cover})$.
+Leverage mult is a linear function (call it $f$) parameterized by two variables:  
+$$\ell \sim f(c_{LA}, c_{cover}).$$
+Similarly, `la_position_value` is a linear function (call it $\phi$) that can be parmaterized by the same variables:
+$$\psi \sim \phi(c_{LA}, c_{cover}).$$
+This means we should be able to write 
+$$\psi \sim f(c_{LA}, \phi) \quad \text{ or }\quad \psi \sim f(\phi, c_{cover}).$$
 
-Let $\boxed{\ell := \dfrac{c_{\text{cov}}}{c_{LA}} }$, $\boxed{\eta := \dfrac{c_{\text{cov}} + c_{LA}}{c_{\text{cov}}} }$, and $\Delta_{\text{pct\_p}} = \dfrac{p_f - p_i}{p_f} = \left(1 - \dfrac{p_i}{p_f}\right)$.
+Let $\boxed{\ell := \dfrac{c_{\text{cov}}}{c_{LA}} }$, $\boxed{\phi := \dfrac{c_{\text{cov}} + c_{LA}}{c_{\text{cov}}} }$, and $\Delta_{\text{pct\_p}} = \dfrac{p_f - p_i}{p_f} = \left(1 - \dfrac{p_i}{p_f}\right)$.
 $$\begin{align}
 \psi &= c_{\text{cov}} \cdot \Delta_{\text{pct\_p}} + c_{LA}  \\
   &= c_{\text{cov}}  \cdot \left(1 - \frac{p_i}{p_f}\right) + c_{LA} 
     = c_{\text{cov}}\cdot 1  -  c_{\text{cov}} \cdot \left(\frac{p_i}{p_f}\right) + c_{LA} \\
   &= c_{\text{cov}} + c_{LA}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
-  &= \eta \cdot c_{\text{cov}}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
-  & \therefore \quad \boxed{ \psi = c_{\text{cov}} \left(\eta - \frac{p_i}{p_f} \right) } \\
+  &= \phi \cdot c_{\text{cov}}  -  c_{\text{cov}} \left(\frac{p_i}{p_f}\right) \\
+  & \therefore \quad \boxed{ \psi = c_{\text{cov}} \left(\phi - \frac{p_i}{p_f} \right) } \\
 \end{align}$$
 
 We can similarly derive the leveraged position value, $\psi$ in terms of $\ell$. Starting again from equation 1, 
