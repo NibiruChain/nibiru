@@ -13,7 +13,9 @@ class Parameters:
 
     # Protocol parameter
     exit_fee: float
+    entry_fee: float
     hourly_funding_rate: float
+    initial_insurance_fund: float
 
     # LA parameters
     n_LAs_position_per_period: float
@@ -57,32 +59,36 @@ def create_scenario(parameters: Parameters):
         # Add the new positions to the protocol
         # Each position size is taken from a gamma distribution defined by the parameters
         # Each leverage is taken from a poisson distribution
-        current_positions = pd.concat(
-            [
-                current_positions,
-                pd.DataFrame(
-                    np.vstack(
-                        [
-                            np.random.gamma(
-                                *parameters.size_LAs_position_gamma_parameters,
-                                parameters.n_LAs_position_per_period,
-                            ),
-                            np.random.poisson(
-                                parameters.leverages_poisson_parameter,
-                                parameters.n_LAs_position_per_period,
-                            ),
-                            [row["price"]] * parameters.n_LAs_position_per_period,
-                        ]
-                    ).T,
-                    columns=column_names,
-                ),
-            ]
+        new_positions = pd.DataFrame(
+            np.vstack(
+                [
+                    np.random.gamma(
+                        *parameters.size_LAs_position_gamma_parameters,
+                        parameters.n_LAs_position_per_period,
+                    ),
+                    np.random.poisson(
+                        parameters.leverages_poisson_parameter,
+                        parameters.n_LAs_position_per_period,
+                    ),
+                    [row["price"]] * parameters.n_LAs_position_per_period,
+                ]
+            ).T,
+            columns=column_names,
         )
+        """
+        New position:
+
+        bet_size    |   leverage    |   entry price
+        -------------------------------------------
+        100k        |   5           |   4.2
+        150k        |   8           |   4.2
+
+        """
+
+        current_positions = pd.concat([current_positions, new_positions])
 
         # Compute all exits
-        t = current_positions
-
-        liquidation = (
+        liquidations = (
             current_positions.bet_size
             * current_positions.leverage
             * (row["price"] - current_positions.price)
@@ -90,17 +96,22 @@ def create_scenario(parameters: Parameters):
             < 0
         )
 
-        exit_loss = (row["price"] - current_positions.price < 0) & (
+        exits_loss = (row["price"] - current_positions.price < 0) & (
             np.random.random(len(current_positions)) < parameters.take_loss_chance
         )
 
-        exit_profit = (row["price"] - current_positions.price > 0) & (
+        exits_profit = (row["price"] - current_positions.price > 0) & (
             np.random.random(len(current_positions)) < parameters.take_profit_chance
         )
 
-        fee_paid = (
+        entry_fee = (
+            new_positions[["bet_size", "leverage"]].product(axis=1).sum()
+            * parameters.entry_fee
+        )
+
+        exit_fee = (
             current_positions.loc[
-                (liquidation | exit_loss | exit_profit), ["bet_size", "leverage"]
+                (liquidations | exits_loss | exits_profit), ["bet_size", "leverage"]
             ]
             .product(axis=1)
             .sum()
@@ -109,18 +120,28 @@ def create_scenario(parameters: Parameters):
 
         # remove exits from active positions
         current_positions = current_positions[
-            ~(liquidation | exit_loss | exit_profit)
+            ~(liquidations | exits_loss | exits_profit)
         ].copy()
 
         # funding rate calculation
-        funding_rate_payment = (
-            current_positions[["bet_size", "leverage"]].product(axis=1).sum()
-            * parameters.hourly_funding_rate
-        )
+        positive_unrealized_pnl = current_positions.price > row["price"]
+        negative_unrealized_pnl = current_positions.price < row["price"]
 
-        df.loc[i, "fees"] = fee_paid
-        df.loc[i, "funding_rate"] = funding_rate_payment
+        funding_rate_income = (
+            current_positions.loc[positive_unrealized_pnl, ["bet_size", "leverage"]]
+            .product(axis=1)
+            .sum()
+            - current_positions.loc[negative_unrealized_pnl, ["bet_size", "leverage"]]
+            .product(axis=1)
+            .sum()
+        ) * parameters.hourly_funding_rate
 
-    df.loc[0, "treasury"] = 10_000_000
-    df["treasury"] = (df.treasury.fillna(0) + df.fees - df.funding_rate).cumsum()
+        df.loc[i, "fees"] = entry_fee + exit_fee
+        df.loc[i, "funding_rate"] = funding_rate_income
+
+        df.loc[i, "liquidations"] = liquidations.sum()
+        df.loc[i, "exits"] = (exits_profit | exits_loss).sum()
+
+    df.loc[0, "treasury"] = parameters.initial_insurance_fund
+    df["treasury"] = (df.treasury.fillna(0) + df.fees + df.funding_rate).cumsum()
     return df
