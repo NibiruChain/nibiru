@@ -34,15 +34,24 @@ class ProtocolState:
     LA_amt: float
     IA_amt: float
     IF_amt: float
+    frate_to_LA: int
+    frate_to_IF: int
 
-    def update(self, LA_amt=None, IA_amt=None, IF_amt=None) -> None:
-        """Update the protocol state."""
+    def update_amts(self, LA_amt=None, IA_amt=None, IF_amt=None) -> None:
+        """Update the asset amounts of the protocol."""
         if LA_amt is not None:
             self.LA_amt = LA_amt
         if IA_amt is not None:
             self.IA_amt = IA_amt
         if IF_amt is not None:
             self.IF_amt = IF_amt
+    
+    def update_frates(self, frate_to_LA=None, frate_to_IF=None) -> None:
+        """Update the funding rates of the protocol."""
+        if frate_to_LA is not None:
+            self.frate_to_LA = frate_to_LA
+        if frate_to_IF is not None:
+            self.frate_to_IF = frate_to_IF
 
     @property
     def total_amt(self) -> float:
