@@ -9,13 +9,14 @@ from matplotlib import pyplot as plt
 @dataclasses.dataclass
 class Parameters:
     # Simulation parameter
-    n_periods: float
+    # n_periods: float
 
     # Protocol parameter
     exit_fee: float
     entry_fee: float
-    hourly_funding_rate: float
+    hourly_funding_rate_payout: float
     initial_insurance_fund: float
+    hourly_funding_rate_fee: float
 
     # LA parameters
     n_LAs_position_per_period: float
@@ -36,24 +37,40 @@ class Parameters:
 def create_scenario(parameters: Parameters):
 
     b = Brownian()
-    df = pd.DataFrame(
-        zip(
-            *[
-                pd.date_range("2020-01-01", periods=parameters.n_periods, freq="h"),
-                b.stock_price(
-                    parameters.s0,
-                    parameters.mu,
-                    parameters.sigma,
-                    parameters.n_periods,
-                    parameters.dt,
-                ),
-            ]
-        ),
-        columns=["time", "price"],
+
+    if False:
+        df = pd.DataFrame(
+            zip(
+                *[
+                    pd.date_range("2020-01-01", periods=parameters.n_periods, freq="h"),
+                    b.stock_price(
+                        parameters.s0,
+                        parameters.mu,
+                        parameters.sigma,
+                        parameters.n_periods,
+                        parameters.dt,
+                    ),
+                ]
+            ),
+            columns=["time", "price"],
+        )
+
+    df = pd.read_excel("data.xlsx", sheet_name="raw")
+    df["time"] = pd.to_datetime(df.Date)
+    df["price"] = df["Luna"]
+
+    df = (
+        df[df.price.notnull()][["time", "price"]]
+        .sort_values("time")
+        .reset_index(drop=True)
     )
+
+    parameters.n_periods = df.shape[0]
 
     column_names = ["bet_size", "leverage", "price"]
     current_positions = pd.DataFrame(columns=column_names)
+
+    insurance_fund = parameters.initial_insurance_fund
 
     for i, row in df.iterrows():
         # Add the new positions to the protocol
@@ -65,7 +82,8 @@ def create_scenario(parameters: Parameters):
                     np.random.gamma(
                         *parameters.size_LAs_position_gamma_parameters,
                         parameters.n_LAs_position_per_period,
-                    ),
+                    )
+                    / row["price"],
                     np.random.poisson(
                         parameters.leverages_poisson_parameter,
                         parameters.n_LAs_position_per_period,
@@ -92,7 +110,7 @@ def create_scenario(parameters: Parameters):
             current_positions.bet_size
             * current_positions.leverage
             * (row["price"] - current_positions.price)
-            + current_positions.bet_size
+            + current_positions.bet_size * row["price"]
             < 0
         )
 
@@ -117,6 +135,8 @@ def create_scenario(parameters: Parameters):
             .sum()
             * parameters.exit_fee
         )
+        df.loc[i, "fees"] = (entry_fee + exit_fee) * row["price"]
+        insurance_fund += (entry_fee + exit_fee) * row["price"]
 
         # remove exits from active positions
         current_positions = current_positions[
@@ -127,21 +147,28 @@ def create_scenario(parameters: Parameters):
         positive_unrealized_pnl = current_positions.price > row["price"]
         negative_unrealized_pnl = current_positions.price < row["price"]
 
+        # This funding rate is if it's depending on the current insurance fund
+        funding_rate_payout = insurance_fund * parameters.hourly_funding_rate_payout
+        # funding_rate_income = 2 * funding_rate_payout
         funding_rate_income = (
             current_positions.loc[positive_unrealized_pnl, ["bet_size", "leverage"]]
             .product(axis=1)
             .sum()
-            - current_positions.loc[negative_unrealized_pnl, ["bet_size", "leverage"]]
-            .product(axis=1)
-            .sum()
-        ) * parameters.hourly_funding_rate
+            * parameters.hourly_funding_rate_fee
+            * row["price"]
+        )
 
-        df.loc[i, "fees"] = entry_fee + exit_fee
-        df.loc[i, "funding_rate"] = funding_rate_income
+        insurance_fund -= funding_rate_payout
+        insurance_fund += funding_rate_income
+
+        df.loc[i, "treasury"] = insurance_fund
+
+        df.loc[i, "funding_rate_payout"] = funding_rate_payout
+        df.loc[i, "funding_rate_income"] = funding_rate_income
+        df.loc[i, "entry_fee_income"] = entry_fee * row["price"]
+        df.loc[i, "exit_fee_income"] = exit_fee * row["price"]
 
         df.loc[i, "liquidations"] = liquidations.sum()
         df.loc[i, "exits"] = (exits_profit | exits_loss).sum()
 
-    df.loc[0, "treasury"] = parameters.initial_insurance_fund
-    df["treasury"] = (df.treasury.fillna(0) + df.fees + df.funding_rate).cumsum()
     return df
