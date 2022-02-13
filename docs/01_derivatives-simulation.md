@@ -1,5 +1,7 @@
 <!-- simulation -->
 
+# Intro meeting
+
 ```python
 amt_osmo = 100 # qty of osmo = 100
 osmo_price = 10 # price of osmo  = 10
@@ -99,8 +101,12 @@ The main incentive that an LA has to come to Matrix is that they can take long l
 
 `osmo_price = 15`
 
-- PROTOCOL PNL : 50,000 USD
-- LA : 10,000 -> 100% pnl
+- Matrix has of 10k OSMO (`amt_osmo` ). Since price increased \$5, the protocol exposure has increased by $50k. In other words, the protocol profit is \%50.
+- Because the `la_exposure` was $\$10$k at a price of \$10, `la_amt_osmo` is 1000. With a price increase of \$5, $\Delta_{\text{pct\_p}}$ is 50\% (0.5). The LAs' leveraged position value is now
+$$ \psi = c_{LA} \left[\ell \cdot \Delta_{\text{pct\_p}} + 1\right] 
+  = 1000\left[ 10\cdot 0.5 + 1\right] = 6000 \text{ OSMO}.$$
+  Since the LAs started with 1000 OSMO, they have an unrealized profit of 5000 OSMO, or \$25k, implying a profit of 250\% in USD, which is 500\% in OSMO.
+  - Notice that this means the LAs receive all of the protocol profits if they exit this leveraged position.
 - IF =  40,000 —> incentive pendulum —> governance token would vote for the split
 
 IAs receive yield from the matrix protocol when it's over-collateteralized.
@@ -198,3 +204,28 @@ $$\begin{align}
     = c_{LA} \left[\ell\left(1 - \frac{p_i}{p_f}\right) + 1\right] \\
   &\boxed{\psi = c_{LA} \left[\ell \cdot \Delta_{\text{pct\_p}} + 1\right] }\\
 \end{align}$$
+
+
+---
+
+#  Initial Protocol Simulation Presentation
+
+Date: 2022-02-13
+
+Simulator presentation.
+
+Input parameters: 
+
+1. Choose the implied leverage for the LA
+1. Every hour there is a funding payment based on whether that collateral price has increased or decreased. 
+    - If price increases (bull), the funding payment goes LA → IF. 
+    - If price decreases, the funding payment goes IF → LA.
+2. Calculate the P&L of the LA (assuming aggregate agents) and the IF.
+3. (Extension) IF should charge higher funding rates based on implied leverage of the LAs.
+
+
+Next feature - Stablecoin minting and burning
+
+- 3 lockup periods for the stablecoin: 1 hour, 1 day, 1 week 
+1. Choose the "amount of stable coin" to be minted at the "Collateral value"
+1. Show the different profits based on the duration of how long the stablecoins were in circulation.
