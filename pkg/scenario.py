@@ -1,5 +1,4 @@
 import dataclasses
-from collections import namedtuple
 
 import numpy as np
 import pandas as pd
@@ -8,40 +7,46 @@ from matplotlib import pyplot as plt
 
 from pkg import simulation as sim
 from pkg import types
-from pkg.stochastic import Brownian
+from pkg import stochastic
+
+from typing import List
+
+@dataclasses.dataclass
+class ProtocolParams:
+    exit_fee: float
+    entry_fee: float
+    frate_to_LA: int
+    frate_to_IF: int
+    IF_exposure_init: float
+    take_profit_chance: float
+    take_loss_chance: float
+
+
+@dataclasses.dataclass
+class LeverageAgentParams:
+    num_LA_positions_per_period: float
+    position_size_gamma_params: List[float]
+    poisson: float
+
+
+@dataclasses.dataclass
+class StochasticProcessParams:
+    s0: float
+    mu: float
+    sigma: float
+    dt: float
 
 
 @dataclasses.dataclass
 class Parameters:
-    # Simulation parameter
-    # n_periods: float
-
-    # Protocol parameter
-    exit_fee: float
-    entry_fee: float
-    hourly_funding_rate_payout_bp: int
-    hourly_funding_rate_fee_bp: int
-    initial_insurance_fund: float
-
-    # LA parameters
-    n_LAs_position_per_period: float
-    size_LAs_position_gamma_parameters: float
-    leverages_poisson_parameter: float
-
-    take_profit_chance: float
-    take_loss_chance: float
-
-    # Price parameters
-    s0: float
-    mu: float
-    sigma: float
-
-    dt: float
+    protocol: ProtocolParams
+    LA: LeverageAgentParams
+    stochastic: StochasticProcessParams
+    n_periods: int = 0
 
 
-def get_funding_payment(
-    protocol: types.ProtocolState, price: float, bull: bool
-) -> float:
+def get_funding_payment(protocol: types.ProtocolState, price: float,
+                        bull: bool) -> float:
     """[summary]
 
     Args:
@@ -69,7 +74,7 @@ def get_funding_payment(
     return funding_payment
 
 
-def get_new_positions(parameters, row) -> pd.DataFrame:
+def get_new_positions(params, row) -> pd.DataFrame:
     # Add the new positions to the protocol
     # Each position size is taken from a gamma distribution defined by the parameters
     # Each leverage is taken from a poisson distribution
@@ -84,42 +89,38 @@ def get_new_positions(parameters, row) -> pd.DataFrame:
     """
 
     return pd.DataFrame(
-        np.vstack(
-            [
-                np.random.gamma(
-                    *parameters.size_LAs_position_gamma_parameters,
-                    parameters.n_LAs_position_per_period,
-                )
-                / row["price"],
-                np.random.poisson(
-                    parameters.leverages_poisson_parameter,
-                    parameters.n_LAs_position_per_period,
-                ),
-                [row["price"]] * parameters.n_LAs_position_per_period,
-            ]
-        ).T,
+        np.vstack([
+            np.random.gamma(
+                *params.LA.position_size_gamma_params,
+                params.LA.num_LA_positions_per_period,
+            ) / row["price"],
+            np.random.poisson(
+                params.LA.poisson,
+                params.LA.num_LA_positions_per_period,
+            ),
+            [row["price"]] * params.LA.num_LA_positions_per_period,
+        ]).T,
         columns=["collateral_brought", "leverage", "price"],
     )
 
 
-def create_scenario(parameters: Parameters):
+def create_scenario(params: Parameters):
 
-    b = Brownian()
+    brownian = stochastic.Brownian()
 
     if False:
         price_dataframe = pd.DataFrame(
-            zip(
-                *[
-                    pd.date_range("2020-01-01", periods=parameters.n_periods, freq="h"),
-                    b.stock_price(
-                        parameters.s0,
-                        parameters.mu,
-                        parameters.sigma,
-                        parameters.n_periods,
-                        parameters.dt,
-                    ),
-                ]
-            ),
+            zip(*[
+                pd.date_range(
+                    "2020-01-01", periods=params.n_periods, freq="h"),
+                brownian.stock_price(
+                    params.stochastic.s0,
+                    params.stochastic.mu,
+                    params.stochastic.sigma,
+                    params.n_periods,
+                    params.stochastic.dt,
+                ),
+            ]),
             columns=["time", "price"],
         )
 
@@ -127,66 +128,52 @@ def create_scenario(parameters: Parameters):
     price_dataframe["time"] = pd.to_datetime(price_dataframe.Date)
     price_dataframe["price"] = price_dataframe["Luna"]
 
-    price_dataframe = (
-        price_dataframe[price_dataframe.price.notnull()][["time", "price"]]
-        .sort_values("time")
-        .reset_index(drop=True)
-    )
+    price_dataframe = (price_dataframe[price_dataframe.price.notnull()][[
+        "time", "price"
+    ]].sort_values("time").reset_index(drop=True))
 
-    parameters.n_periods = price_dataframe.shape[0]
+    params.n_periods = price_dataframe.shape[0]
 
     current_positions = pd.DataFrame(
-        columns=["collateral_brought", "leverage", "price"]
-    )
+        columns=["collateral_brought", "leverage", "price"])
 
-    insurance_fund = parameters.initial_insurance_fund
+    insurance_fund = params.protocol.IF_exposure_init
 
     previous_price = -1
     for i, row in price_dataframe.iterrows():
 
-        new_positions = get_new_positions(parameters, row)
+        new_positions = get_new_positions(params=params, row=row)
 
         current_positions = pd.concat([current_positions, new_positions])
 
         # Compute all exits
         liquidations = (
-            current_positions.collateral_brought
-            * current_positions.leverage
-            * (row["price"] - current_positions.price)
-            + current_positions.collateral_brought * row["price"]
-            < 0
-        )
+            current_positions.collateral_brought * current_positions.leverage *
+            (row["price"] - current_positions.price) +
+            current_positions.collateral_brought * row["price"] < 0)
 
-        exits_loss = (row["price"] - current_positions.price < 0) & (
-            np.random.random(len(current_positions)) < parameters.take_loss_chance
-        )
+        exits_loss = (row["price"] - current_positions.price <
+                      0) & (np.random.random(len(current_positions)) <
+                            params.protocol.take_loss_chance)
 
-        exits_profit = (row["price"] - current_positions.price > 0) & (
-            np.random.random(len(current_positions)) < parameters.take_profit_chance
-        )
+        exits_profit = (row["price"] - current_positions.price >
+                        0) & (np.random.random(len(current_positions)) <
+                              params.protocol.take_profit_chance)
 
-        entry_fee = (
-            new_positions[["collateral_brought", "leverage"]].product(axis=1).sum()
-            * parameters.entry_fee
-        ) * row["price"]
+        entry_fee = (new_positions[["collateral_brought", "leverage"]].product(
+            axis=1).sum() * params.protocol.entry_fee) * row["price"]
 
-        exit_fee = (
-            current_positions.loc[
-                (liquidations | exits_loss | exits_profit),
-                ["collateral_brought", "leverage"],
-            ]
-            .product(axis=1)
-            .sum()
-            * parameters.exit_fee
-        ) * row["price"]
+        exit_fee = (current_positions.loc[
+            (liquidations | exits_loss | exits_profit),
+            ["collateral_brought", "leverage"], ].product(axis=1).sum() *
+                    params.protocol.exit_fee) * row["price"]
 
         price_dataframe.loc[i, "fees"] = entry_fee + exit_fee
         insurance_fund += entry_fee + exit_fee
 
         # remove exits from active positions
-        current_positions = current_positions[
-            ~(liquidations | exits_loss | exits_profit)
-        ].copy()
+        current_positions = current_positions[~(liquidations | exits_loss
+                                                | exits_profit)].copy()
 
         # funding rate calculation TODO: Update this to new logic
 
@@ -194,20 +181,19 @@ def create_scenario(parameters: Parameters):
         positive_unrealized_pnl = current_positions.price > row["price"]
         negative_unrealized_pnl = current_positions.price < row["price"]
 
-        LA_amt = (
-            current_positions[["collateral_brought", "leverage"]].product(axis=1).sum()
-            * row["price"]
-        )
+        LA_amt = (current_positions[["collateral_brought", "leverage"
+                                     ]].product(axis=1).sum() * row["price"])
         protocol = types.ProtocolState(
             LA_amt=LA_amt,
             IF_amt=insurance_fund,
-            frate_to_LA=parameters.hourly_funding_rate_payout_bp,
-            frate_to_IF=parameters.hourly_funding_rate_fee_bp,
+            frate_to_LA=params.protocol.frate_to_LA,
+            frate_to_IF=params.protocol.frate_to_IF,
             IA_amt=0,
         )
 
-        bull = row["price"] > previous_price
-        funding_payment = get_funding_payment(protocol, row["price"], bull)
+        bull: bool = row["price"] > previous_price
+        funding_payment = get_funding_payment(
+            protocol=protocol, price=row["price"], bull=bull)
 
         # TODO: Are we allowed to take the money from the LAs collaterals?
         # We assume that they pay it from an infinite wallet for now
@@ -224,13 +210,11 @@ def create_scenario(parameters: Parameters):
         price_dataframe.loc[i, "LA_exposure"] = (
             current_positions.collateral_brought  # 10_000
             # * current_positions.leverage  # 10
-            * row["price"]
-        ).sum()
+            * row["price"]).sum()
         price_dataframe.loc[i, "LA_position"] = (
             current_positions.collateral_brought  # 10_000
             * current_positions.leverage  # 10
-            * row["price"]
-        ).sum()
+            * row["price"]).sum()
 
         price_dataframe.loc[i, "funding_payments"] = funding_payment
         price_dataframe.loc[i, "bull"] = bull
