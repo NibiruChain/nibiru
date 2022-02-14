@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import dataclasses
-from multiprocessing.sharedctypes import Value
 import numpy as np
 import pandas as pd
 from pkg import types
@@ -35,8 +34,8 @@ def get_leveraged_position(LA_amt: float,
         spec_final (types.SpeculativeAssetState): Collateral final state.
 
     Returns:
-        types.LeveragedPosition: Representation for the corresponding leverage agent
-            liquidity position. 
+        types.LeveragedPosition: Representation for the corresponding leverage 
+            agent liquidity position. 
     """
             
     price_pct_change = (1 - spec_init.price_usd / spec_final.price_usd)
@@ -49,26 +48,6 @@ def get_leveraged_position(LA_amt: float,
     return types.LeveragedPosition(
         c_LA=LA_amt, price_pct_change=price_pct_change, 
         c_cover=cover_amt, value=position_value_in_spec)
-
-def example_0():
-    total_spec_supply = 1e9 # 1 billion
-
-def example_1():
-    amt_osmo = 10e3
-    spec_init = types.SpeculativeAssetState(amt=amt_osmo, price_usd=10)
-    matrix_exposure = exposure_in_spec(spec=spec_init)
-    assert matrix_exposure == 1e5
-
-    la_exposure = 1e4
-    la_amt = la_exposure / spec_init.price_usd
-    assert la_amt == 1000
-    leverage_mult = matrix_exposure / la_exposure
-    assert leverage_mult == 10
-
-    # Price of OSMO increases 5 bucks
-    spec_1 = types.SpeculativeAssetState(amt=amt_osmo, price_usd=15)
-    protocol_pnl = exposure_delta(spec_init=spec_init, spec_final=spec_1)
-    assert protocol_pnl == 5e4
 
 def compute_funding_payment(bps: int, 
                             spec: types.SpeculativeAssetState) -> float:
