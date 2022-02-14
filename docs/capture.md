@@ -28,3 +28,8 @@ Celestia: Founder was the child hacker that hacked Sony
 Furucombo.app
 - Furucombo strategy provider for SOMM.
 
+---
+
+#### Low IF near end of LUNA data
+
+- Need to account for rapid changes in price.
