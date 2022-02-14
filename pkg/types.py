@@ -34,8 +34,8 @@ class ProtocolState:
     LA_amt: float
     IA_amt: float
     IF_amt: float
-    frate_to_LA: int
-    frate_to_IF: int
+    frate_to_LA: int = 60
+    frate_to_IF: int = 120
 
     def update_amts(self, LA_amt=None, IA_amt=None, IF_amt=None) -> None:
         """Update the asset amounts of the protocol."""
