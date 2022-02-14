@@ -25,7 +25,7 @@ def params() -> scenario.Parameters:
         take_loss_chance=0.3)
     params = scenario.Parameters(LA=la_params, 
                                  protocol=protocol_params, 
-                                stochastic=stochastic_process_params)
+                                 stochastic=stochastic_process_params)
     return params
 
 def test_full_run(params: scenario.Parameters):
