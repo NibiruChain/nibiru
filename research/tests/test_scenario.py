@@ -1,7 +1,5 @@
 import pytest
-from pkg import simulation as sim
-from pkg import types
-from pkg import scenario
+from research.pkg import scenario
 import pandas as pd
 
 @pytest.fixture
@@ -23,8 +21,8 @@ def params() -> scenario.Parameters:
         IF_exposure_init=1_000_000,
         take_profit_chance=0.4,
         take_loss_chance=0.3)
-    params = scenario.Parameters(LA=la_params, 
-                                 protocol=protocol_params, 
+    params = scenario.Parameters(LA=la_params,
+                                 protocol=protocol_params,
                                  stochastic=stochastic_process_params)
     return params
 

@@ -2,12 +2,10 @@ import dataclasses
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
 
-from pkg import simulation as sim
-from pkg import types
-from pkg import stochastic
+from research.pkg import simulation as sim
+from research.pkg import types
+from research.pkg import stochastic
 
 from typing import List
 

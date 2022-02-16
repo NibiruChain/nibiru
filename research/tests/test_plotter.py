@@ -1,7 +1,5 @@
 import pytest
-from pkg import simulation as sim
-from pkg import types
-from pkg import plotter
+from research.pkg import plotter
 import plotly.graph_objects as go
 import pandas as pd
 

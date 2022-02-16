@@ -2,13 +2,7 @@
 # import dash_core_components as dcc
 # import dash_html_components as html
 
-from pkg import scenario
-from pkg import plotter
-
-import pandas as pd
-import numpy as np
-import seaborn as sns
-from matplotlib import pyplot as plt
+from research.pkg import scenario, plotter
 
 import streamlit as st
 
@@ -43,9 +37,9 @@ if __name__ == "__main__":
         IF_exposure_init=1_000_000,
         take_profit_chance=0.4,
         take_loss_chance=0.3)
-    params = scenario.Parameters(LA=la_params, 
-                                 protocol=protocol_params, 
-                                stochastic=stochastic_process_params)
+    params = scenario.Parameters(LA=la_params,
+                                 protocol=protocol_params,
+                                 stochastic=stochastic_process_params)
     result = scenario.create_scenario(params)
     result.to_csv("luna_plot_df.csv")
 

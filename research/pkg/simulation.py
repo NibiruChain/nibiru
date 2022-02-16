@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-import dataclasses
 import numpy as np
 import pandas as pd
-from pkg import types
-from typing import Dict, List, Sequence
+from research.pkg import types
+from typing import List, Sequence
 
 def exposure_in_spec(spec: types.SpeculativeAssetState) -> float:
     exposure_in_spec = spec.amt * spec.price_usd
     return exposure_in_spec
 
-def exposure_delta(spec_init: types.SpeculativeAssetState, 
+def exposure_delta(spec_init: types.SpeculativeAssetState,
                    spec_final: types.SpeculativeAssetState) -> float:
     exposure_init, exposure_final = [
         exposure_in_spec(spec=s) for s in [spec_init, spec_final]]
@@ -18,10 +17,10 @@ def exposure_delta(spec_init: types.SpeculativeAssetState,
 def basis_points(x: float) -> float:
     return x * 1e-4
 
-def get_leveraged_position(LA_amt: float, 
+def get_leveraged_position(LA_amt: float,
                            cover_amt: float,
-                           protocol: types.ProtocolState, 
-                           spec_init: types.SpeculativeAssetState, 
+                           protocol: types.ProtocolState,
+                           spec_init: types.SpeculativeAssetState,
                            spec_final: types.SpeculativeAssetState
                            ) -> types.LeveragedPosition:
     """[summary]
@@ -49,7 +48,7 @@ def get_leveraged_position(LA_amt: float,
         c_LA=LA_amt, price_pct_change=price_pct_change, 
         c_cover=cover_amt, value=position_value_in_spec)
 
-def compute_funding_payment(bps: int, 
+def compute_funding_payment(bps: int,
                             spec: types.SpeculativeAssetState) -> float:
     funding_rate: float = basis_points(bps)
     exposure: float = exposure_in_spec(spec=spec)
@@ -78,8 +77,8 @@ class Simulator:
             cycles_passed=self.payment_cycles_passed
         ))
 
-    def get_funding_payment(self, 
-                            protocol: types.ProtocolState, 
+    def get_funding_payment(self,
+                            protocol: types.ProtocolState,
                             price: float) -> float:
         """[summary]
 
@@ -116,8 +115,8 @@ class Simulator:
         return market
 
     def distribute_funding_payment(self,
-                                   protocol: types.ProtocolState,  
-                                   payment: float, 
+                                   protocol: types.ProtocolState,
+                                   payment: float,
                                    ) -> types.ProtocolState:
         """Updates the protocol state based on the given funding payment.
         - Funding payments go IF → LA  in a bear market.
@@ -144,12 +143,12 @@ class Simulator:
         protocol.update_amts(LA_amt=LA_amt, IF_amt=IF_amt)
         return protocol
 
-    def funding_payment_simulation(self, 
-                                   protocol: types.ProtocolState, 
+    def funding_payment_simulation(self,
+                                   protocol: types.ProtocolState,
                                    prices: Sequence[float],
                                    timestamps: Sequence[pd.Timestamp],
                                    daily_payments: int = 24,
-                                ) -> pd.DataFrame:
+                                   ) -> pd.DataFrame:
         """[summary]
 
         Args:

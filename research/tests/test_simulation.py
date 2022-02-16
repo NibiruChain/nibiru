@@ -1,6 +1,7 @@
 import pytest
-from pkg import simulation as sim
-from pkg import types
+from research.pkg import simulation as sim
+from research.pkg import types
+
 
 def test_exposure_delta_market_up():
     amt_osmo: int = 100
