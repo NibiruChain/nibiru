@@ -1,0 +1,12 @@
+syntax = "proto3";
+package MatrixDao.matrix.derivatives;
+
+import "gogoproto/gogo.proto";
+import "derivatives/params.proto";
+
+option go_package = "github.com/MatrixDao/matrix/x/derivatives/types";
+
+// GenesisState defines the derivatives module's genesis state.
+message GenesisState {
+  Params params = 1;
+}
