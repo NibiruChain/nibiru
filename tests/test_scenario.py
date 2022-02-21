@@ -1,36 +1,92 @@
-import pytest
+import unittest
+
+import pandas as pd
+import xmlrunner
+from pkg import scenario
 from pkg import simulation as sim
 from pkg import types
-from pkg import scenario
-import pandas as pd
 
-@pytest.fixture
-def params() -> scenario.Parameters:
-    la_params = scenario.LeverageAgentParams(
-        num_LA_positions_per_period=100, 
-        position_size_gamma_params=[3, 10_000], 
-        poisson=8)
-    stochastic_process_params = scenario.StochasticProcessParams(
-        s0=100,
-        mu=0.23,
-        sigma=0.68,
-        dt=1)
-    protocol_params = scenario.ProtocolParams(
-        entry_fee=20e-4,
-        exit_fee=40e-4,
-        frate_to_LA=60,
-        frate_to_IF=120,
-        IF_exposure_init=1_000_000,
-        take_profit_chance=0.4,
-        take_loss_chance=0.3)
-    params = scenario.Parameters(LA=la_params, 
-                                 protocol=protocol_params, 
-                                 stochastic=stochastic_process_params)
-    return params
 
-def test_full_run(params: scenario.Parameters):
-    # TODO: refactor, feature: Make 'scenario.create_scenario' more composable.
-    # scenario_df: pd.DataFrame = scenario.create_scenario(params)
-    # scenario_df.to_csv("luna_plot_csv")
-    scenario_df: pd.DataFrame = pd.read_csv("luna_plot_df.csv")
-    assert isinstance(scenario_df, pd.DataFrame)
+class TestScenario(unittest.TestCase):
+    """
+    Unit tests for the scenario module.
+    """
+
+    def setUp(self):
+        self.la_parameters = scenario.LeverageAgentParams(
+            num_LA_positions_per_period=100,
+            position_size_gamma_params=[3, 10_000],
+            poisson=100,
+        )
+
+    def test_get_funding_payment(self):
+        protocol = types.ProtocolState(
+            LA_amt=200, IA_amt=100, IF_amt=400, frate_to_IF=50, frate_to_LA=100
+        )
+
+        # Test bear market
+        self.assertAlmostEqual(
+            scenario.get_funding_payment(protocol=protocol, price=10, bull=True),
+            protocol.frate_to_IF * 1e-4 * protocol.LA_amt * 10,
+        )
+
+        # Test bull market
+        self.assertAlmostEqual(
+            scenario.get_funding_payment(protocol=protocol, price=10, bull=False),
+            protocol.frate_to_LA * protocol.IF_amt * 10 * 1e-4,
+        )
+
+    def test_get_new_positions(self):
+
+        generated_dataframe = scenario.get_new_positions(
+            params=self.la_parameters, price=10
+        )
+
+        self.assertEqual(
+            generated_dataframe.shape[0], self.la_parameters.num_LA_positions_per_period
+        )
+
+        self.assertCountEqual(
+            generated_dataframe.columns, ["collateral_brought", "leverage", "price"]
+        )
+
+    def test_get_new_exits(self):
+        current_positions = scenario.get_new_positions(
+            params=self.la_parameters, price=10
+        )
+
+        scenario_parameters = scenario.ProtocolParams(
+            exit_fee=100,
+            entry_fee=100,
+            frate_to_LA=100,
+            frate_to_IF=100,
+            IF_exposure_init=100,
+            take_profit_chance=1,
+            take_loss_chance=1,
+        )
+
+        exits_loss, exits_profit = scenario.get_new_exits(
+            scenario_parameters, current_positions, 8,
+        )
+
+        self.assertCountEqual(exits_loss.tolist(), [True] * len(current_positions))
+        self.assertCountEqual(exits_profit.tolist(), [False] * len(current_positions))
+
+        exits_loss, exits_profit = scenario.get_new_exits(
+            scenario_parameters, current_positions, 12,
+        )
+
+        self.assertCountEqual(exits_loss.tolist(), [False] * len(current_positions))
+        self.assertCountEqual(exits_profit.tolist(), [True] * len(current_positions))
+
+
+if __name__ == "__main__":
+
+    unittest.main(
+        testRunner=xmlrunner.XMLTestRunner(output="unit-test-reports"),
+        # these make sure that some options that are not applicable
+        # remain hidden from the help menu.
+        failfast=False,
+        buffer=False,
+        catchbreak=False,
+    )
