@@ -1,10 +1,7 @@
 import unittest
 
-import pandas as pd
 import xmlrunner
-from pkg import scenario
-from pkg import simulation as sim
-from pkg import types
+from research.pkg import scenario, types
 
 
 class TestScenario(unittest.TestCase):
@@ -15,7 +12,7 @@ class TestScenario(unittest.TestCase):
     def setUp(self):
         self.la_parameters = scenario.LeverageAgentParams(
             num_LA_positions_per_period=100,
-            position_size_gamma_params=[3, 10_000],
+            position_size_gamma_params=scenario.GammaParameters(3, 10_000),
             poisson=100,
         )
 

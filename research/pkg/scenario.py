@@ -6,8 +6,8 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from pkg import simulation as sim
-from pkg import stochastic, types
+from research.pkg import simulation as sim
+from research.pkg import stochastic, types
 
 
 @dataclasses.dataclass
@@ -22,10 +22,22 @@ class ProtocolParams:
 
 
 @dataclasses.dataclass
+class GammaParameters:
+    shape: float
+    scale: float
+
+
+@dataclasses.dataclass
 class LeverageAgentParams:
     num_LA_positions_per_period: float
-    position_size_gamma_params: List[float]
+    position_size_gamma_params: GammaParameters
     poisson: float
+
+
+@dataclasses.dataclass
+class StableCoinSeekersParams:
+    mint_gamma_params: GammaParameters
+    burn_gamma_params: GammaParameters
 
 
 @dataclasses.dataclass
@@ -91,8 +103,9 @@ def get_new_positions(params: LeverageAgentParams, price: float) -> pd.DataFrame
         np.vstack(
             [
                 np.random.gamma(
-                    *params.position_size_gamma_params,
-                    params.num_LA_positions_per_period,
+                    shape=params.position_size_gamma_params.shape,
+                    scale=params.position_size_gamma_params.scale,
+                    size=params.num_LA_positions_per_period,
                 )
                 / price,
                 np.random.poisson(params.poisson, params.num_LA_positions_per_period,),

@@ -2,28 +2,35 @@
 import dataclasses
 import numpy as np
 import pandas as pd
-from pkg import types
+from research.pkg import types
 from typing import Dict, List, Sequence
+
 
 def exposure_in_spec(spec: types.SpeculativeAssetState) -> float:
     exposure_in_spec = spec.amt * spec.price_usd
     return exposure_in_spec
 
-def exposure_delta(spec_init: types.SpeculativeAssetState, 
-                   spec_final: types.SpeculativeAssetState) -> float:
+
+def exposure_delta(
+    spec_init: types.SpeculativeAssetState, spec_final: types.SpeculativeAssetState
+) -> float:
     exposure_init, exposure_final = [
-        exposure_in_spec(spec=s) for s in [spec_init, spec_final]]
+        exposure_in_spec(spec=s) for s in [spec_init, spec_final]
+    ]
     return exposure_final - exposure_init
+
 
 def basis_points(x: float) -> float:
     return x * 1e-4
 
-def get_leveraged_position(LA_amt: float, 
-                           cover_amt: float,
-                           protocol: types.ProtocolState, 
-                           spec_init: types.SpeculativeAssetState, 
-                           spec_final: types.SpeculativeAssetState
-                           ) -> types.LeveragedPosition:
+
+def get_leveraged_position(
+    LA_amt: float,
+    cover_amt: float,
+    protocol: types.ProtocolState,
+    spec_init: types.SpeculativeAssetState,
+    spec_final: types.SpeculativeAssetState,
+) -> types.LeveragedPosition:
     """[summary]
 
     Args:
@@ -37,20 +44,25 @@ def get_leveraged_position(LA_amt: float,
         types.LeveragedPosition: Representation for the corresponding leverage 
             agent liquidity position. 
     """
-            
-    price_pct_change = (1 - spec_init.price_usd / spec_final.price_usd)
+
+    price_pct_change = 1 - spec_init.price_usd / spec_final.price_usd
     if cover_amt > protocol.total_amt:
-        raise ValueError("An LA cannot cover more collateral than what's "
-                         "available in Matrix.\n" 
-                         f"'cover_amt': {cover_amt}\n"
-                         f"'protcol.total_amt': {protocol.total_amt}")
+        raise ValueError(
+            "An LA cannot cover more collateral than what's "
+            "available in Matrix.\n"
+            f"'cover_amt': {cover_amt}\n"
+            f"'protcol.total_amt': {protocol.total_amt}"
+        )
     position_value_in_spec = LA_amt + protocol.total_amt * price_pct_change
     return types.LeveragedPosition(
-        c_LA=LA_amt, price_pct_change=price_pct_change, 
-        c_cover=cover_amt, value=position_value_in_spec)
+        c_LA=LA_amt,
+        price_pct_change=price_pct_change,
+        c_cover=cover_amt,
+        value=position_value_in_spec,
+    )
 
-def compute_funding_payment(bps: int, 
-                            spec: types.SpeculativeAssetState) -> float:
+
+def compute_funding_payment(bps: int, spec: types.SpeculativeAssetState) -> float:
     funding_rate: float = basis_points(bps)
     exposure: float = exposure_in_spec(spec=spec)
     funding_payment = funding_rate * exposure
@@ -66,21 +78,21 @@ class Simulator:
 
     def __init__(self):
         self.simulation_log = []
-    
-    def log_simulation(self):
-        self.simulation_log.append(dict(
-            ts=self.ts_current, 
-            price=self.price_current,
-            LA_amt=self.protocol.LA_amt,
-            IF_amt=self.protocol.IF_amt,
-            IA_amt=self.protocol.IA_amt,
-            total_amt=self.protocol.total_amt,
-            cycles_passed=self.payment_cycles_passed
-        ))
 
-    def get_funding_payment(self, 
-                            protocol: types.ProtocolState, 
-                            price: float) -> float:
+    def log_simulation(self):
+        self.simulation_log.append(
+            dict(
+                ts=self.ts_current,
+                price=self.price_current,
+                LA_amt=self.protocol.LA_amt,
+                IF_amt=self.protocol.IF_amt,
+                IA_amt=self.protocol.IA_amt,
+                total_amt=self.protocol.total_amt,
+                cycles_passed=self.payment_cycles_passed,
+            )
+        )
+
+    def get_funding_payment(self, protocol: types.ProtocolState, price: float) -> float:
         """[summary]
 
         Args:
@@ -90,22 +102,23 @@ class Simulator:
         Returns:
             float: [description]
         """
-            
+
         funding_rate_bps: int
-        if self.market_state == "bull": 
+        if self.market_state == "bull":
             # LAs pay the IF in bull
-            funding_rate_bps = protocol.frate_to_IF 
+            funding_rate_bps = protocol.frate_to_IF
             spec_amt = protocol.LA_amt
-        else: 
-            # IF pays the LA in bear 
-            funding_rate_bps = protocol.frate_to_LA 
+        else:
+            # IF pays the LA in bear
+            funding_rate_bps = protocol.frate_to_LA
             spec_amt = protocol.IF_amt
-        
+
         funding_payment: float = compute_funding_payment(
-            bps=funding_rate_bps, 
-            spec=types.SpeculativeAssetState(amt=spec_amt, price_usd=price))
+            bps=funding_rate_bps,
+            spec=types.SpeculativeAssetState(amt=spec_amt, price_usd=price),
+        )
         return funding_payment
-    
+
     @property
     def market_state(self) -> str:
         price_delta = self.price_current - self.price_at_previous_funding_payment
@@ -115,10 +128,9 @@ class Simulator:
             market: str = "bear"
         return market
 
-    def distribute_funding_payment(self,
-                                   protocol: types.ProtocolState,  
-                                   payment: float, 
-                                   ) -> types.ProtocolState:
+    def distribute_funding_payment(
+        self, protocol: types.ProtocolState, payment: float,
+    ) -> types.ProtocolState:
         """Updates the protocol state based on the given funding payment.
         - Funding payments go IF → LA  in a bear market.
         - Funding payments go LA → IF  in a bull market.
@@ -136,7 +148,7 @@ class Simulator:
             # LAs pays the Insurance Fund
             IF_amt = protocol.IF_amt + payment
             LA_amt = protocol.LA_amt - payment
-        else: # self.market_state == "bear" 
+        else:  # self.market_state == "bear"
             # Insurance fund pays the LAs
             LA_amt = protocol.LA_amt + payment
             IF_amt = protocol.IF_amt - payment
@@ -144,12 +156,13 @@ class Simulator:
         protocol.update_amts(LA_amt=LA_amt, IF_amt=IF_amt)
         return protocol
 
-    def funding_payment_simulation(self, 
-                                   protocol: types.ProtocolState, 
-                                   prices: Sequence[float],
-                                   timestamps: Sequence[pd.Timestamp],
-                                   daily_payments: int = 24,
-                                ) -> pd.DataFrame:
+    def funding_payment_simulation(
+        self,
+        protocol: types.ProtocolState,
+        prices: Sequence[float],
+        timestamps: Sequence[pd.Timestamp],
+        daily_payments: int = 24,
+    ) -> pd.DataFrame:
         """[summary]
 
         Args:
@@ -179,34 +192,41 @@ class Simulator:
 
         cycle_duration_in_seconds = 3600 * 24 / daily_payments
 
-        done: bool = (protocol.IF_amt > 0) and (protocol.LA_amt >= 0) 
+        done: bool = (protocol.IF_amt > 0) and (protocol.LA_amt >= 0)
         while not done:
-            self.price_current = prices[time_index] 
+            self.price_current = prices[time_index]
             self.ts_current = timestamps[time_index]
             time_delta: pd.Timedelta = self.ts_current - timestamps[0]
             time_delta_in_cycles = (
-                time_delta.total_seconds() / cycle_duration_in_seconds)
+                time_delta.total_seconds() / cycle_duration_in_seconds
+            )
 
             payment_cycle_has_passed: bool = (
-                time_delta_in_cycles - payment_cycles_passed >= 1)
+                time_delta_in_cycles - payment_cycles_passed >= 1
+            )
             if payment_cycle_has_passed:
                 funding_payment: float = self.get_funding_payment(
-                    protocol=protocol, price=self.current_price)
-                
+                    protocol=protocol, price=self.current_price
+                )
+
                 if protocol.IF_amt - funding_payment < 0:
                     self.log_simulation()
-                    done = True; break
+                    done = True
+                    break
 
                 protocol: types.ProtocolState = self.distribute_funding_payment(
-                    protocol=protocol, price=self.price_current, 
-                    payment=funding_payment, 
-                    to="fpayments")
+                    protocol=protocol,
+                    price=self.price_current,
+                    payment=funding_payment,
+                    to="fpayments",
+                )
                 payment_cycles_passed += 1
                 self.price_at_previous_funding_payment = self.price_current
                 self.log_simulation()
-            
+
             time_index += 1
-            done = (not((protocol.IF_amt > 0) and (protocol.LA_amt >= 0)) 
-                    or (time_index + 1 > max_time_index))
-        
+            done = not ((protocol.IF_amt > 0) and (protocol.LA_amt >= 0)) or (
+                time_index + 1 > max_time_index
+            )
+
         return pd.DataFrame(self.simulation_log)
