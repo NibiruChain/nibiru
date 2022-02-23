@@ -55,11 +55,14 @@ class TestScenario(unittest.TestCase):
         scenario_parameters = scenario.ProtocolParams(
             exit_fee=100,
             entry_fee=100,
+            mint_fee=100,
+            burn_fee=100,
             frate_to_LA=100,
             frate_to_IF=100,
             IF_exposure_init=100,
             take_profit_chance=1,
             take_loss_chance=1,
+            initial_sc_supply=100,
         )
 
         exits_loss, exits_profit = scenario.get_new_exits(
