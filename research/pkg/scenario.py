@@ -14,11 +14,14 @@ from research.pkg import stochastic, types
 class ProtocolParams:
     exit_fee: float
     entry_fee: float
+    mint_fee: float
+    burn_fee: float
     frate_to_LA: int
     frate_to_IF: int
     IF_exposure_init: float
     take_profit_chance: float
     take_loss_chance: float
+    initial_sc_supply: float
 
 
 @dataclasses.dataclass
@@ -52,6 +55,7 @@ class StochasticProcessParams:
 class Parameters:
     protocol: ProtocolParams
     LA: LeverageAgentParams
+    sseeker: StableCoinSeekersParams
     stochastic: StochasticProcessParams
 
 
@@ -187,6 +191,38 @@ def create_scenario(params: Parameters):
     return simulation_result
 
 
+def get_stablecoinseeker_fees(params: Parameters, current_sc_supply: float):
+    """
+    Compute the mint and burn fee to pay to the insurance fund and update the current stablecoin supply.
+
+    Args:
+        params (Parameters): The parameters for the scenario
+        current_sc_supply (float): The current supply for stablecoins
+
+    Returns:
+        tuple: The mint fee, burn fee and the updated current stablecoin supply
+    """
+    mint = np.random.gamma(
+        scale=params.sseeker.mint_gamma_params.scale,
+        shape=params.mint_gamma_params.shape,
+    )
+    burn = (
+        np.random.gamma(
+            scale=params.sseeker.burn_gamma_params.scale,
+            shape=params.burn_gamma_params.shape,
+        )
+        * current_sc_supply
+    )
+
+    current_sc_supply += mint - burn
+
+    return (
+        mint * params.protocol.mint_fee,
+        burn * params.protocol.burn_fee,
+        current_sc_supply,
+    )
+
+
 def run_simulation(
     params: Parameters,
     price_dataframe: pd.DataFrame,
@@ -194,6 +230,8 @@ def run_simulation(
     insurance_fund: float,
 ):
     previous_price: float = -1
+    current_sc_supply: float = params.protocol.initial_sc_supply
+
     for i, row in price_dataframe.iterrows():
         price = row["price"]
         new_positions = get_new_positions(params=params.LA, price=price)
@@ -216,8 +254,12 @@ def run_simulation(
             exits_profit,
         )
 
+        mint_fee, burn_fee, current_sc_supply = get_stablecoinseeker_fees(
+            params, current_sc_supply
+        )
+
         # Update the simulation
-        insurance_fund += entry_fee + exit_fee
+        insurance_fund += entry_fee + exit_fee + mint_fee + burn_fee
 
         # remove exits from active positions
         current_positions = current_positions[
