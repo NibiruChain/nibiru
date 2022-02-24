@@ -17,6 +17,6 @@ const (
 	MemStoreKey = "mem_derivatives"
 )
 
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}
+const (
+	DerivativesAMMAccount = "derivatives_amm"
+)
