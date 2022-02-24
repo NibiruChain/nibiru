@@ -1,0 +1,51 @@
+syntax="proto3";
+
+package matrix.derivatives.v1;
+
+option go_package ="github.com/MatrixDao/matrix/api";
+
+import "cosmos/orm/v1alpha1/orm.proto";
+
+message Params {
+  option (cosmos.orm.v1alpha1.singleton) = {
+    id: 2,
+  };
+
+  // stopped identifies if the derivatives exchange is stopped or not
+  bool stopped = 1;
+}
+
+// Position identifies a user position in a given pair.
+message Position {
+  option (cosmos.orm.v1alpha1.table) = {
+    id: 1,
+    primary_key: {
+      fields: "address,pair"
+    }
+  };
+  string address = 1;
+  string pair = 2;
+  string average_price = 3; // sdk.Int
+  string amount = 4; // sdk.Int
+}
+
+// PairMetadata contains information regarding the pair such as leverage.
+message PairMetadata {
+  option (cosmos.orm.v1alpha1.table) = {
+    id: 3,
+    primary_key: {
+      fields: "pair",
+    }
+  };
+
+  // pair identifies the pair name, example: vBTC/vUSDM
+  string pair = 1;
+  // max_leverage identifies the maximum allowed leverage for the pair
+  int64 max_leverage = 2;
+  // collateral_denom identifies the denom that can be used as collateral
+  string collateral_denom = 3;
+  // base_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vBTC.
+  string base_asset_denom = 4;
+  // quote_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vUSDM.
+  string quote_asset_denom = 5;
+}

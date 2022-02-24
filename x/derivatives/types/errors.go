@@ -8,5 +8,6 @@ import (
 
 // x/derivatives module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrNotRunning = sdkerrors.Register(ModuleName, 1, "derivatives platform is not running")
+	ErrLeverage   = sdkerrors.Register(ModuleName, 2, "excessive leverage")
 )
