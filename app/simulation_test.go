@@ -1,5 +1,6 @@
 package app_test
 
+/*
 import (
 	"os"
 	"testing"
@@ -111,3 +112,6 @@ func BenchmarkSimulation(b *testing.B) {
 		simapp.PrintStats(db)
 	}
 }
+
+
+*/

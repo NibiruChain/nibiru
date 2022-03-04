@@ -2,8 +2,6 @@ syntax="proto3";
 
 package matrix.derivatives.v1;
 
-option go_package ="github.com/MatrixDao/matrix/api";
-
 import "cosmos/orm/v1alpha1/orm.proto";
 
 message Params {

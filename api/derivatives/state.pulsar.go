@@ -1125,8 +1125,8 @@ func (x *fastReflection_PairMetadata) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
-	if x.MaxLeverage != int32(0) {
-		value := protoreflect.ValueOfInt32(x.MaxLeverage)
+	if x.MaxLeverage != int64(0) {
+		value := protoreflect.ValueOfInt64(x.MaxLeverage)
 		if !f(fd_PairMetadata_max_leverage, value) {
 			return
 		}
@@ -1167,7 +1167,7 @@ func (x *fastReflection_PairMetadata) Has(fd protoreflect.FieldDescriptor) bool 
 	case "matrix.derivatives.v1.PairMetadata.pair":
 		return x.Pair != ""
 	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		return x.MaxLeverage != int32(0)
+		return x.MaxLeverage != int64(0)
 	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
 		return x.CollateralDenom != ""
 	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
@@ -1193,7 +1193,7 @@ func (x *fastReflection_PairMetadata) Clear(fd protoreflect.FieldDescriptor) {
 	case "matrix.derivatives.v1.PairMetadata.pair":
 		x.Pair = ""
 	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		x.MaxLeverage = int32(0)
+		x.MaxLeverage = int64(0)
 	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
 		x.CollateralDenom = ""
 	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
@@ -1221,7 +1221,7 @@ func (x *fastReflection_PairMetadata) Get(descriptor protoreflect.FieldDescripto
 		return protoreflect.ValueOfString(value)
 	case "matrix.derivatives.v1.PairMetadata.max_leverage":
 		value := x.MaxLeverage
-		return protoreflect.ValueOfInt32(value)
+		return protoreflect.ValueOfInt64(value)
 	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
 		value := x.CollateralDenom
 		return protoreflect.ValueOfString(value)
@@ -1254,7 +1254,7 @@ func (x *fastReflection_PairMetadata) Set(fd protoreflect.FieldDescriptor, value
 	case "matrix.derivatives.v1.PairMetadata.pair":
 		x.Pair = value.Interface().(string)
 	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		x.MaxLeverage = int32(value.Int())
+		x.MaxLeverage = value.Int()
 	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
 		x.CollateralDenom = value.Interface().(string)
 	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
@@ -1307,7 +1307,7 @@ func (x *fastReflection_PairMetadata) NewField(fd protoreflect.FieldDescriptor) 
 	case "matrix.derivatives.v1.PairMetadata.pair":
 		return protoreflect.ValueOfString("")
 	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		return protoreflect.ValueOfInt32(int32(0))
+		return protoreflect.ValueOfInt64(int64(0))
 	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
 		return protoreflect.ValueOfString("")
 	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
@@ -1559,7 +1559,7 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.MaxLeverage |= int32(b&0x7F) << shift
+					x.MaxLeverage |= int64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -1752,8 +1752,8 @@ type Position struct {
 
 	Address      string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	Pair         string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	AveragePrice string `protobuf:"bytes,3,opt,name=average_price,json=averagePrice,proto3" json:"average_price,omitempty"` // sdk.Dec
-	Amount       string `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`                                 // sdk.Dec
+	AveragePrice string `protobuf:"bytes,3,opt,name=average_price,json=averagePrice,proto3" json:"average_price,omitempty"` // sdk.Int
+	Amount       string `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`                                 // sdk.Int
 }
 
 func (x *Position) Reset() {
@@ -1813,11 +1813,12 @@ type PairMetadata struct {
 	// pair identifies the pair name, example: vBTC/vUSDM
 	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
 	// max_leverage identifies the maximum allowed leverage for the pair
-	MaxLeverage int32 `protobuf:"varint,2,opt,name=max_leverage,json=maxLeverage,proto3" json:"max_leverage,omitempty"`
+	MaxLeverage int64 `protobuf:"varint,2,opt,name=max_leverage,json=maxLeverage,proto3" json:"max_leverage,omitempty"`
 	// collateral_denom identifies the denom that can be used as collateral
 	CollateralDenom string `protobuf:"bytes,3,opt,name=collateral_denom,json=collateralDenom,proto3" json:"collateral_denom,omitempty"`
-	// base asset identifies
-	BaseAssetDenom  string `protobuf:"bytes,4,opt,name=base_asset_denom,json=baseAssetDenom,proto3" json:"base_asset_denom,omitempty"`
+	// base_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vBTC.
+	BaseAssetDenom string `protobuf:"bytes,4,opt,name=base_asset_denom,json=baseAssetDenom,proto3" json:"base_asset_denom,omitempty"`
+	// quote_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vUSDM.
 	QuoteAssetDenom string `protobuf:"bytes,5,opt,name=quote_asset_denom,json=quoteAssetDenom,proto3" json:"quote_asset_denom,omitempty"`
 }
 
@@ -1848,7 +1849,7 @@ func (x *PairMetadata) GetPair() string {
 	return ""
 }
 
-func (x *PairMetadata) GetMaxLeverage() int32 {
+func (x *PairMetadata) GetMaxLeverage() int64 {
 	if x != nil {
 		return x.MaxLeverage
 	}
@@ -1899,7 +1900,7 @@ var file_derivatives_state_proto_rawDesc = []byte{
 	0xd8, 0x01, 0x0a, 0x0c, 0x50, 0x61, 0x69, 0x72, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
 	0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
 	0x70, 0x61, 0x69, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x6d, 0x61, 0x78, 0x5f, 0x6c, 0x65, 0x76, 0x65,
-	0x72, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x6d, 0x61, 0x78, 0x4c,
+	0x72, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b, 0x6d, 0x61, 0x78, 0x4c,
 	0x65, 0x76, 0x65, 0x72, 0x61, 0x67, 0x65, 0x12, 0x29, 0x0a, 0x10, 0x63, 0x6f, 0x6c, 0x6c, 0x61,
 	0x74, 0x65, 0x72, 0x61, 0x6c, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x03, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x0f, 0x63, 0x6f, 0x6c, 0x6c, 0x61, 0x74, 0x65, 0x72, 0x61, 0x6c, 0x44, 0x65, 0x6e,
