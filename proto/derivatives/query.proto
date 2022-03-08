@@ -1,10 +1,10 @@
 syntax = "proto3";
-package MatrixDao.matrix.derivatives;
+package matrix.derivatives.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "derivatives/params.proto";
+import "derivatives/state.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/MatrixDao/matrix/x/derivatives/types";
