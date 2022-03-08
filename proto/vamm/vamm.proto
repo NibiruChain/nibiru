@@ -1,0 +1,238 @@
+syntax="proto3";
+
+package matrix.vamm.v1;
+
+enum Direction {
+  // DIRECTION_UNKNOWN defines an unspecified direction.
+  DIRECTION_UNKNOWN = 0;
+  // DIRECTION_LONG defines a long perp request
+  DIRECTION_LONG = 1;
+  // DIRECTION_SHORT defines a short amm request
+  DIRECTION_SHORT = 2;
+}
+
+message LiquidityChangedSnapshot {
+  // cumulative_notional is sdk.Int (signed)
+  string cumulative_notional = 1;
+  // quote_asset_reserve is sdk.Int (unsigned) and defines the quote reserve before liquidity changes.
+  string quote_asset_reserve = 2;
+  // base_asset_reserve is sdk.Int (unsigned) and defines the base asset reserve before liquidity changes.
+  string base_asset_reserve = 3;
+  // total_position_size is sdk.Int (signed) and defines the total position size owned by the virtual AMM before liquidity changes.
+  string total_position_size = 4;
+}
+
+// VirtualAMM defines the virtual AMM interface.
+service VirtualAMM {
+  // SwapInput TODO(godismercilex): comment how swap input differentiates from swap output
+  rpc SwapInput(SwapInputRequest) returns (SwapInputResponse) {};
+  // SwapOutput TODO(godismercilex): comment how swap output differentiates from swap input
+  rpc SwapOutput(SwapOutputRequest) returns (SwapOutputResponse) {};
+  // Shutdown shutdowns the amm.
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse) {};
+  // SettleFunding settles the funding.
+  rpc SettleFunding(SettleFundingRequest) returns (SettleFundingResponse) {};
+
+  // READONLY. TODO(godismercilex) document RPCs
+
+  rpc CalcFee(CalcFeeRequest) returns (CalcFeeResponse) {};
+
+  rpc IsOverFluctuationLimit(IsOverFluctuationLimitRequest) returns (IsOverFluctuationLimitResponse) {};
+
+  rpc CalcBaseAssetAfterLiquidityMigration(CalcBaseAssetAfterLiquidityMigrationRequest) returns (CalcBaseAssetAfterLiquidityMigrationResponse) {};
+
+  rpc GetInputTWAP(GetInputTWAPRequest) returns (GetInputTWAPResponse) {};
+
+  rpc GetOutputTWAP(GetOutputTWAPRequest) returns (GetOutputTWAPResponse) {};
+
+  rpc GetInputPrice(GetInputPriceRequest) returns (GetInputPriceResponse) {};
+
+  rpc GetOutputPrice(GetOutputPriceRequest) returns (GetOutputPriceResponse) {};
+
+  rpc GetInputPriceWithReserves(GetInputPriceWithReservesRequest) returns (GetInputPriceWithReservesResponse) {};
+
+  rpc GetOutputPriceWithReserves(GetOutputPriceWithReservesRequest) returns (GetOutputPriceWithReservesResponse) {};
+
+  rpc GetSpotPrice(GetSpotPriceRequest) returns (GetSpotPriceResponse) {};
+
+  rpc GetLiquidityHistoryLength(GetLiquidityHistoryLengthRequest) returns (GetLiquidityHistoryLengthResponse) {};
+
+  rpc QuoteAsset(QuoteAssetRequest) returns (QuoteAssetResponse) {};
+
+  rpc Open(OpenRequest) returns (OpenResponse) {};
+
+  rpc GetSettlementPrice(GetSettlementPriceRequest) returns (GetSettlementPriceResponse) {};
+
+  rpc GetBaseAssetDeltaThisFundingPeriod(GetBaseAssetDeltaThisFundingPeriodRequest) returns (GetBaseAssetDeltaThisFundingPeriodResponse) {};
+
+  rpc GetCumulativeNotional(GetCumulativeNotionalRequest) returns (GetCumulativeNotionalResponse) {};
+
+  rpc GetMaxHoldingBaseAsset(GetMaxHoldingBaseAssetRequest) returns (GetMaxHoldingBaseAssetResponse) {};
+
+  rpc GetOpenInterestNotionalCap(GetOpenInterestNotionalCapRequest) returns (GetOpenInterestNotionalCapResponse) {};
+
+  rpc GetLiquidityChangedSnapshots(GetLiquidityChangedSnapshotsRequest) returns (GetLiquidityChangedSnapshotsResponse) {};
+
+  rpc GetBaseAssetDelta(GetBaseAssetDeltaRequest) returns (GetBaseAssetDeltaResponse) {};
+
+  rpc GetUnderlyingPrice(GetUnderlyingPriceRequest) returns (GetUnderlyingPriceResponse) {};
+
+  rpc IsOverSpreadLimit(IsOverSpreadLimitRequest) returns (IsOverSpreadLimitResponse) {};
+
+}
+
+message SwapInputRequest {
+  Direction direction = 1;
+  string quote_asset_amount = 2;
+  string base_asset_amount_limit = 3;
+  bool can_over_fluctuation_limit = 4;
+}
+message SwapInputResponse {
+  // TODO(godismercilex): change resp field name once it's more clear what is actually returned.
+  string resp = 1;
+}
+
+message SwapOutputRequest {
+  Direction direction = 1;
+  string base_asset_amount = 2;
+  string quote_asset_amount_limit = 3;
+}
+message SwapOutputResponse {
+  // TODO(godismercilex): change resp field name once it's more clear what is actually returned.
+  string resp = 1;
+}
+
+
+message ShutdownRequest {}
+message ShutdownResponse {}
+
+message SettleFundingRequest {}
+message SettleFundingResponse {
+  // TODO(godismercilex): change respp field name once it's more clear what is actually returned.
+  string resp = 1;
+}
+
+message CalcFeeRequest {
+  string quote_asset_amount  = 1;
+}
+
+message CalcFeeResponse {
+  // TODO(godismercileX): change resp field name
+  string resp_1 = 1;
+  string resp_2 = 2;
+}
+
+message IsOverFluctuationLimitRequest {
+  Direction base_direction = 1;
+  string base_asset_amount = 2;
+}
+
+message IsOverFluctuationLimitResponse {
+  bool over_fluctuation_limit = 1;
+}
+
+message CalcBaseAssetAfterLiquidityMigrationRequest {
+  string base_asset_amount = 1;
+  string from_quote_reserve = 2;
+  string from_base_reserve = 3;
+}
+
+message CalcBaseAssetAfterLiquidityMigrationResponse {
+  // TODO(godismercilex): rename resp field
+  string resp = 1;
+}
+
+message GetInputTWAPRequest {
+  Direction direction = 1;
+  string quote_asset_amount = 2;
+}
+
+message GetInputTWAPResponse {
+  // TODO(godismercilex): rename resp field
+  string resp = 1;
+}
+
+message GetOutputTWAPRequest {
+  Direction direction = 1;
+  string base_asset_amount = 2;
+}
+
+message GetOutputTWAPResponse {
+  // TODO(godismercilex): rename resp field
+  string resp = 1;
+}
+
+message GetInputPriceRequest {
+  Direction direction = 1;
+  string quote_asset_amount = 2;
+}
+
+message GetInputPriceResponse {
+  string price = 1;
+}
+
+message GetOutputPriceRequest {
+  Direction direction = 1;
+  string base_asset_amount = 2;
+}
+
+message GetOutputPriceResponse {
+  string price = 1;
+}
+
+message GetInputPriceWithReservesRequest {
+  Direction direction = 1;
+  string quote_asset_amount = 2;
+  string quote_asset_pool_amount = 3;
+  string base_asset_pool_amount = 4;
+}
+
+message GetInputPriceWithReservesResponse { string price = 1; }
+
+message GetOutputPriceWithReservesRequest {
+  Direction direction = 1;
+  string base_asset_amount = 2;
+  string quote_asset_pool_amount = 3;
+  string base_asset_pool_amount = 4;
+}
+
+message GetOutputPriceWithReservesResponse { string price = 1; }
+
+message GetSpotPriceRequest {}
+message GetSpotPriceResponse { string price = 1; }
+
+message GetLiquidityHistoryLengthRequest {}
+message GetLiquidityHistoryLengthResponse { string length = 1; }
+
+message QuoteAssetRequest {}
+message QuoteAssetResponse { /* TODO(godismercilex): fill this */ }
+
+message OpenRequest {}
+message OpenResponse { bool open = 1; }
+
+message GetSettlementPriceRequest {}
+message GetSettlementPriceResponse { string settlement_price = 1; }
+
+message GetBaseAssetDeltaThisFundingPeriodRequest {}
+message GetBaseAssetDeltaThisFundingPeriodResponse { string base_asset_delta = 1; }
+
+message GetCumulativeNotionalRequest {}
+message GetCumulativeNotionalResponse { string cumulative_notional = 1; }
+
+message GetMaxHoldingBaseAssetRequest {}
+message GetMaxHoldingBaseAssetResponse { string max = 1; }
+
+message GetOpenInterestNotionalCapRequest {}
+message GetOpenInterestNotionalCapResponse { string notional_cap = 1; }
+
+message GetLiquidityChangedSnapshotsRequest { string snapshot_number = 1; }
+message GetLiquidityChangedSnapshotsResponse { LiquidityChangedSnapshot snapshot = 1;}
+
+message GetBaseAssetDeltaRequest {}
+message GetBaseAssetDeltaResponse { string delta = 1; }
+
+message GetUnderlyingPriceRequest {}
+message GetUnderlyingPriceResponse { string underlying_price = 1; }
+
+message IsOverSpreadLimitRequest {}
+message IsOverSpreadLimitResponse { bool over_spread_limit = 1;}

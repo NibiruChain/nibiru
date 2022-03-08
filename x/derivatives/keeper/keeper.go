@@ -2,28 +2,28 @@ package keeper
 
 import (
 	"fmt"
-
-	"github.com/tendermint/tendermint/libs/log"
-
 	"github.com/MatrixDao/matrix/x/derivatives/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
-type (
-	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
-		memKey     sdk.StoreKey
-		paramstore paramtypes.Subspace
-	}
-)
+type Keeper struct {
+	cdc      codec.BinaryCodec
+	storeKey storetypes.StoreKey
+	memKey   storetypes.StoreKey
+
+	// imports
+	bk bank.Keeper
+}
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 
 ) *Keeper {
@@ -33,10 +33,9 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
+		cdc:      cdc,
+		storeKey: storeKey,
+		memKey:   memKey,
 	}
 }
 
