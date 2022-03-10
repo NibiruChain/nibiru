@@ -424,11 +424,15 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_Position               protoreflect.MessageDescriptor
-	fd_Position_address       protoreflect.FieldDescriptor
-	fd_Position_pair          protoreflect.FieldDescriptor
-	fd_Position_average_price protoreflect.FieldDescriptor
-	fd_Position_amount        protoreflect.FieldDescriptor
+	md_Position                                         protoreflect.MessageDescriptor
+	fd_Position_address                                 protoreflect.FieldDescriptor
+	fd_Position_pair                                    protoreflect.FieldDescriptor
+	fd_Position_size                                    protoreflect.FieldDescriptor
+	fd_Position_margin                                  protoreflect.FieldDescriptor
+	fd_Position_open_notional                           protoreflect.FieldDescriptor
+	fd_Position_last_update_cumulative_premium_fraction protoreflect.FieldDescriptor
+	fd_Position_liquidity_history_index                 protoreflect.FieldDescriptor
+	fd_Position_block_number                            protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -436,8 +440,12 @@ func init() {
 	md_Position = File_derivatives_state_proto.Messages().ByName("Position")
 	fd_Position_address = md_Position.Fields().ByName("address")
 	fd_Position_pair = md_Position.Fields().ByName("pair")
-	fd_Position_average_price = md_Position.Fields().ByName("average_price")
-	fd_Position_amount = md_Position.Fields().ByName("amount")
+	fd_Position_size = md_Position.Fields().ByName("size")
+	fd_Position_margin = md_Position.Fields().ByName("margin")
+	fd_Position_open_notional = md_Position.Fields().ByName("open_notional")
+	fd_Position_last_update_cumulative_premium_fraction = md_Position.Fields().ByName("last_update_cumulative_premium_fraction")
+	fd_Position_liquidity_history_index = md_Position.Fields().ByName("liquidity_history_index")
+	fd_Position_block_number = md_Position.Fields().ByName("block_number")
 }
 
 var _ protoreflect.Message = (*fastReflection_Position)(nil)
@@ -517,15 +525,39 @@ func (x *fastReflection_Position) Range(f func(protoreflect.FieldDescriptor, pro
 			return
 		}
 	}
-	if x.AveragePrice != "" {
-		value := protoreflect.ValueOfString(x.AveragePrice)
-		if !f(fd_Position_average_price, value) {
+	if x.Size != "" {
+		value := protoreflect.ValueOfString(x.Size)
+		if !f(fd_Position_size, value) {
 			return
 		}
 	}
-	if x.Amount != "" {
-		value := protoreflect.ValueOfString(x.Amount)
-		if !f(fd_Position_amount, value) {
+	if x.Margin != "" {
+		value := protoreflect.ValueOfString(x.Margin)
+		if !f(fd_Position_margin, value) {
+			return
+		}
+	}
+	if x.OpenNotional != "" {
+		value := protoreflect.ValueOfString(x.OpenNotional)
+		if !f(fd_Position_open_notional, value) {
+			return
+		}
+	}
+	if x.LastUpdateCumulativePremiumFraction != "" {
+		value := protoreflect.ValueOfString(x.LastUpdateCumulativePremiumFraction)
+		if !f(fd_Position_last_update_cumulative_premium_fraction, value) {
+			return
+		}
+	}
+	if x.LiquidityHistoryIndex != int64(0) {
+		value := protoreflect.ValueOfInt64(x.LiquidityHistoryIndex)
+		if !f(fd_Position_liquidity_history_index, value) {
+			return
+		}
+	}
+	if x.BlockNumber != int64(0) {
+		value := protoreflect.ValueOfInt64(x.BlockNumber)
+		if !f(fd_Position_block_number, value) {
 			return
 		}
 	}
@@ -548,10 +580,18 @@ func (x *fastReflection_Position) Has(fd protoreflect.FieldDescriptor) bool {
 		return x.Address != ""
 	case "matrix.derivatives.v1.Position.pair":
 		return x.Pair != ""
-	case "matrix.derivatives.v1.Position.average_price":
-		return x.AveragePrice != ""
-	case "matrix.derivatives.v1.Position.amount":
-		return x.Amount != ""
+	case "matrix.derivatives.v1.Position.size":
+		return x.Size != ""
+	case "matrix.derivatives.v1.Position.margin":
+		return x.Margin != ""
+	case "matrix.derivatives.v1.Position.open_notional":
+		return x.OpenNotional != ""
+	case "matrix.derivatives.v1.Position.last_update_cumulative_premium_fraction":
+		return x.LastUpdateCumulativePremiumFraction != ""
+	case "matrix.derivatives.v1.Position.liquidity_history_index":
+		return x.LiquidityHistoryIndex != int64(0)
+	case "matrix.derivatives.v1.Position.block_number":
+		return x.BlockNumber != int64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.Position"))
@@ -572,10 +612,18 @@ func (x *fastReflection_Position) Clear(fd protoreflect.FieldDescriptor) {
 		x.Address = ""
 	case "matrix.derivatives.v1.Position.pair":
 		x.Pair = ""
-	case "matrix.derivatives.v1.Position.average_price":
-		x.AveragePrice = ""
-	case "matrix.derivatives.v1.Position.amount":
-		x.Amount = ""
+	case "matrix.derivatives.v1.Position.size":
+		x.Size = ""
+	case "matrix.derivatives.v1.Position.margin":
+		x.Margin = ""
+	case "matrix.derivatives.v1.Position.open_notional":
+		x.OpenNotional = ""
+	case "matrix.derivatives.v1.Position.last_update_cumulative_premium_fraction":
+		x.LastUpdateCumulativePremiumFraction = ""
+	case "matrix.derivatives.v1.Position.liquidity_history_index":
+		x.LiquidityHistoryIndex = int64(0)
+	case "matrix.derivatives.v1.Position.block_number":
+		x.BlockNumber = int64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.Position"))
@@ -598,12 +646,24 @@ func (x *fastReflection_Position) Get(descriptor protoreflect.FieldDescriptor) p
 	case "matrix.derivatives.v1.Position.pair":
 		value := x.Pair
 		return protoreflect.ValueOfString(value)
-	case "matrix.derivatives.v1.Position.average_price":
-		value := x.AveragePrice
+	case "matrix.derivatives.v1.Position.size":
+		value := x.Size
 		return protoreflect.ValueOfString(value)
-	case "matrix.derivatives.v1.Position.amount":
-		value := x.Amount
+	case "matrix.derivatives.v1.Position.margin":
+		value := x.Margin
 		return protoreflect.ValueOfString(value)
+	case "matrix.derivatives.v1.Position.open_notional":
+		value := x.OpenNotional
+		return protoreflect.ValueOfString(value)
+	case "matrix.derivatives.v1.Position.last_update_cumulative_premium_fraction":
+		value := x.LastUpdateCumulativePremiumFraction
+		return protoreflect.ValueOfString(value)
+	case "matrix.derivatives.v1.Position.liquidity_history_index":
+		value := x.LiquidityHistoryIndex
+		return protoreflect.ValueOfInt64(value)
+	case "matrix.derivatives.v1.Position.block_number":
+		value := x.BlockNumber
+		return protoreflect.ValueOfInt64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.Position"))
@@ -628,10 +688,18 @@ func (x *fastReflection_Position) Set(fd protoreflect.FieldDescriptor, value pro
 		x.Address = value.Interface().(string)
 	case "matrix.derivatives.v1.Position.pair":
 		x.Pair = value.Interface().(string)
-	case "matrix.derivatives.v1.Position.average_price":
-		x.AveragePrice = value.Interface().(string)
-	case "matrix.derivatives.v1.Position.amount":
-		x.Amount = value.Interface().(string)
+	case "matrix.derivatives.v1.Position.size":
+		x.Size = value.Interface().(string)
+	case "matrix.derivatives.v1.Position.margin":
+		x.Margin = value.Interface().(string)
+	case "matrix.derivatives.v1.Position.open_notional":
+		x.OpenNotional = value.Interface().(string)
+	case "matrix.derivatives.v1.Position.last_update_cumulative_premium_fraction":
+		x.LastUpdateCumulativePremiumFraction = value.Interface().(string)
+	case "matrix.derivatives.v1.Position.liquidity_history_index":
+		x.LiquidityHistoryIndex = value.Int()
+	case "matrix.derivatives.v1.Position.block_number":
+		x.BlockNumber = value.Int()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.Position"))
@@ -656,10 +724,18 @@ func (x *fastReflection_Position) Mutable(fd protoreflect.FieldDescriptor) proto
 		panic(fmt.Errorf("field address of message matrix.derivatives.v1.Position is not mutable"))
 	case "matrix.derivatives.v1.Position.pair":
 		panic(fmt.Errorf("field pair of message matrix.derivatives.v1.Position is not mutable"))
-	case "matrix.derivatives.v1.Position.average_price":
-		panic(fmt.Errorf("field average_price of message matrix.derivatives.v1.Position is not mutable"))
-	case "matrix.derivatives.v1.Position.amount":
-		panic(fmt.Errorf("field amount of message matrix.derivatives.v1.Position is not mutable"))
+	case "matrix.derivatives.v1.Position.size":
+		panic(fmt.Errorf("field size of message matrix.derivatives.v1.Position is not mutable"))
+	case "matrix.derivatives.v1.Position.margin":
+		panic(fmt.Errorf("field margin of message matrix.derivatives.v1.Position is not mutable"))
+	case "matrix.derivatives.v1.Position.open_notional":
+		panic(fmt.Errorf("field open_notional of message matrix.derivatives.v1.Position is not mutable"))
+	case "matrix.derivatives.v1.Position.last_update_cumulative_premium_fraction":
+		panic(fmt.Errorf("field last_update_cumulative_premium_fraction of message matrix.derivatives.v1.Position is not mutable"))
+	case "matrix.derivatives.v1.Position.liquidity_history_index":
+		panic(fmt.Errorf("field liquidity_history_index of message matrix.derivatives.v1.Position is not mutable"))
+	case "matrix.derivatives.v1.Position.block_number":
+		panic(fmt.Errorf("field block_number of message matrix.derivatives.v1.Position is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.Position"))
@@ -677,10 +753,18 @@ func (x *fastReflection_Position) NewField(fd protoreflect.FieldDescriptor) prot
 		return protoreflect.ValueOfString("")
 	case "matrix.derivatives.v1.Position.pair":
 		return protoreflect.ValueOfString("")
-	case "matrix.derivatives.v1.Position.average_price":
+	case "matrix.derivatives.v1.Position.size":
 		return protoreflect.ValueOfString("")
-	case "matrix.derivatives.v1.Position.amount":
+	case "matrix.derivatives.v1.Position.margin":
 		return protoreflect.ValueOfString("")
+	case "matrix.derivatives.v1.Position.open_notional":
+		return protoreflect.ValueOfString("")
+	case "matrix.derivatives.v1.Position.last_update_cumulative_premium_fraction":
+		return protoreflect.ValueOfString("")
+	case "matrix.derivatives.v1.Position.liquidity_history_index":
+		return protoreflect.ValueOfInt64(int64(0))
+	case "matrix.derivatives.v1.Position.block_number":
+		return protoreflect.ValueOfInt64(int64(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.Position"))
@@ -758,13 +842,27 @@ func (x *fastReflection_Position) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		l = len(x.AveragePrice)
+		l = len(x.Size)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		l = len(x.Amount)
+		l = len(x.Margin)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.OpenNotional)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.LastUpdateCumulativePremiumFraction)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.LiquidityHistoryIndex != 0 {
+			n += 1 + runtime.Sov(uint64(x.LiquidityHistoryIndex))
+		}
+		if x.BlockNumber != 0 {
+			n += 1 + runtime.Sov(uint64(x.BlockNumber))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -795,17 +893,41 @@ func (x *fastReflection_Position) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Amount) > 0 {
-			i -= len(x.Amount)
-			copy(dAtA[i:], x.Amount)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Amount)))
+		if x.BlockNumber != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.BlockNumber))
+			i--
+			dAtA[i] = 0x40
+		}
+		if x.LiquidityHistoryIndex != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.LiquidityHistoryIndex))
+			i--
+			dAtA[i] = 0x38
+		}
+		if len(x.LastUpdateCumulativePremiumFraction) > 0 {
+			i -= len(x.LastUpdateCumulativePremiumFraction)
+			copy(dAtA[i:], x.LastUpdateCumulativePremiumFraction)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.LastUpdateCumulativePremiumFraction)))
+			i--
+			dAtA[i] = 0x32
+		}
+		if len(x.OpenNotional) > 0 {
+			i -= len(x.OpenNotional)
+			copy(dAtA[i:], x.OpenNotional)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.OpenNotional)))
+			i--
+			dAtA[i] = 0x2a
+		}
+		if len(x.Margin) > 0 {
+			i -= len(x.Margin)
+			copy(dAtA[i:], x.Margin)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Margin)))
 			i--
 			dAtA[i] = 0x22
 		}
-		if len(x.AveragePrice) > 0 {
-			i -= len(x.AveragePrice)
-			copy(dAtA[i:], x.AveragePrice)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AveragePrice)))
+		if len(x.Size) > 0 {
+			i -= len(x.Size)
+			copy(dAtA[i:], x.Size)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Size)))
 			i--
 			dAtA[i] = 0x1a
 		}
@@ -938,7 +1060,7 @@ func (x *fastReflection_Position) ProtoMethods() *protoiface.Methods {
 				iNdEx = postIndex
 			case 3:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AveragePrice", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Size", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -966,11 +1088,11 @@ func (x *fastReflection_Position) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.AveragePrice = string(dAtA[iNdEx:postIndex])
+				x.Size = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 4:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Margin", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -998,8 +1120,110 @@ func (x *fastReflection_Position) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Amount = string(dAtA[iNdEx:postIndex])
+				x.Margin = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 5:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field OpenNotional", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.OpenNotional = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 6:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field LastUpdateCumulativePremiumFraction", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.LastUpdateCumulativePremiumFraction = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 7:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field LiquidityHistoryIndex", wireType)
+				}
+				x.LiquidityHistoryIndex = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.LiquidityHistoryIndex |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 8:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BlockNumber", wireType)
+				}
+				x.BlockNumber = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.BlockNumber |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1035,34 +1259,76 @@ func (x *fastReflection_Position) ProtoMethods() *protoiface.Methods {
 	}
 }
 
+var _ protoreflect.List = (*_VirtualAMMInfo_3_list)(nil)
+
+type _VirtualAMMInfo_3_list struct {
+	list *[]string
+}
+
+func (x *_VirtualAMMInfo_3_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_VirtualAMMInfo_3_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfString((*x.list)[i])
+}
+
+func (x *_VirtualAMMInfo_3_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_VirtualAMMInfo_3_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_VirtualAMMInfo_3_list) AppendMutable() protoreflect.Value {
+	panic(fmt.Errorf("AppendMutable can not be called on message VirtualAMMInfo at list field CumulativePremiumFractions as it is not of Message kind"))
+}
+
+func (x *_VirtualAMMInfo_3_list) Truncate(n int) {
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_VirtualAMMInfo_3_list) NewElement() protoreflect.Value {
+	v := ""
+	return protoreflect.ValueOfString(v)
+}
+
+func (x *_VirtualAMMInfo_3_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_PairMetadata                   protoreflect.MessageDescriptor
-	fd_PairMetadata_pair              protoreflect.FieldDescriptor
-	fd_PairMetadata_max_leverage      protoreflect.FieldDescriptor
-	fd_PairMetadata_collateral_denom  protoreflect.FieldDescriptor
-	fd_PairMetadata_base_asset_denom  protoreflect.FieldDescriptor
-	fd_PairMetadata_quote_asset_denom protoreflect.FieldDescriptor
+	md_VirtualAMMInfo                              protoreflect.MessageDescriptor
+	fd_VirtualAMMInfo_pair                         protoreflect.FieldDescriptor
+	fd_VirtualAMMInfo_last_restriction_block       protoreflect.FieldDescriptor
+	fd_VirtualAMMInfo_cumulative_premium_fractions protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_derivatives_state_proto_init()
-	md_PairMetadata = File_derivatives_state_proto.Messages().ByName("PairMetadata")
-	fd_PairMetadata_pair = md_PairMetadata.Fields().ByName("pair")
-	fd_PairMetadata_max_leverage = md_PairMetadata.Fields().ByName("max_leverage")
-	fd_PairMetadata_collateral_denom = md_PairMetadata.Fields().ByName("collateral_denom")
-	fd_PairMetadata_base_asset_denom = md_PairMetadata.Fields().ByName("base_asset_denom")
-	fd_PairMetadata_quote_asset_denom = md_PairMetadata.Fields().ByName("quote_asset_denom")
+	md_VirtualAMMInfo = File_derivatives_state_proto.Messages().ByName("VirtualAMMInfo")
+	fd_VirtualAMMInfo_pair = md_VirtualAMMInfo.Fields().ByName("pair")
+	fd_VirtualAMMInfo_last_restriction_block = md_VirtualAMMInfo.Fields().ByName("last_restriction_block")
+	fd_VirtualAMMInfo_cumulative_premium_fractions = md_VirtualAMMInfo.Fields().ByName("cumulative_premium_fractions")
 }
 
-var _ protoreflect.Message = (*fastReflection_PairMetadata)(nil)
+var _ protoreflect.Message = (*fastReflection_VirtualAMMInfo)(nil)
 
-type fastReflection_PairMetadata PairMetadata
+type fastReflection_VirtualAMMInfo VirtualAMMInfo
 
-func (x *PairMetadata) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_PairMetadata)(x)
+func (x *VirtualAMMInfo) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_VirtualAMMInfo)(x)
 }
 
-func (x *PairMetadata) slowProtoReflect() protoreflect.Message {
+func (x *VirtualAMMInfo) slowProtoReflect() protoreflect.Message {
 	mi := &file_derivatives_state_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1074,43 +1340,43 @@ func (x *PairMetadata) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_PairMetadata_messageType fastReflection_PairMetadata_messageType
-var _ protoreflect.MessageType = fastReflection_PairMetadata_messageType{}
+var _fastReflection_VirtualAMMInfo_messageType fastReflection_VirtualAMMInfo_messageType
+var _ protoreflect.MessageType = fastReflection_VirtualAMMInfo_messageType{}
 
-type fastReflection_PairMetadata_messageType struct{}
+type fastReflection_VirtualAMMInfo_messageType struct{}
 
-func (x fastReflection_PairMetadata_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_PairMetadata)(nil)
+func (x fastReflection_VirtualAMMInfo_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_VirtualAMMInfo)(nil)
 }
-func (x fastReflection_PairMetadata_messageType) New() protoreflect.Message {
-	return new(fastReflection_PairMetadata)
+func (x fastReflection_VirtualAMMInfo_messageType) New() protoreflect.Message {
+	return new(fastReflection_VirtualAMMInfo)
 }
-func (x fastReflection_PairMetadata_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_PairMetadata
+func (x fastReflection_VirtualAMMInfo_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_VirtualAMMInfo
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_PairMetadata) Descriptor() protoreflect.MessageDescriptor {
-	return md_PairMetadata
+func (x *fastReflection_VirtualAMMInfo) Descriptor() protoreflect.MessageDescriptor {
+	return md_VirtualAMMInfo
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_PairMetadata) Type() protoreflect.MessageType {
-	return _fastReflection_PairMetadata_messageType
+func (x *fastReflection_VirtualAMMInfo) Type() protoreflect.MessageType {
+	return _fastReflection_VirtualAMMInfo_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_PairMetadata) New() protoreflect.Message {
-	return new(fastReflection_PairMetadata)
+func (x *fastReflection_VirtualAMMInfo) New() protoreflect.Message {
+	return new(fastReflection_VirtualAMMInfo)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_PairMetadata) Interface() protoreflect.ProtoMessage {
-	return (*PairMetadata)(x)
+func (x *fastReflection_VirtualAMMInfo) Interface() protoreflect.ProtoMessage {
+	return (*VirtualAMMInfo)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -1118,34 +1384,22 @@ func (x *fastReflection_PairMetadata) Interface() protoreflect.ProtoMessage {
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_PairMetadata) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_VirtualAMMInfo) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if x.Pair != "" {
 		value := protoreflect.ValueOfString(x.Pair)
-		if !f(fd_PairMetadata_pair, value) {
+		if !f(fd_VirtualAMMInfo_pair, value) {
 			return
 		}
 	}
-	if x.MaxLeverage != int64(0) {
-		value := protoreflect.ValueOfInt64(x.MaxLeverage)
-		if !f(fd_PairMetadata_max_leverage, value) {
+	if x.LastRestrictionBlock != int64(0) {
+		value := protoreflect.ValueOfInt64(x.LastRestrictionBlock)
+		if !f(fd_VirtualAMMInfo_last_restriction_block, value) {
 			return
 		}
 	}
-	if x.CollateralDenom != "" {
-		value := protoreflect.ValueOfString(x.CollateralDenom)
-		if !f(fd_PairMetadata_collateral_denom, value) {
-			return
-		}
-	}
-	if x.BaseAssetDenom != "" {
-		value := protoreflect.ValueOfString(x.BaseAssetDenom)
-		if !f(fd_PairMetadata_base_asset_denom, value) {
-			return
-		}
-	}
-	if x.QuoteAssetDenom != "" {
-		value := protoreflect.ValueOfString(x.QuoteAssetDenom)
-		if !f(fd_PairMetadata_quote_asset_denom, value) {
+	if len(x.CumulativePremiumFractions) != 0 {
+		value := protoreflect.ValueOfList(&_VirtualAMMInfo_3_list{list: &x.CumulativePremiumFractions})
+		if !f(fd_VirtualAMMInfo_cumulative_premium_fractions, value) {
 			return
 		}
 	}
@@ -1162,23 +1416,19 @@ func (x *fastReflection_PairMetadata) Range(f func(protoreflect.FieldDescriptor,
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_PairMetadata) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_VirtualAMMInfo) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "matrix.derivatives.v1.PairMetadata.pair":
+	case "matrix.derivatives.v1.VirtualAMMInfo.pair":
 		return x.Pair != ""
-	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		return x.MaxLeverage != int64(0)
-	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
-		return x.CollateralDenom != ""
-	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
-		return x.BaseAssetDenom != ""
-	case "matrix.derivatives.v1.PairMetadata.quote_asset_denom":
-		return x.QuoteAssetDenom != ""
+	case "matrix.derivatives.v1.VirtualAMMInfo.last_restriction_block":
+		return x.LastRestrictionBlock != int64(0)
+	case "matrix.derivatives.v1.VirtualAMMInfo.cumulative_premium_fractions":
+		return len(x.CumulativePremiumFractions) != 0
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.PairMetadata"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.VirtualAMMInfo"))
 		}
-		panic(fmt.Errorf("message matrix.derivatives.v1.PairMetadata does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message matrix.derivatives.v1.VirtualAMMInfo does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1188,23 +1438,19 @@ func (x *fastReflection_PairMetadata) Has(fd protoreflect.FieldDescriptor) bool 
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_PairMetadata) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_VirtualAMMInfo) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "matrix.derivatives.v1.PairMetadata.pair":
+	case "matrix.derivatives.v1.VirtualAMMInfo.pair":
 		x.Pair = ""
-	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		x.MaxLeverage = int64(0)
-	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
-		x.CollateralDenom = ""
-	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
-		x.BaseAssetDenom = ""
-	case "matrix.derivatives.v1.PairMetadata.quote_asset_denom":
-		x.QuoteAssetDenom = ""
+	case "matrix.derivatives.v1.VirtualAMMInfo.last_restriction_block":
+		x.LastRestrictionBlock = int64(0)
+	case "matrix.derivatives.v1.VirtualAMMInfo.cumulative_premium_fractions":
+		x.CumulativePremiumFractions = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.PairMetadata"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.VirtualAMMInfo"))
 		}
-		panic(fmt.Errorf("message matrix.derivatives.v1.PairMetadata does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message matrix.derivatives.v1.VirtualAMMInfo does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1214,28 +1460,25 @@ func (x *fastReflection_PairMetadata) Clear(fd protoreflect.FieldDescriptor) {
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_PairMetadata) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_VirtualAMMInfo) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "matrix.derivatives.v1.PairMetadata.pair":
+	case "matrix.derivatives.v1.VirtualAMMInfo.pair":
 		value := x.Pair
 		return protoreflect.ValueOfString(value)
-	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		value := x.MaxLeverage
+	case "matrix.derivatives.v1.VirtualAMMInfo.last_restriction_block":
+		value := x.LastRestrictionBlock
 		return protoreflect.ValueOfInt64(value)
-	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
-		value := x.CollateralDenom
-		return protoreflect.ValueOfString(value)
-	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
-		value := x.BaseAssetDenom
-		return protoreflect.ValueOfString(value)
-	case "matrix.derivatives.v1.PairMetadata.quote_asset_denom":
-		value := x.QuoteAssetDenom
-		return protoreflect.ValueOfString(value)
+	case "matrix.derivatives.v1.VirtualAMMInfo.cumulative_premium_fractions":
+		if len(x.CumulativePremiumFractions) == 0 {
+			return protoreflect.ValueOfList(&_VirtualAMMInfo_3_list{})
+		}
+		listValue := &_VirtualAMMInfo_3_list{list: &x.CumulativePremiumFractions}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.PairMetadata"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.VirtualAMMInfo"))
 		}
-		panic(fmt.Errorf("message matrix.derivatives.v1.PairMetadata does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message matrix.derivatives.v1.VirtualAMMInfo does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -1249,23 +1492,21 @@ func (x *fastReflection_PairMetadata) Get(descriptor protoreflect.FieldDescripto
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_PairMetadata) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_VirtualAMMInfo) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "matrix.derivatives.v1.PairMetadata.pair":
+	case "matrix.derivatives.v1.VirtualAMMInfo.pair":
 		x.Pair = value.Interface().(string)
-	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		x.MaxLeverage = value.Int()
-	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
-		x.CollateralDenom = value.Interface().(string)
-	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
-		x.BaseAssetDenom = value.Interface().(string)
-	case "matrix.derivatives.v1.PairMetadata.quote_asset_denom":
-		x.QuoteAssetDenom = value.Interface().(string)
+	case "matrix.derivatives.v1.VirtualAMMInfo.last_restriction_block":
+		x.LastRestrictionBlock = value.Int()
+	case "matrix.derivatives.v1.VirtualAMMInfo.cumulative_premium_fractions":
+		lv := value.List()
+		clv := lv.(*_VirtualAMMInfo_3_list)
+		x.CumulativePremiumFractions = *clv.list
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.PairMetadata"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.VirtualAMMInfo"))
 		}
-		panic(fmt.Errorf("message matrix.derivatives.v1.PairMetadata does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message matrix.derivatives.v1.VirtualAMMInfo does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1279,56 +1520,53 @@ func (x *fastReflection_PairMetadata) Set(fd protoreflect.FieldDescriptor, value
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_PairMetadata) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_VirtualAMMInfo) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "matrix.derivatives.v1.PairMetadata.pair":
-		panic(fmt.Errorf("field pair of message matrix.derivatives.v1.PairMetadata is not mutable"))
-	case "matrix.derivatives.v1.PairMetadata.max_leverage":
-		panic(fmt.Errorf("field max_leverage of message matrix.derivatives.v1.PairMetadata is not mutable"))
-	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
-		panic(fmt.Errorf("field collateral_denom of message matrix.derivatives.v1.PairMetadata is not mutable"))
-	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
-		panic(fmt.Errorf("field base_asset_denom of message matrix.derivatives.v1.PairMetadata is not mutable"))
-	case "matrix.derivatives.v1.PairMetadata.quote_asset_denom":
-		panic(fmt.Errorf("field quote_asset_denom of message matrix.derivatives.v1.PairMetadata is not mutable"))
+	case "matrix.derivatives.v1.VirtualAMMInfo.cumulative_premium_fractions":
+		if x.CumulativePremiumFractions == nil {
+			x.CumulativePremiumFractions = []string{}
+		}
+		value := &_VirtualAMMInfo_3_list{list: &x.CumulativePremiumFractions}
+		return protoreflect.ValueOfList(value)
+	case "matrix.derivatives.v1.VirtualAMMInfo.pair":
+		panic(fmt.Errorf("field pair of message matrix.derivatives.v1.VirtualAMMInfo is not mutable"))
+	case "matrix.derivatives.v1.VirtualAMMInfo.last_restriction_block":
+		panic(fmt.Errorf("field last_restriction_block of message matrix.derivatives.v1.VirtualAMMInfo is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.PairMetadata"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.VirtualAMMInfo"))
 		}
-		panic(fmt.Errorf("message matrix.derivatives.v1.PairMetadata does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message matrix.derivatives.v1.VirtualAMMInfo does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_PairMetadata) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_VirtualAMMInfo) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "matrix.derivatives.v1.PairMetadata.pair":
+	case "matrix.derivatives.v1.VirtualAMMInfo.pair":
 		return protoreflect.ValueOfString("")
-	case "matrix.derivatives.v1.PairMetadata.max_leverage":
+	case "matrix.derivatives.v1.VirtualAMMInfo.last_restriction_block":
 		return protoreflect.ValueOfInt64(int64(0))
-	case "matrix.derivatives.v1.PairMetadata.collateral_denom":
-		return protoreflect.ValueOfString("")
-	case "matrix.derivatives.v1.PairMetadata.base_asset_denom":
-		return protoreflect.ValueOfString("")
-	case "matrix.derivatives.v1.PairMetadata.quote_asset_denom":
-		return protoreflect.ValueOfString("")
+	case "matrix.derivatives.v1.VirtualAMMInfo.cumulative_premium_fractions":
+		list := []string{}
+		return protoreflect.ValueOfList(&_VirtualAMMInfo_3_list{list: &list})
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.PairMetadata"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: matrix.derivatives.v1.VirtualAMMInfo"))
 		}
-		panic(fmt.Errorf("message matrix.derivatives.v1.PairMetadata does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message matrix.derivatives.v1.VirtualAMMInfo does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_PairMetadata) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_VirtualAMMInfo) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in matrix.derivatives.v1.PairMetadata", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in matrix.derivatives.v1.VirtualAMMInfo", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1336,7 +1574,7 @@ func (x *fastReflection_PairMetadata) WhichOneof(d protoreflect.OneofDescriptor)
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_PairMetadata) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_VirtualAMMInfo) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -1347,7 +1585,7 @@ func (x *fastReflection_PairMetadata) GetUnknown() protoreflect.RawFields {
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_PairMetadata) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_VirtualAMMInfo) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -1359,7 +1597,7 @@ func (x *fastReflection_PairMetadata) SetUnknown(fields protoreflect.RawFields) 
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_PairMetadata) IsValid() bool {
+func (x *fastReflection_VirtualAMMInfo) IsValid() bool {
 	return x != nil
 }
 
@@ -1369,9 +1607,9 @@ func (x *fastReflection_PairMetadata) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_VirtualAMMInfo) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*PairMetadata)
+		x := input.Message.Interface().(*VirtualAMMInfo)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1387,20 +1625,14 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if x.MaxLeverage != 0 {
-			n += 1 + runtime.Sov(uint64(x.MaxLeverage))
+		if x.LastRestrictionBlock != 0 {
+			n += 1 + runtime.Sov(uint64(x.LastRestrictionBlock))
 		}
-		l = len(x.CollateralDenom)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
-		}
-		l = len(x.BaseAssetDenom)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
-		}
-		l = len(x.QuoteAssetDenom)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if len(x.CumulativePremiumFractions) > 0 {
+			for _, s := range x.CumulativePremiumFractions {
+				l = len(s)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -1412,7 +1644,7 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*PairMetadata)
+		x := input.Message.Interface().(*VirtualAMMInfo)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1431,29 +1663,17 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.QuoteAssetDenom) > 0 {
-			i -= len(x.QuoteAssetDenom)
-			copy(dAtA[i:], x.QuoteAssetDenom)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.QuoteAssetDenom)))
-			i--
-			dAtA[i] = 0x2a
+		if len(x.CumulativePremiumFractions) > 0 {
+			for iNdEx := len(x.CumulativePremiumFractions) - 1; iNdEx >= 0; iNdEx-- {
+				i -= len(x.CumulativePremiumFractions[iNdEx])
+				copy(dAtA[i:], x.CumulativePremiumFractions[iNdEx])
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.CumulativePremiumFractions[iNdEx])))
+				i--
+				dAtA[i] = 0x1a
+			}
 		}
-		if len(x.BaseAssetDenom) > 0 {
-			i -= len(x.BaseAssetDenom)
-			copy(dAtA[i:], x.BaseAssetDenom)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BaseAssetDenom)))
-			i--
-			dAtA[i] = 0x22
-		}
-		if len(x.CollateralDenom) > 0 {
-			i -= len(x.CollateralDenom)
-			copy(dAtA[i:], x.CollateralDenom)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.CollateralDenom)))
-			i--
-			dAtA[i] = 0x1a
-		}
-		if x.MaxLeverage != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.MaxLeverage))
+		if x.LastRestrictionBlock != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.LastRestrictionBlock))
 			i--
 			dAtA[i] = 0x10
 		}
@@ -1475,7 +1695,7 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*PairMetadata)
+		x := input.Message.Interface().(*VirtualAMMInfo)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1507,10 +1727,10 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: PairMetadata: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: VirtualAMMInfo: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: PairMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: VirtualAMMInfo: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -1547,9 +1767,9 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 				iNdEx = postIndex
 			case 2:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MaxLeverage", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field LastRestrictionBlock", wireType)
 				}
-				x.MaxLeverage = 0
+				x.LastRestrictionBlock = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -1559,14 +1779,14 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.MaxLeverage |= int64(b&0x7F) << shift
+					x.LastRestrictionBlock |= int64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
 			case 3:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field CollateralDenom", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field CumulativePremiumFractions", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -1594,71 +1814,7 @@ func (x *fastReflection_PairMetadata) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.CollateralDenom = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
-			case 4:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BaseAssetDenom", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.BaseAssetDenom = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
-			case 5:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field QuoteAssetDenom", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.QuoteAssetDenom = string(dAtA[iNdEx:postIndex])
+				x.CumulativePremiumFractions = append(x.CumulativePremiumFractions, string(dAtA[iNdEx:postIndex]))
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -1750,10 +1906,16 @@ type Position struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Address      string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Pair         string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	AveragePrice string `protobuf:"bytes,3,opt,name=average_price,json=averagePrice,proto3" json:"average_price,omitempty"` // sdk.Int
-	Amount       string `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`                                 // sdk.Int
+	// address identifies the address owner of this position
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	// pair identifies the pair associated with this position
+	Pair                                string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
+	Size                                string `protobuf:"bytes,3,opt,name=size,proto3" json:"size,omitempty"`                                                                                                                // signed int
+	Margin                              string `protobuf:"bytes,4,opt,name=margin,proto3" json:"margin,omitempty"`                                                                                                            // int
+	OpenNotional                        string `protobuf:"bytes,5,opt,name=open_notional,json=openNotional,proto3" json:"open_notional,omitempty"`                                                                            // int
+	LastUpdateCumulativePremiumFraction string `protobuf:"bytes,6,opt,name=last_update_cumulative_premium_fraction,json=lastUpdateCumulativePremiumFraction,proto3" json:"last_update_cumulative_premium_fraction,omitempty"` // int
+	LiquidityHistoryIndex               int64  `protobuf:"varint,7,opt,name=liquidity_history_index,json=liquidityHistoryIndex,proto3" json:"liquidity_history_index,omitempty"`
+	BlockNumber                         int64  `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
 }
 
 func (x *Position) Reset() {
@@ -1790,40 +1952,60 @@ func (x *Position) GetPair() string {
 	return ""
 }
 
-func (x *Position) GetAveragePrice() string {
+func (x *Position) GetSize() string {
 	if x != nil {
-		return x.AveragePrice
+		return x.Size
 	}
 	return ""
 }
 
-func (x *Position) GetAmount() string {
+func (x *Position) GetMargin() string {
 	if x != nil {
-		return x.Amount
+		return x.Margin
 	}
 	return ""
 }
 
-// PairMetadata contains information regarding the pair such as leverage.
-type PairMetadata struct {
+func (x *Position) GetOpenNotional() string {
+	if x != nil {
+		return x.OpenNotional
+	}
+	return ""
+}
+
+func (x *Position) GetLastUpdateCumulativePremiumFraction() string {
+	if x != nil {
+		return x.LastUpdateCumulativePremiumFraction
+	}
+	return ""
+}
+
+func (x *Position) GetLiquidityHistoryIndex() int64 {
+	if x != nil {
+		return x.LiquidityHistoryIndex
+	}
+	return 0
+}
+
+func (x *Position) GetBlockNumber() int64 {
+	if x != nil {
+		return x.BlockNumber
+	}
+	return 0
+}
+
+type VirtualAMMInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// pair identifies the pair name, example: vBTC/vUSDM
-	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
-	// max_leverage identifies the maximum allowed leverage for the pair
-	MaxLeverage int64 `protobuf:"varint,2,opt,name=max_leverage,json=maxLeverage,proto3" json:"max_leverage,omitempty"`
-	// collateral_denom identifies the denom that can be used as collateral
-	CollateralDenom string `protobuf:"bytes,3,opt,name=collateral_denom,json=collateralDenom,proto3" json:"collateral_denom,omitempty"`
-	// base_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vBTC.
-	BaseAssetDenom string `protobuf:"bytes,4,opt,name=base_asset_denom,json=baseAssetDenom,proto3" json:"base_asset_denom,omitempty"`
-	// quote_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vUSDM.
-	QuoteAssetDenom string `protobuf:"bytes,5,opt,name=quote_asset_denom,json=quoteAssetDenom,proto3" json:"quote_asset_denom,omitempty"`
+	Pair                       string   `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
+	LastRestrictionBlock       int64    `protobuf:"varint,2,opt,name=last_restriction_block,json=lastRestrictionBlock,proto3" json:"last_restriction_block,omitempty"`
+	CumulativePremiumFractions []string `protobuf:"bytes,3,rep,name=cumulative_premium_fractions,json=cumulativePremiumFractions,proto3" json:"cumulative_premium_fractions,omitempty"`
 }
 
-func (x *PairMetadata) Reset() {
-	*x = PairMetadata{}
+func (x *VirtualAMMInfo) Reset() {
+	*x = VirtualAMMInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_derivatives_state_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1831,50 +2013,36 @@ func (x *PairMetadata) Reset() {
 	}
 }
 
-func (x *PairMetadata) String() string {
+func (x *VirtualAMMInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PairMetadata) ProtoMessage() {}
+func (*VirtualAMMInfo) ProtoMessage() {}
 
-// Deprecated: Use PairMetadata.ProtoReflect.Descriptor instead.
-func (*PairMetadata) Descriptor() ([]byte, []int) {
+// Deprecated: Use VirtualAMMInfo.ProtoReflect.Descriptor instead.
+func (*VirtualAMMInfo) Descriptor() ([]byte, []int) {
 	return file_derivatives_state_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PairMetadata) GetPair() string {
+func (x *VirtualAMMInfo) GetPair() string {
 	if x != nil {
 		return x.Pair
 	}
 	return ""
 }
 
-func (x *PairMetadata) GetMaxLeverage() int64 {
+func (x *VirtualAMMInfo) GetLastRestrictionBlock() int64 {
 	if x != nil {
-		return x.MaxLeverage
+		return x.LastRestrictionBlock
 	}
 	return 0
 }
 
-func (x *PairMetadata) GetCollateralDenom() string {
+func (x *VirtualAMMInfo) GetCumulativePremiumFractions() []string {
 	if x != nil {
-		return x.CollateralDenom
+		return x.CumulativePremiumFractions
 	}
-	return ""
-}
-
-func (x *PairMetadata) GetBaseAssetDenom() string {
-	if x != nil {
-		return x.BaseAssetDenom
-	}
-	return ""
-}
-
-func (x *PairMetadata) GetQuoteAssetDenom() string {
-	if x != nil {
-		return x.QuoteAssetDenom
-	}
-	return ""
+	return nil
 }
 
 var File_derivatives_state_proto protoreflect.FileDescriptor
@@ -1887,44 +2055,54 @@ var file_derivatives_state_proto_rawDesc = []byte{
 	0x6c, 0x70, 0x68, 0x61, 0x31, 0x2f, 0x6f, 0x72, 0x6d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
 	0x2c, 0x0a, 0x06, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x74, 0x6f,
 	0x70, 0x70, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x74, 0x6f, 0x70,
-	0x70, 0x65, 0x64, 0x3a, 0x08, 0xfa, 0x9e, 0xd3, 0x8e, 0x03, 0x02, 0x08, 0x02, 0x22, 0x8f, 0x01,
+	0x70, 0x65, 0x64, 0x3a, 0x08, 0xfa, 0x9e, 0xd3, 0x8e, 0x03, 0x02, 0x08, 0x01, 0x22, 0xd4, 0x02,
 	0x0a, 0x08, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x64,
 	0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x64, 0x64,
 	0x72, 0x65, 0x73, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x04, 0x70, 0x61, 0x69, 0x72, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x76, 0x65, 0x72,
-	0x61, 0x67, 0x65, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0c, 0x61, 0x76, 0x65, 0x72, 0x61, 0x67, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x16, 0x0a,
-	0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61,
-	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x3a, 0x18, 0xf2, 0x9e, 0xd3, 0x8e, 0x03, 0x12, 0x0a, 0x0e, 0x0a,
-	0x0c, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x2c, 0x70, 0x61, 0x69, 0x72, 0x18, 0x01, 0x22,
-	0xd8, 0x01, 0x0a, 0x0c, 0x50, 0x61, 0x69, 0x72, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
-	0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
-	0x70, 0x61, 0x69, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x6d, 0x61, 0x78, 0x5f, 0x6c, 0x65, 0x76, 0x65,
-	0x72, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b, 0x6d, 0x61, 0x78, 0x4c,
-	0x65, 0x76, 0x65, 0x72, 0x61, 0x67, 0x65, 0x12, 0x29, 0x0a, 0x10, 0x63, 0x6f, 0x6c, 0x6c, 0x61,
-	0x74, 0x65, 0x72, 0x61, 0x6c, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0f, 0x63, 0x6f, 0x6c, 0x6c, 0x61, 0x74, 0x65, 0x72, 0x61, 0x6c, 0x44, 0x65, 0x6e,
-	0x6f, 0x6d, 0x12, 0x28, 0x0a, 0x10, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x65, 0x74,
-	0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x62, 0x61,
-	0x73, 0x65, 0x41, 0x73, 0x73, 0x65, 0x74, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x2a, 0x0a, 0x11,
-	0x71, 0x75, 0x6f, 0x74, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f,
-	0x6d, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x41, 0x73,
-	0x73, 0x65, 0x74, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x3a, 0x10, 0xf2, 0x9e, 0xd3, 0x8e, 0x03, 0x0a,
-	0x0a, 0x06, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x03, 0x42, 0xd8, 0x01, 0x0a, 0x19, 0x63,
-	0x6f, 0x6d, 0x2e, 0x6d, 0x61, 0x74, 0x72, 0x69, 0x78, 0x2e, 0x64, 0x65, 0x72, 0x69, 0x76, 0x61,
-	0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x53, 0x74, 0x61, 0x74, 0x65, 0x50,
-	0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x39, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x4d, 0x61, 0x74, 0x72, 0x69, 0x78, 0x44, 0x61, 0x6f, 0x2f, 0x6d, 0x61, 0x74,
-	0x72, 0x69, 0x78, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x64, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69,
-	0x76, 0x65, 0x73, 0x3b, 0x64, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x76,
-	0x31, 0xa2, 0x02, 0x03, 0x4d, 0x44, 0x58, 0xaa, 0x02, 0x15, 0x4d, 0x61, 0x74, 0x72, 0x69, 0x78,
-	0x2e, 0x44, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x56, 0x31, 0xca,
-	0x02, 0x15, 0x4d, 0x61, 0x74, 0x72, 0x69, 0x78, 0x5c, 0x44, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74,
-	0x69, 0x76, 0x65, 0x73, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x21, 0x4d, 0x61, 0x74, 0x72, 0x69, 0x78,
-	0x5c, 0x44, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x5c, 0x56, 0x31, 0x5c,
-	0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x17, 0x4d, 0x61,
-	0x74, 0x72, 0x69, 0x78, 0x3a, 0x3a, 0x44, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65,
-	0x73, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x28, 0x09, 0x52, 0x04, 0x70, 0x61, 0x69, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x12, 0x16, 0x0a, 0x06,
+	0x6d, 0x61, 0x72, 0x67, 0x69, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6d, 0x61,
+	0x72, 0x67, 0x69, 0x6e, 0x12, 0x23, 0x0a, 0x0d, 0x6f, 0x70, 0x65, 0x6e, 0x5f, 0x6e, 0x6f, 0x74,
+	0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x6f, 0x70, 0x65,
+	0x6e, 0x4e, 0x6f, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x12, 0x54, 0x0a, 0x27, 0x6c, 0x61, 0x73,
+	0x74, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5f, 0x63, 0x75, 0x6d, 0x75, 0x6c, 0x61, 0x74,
+	0x69, 0x76, 0x65, 0x5f, 0x70, 0x72, 0x65, 0x6d, 0x69, 0x75, 0x6d, 0x5f, 0x66, 0x72, 0x61, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x23, 0x6c, 0x61, 0x73, 0x74,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x43, 0x75, 0x6d, 0x75, 0x6c, 0x61, 0x74, 0x69, 0x76, 0x65,
+	0x50, 0x72, 0x65, 0x6d, 0x69, 0x75, 0x6d, 0x46, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x36, 0x0a, 0x17, 0x6c, 0x69, 0x71, 0x75, 0x69, 0x64, 0x69, 0x74, 0x79, 0x5f, 0x68, 0x69, 0x73,
+	0x74, 0x6f, 0x72, 0x79, 0x5f, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x07, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x15, 0x6c, 0x69, 0x71, 0x75, 0x69, 0x64, 0x69, 0x74, 0x79, 0x48, 0x69, 0x73, 0x74, 0x6f,
+	0x72, 0x79, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x6c, 0x6f, 0x63, 0x6b,
+	0x5f, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x08, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b, 0x62,
+	0x6c, 0x6f, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x3a, 0x18, 0xf2, 0x9e, 0xd3, 0x8e,
+	0x03, 0x12, 0x0a, 0x0e, 0x0a, 0x0c, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x2c, 0x70, 0x61,
+	0x69, 0x72, 0x18, 0x02, 0x22, 0xae, 0x01, 0x0a, 0x0e, 0x56, 0x69, 0x72, 0x74, 0x75, 0x61, 0x6c,
+	0x41, 0x4d, 0x4d, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x61, 0x69, 0x72, 0x12, 0x34, 0x0a, 0x16, 0x6c,
+	0x61, 0x73, 0x74, 0x5f, 0x72, 0x65, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
+	0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x14, 0x6c, 0x61, 0x73,
+	0x74, 0x52, 0x65, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x6c, 0x6f, 0x63,
+	0x6b, 0x12, 0x40, 0x0a, 0x1c, 0x63, 0x75, 0x6d, 0x75, 0x6c, 0x61, 0x74, 0x69, 0x76, 0x65, 0x5f,
+	0x70, 0x72, 0x65, 0x6d, 0x69, 0x75, 0x6d, 0x5f, 0x66, 0x72, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x1a, 0x63, 0x75, 0x6d, 0x75, 0x6c, 0x61, 0x74,
+	0x69, 0x76, 0x65, 0x50, 0x72, 0x65, 0x6d, 0x69, 0x75, 0x6d, 0x46, 0x72, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x3a, 0x10, 0xf2, 0x9e, 0xd3, 0x8e, 0x03, 0x0a, 0x0a, 0x06, 0x0a, 0x04, 0x70,
+	0x61, 0x69, 0x72, 0x18, 0x03, 0x42, 0xd8, 0x01, 0x0a, 0x19, 0x63, 0x6f, 0x6d, 0x2e, 0x6d, 0x61,
+	0x74, 0x72, 0x69, 0x78, 0x2e, 0x64, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73,
+	0x2e, 0x76, 0x31, 0x42, 0x0a, 0x53, 0x74, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50,
+	0x01, 0x5a, 0x39, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4d, 0x61,
+	0x74, 0x72, 0x69, 0x78, 0x44, 0x61, 0x6f, 0x2f, 0x6d, 0x61, 0x74, 0x72, 0x69, 0x78, 0x2f, 0x61,
+	0x70, 0x69, 0x2f, 0x64, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x3b, 0x64,
+	0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x4d,
+	0x44, 0x58, 0xaa, 0x02, 0x15, 0x4d, 0x61, 0x74, 0x72, 0x69, 0x78, 0x2e, 0x44, 0x65, 0x72, 0x69,
+	0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x15, 0x4d, 0x61, 0x74,
+	0x72, 0x69, 0x78, 0x5c, 0x44, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x5c,
+	0x56, 0x31, 0xe2, 0x02, 0x21, 0x4d, 0x61, 0x74, 0x72, 0x69, 0x78, 0x5c, 0x44, 0x65, 0x72, 0x69,
+	0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x17, 0x4d, 0x61, 0x74, 0x72, 0x69, 0x78, 0x3a,
+	0x3a, 0x44, 0x65, 0x72, 0x69, 0x76, 0x61, 0x74, 0x69, 0x76, 0x65, 0x73, 0x3a, 0x3a, 0x56, 0x31,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1941,9 +2119,9 @@ func file_derivatives_state_proto_rawDescGZIP() []byte {
 
 var file_derivatives_state_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_derivatives_state_proto_goTypes = []interface{}{
-	(*Params)(nil),       // 0: matrix.derivatives.v1.Params
-	(*Position)(nil),     // 1: matrix.derivatives.v1.Position
-	(*PairMetadata)(nil), // 2: matrix.derivatives.v1.PairMetadata
+	(*Params)(nil),         // 0: matrix.derivatives.v1.Params
+	(*Position)(nil),       // 1: matrix.derivatives.v1.Position
+	(*VirtualAMMInfo)(nil), // 2: matrix.derivatives.v1.VirtualAMMInfo
 }
 var file_derivatives_state_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -1984,7 +2162,7 @@ func file_derivatives_state_proto_init() {
 			}
 		}
 		file_derivatives_state_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PairMetadata); i {
+			switch v := v.(*VirtualAMMInfo); i {
 			case 0:
 				return &v.state
 			case 1:

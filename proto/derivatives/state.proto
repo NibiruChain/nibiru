@@ -6,7 +6,7 @@ import "cosmos/orm/v1alpha1/orm.proto";
 
 message Params {
   option (cosmos.orm.v1alpha1.singleton) = {
-    id: 2,
+    id: 1,
   };
 
   // stopped identifies if the derivatives exchange is stopped or not
@@ -16,34 +16,33 @@ message Params {
 // Position identifies a user position in a given pair.
 message Position {
   option (cosmos.orm.v1alpha1.table) = {
-    id: 1,
+    id: 2,
     primary_key: {
       fields: "address,pair"
     }
   };
+  // address identifies the address owner of this position
   string address = 1;
+  // pair identifies the pair associated with this position
   string pair = 2;
-  string average_price = 3; // sdk.Int
-  string amount = 4; // sdk.Int
+
+
+  string size = 3; // signed int
+  string margin = 4; // int
+  string open_notional = 5; // int
+  string last_update_cumulative_premium_fraction = 6; // int
+  int64 liquidity_history_index = 7;
+  int64 block_number = 8;
 }
 
-// PairMetadata contains information regarding the pair such as leverage.
-message PairMetadata {
+message VirtualAMMInfo {
   option (cosmos.orm.v1alpha1.table) = {
     id: 3,
     primary_key: {
-      fields: "pair",
+      fields: "pair"
     }
   };
-
-  // pair identifies the pair name, example: vBTC/vUSDM
   string pair = 1;
-  // max_leverage identifies the maximum allowed leverage for the pair
-  int64 max_leverage = 2;
-  // collateral_denom identifies the denom that can be used as collateral
-  string collateral_denom = 3;
-  // base_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vBTC.
-  string base_asset_denom = 4;
-  // quote_asset_denom identifies the base asset denom of the pair, ex in vBTC/vUSDM it's vUSDM.
-  string quote_asset_denom = 5;
+  int64 last_restriction_block = 2;
+  repeated string cumulative_premium_fractions = 3;
 }

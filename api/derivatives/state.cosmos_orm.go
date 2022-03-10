@@ -158,132 +158,132 @@ func NewPositionTable(db ormtable.Schema) (PositionTable, error) {
 	return positionTable{table}, nil
 }
 
-type PairMetadataTable interface {
-	Insert(ctx context.Context, pairMetadata *PairMetadata) error
-	Update(ctx context.Context, pairMetadata *PairMetadata) error
-	Save(ctx context.Context, pairMetadata *PairMetadata) error
-	Delete(ctx context.Context, pairMetadata *PairMetadata) error
+type VirtualAMMInfoTable interface {
+	Insert(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error
+	Update(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error
+	Save(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error
+	Delete(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error
 	Has(ctx context.Context, pair string) (found bool, err error)
 	// Get returns nil and an error which responds true to ormerrors.IsNotFound() if the record was not found.
-	Get(ctx context.Context, pair string) (*PairMetadata, error)
-	List(ctx context.Context, prefixKey PairMetadataIndexKey, opts ...ormlist.Option) (PairMetadataIterator, error)
-	ListRange(ctx context.Context, from, to PairMetadataIndexKey, opts ...ormlist.Option) (PairMetadataIterator, error)
-	DeleteBy(ctx context.Context, prefixKey PairMetadataIndexKey) error
-	DeleteRange(ctx context.Context, from, to PairMetadataIndexKey) error
+	Get(ctx context.Context, pair string) (*VirtualAMMInfo, error)
+	List(ctx context.Context, prefixKey VirtualAMMInfoIndexKey, opts ...ormlist.Option) (VirtualAMMInfoIterator, error)
+	ListRange(ctx context.Context, from, to VirtualAMMInfoIndexKey, opts ...ormlist.Option) (VirtualAMMInfoIterator, error)
+	DeleteBy(ctx context.Context, prefixKey VirtualAMMInfoIndexKey) error
+	DeleteRange(ctx context.Context, from, to VirtualAMMInfoIndexKey) error
 
 	doNotImplement()
 }
 
-type PairMetadataIterator struct {
+type VirtualAMMInfoIterator struct {
 	ormtable.Iterator
 }
 
-func (i PairMetadataIterator) Value() (*PairMetadata, error) {
-	var pairMetadata PairMetadata
-	err := i.UnmarshalMessage(&pairMetadata)
-	return &pairMetadata, err
+func (i VirtualAMMInfoIterator) Value() (*VirtualAMMInfo, error) {
+	var virtualAMMInfo VirtualAMMInfo
+	err := i.UnmarshalMessage(&virtualAMMInfo)
+	return &virtualAMMInfo, err
 }
 
-type PairMetadataIndexKey interface {
+type VirtualAMMInfoIndexKey interface {
 	id() uint32
 	values() []interface{}
-	pairMetadataIndexKey()
+	virtualAMMInfoIndexKey()
 }
 
 // primary key starting index..
-type PairMetadataPrimaryKey = PairMetadataPairIndexKey
+type VirtualAMMInfoPrimaryKey = VirtualAMMInfoPairIndexKey
 
-type PairMetadataPairIndexKey struct {
+type VirtualAMMInfoPairIndexKey struct {
 	vs []interface{}
 }
 
-func (x PairMetadataPairIndexKey) id() uint32            { return 0 }
-func (x PairMetadataPairIndexKey) values() []interface{} { return x.vs }
-func (x PairMetadataPairIndexKey) pairMetadataIndexKey() {}
+func (x VirtualAMMInfoPairIndexKey) id() uint32              { return 0 }
+func (x VirtualAMMInfoPairIndexKey) values() []interface{}   { return x.vs }
+func (x VirtualAMMInfoPairIndexKey) virtualAMMInfoIndexKey() {}
 
-func (this PairMetadataPairIndexKey) WithPair(pair string) PairMetadataPairIndexKey {
+func (this VirtualAMMInfoPairIndexKey) WithPair(pair string) VirtualAMMInfoPairIndexKey {
 	this.vs = []interface{}{pair}
 	return this
 }
 
-type pairMetadataTable struct {
+type virtualAMMInfoTable struct {
 	table ormtable.Table
 }
 
-func (this pairMetadataTable) Insert(ctx context.Context, pairMetadata *PairMetadata) error {
-	return this.table.Insert(ctx, pairMetadata)
+func (this virtualAMMInfoTable) Insert(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error {
+	return this.table.Insert(ctx, virtualAMMInfo)
 }
 
-func (this pairMetadataTable) Update(ctx context.Context, pairMetadata *PairMetadata) error {
-	return this.table.Update(ctx, pairMetadata)
+func (this virtualAMMInfoTable) Update(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error {
+	return this.table.Update(ctx, virtualAMMInfo)
 }
 
-func (this pairMetadataTable) Save(ctx context.Context, pairMetadata *PairMetadata) error {
-	return this.table.Save(ctx, pairMetadata)
+func (this virtualAMMInfoTable) Save(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error {
+	return this.table.Save(ctx, virtualAMMInfo)
 }
 
-func (this pairMetadataTable) Delete(ctx context.Context, pairMetadata *PairMetadata) error {
-	return this.table.Delete(ctx, pairMetadata)
+func (this virtualAMMInfoTable) Delete(ctx context.Context, virtualAMMInfo *VirtualAMMInfo) error {
+	return this.table.Delete(ctx, virtualAMMInfo)
 }
 
-func (this pairMetadataTable) Has(ctx context.Context, pair string) (found bool, err error) {
+func (this virtualAMMInfoTable) Has(ctx context.Context, pair string) (found bool, err error) {
 	return this.table.PrimaryKey().Has(ctx, pair)
 }
 
-func (this pairMetadataTable) Get(ctx context.Context, pair string) (*PairMetadata, error) {
-	var pairMetadata PairMetadata
-	found, err := this.table.PrimaryKey().Get(ctx, &pairMetadata, pair)
+func (this virtualAMMInfoTable) Get(ctx context.Context, pair string) (*VirtualAMMInfo, error) {
+	var virtualAMMInfo VirtualAMMInfo
+	found, err := this.table.PrimaryKey().Get(ctx, &virtualAMMInfo, pair)
 	if err != nil {
 		return nil, err
 	}
 	if !found {
 		return nil, ormerrors.NotFound
 	}
-	return &pairMetadata, nil
+	return &virtualAMMInfo, nil
 }
 
-func (this pairMetadataTable) List(ctx context.Context, prefixKey PairMetadataIndexKey, opts ...ormlist.Option) (PairMetadataIterator, error) {
+func (this virtualAMMInfoTable) List(ctx context.Context, prefixKey VirtualAMMInfoIndexKey, opts ...ormlist.Option) (VirtualAMMInfoIterator, error) {
 	it, err := this.table.GetIndexByID(prefixKey.id()).List(ctx, prefixKey.values(), opts...)
-	return PairMetadataIterator{it}, err
+	return VirtualAMMInfoIterator{it}, err
 }
 
-func (this pairMetadataTable) ListRange(ctx context.Context, from, to PairMetadataIndexKey, opts ...ormlist.Option) (PairMetadataIterator, error) {
+func (this virtualAMMInfoTable) ListRange(ctx context.Context, from, to VirtualAMMInfoIndexKey, opts ...ormlist.Option) (VirtualAMMInfoIterator, error) {
 	it, err := this.table.GetIndexByID(from.id()).ListRange(ctx, from.values(), to.values(), opts...)
-	return PairMetadataIterator{it}, err
+	return VirtualAMMInfoIterator{it}, err
 }
 
-func (this pairMetadataTable) DeleteBy(ctx context.Context, prefixKey PairMetadataIndexKey) error {
+func (this virtualAMMInfoTable) DeleteBy(ctx context.Context, prefixKey VirtualAMMInfoIndexKey) error {
 	return this.table.GetIndexByID(prefixKey.id()).DeleteBy(ctx, prefixKey.values()...)
 }
 
-func (this pairMetadataTable) DeleteRange(ctx context.Context, from, to PairMetadataIndexKey) error {
+func (this virtualAMMInfoTable) DeleteRange(ctx context.Context, from, to VirtualAMMInfoIndexKey) error {
 	return this.table.GetIndexByID(from.id()).DeleteRange(ctx, from.values(), to.values())
 }
 
-func (this pairMetadataTable) doNotImplement() {}
+func (this virtualAMMInfoTable) doNotImplement() {}
 
-var _ PairMetadataTable = pairMetadataTable{}
+var _ VirtualAMMInfoTable = virtualAMMInfoTable{}
 
-func NewPairMetadataTable(db ormtable.Schema) (PairMetadataTable, error) {
-	table := db.GetTable(&PairMetadata{})
+func NewVirtualAMMInfoTable(db ormtable.Schema) (VirtualAMMInfoTable, error) {
+	table := db.GetTable(&VirtualAMMInfo{})
 	if table == nil {
-		return nil, ormerrors.TableNotFound.Wrap(string((&PairMetadata{}).ProtoReflect().Descriptor().FullName()))
+		return nil, ormerrors.TableNotFound.Wrap(string((&VirtualAMMInfo{}).ProtoReflect().Descriptor().FullName()))
 	}
-	return pairMetadataTable{table}, nil
+	return virtualAMMInfoTable{table}, nil
 }
 
 type StateStore interface {
 	ParamsTable() ParamsTable
 	PositionTable() PositionTable
-	PairMetadataTable() PairMetadataTable
+	VirtualAMMInfoTable() VirtualAMMInfoTable
 
 	doNotImplement()
 }
 
 type stateStore struct {
-	params       ParamsTable
-	position     PositionTable
-	pairMetadata PairMetadataTable
+	params         ParamsTable
+	position       PositionTable
+	virtualAMMInfo VirtualAMMInfoTable
 }
 
 func (x stateStore) ParamsTable() ParamsTable {
@@ -294,8 +294,8 @@ func (x stateStore) PositionTable() PositionTable {
 	return x.position
 }
 
-func (x stateStore) PairMetadataTable() PairMetadataTable {
-	return x.pairMetadata
+func (x stateStore) VirtualAMMInfoTable() VirtualAMMInfoTable {
+	return x.virtualAMMInfo
 }
 
 func (stateStore) doNotImplement() {}
@@ -313,7 +313,7 @@ func NewStateStore(db ormtable.Schema) (StateStore, error) {
 		return nil, err
 	}
 
-	pairMetadataTable, err := NewPairMetadataTable(db)
+	virtualAMMInfoTable, err := NewVirtualAMMInfoTable(db)
 	if err != nil {
 		return nil, err
 	}
@@ -321,6 +321,6 @@ func NewStateStore(db ormtable.Schema) (StateStore, error) {
 	return stateStore{
 		paramsTable,
 		positionTable,
-		pairMetadataTable,
+		virtualAMMInfoTable,
 	}, nil
 }

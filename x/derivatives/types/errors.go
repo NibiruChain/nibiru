@@ -8,6 +8,7 @@ import (
 
 // x/derivatives module sentinel errors
 var (
-	ErrNotRunning = sdkerrors.Register(ModuleName, 1, "derivatives platform is not running")
-	ErrLeverage   = sdkerrors.Register(ModuleName, 2, "excessive leverage")
+	ErrNotRunning        = sdkerrors.Register(ModuleName, 1, "derivatives platform is not running")
+	ErrLeverage          = sdkerrors.Register(ModuleName, 2, "excessive leverage")
+	ErrPositionSideLimit = sdkerrors.Register(ModuleName, 3, "position size limit reached")
 )
