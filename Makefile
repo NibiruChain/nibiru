@@ -35,3 +35,12 @@ build-reproducible: go.sum
 
 .PHONY: build
 
+###############################################################################
+###                               Localnet                                  ###
+###############################################################################
+
+# Run a single testnet locally
+localnet:
+	./scripts/localnet.sh
+
+.PHONY: localnet
