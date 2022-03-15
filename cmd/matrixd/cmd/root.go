@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/MatrixDao/matrix/app"
+	stablecoincmd "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -203,6 +204,7 @@ func queryCommand() *cobra.Command {
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
+		stablecoincmd.GetQueryCmd(),
 	)
 
 	simapp.ModuleBasics.AddQueryCommands(cmd)
@@ -230,6 +232,7 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 		authcmd.GetAuxToFeeCommand(),
+		stablecoincmd.GetTxCmd(),
 	)
 
 	simapp.ModuleBasics.AddTxCommands(cmd)
