@@ -9,5 +9,5 @@ In a new terminal, run the following command:
 $ matrixd tx stablecoin mint 1000validatortoken --from validator --home data/localnet --chain-id localnet
 
 // query the balance
-$ dexd q bank balances cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v
+$ matrixd q bank balances cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v
 ```
