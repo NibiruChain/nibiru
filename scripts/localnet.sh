@@ -75,12 +75,21 @@ else
   echo_error "Failed to initialize $CHAIN_ID"
 fi
 
+# Configure blockchain to use test keyring-backend (local unencrypted file)
+echo_info "Setting keyring-backend to TEST"
+if $BINARY --home $CHAIN_DIR/$CHAIN_ID config keyring-backend test; then
+  echo_success "Successfully configured $CHAIN_ID to use test keyring-backend"
+else
+  echo_error "Failed to configure $CHAIN_ID with test keyring-backend"
+fi
+
+
 echo_info "Adding genesis accounts..."
-echo "$MNEMONIC" | $BINARY --home $CHAIN_DIR/$CHAIN_ID keys add validator --recover --keyring-backend=test
+echo "$MNEMONIC" | $BINARY --home $CHAIN_DIR/$CHAIN_ID keys add validator --recover --keyring-backend test
 $BINARY --home $CHAIN_DIR/$CHAIN_ID add-genesis-account $($BINARY --home $CHAIN_DIR/$CHAIN_ID keys show validator --keyring-backend test -a) $GENESIS_COINS
 
 echo_info "Adding gentx validator..."
-$BINARY --home $CHAIN_DIR/$CHAIN_ID gentx validator 1000000000stake --chain-id $CHAIN_ID --keyring-backend=test
+$BINARY --home $CHAIN_DIR/$CHAIN_ID gentx validator 1000000000stake --chain-id $CHAIN_ID --keyring-backend test
 
 echo_info "Collecting gentx..."
 if $BINARY --home $CHAIN_DIR/$CHAIN_ID collect-gentxs; then
