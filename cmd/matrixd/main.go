@@ -5,6 +5,7 @@ import (
 
 	"github.com/MatrixDao/matrix/app"
 	"github.com/MatrixDao/matrix/cmd/matrixd/cmd"
+
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 )
