@@ -15,6 +15,14 @@ type Keeper struct {
 }
 
 // SwapInput swaps pair token
-func (k Keeper) SwapInput(dir types.Direction, amount sdk.Coin) error {
-	return nil
+func (k Keeper) SwapInput(dir types.Direction, amount sdk.Coin) (sdk.Int, error) {
+	if amount.Denom != types.StableDenom {
+		return sdk.ZeroInt(), types.ErrStableNotSupported
+	}
+
+	if amount.Amount.Equal(sdk.ZeroInt()) {
+		return sdk.ZeroInt(), nil
+	}
+
+	return sdk.NewInt(1234), nil
 }

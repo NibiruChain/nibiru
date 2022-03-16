@@ -29,11 +29,13 @@ func TestSwapInput_Errors(t *testing.T) {
 		name        string
 		direction   ammtypes.Direction
 		quoteAmount sdktypes.Coin
+		error       error
 	}{
 		{
 			"amount not USDM",
 			ammtypes.ADD_TO_AMM,
-			sdktypes.NewCoin("USDM", sdktypes.NewInt(10)),
+			sdktypes.NewCoin("uusdt", sdktypes.NewInt(10)),
+			ammtypes.ErrStableNotSupported,
 		},
 	}
 
@@ -41,8 +43,34 @@ func TestSwapInput_Errors(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			keeper := AmmKeeper(t)
-			err := keeper.SwapInput(tc.direction, tc.quoteAmount)
-			require.EqualError(t, err, "")
+			_, err := keeper.SwapInput(tc.direction, tc.quoteAmount)
+			require.EqualError(t, err, tc.error.Error())
+		})
+	}
+}
+
+func TestSwapInput_HappyPath(t *testing.T) {
+	tests := []struct {
+		name        string
+		direction   ammtypes.Direction
+		quoteAmount sdktypes.Coin
+		resp        sdktypes.Int
+	}{
+		{
+			"quote amount == 0",
+			ammtypes.ADD_TO_AMM,
+			sdktypes.NewCoin("uusdm", sdktypes.NewInt(0)),
+			sdktypes.ZeroInt(),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			keeper := AmmKeeper(t)
+			res, err := keeper.SwapInput(tc.direction, tc.quoteAmount)
+			require.NoError(t, err)
+			require.Equal(t, res, tc.resp)
 		})
 	}
 }

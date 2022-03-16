@@ -1,5 +1,8 @@
 package types
 
 const (
-	StoreKey = "ammkey"
+	ModuleName = "amm"
+	StoreKey   = "ammkey"
 )
+
+const StableDenom = "uusdm"
