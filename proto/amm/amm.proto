@@ -2,6 +2,13 @@ syntax="proto3";
 
 package matrix.amm.v1;
 
-message Pool {
+enum Direction {
+  UNDEFINED = 0;
+  ADD_TO_AMM = 1;
+  REMOVE_FROM_AMM = 2;
+}
 
+message Pool {
+  string Pair = 1;
+  string QuoteAssetReserve = 2;
 }

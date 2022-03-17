@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -27,13 +28,13 @@ func AmmKeeper(t *testing.T) Keeper {
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
-		direction   ammtypes.Direction
+		direction   ammv1.Direction
 		quoteAmount sdktypes.Coin
 		error       error
 	}{
 		{
 			"amount not USDM",
-			ammtypes.ADD_TO_AMM,
+			ammv1.Direction_ADD_TO_AMM,
 			sdktypes.NewCoin("uusdt", sdktypes.NewInt(10)),
 			ammtypes.ErrStableNotSupported,
 		},
@@ -52,13 +53,13 @@ func TestSwapInput_Errors(t *testing.T) {
 func TestSwapInput_HappyPath(t *testing.T) {
 	tests := []struct {
 		name        string
-		direction   ammtypes.Direction
+		direction   ammv1.Direction
 		quoteAmount sdktypes.Coin
 		resp        sdktypes.Int
 	}{
 		{
 			"quote amount == 0",
-			ammtypes.ADD_TO_AMM,
+			ammv1.Direction_ADD_TO_AMM,
 			sdktypes.NewCoin("uusdm", sdktypes.NewInt(0)),
 			sdktypes.ZeroInt(),
 		},
