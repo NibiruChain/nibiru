@@ -8,21 +8,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMsgMint_ValidateBasic(t *testing.T) {
+func TestMsgPostPrice_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgMint
+		msg  MsgPostPrice
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgMint{
+			msg: MsgPostPrice{
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
-			msg: MsgMint{
+			msg: MsgPostPrice{
 				Creator: sample.AccAddress(),
 			},
 		},

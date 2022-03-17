@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/stretchr/testify/require"
 )
 
