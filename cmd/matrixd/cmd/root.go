@@ -204,7 +204,7 @@ func queryCommand() *cobra.Command {
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
-		stablecoincmd.GetQueryCmd(),
+		//stablecoincmd.GetQueryCmd(), TODO: Commented to avoid build errors
 	)
 
 	simapp.ModuleBasics.AddQueryCommands(cmd)
