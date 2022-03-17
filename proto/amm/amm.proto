@@ -1,0 +1,7 @@
+syntax="proto3";
+
+package matrix.amm.v1;
+
+message Pool {
+
+}

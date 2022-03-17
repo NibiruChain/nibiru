@@ -24,5 +24,11 @@ func (k Keeper) SwapInput(dir types.Direction, amount sdk.Coin) (sdk.Int, error)
 		return sdk.ZeroInt(), nil
 	}
 
+	if dir == types.REMOVE_FROM_AMM {
+	}
+
 	return sdk.NewInt(1234), nil
+}
+
+func (k Keeper) getQuoteAssetReserve(pair string) sdk.Int {
 }
