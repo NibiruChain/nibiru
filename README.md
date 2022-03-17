@@ -26,6 +26,10 @@ Matrix presents decentralized, over-collateralized and capital-efficient reserve
 
 TODO: Update installation instructions  
 
+To develop on the chain locally, simply run `make localnet` and open another terminal.  
+
+----
+
 ## Installation
 
 Recommended minimum specs
