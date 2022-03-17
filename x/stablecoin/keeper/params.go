@@ -16,10 +16,10 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
 
-func (k Keeper) GetMinterBalance(ctx sdk.Context, coinToSpend sdk.Coin, minterAddr sdk.AccAddress) (bool, error) {
-	minterCoins := k.bankKeeper.SpendableCoins(ctx, minterAddr)
+func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) (bool, error) {
+	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
 
-	for _, coin := range minterCoins {
+	for _, coin := range accCoins {
 		if coin.Denom == coinToSpend.Denom {
 			return coin.Amount.GTE(coinToSpend.Amount), nil
 		}
