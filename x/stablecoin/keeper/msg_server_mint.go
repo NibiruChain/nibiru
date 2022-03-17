@@ -15,7 +15,7 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 		return nil, err
 	}
 
-	hasEnoughBalance, err := k.GetMinterBalance(ctx, msg.Collateral, fromAddr)
+	hasEnoughBalance, err := k.checkEnoughBalance(ctx, msg.Collateral, fromAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,18 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 		return nil, err
 	}
 
-	// TODO(heisenberg): Get the actual price to multiply by
+	/*  Minting USDM
+	TODO(heisenberg): Get the actual price to multiply by
+	See Example B of https://docs.frax.finance/minting-and-redeeming
+
+	collateralDeposited: (sdk.Coin)
+	collateralRatio:
+	priceGOV: Price of the governance token in USD.
+
+	govDeposited: Units of GOV burned
+	govDeposited = (1 - collateralRatio) * (collateralDeposited * 1) / (collateralRatio * priceGOV)
+
+	*/
 	newCoin := sdk.NewCoin("usdm", msg.Collateral.Amount.Mul(sdk.NewInt(10)))
 	newCoins := sdk.NewCoins(newCoin)
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
