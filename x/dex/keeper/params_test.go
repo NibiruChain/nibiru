@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	testkeeper "github.com/MatrixDao/matrix/testutil/keeper"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.StablecoinKeeper(t)
+	k, ctx := testkeeper.DexKeeper(t)
 	params := types.DefaultParams()
 
 	k.SetParams(ctx, params)

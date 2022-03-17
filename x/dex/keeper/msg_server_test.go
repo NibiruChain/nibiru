@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	keepertest "github.com/MatrixDao/matrix/testutil/keeper"
-	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/MatrixDao/matrix/x/dex/keeper"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := keepertest.StablecoinKeeper(t)
+	k, ctx := keepertest.DexKeeper(t)
 	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
 }
