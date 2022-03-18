@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"github.com/MatrixDao/matrix/x/amm/types"
 	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
@@ -44,6 +45,15 @@ func (k Keeper) getQuoteAssetReserve(pair string) sdk.Int {
 	return sdk.ZeroInt()
 }
 
-func (k Keeper) CreateReserve(pair string) {
+func (k Keeper) CreatePool(ctx context.Context, pair string) error {
+	pool := &ammv1.Pool{
+		Pair:              pair,
+		QuoteAssetReserve: "1234",
+	}
 
+	return k.store.PoolTable().Save(ctx, pool)
+}
+
+func (k Keeper) GetPool(ctx context.Context, pair string) (*ammv1.Pool, error) {
+	return k.store.PoolTable().Get(ctx, pair)
 }

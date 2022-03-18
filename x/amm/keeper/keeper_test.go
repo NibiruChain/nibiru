@@ -1,29 +1,29 @@
 package keeper
 
 import (
+	"context"
 	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
+	"github.com/cosmos/cosmos-sdk/orm/model/ormtable"
+	"github.com/cosmos/cosmos-sdk/orm/testing/ormtest"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/types"
+	ammtypes "github.com/MatrixDao/matrix/x/amm/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	tmdb "github.com/tendermint/tm-db"
-
-	ammtypes "github.com/MatrixDao/matrix/x/amm/types"
 )
 
 func AmmKeeper(t *testing.T) Keeper {
-	storeKey := sdktypes.NewKVStoreKey(ammtypes.StoreKey)
+	db := ormtest.NewMemoryBackend()
 
-	db := tmdb.NewMemDB()
-
-	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, types.StoreTypeIAVL, db)
-	require.NoError(t, stateStore.LoadLatestVersion())
-
-	moduleDB, err := ormdb.NewModuleDB(PoolSchema, ormdb.ModuleDBOptions{})
+	moduleDB, err := ormdb.NewModuleDB(PoolSchema, ormdb.ModuleDBOptions{
+		GetBackend: func(ctx context.Context) (ormtable.Backend, error) {
+			return db, nil
+		},
+		GetReadBackend: func(ctx context.Context) (ormtable.ReadBackend, error) {
+			return db, nil
+		},
+	})
 	require.NoError(t, err)
 
 	ammStore, err := ammv1.NewAmmStore(moduleDB)
@@ -81,4 +81,16 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			require.Equal(t, res, tc.resp)
 		})
 	}
+}
+
+func TestCreatePool(t *testing.T) {
+	ammKeeper := AmmKeeper(t)
+
+	err := ammKeeper.CreatePool(context.Background(), "BTC:USDM")
+	require.NoError(t, err)
+
+	pool, err := ammKeeper.GetPool(context.Background(), "BTC:USDM")
+	require.NoError(t, err)
+
+	require.Equal(t, pool.Pair, "BTC:USDM")
 }
