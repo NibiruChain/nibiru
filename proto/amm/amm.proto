@@ -2,6 +2,8 @@ syntax="proto3";
 
 package matrix.amm.v1;
 
+import "cosmos/orm/v1alpha1/orm.proto";
+
 enum Direction {
   UNDEFINED = 0;
   ADD_TO_AMM = 1;
@@ -9,6 +11,13 @@ enum Direction {
 }
 
 message Pool {
-  string Pair = 1;
-  string QuoteAssetReserve = 2;
+  option (cosmos.orm.v1alpha1.table) = {
+    id: 1,
+    primary_key: {
+      fields: "pair"
+    }
+  };
+
+  string pair = 1;
+  string quote_asset_reserve = 2;
 }
