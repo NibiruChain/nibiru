@@ -90,8 +90,9 @@ func TestCreatePool(t *testing.T) {
 	err := ammKeeper.CreatePool(context.Background(), "BTC:USDM")
 	require.NoError(t, err)
 
-	pool, err := ammKeeper.GetPool(context.Background(), "BTC:USDM")
-	require.NoError(t, err)
+	exists := ammKeeper.ExistsPool(context.Background(), "BTC:USDM")
+	require.True(t, exists)
 
-	require.Equal(t, pool.Pair, "BTC:USDM")
+	notExist := ammKeeper.ExistsPool(context.Background(), "BTC:OTHER")
+	require.False(t, notExist)
 }

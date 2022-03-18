@@ -54,6 +54,7 @@ func (k Keeper) CreatePool(ctx context.Context, pair string) error {
 	return k.store.PoolTable().Save(ctx, pool)
 }
 
-func (k Keeper) GetPool(ctx context.Context, pair string) (*ammv1.Pool, error) {
-	return k.store.PoolTable().Get(ctx, pair)
+func (k Keeper) ExistsPool(ctx context.Context, pair string) bool {
+	has, _ := k.store.PoolTable().Has(ctx, pair)
+	return has
 }
