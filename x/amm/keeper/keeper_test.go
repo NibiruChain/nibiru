@@ -2,15 +2,16 @@ package keeper
 
 import (
 	"context"
+	"testing"
+
 	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
 	"github.com/cosmos/cosmos-sdk/orm/model/ormtable"
 	"github.com/cosmos/cosmos-sdk/orm/testing/ormtest"
-	"testing"
-
-	ammtypes "github.com/MatrixDao/matrix/x/amm/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	ammtypes "github.com/MatrixDao/matrix/x/amm/types"
 )
 
 func AmmKeeper(t *testing.T) Keeper {
