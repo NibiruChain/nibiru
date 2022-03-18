@@ -2,6 +2,7 @@ package keeper
 
 import (
 	ammv1 "github.com/MatrixDao/matrix/api/amm"
+	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -22,7 +23,13 @@ func AmmKeeper(t *testing.T) Keeper {
 	stateStore.MountStoreWithDB(storeKey, types.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
-	return NewKeeper(storeKey)
+	moduleDB, err := ormdb.NewModuleDB(PoolSchema, ormdb.ModuleDBOptions{})
+	require.NoError(t, err)
+
+	ammStore, err := ammv1.NewAmmStore(moduleDB)
+	require.NoError(t, err)
+
+	return NewKeeper(ammStore)
 }
 
 func TestSwapInput_Errors(t *testing.T) {

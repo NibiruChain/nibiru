@@ -1,19 +1,27 @@
 package keeper
 
 import (
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"github.com/MatrixDao/matrix/x/amm/types"
+	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func NewKeeper(storeKey storetypes.StoreKey) Keeper {
-	return Keeper{storeKey: storeKey}
+var PoolSchema = ormdb.ModuleSchema{
+	FileDescriptors: map[uint32]protoreflect.FileDescriptor{
+		1: ammv1.File_amm_amm_proto,
+	},
+}
+
+func NewKeeper(store ammv1.AmmStore) Keeper {
+	return Keeper{
+		store: store,
+	}
 }
 
 type Keeper struct {
-	storeKey storetypes.StoreKey
+	store ammv1.AmmStore
 }
 
 // SwapInput swaps pair token
