@@ -72,7 +72,7 @@ func TestSwapInput_Errors(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			_, err = keeper.SwapInput(UsdmPair, tc.direction, tc.quoteAmount)
+			_, err = keeper.SwapInput(tc.pair, tc.direction, tc.quoteAmount)
 			require.EqualError(t, err, tc.error.Error())
 		})
 	}
@@ -97,6 +97,15 @@ func TestSwapInput_HappyPath(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			keeper := AmmKeeper(t)
+
+			err := keeper.CreatePool(
+				context.Background(),
+				UsdmPair,
+				sdktypes.NewInt(900_000),    // 0.9 ratio
+				sdktypes.NewInt(10_000_000), // 10 tokens
+			)
+			require.NoError(t, err)
+
 			res, err := keeper.SwapInput(UsdmPair, tc.direction, tc.quoteAmount)
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)

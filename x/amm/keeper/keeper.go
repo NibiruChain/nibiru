@@ -36,14 +36,23 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 	}
 
 	if dir == ammv1.Direction_REMOVE_FROM_AMM {
-
+		pool, err := k.getPool(pair)
+		if err != nil {
+			return sdk.Int{}, err
+		}
 	}
 
 	return sdk.NewInt(1234), nil
 }
 
-func (k Keeper) getPool(pair string) sdk.Int {
-	return sdk.ZeroInt()
+// getPool returns the pool
+func (k Keeper) getPool(pair string) (*ammv1.Pool, error) {
+	p, err := k.store.PoolTable().Get(context.Background(), pair)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 // CreatePool creates a pool for a specific pair.
@@ -62,6 +71,7 @@ func (k Keeper) CreatePool(
 	return k.store.PoolTable().Save(ctx, pool)
 }
 
+// ExistsPool returns true if pool exists, false if not.
 func (k Keeper) ExistsPool(ctx context.Context, pair string) bool {
 	has, _ := k.store.PoolTable().Has(ctx, pair)
 
