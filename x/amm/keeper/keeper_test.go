@@ -4,15 +4,17 @@ import (
 	"context"
 	"testing"
 
-	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
 	"github.com/cosmos/cosmos-sdk/orm/model/ormtable"
 	"github.com/cosmos/cosmos-sdk/orm/testing/ormtest"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	ammtypes "github.com/MatrixDao/matrix/x/amm/types"
 )
+
+const UsdmPair = "BTC:USDM"
 
 func AmmKeeper(t *testing.T) Keeper {
 	db := ormtest.NewMemoryBackend()
@@ -36,15 +38,24 @@ func AmmKeeper(t *testing.T) Keeper {
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
+		pair        string
 		direction   ammv1.Direction
-		quoteAmount sdktypes.Coin
+		quoteAmount sdktypes.Int
 		error       error
 	}{
 		{
-			"amount not USDM",
+			"pair not supported",
+			"BTC:UST",
 			ammv1.Direction_ADD_TO_AMM,
-			sdktypes.NewCoin("uusdt", sdktypes.NewInt(10)),
-			ammtypes.ErrStableNotSupported,
+			sdktypes.NewInt(10),
+			ammtypes.ErrPairNotSupported,
+		},
+		{
+			"quote input bigger than reserve ratio",
+			UsdmPair,
+			ammv1.Direction_REMOVE_FROM_AMM,
+			sdktypes.NewInt(10_000_000),
+			ammtypes.ErrOvertradingLimit,
 		},
 	}
 
@@ -52,7 +63,16 @@ func TestSwapInput_Errors(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			keeper := AmmKeeper(t)
-			_, err := keeper.SwapInput(tc.direction, tc.quoteAmount)
+
+			err := keeper.CreatePool(
+				context.Background(),
+				UsdmPair,
+				sdktypes.NewInt(900_000),    // 0.9 ratio
+				sdktypes.NewInt(10_000_000), // 10
+			)
+			require.NoError(t, err)
+
+			_, err = keeper.SwapInput(UsdmPair, tc.direction, tc.quoteAmount)
 			require.EqualError(t, err, tc.error.Error())
 		})
 	}
@@ -62,13 +82,13 @@ func TestSwapInput_HappyPath(t *testing.T) {
 	tests := []struct {
 		name        string
 		direction   ammv1.Direction
-		quoteAmount sdktypes.Coin
+		quoteAmount sdktypes.Int
 		resp        sdktypes.Int
 	}{
 		{
 			"quote amount == 0",
 			ammv1.Direction_ADD_TO_AMM,
-			sdktypes.NewCoin("uusdm", sdktypes.NewInt(0)),
+			sdktypes.NewInt(0),
 			sdktypes.ZeroInt(),
 		},
 	}
@@ -77,7 +97,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			keeper := AmmKeeper(t)
-			res, err := keeper.SwapInput(tc.direction, tc.quoteAmount)
+			res, err := keeper.SwapInput(UsdmPair, tc.direction, tc.quoteAmount)
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)
 		})
@@ -87,10 +107,15 @@ func TestSwapInput_HappyPath(t *testing.T) {
 func TestCreatePool(t *testing.T) {
 	ammKeeper := AmmKeeper(t)
 
-	err := ammKeeper.CreatePool(context.Background(), "BTC:USDM")
+	err := ammKeeper.CreatePool(
+		context.Background(),
+		UsdmPair,
+		sdktypes.NewInt(900_000),    // 0.9 ratio
+		sdktypes.NewInt(10_000_000), // 10 tokens
+	)
 	require.NoError(t, err)
 
-	exists := ammKeeper.ExistsPool(context.Background(), "BTC:USDM")
+	exists := ammKeeper.ExistsPool(context.Background(), UsdmPair)
 	require.True(t, exists)
 
 	notExist := ammKeeper.ExistsPool(context.Background(), "BTC:OTHER")

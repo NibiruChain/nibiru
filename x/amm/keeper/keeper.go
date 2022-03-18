@@ -26,29 +26,37 @@ type Keeper struct {
 }
 
 // SwapInput swaps pair token
-func (k Keeper) SwapInput(dir ammv1.Direction, amount sdk.Coin) (sdk.Int, error) {
-	if amount.Denom != types.StableDenom {
-		return sdk.ZeroInt(), types.ErrStableNotSupported
+func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk.Int) (sdk.Int, error) {
+	if !k.ExistsPool(context.Background(), pair) {
+		return sdk.Int{}, types.ErrPairNotSupported
 	}
 
-	if amount.Amount.Equal(sdk.ZeroInt()) {
+	if quoteAssetAmount.Equal(sdk.ZeroInt()) {
 		return sdk.ZeroInt(), nil
 	}
 
 	if dir == ammv1.Direction_REMOVE_FROM_AMM {
+
 	}
 
 	return sdk.NewInt(1234), nil
 }
 
-func (k Keeper) getQuoteAssetReserve(pair string) sdk.Int {
+func (k Keeper) getPool(pair string) sdk.Int {
 	return sdk.ZeroInt()
 }
 
-func (k Keeper) CreatePool(ctx context.Context, pair string) error {
+// CreatePool creates a pool for a specific pair.
+func (k Keeper) CreatePool(
+	ctx context.Context,
+	pair string,
+	tradeLimitRatio sdk.Int, // integer with 6 decimals, 1_000_000 means 1.0
+	quoteAssetReserve sdk.Int,
+) error {
 	pool := &ammv1.Pool{
 		Pair:              pair,
-		QuoteAssetReserve: "1234",
+		TradeLimitRatio:   tradeLimitRatio.String(),
+		QuoteAssetReserve: quoteAssetReserve.String(),
 	}
 
 	return k.store.PoolTable().Save(ctx, pool)
@@ -56,5 +64,6 @@ func (k Keeper) CreatePool(ctx context.Context, pair string) error {
 
 func (k Keeper) ExistsPool(ctx context.Context, pair string) bool {
 	has, _ := k.store.PoolTable().Has(ctx, pair)
+
 	return has
 }
