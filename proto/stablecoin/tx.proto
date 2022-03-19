@@ -1,17 +1,16 @@
 syntax = "proto3";
-package MatrixDAO.stablecoin.v1;
+package MatrixDao.stablecoin.v1;
 
 // this line is used by starport scaffolding # proto/tx/import
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/MatrixDAO/matrix/x/stablecoin/types";
+option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 
 // Msg defines the Msg service.
 service Msg {
       rpc Mint(MsgMint) returns (MsgMintResponse);
-// this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgMint {
@@ -21,6 +20,11 @@ message MsgMint {
 
 message MsgMintResponse {
   cosmos.base.v1beta1.Coin amount = 1 [(gogoproto.nullable) = false];
+}
+
+message MsgBurn {
+  string creator = 1;
+  cosmos.base.v1beta1.Coin collateral = 2 [(gogoproto.nullable) = false];
 }
 
 // this line is used by starport scaffolding # proto/tx/message
