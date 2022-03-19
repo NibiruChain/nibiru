@@ -69,6 +69,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				UsdmPair,
 				sdktypes.NewInt(900_000),    // 0.9 ratio
 				sdktypes.NewInt(10_000_000), // 10
+				sdktypes.NewInt(5_000_000),  // 5
 			)
 			require.NoError(t, err)
 
@@ -103,6 +104,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				UsdmPair,
 				sdktypes.NewInt(900_000),    // 0.9 ratio
 				sdktypes.NewInt(10_000_000), // 10 tokens
+				sdktypes.NewInt(5_000_000),  // 5 tokens
 			)
 			require.NoError(t, err)
 
@@ -121,6 +123,7 @@ func TestCreatePool(t *testing.T) {
 		UsdmPair,
 		sdktypes.NewInt(900_000),    // 0.9 ratio
 		sdktypes.NewInt(10_000_000), // 10 tokens
+		sdktypes.NewInt(5_000_000),  // 5 tokens
 	)
 	require.NoError(t, err)
 

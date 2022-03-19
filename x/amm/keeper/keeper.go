@@ -54,7 +54,7 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 	return sdk.NewInt(1234), nil
 }
 
-// getPool returns the pool
+// getPool returns the pool from database
 func (k Keeper) getPool(pair string) (*ammv1.Pool, error) {
 	p, err := k.store.PoolTable().Get(context.Background(), pair)
 	if err != nil {
@@ -70,11 +70,13 @@ func (k Keeper) CreatePool(
 	pair string,
 	tradeLimitRatio sdk.Int, // integer with 6 decimals, 1_000_000 means 1.0
 	quoteAssetReserve sdk.Int,
+	baseAssetReserve sdk.Int,
 ) error {
 	pool := &ammv1.Pool{
 		Pair:              pair,
 		TradeLimitRatio:   tradeLimitRatio.String(),
 		QuoteAssetReserve: quoteAssetReserve.String(),
+		BaseAssetReserve:  baseAssetReserve.String(),
 	}
 
 	return k.store.PoolTable().Save(ctx, pool)
