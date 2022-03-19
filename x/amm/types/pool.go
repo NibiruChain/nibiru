@@ -17,9 +17,10 @@ func PoolHasEnoughQuoteReserve(pool *ammv1.Pool, quoteAmount sdk.Int) (bool, err
 	}
 
 	tradeLimitRatio, ok := sdk.NewIntFromString(pool.TradeLimitRatio)
+	tradeLimitRatioDec := sdk.NewDecFromIntWithPrec(tradeLimitRatio, 6)
 	if !ok {
 		return false, fmt.Errorf("error with pool trade limit ratio value: %s", pool.TradeLimitRatio)
 	}
 
-	return quoteAssetReserve.Mul(tradeLimitRatio).GTE(quoteAmount), nil
+	return quoteAssetReserve.ToDec().Mul(tradeLimitRatioDec).GTE(quoteAmount.ToDec()), nil
 }

@@ -40,6 +40,15 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 		if err != nil {
 			return sdk.Int{}, err
 		}
+
+		enoughReserve, err := types.PoolHasEnoughQuoteReserve(pool, quoteAssetAmount)
+		if err != nil {
+			return sdk.Int{}, err
+		}
+		if !enoughReserve {
+			return sdk.Int{}, types.ErrOvertradingLimit
+
+		}
 	}
 
 	return sdk.NewInt(1234), nil
