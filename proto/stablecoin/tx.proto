@@ -13,6 +13,7 @@ service Msg {
       rpc Mint(MsgMint) returns (MsgMintResponse);
 }
 
+// Msg to mint USDM: User deposits MTRX and collateral and gets USDM in return.
 message MsgMint {
   string creator = 1;
   cosmos.base.v1beta1.Coin collateral = 2 [(gogoproto.nullable) = false];
@@ -22,6 +23,7 @@ message MsgMintResponse {
   cosmos.base.v1beta1.Coin amount = 1 [(gogoproto.nullable) = false];
 }
 
+// Msg to burn USDM: User burns USDM and gets MTRX and collateral in return.
 message MsgBurn {
   string creator = 1;
   cosmos.base.v1beta1.Coin collateral = 2 [(gogoproto.nullable) = false];

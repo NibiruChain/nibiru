@@ -29,6 +29,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Msg to mint USDM: User deposits MTRX and collateral and gets USDM in return.
 type MsgMint struct {
 	Creator    string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Collateral types.Coin `protobuf:"bytes,2,opt,name=collateral,proto3" json:"collateral"`
@@ -125,6 +126,7 @@ func (m *MsgMintResponse) GetAmount() types.Coin {
 	return types.Coin{}
 }
 
+// Msg to burn USDM: User burns USDM and gets MTRX and collateral in return.
 type MsgBurn struct {
 	Creator    string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Collateral types.Coin `protobuf:"bytes,2,opt,name=collateral,proto3" json:"collateral"`
