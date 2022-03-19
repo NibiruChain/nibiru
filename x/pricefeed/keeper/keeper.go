@@ -9,8 +9,8 @@ import (
 
 	"github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
@@ -21,9 +21,6 @@ type (
 		storeKey   storetypes.StoreKey
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
-
-		accountKeeper types.AccountKeeper
-		bankKeeper    types.BankKeeper
 	}
 )
 
@@ -33,7 +30,6 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 
-	accountKeeper types.AccountKeeper, bankKeeper types.BankKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -42,11 +38,10 @@ func NewKeeper(
 
 	return &Keeper{
 
-		cdc:           cdc,
-		storeKey:      storeKey,
-		memKey:        memKey,
-		paramstore:    ps,
-		accountKeeper: accountKeeper, bankKeeper: bankKeeper,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		memKey:     memKey,
+		paramstore: ps,
 	}
 }
 
@@ -62,9 +57,9 @@ func (k Keeper) SetPrice(
 	price sdk.Dec,
 	expiry time.Time) (types.PostedPrice, error) {
 	// If the expiry is less than or equal to the current blockheight, we consider the price valid
-	// if !expiry.After(ctx.BlockTime()) {
-	// 	return types.PostedPrice{}, types.ErrExpired
-	// }
+	if !expiry.After(ctx.BlockTime()) {
+		return types.PostedPrice{}, types.ErrExpired
+	}
 
 	store := ctx.KVStore(k.storeKey)
 
