@@ -1,20 +1,20 @@
 package types
 
 import (
+	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	ammv1 "github.com/MatrixDao/matrix/api/amm"
 )
 
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
-	pool := &ammv1.Pool{
-		Pair:              "",
-		TradeLimitRatio:   "900000",   // 0.9
-		QuoteAssetReserve: "10000000", // 10
-	}
+	pool := NewPool(
+		"BTC:USDM",
+		sdk.NewInt(900_000),    // 0.9
+		sdk.NewInt(10_000_000), // 10
+		sdk.NewInt(10_000_000), // 10
+	)
 
 	// less that max ratio
 	isEnough, err := PoolHasEnoughQuoteReserve(pool, sdk.NewInt(8_000_000))
@@ -30,4 +30,15 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	isEnough, err = PoolHasEnoughQuoteReserve(pool, sdk.NewInt(9_000_001))
 	require.NoError(t, err)
 	require.False(t, isEnough)
+}
+
+func TestGetBaseAmountByQuoteAmount(t *testing.T) {
+	pool := NewPool(
+		"BTC:USDM",
+		sdk.NewInt(900_000),    // 0.9
+		sdk.NewInt(10_000_000), // 10
+		sdk.NewInt(10_000_000), // 10
+	)
+
+	amount := GetBaseAmountByQuoteAmount(ammv1.Direction_ADD_TO_AMM, pool, sdk.NewInt(3_000_000))
 }

@@ -35,12 +35,12 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 		return sdk.ZeroInt(), nil
 	}
 
-	if dir == ammv1.Direction_REMOVE_FROM_AMM {
-		pool, err := k.getPool(pair)
-		if err != nil {
-			return sdk.Int{}, err
-		}
+	pool, err := k.getPool(pair)
+	if err != nil {
+		return sdk.Int{}, err
+	}
 
+	if dir == ammv1.Direction_REMOVE_FROM_AMM {
 		enoughReserve, err := types.PoolHasEnoughQuoteReserve(pool, quoteAssetAmount)
 		if err != nil {
 			return sdk.Int{}, err
@@ -51,7 +51,14 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 		}
 	}
 
+	amount := types.GetBaseAmountByQuoteAmount(dir, pool, quoteAssetAmount)
+
 	return sdk.NewInt(1234), nil
+}
+
+// getBaseAmountByQuoteAmount returns the amount that you will get by specific quote amount
+func getBaseAmountByQuoteAmount(dir ammv1.Direction, pair string, quoteAmount sdk.Int) sdk.Int {
+	return sdk.ZeroInt()
 }
 
 // getPool returns the pool from database
