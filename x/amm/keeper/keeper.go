@@ -51,7 +51,7 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 		}
 	}
 
-	amount := types.GetBaseAmountByQuoteAmount(dir, pool, quoteAssetAmount)
+	//amount := types.GetBaseAmountByQuoteAmount(dir, pool, quoteAssetAmount)
 
 	return sdk.NewInt(1234), nil
 }

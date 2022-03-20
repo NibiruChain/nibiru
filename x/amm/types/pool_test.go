@@ -33,12 +33,31 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
-	pool := NewPool(
-		"BTC:USDM",
-		sdk.NewInt(900_000),    // 0.9
-		sdk.NewInt(10_000_000), // 10
-		sdk.NewInt(10_000_000), // 10
-	)
+	tests := []struct {
+		name               string
+		quoteAmount        sdk.Int
+		expectedBaseAmount sdk.Int
+	}{
+		{
+			"quote amount == 0",
+			sdk.NewInt(0),
+			sdk.NewInt(0),
+		},
+	}
 
-	amount := GetBaseAmountByQuoteAmount(ammv1.Direction_ADD_TO_AMM, pool, sdk.NewInt(3_000_000))
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+
+			pool := NewPool(
+				"BTC:USDM",
+				sdk.NewInt(900_000),    // 0.9
+				sdk.NewInt(10_000_000), // 10
+				sdk.NewInt(10_000_000), // 10
+			)
+
+			amount := GetBaseAmountByQuoteAmount(ammv1.Direction_ADD_TO_AMM, pool, tc.quoteAmount)
+			require.True(t, amount.Equal(tc.expectedBaseAmount))
+		})
+	}
 }
