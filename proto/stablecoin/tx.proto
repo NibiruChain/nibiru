@@ -28,5 +28,3 @@ message MsgBurn {
   string creator = 1;
   cosmos.base.v1beta1.Coin collateral = 2 [(gogoproto.nullable) = false];
 }
-
-// this line is used by starport scaffolding # proto/tx/message
