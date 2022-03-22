@@ -2,7 +2,7 @@ syntax="proto3";
 
 package matrix.amm.v1;
 
-import "cosmos/orm/v1alpha1/orm.proto";
+option go_package = "github.com/MatrixDao/matrix/x/amm/types";
 
 enum Direction {
   UNDEFINED = 0;
@@ -11,13 +11,6 @@ enum Direction {
 }
 
 message Pool {
-  option (cosmos.orm.v1alpha1.table) = {
-    id: 1,
-    primary_key: {
-      fields: "pair"
-    }
-  };
-
   string pair = 1;
   // ratio applied to reserves in order not to over trade
   string trade_limit_ratio = 2;
