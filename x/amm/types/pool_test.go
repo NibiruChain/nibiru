@@ -53,10 +53,11 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				"BTC:USDM",
 				sdk.NewInt(900_000),    // 0.9
 				sdk.NewInt(10_000_000), // 10
-				sdk.NewInt(10_000_000), // 10
+				sdk.NewInt(5_000_000),  // 5
 			)
 
-			amount := GetBaseAmountByQuoteAmount(ammv1.Direction_ADD_TO_AMM, pool, tc.quoteAmount)
+			amount, err := GetBaseAmountByQuoteAmount(ammv1.Direction_ADD_TO_AMM, pool, tc.quoteAmount)
+			require.NoError(t, err)
 			require.True(t, amount.Equal(tc.expectedBaseAmount))
 		})
 	}
