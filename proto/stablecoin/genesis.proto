@@ -1,0 +1,14 @@
+syntax = "proto3";
+package MatrixDao.stablecoin.v1;
+
+import "gogoproto/gogo.proto";
+import "stablecoin/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
+
+// GenesisState defines the stablecoin module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  // this line is used by starport scaffolding # genesis/proto/state
+}
