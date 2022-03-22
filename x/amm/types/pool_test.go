@@ -1,7 +1,6 @@
 package types
 
 import (
-	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,17 +16,17 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	)
 
 	// less that max ratio
-	isEnough, err := PoolHasEnoughQuoteReserve(pool, sdk.NewInt(8_000_000))
+	isEnough, err := pool.HasEnoughQuoteReserve(sdk.NewInt(8_000_000))
 	require.NoError(t, err)
 	require.True(t, isEnough)
 
 	// equal to ratio limit
-	isEnough, err = PoolHasEnoughQuoteReserve(pool, sdk.NewInt(9_000_000))
+	isEnough, err = pool.HasEnoughQuoteReserve(sdk.NewInt(9_000_000))
 	require.NoError(t, err)
 	require.True(t, isEnough)
 
 	// more than ratio limit
-	isEnough, err = PoolHasEnoughQuoteReserve(pool, sdk.NewInt(9_000_001))
+	isEnough, err = pool.HasEnoughQuoteReserve(sdk.NewInt(9_000_001))
 	require.NoError(t, err)
 	require.False(t, isEnough)
 }
@@ -56,7 +55,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				sdk.NewInt(5_000_000),  // 5
 			)
 
-			amount, err := GetBaseAmountByQuoteAmount(ammv1.Direction_ADD_TO_AMM, pool, tc.quoteAmount)
+			amount, err := GetBaseAmountByQuoteAmount(Direction_ADD_TO_AMM, pool, tc.quoteAmount)
 			require.NoError(t, err)
 			require.True(t, amount.Equal(tc.expectedBaseAmount))
 		})

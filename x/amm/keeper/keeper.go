@@ -1,33 +1,26 @@
 package keeper
 
 import (
-	"context"
-	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	"github.com/MatrixDao/matrix/x/amm/types"
-	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-var PoolSchema = ormdb.ModuleSchema{
-	FileDescriptors: map[uint32]protoreflect.FileDescriptor{
-		1: ammv1.File_amm_amm_proto,
-	},
-}
-
-func NewKeeper(store ammv1.AmmStore) Keeper {
+func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {
 	return Keeper{
-		store: store,
+		codec:    codec,
+		storeKey: storeKey,
 	}
 }
 
 type Keeper struct {
-	store ammv1.AmmStore
+	codec    codec.BinaryCodec
+	storeKey sdk.StoreKey
 }
 
 // SwapInput swaps pair token
-func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk.Int) (sdk.Int, error) {
-	if !k.ExistsPool(context.Background(), pair) {
+func (k Keeper) SwapInput(ctx sdk.Context, pair string, dir types.Direction, quoteAssetAmount sdk.Int) (sdk.Int, error) {
+	if !k.ExistsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
 	}
 
@@ -35,13 +28,13 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 		return sdk.ZeroInt(), nil
 	}
 
-	pool, err := k.getPool(pair)
+	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	if dir == ammv1.Direction_REMOVE_FROM_AMM {
-		enoughReserve, err := types.PoolHasEnoughQuoteReserve(pool, quoteAssetAmount)
+	if dir == types.Direction_REMOVE_FROM_AMM {
+		enoughReserve, err := pool.HasEnoughQuoteReserve(quoteAssetAmount)
 		if err != nil {
 			return sdk.Int{}, err
 		}
@@ -57,41 +50,58 @@ func (k Keeper) SwapInput(pair string, dir ammv1.Direction, quoteAssetAmount sdk
 }
 
 // getBaseAmountByQuoteAmount returns the amount that you will get by specific quote amount
-func getBaseAmountByQuoteAmount(dir ammv1.Direction, pair string, quoteAmount sdk.Int) sdk.Int {
+func getBaseAmountByQuoteAmount(dir types.Direction, pair string, quoteAmount sdk.Int) sdk.Int {
 	return sdk.ZeroInt()
 }
 
 // getPool returns the pool from database
-func (k Keeper) getPool(pair string) (*ammv1.Pool, error) {
-	p, err := k.store.PoolTable().Get(context.Background(), pair)
+func (k Keeper) getPool(ctx sdk.Context, pair string) (*types.Pool, error) {
+	store := k.getStore(ctx)
+
+	bz := store.Get(types.GetPoolKey(pair))
+	var pool types.Pool
+
+	err := k.codec.Unmarshal(bz, &pool)
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
+	return &pool, nil
 }
 
 // CreatePool creates a pool for a specific pair.
 func (k Keeper) CreatePool(
-	ctx context.Context,
+	ctx sdk.Context,
 	pair string,
 	tradeLimitRatio sdk.Int, // integer with 6 decimals, 1_000_000 means 1.0
 	quoteAssetReserve sdk.Int,
 	baseAssetReserve sdk.Int,
 ) error {
-	pool := &ammv1.Pool{
+	store := ctx.KVStore(k.storeKey)
+
+	pool := &types.Pool{
 		Pair:              pair,
 		TradeLimitRatio:   tradeLimitRatio.String(),
 		QuoteAssetReserve: quoteAssetReserve.String(),
 		BaseAssetReserve:  baseAssetReserve.String(),
 	}
 
-	return k.store.PoolTable().Save(ctx, pool)
+	bz, err := k.codec.Marshal(pool)
+	if err != nil {
+		return err
+	}
+
+	store.Set(types.GetPoolKey(pool.Pair), bz)
+
+	return nil
 }
 
 // ExistsPool returns true if pool exists, false if not.
-func (k Keeper) ExistsPool(ctx context.Context, pair string) bool {
-	has, _ := k.store.PoolTable().Has(ctx, pair)
+func (k Keeper) ExistsPool(ctx sdk.Context, pair string) bool {
+	store := k.getStore(ctx)
+	return store.Has(types.GetPoolKey(pair))
+}
 
-	return has
+func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
+	return ctx.KVStore(k.storeKey)
 }

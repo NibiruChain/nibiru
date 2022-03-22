@@ -1,59 +1,64 @@
 package keeper
 
 import (
-	"context"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/orm/model/ormdb"
-	"github.com/cosmos/cosmos-sdk/orm/model/ormtable"
-	"github.com/cosmos/cosmos-sdk/orm/testing/ormtest"
+	"github.com/cosmos/cosmos-sdk/codec"
+	types2 "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/capability/types"
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmdb "github.com/tendermint/tm-db"
 
-	ammv1 "github.com/MatrixDao/matrix/api/amm"
 	ammtypes "github.com/MatrixDao/matrix/x/amm/types"
 )
 
 const UsdmPair = "BTC:USDM"
 
-func AmmKeeper(t *testing.T) Keeper {
-	db := ormtest.NewMemoryBackend()
+func AmmKeeper(t *testing.T) (Keeper, sdktypes.Context) {
+	storeKey := sdktypes.NewKVStoreKey(ammtypes.StoreKey)
+	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
-	moduleDB, err := ormdb.NewModuleDB(PoolSchema, ormdb.ModuleDBOptions{
-		GetBackend: func(ctx context.Context) (ormtable.Backend, error) {
-			return db, nil
-		},
-		GetReadBackend: func(ctx context.Context) (ormtable.ReadBackend, error) {
-			return db, nil
-		},
-	})
-	require.NoError(t, err)
+	db := tmdb.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db)
+	stateStore.MountStoreWithDB(storeKey, sdktypes.StoreTypeIAVL, db)
+	stateStore.MountStoreWithDB(memStoreKey, sdktypes.StoreTypeMemory, nil)
+	require.NoError(t, stateStore.LoadLatestVersion())
 
-	ammStore, err := ammv1.NewAmmStore(moduleDB)
-	require.NoError(t, err)
+	registry := types2.NewInterfaceRegistry()
 
-	return NewKeeper(ammStore)
+	k := NewKeeper(
+		codec.NewProtoCodec(registry),
+		storeKey,
+	)
+
+	ctx := sdktypes.NewContext(stateStore, tmproto.Header{}, false, nil)
+
+	return k, ctx
 }
 
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
 		pair        string
-		direction   ammv1.Direction
+		direction   ammtypes.Direction
 		quoteAmount sdktypes.Int
 		error       error
 	}{
 		{
 			"pair not supported",
 			"BTC:UST",
-			ammv1.Direction_ADD_TO_AMM,
+			ammtypes.Direction_ADD_TO_AMM,
 			sdktypes.NewInt(10),
 			ammtypes.ErrPairNotSupported,
 		},
 		{
 			"quote input bigger than reserve ratio",
 			UsdmPair,
-			ammv1.Direction_REMOVE_FROM_AMM,
+			ammtypes.Direction_REMOVE_FROM_AMM,
 			sdktypes.NewInt(10_000_000),
 			ammtypes.ErrOvertradingLimit,
 		},
@@ -62,10 +67,10 @@ func TestSwapInput_Errors(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper := AmmKeeper(t)
+			keeper, ctx := AmmKeeper(t)
 
 			err := keeper.CreatePool(
-				context.Background(),
+				ctx,
 				UsdmPair,
 				sdktypes.NewInt(900_000),    // 0.9 ratio
 				sdktypes.NewInt(10_000_000), // 10
@@ -73,7 +78,7 @@ func TestSwapInput_Errors(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			_, err = keeper.SwapInput(tc.pair, tc.direction, tc.quoteAmount)
+			_, err = keeper.SwapInput(ctx, tc.pair, tc.direction, tc.quoteAmount)
 			require.EqualError(t, err, tc.error.Error())
 		})
 	}
@@ -82,13 +87,13 @@ func TestSwapInput_Errors(t *testing.T) {
 func TestSwapInput_HappyPath(t *testing.T) {
 	tests := []struct {
 		name        string
-		direction   ammv1.Direction
+		direction   ammtypes.Direction
 		quoteAmount sdktypes.Int
 		resp        sdktypes.Int
 	}{
 		{
 			"quote amount == 0",
-			ammv1.Direction_ADD_TO_AMM,
+			ammtypes.Direction_ADD_TO_AMM,
 			sdktypes.NewInt(0),
 			sdktypes.ZeroInt(),
 		},
@@ -97,10 +102,10 @@ func TestSwapInput_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper := AmmKeeper(t)
+			keeper, ctx := AmmKeeper(t)
 
 			err := keeper.CreatePool(
-				context.Background(),
+				ctx,
 				UsdmPair,
 				sdktypes.NewInt(900_000),    // 0.9 ratio
 				sdktypes.NewInt(10_000_000), // 10 tokens
@@ -108,7 +113,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			res, err := keeper.SwapInput(UsdmPair, tc.direction, tc.quoteAmount)
+			res, err := keeper.SwapInput(ctx, UsdmPair, tc.direction, tc.quoteAmount)
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)
 		})
@@ -116,10 +121,10 @@ func TestSwapInput_HappyPath(t *testing.T) {
 }
 
 func TestCreatePool(t *testing.T) {
-	ammKeeper := AmmKeeper(t)
+	ammKeeper, ctx := AmmKeeper(t)
 
 	err := ammKeeper.CreatePool(
-		context.Background(),
+		ctx,
 		UsdmPair,
 		sdktypes.NewInt(900_000),    // 0.9 ratio
 		sdktypes.NewInt(10_000_000), // 10 tokens
@@ -127,9 +132,9 @@ func TestCreatePool(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	exists := ammKeeper.ExistsPool(context.Background(), UsdmPair)
+	exists := ammKeeper.ExistsPool(ctx, UsdmPair)
 	require.True(t, exists)
 
-	notExist := ammKeeper.ExistsPool(context.Background(), "BTC:OTHER")
+	notExist := ammKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }
