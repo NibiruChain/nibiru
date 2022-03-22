@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	testkeeper "github.com/MatrixDao/dex/testutil/keeper"
-	"github.com/MatrixDao/dex/x/dex/types"
+	testkeeper "github.com/MatrixDao/matrix/testutil/keeper"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

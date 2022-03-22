@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/MatrixDao/dex/x/dex/types"
+	"github.com/MatrixDao/matrix/x/dex/types"
 )
 
 type msgServer struct {

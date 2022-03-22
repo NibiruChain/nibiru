@@ -10,7 +10,7 @@ import (
 	// "github.com/cosmos/cosmos-sdk/client/flags"
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/MatrixDao/dex/x/dex/types"
+	"github.com/MatrixDao/matrix/x/dex/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

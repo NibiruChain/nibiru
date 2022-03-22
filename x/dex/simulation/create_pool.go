@@ -3,8 +3,8 @@ package simulation
 import (
 	"math/rand"
 
-	"github.com/MatrixDao/dex/x/dex/keeper"
-	"github.com/MatrixDao/dex/x/dex/types"
+	"github.com/MatrixDao/matrix/x/dex/keeper"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"

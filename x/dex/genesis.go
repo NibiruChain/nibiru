@@ -1,8 +1,8 @@
 package dex
 
 import (
-	"github.com/MatrixDao/dex/x/dex/keeper"
-	"github.com/MatrixDao/dex/x/dex/types"
+	"github.com/MatrixDao/matrix/x/dex/keeper"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
