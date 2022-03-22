@@ -3,7 +3,7 @@ package cli
 import (
 	"context"
 
-	"github.com/MatrixDao/dex/x/dex/types"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"

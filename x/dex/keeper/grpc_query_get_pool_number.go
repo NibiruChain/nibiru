@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/MatrixDao/dex/x/dex/types"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc/codes"

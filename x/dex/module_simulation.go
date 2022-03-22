@@ -3,9 +3,9 @@ package dex
 import (
 	"math/rand"
 
-	"github.com/MatrixDao/dex/testutil/sample"
-	dexsimulation "github.com/MatrixDao/dex/x/dex/simulation"
-	"github.com/MatrixDao/dex/x/dex/types"
+	"github.com/MatrixDao/matrix/testutil/sample"
+	dexsimulation "github.com/MatrixDao/matrix/x/dex/simulation"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"

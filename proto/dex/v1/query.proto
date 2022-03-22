@@ -13,16 +13,16 @@ option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/MatrixDao/dex/dex/params";
+    option (google.api.http).get = "/MatrixDao/matrix/dex/params";
   }
   // Queries a list of GetPoolNumber items.
 	rpc GetPoolNumber(QueryGetPoolNumberRequest) returns (QueryGetPoolNumberResponse) {
-		option (google.api.http).get = "/MatrixDao/dex/dex/get_pool_number";
+		option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool_number";
 	}
 
 // Queries a list of GetPool items.
 	rpc GetPool(QueryGetPoolRequest) returns (QueryGetPoolResponse) {
-		option (google.api.http).get = "/MatrixDao/dex/dex/get_pool";
+		option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool";
 	}
 
 }

@@ -3,10 +3,10 @@ package dex_test
 import (
 	"testing"
 
-	keepertest "github.com/MatrixDao/dex/testutil/keeper"
-	"github.com/MatrixDao/dex/testutil/nullify"
-	"github.com/MatrixDao/dex/x/dex"
-	"github.com/MatrixDao/dex/x/dex/types"
+	keepertest "github.com/MatrixDao/matrix/testutil/keeper"
+	"github.com/MatrixDao/matrix/testutil/nullify"
+	"github.com/MatrixDao/matrix/x/dex"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/stretchr/testify/require"
 )
 
