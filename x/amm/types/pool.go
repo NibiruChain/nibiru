@@ -65,7 +65,7 @@ func GetBaseAmountByQuoteAmount(dir Direction, pool *Pool, quoteAmount sdk.Int) 
 	}
 
 	if quoteAssetAfter.Equal(sdk.ZeroInt()) {
-		return sdk.Int{}, fmt.Errorf("quote asset after is zero")
+		return sdk.Int{}, ErrQuoteReserveAtZero
 	}
 
 	return sdk.Int{}, nil

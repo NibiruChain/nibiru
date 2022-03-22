@@ -61,3 +61,35 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 		})
 	}
 }
+
+func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
+	tests := []struct {
+		name          string
+		direction     Direction
+		quoteAmount   sdk.Int
+		expectedError error
+	}{
+		{
+			"quote after is zero",
+			Direction_REMOVE_FROM_AMM,
+			sdk.NewInt(10_000_000),
+			ErrQuoteReserveAtZero,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+
+			pool := NewPool(
+				"BTC:USDM",
+				sdk.NewInt(900_000),    // 0.9
+				sdk.NewInt(10_000_000), // 10
+				sdk.NewInt(5_000_000),  // 5
+			)
+
+			_, err := GetBaseAmountByQuoteAmount(tc.direction, pool, tc.quoteAmount)
+			require.Equal(t, tc.expectedError, err)
+		})
+	}
+}
