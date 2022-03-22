@@ -24,13 +24,11 @@
 
 Matrix presents decentralized, over-collateralized and capital-efficient reserve protocol using [Cosmos SDK](https://github.com/cosmos/cosmos-sdk). Matrix enables liquid, capital efficient convertibility between stable assets and collateral using front-running resistant oracle to achieve the swapping.
 
-TODO: Update installation instructions  
-
 To develop on the chain locally, simply run `make localnet` and open another terminal.  
 
 ----
 
-## Installation
+## Requirements
 
 Recommended minimum specs
 - 2CPU
@@ -38,64 +36,8 @@ Recommended minimum specs
 - 100GB SSD
 - Ubuntu 20.04 LTS
 
-### Install Go (1.16+)
 
-```
-snap install --classic go
-```
-
-### Install Git
-
-```
-sudo apt install -y git gcc make
-```
-
-### Set the environment
-```
-sudo nano $HOME/.profile
-```
-Add the following 2 lines at the end of the file.
-```
-GOPATH=$HOME/go
-PATH=$GOPATH/bin:$PATH
-```
-Save the file and exit the editor.
-```
-source $HOME/.profile
-```
-
-### Clone the Matrix Repository
-
-```
-git clone https://github.com/MatrixDAO/matrix
-cd matrix
-git checkout v0.0.1
-make install
-```
-
-### Other recommended steps
-
-- Increase number of open files limit
-- Set your firewall rules
-
-### Upgrade
-
-The scheduled mainnet upgrade to `matrix-2` is planned for 
-
-```
-cd matrix
-git fetch tags
-git checkout v0.0.1
-make install
-```
-
-## Testnet
-
-One the Matrix binary has been installed, for further information on joining the testnet, head over to the [testnet repo](https://github.com/MatrixDao/Networks/tree/main/Testnet).
-
-## Mainnet
-
-One the Matrix binary has been installed, for further information on joining mainnet, head over to the [mainnet repo](https://github.com/MatrixDao/Networks/tree/main/Mainnet).
+Installation instructions can be found [here](./INSTALL.md)
 
 ## Docs
 
