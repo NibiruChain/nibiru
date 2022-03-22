@@ -7,22 +7,22 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
 
-option go_package = "github.com/MatrixDAO/matrix/x/dex/types";
+option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
 // Query defines the gRPC querier service.
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/MatrixDAO/dex/dex/params";
+    option (google.api.http).get = "/MatrixDao/dex/dex/params";
   }
   // Queries a list of GetPoolNumber items.
 	rpc GetPoolNumber(QueryGetPoolNumberRequest) returns (QueryGetPoolNumberResponse) {
-		option (google.api.http).get = "/MatrixDAO/dex/dex/get_pool_number";
+		option (google.api.http).get = "/MatrixDao/dex/dex/get_pool_number";
 	}
 
 // Queries a list of GetPool items.
 	rpc GetPool(QueryGetPoolRequest) returns (QueryGetPoolResponse) {
-		option (google.api.http).get = "/MatrixDAO/dex/dex/get_pool";
+		option (google.api.http).get = "/MatrixDao/dex/dex/get_pool";
 	}
 
 }
