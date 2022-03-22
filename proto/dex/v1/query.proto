@@ -1,0 +1,53 @@
+syntax = "proto3";
+package matrix.dex.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "dex/v1/params.proto";
+import "dex/v1/pool.proto";
+
+option go_package = "github.com/MatrixDAO/matrix/x/dex/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/MatrixDAO/dex/dex/params";
+  }
+  // Queries a list of GetPoolNumber items.
+	rpc GetPoolNumber(QueryGetPoolNumberRequest) returns (QueryGetPoolNumberResponse) {
+		option (google.api.http).get = "/MatrixDAO/dex/dex/get_pool_number";
+	}
+
+// Queries a list of GetPool items.
+	rpc GetPool(QueryGetPoolRequest) returns (QueryGetPoolResponse) {
+		option (google.api.http).get = "/MatrixDAO/dex/dex/get_pool";
+	}
+
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetPoolNumberRequest {
+}
+
+message QueryGetPoolNumberResponse {
+  uint64 poolId = 1;
+}
+
+message QueryGetPoolRequest {
+  uint64 poolId = 1;
+}
+
+message QueryGetPoolResponse {
+  Pool pool = 1;
+}
+

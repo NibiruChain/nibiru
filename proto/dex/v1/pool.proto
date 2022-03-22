@@ -1,0 +1,30 @@
+syntax = "proto3";
+package matrix.dex.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/MatrixDAO/matrix/x/dex/types";
+
+message PoolParams {
+  string swapFee = 1;
+  string exitFee = 2;
+}
+
+message PoolAsset {
+  // Coins we are talking about,
+  // the denomination must be unique amongst all PoolAssets for this pool.
+  cosmos.base.v1beta1.Coin token = 1;
+}
+
+message Pool {
+  uint64 id = 1;
+
+  string address = 2;
+
+  PoolParams poolParams = 3;
+
+  // These are assumed to be sorted by denomiation.
+  // They contain the pool asset and the information about the weight
+  repeated PoolAsset poolAssets = 4;
+}
