@@ -92,4 +92,4 @@ fi
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
 echo_info "Log file is located at $CHAIN_DIR/$CHAIN_ID.log"
-$BINARY --home $CHAIN_DIR/$CHAIN_ID start --pruning=nothing --grpc.address="0.0.0.0:$GRPC_PORT" --mode validator
+$BINARY --home $CHAIN_DIR/$CHAIN_ID start --pruning=nothing --grpc.address="0.0.0.0:$GRPC_PORT"
