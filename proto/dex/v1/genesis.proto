@@ -3,7 +3,7 @@ package matrix.dex.v1;
 
 import "dex/v1/params.proto";
 
-option go_package = "github.com/MatrixDAO/matrix/x/dex/types";
+option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
 // GenesisState defines the dex module's genesis state.
 message GenesisState {
