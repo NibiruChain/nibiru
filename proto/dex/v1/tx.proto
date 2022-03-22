@@ -1,0 +1,25 @@
+syntax = "proto3";
+package matrix.dex.v1;
+
+import "dex/v1/params.proto";
+import "dex/v1/pool.proto";
+
+option go_package = "github.com/MatrixDAO/matrix/x/dex/types";
+
+// Msg defines the Msg service.
+service Msg {
+  // Used to create a pool
+  rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse);
+}
+
+message MsgCreatePool {
+  string creator = 1;
+
+  PoolParams poolParams = 2;
+
+  repeated PoolAsset poolAssets = 3;
+}
+
+message MsgCreatePoolResponse {
+  string poolId = 1;
+}
