@@ -1,19 +1,19 @@
 syntax = "proto3";
-package matrix.derivatives.v1;
+package MatrixDao.stablecoin.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "derivatives/state.proto";
+import "stablecoin/params.proto";
 // this line is used by starport scaffolding # 1
 
-option go_package = "github.com/MatrixDao/matrix/x/derivatives/types";
+option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 
 // Query defines the gRPC querier service.
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/MatrixDao/matrix/derivatives/params";
+    option (google.api.http).get = "/MatrixDao/matrix/stablecoin/params";
   }
   // this line is used by starport scaffolding # 2
 }

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package MatrixDao.stablecoin.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+}
