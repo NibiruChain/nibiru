@@ -18,8 +18,8 @@ func TestGenesis(t *testing.T) {
 	}
 
 	k, ctx := keepertest.PricefeedKeeper(t)
-	pricefeed.InitGenesis(ctx, *k, genesisState)
-	got := pricefeed.ExportGenesis(ctx, *k)
+	pricefeed.InitGenesis(ctx, k, genesisState)
+	got := pricefeed.ExportGenesis(ctx, k)
 	require.NotNil(t, got)
 
 	nullify.Fill(&genesisState)

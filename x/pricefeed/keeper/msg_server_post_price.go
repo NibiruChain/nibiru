@@ -21,6 +21,7 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice) (*t
 	}
 
 	_, err = k.SetPrice(ctx, from, msg.MarketID, msg.Price, msg.Expiry)
+
 	if err != nil {
 		return nil, err
 	}
