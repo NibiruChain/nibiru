@@ -36,12 +36,15 @@ func DexKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec, st
 		memStoreKey,
 		"DexParams",
 	)
+	accountKeeper, _ := AccountKeeper(t)
+	bankKeeper, _ := BankKeeper(t)
+
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		paramsSubspace,
-		nil,
-		nil,
+		accountKeeper,
+		bankKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
