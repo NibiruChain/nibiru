@@ -51,14 +51,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // SetNextPoolNumber sets next pool number
 func (k Keeper) SetNextPoolNumber(ctx sdk.Context, poolNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
-	k.Logger(ctx).Info(fmt.Sprintf("SetNextPoolNumber started: %d", poolNumber))
 	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: poolNumber})
-	k.Logger(ctx).Info(fmt.Sprintf("SetNextPoolNumber completed: %d", poolNumber))
 	store.Set(types.KeyNextGlobalPoolNumber, bz)
 }
 
-// GetNextPoolNumberAndIncrement returns the next pool number, and increments the corresponding state entry
-func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
+func (k Keeper) GetNextPoolNumber(ctx sdk.Context) uint64 {
 	var poolNumber uint64
 	store := ctx.KVStore(k.storeKey)
 
@@ -76,6 +73,12 @@ func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
 		poolNumber = val.GetValue()
 	}
 
+	return poolNumber
+}
+
+// GetNextPoolNumberAndIncrement returns the next pool number, and increments the corresponding state entry
+func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
+	poolNumber := k.GetNextPoolNumber(ctx)
 	k.SetNextPoolNumber(ctx, poolNumber+1)
 	return poolNumber
 }
@@ -99,7 +102,7 @@ func (k Keeper) NewPool(
 	poolParams types.PoolParams,
 	poolAssets []types.PoolAsset,
 ) (uint64, error) {
-	k.Logger(ctx).Error("Reached NewPool")
+	ctx.Logger().Error("Reached NewPool")
 	poolId := k.GetNextPoolNumberAndIncrement(ctx)
 	k.Logger(ctx).Info(fmt.Sprintf("Pool id is %d", poolId))
 	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
