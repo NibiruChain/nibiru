@@ -27,8 +27,8 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey sdk.StoreKey,
 	ps paramtypes.Subspace,
-
-	accountKeeper types.AccountKeeper, bankKeeper types.BankKeeper,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
