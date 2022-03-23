@@ -13,7 +13,6 @@ import (
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params: types.DefaultParams(),
-
 	}
 
 	k, ctx := keepertest.DexKeeper(t)
@@ -24,4 +23,5 @@ func TestGenesis(t *testing.T) {
 	nullify.Fill(&genesisState)
 	nullify.Fill(got)
 
+	require.Equal(t, genesisState, *got)
 }
