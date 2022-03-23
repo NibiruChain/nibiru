@@ -9,4 +9,6 @@ option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
+
+  uint64 startingPoolNumber = 1;
 }
