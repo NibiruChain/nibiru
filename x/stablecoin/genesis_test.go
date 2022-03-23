@@ -17,6 +17,8 @@ var (
 	coinsType = reflect.TypeOf(sdk.Coins{})
 )
 
+// Fill analyze all struct fields and slices with reflection.
+// Initialize the nil and empty slices, structs, and pointers.
 func Fill(x interface{}) interface{} {
 	v := reflect.Indirect(reflect.ValueOf(x))
 	switch v.Kind() {
