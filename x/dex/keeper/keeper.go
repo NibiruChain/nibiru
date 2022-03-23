@@ -16,7 +16,6 @@ type (
 	Keeper struct {
 		cdc        codec.BinaryCodec
 		storeKey   sdk.StoreKey
-		memKey     sdk.StoreKey
 		paramstore paramtypes.Subspace
 
 		accountKeeper types.AccountKeeper
@@ -26,8 +25,7 @@ type (
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey,
-	memKey sdk.StoreKey,
+	storeKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 
 	accountKeeper types.AccountKeeper, bankKeeper types.BankKeeper,
@@ -41,7 +39,6 @@ func NewKeeper(
 
 		cdc:           cdc,
 		storeKey:      storeKey,
-		memKey:        memKey,
 		paramstore:    ps,
 		accountKeeper: accountKeeper, bankKeeper: bankKeeper,
 	}
@@ -102,6 +99,7 @@ func (k Keeper) NewPool(
 	poolParams types.PoolParams,
 	poolAssets []types.PoolAsset,
 ) (uint64, error) {
+	k.Logger(ctx).Error("Reached NewPool")
 	poolId := k.GetNextPoolNumberAndIncrement(ctx)
 	k.Logger(ctx).Info(fmt.Sprintf("Pool id is %d", poolId))
 	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
