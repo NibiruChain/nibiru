@@ -43,11 +43,11 @@ func TestSetAndFetchPool(t *testing.T) {
 		PoolAssets: []types.PoolAsset{
 			types.PoolAsset{
 				Token:  sdk.NewCoin("token", sdk.NewInt(100)),
-				Weight: sdk.NewInt(0),
+				Weight: sdk.NewInt(50),
 			},
 			types.PoolAsset{
 				Token:  sdk.NewCoin("token", sdk.NewInt(100)),
-				Weight: sdk.NewInt(0),
+				Weight: sdk.NewInt(50),
 			},
 		},
 		TotalWeight: sdk.NewInt(100),
