@@ -42,6 +42,11 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 			sdk.NewInt(0),
 			sdk.NewInt(0),
 		},
+		{
+			"quote amount == 0",
+			sdk.NewInt(5_000_000),
+			sdk.NewInt(1_666_665),
+		},
 	}
 
 	for _, tc := range tests {
@@ -57,7 +62,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(Direction_ADD_TO_AMM, tc.quoteAmount)
 			require.NoError(t, err)
-			require.True(t, amount.Equal(tc.expectedBaseAmount))
+			require.True(t, amount.Equal(tc.expectedBaseAmount), "expected base: %s, got: %s", tc.expectedBaseAmount.String(), amount.String())
 		})
 	}
 }

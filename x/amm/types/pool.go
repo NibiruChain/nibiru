@@ -43,7 +43,7 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 		return sdk.ZeroInt(), nil
 	}
 
-	_, err := p.GetPoolBaseAssetReserveAsInt()
+	baseAssetReserve, err := p.GetPoolBaseAssetReserveAsInt()
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -53,21 +53,31 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 		return sdk.Int{}, err
 	}
 
-	//_ := sdk.NewDecFromIntWithPrec(baseAssetReserve, 6).
-	//	Mul(sdk.NewDecFromIntWithPrec(quoteAssetReserve, 6)) // x * y = k
+	invariant := quoteAssetReserve.ToDec().Mul(baseAssetReserve.ToDec()) // x * y = k
 
-	var quoteAssetAfter sdk.Int
+	var quoteAssetAfter sdk.Dec
 	if dir == Direction_ADD_TO_AMM {
-		quoteAssetAfter = quoteAssetReserve.Add(quoteAmount)
+		quoteAssetAfter = quoteAssetReserve.ToDec().Add(quoteAmount.ToDec())
 	} else {
-		quoteAssetAfter = quoteAssetReserve.Sub(quoteAmount)
+		quoteAssetAfter = quoteAssetReserve.ToDec().Sub(quoteAmount.ToDec())
 	}
 
-	if quoteAssetAfter.Equal(sdk.ZeroInt()) {
+	if quoteAssetAfter.Equal(sdk.ZeroDec()) {
 		return sdk.Int{}, ErrQuoteReserveAtZero
 	}
 
-	return sdk.Int{}, nil
+	baseAssetAfter := invariant.Quo(quoteAssetAfter)
+	baseAssetBought := baseAssetAfter.Sub(baseAssetReserve.ToDec()).Abs()
+
+	if !invariant.TruncateInt().Mod(quoteAssetAfter.TruncateInt()).Equal(sdk.ZeroInt()) {
+		if dir == Direction_ADD_TO_AMM {
+			baseAssetBought = baseAssetBought.Sub(sdk.OneDec())
+		} else {
+			baseAssetBought = baseAssetBought.Add(sdk.OneDec())
+		}
+	}
+
+	return baseAssetBought.TruncateInt(), nil
 }
 
 // GetPoolBaseAssetReserveAsInt returns the base asset reserve value from a pool as sdk.Int
