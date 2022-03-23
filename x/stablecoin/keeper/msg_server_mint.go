@@ -15,7 +15,7 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 		return nil, err
 	}
 
-	hasEnoughBalance, err := k.checkEnoughBalance(ctx, msg.Collateral, fromAddr)
+	hasEnoughBalance, err := k.CheckEnoughBalance(ctx, msg.Collateral, fromAddr)
 	if err != nil {
 		return nil, err
 	}
