@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	testkeeper "github.com/MatrixDao/matrix/testutil/keeper"
+	"github.com/MatrixDao/matrix/testutil/nullify"
+	"github.com/MatrixDao/matrix/x/dex/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,4 +29,37 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 
 	poolNumber = k.GetNextPoolNumber(ctx)
 	require.EqualValues(t, poolNumber, 201)
+}
+
+func TestSetAndFetchPool(t *testing.T) {
+	k, ctx, _, _ := testkeeper.DexKeeper(t)
+
+	pool := types.Pool{
+		Id: 150,
+		PoolParams: types.PoolParams{
+			SwapFee: sdk.NewDecWithPrec(3, 2),
+			ExitFee: sdk.NewDecWithPrec(3, 2),
+		},
+		PoolAssets: []types.PoolAsset{
+			types.PoolAsset{
+				Token:  sdk.NewCoin("token", sdk.NewInt(100)),
+				Weight: sdk.NewInt(0),
+			},
+			types.PoolAsset{
+				Token:  sdk.NewCoin("token", sdk.NewInt(100)),
+				Weight: sdk.NewInt(0),
+			},
+		},
+		TotalWeight: sdk.NewInt(100),
+	}
+
+	err := k.SetPool(ctx, pool)
+	require.NoError(t, err)
+
+	retrievedPool, err := k.FetchPool(ctx, 150)
+
+	nullify.Fill(&pool)
+	nullify.Fill(retrievedPool)
+
+	require.Equal(t, pool, *retrievedPool)
 }
