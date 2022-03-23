@@ -14,7 +14,9 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams() Params {
-	return Params{}
+	return Params{
+		StartingPoolNumber: 1,
+	}
 }
 
 // DefaultParams returns a default set of parameters
