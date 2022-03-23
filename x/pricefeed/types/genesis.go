@@ -14,6 +14,14 @@ func DefaultGenesis() *GenesisState {
 	}
 }
 
+// NewGenesisState creates a new genesis state for the pricefeed module
+func NewGenesisState(p Params, pp []PostedPrice) *GenesisState {
+	return &GenesisState{
+		Params:       p,
+		PostedPrices: pp,
+	}
+}
+
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {

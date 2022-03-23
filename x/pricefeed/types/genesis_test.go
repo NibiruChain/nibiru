@@ -1,31 +1,73 @@
-package types_test
+package types
 
 import (
 	"testing"
+	"time"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	//keepertest "github.com/MatrixDao/matrix/testutil/keeper"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
+	//_, ctx := keepertest.PricefeedKeeper(t)
+	mockPrivKey := tmtypes.NewMockPV()
+	pubkey, err := mockPrivKey.GetPubKey(nil)
+	require.NoError(t, err)
+	addr := sdk.AccAddress(pubkey.Address())
+	now := time.Now()
+
 	for _, tc := range []struct {
 		desc     string
-		genState *types.GenesisState
+		genState *GenesisState
 		valid    bool
 	}{
 		{
 			desc:     "default is valid",
-			genState: types.DefaultGenesis(),
+			genState: DefaultGenesis(),
 			valid:    true,
 		},
 		{
 			desc:     "valid genesis state",
-			genState: &types.GenesisState{
+			genState: &GenesisState{
 
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
+		{
+			desc: "dup market param",
+			genState: NewGenesisState(
+				NewParams([]Market{
+					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
+					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
+				}),
+				[]PostedPrice{NewPostedPrice("xrp", addr, sdk.OneDec(), now)},
+			),
+			valid: false,
+		},
+		{
+			desc: "invalid posted price",
+			genState: NewGenesisState(
+				NewParams([]Market{}),
+				[]PostedPrice{NewPostedPrice("xrp", nil, sdk.OneDec(), now)},
+			),
+			valid: false,
+		},
+		{
+			desc: "duplicated posted price",
+			genState: NewGenesisState(
+				NewParams([]Market{}),
+				[]PostedPrice{
+					NewPostedPrice("xrp", addr, sdk.OneDec(), now),
+					NewPostedPrice("xrp", addr, sdk.OneDec(), now),
+				},
+			),
+			valid: false,
+		},
+
 		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
