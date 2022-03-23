@@ -55,7 +55,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				sdk.NewInt(5_000_000),        // 5
 			)
 
-			amount, err := GetBaseAmountByQuoteAmount(Direction_ADD_TO_AMM, pool, tc.quoteAmount)
+			amount, err := pool.GetBaseAmountByQuoteAmount(Direction_ADD_TO_AMM, tc.quoteAmount)
 			require.NoError(t, err)
 			require.True(t, amount.Equal(tc.expectedBaseAmount))
 		})
@@ -88,7 +88,7 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 				sdk.NewInt(5_000_000),        // 5
 			)
 
-			_, err := GetBaseAmountByQuoteAmount(tc.direction, pool, tc.quoteAmount)
+			_, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
 			require.Equal(t, tc.expectedError, err)
 		})
 	}

@@ -38,17 +38,17 @@ func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Int) (bool, error) {
 }
 
 // GetBaseAmountByQuoteAmount returns the amount that you will get by specific quote amount
-func GetBaseAmountByQuoteAmount(dir Direction, pool *Pool, quoteAmount sdk.Int) (sdk.Int, error) {
+func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (sdk.Int, error) {
 	if quoteAmount.IsZero() {
 		return sdk.ZeroInt(), nil
 	}
 
-	_, err := GetPoolBaseAssetReserveAsInt(pool)
+	_, err := p.GetPoolBaseAssetReserveAsInt()
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	quoteAssetReserve, err := GetPoolQuoteAssetReserveAsInt(pool)
+	quoteAssetReserve, err := p.GetPoolQuoteAssetReserveAsInt()
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -71,20 +71,20 @@ func GetBaseAmountByQuoteAmount(dir Direction, pool *Pool, quoteAmount sdk.Int) 
 }
 
 // GetPoolBaseAssetReserveAsInt returns the base asset reserve value from a pool as sdk.Int
-func GetPoolBaseAssetReserveAsInt(pool *Pool) (sdk.Int, error) {
-	baseAssetReserve, ok := sdk.NewIntFromString(pool.BaseAssetReserve)
+func (p *Pool) GetPoolBaseAssetReserveAsInt() (sdk.Int, error) {
+	baseAssetReserve, ok := sdk.NewIntFromString(p.BaseAssetReserve)
 	if !ok {
-		return sdk.Int{}, fmt.Errorf("error with pool base asset reserve value: %s", pool.BaseAssetReserve)
+		return sdk.Int{}, fmt.Errorf("error with pool base asset reserve value: %s", p.BaseAssetReserve)
 	}
 
 	return baseAssetReserve, nil
 }
 
 // GetPoolQuoteAssetReserveAsInt returns the quote asset reserve value from pool as sdk.Int
-func GetPoolQuoteAssetReserveAsInt(pool *Pool) (sdk.Int, error) {
-	quoteAssetReserve, ok := sdk.NewIntFromString(pool.QuoteAssetReserve)
+func (p *Pool) GetPoolQuoteAssetReserveAsInt() (sdk.Int, error) {
+	quoteAssetReserve, ok := sdk.NewIntFromString(p.QuoteAssetReserve)
 	if !ok {
-		return sdk.Int{}, fmt.Errorf("error with pool quote asset reserve value: %s", pool.QuoteAssetReserve)
+		return sdk.Int{}, fmt.Errorf("error with pool quote asset reserve value: %s", p.QuoteAssetReserve)
 	}
 
 	return quoteAssetReserve, nil
