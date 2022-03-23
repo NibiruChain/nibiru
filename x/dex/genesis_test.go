@@ -15,7 +15,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx := keepertest.DexKeeper(t)
+	k, ctx, _, _ := keepertest.DexKeeper(t)
 	dex.InitGenesis(ctx, *k, genesisState)
 	got := dex.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)
