@@ -10,14 +10,13 @@ import (
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
-	k.SetNextPoolNumber(ctx, 1)
+	k.SetNextPoolNumber(ctx, uint64(genState.Params.StartingPoolNumber))
 }
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
-
 
 	return genesis
 }
