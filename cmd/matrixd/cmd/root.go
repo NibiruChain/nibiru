@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"github.com/MatrixDao/matrix/app"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,6 +13,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/MatrixDao/matrix/app"
+	dexcmd "github.com/MatrixDao/matrix/x/dex/client/cli"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -50,7 +51,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithViper("") // In simapp, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
-		Use:   "simd",
+		Use:   "matrixd",
 		Short: "simulation app",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
@@ -190,6 +191,7 @@ func queryCommand() *cobra.Command {
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
+		dexcmd.GetQueryCmd(),
 	)
 
 	simapp.ModuleBasics.AddQueryCommands(cmd)
@@ -216,6 +218,7 @@ func txCommand() *cobra.Command {
 		authcmd.GetBroadcastCommand(),
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
+		dexcmd.GetTxCmd(),
 	)
 
 	simapp.ModuleBasics.AddTxCommands(cmd)
