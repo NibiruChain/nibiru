@@ -83,6 +83,20 @@ func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
 	return poolNumber
 }
 
+func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (*types.Pool, error) {
+	store := ctx.KVStore(k.storeKey)
+	poolKey := types.GetKeyPrefixPools(poolId)
+	bz := store.Get(poolKey)
+
+	var pool types.Pool
+	err := pool.Unmarshal(bz)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pool, nil
+}
+
 func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) error {
 	bz, err := pool.Marshal()
 	if err != nil {
