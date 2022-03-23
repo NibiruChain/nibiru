@@ -10,9 +10,9 @@ import (
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	pool := NewPool(
 		"BTC:USDM",
-		sdk.NewInt(900_000),    // 0.9
-		sdk.NewInt(10_000_000), // 10
-		sdk.NewInt(10_000_000), // 10
+		sdk.MustNewDecFromStr("0.9"), // 0.9
+		sdk.NewInt(10_000_000),       // 10
+		sdk.NewInt(10_000_000),       // 10
 	)
 
 	// less that max ratio
@@ -50,9 +50,9 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 
 			pool := NewPool(
 				"BTC:USDM",
-				sdk.NewInt(900_000),    // 0.9
-				sdk.NewInt(10_000_000), // 10
-				sdk.NewInt(5_000_000),  // 5
+				sdk.MustNewDecFromStr("0.9"), // 0.9
+				sdk.NewInt(10_000_000),       // 10
+				sdk.NewInt(5_000_000),        // 5
 			)
 
 			amount, err := GetBaseAmountByQuoteAmount(Direction_ADD_TO_AMM, pool, tc.quoteAmount)
@@ -83,9 +83,9 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 
 			pool := NewPool(
 				"BTC:USDM",
-				sdk.NewInt(900_000),    // 0.9
-				sdk.NewInt(10_000_000), // 10
-				sdk.NewInt(5_000_000),  // 5
+				sdk.MustNewDecFromStr("0.9"), // 0.9
+				sdk.NewInt(10_000_000),       // 10
+				sdk.NewInt(5_000_000),        // 5
 			)
 
 			_, err := GetBaseAmountByQuoteAmount(tc.direction, pool, tc.quoteAmount)

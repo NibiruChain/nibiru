@@ -8,7 +8,7 @@ import (
 
 func NewPool(
 	pair string,
-	tradeLimitRatio sdk.Int,
+	tradeLimitRatio sdk.Dec,
 	quoteAssetReserve sdk.Int,
 	baseAssetReserve sdk.Int,
 ) *Pool {
@@ -29,13 +29,12 @@ func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Int) (bool, error) {
 			p.QuoteAssetReserve)
 	}
 
-	tradeLimitRatio, ok := sdk.NewIntFromString(p.TradeLimitRatio)
-	if !ok {
+	tradeLimitRatio, err := sdk.NewDecFromStr(p.TradeLimitRatio)
+	if err != nil {
 		return false, fmt.Errorf("error with pool trade limit ratio value: %s", p.TradeLimitRatio)
 	}
 
-	tradeLimitRatioDec := sdk.NewDecFromIntWithPrec(tradeLimitRatio, 6)
-	return quoteAssetReserve.ToDec().Mul(tradeLimitRatioDec).GTE(quoteAmount.ToDec()), nil
+	return quoteAssetReserve.ToDec().Mul(tradeLimitRatio).GTE(quoteAmount.ToDec()), nil
 }
 
 // GetBaseAmountByQuoteAmount returns the amount that you will get by specific quote amount
@@ -54,7 +53,7 @@ func GetBaseAmountByQuoteAmount(dir Direction, pool *Pool, quoteAmount sdk.Int) 
 		return sdk.Int{}, err
 	}
 
-	//invariant := sdk.NewDecFromIntWithPrec(baseAssetReserve, 6).
+	//_ := sdk.NewDecFromIntWithPrec(baseAssetReserve, 6).
 	//	Mul(sdk.NewDecFromIntWithPrec(quoteAssetReserve, 6)) // x * y = k
 
 	var quoteAssetAfter sdk.Int

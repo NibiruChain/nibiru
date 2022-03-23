@@ -72,9 +72,9 @@ func TestSwapInput_Errors(t *testing.T) {
 			err := keeper.CreatePool(
 				ctx,
 				UsdmPair,
-				sdktypes.NewInt(900_000),    // 0.9 ratio
-				sdktypes.NewInt(10_000_000), // 10
-				sdktypes.NewInt(5_000_000),  // 5
+				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
+				sdktypes.NewInt(10_000_000),       // 10
+				sdktypes.NewInt(5_000_000),        // 5
 			)
 			require.NoError(t, err)
 
@@ -107,9 +107,9 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			err := keeper.CreatePool(
 				ctx,
 				UsdmPair,
-				sdktypes.NewInt(900_000),    // 0.9 ratio
-				sdktypes.NewInt(10_000_000), // 10 tokens
-				sdktypes.NewInt(5_000_000),  // 5 tokens
+				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
+				sdktypes.NewInt(10_000_000),       // 10 tokens
+				sdktypes.NewInt(5_000_000),        // 5 tokens
 			)
 			require.NoError(t, err)
 
@@ -126,9 +126,9 @@ func TestCreatePool(t *testing.T) {
 	err := ammKeeper.CreatePool(
 		ctx,
 		UsdmPair,
-		sdktypes.NewInt(900_000),    // 0.9 ratio
-		sdktypes.NewInt(10_000_000), // 10 tokens
-		sdktypes.NewInt(5_000_000),  // 5 tokens
+		sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
+		sdktypes.NewInt(10_000_000),       // 10 tokens
+		sdktypes.NewInt(5_000_000),        // 5 tokens
 	)
 	require.NoError(t, err)
 

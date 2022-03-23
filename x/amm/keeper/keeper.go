@@ -73,7 +73,7 @@ func (k Keeper) getPool(ctx sdk.Context, pair string) (*types.Pool, error) {
 func (k Keeper) CreatePool(
 	ctx sdk.Context,
 	pair string,
-	tradeLimitRatio sdk.Int, // integer with 6 decimals, 1_000_000 means 1.0
+	tradeLimitRatio sdk.Dec, // integer with 6 decimals, 1_000_000 means 1.0
 	quoteAssetReserve sdk.Int,
 	baseAssetReserve sdk.Int,
 ) error {
