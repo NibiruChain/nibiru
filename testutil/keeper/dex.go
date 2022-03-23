@@ -37,7 +37,7 @@ func DexKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec, st
 		"DexParams",
 	)
 	accountKeeper, _ := AccountKeeper(t)
-	bankKeeper, _ := BankKeeper(t)
+	bankKeeper, _ := BankKeeper(t, accountKeeper)
 
 	k := keeper.NewKeeper(
 		cdc,
