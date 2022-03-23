@@ -3,6 +3,7 @@ package matrix.dex.v1;
 
 import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
@@ -15,9 +16,9 @@ service Msg {
 message MsgCreatePool {
   string creator = 1;
 
-  PoolParams poolParams = 2;
+  PoolParams poolParams = 2 [(gogoproto.moretags) = "yaml:\"pool_params\""];
 
-  repeated PoolAsset poolAssets = 3;
+  repeated PoolAsset poolAssets = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgCreatePoolResponse {
