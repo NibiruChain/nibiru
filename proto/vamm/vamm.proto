@@ -1,6 +1,6 @@
 syntax="proto3";
 
-package matrix.amm.v1;
+package matrix.vamm.v1;
 
 option go_package = "github.com/MatrixDao/matrix/x/vamm/types";
 
