@@ -1,0 +1,19 @@
+syntax="proto3";
+
+package matrix.vamm.v1;
+
+option go_package = "github.com/MatrixDao/matrix/x/vamm/types";
+
+enum Direction {
+  UNDEFINED = 0;
+  ADD_TO_AMM = 1;
+  REMOVE_FROM_AMM = 2;
+}
+
+message Pool {
+  string pair = 1;
+  // ratio applied to reserves in order not to over trade
+  string trade_limit_ratio = 2;
+  string quote_asset_reserve = 3;
+  string base_asset_reserve = 4;
+}
