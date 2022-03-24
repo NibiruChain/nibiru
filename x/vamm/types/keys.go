@@ -1,7 +1,7 @@
 package types
 
 const (
-	ModuleName = "amm"
+	ModuleName = "vamm"
 	StoreKey   = "ammkey"
 )
 

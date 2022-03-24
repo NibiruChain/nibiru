@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/MatrixDao/matrix/x/amm/types"
+	"github.com/MatrixDao/matrix/x/vamm/types"
 )
 
 func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {

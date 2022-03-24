@@ -2,7 +2,7 @@ syntax="proto3";
 
 package matrix.amm.v1;
 
-option go_package = "github.com/MatrixDao/matrix/x/amm/types";
+option go_package = "github.com/MatrixDao/matrix/x/vamm/types";
 
 enum Direction {
   UNDEFINED = 0;

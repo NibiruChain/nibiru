@@ -13,7 +13,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
-	ammtypes "github.com/MatrixDao/matrix/x/amm/types"
+	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
 )
 
 const UsdmPair = "BTC:USDM"
