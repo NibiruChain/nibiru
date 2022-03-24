@@ -53,5 +53,5 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 		panic(err)
 	}
 
-	return &types.MsgMintResponse{Amount: newCoin}, nil
+	return &types.MsgMintResponse{Stable: newCoin}, nil
 }
