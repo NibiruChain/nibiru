@@ -27,10 +27,11 @@ echo_success () {
 
 
 echo_info "Building from source..."
-if make build; then 
+if make build; then
   echo_success "Successfully built binary"
 else
   echo_error "Could not build binary. Failed to make build"
+  exit 1
 fi
 
 # Set localnet settings
@@ -54,8 +55,8 @@ rm -rf $CHAIN_DIR/$CHAIN_ID
 
 # Add directory for chain, exit if error
 if ! mkdir -p $CHAIN_DIR/$CHAIN_ID 2>/dev/null; then
-    echo_error "Failed to create chain folder. Aborting..."
-    exit 1
+  echo_error "Failed to create chain folder. Aborting..."
+  exit 1
 fi
 
 # Initialize matrixd with "localnet" chain id
@@ -69,18 +70,18 @@ fi
 
 # Initialize matrixd with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY --home $CHAIN_DIR/$CHAIN_ID init test --chain-id=$CHAIN_ID; then
+if $BINARY --home $CHAIN_DIR/$CHAIN_ID init test --chain-id $CHAIN_ID; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
 fi
 
 echo_info "Adding genesis accounts..."
-echo "$MNEMONIC" | $BINARY --home $CHAIN_DIR/$CHAIN_ID keys add validator --recover --keyring-backend=test
+echo "$MNEMONIC" | $BINARY --home $CHAIN_DIR/$CHAIN_ID keys add validator --recover --keyring-backend test
 $BINARY --home $CHAIN_DIR/$CHAIN_ID add-genesis-account $($BINARY --home $CHAIN_DIR/$CHAIN_ID keys show validator --keyring-backend test -a) $GENESIS_COINS
 
 echo_info "Adding gentx validator..."
-$BINARY --home $CHAIN_DIR/$CHAIN_ID gentx validator 1000000000stake --chain-id $CHAIN_ID --keyring-backend=test
+$BINARY --home $CHAIN_DIR/$CHAIN_ID gentx validator 900000000stake --chain-id $CHAIN_ID --keyring-backend test
 
 echo_info "Collecting gentx..."
 if $BINARY --home $CHAIN_DIR/$CHAIN_ID collect-gentxs; then
@@ -89,7 +90,16 @@ else
   echo_error "Failed to collect genesis txs"
 fi
 
+echo_info "Adding genesis parameters..."
+
+if cat $CHAIN_DIR/$CHAIN_ID/config/genesis.json | jq '.app_state["dex"]["params"]["startingPoolNumber"]=1' > $CHAIN_DIR/$CHAIN_ID/config/tmp_genesis.json && mv $CHAIN_DIR/$CHAIN_ID/config/tmp_genesis.json $CHAIN_DIR/$CHAIN_ID/config/genesis.json; then
+  echo_success "Successfully added genesis parameters"
+else
+  echo_error "Failed to generate genesis parameters"
+  exit 1
+fi
+
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
 echo_info "Log file is located at $CHAIN_DIR/$CHAIN_ID.log"
-$BINARY --home $CHAIN_DIR/$CHAIN_ID start --pruning=nothing --grpc.address="0.0.0.0:$GRPC_PORT"
+$BINARY --home $CHAIN_DIR/$CHAIN_ID start
