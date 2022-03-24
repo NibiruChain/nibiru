@@ -99,3 +99,26 @@ func (p *Pool) GetPoolQuoteAssetReserveAsInt() (sdk.Int, error) {
 
 	return quoteAssetReserve, nil
 }
+
+// IncreaseQuoteAssetReserve increases the quote reserve by amount
+func (p *Pool) IncreaseQuoteAssetReserve(amount sdk.Int) {
+	quoteAssetReserve, _ := p.GetPoolQuoteAssetReserveAsInt()
+	p.QuoteAssetReserve = quoteAssetReserve.Add(amount).String()
+}
+
+// DecreaseBaseAssetReserve decreases the base reserve by amount
+func (p *Pool) DecreaseBaseAssetReserve(amount sdk.Int) {
+	baseAssetReserve, _ := p.GetPoolBaseAssetReserveAsInt()
+	p.BaseAssetReserve = baseAssetReserve.Sub(amount).String()
+}
+
+// DecreaseQuoteAssetReserve descreases the quote asset reserve by amount
+func (p *Pool) DecreaseQuoteAssetReserve(amount sdk.Int) {
+	quoteAssetReserve, _ := p.GetPoolQuoteAssetReserveAsInt()
+	p.QuoteAssetReserve = quoteAssetReserve.Sub(amount).String()
+}
+
+func (p *Pool) IncreaseBaseAssetReserve(amount sdk.Int) {
+	baseAssetReserve, _ := p.GetPoolBaseAssetReserveAsInt()
+	p.BaseAssetReserve = baseAssetReserve.Add(amount).String()
+}

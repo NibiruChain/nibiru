@@ -46,12 +46,14 @@ func TestSwapInput_Errors(t *testing.T) {
 		pair        string
 		direction   ammtypes.Direction
 		quoteAmount sdktypes.Int
+		baseLimit   sdktypes.Int
 		error       error
 	}{
 		{
 			"pair not supported",
 			"BTC:UST",
 			ammtypes.Direction_ADD_TO_AMM,
+			sdktypes.NewInt(10),
 			sdktypes.NewInt(10),
 			ammtypes.ErrPairNotSupported,
 		},
@@ -60,6 +62,7 @@ func TestSwapInput_Errors(t *testing.T) {
 			UsdmPair,
 			ammtypes.Direction_REMOVE_FROM_AMM,
 			sdktypes.NewInt(10_000_000),
+			sdktypes.NewInt(10),
 			ammtypes.ErrOvertradingLimit,
 		},
 	}
@@ -78,7 +81,13 @@ func TestSwapInput_Errors(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			_, err = keeper.SwapInput(ctx, tc.pair, tc.direction, tc.quoteAmount)
+			_, err = keeper.SwapInput(
+				ctx,
+				tc.pair,
+				tc.direction,
+				tc.quoteAmount,
+				tc.baseLimit,
+			)
 			require.EqualError(t, err, tc.error.Error())
 		})
 	}
@@ -86,16 +95,40 @@ func TestSwapInput_Errors(t *testing.T) {
 
 func TestSwapInput_HappyPath(t *testing.T) {
 	tests := []struct {
-		name        string
-		direction   ammtypes.Direction
-		quoteAmount sdktypes.Int
-		resp        sdktypes.Int
+		name                 string
+		direction            ammtypes.Direction
+		quoteAmount          sdktypes.Int
+		baseLimit            sdktypes.Int
+		expectedQuoteReserve sdktypes.Int
+		expectedBaseReserve  sdktypes.Int
+		resp                 sdktypes.Int
 	}{
 		{
 			"quote amount == 0",
 			ammtypes.Direction_ADD_TO_AMM,
 			sdktypes.NewInt(0),
+			sdktypes.NewInt(10),
+			sdktypes.NewInt(10_000_000),
+			sdktypes.NewInt(5_000_000),
 			sdktypes.ZeroInt(),
+		},
+		{
+			"normal swap add",
+			ammtypes.Direction_ADD_TO_AMM,
+			sdktypes.NewInt(1_000_000),
+			sdktypes.NewInt(454_500),
+			sdktypes.NewInt(11_000_000),
+			sdktypes.NewInt(4_545_456),
+			sdktypes.NewInt(454_544),
+		},
+		{
+			"normal swap remove",
+			ammtypes.Direction_REMOVE_FROM_AMM,
+			sdktypes.NewInt(1_000_000),
+			sdktypes.NewInt(555_560),
+			sdktypes.NewInt(9_000_000),
+			sdktypes.NewInt(5_555_556),
+			sdktypes.NewInt(555_556),
 		},
 	}
 
@@ -113,9 +146,24 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			res, err := keeper.SwapInput(ctx, UsdmPair, tc.direction, tc.quoteAmount)
+			res, err := keeper.SwapInput(
+				ctx,
+				UsdmPair,
+				tc.direction,
+				tc.quoteAmount,
+				tc.baseLimit,
+			)
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)
+
+			pool, err := keeper.getPool(ctx, UsdmPair)
+			quoteAmount, err := pool.GetPoolQuoteAssetReserveAsInt()
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedQuoteReserve, quoteAmount)
+
+			baseAmount, err := pool.GetPoolBaseAssetReserveAsInt()
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedBaseReserve, baseAmount)
 		})
 	}
 }

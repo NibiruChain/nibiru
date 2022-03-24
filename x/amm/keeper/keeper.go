@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -20,7 +21,13 @@ type Keeper struct {
 }
 
 // SwapInput swaps pair token
-func (k Keeper) SwapInput(ctx sdk.Context, pair string, dir types.Direction, quoteAssetAmount sdk.Int) (sdk.Int, error) {
+func (k Keeper) SwapInput(
+	ctx sdk.Context,
+	pair string,
+	dir types.Direction,
+	quoteAssetAmount sdk.Int,
+	baseAmountLimit sdk.Int,
+) (sdk.Int, error) {
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
 	}
@@ -41,18 +48,37 @@ func (k Keeper) SwapInput(ctx sdk.Context, pair string, dir types.Direction, quo
 		}
 		if !enoughReserve {
 			return sdk.Int{}, types.ErrOvertradingLimit
-
 		}
 	}
 
-	//amount := types.GetBaseAmountByQuoteAmount(dir, pool, quoteAssetAmount)
+	baseAssetAmount, err := pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
+	if err != nil {
+		return sdk.Int{}, err
+	}
 
-	return sdk.NewInt(1234), nil
-}
+	if !baseAmountLimit.Equal(sdk.ZeroInt()) {
+		if dir == types.Direction_ADD_TO_AMM {
+			if baseAssetAmount.LT(baseAmountLimit) {
+				return sdk.Int{}, fmt.Errorf(
+					"base amount (%s) is less than selected limit (%s)",
+					baseAssetAmount.String(),
+					baseAmountLimit.String(),
+				)
+			}
+		} else {
+			if baseAssetAmount.GT(baseAmountLimit) {
+				return sdk.Int{}, fmt.Errorf(
+					"base amount (%s) is greater than selected limit (%s)",
+					baseAssetAmount.String(),
+					baseAmountLimit.String(),
+				)
+			}
+		}
+	}
 
-// getBaseAmountByQuoteAmount returns the amount that you will get by specific quote amount
-func getBaseAmountByQuoteAmount(dir types.Direction, pair string, quoteAmount sdk.Int) sdk.Int {
-	return sdk.ZeroInt()
+	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount)
+
+	return baseAssetAmount, nil
 }
 
 // getPool returns the pool from database
@@ -78,8 +104,6 @@ func (k Keeper) CreatePool(
 	quoteAssetReserve sdk.Int,
 	baseAssetReserve sdk.Int,
 ) error {
-	store := ctx.KVStore(k.storeKey)
-
 	pool := &types.Pool{
 		Pair:              pair,
 		TradeLimitRatio:   tradeLimitRatio.String(),
@@ -87,6 +111,19 @@ func (k Keeper) CreatePool(
 		BaseAssetReserve:  baseAssetReserve.String(),
 	}
 
+	err := k.savePool(ctx, pool)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (k Keeper) savePool(
+	ctx sdk.Context,
+	pool *types.Pool,
+) error {
+	store := ctx.KVStore(k.storeKey)
 	bz, err := k.codec.Marshal(pool)
 	if err != nil {
 		return err
@@ -95,6 +132,32 @@ func (k Keeper) CreatePool(
 	store.Set(types.GetPoolKey(pool.Pair), bz)
 
 	return nil
+}
+
+func (k Keeper) updateReserve(
+	ctx sdk.Context,
+	pool *types.Pool,
+	dir types.Direction,
+	quoteAssetAmount sdk.Int,
+	baseAssetAmount sdk.Int,
+) error {
+	if dir == types.Direction_ADD_TO_AMM {
+		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.DecreaseBaseAssetReserve(baseAssetAmount)
+		// TODO baseAssetDeltaThisFunding
+		// TODO totalPositionSize
+		// TODO cumulativeNotional
+	} else {
+		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.IncreaseBaseAssetReserve(baseAssetAmount)
+		// TODO baseAssetDeltaThisFunding
+		// TODO totalPositionSize
+		// TODO cumulativeNotional
+	}
+
+	// TODO check Fluctuation Limit
+
+	return k.savePool(ctx, pool)
 }
 
 // ExistsPool returns true if pool exists, false if not.
