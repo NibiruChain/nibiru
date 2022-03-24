@@ -12,6 +12,7 @@ protoc_gen_gocosmos() {
   go get github.com/regen-network/cosmos-proto/protoc-gen-gocosmos@latest 2>/dev/null
   # get cosmos sdk from github
   go get github.com/cosmos/cosmos-sdk 2>/dev/null
+  go get github.com/tendermint/starport/starport/pkg/cosmoscmd 2>/dev/null
 }
 
 protoc_gen_gocosmos
