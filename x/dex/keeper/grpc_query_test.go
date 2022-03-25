@@ -5,12 +5,14 @@ import (
 
 	testkeeper "github.com/MatrixDao/matrix/testutil/keeper"
 	"github.com/MatrixDao/matrix/x/dex/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx, _, _ := testkeeper.DexKeeper(t)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	keeper, ctx, _ := testkeeper.NewDexKeeper(t, storeKey)
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()
 	keeper.SetParams(ctx, params)

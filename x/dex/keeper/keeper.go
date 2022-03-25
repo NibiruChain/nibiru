@@ -36,11 +36,11 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-
 		cdc:           cdc,
 		storeKey:      storeKey,
 		paramstore:    ps,
-		accountKeeper: accountKeeper, bankKeeper: bankKeeper,
+		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
 	}
 }
 
@@ -127,11 +127,10 @@ func (k Keeper) NewPool(
 	k.accountKeeper.SetAccount(ctx, poolAccount)
 
 	pool := types.Pool{
-		Id:          poolId,
-		Address:     poolAccount.GetAddress().String(),
-		PoolParams:  poolParams,
-		TotalWeight: sdk.ZeroInt(),
-		PoolAssets:  poolAssets,
+		Id:         poolId,
+		Address:    poolAccount.GetAddress().String(),
+		PoolParams: poolParams,
+		PoolAssets: poolAssets,
 	}
 
 	err := k.SetPool(ctx, pool)
