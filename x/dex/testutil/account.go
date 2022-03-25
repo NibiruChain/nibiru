@@ -3,6 +3,7 @@ package testutil
 import (
 	"testing"
 
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,6 +35,8 @@ func NewAccountKeeper(
 		storeKey,
 		paramsSubspace,
 		authtypes.ProtoBaseAccount,
-		map[string][]string{},
+		map[string][]string{
+			types.ModuleName: nil,
+		},
 	)
 }
