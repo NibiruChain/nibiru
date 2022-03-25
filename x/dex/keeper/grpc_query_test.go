@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	testkeeper "github.com/MatrixDao/matrix/testutil/keeper"
+	"github.com/MatrixDao/matrix/x/dex/testutil"
 	"github.com/MatrixDao/matrix/x/dex/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,12 +12,12 @@ import (
 
 func TestParamsQuery(t *testing.T) {
 	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	keeper, ctx, _ := testkeeper.NewDexKeeper(t, storeKey)
-	wctx := sdk.WrapSDKContext(ctx)
-	params := types.DefaultParams()
-	keeper.SetParams(ctx, params)
+	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
 
-	response, err := keeper.Params(wctx, &types.QueryParamsRequest{})
+	params := types.DefaultParams()
+	k.SetParams(ctx, params)
+
+	response, err := k.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
 }
