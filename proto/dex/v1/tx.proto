@@ -22,5 +22,5 @@ message MsgCreatePool {
 }
 
 message MsgCreatePoolResponse {
-  string poolId = 1;
+  uint64 poolId = 1;
 }
