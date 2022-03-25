@@ -23,35 +23,36 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	if !hasEnoughBalance {
 		return nil, types.NotEnoughBalance.Wrap(msg.Collateral.Amount.String())
 	}
-
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, fromAddr, types.ModuleName, sdk.NewCoins(msg.Collateral))
-	if err != nil {
-		return nil, err
-	}
-
-	/*  Minting USDM
-	TODO(heisenberg): Get the actual price to multiply by
-	See Example B of https://docs.frax.finance/minting-and-redeeming
-
-	collateralDeposited: (sdk.Coin)
-	collateralRatio:
-	priceGOV: Price of the governance token in USD.
-
-	govDeposited: Units of GOV burned
-	govDeposited = (1 - collateralRatio) * (collateralDeposited * 1) / (collateralRatio * priceGOV)
-
-	*/
-	newCoin := sdk.NewCoin("usdm", msg.Collateral.Amount.Mul(sdk.NewInt(10)))
-	newCoins := sdk.NewCoins(newCoin)
-	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
-	if err != nil {
-		panic(err)
-	}
-
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, fromAddr, newCoins)
-	if err != nil {
-		panic(err)
-	}
-
-	return &types.MsgMintResponse{Stable: newCoin}, nil
+	//
+	//err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, fromAddr, types.ModuleName, sdk.NewCoins(msg.Collateral))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	///*  Minting USDM
+	//TODO(heisenberg): Get the actual price to multiply by
+	//See Example B of https://docs.frax.finance/minting-and-redeeming
+	//
+	//collateralDeposited: (sdk.Coin)
+	//collateralRatio:
+	//priceGOV: Price of the governance token in USD.
+	//
+	//govDeposited: Units of GOV burned
+	//govDeposited = (1 - collateralRatio) * (collateralDeposited * 1) / (collateralRatio * priceGOV)
+	//
+	//*/
+	//newCoin := sdk.NewCoin("usdm", msg.Collateral.Amount.Mul(sdk.NewInt(10)))
+	//newCoins := sdk.NewCoins(newCoin)
+	//err = k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, fromAddr, newCoins)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//return &types.MsgMintResponse{Stable: newCoin}, nil
+	return nil, err
 }

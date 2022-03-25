@@ -11,11 +11,6 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams()
 }
 
-// SetParams set the params
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramstore.SetParamSet(ctx, &params)
-}
-
 func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) (bool, error) {
 	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
 
@@ -26,5 +21,4 @@ func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sd
 	}
 
 	return false, sdkerrors.Wrap(types.NoCoinFound, coinToSpend.Denom)
-
 }
