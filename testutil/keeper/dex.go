@@ -17,14 +17,12 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-func DexKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec, storetypes.StoreKey) {
-	storeKey := sdk.NewKVStoreKey(types.StoreKey)
+func NewDexKeeper(t testing.TB, storeKey storetypes.StoreKey) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
 	db := tmdb.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db)
 	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
-	// stateStore.MountStoreWithDB(memStoreKey, sdk.StoreTypeMemory, nil)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
@@ -49,5 +47,5 @@ func DexKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec, st
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
-	return k, ctx, cdc, storeKey
+	return k, ctx, cdc
 }

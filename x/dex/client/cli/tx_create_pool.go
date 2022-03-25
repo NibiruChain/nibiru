@@ -37,12 +37,10 @@ func CmdCreatePool() *cobra.Command {
 
 			poolAssets := []types.PoolAsset{}
 			poolAssets = append(poolAssets, types.PoolAsset{
-				Token:  token1,
-				Weight: sdk.NewInt(token1.Amount.Int64()),
+				Token: token1,
 			})
 			poolAssets = append(poolAssets, types.PoolAsset{
-				Token:  token2,
-				Weight: sdk.NewInt(token2.Amount.Int64()),
+				Token: token2,
 			})
 
 			poolParams := &types.PoolParams{
