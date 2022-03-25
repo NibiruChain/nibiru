@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/tendermint/tendermint/types/time"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -185,4 +186,43 @@ func TestCreatePool(t *testing.T) {
 
 	notExist := ammKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
+}
+
+func TestKeeper_AddReserveSnapshot_ErrorNoLastSnapshot(t *testing.T) {
+	ammKeeper, ctx := AmmKeeper(t)
+
+	_, err := ammKeeper.GetLastReserveSnapshot(ctx, UsdmPair)
+	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
+}
+
+func TestKeeper_AddReserveSnapshot(t *testing.T) {
+	expectedTime := time.Now()
+	expectedBlockHeight := 123
+	ammKeeper, ctx := AmmKeeper(t)
+	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight))
+	ctx = ctx.WithBlockTime(expectedTime)
+
+	_, err := ammKeeper.GetLastReserveSnapshot(ctx, UsdmPair)
+	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
+
+	ratioLimit, err := sdktypes.NewDecFromStr("0.9")
+	pool := ammtypes.NewPool(
+		UsdmPair,
+		ratioLimit,
+		sdktypes.NewInt(10_000_000),
+		sdktypes.NewInt(5_000_000),
+	)
+
+	err = ammKeeper.TakeReserveSnapshot(ctx, pool)
+	require.NoError(t, err)
+
+	snapshot, err := ammKeeper.GetLastReserveSnapshot(ctx, UsdmPair)
+	require.NoError(t, err)
+
+	require.Equal(t, ammtypes.ReserveSnapshot{
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		Timestamp:         expectedTime.Unix(),
+		BlockNumber:       int64(expectedBlockHeight),
+	}, snapshot)
 }

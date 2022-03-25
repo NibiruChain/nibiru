@@ -157,6 +157,8 @@ func (k Keeper) updateReserve(
 
 	// TODO check Fluctuation Limit
 
+	k.TakeReserveSnapshot(ctx, pool)
+
 	return k.savePool(ctx, pool)
 }
 
@@ -168,4 +170,74 @@ func (k Keeper) ExistsPool(ctx sdk.Context, pair string) bool {
 
 func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
 	return ctx.KVStore(k.storeKey)
+}
+
+func (k Keeper) TakeReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
+	counter, found := k.getSnapshotCounter(ctx, pool.Pair)
+	if !found {
+		counter = 1
+	} else {
+		counter = counter + 1
+	}
+
+	snapshot := &types.ReserveSnapshot{
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		Timestamp:         ctx.BlockTime().Unix(),
+		BlockNumber:       ctx.BlockHeight(),
+	}
+	bz, err := k.codec.Marshal(snapshot)
+	if err != nil {
+		return err
+	}
+
+	store := k.getStore(ctx)
+	store.Set(types.GetPoolReserveSnapshotKey(pool.Pair, counter), bz)
+
+	k.updateSnapshotCounter(ctx, pool.Pair, counter)
+
+	return nil
+}
+
+// getSnapshotCounter returns the counter and if it has been found or not.
+func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair string) (int64, bool) {
+	store := k.getStore(ctx)
+
+	bz := store.
+		Get(types.GetPoolReserveSnapshotCounter(pair))
+	if bz == nil {
+		return 0, false
+	}
+
+	sc := sdk.BigEndianToUint64(bz)
+
+	return int64(sc), true
+}
+
+func (k Keeper) updateSnapshotCounter(ctx sdk.Context, pair string, counter int64) {
+	store := k.getStore(ctx)
+
+	store.Set(types.GetPoolReserveSnapshotCounter(pair), sdk.Uint64ToBigEndian(uint64(counter)))
+}
+
+func (k Keeper) GetLastReserveSnapshot(ctx sdk.Context, pair string) (types.ReserveSnapshot, error) {
+	counter, found := k.getSnapshotCounter(ctx, pair)
+	if !found {
+		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved
+	}
+
+	store := k.getStore(ctx)
+	bz := store.Get(types.GetPoolReserveSnapshotKey(pair, counter))
+	if bz == nil {
+		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
+			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))
+	}
+
+	var snapshot types.ReserveSnapshot
+	err := k.codec.Unmarshal(bz, &snapshot)
+	if err != nil {
+		return types.ReserveSnapshot{}, fmt.Errorf("problem decoding snapshot")
+	}
+
+	return snapshot, nil
 }
