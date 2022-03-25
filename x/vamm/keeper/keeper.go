@@ -157,7 +157,10 @@ func (k Keeper) updateReserve(
 
 	// TODO check Fluctuation Limit
 
-	k.TakeReserveSnapshot(ctx, pool)
+	err := k.TakeReserveSnapshot(ctx, pool)
+	if err != nil {
+		return err
+	}
 
 	return k.savePool(ctx, pool)
 }
