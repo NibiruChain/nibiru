@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	testkeeper "github.com/MatrixDao/matrix/testutil/keeper"
 	"github.com/MatrixDao/matrix/testutil/nullify"
+	"github.com/MatrixDao/matrix/x/dex/testutil"
 	"github.com/MatrixDao/matrix/x/dex/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +14,7 @@ import (
 
 func TestGetNextPoolNumber(t *testing.T) {
 	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, ctx, cdc := testkeeper.NewDexKeeper(t, storeKey)
+	k, _, _, ctx, cdc := testutil.CreateKeepers(t, storeKey)
 
 	// Write to store manually
 	bz := cdc.MustMarshal(&gogotypes.UInt64Value{Value: 100})
@@ -27,7 +27,7 @@ func TestGetNextPoolNumber(t *testing.T) {
 
 func TestSetNextPoolNumber(t *testing.T) {
 	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, ctx, _ := testkeeper.NewDexKeeper(t, storeKey)
+	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
 
 	// Write to store
 	k.SetNextPoolNumber(ctx, 150)
@@ -40,7 +40,7 @@ func TestSetNextPoolNumber(t *testing.T) {
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, ctx, _ := testkeeper.NewDexKeeper(t, storeKey)
+	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
 
 	// Write a pool number
 	k.SetNextPoolNumber(ctx, 200)
@@ -56,7 +56,7 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 
 func TestSetAndFetchPool(t *testing.T) {
 	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, ctx, _ := testkeeper.NewDexKeeper(t, storeKey)
+	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
 
 	pool := types.Pool{
 		Id: 150,
