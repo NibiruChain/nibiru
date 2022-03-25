@@ -83,7 +83,7 @@ func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
 	return poolNumber
 }
 
-func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (*types.Pool, error) {
+func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (types.Pool, error) {
 	store := ctx.KVStore(k.storeKey)
 	poolKey := types.GetKeyPrefixPools(poolId)
 	bz := store.Get(poolKey)
@@ -91,10 +91,10 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (*types.Pool, error) {
 	var pool types.Pool
 	err := pool.Unmarshal(bz)
 	if err != nil {
-		return nil, err
+		return types.Pool{}, err
 	}
 
-	return &pool, nil
+	return pool, nil
 }
 
 func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) error {
@@ -116,13 +116,9 @@ func (k Keeper) NewPool(
 	poolParams types.PoolParams,
 	poolAssets []types.PoolAsset,
 ) (uint64, error) {
-	ctx.Logger().Error("Reached NewPool")
 	poolId := k.GetNextPoolNumberAndIncrement(ctx)
-	k.Logger(ctx).Info(fmt.Sprintf("Pool id is %d", poolId))
 	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
-	k.Logger(ctx).Info(fmt.Sprintf("Pool name is %s", poolName))
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
-	k.Logger(ctx).Info(fmt.Sprintf("Pool address is %s", poolAccount.GetAddress()))
 
 	k.accountKeeper.SetAccount(ctx, poolAccount)
 
@@ -150,6 +146,7 @@ func (k Keeper) NewPool(
 		return 0, err
 	}
 
+	// TODO(heisenberg): implement
 	// // Mint the initial 100.000000000000000000 share token to the sender
 	// err = k.MintPoolShareToAccount(ctx, pool, sender, types.InitPoolSharesSupply)
 	// if err != nil {
