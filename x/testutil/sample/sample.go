@@ -18,8 +18,8 @@ func AccAddress() string {
 	return sdk.AccAddress(addr).String()
 }
 
-// GeneratePrivKeyAddressPairsFromRand generates (deterministically) a total of n private keys and addresses.
-func GeneratePrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
+// PrivKeyAddressPairsFromRand generates (deterministically) a total of n private keys and addresses.
+func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
 	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
 	keys = make([]cryptotypes.PrivKey, n)
 	addrs = make([]sdk.AccAddress, n)
