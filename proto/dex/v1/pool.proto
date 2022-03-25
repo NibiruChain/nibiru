@@ -25,21 +25,18 @@ message PoolAsset {
   // the denomination must be unique amongst all PoolAssets for this pool.
   cosmos.base.v1beta1.Coin token = 1
       [(gogoproto.moretags) = "yaml:\"token\"", (gogoproto.nullable) = false];
-  // Weight that is not normalized. This weight must be less than 2^50
-  string weight = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.moretags) = "yaml:\"weight\"",
-    (gogoproto.nullable) = false
-  ];
 }
 
 message Pool {
   option (gogoproto.goproto_getters) = false;
 
+  // The pool id.
   uint64 id = 1;
 
+  // The pool account address.
   string address = 2 [(gogoproto.moretags) = "yaml:\"address\""];
 
+  // Fees and other pool-specific parameters.
   PoolParams poolParams = 3 [
     (gogoproto.moretags) = "yaml:\"pool_params\"",
     (gogoproto.nullable) = false
@@ -49,13 +46,6 @@ message Pool {
   // They contain the pool asset and the information about the weight
   repeated PoolAsset poolAssets = 4 [
     (gogoproto.moretags) = "yaml:\"pool_assets\"",
-    (gogoproto.nullable) = false
-  ];
-
-  // sum of all non-normalized pool weights
-  string totalWeight = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.moretags) = "yaml:\"total_weight\"",
     (gogoproto.nullable) = false
   ];
 }
