@@ -5,6 +5,7 @@ import (
 
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMintResponse, error) {
@@ -30,18 +31,16 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	}
 
 	/*  Minting USDM
-	TODO(heisenberg): Get the actual price to multiply by
+	TODO: Get the actual price to multiply by
 	See Example B of https://docs.frax.finance/minting-and-redeeming
-
-	collateralDeposited: (sdk.Coin)
-	collateralRatio:
-	priceGOV: Price of the governance token in USD.
-
-	govDeposited: Units of GOV burned
-	govDeposited = (1 - collateralRatio) * (collateralDeposited * 1) / (collateralRatio * priceGOV)
-
 	*/
-	newCoin := sdk.NewCoin("usdm", msg.Collateral.Amount.Mul(sdk.NewInt(10)))
+
+	assetPriceInfo, err := k.priceKeeper.GetCurrentPrice(ctx, msg.Collateral.Denom)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrPriceNotFound, "no price found for market %s", msg.Collateral.Denom)
+	}
+	newCoin := sdk.NewCoin("usdm", sdk.NewDecFromInt(msg.Collateral.Amount).Mul(assetPriceInfo.Price).TruncateInt())
+
 	newCoins := sdk.NewCoins(newCoin)
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 	if err != nil {

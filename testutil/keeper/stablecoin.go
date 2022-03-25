@@ -31,7 +31,7 @@ func StablecoinKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	cdc := codec.NewProtoCodec(registry)
 
 	paramsSubspace := typesparams.NewSubspace(cdc,
-		types.Amino,
+		codec.NewLegacyAmino(),
 		storeKey,
 		memStoreKey,
 		"StablecoinParams",
@@ -41,6 +41,7 @@ func StablecoinKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
+		nil,
 		nil,
 		nil,
 	)
