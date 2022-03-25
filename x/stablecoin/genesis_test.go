@@ -3,10 +3,10 @@ package stablecoin_test
 import (
 	"testing"
 
-	keepertest "github.com/MatrixDao/matrix/testutil/keeper"
-	"github.com/MatrixDao/matrix/testutil/nullify"
 	"github.com/MatrixDao/matrix/x/stablecoin"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
+	"github.com/MatrixDao/matrix/x/testutil/nullify"
 	"github.com/stretchr/testify/require"
 )
 
