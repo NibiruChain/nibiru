@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/testutil/sample"
+	"github.com/MatrixDao/matrix/x/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
