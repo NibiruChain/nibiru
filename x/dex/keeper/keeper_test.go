@@ -6,10 +6,13 @@ import (
 	"github.com/MatrixDao/matrix/testutil/nullify"
 	"github.com/MatrixDao/matrix/x/dex/testutil"
 	"github.com/MatrixDao/matrix/x/dex/types"
+
+	"github.com/cosmos/cosmos-sdk/simapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 func TestGetNextPoolNumber(t *testing.T) {
@@ -84,4 +87,40 @@ func TestSetAndFetchPool(t *testing.T) {
 	nullify.Fill(retrievedPool)
 
 	require.Equal(t, pool, retrievedPool)
+}
+
+func TestNewPool(t *testing.T) {
+	app, ctx := testutil.NewApp()
+	app.DexKeeper.SetNextPoolNumber(ctx, 1)
+
+	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
+	coins := sdk.NewCoins(
+		sdk.NewCoin("uatom", sdk.NewInt(1000)),
+		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+	)
+
+	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, coins)
+	require.NoError(t, err)
+
+	poolParams := types.PoolParams{
+		SwapFee: sdk.NewDecWithPrec(3, 2),
+		ExitFee: sdk.NewDecWithPrec(3, 2),
+	}
+	poolAssets := []types.PoolAsset{
+		{
+			Token: sdk.NewCoin("uatom", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+		},
+	}
+
+	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	require.NoError(t, err)
+
+	retrievedPool, err := app.DexKeeper.FetchPool(ctx, poolId)
+	require.NoError(t, err)
+
+	require.Equal(t, poolAssets, retrievedPool.PoolAssets)
+	require.Equal(t, poolParams, retrievedPool.PoolParams)
 }
