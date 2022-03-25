@@ -146,43 +146,7 @@ func (k Keeper) NewPool(
 		return 0, err
 	}
 
-	// TODO(heisenberg): implement
-	// // Mint the initial 100.000000000000000000 share token to the sender
-	// err = k.MintPoolShareToAccount(ctx, pool, sender, types.InitPoolSharesSupply)
-	// if err != nil {
-	// 	return 0, err
-	// }
-
-	// // Finally, add the share token's meta data to the bank keeper.
-	// poolShareBaseDenom := types.GetPoolShareDenom(pool.GetId())
-	// poolShareDisplayDenom := fmt.Sprintf("GAMM-%d", pool.GetId())
-	// k.bankKeeper.SetDenomMetaData(ctx, banktypes.Metadata{
-	// 	Description: fmt.Sprintf("The share token of the gamm pool %d", pool.GetId()),
-	// 	DenomUnits: []*banktypes.DenomUnit{
-	// 		{
-	// 			Denom:    poolShareBaseDenom,
-	// 			Exponent: 0,
-	// 			Aliases: []string{
-	// 				"attopoolshare",
-	// 			},
-	// 		},
-	// 		{
-	// 			Denom:    poolShareDisplayDenom,
-	// 			Exponent: types.OneShareExponent,
-	// 			Aliases:  nil,
-	// 		},
-	// 	},
-	// 	Base:    poolShareBaseDenom,
-	// 	Display: poolShareDisplayDenom,
-	// })
-
-	// err = k.SetPool(ctx, pool)
-	// if err != nil {
-	// 	return 0, err
-	// }
-
-	// k.hooks.AfterPoolCreated(ctx, sender, pool.GetId())
-	// k.RecordTotalLiquidityIncrease(ctx, coins)
+	// TODO(heisenberg): finish implementation of setting up the pool
 
 	return poolId, nil
 }
