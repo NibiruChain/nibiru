@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/testutil"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/MatrixDao/matrix/x/testutil/sample"
 
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -26,7 +26,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: types.MsgMint{
-				Creator: testutil.SampleAccAddress(),
+				Creator: sample.AccAddress(),
 			},
 		},
 	}
