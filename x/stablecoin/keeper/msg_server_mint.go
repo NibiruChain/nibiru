@@ -15,15 +15,18 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 		return nil, err
 	}
 
-	hasEnoughBalance, err := k.CheckEnoughBalance(ctx, msg.Collateral, fromAddr)
-	if err != nil {
-		return nil, err
+	for _, coin := range []sdk.Coin{msg.Collateral, msg.Gov} {
+		hasEnoughBalance, err := k.CheckEnoughBalance(ctx, coin, fromAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		if !hasEnoughBalance {
+			return nil, types.NotEnoughBalance.Wrap(coin.Amount.String())
+		}
 	}
 
-	if !hasEnoughBalance {
-		return nil, types.NotEnoughBalance.Wrap(msg.Collateral.Amount.String())
-	}
-
+	// TODO: This should be called after we compute 'maxMintableStable'
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, fromAddr, types.ModuleName, sdk.NewCoins(msg.Collateral))
 	if err != nil {
 		return nil, err
