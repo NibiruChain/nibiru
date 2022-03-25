@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/rakyll/statik v0.1.7
+	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
@@ -19,6 +20,7 @@ require (
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
 	google.golang.org/grpc v1.45.0
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -36,6 +38,8 @@ replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 
 // x/stablecoin dependencies
 replace github.com/MatrixDao/matrix/x/stablecoin => ./x/stablecoin
+
+replace github.com/MatrixDao/matrix/x/testutil => ./x/testutil
 
 replace github.com/MatrixDao/matrix/app => ./app
 
