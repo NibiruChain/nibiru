@@ -13,8 +13,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
     - name: Build binaries for matrixd using the Makefile
-      uses: actions/checkout@v2
       with: 
         go-version: 1.16
       run: make build
@@ -31,4 +35,5 @@ jobs:
 
     - name: Run all tests.
       run: go test -v ./...
+
 
