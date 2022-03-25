@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"github.com/tendermint/tendermint/types/time"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/capability/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	"github.com/tendermint/tendermint/types/time"
 	tmdb "github.com/tendermint/tm-db"
 
 	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
