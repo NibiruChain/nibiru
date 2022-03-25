@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/MatrixDao/matrix/app"
-	keepertest "github.com/MatrixDao/matrix/testutil/keeper"
 	"github.com/MatrixDao/matrix/x/pricefeed/keeper"
 	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

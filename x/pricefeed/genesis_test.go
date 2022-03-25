@@ -3,10 +3,10 @@ package pricefeed_test
 import (
 	"testing"
 
-	keepertest "github.com/MatrixDao/matrix/testutil/keeper"
-	"github.com/MatrixDao/matrix/testutil/nullify"
 	"github.com/MatrixDao/matrix/x/pricefeed"
 	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
+	"github.com/MatrixDao/matrix/x/testutil/nullify"
 	"github.com/stretchr/testify/require"
 )
 

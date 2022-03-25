@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	testkeeper "github.com/MatrixDao/matrix/testutil/keeper"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	testkeeper "github.com/MatrixDao/matrix/x/testutil/keeper"
 	"github.com/stretchr/testify/require"
 )
 
