@@ -10,6 +10,13 @@ enum Direction {
   REMOVE_FROM_AMM = 2;
 }
 
+message ReserveSnapshot {
+ string quote_asset_reserve = 1;
+ string base_asset_reserve = 2;
+ int64 timestamp = 3;
+ int64 block_number = 4;
+}
+
 message Pool {
   string pair = 1;
   // ratio applied to reserves in order not to over trade
