@@ -19,8 +19,6 @@ jobs:
         go-version: 1.16
 
     - name: Build binaries for matrixd using the Makefile
-      with: 
-        go-version: 1.16
       run: make build
 
   test:
