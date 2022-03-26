@@ -14,5 +14,5 @@ func TestGetParams(t *testing.T) {
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)
 
-	require.EqualValues(t, params, k.GetParams(ctx))
+	require.EqualValues(t, params, app.DexKeeper.GetParams(ctx))
 }
