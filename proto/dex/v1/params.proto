@@ -1,0 +1,14 @@
+syntax = "proto3";
+package matrix.dex.v1;
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/MatrixDao/matrix/x/dex/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  uint64 startingPoolNumber = 1;
+}
