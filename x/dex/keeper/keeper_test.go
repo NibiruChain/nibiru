@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/MatrixDao/matrix/testutil/nullify"
-	"github.com/MatrixDao/matrix/x/dex/testutil"
 	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/MatrixDao/matrix/x/testutil"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
