@@ -16,12 +16,23 @@
 [<img align="right" alt="Matrix Medium Blog" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/medium.svg" />][Medium]
 
 
-Matrix presents decentralized, over-collateralized and capital-efficient reserve protocol using [Cosmos SDK](https://github.com/cosmos/cosmos-sdk). Matrix enables liquid, capital efficient convertibility between stable assets and collateral using front-running resistant oracle to achieve the swapping.
+Matrix is a zone in the Cosmos that houses a decentralized ecosystem  consisting of  3 main applications:  
+① USDM: A partially collateralized, algorithmic stablecoin protocol
+② Derivatives: A platform for trading perpetual futures, enabling users to take long and short leveraged exposure in a capital efficient manner. 
+③ DEX: An automated market maker for both standard swaps and "stable swaps" of multichain assets. 
+
+Matrix is built with the [Cosmos SDK][cosmos-sdk-repo], Tendermint Consensus, and a system of front-run resistant oracles for accurate pricing on the stablecoin, dex, and derivatives applications. 
+
+#### Documentation 
+
+- Conceptual and technical documentation can be found in the [Matrix docs](https://docs.matrix.io).
+- If you have questions or concerns, feel free to connect with a developer or community member in the [Matrix discord][matrix-discord].
 
 [Medium]: example.com
 [Telegram]: example.com
 [matrix-website]: https://github.com/MatrixDao
-[go-unit-tests-badge]: https://github.com/MatrixDao/matrix/actions/workflows/go.yml/badge.svg?label=Follow
+[cosmos-sdk-repo]: https://github.com/cosmos/cosmos-sdk
+[go-unit-tests-badge]: https://github.com/MatrixDao/matrix/actions/workflows/go.yml/badge.svg
 [go-unit-tests-workflow]: https://github.com/MatrixDao/matrix/actions/workflows/go.yml
 [matrix-twitter]: https://twitter.com/matrix_platform 
 [matrix-discord]: https://discord.com/invite/pgArXgAxDD
@@ -48,11 +59,6 @@ Recommended minimum specs:
 
 On a fresh clone of the repo, simply run `make localnet` and open another terminal.  
 
-## Docs
-
-Matrix protocol and client documentation can be found in the [Matrix docs](https://docs.matrix.io).
-
-If you have technical questions or concerns, ask a developer or community member in the [Matrix discord][matrix-discord].
 
 ## License
 
