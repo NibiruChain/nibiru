@@ -3,10 +3,11 @@ package dex_test
 import (
 	"testing"
 
-	keepertest "github.com/MatrixDao/matrix/testutil/keeper"
 	"github.com/MatrixDao/matrix/testutil/nullify"
 	"github.com/MatrixDao/matrix/x/dex"
+	"github.com/MatrixDao/matrix/x/dex/testutil"
 	"github.com/MatrixDao/matrix/x/dex/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,9 +16,10 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx, _, _ := keepertest.DexKeeper(t)
-	dex.InitGenesis(ctx, *k, genesisState)
-	got := dex.ExportGenesis(ctx, *k)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
+	dex.InitGenesis(ctx, k, genesisState)
+	got := dex.ExportGenesis(ctx, k)
 	require.NotNil(t, got)
 
 	nullify.Fill(&genesisState)
