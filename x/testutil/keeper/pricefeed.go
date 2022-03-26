@@ -1,10 +1,10 @@
-package testutil
+package keeper
 
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/MatrixDao/matrix/x/pricefeed/keeper"
+	"github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -17,7 +17,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-func StablecoinKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func PricefeedKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -31,18 +31,16 @@ func StablecoinKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	cdc := codec.NewProtoCodec(registry)
 
 	paramsSubspace := typesparams.NewSubspace(cdc,
-		codec.NewLegacyAmino(),
+		types.Amino,
 		storeKey,
 		memStoreKey,
-		"StablecoinParams",
+		"PricefeedParams",
 	)
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
-		nil,
-		nil,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

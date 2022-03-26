@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"errors"
-	"github.com/MatrixDao/matrix/app"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/MatrixDao/matrix/app"
 
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/spf13/cast"
@@ -256,7 +257,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	return app.NewApp(
+	return app.NewMatrixApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
@@ -282,20 +283,20 @@ func (a appCreator) appExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions) (servertypes.ExportedApp, error) {
 
-	var appl *app.App
+	var appl *app.MatrixApp
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
 	if height != -1 {
-		appl = app.NewApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
+		appl = app.NewMatrixApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 
 		if err := appl.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		appl = app.NewApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
+		appl = app.NewMatrixApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 	}
 
 	return appl.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
