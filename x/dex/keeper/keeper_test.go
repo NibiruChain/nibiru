@@ -8,58 +8,40 @@ import (
 	"github.com/MatrixDao/matrix/x/dex/types"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 )
 
-func TestGetNextPoolNumber(t *testing.T) {
-	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, _, _, ctx, cdc := testutil.CreateKeepers(t, storeKey)
-
-	// Write to store manually
-	bz := cdc.MustMarshal(&gogotypes.UInt64Value{Value: 100})
-	ctx.KVStore(storeKey).Set(types.KeyNextGlobalPoolNumber, bz)
-
-	// Read
-	poolNumber := k.GetNextPoolNumber(ctx)
-	require.EqualValues(t, poolNumber, 100)
-}
-
-func TestSetNextPoolNumber(t *testing.T) {
-	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
+func TestGetAndSetNextPoolNumber(t *testing.T) {
+	app, ctx := testutil.NewApp()
 
 	// Write to store
-	k.SetNextPoolNumber(ctx, 150)
+	app.DexKeeper.SetNextPoolNumber(ctx, 150)
 
 	// Read from store
-	poolNumber := k.GetNextPoolNumber(ctx)
+	poolNumber := app.DexKeeper.GetNextPoolNumber(ctx)
 
 	require.EqualValues(t, poolNumber, 150)
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
+	app, ctx := testutil.NewApp()
 
 	// Write a pool number
-	k.SetNextPoolNumber(ctx, 200)
+	app.DexKeeper.SetNextPoolNumber(ctx, 200)
 
 	// Get next and increment should return the current pool number
-	poolNumber := k.GetNextPoolNumberAndIncrement(ctx)
+	poolNumber := app.DexKeeper.GetNextPoolNumberAndIncrement(ctx)
 	require.EqualValues(t, poolNumber, 200)
 
 	// Check that the previous call incremented the number
-	poolNumber = k.GetNextPoolNumber(ctx)
+	poolNumber = app.DexKeeper.GetNextPoolNumber(ctx)
 	require.EqualValues(t, poolNumber, 201)
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
+	app, ctx := testutil.NewApp()
 
 	pool := types.Pool{
 		Id: 150,
@@ -69,18 +51,18 @@ func TestSetAndFetchPool(t *testing.T) {
 		},
 		PoolAssets: []types.PoolAsset{
 			types.PoolAsset{
-				Token: sdk.NewCoin("token", sdk.NewInt(100)),
+				Token: sdk.NewCoin("validatortoken", sdk.NewInt(1000)),
 			},
 			types.PoolAsset{
-				Token: sdk.NewCoin("token", sdk.NewInt(100)),
+				Token: sdk.NewCoin("stake", sdk.NewInt(1000)),
 			},
 		},
 	}
 
-	err := k.SetPool(ctx, pool)
+	err := app.DexKeeper.SetPool(ctx, pool)
 	require.NoError(t, err)
 
-	retrievedPool, err := k.FetchPool(ctx, 150)
+	retrievedPool, err := app.DexKeeper.FetchPool(ctx, 150)
 	require.NoError(t, err)
 
 	nullify.Fill(pool)
