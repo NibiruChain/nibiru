@@ -6,19 +6,18 @@ import (
 	"github.com/MatrixDao/matrix/x/dex/keeper"
 	"github.com/MatrixDao/matrix/x/dex/testutil"
 	"github.com/MatrixDao/matrix/x/dex/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 func TestCreatePool(t *testing.T) {
-	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	dexKeeper, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
-	msgServer := keeper.NewMsgServerImpl(dexKeeper)
+	app, ctx := testutil.NewApp()
+
+	msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 	// Setup
-	dexKeeper.SetNextPoolNumber(ctx, 1)
+	app.DexKeeper.SetNextPoolNumber(ctx, 1)
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 
 	msgCreatePool := types.MsgCreatePool{

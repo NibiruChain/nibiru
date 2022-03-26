@@ -7,7 +7,6 @@ import (
 	"github.com/MatrixDao/matrix/x/dex"
 	"github.com/MatrixDao/matrix/x/dex/testutil"
 	"github.com/MatrixDao/matrix/x/dex/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,10 +15,9 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
-	k, _, _, ctx, _ := testutil.CreateKeepers(t, storeKey)
-	dex.InitGenesis(ctx, k, genesisState)
-	got := dex.ExportGenesis(ctx, k)
+	app, ctx := testutil.NewApp()
+	dex.InitGenesis(ctx, app.DexKeeper, genesisState)
+	got := dex.ExportGenesis(ctx, app.DexKeeper)
 	require.NotNil(t, got)
 
 	nullify.Fill(&genesisState)
