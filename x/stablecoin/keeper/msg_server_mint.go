@@ -46,7 +46,7 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	neededGovAmt := sdk.NewIntFromBigInt(neededGovUSD.Quo(priceGov).BigInt())
 	neededGov := sdk.NewCoin(govDenom, neededGovAmt)
 
-	coinsNeededToMint := []sdk.Coin{neededColl, neededGov}
+	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
 
 	for _, coin := range coinsNeededToMint {
 		hasEnoughBalance, err := k.CheckEnoughBalance(ctx, coin, fromAddr)
@@ -55,17 +55,17 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 		}
 
 		if !hasEnoughBalance {
-			return nil, types.NotEnoughBalance.Wrap(coin.Amount.String())
+			return nil, types.NotEnoughBalance.Wrap(coin.String())
 		}
 	}
 
 	// Take assets out of the user account.
-	for _, coin := range coinsNeededToMint {
-		err = k.bankKeeper.SendCoinsFromAccountToModule(
-			ctx, fromAddr, types.ModuleName, sdk.NewCoins(coin))
-		if err != nil {
-			return nil, err
-		}
+	err = k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx, fromAddr, types.ModuleName, coinsNeededToMint)
+	if err != nil {
+		panic(err)
+		// return nil, err
+		// Q: Ask about panic vs. return nil and reverting an entire method.
 	}
 
 	// Mint the USDM
@@ -75,6 +75,7 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	if err != nil {
 		panic(err)
 	}
+	// TODO: Burn the GOV that the user gave to the protocol.
 
 	// Send the minted tokens to the user.
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
