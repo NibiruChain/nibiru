@@ -6,6 +6,7 @@ import (
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/nullify"
+	"github.com/MatrixDao/matrix/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -104,4 +105,68 @@ func TestNewPool(t *testing.T) {
 
 	require.Equal(t, poolAssets, retrievedPool.PoolAssets)
 	require.Equal(t, poolParams, retrievedPool.PoolParams)
+}
+
+func TestNewPoolTooLittleAssets(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress())
+	require.NoError(t, err)
+
+	poolParams := types.PoolParams{
+		SwapFee: sdk.NewDecWithPrec(3, 2),
+		ExitFee: sdk.NewDecWithPrec(3, 2),
+	}
+	poolAssets := []types.PoolAsset{
+		{
+			Token: sdk.NewCoin("uatom", sdk.NewInt(1000)),
+		},
+	}
+
+	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	require.ErrorIs(t, err, types.ErrTooFewPoolAssets)
+	require.Equal(t, uint64(0), poolId)
+}
+
+func TestNewPoolTooManyAssets(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress())
+	require.NoError(t, err)
+
+	poolParams := types.PoolParams{
+		SwapFee: sdk.NewDecWithPrec(3, 2),
+		ExitFee: sdk.NewDecWithPrec(3, 2),
+	}
+	poolAssets := []types.PoolAsset{
+		{
+			Token: sdk.NewCoin("uatom1", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom2", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom3", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom4", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom5", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom6", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom7", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom8", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom9", sdk.NewInt(1000)),
+		},
+	}
+
+	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	require.ErrorIs(t, err, types.ErrTooManyPoolAssets)
+	require.Equal(t, uint64(0), poolId)
 }
