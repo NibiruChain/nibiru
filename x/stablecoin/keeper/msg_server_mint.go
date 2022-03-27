@@ -10,10 +10,14 @@ import (
 )
 
 var (
-	stableDenom string = "usdm"
-	govDenom    string = "umtrx"
-	collDenom   string = "uust"
+	// stableDenom string = "usdm"
+	govDenom  string = "umtrx"
+	collDenom string = "uust"
 )
+
+func AsInt(dec sdk.Dec) sdk.Int {
+	return sdk.NewIntFromBigInt(dec.BigInt())
+}
 
 // govDeposited: Units of GOV burned
 // govDeposited = (1 - collRatio) * (collDeposited * 1) / (collRatio * priceGOV)
@@ -48,15 +52,9 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
 
-	for _, coin := range coinsNeededToMint {
-		hasEnoughBalance, err := k.CheckEnoughBalance(ctx, coin, fromAddr)
-		if err != nil {
-			return nil, err
-		}
-
-		if !hasEnoughBalance {
-			return nil, types.NotEnoughBalance.Wrap(coin.String())
-		}
+	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, fromAddr)
+	if err != nil {
+		panic(err)
 	}
 
 	// Take assets out of the user account.
@@ -87,20 +85,39 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	return &types.MsgMintResponse{Stable: stableToMint}, nil
 }
 
-// Computes the maximum amount of USDM mintable for a MsgMint.Creator's
-// input of collateral and governance tokens
-// TODO
-func MaxMintableStable(
-	msg *types.MsgMint,
-	collRatio sdk.Dec,
-	priceGov sdk.Dec,
-	priceColl sdk.Dec) sdk.Coin {
+// Computes the amount of MTRX needed to mint USDM given some COLL amount.
+// Args:
+//   collAmt sdk.Int: Amount of COLL given.
+// Returns:
+//   neededGovAmt sdk.Int: Amount of MTRX needed.
+//   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
+func NeededGovAmtGivenColl(
+	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
+	collRatio sdk.Dec) (sdk.Int, sdk.Int) {
 
-	// msgCollUSD := sdk.NewDecFromInt(msg.Coll.Amount).Mul(priceColl)
-	// msgGovUSD := sdk.NewDecFromInt(msg.Gov.Amount).Mul(priceGov)
+	collUSD := sdk.NewDecFromInt(collAmt).Mul(priceColl)
+	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
 
-	// govUSDNeeded := msgCollUSD.Quo(collRatio).Sub(msgCollUSD)
-	// ^ should be LE sum(msgCollUSD, msgGovUSD)
-	maxStable := sdk.NewCoin(stableDenom, sdk.ZeroInt())
-	return maxStable
+	neededGovAmt := AsInt(neededGovUSD.Quo(priceGov))
+	mintableStableAmt := AsInt(collUSD.Add(neededGovUSD))
+	return neededGovAmt, mintableStableAmt
+}
+
+// Computes the amount of COLL needed to mint USDM given some MTRX amount.
+// Args:
+//   govAmt sdk.Int: Amount of  MTRX given.
+// Returns:
+//   neededCollAmt sdk.Int: Amount of COLL needed.
+//   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
+func NeededCollAmtGivenGov(
+	govAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
+	collRatio sdk.Dec) (sdk.Int, sdk.Int) {
+
+	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
+	govRatio := sdk.NewDec(1).Sub(collRatio)
+	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)
+
+	neededCollAmt := AsInt(neededCollUSD.Quo(priceColl))
+	mintableStableAmt := AsInt(govUSD.Add(neededCollUSD))
+	return neededCollAmt, mintableStableAmt
 }
