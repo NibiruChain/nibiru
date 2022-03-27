@@ -19,6 +19,17 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
+/*
+Handler for the MsgCreatePool transaction.
+
+args
+  ctx: the cosmos-sdk context
+  msg: a MsgCreatePool proto object
+
+ret
+  MsgCreatePoolResponse: the MsgCreatePoolResponse proto object response, containing the pool id number
+  error: an error if any occurred
+*/
 func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
