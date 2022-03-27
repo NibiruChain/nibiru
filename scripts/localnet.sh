@@ -27,7 +27,7 @@ echo_success () {
 
 
 echo_info "Building from source..."
-if make build; then 
+if make build; then
   echo_success "Successfully built binary"
 else
   echo_error "Could not build binary. Failed to make build"

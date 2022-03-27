@@ -6,7 +6,7 @@ import (
 	"github.com/MatrixDao/matrix/testutil/nullify"
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
-
+	"github.com/MatrixDao/matrix/x/testutil/nullify"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := testutil.NewApp()
+	app, ctx := testutil.NewMatrixApp()
 
 	// Write to store
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
@@ -26,7 +26,7 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := testutil.NewApp()
+	app, ctx := testutil.NewMatrixApp()
 
 	// Write a pool number
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
@@ -41,7 +41,7 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := testutil.NewApp()
+	app, ctx := testutil.NewMatrixApp()
 
 	pool := types.Pool{
 		Id: 150,
@@ -72,7 +72,7 @@ func TestSetAndFetchPool(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := testutil.NewApp()
+	app, ctx := testutil.NewMatrixApp()
 	app.DexKeeper.SetNextPoolNumber(ctx, 1)
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
