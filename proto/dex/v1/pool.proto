@@ -1,0 +1,51 @@
+syntax = "proto3";
+package matrix.dex.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/MatrixDao/matrix/x/dex/types";
+
+message PoolParams {
+  string swapFee = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.moretags) = "yaml:\"swap_fee\"",
+    (gogoproto.nullable) = false
+  ];
+  string exitFee = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.moretags) = "yaml:\"exit_fee\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message PoolAsset {
+  // Coins we are talking about,
+  // the denomination must be unique amongst all PoolAssets for this pool.
+  cosmos.base.v1beta1.Coin token = 1
+      [(gogoproto.moretags) = "yaml:\"token\"", (gogoproto.nullable) = false];
+}
+
+message Pool {
+  option (gogoproto.goproto_getters) = false;
+
+  // The pool id.
+  uint64 id = 1;
+
+  // The pool account address.
+  string address = 2 [(gogoproto.moretags) = "yaml:\"address\""];
+
+  // Fees and other pool-specific parameters.
+  PoolParams poolParams = 3 [
+    (gogoproto.moretags) = "yaml:\"pool_params\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // These are assumed to be sorted by denomiation.
+  // They contain the pool asset and the information about the weight
+  repeated PoolAsset poolAssets = 4 [
+    (gogoproto.moretags) = "yaml:\"pool_assets\"",
+    (gogoproto.nullable) = false
+  ];
+}
