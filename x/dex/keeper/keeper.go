@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -172,6 +173,36 @@ func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) error {
 }
 
 /*
+Mints new pool share tokens and sends them to an account.
+
+args:
+  ctx: the cosmos-sdk context
+  poolId: the pool id number
+  recipientAddr: the address of the recipient
+  amountPoolShares: the amount of pool shares to mint to the recipient
+
+ret:
+  err: returns an error if something errored out
+*/
+func (k Keeper) MintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
+	newCoins := sdk.Coins{
+		sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amountPoolShares),
+	}
+
+	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
+	if err != nil {
+		return err
+	}
+
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipientAddr, newCoins)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
 Creates a brand new pool and writes it to the state.
 
 args
@@ -221,7 +252,39 @@ func (k Keeper) NewPool(
 		return 0, err
 	}
 
-	// TODO(heisenberg): finish implementation of setting up the pool
+	// Mint the initial 100.000000000000000000 pool share tokens to the sender
+	err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply)
+	if err != nil {
+		return 0, err
+	}
+
+	// Finally, add the share token's meta data to the bank keeper.
+	poolShareBaseDenom := types.GetPoolShareBaseDenom(pool.Id)
+	poolShareDisplayDenom := types.GetPoolShareDisplayDenom(pool.Id)
+	k.bankKeeper.SetDenomMetaData(ctx, banktypes.Metadata{
+		Description: fmt.Sprintf("The share token of the matrix dex pool %d", pool.Id),
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    poolShareBaseDenom,
+				Exponent: 0,
+			},
+			{
+				Denom:    poolShareDisplayDenom,
+				Exponent: 18,
+			},
+		},
+		Base:    poolShareBaseDenom,
+		Display: poolShareDisplayDenom,
+		Name:    fmt.Sprintf("Matrix Pool %d Share Token", pool.Id),
+		Symbol:  poolShareDisplayDenom,
+	})
+
+	err = k.SetPool(ctx, pool)
+	if err != nil {
+		return 0, err
+	}
+
+	// k.RecordTotalLiquidityIncrease(ctx, coins)
 
 	return poolId, nil
 }
