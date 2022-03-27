@@ -17,7 +17,7 @@ import (
 )
 
 // New creates application instance with in-memory database and disabled logging.
-func New() *app.App {
+func New() *app.MatrixApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -29,7 +29,7 @@ func New() *app.App {
 
 	encoding := app.MakeTestEncodingConfig()
 
-	a := app.NewApp(logger, db, nil, true, map[int64]bool{}, nodeHome, 0, encoding,
+	a := app.NewMatrixApp(logger, db, nil, true, map[int64]bool{}, nodeHome, 0, encoding,
 		simapp.EmptyAppOptions{})
 
 	// InitChain updates deliverState which is required when app.NewContext is called
@@ -41,11 +41,11 @@ func New() *app.App {
 	return a
 }
 
-func NewApp() (*app.App, sdk.Context) {
-	newApp := New()
-	ctx := newApp.NewContext(false, tmproto.Header{})
+func NewMatrixApp() (*app.MatrixApp, sdk.Context) {
+	newMatrixApp := New()
+	ctx := newMatrixApp.NewContext(false, tmproto.Header{})
 
-	return newApp, ctx
+	return newMatrixApp, ctx
 }
 
 var defaultConsensusParams = &abci.ConsensusParams{

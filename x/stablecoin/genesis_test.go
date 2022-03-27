@@ -6,8 +6,8 @@ import (
 	"unsafe"
 
 	"github.com/MatrixDao/matrix/x/stablecoin"
-	keepertest "github.com/MatrixDao/matrix/x/stablecoin/testutil"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

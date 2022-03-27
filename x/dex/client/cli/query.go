@@ -2,15 +2,10 @@ package cli
 
 import (
 	"fmt"
-	// "strings"
-
-	"github.com/spf13/cobra"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/spf13/cobra"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -29,7 +24,6 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdGetPoolNumber())
 
 	cmd.AddCommand(CmdGetPool())
-
 
 	return cmd
 }

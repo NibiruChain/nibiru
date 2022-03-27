@@ -10,7 +10,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	app, ctx := testutil.NewApp()
+	app, ctx := testutil.NewMatrixApp()
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)

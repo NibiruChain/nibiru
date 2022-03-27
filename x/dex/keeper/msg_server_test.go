@@ -12,7 +12,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	app, ctx := testutil.NewApp()
+	app, ctx := testutil.NewMatrixApp()
 
 	msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
