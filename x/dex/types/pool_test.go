@@ -7,5 +7,5 @@ import (
 )
 
 func TestGetPoolShareDenom(t *testing.T) {
-	require.Equal(t, "matrix/pool/123", GetPoolShareDenom(123))
+	require.Equal(t, "matrix/pool/123", GetPoolShareBaseDenom(123))
 }
