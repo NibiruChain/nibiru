@@ -102,9 +102,14 @@ func TestNewPool(t *testing.T) {
 
 	retrievedPool, err := app.DexKeeper.FetchPool(ctx, poolId)
 	require.NoError(t, err)
-
 	require.Equal(t, poolAssets, retrievedPool.PoolAssets)
 	require.Equal(t, poolParams, retrievedPool.PoolParams)
+
+	liquidity := app.DexKeeper.GetTotalLiquidity(ctx)
+	require.Equal(t, sdk.NewCoins(
+		sdk.NewCoin("uatom", sdk.NewInt(1000)),
+		sdk.NewCoin("uosmo", sdk.NewInt(1000))),
+		liquidity)
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
