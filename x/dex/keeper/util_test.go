@@ -21,6 +21,6 @@ func TestPoolAssetsCoins(t *testing.T) {
 
 	require.Equal(t, coins, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(100)),
-		sdk.NewCoin("mtrx", sdk.NewInt(100))),
+		sdk.NewCoin("mtrx", sdk.NewInt(200))),
 	)
 }
