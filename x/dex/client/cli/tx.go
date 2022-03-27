@@ -28,7 +28,7 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// TODO(heisenberg): Add tx commands.
+	cmd.AddCommand(CmdCreatePool())
 
 	return cmd
 }

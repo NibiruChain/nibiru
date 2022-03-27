@@ -19,7 +19,11 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// TODO(heisenberg): Add query commands.
+	cmd.AddCommand(CmdQueryParams())
+
+	cmd.AddCommand(CmdGetPoolNumber())
+
+	cmd.AddCommand(CmdGetPool())
 
 	return cmd
 }
