@@ -8,5 +8,6 @@ import (
 
 // x/dex module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrTooFewPoolAssets  = sdkerrors.Register(ModuleName, 1, "pool should have at least 2 assets, as they must be swapping between at least two assets")
+	ErrTooManyPoolAssets = sdkerrors.Register(ModuleName, 2, "pool has too many assets (currently capped at 8 assets per pool)")
 )
