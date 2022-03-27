@@ -3,9 +3,9 @@ package dex
 import (
 	"math/rand"
 
-	"github.com/MatrixDao/matrix/testutil/sample"
 	dexsimulation "github.com/MatrixDao/matrix/x/dex/simulation"
 	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/MatrixDao/matrix/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,7 +27,6 @@ const (
 	opWeightMsgCreatePool = "op_weight_msg_create_chain"
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgCreatePool int = 100
-
 )
 
 // GenerateGenesisState creates a randomized GenState of the module
@@ -36,8 +35,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	dexGenesis := types.GenesisState{
-	}
+	dexGenesis := types.GenesisState{}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&dexGenesis)
 }
 
@@ -69,7 +67,6 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		weightMsgCreatePool,
 		dexsimulation.SimulateMsgCreatePool(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
-
 
 	return operations
 }
