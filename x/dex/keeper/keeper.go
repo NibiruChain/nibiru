@@ -293,7 +293,7 @@ func (k Keeper) NewPool(
 		return 0, err
 	}
 
-	// k.RecordTotalLiquidityIncrease(ctx, coins)
+	k.RecordTotalLiquidityIncrease(ctx, coins)
 
 	return poolId, nil
 }
