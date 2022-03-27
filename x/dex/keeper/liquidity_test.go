@@ -53,3 +53,37 @@ func TestSetTotalLiquidity(t *testing.T) {
 	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "mtrx"), sdk.NewInt(456))
 	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "foo"), sdk.NewInt(789))
 }
+
+func TestRecordTotalLiquidityIncrease(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+
+	// Write to store
+	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
+		sdk.NewCoin("atom", sdk.NewInt(100)),
+		sdk.NewCoin("mtrx", sdk.NewInt(200)),
+	))
+	app.DexKeeper.RecordTotalLiquidityIncrease(ctx, sdk.NewCoins(
+		sdk.NewCoin("atom", sdk.NewInt(50)),
+		sdk.NewCoin("mtrx", sdk.NewInt(75)),
+	))
+
+	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "atom"), sdk.NewInt(150))
+	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "mtrx"), sdk.NewInt(275))
+}
+
+func TestRecordTotalLiquidityDecrease(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+
+	// Write to store
+	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
+		sdk.NewCoin("atom", sdk.NewInt(100)),
+		sdk.NewCoin("mtrx", sdk.NewInt(200)),
+	))
+	app.DexKeeper.RecordTotalLiquidityDecrease(ctx, sdk.NewCoins(
+		sdk.NewCoin("atom", sdk.NewInt(50)),
+		sdk.NewCoin("mtrx", sdk.NewInt(75)),
+	))
+
+	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "atom"), sdk.NewInt(50))
+	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "mtrx"), sdk.NewInt(125))
+}

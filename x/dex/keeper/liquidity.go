@@ -86,3 +86,33 @@ func (k Keeper) SetTotalLiquidity(ctx sdk.Context, coins sdk.Coins) {
 		k.SetDenomLiquidity(ctx, coin.Denom, coin.Amount)
 	}
 }
+
+/*
+Increases the total liquidity of the provided coins by the coin amount.
+
+args:
+  ctx: the cosmos-sdk context
+  coins: the coins added to the dex
+*/
+func (k Keeper) RecordTotalLiquidityIncrease(ctx sdk.Context, coins sdk.Coins) {
+	for _, coin := range coins {
+		amount := k.GetDenomLiquidity(ctx, coin.Denom)
+		amount = amount.Add(coin.Amount)
+		k.SetDenomLiquidity(ctx, coin.Denom, amount)
+	}
+}
+
+/*
+Increases the total liquidity of the provided coins by the coin amount.
+
+args:
+  ctx: the cosmos-sdk context
+  coins: the coins removed from the dex
+*/
+func (k Keeper) RecordTotalLiquidityDecrease(ctx sdk.Context, coins sdk.Coins) {
+	for _, coin := range coins {
+		amount := k.GetDenomLiquidity(ctx, coin.Denom)
+		amount = amount.Sub(coin.Amount)
+		k.SetDenomLiquidity(ctx, coin.Denom, amount)
+	}
+}
