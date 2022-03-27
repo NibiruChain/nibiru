@@ -402,6 +402,7 @@ func NewMatrixApp(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		dexModule,
 	)
 
 	app.sm.RegisterStoreDecoders()

@@ -6,7 +6,6 @@ import (
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/nullify"
-
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
