@@ -170,3 +170,16 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrTooManyPoolAssets)
 	require.Equal(t, uint64(0), poolId)
 }
+
+func TestMintPoolShareToAccount(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+
+	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress())
+	require.NoError(t, err)
+
+	err = app.DexKeeper.MintPoolShareToAccount(ctx, 1, userAddr, sdk.NewIntWithDecimal(100, 18))
+	require.NoError(t, err)
+
+	coin := app.BankKeeper.GetBalance(ctx, userAddr, "matrix/pool/1")
+	require.Equal(t, sdk.NewIntWithDecimal(100, 18), coin.Amount)
+}
