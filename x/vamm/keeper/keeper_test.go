@@ -88,6 +88,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
+				false,
 			)
 			require.EqualError(t, err, tc.error.Error())
 		})
@@ -153,6 +154,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
+				false,
 			)
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)
@@ -205,13 +207,7 @@ func TestKeeper_AddReserveSnapshot(t *testing.T) {
 	_, err := ammKeeper.GetLastReserveSnapshot(ctx, UsdmPair)
 	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
 
-	ratioLimit, err := sdktypes.NewDecFromStr("0.9")
-	pool := ammtypes.NewPool(
-		UsdmPair,
-		ratioLimit,
-		sdktypes.NewInt(10_000_000),
-		sdktypes.NewInt(5_000_000),
-	)
+	pool := getSamplePool()
 
 	err = ammKeeper.TakeReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
@@ -225,4 +221,43 @@ func TestKeeper_AddReserveSnapshot(t *testing.T) {
 		Timestamp:         expectedTime.Unix(),
 		BlockNumber:       int64(expectedBlockHeight),
 	}, snapshot)
+}
+
+func getSamplePool() *ammtypes.Pool {
+	ratioLimit, _ := sdktypes.NewDecFromStr("0.9")
+
+	pool := ammtypes.NewPool(
+		UsdmPair,
+		ratioLimit,
+		sdktypes.NewInt(10_000_000),
+		sdktypes.NewInt(5_000_000),
+	)
+
+	return pool
+}
+
+func TestKeeper_TakeReserveSnapshot_IncrementsCounter(t *testing.T) {
+	expectedTime := time.Now()
+	expectedBlockHeight := 123
+
+	ammKeeper, ctx := AmmKeeper(t)
+	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight))
+	ctx = ctx.WithBlockTime(expectedTime)
+
+	pool := getSamplePool()
+
+	err := ammKeeper.TakeReserveSnapshot(ctx, pool)
+	require.NoError(t, err)
+
+	counter, found := ammKeeper.getSnapshotCounter(ctx, pool.Pair)
+	require.True(t, found)
+	require.Equal(t, int64(1), counter)
+
+	// Save another one, counter should be incremented to 2
+	err = ammKeeper.TakeReserveSnapshot(ctx, pool)
+	require.NoError(t, err)
+
+	counter, found = ammKeeper.getSnapshotCounter(ctx, pool.Pair)
+	require.True(t, found)
+	require.Equal(t, int64(2), counter)
 }

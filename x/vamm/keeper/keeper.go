@@ -27,6 +27,7 @@ func (k Keeper) SwapInput(
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
+	skipFluctuationCheck bool,
 ) (sdk.Int, error) {
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
@@ -76,7 +77,7 @@ func (k Keeper) SwapInput(
 		}
 	}
 
-	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount)
+	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount, skipFluctuationCheck)
 
 	return baseAssetAmount, nil
 }
@@ -140,6 +141,7 @@ func (k Keeper) updateReserve(
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAssetAmount sdk.Int,
+	skipFluctuationCheck bool,
 ) error {
 	if dir == types.Direction_ADD_TO_AMM {
 		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
@@ -155,11 +157,14 @@ func (k Keeper) updateReserve(
 		// TODO cumulativeNotional
 	}
 
-	// TODO check Fluctuation Limit
+	// Check if its over Fluctuation Limit Ratio.
+	if !skipFluctuationCheck {
+
+	}
 
 	err := k.TakeReserveSnapshot(ctx, pool)
 	if err != nil {
-		return err
+		return fmt.Errorf("error taking snapshot: %w", err)
 	}
 
 	return k.savePool(ctx, pool)
