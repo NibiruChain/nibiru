@@ -221,6 +221,15 @@ func (k Keeper) NewPool(
 	poolParams types.PoolParams,
 	poolAssets []types.PoolAsset,
 ) (uint64, error) {
+	if len(poolAssets) < types.MinPoolAssets {
+		return uint64(0), types.ErrTooFewPoolAssets
+	}
+
+	if len(poolAssets) > types.MaxPoolAssets {
+		return uint64(0), types.ErrTooManyPoolAssets
+
+	}
+
 	poolId := k.GetNextPoolNumberAndIncrement(ctx)
 	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
