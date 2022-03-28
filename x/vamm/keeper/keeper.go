@@ -188,7 +188,9 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 
 	} else {
 		err = k.saveReserveSnapshot(ctx, pool)
-		return fmt.Errorf("error saving snapshot: %w", err)
+		if err != nil {
+			return fmt.Errorf("error saving snapshot: %w", err)
+		}
 	}
 
 	// TODO emit event snapshot saved
@@ -196,6 +198,7 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	return nil
 }
 
+// saveReserveSnapshot saves reserve snapshot and increments counter
 func (k Keeper) saveReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	counter, found := k.getSnapshotCounter(ctx, pool.Pair)
 	if !found {
@@ -204,6 +207,32 @@ func (k Keeper) saveReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 		counter = counter + 1
 	}
 
+	err := k.saveSnapshotInStore(ctx, pool, counter)
+	if err != nil {
+		return err
+	}
+
+	k.updateSnapshotCounter(ctx, pool.Pair, counter)
+
+	return nil
+}
+
+// updateSnapshot saves the snapshot but does not increase the counter
+func (k Keeper) updateSnapshot(ctx sdk.Context, pool *types.Pool) error {
+	counter, found := k.getSnapshotCounter(ctx, pool.Pair)
+	if !found {
+		return fmt.Errorf("counter not found, probably is the first snapshot")
+	}
+
+	err := k.saveSnapshotInStore(ctx, pool, counter)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (k Keeper) saveSnapshotInStore(ctx sdk.Context, pool *types.Pool, counter int64) error {
 	snapshot := &types.ReserveSnapshot{
 		QuoteAssetReserve: pool.QuoteAssetReserve,
 		BaseAssetReserve:  pool.BaseAssetReserve,
@@ -217,9 +246,6 @@ func (k Keeper) saveReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 
 	store := k.getStore(ctx)
 	store.Set(types.GetPoolReserveSnapshotKey(pool.Pair, counter), bz)
-
-	k.updateSnapshotCounter(ctx, pool.Pair, counter)
-
 	return nil
 }
 
