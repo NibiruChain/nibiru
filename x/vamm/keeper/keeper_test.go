@@ -248,3 +248,34 @@ func TestKeeper_SaveReserveSnapshot_IncrementsCounter(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, int64(2), counter)
 }
+
+func TestKeeper_updateSnapshot_doesNotIncrementCounter(t *testing.T) {
+	expectedTime := time.Now()
+	expectedBlockHeight := 123
+
+	ammKeeper, ctx := AmmKeeper(t)
+	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight))
+	ctx = ctx.WithBlockTime(expectedTime)
+
+	pool := getSamplePool()
+
+	err := ammKeeper.saveReserveSnapshot(ctx, pool)
+	require.NoError(t, err)
+
+	counter, found := ammKeeper.getSnapshotCounter(ctx, pool.Pair)
+	require.True(t, found)
+	require.Equal(t, int64(1), counter)
+
+	// update the snapshot another one, counter should not be incremented
+	pool.QuoteAssetReserve = "20000"
+	err = ammKeeper.updateSnapshot(ctx, pool)
+	require.NoError(t, err)
+
+	counter, found = ammKeeper.getSnapshotCounter(ctx, pool.Pair)
+	require.True(t, found)
+	require.Equal(t, int64(1), counter)
+
+	savedSnap, err := ammKeeper.getLastReserveSnapshot(ctx, pool.Pair)
+	require.NoError(t, err)
+	require.Equal(t, pool.QuoteAssetReserve, savedSnap.QuoteAssetReserve)
+}
