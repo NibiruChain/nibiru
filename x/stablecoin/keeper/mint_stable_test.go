@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
@@ -66,6 +67,13 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
+
+			markets := []pricefeedTypes.Market{
+				{MarketID: "mtrx:ust", BaseAsset: "ust", QuoteAsset: "mtrx",
+					Oracles: []sdk.AccAddress{oracle}, Active: true},
+				{MarketID: "usdm:ust", BaseAsset: "ust", QuoteAsset: "usdm",
+					Oracles: []sdk.AccAddress{oracle}, Active: true},
+			}
 
 			// Set prices for GOV and COLL
 			priceKeeper := &matrixApp.PriceKeeper
