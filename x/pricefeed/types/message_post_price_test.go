@@ -23,7 +23,7 @@ func TestMsgPostPrice_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgPostPrice{
-				From: sample.AccAddress(),
+				From: sample.AccAddress().String(),
 			},
 		},
 	}

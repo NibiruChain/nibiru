@@ -23,7 +23,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgMint{
-				Creator: sample.AccAddress(),
+				Creator: sample.AccAddress().String(),
 			},
 		},
 	}
