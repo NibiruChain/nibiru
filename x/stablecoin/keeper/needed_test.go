@@ -4,18 +4,11 @@ import (
 	"testing"
 
 	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
+	"github.com/MatrixDao/matrix/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
-
-func requireEqualWithMessage(
-	t require.TestingT, expected interface{}, actual interface{}, varName string) {
-
-	require.Equalf(t, expected, actual,
-		"Expected '%s': %d,\nActual '%s': %d",
-		varName, expected, varName, actual)
-}
 
 func TestAsInt(t *testing.T) {
 	tests := []struct {
@@ -84,9 +77,9 @@ func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			neededCollAmt, mintableStableAmt := keeper.NeededCollAmtGivenGov(
 				tc.govAmt, tc.priceGov, tc.priceColl, tc.collRatio)
-			requireEqualWithMessage(
+			testutil.RequireEqualWithMessage(
 				t, neededCollAmt, tc.neededCollAmt, "neededCollAmt")
-			requireEqualWithMessage(
+			testutil.RequireEqualWithMessage(
 				t, mintableStableAmt, tc.mintableStableAmt, "mintableStableAmt")
 		})
 	}
