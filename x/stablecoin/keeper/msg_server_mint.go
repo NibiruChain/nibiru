@@ -15,10 +15,6 @@ var (
 	collDenom string = "uust"
 )
 
-func AsInt(dec sdk.Dec) sdk.Int {
-	return sdk.NewIntFromBigInt(dec.BigInt())
-}
-
 // govDeposited: Units of GOV burned
 // govDeposited = (1 - collRatio) * (collDeposited * 1) / (collRatio * priceGOV)
 func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMintResponse, error) {
@@ -47,11 +43,11 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 
 	neededCollUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(collRatio)
-	neededCollAmt := sdk.NewIntFromBigInt(neededCollUSD.Quo(priceColl.Price).BigInt())
+	neededCollAmt := AsInt(neededCollUSD.Quo(priceColl.Price))
 	neededColl := sdk.NewCoin(collDenom, neededCollAmt)
 
 	neededGovUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio)
-	neededGovAmt := sdk.NewIntFromBigInt(neededGovUSD.Quo(priceGov.Price).BigInt())
+	neededGovAmt := AsInt(neededGovUSD.Quo(priceGov.Price))
 	neededGov := sdk.NewCoin(govDenom, neededGovAmt)
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
@@ -87,41 +83,4 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	}
 
 	return &types.MsgMintResponse{Stable: stableToMint}, nil
-}
-
-// Computes the amount of MTRX needed to mint USDM given some COLL amount.
-// Args:
-//   collAmt sdk.Int: Amount of COLL given.
-// Returns:
-//   neededGovAmt sdk.Int: Amount of MTRX needed.
-//   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
-func NeededGovAmtGivenColl(
-	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (sdk.Int, sdk.Int) {
-
-	collUSD := sdk.NewDecFromInt(collAmt).Mul(priceColl)
-	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
-
-	neededGovAmt := AsInt(neededGovUSD.Quo(priceGov))
-	mintableStableAmt := AsInt(collUSD.Add(neededGovUSD))
-	return neededGovAmt, mintableStableAmt
-}
-
-// Computes the amount of COLL needed to mint USDM given some MTRX amount.
-// Args:
-//   govAmt sdk.Int: Amount of  MTRX given.
-// Returns:
-//   neededCollAmt sdk.Int: Amount of COLL needed.
-//   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
-func NeededCollAmtGivenGov(
-	govAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (sdk.Int, sdk.Int) {
-
-	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
-	govRatio := sdk.NewDec(1).Sub(collRatio)
-	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)
-
-	neededCollAmt := AsInt(neededCollUSD.Quo(priceColl))
-	mintableStableAmt := AsInt(govUSD.Add(neededCollUSD))
-	return neededCollAmt, mintableStableAmt
 }
