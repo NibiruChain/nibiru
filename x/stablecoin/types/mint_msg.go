@@ -11,8 +11,8 @@ var _ sdk.Msg = &MsgMint{}
 
 func NewMsgMint(creator string, coin sdk.Coin) *MsgMint {
 	return &MsgMint{
-		Creator:    creator,
-		Collateral: coin,
+		Creator: creator,
+		Stable:  coin,
 	}
 }
 

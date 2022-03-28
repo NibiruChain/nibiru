@@ -28,3 +28,19 @@ func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sd
 	return false, sdkerrors.Wrap(types.NoCoinFound, coinToSpend.Denom)
 
 }
+
+func (k Keeper) CheckEnoughBalances(ctx sdk.Context, coins sdk.Coins, acc sdk.AccAddress) error {
+
+	fromAddr := acc
+	for _, coin := range coins {
+		hasEnoughBalance, err := k.CheckEnoughBalance(ctx, coin, fromAddr)
+		if err != nil {
+			return err
+		}
+		if !hasEnoughBalance {
+			return types.NotEnoughBalance.Wrap(coin.String())
+		}
+	}
+
+	return nil
+}
