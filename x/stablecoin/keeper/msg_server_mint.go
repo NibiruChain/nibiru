@@ -30,12 +30,16 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	}
 
 	// priceGov: Price of the governance token in USD
-	// TODO: Read the governance token price (MTRX per USD) from an oracle.
-	priceGov, _ := sdk.NewDecFromStr("20")
+	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, govDenom)
+	if err != nil {
+		return nil, err
+	}
 
 	// priceColl: Price of the collateral token in USD
-	// TODO: Read the collateral token price (per USD) from an oracle.
-	priceColl, _ := sdk.NewDecFromStr("1")
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, collDenom)
+	if err != nil {
+		return nil, err
+	}
 
 	// The user deposits a mixure of collateral and GOV tokens based on the collateral ratio.
 	// TODO: Initialize these two vars based on the collateral ratio of the protocol.
@@ -43,11 +47,11 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 
 	neededCollUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(collRatio)
-	neededCollAmt := sdk.NewIntFromBigInt(neededCollUSD.Quo(priceColl).BigInt())
+	neededCollAmt := sdk.NewIntFromBigInt(neededCollUSD.Quo(priceColl.Price).BigInt())
 	neededColl := sdk.NewCoin(collDenom, neededCollAmt)
 
 	neededGovUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio)
-	neededGovAmt := sdk.NewIntFromBigInt(neededGovUSD.Quo(priceGov).BigInt())
+	neededGovAmt := sdk.NewIntFromBigInt(neededGovUSD.Quo(priceGov.Price).BigInt())
 	neededGov := sdk.NewCoin(govDenom, neededGovAmt)
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)

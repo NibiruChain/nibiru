@@ -1,6 +1,8 @@
 package types
 
 import (
+	pftypes "github.com/MatrixDao/matrix/x/pricefeed/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -19,4 +21,8 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 	// Methods imported from bank should be defined here
+}
+
+type PriceKeeper interface {
+	GetCurrentPrice(sdk.Context, string) (pftypes.CurrentPrice, error)
 }

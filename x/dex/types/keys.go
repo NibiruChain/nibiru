@@ -37,3 +37,7 @@ var (
 func GetKeyPrefixPools(poolId uint64) []byte {
 	return append(KeyPrefixPools, sdk.Uint64ToBigEndian(poolId)...)
 }
+
+func GetDenomLiquidityPrefix(denom string) []byte {
+	return append(KeyTotalLiquidity, []byte(denom)...)
+}
