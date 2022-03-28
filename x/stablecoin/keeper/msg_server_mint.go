@@ -73,7 +73,12 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 	if err != nil {
 		panic(err)
 	}
-	// TODO: Burn the GOV that the user gave to the protocol.
+
+	// Burn the GOV that the user gave to the protocol.
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
+	if err != nil {
+		panic(err)
+	}
 
 	// Send the minted tokens to the user.
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
