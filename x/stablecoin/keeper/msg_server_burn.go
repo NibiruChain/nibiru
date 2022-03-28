@@ -75,5 +75,5 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 		panic(err)
 	}
 
-	return &types.MsgBurnResponse{collToSend, govToSend}, nil
+	return &types.MsgBurnResponse{Collateral: collToSend, Gov: govToSend}, nil
 }
