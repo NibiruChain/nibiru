@@ -170,7 +170,10 @@ func (k Keeper) updateReserve(
 
 	// Check if its over Fluctuation Limit Ratio.
 	if !skipFluctuationCheck {
-		k.checkFluctuationLimitRation(ctx, pool)
+		err := k.checkFluctuationLimitRatio(ctx, pool)
+		if err != nil {
+			return err
+		}
 	}
 
 	err := k.addReserveSnapshot(ctx, pool)
@@ -187,7 +190,7 @@ func (k Keeper) existsPool(ctx sdk.Context, pair string) bool {
 	return store.Has(types.GetPoolKey(pair))
 }
 
-func (k Keeper) checkFluctuationLimitRation(ctx sdk.Context, pool *types.Pool) error {
+func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
 	fluctuationLimitRatio, err := sdk.NewDecFromStr(pool.FluctuationLimitRatio)
 	if err != nil {
 		return fmt.Errorf("error getting fluctuation limit ratio for pool: %s", pool.Pair)
