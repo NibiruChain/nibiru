@@ -20,6 +20,10 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
+func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
+	return ctx.KVStore(k.storeKey)
+}
+
 // SwapInput swaps pair token
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
@@ -29,7 +33,7 @@ func (k Keeper) SwapInput(
 	baseAmountLimit sdk.Int,
 	skipFluctuationCheck bool,
 ) (sdk.Int, error) {
-	if !k.ExistsPool(ctx, pair) {
+	if !k.existsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
 	}
 
@@ -162,25 +166,37 @@ func (k Keeper) updateReserve(
 
 	}
 
-	err := k.TakeReserveSnapshot(ctx, pool)
-	if err != nil {
-		return fmt.Errorf("error taking snapshot: %w", err)
-	}
+	k.addReserveSnapshot(ctx, pool)
 
 	return k.savePool(ctx, pool)
 }
 
-// ExistsPool returns true if pool exists, false if not.
-func (k Keeper) ExistsPool(ctx sdk.Context, pair string) bool {
+// existsPool returns true if pool exists, false if not.
+func (k Keeper) existsPool(ctx sdk.Context, pair string) bool {
 	store := k.getStore(ctx)
 	return store.Has(types.GetPoolKey(pair))
 }
 
-func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
-	return ctx.KVStore(k.storeKey)
+func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
+	blockNumber := ctx.BlockHeight()
+	lastSnapshot, err := k.getLastReserveSnapshot(ctx, pool.Pair)
+	if err != nil {
+		return err
+	}
+
+	if blockNumber == lastSnapshot.BlockNumber {
+
+	} else {
+		err = k.saveReserveSnapshot(ctx, pool)
+		return fmt.Errorf("error saving snapshot: %w", err)
+	}
+
+	// TODO emit event snapshot saved
+
+	return nil
 }
 
-func (k Keeper) TakeReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
+func (k Keeper) saveReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	counter, found := k.getSnapshotCounter(ctx, pool.Pair)
 	if !found {
 		counter = 1
@@ -228,7 +244,7 @@ func (k Keeper) updateSnapshotCounter(ctx sdk.Context, pair string, counter int6
 	store.Set(types.GetPoolReserveSnapshotCounter(pair), sdk.Uint64ToBigEndian(uint64(counter)))
 }
 
-func (k Keeper) GetLastReserveSnapshot(ctx sdk.Context, pair string) (types.ReserveSnapshot, error) {
+func (k Keeper) getLastReserveSnapshot(ctx sdk.Context, pair string) (types.ReserveSnapshot, error) {
 	counter, found := k.getSnapshotCounter(ctx, pair)
 	if !found {
 		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved
