@@ -183,36 +183,36 @@ func TestCreatePool(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	exists := ammKeeper.ExistsPool(ctx, UsdmPair)
+	exists := ammKeeper.existsPool(ctx, UsdmPair)
 	require.True(t, exists)
 
-	notExist := ammKeeper.ExistsPool(ctx, "BTC:OTHER")
+	notExist := ammKeeper.existsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }
 
-func TestKeeper_AddReserveSnapshot_ErrorNoLastSnapshot(t *testing.T) {
+func TestKeeper_GetLastReserveSnapshot_ErrorNoLastSnapshot(t *testing.T) {
 	ammKeeper, ctx := AmmKeeper(t)
 
-	_, err := ammKeeper.GetLastReserveSnapshot(ctx, UsdmPair)
+	err := ammKeeper.addReserveSnapshot(ctx, getSamplePool())
 	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
 }
 
-func TestKeeper_AddReserveSnapshot(t *testing.T) {
+func TestKeeper_SaveReserveSnapshot(t *testing.T) {
 	expectedTime := time.Now()
 	expectedBlockHeight := 123
 	ammKeeper, ctx := AmmKeeper(t)
 	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight))
 	ctx = ctx.WithBlockTime(expectedTime)
 
-	_, err := ammKeeper.GetLastReserveSnapshot(ctx, UsdmPair)
+	_, err := ammKeeper.getLastReserveSnapshot(ctx, UsdmPair)
 	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
 
 	pool := getSamplePool()
 
-	err = ammKeeper.TakeReserveSnapshot(ctx, pool)
+	err = ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
-	snapshot, err := ammKeeper.GetLastReserveSnapshot(ctx, UsdmPair)
+	snapshot, err := ammKeeper.getLastReserveSnapshot(ctx, UsdmPair)
 	require.NoError(t, err)
 
 	require.Equal(t, ammtypes.ReserveSnapshot{
@@ -223,20 +223,7 @@ func TestKeeper_AddReserveSnapshot(t *testing.T) {
 	}, snapshot)
 }
 
-func getSamplePool() *ammtypes.Pool {
-	ratioLimit, _ := sdktypes.NewDecFromStr("0.9")
-
-	pool := ammtypes.NewPool(
-		UsdmPair,
-		ratioLimit,
-		sdktypes.NewInt(10_000_000),
-		sdktypes.NewInt(5_000_000),
-	)
-
-	return pool
-}
-
-func TestKeeper_TakeReserveSnapshot_IncrementsCounter(t *testing.T) {
+func TestKeeper_SaveReserveSnapshot_IncrementsCounter(t *testing.T) {
 	expectedTime := time.Now()
 	expectedBlockHeight := 123
 
@@ -246,7 +233,7 @@ func TestKeeper_TakeReserveSnapshot_IncrementsCounter(t *testing.T) {
 
 	pool := getSamplePool()
 
-	err := ammKeeper.TakeReserveSnapshot(ctx, pool)
+	err := ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
 	counter, found := ammKeeper.getSnapshotCounter(ctx, pool.Pair)
@@ -254,7 +241,7 @@ func TestKeeper_TakeReserveSnapshot_IncrementsCounter(t *testing.T) {
 	require.Equal(t, int64(1), counter)
 
 	// Save another one, counter should be incremented to 2
-	err = ammKeeper.TakeReserveSnapshot(ctx, pool)
+	err = ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
 	counter, found = ammKeeper.getSnapshotCounter(ctx, pool.Pair)
