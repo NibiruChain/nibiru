@@ -6,8 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Truncates a decimal (sdk.Dec) to convert it into an integer (sdk.Int).
 func AsInt(dec sdk.Dec) sdk.Int {
-	return sdk.NewIntFromBigInt(dec.BigInt())
+	sdkInt18 := sdk.NewIntFromBigInt(dec.BigInt())
+	var ten18 sdk.Int = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("1").BigInt())
+	sdkInt := sdkInt18.Quo(sdk.OneInt().Mul(ten18))
+	return sdkInt
 }
 
 // Computes the amount of MTRX needed to mint USDM given some COLL amount.
