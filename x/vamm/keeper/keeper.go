@@ -31,7 +31,6 @@ func (k Keeper) SwapInput(
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
-	skipFluctuationCheck bool,
 ) (sdk.Int, error) {
 	if !k.existsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
@@ -81,7 +80,7 @@ func (k Keeper) SwapInput(
 		}
 	}
 
-	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount, skipFluctuationCheck)
+	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount, false)
 	if err != nil {
 		return sdk.Int{}, fmt.Errorf("error updating reserve: %w", err)
 	}
