@@ -3,43 +3,11 @@ package keeper
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	types2 "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/capability/types"
-	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"github.com/tendermint/tendermint/types/time"
-	tmdb "github.com/tendermint/tm-db"
-
 	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/types/time"
 )
-
-const UsdmPair = "BTC:USDM"
-
-func AmmKeeper(t *testing.T) (Keeper, sdktypes.Context) {
-	storeKey := sdktypes.NewKVStoreKey(ammtypes.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
-
-	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, sdktypes.StoreTypeIAVL, db)
-	stateStore.MountStoreWithDB(memStoreKey, sdktypes.StoreTypeMemory, nil)
-	require.NoError(t, stateStore.LoadLatestVersion())
-
-	registry := types2.NewInterfaceRegistry()
-
-	k := NewKeeper(
-		codec.NewProtoCodec(registry),
-		storeKey,
-	)
-
-	ctx := sdktypes.NewContext(stateStore, tmproto.Header{}, false, nil)
-
-	return k, ctx
-}
 
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
@@ -195,87 +163,91 @@ func TestKeeper_GetLastReserveSnapshot_ErrorNoLastSnapshot(t *testing.T) {
 
 	err := ammKeeper.addReserveSnapshot(ctx, getSamplePool())
 	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
+
+	_, err = ammKeeper.getLastReserveSnapshot(ctx, UsdmPair)
+	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
 }
 
 func TestKeeper_SaveReserveSnapshot(t *testing.T) {
 	expectedTime := time.Now()
 	expectedBlockHeight := 123
-	ammKeeper, ctx := AmmKeeper(t)
-	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight))
-	ctx = ctx.WithBlockTime(expectedTime)
-
-	_, err := ammKeeper.getLastReserveSnapshot(ctx, UsdmPair)
-	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
-
 	pool := getSamplePool()
 
-	err = ammKeeper.saveReserveSnapshot(ctx, pool)
+	expectedSnapshot := ammtypes.ReserveSnapshot{
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		Timestamp:         expectedTime.Unix(),
+		BlockNumber:       int64(expectedBlockHeight),
+	}
+
+	ammKeeper, ctx := AmmKeeper(t)
+	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight)).WithBlockTime(expectedTime)
+
+	err := ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
 	snapshot, err := ammKeeper.getLastReserveSnapshot(ctx, UsdmPair)
 	require.NoError(t, err)
 
-	require.Equal(t, ammtypes.ReserveSnapshot{
-		QuoteAssetReserve: pool.QuoteAssetReserve,
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		Timestamp:         expectedTime.Unix(),
-		BlockNumber:       int64(expectedBlockHeight),
-	}, snapshot)
+	require.Equal(t, expectedSnapshot, snapshot)
 }
 
-func TestKeeper_SaveReserveSnapshot_IncrementsCounter(t *testing.T) {
-	expectedTime := time.Now()
-	expectedBlockHeight := 123
-
+func TestKeeper_saveReserveSnapshot_IncrementsCounter(t *testing.T) {
 	ammKeeper, ctx := AmmKeeper(t)
-	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight))
-	ctx = ctx.WithBlockTime(expectedTime)
+	ctx = ctx.WithBlockHeight(int64(123)).WithBlockTime(time.Now())
 
 	pool := getSamplePool()
 
 	err := ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
-	counter, found := ammKeeper.getSnapshotCounter(ctx, pool.Pair)
-	require.True(t, found)
-	require.Equal(t, int64(1), counter)
+	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
 
 	// Save another one, counter should be incremented to 2
 	err = ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
-	counter, found = ammKeeper.getSnapshotCounter(ctx, pool.Pair)
-	require.True(t, found)
-	require.Equal(t, int64(2), counter)
+	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 2)
 }
 
 func TestKeeper_updateSnapshot_doesNotIncrementCounter(t *testing.T) {
-	expectedTime := time.Now()
-	expectedBlockHeight := 123
-
 	ammKeeper, ctx := AmmKeeper(t)
-	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight))
-	ctx = ctx.WithBlockTime(expectedTime)
+	ctx = ctx.WithBlockHeight(int64(123)).WithBlockTime(time.Now())
 
 	pool := getSamplePool()
 
 	err := ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
-	counter, found := ammKeeper.getSnapshotCounter(ctx, pool.Pair)
-	require.True(t, found)
-	require.Equal(t, int64(1), counter)
+	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
 
-	// update the snapshot another one, counter should not be incremented
+	// update the snapshot, counter should not be incremented
 	pool.QuoteAssetReserve = "20000"
 	err = ammKeeper.updateSnapshot(ctx, pool)
 	require.NoError(t, err)
 
-	counter, found = ammKeeper.getSnapshotCounter(ctx, pool.Pair)
-	require.True(t, found)
-	require.Equal(t, int64(1), counter)
+	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
 
 	savedSnap, err := ammKeeper.getLastReserveSnapshot(ctx, pool.Pair)
 	require.NoError(t, err)
 	require.Equal(t, pool.QuoteAssetReserve, savedSnap.QuoteAssetReserve)
+}
+
+func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
+	ammKeeper, ctx := AmmKeeper(t)
+	ctx = ctx.WithBlockHeight(int64(123)).WithBlockTime(time.Now())
+
+	pool := getSamplePool()
+
+	err := ammKeeper.saveReserveSnapshot(ctx, pool)
+	require.NoError(t, err)
+
+	// Last counter updated
+	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
+}
+
+func requireLastSnapshotCounterEqual(t *testing.T, ctx sdktypes.Context, keeper Keeper, pool *ammtypes.Pool, counter int64) {
+	c, found := keeper.getSnapshotCounter(ctx, pool.Pair)
+	require.True(t, found)
+	require.Equal(t, counter, c)
 }
