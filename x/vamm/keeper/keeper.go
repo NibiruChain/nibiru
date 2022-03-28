@@ -82,6 +82,9 @@ func (k Keeper) SwapInput(
 	}
 
 	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount, skipFluctuationCheck)
+	if err != nil {
+		return sdk.Int{}, fmt.Errorf("error updating reserve: %w", err)
+	}
 
 	return baseAssetAmount, nil
 }
@@ -119,6 +122,11 @@ func (k Keeper) CreatePool(
 	err := k.savePool(ctx, pool)
 	if err != nil {
 		return err
+	}
+
+	err = k.saveReserveSnapshot(ctx, pool)
+	if err != nil {
+		return fmt.Errorf("error saving snapshot on pool creation: %w", err)
 	}
 
 	return nil
@@ -166,7 +174,10 @@ func (k Keeper) updateReserve(
 
 	}
 
-	k.addReserveSnapshot(ctx, pool)
+	err := k.addReserveSnapshot(ctx, pool)
+	if err != nil {
+		return fmt.Errorf("error creating snapshot: %w", err)
+	}
 
 	return k.savePool(ctx, pool)
 }
@@ -249,6 +260,7 @@ func (k Keeper) saveSnapshotInStore(ctx sdk.Context, pool *types.Pool, counter i
 
 	store := k.getStore(ctx)
 	store.Set(types.GetPoolReserveSnapshotKey(pool.Pair, counter), bz)
+
 	return nil
 }
 
