@@ -13,6 +13,17 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+/*
+Handler for the QueryParamsRequest query.
+
+args
+  ctx: the cosmos-sdk context
+  req: a QueryParamsRequest proto object
+
+ret
+  QueryParamsResponse: the QueryParamsResponse proto object response, containing the params
+  error: an error if any occurred
+*/
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -22,6 +33,17 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
+/*
+Handler for the QueryGetPoolRequest query.
+
+args
+  ctx: the cosmos-sdk context
+  req: a QueryGetPoolRequest proto object
+
+ret
+  QueryGetPoolResponse: the QueryGetPoolResponse proto object response, containing the pool
+  error: an error if any occurred
+*/
 func (k Keeper) GetPool(goCtx context.Context, req *types.QueryGetPoolRequest) (*types.QueryGetPoolResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -44,6 +66,17 @@ func (k Keeper) GetPool(goCtx context.Context, req *types.QueryGetPoolRequest) (
 	}, nil
 }
 
+/*
+Handler for the QueryGetPoolNumberRequest query.
+
+args
+  ctx: the cosmos-sdk context
+  req: a QueryGetPoolNumberRequest proto object
+
+ret
+  QueryGetPoolNumberResponse: the QueryGetPoolNumberResponse proto object response, containing the next pool id number
+  error: an error if any occurred
+*/
 func (k Keeper) GetPoolNumber(goCtx context.Context, req *types.QueryGetPoolNumberRequest) (*types.QueryGetPoolNumberResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
