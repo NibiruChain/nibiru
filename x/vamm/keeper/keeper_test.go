@@ -55,7 +55,6 @@ func TestSwapInput_Errors(t *testing.T) {
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
-				false,
 			)
 			require.EqualError(t, err, tc.error.Error())
 		})
@@ -121,7 +120,6 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
-				false,
 			)
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)
