@@ -126,7 +126,6 @@ func TestMint_NeededGovAmtGivenColl(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			neededGovAmt, mintableStableAmt := keeper.NeededGovAmtGivenColl(
 				test.collAmt, test.priceGov, test.priceColl, test.collRatio)
-			require.Equal(t, sdk.NewInt(1), sdk.NewInt(1))
 			require.Equal(t, neededGovAmt, test.neededGovAmt)
 			require.Equal(t, mintableStableAmt, test.mintableStableAmt)
 		})

@@ -3,7 +3,9 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,7 +77,11 @@ func TestMsgMintResponse(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.msg.ValidateBasic()
+
+			matrixApp, ctx := testutil.NewMatrixApp()
+			matrixApp.
+			msgServer := keeper.NewMsgServerImpl(keeper.)
+			mintResponse := keeper.Mint(ctx, test.msg)
 			if test.err != nil {
 				require.ErrorIs(t, err, test.err)
 				return

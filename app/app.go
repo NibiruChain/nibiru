@@ -19,6 +19,11 @@ import (
 	"github.com/MatrixDao/matrix/x/dex"
 	dexkeeper "github.com/MatrixDao/matrix/x/dex/keeper"
 	dextypes "github.com/MatrixDao/matrix/x/dex/types"
+	pricekeeper "github.com/MatrixDao/matrix/x/pricefeed/keeper"
+	pricetypes "github.com/MatrixDao/matrix/x/pricefeed/types"
+	stablecoin "github.com/MatrixDao/matrix/x/stablecoin"
+	stablekeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
+	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -176,6 +181,8 @@ type MatrixApp struct {
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	DexKeeper        dexkeeper.Keeper
+	StablecoinKeeper stablekeeper.Keeper
+	PriceKeeper      pricekeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -305,7 +312,20 @@ func NewMatrixApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	app.DexKeeper = *dexkeeper.NewKeeper(appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName), app.AccountKeeper, app.BankKeeper)
+	app.DexKeeper = *dexkeeper.NewKeeper(
+		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper)
+
+	app.PriceKeeper = pricekeeper.NewKeeper(
+		appCodec, keys[pricetypes.StoreKey], keys[pricetypes.MemStoreKey],
+		app.GetSubspace(pricetypes.ModuleName),
+	)
+
+	app.StablecoinKeeper = *stablekeeper.NewKeeper(
+		appCodec, keys[stabletypes.StoreKey], keys[stabletypes.MemStoreKey],
+		app.GetSubspace(stabletypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
+	)
 
 	/****  Module Options ****/
 
@@ -314,6 +334,7 @@ func NewMatrixApp(
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	dexModule := dex.NewAppModule(appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
+	stablecoinModule := stablecoin.New
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
