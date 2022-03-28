@@ -12,9 +12,9 @@ import (
 )
 
 // Setup initializes a new App.
-func Setup(isCheckTx bool) *App {
+func Setup(isCheckTx bool) *MatrixApp {
 	db := dbm.NewMemDB()
-	app := NewApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, MakeTestEncodingConfig(), simapp.EmptyAppOptions{})
+	app := NewMatrixApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, MakeTestEncodingConfig(), simapp.EmptyAppOptions{})
 	if !isCheckTx {
 		genesisState := NewDefaultGenesisState()
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -36,13 +36,13 @@ func Setup(isCheckTx bool) *App {
 
 // SetupTestingAppWithLevelDb initializes a new App intended for testing,
 // with LevelDB as a db.
-func SetupTestingAppWithLevelDb(isCheckTx bool) (app *App, cleanupFn func()) {
+func SetupTestingAppWithLevelDb(isCheckTx bool) (app *MatrixApp, cleanupFn func()) {
 	dir := "matrix_testing"
 	db, err := sdk.NewLevelDB("matrix_leveldb_testing", dir)
 	if err != nil {
 		panic(err)
 	}
-	app = NewApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, MakeTestEncodingConfig(), simapp.EmptyAppOptions{})
+	app = NewMatrixApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, MakeTestEncodingConfig(), simapp.EmptyAppOptions{})
 	if !isCheckTx {
 		genesisState := NewDefaultGenesisState()
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
