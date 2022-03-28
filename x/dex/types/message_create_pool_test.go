@@ -23,7 +23,7 @@ func TestMsgCreatePool_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress(),
+				Creator: sample.AccAddress().String(),
 			},
 		},
 	}

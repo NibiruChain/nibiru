@@ -80,13 +80,14 @@ func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		tc := test
+		t.Run(tc.name, func(t *testing.T) {
 			neededCollAmt, mintableStableAmt := keeper.NeededCollAmtGivenGov(
-				test.govAmt, test.priceGov, test.priceColl, test.collRatio)
+				tc.govAmt, tc.priceGov, tc.priceColl, tc.collRatio)
 			requireEqualWithMessage(
-				t, neededCollAmt, test.neededCollAmt, "neededCollAmt")
+				t, neededCollAmt, tc.neededCollAmt, "neededCollAmt")
 			requireEqualWithMessage(
-				t, mintableStableAmt, test.mintableStableAmt, "mintableStableAmt")
+				t, mintableStableAmt, tc.mintableStableAmt, "mintableStableAmt")
 		})
 	}
 }

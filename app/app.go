@@ -21,7 +21,6 @@ import (
 	dextypes "github.com/MatrixDao/matrix/x/dex/types"
 	pricekeeper "github.com/MatrixDao/matrix/x/pricefeed/keeper"
 	pricetypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	stablecoin "github.com/MatrixDao/matrix/x/stablecoin"
 	stablekeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
 	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -334,7 +333,6 @@ func NewMatrixApp(
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	dexModule := dex.NewAppModule(appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
-	stablecoinModule := stablecoin.New
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

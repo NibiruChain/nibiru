@@ -10,11 +10,12 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 )
 
-// AccAddress returns a sample account address
-func AccAddress() string {
+// Returns a sample account address (sdk.AccAddress)
+// Note that AccAddress().String() can be used to get a string representation.
+func AccAddress() sdk.AccAddress {
 	pk := ed25519.GenPrivKey().PubKey()
 	addr := pk.Address()
-	return sdk.AccAddress(addr).String()
+	return sdk.AccAddress(addr)
 }
 
 // PrivKeyAddressPairsFromRand generates (deterministically) a total of n private keys and addresses.
