@@ -185,7 +185,10 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	}
 
 	if blockNumber == lastSnapshot.BlockNumber {
-
+		err = k.updateSnapshot(ctx, pool)
+		if err != nil {
+			return fmt.Errorf("error updating snapshot: %w", err)
+		}
 	} else {
 		err = k.saveReserveSnapshot(ctx, pool)
 		if err != nil {
