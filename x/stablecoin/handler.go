@@ -17,8 +17,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case *types.MsgMint:
-			res, err := msgServer.Mint(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgMintStable:
+			res, err := msgServer.MintStable(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		// case *types.MsgDeposit:
 		// 	res, err := msgServer.Deposit(sdk.WrapSDKContext(ctx), msg)
