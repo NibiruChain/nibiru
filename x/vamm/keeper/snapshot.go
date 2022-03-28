@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/MatrixDao/matrix/x/vamm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/MatrixDao/matrix/x/vamm/types"
 )
 
+// addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
 func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	blockNumber := ctx.BlockHeight()
 	lastSnapshot, err := k.getLastReserveSnapshot(ctx, pool.Pair)
