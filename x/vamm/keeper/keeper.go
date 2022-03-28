@@ -170,7 +170,7 @@ func (k Keeper) updateReserve(
 
 	// Check if its over Fluctuation Limit Ratio.
 	if !skipFluctuationCheck {
-
+		k.checkFluctuationLimitRation(ctx, pool)
 	}
 
 	err := k.addReserveSnapshot(ctx, pool)
@@ -185,4 +185,55 @@ func (k Keeper) updateReserve(
 func (k Keeper) existsPool(ctx sdk.Context, pair string) bool {
 	store := k.getStore(ctx)
 	return store.Has(types.GetPoolKey(pair))
+}
+
+func (k Keeper) checkFluctuationLimitRation(ctx sdk.Context, pool *types.Pool) error {
+	fluctuationLimitRatio, err := sdk.NewDecFromStr(pool.FluctuationLimitRatio)
+	if err != nil {
+		return fmt.Errorf("error getting fluctuation limit ratio for pool: %s", pool.Pair)
+	}
+
+	if fluctuationLimitRatio.GT(sdk.ZeroDec()) {
+		latestSnapshot, err := k.getLastReserveSnapshot(ctx, pool.Pair)
+		if err != nil {
+			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+		}
+
+		counter, found := k.getSnapshotCounter(ctx, pool.Pair)
+		if !found {
+			counter = 1
+		}
+
+		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 1 {
+			latestSnapshot, err = k.getSnapshotByCounter(ctx, pool.Pair, counter-1)
+			if err != nil {
+				return fmt.Errorf("error getting snapshot number %d from pair %s", counter, pool.Pair)
+			}
+		}
+
+		if isOverFluctuationLimit(pool, latestSnapshot) {
+			return fmt.Errorf("price is over fluctuation limit")
+		}
+	}
+
+	return nil
+}
+
+func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
+	fluctuationLimitRatio, _ := sdk.NewDecFromStr(pool.FluctuationLimitRatio)
+	quoteAssetReserve, _ := pool.GetPoolQuoteAssetReserveAsInt()
+	baseAssetReserve, _ := pool.GetPoolBaseAssetReserveAsInt()
+	price := quoteAssetReserve.ToDec().Quo(baseAssetReserve.ToDec())
+
+	snapshotQuote, _ := sdk.NewDecFromStr(snapshot.QuoteAssetReserve)
+	snapshotBase, _ := sdk.NewDecFromStr(snapshot.BaseAssetReserve)
+	lastPrice := snapshotQuote.Quo(snapshotBase)
+	upperLimit := lastPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
+	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+
+	if price.GT(upperLimit) || price.LT(lowerLimit) {
+		return true
+	}
+
+	return false
 }

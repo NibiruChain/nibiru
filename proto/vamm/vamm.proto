@@ -23,4 +23,5 @@ message Pool {
   string trade_limit_ratio = 2;
   string quote_asset_reserve = 3;
   string base_asset_reserve = 4;
+  string fluctuation_limit_ratio = 5;
 }
