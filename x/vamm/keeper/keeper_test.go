@@ -158,7 +158,7 @@ func TestCreatePool(t *testing.T) {
 	require.False(t, notExist)
 }
 
-func TestKeeper_GetLastReserveSnapshot_ErrorNoLastSnapshot(t *testing.T) {
+func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
 	ammKeeper, ctx := AmmKeeper(t)
 
 	err := ammKeeper.addReserveSnapshot(ctx, getSamplePool())
@@ -235,15 +235,40 @@ func TestKeeper_updateSnapshot_doesNotIncrementCounter(t *testing.T) {
 
 func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
 	ammKeeper, ctx := AmmKeeper(t)
-	ctx = ctx.WithBlockHeight(int64(123)).WithBlockTime(time.Now())
+	expectedHeight := int64(123)
+	expectedTime := time.Now()
+
+	ctx = ctx.WithBlockHeight(expectedHeight).WithBlockTime(expectedTime)
 
 	pool := getSamplePool()
+
+	expectedSnapshot := ammtypes.ReserveSnapshot{
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		Timestamp:         expectedTime.Unix(),
+		BlockNumber:       expectedHeight,
+	}
 
 	err := ammKeeper.saveReserveSnapshot(ctx, pool)
 	require.NoError(t, err)
 
 	// Last counter updated
 	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
+	snapshot, err := ammKeeper.getLastReserveSnapshot(ctx, pool.Pair)
+	require.NoError(t, err)
+	require.Equal(t, expectedSnapshot, snapshot)
+
+	// We save another different snapshot
+	differentSnapshot := expectedSnapshot
+	differentSnapshot.QuoteAssetReserve = "12341234"
+	pool.QuoteAssetReserve = differentSnapshot.QuoteAssetReserve
+	err = ammKeeper.saveReserveSnapshot(ctx, pool)
+	require.NoError(t, err)
+
+	// We get the snapshot 1
+	savedSnap, err := ammKeeper.getSnapshotByCounter(ctx, pool.Pair, 1)
+	require.NoError(t, err)
+	require.Equal(t, expectedSnapshot, savedSnap)
 }
 
 func requireLastSnapshotCounterEqual(t *testing.T, ctx sdktypes.Context, keeper Keeper, pool *ammtypes.Pool, counter int64) {

@@ -291,6 +291,11 @@ func (k Keeper) getLastReserveSnapshot(ctx sdk.Context, pair string) (types.Rese
 		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved
 	}
 
+	return k.getSnapshotByCounter(ctx, pair, counter)
+}
+
+// getSnapshotByCounter returns the snapshot saved by counter num
+func (k Keeper) getSnapshotByCounter(ctx sdk.Context, pair string, counter int64) (types.ReserveSnapshot, error) {
 	store := k.getStore(ctx)
 	bz := store.Get(types.GetPoolReserveSnapshotKey(pair, counter))
 	if bz == nil {
