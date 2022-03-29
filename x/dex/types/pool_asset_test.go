@@ -47,3 +47,26 @@ func TestPoolAssetValidateError(t *testing.T) {
 	}
 
 }
+
+func TestPoolAssetValidateSuccess(t *testing.T) {
+	tests := []struct {
+		name string
+		pa   PoolAsset
+	}{
+		{
+			name: "successful validation",
+			pa: PoolAsset{
+				Token:  sdk.NewInt64Coin("foo", 1),
+				Weight: sdk.NewInt(1),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			require.NoError(t, tc.pa.Validate())
+		})
+	}
+
+}
