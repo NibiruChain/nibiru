@@ -9,7 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable) (*types.MsgBurnStableResponse, error) {
+func (k Keeper) BurnStable(
+	goCtx context.Context, msg *types.MsgBurnStable,
+) (*types.MsgBurnStableResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	toAddr, err := sdk.AccAddressFromBech32(msg.Creator)
