@@ -11,12 +11,14 @@ func NewPool(
 	tradeLimitRatio sdk.Dec,
 	quoteAssetReserve sdk.Int,
 	baseAssetReserve sdk.Int,
+	fluctuationLimitRatio sdk.Dec,
 ) *Pool {
 	return &Pool{
-		Pair:              pair,
-		TradeLimitRatio:   tradeLimitRatio.String(),
-		QuoteAssetReserve: quoteAssetReserve.String(),
-		BaseAssetReserve:  baseAssetReserve.String(),
+		Pair:                  pair,
+		TradeLimitRatio:       tradeLimitRatio.String(),
+		QuoteAssetReserve:     quoteAssetReserve.String(),
+		BaseAssetReserve:      baseAssetReserve.String(),
+		FluctuationLimitRatio: fluctuationLimitRatio.String(),
 	}
 }
 

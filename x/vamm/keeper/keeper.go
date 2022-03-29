@@ -110,13 +110,9 @@ func (k Keeper) CreatePool(
 	tradeLimitRatio sdk.Dec, // integer with 6 decimals, 1_000_000 means 1.0
 	quoteAssetReserve sdk.Int,
 	baseAssetReserve sdk.Int,
+	fluctuationLimitRation sdk.Dec,
 ) error {
-	pool := &types.Pool{
-		Pair:              pair,
-		TradeLimitRatio:   tradeLimitRatio.String(),
-		QuoteAssetReserve: quoteAssetReserve.String(),
-		BaseAssetReserve:  baseAssetReserve.String(),
-	}
+	pool := types.NewPool(pair, tradeLimitRatio, quoteAssetReserve, baseAssetReserve, fluctuationLimitRation)
 
 	err := k.savePool(ctx, pool)
 	if err != nil {
@@ -215,7 +211,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 		}
 
 		if isOverFluctuationLimit(pool, latestSnapshot) {
-			return fmt.Errorf("price is over fluctuation limit")
+			return types.ErrOverFluctuationLimit
 		}
 	}
 
@@ -233,6 +229,14 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 	lastPrice := snapshotQuote.Quo(snapshotBase)
 	upperLimit := lastPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
 	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+
+	fmt.Printf("snapshot quote: %d\n", snapshotQuote)
+	fmt.Printf("snapshot base: %d\n", snapshotBase)
+	fmt.Printf("snapshot last price: %d\n", lastPrice)
+	fmt.Printf("snapshot upper limit: %d\n", upperLimit)
+	fmt.Printf("snapshot lower limit: %d\n", lowerLimit)
+
+	fmt.Printf("actual price: %d\n", price)
 
 	if price.GT(upperLimit) || price.LT(lowerLimit) {
 		return true

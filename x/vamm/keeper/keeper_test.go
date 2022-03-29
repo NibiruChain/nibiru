@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 
 	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
@@ -33,6 +34,14 @@ func TestSwapInput_Errors(t *testing.T) {
 			sdktypes.NewInt(10),
 			ammtypes.ErrOvertradingLimit,
 		},
+		{
+			"over fluctuation limit fails",
+			UsdmPair,
+			ammtypes.Direction_ADD_TO_AMM,
+			sdktypes.NewInt(1_000_000),
+			sdktypes.NewInt(454544),
+			fmt.Errorf("error updating reserve: %w", ammtypes.ErrOverFluctuationLimit),
+		},
 	}
 
 	for _, tc := range tests {
@@ -46,6 +55,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
 				sdktypes.NewInt(10_000_000),       // 10
 				sdktypes.NewInt(5_000_000),        // 5
+				sdktypes.MustNewDecFromStr("0.1"), // 0.9 ratio
 			)
 			require.NoError(t, err)
 
@@ -108,9 +118,10 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			err := keeper.CreatePool(
 				ctx,
 				UsdmPair,
-				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
-				sdktypes.NewInt(10_000_000),       // 10 tokens
-				sdktypes.NewInt(5_000_000),        // 5 tokens
+				sdktypes.MustNewDecFromStr("0.9"),  // 0.9 ratio
+				sdktypes.NewInt(10_000_000),        // 10 tokens
+				sdktypes.NewInt(5_000_000),         // 5 tokens
+				sdktypes.MustNewDecFromStr("0.25"), // 0.9 ratio
 			)
 			require.NoError(t, err)
 
@@ -145,6 +156,7 @@ func TestCreatePool(t *testing.T) {
 		sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
 		sdktypes.NewInt(10_000_000),       // 10 tokens
 		sdktypes.NewInt(5_000_000),        // 5 tokens
+		sdktypes.MustNewDecFromStr("0.1"), // 0.9 ratio
 	)
 	require.NoError(t, err)
 
