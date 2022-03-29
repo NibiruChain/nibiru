@@ -114,7 +114,7 @@ func TestNewPool(t *testing.T) {
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
-	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress())
+	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
@@ -134,7 +134,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 
 func TestNewPoolTooManyAssets(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
-	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress())
+	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
@@ -179,7 +179,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 func TestMintPoolShareToAccount(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
 
-	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress())
+	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
 	err = app.DexKeeper.MintPoolShareToAccount(ctx, 1, userAddr, sdk.NewIntWithDecimal(100, 18))
