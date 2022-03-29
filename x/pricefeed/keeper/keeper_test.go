@@ -34,12 +34,14 @@ func TestKeeper_SetGetMarket(t *testing.T) {
 
 	mp = types.Params{
 		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true},
-			{MarketID: "tst2usd", BaseAsset: "tst2", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true},
+			tstusdMarket,
+			tst2usdMarket,
 		},
 	}
+
 	keeper.SetParams(ctx, mp)
 	markets = keeper.GetMarkets(ctx)
+	require.Contains(t, markets, tstusdMarket)
 	require.Equal(t, len(markets), 2)
 	require.Equal(t, markets[0].MarketID, "tstusd")
 	require.Equal(t, markets[1].MarketID, "tst2usd")
@@ -55,7 +57,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(2)
 	mp := types.Params{
 		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true},
+			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, mp)
@@ -73,6 +75,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 
 	for _, p := range prices {
 		// Set price by oracle 1
+
 		pp, err := keeper.SetPrice(
 			ctx,
 			p.oracle,
@@ -106,7 +109,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 	mp := types.Params{
 		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true},
+			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, mp)
@@ -194,7 +197,7 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 
 	mp := types.Params{
 		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true},
+			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, mp)
