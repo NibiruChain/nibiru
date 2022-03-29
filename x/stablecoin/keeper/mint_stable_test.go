@@ -18,7 +18,7 @@ import (
 )
 
 func TestMsgMint_ValidateBasic(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		name string
 		msg  types.MsgMintStable
 		err  error
@@ -36,11 +36,12 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := test.msg.ValidateBasic()
-			if test.err != nil {
-				require.ErrorIs(t, err, test.err)
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
 				return
 			}
 			require.NoError(t, err)
