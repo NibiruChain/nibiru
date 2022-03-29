@@ -72,7 +72,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
 				sdktypes.NewInt(10_000_000),       // 10
 				sdktypes.NewInt(5_000_000),        // 5
-				sdktypes.MustNewDecFromStr("0.1"), // 0.9 ratio
+				sdktypes.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
 			)
 			require.NoError(t, err)
 
