@@ -118,7 +118,7 @@ func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
 	require.NoError(t, err)
 
 	// We get the snapshot 1
-	savedSnap, _, err := ammKeeper.getSnapshotByCounter(ctx, pool.Pair, 1)
+	savedSnap, err := ammKeeper.getSnapshotByCounter(ctx, pool.Pair, 1)
 	require.NoError(t, err)
 	require.Equal(t, expectedSnapshot, savedSnap)
 	require.NotEqual(t, differentSnapshot, snapshot)

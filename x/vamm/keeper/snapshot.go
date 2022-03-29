@@ -109,23 +109,28 @@ func (k Keeper) getLastReserveSnapshot(ctx sdk.Context, pair string) (types.Rese
 		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
 	}
 
-	return k.getSnapshotByCounter(ctx, pair, counter)
+	snapshot, err := k.getSnapshotByCounter(ctx, pair, counter)
+	if err != nil {
+		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
+	}
+
+	return snapshot, counter, err
 }
 
 // getSnapshotByCounter returns the snapshot saved by counter num
-func (k Keeper) getSnapshotByCounter(ctx sdk.Context, pair string, counter int64) (types.ReserveSnapshot, int64, error) {
+func (k Keeper) getSnapshotByCounter(ctx sdk.Context, pair string, counter int64) (types.ReserveSnapshot, error) {
 	store := k.getStore(ctx)
 	bz := store.Get(types.GetPoolReserveSnapshotKey(pair, counter))
 	if bz == nil {
-		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved.
+		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
 			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))
 	}
 
 	var snapshot types.ReserveSnapshot
 	err := k.codec.Unmarshal(bz, &snapshot)
 	if err != nil {
-		return types.ReserveSnapshot{}, counter, fmt.Errorf("problem decoding snapshot")
+		return types.ReserveSnapshot{}, fmt.Errorf("problem decoding snapshot")
 	}
 
-	return snapshot, counter, nil
+	return snapshot, nil
 }
