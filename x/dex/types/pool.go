@@ -48,7 +48,6 @@ func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	newTotalWeight := sdk.ZeroInt()
 	scaledPoolAssets := make([]PoolAsset, 0, len(poolAssets))
 
-	// TODO: Refactor this into PoolAsset.validate()
 	for _, asset := range poolAssets {
 		if err = asset.Validate(); err != nil {
 			return err
