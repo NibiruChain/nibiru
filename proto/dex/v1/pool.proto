@@ -7,12 +7,14 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
+// Configuration parameters for the pool.
 message PoolParams {
   string swapFee = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"swap_fee\"",
     (gogoproto.nullable) = false
   ];
+
   string exitFee = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"exit_fee\"",
@@ -20,11 +22,18 @@ message PoolParams {
   ];
 }
 
+// Which assets the pool contains.
 message PoolAsset {
   // Coins we are talking about,
   // the denomination must be unique amongst all PoolAssets for this pool.
   cosmos.base.v1beta1.Coin token = 1
       [(gogoproto.moretags) = "yaml:\"token\"", (gogoproto.nullable) = false];
+  // Weight that is not normalized. This weight must be less than 2^50
+  string weight = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"weight\"",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message Pool {
@@ -46,6 +55,13 @@ message Pool {
   // They contain the pool asset and the information about the weight
   repeated PoolAsset poolAssets = 4 [
     (gogoproto.moretags) = "yaml:\"pool_assets\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // sum of all non-normalized pool weights
+  string totalWeight = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"total_weight\"",
     (gogoproto.nullable) = false
   ];
 }
