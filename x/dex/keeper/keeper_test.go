@@ -51,12 +51,16 @@ func TestSetAndFetchPool(t *testing.T) {
 		},
 		PoolAssets: []types.PoolAsset{
 			types.PoolAsset{
-				Token: sdk.NewCoin("validatortoken", sdk.NewInt(1000)),
+				Token:  sdk.NewCoin("validatortoken", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
 			},
 			types.PoolAsset{
-				Token: sdk.NewCoin("stake", sdk.NewInt(1000)),
+				Token:  sdk.NewCoin("stake", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
 			},
 		},
+		TotalWeight: sdk.NewInt(2),
+		TotalShares: sdk.NewInt64Coin("matrix/pool/150", 100),
 	}
 
 	err := app.DexKeeper.SetPool(ctx, pool)
