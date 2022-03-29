@@ -22,13 +22,13 @@ func AsInt(dec sdk.Dec) sdk.Int {
 //   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
 func NeededGovAmtGivenColl(
 	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (sdk.Int, sdk.Int) {
+	collRatio sdk.Dec) (neededGovAmt sdk.Int, mintableStableAmt sdk.Int) {
 
 	collUSD := sdk.NewDecFromInt(collAmt).Mul(priceColl)
 	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
 
-	neededGovAmt := AsInt(neededGovUSD.Quo(priceGov))
-	mintableStableAmt := AsInt(collUSD.Add(neededGovUSD))
+	neededGovAmt = AsInt(neededGovUSD.Quo(priceGov))
+	mintableStableAmt = AsInt(collUSD.Add(neededGovUSD))
 	return neededGovAmt, mintableStableAmt
 }
 
@@ -40,13 +40,13 @@ func NeededGovAmtGivenColl(
 //   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
 func NeededCollAmtGivenGov(
 	govAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (sdk.Int, sdk.Int) {
+	collRatio sdk.Dec) (neededCollAmt sdk.Int, mintableStableAmt sdk.Int) {
 
 	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)
 
-	neededCollAmt := AsInt(neededCollUSD.Quo(priceColl))
-	mintableStableAmt := AsInt(govUSD.Add(neededCollUSD))
+	neededCollAmt = AsInt(neededCollUSD.Quo(priceColl))
+	mintableStableAmt = AsInt(govUSD.Add(neededCollUSD))
 	return neededCollAmt, mintableStableAmt
 }
