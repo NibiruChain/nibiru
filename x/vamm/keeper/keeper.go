@@ -127,7 +127,7 @@ func (k Keeper) CreatePool(
 		return err
 	}
 
-	err = k.saveReserveSnapshot(ctx, pool)
+	err = k.saveReserveSnapshot(ctx, 0, pool)
 	if err != nil {
 		return fmt.Errorf("error saving snapshot on pool creation: %w", err)
 	}
@@ -201,18 +201,13 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 	}
 
 	if fluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		latestSnapshot, err := k.getLastReserveSnapshot(ctx, pool.Pair)
+		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, pool.Pair)
 		if err != nil {
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}
 
-		counter, found := k.getSnapshotCounter(ctx, pool.Pair)
-		if !found {
-			counter = 1
-		}
-
 		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 1 {
-			latestSnapshot, err = k.getSnapshotByCounter(ctx, pool.Pair, counter-1)
+			latestSnapshot, counter, err = k.getSnapshotByCounter(ctx, pool.Pair, counter-1)
 			if err != nil {
 				return fmt.Errorf("error getting snapshot number %d from pair %s", counter, pool.Pair)
 			}
