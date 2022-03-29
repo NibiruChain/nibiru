@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO: Add test cases for negative real numbers.
+// TODO: Add test cases for numbers close to the upper limit of sdk.Int
 func TestAsInt(t *testing.T) {
 	testCases := []struct {
 		name   string
@@ -53,6 +55,8 @@ func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 		mintableStableAmt sdk.Int
 		err               error
 	}{
+		// TODO fix: This test case should give 1000 but instead gives 999 b/c
+		// of truncation. Change AsInt to be a bit more precise on base units.
 		{
 			name:              "Low collateral ratio",
 			govAmt:            sdk.NewInt(10),

@@ -16,6 +16,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
 
+// TODO test: CheckEnoughBalance
 func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) (bool, error) {
 	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
 
@@ -29,6 +30,7 @@ func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sd
 
 }
 
+// TODO test: CheckEnoughBalances
 func (k Keeper) CheckEnoughBalances(ctx sdk.Context, coins sdk.Coins, acc sdk.AccAddress) error {
 
 	fromAddr := acc
