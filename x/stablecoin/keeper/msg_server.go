@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"context"
+
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 )
 
@@ -15,3 +17,21 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
+
+/*
+Args:
+	goCtx
+
+Returns
+	MsgMintStableResponse:
+	error:
+*/
+func (k msgServer) MsgMintStable(
+	goCtx context.Context, msg *types.MsgMintStable) (
+	*types.MsgMintStableResponse, error) {
+	mintStableResponse, err := k.MintStable(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return mintStableResponse, nil
+}
