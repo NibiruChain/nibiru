@@ -7,24 +7,24 @@ import (
 
 const TypeMsgBurn = "mint"
 
-var _ sdk.Msg = &MsgBurn{}
+var _ sdk.Msg = &MsgBurnStable{}
 
-func NewMsgBurn(creator string, coin sdk.Coin) *MsgBurn {
-	return &MsgBurn{
+func NewMsgBurn(creator string, coin sdk.Coin) *MsgBurnStable {
+	return &MsgBurnStable{
 		Creator: creator,
 		Stable:  coin,
 	}
 }
 
-func (msg *MsgBurn) Route() string {
+func (msg *MsgBurnStable) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgBurn) Type() string {
+func (msg *MsgBurnStable) Type() string {
 	return TypeMsgBurn
 }
 
-func (msg *MsgBurn) GetSigners() []sdk.AccAddress {
+func (msg *MsgBurnStable) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -32,12 +32,12 @@ func (msg *MsgBurn) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgBurn) GetSignBytes() []byte {
+func (msg *MsgBurnStable) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgBurn) ValidateBasic() error {
+func (msg *MsgBurnStable) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
