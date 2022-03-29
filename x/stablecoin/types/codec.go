@@ -8,7 +8,7 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgMintStable{}, "stablecoin/Mint", nil)
+	cdc.RegisterConcrete(&MsgMintStable{}, "stablecoin/MintStable", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
