@@ -230,14 +230,6 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 	upperLimit := lastPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
 	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
 
-	fmt.Printf("snapshot quote: %d\n", snapshotQuote)
-	fmt.Printf("snapshot base: %d\n", snapshotBase)
-	fmt.Printf("snapshot last price: %d\n", lastPrice)
-	fmt.Printf("snapshot upper limit: %d\n", upperLimit)
-	fmt.Printf("snapshot lower limit: %d\n", lowerLimit)
-
-	fmt.Printf("actual price: %d\n", price)
-
 	if price.GT(upperLimit) || price.LT(lowerLimit) {
 		return true
 	}
