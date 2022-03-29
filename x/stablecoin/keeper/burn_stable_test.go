@@ -105,7 +105,6 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			burnStableResponse, err := app.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
 
-			fmt.Println("Hi")
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 				return
@@ -122,7 +121,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			accFunds: sdk.NewCoins(sdk.NewCoin("uusdm", sdk.NewInt(10))),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin("uusdm", sdk.NewInt(11)),
+				Stable:  sdk.NewCoin("uusdm", sdk.NewInt(9001)),
 			},
 			msgResponse: types.MsgBurnStableResponse{
 				Collateral: sdk.NewCoin("umtrx", sdk.NewInt(0)),
@@ -130,7 +129,8 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       sdkerrors.Wrap(types.NoCoinFound, "uusdm"),
+			err: types.NotEnoughBalance.Wrap(
+				sdk.NewCoin("uusdm", sdk.NewInt(9001)).String()),
 		},
 	}
 	for _, test := range testCases {
