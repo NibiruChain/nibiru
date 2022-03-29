@@ -16,13 +16,12 @@ service Query {
     option (google.api.http).get = "/MatrixDao/matrix/dex/params";
   }
   // Queries the current pool id number.
-  rpc GetPoolNumber(QueryGetPoolNumberRequest)
-      returns (QueryGetPoolNumberResponse) {
+  rpc PoolNumber(QueryPoolNumberRequest) returns (QueryPoolNumberResponse) {
     option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool_number";
   }
 
   // Queries a pool by id.
-  rpc GetPool(QueryGetPoolRequest) returns (QueryGetPoolResponse) {
+  rpc Pool(QueryPoolRequest) returns (QueryPoolResponse) {
     option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool";
   }
 }
@@ -36,16 +35,16 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-message QueryGetPoolNumberRequest {}
+message QueryPoolNumberRequest {}
 
-message QueryGetPoolNumberResponse {
+message QueryPoolNumberResponse {
   uint64 poolId = 1;
 }
 
-message QueryGetPoolRequest {
+message QueryPoolRequest {
   uint64 poolId = 1;
 }
 
-message QueryGetPoolResponse {
+message QueryPoolResponse {
   Pool pool = 1;
 }
