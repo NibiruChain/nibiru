@@ -64,4 +64,10 @@ message Pool {
     (gogoproto.moretags) = "yaml:\"total_weight\"",
     (gogoproto.nullable) = false
   ];
+
+  // sum of all LP tokens sent out
+  cosmos.base.v1beta1.Coin totalShares = 6 [
+    (gogoproto.moretags) = "yaml:\"total_shares\"",
+    (gogoproto.nullable) = false
+  ];
 }
