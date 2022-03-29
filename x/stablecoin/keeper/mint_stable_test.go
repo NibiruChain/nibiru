@@ -124,7 +124,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
-				t, mintStableResponse, tc.msgResponse, "mintStableResponse")
+				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
 		})
 	}
 
@@ -144,9 +144,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(govDenom, sdk.NewInt(1)).String(),
-			),
+			err:       types.NoCoinFound.Wrap(govDenom),
 		}, {
 			name: "Not enough COLL",
 			accFunds: sdk.NewCoins(
@@ -162,9 +160,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(collDenom, sdk.NewInt(1)).String(),
-			),
+			err:       types.NoCoinFound.Wrap(collDenom),
 		}, {
 			name: "Successful mint",
 			accFunds: sdk.NewCoins(
