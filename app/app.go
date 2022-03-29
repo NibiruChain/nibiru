@@ -19,6 +19,10 @@ import (
 	"github.com/MatrixDao/matrix/x/dex"
 	dexkeeper "github.com/MatrixDao/matrix/x/dex/keeper"
 	dextypes "github.com/MatrixDao/matrix/x/dex/types"
+	pricekeeper "github.com/MatrixDao/matrix/x/pricefeed/keeper"
+	pricetypes "github.com/MatrixDao/matrix/x/pricefeed/types"
+	stablekeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
+	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -176,6 +180,8 @@ type MatrixApp struct {
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	DexKeeper        dexkeeper.Keeper
+	StablecoinKeeper stablekeeper.Keeper
+	PriceKeeper      pricekeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -217,12 +223,14 @@ func NewMatrixApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
-		authzkeeper.StoreKey, dextypes.StoreKey,
+		authzkeeper.StoreKey,
+		dextypes.StoreKey, pricetypes.StoreKey, stabletypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
 	// not include this key.
-	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, "testingkey")
+	memKeys := sdk.NewMemoryStoreKeys(
+		capabilitytypes.MemStoreKey, "testingkey", stabletypes.MemStoreKey, pricetypes.MemStoreKey)
 
 	app := &MatrixApp{
 		BaseApp:           bApp,
@@ -305,7 +313,20 @@ func NewMatrixApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	app.DexKeeper = *dexkeeper.NewKeeper(appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName), app.AccountKeeper, app.BankKeeper)
+	app.DexKeeper = *dexkeeper.NewKeeper(
+		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper)
+
+	app.PriceKeeper = pricekeeper.NewKeeper(
+		appCodec, keys[pricetypes.StoreKey], memKeys[pricetypes.MemStoreKey],
+		app.GetSubspace(pricetypes.ModuleName),
+	)
+
+	app.StablecoinKeeper = *stablekeeper.NewKeeper(
+		appCodec, keys[stabletypes.StoreKey], memKeys[stabletypes.MemStoreKey],
+		app.GetSubspace(stabletypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
+	)
 
 	/****  Module Options ****/
 
@@ -588,7 +609,9 @@ func GetMaccPerms() map[string][]string {
 }
 
 // initParamsKeeper init params keeper and its subspaces
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
+func initParamsKeeper(
+	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
+	tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)
@@ -600,6 +623,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(dextypes.ModuleName)
+	paramsKeeper.Subspace(pricetypes.ModuleName)
+	paramsKeeper.Subspace(stabletypes.ModuleName)
 
 	return paramsKeeper
 }
