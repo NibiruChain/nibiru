@@ -56,7 +56,7 @@ func (k Keeper) MintStable(goCtx context.Context, msg *types.MsgMintStable) (
 
 	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, fromAddr)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Take assets out of the user account.
