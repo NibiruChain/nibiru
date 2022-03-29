@@ -141,6 +141,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		dextypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		stabletypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 	}
 )
 
