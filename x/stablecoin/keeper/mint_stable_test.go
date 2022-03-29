@@ -1,18 +1,18 @@
 package keeper_test
 
 import (
-	// "fmt"
-	// "math"
+	"fmt"
 	"testing"
-	// "time"
+	"time"
 
-	// pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
+	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	// "github.com/MatrixDao/matrix/x/testutil"
+	"github.com/MatrixDao/matrix/x/testutil"
+
 	"github.com/MatrixDao/matrix/x/testutil/sample"
 
-	// "github.com/cosmos/cosmos-sdk/simapp"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +50,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 }
 
 // TODO: test (pricefeed/keeper): We need to test posted prices first.
-/*
+
 func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 	type TestCase struct {
@@ -71,21 +71,24 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
-			markets := []pricefeedTypes.Market{
-				{MarketID: "mtrx:ust", BaseAsset: "ust", QuoteAsset: "mtrx",
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-				{MarketID: "usdm:ust", BaseAsset: "ust", QuoteAsset: "usdm",
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-			}
+			params := pricefeedTypes.Params{
+				Markets: []pricefeedTypes.Market{
+					{MarketID: "mtrx:ust", BaseAsset: "ust", QuoteAsset: "mtrx",
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: "usdm:ust", BaseAsset: "ust", QuoteAsset: "usdm",
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+				}}
 
-			// Set prices for GOV and COLL
 			priceKeeper := &matrixApp.PriceKeeper
-			priceExpiry := time.Now().Add(time.Duration(math.Pow10(6)))
+			priceKeeper.SetParams(ctx, params)
+
+			priceExpiry := ctx.BlockTime().Add(time.Hour)
+
 			_, err := priceKeeper.SetPrice(ctx, oracle, "mtrx:ust", tc.govPrice, priceExpiry)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(ctx, oracle, "ust:usdm", tc.collPrice, priceExpiry)
+			_, err = priceKeeper.SetPrice(ctx, oracle, "usdm:ust", tc.collPrice, priceExpiry)
 			require.NoError(t, err)
-			for _, market := range markets {
+			for _, market := range params.Markets {
 				priceKeeper.SetCurrentPrices(ctx, market.MarketID)
 			}
 
@@ -103,6 +106,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				return
 			}
 			fmt.Println("prices: ", priceKeeper.GetCurrentPrices(ctx))
+
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
 				t, mintStableResponse, tc.msgResponse, "mintStableResponse")
@@ -143,4 +147,3 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 		executeTest(t, test)
 	}
 }
-*/
