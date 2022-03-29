@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// TODO: Use with keeper tests.
 type KeeperTestSuite struct {
 	suite.Suite
 	ctx sdk.Context
