@@ -27,7 +27,14 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 		}
 	}
 
-	// TODO emit event snapshot saved
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventSnapshotSaved,
+			sdk.NewAttribute(types.AttributeBlockHeight, fmt.Sprintf("%d", ctx.BlockHeight())),
+			sdk.NewAttribute(types.AttributeQuoteReserve, pool.QuoteAssetReserve),
+			sdk.NewAttribute(types.AttributeBaseReserve, pool.BaseAssetReserve),
+		),
+	)
 
 	return nil
 }
