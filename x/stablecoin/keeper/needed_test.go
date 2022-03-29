@@ -4,21 +4,14 @@ import (
 	"testing"
 
 	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
+	"github.com/MatrixDao/matrix/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
-func requireEqualWithMessage(
-	t require.TestingT, expected interface{}, actual interface{}, varName string) {
-
-	require.Equalf(t, expected, actual,
-		"Expected '%s': %d,\nActual '%s': %d",
-		varName, expected, varName, actual)
-}
-
 func TestAsInt(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		name   string
 		inDec  sdk.Dec
 		outInt sdk.Int
@@ -39,17 +32,18 @@ func TestAsInt(t *testing.T) {
 			outInt: sdk.NewInt(9),
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			sdkInt := keeper.AsInt(test.inDec)
-			require.Equal(t, test.outInt, sdkInt)
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			sdkInt := keeper.AsInt(tc.inDec)
+			require.Equal(t, tc.outInt, sdkInt)
 		})
 	}
 
 }
 
 func TestMint_NeededCollAmtGivenGov(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		name              string
 		govAmt            sdk.Int
 		priceGov          sdk.Dec
@@ -79,21 +73,21 @@ func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 			err:               nil,
 		},
 	}
-	for _, test := range tests {
-		tc := test
+	for _, testCase := range testCases {
+		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			neededCollAmt, mintableStableAmt := keeper.NeededCollAmtGivenGov(
 				tc.govAmt, tc.priceGov, tc.priceColl, tc.collRatio)
-			requireEqualWithMessage(
+			testutil.RequireEqualWithMessage(
 				t, neededCollAmt, tc.neededCollAmt, "neededCollAmt")
-			requireEqualWithMessage(
+			testutil.RequireEqualWithMessage(
 				t, mintableStableAmt, tc.mintableStableAmt, "mintableStableAmt")
 		})
 	}
 }
 
 func TestMint_NeededGovAmtGivenColl(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		name              string
 		collAmt           sdk.Int
 		priceGov          sdk.Dec
@@ -123,12 +117,13 @@ func TestMint_NeededGovAmtGivenColl(t *testing.T) {
 			err:               nil,
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
 			neededGovAmt, mintableStableAmt := keeper.NeededGovAmtGivenColl(
-				test.collAmt, test.priceGov, test.priceColl, test.collRatio)
-			require.Equal(t, neededGovAmt, test.neededGovAmt)
-			require.Equal(t, mintableStableAmt, test.mintableStableAmt)
+				tc.collAmt, tc.priceGov, tc.priceColl, tc.collRatio)
+			require.Equal(t, neededGovAmt, tc.neededGovAmt)
+			require.Equal(t, mintableStableAmt, tc.mintableStableAmt)
 		})
 	}
 }

@@ -28,11 +28,11 @@ func CmdGetPool() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryGetPoolRequest{
+			params := &types.QueryPoolRequest{
 				PoolId: poolId.Uint64(),
 			}
 
-			res, err := queryClient.GetPool(cmd.Context(), params)
+			res, err := queryClient.Pool(cmd.Context(), params)
 			if err != nil {
 				return err
 			}
