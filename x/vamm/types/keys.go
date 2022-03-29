@@ -4,7 +4,7 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 
 const (
 	ModuleName = "vamm"
-	StoreKey   = "ammkey"
+	StoreKey   = "vammkey"
 )
 
 /*

@@ -44,7 +44,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 			sdk.NewInt(0),
 		},
 		{
-			"quote amount == 0",
+			"quote amount != 0",
 			sdk.NewInt(5_000_000),
 			sdk.NewInt(1_666_665),
 		},

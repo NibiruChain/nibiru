@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
 )
 
 func TestSwapInput_Errors(t *testing.T) {
@@ -121,7 +122,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				sdktypes.MustNewDecFromStr("0.9"),  // 0.9 ratio
 				sdktypes.NewInt(10_000_000),        // 10 tokens
 				sdktypes.NewInt(5_000_000),         // 5 tokens
-				sdktypes.MustNewDecFromStr("0.25"), // 0.9 ratio
+				sdktypes.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
 			require.NoError(t, err)
 
