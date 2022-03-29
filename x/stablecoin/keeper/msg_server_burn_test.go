@@ -2,20 +2,16 @@ package keeper_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMsgBurn_ValidateBasic(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		name string
 		msg  types.MsgBurn
 		err  error
@@ -33,11 +29,12 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := test.msg.ValidateBasic()
-			if test.err != nil {
-				require.ErrorIs(t, err, test.err)
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
 				return
 			}
 			require.NoError(t, err)
@@ -45,6 +42,9 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	}
 }
 
+//  TODO Write this test after we test the pricefeed keeper since there's a dependency
+//  since there's a dependency between the two modules.
+/*
 func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 	type TestCase struct {
@@ -81,7 +81,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 		})
 	}
 
-	tests := []TestCase{
+	testCases := []TestCase{
 		{
 			name:     "Not enough GOV",
 			accFunds: sdk.NewCoins(),
@@ -108,7 +108,8 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			err: nil,
 		},
 	}
-	for _, test := range tests {
+	for _, test := range testCases {
 		executeTest(t, test)
 	}
 }
+*/
