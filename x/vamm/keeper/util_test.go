@@ -37,12 +37,14 @@ func AmmKeeper(t *testing.T) (Keeper, sdktypes.Context) {
 
 func getSamplePool() *ammtypes.Pool {
 	ratioLimit, _ := sdktypes.NewDecFromStr("0.9")
+	fluctuationLimit, _ := sdktypes.NewDecFromStr("0.1")
 
 	pool := ammtypes.NewPool(
 		UsdmPair,
 		ratioLimit,
 		sdktypes.NewInt(10_000_000),
 		sdktypes.NewInt(5_000_000),
+		fluctuationLimit,
 	)
 
 	return pool

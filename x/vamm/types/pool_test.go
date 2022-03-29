@@ -13,6 +13,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 		sdk.MustNewDecFromStr("0.9"), // 0.9
 		sdk.NewInt(10_000_000),       // 10
 		sdk.NewInt(10_000_000),       // 10
+		sdk.MustNewDecFromStr("0.1"),
 	)
 
 	// less that max ratio
@@ -58,6 +59,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				sdk.MustNewDecFromStr("0.9"), // 0.9
 				sdk.NewInt(10_000_000),       // 10
 				sdk.NewInt(5_000_000),        // 5
+				sdk.MustNewDecFromStr("0.1"),
 			)
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(Direction_ADD_TO_AMM, tc.quoteAmount)
@@ -91,6 +93,7 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 				sdk.MustNewDecFromStr("0.9"), // 0.9
 				sdk.NewInt(10_000_000),       // 10
 				sdk.NewInt(5_000_000),        // 5
+				sdk.MustNewDecFromStr("0.1"),
 			)
 
 			_, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
@@ -105,6 +108,7 @@ func TestIncreaseQuoteAssetReserve(t *testing.T) {
 		sdk.MustNewDecFromStr("0.9"),
 		sdk.NewInt(1_000_000),
 		sdk.NewInt(1_000_000),
+		sdk.MustNewDecFromStr("0.1"),
 	)
 
 	pool.IncreaseQuoteAssetReserve(sdk.NewInt(100))
@@ -121,6 +125,7 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		sdk.MustNewDecFromStr("0.9"),
 		sdk.NewInt(1_000_000),
 		sdk.NewInt(1_000_000),
+		sdk.MustNewDecFromStr("0.1"),
 	)
 
 	// DecreaseBaseAsset
