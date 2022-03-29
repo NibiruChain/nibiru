@@ -35,3 +35,13 @@ func (k msgServer) MsgMintStable(
 	}
 	return mintStableResponse, nil
 }
+
+func (k msgServer) MsgBurnStable(
+	goCtx context.Context, msg *types.MsgBurnStable) (
+	*types.MsgBurnStableResponse, error) {
+	burnStableResponse, err := k.BurnStable(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return burnStableResponse, nil
+}
