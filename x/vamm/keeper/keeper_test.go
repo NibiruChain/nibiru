@@ -28,6 +28,22 @@ func TestSwapInput_Errors(t *testing.T) {
 			ammtypes.ErrPairNotSupported,
 		},
 		{
+			"base amount less than base limit in Long",
+			UsdmPair,
+			ammtypes.Direction_ADD_TO_AMM,
+			sdktypes.NewInt(500_000),
+			sdktypes.NewInt(454_500),
+			fmt.Errorf("base amount (238094) is less than selected limit (454500)"),
+		},
+		{
+			"base amount more than base limit in Short",
+			UsdmPair,
+			ammtypes.Direction_REMOVE_FROM_AMM,
+			sdktypes.NewInt(1_000_000),
+			sdktypes.NewInt(454_500),
+			fmt.Errorf("base amount (555556) is greater than selected limit (454500)"),
+		},
+		{
 			"quote input bigger than reserve ratio",
 			UsdmPair,
 			ammtypes.Direction_REMOVE_FROM_AMM,
