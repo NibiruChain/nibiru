@@ -34,50 +34,45 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 }
 
 /*
-Handler for the QueryGetPoolRequest query.
+Handler for the QueryPoolRequest query.
 
 args
   ctx: the cosmos-sdk context
-  req: a QueryGetPoolRequest proto object
+  req: a QueryPoolRequest proto object
 
 ret
-  QueryGetPoolResponse: the QueryGetPoolResponse proto object response, containing the pool
+  QueryPoolResponse: the QueryPoolResponse proto object response, containing the pool
   error: an error if any occurred
 */
-func (k Keeper) GetPool(goCtx context.Context, req *types.QueryGetPoolRequest) (*types.QueryGetPoolResponse, error) {
+func (k Keeper) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*types.QueryPoolResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	store := ctx.KVStore(k.storeKey)
-	poolKey := types.GetKeyPrefixPools(req.PoolId)
-	bz := store.Get(poolKey)
-
-	var pool types.Pool
-	err := pool.Unmarshal(bz)
+	pool, err := k.FetchPool(ctx, req.PoolId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryGetPoolResponse{
+	return &types.QueryPoolResponse{
 		Pool: &pool,
 	}, nil
 }
 
 /*
-Handler for the QueryGetPoolNumberRequest query.
+Handler for the QueryPoolNumberRequest query.
 
 args
   ctx: the cosmos-sdk context
-  req: a QueryGetPoolNumberRequest proto object
+  req: a QueryPoolNumberRequest proto object
 
 ret
-  QueryGetPoolNumberResponse: the QueryGetPoolNumberResponse proto object response, containing the next pool id number
+  QueryPoolNumberResponse: the QueryPoolNumberResponse proto object response, containing the next pool id number
   error: an error if any occurred
 */
-func (k Keeper) GetPoolNumber(goCtx context.Context, req *types.QueryGetPoolNumberRequest) (*types.QueryGetPoolNumberResponse, error) {
+func (k Keeper) PoolNumber(goCtx context.Context, req *types.QueryPoolNumberRequest) (*types.QueryPoolNumberResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -102,7 +97,7 @@ func (k Keeper) GetPoolNumber(goCtx context.Context, req *types.QueryGetPoolNumb
 		poolNumber = val.GetValue()
 	}
 
-	return &types.QueryGetPoolNumberResponse{
+	return &types.QueryPoolNumberResponse{
 		PoolId: poolNumber,
 	}, nil
 }
