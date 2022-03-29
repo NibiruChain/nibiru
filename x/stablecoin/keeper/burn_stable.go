@@ -14,19 +14,19 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable) (*ty
 
 	toAddr, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Check if the user has the fund necessary
 	err = k.CheckEnoughBalances(ctx, sdk.NewCoins(msg.Stable), toAddr)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// priceGov: Price of the governance token in USD
 	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, govDenom)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
