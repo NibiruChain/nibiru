@@ -17,7 +17,9 @@ var (
 
 // govDeposited: Units of GOV burned
 // govDeposited = (1 - collRatio) * (collDeposited * 1) / (collRatio * priceGOV)
-func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMintResponse, error) {
+func (k Keeper) MintStable(goCtx context.Context, msg *types.MsgMintStable) (
+	*types.MsgMintStableResponse, error) {
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	fromAddr, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -87,5 +89,5 @@ func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMi
 		panic(err)
 	}
 
-	return &types.MsgMintResponse{Stable: stableToMint}, nil
+	return &types.MsgMintStableResponse{Stable: stableToMint}, nil
 }

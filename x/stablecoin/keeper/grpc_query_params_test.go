@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	testkeeper "github.com/MatrixDao/matrix/x/testutil/keeper"
+	"github.com/MatrixDao/matrix/x/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.StablecoinKeeper(t)
+	matrixApp, ctx := testutil.NewMatrixApp()
+	keeper := &matrixApp.StablecoinKeeper
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()
 	keeper.SetParams(ctx, params)

@@ -113,21 +113,21 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-type QueryGetPoolNumberRequest struct {
+type QueryPoolNumberRequest struct {
 }
 
-func (m *QueryGetPoolNumberRequest) Reset()         { *m = QueryGetPoolNumberRequest{} }
-func (m *QueryGetPoolNumberRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryGetPoolNumberRequest) ProtoMessage()    {}
-func (*QueryGetPoolNumberRequest) Descriptor() ([]byte, []int) {
+func (m *QueryPoolNumberRequest) Reset()         { *m = QueryPoolNumberRequest{} }
+func (m *QueryPoolNumberRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryPoolNumberRequest) ProtoMessage()    {}
+func (*QueryPoolNumberRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4ba1e1ef24357ddf, []int{2}
 }
-func (m *QueryGetPoolNumberRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryPoolNumberRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryGetPoolNumberRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPoolNumberRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryGetPoolNumberRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPoolNumberRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -137,34 +137,34 @@ func (m *QueryGetPoolNumberRequest) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *QueryGetPoolNumberRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetPoolNumberRequest.Merge(m, src)
+func (m *QueryPoolNumberRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPoolNumberRequest.Merge(m, src)
 }
-func (m *QueryGetPoolNumberRequest) XXX_Size() int {
+func (m *QueryPoolNumberRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryGetPoolNumberRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetPoolNumberRequest.DiscardUnknown(m)
+func (m *QueryPoolNumberRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPoolNumberRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryGetPoolNumberRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryPoolNumberRequest proto.InternalMessageInfo
 
-type QueryGetPoolNumberResponse struct {
+type QueryPoolNumberResponse struct {
 	PoolId uint64 `protobuf:"varint,1,opt,name=poolId,proto3" json:"poolId,omitempty"`
 }
 
-func (m *QueryGetPoolNumberResponse) Reset()         { *m = QueryGetPoolNumberResponse{} }
-func (m *QueryGetPoolNumberResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryGetPoolNumberResponse) ProtoMessage()    {}
-func (*QueryGetPoolNumberResponse) Descriptor() ([]byte, []int) {
+func (m *QueryPoolNumberResponse) Reset()         { *m = QueryPoolNumberResponse{} }
+func (m *QueryPoolNumberResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryPoolNumberResponse) ProtoMessage()    {}
+func (*QueryPoolNumberResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4ba1e1ef24357ddf, []int{3}
 }
-func (m *QueryGetPoolNumberResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryPoolNumberResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryGetPoolNumberResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPoolNumberResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryGetPoolNumberResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPoolNumberResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -174,41 +174,41 @@ func (m *QueryGetPoolNumberResponse) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *QueryGetPoolNumberResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetPoolNumberResponse.Merge(m, src)
+func (m *QueryPoolNumberResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPoolNumberResponse.Merge(m, src)
 }
-func (m *QueryGetPoolNumberResponse) XXX_Size() int {
+func (m *QueryPoolNumberResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryGetPoolNumberResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetPoolNumberResponse.DiscardUnknown(m)
+func (m *QueryPoolNumberResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPoolNumberResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryGetPoolNumberResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryPoolNumberResponse proto.InternalMessageInfo
 
-func (m *QueryGetPoolNumberResponse) GetPoolId() uint64 {
+func (m *QueryPoolNumberResponse) GetPoolId() uint64 {
 	if m != nil {
 		return m.PoolId
 	}
 	return 0
 }
 
-type QueryGetPoolRequest struct {
+type QueryPoolRequest struct {
 	PoolId uint64 `protobuf:"varint,1,opt,name=poolId,proto3" json:"poolId,omitempty"`
 }
 
-func (m *QueryGetPoolRequest) Reset()         { *m = QueryGetPoolRequest{} }
-func (m *QueryGetPoolRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryGetPoolRequest) ProtoMessage()    {}
-func (*QueryGetPoolRequest) Descriptor() ([]byte, []int) {
+func (m *QueryPoolRequest) Reset()         { *m = QueryPoolRequest{} }
+func (m *QueryPoolRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryPoolRequest) ProtoMessage()    {}
+func (*QueryPoolRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4ba1e1ef24357ddf, []int{4}
 }
-func (m *QueryGetPoolRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryPoolRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryGetPoolRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPoolRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryGetPoolRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPoolRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -218,41 +218,41 @@ func (m *QueryGetPoolRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *QueryGetPoolRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetPoolRequest.Merge(m, src)
+func (m *QueryPoolRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPoolRequest.Merge(m, src)
 }
-func (m *QueryGetPoolRequest) XXX_Size() int {
+func (m *QueryPoolRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryGetPoolRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetPoolRequest.DiscardUnknown(m)
+func (m *QueryPoolRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPoolRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryGetPoolRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryPoolRequest proto.InternalMessageInfo
 
-func (m *QueryGetPoolRequest) GetPoolId() uint64 {
+func (m *QueryPoolRequest) GetPoolId() uint64 {
 	if m != nil {
 		return m.PoolId
 	}
 	return 0
 }
 
-type QueryGetPoolResponse struct {
+type QueryPoolResponse struct {
 	Pool *Pool `protobuf:"bytes,1,opt,name=pool,proto3" json:"pool,omitempty"`
 }
 
-func (m *QueryGetPoolResponse) Reset()         { *m = QueryGetPoolResponse{} }
-func (m *QueryGetPoolResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryGetPoolResponse) ProtoMessage()    {}
-func (*QueryGetPoolResponse) Descriptor() ([]byte, []int) {
+func (m *QueryPoolResponse) Reset()         { *m = QueryPoolResponse{} }
+func (m *QueryPoolResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryPoolResponse) ProtoMessage()    {}
+func (*QueryPoolResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4ba1e1ef24357ddf, []int{5}
 }
-func (m *QueryGetPoolResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryPoolResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryGetPoolResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPoolResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryGetPoolResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPoolResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -262,19 +262,19 @@ func (m *QueryGetPoolResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *QueryGetPoolResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetPoolResponse.Merge(m, src)
+func (m *QueryPoolResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPoolResponse.Merge(m, src)
 }
-func (m *QueryGetPoolResponse) XXX_Size() int {
+func (m *QueryPoolResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryGetPoolResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetPoolResponse.DiscardUnknown(m)
+func (m *QueryPoolResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPoolResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryGetPoolResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryPoolResponse proto.InternalMessageInfo
 
-func (m *QueryGetPoolResponse) GetPool() *Pool {
+func (m *QueryPoolResponse) GetPool() *Pool {
 	if m != nil {
 		return m.Pool
 	}
@@ -284,44 +284,44 @@ func (m *QueryGetPoolResponse) GetPool() *Pool {
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "matrix.dex.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "matrix.dex.v1.QueryParamsResponse")
-	proto.RegisterType((*QueryGetPoolNumberRequest)(nil), "matrix.dex.v1.QueryGetPoolNumberRequest")
-	proto.RegisterType((*QueryGetPoolNumberResponse)(nil), "matrix.dex.v1.QueryGetPoolNumberResponse")
-	proto.RegisterType((*QueryGetPoolRequest)(nil), "matrix.dex.v1.QueryGetPoolRequest")
-	proto.RegisterType((*QueryGetPoolResponse)(nil), "matrix.dex.v1.QueryGetPoolResponse")
+	proto.RegisterType((*QueryPoolNumberRequest)(nil), "matrix.dex.v1.QueryPoolNumberRequest")
+	proto.RegisterType((*QueryPoolNumberResponse)(nil), "matrix.dex.v1.QueryPoolNumberResponse")
+	proto.RegisterType((*QueryPoolRequest)(nil), "matrix.dex.v1.QueryPoolRequest")
+	proto.RegisterType((*QueryPoolResponse)(nil), "matrix.dex.v1.QueryPoolResponse")
 }
 
 func init() { proto.RegisterFile("dex/v1/query.proto", fileDescriptor_4ba1e1ef24357ddf) }
 
 var fileDescriptor_4ba1e1ef24357ddf = []byte{
-	// 438 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0xcf, 0x8b, 0xd3, 0x40,
-	0x14, 0xc7, 0x13, 0xad, 0x11, 0x46, 0xf6, 0xe0, 0xb4, 0x8a, 0xc6, 0x65, 0x5c, 0xe3, 0x8f, 0xae,
-	0xc2, 0x66, 0xc8, 0xae, 0x77, 0x71, 0x11, 0x44, 0x41, 0x59, 0x7b, 0xf4, 0x52, 0x26, 0xed, 0x10,
-	0x03, 0x4d, 0x5e, 0x9a, 0x99, 0x94, 0xd6, 0xa3, 0x7f, 0x41, 0xa1, 0xff, 0x54, 0x8f, 0x05, 0x2f,
-	0x9e, 0x44, 0x5a, 0xff, 0x10, 0xc9, 0xcc, 0xe4, 0x90, 0x36, 0x86, 0xbd, 0x25, 0xf3, 0x3e, 0xf3,
-	0x7d, 0x9f, 0xf7, 0x42, 0x10, 0x1e, 0xf3, 0x39, 0x9d, 0x05, 0x74, 0x5a, 0xf0, 0x7c, 0xe1, 0x67,
-	0x39, 0x48, 0xc0, 0x47, 0x09, 0x93, 0x79, 0x3c, 0xf7, 0xc7, 0x7c, 0xee, 0xcf, 0x02, 0xb7, 0x17,
-	0x41, 0x04, 0xaa, 0x42, 0xcb, 0x27, 0x0d, 0xb9, 0xc7, 0x11, 0x40, 0x34, 0xe1, 0x94, 0x65, 0x31,
-	0x65, 0x69, 0x0a, 0x92, 0xc9, 0x18, 0x52, 0x61, 0xaa, 0xaf, 0x46, 0x20, 0x12, 0x10, 0x34, 0x64,
-	0x82, 0xeb, 0x6c, 0x3a, 0x0b, 0x42, 0x2e, 0x59, 0x40, 0x33, 0x16, 0xc5, 0xa9, 0x82, 0x0d, 0xdb,
-	0x35, 0x0a, 0x19, 0xcb, 0x59, 0x52, 0x05, 0xdc, 0xad, 0x0e, 0x01, 0x26, 0xfa, 0xc8, 0xeb, 0x21,
-	0xfc, 0xa5, 0x4c, 0xba, 0x52, 0xdc, 0x80, 0x4f, 0x0b, 0x2e, 0xa4, 0xf7, 0x11, 0x75, 0x6b, 0xa7,
-	0x22, 0x83, 0x54, 0x70, 0x7c, 0x81, 0x1c, 0x9d, 0xf7, 0xc0, 0x3e, 0xb1, 0x4f, 0xef, 0x9c, 0xdf,
-	0xf3, 0x6b, 0x43, 0xf9, 0x1a, 0xbf, 0xec, 0xac, 0x7f, 0x3f, 0xb6, 0x06, 0x06, 0xf5, 0x1e, 0xa1,
-	0x87, 0x2a, 0xeb, 0x3d, 0x97, 0x57, 0x00, 0x93, 0xcf, 0x45, 0x12, 0xf2, 0xbc, 0x6a, 0xf4, 0x1a,
-	0xb9, 0x4d, 0x45, 0xd3, 0xef, 0x3e, 0x72, 0x4a, 0xd5, 0x0f, 0x63, 0xd5, 0xaf, 0x33, 0x30, 0x6f,
-	0xde, 0x99, 0xd1, 0x33, 0xb7, 0x4c, 0xd8, 0x7f, 0xf1, 0x37, 0xa8, 0x57, 0xc7, 0x4d, 0x7c, 0x1f,
-	0x75, 0x4a, 0xc2, 0x0c, 0xd3, 0xdd, 0x1f, 0xa6, 0x44, 0x15, 0x70, 0xbe, 0xbc, 0x89, 0x6e, 0xa9,
-	0x04, 0x5c, 0x20, 0x47, 0x0f, 0x89, 0x9f, 0xec, 0xe1, 0x87, 0x5b, 0x74, 0xbd, 0x36, 0x44, 0x3b,
-	0x78, 0xcf, 0x7e, 0xfc, 0xfc, 0xbb, 0xba, 0x41, 0xf0, 0x31, 0xfd, 0xa4, 0xd8, 0x77, 0x0c, 0xa8,
-	0xbe, 0x45, 0xcb, 0x8f, 0xa5, 0x77, 0x88, 0x57, 0x36, 0x3a, 0xaa, 0xad, 0x08, 0x9f, 0x36, 0x65,
-	0x37, 0xad, 0xd8, 0x7d, 0x79, 0x0d, 0xd2, 0xc8, 0x9c, 0x29, 0x99, 0x3e, 0x7e, 0xde, 0x2c, 0x13,
-	0x71, 0x39, 0x2c, 0xf7, 0x31, 0x4c, 0xb5, 0xc3, 0x77, 0x74, 0xdb, 0xe4, 0x60, 0xaf, 0xa5, 0x49,
-	0x25, 0xf2, 0xb4, 0x95, 0x31, 0x0a, 0x2f, 0x94, 0xc2, 0x09, 0x26, 0xed, 0x0a, 0x97, 0x6f, 0xd7,
-	0x5b, 0x62, 0x6f, 0xb6, 0xc4, 0xfe, 0xb3, 0x25, 0xf6, 0x72, 0x47, 0xac, 0xcd, 0x8e, 0x58, 0xbf,
-	0x76, 0xc4, 0xfa, 0xda, 0x8f, 0x62, 0xf9, 0xad, 0x08, 0xfd, 0x11, 0x24, 0x87, 0x19, 0x3a, 0x45,
-	0x2e, 0x32, 0x2e, 0x42, 0x47, 0xfd, 0x01, 0x17, 0xff, 0x02, 0x00, 0x00, 0xff, 0xff, 0x47, 0x7b,
-	0x2c, 0xa9, 0xae, 0x03, 0x00, 0x00,
+	// 433 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0xcf, 0x8b, 0xd3, 0x40,
+	0x14, 0xc7, 0x93, 0x25, 0xe6, 0x30, 0x22, 0xb8, 0xd3, 0x75, 0x5d, 0xc2, 0x32, 0x5b, 0x83, 0xbb,
+	0x95, 0x05, 0x33, 0x64, 0xf7, 0xea, 0xc5, 0xe2, 0x45, 0x41, 0xd1, 0x1e, 0xbd, 0x94, 0x49, 0x3b,
+	0xc4, 0x40, 0x93, 0x97, 0x66, 0x26, 0xa5, 0xbd, 0x7a, 0xf4, 0x24, 0xf8, 0x4f, 0xf5, 0x58, 0xf0,
+	0xe2, 0x49, 0xa4, 0xf5, 0xef, 0x10, 0x99, 0x1f, 0x51, 0xfb, 0xd3, 0x5b, 0x32, 0xef, 0x33, 0x9f,
+	0xef, 0x7b, 0x2f, 0x41, 0x78, 0xc8, 0xa7, 0x74, 0x12, 0xd3, 0x71, 0xcd, 0xab, 0x59, 0x54, 0x56,
+	0x20, 0x01, 0xdf, 0xcb, 0x99, 0xac, 0xb2, 0x69, 0x34, 0xe4, 0xd3, 0x68, 0x12, 0x07, 0x27, 0x29,
+	0xa4, 0xa0, 0x2b, 0x54, 0x3d, 0x19, 0x28, 0x38, 0x4f, 0x01, 0xd2, 0x11, 0xa7, 0xac, 0xcc, 0x28,
+	0x2b, 0x0a, 0x90, 0x4c, 0x66, 0x50, 0x08, 0x5b, 0xbd, 0x1e, 0x80, 0xc8, 0x41, 0xd0, 0x84, 0x09,
+	0x6e, 0xdc, 0x74, 0x12, 0x27, 0x5c, 0xb2, 0x98, 0x96, 0x2c, 0xcd, 0x0a, 0x0d, 0x5b, 0xb6, 0x65,
+	0x5b, 0x28, 0x59, 0xc5, 0xf2, 0x46, 0x70, 0xdc, 0x1c, 0x02, 0x8c, 0xcc, 0x51, 0x78, 0x82, 0xf0,
+	0x3b, 0x65, 0x7a, 0xab, 0xb9, 0x1e, 0x1f, 0xd7, 0x5c, 0xc8, 0xf0, 0x15, 0x6a, 0xad, 0x9d, 0x8a,
+	0x12, 0x0a, 0xc1, 0xf1, 0x2d, 0xf2, 0x8d, 0xef, 0xcc, 0x6d, 0xbb, 0x4f, 0xee, 0xde, 0x3c, 0x88,
+	0xd6, 0x86, 0x8a, 0x0c, 0xde, 0xf5, 0xe6, 0xdf, 0x2f, 0x9c, 0x9e, 0x45, 0xc3, 0x33, 0x74, 0x6a,
+	0x5c, 0x00, 0xa3, 0x37, 0x75, 0x9e, 0xf0, 0xaa, 0x49, 0x89, 0xd1, 0xc3, 0xad, 0x8a, 0x4d, 0x3a,
+	0x45, 0xbe, 0x6a, 0xf2, 0xe5, 0x50, 0x27, 0x79, 0x3d, 0xfb, 0x16, 0x5e, 0xa3, 0xfb, 0x7f, 0xae,
+	0x58, 0xcd, 0x5e, 0xf6, 0x19, 0x3a, 0xfe, 0x87, 0xb5, 0xe2, 0x0e, 0xf2, 0x54, 0xd9, 0x0e, 0xd0,
+	0xda, 0x1c, 0x40, 0xa1, 0x1a, 0xb8, 0xf9, 0x75, 0x84, 0xee, 0xe8, 0xeb, 0xb8, 0x46, 0xbe, 0x19,
+	0x0c, 0x3f, 0xda, 0xc0, 0xb7, 0x37, 0x17, 0x84, 0x87, 0x10, 0xd3, 0x43, 0xf8, 0xf8, 0xe3, 0xd7,
+	0x9f, 0x5f, 0x8e, 0x08, 0x3e, 0xa7, 0xaf, 0x35, 0xfb, 0x82, 0x01, 0x35, 0xb7, 0xa8, 0xfa, 0x40,
+	0x66, 0x6f, 0xf8, 0x93, 0x8b, 0xd0, 0xdf, 0xcd, 0xe0, 0xcb, 0x9d, 0xe2, 0xcd, 0x9d, 0x06, 0x57,
+	0xff, 0xc3, 0x6c, 0x0f, 0x4f, 0x75, 0x0f, 0x1d, 0x7c, 0xb9, 0xbb, 0x87, 0x94, 0xcb, 0xbe, 0x5a,
+	0x43, 0xbf, 0x30, 0xe9, 0x63, 0xe4, 0x29, 0x09, 0xbe, 0xd8, 0xa7, 0x6f, 0xf2, 0xdb, 0xfb, 0x01,
+	0x9b, 0x7c, 0xa5, 0x93, 0xdb, 0x98, 0x1c, 0x4e, 0xee, 0x3e, 0x9f, 0x2f, 0x89, 0xbb, 0x58, 0x12,
+	0xf7, 0xc7, 0x92, 0xb8, 0x9f, 0x57, 0xc4, 0x59, 0xac, 0x88, 0xf3, 0x6d, 0x45, 0x9c, 0xf7, 0x9d,
+	0x34, 0x93, 0x1f, 0xea, 0x24, 0x1a, 0x40, 0xbe, 0xed, 0x30, 0x16, 0x39, 0x2b, 0xb9, 0x48, 0x7c,
+	0xfd, 0x8f, 0xdf, 0xfe, 0x0e, 0x00, 0x00, 0xff, 0xff, 0x42, 0xbc, 0x1b, 0x9c, 0x90, 0x03, 0x00,
+	0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -336,12 +336,12 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Parameters queries the parameters of the module.
+	// Queries the parameters of the dex module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// Queries a list of GetPoolNumber items.
-	GetPoolNumber(ctx context.Context, in *QueryGetPoolNumberRequest, opts ...grpc.CallOption) (*QueryGetPoolNumberResponse, error)
-	// Queries a list of GetPool items.
-	GetPool(ctx context.Context, in *QueryGetPoolRequest, opts ...grpc.CallOption) (*QueryGetPoolResponse, error)
+	// Queries the current pool id number.
+	PoolNumber(ctx context.Context, in *QueryPoolNumberRequest, opts ...grpc.CallOption) (*QueryPoolNumberResponse, error)
+	// Queries a pool by id.
+	Pool(ctx context.Context, in *QueryPoolRequest, opts ...grpc.CallOption) (*QueryPoolResponse, error)
 }
 
 type queryClient struct {
@@ -361,18 +361,18 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) GetPoolNumber(ctx context.Context, in *QueryGetPoolNumberRequest, opts ...grpc.CallOption) (*QueryGetPoolNumberResponse, error) {
-	out := new(QueryGetPoolNumberResponse)
-	err := c.cc.Invoke(ctx, "/matrix.dex.v1.Query/GetPoolNumber", in, out, opts...)
+func (c *queryClient) PoolNumber(ctx context.Context, in *QueryPoolNumberRequest, opts ...grpc.CallOption) (*QueryPoolNumberResponse, error) {
+	out := new(QueryPoolNumberResponse)
+	err := c.cc.Invoke(ctx, "/matrix.dex.v1.Query/PoolNumber", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) GetPool(ctx context.Context, in *QueryGetPoolRequest, opts ...grpc.CallOption) (*QueryGetPoolResponse, error) {
-	out := new(QueryGetPoolResponse)
-	err := c.cc.Invoke(ctx, "/matrix.dex.v1.Query/GetPool", in, out, opts...)
+func (c *queryClient) Pool(ctx context.Context, in *QueryPoolRequest, opts ...grpc.CallOption) (*QueryPoolResponse, error) {
+	out := new(QueryPoolResponse)
+	err := c.cc.Invoke(ctx, "/matrix.dex.v1.Query/Pool", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -381,12 +381,12 @@ func (c *queryClient) GetPool(ctx context.Context, in *QueryGetPoolRequest, opts
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Parameters queries the parameters of the module.
+	// Queries the parameters of the dex module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// Queries a list of GetPoolNumber items.
-	GetPoolNumber(context.Context, *QueryGetPoolNumberRequest) (*QueryGetPoolNumberResponse, error)
-	// Queries a list of GetPool items.
-	GetPool(context.Context, *QueryGetPoolRequest) (*QueryGetPoolResponse, error)
+	// Queries the current pool id number.
+	PoolNumber(context.Context, *QueryPoolNumberRequest) (*QueryPoolNumberResponse, error)
+	// Queries a pool by id.
+	Pool(context.Context, *QueryPoolRequest) (*QueryPoolResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -396,11 +396,11 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) GetPoolNumber(ctx context.Context, req *QueryGetPoolNumberRequest) (*QueryGetPoolNumberResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPoolNumber not implemented")
+func (*UnimplementedQueryServer) PoolNumber(ctx context.Context, req *QueryPoolNumberRequest) (*QueryPoolNumberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PoolNumber not implemented")
 }
-func (*UnimplementedQueryServer) GetPool(ctx context.Context, req *QueryGetPoolRequest) (*QueryGetPoolResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPool not implemented")
+func (*UnimplementedQueryServer) Pool(ctx context.Context, req *QueryPoolRequest) (*QueryPoolResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Pool not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -425,38 +425,38 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_GetPoolNumber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryGetPoolNumberRequest)
+func _Query_PoolNumber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPoolNumberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).GetPoolNumber(ctx, in)
+		return srv.(QueryServer).PoolNumber(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/matrix.dex.v1.Query/GetPoolNumber",
+		FullMethod: "/matrix.dex.v1.Query/PoolNumber",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).GetPoolNumber(ctx, req.(*QueryGetPoolNumberRequest))
+		return srv.(QueryServer).PoolNumber(ctx, req.(*QueryPoolNumberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_GetPool_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryGetPoolRequest)
+func _Query_Pool_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPoolRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).GetPool(ctx, in)
+		return srv.(QueryServer).Pool(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/matrix.dex.v1.Query/GetPool",
+		FullMethod: "/matrix.dex.v1.Query/Pool",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).GetPool(ctx, req.(*QueryGetPoolRequest))
+		return srv.(QueryServer).Pool(ctx, req.(*QueryPoolRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -470,12 +470,12 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "GetPoolNumber",
-			Handler:    _Query_GetPoolNumber_Handler,
+			MethodName: "PoolNumber",
+			Handler:    _Query_PoolNumber_Handler,
 		},
 		{
-			MethodName: "GetPool",
-			Handler:    _Query_GetPool_Handler,
+			MethodName: "Pool",
+			Handler:    _Query_Pool_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -538,7 +538,7 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryGetPoolNumberRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryPoolNumberRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -548,12 +548,12 @@ func (m *QueryGetPoolNumberRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryGetPoolNumberRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryPoolNumberRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryGetPoolNumberRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryPoolNumberRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -561,7 +561,7 @@ func (m *QueryGetPoolNumberRequest) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryGetPoolNumberResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryPoolNumberResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -571,40 +571,12 @@ func (m *QueryGetPoolNumberResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryGetPoolNumberResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryPoolNumberResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryGetPoolNumberResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.PoolId != 0 {
-		i = encodeVarintQuery(dAtA, i, uint64(m.PoolId))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryGetPoolRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryGetPoolRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryGetPoolRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryPoolNumberResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -617,7 +589,7 @@ func (m *QueryGetPoolRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryGetPoolResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryPoolRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -627,12 +599,40 @@ func (m *QueryGetPoolResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryGetPoolResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryPoolRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryGetPoolResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryPoolRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.PoolId != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.PoolId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryPoolResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryPoolResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryPoolResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -683,7 +683,7 @@ func (m *QueryParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryGetPoolNumberRequest) Size() (n int) {
+func (m *QueryPoolNumberRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -692,19 +692,7 @@ func (m *QueryGetPoolNumberRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryGetPoolNumberResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.PoolId != 0 {
-		n += 1 + sovQuery(uint64(m.PoolId))
-	}
-	return n
-}
-
-func (m *QueryGetPoolRequest) Size() (n int) {
+func (m *QueryPoolNumberResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -716,7 +704,19 @@ func (m *QueryGetPoolRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryGetPoolResponse) Size() (n int) {
+func (m *QueryPoolRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.PoolId != 0 {
+		n += 1 + sovQuery(uint64(m.PoolId))
+	}
+	return n
+}
+
+func (m *QueryPoolResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -868,7 +868,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryGetPoolNumberRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryPoolNumberRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -891,10 +891,10 @@ func (m *QueryGetPoolNumberRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetPoolNumberRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryPoolNumberRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetPoolNumberRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryPoolNumberRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -918,7 +918,7 @@ func (m *QueryGetPoolNumberRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryGetPoolNumberResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryPoolNumberResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -941,79 +941,10 @@ func (m *QueryGetPoolNumberResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetPoolNumberResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryPoolNumberResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetPoolNumberResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
-			}
-			m.PoolId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PoolId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryGetPoolRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetPoolRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetPoolRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryPoolNumberResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1056,7 +987,7 @@ func (m *QueryGetPoolRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryGetPoolResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryPoolRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1079,10 +1010,79 @@ func (m *QueryGetPoolResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetPoolResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryPoolRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetPoolResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryPoolRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
+			}
+			m.PoolId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PoolId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryPoolResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryPoolResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryPoolResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
