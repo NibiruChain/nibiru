@@ -85,6 +85,14 @@ func (k Keeper) SwapInput(
 		return sdk.Int{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventSwapInput,
+			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
+		),
+	)
+
 	return baseAssetAmount, nil
 }
 
