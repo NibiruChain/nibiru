@@ -11,20 +11,19 @@ option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Parameters queries the parameters of the module.
+  // Queries the parameters of the dex module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/MatrixDao/matrix/dex/params";
   }
-  // Queries a list of GetPoolNumber items.
-	rpc GetPoolNumber(QueryGetPoolNumberRequest) returns (QueryGetPoolNumberResponse) {
-		option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool_number";
-	}
+  // Queries the current pool id number.
+  rpc PoolNumber(QueryPoolNumberRequest) returns (QueryPoolNumberResponse) {
+    option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool_number";
+  }
 
-// Queries a list of GetPool items.
-	rpc GetPool(QueryGetPoolRequest) returns (QueryGetPoolResponse) {
-		option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool";
-	}
-
+  // Queries a pool by id.
+  rpc Pool(QueryPoolRequest) returns (QueryPoolResponse) {
+    option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -36,18 +35,16 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-message QueryGetPoolNumberRequest {
-}
+message QueryPoolNumberRequest {}
 
-message QueryGetPoolNumberResponse {
+message QueryPoolNumberResponse {
   uint64 poolId = 1;
 }
 
-message QueryGetPoolRequest {
+message QueryPoolRequest {
   uint64 poolId = 1;
 }
 
-message QueryGetPoolResponse {
+message QueryPoolResponse {
   Pool pool = 1;
 }
-
