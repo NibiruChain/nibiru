@@ -42,8 +42,7 @@ func GetPoolShareDisplayDenom(poolId uint64) (poolDenom string) {
 // It is only designed to be called at the pool's creation.
 // If the same denom's PoolAsset exists, will return error.
 // The list of PoolAssets must be sorted. This is done to enable fast searching for a PoolAsset by denomination.
-// TODO: Unify story for validation of []PoolAsset, some is here, some is in CreatePool.ValidateBasic()
-func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) error {
+func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	exists := make(map[string]bool)
 
 	newTotalWeight := sdk.ZeroInt()
@@ -51,12 +50,7 @@ func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) error {
 
 	// TODO: Refactor this into PoolAsset.validate()
 	for _, asset := range poolAssets {
-		if asset.Token.Amount.LTE(sdk.ZeroInt()) {
-			return fmt.Errorf("can't add the zero or negative balance of token")
-		}
-
-		err := asset.ValidateWeight()
-		if err != nil {
+		if err = asset.Validate(); err != nil {
 			return err
 		}
 
@@ -71,9 +65,6 @@ func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) error {
 		newTotalWeight = newTotalWeight.Add(asset.Weight)
 	}
 
-	// TODO: Change this to a more efficient sorted insert algorithm.
-	// Furthermore, consider changing the underlying data type to allow in-place modification if the
-	// number of PoolAssets is expected to be large.
 	p.PoolAssets = scaledPoolAssets
 	SortPoolAssetsByDenom(p.PoolAssets)
 
@@ -82,7 +73,7 @@ func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) error {
 	return nil
 }
 
-// SortPoolAssetsByDenom sorts pool assets in place, by weight.
+// SortPoolAssetsByDenom sorts pool assets in place, by denomination.
 func SortPoolAssetsByDenom(assets []PoolAsset) {
 	sort.Slice(assets, func(i, j int) bool {
 		PoolAssetA := assets[i]
