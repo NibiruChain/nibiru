@@ -12,6 +12,12 @@ const (
 
 	// the exponent of a pool display share compared to a pool base share (one pool display share = 10^18 pool base shares)
 	DisplayPoolShareExponent = 18
+
+	// Scaling factor for every weight. The pool weight is:
+	// weight_in_MsgCreateBalancerPool * GuaranteedWeightPrecision
+	//
+	// This is done so that smooth weight changes have enough precision to actually be smooth.
+	GuaranteedWeightPrecision int64 = 1 << 30
 )
 
 var (
@@ -28,9 +34,4 @@ var (
 	// This is done so that LBP's / smooth weight changes can actually happen smoothly,
 	// without complex precision loss / edge effects.
 	MaxUserSpecifiedWeight sdk.Int = sdk.NewIntFromUint64(1 << 20)
-	// Scaling factor for every weight. The pool weight is:
-	// weight_in_MsgCreateBalancerPool * GuaranteedWeightPrecision
-	//
-	// This is done so that smooth weight changes have enough precision to actually be smooth.
-	GuaranteedWeightPrecision int64 = 1 << 30
 )
