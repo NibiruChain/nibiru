@@ -4,15 +4,16 @@ import (
 	"testing"
 
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	testkeeper "github.com/MatrixDao/matrix/x/testutil/keeper"
+	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.StablecoinKeeper(t)
+	matrixApp, ctx := testutil.NewMatrixApp()
+	stableKeeper := &matrixApp.StablecoinKeeper
 	params := types.DefaultParams()
 
-	k.SetParams(ctx, params)
+	stableKeeper.SetParams(ctx, params)
 
-	require.EqualValues(t, params, k.GetParams(ctx))
+	require.EqualValues(t, params, stableKeeper.GetParams(ctx))
 }
