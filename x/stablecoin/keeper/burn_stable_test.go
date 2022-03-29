@@ -68,35 +68,48 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			app, ctx := testutil.NewMatrixApp()
-			acc := sample.AccAddress()
+			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
 			// Set prices for GOV and COLL
 			mp := ptypes.Params{
 				Markets: []ptypes.Market{
-					{MarketID: "mtrx:ust", BaseAsset: "mtrx", QuoteAsset: "ust", Oracles: []sdk.AccAddress{}, Active: true},
-					{MarketID: "ust:usdm", BaseAsset: "ust", QuoteAsset: "usdm", Oracles: []sdk.AccAddress{}, Active: true},
-				},
-			}
-			keeper := app.PriceKeeper
+					{MarketID: "mtrx:ust", BaseAsset: "ust", QuoteAsset: "mtrx",
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: "usdm:ust", BaseAsset: "ust", QuoteAsset: "usdm",
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+				}}
+			keeper := &app.PriceKeeper
 			keeper.SetParams(ctx, mp)
 
-			priceExpiry := time.Now().UTC().Add(1 * time.Hour)
+			priceExpiry := ctx.BlockTime().Add(time.Hour)
 
-			keeper.SetPrice(ctx, oracle, "mtrx:ust", tc.govPrice, priceExpiry)
-			keeper.SetPrice(ctx, oracle, "ust:usdm", tc.collPrice, priceExpiry)
+			_, err := keeper.SetPrice(ctx, oracle, "mtrx:ust", tc.govPrice, priceExpiry)
+			require.NoError(t, err)
+
+			_, err = keeper.SetPrice(ctx, oracle, "usdm:ust", tc.collPrice, priceExpiry)
+			require.NoError(t, err)
+
+			for _, market := range mp.Markets {
+				keeper.SetCurrentPrices(ctx, market.MarketID)
+			}
+
+			out := keeper.GetCurrentPrices(ctx)
+			fmt.Println("prices: ", out)
+
 			simapp.FundAccount(app.BankKeeper, ctx, acc, tc.accFunds)
 
 			// Mint USDM
 			goCtx := sdk.WrapSDKContext(ctx)
+
 			burnStableResponse, err := app.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
 
+			fmt.Println("Hi")
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 				return
 			}
-			fmt.Println("prices: ", keeper.GetCurrentPrices(ctx))
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, tc.msgResponse, "mintStableResponse")
@@ -106,16 +119,18 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 	testCases := []TestCase{
 		{
 			name:     "Not enough stable",
-			accFunds: sdk.NewCoins(sdk.NewCoin("usdm", sdk.NewInt(10))),
+			accFunds: sdk.NewCoins(sdk.NewCoin("uusdm", sdk.NewInt(10))),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin("usdm", sdk.NewInt(11)),
+				Stable:  sdk.NewCoin("uusdm", sdk.NewInt(11)),
 			},
 			msgResponse: types.MsgBurnStableResponse{
 				Collateral: sdk.NewCoin("umtrx", sdk.NewInt(0)),
 				Gov:        sdk.NewCoin("uust", sdk.NewInt(0)),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			err:       sdkerrors.Wrap(types.NoCoinFound, "uusdm"),
 		},
 	}
 	for _, test := range testCases {
