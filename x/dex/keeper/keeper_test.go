@@ -84,32 +84,48 @@ func TestNewPool(t *testing.T) {
 	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, coins)
 	require.NoError(t, err)
 
-	poolParams := types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
-	}
-	poolAssets := []types.PoolAsset{
-		{
-			Token: sdk.NewCoin("uatom", sdk.NewInt(1000)),
+	poolId, err := app.DexKeeper.NewPool(ctx,
+		// sender
+		userAddr,
+		// poolParams
+		types.PoolParams{
+			SwapFee: sdk.NewDecWithPrec(3, 2),
+			ExitFee: sdk.NewDecWithPrec(3, 2),
 		},
-		{
-			Token: sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-		},
-	}
-
-	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+		// poolAssets
+		[]types.PoolAsset{
+			{
+				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+			{
+				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+		})
 	require.NoError(t, err)
 
 	retrievedPool, err := app.DexKeeper.FetchPool(ctx, poolId)
 	require.NoError(t, err)
-	require.Equal(t, poolAssets, retrievedPool.PoolAssets)
-	require.Equal(t, poolParams, retrievedPool.PoolParams)
 
-	liquidity := app.DexKeeper.GetTotalLiquidity(ctx)
-	require.Equal(t, sdk.NewCoins(
-		sdk.NewCoin("uatom", sdk.NewInt(1000)),
-		sdk.NewCoin("uosmo", sdk.NewInt(1000))),
-		liquidity)
+	require.Equal(t, []types.PoolAsset{
+		{
+			Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
+			Weight: sdk.NewInt(1 << 30),
+		},
+		{
+			Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+			Weight: sdk.NewInt(1 << 30),
+		},
+	}, retrievedPool.PoolAssets)
+	require.Equal(t, types.PoolParams{
+		SwapFee: sdk.NewDecWithPrec(3, 2),
+		ExitFee: sdk.NewDecWithPrec(3, 2),
+	}, retrievedPool.PoolParams)
+	require.Equal(t, sdk.NewInt(2<<30), retrievedPool.TotalWeight)
+	require.Equal(t,
+		sdk.NewCoin("matrix/pool/1", sdk.NewIntWithDecimal(100, 18)),
+		retrievedPool.TotalShares)
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
