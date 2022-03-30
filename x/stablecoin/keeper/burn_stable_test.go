@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -55,17 +54,19 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 	stableDenom := "uusdm"
 	govDenom := "umtrx"
 	collDenom := "uust"
-	govPricePool := "umtrx:uust"
-	collPricePool := "uusdm:uust"
+	govPricePool := govDenom
+	collPricePool := collDenom
 
 	type TestCase struct {
-		name        string
-		accFunds    sdk.Coins
-		msgBurn     types.MsgBurnStable
-		msgResponse types.MsgBurnStableResponse
-		govPrice    sdk.Dec
-		collPrice   sdk.Dec
-		err         error
+		name         string
+		accFunds     sdk.Coins
+		moduleFunds  sdk.Coins
+		msgBurn      types.MsgBurnStable
+		msgResponse  types.MsgBurnStableResponse
+		govPrice     sdk.Dec
+		collPrice    sdk.Dec
+		expectedPass bool
+		err          string
 	}
 
 	executeTest := func(t *testing.T, testCase TestCase) {
@@ -89,9 +90,6 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			fmt.Println("Burn tests ------------")
-			fmt.Println("Price expiry: ", priceExpiry.UTC().Unix())
-			fmt.Println("ctx.BlockTime(): ", ctx.BlockTime().UTC().Unix())
 			_, err := priceKeeper.SetPrice(
 				ctx, oracle, govPricePool, tc.govPrice, priceExpiry,
 			)
@@ -107,6 +105,12 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
+			// Add collaterals to the module
+			err = matrixApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds)
+			if err != nil {
+				panic(err)
+			}
+
 			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
@@ -115,13 +119,15 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			burnStableResponse, err := matrixApp.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
 
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+			if !tc.expectedPass {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.err)
+
 				return
 			}
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
-				t, burnStableResponse, tc.msgResponse, "burnStableResponse")
+				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
 		})
 	}
 
@@ -137,10 +143,30 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				Collateral: sdk.NewCoin(govDenom, sdk.NewInt(0)),
 				Gov:        sdk.NewCoin(collDenom, sdk.NewInt(0)),
 			},
+			govPrice:     sdk.MustNewDecFromStr("10"),
+			collPrice:    sdk.MustNewDecFromStr("1"),
+			expectedPass: false,
+			err:          "uusdm: Not enough balance",
+		},
+		{
+			name:      "Happy path",
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(stableDenom, sdk.NewInt(9001)).String()),
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(stableDenom, sdk.NewInt(1000000000)),
+			),
+			moduleFunds: sdk.NewCoins(
+				sdk.NewCoin(collDenom, sdk.NewInt(100000000)),
+			),
+			msgBurn: types.MsgBurnStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(10000000)),
+			},
+			msgResponse: types.MsgBurnStableResponse{
+				Gov:        sdk.NewCoin(govDenom, sdk.NewInt(100000)),
+				Collateral: sdk.NewCoin(collDenom, sdk.NewInt(9000000)),
+			},
+			expectedPass: true,
 		},
 	}
 	for _, test := range testCases {
