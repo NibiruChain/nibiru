@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -76,7 +75,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -88,7 +87,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -106,12 +105,6 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			goCtx := sdk.WrapSDKContext(ctx)
 			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
 				goCtx, &tc.msgMint)
-			if err == pricefeedTypes.ErrNoValidPrice {
-				fmt.Println("Mint tests ------------")
-				fmt.Println("Price expiry: ", priceExpiry.UTC().Unix())
-				fmt.Println("ctx.BlockTime(): ", ctx.BlockTime().UTC().Unix())
-				fmt.Println("Prices failed to post: ", priceKeeper.GetCurrentPrices(ctx))
-			}
 
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)

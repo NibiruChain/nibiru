@@ -76,7 +76,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				Markets: []ptypes.Market{
 					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -88,7 +88,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -196,7 +196,7 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 				Markets: []ptypes.Market{
 					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -208,7 +208,7 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 

@@ -14,14 +14,6 @@ func NewMsgBurn(creator string, coin sdk.Coin) *MsgBurnStable {
 	}
 }
 
-func (msg *MsgBurnStable) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgBurnStable) Type() string {
-	return "BurnStable"
-}
-
 func (msg *MsgBurnStable) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
