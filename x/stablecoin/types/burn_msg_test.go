@@ -10,26 +10,26 @@ import (
 
 func TestMsgBurn_ValidateBasic(t *testing.T) {
 	tests := []struct {
-		name string
-		msg  MsgBurnStable
-		err  error
+		name    string
+		msgBurn MsgBurnStable
+		err     error
 	}{
 		{
-			name: "invalid address",
-			msg: MsgBurnStable{
+			name: "Invalid MsgBurn.Creator address",
+			msgBurn: MsgBurnStable{
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
-			name: "valid address",
-			msg: MsgBurnStable{
+			name: "Valid MsgBurn.Creator address",
+			msgBurn: MsgBurnStable{
 				Creator: sample.AccAddress().String(),
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.msg.ValidateBasic()
+			err := test.msgBurn.ValidateBasic()
 			if test.err != nil {
 				require.ErrorIs(t, err, test.err)
 				return
