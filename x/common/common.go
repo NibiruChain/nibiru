@@ -5,11 +5,13 @@ import (
 	"sort"
 )
 
-const (
-	GovDenom       = "umtrx"
-	CollDenom      = "uust"
-	GovPricePool   = "umtrx:uust"
-	CollStablePool = "uusdm:uust"
+var (
+	GovDenom    = "umtrx"
+	CollDenom   = "uust"
+	StableDenom = "uusdm"
+
+	GovPricePool   = PoolNameFromDenoms([]string{GovDenom, CollDenom})
+	CollStablePool = PoolNameFromDenoms([]string{CollDenom, StableDenom})
 )
 
 func PoolNameFromDenoms(denoms []string) string {

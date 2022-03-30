@@ -5,6 +5,7 @@ package keeper
 import (
 	"context"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,13 +28,13 @@ func (k Keeper) BurnStable(
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, govDenom)
+	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovPricePool)
 	if err != nil {
 		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, collDenom)
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +56,8 @@ func (k Keeper) BurnStable(
 	}
 
 	// Mint GOV that will later be sent to the user.
-	collToSend := sdk.NewCoin(collDenom, redeemColl)
-	govToSend := sdk.NewCoin(govDenom, redeemGov)
+	collToSend := sdk.NewCoin(common.CollDenom, redeemColl)
+	govToSend := sdk.NewCoin(common.GovDenom, redeemGov)
 	coinsNeededToSend := sdk.NewCoins(collToSend, govToSend)
 
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(govToSend))

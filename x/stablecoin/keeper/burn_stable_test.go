@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MatrixDao/matrix/x/common"
 	ptypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/MatrixDao/matrix/x/testutil"
@@ -51,11 +52,6 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 //  since there's a dependency between the two modules.
 
 func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
-	stableDenom := "uusdm"
-	govDenom := "umtrx"
-	collDenom := "uust"
-	govPricePool := govDenom
-	collPricePool := collDenom
 
 	type TestCase struct {
 		name         string
@@ -81,9 +77,9 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := ptypes.Params{
 				Markets: []ptypes.Market{
-					{MarketID: govPricePool, BaseAsset: collDenom, QuoteAsset: govDenom,
+					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: collPricePool, BaseAsset: collDenom, QuoteAsset: stableDenom,
+					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -91,11 +87,11 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, govPricePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovPricePool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, collPricePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -134,14 +130,14 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 	testCases := []TestCase{
 		{
 			name:     "Not enough stable",
-			accFunds: sdk.NewCoins(sdk.NewCoin(stableDenom, sdk.NewInt(10))),
+			accFunds: sdk.NewCoins(sdk.NewCoin(common.StableDenom, sdk.NewInt(10))),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(9001)),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(9001)),
 			},
 			msgResponse: types.MsgBurnStableResponse{
-				Collateral: sdk.NewCoin(govDenom, sdk.NewInt(0)),
-				Gov:        sdk.NewCoin(collDenom, sdk.NewInt(0)),
+				Collateral: sdk.NewCoin(common.GovDenom, sdk.NewInt(0)),
+				Gov:        sdk.NewCoin(common.CollDenom, sdk.NewInt(0)),
 			},
 			govPrice:     sdk.MustNewDecFromStr("10"),
 			collPrice:    sdk.MustNewDecFromStr("1"),
@@ -153,18 +149,18 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(stableDenom, sdk.NewInt(1000000000)),
+				sdk.NewCoin(common.StableDenom, sdk.NewInt(1000000000)),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewCoin(collDenom, sdk.NewInt(100000000)),
+				sdk.NewCoin(common.CollDenom, sdk.NewInt(100000000)),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(10000000)),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(10000000)),
 			},
 			msgResponse: types.MsgBurnStableResponse{
-				Gov:        sdk.NewCoin(govDenom, sdk.NewInt(100000)),
-				Collateral: sdk.NewCoin(collDenom, sdk.NewInt(9000000)),
+				Gov:        sdk.NewCoin(common.GovDenom, sdk.NewInt(100000)),
+				Collateral: sdk.NewCoin(common.CollDenom, sdk.NewInt(9000000)),
 			},
 			expectedPass: true,
 		},
