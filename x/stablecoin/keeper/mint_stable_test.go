@@ -49,9 +49,12 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 }
 
-// TODO: test (pricefeed/keeper): We need to test posted prices first.
-
 func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
+	stableDenom := "uusdm"
+	govDenom := "umtrx"
+	collDenom := "uust"
+	govPricePool := "umtrx:uust"
+	collPricePool := "uusdm:uust"
 
 	type TestCase struct {
 		name        string
@@ -71,79 +74,148 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
-			params := pricefeedTypes.Params{
+			// Set up markets for the pricefeed keeper.
+			priceKeeper := &matrixApp.PriceKeeper
+			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
-					{MarketID: "mtrx:ust", BaseAsset: "ust", QuoteAsset: "mtrx",
+					{MarketID: govPricePool, BaseAsset: collDenom, QuoteAsset: govDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: "usdm:ust", BaseAsset: "ust", QuoteAsset: "usdm",
+					{MarketID: collPricePool, BaseAsset: collDenom, QuoteAsset: stableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
+			priceKeeper.SetParams(ctx, pfParams)
 
-			priceKeeper := &matrixApp.PriceKeeper
-			priceKeeper.SetParams(ctx, params)
-
+			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
+			_, err := priceKeeper.SetPrice(
+				ctx, oracle, govPricePool, tc.govPrice, priceExpiry,
+			)
+			require.NoError(t, err)
+			_, err = priceKeeper.SetPrice(
+				ctx, oracle, collPricePool, tc.collPrice, priceExpiry,
+			)
+			require.NoError(t, err)
 
-			_, err := priceKeeper.SetPrice(ctx, oracle, "mtrx:ust", tc.govPrice, priceExpiry)
-			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(ctx, oracle, "usdm:ust", tc.collPrice, priceExpiry)
-			require.NoError(t, err)
-			for _, market := range params.Markets {
-				priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+			// Update the 'CurrentPrice' posted by the oracles.
+			for _, market := range pfParams.Markets {
+				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
 			// Fund account
 			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Mint USDM
+			// Mint USDM -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
 			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
 				goCtx, &tc.msgMint)
+			if err == pricefeedTypes.ErrNoValidPrice {
+				fmt.Println("Mint tests ------------")
+				fmt.Println("Price expiry: ", priceExpiry.UTC().Unix())
+				fmt.Println("ctx.BlockTime(): ", ctx.BlockTime().UTC().Unix())
+				fmt.Println("Prices failed to post: ", priceKeeper.GetCurrentPrices(ctx))
+			}
 
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 				return
 			}
-			fmt.Println("prices: ", priceKeeper.GetCurrentPrices(ctx))
 
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
-				t, mintStableResponse, tc.msgResponse, "mintStableResponse")
+				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
 		})
 	}
 
-	tests := []TestCase{
+	testCases := []TestCase{
 		{
-			name: "Not enough GOV",
+			name: "User has no GOV",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin("ust", sdk.NewInt(1000000))),
+				sdk.NewCoin(collDenom, sdk.NewInt(9001)),
+				sdk.NewCoin(govDenom, sdk.NewInt(0)),
+			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin("usdm", sdk.NewInt(0)),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin("usdm", sdk.NewInt(0)),
+				Stable: sdk.NewCoin(stableDenom, sdk.NewInt(0)),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       fmt.Errorf("all input prices are expired"),
+			err:       types.NoCoinFound.Wrap(govDenom),
 		}, {
-			name:     "Not enough COLL",
-			accFunds: sdk.NewCoins(),
+			name: "User has no COLL",
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(collDenom, sdk.NewInt(0)),
+				sdk.NewCoin(govDenom, sdk.NewInt(9001)),
+			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin("usdm", sdk.NewInt(0)),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin("usdm", sdk.NewInt(0)),
+				Stable: sdk.NewCoin(stableDenom, sdk.NewInt(0)),
+			},
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			err:       types.NoCoinFound.Wrap(collDenom),
+		},
+		{
+			name: "Not enough GOV",
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(collDenom, sdk.NewInt(9001)),
+				sdk.NewCoin(govDenom, sdk.NewInt(1)),
+			),
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(1000)),
+			},
+			msgResponse: types.MsgMintStableResponse{
+				Stable: sdk.NewCoin(stableDenom, sdk.NewInt(0)),
+			},
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			err: types.NotEnoughBalance.Wrap(
+				sdk.NewCoin(govDenom, sdk.NewInt(1)).String()),
+		}, {
+			name: "Not enough COLL",
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(collDenom, sdk.NewInt(1)),
+				sdk.NewCoin(govDenom, sdk.NewInt(9001)),
+			),
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(100)),
+			},
+			msgResponse: types.MsgMintStableResponse{
+				Stable: sdk.NewCoin(stableDenom, sdk.NewInt(0)),
+			},
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			err: types.NotEnoughBalance.Wrap(
+				sdk.NewCoin(collDenom, sdk.NewInt(1)).String()),
+		},
+		{
+			name: "Successful mint",
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(govDenom, sdk.NewInt(9001)),
+				sdk.NewCoin(collDenom, sdk.NewInt(9001)),
+			),
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(100)),
+			},
+			msgResponse: types.MsgMintStableResponse{
+				Stable: sdk.NewCoin(stableDenom, sdk.NewInt(100)),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			err:       nil,
 		},
 	}
-	for _, test := range tests {
-		executeTest(t, test)
+	for _, testCase := range testCases {
+		executeTest(t, testCase)
 	}
 }
