@@ -25,13 +25,6 @@ func (k Keeper) BurnStable(
 		return nil, sdkerrors.Wrap(types.NoCoinFound, msg.Stable.Denom)
 	}
 
-	// Check if the user has the fund necessary
-	stablesToBurn := sdk.NewCoins(msg.Stable)
-	err = k.CheckEnoughBalances(ctx, stablesToBurn, toAddr)
-	if err != nil {
-		return nil, err
-	}
-
 	// priceGov: Price of the governance token in USD
 	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovPricePool)
 	if err != nil {
@@ -54,10 +47,11 @@ func (k Keeper) BurnStable(
 	redeemGov := AsInt(sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio).Quo(priceGov.Price))
 
 	// Send USDM from account to module
+	stablesToBurn := sdk.NewCoins(msg.Stable)
 	err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx, toAddr, types.ModuleName, stablesToBurn)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Mint GOV that will later be sent to the user.
