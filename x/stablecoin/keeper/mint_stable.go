@@ -5,17 +5,12 @@ package keeper
 import (
 	"context"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // stableDenom string = "usdm"
-const (
-	govDenom       = "umtrx"
-	collDenom      = "uust"
-	govPricePool   = "umtrx:uust"
-	collStablePool = "uusdm:uust"
-)
 
 // govDeposited: Units of GOV burned
 // govDeposited = (1 - collRatio) * (collDeposited * 1) / (collRatio * priceGOV)
@@ -31,13 +26,13 @@ func (k Keeper) MintStable(
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, govPricePool)
+	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovPricePool)
 	if err != nil {
 		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, collStablePool)
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollPricePool)
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +44,11 @@ func (k Keeper) MintStable(
 
 	neededCollUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(collRatio)
 	neededCollAmt := AsInt(neededCollUSD.Quo(priceColl.Price))
-	neededColl := sdk.NewCoin(collDenom, neededCollAmt)
+	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
 
 	neededGovUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio)
 	neededGovAmt := AsInt(neededGovUSD.Quo(priceGov.Price))
-	neededGov := sdk.NewCoin(govDenom, neededGovAmt)
+	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
 
