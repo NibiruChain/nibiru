@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,10 +15,11 @@ import (
 func TestKeeper_SetGetMarket(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
 
+	tstusdMarket := types.Market{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true}
+	tst2usdMarket := types.Market{MarketID: "tst2usd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true}
+
 	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true},
-		},
+		Markets: types.Markets{tstusdMarket},
 	}
 	keeper := app.PriceKeeper
 	keeper.SetParams(ctx, mp)
@@ -41,7 +43,6 @@ func TestKeeper_SetGetMarket(t *testing.T) {
 
 	keeper.SetParams(ctx, mp)
 	markets = keeper.GetMarkets(ctx)
-	require.Contains(t, markets, tstusdMarket)
 	require.Equal(t, len(markets), 2)
 	require.Equal(t, markets[0].MarketID, "tstusd")
 	require.Equal(t, markets[1].MarketID, "tst2usd")
@@ -99,6 +100,83 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestKeeper_GetSetPriceWrongOracle(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+	keeper := app.PriceKeeper
+
+	_, addrs := sample.PrivKeyAddressPairs(2)
+	mp := types.Params{
+		Markets: []types.Market{
+			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs[:1], Active: true},
+		},
+	}
+	keeper.SetParams(ctx, mp)
+
+	// happy path
+	marketID := "tstusd"
+	price := sdk.MustNewDecFromStr("0.1")
+	_, err := keeper.SetPrice(
+		ctx,
+		addrs[0],
+		marketID,
+		price,
+		time.Now().UTC().Add(1*time.Hour),
+	)
+	require.NoError(t, err)
+
+	// wrong oracle given
+	// happy path
+	_, err = keeper.SetPrice(
+		ctx,
+		addrs[1],
+		marketID,
+		price,
+		time.Now().UTC().Add(1*time.Hour),
+	)
+	require.Error(t, err)
+}
+
+func TestKeeper_GetSetPriceWrongOracles(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+	keeper := app.PriceKeeper
+
+	_, addrs := sample.PrivKeyAddressPairs(10)
+	mp := types.Params{
+		Markets: []types.Market{
+			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs[:5], Active: true},
+		},
+	}
+	keeper.SetParams(ctx, mp)
+
+	marketID := "tstusd"
+	price := sdk.MustNewDecFromStr("0.1")
+
+	for i, addr := range addrs {
+		fmt.Println(i, addr)
+		if i < 5 {
+			_, err := keeper.SetPrice(
+				ctx,
+				addr,
+				marketID,
+				price,
+				time.Now().UTC().Add(1*time.Hour),
+			)
+			require.NoError(t, err)
+		} else {
+			_, err := keeper.SetPrice(
+				ctx,
+				addr,
+				marketID,
+				price,
+				time.Now().UTC().Add(1*time.Hour),
+			)
+			require.Error(t, err)
+		}
+
+	}
+
 }
 
 // TestKeeper_GetSetCurrentPrice Test Setting the median price of an Asset
