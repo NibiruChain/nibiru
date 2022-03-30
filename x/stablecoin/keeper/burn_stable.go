@@ -5,8 +5,10 @@ package keeper
 import (
 	"context"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k Keeper) BurnStable(
@@ -19,21 +21,18 @@ func (k Keeper) BurnStable(
 		return nil, err
 	}
 
-	// Check if the user has the fund necessary
-	stablesToBurn := sdk.NewCoins(msg.Stable)
-	err = k.CheckEnoughBalances(ctx, stablesToBurn, toAddr)
-	if err != nil {
-		return nil, err
+	if msg.Stable.Amount == sdk.ZeroInt() {
+		return nil, sdkerrors.Wrap(types.NoCoinFound, msg.Stable.Denom)
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, govDenom)
+	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovPricePool)
 	if err != nil {
 		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, collDenom)
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollPricePool)
 	if err != nil {
 		return nil, err
 	}
@@ -48,15 +47,16 @@ func (k Keeper) BurnStable(
 	redeemGov := AsInt(sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio).Quo(priceGov.Price))
 
 	// Send USDM from account to module
+	stablesToBurn := sdk.NewCoins(msg.Stable)
 	err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx, toAddr, types.ModuleName, stablesToBurn)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Mint GOV that will later be sent to the user.
-	collToSend := sdk.NewCoin(collDenom, redeemColl)
-	govToSend := sdk.NewCoin(govDenom, redeemGov)
+	collToSend := sdk.NewCoin(common.CollDenom, redeemColl)
+	govToSend := sdk.NewCoin(common.GovDenom, redeemGov)
 	coinsNeededToSend := sdk.NewCoins(collToSend, govToSend)
 
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(govToSend))
