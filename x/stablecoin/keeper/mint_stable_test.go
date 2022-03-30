@@ -130,7 +130,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 	testCases := []TestCase{
 		{
-			name: "Not enough GOV",
+			name: "User has no GOV",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(collDenom, sdk.NewInt(9001)),
 				sdk.NewCoin(govDenom, sdk.NewInt(0)),
@@ -146,7 +146,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			collPrice: sdk.MustNewDecFromStr("1"),
 			err:       types.NoCoinFound.Wrap(govDenom),
 		}, {
-			name: "Not enough COLL",
+			name: "User has no COLL",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(collDenom, sdk.NewInt(0)),
 				sdk.NewCoin(govDenom, sdk.NewInt(9001)),
@@ -161,7 +161,43 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			err:       types.NoCoinFound.Wrap(collDenom),
+		},
+		{
+			name: "Not enough GOV",
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(collDenom, sdk.NewInt(9001)),
+				sdk.NewCoin(govDenom, sdk.NewInt(1)),
+			),
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(1000)),
+			},
+			msgResponse: types.MsgMintStableResponse{
+				Stable: sdk.NewCoin(stableDenom, sdk.NewInt(0)),
+			},
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			err: types.NotEnoughBalance.Wrap(
+				sdk.NewCoin(govDenom, sdk.NewInt(1)).String()),
 		}, {
+			name: "Not enough COLL",
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(collDenom, sdk.NewInt(1)),
+				sdk.NewCoin(govDenom, sdk.NewInt(9001)),
+			),
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(100)),
+			},
+			msgResponse: types.MsgMintStableResponse{
+				Stable: sdk.NewCoin(stableDenom, sdk.NewInt(0)),
+			},
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			err: types.NotEnoughBalance.Wrap(
+				sdk.NewCoin(collDenom, sdk.NewInt(1)).String()),
+		},
+		{
 			name: "Successful mint",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(govDenom, sdk.NewInt(9001)),
