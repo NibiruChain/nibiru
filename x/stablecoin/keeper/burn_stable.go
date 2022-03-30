@@ -20,7 +20,8 @@ func (k Keeper) BurnStable(
 	}
 
 	// Check if the user has the fund necessary
-	err = k.CheckEnoughBalances(ctx, sdk.NewCoins(msg.Stable), toAddr)
+	stablesToBurn := sdk.NewCoins(msg.Stable)
+	err = k.CheckEnoughBalances(ctx, stablesToBurn, toAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +48,6 @@ func (k Keeper) BurnStable(
 	redeemGov := AsInt(sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio).Quo(priceGov.Price))
 
 	// Send USDM from account to module
-	stableToBurn := msg.Stable
-	stablesToBurn := sdk.NewCoins(stableToBurn)
 	err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx, toAddr, types.ModuleName, stablesToBurn)
 	if err != nil {
