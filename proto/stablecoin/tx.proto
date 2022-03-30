@@ -22,12 +22,12 @@ message MsgMintStableResponse {
 }
 
 // Msg to burn USDM: User burns USDM and gets MTRX and collateral in return.
-message MsgBurn {
+message MsgBurnStable {
   string creator = 1;
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
 }
 
-message MsgBurnResponse {
+message MsgBurnStableResponse {
   cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
 }
