@@ -9,16 +9,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	// stableDenom string = "usdm"
-	govDenom  string = "umtrx"
-	collDenom string = "uust"
+// stableDenom string = "usdm"
+const (
+	govDenom       = "umtrx"
+	collDenom      = "uust"
+	govPricePool   = "umtrx:uust"
+	collStablePool = "uusdm:uust"
 )
 
 // govDeposited: Units of GOV burned
 // govDeposited = (1 - collRatio) * (collDeposited * 1) / (collRatio * priceGOV)
-func (k Keeper) MintStable(goCtx context.Context, msg *types.MsgMintStable) (
-	*types.MsgMintStableResponse, error) {
+func (k Keeper) MintStable(
+	goCtx context.Context, msg *types.MsgMintStable,
+) (*types.MsgMintStableResponse, error) {
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -28,13 +31,13 @@ func (k Keeper) MintStable(goCtx context.Context, msg *types.MsgMintStable) (
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, govDenom)
+	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, govPricePool)
 	if err != nil {
 		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, collDenom)
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, collStablePool)
 	if err != nil {
 		return nil, err
 	}

@@ -52,6 +52,11 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 //  since there's a dependency between the two modules.
 
 func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
+	stableDenom := "uusdm"
+	govDenom := "umtrx"
+	collDenom := "uust"
+	govPricePool := "umtrx:uust"
+	collPricePool := "uusdm:uust"
 
 	type TestCase struct {
 		name         string
@@ -68,42 +73,47 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 
-			app, ctx := testutil.NewMatrixApp()
+			matrixApp, ctx := testutil.NewMatrixApp()
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
-			// Set prices for GOV and COLL
-			mp := ptypes.Params{
+			// Set up markets for the pricefeed keeper.
+			priceKeeper := &matrixApp.PriceKeeper
+			pfParams := ptypes.Params{
 				Markets: []ptypes.Market{
-					{MarketID: "mtrx:ust", BaseAsset: "ust", QuoteAsset: "mtrx",
+					{MarketID: govPricePool, BaseAsset: collDenom, QuoteAsset: govDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: "usdm:ust", BaseAsset: "ust", QuoteAsset: "usdm",
+					{MarketID: collPricePool, BaseAsset: collDenom, QuoteAsset: stableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			keeper := &app.PriceKeeper
-			keeper.SetParams(ctx, mp)
+			priceKeeper.SetParams(ctx, pfParams)
 
+			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-
-			_, err := keeper.SetPrice(ctx, oracle, "mtrx:ust", tc.govPrice, priceExpiry)
+			fmt.Println("Burn tests ------------")
+			fmt.Println("Price expiry: ", priceExpiry.UTC().Unix())
+			fmt.Println("ctx.BlockTime(): ", ctx.BlockTime().UTC().Unix())
+			_, err := priceKeeper.SetPrice(
+				ctx, oracle, govPricePool, tc.govPrice, priceExpiry,
+			)
+			require.NoError(t, err)
+			_, err = priceKeeper.SetPrice(
+				ctx, oracle, collPricePool, tc.collPrice, priceExpiry,
+			)
 			require.NoError(t, err)
 
-			_, err = keeper.SetPrice(ctx, oracle, "usdm:ust", tc.collPrice, priceExpiry)
-			require.NoError(t, err)
-
-			for _, market := range mp.Markets {
-				keeper.SetCurrentPrices(ctx, market.MarketID)
+			// Update the 'CurrentPrice' posted by the oracles.
+			for _, market := range pfParams.Markets {
+				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
-			out := keeper.GetCurrentPrices(ctx)
-			fmt.Println("prices: ", out)
+			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
+			require.NoError(t, err)
 
-			simapp.FundAccount(app.BankKeeper, ctx, acc, tc.accFunds)
-
-			// Mint USDM
+			// Burn USDM -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
-
-			burnStableResponse, err := app.StablecoinKeeper.BurnStable(
+			burnStableResponse, err := matrixApp.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
 
 			if !tc.expectedPass {
@@ -114,21 +124,21 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			}
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
-				t, burnStableResponse, tc.msgResponse, "mintStableResponse")
+				t, burnStableResponse, tc.msgResponse, "burnStableResponse")
 		})
 	}
 
 	testCases := []TestCase{
 		{
 			name:     "Not enough stable",
-			accFunds: sdk.NewCoins(sdk.NewCoin("uusdm", sdk.NewInt(10))),
+			accFunds: sdk.NewCoins(sdk.NewCoin(stableDenom, sdk.NewInt(10))),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin("uusdm", sdk.NewInt(11)),
+				Stable:  sdk.NewCoin(stableDenom, sdk.NewInt(9001)),
 			},
 			msgResponse: types.MsgBurnStableResponse{
-				Collateral: sdk.NewCoin("umtrx", sdk.NewInt(0)),
-				Gov:        sdk.NewCoin("uust", sdk.NewInt(0)),
+				Collateral: sdk.NewCoin(govDenom, sdk.NewInt(0)),
+				Gov:        sdk.NewCoin(collDenom, sdk.NewInt(0)),
 			},
 			govPrice:     sdk.MustNewDecFromStr("10"),
 			collPrice:    sdk.MustNewDecFromStr("1"),

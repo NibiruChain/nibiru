@@ -9,7 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable) (*types.MsgBurnStableResponse, error) {
+func (k Keeper) BurnStable(
+	goCtx context.Context, msg *types.MsgBurnStable,
+) (*types.MsgBurnStableResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	toAddr, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -35,8 +37,9 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable) (*ty
 		return nil, err
 	}
 
-	// The user deposits a mixure of collateral and GOV tokens based on the collateral ratio.
-	// TODO: Initialize these two vars based on the collateral ratio of the protocol.
+	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
+	// based on the collateral ratio.
+	// TODO: Initialize 'collRatio' based on the collateral ratio of the protocol.
 	collRatio, _ := sdk.NewDecFromStr("0.9")
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 
@@ -52,7 +55,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable) (*ty
 		panic(err)
 	}
 
-	// Mint the GOV that the user gave to the protocol.
+	// Mint GOV that will later be sent to the user.
 	collToSend := sdk.NewCoin(collDenom, redeemColl)
 	govToSend := sdk.NewCoin(govDenom, redeemGov)
 	coinsNeededToSend := sdk.NewCoins(collToSend, govToSend)
@@ -62,7 +65,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable) (*ty
 		panic(err)
 	}
 
-	// Send tokens to the account
+	// Send tokens (GOV and COLL) to the account
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, toAddr, coinsNeededToSend)
 	if err != nil {
