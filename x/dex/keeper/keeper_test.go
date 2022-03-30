@@ -112,24 +112,27 @@ func TestNewPool(t *testing.T) {
 	retrievedPool, err := app.DexKeeper.FetchPool(ctx, poolId)
 	require.NoError(t, err)
 
-	require.Equal(t, []types.PoolAsset{
-		{
-			Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
-			Weight: sdk.NewInt(1 << 30),
+	require.Equal(t, types.Pool{
+		Id:      1,
+		Address: retrievedPool.Address, // address is random so can't test, just reuse value
+		PoolParams: types.PoolParams{
+			SwapFee: sdk.NewDecWithPrec(3, 2),
+			ExitFee: sdk.NewDecWithPrec(3, 2),
 		},
-		{
-			Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-			Weight: sdk.NewInt(1 << 30),
+		PoolAssets: []types.PoolAsset{
+			{
+				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1 << 30),
+			},
+			{
+				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1 << 30),
+			},
 		},
-	}, retrievedPool.PoolAssets)
-	require.Equal(t, types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
-	}, retrievedPool.PoolParams)
-	require.Equal(t, sdk.NewInt(2<<30), retrievedPool.TotalWeight)
-	require.Equal(t,
-		sdk.NewCoin("matrix/pool/1", sdk.NewIntWithDecimal(100, 18)),
-		retrievedPool.TotalShares)
+		TotalWeight: sdk.NewInt(2 << 30),
+		TotalShares: sdk.NewCoin("matrix/pool/1", sdk.NewIntWithDecimal(100, 18)),
+	}, retrievedPool)
+
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
