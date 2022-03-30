@@ -32,7 +32,7 @@ func (k Keeper) MintStable(
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollPricePool)
 	if err != nil {
 		return nil, err
 	}
