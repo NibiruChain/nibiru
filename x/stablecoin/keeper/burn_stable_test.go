@@ -54,13 +54,14 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 	type TestCase struct {
-		name        string
-		accFunds    sdk.Coins
-		msgBurn     types.MsgBurnStable
-		msgResponse types.MsgBurnStableResponse
-		govPrice    sdk.Dec
-		collPrice   sdk.Dec
-		err         error
+		name         string
+		accFunds     sdk.Coins
+		msgBurn      types.MsgBurnStable
+		msgResponse  types.MsgBurnStableResponse
+		govPrice     sdk.Dec
+		collPrice    sdk.Dec
+		expectedPass bool
+		err          string
 	}
 
 	executeTest := func(t *testing.T, testCase TestCase) {
@@ -105,9 +106,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			burnStableResponse, err := app.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
 
-			fmt.Println("Hi")
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+			if !tc.expectedPass {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.err)
+
 				return
 			}
 			require.NoError(t, err)
@@ -128,9 +130,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				Collateral: sdk.NewCoin("umtrx", sdk.NewInt(0)),
 				Gov:        sdk.NewCoin("uust", sdk.NewInt(0)),
 			},
-			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       sdkerrors.Wrap(types.NoCoinFound, "uusdm"),
+			govPrice:     sdk.MustNewDecFromStr("10"),
+			collPrice:    sdk.MustNewDecFromStr("1"),
+			expectedPass: false,
+			err:          "uusdm: Not enough balance",
 		},
 	}
 	for _, test := range testCases {
