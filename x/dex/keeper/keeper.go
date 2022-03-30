@@ -227,7 +227,6 @@ func (k Keeper) NewPool(
 
 	if len(poolAssets) > types.MaxPoolAssets {
 		return uint64(0), types.ErrTooManyPoolAssets
-
 	}
 
 	poolId = k.GetNextPoolNumberAndIncrement(ctx)
@@ -236,16 +235,7 @@ func (k Keeper) NewPool(
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
 	k.accountKeeper.SetAccount(ctx, poolAccount)
 
-	pool := types.Pool{
-		Id:          poolId,
-		Address:     poolAccount.GetAddress().String(),
-		PoolParams:  poolParams,
-		PoolAssets:  nil,
-		TotalWeight: sdk.ZeroInt(),
-		TotalShares: sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), types.InitPoolSharesSupply),
-	}
-
-	err = pool.SetInitialPoolAssets(poolAssets)
+	pool, err := types.NewPool(ctx, poolId, poolAccount.GetAddress(), poolParams, poolAssets)
 	if err != nil {
 		return uint64(0), err
 	}

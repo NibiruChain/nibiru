@@ -42,7 +42,7 @@ func GetPoolShareDisplayDenom(poolId uint64) (poolDenom string) {
 // It is only designed to be called at the pool's creation.
 // If the same denom's PoolAsset exists, will return error.
 // The list of PoolAssets must be sorted. This is done to enable fast searching for a PoolAsset by denomination.
-func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) (err error) {
+func (p *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	exists := make(map[string]bool)
 
 	newTotalWeight := sdk.ZeroInt()
@@ -65,19 +65,57 @@ func (p *Pool) SetInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	}
 
 	p.PoolAssets = scaledPoolAssets
-	SortPoolAssetsByDenom(p.PoolAssets)
+	sortPoolAssetsByDenom(p.PoolAssets)
 
 	p.TotalWeight = newTotalWeight
 
 	return nil
 }
 
-// SortPoolAssetsByDenom sorts pool assets in place, by denomination.
-func SortPoolAssetsByDenom(assets []PoolAsset) {
+// sortPoolAssetsByDenom sorts pool assets in place, by denomination.
+func sortPoolAssetsByDenom(assets []PoolAsset) {
 	sort.Slice(assets, func(i, j int) bool {
 		PoolAssetA := assets[i]
 		PoolAssetB := assets[j]
 
 		return strings.Compare(PoolAssetA.Token.Denom, PoolAssetB.Token.Denom) == -1
 	})
+}
+
+/*
+Creates a new pool and sets the initial assets.
+
+args:
+  ctx: the cosmos-sdk context
+  poolId: the pool numeric id
+  poolAccountAddr: the pool's account address for holding funds
+  poolParams: pool configuration options
+  poolAssets: the initial pool assets and weights
+
+ret:
+  pool: a new pool
+  err: error if any
+*/
+func NewPool(
+	ctx sdk.Context,
+	poolId uint64,
+	poolAccountAddr sdk.Address,
+	poolParams PoolParams,
+	poolAssets []PoolAsset,
+) (pool Pool, err error) {
+	pool = Pool{
+		Id:          poolId,
+		Address:     poolAccountAddr.String(),
+		PoolParams:  poolParams,
+		PoolAssets:  nil,
+		TotalWeight: sdk.ZeroInt(),
+		TotalShares: sdk.NewCoin(GetPoolShareBaseDenom(poolId), InitPoolSharesSupply),
+	}
+
+	err = pool.setInitialPoolAssets(poolAssets)
+	if err != nil {
+		return Pool{}, err
+	}
+
+	return pool, nil
 }
