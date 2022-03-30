@@ -8,6 +8,7 @@ import (
 	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k Keeper) BurnStable(
@@ -18,6 +19,10 @@ func (k Keeper) BurnStable(
 	toAddr, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, err
+	}
+
+	if msg.Stable.Amount == sdk.ZeroInt() {
+		return nil, sdkerrors.Wrap(types.NoCoinFound, msg.Stable.Denom)
 	}
 
 	// Check if the user has the fund necessary

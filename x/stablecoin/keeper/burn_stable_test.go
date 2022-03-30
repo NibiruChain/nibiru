@@ -48,9 +48,6 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	}
 }
 
-//  TODO Write this test after we test the pricefeed keeper since there's a dependency
-//  since there's a dependency between the two modules.
-
 func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 	type TestCase struct {
@@ -163,6 +160,27 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				Collateral: sdk.NewCoin(common.CollDenom, sdk.NewInt(9000000)),
 			},
 			expectedPass: true,
+		},
+		{
+			name:      "Stable is zero",
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(common.StableDenom, sdk.NewInt(1000000000)),
+			),
+			moduleFunds: sdk.NewCoins(
+				sdk.NewCoin(common.CollDenom, sdk.NewInt(100000000)),
+			),
+			msgBurn: types.MsgBurnStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.ZeroInt()),
+			},
+			msgResponse: types.MsgBurnStableResponse{
+				Gov:        sdk.NewCoin(common.GovDenom, sdk.ZeroInt()),
+				Collateral: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
+			},
+			expectedPass: true,
+			err:          types.NoCoinFound.Wrap(common.StableDenom).Error(),
 		},
 	}
 	for _, test := range testCases {
