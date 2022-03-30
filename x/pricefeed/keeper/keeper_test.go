@@ -48,7 +48,7 @@ func TestKeeper_SetGetMarket(t *testing.T) {
 	require.Equal(t, markets[1].MarketID, "tst2usd")
 
 	_, found = keeper.GetMarket(ctx, "nan")
-	require.Equal(t, found, false)
+	require.False(t, found)
 }
 
 func TestKeeper_GetSetPrice(t *testing.T) {
