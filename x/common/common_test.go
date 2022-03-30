@@ -1,9 +1,10 @@
 package common_test
 
 import (
+	"testing"
+
 	"github.com/MatrixDao/matrix/x/common"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestPoolNameFromDenoms(t *testing.T) {
@@ -23,6 +24,16 @@ func TestPoolNameFromDenoms(t *testing.T) {
 			name:     "ATOM:OSMO in wrong order",
 			denoms:   []string{"osmo", "atom"},
 			poolName: "atom:osmo",
+		},
+		{
+			name:     "X:Y:Z in correct order",
+			denoms:   []string{"x", "y", "z"},
+			poolName: "x:y:z",
+		},
+		{
+			name:     "X:Y:Z in wrong order",
+			denoms:   []string{"z", "x", "y"},
+			poolName: "x:y:z",
 		},
 	}
 
