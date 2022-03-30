@@ -139,7 +139,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			govPrice:     sdk.MustNewDecFromStr("10"),
 			collPrice:    sdk.MustNewDecFromStr("1"),
 			expectedPass: false,
-			err:          "uusdm: Not enough balance",
+			err:          "insufficient funds",
 		},
 		{
 			name:      "Stable is zero",
