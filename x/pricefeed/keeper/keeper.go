@@ -63,7 +63,7 @@ func (k Keeper) SetPrice(
 
 	_, err := k.GetOracle(ctx, marketID, oracle)
 	if err != nil {
-		panic(err)
+		return types.PostedPrice{}, err
 	}
 
 	store := ctx.KVStore(k.storeKey)
