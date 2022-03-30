@@ -5,8 +5,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgBurn = "mint"
-
 var _ sdk.Msg = &MsgBurnStable{}
 
 func NewMsgBurn(creator string, coin sdk.Coin) *MsgBurnStable {
@@ -21,7 +19,7 @@ func (msg *MsgBurnStable) Route() string {
 }
 
 func (msg *MsgBurnStable) Type() string {
-	return TypeMsgBurn
+	return "BurnStable"
 }
 
 func (msg *MsgBurnStable) GetSigners() []sdk.AccAddress {
