@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -11,6 +10,47 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
+
+func TestKeeper_SetGetMarket(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+
+	tstusdMarket := types.Market{
+		MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
+		Oracles: []sdk.AccAddress{}, Active: true}
+	tst2usdMarket := types.Market{MarketID: "tst2usd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true}
+
+	mp := types.Params{
+		Markets: types.Markets{tstusdMarket},
+	}
+	keeper := app.PriceKeeper
+	keeper.SetParams(ctx, mp)
+
+	markets := keeper.GetMarkets(ctx)
+	require.Equal(t, len(markets), 1)
+	require.Equal(t, markets[0].MarketID, "tstusd")
+
+	_, found := keeper.GetMarket(ctx, "tstusd")
+	require.True(t, found, "market should be found")
+
+	_, found = keeper.GetMarket(ctx, "invalidmarket")
+	require.False(t, found, "invalidmarket should not be found")
+
+	mp = types.Params{
+		Markets: []types.Market{
+			tstusdMarket,
+			tst2usdMarket,
+		},
+	}
+
+	keeper.SetParams(ctx, mp)
+	markets = keeper.GetMarkets(ctx)
+	require.Equal(t, len(markets), 2)
+	require.Equal(t, markets[0].MarketID, "tstusd")
+	require.Equal(t, markets[1].MarketID, "tst2usd")
+
+	_, found = keeper.GetMarket(ctx, "nan")
+	require.False(t, found)
+}
 
 func TestKeeper_GetSetPrice(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
@@ -50,7 +90,6 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 
 		// Get raw prices
 		rawPrices := keeper.GetRawPrices(ctx, "tstusd")
-		fmt.Println(rawPrices)
 
 		require.Equal(t, p.total, len(rawPrices))
 		require.Contains(t, rawPrices, pp)
@@ -64,6 +103,75 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 	}
 }
 
+/*
+Test case where two oracles try to set prices for a market and only one of the
+oracles is valid (i.e. registered with keeper.SetParams).
+*/
+func TestKeeper_SetPriceWrongOracle(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+	keeper := app.PriceKeeper
+	marketID := "tstusd"
+	price := sdk.MustNewDecFromStr("0.1")
+
+	// Register addrs[1] as the oracle.
+	_, addrs := sample.PrivKeyAddressPairs(2)
+	mp := types.Params{
+		Markets: []types.Market{
+			{MarketID: marketID, BaseAsset: "tst", QuoteAsset: "usd",
+				Oracles: addrs[:1], Active: true},
+		}}
+	keeper.SetParams(ctx, mp)
+
+	// Set price with valid oracle given (addrs[1])
+	_, err := keeper.SetPrice(
+		ctx, addrs[0], marketID, price, time.Now().UTC().Add(1*time.Hour),
+	)
+	require.NoError(t, err)
+
+	// Set price with invalid oracle given (addrs[1])
+	_, err = keeper.SetPrice(
+		ctx, addrs[1], marketID, price, time.Now().UTC().Add(1*time.Hour),
+	)
+	require.Error(t, err)
+}
+
+/*
+Test case where several oracles try to set prices for a market
+and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
+*/
+func TestKeeper_SetPriceWrongOracles(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp()
+	keeper := app.PriceKeeper
+
+	marketID := "tstusd"
+	price := sdk.MustNewDecFromStr("0.1")
+
+	_, addrs := sample.PrivKeyAddressPairs(10)
+	mp := types.Params{
+		Markets: []types.Market{
+			{MarketID: marketID, BaseAsset: "tst", QuoteAsset: "usd",
+				Oracles: addrs[:5], Active: true},
+		},
+	}
+	keeper.SetParams(ctx, mp)
+
+	for i, addr := range addrs {
+		if i < 5 {
+			// Valid oracle addresses. This shouldn't raise an error.
+			_, err := keeper.SetPrice(
+				ctx, addr, marketID, price, time.Now().UTC().Add(1*time.Hour),
+			)
+			require.NoError(t, err)
+		} else {
+			// Invalid oracle addresses. This should raise errors.
+			_, err := keeper.SetPrice(
+				ctx, addr, marketID, price, time.Now().UTC().Add(1*time.Hour),
+			)
+			require.Error(t, err)
+		}
+	}
+}
+
 // TestKeeper_GetSetCurrentPrice Test Setting the median price of an Asset
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
@@ -72,7 +180,8 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 	mp := types.Params{
 		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
+			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
+				Oracles: addrs, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, mp)
