@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -15,7 +14,9 @@ import (
 func TestKeeper_SetGetMarket(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
 
-	tstusdMarket := types.Market{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true}
+	tstusdMarket := types.Market{
+		MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
+		Oracles: []sdk.AccAddress{}, Active: true}
 	tst2usdMarket := types.Market{MarketID: "tst2usd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true}
 
 	mp := types.Params{
@@ -102,81 +103,73 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 	}
 }
 
-func TestKeeper_GetSetPriceWrongOracle(t *testing.T) {
+/*
+Test case where two oracles try to set prices for a market and only one of the
+oracles is valid (i.e. registered with keeper.SetParams).
+*/
+func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
 	keeper := app.PriceKeeper
+	marketID := "tstusd"
+	price := sdk.MustNewDecFromStr("0.1")
 
+	// Register addrs[1] as the oracle.
 	_, addrs := sample.PrivKeyAddressPairs(2)
 	mp := types.Params{
 		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs[:1], Active: true},
-		},
-	}
+			{MarketID: marketID, BaseAsset: "tst", QuoteAsset: "usd",
+				Oracles: addrs[:1], Active: true},
+		}}
 	keeper.SetParams(ctx, mp)
 
-	// happy path
-	marketID := "tstusd"
-	price := sdk.MustNewDecFromStr("0.1")
+	// Set price with valid oracle given (addrs[1])
 	_, err := keeper.SetPrice(
-		ctx,
-		addrs[0],
-		marketID,
-		price,
-		time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[0], marketID, price, time.Now().UTC().Add(1*time.Hour),
 	)
 	require.NoError(t, err)
 
-	// wrong oracle given
-	// happy path
+	// Set price with invalid oracle given (addrs[1])
 	_, err = keeper.SetPrice(
-		ctx,
-		addrs[1],
-		marketID,
-		price,
-		time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[1], marketID, price, time.Now().UTC().Add(1*time.Hour),
 	)
 	require.Error(t, err)
 }
 
-func TestKeeper_GetSetPriceWrongOracles(t *testing.T) {
+/*
+Test case where several oracles try to set prices for a market
+and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
+*/
+func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp()
 	keeper := app.PriceKeeper
-
-	_, addrs := sample.PrivKeyAddressPairs(10)
-	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs[:5], Active: true},
-		},
-	}
-	keeper.SetParams(ctx, mp)
 
 	marketID := "tstusd"
 	price := sdk.MustNewDecFromStr("0.1")
 
+	_, addrs := sample.PrivKeyAddressPairs(10)
+	mp := types.Params{
+		Markets: []types.Market{
+			{MarketID: marketID, BaseAsset: "tst", QuoteAsset: "usd",
+				Oracles: addrs[:5], Active: true},
+		},
+	}
+	keeper.SetParams(ctx, mp)
+
 	for i, addr := range addrs {
-		fmt.Println(i, addr)
 		if i < 5 {
+			// Valid oracle addresses. This shouldn't raise an error.
 			_, err := keeper.SetPrice(
-				ctx,
-				addr,
-				marketID,
-				price,
-				time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, marketID, price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.NoError(t, err)
 		} else {
+			// Invalid oracle addresses. This should raise errors.
 			_, err := keeper.SetPrice(
-				ctx,
-				addr,
-				marketID,
-				price,
-				time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, marketID, price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.Error(t, err)
 		}
-
 	}
-
 }
 
 // TestKeeper_GetSetCurrentPrice Test Setting the median price of an Asset
@@ -187,7 +180,8 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 	mp := types.Params{
 		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
+			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
+				Oracles: addrs, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, mp)
