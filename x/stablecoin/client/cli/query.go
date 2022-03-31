@@ -26,9 +26,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdQueryParams(),
 	}
 	for _, cmd := range cmds {
-		flags.AddQueryFlagsToCmd(cmd)
+		stablecoinQueryCmd.AddCommand(cmd)
 	}
-	stablecoinQueryCmd.AddCommand(cmds...)
 
 	return stablecoinQueryCmd
 }
