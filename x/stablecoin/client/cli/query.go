@@ -12,7 +12,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(queryRoute string) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group stablecoin queries under a subcommand
 	stablecoinQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
