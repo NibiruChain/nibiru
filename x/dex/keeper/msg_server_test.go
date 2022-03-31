@@ -28,10 +28,12 @@ func TestCreatePool(t *testing.T) {
 		},
 		PoolAssets: []types.PoolAsset{
 			{
-				Token: sdk.NewCoin("uatom", sdk.NewInt(1000)),
+				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
 			},
 			{
-				Token: sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
 			},
 		},
 	}

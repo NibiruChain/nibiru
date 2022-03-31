@@ -212,41 +212,32 @@ args
   poolAssets: initial assets in the pool, represented by a PoolAssets proto object array
 
 ret
-  uint64: the pool id number
-  error: an error if any occurred
+  poolId: the pool id number
+  err: an error if any occurred
 */
 func (k Keeper) NewPool(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	poolParams types.PoolParams,
 	poolAssets []types.PoolAsset,
-) (uint64, error) {
+) (poolId uint64, err error) {
 	if len(poolAssets) < types.MinPoolAssets {
 		return uint64(0), types.ErrTooFewPoolAssets
 	}
 
 	if len(poolAssets) > types.MaxPoolAssets {
 		return uint64(0), types.ErrTooManyPoolAssets
-
 	}
 
-	poolId := k.GetNextPoolNumberAndIncrement(ctx)
+	poolId = k.GetNextPoolNumberAndIncrement(ctx)
 	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
-
 	k.accountKeeper.SetAccount(ctx, poolAccount)
 
-	pool := types.Pool{
-		Id:         poolId,
-		Address:    poolAccount.GetAddress().String(),
-		PoolParams: poolParams,
-		PoolAssets: poolAssets,
-	}
-
-	err := k.SetPool(ctx, pool)
+	pool, err := types.NewPool(ctx, poolId, poolAccount.GetAddress(), poolParams, poolAssets)
 	if err != nil {
-		return 0, err
+		return uint64(0), err
 	}
 
 	// Transfer the PoolAssets tokens to the pool's module account from the user account.
@@ -254,16 +245,13 @@ func (k Keeper) NewPool(
 	for _, asset := range poolAssets {
 		coins = append(coins, asset.Token)
 	}
-	coins = coins.Sort()
 
-	err = k.bankKeeper.SendCoins(ctx, sender, poolAccount.GetAddress(), coins)
-	if err != nil {
+	if err = k.bankKeeper.SendCoins(ctx, sender, poolAccount.GetAddress(), coins); err != nil {
 		return 0, err
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
-	err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply)
-	if err != nil {
+	if err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
 		return 0, err
 	}
 
@@ -288,8 +276,7 @@ func (k Keeper) NewPool(
 		Symbol:  poolShareDisplayDenom,
 	})
 
-	err = k.SetPool(ctx, pool)
-	if err != nil {
+	if err = k.SetPool(ctx, pool); err != nil {
 		return 0, err
 	}
 
