@@ -44,7 +44,7 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	lockId := k.GetLastLockId(ctx) + 1
 	// unlock time is set at the beginning of unlocking time
 	lock := types.NewLock(lockId, owner, duration, time.Time{}, coins)
-	err := k.Lock(ctx, lock)
+	err := k.lock(ctx, lock)
 	if err != nil {
 		return lock, err
 	}
@@ -53,7 +53,7 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 }
 
 // Lock is a utility to lock coins into module account.
-func (k LockupKeeper) Lock(ctx sdk.Context, lock types.Lock) error {
+func (k LockupKeeper) lock(ctx sdk.Context, lock types.Lock) error {
 	owner, err := sdk.AccAddressFromBech32(lock.Owner)
 	if err != nil {
 		return err
