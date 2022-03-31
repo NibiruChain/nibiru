@@ -10,6 +10,52 @@ import (
 	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
 )
 
+func TestSwapOutput_Errors(t *testing.T) {
+	tests := []struct {
+		name        string
+		pair        string
+		direction   ammtypes.Direction
+		quoteAmount sdktypes.Int
+		baseLimit   sdktypes.Int
+		error       error
+	}{
+		{
+			"pair not supported",
+			"BTC:UST",
+			ammtypes.Direction_ADD_TO_AMM,
+			sdktypes.NewInt(10),
+			sdktypes.NewInt(10),
+			ammtypes.ErrPairNotSupported,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			keeper, ctx := AmmKeeper(t)
+
+			err := keeper.CreatePool(
+				ctx,
+				UsdmPair,
+				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
+				sdktypes.NewInt(10_000_000),       // 10
+				sdktypes.NewInt(5_000_000),        // 5
+				sdktypes.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
+			)
+			require.NoError(t, err)
+
+			_, err = keeper.SwapOutput(
+				ctx,
+				tc.pair,
+				tc.direction,
+				tc.quoteAmount,
+				tc.baseLimit,
+			)
+			require.EqualError(t, err, tc.error.Error())
+		})
+	}
+}
+
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string

@@ -24,6 +24,25 @@ func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
 	return ctx.KVStore(k.storeKey)
 }
 
+// SwapOutput swaps your base asset to quote asset.
+func (k Keeper) SwapOutput(
+	ctx sdk.Context,
+	pair string,
+	dir types.Direction,
+	baseAssetAmount sdk.Int,
+	quoteAssetAmountLimit sdk.Int,
+) (sdk.Int, error) {
+	if !k.existsPool(ctx, pair) {
+		return sdk.Int{}, types.ErrPairNotSupported
+	}
+
+	if baseAssetAmount.IsZero() {
+		return sdk.ZeroInt(), nil
+	}
+
+	return sdk.Int{}, nil
+}
+
 // SwapInput swaps pair token
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
