@@ -9,6 +9,7 @@ option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 // Msg defines the Msg service.
 service Msg {
       rpc MintStable(MsgMintStable) returns (MsgMintStableResponse);
+      rpc BurnStable(MsgBurnStable) returns (MsgBurnStableResponse);
 }
 
 // Msg to mint USDM: User deposits MTRX and collateral and gets USDM in return.
