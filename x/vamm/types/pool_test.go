@@ -94,6 +94,43 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	}
 }
 
+func TestGetQuoteAmountByBaseAmount(t *testing.T) {
+	tests := []struct {
+		name                string
+		baseAmount          sdk.Int
+		expectedQuoteAmount sdk.Int
+	}{
+		{
+			"Base amount == 0",
+			sdk.NewInt(0),
+			sdk.NewInt(0),
+		},
+		{
+			"Base amount != 0",
+			sdk.NewInt(5_000_000),
+			sdk.NewInt(1_666_665),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+
+			pool := NewPool(
+				"BTC:USDM",
+				sdk.MustNewDecFromStr("0.9"), // 0.9
+				sdk.NewInt(5_000_000),        // 5
+				sdk.NewInt(10_000_000),       // 10
+				sdk.MustNewDecFromStr("0.1"),
+			)
+
+			amount, err := pool.GetQuoteAmountByBaseAmount(Direction_ADD_TO_AMM, tc.baseAmount)
+			require.NoError(t, err)
+			require.True(t, amount.Equal(tc.expectedQuoteAmount), "expected quote: %s, got: %s", tc.expectedQuoteAmount.String(), amount.String())
+		})
+	}
+}
+
 func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -127,6 +164,38 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	}
 }
 
+func TestGetQuoteAmountByBaseAmount_Error(t *testing.T) {
+	tests := []struct {
+		name          string
+		direction     Direction
+		baseAmount    sdk.Int
+		expectedError error
+	}{
+		{
+			"base after is zero",
+			Direction_REMOVE_FROM_AMM,
+			sdk.NewInt(10_000_000),
+			ErrQuoteReserveAtZero,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+
+			pool := NewPool(
+				"BTC:USDM",
+				sdk.MustNewDecFromStr("0.9"), // 0.9
+				sdk.NewInt(5_000_000),        // 5
+				sdk.NewInt(10_000_000),       // 10
+				sdk.MustNewDecFromStr("0.1"),
+			)
+
+			_, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
+			require.Equal(t, tc.expectedError, err)
+		})
+	}
+}
 func TestIncreaseQuoteAssetReserve(t *testing.T) {
 	pool := NewPool(
 		"ATOM:USDM",

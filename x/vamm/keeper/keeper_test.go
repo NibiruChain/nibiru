@@ -83,15 +83,15 @@ func TestSwapOutput_HappyPath(t *testing.T) {
 			sdktypes.NewInt(5_000_000),
 			sdktypes.ZeroInt(),
 		},
-		//{
-		//	"normal swap add",
-		//	ammtypes.Direction_ADD_TO_AMM,
-		//	sdktypes.NewInt(1_000_000),
-		//	sdktypes.NewInt(454_500),
-		//	sdktypes.NewInt(11_000_000),
-		//	sdktypes.NewInt(4_545_456),
-		//	sdktypes.NewInt(454_544),
-		//},
+		{
+			"normal swap add",
+			ammtypes.Direction_ADD_TO_AMM,
+			sdktypes.NewInt(1_000_000),
+			sdktypes.NewInt(454_500),
+			sdktypes.NewInt(11_000_000),
+			sdktypes.NewInt(4_545_456),
+			sdktypes.NewInt(454_544),
+		},
 		//{
 		//	"normal swap remove",
 		//	ammtypes.Direction_REMOVE_FROM_AMM,
@@ -118,7 +118,7 @@ func TestSwapOutput_HappyPath(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			res, err := keeper.SwapInput(
+			res, err := keeper.SwapOutput(
 				ctx,
 				UsdmPair,
 				tc.direction,

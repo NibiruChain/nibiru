@@ -108,6 +108,49 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 	return baseAssetBought.TruncateInt(), nil
 }
 
+// GetQuoteAmountByBaseAmount returns the amount that you will get by specific quote amount
+func (p *Pool) GetQuoteAmountByBaseAmount(dir Direction, baseAmount sdk.Int) (sdk.Int, error) {
+	if baseAmount.IsZero() {
+		return sdk.ZeroInt(), nil
+	}
+
+	baseAssetReserve, err := p.GetPoolBaseAssetReserveAsInt()
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	quoteAssetReserve, err := p.GetPoolQuoteAssetReserveAsInt()
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	invariant := quoteAssetReserve.ToDec().Mul(baseAssetReserve.ToDec()) // x * y = k
+
+	var baseAssetAfter sdk.Dec
+	if dir == Direction_ADD_TO_AMM {
+		baseAssetAfter = baseAssetReserve.ToDec().Add(baseAmount.ToDec())
+	} else {
+		baseAssetAfter = baseAssetReserve.ToDec().Sub(baseAmount.ToDec())
+	}
+
+	if baseAssetAfter.Equal(sdk.ZeroDec()) {
+		return sdk.Int{}, ErrQuoteReserveAtZero
+	}
+
+	quoteAssetAfter := invariant.Quo(baseAssetAfter)
+	quoteAssetSold := quoteAssetAfter.Sub(quoteAssetReserve.ToDec()).Abs()
+
+	if !invariant.TruncateInt().Mod(quoteAssetAfter.TruncateInt()).Equal(sdk.ZeroInt()) {
+		if dir == Direction_ADD_TO_AMM {
+			quoteAssetSold = quoteAssetSold.Sub(sdk.OneDec())
+		} else {
+			quoteAssetSold = quoteAssetSold.Add(sdk.OneDec())
+		}
+	}
+
+	return quoteAssetSold.TruncateInt(), nil
+}
+
 // GetPoolBaseAssetReserveAsInt returns the base asset reserve value from a pool as sdk.Int
 func (p *Pool) GetPoolBaseAssetReserveAsInt() (sdk.Int, error) {
 	baseAssetReserve, ok := sdk.NewIntFromString(p.BaseAssetReserve)
