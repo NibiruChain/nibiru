@@ -32,7 +32,7 @@ func TestCreateLock(t *testing.T) {
 			shouldErr:           false,
 		},
 		{
-			name:                "happy path",
+			name:                "not enough funds",
 			previousLockId:      1,
 			accountInitialFunds: sdk.NewCoins(sdk.NewInt64Coin("foo", 99)),
 			ownerAddr:           sample.AccAddress(),
