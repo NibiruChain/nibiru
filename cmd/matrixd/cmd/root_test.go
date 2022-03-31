@@ -1,11 +1,11 @@
-package cmd
+package cmd_test
 
 import (
 	"testing"
 
 	// Matrix
 	"github.com/MatrixDao/matrix/app"
-	// matrixd "github.com/MatrixDao/matrix/cmd/matrixd/cmd"
+	matrixd "github.com/MatrixDao/matrix/cmd/matrixd/cmd"
 
 	// Cosmos-SDK
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestRootCmdConfig(t *testing.T) {
-	rootCmd, _ := NewRootCmd()
+	rootCmd, _ := matrixd.NewRootCmd()
 	cmds := []string{
 		"config",
 	}

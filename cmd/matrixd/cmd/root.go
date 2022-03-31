@@ -9,7 +9,7 @@ import (
 	// Matrix
 	"github.com/MatrixDao/matrix/app"
 	dexcmd "github.com/MatrixDao/matrix/x/dex/client/cli"
-	// sccmd "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
+	sccmd "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
 
 	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -212,7 +212,7 @@ func queryCommand() *cobra.Command {
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
 		dexcmd.GetQueryCmd(),
-		// sccmd.GetQueryCmd(),
+		sccmd.GetQueryCmd(),
 	)
 
 	// Adds all query commands to the 'rootQueryCmd'
