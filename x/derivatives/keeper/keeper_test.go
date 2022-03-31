@@ -1,11 +1,12 @@
 package keeper_test
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
-func Test_A(t *testing.T) {
-	require.True(t, sdk.Int{}.IsZero())
+func Test_TrivialPass(t *testing.T) {
+	require.True(t, sdk.ZeroInt().IsZero())
 }
