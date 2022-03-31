@@ -32,6 +32,31 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	require.False(t, isEnough)
 }
 
+func TestPoolHasEnoughBaseReserve(t *testing.T) {
+	pool := NewPool(
+		"BTC:USDM",
+		sdk.MustNewDecFromStr("0.9"), // 0.9 trade limit ratio
+		sdk.NewInt(5_000_000),        // 5
+		sdk.NewInt(10_000_000),       // 10
+		sdk.MustNewDecFromStr("0.1"),
+	)
+
+	// less that max ratio
+	isEnough, err := pool.HasEnoughBaseReserve(sdk.NewInt(8_000_000))
+	require.NoError(t, err)
+	require.True(t, isEnough)
+
+	// equal to ratio limit
+	isEnough, err = pool.HasEnoughBaseReserve(sdk.NewInt(9_000_000))
+	require.NoError(t, err)
+	require.True(t, isEnough)
+
+	// more than ratio limit
+	isEnough, err = pool.HasEnoughBaseReserve(sdk.NewInt(9_000_001))
+	require.NoError(t, err)
+	require.False(t, isEnough)
+}
+
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	tests := []struct {
 		name               string

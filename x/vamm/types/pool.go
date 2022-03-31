@@ -22,6 +22,23 @@ func NewPool(
 	}
 }
 
+// HasEnoughBaseReserve returns true if there is enough base reserve based on
+// baseReserve * tradeLimitRatio
+func (p *Pool) HasEnoughBaseReserve(baseAmount sdk.Int) (bool, error) {
+	baseAssetReserve, ok := sdk.NewIntFromString(p.BaseAssetReserve)
+	if !ok {
+		return false, fmt.Errorf("error with pool quote asset reserve value: %s",
+			p.QuoteAssetReserve)
+	}
+
+	tradeLimitRatio, err := sdk.NewDecFromStr(p.TradeLimitRatio)
+	if err != nil {
+		return false, fmt.Errorf("error with pool trade limit ratio value: %s", p.TradeLimitRatio)
+	}
+
+	return baseAssetReserve.ToDec().Mul(tradeLimitRatio).GTE(baseAmount.ToDec()), nil
+}
+
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
 func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Int) (bool, error) {

@@ -40,6 +40,22 @@ func (k Keeper) SwapOutput(
 		return sdk.ZeroInt(), nil
 	}
 
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	if dir == types.Direction_REMOVE_FROM_AMM {
+		enoughReserve, err := pool.HasEnoughBaseReserve(baseAssetAmount)
+		if err != nil {
+			return sdk.Int{}, err
+		}
+
+		if !enoughReserve {
+			return sdk.Int{}, types.ErrOvertradingLimit
+		}
+	}
+
 	return sdk.Int{}, nil
 }
 
