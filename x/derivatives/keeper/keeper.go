@@ -7,14 +7,15 @@ import (
 	v1 "github.com/MatrixDao/matrix/x/derivatives/types/v1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 )
 
 type Keeper struct {
 	key sdk.StoreKey
 	cdc codec.BinaryCodec
 
-	bk bankkeeper.Keeper
+	bk  v1.BankKeeper
+	ak  v1.AccountKeeper
+	pfk v1.PriceKeeper
 }
 
 type VirtualAMMDirection uint8
