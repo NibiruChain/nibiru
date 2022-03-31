@@ -17,12 +17,9 @@ import (
 func TestRootCmdConfig(t *testing.T) {
 	rootCmd, _ := NewRootCmd()
 	cmds := []string{
-		// "config",
-		// "query",
-		// "tx",
+		"config",
 	}
 	rootCmd.SetArgs(cmds)
 
 	require.NoError(t, svrcmd.Execute(rootCmd, app.DefaultNodeHome))
-
 }
