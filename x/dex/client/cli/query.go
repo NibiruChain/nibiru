@@ -11,19 +11,24 @@ import (
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	// Group dex queries under a subcommand
-	cmd := &cobra.Command{
-		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
+	dexQueryCommand := &cobra.Command{
+		Use: types.ModuleName,
+		Short: fmt.Sprintf(
+			"Querying commands for the %s module", types.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryParams())
+	commands := []*cobra.Command{
+		CmdQueryParams(),
+		CmdGetPoolNumber(),
+		CmdGetPool(),
+	}
 
-	cmd.AddCommand(CmdGetPoolNumber())
+	for _, cmd := range commands {
+		dexQueryCommand.AddCommand(cmd)
+	}
 
-	cmd.AddCommand(CmdGetPool())
-
-	return cmd
+	return dexQueryCommand
 }
