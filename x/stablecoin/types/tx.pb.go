@@ -29,7 +29,9 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Msg to mint USDM: User deposits MTRX and collateral and gets USDM in return.
+// MsgMintStable allows users to deposits MTRX and collateral in return for USDM. The amount of USDM
+// received depends on the current price set by the pricefeed library and the current collateral ratio
+// for the protocol.
 type MsgMintStable struct {
 	Creator string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Stable  types.Coin `protobuf:"bytes,2,opt,name=stable,proto3" json:"stable"`
@@ -82,6 +84,8 @@ func (m *MsgMintStable) GetStable() types.Coin {
 	return types.Coin{}
 }
 
+// MsgMintStableResponse specifies the amount of USDM token the user will receive after their
+// mint transaction
 type MsgMintStableResponse struct {
 	Stable types.Coin `protobuf:"bytes,1,opt,name=stable,proto3" json:"stable"`
 }
@@ -126,7 +130,9 @@ func (m *MsgMintStableResponse) GetStable() types.Coin {
 	return types.Coin{}
 }
 
-// Msg to burn USDM: User burns USDM and gets MTRX and collateral in return.
+// MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and
+// Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
+// for the protocol.
 type MsgBurnStable struct {
 	Creator string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Stable  types.Coin `protobuf:"bytes,2,opt,name=stable,proto3" json:"stable"`
@@ -179,6 +185,8 @@ func (m *MsgBurnStable) GetStable() types.Coin {
 	return types.Coin{}
 }
 
+// MsgBurnStableResponse specifies the amount of collateral and governance token the user will receive after their
+// burn transaction
 type MsgBurnStableResponse struct {
 	Collateral types.Coin `protobuf:"bytes,1,opt,name=collateral,proto3" json:"collateral"`
 	Gov        types.Coin `protobuf:"bytes,2,opt,name=gov,proto3" json:"gov"`
