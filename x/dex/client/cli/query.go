@@ -5,7 +5,6 @@ import (
 
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -28,10 +27,8 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	for _, cmd := range commands {
-		flags.AddQueryFlagsToCmd(cmd)
+		dexQueryCommand.AddCommand(cmd)
 	}
-
-	dexQueryCommand.AddCommand(commands...)
 
 	return dexQueryCommand
 }
