@@ -314,7 +314,7 @@ func NewMatrixApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	app.DexKeeper = *dexkeeper.NewKeeper(
+	app.DexKeeper = dexkeeper.NewKeeper(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper)
 
@@ -323,7 +323,7 @@ func NewMatrixApp(
 		app.GetSubspace(pricetypes.ModuleName),
 	)
 
-	app.StablecoinKeeper = *stablekeeper.NewKeeper(
+	app.StablecoinKeeper = stablekeeper.NewKeeper(
 		appCodec, keys[stabletypes.StoreKey], memKeys[stabletypes.MemStoreKey],
 		app.GetSubspace(stabletypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
