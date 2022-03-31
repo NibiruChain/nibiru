@@ -5,13 +5,14 @@ import (
 
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 )
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	// Group dex queries under a subcommand
-	cmd := &cobra.Command{
+	dexQueryCommand := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
 		DisableFlagParsing:         true,
@@ -19,11 +20,17 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryParams())
+	commands := []*cobra.Command{
+		CmdQueryParams(),
+		CmdGetPoolNumber(),
+		CmdGetPool(),
+	}
 
-	cmd.AddCommand(CmdGetPoolNumber())
+	for _, cmd := range commands {
+		flags.AddQueryFlagsToCmd(cmd)
+	}
 
-	cmd.AddCommand(CmdGetPool())
+	dexQueryCommand.AddCommand(commands...)
 
-	return cmd
+	return dexQueryCommand
 }
