@@ -40,7 +40,7 @@ type VirtualAMM interface {
 
 // TODO test: openPosition
 func (k Keeper) openPosition(
-	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) error {
 	// TODO(mercilex): missing checks
@@ -49,7 +49,7 @@ func (k Keeper) openPosition(
 		panic(err)
 	}
 
-	position, err := k.Positions().Get(ctx, amm.Pair(), trader)
+	position, err := k.Positions().Get(ctx, vamm.Pair(), trader)
 	positionExists := errors.Is(err, errNotFound)
 
 	var positionResp *v1.PositionResp
@@ -59,7 +59,7 @@ func (k Keeper) openPosition(
 		position.Size_.IsPositive() && side == v1.Side_Side_BUY,
 		position.Size_.IsNegative() && side == v1.Side_Side_SELL:
 		positionResp, err = k.increasePosition(
-			ctx, amm, side, trader,
+			ctx, vamm, side, trader,
 			quoteAssetAmount.Mul(leverage),
 			baseAssetAmountLimit,
 			leverage)
@@ -70,7 +70,7 @@ func (k Keeper) openPosition(
 	// everything else decreases the position
 	default:
 		positionResp, err = k.openReversePosition(
-			ctx, amm, side, trader,
+			ctx, vamm, side, trader,
 			quoteAssetAmount, leverage, baseAssetAmountLimit, false)
 		if err != nil {
 			return err
@@ -81,7 +81,7 @@ func (k Keeper) openPosition(
 	k.Positions().Set(ctx, positionResp.Position)
 
 	if !positionExists && !positionResp.Position.Size_.IsZero() {
-		marginRatio, err := k.getMarginRatio(ctx, amm, trader)
+		marginRatio, err := k.GetMarginRatio(ctx, vamm, trader)
 		if err != nil {
 			return err
 		}
@@ -104,31 +104,31 @@ func (k Keeper) openPosition(
 	case positionResp.MarginToVault.IsPositive():
 		err = k.bk.SendCoinsFromAccountToModule(
 			ctx, traderAddr, v1.VaultModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(amm.QuoteTokenDenom(), positionResp.MarginToVault)))
+			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), positionResp.MarginToVault)))
 		if err != nil {
 			return err
 		}
 	case positionResp.MarginToVault.IsNegative():
 		err = k.bk.SendCoinsFromModuleToAccount(ctx, v1.VaultModuleAccount, traderAddr,
-			sdk.NewCoins(sdk.NewCoin(amm.QuoteTokenDenom(), positionResp.MarginToVault.Abs())))
+			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), positionResp.MarginToVault.Abs())))
 		if err != nil {
 			return err
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, traderAddr, amm, positionResp.ExchangedQuoteAssetAmount)
+	transferredFee, err := k.transferFee(ctx, traderAddr, vamm, positionResp.ExchangedQuoteAssetAmount)
 	if err != nil {
 		return err
 	}
 
-	spotPrice, err := amm.GetSpotPrice(ctx)
+	spotPrice, err := vamm.GetSpotPrice(ctx)
 	if err != nil {
 		return err
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&v1.PositionChangedEvent{
 		Trader:                trader,
-		Pair:                  amm.Pair(),
+		Pair:                  vamm.Pair(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
@@ -145,32 +145,32 @@ func (k Keeper) openPosition(
 
 // TODO test: increasePosition
 func (k Keeper) increasePosition(
-	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 
 	positionResp = new(v1.PositionResp)
 
-	oldPosition, err := k.Positions().Get(ctx, amm.Pair(), trader) // TODO(mercilex) we already have the info from the caller
+	oldPosition, err := k.Positions().Get(ctx, vamm.Pair(), trader) // TODO(mercilex) we already have the info from the caller
 	if err != nil {
 		panic(err)
 	}
 
-	positionResp.ExchangedPositionSize, err = swapInput(ctx, amm, side, openNotional, minPositionSize, false)
+	positionResp.ExchangedPositionSize, err = swapInput(ctx, vamm, side, openNotional, minPositionSize, false)
 	if err != nil {
 		return nil, err
 	}
 
 	newSize := oldPosition.Size_.Add(positionResp.ExchangedPositionSize)
 
-	err = k.updateOpenInterestNotional(ctx, amm, openNotional, trader)
+	err = k.updateOpenInterestNotional(ctx, vamm, openNotional, trader)
 	if err != nil {
 		return nil, err
 	}
 
 	// check if trader is not in whitelist to check max position size
 	if !k.Whitelist().IsWhitelisted(ctx, trader) {
-		maxHoldingBaseAsset, err := amm.GetMaxHoldingBaseAsset(ctx)
+		maxHoldingBaseAsset, err := vamm.GetMaxHoldingBaseAsset(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +184,7 @@ func (k Keeper) increasePosition(
 
 	remainMargin, _, fundingPayment, latestCumulativePremiumFraction, err := k.calcRemainMarginWithFundingPayment(
 		ctx,
-		amm,
+		vamm,
 		oldPosition,
 		increaseMarginRequirement,
 	)
@@ -192,7 +192,7 @@ func (k Keeper) increasePosition(
 		return nil, err
 	}
 
-	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (k Keeper) increasePosition(
 	positionResp.FundingPayment = fundingPayment
 	positionResp.Position = &v1.Position{
 		Address:                             trader,
-		Pair:                                amm.Pair(),
+		Pair:                                vamm.Pair(),
 		Size_:                               newSize,
 		Margin:                              remainMargin,
 		OpenNotional:                        oldPosition.OpenNotional.Add(positionResp.ExchangedQuoteAssetAmount),
@@ -216,8 +216,8 @@ func (k Keeper) increasePosition(
 }
 
 // TODO test: updateOpenInterestNotional
-func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, amm VirtualAMM, amount sdk.Int, trader string) error {
-	maxOpenInterest, err := amm.GetOpenInterestNotionalCap(ctx)
+func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm VirtualAMM, amount sdk.Int, trader string) error {
+	maxOpenInterest, err := vamm.GetOpenInterestNotionalCap(ctx)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, amm VirtualAMM, amou
 		return nil
 	}
 
-	pairMetadata, err := k.PairMetadata().Get(ctx, amm.Pair())
+	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
 	if err != nil {
 		return err
 	}
@@ -250,11 +250,12 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, amm VirtualAMM, amou
 
 // TODO test: calcRemainMarginWithFundingPayment
 func (k Keeper) calcRemainMarginWithFundingPayment(
-	ctx sdk.Context, amm VirtualAMM,
-	oldPosition *v1.Position, marginDelta sdk.Int) (
-	remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int, latestCumulativePremiumFraction sdk.Int, err error) {
+	ctx sdk.Context, vamm VirtualAMM,
+	oldPosition *v1.Position, marginDelta sdk.Int,
+) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
+	latestCumulativePremiumFraction sdk.Int, err error) {
 
-	latestCumulativePremiumFraction, err = k.getLatestCumulativePremiumFraction(ctx, amm)
+	latestCumulativePremiumFraction, err = k.getLatestCumulativePremiumFraction(ctx, vamm)
 	if err != nil {
 		return
 	}
@@ -278,8 +279,8 @@ func (k Keeper) calcRemainMarginWithFundingPayment(
 }
 
 // TODO test: getLatestCumulativePremiumFraction
-func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, amm VirtualAMM) (sdk.Int, error) {
-	pairMetadata, err := k.PairMetadata().Get(ctx, amm.Pair())
+func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm VirtualAMM) (sdk.Int, error) {
+	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -288,11 +289,11 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, amm VirtualA
 }
 
 // TODO test: getPositionNotionalAndUnrealizedPnL
-func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, amm VirtualAMM,
+func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm VirtualAMM,
 	trader string, pnlCalcOption v1.PnLCalcOption) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
 
-	position, err := k.Positions().Get(ctx, amm.Pair(), trader) // tODO(mercilex): inefficient refetch
+	position, err := k.Positions().Get(ctx, vamm.Pair(), trader) // tODO(mercilex): inefficient refetch
 	if err != nil {
 		return
 	}
@@ -313,17 +314,17 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, amm Virtual
 
 	switch pnlCalcOption {
 	case v1.PnLCalcOption_PnLCalcOption_TWAP:
-		positionNotional, err = amm.GetOutputTWAP(ctx, dir, positionSizeAbs)
+		positionNotional, err = vamm.GetOutputTWAP(ctx, dir, positionSizeAbs)
 		if err != nil {
 			return
 		}
 	case v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE:
-		positionNotional, err = amm.GetOutputPrice(ctx, dir, positionSizeAbs)
+		positionNotional, err = vamm.GetOutputPrice(ctx, dir, positionSizeAbs)
 		if err != nil {
 			return
 		}
 	case v1.PnLCalcOption_PnLCalcOption_ORACLE:
-		oraclePrice, err2 := amm.GetUnderlyingPrice(ctx)
+		oraclePrice, err2 := vamm.GetUnderlyingPrice(ctx)
 		if err2 != nil {
 			err = err2
 			return
@@ -345,12 +346,12 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, amm Virtual
 
 // TODO test: openReversePosition
 func (k Keeper) openReversePosition(
-	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int, canOverFluctuationLimit bool) (positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
 
 	openNotional := quoteAssetAmount.Mul(leverage)
-	oldPositionNotional, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	oldPositionNotional, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -359,34 +360,34 @@ func (k Keeper) openReversePosition(
 	// position reduction
 	case true:
 		return k.reducePosition(
-			ctx, amm, side, trader,
+			ctx, vamm, side, trader,
 			openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL,
 			canOverFluctuationLimit)
 	// close and reverse
 	default:
-		return k.closeAndOpenReversePosition(ctx, amm, side, trader, quoteAssetAmount, leverage, baseAssetAmountLimit)
+		return k.closeAndOpenReversePosition(ctx, vamm, side, trader, quoteAssetAmount, leverage, baseAssetAmountLimit)
 	}
 }
 
 // TODO test: reducePosition
 func (k Keeper) reducePosition(
-	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
 	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
 	canOverFluctuationLimit bool) (positionResp *v1.PositionResp, err error) {
 
 	positionResp = new(v1.PositionResp)
 
-	err = k.updateOpenInterestNotional(ctx, amm, openNotional.MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, vamm, openNotional.MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
 	var oldPosition *v1.Position
-	oldPosition, err = k.Positions().Get(ctx, amm.Pair(), trader)
+	oldPosition, err = k.Positions().Get(ctx, vamm.Pair(), trader)
 	if err != nil {
 		return nil, err
 	}
 
-	positionResp.ExchangedPositionSize, err = swapInput(ctx, amm, side, openNotional, baseAssetAmountLimit, canOverFluctuationLimit)
+	positionResp.ExchangedPositionSize, err = swapInput(ctx, vamm, side, openNotional, baseAssetAmountLimit, canOverFluctuationLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +398,7 @@ func (k Keeper) reducePosition(
 	}
 	var remainMargin, latestCumulativePremiumFraction sdk.Int
 	remainMargin, positionResp.BadDebt, positionResp.FundingPayment, latestCumulativePremiumFraction, err =
-		k.calcRemainMarginWithFundingPayment(ctx, amm, oldPosition, positionResp.RealizedPnl)
+		k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, positionResp.RealizedPnl)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +420,7 @@ func (k Keeper) reducePosition(
 
 	positionResp.Position = &v1.Position{
 		Address:                             trader,
-		Pair:                                amm.Pair(),
+		Pair:                                vamm.Pair(),
 		Size_:                               oldPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remainMargin,
 		OpenNotional:                        remainOpenNotional.Abs(),
@@ -431,8 +432,10 @@ func (k Keeper) reducePosition(
 }
 
 // TODO test: closeAndOpenReversePosition
-func (k Keeper) closeAndOpenReversePosition(ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
-	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int) (positionResp *v1.PositionResp, err error) {
+func (k Keeper) closeAndOpenReversePosition(
+	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
+	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
+) (positionResp *v1.PositionResp, err error) {
 
 	positionResp = new(v1.PositionResp)
 
@@ -478,24 +481,24 @@ func (k Keeper) closeAndOpenReversePosition(ctx sdk.Context, amm VirtualAMM, sid
 }
 
 // TODO test: closePosition
-func (k Keeper) closePosition(ctx sdk.Context, amm VirtualAMM, trader string, quoteAssetAmountLimit sdk.Int) (
+func (k Keeper) closePosition(ctx sdk.Context, vamm VirtualAMM, trader string, quoteAssetAmountLimit sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 
 	positionResp = new(v1.PositionResp)
 
-	oldPosition, err := k.Positions().Get(ctx, amm.Pair(), trader)
+	oldPosition, err := k.Positions().Get(ctx, vamm.Pair(), trader)
 	if err != nil {
 		return nil, err
 	}
 	if oldPosition.Size_.IsZero() {
 		return nil, fmt.Errorf("zero position size")
 	}
-	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, oldPosition, unrealizedPnL)
+	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, unrealizedPnL)
 	if err != nil {
 		return nil, err
 	}
@@ -506,24 +509,24 @@ func (k Keeper) closePosition(ctx sdk.Context, amm VirtualAMM, trader string, qu
 	positionResp.FundingPayment = fundingPayment
 	positionResp.MarginToVault = remainMargin.MulRaw(-1)
 
-	var ammDir VirtualAMMDirection
+	var vammDir VirtualAMMDirection
 	switch oldPosition.Size_.GTE(sdk.ZeroInt()) {
 	case true:
-		ammDir = VirtualAMMDirection_AddToAMM
+		vammDir = VirtualAMMDirection_AddToAMM
 	case false:
-		ammDir = VirtualAMMDirection_RemoveFromAMM
+		vammDir = VirtualAMMDirection_RemoveFromAMM
 	}
-	positionResp.ExchangedQuoteAssetAmount, err = amm.SwapOutput(ctx, ammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
+	positionResp.ExchangedQuoteAssetAmount, err = vamm.SwapOutput(ctx, vammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	err = k.updateOpenInterestNotional(ctx, amm, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, vamm, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
 
-	err = k.clearPosition(ctx, amm, trader)
+	err = k.clearPosition(ctx, vamm, trader)
 	if err != nil {
 		return nil, err
 	}
@@ -532,10 +535,10 @@ func (k Keeper) closePosition(ctx sdk.Context, amm VirtualAMM, trader string, qu
 }
 
 // TODO test: clearPosition
-func (k Keeper) clearPosition(ctx sdk.Context, amm VirtualAMM, trader string) error {
+func (k Keeper) clearPosition(ctx sdk.Context, vamm VirtualAMM, trader string) error {
 	return k.Positions().Update(ctx, &v1.Position{
 		Address:                             trader,
-		Pair:                                amm.Pair(),
+		Pair:                                vamm.Pair(),
 		Size_:                               sdk.ZeroInt(),
 		Margin:                              sdk.ZeroInt(),
 		OpenNotional:                        sdk.ZeroInt(),
@@ -546,8 +549,11 @@ func (k Keeper) clearPosition(ctx sdk.Context, amm VirtualAMM, trader string) er
 }
 
 // TODO test: transferFee
-func (k Keeper) transferFee(ctx sdk.Context, trader sdk.AccAddress, amm VirtualAMM, positionNotional sdk.Int) (sdk.Int, error) {
-	toll, spread, err := amm.CalcFee(positionNotional)
+func (k Keeper) transferFee(
+	ctx sdk.Context, trader sdk.AccAddress, vamm VirtualAMM,
+	positionNotional sdk.Int,
+) (sdk.Int, error) {
+	toll, spread, err := vamm.CalcFee(positionNotional)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -562,58 +568,31 @@ func (k Keeper) transferFee(ctx sdk.Context, trader sdk.AccAddress, amm VirtualA
 
 	if hasSpread {
 		err = k.bk.SendCoinsFromAccountToModule(ctx, trader, v1.InsuranceFundModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(amm.QuoteTokenDenom(), spread)))
+			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), spread)))
 		if err != nil {
 			return sdk.Int{}, err
 		}
 	}
 	if hasToll {
 		err = k.bk.SendCoinsFromAccountToModule(ctx, trader, v1.FeePoolModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(amm.QuoteTokenDenom(), toll)))
+			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), toll)))
+		if err != nil {
+			return sdk.Int{}, err
+		}
 	}
 
 	return toll.Add(spread), nil
 }
 
-// TODO test: getMarginRatio
-func (k Keeper) getMarginRatio(ctx sdk.Context, amm VirtualAMM, trader string) (sdk.Int, error) {
-	position, err := k.Positions().Get(ctx, amm.Pair(), trader) // TODO(mercilex): inefficient position get
-	if err != nil {
-		return sdk.Int{}, err
-	}
-
-	if position.Size_.IsZero() {
-		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
-	}
-
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLPreferenceOption_PnLPreferenceOption_MAX)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-
-	return k._getMarginRatio(ctx, amm, position, unrealizedPnL, positionNotional)
-}
-
-// TODO test: _getMarginRatio
-func (k Keeper) _getMarginRatio(ctx sdk.Context, amm VirtualAMM, position *v1.Position, unrealizedPnL, positionNotional sdk.Int) (sdk.Int, error) {
-	// todo(mercilex): maybe inefficient re-get
-	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, position, unrealizedPnL)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-
-	return remainMargin.Sub(badDebt).Quo(positionNotional), nil
-}
-
 // TODO test: getPreferencePositionNotionalAndUnrealizedPnL
-func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, amm VirtualAMM, trader string, pnLPreferenceOption v1.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
+func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm VirtualAMM, trader string, pnLPreferenceOption v1.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
-	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return sdk.Int{}, sdk.Int{}, err
 	}
 
-	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLCalcOption_PnLCalcOption_TWAP)
+	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_TWAP)
 	if err != nil {
 		return sdk.Int{}, sdk.Int{}, err
 	}
@@ -647,25 +626,25 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, a
 }
 
 // TODO test: swapInput
-func swapInput(ctx sdk.Context, amm VirtualAMM,
+func swapInput(ctx sdk.Context, vamm VirtualAMM,
 	side v1.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
 
-	var ammDir VirtualAMMDirection
+	var vammDir VirtualAMMDirection
 	switch side {
 	case v1.Side_Side_BUY:
-		ammDir = VirtualAMMDirection_AddToAMM
+		vammDir = VirtualAMMDirection_AddToAMM
 	case v1.Side_Side_SELL:
-		ammDir = VirtualAMMDirection_RemoveFromAMM
+		vammDir = VirtualAMMDirection_RemoveFromAMM
 	default:
 		panic("invalid side")
 	}
 
-	outputAmount, err := amm.SwapInput(ctx, ammDir, inputAmount, minOutputAmount, canOverFluctuationLimit)
+	outputAmount, err := vamm.SwapInput(ctx, vammDir, inputAmount, minOutputAmount, canOverFluctuationLimit)
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	switch ammDir {
+	switch vammDir {
 	case VirtualAMMDirection_AddToAMM:
 		return outputAmount, nil
 	case VirtualAMMDirection_RemoveFromAMM:
@@ -675,36 +654,4 @@ func swapInput(ctx sdk.Context, amm VirtualAMM,
 		panic("invalid side")
 	}
 
-}
-
-/*
-function requireMoreMarginRatio(
-        SignedDecimal.signedDecimal memory _marginRatio,
-        Decimal.decimal memory _baseMarginRatio,
-        bool _largerThanOrEqualTo
-    ) private pure {
-        int256 remainingMarginRatio = _marginRatio.subD(_baseMarginRatio).toInt();
-        require(
-            _largerThanOrEqualTo ? remainingMarginRatio >= 0 : remainingMarginRatio < 0,
-            "Margin ratio not meet criteria"
-        );
-    }
-*/
-
-// TODO test: requireMoreMarginRatio
-func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEqualTo bool) error {
-	// TODO(mercilex): look at this and make sure it's legit compared ot the counterparty above ^
-	remainMarginRatio := marginRatio.Sub(baseMarginRatio)
-	switch largerThanOrEqualTo {
-	case true:
-		if !remainMarginRatio.GTE(sdk.ZeroInt()) {
-			return fmt.Errorf("margin ratio did not meet criteria")
-		}
-	default:
-		if remainMarginRatio.LT(sdk.ZeroInt()) {
-			return fmt.Errorf("margin ratio did not meet criteria")
-		}
-	}
-
-	return nil
 }
