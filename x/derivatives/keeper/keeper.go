@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	v1 "github.com/MatrixDao/matrix/x/derivatives/types/v1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,6 +38,7 @@ type VirtualAMM interface {
 	CalcFee(notional sdk.Int) (sdk.Int, sdk.Int, error)
 }
 
+// TODO test: openPosition
 func (k Keeper) openPosition(
 	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
@@ -141,6 +143,7 @@ func (k Keeper) openPosition(
 	})
 }
 
+// TODO test: increasePosition
 func (k Keeper) increasePosition(
 	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
@@ -212,6 +215,7 @@ func (k Keeper) increasePosition(
 	return
 }
 
+// TODO test: updateOpenInterestNotional
 func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, amm VirtualAMM, amount sdk.Int, trader string) error {
 	maxOpenInterest, err := amm.GetOpenInterestNotionalCap(ctx)
 	if err != nil {
@@ -244,6 +248,7 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, amm VirtualAMM, amou
 	return nil
 }
 
+// TODO test: calcRemainMarginWithFundingPayment
 func (k Keeper) calcRemainMarginWithFundingPayment(
 	ctx sdk.Context, amm VirtualAMM,
 	oldPosition *v1.Position, marginDelta sdk.Int) (
@@ -272,6 +277,7 @@ func (k Keeper) calcRemainMarginWithFundingPayment(
 	return
 }
 
+// TODO test: getLatestCumulativePremiumFraction
 func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, amm VirtualAMM) (sdk.Int, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, amm.Pair())
 	if err != nil {
@@ -281,6 +287,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, amm VirtualA
 	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }
 
+// TODO test: getPositionNotionalAndUnrealizedPnL
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, amm VirtualAMM,
 	trader string, pnlCalcOption v1.PnLCalcOption) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
@@ -336,6 +343,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, amm Virtual
 	return
 }
 
+// TODO test: openReversePosition
 func (k Keeper) openReversePosition(
 	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int, canOverFluctuationLimit bool) (positionResp *v1.PositionResp, err error) {
@@ -360,6 +368,7 @@ func (k Keeper) openReversePosition(
 	}
 }
 
+// TODO test: reducePosition
 func (k Keeper) reducePosition(
 	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
 	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
@@ -421,6 +430,7 @@ func (k Keeper) reducePosition(
 	return positionResp, nil
 }
 
+// TODO test: closeAndOpenReversePosition
 func (k Keeper) closeAndOpenReversePosition(ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int) (positionResp *v1.PositionResp, err error) {
 
@@ -467,6 +477,7 @@ func (k Keeper) closeAndOpenReversePosition(ctx sdk.Context, amm VirtualAMM, sid
 	return positionResp, nil
 }
 
+// TODO test: closePosition
 func (k Keeper) closePosition(ctx sdk.Context, amm VirtualAMM, trader string, quoteAssetAmountLimit sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 
@@ -520,6 +531,7 @@ func (k Keeper) closePosition(ctx sdk.Context, amm VirtualAMM, trader string, qu
 	return positionResp, nil
 }
 
+// TODO test: clearPosition
 func (k Keeper) clearPosition(ctx sdk.Context, amm VirtualAMM, trader string) error {
 	return k.Positions().Update(ctx, &v1.Position{
 		Address:                             trader,
@@ -533,6 +545,7 @@ func (k Keeper) clearPosition(ctx sdk.Context, amm VirtualAMM, trader string) er
 	})
 }
 
+// TODO test: transferFee
 func (k Keeper) transferFee(ctx sdk.Context, trader sdk.AccAddress, amm VirtualAMM, positionNotional sdk.Int) (sdk.Int, error) {
 	toll, spread, err := amm.CalcFee(positionNotional)
 	if err != nil {
@@ -562,6 +575,7 @@ func (k Keeper) transferFee(ctx sdk.Context, trader sdk.AccAddress, amm VirtualA
 	return toll.Add(spread), nil
 }
 
+// TODO test: getMarginRatio
 func (k Keeper) getMarginRatio(ctx sdk.Context, amm VirtualAMM, trader string) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, amm.Pair(), trader) // TODO(mercilex): inefficient position get
 	if err != nil {
@@ -580,6 +594,7 @@ func (k Keeper) getMarginRatio(ctx sdk.Context, amm VirtualAMM, trader string) (
 	return k._getMarginRatio(ctx, amm, position, unrealizedPnL, positionNotional)
 }
 
+// TODO test: _getMarginRatio
 func (k Keeper) _getMarginRatio(ctx sdk.Context, amm VirtualAMM, position *v1.Position, unrealizedPnL, positionNotional sdk.Int) (sdk.Int, error) {
 	// todo(mercilex): maybe inefficient re-get
 	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, position, unrealizedPnL)
@@ -590,6 +605,7 @@ func (k Keeper) _getMarginRatio(ctx sdk.Context, amm VirtualAMM, position *v1.Po
 	return remainMargin.Sub(badDebt).Quo(positionNotional), nil
 }
 
+// TODO test: getPreferencePositionNotionalAndUnrealizedPnL
 func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, amm VirtualAMM, trader string, pnLPreferenceOption v1.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
@@ -630,6 +646,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, a
 	}
 }
 
+// TODO test: swapInput
 func swapInput(ctx sdk.Context, amm VirtualAMM,
 	side v1.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
 
@@ -674,6 +691,7 @@ function requireMoreMarginRatio(
     }
 */
 
+// TODO test: requireMoreMarginRatio
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEqualTo bool) error {
 	// TODO(mercilex): look at this and make sure it's legit compared ot the counterparty above ^
 	remainMarginRatio := marginRatio.Sub(baseMarginRatio)
