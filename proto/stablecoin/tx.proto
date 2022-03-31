@@ -12,22 +12,31 @@ service Msg {
 }
 
 // Msg to mint USDM: User deposits MTRX and collateral and gets USDM in return.
+/* MsgMintStable allows users to deposits MTRX and collateral in return for USDM. The amount of USDM 
+* received depends on the current price set by the pricefeed library and the current collateral ratio
+* for the protocol.*/
 message MsgMintStable {
   string creator = 1;
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
 }
 
+/* MsgMintStableResponse specifies the amount of USDM token the user will receive after their
+* mint transaction*/
 message MsgMintStableResponse {
   cosmos.base.v1beta1.Coin stable = 1 [(gogoproto.nullable) = false];
 }
 
-// Msg to burn USDM: User burns USDM and gets MTRX and collateral in return.
-message MsgBurn {
+/* MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and 
+* Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
+* for the protocol.*/
+message MsgBurnStable {
   string creator = 1;
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
 }
 
-message MsgBurnResponse {
+/* MsgBurnStableResponse specifies the amount of collateral and governance token the user will receive after their
+* burn transaction*/
+message MsgBurnStableResponse {
   cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
 }
