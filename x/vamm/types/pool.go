@@ -31,12 +31,21 @@ func (p *Pool) HasEnoughBaseReserve(baseAmount sdk.Int) (bool, error) {
 			p.QuoteAssetReserve)
 	}
 
-	tradeLimitRatio, err := sdk.NewDecFromStr(p.TradeLimitRatio)
+	tradeLimitRatio, err := p.getTradeLimitRatio()
 	if err != nil {
-		return false, fmt.Errorf("error with pool trade limit ratio value: %s", p.TradeLimitRatio)
+		return false, err
 	}
 
 	return baseAssetReserve.ToDec().Mul(tradeLimitRatio).GTE(baseAmount.ToDec()), nil
+}
+
+func (p *Pool) getTradeLimitRatio() (sdk.Dec, error) {
+	tradeLimitRatio, err := sdk.NewDecFromStr(p.TradeLimitRatio)
+	if err != nil {
+		return sdk.Dec{}, fmt.Errorf("error with pool trade limit ratio value: %s", p.TradeLimitRatio)
+	}
+
+	return tradeLimitRatio, nil
 }
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
@@ -48,9 +57,9 @@ func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Int) (bool, error) {
 			p.QuoteAssetReserve)
 	}
 
-	tradeLimitRatio, err := sdk.NewDecFromStr(p.TradeLimitRatio)
+	tradeLimitRatio, err := p.getTradeLimitRatio()
 	if err != nil {
-		return false, fmt.Errorf("error with pool trade limit ratio value: %s", p.TradeLimitRatio)
+		return false, err
 	}
 
 	return quoteAssetReserve.ToDec().Mul(tradeLimitRatio).GTE(quoteAmount.ToDec()), nil
