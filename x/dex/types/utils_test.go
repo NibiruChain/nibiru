@@ -122,3 +122,47 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestPoolAssetsCoins(t *testing.T) {
+	tests := []struct {
+		name          string
+		poolAssets    []PoolAsset
+		expectedCoins sdk.Coins
+	}{
+		{
+			name: "happy path single asset",
+			poolAssets: []PoolAsset{
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("foo", 100),
+					Weight: sdk.NewInt(1),
+				},
+			},
+			expectedCoins: sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
+		},
+		{
+			name: "happy path multiple asset",
+			poolAssets: []PoolAsset{
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("bar", 100),
+					Weight: sdk.NewInt(1),
+				},
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("foo", 200),
+					Weight: sdk.NewInt(1),
+				},
+			},
+			expectedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 200),
+			),
+		},
+	}
+
+	for _, testcase := range tests {
+		tc := testcase
+		t.Run(tc.name, func(t *testing.T) {
+			coins := poolAssetsCoins(tc.poolAssets)
+			require.Equal(t, tc.expectedCoins, coins)
+		})
+	}
+}
