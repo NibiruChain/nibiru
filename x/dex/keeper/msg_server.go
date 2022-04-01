@@ -47,3 +47,19 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 		PoolId: poolId,
 	}, nil
 }
+
+/*
+Handler for the MsgJoinPool transaction.
+
+args
+  ctx: the cosmos-sdk context
+  msg: a MsgJoinPool proto object
+
+ret
+  MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
+  error: an error if any occurred
+*/
+func (k msgServer) JoinPool(goCtx context.Context, msg *types.MsgJoinPool) (*types.MsgJoinPoolResponse, error) {
+	// TODO(https://github.com/MatrixDao/matrix/issues/47): Implement this
+	return &types.MsgJoinPoolResponse{}, nil
+}
