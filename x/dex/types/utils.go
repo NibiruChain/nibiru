@@ -4,9 +4,10 @@ import (
 	fmt "fmt"
 	"sort"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Returns a pool asset, and its index. If err != nil, then the index will be valid.
 /*
 Given a pool, find the poolAsset with a given denom.
 
@@ -39,4 +40,21 @@ func getPoolAssetAndIndex(poolAssets []PoolAsset, denom string) (index int, pool
 	}
 
 	return i, poolAssets[i], nil
+}
+
+/*
+Maps poolAssets to its underlying coins.
+
+ret:
+  - coins: all the coins in the pool assets
+
+args:
+  - poolAssets: the slice of pool assets
+*/
+func poolAssetsCoins(poolAssets []PoolAsset) (coins sdk.Coins) {
+	coins = sdk.Coins{}
+	for _, asset := range poolAssets {
+		coins = coins.Add(asset.Token)
+	}
+	return coins
 }
