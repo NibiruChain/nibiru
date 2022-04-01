@@ -166,3 +166,58 @@ func TestPoolAssetsCoins(t *testing.T) {
 		})
 	}
 }
+
+func TestSortPoolAssets(t *testing.T) {
+	tests := []struct {
+		name              string
+		poolAssets        []PoolAsset
+		expectedPoolAsset []PoolAsset
+	}{
+		{
+			name: "single asset",
+			poolAssets: []PoolAsset{
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("foo", 100),
+					Weight: sdk.NewInt(1),
+				},
+			},
+			expectedPoolAsset: []PoolAsset{
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("foo", 100),
+					Weight: sdk.NewInt(1),
+				},
+			},
+		},
+		{
+			name: "happy path multiple asset",
+			poolAssets: []PoolAsset{
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("foo", 100),
+					Weight: sdk.NewInt(1),
+				},
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("bar", 200),
+					Weight: sdk.NewInt(1),
+				},
+			},
+			expectedPoolAsset: []PoolAsset{
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("bar", 200),
+					Weight: sdk.NewInt(1),
+				},
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("foo", 100),
+					Weight: sdk.NewInt(1),
+				},
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tc := testcase
+		t.Run(tc.name, func(t *testing.T) {
+			sortPoolAssetsByDenom(tc.poolAssets)
+			require.Equal(t, tc.expectedPoolAsset, tc.poolAssets)
+		})
+	}
+}

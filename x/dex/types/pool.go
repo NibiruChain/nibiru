@@ -72,16 +72,6 @@ func (p *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	return nil
 }
 
-// sortPoolAssetsByDenom sorts pool assets in place, by denomination.
-func sortPoolAssetsByDenom(assets []PoolAsset) {
-	sort.Slice(assets, func(i, j int) bool {
-		PoolAssetA := assets[i]
-		PoolAssetB := assets[j]
-
-		return strings.Compare(PoolAssetA.Token.Denom, PoolAssetB.Token.Denom) == -1
-	})
-}
-
 /*
 Creates a new pool and sets the initial assets.
 
