@@ -2,8 +2,6 @@ package types
 
 import (
 	fmt "fmt"
-	"sort"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
