@@ -61,6 +61,11 @@ func (k Keeper) SetPrice(
 		return types.PostedPrice{}, types.ErrExpired
 	}
 
+	_, err := k.GetOracle(ctx, marketID, oracle)
+	if err != nil {
+		return types.PostedPrice{}, err
+	}
+
 	store := ctx.KVStore(k.storeKey)
 
 	newRawPrice := types.NewPostedPrice(marketID, oracle, price, expiry)
