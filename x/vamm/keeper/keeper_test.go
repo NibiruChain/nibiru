@@ -58,6 +58,7 @@ func TestSwapOutput_Errors(t *testing.T) {
 				tc.direction,
 				tc.baseAmount,
 				tc.quoteLimit,
+				false,
 			)
 			require.EqualError(t, err, tc.error.Error())
 		})
@@ -87,10 +88,10 @@ func TestSwapOutput_HappyPath(t *testing.T) {
 			"normal swap add",
 			ammtypes.Direction_ADD_TO_AMM,
 			sdktypes.NewInt(1_000_000),
-			sdktypes.NewInt(454_500),
-			sdktypes.NewInt(11_000_000),
-			sdktypes.NewInt(4_545_456),
-			sdktypes.NewInt(454_544),
+			sdktypes.NewInt(1_666_665),
+			sdktypes.NewInt(8_333_335), // TODO: Review with maths magicians (Vim and Heisenberg)
+			sdktypes.NewInt(6_000_000),
+			sdktypes.NewInt(1_666_665),
 		},
 		//{
 		//	"normal swap remove",
@@ -114,7 +115,7 @@ func TestSwapOutput_HappyPath(t *testing.T) {
 				sdktypes.MustNewDecFromStr("0.9"),  // 0.9 ratio
 				sdktypes.NewInt(10_000_000),        // 10 tokens
 				sdktypes.NewInt(5_000_000),         // 5 tokens
-				sdktypes.MustNewDecFromStr("0.25"), // 0.25 ratio
+				sdktypes.MustNewDecFromStr("0.50"), // 0.25 ratio
 			)
 			require.NoError(t, err)
 
@@ -124,6 +125,7 @@ func TestSwapOutput_HappyPath(t *testing.T) {
 				tc.direction,
 				tc.baseAmount,
 				tc.quoteLimit,
+				false,
 			)
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)

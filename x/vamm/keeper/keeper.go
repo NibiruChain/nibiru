@@ -32,6 +32,7 @@ func (k Keeper) SwapOutput(
 	dir types.Direction,
 	baseAssetAmount sdk.Int,
 	quoteAssetAmountLimit sdk.Int,
+	skipFluctuationCheck bool,
 ) (sdk.Int, error) {
 	if !k.existsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
@@ -57,7 +58,53 @@ func (k Keeper) SwapOutput(
 		}
 	}
 
-	return sdk.Int{}, nil
+	quoteAssetAmount, err := pool.GetQuoteAmountByBaseAmount(dir, baseAssetAmount)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	if !quoteAssetAmountLimit.IsZero() {
+		if dir == types.Direction_ADD_TO_AMM {
+			// SHORT
+			if quoteAssetAmount.LT(quoteAssetAmountLimit) {
+				return sdk.Int{}, fmt.Errorf(
+					"quote amount (%s) is less than selected limit (%s)",
+					quoteAssetAmount.String(),
+					quoteAssetAmountLimit.String(),
+				)
+			}
+		} else {
+			// LONG
+			if quoteAssetAmount.GT(quoteAssetAmountLimit) {
+				return sdk.Int{}, fmt.Errorf(
+					"quote amount (%s) is more than selected limit (%s)",
+					quoteAssetAmount.String(),
+					quoteAssetAmountLimit.String(),
+				)
+			}
+		}
+	}
+
+	// Invert direction to update reserve
+	var updateDir types.Direction
+	if dir == types.Direction_ADD_TO_AMM {
+		updateDir = types.Direction_REMOVE_FROM_AMM
+	} else {
+		updateDir = types.Direction_ADD_TO_AMM
+	}
+	err = k.updateReserve(
+		ctx,
+		pool,
+		updateDir,
+		quoteAssetAmount,
+		baseAssetAmount,
+		skipFluctuationCheck,
+	)
+	if err != nil {
+		return sdk.Int{}, fmt.Errorf("error updating reserve: %w", err)
+	}
+
+	return quoteAssetAmount, nil
 }
 
 // SwapInput swaps pair token
