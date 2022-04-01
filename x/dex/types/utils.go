@@ -58,3 +58,15 @@ func poolAssetsCoins(poolAssets []PoolAsset) (coins sdk.Coins) {
 	}
 	return coins
 }
+
+/*
+Sorts poolAssets in place by denom, lexicographically increasing.
+
+args:
+  - poolAssets: the pool assets to sort
+*/
+func sortPoolAssetsByDenom(poolAssets []PoolAsset) {
+	sort.Slice(poolAssets, func(i, j int) bool {
+		return strings.Compare(poolAssets[i].Token.Denom, poolAssets[j].Token.Denom) == -1
+	})
+}
