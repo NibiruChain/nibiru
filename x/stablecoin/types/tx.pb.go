@@ -29,9 +29,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgMintStable allows users to deposits MTRX and collateral in return for USDM. The amount of USDM
-// received depends on the current price set by the pricefeed library and the current collateral ratio
-// for the protocol.
+//
+//MsgMintStable: Msg to mint USDM. A user deposits MTRX and collateral and gets
+//USDM in return. The amount of USDM received depends on the current price set
+//by the pricefeed library and the current collateral ratio for the protocol.
 type MsgMintStable struct {
 	Creator string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Stable  types.Coin `protobuf:"bytes,2,opt,name=stable,proto3" json:"stable"`
