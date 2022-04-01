@@ -6,8 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	// Matrix
 	"github.com/MatrixDao/matrix/app"
 	dexcmd "github.com/MatrixDao/matrix/x/dex/client/cli"
+	sccmd "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
+
+	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -28,14 +32,17 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	// Tendermint
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 )
 
-// NewRootCmd creates a new root command for simd. It is called once in the
+// NewRootCmd creates a new root command for matrixd. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	encodingConfig := app.MakeTestEncodingConfig()
@@ -48,6 +55,8 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(simapp.DefaultNodeHome).
 		WithViper("") // In simapp, we don't use any prefix for env variables.
+
+	app.SetPrefixes(app.AccountAddressPrefix)
 
 	rootCmd := &cobra.Command{
 		Use:   "matrixd",
@@ -138,6 +147,17 @@ lru_size = 0`
 	return customAppTemplate, customAppConfig
 }
 
+/*
+'initRootCmd' adds keybase, auxiliary RPC, query, and transaction (tx) child
+commands, then builds the rosetta root command given a protocol buffers
+serializer/deserializer.
+
+Args:
+  rootCmd: The root command called once in the 'main.go' of 'matrixd'.
+  encodingConfig: EncodingConfig specifies the concrete encoding types to use
+    for a given app. This is provided for compatibility between protobuf and
+    amino implementations.
+*/
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
@@ -170,12 +190,13 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	rootCmd.AddCommand(server.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
 }
 
+// Implements the servertypes.ModuleInitFlags interface
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
-	cmd := &cobra.Command{
+	rootQueryCmd := &cobra.Command{
 		Use:                        "query",
 		Aliases:                    []string{"q"},
 		Short:                      "Querying subcommands",
@@ -184,19 +205,21 @@ func queryCommand() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(
+	rootQueryCmd.AddCommand(
 		authcmd.GetAccountCmd(),
 		rpc.ValidatorCommand(),
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
 		dexcmd.GetQueryCmd(),
+		sccmd.GetQueryCmd(),
 	)
 
-	simapp.ModuleBasics.AddQueryCommands(cmd)
-	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+	// Adds all query commands to the 'rootQueryCmd'
+	simapp.ModuleBasics.AddQueryCommands(rootQueryCmd)
+	rootQueryCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
-	return cmd
+	return rootQueryCmd
 }
 
 func txCommand() *cobra.Command {

@@ -14,7 +14,7 @@ var _ = strconv.Itoa(0)
 func CmdGetPoolNumber() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-pool-number",
-		Short: "Query GetPoolNumber",
+		Short: "QueryPoolNumber",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
@@ -25,9 +25,9 @@ func CmdGetPoolNumber() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryGetPoolNumberRequest{}
+			params := &types.QueryPoolNumberRequest{}
 
-			res, err := queryClient.GetPoolNumber(cmd.Context(), params)
+			res, err := queryClient.PoolNumber(cmd.Context(), params)
 			if err != nil {
 				return err
 			}
