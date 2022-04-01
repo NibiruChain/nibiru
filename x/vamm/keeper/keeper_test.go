@@ -93,15 +93,15 @@ func TestSwapOutput_HappyPath(t *testing.T) {
 			sdktypes.NewInt(6_000_000),
 			sdktypes.NewInt(1_666_665),
 		},
-		//{
-		//	"normal swap remove",
-		//	ammtypes.Direction_REMOVE_FROM_AMM,
-		//	sdktypes.NewInt(1_000_000),
-		//	sdktypes.NewInt(555_560),
-		//	sdktypes.NewInt(9_000_000),
-		//	sdktypes.NewInt(5_555_556),
-		//	sdktypes.NewInt(555_556),
-		//},
+		{
+			"normal swap remove",
+			ammtypes.Direction_REMOVE_FROM_AMM,
+			sdktypes.NewInt(1_000_000),
+			sdktypes.NewInt(2_500_000),
+			sdktypes.NewInt(12_500_000),
+			sdktypes.NewInt(4_000_000),
+			sdktypes.NewInt(2_500_000),
+		},
 	}
 
 	for _, tc := range tests {
@@ -115,7 +115,7 @@ func TestSwapOutput_HappyPath(t *testing.T) {
 				sdktypes.MustNewDecFromStr("0.9"),  // 0.9 ratio
 				sdktypes.NewInt(10_000_000),        // 10 tokens
 				sdktypes.NewInt(5_000_000),         // 5 tokens
-				sdktypes.MustNewDecFromStr("0.50"), // 0.25 ratio
+				sdktypes.MustNewDecFromStr("0.75"), // 0.25 ratio
 			)
 			require.NoError(t, err)
 
