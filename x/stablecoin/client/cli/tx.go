@@ -21,14 +21,14 @@ func NewTxCmd() *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		NewMintCmd(),
-		NewBurnCmd(),
+		NewMintStableCmd(),
+		NewBurnStableCmd(),
 	)
 
 	return txCmd
 }
 
-func NewMintCmd() *cobra.Command {
+func NewMintStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint [token-in]",
 		Short: "mint",
@@ -55,7 +55,12 @@ func NewMintCmd() *cobra.Command {
 	return cmd
 }
 
-func NewBuildMintMsg(clientCtx client.Context, tokenInStr string, txf tx.Factory, fs *flag.FlagSet) (tx.Factory, sdk.Msg, error) {
+/*
+NewBuildMintMsg
+*/
+func NewBuildMintMsg(
+	clientCtx client.Context, tokenInStr string, txf tx.Factory, fs *flag.FlagSet,
+) (tx.Factory, sdk.Msg, error) {
 
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 	if err != nil {
@@ -70,7 +75,7 @@ func NewBuildMintMsg(clientCtx client.Context, tokenInStr string, txf tx.Factory
 	return txf, msg, nil
 }
 
-func NewBurnCmd() *cobra.Command {
+func NewBurnStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn [token-in]",
 		Short: "burn",
@@ -97,7 +102,9 @@ func NewBurnCmd() *cobra.Command {
 	return cmd
 }
 
-func NewBuildBurnMsg(clientCtx client.Context, tokenInStr string, txf tx.Factory, fs *flag.FlagSet) (tx.Factory, sdk.Msg, error) {
+func NewBuildBurnMsg(
+	clientCtx client.Context, tokenInStr string, txf tx.Factory, fs *flag.FlagSet,
+) (tx.Factory, sdk.Msg, error) {
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 	if err != nil {
 		return txf, nil, err

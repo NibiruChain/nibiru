@@ -241,6 +241,8 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 		dexcmd.GetTxCmd(),
+		sccmd.NewMintStableCmd(),
+		sccmd.NewBurnStableCmd(),
 	)
 
 	simapp.ModuleBasics.AddTxCommands(cmd)
