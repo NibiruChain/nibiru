@@ -6,19 +6,19 @@ import (
 )
 
 // GetLastLockId returns ID used last time.
-func (k LockupKeeper) GetLastLockId(ctx sdk.Context) uint64 {
+func (k LockupKeeper) GetNextLockId(ctx sdk.Context) (lockId uint64) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.KeyLastLockId)
 	if bz == nil {
-		return 0
+		// If uninitialized, start using lockId=0
+		lockId = 0
+	} else {
+		lockId = sdk.BigEndianToUint64(bz)
 	}
 
-	return sdk.BigEndianToUint64(bz)
-}
+	// Increment so that next call receives a new number
+	store.Set(types.KeyLastLockId, sdk.Uint64ToBigEndian(lockId+1))
 
-// SetLastLockId save ID used by last lock.
-func (k LockupKeeper) SetLastLockId(ctx sdk.Context, lockId uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.KeyLastLockId, sdk.Uint64ToBigEndian(lockId))
+	return lockId
 }
