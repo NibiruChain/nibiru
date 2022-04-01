@@ -15,7 +15,6 @@ import (
 func TestCreateLock(t *testing.T) {
 	tests := []struct {
 		name                string
-		previousLockId      uint64
 		accountInitialFunds sdk.Coins
 		ownerAddr           sdk.AccAddress
 		coins               sdk.Coins
@@ -24,7 +23,6 @@ func TestCreateLock(t *testing.T) {
 	}{
 		{
 			name:                "happy path",
-			previousLockId:      1,
 			accountInitialFunds: sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
 			ownerAddr:           sample.AccAddress(),
 			coins:               sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
@@ -33,7 +31,6 @@ func TestCreateLock(t *testing.T) {
 		},
 		{
 			name:                "not enough funds",
-			previousLockId:      1,
 			accountInitialFunds: sdk.NewCoins(sdk.NewInt64Coin("foo", 99)),
 			ownerAddr:           sample.AccAddress(),
 			coins:               sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
@@ -46,7 +43,6 @@ func TestCreateLock(t *testing.T) {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testutil.NewMatrixApp()
-			app.LockupKeeper.SetLastLockId(ctx, tc.previousLockId)
 			simapp.FundAccount(app.BankKeeper, ctx, tc.ownerAddr, tc.accountInitialFunds)
 
 			lock, err := app.LockupKeeper.LockTokens(ctx, tc.ownerAddr, tc.coins, tc.duration)
@@ -56,13 +52,14 @@ func TestCreateLock(t *testing.T) {
 				require.NoError(t, err)
 
 				require.Equal(t, types.Lock{
-					LockId:   tc.previousLockId + 1,
+					LockId:   0,
 					Owner:    tc.ownerAddr.String(),
 					Duration: tc.duration,
 					Coins:    tc.coins,
+					EndTime:  ctx.BlockTime().Add(24 * time.Hour),
 				}, lock)
 
-				require.Equal(t, tc.previousLockId+1, app.LockupKeeper.GetLastLockId(ctx))
+				require.Equal(t, uint64(1), app.LockupKeeper.GetNextLockId(ctx))
 			}
 
 		})

@@ -41,34 +41,28 @@ func (k LockupKeeper) Logger(ctx sdk.Context) log.Logger {
 // LockTokens lock tokens from an account for specified duration.
 func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	coins sdk.Coins, duration time.Duration) (types.Lock, error) {
-	lockId := k.GetLastLockId(ctx) + 1
+	lockId := k.GetNextLockId(ctx)
 	// unlock time is set at the beginning of unlocking time
-	lock := types.NewLock(lockId, owner, duration, time.Time{}, coins)
-	err := k.lock(ctx, lock)
-	if err != nil {
+	lock := types.NewLock(lockId, owner, duration, ctx.BlockTime().Add(duration), coins)
+	if err := k.lock(ctx, lock); err != nil {
 		return lock, err
 	}
-	k.SetLastLockId(ctx, lockId)
+
 	return lock, nil
 }
 
 // Lock is a utility to lock coins into module account.
-func (k LockupKeeper) lock(ctx sdk.Context, lock types.Lock) error {
+func (k LockupKeeper) lock(ctx sdk.Context, lock types.Lock) (err error) {
 	owner, err := sdk.AccAddressFromBech32(lock.Owner)
 	if err != nil {
 		return err
 	}
-	if err := k.bk.SendCoinsFromAccountToModule(ctx, owner, types.ModuleName, lock.Coins); err != nil {
+	if err = k.bk.SendCoinsFromAccountToModule(ctx, owner, types.ModuleName, lock.Coins); err != nil {
 		return err
 	}
 
 	// store lock object into the store
-	store := ctx.KVStore(k.storeKey)
-	bz, err := lock.Marshal()
-	if err != nil {
-		return err
-	}
-	store.Set(lockStoreKey(lock.LockId), bz)
+	ctx.KVStore(k.storeKey).Set(lockStoreKey(lock.LockId), k.cdc.MustMarshal(&lock))
 
 	return nil
 }
