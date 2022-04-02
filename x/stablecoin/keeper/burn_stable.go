@@ -82,7 +82,7 @@ func (k Keeper) BurnStable(
 	if err != nil {
 		panic(err)
 	}
-	events.EmitBurnMtrx(ctx, msg.Stable)
+	events.EmitBurnStable(ctx, msg.Stable)
 
 	return &types.MsgBurnStableResponse{Collateral: collToSend, Gov: govToSend}, nil
 }
