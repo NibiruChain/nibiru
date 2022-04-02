@@ -23,8 +23,8 @@ import (
 	pricekeeper "github.com/MatrixDao/matrix/x/pricefeed/keeper"
 	pricetypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin"
-	stablekeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
+	stablecoinkeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
+	stablecointypes "github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -132,6 +132,7 @@ var (
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		dex.AppModuleBasic{},
+		pricefeed.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
 	)
 
@@ -144,7 +145,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		dextypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		stabletypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
+		stablecointypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -184,7 +185,7 @@ type MatrixApp struct {
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	DexKeeper        dexkeeper.Keeper
-	StablecoinKeeper stablekeeper.Keeper
+	StablecoinKeeper stablecoinkeeper.Keeper
 	PriceKeeper      pricekeeper.Keeper
 
 	// the module manager
@@ -228,13 +229,13 @@ func NewMatrixApp(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
-		dextypes.StoreKey, pricetypes.StoreKey, stabletypes.StoreKey,
+		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
 	// not include this key.
 	memKeys := sdk.NewMemoryStoreKeys(
-		capabilitytypes.MemStoreKey, "testingkey", stabletypes.MemStoreKey, pricetypes.MemStoreKey)
+		capabilitytypes.MemStoreKey, "testingkey", stablecointypes.MemStoreKey, pricetypes.MemStoreKey)
 
 	app := &MatrixApp{
 		BaseApp:           bApp,
@@ -326,9 +327,9 @@ func NewMatrixApp(
 		app.GetSubspace(pricetypes.ModuleName),
 	)
 
-	app.StablecoinKeeper = stablekeeper.NewKeeper(
-		appCodec, keys[stabletypes.StoreKey], memKeys[stabletypes.MemStoreKey],
-		app.GetSubspace(stabletypes.ModuleName),
+	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
+		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
+		app.GetSubspace(stablecointypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
 	)
 
@@ -340,9 +341,9 @@ func NewMatrixApp(
 
 	dexModule := dex.NewAppModule(
 		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
-	pfModule := pricefeed.NewAppModule(
+	pricefeedModule := pricefeed.NewAppModule(
 		appCodec, app.PriceKeeper, app.AccountKeeper, app.BankKeeper)
-	scModule := stablecoin.NewAppModule(
+	stablecoinModule := stablecoin.NewAppModule(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
 		app.PriceKeeper,
 	)
@@ -370,8 +371,8 @@ func NewMatrixApp(
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		dexModule,
-		pfModule,
-		scModule,
+		pricefeedModule,
+		stablecoinModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -387,7 +388,7 @@ func NewMatrixApp(
 		paramstypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
 		pricetypes.ModuleName,
-		stabletypes.ModuleName,
+		stablecointypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -398,7 +399,7 @@ func NewMatrixApp(
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
 		pricetypes.ModuleName,
-		stabletypes.ModuleName,
+		stablecointypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -414,7 +415,7 @@ func NewMatrixApp(
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
 		pricetypes.ModuleName,
-		stabletypes.ModuleName,
+		stablecointypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -446,8 +447,8 @@ func NewMatrixApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		dexModule,
-		pfModule,
-		scModule,
+		pricefeedModule,
+		stablecoinModule,
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -648,7 +649,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(dextypes.ModuleName)
 	paramsKeeper.Subspace(pricetypes.ModuleName)
-	paramsKeeper.Subspace(stabletypes.ModuleName)
+	paramsKeeper.Subspace(stablecointypes.ModuleName)
 
 	return paramsKeeper
 }
