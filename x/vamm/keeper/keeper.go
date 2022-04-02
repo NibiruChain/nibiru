@@ -85,6 +85,15 @@ func (k Keeper) SwapOutput(
 		}
 	}
 
+	// If the price impact of one single tx is larger than priceFluctuation, skip the check
+	// only for liquidate()
+	if !skipFluctuationCheck {
+		skipFluctuationCheck, err = k.isSingleTxOverFluctuation(ctx, dir, pool, quoteAssetAmount, baseAssetAmount)
+		if err != nil {
+			return sdk.Int{}, err
+		}
+	}
+
 	// Invert direction to update reserve
 	var updateDir types.Direction
 	if dir == types.Direction_ADD_TO_AMM {
@@ -104,7 +113,40 @@ func (k Keeper) SwapOutput(
 		return sdk.Int{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventSwapOutput,
+			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
+		),
+	)
+
 	return quoteAssetAmount, nil
+}
+
+func (k Keeper) isSingleTxOverFluctuation(ctx sdk.Context, dir types.Direction, pool *types.Pool, quoteAssetAmount sdk.Int, baseAssetAmount sdk.Int) (bool, error) {
+	quoteAssetReserve, _ := pool.GetPoolQuoteAssetReserveAsInt()
+	baseAssetReserve, _ := pool.GetPoolBaseAssetReserveAsInt()
+
+	if dir == types.Direction_ADD_TO_AMM {
+		pool.QuoteAssetReserve = quoteAssetReserve.Sub(baseAssetAmount).String()
+		pool.BaseAssetReserve = baseAssetReserve.Add(baseAssetAmount).String()
+	} else {
+		pool.QuoteAssetReserve = quoteAssetReserve.Add(baseAssetAmount).String()
+		pool.BaseAssetReserve = baseAssetReserve.Sub(baseAssetAmount).String()
+	}
+
+	counter, found := k.getSnapshotCounter(ctx, pool.Pair)
+	if !found {
+		return false, fmt.Errorf("snapshot not found for pair: %s", pool.Pair)
+	}
+
+	snapshot, err := k.getSnapshotByCounter(ctx, pool.Pair, counter-1)
+	if err != nil {
+		return false, err
+	}
+
+	return isOverFluctuationLimit(pool, snapshot), nil
 }
 
 // SwapInput swaps pair token
