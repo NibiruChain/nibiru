@@ -29,7 +29,7 @@ func GetTxCmd() *cobra.Command {
 }
 
 /*
-GetMintStableCmd is a CLI command that mints Matrix stablecoins.
+MintStableCmd is a CLI command that mints Matrix stablecoins.
 Example: "mint-sc 100usdm"
 */
 func MintStableCmd() *cobra.Command {
@@ -45,7 +45,7 @@ func MintStableCmd() *cobra.Command {
 
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			txf, msg, err := NewBuildMintMsg(clientCtx, args[0], txf, cmd.Flags())
+			msg, err := NewBuildMintMsg(clientCtx, args[0])
 			if err != nil {
 				return err
 			}
@@ -63,12 +63,12 @@ func MintStableCmd() *cobra.Command {
 NewBuildMintMsg
 */
 func NewBuildMintMsg(
-	clientCtx client.Context, tokenInStr string, txf tx.Factory, fs *flag.FlagSet,
-) (tx.Factory, sdk.Msg, error) {
+	clientCtx client.Context, tokenInStr string,
+) (sdk.Msg, error) {
 
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 	if err != nil {
-		return txf, nil, err
+		return nil, err
 	}
 
 	msg := &types.MsgMintStable{
@@ -76,7 +76,7 @@ func NewBuildMintMsg(
 		Stable:  tokenIn,
 	}
 
-	return txf, msg, nil
+	return msg, nil
 }
 
 func BurnStableCmd() *cobra.Command {
