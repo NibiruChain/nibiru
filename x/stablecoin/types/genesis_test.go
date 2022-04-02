@@ -20,13 +20,9 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		{
 			description: "valid genesis state",
-			genState:    &types.GenesisState{
-
-				// this line is used by starport scaffolding # types/genesis/validField
-			},
-			valid: true,
+			genState:    &types.GenesisState{},
+			valid:       true,
 		},
-		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
 		t.Run(testCase.description, func(t *testing.T) {
 			err := testCase.genState.Validate()
