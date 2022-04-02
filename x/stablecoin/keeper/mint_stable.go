@@ -57,18 +57,7 @@ func (k Keeper) MintStable(
 		return nil, err
 	}
 
-	// Take assets out of the user account.
-	err = k.bankKeeper.SendCoinsFromAccountToModule(
-		ctx, msgCreator, types.ModuleName, coinsNeededToMint)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, coin := range coinsNeededToMint {
-		events.EmitTransfer(ctx, coin, msgCreator.String(), types.ModuleName)
-	}
-
-	err = k.mintStable(msg.Stable, ctx)
+	err = k.vaultCollateralCoins(ctx, msgCreator, coinsNeededToMint)
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +67,12 @@ func (k Keeper) MintStable(
 		panic(err)
 	}
 
-	err = k.sendMintedTokensToUser(ctx, msgCreator, msg)
+	err = k.mintStable(ctx, msg.Stable)
+	if err != nil {
+		panic(err)
+	}
+
+	err = k.sendMintedTokensToUser(ctx, msgCreator, msg.Stable)
 	if err != nil {
 		panic(err)
 	}
@@ -86,14 +80,29 @@ func (k Keeper) MintStable(
 	return &types.MsgMintStableResponse{Stable: msg.Stable}, nil
 }
 
-func (k Keeper) sendMintedTokensToUser(ctx sdk.Context, msgCreator sdk.AccAddress, msg *types.MsgMintStable) error {
-	err := k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, msgCreator, sdk.NewCoins(msg.Stable))
+// vaultCollateralCoins transfer selected coins from address to module account vault
+func (k Keeper) vaultCollateralCoins(ctx sdk.Context, msgCreator sdk.AccAddress, coins sdk.Coins) error {
+	err := k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx, msgCreator, types.ModuleName, coins)
 	if err != nil {
 		return err
 	}
 
-	events.EmitTransfer(ctx, msg.Stable, types.ModuleName, msgCreator.String())
+	for _, coin := range coins {
+		events.EmitTransfer(ctx, coin, msgCreator.String(), types.ModuleName)
+	}
+
+	return nil
+}
+
+func (k Keeper) sendMintedTokensToUser(ctx sdk.Context, msgCreator sdk.AccAddress, stable sdk.Coin) error {
+	err := k.bankKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, msgCreator, sdk.NewCoins(stable))
+	if err != nil {
+		return err
+	}
+
+	events.EmitTransfer(ctx, stable, types.ModuleName, msgCreator.String())
 
 	return nil
 }
@@ -109,7 +118,7 @@ func (k Keeper) burnGovTokens(ctx sdk.Context, neededGov sdk.Coin) error {
 	return nil
 }
 
-func (k Keeper) mintStable(stable sdk.Coin, ctx sdk.Context) error {
+func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stable))
 	if err != nil {
 		return err
