@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/MatrixDao/matrix/x/common"
+	"github.com/MatrixDao/matrix/x/stablecoin/events"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -20,7 +21,7 @@ func (k Keeper) MintStable(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	fromAddr, err := sdk.AccAddressFromBech32(msg.Creator)
+	msgCreator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, err
 	}
@@ -52,18 +53,19 @@ func (k Keeper) MintStable(
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
 
-	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, fromAddr)
+	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, msgCreator)
 	if err != nil {
 		return nil, err
 	}
 
 	// Take assets out of the user account.
 	err = k.bankKeeper.SendCoinsFromAccountToModule(
-		ctx, fromAddr, types.ModuleName, coinsNeededToMint)
+		ctx, msgCreator, types.ModuleName, coinsNeededToMint)
 	if err != nil {
 		panic(err)
-		// return nil, err
-		// Q: Ask about panic vs. return nil and reverting an entire method.
+	}
+	for _, coin := range coinsNeededToMint {
+		events.EmitTransfer(ctx, coin, msgCreator.String(), types.ModuleName)
 	}
 
 	// Mint the USDM
@@ -73,19 +75,22 @@ func (k Keeper) MintStable(
 	if err != nil {
 		panic(err)
 	}
+	events.EmitMintStable(ctx, msg.Stable)
 
 	// Burn the GOV that the user gave to the protocol.
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
 	if err != nil {
 		panic(err)
 	}
+	events.EmitBurnMtrx(ctx, neededGov)
 
 	// Send the minted tokens to the user.
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, fromAddr, stablesToMint)
+		ctx, types.ModuleName, msgCreator, stablesToMint)
 	if err != nil {
 		panic(err)
 	}
+	events.EmitTransfer(ctx, stableToMint, types.ModuleName, msgCreator.String())
 
 	return &types.MsgMintStableResponse{Stable: stableToMint}, nil
 }
