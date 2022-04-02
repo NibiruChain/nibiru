@@ -95,18 +95,20 @@ func (k Keeper) vaultCollateralCoins(ctx sdk.Context, msgCreator sdk.AccAddress,
 	return nil
 }
 
-func (k Keeper) sendMintedTokensToUser(ctx sdk.Context, msgCreator sdk.AccAddress, stable sdk.Coin) error {
+// sendMintedTokensToUser sends coins minted in Module Account to address to
+func (k Keeper) sendMintedTokensToUser(ctx sdk.Context, to sdk.AccAddress, stable sdk.Coin) error {
 	err := k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, msgCreator, sdk.NewCoins(stable))
+		ctx, types.ModuleName, to, sdk.NewCoins(stable))
 	if err != nil {
 		return err
 	}
 
-	events.EmitTransfer(ctx, stable, types.ModuleName, msgCreator.String())
+	events.EmitTransfer(ctx, stable, types.ModuleName, to.String())
 
 	return nil
 }
 
+// burnGovTokens burns governance coins
 func (k Keeper) burnGovTokens(ctx sdk.Context, neededGov sdk.Coin) error {
 	err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
 	if err != nil {
