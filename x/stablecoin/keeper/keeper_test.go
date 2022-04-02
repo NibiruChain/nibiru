@@ -10,16 +10,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 
 	// For integration testing
-	ginkgo "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
-	// "github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	// paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
+// TODO: Move to CLI for integrations
 type KeeperTestSuite struct {
 	suite.Suite
 
@@ -41,10 +39,10 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite._doSetupTest(suite.T())
+	suite._doSetupTest()
 }
 
-func (suite *KeeperTestSuite) _doSetupTest(t require.TestingT) {
+func (suite *KeeperTestSuite) _doSetupTest() {
 	matrixApp, ctx := testutil.NewMatrixApp()
 	suite.app = matrixApp
 	suite.ctx = ctx
