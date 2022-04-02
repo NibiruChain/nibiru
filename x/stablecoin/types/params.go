@@ -18,7 +18,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams(collRatio sdk.Dec) Params {
 	collRatioInt := collRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
 	// TODO: Verify collRatio is an integer in a test.
-	return Params{CollRatio: int64(collRatioInt.Int64())}
+	return Params{CollRatio: collRatioInt.Uint64()}
 }
 
 // DefaultParams returns a default set of parameters
@@ -43,22 +43,15 @@ func (p Params) Validate() error {
 	return validateCollRatio(p.CollRatio)
 }
 
-type _TypeCollRatio struct {
-	cr uint64
-}
-
-func (_cr _TypeCollRatio) Validate() error {
-	if _cr.cr >= 1_000_000 {
-		return fmt.Errorf("collateral Ratio is above max value(1e6): %o", _cr.cr)
-	} else {
-		return nil
-	}
-}
-
 func validateCollRatio(i interface{}) error {
-	collRatio, ok := i.(_TypeCollRatio)
+	collRatio, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	return collRatio.Validate()
+
+	if collRatio >= 1_000_000 {
+		return fmt.Errorf("collateral Ratio is above max value(1e6): %o", collRatio)
+	} else {
+		return nil
+	}
 }
