@@ -68,32 +68,49 @@ func (k Keeper) MintStable(
 		events.EmitTransfer(ctx, coin, msgCreator.String(), types.ModuleName)
 	}
 
-	err = k.mintStable(msg.Stable, err, ctx)
+	err = k.mintStable(msg.Stable, ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	// Burn the GOV that the user gave to the protocol.
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
-	if err != nil {
-		panic(err)
-	}
-	events.EmitBurnMtrx(ctx, neededGov)
-
-	// Send the minted tokens to the user.
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, msgCreator, sdk.NewCoins(msg.Stable))
+	err = k.burnGovTokens(ctx, neededGov)
 	if err != nil {
 		panic(err)
 	}
 
-	events.EmitTransfer(ctx, msg.Stable, types.ModuleName, msgCreator.String())
+	err = k.sendMintedTokensToUser(ctx, msgCreator, msg)
+	if err != nil {
+		panic(err)
+	}
 
 	return &types.MsgMintStableResponse{Stable: msg.Stable}, nil
 }
 
-func (k Keeper) mintStable(stable sdk.Coin, err error, ctx sdk.Context) error {
-	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stable))
+func (k Keeper) sendMintedTokensToUser(ctx sdk.Context, msgCreator sdk.AccAddress, msg *types.MsgMintStable) error {
+	err := k.bankKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, msgCreator, sdk.NewCoins(msg.Stable))
+	if err != nil {
+		return err
+	}
+
+	events.EmitTransfer(ctx, msg.Stable, types.ModuleName, msgCreator.String())
+
+	return nil
+}
+
+func (k Keeper) burnGovTokens(ctx sdk.Context, neededGov sdk.Coin) error {
+	err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
+	if err != nil {
+		return err
+	}
+
+	events.EmitBurnMtrx(ctx, neededGov)
+
+	return nil
+}
+
+func (k Keeper) mintStable(stable sdk.Coin, ctx sdk.Context) error {
+	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stable))
 	if err != nil {
 		return err
 	}
