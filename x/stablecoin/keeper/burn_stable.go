@@ -5,11 +5,12 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/events"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k Keeper) BurnStable(
@@ -82,7 +83,7 @@ func (k Keeper) BurnStable(
 	if err != nil {
 		panic(err)
 	}
-	events.EmitBurnMtrx(ctx, msg.Stable)
+	events.EmitBurnStable(ctx, msg.Stable)
 
 	return &types.MsgBurnStableResponse{Collateral: collToSend, Gov: govToSend}, nil
 }
