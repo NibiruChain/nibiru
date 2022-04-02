@@ -52,7 +52,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s IntegrationTestSuite) TestMintCmd() {
+func (s IntegrationTestSuite) TestMintStableCmd() {
 	val := s.network.Validators[0]
 
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("NewJoinPoolAddr", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
@@ -101,7 +101,7 @@ func (s IntegrationTestSuite) TestMintCmd() {
 		fmt.Println("----------------------------------------------------------------------------")
 
 		s.Run(tc.name, func() {
-			cmd := cli.NewMintCmd()
+			cmd := cli.MintStableCmd()
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
