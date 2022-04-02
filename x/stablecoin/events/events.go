@@ -31,46 +31,39 @@ func EmitTransfer(
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
-func EmitMintStable(
-	ctx sdk.Context, coin sdk.Coin,
-) {
+func _mintOrBurnEvent(eventType string, coin sdk.Coin) sdk.Event {
 	event := sdk.NewEvent(
-		EventTypeMintStable,
+		eventType,
 		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
 		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
 	)
+	return event
+}
+
+func EmitMintStable(
+	ctx sdk.Context, coin sdk.Coin,
+) {
+	event := _mintOrBurnEvent(EventTypeMintStable, coin)
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
 func EmitBurnStable(
 	ctx sdk.Context, coin sdk.Coin, from sdk.AccAddress, to sdk.AccAddress,
 ) {
-	event := sdk.NewEvent(
-		EventTypeBurnStable,
-		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
-		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
-	)
+	event := _mintOrBurnEvent(EventTypeBurnStable, coin)
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
 func EmitMintMtrx(
 	ctx sdk.Context, coin sdk.Coin, from sdk.AccAddress, to sdk.AccAddress,
 ) {
-	event := sdk.NewEvent(
-		EventTypeMintMtrx,
-		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
-		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
-	)
+	event := _mintOrBurnEvent(EventTypeMintMtrx, coin)
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
 func EmitBurnMtrx(
 	ctx sdk.Context, coin sdk.Coin, from sdk.AccAddress, to sdk.AccAddress,
 ) {
-	event := sdk.NewEvent(
-		EventTypeBurnMtrx,
-		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
-		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
-	)
+	event := _mintOrBurnEvent(EventTypeBurnMtrx, coin)
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
