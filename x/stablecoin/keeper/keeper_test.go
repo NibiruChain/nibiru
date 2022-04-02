@@ -48,7 +48,8 @@ func (suite *KeeperTestSuite) _doSetupTest() {
 	suite.ctx = ctx
 
 	queryGrpcClientConn := baseapp.NewQueryServerTestHelper(
-		suite.ctx, suite.app.InterfaceRegistry())
+		suite.ctx, suite.app.InterfaceRegistry(),
+	)
 	types.RegisterQueryServer(queryGrpcClientConn, suite.app.StablecoinKeeper)
 	suite.queryClient = types.NewQueryClient(queryGrpcClientConn)
 }

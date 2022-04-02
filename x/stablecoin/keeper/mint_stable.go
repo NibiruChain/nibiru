@@ -1,4 +1,4 @@
-// Module for minting USDM  Minting USDM
+// Package keeper for minting USDM  Minting USDM
 // See Example B of https://docs.frax.finance/minting-and-redeeming
 package keeper
 
@@ -11,8 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// stableDenom string = "usdm"
-
+// MintStable mints stable coins given collateral and governance
 // govDeposited: Units of GOV burned
 // govDeposited = (1 - collRatio) * (collDeposited * 1) / (collRatio * priceGOV)
 func (k Keeper) MintStable(
@@ -38,10 +37,10 @@ func (k Keeper) MintStable(
 		return nil, err
 	}
 
-	// The user deposits a mixure of collateral and GOV tokens based on the collateral ratio.
+	// The user deposits a mixture of collateral and GOV tokens based on the collateral ratio.
 	// TODO: Initialize these two vars based on the collateral ratio of the protocol.
 	collRatio, _ := sdk.NewDecFromStr("0.9")
-	govRatio := sdk.NewDec(1).Sub(collRatio)
+	govRatio := sdk.OneDec().Sub(collRatio)
 
 	neededCollUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(collRatio)
 	neededCollAmt := AsInt(neededCollUSD.Quo(priceColl.Price))
