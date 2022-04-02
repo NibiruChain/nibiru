@@ -16,7 +16,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
 
-func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) (bool, error) {
+func (k Keeper) _checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) (bool, error) {
 	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
 
 	for _, coin := range accCoins {
@@ -33,7 +33,7 @@ func (k Keeper) CheckEnoughBalances(ctx sdk.Context, coins sdk.Coins, acc sdk.Ac
 
 	fromAddr := acc
 	for _, coin := range coins {
-		hasEnoughBalance, err := k.CheckEnoughBalance(ctx, coin, fromAddr)
+		hasEnoughBalance, err := k._checkEnoughBalance(ctx, coin, fromAddr)
 		if err != nil {
 			return err
 		}
