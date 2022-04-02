@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewTxCmd() *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Generalized automated market maker transaction subcommands",
@@ -21,14 +21,18 @@ func NewTxCmd() *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		NewMintStableCmd(),
-		NewBurnStableCmd(),
+		MintStableCmd(),
+		BurnStableCmd(),
 	)
 
 	return txCmd
 }
 
-func NewMintStableCmd() *cobra.Command {
+/*
+GetMintStableCmd is a CLI command that mints Matrix stablecoins.
+Example: "mint-sc 100usdm"
+*/
+func MintStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint-sc [token-in]",
 		Short: "Mint Matrix stablecoin subcommands",
@@ -75,7 +79,7 @@ func NewBuildMintMsg(
 	return txf, msg, nil
 }
 
-func NewBurnStableCmd() *cobra.Command {
+func BurnStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn-sc [token-in]",
 		Short: "Burn Matrix stablecoin commands",
