@@ -12,10 +12,10 @@ import (
 )
 
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
-	memKey     sdk.StoreKey
-	paramstore paramtypes.Subspace
+	cdc           codec.BinaryCodec
+	storeKey      sdk.StoreKey
+	memKey        sdk.StoreKey
+	ParamSubspace paramtypes.Subspace
 
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
@@ -26,23 +26,23 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
 	memKey sdk.StoreKey,
-	ps paramtypes.Subspace,
+	paramSubspace paramtypes.Subspace,
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	priceKeeper types.PriceKeeper,
-) *Keeper {
+) Keeper {
 	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
+	if !paramSubspace.HasKeyTable() {
+		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
 	}
 
-	return &Keeper{
+	return Keeper{
 
 		cdc:           cdc,
 		storeKey:      storeKey,
 		memKey:        memKey,
-		paramstore:    ps,
+		ParamSubspace: paramSubspace,
 		accountKeeper: accountKeeper, bankKeeper: bankKeeper, priceKeeper: priceKeeper,
 	}
 }
