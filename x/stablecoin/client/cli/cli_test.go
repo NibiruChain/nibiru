@@ -13,11 +13,13 @@ import (
 
 	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	keycli "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 )
 
@@ -99,9 +101,22 @@ func (s IntegrationTestSuite) TestMintCmd() {
 		fmt.Println(tc.name)
 		fmt.Println(tc.args)
 		fmt.Println("----------------------------------------------------------------------------")
+		fmt.Println("BALANCE")
+
+		balance_cmd := bankcli.GetBalancesCmd()
+		outt, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, balance_cmd, []string{newAddr.String()})
+
+		fmt.Println(outt)
+
+		fmt.Println("----------------------------------------------------------------------------")
+
+		keys_list_cmd := keycli.ListKeysCmd()
+		outt, _ = clitestutil.ExecTestCLICmd(val.ClientCtx, keys_list_cmd, []string{}) //"--keyring-backend", "test"
+
+		fmt.Println(outt)
 
 		s.Run(tc.name, func() {
-			cmd := cli.NewMintCmd()
+			cmd := cli.MintStableCmd()
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
