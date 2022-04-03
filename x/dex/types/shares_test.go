@@ -1,9 +1,8 @@
-package math
+package types
 
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -11,7 +10,7 @@ import (
 func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
-		poolAssets        []types.PoolAsset
+		poolAssets        []PoolAsset
 		existingShares    int64
 		tokensIn          sdk.Coins
 		expectedNumShares sdk.Int
@@ -19,7 +18,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 	}{
 		{
 			name: "all coins deposited",
-			poolAssets: []types.PoolAsset{
+			poolAssets: []PoolAsset{
 				{
 					Token: sdk.NewInt64Coin("aaa", 100),
 				},
@@ -37,7 +36,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 		},
 		{
 			name: "some coins deposited",
-			poolAssets: []types.PoolAsset{
+			poolAssets: []PoolAsset{
 				{
 					Token: sdk.NewInt64Coin("aaa", 100),
 				},
@@ -57,7 +56,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 		},
 		{
 			name: "limited by smallest amount",
-			poolAssets: []types.PoolAsset{
+			poolAssets: []PoolAsset{
 				{
 					Token: sdk.NewInt64Coin("aaa", 100),
 				},
@@ -77,7 +76,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 		},
 		{
 			name: "right number of LP shares",
-			poolAssets: []types.PoolAsset{
+			poolAssets: []PoolAsset{
 				{
 					Token: sdk.NewInt64Coin("aaa", 50),
 				},
@@ -98,15 +97,15 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := types.Pool{
+			pool := Pool{
 				Id:          1,
 				Address:     "some_address",
-				PoolParams:  types.PoolParams{},
+				PoolParams:  PoolParams{},
 				PoolAssets:  tc.poolAssets,
 				TotalWeight: sdk.OneInt(),
 				TotalShares: sdk.NewInt64Coin("matrix/pool/1", tc.existingShares),
 			}
-			numShares, remCoins, _ := maximalSharesFromExactRatioJoin(pool, tc.tokensIn)
+			numShares, remCoins, _ := pool.maximalSharesFromExactRatioJoin(tc.tokensIn)
 			require.Equal(t, tc.expectedNumShares, numShares)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
 		})

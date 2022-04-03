@@ -1,9 +1,8 @@
-package math
+package types
 
 import (
 	"errors"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -24,12 +23,12 @@ ret:
   - remCoins: the remaining number of coins after adding the tokens
 
 */
-func maximalSharesFromExactRatioJoin(pool types.Pool, tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
+func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
 	coinShareRatios := make([]sdk.Dec, len(tokensIn), len(tokensIn))
 	minShareRatio := sdk.MaxSortableDec
 	maxShareRatio := sdk.ZeroDec()
 
-	poolLiquidity := types.GetPoolLiquidity(pool.PoolAssets)
+	poolLiquidity := GetPoolLiquidity(pool.PoolAssets)
 
 	for i, coin := range tokensIn {
 		shareRatio := coin.Amount.ToDec().QuoInt(poolLiquidity.AmountOfNoDenomValidation(coin.Denom))
