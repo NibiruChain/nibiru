@@ -7,16 +7,16 @@ import (
 )
 
 // Validates a PoolAsset amount and weights.
-func (pa PoolAsset) Validate() error {
-	if pa.Token.Amount.LTE(sdk.ZeroInt()) {
+func (poolAsset PoolAsset) Validate() error {
+	if poolAsset.Token.Amount.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("can't add the zero or negative balance of token")
 	}
 
-	if pa.Weight.LTE(sdk.ZeroInt()) {
+	if poolAsset.Weight.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("a token's weight in the pool must be greater than 0")
 	}
 
-	if pa.Weight.GTE(MaxUserSpecifiedWeight.MulRaw(GuaranteedWeightPrecision)) {
+	if poolAsset.Weight.GTE(MaxUserSpecifiedWeight.MulRaw(GuaranteedWeightPrecision)) {
 		return fmt.Errorf("a token's weight in the pool must be less than 1^50")
 	}
 
