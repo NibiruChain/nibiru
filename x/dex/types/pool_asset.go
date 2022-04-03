@@ -22,3 +22,17 @@ func (poolAsset PoolAsset) Validate() error {
 
 	return nil
 }
+
+/*
+Returns all of the coins contained in the pool's assets.
+
+ret:
+  - coins: the coin denoms and amounts that the pool contains, aka the pool total liquidity
+*/
+func GetPoolLiquidity(poolAssets []PoolAsset) (coins sdk.Coins) {
+	coins = sdk.Coins{}
+	for _, asset := range poolAssets {
+		coins = coins.Add(asset.Token)
+	}
+	return coins
+}
