@@ -1,4 +1,4 @@
-// Module for minting USDM  Minting USDM
+// Package keeper Module for minting USDM  Minting USDM
 // See Example B of https://docs.frax.finance/minting-and-redeeming
 package keeper
 
@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Truncates a decimal (sdk.Dec) to convert it into an integer (sdk.Int).
+// AsInt Truncates a decimal (sdk.Dec) to convert it into an integer (sdk.Int).
 func AsInt(dec sdk.Dec) sdk.Int {
 	sdkInt18 := sdk.NewIntFromBigInt(dec.BigInt())
 	var ten18 sdk.Int = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("1").BigInt())

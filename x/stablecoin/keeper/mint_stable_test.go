@@ -133,7 +133,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       types.NoCoinFound.Wrap(common.GovDenom),
+			err:       types.NotEnoughBalance.Wrap(common.GovDenom),
 		}, {
 			name: "User has no COLL",
 			accFunds: sdk.NewCoins(
@@ -149,7 +149,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       types.NoCoinFound.Wrap(common.CollDenom),
+			err:       types.NotEnoughBalance.Wrap(common.CollDenom),
 		},
 		{
 			name: "Not enough GOV",
