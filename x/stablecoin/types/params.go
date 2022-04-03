@@ -40,7 +40,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 // Validate validates the set of params
-func (p Params) Validate() error {
+func (p *Params) Validate() error {
 	return validateCollRatio(p.CollRatio)
 }
 
