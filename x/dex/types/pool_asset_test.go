@@ -70,3 +70,45 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 	}
 
 }
+
+func TestPoolAssetGetLiquidity(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		poolAssets        []PoolAsset
+		expectedLiquidity sdk.Coins
+	}{
+		{
+			name: "get liquidity",
+			poolAssets: []PoolAsset{
+				{
+					Token:  sdk.NewInt64Coin("aaa", 1),
+					Weight: sdk.NewInt(1),
+				},
+				{
+					Token:  sdk.NewInt64Coin("bbb", 2),
+					Weight: sdk.NewInt(1),
+				},
+				{
+					Token:  sdk.NewInt64Coin("ccc", 3),
+					Weight: sdk.NewInt(1),
+				},
+				{
+					Token:  sdk.NewInt64Coin("ddd", 4),
+					Weight: sdk.NewInt(1),
+				},
+			},
+			expectedLiquidity: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 1),
+				sdk.NewInt64Coin("bbb", 2),
+				sdk.NewInt64Coin("ccc", 3),
+				sdk.NewInt64Coin("ddd", 4),
+			),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expectedLiquidity, GetPoolLiquidity(tc.poolAssets))
+		})
+	}
+
+}
