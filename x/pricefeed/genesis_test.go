@@ -5,8 +5,8 @@ import (
 
 	"github.com/MatrixDao/matrix/x/pricefeed"
 	"github.com/MatrixDao/matrix/x/pricefeed/types"
-	keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
 	"github.com/MatrixDao/matrix/x/testutil/nullify"
+	"github.com/MatrixDao/matrix/x/testutil/testkeeper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +17,7 @@ func TestGenesis(t *testing.T) {
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
-	k, ctx := keepertest.PricefeedKeeper(t)
+	k, ctx := testkeeper.PricefeedKeeper(t)
 	pricefeed.InitGenesis(ctx, k, genesisState)
 	got := pricefeed.ExportGenesis(ctx, k)
 	require.NotNil(t, got)

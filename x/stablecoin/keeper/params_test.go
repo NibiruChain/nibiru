@@ -11,6 +11,7 @@ import (
 func TestGetParams(t *testing.T) {
 	matrixApp, ctx := testutil.NewMatrixApp()
 	stableKeeper := &matrixApp.StablecoinKeeper
+
 	params := types.DefaultParams()
 
 	stableKeeper.SetParams(ctx, params)
