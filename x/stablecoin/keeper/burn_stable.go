@@ -5,10 +5,12 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/MatrixDao/matrix/x/common"
+	"github.com/MatrixDao/matrix/x/stablecoin/events"
+	"github.com/MatrixDao/matrix/x/stablecoin/types"
 )
 
 func (k Keeper) BurnStable(
@@ -16,7 +18,7 @@ func (k Keeper) BurnStable(
 ) (*types.MsgBurnStableResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	toAddr, err := sdk.AccAddressFromBech32(msg.Creator)
+	msgCreator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, err
 	}
@@ -49,10 +51,11 @@ func (k Keeper) BurnStable(
 	// Send USDM from account to module
 	stablesToBurn := sdk.NewCoins(msg.Stable)
 	err = k.bankKeeper.SendCoinsFromAccountToModule(
-		ctx, toAddr, types.ModuleName, stablesToBurn)
+		ctx, msgCreator, types.ModuleName, stablesToBurn)
 	if err != nil {
 		return nil, err
 	}
+	events.EmitTransfer(ctx, msg.Stable, msgCreator.String(), types.ModuleName)
 
 	// Mint GOV that will later be sent to the user.
 	collToSend := sdk.NewCoin(common.CollDenom, redeemColl)
@@ -63,12 +66,16 @@ func (k Keeper) BurnStable(
 	if err != nil {
 		panic(err)
 	}
+	events.EmitMintMtrx(ctx, govToSend)
 
 	// Send tokens (GOV and COLL) to the account
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, toAddr, coinsNeededToSend)
+		ctx, types.ModuleName, msgCreator, coinsNeededToSend)
 	if err != nil {
 		panic(err)
+	}
+	for _, coin := range coinsNeededToSend {
+		events.EmitTransfer(ctx, coin, types.ModuleName, msgCreator.String())
 	}
 
 	// Burn the USDM
@@ -76,6 +83,7 @@ func (k Keeper) BurnStable(
 	if err != nil {
 		panic(err)
 	}
+	events.EmitBurnStable(ctx, msg.Stable)
 
 	return &types.MsgBurnStableResponse{Collateral: collToSend, Gov: govToSend}, nil
 }

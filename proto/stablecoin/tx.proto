@@ -9,12 +9,14 @@ option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 // Msg defines the Msg service.
 service Msg {
       rpc MintStable(MsgMintStable) returns (MsgMintStableResponse);
+      rpc BurnStable(MsgBurnStable) returns (MsgBurnStableResponse);
 }
 
-// Msg to mint USDM: User deposits MTRX and collateral and gets USDM in return.
-/* MsgMintStable allows users to deposits MTRX and collateral in return for USDM. The amount of USDM 
-* received depends on the current price set by the pricefeed library and the current collateral ratio
-* for the protocol.*/
+/* 
+MsgMintStable: Msg to mint USDM. A user deposits MTRX and collateral and gets 
+USDM in return. The amount of USDM received depends on the current price set 
+by the pricefeed library and the current collateral ratio for the protocol.
+*/
 message MsgMintStable {
   string creator = 1;
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
