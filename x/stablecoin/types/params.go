@@ -29,7 +29,7 @@ func DefaultParams() Params {
 }
 
 // ParamSetPairs get the params.ParamSet
-func (p Params) ParamSetPairs() paramtypes.ParamSetPairs {
+func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(
 			[]byte("CollRatio"),
