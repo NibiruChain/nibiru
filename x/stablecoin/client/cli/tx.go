@@ -2,16 +2,14 @@ package cli
 
 import (
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cobra"
 )
 
-func NewTxCmd() *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Generalized automated market maker transaction subcommands",
@@ -21,17 +19,21 @@ func NewTxCmd() *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		NewMintStableCmd(),
-		NewBurnStableCmd(),
+		MintStableCmd(),
+		BurnStableCmd(),
 	)
 
 	return txCmd
 }
 
-func NewMintStableCmd() *cobra.Command {
+/*
+MintStableCmd is a CLI command that mints Matrix stablecoins.
+Example: "mint-sc 100usdm"
+*/
+func MintStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint-sc [token-in]",
-		Short: "Mint Matrix stablecoin subcommands",
+		Short: "Mint Matrix stablecoin",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -41,7 +43,7 @@ func NewMintStableCmd() *cobra.Command {
 
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			txf, msg, err := NewBuildMintMsg(clientCtx, args[0], txf, cmd.Flags())
+			msg, err := NewBuildMintMsg(clientCtx, args[0])
 			if err != nil {
 				return err
 			}
@@ -59,12 +61,12 @@ func NewMintStableCmd() *cobra.Command {
 NewBuildMintMsg
 */
 func NewBuildMintMsg(
-	clientCtx client.Context, tokenInStr string, txf tx.Factory, fs *flag.FlagSet,
-) (tx.Factory, sdk.Msg, error) {
+	clientCtx client.Context, tokenInStr string,
+) (sdk.Msg, error) {
 
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 	if err != nil {
-		return txf, nil, err
+		return nil, err
 	}
 
 	msg := &types.MsgMintStable{
@@ -72,10 +74,10 @@ func NewBuildMintMsg(
 		Stable:  tokenIn,
 	}
 
-	return txf, msg, nil
+	return msg, nil
 }
 
-func NewBurnStableCmd() *cobra.Command {
+func BurnStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn-sc [token-in]",
 		Short: "Burn Matrix stablecoin commands",
@@ -88,7 +90,7 @@ func NewBurnStableCmd() *cobra.Command {
 
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			txf, msg, err := NewBuildBurnMsg(clientCtx, args[0], txf, cmd.Flags())
+			msg, err := NewBuildBurnMsg(clientCtx, args[0])
 			if err != nil {
 				return err
 			}
@@ -103,11 +105,11 @@ func NewBurnStableCmd() *cobra.Command {
 }
 
 func NewBuildBurnMsg(
-	clientCtx client.Context, tokenInStr string, txf tx.Factory, fs *flag.FlagSet,
-) (tx.Factory, sdk.Msg, error) {
+	clientCtx client.Context, tokenInStr string,
+) (sdk.Msg, error) {
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 	if err != nil {
-		return txf, nil, err
+		return nil, err
 	}
 
 	msg := &types.MsgBurnStable{
@@ -115,5 +117,5 @@ func NewBuildBurnMsg(
 		Stable:  tokenIn,
 	}
 
-	return txf, msg, nil
+	return msg, nil
 }
