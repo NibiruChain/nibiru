@@ -13,7 +13,7 @@ what proportion of collateral and governance token is used during stablecoin min
 and burns.
 */
 
-/* GetCollRatio queries the 'collRatio'. */
+// GetCollRatio queries the 'collRatio'.
 func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
 	return sdk.NewInt(k.GetParams(ctx).CollRatio).ToDec().QuoInt64(1_000_000)
 }
@@ -21,7 +21,7 @@ func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
 /*
 SetCollRatio manually sets the 'collRatio'. This method is mainly used for
 testing. When the chain is live, the collateral ratio cannot be manually set, only
-adjusted by a fixed amount (0.25%).
+adjusted by a fixed amount (e.g. 0.25%).
 */
 func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	collRatioTooHigh := collRatio.GT(sdk.OneDec())
