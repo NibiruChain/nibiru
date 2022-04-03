@@ -15,7 +15,7 @@ and burns.
 
 // GetCollRatio queries the 'collRatio'.
 func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
-	return sdk.NewInt(k.GetParams(ctx).CollRatio).ToDec().QuoInt64(1_000_000)
+	return sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1_000_000)
 }
 
 /*
