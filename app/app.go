@@ -19,6 +19,9 @@ import (
 	"github.com/MatrixDao/matrix/x/dex"
 	dexkeeper "github.com/MatrixDao/matrix/x/dex/keeper"
 	dextypes "github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/MatrixDao/matrix/x/lockup"
+	lockupkeeper "github.com/MatrixDao/matrix/x/lockup/keeper"
+	lockuptypes "github.com/MatrixDao/matrix/x/lockup/types"
 	pricekeeper "github.com/MatrixDao/matrix/x/pricefeed/keeper"
 	pricetypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	stablekeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
@@ -130,6 +133,7 @@ var (
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		dex.AppModuleBasic{},
+		lockup.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -142,6 +146,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		dextypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		stabletypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
+		lockuptypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -183,6 +188,7 @@ type MatrixApp struct {
 	DexKeeper        dexkeeper.Keeper
 	StablecoinKeeper stablekeeper.Keeper
 	PriceKeeper      pricekeeper.Keeper
+	LockupKeeper     lockupkeeper.LockupKeeper
 
 	// the module manager
 	mm *module.Manager
@@ -226,6 +232,7 @@ func NewMatrixApp(
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
 		dextypes.StoreKey, pricetypes.StoreKey, stabletypes.StoreKey,
+		lockuptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -329,6 +336,10 @@ func NewMatrixApp(
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
 	)
 
+	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
+		keys[lockuptypes.StoreKey], app.AccountKeeper, app.BankKeeper,
+		app.DistrKeeper)
+
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
@@ -336,6 +347,7 @@ func NewMatrixApp(
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	dexModule := dex.NewAppModule(appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
+	lockupModule := lockup.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -360,6 +372,7 @@ func NewMatrixApp(
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		dexModule,
+		lockupModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -373,6 +386,7 @@ func NewMatrixApp(
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName, dextypes.ModuleName,
+		lockuptypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -381,6 +395,7 @@ func NewMatrixApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, dextypes.ModuleName,
+		lockuptypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -394,6 +409,7 @@ func NewMatrixApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, dextypes.ModuleName,
+		lockuptypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
