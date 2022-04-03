@@ -22,7 +22,7 @@ type Keeper struct {
 	priceKeeper   types.PriceKeeper
 }
 
-// Creates a new x/stablecoin Keeper instance.
+// NewKeeper Creates a new x/stablecoin Keeper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
