@@ -7,7 +7,6 @@ import (
 )
 
 // CheckEnoughBalance
-// TODO Tests
 func (k Keeper) _checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) error {
 	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
 	for _, coin := range accCoins {
@@ -15,6 +14,8 @@ func (k Keeper) _checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc s
 			hasEnoughBalance := coin.Amount.GTE(coinToSpend.Amount)
 			if hasEnoughBalance {
 				return nil
+			} else {
+				break
 			}
 		}
 	}
@@ -22,7 +23,6 @@ func (k Keeper) _checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc s
 }
 
 // CheckEnoughBalances
-// TODO Tests
 func (k Keeper) CheckEnoughBalances(ctx sdk.Context, coins sdk.Coins, fromAddr sdk.AccAddress) error {
 	for _, coin := range coins {
 		err := k._checkEnoughBalance(ctx, coin, fromAddr)
