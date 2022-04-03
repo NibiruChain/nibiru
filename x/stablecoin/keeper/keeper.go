@@ -22,6 +22,7 @@ type Keeper struct {
 	priceKeeper   types.PriceKeeper
 }
 
+// NewKeeper Creates a new x/stablecoin Keeper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
@@ -32,18 +33,26 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	priceKeeper types.PriceKeeper,
 ) Keeper {
-	// set KeyTable if it has not already been set
+
+	// Ensure that the module account is set.
+	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
+		panic("The stablecoin module account has not been set")
+	}
+
+	// Set param.types.'KeyTable' if it has not already been set
 	if !paramSubspace.HasKeyTable() {
 		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
 	}
 
 	return Keeper{
-
 		cdc:           cdc,
 		storeKey:      storeKey,
 		memKey:        memKey,
 		ParamSubspace: paramSubspace,
-		accountKeeper: accountKeeper, bankKeeper: bankKeeper, priceKeeper: priceKeeper,
+
+		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
+		priceKeeper:   priceKeeper,
 	}
 }
 

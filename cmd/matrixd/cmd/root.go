@@ -66,7 +66,8 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			cmd.SetOut(cmd.OutOrStdout())
 			cmd.SetErr(cmd.ErrOrStderr())
 
-			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
+			initClientCtx, err := client.ReadPersistentCommandFlags(
+				initClientCtx, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -76,13 +77,16 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
-			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
+			if err := client.SetCmdClientContextHandler(
+				initClientCtx, cmd,
+			); err != nil {
 				return err
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
 
-			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig)
+			return server.InterceptConfigsPreRunHandler(
+				cmd, customAppTemplate, customAppConfig)
 		},
 	}
 
@@ -241,6 +245,8 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 		dexcmd.GetTxCmd(),
+		sccmd.MintStableCmd(),
+		sccmd.BurnStableCmd(),
 	)
 
 	simapp.ModuleBasics.AddTxCommands(cmd)
