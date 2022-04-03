@@ -1,4 +1,4 @@
-package types
+package types // noalias
 
 import (
 	pftypes "github.com/MatrixDao/matrix/x/pricefeed/types"
@@ -9,8 +9,10 @@ import (
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
+	GetModuleAddress(name string) sdk.AccAddress
+	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
-	// Methods imported from account should be defined here
+	SetAccount(sdk.Context, types.AccountI)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -25,4 +27,11 @@ type BankKeeper interface {
 
 type PriceKeeper interface {
 	GetCurrentPrice(sdk.Context, string) (pftypes.CurrentPrice, error)
+	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
+	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
+	GetMarket(ctx sdk.Context, marketID string) (pftypes.Market, bool)
+	GetMarkets(ctx sdk.Context) pftypes.Markets
+	GetOracle(ctx sdk.Context, marketID string, address sdk.AccAddress) (sdk.AccAddress, error)
+	GetOracles(ctx sdk.Context, marketID string) ([]sdk.AccAddress, error)
+	SetCurrentPrices(ctx sdk.Context, marketID string) error
 }
