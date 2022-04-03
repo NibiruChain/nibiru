@@ -7,15 +7,14 @@ import (
 )
 
 // GetParams get all parameters as types.Params
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	var scParams types.Params
-	k.paramstore.GetParamSet(ctx, &scParams)
-	return scParams
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.ParamSubspace.GetParamSet(ctx, &params)
+	return params
 }
 
 // SetParams set the params
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramstore.SetParamSet(ctx, &params)
+	k.ParamSubspace.SetParamSet(ctx, &params)
 }
 
 func (k Keeper) CheckEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) (bool, error) {

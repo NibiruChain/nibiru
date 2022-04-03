@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	//keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
