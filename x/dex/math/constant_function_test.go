@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConstantProductInvariatn(t *testing.T) {
+func TestSolveConstantProductInvariantHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
 		xPrior         sdk.Dec
@@ -19,7 +19,7 @@ func TestConstantProductInvariatn(t *testing.T) {
 	}{
 		{
 			// 100*(1-(100/200)^(.50/.50))
-			name:           "simple swap - happy path",
+			name:           "simple numbers",
 			xPrior:         sdk.NewDec(100),
 			xAfter:         sdk.NewDec(200),
 			xWeight:        sdk.NewDecWithPrec(5, 1),
@@ -29,7 +29,7 @@ func TestConstantProductInvariatn(t *testing.T) {
 		},
 		{
 			// 33*(1-(33/50)^(.50/.50))
-			name:           "simple swap - difficult numbers",
+			name:           "difficult numbers",
 			xPrior:         sdk.NewDec(33),
 			xAfter:         sdk.NewDec(50),
 			xWeight:        sdk.NewDecWithPrec(5, 1),
@@ -39,7 +39,7 @@ func TestConstantProductInvariatn(t *testing.T) {
 		},
 		{
 			// 44*(1-(86/35)^(.75/.25))
-			name:           "simple swap - difficult numbers",
+			name:           "difficult numbers - uneven weights",
 			xPrior:         sdk.NewDec(86),
 			xAfter:         sdk.NewDec(35),
 			xWeight:        sdk.NewDecWithPrec(75, 2),
