@@ -1,4 +1,4 @@
-package types
+package types // noalias
 
 import (
 	pftypes "github.com/MatrixDao/matrix/x/pricefeed/types"
@@ -9,8 +9,10 @@ import (
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
+	GetModuleAddress(name string) sdk.AccAddress
+	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
-	// Methods imported from account should be defined here
+	SetAccount(sdk.Context, types.AccountI)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
