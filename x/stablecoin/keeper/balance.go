@@ -6,8 +6,8 @@ import (
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 )
 
-// CheckEnoughBalance
-func (k Keeper) _checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) error {
+// checkEnoughBalance
+func (k Keeper) checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) error {
 	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
 	for _, coin := range accCoins {
 		if coin.Denom == coinToSpend.Denom {
@@ -22,13 +22,14 @@ func (k Keeper) _checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc s
 	return types.NotEnoughBalance.Wrap(coinToSpend.String())
 }
 
-// CheckEnoughBalances
-func (k Keeper) CheckEnoughBalances(ctx sdk.Context, coins sdk.Coins, fromAddr sdk.AccAddress) error {
+// CheckEnoughBalances checks if account address has enough balance of coins.
+func (k Keeper) CheckEnoughBalances(ctx sdk.Context, coins sdk.Coins, account sdk.AccAddress) error {
 	for _, coin := range coins {
-		err := k._checkEnoughBalance(ctx, coin, fromAddr)
+		err := k.checkEnoughBalance(ctx, coin, account)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

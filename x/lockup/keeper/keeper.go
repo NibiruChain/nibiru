@@ -21,7 +21,7 @@ type LockupKeeper struct {
 	dk types.DistrKeeper
 }
 
-// NewKeeper returns an instance of Keeper.
+// NewLockupKeeper returns an instance of Keeper.
 func NewLockupKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak types.AccountKeeper,
 	bk types.BankKeeper, dk types.DistrKeeper) LockupKeeper {
 	return LockupKeeper{
@@ -51,7 +51,7 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	return lock, nil
 }
 
-// Lock is a utility to lock coins into module account.
+// lock is a utility to lock coins into module account.
 func (k LockupKeeper) lock(ctx sdk.Context, lock types.Lock) (err error) {
 	owner, err := sdk.AccAddressFromBech32(lock.Owner)
 	if err != nil {
