@@ -6,14 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// AsInt Truncates a decimal (sdk.Dec) to convert it into an integer (sdk.Int).
-func AsInt(dec sdk.Dec) sdk.Int {
-	sdkInt18 := sdk.NewIntFromBigInt(dec.BigInt())
-	var ten18 sdk.Int = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("1").BigInt())
-	sdkInt := sdkInt18.Quo(sdk.OneInt().Mul(ten18))
-	return sdkInt
-}
-
 // Computes the amount of MTRX needed to mint USDM given some COLL amount.
 // Args:
 //   collAmt sdk.Int: Amount of COLL given.
@@ -24,11 +16,11 @@ func NeededGovAmtGivenColl(
 	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededGovAmt sdk.Int, mintableStableAmt sdk.Int) {
 
-	collUSD := sdk.NewDecFromInt(collAmt).Mul(priceColl)
+	collUSD := collAmt.ToDec().Mul(priceColl)
 	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
 
-	neededGovAmt = AsInt(neededGovUSD.Quo(priceGov))
-	mintableStableAmt = AsInt(collUSD.Add(neededGovUSD))
+	neededGovAmt = neededGovUSD.Quo(priceGov).TruncateInt()
+	mintableStableAmt = collUSD.Add(neededGovUSD).TruncateInt()
 	return neededGovAmt, mintableStableAmt
 }
 
@@ -46,7 +38,7 @@ func NeededCollAmtGivenGov(
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)
 
-	neededCollAmt = AsInt(neededCollUSD.Quo(priceColl))
-	mintableStableAmt = AsInt(govUSD.Add(neededCollUSD))
+	neededCollAmt = neededCollUSD.Quo(priceColl).TruncateInt()
+	mintableStableAmt = govUSD.Add(neededCollUSD).TruncateInt()
 	return neededCollAmt, mintableStableAmt
 }
