@@ -1,6 +1,9 @@
 package app
 
 import (
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/std"
 )
@@ -16,4 +19,13 @@ func MakeTestEncodingConfig() simappparams.EncodingConfig {
 	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
+}
+
+// EncodingConfig specifies the concrete encoding types to use for a given app.
+// This is provided for compatibility between protobuf and amino implementations.
+type EncodingConfig struct {
+	InterfaceRegistry types.InterfaceRegistry
+	Marshaler         codec.Codec
+	TxConfig          client.TxConfig
+	Amino             *codec.LegacyAmino
 }
