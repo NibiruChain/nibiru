@@ -90,15 +90,6 @@ else
   echo_error "Failed to collect genesis txs"
 fi
 
-echo_info "Adding genesis parameters..."
-
-if cat $CHAIN_DIR/$CHAIN_ID/config/genesis.json | jq '.app_state["dex"]["params"]["startingPoolNumber"]=1' > $CHAIN_DIR/$CHAIN_ID/config/tmp_genesis.json && mv $CHAIN_DIR/$CHAIN_ID/config/tmp_genesis.json $CHAIN_DIR/$CHAIN_ID/config/genesis.json; then
-  echo_success "Successfully added genesis parameters"
-else
-  echo_error "Failed to generate genesis parameters"
-  exit 1
-fi
-
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
 echo_info "Log file is located at $CHAIN_DIR/$CHAIN_ID.log"
