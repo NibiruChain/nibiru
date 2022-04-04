@@ -3,7 +3,6 @@ package cli_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/MatrixDao/matrix/app"
 	"github.com/gogo/protobuf/proto"
@@ -109,12 +108,10 @@ func (s IntegrationTestSuite) TestMintCmd() {
 				pricefeedtypes.MsgPostPrice{
 					MarketID: common.CollDenom,
 					Price:    sdk.MustNewDecFromStr("1.0"),
-					Expiry:   time.Now().Add(1 * time.Hour),
 				},
 				pricefeedtypes.MsgPostPrice{
 					MarketID: common.GovDenom,
 					Price:    sdk.MustNewDecFromStr("10.0"),
-					Expiry:   time.Now().Add(1 * time.Hour),
 				},
 			},
 			false, &sdk.TxResponse{}, 0,
@@ -138,14 +135,16 @@ func (s IntegrationTestSuite) TestMintCmd() {
 			ppQuery := ppQuery
 
 			fmt.Println("Posting prices : ")
-			fmt.Println([]string{ppQuery.MarketID, ppQuery.Price.String(), ppQuery.Expiry.String(), "--from=oracle"})
 			fmt.Println("--------------------------------")
-			out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, postPricecmd, []string{ppQuery.MarketID, ppQuery.Price.String(), ppQuery.Expiry.String(), "--from=val"})
+			out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, postPricecmd, []string{ppQuery.MarketID, ppQuery.Price.String(), "253402300799", "--from=oracle", "--keyring-backend=test", "-y"})
 			fmt.Println(out)
 			s.Require().NoError(err)
 
 			// post-price [market-id] [price] [expiry]
 		}
+
+		_, err := s.network.WaitForHeight(2)
+		s.Require().NoError(err)
 
 		fmt.Println("Prices ::------------------------------------------------------------------------------------------------")
 		out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, pricefeedcli.CmdPrices(), []string{})
