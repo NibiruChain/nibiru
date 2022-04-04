@@ -69,3 +69,23 @@ func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares 
 
 	return numShares, remCoins, nil
 }
+
+/*
+Adds new liquidity to the pool and increments the total number of shares.
+
+args:
+  - numShares: the number of LP shares to increment
+  - newLiquidity: the new tokens to deposit into the pool
+*/
+func (pool *Pool) updateLiquidity(numShares sdk.Int, newLiquidity sdk.Coins) (err error) {
+	for _, coin := range newLiquidity {
+		i, poolAsset, err := getPoolAssetAndIndex(pool.PoolAssets, coin.Denom)
+		if err != nil {
+			return err
+		}
+		poolAsset.Token.Amount = poolAsset.Token.Amount.Add(coin.Amount)
+		pool.PoolAssets[i] = poolAsset
+	}
+	pool.TotalShares.Amount = pool.TotalShares.Amount.Add(numShares)
+	return nil
+}
