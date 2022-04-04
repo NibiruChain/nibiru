@@ -74,7 +74,6 @@ func (p *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 Creates a new pool and sets the initial assets.
 
 args:
-  ctx: the cosmos-sdk context
   poolId: the pool numeric id
   poolAccountAddr: the pool's account address for holding funds
   poolParams: pool configuration options
@@ -85,7 +84,6 @@ ret:
   err: error if any
 */
 func NewPool(
-	ctx sdk.Context,
 	poolId uint64,
 	poolAccountAddr sdk.Address,
 	poolParams PoolParams,
