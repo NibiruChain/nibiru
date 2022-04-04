@@ -22,11 +22,11 @@ ret:
 */
 func getPoolAssetAndIndex(poolAssets []PoolAsset, denom string) (index int, poolAsset PoolAsset, err error) {
 	if denom == "" {
-		return -1, PoolAsset{}, fmt.Errorf("empty denom.")
+		return -1, PoolAsset{}, fmt.Errorf("empty denom")
 	}
 
 	if len(poolAssets) == 0 {
-		return -1, PoolAsset{}, fmt.Errorf("empty pool assets.")
+		return -1, PoolAsset{}, fmt.Errorf("empty pool assets")
 	}
 
 	// binary search for the asset. poolAssets must be sorted.
