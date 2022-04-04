@@ -32,10 +32,10 @@ func getPoolAssetAndIndex(poolAssets []PoolAsset, denom string) (index int, pool
 	// binary search for the asset. poolAssets must be sorted.
 	i := sort.Search(len(poolAssets), func(i int) bool {
 		compare := strings.Compare(poolAssets[i].Token.Denom, denom)
-		return compare == 0
+		return compare >= 0
 	})
 
-	if i < 0 || i >= len(poolAssets) {
+	if i < 0 || i >= len(poolAssets) || poolAssets[i].Token.Denom != denom {
 		return -1, PoolAsset{}, fmt.Errorf("Did not find the PoolAsset (%s)", denom)
 	}
 
