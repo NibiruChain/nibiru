@@ -116,7 +116,7 @@ func (s IntegrationTestSuite) fillWalletFromValidator(walletAddress string, bala
 func (s IntegrationTestSuite) TestMintCmd() {
 	val := s.network.Validators[0]
 
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	minterAddr := info.GetPubKey().Address().String()
 	s.fillWalletFromValidator(minterAddr, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 20000), sdk.NewInt64Coin("uusdm", 1000000000)), val)
@@ -124,9 +124,10 @@ func (s IntegrationTestSuite) TestMintCmd() {
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
+		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
+	fmt.Println(info.GetAddress().String())
 
 	testCases := []struct {
 		name string
@@ -137,11 +138,13 @@ func (s IntegrationTestSuite) TestMintCmd() {
 		expectedCode uint32
 	}{
 		{
-			"Mint correct amount", // matrixd tx stablecoin mint 100uusdm --from=validator --keyring-backend=test --chain-id=testing --yes
-			append([]string{
+			name: "Mint correct amount",
+			args: append([]string{
 				"10000000uusdm",
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter")}, commonArgs...),
-			false, &sdk.TxResponse{}, 0,
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter2")}, commonArgs...),
+			expectErr:    false,
+			respType:     &sdk.TxResponse{},
+			expectedCode: 0,
 		},
 	}
 
@@ -151,8 +154,10 @@ func (s IntegrationTestSuite) TestMintCmd() {
 		s.Run(tc.name, func() {
 			cmd := cli.MintStableCmd()
 			clientCtx := val.ClientCtx
+			fmt.Println(tc.args)
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			fmt.Println(out)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
