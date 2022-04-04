@@ -18,9 +18,9 @@ func TestGenesis(t *testing.T) {
 	}
 
 	matrixApp, ctx := testutil.NewMatrixApp()
-	k := &matrixApp.StablecoinKeeper
-	stablecoin.InitGenesis(ctx, *k, genesisState)
-	got := stablecoin.ExportGenesis(ctx, *k)
+	k := matrixApp.StablecoinKeeper
+	stablecoin.InitGenesis(ctx, k, genesisState)
+	got := stablecoin.ExportGenesis(ctx, k)
 	require.NotNil(t, got)
 
 	nullify.Fill(&genesisState)

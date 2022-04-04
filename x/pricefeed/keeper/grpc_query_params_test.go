@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/MatrixDao/matrix/x/pricefeed/types"
-	testkeeper "github.com/MatrixDao/matrix/x/testutil/keeper"
+	"github.com/MatrixDao/matrix/x/testutil/testkeeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
