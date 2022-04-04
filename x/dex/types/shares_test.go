@@ -17,81 +17,51 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 		expectedRemCoins  sdk.Coins
 	}{
 		{
-			name: "all coins deposited",
-			poolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 100),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 100),
-				},
-			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 100),
-				sdk.NewInt64Coin("bbb", 100),
-			),
-			expectedNumShares: sdk.NewInt(100),
-			expectedRemCoins:  sdk.NewCoins(),
-		},
-		{
 			name: "some coins deposited",
 			poolAssets: []PoolAsset{
 				{
 					Token: sdk.NewInt64Coin("aaa", 100),
 				},
 				{
-					Token: sdk.NewInt64Coin("bbb", 100),
+					Token: sdk.NewInt64Coin("bbb", 200),
 				},
 			},
 			existingShares: 100,
+			// limiting coin is 'bbb' which accounts for 5% of pool 'bbb'
+			// so all 'bbb' tokens should be taken
+			// and exactly 5 'aaa' tokens should be taken
+			// but osmosis' math takes only 1 'aaa' token
 			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 100),
-				sdk.NewInt64Coin("bbb", 50),
+				sdk.NewInt64Coin("aaa", 10),
+				sdk.NewInt64Coin("bbb", 10),
 			),
-			expectedNumShares: sdk.NewInt(50),
+			expectedNumShares: sdk.NewInt(5),
 			expectedRemCoins: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("aaa", 5),
 			),
 		},
 		{
 			name: "limited by smallest amount",
 			poolAssets: []PoolAsset{
 				{
-					Token: sdk.NewInt64Coin("aaa", 100),
+					Token: sdk.NewInt64Coin("aaa", 1000),
 				},
 				{
-					Token: sdk.NewInt64Coin("bbb", 100),
+					Token: sdk.NewInt64Coin("bbb", 1000),
 				},
 			},
-			existingShares: 100,
+			existingShares: 1000,
+			// limiting coin is 'aaa' which accounts for 1% of pool 'aaa'
+			// so all 'aaa' tokens should be taken
+			// and exactly 10 'bbb' tokens should be taken
+			// but osmosis' math takes only 1 'bbb' token
 			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 1),
+				sdk.NewInt64Coin("aaa", 10),
 				sdk.NewInt64Coin("bbb", 50),
 			),
-			expectedNumShares: sdk.NewInt(1),
+			expectedNumShares: sdk.NewInt(10),
 			expectedRemCoins: sdk.NewCoins(
-				sdk.NewInt64Coin("bbb", 49),
-			),
-		},
-		{
-			name: "right number of LP shares",
-			poolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 50),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 100),
-				},
-			},
-			existingShares: 150,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 50),
-				sdk.NewInt64Coin("bbb", 50),
-			),
-			expectedNumShares: sdk.NewInt(75),
-			expectedRemCoins: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 25),
+				sdk.NewInt64Coin("bbb", 40),
 			),
 		},
 	} {
