@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: Add test cases for negative real numbers.
 func TestAsInt(t *testing.T) {
 	testCases := []struct {
 		name   string
@@ -32,6 +31,11 @@ func TestAsInt(t *testing.T) {
 			inDec:  sdk.MustNewDecFromStr("9.999"),
 			outInt: sdk.NewInt(9),
 		},
+		{
+			name:   "Negative precision loss",
+			inDec:  sdk.MustNewDecFromStr("-4.9999999999999"),
+			outInt: sdk.NewInt(-4),
+		},
 	}
 	for _, testCase := range testCases {
 		tc := testCase
@@ -40,7 +44,6 @@ func TestAsInt(t *testing.T) {
 			require.Equal(t, tc.outInt, sdkInt)
 		})
 	}
-
 }
 
 func TestMint_NeededCollAmtGivenGov(t *testing.T) {
