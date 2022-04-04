@@ -3,6 +3,7 @@ package cli_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/MatrixDao/matrix/app"
 	"github.com/gogo/protobuf/proto"
@@ -14,17 +15,19 @@ import (
 	"github.com/MatrixDao/matrix/x/common"
 	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
 
-	pricefeedcli "github.com/MatrixDao/matrix/x/pricefeed/client/cli"
 	pricefeedtypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	keycli "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+)
+
+const (
+	oracleAddress = "matrix17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
 )
 
 type IntegrationTestSuite struct {
@@ -36,17 +39,51 @@ type IntegrationTestSuite struct {
 
 type MsgPostPrices []pricefeedtypes.MsgPostPrice
 
+func NewPricefeedGen() *pricefeedtypes.GenesisState {
+	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+
+	return &pricefeedtypes.GenesisState{
+		Params: pricefeedtypes.Params{
+			Markets: []pricefeedtypes.Market{
+				{MarketID: common.GovPricePool, BaseAsset: common.GovDenom,
+					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle}, Active: true},
+				{MarketID: common.CollPricePool, BaseAsset: common.StableDenom,
+					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle}, Active: true},
+			},
+		},
+		PostedPrices: []pricefeedtypes.PostedPrice{
+			{
+				MarketID:      common.GovPricePool,
+				OracleAddress: oracle,
+				Price:         sdk.MustNewDecFromStr("10.00"),
+				Expiry:        time.Now().Add(1 * time.Hour),
+			},
+			{
+				MarketID:      common.CollPricePool,
+				OracleAddress: oracle,
+				Price:         sdk.MustNewDecFromStr("1"),
+				Expiry:        time.Now().Add(1 * time.Hour),
+			},
+		},
+	}
+}
+
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	s.cfg = utils.DefaultConfig()
 
 	// modification to pay fee with test bond denom "stake"
+	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 	gammGen := stabletypes.DefaultGenesis()
 
 	gammGenJson := s.cfg.Codec.MustMarshalJSON(gammGen)
+	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
+
 	genesisState[stabletypes.ModuleName] = gammGenJson
+	genesisState[pricefeedtypes.ModuleName] = pricefeedGenJson
+
 	s.cfg.GenesisState = genesisState
 
 	s.network = network.New(s.T(), s.cfg)
@@ -61,12 +98,9 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 // Create a new wallet and try to fill the wallet with the require balance. Tokens are sent by the validator
-func (s IntegrationTestSuite) createWallet(name string, balance sdk.Coins, val *network.Validator) sdk.AccAddress {
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic(name, keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
-
-	newAddr := sdk.AccAddress(info.GetPubKey().Address())
-	_, err = banktestutil.MsgSendExec(
+func (s IntegrationTestSuite) fillWalletFromValidator(walletAddress string, balance sdk.Coins, val *network.Validator) sdk.AccAddress {
+	newAddr := sdk.AccAddress(walletAddress)
+	_, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
 		newAddr,
@@ -82,74 +116,37 @@ func (s IntegrationTestSuite) createWallet(name string, balance sdk.Coins, val *
 func (s IntegrationTestSuite) TestMintCmd() {
 	val := s.network.Validators[0]
 
-	minterAddr := s.createWallet("minter", sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 20000), sdk.NewInt64Coin("usdm", 1000)), val)
-	s.createWallet("oracle", sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 20000)), val)
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	minterAddr := info.GetPubKey().Address().String()
+	s.fillWalletFromValidator(minterAddr, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 20000), sdk.NewInt64Coin("uusdm", 1000000000)), val)
+
+	commonArgs := []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	}
 
 	testCases := []struct {
-		name       string
-		args       []string
-		postPrices MsgPostPrices
+		name string
+		args []string
 
 		expectErr    bool
 		respType     proto.Message
 		expectedCode uint32
 	}{
 		{
-			"Mint correct amount", // matrixd tx stablecoin mint 100usdm --from=validator --keyring-backend=test --chain-id=testing --yes
-			[]string{
-				"100usdm",
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, minterAddr),
-				// common args
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
-			},
-			MsgPostPrices{
-				pricefeedtypes.MsgPostPrice{
-					MarketID: common.CollDenom,
-					Price:    sdk.MustNewDecFromStr("1.0"),
-				},
-				pricefeedtypes.MsgPostPrice{
-					MarketID: common.GovDenom,
-					Price:    sdk.MustNewDecFromStr("10.0"),
-				},
-			},
+			"Mint correct amount", // matrixd tx stablecoin mint 100uusdm --from=validator --keyring-backend=test --chain-id=testing --yes
+			append([]string{
+				"10000000uusdm",
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter")}, commonArgs...),
 			false, &sdk.TxResponse{}, 0,
 		},
 	}
 
 	for _, tc := range testCases {
 		tc := tc
-
-		fmt.Println("----------------------------------------------------------------------------")
-
-		keys_list_cmd := keycli.ListKeysCmd()
-		outt, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, keys_list_cmd, []string{})
-
-		fmt.Println(outt)
-
-		fmt.Println("----------------------------------------------------------------------------")
-
-		postPricecmd := pricefeedcli.CmdPostPrice()
-		for _, ppQuery := range tc.postPrices {
-			ppQuery := ppQuery
-
-			fmt.Println("Posting prices : ")
-			fmt.Println("--------------------------------")
-			out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, postPricecmd, []string{ppQuery.MarketID, ppQuery.Price.String(), "253402300799", "--from=oracle", "--keyring-backend=test", "-y"})
-			fmt.Println(out)
-			s.Require().NoError(err)
-
-			// post-price [market-id] [price] [expiry]
-		}
-
-		_, err := s.network.WaitForHeight(2)
-		s.Require().NoError(err)
-
-		fmt.Println("Prices ::------------------------------------------------------------------------------------------------")
-		out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, pricefeedcli.CmdPrices(), []string{})
-		fmt.Println(out)
-		s.Require().NoError(err)
 
 		s.Run(tc.name, func() {
 			cmd := cli.MintStableCmd()
