@@ -45,8 +45,10 @@ func (k Keeper) BurnStable(
 	collRatio, _ := sdk.NewDecFromStr("0.9")
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 
-	redeemColl := AsInt(sdk.NewDecFromInt(msg.Stable.Amount).Mul(collRatio).Quo(priceColl.Price))
-	redeemGov := AsInt(sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio).Quo(priceGov.Price))
+	redeemColl := msg.Stable.Amount.ToDec().Mul(collRatio).Quo(
+		priceColl.Price).TruncateInt()
+	redeemGov := msg.Stable.Amount.ToDec().Mul(govRatio).Quo(
+		priceGov.Price).TruncateInt()
 
 	// Send USDM from account to module
 	stablesToBurn := sdk.NewCoins(msg.Stable)
