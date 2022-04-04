@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	fmt "fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -104,4 +105,33 @@ func NewPool(
 	}
 
 	return pool, nil
+}
+
+/*
+Adds tokens to a pool and updates the pool balances (i.e. liquidity).
+
+args:
+  - tokensIn: the tokens to add to the pool
+
+ret:
+  - numShares: the number of LP shares given to the user for the deposit
+  - remCoins: the number of coins remaining after the deposit
+  - err: error if any
+*/
+func (pool *Pool) JoinPool(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
+	if tokensIn.Len() != len(pool.PoolAssets) {
+		return sdk.ZeroInt(), sdk.NewCoins(), errors.New("wrong number of assets to deposit into the pool")
+	}
+
+	// Add all exact coins we can (no swap)
+	numShares, remCoins, err = pool.maximalSharesFromExactRatioJoin(tokensIn)
+	if err != nil {
+		return sdk.ZeroInt(), sdk.NewCoins(), err
+	}
+
+	if err := pool.updateLiquidity(numShares, tokensIn.Sub(remCoins)); err != nil {
+		return sdk.ZeroInt(), sdk.NewCoins(), err
+	}
+
+	return numShares, remCoins, nil
 }
