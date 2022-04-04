@@ -1,5 +1,8 @@
-// Package keeper for minting USDM  Minting USDM
-// See Example B of https://docs.frax.finance/minting-and-redeeming
+/*
+Package keeper that mints Matrix stablecoins, maintains their price stability,
+and ensures that the protocol remains collateralized enough for stablecoins to
+be redeemed.
+*/
 package keeper
 
 import (
@@ -11,9 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// MintStable mints stable coins given collateral and governance
-// govDeposited: Units of GOV burned
-// govDeposited = (1 - collRatio) * (collDeposited * 1) / (collRatio * priceGOV)
+// MintStable mints stable coins given collateral (COLL) and governance (GOV)
 func (k Keeper) MintStable(
 	goCtx context.Context, msg *types.MsgMintStable,
 ) (*types.MsgMintStableResponse, error) {
@@ -42,12 +43,12 @@ func (k Keeper) MintStable(
 	collRatio, _ := sdk.NewDecFromStr("0.9")
 	govRatio := sdk.OneDec().Sub(collRatio)
 
-	neededCollUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(collRatio)
-	neededCollAmt := AsInt(neededCollUSD.Quo(priceColl.Price))
+	neededCollUSD := msg.Stable.Amount.ToDec().Mul(collRatio)
+	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
 	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
 
-	neededGovUSD := sdk.NewDecFromInt(msg.Stable.Amount).Mul(govRatio)
-	neededGovAmt := AsInt(neededGovUSD.Quo(priceGov.Price))
+	neededGovUSD := msg.Stable.Amount.ToDec().Mul(govRatio)
+	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
 	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
@@ -57,7 +58,7 @@ func (k Keeper) MintStable(
 		return nil, err
 	}
 
-	err = k.vaultCollateralCoins(ctx, msgCreator, coinsNeededToMint)
+	err = k.sendInputCoinsToModule(ctx, msgCreator, coinsNeededToMint)
 	if err != nil {
 		panic(err)
 	}
@@ -80,9 +81,11 @@ func (k Keeper) MintStable(
 	return &types.MsgMintStableResponse{Stable: msg.Stable}, nil
 }
 
-// vaultCollateralCoins transfer selected coins from address to module account vault
-func (k Keeper) vaultCollateralCoins(ctx sdk.Context, msgCreator sdk.AccAddress, coins sdk.Coins) error {
-	err := k.bankKeeper.SendCoinsFromAccountToModule(
+// sendInputCoinsToModule sends coins from the 'msg.Creator' to the module account
+func (k Keeper) sendInputCoinsToModule(
+	ctx sdk.Context, msgCreator sdk.AccAddress, coins sdk.Coins,
+) (err error) {
+	err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgCreator, types.ModuleName, coins)
 	if err != nil {
 		return err
@@ -96,7 +99,9 @@ func (k Keeper) vaultCollateralCoins(ctx sdk.Context, msgCreator sdk.AccAddress,
 }
 
 // sendMintedTokensToUser sends coins minted in Module Account to address to
-func (k Keeper) sendMintedTokensToUser(ctx sdk.Context, to sdk.AccAddress, stable sdk.Coin) error {
+func (k Keeper) sendMintedTokensToUser(
+	ctx sdk.Context, to sdk.AccAddress, stable sdk.Coin,
+) error {
 	err := k.bankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, to, sdk.NewCoins(stable))
 	if err != nil {

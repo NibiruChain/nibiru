@@ -34,7 +34,9 @@ func (k Keeper) GetOracles(ctx sdk.Context, marketID string) ([]sdk.AccAddress, 
 }
 
 // GetOracle returns the oracle from the store or an error if not found
-func (k Keeper) GetOracle(ctx sdk.Context, marketID string, address sdk.AccAddress) (sdk.AccAddress, error) {
+func (k Keeper) GetOracle(
+	ctx sdk.Context, marketID string, address sdk.AccAddress,
+) (sdk.AccAddress, error) {
 	oracles, err := k.GetOracles(ctx, marketID)
 	if err != nil {
 		// Error already wrapped
