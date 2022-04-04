@@ -24,7 +24,7 @@ ret:
 
 */
 func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
-	coinShareRatios := make([]sdk.Dec, len(tokensIn), len(tokensIn))
+	coinShareRatios := make([]sdk.Dec, len(tokensIn))
 	minShareRatio := sdk.MaxSortableDec
 	maxShareRatio := sdk.ZeroDec()
 
