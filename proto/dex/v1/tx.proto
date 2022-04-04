@@ -4,13 +4,17 @@ package matrix.dex.v1;
 import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // Used to create a pool
+  // Used to create a pool.
   rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse);
+
+  // Join a pool as a liquidity provider.
+  rpc JoinPool(MsgJoinPool) returns (MsgJoinPoolResponse);
 }
 
 message MsgCreatePool {
@@ -24,3 +28,22 @@ message MsgCreatePool {
 message MsgCreatePoolResponse {
   uint64 poolId = 1;
 }
+
+message MsgJoinPool {
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+
+  uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+
+  string shareOutAmount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"pool_amount_out\"",
+    (gogoproto.nullable) = false
+  ];
+
+  repeated cosmos.base.v1beta1.Coin maxTokensIn = 4 [
+    (gogoproto.moretags) = "yaml:\"max_tokens_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgJoinPoolResponse {}

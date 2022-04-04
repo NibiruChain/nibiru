@@ -7,6 +7,5 @@ option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 
 // Params defines the parameters for the module.
 message Params {
-  option (gogoproto.goproto_stringer) = false;
-  
+  int64 collRatio = 1;
 }

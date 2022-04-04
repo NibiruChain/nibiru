@@ -6,14 +6,14 @@ import (
 
 	"github.com/MatrixDao/matrix/x/pricefeed/keeper"
 	"github.com/MatrixDao/matrix/x/pricefeed/types"
-	keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/MatrixDao/matrix/x/testutil/testkeeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPostPrice(t *testing.T) {
-	k, ctx := keepertest.PricefeedKeeper(t)
+	k, ctx := testkeeper.PricefeedKeeper(t)
 	msgSrv := keeper.NewMsgServerImpl(k)
 
 	_, addrs := sample.PrivKeyAddressPairs(4)
