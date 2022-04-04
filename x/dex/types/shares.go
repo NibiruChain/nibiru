@@ -57,7 +57,8 @@ func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares 
 		// we have to calculate remCoins
 		for i, coin := range tokensIn {
 			if !coinShareRatios[i].Equal(minShareRatio) {
-				usedAmount := minShareRatio.MulInt(coin.Amount).Ceil().TruncateInt()
+				usedAmount := minShareRatio.MulInt(
+					poolLiquidity.AmountOfNoDenomValidation(coin.Denom)).Ceil().TruncateInt()
 				remainingAmount := coin.Amount.Sub(usedAmount)
 				// add to RemCoins
 				if !remainingAmount.IsZero() {

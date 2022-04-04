@@ -75,6 +75,26 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 			),
 		},
 		{
+			name: "limited by smallest amount - 2",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 200),
+				},
+			},
+			existingShares: 100,
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 10),
+				sdk.NewInt64Coin("bbb", 10),
+			),
+			expectedNumShares: sdk.NewInt(5),
+			expectedRemCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 5),
+			),
+		},
+		{
 			name: "right number of LP shares",
 			poolAssets: []PoolAsset{
 				{
