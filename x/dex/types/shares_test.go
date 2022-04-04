@@ -154,8 +154,8 @@ func TestUpdateLiquidityHappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.pool.updateLiquidity(tc.numShares, tc.newLiquidity)
 			require.NoError(t, err)
-			require.Equal(t, tc.pool.TotalShares.Amount, tc.expectedNumShares)
-			require.Equal(t, tc.pool.PoolAssets, tc.expectedNewPoolAssets)
+			require.Equal(t, tc.expectedNumShares, tc.pool.TotalShares.Amount)
+			require.Equal(t, tc.expectedNewPoolAssets, tc.pool.PoolAssets)
 		})
 	}
 }
