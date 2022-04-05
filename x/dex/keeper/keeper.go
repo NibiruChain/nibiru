@@ -151,25 +151,15 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (types.Pool, error) {
 
 /*
 Writes a pool to the state.
+Panics if the pool proto could not be marshalled.
 
-args
-  ctx: the cosmos-sdk context
-  Pool: a Pool proto object
-
-ret
-  error: an error if any occurred
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the Pool proto object
 */
-func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) error {
-	bz, err := pool.Marshal()
-	if err != nil {
-		return err
-	}
-
+func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
-	poolKey := types.GetKeyPrefixPools(pool.Id)
-	store.Set(poolKey, bz)
-
-	return nil
+	store.Set(types.GetKeyPrefixPools(pool.Id), k.cdc.MustMarshal(&pool))
 }
 
 /*
@@ -276,10 +266,7 @@ func (k Keeper) NewPool(
 		Symbol:  poolShareDisplayDenom,
 	})
 
-	if err = k.SetPool(ctx, pool); err != nil {
-		return 0, err
-	}
-
+	k.SetPool(ctx, pool)
 	k.RecordTotalLiquidityIncrease(ctx, coins)
 
 	return poolId, nil

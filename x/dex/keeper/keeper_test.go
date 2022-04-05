@@ -63,8 +63,7 @@ func TestSetAndFetchPool(t *testing.T) {
 		TotalShares: sdk.NewInt64Coin("matrix/pool/150", 100),
 	}
 
-	err := app.DexKeeper.SetPool(ctx, pool)
-	require.NoError(t, err)
+	app.DexKeeper.SetPool(ctx, pool)
 
 	retrievedPool, err := app.DexKeeper.FetchPool(ctx, 150)
 	require.NoError(t, err)
