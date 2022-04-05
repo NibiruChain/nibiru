@@ -8,6 +8,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/MatrixDao/matrix/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,6 +69,35 @@ func (k Keeper) SetPrice(
 
 	store := ctx.KVStore(k.storeKey)
 
+	newRawPrice := types.NewPostedPrice(marketID, oracle, price, expiry)
+
+	// Emit an event containing the oracle's new price
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOracleUpdatedPrice,
+			sdk.NewAttribute(types.AttributeMarketID, marketID),
+			sdk.NewAttribute(types.AttributeOracle, oracle.String()),
+			sdk.NewAttribute(types.AttributeMarketPrice, price.String()),
+			sdk.NewAttribute(types.AttributeExpiry, expiry.UTC().String()),
+		),
+	)
+
+	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
+	store.Set(types.RawPriceKey(marketID, oracle), k.cdc.MustMarshal(&newRawPrice))
+	return newRawPrice, nil
+}
+
+// SimSetPrice simulate SetPrice without needing an oracle and for one hour
+func (k Keeper) SimSetPrice(
+	ctx sdk.Context,
+	marketID string,
+	price sdk.Dec) (types.PostedPrice, error) {
+	// If the expiry is less than or equal to the current blockheight, we consider the price valid
+
+	store := ctx.KVStore(k.storeKey)
+	expiry := ctx.BlockTime().UTC().Add(time.Hour * 1)
+
+	oracle := sample.AccAddress()
 	newRawPrice := types.NewPostedPrice(marketID, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
@@ -187,6 +217,12 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, marketID string) (types.Current
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
 	return price, nil
+}
+
+// GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
+// TODO: Replace this with actual TWAP logic
+func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, marketID string) (types.CurrentPrice, error) {
+	return k.GetCurrentPrice(ctx, marketID)
 }
 
 // IterateCurrentPrices iterates over all current price objects in the store and performs a callback function
