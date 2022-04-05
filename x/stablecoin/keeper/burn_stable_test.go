@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -347,9 +346,6 @@ func TestMsgBurnResponse_supply(t *testing.T) {
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
-
-			fmt.Println(matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
-			fmt.Println(matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
 
 			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
 			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
