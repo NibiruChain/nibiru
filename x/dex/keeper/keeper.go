@@ -72,8 +72,8 @@ args
 */
 func (k Keeper) SetNextPoolNumber(ctx sdk.Context, poolNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: poolNumber})
-	store.Set(types.KeyNextGlobalPoolNumber, bz)
+	store.Set(types.KeyNextGlobalPoolNumber,
+		k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: poolNumber}))
 }
 
 /*
@@ -86,25 +86,14 @@ args
 ret
   uint64: a pool id number
 */
-func (k Keeper) GetNextPoolNumber(ctx sdk.Context) uint64 {
-	var poolNumber uint64
-	store := ctx.KVStore(k.storeKey)
-
-	bz := store.Get(types.KeyNextGlobalPoolNumber)
+func (k Keeper) GetNextPoolNumber(ctx sdk.Context) (poolNumber uint64) {
+	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
 	if bz == nil {
 		panic(fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis"))
-	} else {
-		val := gogotypes.UInt64Value{}
-
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-
-		poolNumber = val.GetValue()
 	}
-
-	return poolNumber
+	val := gogotypes.UInt64Value{}
+	k.cdc.MustUnmarshal(bz, &val)
+	return val.GetValue()
 }
 
 /*
