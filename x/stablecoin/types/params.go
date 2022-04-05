@@ -15,17 +15,18 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(collRatio sdk.Dec) Params {
+func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec) Params {
 	collRatioInt := collRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
+	feeRationInt := feeRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
 
-	// TODO: Verify collRatio is an integer in a test.
-	return Params{CollRatio: collRatioInt.Int64()}
+	return Params{CollRatio: collRatioInt.Int64(), FeeRatio: feeRationInt.Int64()}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	genesisCollRatio := sdk.MustNewDecFromStr("1")
-	return NewParams(genesisCollRatio)
+	feeRatio := sdk.MustNewDecFromStr("0.002")
+	return NewParams(genesisCollRatio, feeRatio)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -41,18 +42,44 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Validate validates the set of params
 func (p *Params) Validate() error {
-	return validateCollRatio(p.CollRatio)
+	err := validateCollRatio(p.CollRatio)
+	if err != nil {
+		return err
+	}
+
+	return validateFeeRatio(p.FeeRatio)
 }
 
 func validateCollRatio(i interface{}) error {
-	collRatio, ok := i.(int64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+	collRatio, err := getAsInt64(i)
+	if err != nil {
+		return err
 	}
 
 	if collRatio > 1_000_000 {
-		return fmt.Errorf("collateral Ratio is above max value(1e6): %o", collRatio)
+		return fmt.Errorf("collateral Ratio is above max value(1e6): %d", collRatio)
 	} else {
 		return nil
 	}
+}
+
+func validateFeeRatio(i interface{}) error {
+	feeRatio, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if feeRatio > 1_000_000 {
+		return fmt.Errorf("fee Ratio is above max value(1e6): %d", feeRatio)
+	} else {
+		return nil
+	}
+}
+
+func getAsInt64(i interface{}) (int64, error) {
+	value, ok := i.(int64)
+	if !ok {
+		return 0, fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return value, nil
 }

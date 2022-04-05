@@ -50,8 +50,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
-
-	type TestCase struct {
+	testCases := []struct {
 		name        string
 		accFunds    sdk.Coins
 		msgMint     types.MsgMintStable
@@ -59,65 +58,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 		govPrice    sdk.Dec
 		collPrice   sdk.Dec
 		err         error
-	}
-
-	executeTest := func(t *testing.T, testCase TestCase) {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-
-			matrixApp, ctx := testutil.NewMatrixApp()
-			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
-			oracle := sample.AccAddress()
-
-			// Set up markets for the pricefeed keeper.
-			priceKeeper := &matrixApp.PriceKeeper
-			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-				}}
-			priceKeeper.SetParams(ctx, pfParams)
-
-			// Post prices to each market with the oracle.
-			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovPricePool, tc.govPrice, priceExpiry,
-			)
-			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
-			)
-			require.NoError(t, err)
-
-			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
-				require.NoError(t, err, "Error posting price for market: %d", market)
-			}
-
-			// Fund account
-			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
-			require.NoError(t, err)
-
-			// Mint USDM -> Response contains Stable (sdk.Coin)
-			goCtx := sdk.WrapSDKContext(ctx)
-			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
-				goCtx, &tc.msgMint)
-
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-				return
-			}
-
-			require.NoError(t, err)
-			testutil.RequireEqualWithMessage(
-				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
-		})
-	}
-
-	testCases := []TestCase{
+	}{
 		{
 			name: "User has no GOV",
 			accFunds: sdk.NewCoins(
@@ -204,7 +145,59 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			err:       nil,
 		},
 	}
+
 	for _, testCase := range testCases {
-		executeTest(t, testCase)
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			matrixApp, ctx := testutil.NewMatrixApp()
+			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
+			oracle := sample.AccAddress()
+
+			// Set up markets for the pricefeed keeper.
+			priceKeeper := &matrixApp.PriceKeeper
+			pfParams := pricefeedTypes.Params{
+				Markets: []pricefeedTypes.Market{
+					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+				}}
+			priceKeeper.SetParams(ctx, pfParams)
+
+			// Post prices to each market with the oracle.
+			priceExpiry := ctx.BlockTime().Add(time.Hour)
+			_, err := priceKeeper.SetPrice(
+				ctx, oracle, common.GovPricePool, tc.govPrice, priceExpiry,
+			)
+			require.NoError(t, err)
+			_, err = priceKeeper.SetPrice(
+				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
+			)
+			require.NoError(t, err)
+
+			// Update the 'CurrentPrice' posted by the oracles.
+			for _, market := range pfParams.Markets {
+				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+				require.NoError(t, err, "Error posting price for market: %d", market)
+			}
+
+			// Fund account
+			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
+			require.NoError(t, err)
+
+			// Mint USDM -> Response contains Stable (sdk.Coin)
+			goCtx := sdk.WrapSDKContext(ctx)
+			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
+				goCtx, &tc.msgMint)
+
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+				return
+			}
+
+			require.NoError(t, err)
+			testutil.RequireEqualWithMessage(
+				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
+		})
 	}
 }

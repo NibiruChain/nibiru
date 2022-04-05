@@ -7,7 +7,6 @@ package keeper
 
 import (
 	"context"
-
 	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/events"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
@@ -18,7 +17,6 @@ import (
 func (k Keeper) MintStable(
 	goCtx context.Context, msg *types.MsgMintStable,
 ) (*types.MsgMintStableResponse, error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	msgCreator, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -42,14 +40,21 @@ func (k Keeper) MintStable(
 	// TODO: Initialize these two vars based on the collateral ratio of the protocol.
 	collRatio, _ := sdk.NewDecFromStr("0.9")
 	govRatio := sdk.OneDec().Sub(collRatio)
+	feeRatio, _ := sdk.NewDecFromStr("0.002")
 
 	neededCollUSD := msg.Stable.Amount.ToDec().Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
 	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
+	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
+	collFee := sdk.NewCoin(common.CollDenom, collFeeAmt)
+	neededColl = neededColl.Sub(collFee)
 
 	neededGovUSD := msg.Stable.Amount.ToDec().Mul(govRatio)
 	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
 	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
+	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
+	govFee := sdk.NewCoin(common.GovDenom, govFeeAmt)
+	neededGov = neededGov.Sub(govFee)
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
 
