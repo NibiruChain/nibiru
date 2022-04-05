@@ -5,7 +5,6 @@ import (
 
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/nullify"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -63,14 +62,9 @@ func TestSetAndFetchPool(t *testing.T) {
 		TotalShares: sdk.NewInt64Coin("matrix/pool/150", 100),
 	}
 
-	err := app.DexKeeper.SetPool(ctx, pool)
-	require.NoError(t, err)
+	app.DexKeeper.SetPool(ctx, pool)
 
-	retrievedPool, err := app.DexKeeper.FetchPool(ctx, 150)
-	require.NoError(t, err)
-
-	nullify.Fill(pool)
-	nullify.Fill(retrievedPool)
+	retrievedPool := app.DexKeeper.FetchPool(ctx, 150)
 
 	require.Equal(t, pool, retrievedPool)
 }
@@ -109,8 +103,7 @@ func TestNewPool(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	retrievedPool, err := app.DexKeeper.FetchPool(ctx, poolId)
-	require.NoError(t, err)
+	retrievedPool := app.DexKeeper.FetchPool(ctx, poolId)
 
 	require.Equal(t, types.Pool{
 		Id:      1,
