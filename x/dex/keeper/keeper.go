@@ -72,8 +72,8 @@ args
 */
 func (k Keeper) SetNextPoolNumber(ctx sdk.Context, poolNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: poolNumber})
-	store.Set(types.KeyNextGlobalPoolNumber, bz)
+	store.Set(types.KeyNextGlobalPoolNumber,
+		k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: poolNumber}))
 }
 
 /*
@@ -86,25 +86,14 @@ args
 ret
   uint64: a pool id number
 */
-func (k Keeper) GetNextPoolNumber(ctx sdk.Context) uint64 {
-	var poolNumber uint64
-	store := ctx.KVStore(k.storeKey)
-
-	bz := store.Get(types.KeyNextGlobalPoolNumber)
+func (k Keeper) GetNextPoolNumber(ctx sdk.Context) (poolNumber uint64) {
+	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
 	if bz == nil {
 		panic(fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis"))
-	} else {
-		val := gogotypes.UInt64Value{}
-
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-
-		poolNumber = val.GetValue()
 	}
-
-	return poolNumber
+	val := gogotypes.UInt64Value{}
+	k.cdc.MustUnmarshal(bz, &val)
+	return val.GetValue()
 }
 
 /*
@@ -126,50 +115,32 @@ func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
 /*
 Fetches a pool by id number.
 Does not modify state.
+Panics if the bytes could not be unmarshalled to a Pool proto object.
 
 args
   ctx: the cosmos-sdk context
   poolId: the pool id number
 
 ret
-  Pool: a Pool proto object
-  error: an error if any occurred
+  pool: a Pool proto object
 */
-func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (types.Pool, error) {
+func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
-	poolKey := types.GetKeyPrefixPools(poolId)
-	bz := store.Get(poolKey)
-
-	var pool types.Pool
-	err := pool.Unmarshal(bz)
-	if err != nil {
-		return types.Pool{}, err
-	}
-
-	return pool, nil
+	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
+	return pool
 }
 
 /*
 Writes a pool to the state.
+Panics if the pool proto could not be marshalled.
 
-args
-  ctx: the cosmos-sdk context
-  Pool: a Pool proto object
-
-ret
-  error: an error if any occurred
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the Pool proto object
 */
-func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) error {
-	bz, err := pool.Marshal()
-	if err != nil {
-		return err
-	}
-
+func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
-	poolKey := types.GetKeyPrefixPools(pool.Id)
-	store.Set(poolKey, bz)
-
-	return nil
+	store.Set(types.GetKeyPrefixPools(pool.Id), k.cdc.MustMarshal(&pool))
 }
 
 /*
@@ -276,10 +247,7 @@ func (k Keeper) NewPool(
 		Symbol:  poolShareDisplayDenom,
 	})
 
-	if err = k.SetPool(ctx, pool); err != nil {
-		return 0, err
-	}
-
+	k.SetPool(ctx, pool)
 	k.RecordTotalLiquidityIncrease(ctx, coins)
 
 	return poolId, nil

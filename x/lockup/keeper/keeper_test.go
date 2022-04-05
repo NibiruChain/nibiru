@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"testing"
 	"time"
 
@@ -64,4 +65,54 @@ func TestCreateLock(t *testing.T) {
 
 		})
 	}
+}
+
+func TestLockupKeeper_UnlockTokens(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		app, _ := testutil.NewMatrixApp()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
+
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		lock, err := app.LockupKeeper.LockTokens(ctx, addr, coins, time.Second*1000)
+		require.NoError(t, err)
+
+		// unlock coins
+		ctx = app.NewContext(false, tmproto.Header{Time: ctx.BlockTime().Add(lock.Duration + 1*time.Second)}) // instantiate a new context with oldBlockTime+lock duration+1 second
+
+		unlockedCoins, err := app.LockupKeeper.UnlockTokens(ctx, lock.LockId)
+		require.NoError(t, err)
+
+		require.Equal(t, lock.Coins, unlockedCoins)
+
+		// assert cleanups
+		_, err = app.LockupKeeper.UnlockTokens(ctx, lock.LockId)
+		require.ErrorIs(t, err, types.ErrLockupNotFound)
+	})
+
+	t.Run("lock not found", func(t *testing.T) {
+		app, ctx := testutil.NewMatrixApp()
+
+		_, err := app.LockupKeeper.UnlockTokens(ctx, 1)
+		require.ErrorIs(t, err, types.ErrLockupNotFound)
+	})
+
+	t.Run("lock not matured", func(t *testing.T) {
+		app, _ := testutil.NewMatrixApp()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
+
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		lock, err := app.LockupKeeper.LockTokens(ctx, addr, coins, time.Second*1000)
+		require.NoError(t, err)
+
+		_, err = app.LockupKeeper.UnlockTokens(ctx, lock.LockId) // we use the same ctx which means lock up duration did not mature yet
+		require.ErrorIs(t, err, types.ErrLockEndTime)
+	})
 }
