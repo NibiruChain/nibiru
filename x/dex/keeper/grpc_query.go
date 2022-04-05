@@ -49,9 +49,7 @@ func (k Keeper) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*types
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	pool := k.FetchPool(ctx, req.PoolId)
+	pool := k.FetchPool(sdk.UnwrapSDKContext(goCtx), req.PoolId)
 
 	return &types.QueryPoolResponse{
 		Pool: &pool,
