@@ -164,6 +164,8 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
+			matrixApp.StablecoinKeeper.SetParams(ctx, types.DefaultParams())
+
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
@@ -203,8 +205,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 }
 
 func TestMsgMintStableResponse_Supply(t *testing.T) {
-
-	type TestCase struct {
+	tests := []struct {
 		name        string
 		accFunds    sdk.Coins
 		msgMint     types.MsgMintStable
@@ -214,10 +215,30 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 		supplyMtrx  sdk.Coin
 		supplyUsdm  sdk.Coin
 		err         error
+	}{
+		{
+			name: "Successful mint",
+			accFunds: sdk.NewCoins(
+				sdk.NewCoin(common.GovDenom, sdk.NewInt(10_020)),   // Plus fees DenomAmt + (DenomAmount * 0,002)
+				sdk.NewCoin(common.CollDenom, sdk.NewInt(901_800)), // Plus fees CollAmt + (CollAmt * 0,002)
+			),
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			},
+			msgResponse: types.MsgMintStableResponse{
+				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			},
+			govPrice:   sdk.MustNewDecFromStr("10"),
+			collPrice:  sdk.MustNewDecFromStr("1"),
+			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(20)), // 10_000 - 20 (neededAmt - fees)
+			supplyUsdm: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			err:        nil,
+		},
 	}
 
-	executeTest := func(t *testing.T, testCase TestCase) {
-		tc := testCase
+	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp()
@@ -234,6 +255,7 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
+			matrixApp.StablecoinKeeper.SetParams(ctx, types.DefaultParams())
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -275,28 +297,4 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 		})
 	}
 
-	testCases := []TestCase{
-		{
-			name: "Successful mint",
-			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(9001)),
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(9001)),
-			),
-			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
-			},
-			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
-			},
-			govPrice:   sdk.MustNewDecFromStr("10"),
-			collPrice:  sdk.MustNewDecFromStr("1"),
-			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(9000)),
-			supplyUsdm: sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
-			err:        nil,
-		},
-	}
-	for _, testCase := range testCases {
-		executeTest(t, testCase)
-	}
 }

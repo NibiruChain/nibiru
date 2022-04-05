@@ -37,6 +37,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&p.CollRatio,
 			validateCollRatio,
 		),
+		paramtypes.NewParamSetPair(
+			[]byte("FeeRatio"),
+			&p.FeeRatio,
+			validateFeeRatio,
+		),
 	}
 }
 
@@ -48,6 +53,11 @@ func (p *Params) Validate() error {
 	}
 
 	return validateFeeRatio(p.FeeRatio)
+}
+
+func (p *Params) GetFeeRatioAsDec() sdk.Dec {
+	feeRatio := sdk.NewIntFromUint64(uint64(p.FeeRatio)).ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return feeRatio
 }
 
 func validateCollRatio(i interface{}) error {

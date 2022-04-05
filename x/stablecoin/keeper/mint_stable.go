@@ -40,7 +40,9 @@ func (k Keeper) MintStable(
 	// TODO: Initialize these two vars based on the collateral ratio of the protocol.
 	collRatio, _ := sdk.NewDecFromStr("0.9")
 	govRatio := sdk.OneDec().Sub(collRatio)
-	feeRatio, _ := sdk.NewDecFromStr("0.002")
+
+	params := k.GetParams(ctx)
+	feeRatio := params.GetFeeRatioAsDec()
 
 	neededCollUSD := msg.Stable.Amount.ToDec().Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
