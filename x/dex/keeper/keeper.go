@@ -126,27 +126,19 @@ func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
 /*
 Fetches a pool by id number.
 Does not modify state.
+Panics if the bytes could not be unmarshalled to a Pool proto object.
 
 args
   ctx: the cosmos-sdk context
   poolId: the pool id number
 
 ret
-  Pool: a Pool proto object
-  error: an error if any occurred
+  pool: a Pool proto object
 */
-func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (types.Pool, error) {
+func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
-	poolKey := types.GetKeyPrefixPools(poolId)
-	bz := store.Get(poolKey)
-
-	var pool types.Pool
-	err := pool.Unmarshal(bz)
-	if err != nil {
-		return types.Pool{}, err
-	}
-
-	return pool, nil
+	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
+	return pool
 }
 
 /*
