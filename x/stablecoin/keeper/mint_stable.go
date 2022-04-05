@@ -45,18 +45,19 @@ func (k Keeper) MintStable(
 	neededCollUSD := msg.Stable.Amount.ToDec().Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
 	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
+
 	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
 	collFee := sdk.NewCoin(common.CollDenom, collFeeAmt)
-	neededColl = neededColl.Sub(collFee)
+	neededCollPlusFees := neededColl.Add(collFee)
 
 	neededGovUSD := msg.Stable.Amount.ToDec().Mul(govRatio)
 	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
 	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
 	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
 	govFee := sdk.NewCoin(common.GovDenom, govFeeAmt)
-	neededGov = neededGov.Sub(govFee)
+	neededGovPlusFees := neededGov.Add(govFee)
 
-	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
+	coinsNeededToMint := sdk.NewCoins(neededCollPlusFees, neededGovPlusFees)
 
 	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, msgCreator)
 	if err != nil {

@@ -130,15 +130,15 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 		{
 			name: "Successful mint",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(9001)),
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(9001)),
+				sdk.NewCoin(common.GovDenom, sdk.NewInt(10_020)),   // Plus fees DenomAmt + (DenomAmount * 0,002)
+				sdk.NewCoin(common.CollDenom, sdk.NewInt(901_800)), // Plus fees CollAmt + (CollAmt * 0,002)
 			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
+				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
@@ -284,7 +284,7 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
 				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
