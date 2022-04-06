@@ -212,6 +212,9 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
 				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
+
+			balances := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			require.Equal(t, mintStableResponse.FeesPayed, balances)
 		})
 	}
 }
@@ -318,6 +321,9 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 
 			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
 			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
+
+			balances := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			require.Equal(t, mintStableResponse.FeesPayed, balances)
 		})
 	}
 

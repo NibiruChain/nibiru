@@ -175,6 +175,7 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 }
 
 // sendFeesToPool sends the coins to the Stable Ecosystem Fund.
+// TODO: define what goes to treasury and what goes to Stable Ecosystem fund
 func (k Keeper) sendFeesToPool(ctx sdk.Context, account sdk.AccAddress, coins sdk.Coins) error {
 	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, coins)
 	if err != nil {
