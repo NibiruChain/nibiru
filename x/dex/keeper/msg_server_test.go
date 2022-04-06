@@ -168,11 +168,10 @@ func TestJoinPool(t *testing.T) {
 			simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds)
 
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
-			resp, err := msgServer.JoinPool(sdk.WrapSDKContext(ctx), &types.MsgJoinPool{
-				Sender:   joinerAddr.String(),
-				PoolId:   tc.initialPool.Id,
-				TokensIn: tc.tokensIn,
-			})
+			resp, err := msgServer.JoinPool(
+				sdk.WrapSDKContext(ctx),
+				types.NewMsgJoinPool(joinerAddr.String(), tc.initialPool.Id, tc.tokensIn),
+			)
 
 			require.NoError(t, err)
 			require.Equal(t, types.MsgJoinPoolResponse{
