@@ -24,42 +24,24 @@ func (k Keeper) MintStable(
 		return nil, err
 	}
 
-	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovPricePool)
-	if err != nil {
-		return nil, err
-	}
-
-	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollPricePool)
-	if err != nil {
-		return nil, err
-	}
-
-	// The user deposits a mixture of collateral and GOV tokens based on the collateral ratio.
-	// TODO: Initialize these two vars based on the collateral ratio of the protocol.
-	collRatio, _ := sdk.NewDecFromStr("0.9")
-	govRatio := sdk.OneDec().Sub(collRatio)
-
 	params := k.GetParams(ctx)
 	feeRatio := params.GetFeeRatioAsDec()
+	collRatio := params.GetCollRatioAsDec()
+	govRatio := sdk.OneDec().Sub(collRatio)
 
-	neededCollUSD := msg.Stable.Amount.ToDec().Mul(collRatio)
-	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
-	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
+	neededColl, collFees, err := k.
+		calcNeededCollateralAndFees(ctx, msg.Stable, collRatio, feeRatio)
+	if err != nil {
+		return nil, err
+	}
 
-	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
-	collFee := sdk.NewCoin(common.CollDenom, collFeeAmt)
-	neededCollPlusFees := neededColl.Add(collFee)
+	neededGov, govFees, err := k.
+		calcNeededGovAndFees(ctx, msg.Stable, govRatio, feeRatio)
+	if err != nil {
+		return nil, err
+	}
 
-	neededGovUSD := msg.Stable.Amount.ToDec().Mul(govRatio)
-	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
-	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
-	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
-	govFee := sdk.NewCoin(common.GovDenom, govFeeAmt)
-	neededGovPlusFees := neededGov.Add(govFee)
-
-	coinsNeededToMint := sdk.NewCoins(neededCollPlusFees, neededGovPlusFees)
+	coinsNeededToMint := sdk.NewCoins(neededColl.Add(collFees), neededGov.Add(govFees))
 
 	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, msgCreator)
 	if err != nil {
@@ -86,7 +68,48 @@ func (k Keeper) MintStable(
 		panic(err)
 	}
 
-	return &types.MsgMintStableResponse{Stable: msg.Stable}, nil
+	return &types.MsgMintStableResponse{
+		Stable:    msg.Stable,
+		UsedCoins: sdk.NewCoins(neededGov, neededColl),
+		FeesPayed: sdk.NewCoins(govFees, collFees),
+	}, nil
+}
+
+// calcNeededGovAndFees returns the needed governance tokens and fees
+func (k Keeper) calcNeededGovAndFees(ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec) (sdk.Coin, sdk.Coin, error) {
+	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovPricePool)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
+
+	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
+	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
+	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
+	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
+	govFee := sdk.NewCoin(common.GovDenom, govFeeAmt)
+
+	return neededGov, govFee, nil
+}
+
+// calcNeededCollateralAndFees returns the needed collateral and the collateral fees
+func (k Keeper) calcNeededCollateralAndFees(
+	ctx sdk.Context,
+	stable sdk.Coin,
+	collRatio sdk.Dec,
+	feeRatio sdk.Dec,
+) (sdk.Coin, sdk.Coin, error) {
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollPricePool)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
+
+	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
+	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
+	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
+	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
+	collFee := sdk.NewCoin(common.CollDenom, collFeeAmt)
+
+	return neededColl, collFee, nil
 }
 
 // sendInputCoinsToModule sends coins from the 'msg.Creator' to the module account
@@ -122,13 +145,13 @@ func (k Keeper) sendMintedTokensToUser(
 }
 
 // burnGovTokens burns governance coins
-func (k Keeper) burnGovTokens(ctx sdk.Context, neededGov sdk.Coin) error {
-	err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
+func (k Keeper) burnGovTokens(ctx sdk.Context, govTokens sdk.Coin) error {
+	err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(govTokens))
 	if err != nil {
 		return err
 	}
 
-	events.EmitBurnMtrx(ctx, neededGov)
+	events.EmitBurnMtrx(ctx, govTokens)
 
 	return nil
 }

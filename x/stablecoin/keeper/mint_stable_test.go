@@ -50,6 +50,16 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
+	accFundsGovAmount := sdk.NewCoin(common.GovDenom, sdk.NewInt(10_000))
+	accFundsCollAmount := sdk.NewCoin(common.CollDenom, sdk.NewInt(900_000))
+	neededGovFees := sdk.NewCoin(common.GovDenom, sdk.NewInt(20))      // 0.002 fee
+	neededCollFees := sdk.NewCoin(common.CollDenom, sdk.NewInt(1_800)) // 0.002 fee
+
+	accFundsAmt := sdk.NewCoins(
+		accFundsGovAmount.Add(neededGovFees),
+		accFundsCollAmount.Add(neededCollFees),
+	)
+
 	testCases := []struct {
 		name        string
 		accFunds    sdk.Coins
@@ -128,17 +138,16 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				sdk.NewCoin(common.CollDenom, sdk.NewInt(1)).String()),
 		},
 		{
-			name: "Successful mint",
-			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(10_020)),   // Plus fees DenomAmt + (DenomAmount * 0,002)
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(901_800)), // Plus fees CollAmt + (CollAmt * 0,002)
-			),
+			name:     "Successful mint",
+			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				Stable:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				UsedCoins: sdk.NewCoins(accFundsGovAmount, accFundsCollAmount),
+				FeesPayed: sdk.NewCoins(neededGovFees, neededCollFees),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
@@ -205,6 +214,16 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 }
 
 func TestMsgMintStableResponse_Supply(t *testing.T) {
+	accFundsGovAmount := sdk.NewCoin(common.GovDenom, sdk.NewInt(10_000))
+	accFundsCollAmount := sdk.NewCoin(common.CollDenom, sdk.NewInt(900_000))
+	neededGovFees := sdk.NewCoin(common.GovDenom, sdk.NewInt(20))      // 0.002 fee
+	neededCollFees := sdk.NewCoin(common.CollDenom, sdk.NewInt(1_800)) // 0.002 fee
+
+	accFundsAmt := sdk.NewCoins(
+		accFundsGovAmount.Add(neededGovFees),
+		accFundsCollAmount.Add(neededCollFees),
+	)
+
 	tests := []struct {
 		name        string
 		accFunds    sdk.Coins
@@ -217,17 +236,16 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 		err         error
 	}{
 		{
-			name: "Successful mint",
-			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(10_020)),   // Plus fees DenomAmt + (DenomAmount * 0,002)
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(901_800)), // Plus fees CollAmt + (CollAmt * 0,002)
-			),
+			name:     "Successful mint",
+			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				Stable:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				UsedCoins: sdk.NewCoins(accFundsCollAmount, accFundsGovAmount),
+				FeesPayed: sdk.NewCoins(neededCollFees, neededGovFees),
 			},
 			govPrice:   sdk.MustNewDecFromStr("10"),
 			collPrice:  sdk.MustNewDecFromStr("1"),

@@ -24,7 +24,7 @@ func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec) Params {
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	genesisCollRatio := sdk.MustNewDecFromStr("1")
+	genesisCollRatio := sdk.MustNewDecFromStr("0.9")
 	feeRatio := sdk.MustNewDecFromStr("0.002")
 	return NewParams(genesisCollRatio, feeRatio)
 }
@@ -58,6 +58,12 @@ func (p *Params) Validate() error {
 func (p *Params) GetFeeRatioAsDec() sdk.Dec {
 	feeRatio := sdk.NewIntFromUint64(uint64(p.FeeRatio)).ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 	return feeRatio
+}
+
+func (p *Params) GetCollRatioAsDec() sdk.Dec {
+	collRatio := sdk.NewIntFromUint64(uint64(p.CollRatio)).ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+
+	return collRatio
 }
 
 func validateCollRatio(i interface{}) error {
