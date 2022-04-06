@@ -19,6 +19,8 @@ import (
 	"github.com/MatrixDao/matrix/x/dex"
 	dexkeeper "github.com/MatrixDao/matrix/x/dex/keeper"
 	dextypes "github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/MatrixDao/matrix/x/epochs"
+	epochskeeper "github.com/MatrixDao/matrix/x/epochs/keeper"
 	"github.com/MatrixDao/matrix/x/lockup"
 	lockupkeeper "github.com/MatrixDao/matrix/x/lockup/keeper"
 	lockuptypes "github.com/MatrixDao/matrix/x/lockup/types"
@@ -136,6 +138,7 @@ var (
 		vesting.AppModuleBasic{},
 		dex.AppModuleBasic{},
 		pricefeed.AppModuleBasic{},
+		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
 		lockup.AppModuleBasic{},
 	)
@@ -192,6 +195,7 @@ type MatrixApp struct {
 	DexKeeper        dexkeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
 	PriceKeeper      pricekeeper.Keeper
+	EpochsKeeper     epochskeeper.Keeper
 	LockupKeeper     lockupkeeper.LockupKeeper
 
 	// the module manager
@@ -354,6 +358,7 @@ func NewMatrixApp(
 		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
 	pricefeedModule := pricefeed.NewAppModule(
 		appCodec, app.PriceKeeper, app.AccountKeeper, app.BankKeeper)
+	epochsModule := epochs.NewAppModule(appCodec, *app.EpochsKeeper)
 	stablecoinModule := stablecoin.NewAppModule(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
 		app.PriceKeeper,
@@ -386,6 +391,7 @@ func NewMatrixApp(
 		pricefeedModule,
 		stablecoinModule,
 		lockupModule,
+		epochsModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -464,6 +470,7 @@ func NewMatrixApp(
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		dexModule,
 		pricefeedModule,
+		epochsModule,
 		stablecoinModule,
 	)
 

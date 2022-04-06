@@ -34,13 +34,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 func validatePoolNumber(i interface{}) error {
-	poolNumber, ok := i.(uint64)
+	_, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if poolNumber < 0 {
-		return fmt.Errorf("poolNumber cannot be less than 0")
 	}
 
 	return nil

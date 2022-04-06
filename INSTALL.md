@@ -2,7 +2,7 @@
 
 
 ## Update the system
-This guide will explain how to install the osmosisd binary onto your system.
+This guide will explain how to install the matrixd binary onto your system.
 
 On Ubuntu, start by updating your system
 

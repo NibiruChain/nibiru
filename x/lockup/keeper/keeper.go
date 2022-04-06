@@ -51,6 +51,40 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	return lock, nil
 }
 
+// UnlockTokens returns tokens back from the module account address to the lock owner.
+// The ID associated with the lock must exist, and the current block time must be after lock end time.
+func (k LockupKeeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedTokens sdk.Coins, err error) {
+	lockIDKey := lockStoreKey(lockID)
+	store := ctx.KVStore(k.storeKey)
+
+	lockBytes := store.Get(lockIDKey)
+	if lockBytes == nil {
+		return unlockedTokens, types.ErrLockupNotFound.Wrapf("%d", lockID)
+	}
+
+	lock := new(types.Lock)
+	k.cdc.MustUnmarshal(lockBytes, lock)
+
+	// assert time constraints have been met
+	if currentTime := ctx.BlockTime(); currentTime.Before(lock.EndTime) {
+		return unlockedTokens, types.ErrLockEndTime.Wrapf("current time: %s, end time: %s", currentTime, lock.EndTime)
+	}
+
+	owner, err := sdk.AccAddressFromBech32(lock.Owner)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := k.bk.SendCoinsFromModuleToAccount(ctx, types.ModuleName, owner, lock.Coins); err != nil {
+		panic(err) // invariant broken: module account holds fewer coins compared to what can be withdrawn
+	}
+
+	// cleanup state
+	store.Delete(lockIDKey)
+
+	return lock.Coins, nil
+}
+
 // lock is a utility to lock coins into module account.
 func (k LockupKeeper) lock(ctx sdk.Context, lock types.Lock) (err error) {
 	owner, err := sdk.AccAddressFromBech32(lock.Owner)
