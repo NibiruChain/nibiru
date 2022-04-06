@@ -15,12 +15,12 @@ Note that this function is pure/read-only. It only calculates the theoretical am
 and doesn't modify the actual state.
 
 args:
-  - pool: the pool containing assets
   - tokensIn: a slice of coins to add to the pool
 
 ret:
   - numShares: the number of LP shares representing the maximal number of tokens added to the pool
   - remCoins: the remaining number of coins after adding the tokens
+  - err: error if any
 
 */
 func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
@@ -69,6 +69,43 @@ func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares 
 	}
 
 	return numShares, remCoins, nil
+}
+
+/*
+Calculates the number of tokens to remove from liquidity given LP shares returned to the pool.
+
+Note that this function is pure/read-only. It only calculates the theoretical amoount
+and doesn't modify the actual state.
+
+args:
+  - numSharesIn: number of LP shares to return to the pool
+
+ret:
+  - tokensOut: the tokens withdrawn from the pool
+  - err: error if any
+
+*/
+func (pool Pool) tokensOutFromExactShares(numSharesIn sdk.Int) (tokensOut sdk.Coins, err error) {
+	if numSharesIn.IsZero() {
+		return nil, errors.New("num shares in must be greater than zero")
+	}
+
+	shareRatio := numSharesIn.ToDec().QuoInt(pool.TotalShares.Amount)
+	if shareRatio.IsZero() {
+		return nil, errors.New("share ratio must be greater than zero")
+	}
+	if shareRatio.GT(sdk.OneDec()) {
+		return nil, errors.New("share ratio cannot be greater than one")
+	}
+
+	poolLiquidity := GetPoolLiquidity(pool.PoolAssets)
+	tokensOut = make(sdk.Coins, len(poolLiquidity))
+
+	for i, coin := range poolLiquidity {
+		tokensOut[i] = sdk.NewCoin(coin.Denom, shareRatio.MulInt(coin.Amount).TruncateInt())
+	}
+
+	return tokensOut, nil
 }
 
 /*
