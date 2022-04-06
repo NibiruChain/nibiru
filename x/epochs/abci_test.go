@@ -1,20 +1,19 @@
 package epochs_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	simapp "github.com/MatrixDao/matrix/app"
+	"github.com/stretchr/testify/require"
+
 	"github.com/MatrixDao/matrix/x/epochs"
 	"github.com/MatrixDao/matrix/x/epochs/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	"github.com/MatrixDao/matrix/x/testutil"
 )
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *simapp.MatrixApp
-	var ctx sdk.Context
+	app, ctx := testutil.NewMatrixApp()
 	var epochInfo types.EpochInfo
 
 	now := time.Now()
@@ -112,9 +111,9 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		app = simapp.Setup(false)
-		ctx = app.BaseApp.NewContext(false, tmproto.Header{})
+	for i, test := range tests {
+		fmt.Println(i)
+		app, ctx := testutil.NewMatrixApp()
 
 		// On init genesis, default epochs information is set
 		// To check init genesis again, should make it fresh status
@@ -126,7 +125,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
 
 		// check init genesis
-		epochs.InitGenesis(ctx, *app.EpochsKeeper, types.GenesisState{
+		epochs.InitGenesis(ctx, app.EpochsKeeper, types.GenesisState{
 			Epochs: []types.EpochInfo{
 				{
 					Identifier:              "monthly",
@@ -153,8 +152,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
-	app := simapp.Setup(false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	app, ctx := testutil.NewMatrixApp()
 
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
@@ -169,7 +167,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 	initialBlockHeight := int64(1)
 	ctx = ctx.WithBlockHeight(initialBlockHeight).WithBlockTime(now)
 
-	epochs.InitGenesis(ctx, *app.EpochsKeeper, types.GenesisState{
+	epochs.InitGenesis(ctx, app.EpochsKeeper, types.GenesisState{
 		Epochs: []types.EpochInfo{
 			{
 				Identifier:              "monthly",
@@ -226,9 +224,7 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	}
 
 	now := time.Now()
-	app := simapp.Setup(false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
-
+	app, ctx := testutil.NewMatrixApp()
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
@@ -239,7 +235,7 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
 
 	// check init genesis
-	epochs.InitGenesis(ctx, *app.EpochsKeeper, types.GenesisState{
+	epochs.InitGenesis(ctx, app.EpochsKeeper, types.GenesisState{
 		Epochs: []types.EpochInfo{legacyEpochInfo},
 	})
 
@@ -254,3 +250,4 @@ func TestLegacyEpochSerialization(t *testing.T) {
 
 	require.NotEqual(t, epochInfo.CurrentEpochStartHeight, int64(0))
 }
+

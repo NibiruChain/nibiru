@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MatrixDao/matrix/x/epochs/keeper"
-	"github.com/MatrixDao/matrix/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/MatrixDao/matrix/x/epochs/keeper"
+	"github.com/MatrixDao/matrix/x/epochs/types"
 )
 
 // BeginBlocker of epochs module.
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
+func BeginBlocker(ctx sdk.Context, k *keeper.Keeper) {
+	telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 	k.IterateEpochInfo(ctx, func(index int64, epochInfo types.EpochInfo) (stop bool) {
 		logger := k.Logger(ctx)
 

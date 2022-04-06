@@ -3,9 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
+
+	"github.com/MatrixDao/matrix/x/epochs/types"
 )
 
 // GetEpochInfo returns epoch info by identifier.
@@ -44,7 +45,13 @@ func (k Keeper) IterateEpochInfo(ctx sdk.Context, fn func(index int64, epochInfo
 	store := ctx.KVStore(k.storeKey)
 
 	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefixEpoch)
-	defer iterator.Close()
+	defer func(iterator sdk.Iterator) {
+		err := iterator.Close()
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+	}(iterator)
 
 	i := int64(0)
 

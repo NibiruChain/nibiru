@@ -4,21 +4,20 @@ import (
 	"testing"
 	"time"
 
-	simapp "github.com/MatrixDao/matrix/app"
+	"github.com/stretchr/testify/require"
+
 	"github.com/MatrixDao/matrix/x/epochs"
 	"github.com/MatrixDao/matrix/x/epochs/types"
-	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	"github.com/MatrixDao/matrix/x/testutil"
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	app := simapp.Setup(false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	app, ctx := testutil.NewMatrixApp()
 
 	chainStartTime := ctx.BlockTime()
 	chainStartHeight := ctx.BlockHeight()
 
-	genesis := epochs.ExportGenesis(ctx, *app.EpochsKeeper)
+	genesis := epochs.ExportGenesis(ctx, app.EpochsKeeper)
 	require.Len(t, genesis.Epochs, 2)
 
 	require.Equal(t, genesis.Epochs[0].Identifier, "day")
@@ -38,9 +37,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
-	app := simapp.Setup(false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
-
+	app, ctx := testutil.NewMatrixApp()
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
@@ -91,7 +88,7 @@ func TestEpochsInitGenesis(t *testing.T) {
 		},
 	}
 
-	epochs.InitGenesis(ctx, *app.EpochsKeeper, genesisState)
+	epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
 	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 	require.Equal(t, epochInfo.Identifier, "monthly")
 	require.Equal(t, epochInfo.StartTime.UTC().String(), now.UTC().String())
