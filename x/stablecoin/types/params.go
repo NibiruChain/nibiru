@@ -17,8 +17,6 @@ func ParamKeyTable() paramtypes.KeyTable {
 // NewParams creates a new Params instance
 func NewParams(collRatio sdk.Dec) Params {
 	collRatioInt := collRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
-
-	// TODO: Verify collRatio is an integer in a test.
 	return Params{CollRatio: collRatioInt.Int64()}
 }
 

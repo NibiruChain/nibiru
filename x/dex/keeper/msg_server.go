@@ -58,7 +58,25 @@ ret
   MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
   error: an error if any occurred
 */
-func (k msgServer) JoinPool(goCtx context.Context, msg *types.MsgJoinPool) (*types.MsgJoinPoolResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/47): Implement this
-	return &types.MsgJoinPoolResponse{}, nil
+func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types.MsgJoinPoolResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, numSharesOut, remCoins, err := k.JoinPoolNoSwap(
+		sdk.UnwrapSDKContext(ctx),
+		sender,
+		msg.PoolId,
+		msg.TokensIn,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgJoinPoolResponse{
+		Pool:             &pool,
+		NumPoolSharesOut: numSharesOut,
+		RemainingCoins:   remCoins,
+	}, nil
 }
