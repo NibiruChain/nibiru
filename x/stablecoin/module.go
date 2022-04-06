@@ -161,6 +161,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 
 	InitGenesis(ctx, am.keeper, genState)
 
+	// See https://github.com/cosmos/cosmos-sdk/issues/5569 on why we do this.
 	am.ak.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 	return []abci.ValidatorUpdate{}
