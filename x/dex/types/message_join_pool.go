@@ -9,12 +9,11 @@ const TypeMsgJoinPool = "create_pool"
 
 var _ sdk.Msg = &MsgJoinPool{}
 
-func NewMsgJoinPool(sender string, poolId uint64, sharesAmountOut sdk.Int, maxTokensIn sdk.Coins) *MsgJoinPool {
+func NewMsgJoinPool(sender string, poolId uint64, tokensIn sdk.Coins) *MsgJoinPool {
 	return &MsgJoinPool{
-		Sender:         sender,
-		PoolId:         poolId,
-		ShareOutAmount: sharesAmountOut,
-		MaxTokensIn:    maxTokensIn,
+		Sender:   sender,
+		PoolId:   poolId,
+		TokensIn: tokensIn,
 	}
 }
 
