@@ -161,6 +161,8 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 
 	InitGenesis(ctx, am.keeper, genState)
 
+	am.ak.GetModuleAccount(ctx, types.StableEFModuleAccount)
+
 	return []abci.ValidatorUpdate{}
 }
 

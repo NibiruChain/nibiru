@@ -7,6 +7,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/events"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
@@ -41,9 +42,10 @@ func (k Keeper) MintStable(
 		return nil, err
 	}
 
-	coinsNeededToMint := sdk.NewCoins(neededColl.Add(collFees), neededGov.Add(govFees))
+	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
+	coinsNeededToMintPlusFees := coinsNeededToMint.Add(govFees, collFees)
 
-	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, msgCreator)
+	err = k.CheckEnoughBalances(ctx, coinsNeededToMintPlusFees, msgCreator)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +61,11 @@ func (k Keeper) MintStable(
 	}
 
 	err = k.mintStable(ctx, msg.Stable)
+	if err != nil {
+		panic(err)
+	}
+
+	err = k.sendFeesToPool(ctx, msgCreator, sdk.NewCoins(collFees, govFees))
 	if err != nil {
 		panic(err)
 	}
@@ -163,6 +170,16 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 	}
 
 	events.EmitMintStable(ctx, stable)
+
+	return nil
+}
+
+// sendFeesToPool sends the coins to the Stable Ecosystem Fund.
+func (k Keeper) sendFeesToPool(ctx sdk.Context, account sdk.AccAddress, coins sdk.Coins) error {
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, coins)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

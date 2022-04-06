@@ -162,6 +162,9 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
+			// We get module account, to create it.
+			matrixApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
+
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
@@ -262,6 +265,9 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
+
+			// We get module account, to create it.
+			matrixApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
