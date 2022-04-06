@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"time"
@@ -32,10 +33,13 @@ func New() *app.MatrixApp {
 	a := app.NewMatrixApp(logger, db, nil, true, map[int64]bool{}, nodeHome, 0, encoding,
 		simapp.EmptyAppOptions{})
 
+	genesisState := app.NewDefaultGenesisState(encoding.Marshaler)
+	stateBytes, _ := json.MarshalIndent(genesisState, "", " ")
+
 	// InitChain updates deliverState which is required when app.NewContext is called
 	a.InitChain(abci.RequestInitChain{
 		ConsensusParams: defaultConsensusParams,
-		AppStateBytes:   []byte("{}"),
+		AppStateBytes:   stateBytes,
 	})
 
 	return a

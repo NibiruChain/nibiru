@@ -21,6 +21,7 @@ import (
 	dextypes "github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/epochs"
 	epochskeeper "github.com/MatrixDao/matrix/x/epochs/keeper"
+	epochstype "github.com/MatrixDao/matrix/x/epochs/types"
 	"github.com/MatrixDao/matrix/x/lockup"
 	lockupkeeper "github.com/MatrixDao/matrix/x/lockup/keeper"
 	lockuptypes "github.com/MatrixDao/matrix/x/lockup/types"
@@ -153,6 +154,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		dextypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		stablecointypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
+		epochstype.ModuleName:          {},
 		lockuptypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 	}
 )
@@ -239,7 +241,7 @@ func NewMatrixApp(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
-		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey,
+		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey, epochstype.StoreKey,
 		lockuptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -344,6 +346,10 @@ func NewMatrixApp(
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
 	)
 
+	app.EpochsKeeper = epochskeeper.NewKeeper(
+		appCodec, keys[epochstype.StoreKey],
+	)
+
 	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
 		keys[lockuptypes.StoreKey], app.AccountKeeper, app.BankKeeper,
 		app.DistrKeeper)
@@ -358,7 +364,7 @@ func NewMatrixApp(
 		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
 	pricefeedModule := pricefeed.NewAppModule(
 		appCodec, app.PriceKeeper, app.AccountKeeper, app.BankKeeper)
-	epochsModule := epochs.NewAppModule(appCodec, *app.EpochsKeeper)
+	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
 	stablecoinModule := stablecoin.NewAppModule(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
 		app.PriceKeeper,
@@ -407,6 +413,7 @@ func NewMatrixApp(
 		paramstypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
 		pricetypes.ModuleName,
+		epochstype.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
 	)
@@ -418,6 +425,7 @@ func NewMatrixApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
+		epochstype.ModuleName,
 		pricetypes.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
@@ -436,6 +444,7 @@ func NewMatrixApp(
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
 		pricetypes.ModuleName,
+		epochstype.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
 	)
@@ -672,6 +681,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(dextypes.ModuleName)
 	paramsKeeper.Subspace(pricetypes.ModuleName)
+	paramsKeeper.Subspace(epochstype.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 
 	return paramsKeeper
