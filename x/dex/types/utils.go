@@ -22,21 +22,21 @@ ret:
 */
 func getPoolAssetAndIndex(poolAssets []PoolAsset, denom string) (index int, poolAsset PoolAsset, err error) {
 	if denom == "" {
-		return -1, PoolAsset{}, fmt.Errorf("Empty denom.")
+		return -1, PoolAsset{}, fmt.Errorf("empty denom")
 	}
 
 	if len(poolAssets) == 0 {
-		return -1, PoolAsset{}, fmt.Errorf("Empty pool assets.")
+		return -1, PoolAsset{}, fmt.Errorf("empty pool assets")
 	}
 
 	// binary search for the asset. poolAssets must be sorted.
 	i := sort.Search(len(poolAssets), func(i int) bool {
 		compare := strings.Compare(poolAssets[i].Token.Denom, denom)
-		return compare == 0
+		return compare >= 0
 	})
 
-	if i < 0 || i >= len(poolAssets) {
-		return -1, PoolAsset{}, fmt.Errorf("Did not find the PoolAsset (%s)", denom)
+	if i < 0 || i >= len(poolAssets) || poolAssets[i].Token.Denom != denom {
+		return -1, PoolAsset{}, fmt.Errorf("did not find the PoolAsset (%s)", denom)
 	}
 
 	return i, poolAssets[i], nil

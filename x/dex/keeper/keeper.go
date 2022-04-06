@@ -206,7 +206,7 @@ func (k Keeper) NewPool(
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
 	k.accountKeeper.SetAccount(ctx, poolAccount)
 
-	pool, err := types.NewPool(ctx, poolId, poolAccount.GetAddress(), poolParams, poolAssets)
+	pool, err := types.NewPool(poolId, poolAccount.GetAddress(), poolParams, poolAssets)
 	if err != nil {
 		return uint64(0), err
 	}

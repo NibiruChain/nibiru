@@ -16,7 +16,7 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 		expectedIndex     int
 	}{
 		{
-			name: "happy path single asset",
+			name: "single asset",
 			poolAssets: []PoolAsset{
 				PoolAsset{
 					Token:  sdk.NewInt64Coin("foo", 100),
@@ -31,7 +31,7 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 			expectedIndex: 0,
 		},
 		{
-			name: "happy path multiple asset",
+			name: "middle asset",
 			poolAssets: []PoolAsset{
 				PoolAsset{
 					Token:  sdk.NewInt64Coin("bar", 100),
@@ -52,6 +52,25 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 				Weight: sdk.NewInt(1),
 			},
 			expectedIndex: 1,
+		},
+		{
+			name: "asset to the left",
+			poolAssets: []PoolAsset{
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("bar", 100),
+					Weight: sdk.NewInt(1),
+				},
+				PoolAsset{
+					Token:  sdk.NewInt64Coin("foo", 200),
+					Weight: sdk.NewInt(1),
+				},
+			},
+			denom: "bar",
+			expectedPoolAsset: PoolAsset{
+				Token:  sdk.NewInt64Coin("bar", 100),
+				Weight: sdk.NewInt(1),
+			},
+			expectedIndex: 0,
 		},
 	}
 
