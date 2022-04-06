@@ -98,19 +98,21 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 // Create a new wallet and try to fill the wallet with the require balance. Tokens are sent by the validator
-func (s IntegrationTestSuite) fillWalletFromValidator(walletAddress string, balance sdk.Coins, val *network.Validator) sdk.AccAddress {
-	newAddr := sdk.AccAddress(walletAddress)
-	_, err := banktestutil.MsgSendExec(
+func (s IntegrationTestSuite) fillWalletFromValidator(addr sdk.AccAddress, balance sdk.Coins, val *network.Validator) sdk.AccAddress {
+	fmt.Printf("%s\n", addr.String())
+	out, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
-		newAddr,
+		addr,
 		balance,
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		utils.DefaultFeeString(s.cfg),
 	)
+	fmt.Printf("%s\n", out)
 	s.Require().NoError(err)
-	return newAddr
+
+	return addr
 }
 
 func (s IntegrationTestSuite) TestMintCmd() {
@@ -118,8 +120,8 @@ func (s IntegrationTestSuite) TestMintCmd() {
 
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
-	minterAddr := info.GetPubKey().Address().String()
-	s.fillWalletFromValidator(minterAddr, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 20000), sdk.NewInt64Coin("uusdm", 1000000000)), val)
+	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
+	s.fillWalletFromValidator(minterAddr, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 20000), sdk.NewInt64Coin("uusdm", 100000000)), val)
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -127,7 +129,6 @@ func (s IntegrationTestSuite) TestMintCmd() {
 		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
-	fmt.Println(info.GetAddress().String())
 
 	testCases := []struct {
 		name string
