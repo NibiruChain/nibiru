@@ -12,6 +12,8 @@ var (
 
 	GovPricePool  = PoolNameFromDenoms([]string{GovDenom, CollDenom})
 	CollPricePool = PoolNameFromDenoms([]string{CollDenom, StableDenom})
+
+	TreasuryPoolModuleAccount = "treasury_pool"
 )
 
 func PoolNameFromDenoms(denoms []string) string {
