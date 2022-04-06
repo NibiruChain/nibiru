@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strconv"
+	"strings"
 
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +21,27 @@ var _ = strconv.Itoa(0)
 
 func CmdCreatePool() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-pool [token1] [token2]",
-		Short: "Create a pool",
-		Args:  cobra.ExactArgs(2),
+		Use:   "create-pool [flags]",
+		Short: "create a new pool and provide the liquidity to it",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`create a new pool and provide the liquidity to it.
+Pool initialization parameters must be provided through a pool JSON file.
+
+Example:
+$ %s tx dex create-pool --pool-file="path/to/pool.json" --from validator --keyring-backend test --home data/localnet --chain-id localnet
+
+Where pool.json contains:
+{
+	"weights": "1usdm,1ust",
+	"initial-deposit": "100usdm,100ust",
+	"swap-fee": "0.01",
+	"exit-fee": "0.01"
+}
+`,
+				version.AppName,
+			),
+		),
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -90,6 +110,7 @@ func CmdCreatePool() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().AddFlagSet(FlagSetCreatePool())
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
