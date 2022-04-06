@@ -79,11 +79,16 @@ func DefaultConfig() network.Config {
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		StartingTokens:    sdk.Coins(sdk.NewCoins(sdk.NewCoin("uusdm", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)))),
-		PruningStrategy:   storetypes.PruningOptionNothing,
-		CleanupDir:        true,
-		SigningAlgo:       string(hd.Secp256k1Type),
-		KeyringOptions:    []keyring.Option{},
+		StartingTokens: sdk.Coins(
+			sdk.NewCoins(
+				sdk.NewCoin("uusdm", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+				sdk.NewCoin("umtrx", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+				sdk.NewCoin("uust", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			)),
+		PruningStrategy: storetypes.PruningOptionNothing,
+		CleanupDir:      true,
+		SigningAlgo:     string(hd.Secp256k1Type),
+		KeyringOptions:  []keyring.Option{},
 	}
 }
 

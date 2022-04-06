@@ -23,7 +23,9 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 const (
@@ -99,8 +101,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 // Create a new wallet and try to fill the wallet with the require balance. Tokens are sent by the validator
 func (s IntegrationTestSuite) fillWalletFromValidator(addr sdk.AccAddress, balance sdk.Coins, val *network.Validator) sdk.AccAddress {
-	fmt.Printf("%s\n", addr.String())
-	out, err := banktestutil.MsgSendExec(
+	_, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
 		addr,
@@ -109,7 +110,6 @@ func (s IntegrationTestSuite) fillWalletFromValidator(addr sdk.AccAddress, balan
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		utils.DefaultFeeString(s.cfg),
 	)
-	fmt.Printf("%s\n", out)
 	s.Require().NoError(err)
 
 	return addr
@@ -121,7 +121,14 @@ func (s IntegrationTestSuite) TestMintCmd() {
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
-	s.fillWalletFromValidator(minterAddr, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 20000), sdk.NewInt64Coin("uusdm", 100000000)), val)
+	s.fillWalletFromValidator(
+		minterAddr,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
+			sdk.NewInt64Coin(common.GovDenom, 100000000),
+			sdk.NewInt64Coin(common.CollDenom, 100000000),
+		),
+		val)
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -134,18 +141,20 @@ func (s IntegrationTestSuite) TestMintCmd() {
 		name string
 		args []string
 
-		expectErr    bool
-		respType     proto.Message
-		expectedCode uint32
+		expectedStable sdk.Int
+		expectErr      bool
+		respType       proto.Message
+		expectedCode   uint32
 	}{
 		{
 			name: "Mint correct amount",
 			args: append([]string{
-				"10000000uusdm",
+				"1000000uusdm",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter2")}, commonArgs...),
-			expectErr:    false,
-			respType:     &sdk.TxResponse{},
-			expectedCode: 0,
+			expectedStable: sdk.NewInt(1000000),
+			expectErr:      false,
+			respType:       &sdk.TxResponse{},
+			expectedCode:   0,
 		},
 	}
 
@@ -155,10 +164,8 @@ func (s IntegrationTestSuite) TestMintCmd() {
 		s.Run(tc.name, func() {
 			cmd := cli.MintStableCmd()
 			clientCtx := val.ClientCtx
-			fmt.Println(tc.args)
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
-			fmt.Println(out)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -167,6 +174,92 @@ func (s IntegrationTestSuite) TestMintCmd() {
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+
+				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
+				s.Require().NoError(err)
+
+				var balRes banktypes.QueryAllBalancesResponse
+				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
+				s.Require().NoError(err)
+
+				s.Require().Equal(balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
+
+			}
+		})
+	}
+}
+
+func (s IntegrationTestSuite) TestBurnCmd() {
+	val := s.network.Validators[0]
+
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic("burn", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
+	s.fillWalletFromValidator(
+		minterAddr,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
+			sdk.NewInt64Coin(common.StableDenom, 100000000),
+		),
+		val)
+
+	commonArgs := []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	}
+
+	testCases := []struct {
+		name string
+		args []string
+
+		expectedStable sdk.Int
+		expectErr      bool
+		respType       proto.Message
+		expectedCode   uint32
+	}{
+		{
+			name: "Burn correct amount",
+			args: append([]string{
+				"100000000uusdm",
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
+			expectedStable: sdk.NewInt(1000000),
+			expectErr:      false,
+			respType:       &sdk.TxResponse{},
+			expectedCode:   0,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := cli.BurnStableCmd()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				fmt.Println(txResp)
+				fmt.Println(txResp.Code)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+
+				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
+				fmt.Println(resp)
+				s.Require().NoError(err)
+
+				var balRes banktypes.QueryAllBalancesResponse
+				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
+				s.Require().NoError(err)
+
+				s.Require().Equal(balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
+
 			}
 		})
 	}
