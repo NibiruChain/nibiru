@@ -5,6 +5,7 @@ import (
 
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/MatrixDao/matrix/x/testutil/mock"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -208,27 +209,6 @@ func TestMintPoolShareToAccount(t *testing.T) {
 func TestJoinPoolNoswap(t *testing.T) {
 	const shareDenom = "matrix/pool/1"
 
-	// helper function to create dummy test pools
-	mockPool := func(assets sdk.Coins, shares int64) types.Pool {
-		poolAssets := make([]types.PoolAsset, len(assets))
-		for i, asset := range assets {
-			poolAssets[i] = types.PoolAsset{
-				Token:  asset,
-				Weight: sdk.OneInt(),
-			}
-		}
-		return types.Pool{
-			Id: 1,
-			PoolParams: types.PoolParams{
-				SwapFee: sdk.SmallestDec(),
-				ExitFee: sdk.SmallestDec(),
-			},
-			PoolAssets:  poolAssets,
-			TotalShares: sdk.NewInt64Coin(shareDenom, shares),
-			TotalWeight: sdk.NewInt(2),
-		}
-	}
-
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
@@ -245,7 +225,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mockPool(
+			initialPool: mock.DexPool(
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
 					sdk.NewInt64Coin("foo", 100),
@@ -258,7 +238,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 			expectedNumSharesOut:     sdk.NewInt64Coin(shareDenom, 100),
 			expectedRemCoins:         sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
-			expectedFinalPool: mockPool(
+			expectedFinalPool: mock.DexPool(
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 200),
 					sdk.NewInt64Coin("foo", 200),
