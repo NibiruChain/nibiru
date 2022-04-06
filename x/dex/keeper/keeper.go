@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/MatrixDao/matrix/x/dex/types"
@@ -251,4 +252,59 @@ func (k Keeper) NewPool(
 	k.RecordTotalLiquidityIncrease(ctx, coins)
 
 	return poolId, nil
+}
+
+/*
+Joins a pool without swapping leftover assets if the ratios don't exactly match the pool's asset ratios.
+
+
+*/
+func (k Keeper) JoinPoolNoSwap(
+	ctx sdk.Context,
+	joinerAddr sdk.AccAddress,
+	poolId uint64,
+	tokensIn sdk.Coins,
+) (pool types.Pool, numSharesOut sdk.Coin, remCoins sdk.Coins, err error) {
+	pool = k.FetchPool(ctx, poolId)
+
+	if len(tokensIn) != len(pool.PoolAssets) {
+		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
+	}
+
+	poolAddr, err := sdk.AccAddressFromBech32(pool.Address)
+	if err != nil {
+		return pool, numSharesOut, remCoins, err
+	}
+
+	numShares, remCoins, err := pool.JoinPool(tokensIn)
+	if err != nil {
+		return pool, numSharesOut, remCoins, err
+	}
+	tokensConsumed := tokensIn.Sub(remCoins)
+
+	// take coins from joiner to pool
+	if err = k.bankKeeper.SendCoins(
+		ctx,
+		/*from=*/ joinerAddr,
+		/*to=*/ poolAddr,
+		/*amount=*/ tokensConsumed,
+	); err != nil {
+		return pool, numSharesOut, remCoins, err
+	}
+
+	// give joiner LP shares
+	if err = k.MintPoolShareToAccount(
+		ctx,
+		/*from=*/ pool.Id,
+		/*to=*/ joinerAddr,
+		/*amount=*/ numShares,
+	); err != nil {
+		return pool, numSharesOut, remCoins, err
+	}
+
+	// record changes to store
+	k.SetPool(ctx, pool)
+	k.RecordTotalLiquidityIncrease(ctx, tokensConsumed)
+
+	return pool, sdk.NewCoin(pool.TotalShares.Denom, numShares), remCoins, nil
 }
