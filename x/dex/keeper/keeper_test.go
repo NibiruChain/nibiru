@@ -126,7 +126,6 @@ func TestNewPool(t *testing.T) {
 		TotalWeight: sdk.NewInt(2 << 30),
 		TotalShares: sdk.NewCoin("matrix/pool/1", sdk.NewIntWithDecimal(100, 18)),
 	}, retrievedPool)
-
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
@@ -226,6 +225,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 				sdk.NewInt64Coin("foo", 100),
 			),
 			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
 					sdk.NewInt64Coin("foo", 100),
@@ -239,6 +239,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 			expectedRemCoins:         sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
 			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 200),
 					sdk.NewInt64Coin("foo", 200),
@@ -246,12 +247,13 @@ func TestJoinPoolNoswap(t *testing.T) {
 				/*shares=*/ 200),
 		},
 		{
-			name: "join with some assets, none left over",
+			name: "join with some assets, none remaining",
 			joinerInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mockPool(
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
 					sdk.NewInt64Coin("foo", 100),
@@ -268,7 +270,8 @@ func TestJoinPoolNoswap(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 50),
 			),
-			expectedFinalPool: mockPool(
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
 					sdk.NewInt64Coin("foo", 150),
@@ -276,12 +279,13 @@ func TestJoinPoolNoswap(t *testing.T) {
 				/*shares=*/ 150),
 		},
 		{
-			name: "join with some assets, some left over",
+			name: "join with some assets, some remaining",
 			joinerInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mockPool(
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
 					sdk.NewInt64Coin("foo", 100),
@@ -300,7 +304,8 @@ func TestJoinPoolNoswap(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 50),
 			),
-			expectedFinalPool: mockPool(
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
 					sdk.NewInt64Coin("foo", 150),
