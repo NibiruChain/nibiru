@@ -15,18 +15,26 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec) Params {
-	collRatioInt := collRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
-	feeRationInt := feeRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
+func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec) Params {
+	sixthPower := sdk.MustNewDecFromStr("1000000")
+	collRatioInt := collRatio.Mul(sixthPower).RoundInt()
+	feeRationInt := feeRatio.Mul(sixthPower).RoundInt()
+	efFeeRatioInt := efFeeRatio.Mul(sixthPower).RoundInt()
 
-	return Params{CollRatio: collRatioInt.Int64(), FeeRatio: feeRationInt.Int64()}
+	return Params{
+		CollRatio:  collRatioInt.Int64(),
+		FeeRatio:   feeRationInt.Int64(),
+		EfFeeRatio: efFeeRatioInt.Int64(),
+	}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	genesisCollRatio := sdk.MustNewDecFromStr("0.9")
 	feeRatio := sdk.MustNewDecFromStr("0.002")
-	return NewParams(genesisCollRatio, feeRatio)
+	efFeeRatio := sdk.MustNewDecFromStr("0.5")
+
+	return NewParams(genesisCollRatio, feeRatio, efFeeRatio)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -42,6 +50,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&p.FeeRatio,
 			validateFeeRatio,
 		),
+		paramtypes.NewParamSetPair(
+			[]byte("EfFeeRatio"),
+			&p.EfFeeRatio,
+			validateEfFeeRatio,
+		),
 	}
 }
 
@@ -52,7 +65,12 @@ func (p *Params) Validate() error {
 		return err
 	}
 
-	return validateFeeRatio(p.FeeRatio)
+	err = validateFeeRatio(p.FeeRatio)
+	if err != nil {
+		return err
+	}
+
+	return validateEfFeeRatio(p.EfFeeRatio)
 }
 
 func (p *Params) GetFeeRatioAsDec() sdk.Dec {
@@ -87,6 +105,19 @@ func validateFeeRatio(i interface{}) error {
 
 	if feeRatio > 1_000_000 {
 		return fmt.Errorf("fee Ratio is above max value(1e6): %d", feeRatio)
+	} else {
+		return nil
+	}
+}
+
+func validateEfFeeRatio(i interface{}) error {
+	feeRatio, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if feeRatio > 1_000_000 {
+		return fmt.Errorf("ecosystem fund fee Ratio is above max value(1e6): %d", feeRatio)
 	} else {
 		return nil
 	}
