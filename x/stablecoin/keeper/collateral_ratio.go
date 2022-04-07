@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -34,4 +35,89 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	params := types.NewParams(collRatio)
 	k.ParamSubspace.SetParamSet(ctx, &params)
 	return err
+}
+
+/*
+GetNeededCollUSD is the collateral value in USD needed to reach a target
+collateral ratio.
+*/
+func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
+	stableSupply := k.GetSupplyUSDM(ctx)
+	targetCollRatio := k.GetCollRatio(ctx)
+	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	moduleCoins := k.bankKeeper.SpendableCoins(ctx, moduleAddr)
+	collDenoms := []string{common.CollDenom}
+
+	currentTotalCollUSD := sdk.ZeroDec()
+	for _, collDenom := range collDenoms {
+		amtColl := moduleCoins.AmountOf(collDenom)
+		priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+		if err != nil {
+			return sdk.ZeroDec(), err
+		}
+		collUSD := amtColl.ToDec().Mul(priceColl.Price)
+		currentTotalCollUSD = currentTotalCollUSD.Add(collUSD)
+
+	}
+
+	targetCollUSD := stableSupply.Amount.ToDec().Mul(targetCollRatio)
+	neededCollUSD = targetCollUSD.Sub(currentTotalCollUSD)
+	return neededCollUSD, err
+}
+
+func (k *Keeper) GetNeededCollAmount(ctx sdk.Context, collDenom string,
+) (neededCollAmount sdk.Int, err error) {
+	neededUSD, err := k.GetNeededCollUSD(ctx)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	priceCollStable, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	err = nil
+	neededCollAmountDec := neededUSD.Quo(priceCollStable.Price)
+	if neededCollAmountDec.IsInteger() {
+		return neededCollAmountDec.TruncateInt(), err
+	}
+	neededCollAmount = neededCollAmountDec.TruncateInt().Add(sdk.OneInt())
+
+	return neededCollAmount, nil
+}
+
+/*
+GovAmtFromRecollateralize computes the GOV token given as a reward for calling
+recollateralize.
+Args:
+  ctx (sdk.Context): Carries information about the current state of the application.
+  collDenom (string): 'Denom' of the collateral to be used for recollateralization.
+*/
+func (k *Keeper) GovAmtFromRecollateralize(
+	ctx sdk.Context, collDenom string,
+) (govOut sdk.Int, err error) {
+	neededCollUSD, err := k.GetNeededCollUSD(ctx)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	bonusRate := sdk.MustNewDecFromStr("0.002") // TODO: Replace with attribute
+	priceGovColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	priceCollStable, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	priceGov := priceGovColl.Price.Mul(priceCollStable.Price)
+	govOut = neededCollUSD.Mul(sdk.OneDec().Add(bonusRate)).Quo(priceGov).TruncateInt()
+	return govOut, err
+}
+
+/*
+Recollateralize
+*/
+func (k *Keeper) Recollateralize(ctx sdk.Context, collRatio sdk.Dec) (err error) {
+
+	return nil
 }
