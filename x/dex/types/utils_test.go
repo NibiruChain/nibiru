@@ -186,8 +186,10 @@ func TestPoolAssetsCoins(t *testing.T) {
 	for _, testcase := range tests {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
-			coins := poolAssetsCoins(tc.poolAssets)
-			require.Equal(t, tc.expectedCoins, coins)
+			pool := Pool{
+				PoolAssets: tc.poolAssets,
+			}
+			require.Equal(t, tc.expectedCoins, pool.poolAssetsCoins())
 		})
 	}
 }
