@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"github.com/MatrixDao/matrix/x/common"
 	"io"
 	"net/http"
 	"os"
@@ -151,7 +152,8 @@ var (
 		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
-		stablecointypes.StableEFModuleAccount: {},
+		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
+		common.TreasuryPoolModuleAccount:      {},
 	}
 )
 

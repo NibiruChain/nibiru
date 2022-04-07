@@ -229,7 +229,7 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 			},
 			govPrice:   sdk.MustNewDecFromStr("10"),
 			collPrice:  sdk.MustNewDecFromStr("1"),
-			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(20)), // 10_000 - 20 (neededAmt - fees)
+			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)), // 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
 			supplyUsdm: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			err:        nil,
 		},
@@ -296,8 +296,24 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
 			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
 
-			balances := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
-			require.Equal(t, mintStableResponse.FeesPayed, balances)
+			// Check balances in EF
+			efModuleBalance := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			collFeesInEf := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			require.Equal(t, sdk.NewCoins(sdk.NewCoin(common.CollDenom, collFeesInEf)), efModuleBalance)
+
+			// Check balances in Treasury
+			treasuryModuleBalance := matrixApp.BankKeeper.
+				GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount))
+			collFeesInTreasury := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			govFeesInTreasury := neededGovFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			require.Equal(
+				t,
+				sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, collFeesInTreasury),
+					sdk.NewCoin(common.GovDenom, govFeesInTreasury),
+				),
+				treasuryModuleBalance,
+			)
 		})
 	}
 

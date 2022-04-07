@@ -74,14 +74,18 @@ func (p *Params) Validate() error {
 }
 
 func (p *Params) GetFeeRatioAsDec() sdk.Dec {
-	feeRatio := sdk.NewIntFromUint64(uint64(p.FeeRatio)).ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
-	return feeRatio
+	return sdk.NewIntFromUint64(uint64(p.FeeRatio)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func (p *Params) GetCollRatioAsDec() sdk.Dec {
-	collRatio := sdk.NewIntFromUint64(uint64(p.CollRatio)).ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewIntFromUint64(uint64(p.CollRatio)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
 
-	return collRatio
+func (p *Params) GetEfFeeRatioAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.EfFeeRatio)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func validateCollRatio(i interface{}) error {

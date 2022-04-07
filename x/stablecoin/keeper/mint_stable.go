@@ -28,6 +28,7 @@ func (k Keeper) MintStable(
 	params := k.GetParams(ctx)
 	feeRatio := params.GetFeeRatioAsDec()
 	collRatio := params.GetCollRatioAsDec()
+	efFeeRatio := params.GetEfFeeRatioAsDec()
 	govRatio := sdk.OneDec().Sub(collRatio)
 
 	neededColl, collFees, err := k.
@@ -65,7 +66,7 @@ func (k Keeper) MintStable(
 		panic(err)
 	}
 
-	err = k.sendFeesToPool(ctx, msgCreator, sdk.NewCoins(collFees, govFees))
+	err = k.sendFeesToPool(ctx, msgCreator, efFeeRatio, sdk.NewCoins(collFees, govFees))
 	if err != nil {
 		panic(err)
 	}
@@ -174,11 +175,37 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 	return nil
 }
 
-// sendFeesToPool sends the coins to the Stable Ecosystem Fund.
-// TODO: define what goes to treasury and what goes to Stable Ecosystem fund
-func (k Keeper) sendFeesToPool(ctx sdk.Context, account sdk.AccAddress, coins sdk.Coins) error {
-	//params := k.GetParams(ctx)
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, coins)
+// sendFeesToPool sends the coins to the Stable Ecosystem Fund and treasury pool
+func (k Keeper) sendFeesToPool(ctx sdk.Context, account sdk.AccAddress, efFeeRatio sdk.Dec, coins sdk.Coins) error {
+	efCoins := sdk.Coins{}
+	treasuryCoins := sdk.Coins{}
+	for _, c := range coins {
+		amountEf := c.Amount.ToDec().Mul(efFeeRatio).TruncateInt()
+		amountTreasury := c.Amount.Sub(amountEf)
+
+		if c.Denom == common.GovDenom {
+			stableCoins := sdk.NewCoins(sdk.NewCoin(c.Denom, amountEf))
+			err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, stableCoins)
+			if err != nil {
+				return err
+			}
+
+			err = k.bankKeeper.BurnCoins(ctx, types.StableEFModuleAccount, stableCoins)
+			if err != nil {
+				return err
+			}
+		} else {
+			efCoins = efCoins.Add(sdk.NewCoin(c.Denom, amountEf))
+		}
+		treasuryCoins = treasuryCoins.Add(sdk.NewCoin(c.Denom, amountTreasury))
+	}
+
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, efCoins)
+	if err != nil {
+		return err
+	}
+
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, common.TreasuryPoolModuleAccount, treasuryCoins)
 	if err != nil {
 		return err
 	}
