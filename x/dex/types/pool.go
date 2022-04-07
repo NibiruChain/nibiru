@@ -135,3 +135,11 @@ func (pool *Pool) JoinPool(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.
 
 	return numShares, remCoins, nil
 }
+
+func (pool Pool) GetAddress() (addr sdk.AccAddress) {
+	addr, err := sdk.AccAddressFromBech32(pool.Address)
+	if err != nil {
+		panic(fmt.Sprintf("could not bech32 decode address of pool with id: %d", pool.Id))
+	}
+	return addr
+}
