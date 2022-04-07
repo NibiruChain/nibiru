@@ -117,7 +117,7 @@ args:
 */
 func (pool *Pool) updateLiquidity(numShares sdk.Int, newLiquidity sdk.Coins) (err error) {
 	for _, coin := range newLiquidity {
-		i, poolAsset, err := getPoolAssetAndIndex(pool.PoolAssets, coin.Denom)
+		i, poolAsset, err := pool.getPoolAssetAndIndex(coin.Denom)
 		if err != nil {
 			return err
 		}

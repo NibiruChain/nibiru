@@ -59,7 +59,7 @@ func (pool *Pool) updatePoolAssetBalances(tokens sdk.Coins) (err error) {
 	}
 
 	for _, coin := range tokens {
-		assetIndex, existingAsset, err := getPoolAssetAndIndex(pool.PoolAssets, coin.Denom)
+		assetIndex, existingAsset, err := pool.getPoolAssetAndIndex(coin.Denom)
 		if err != nil {
 			return err
 		}

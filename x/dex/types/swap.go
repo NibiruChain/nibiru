@@ -23,12 +23,12 @@ ret:
 func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string) (
 	tokenOut sdk.Coin, err error,
 ) {
-	_, poolAssetIn, err := getPoolAssetAndIndex(pool.PoolAssets, tokenIn.Denom)
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
 	if err != nil {
 		return tokenOut, err
 	}
 
-	_, poolAssetOut, err := getPoolAssetAndIndex(pool.PoolAssets, tokenOutDenom)
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOutDenom)
 	if err != nil {
 		return tokenOut, err
 	}
@@ -66,12 +66,12 @@ ret:
 func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
 	tokenIn sdk.Coin, err error,
 ) {
-	_, poolAssetOut, err := getPoolAssetAndIndex(pool.PoolAssets, tokenOut.Denom)
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut.Denom)
 	if err != nil {
 		return tokenIn, err
 	}
 
-	_, poolAssetIn, err := getPoolAssetAndIndex(pool.PoolAssets, tokenInDenom)
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenInDenom)
 	if err != nil {
 		return tokenIn, err
 	}
@@ -114,12 +114,12 @@ func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
 		return fmt.Errorf("tokenOut (%s) cannot be zero", tokenOut.Denom)
 	}
 
-	_, poolAssetIn, err := getPoolAssetAndIndex(pool.PoolAssets, tokenIn.Denom)
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
 	if err != nil {
 		return err
 	}
 
-	_, poolAssetOut, err := getPoolAssetAndIndex(pool.PoolAssets, tokenOut.Denom)
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut.Denom)
 	if err != nil {
 		return err
 	}
