@@ -37,20 +37,21 @@ func TestSolveConstantProductInvariantHappyPath(t *testing.T) {
 			yWeight:        sdk.NewDecWithPrec(5, 1),
 			expectedDeltaY: sdk.NewDecWithPrec(1122, 2),
 		},
-		{
-			// 44*(1-(86/35)^(.75/.25))
-			name:           "difficult numbers - uneven weights",
-			xPrior:         sdk.NewDec(86),
-			xAfter:         sdk.NewDec(35),
-			xWeight:        sdk.NewDecWithPrec(75, 2),
-			yPrior:         sdk.NewDec(44),
-			yWeight:        sdk.NewDecWithPrec(25, 2),
-			expectedDeltaY: sdk.NewDecWithPrec(-60874551603, 8),
-		},
+		// TODO(https://github.com/MatrixDao/matrix/issues/141): allow for uneven weights
+		// {
+		// 	// 44*(1-(86/35)^(.75/.25))
+		// 	name:           "difficult numbers - uneven weights",
+		// 	xPrior:         sdk.NewDec(86),
+		// 	xAfter:         sdk.NewDec(35),
+		// 	xWeight:        sdk.NewDecWithPrec(75, 2),
+		// 	yPrior:         sdk.NewDec(44),
+		// 	yWeight:        sdk.NewDecWithPrec(25, 2),
+		// 	expectedDeltaY: sdk.NewDecWithPrec(-60874551603, 8),
+		// },
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			deltaY := solveConstantProductInvariant(
+			deltaY := SolveConstantProductInvariant(
 				tc.xPrior, tc.xAfter, tc.xWeight, tc.yPrior, tc.yWeight)
 			require.InDelta(t, tc.expectedDeltaY.MustFloat64(), deltaY.MustFloat64(), 0.0001)
 		})
