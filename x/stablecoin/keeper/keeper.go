@@ -5,6 +5,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,4 +59,14 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// GetModuleAccountBalance gets the airdrop coin balance of module account.
+func (k Keeper) GetModuleAccountBalance(ctx sdk.Context) sdk.Coin {
+	moduleAccAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	return k.bankKeeper.GetBalance(ctx, moduleAccAddr, common.GovDenom)
+}
+
+func (k Keeper) SetCollBalance(ctx sdk.Context, moduleBalance sdk.Coin) {
+	k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(moduleBalance))
 }

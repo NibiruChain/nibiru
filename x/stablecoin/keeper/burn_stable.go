@@ -4,6 +4,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -39,6 +40,7 @@ func (k Keeper) BurnStable(
 		return nil, err
 	}
 
+	fmt.Println("asdasdsadasdadsadasda")
 	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
 	// based on the collateral ratio.
 	// TODO: Initialize 'collRatio' based on the collateral ratio of the protocol.
@@ -74,6 +76,9 @@ func (k Keeper) BurnStable(
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, msgCreator, coinsNeededToSend)
 	if err != nil {
+		fmt.Println("ERRRORRRRRRR")
+		fmt.Println(err)
+		return nil, err
 		panic(err)
 	}
 	for _, coin := range coinsNeededToSend {
