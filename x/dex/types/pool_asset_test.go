@@ -110,5 +110,58 @@ func TestPoolAssetGetLiquidity(t *testing.T) {
 			require.Equal(t, tc.expectedLiquidity, GetPoolLiquidity(tc.poolAssets))
 		})
 	}
+}
 
+// helper function to create dummy test pools
+func MockPool(assets []PoolAsset) Pool {
+	return Pool{
+		Id: 1,
+		PoolParams: PoolParams{
+			SwapFee: sdk.SmallestDec(),
+			ExitFee: sdk.SmallestDec(),
+		},
+		PoolAssets:  assets,
+		TotalShares: sdk.NewInt64Coin(GetPoolShareBaseDenom(1), 100),
+		TotalWeight: sdk.NewInt(2),
+	}
+}
+
+func TestUpdatePoolAssetTokens(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		poolAssets         []PoolAsset
+		newAssets          sdk.Coins
+		expectedPoolAssets []PoolAsset
+	}{
+		{
+			name: "update pool asset balances",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 200),
+				},
+			},
+			newAssets: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 150),
+				sdk.NewInt64Coin("bbb", 125),
+			),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 150),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 125),
+				},
+			},
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			pool := MockPool(tc.poolAssets)
+			pool.UpdatePoolAssetBalances(tc.newAssets)
+			require.Equal(t, tc.expectedPoolAssets, pool.PoolAssets)
+		})
+	}
 }

@@ -36,3 +36,32 @@ func GetPoolLiquidity(poolAssets []PoolAsset) (coins sdk.Coins) {
 	}
 	return coins
 }
+
+/*
+Updates the pool's asset liquidity using the provided tokens.
+
+args:
+  - tokens: the new token liquidity in the pool
+
+ret:
+  - err: error if any
+
+*/
+func (pool *Pool) UpdatePoolAssetBalances(tokens sdk.Coins) (err error) {
+	// Ensures that there are no duplicate denoms, all denom's are valid,
+	// and amount is > 0
+	if err = tokens.Validate(); err != nil {
+		return fmt.Errorf("provided coins are invalid, %v", err)
+	}
+
+	for _, coin := range tokens {
+		assetIndex, existingAsset, err := getPoolAssetAndIndex(pool.PoolAssets, coin.Denom)
+		if err != nil {
+			return err
+		}
+		existingAsset.Token = coin
+		pool.PoolAssets[assetIndex].Token = coin
+	}
+
+	return nil
+}
