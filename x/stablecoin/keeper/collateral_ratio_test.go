@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/MatrixDao/matrix/x/testutil"
@@ -56,4 +57,34 @@ func TestSetCollRatio_Input(t *testing.T) {
 	for _, testCase := range testCases {
 		executeTest(t, testCase)
 	}
+}
+
+func TestGetCollRatio_Input(t *testing.T) {
+
+	testName := "Get without set returns the default params"
+	t.Run(testName, func(t *testing.T) {
+
+		matrixApp, ctx := testutil.NewMatrixApp()
+		// stablecoinKeeper := &matrixApp.StablecoinKeeper
+
+		fmt.Println(matrixApp.StablecoinKeeper.GetParams(ctx))
+		// fmt.Println(stablecoinKeeper.GetParams(ctx))
+		// outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
+		// outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
+		// defaultCollRatioInt := sdk.NewInt(types.DefaultParams().CollRatio)
+		// require.True(t, outCollRatioInt == defaultCollRatioInt)
+	})
+
+	// testName = "Setting to a cust"
+	// t.Run(testName, func(t *testing.T) {
+
+	// 	matrixApp, ctx := testutil.NewMatrixApp()
+	// 	stablecoinKeeper := &matrixApp.StablecoinKeeper
+
+	// 	outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
+	// 	outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
+	// 	defaultCollRatioInt := sdk.NewInt(types.DefaultParams().CollRatio)
+	// 	require.True(t, outCollRatioInt == defaultCollRatioInt)
+	// })
+
 }

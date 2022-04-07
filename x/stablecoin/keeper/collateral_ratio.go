@@ -16,7 +16,8 @@ and burns.
 
 // GetCollRatio queries the 'collRatio'.
 func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
-	return sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1_000_000)
+	collRatio = sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1_000_000)
+	return collRatio
 }
 
 /*
@@ -65,7 +66,8 @@ func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err e
 	return neededCollUSD, err
 }
 
-func (k *Keeper) GetNeededCollAmount(ctx sdk.Context, collDenom string,
+func (k *Keeper) GetNeededCollAmount(
+	ctx sdk.Context, collDenom string,
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSD, err := k.GetNeededCollUSD(ctx)
 	if err != nil {
