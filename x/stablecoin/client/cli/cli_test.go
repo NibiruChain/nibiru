@@ -41,6 +41,7 @@ type IntegrationTestSuite struct {
 
 type MsgPostPrices []pricefeedtypes.MsgPostPrice
 
+// NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pricefeedtypes.GenesisState {
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
 
@@ -48,9 +49,11 @@ func NewPricefeedGen() *pricefeedtypes.GenesisState {
 		Params: pricefeedtypes.Params{
 			Markets: []pricefeedtypes.Market{
 				{MarketID: common.GovPricePool, BaseAsset: common.GovDenom,
-					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle}, Active: true},
+					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
+					Active: true},
 				{MarketID: common.CollPricePool, BaseAsset: common.StableDenom,
-					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle}, Active: true},
+					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
+					Active: true},
 			},
 		},
 		PostedPrices: []pricefeedtypes.PostedPrice{
@@ -78,11 +81,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	// modification to pay fee with test bond denom "stake"
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
-	gammGen := stabletypes.DefaultGenesis()
-	gammGen.ModuleAccountBalance = sdk.NewCoin(common.CollDenom, sdk.NewInt(10000000000))
+	stableGen := stabletypes.DefaultGenesis()
+	stableGen.ModuleAccountBalance = sdk.NewCoin(common.CollDenom, sdk.NewInt(10000000000))
 
-	gammGenJson := s.cfg.Codec.MustMarshalJSON(gammGen)
-	genesisState[stabletypes.ModuleName] = gammGenJson
+	stableGenJson := s.cfg.Codec.MustMarshalJSON(stableGen)
+	genesisState[stabletypes.ModuleName] = stableGenJson
 
 	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
 	genesisState[pricefeedtypes.ModuleName] = pricefeedGenJson
@@ -100,8 +103,13 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-// Create a new wallet and try to fill the wallet with the require balance. Tokens are sent by the validator
-func (s IntegrationTestSuite) fillWalletFromValidator(addr sdk.AccAddress, balance sdk.Coins, val *network.Validator) sdk.AccAddress {
+/*
+Create a new wallet and attempt to fill it with the required balance.
+Tokens are sent by the validator, 'val'.
+*/
+func (s IntegrationTestSuite) fillWalletFromValidator(
+	addr sdk.AccAddress, balance sdk.Coins, val *network.Validator,
+) sdk.AccAddress {
 	_, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
@@ -116,7 +124,7 @@ func (s IntegrationTestSuite) fillWalletFromValidator(addr sdk.AccAddress, balan
 	return addr
 }
 
-func (s IntegrationTestSuite) TestMintCmd() {
+func (s IntegrationTestSuite) TestMintStableCmd() {
 	val := s.network.Validators[0]
 
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
@@ -171,7 +179,8 @@ func (s IntegrationTestSuite) TestMintCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(
+					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
@@ -183,17 +192,19 @@ func (s IntegrationTestSuite) TestMintCmd() {
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
 				s.Require().NoError(err)
 
-				s.Require().Equal(balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
+				s.Require().Equal(
+					balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
 
 			}
 		})
 	}
 }
 
-func (s IntegrationTestSuite) TestBurnCmd() {
+func (s IntegrationTestSuite) TestBurnStableCmd() {
 	val := s.network.Validators[0]
 
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic("burn", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		"burn", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
 	s.fillWalletFromValidator(
@@ -205,11 +216,14 @@ func (s IntegrationTestSuite) TestBurnCmd() {
 		val,
 	)
 
+	defaultBondCoinsString := sdk.NewCoins(
+		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf(
+			"--%s=%s", flags.FlagFees, defaultBondCoinsString),
 	}
 
 	testCases := []struct {
@@ -249,7 +263,10 @@ func (s IntegrationTestSuite) TestBurnCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(
+					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType),
+					out.String(),
+				)
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
@@ -261,9 +278,12 @@ func (s IntegrationTestSuite) TestBurnCmd() {
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
 				s.Require().NoError(err)
 
-				s.Require().Equal(balRes.Balances.AmountOf(common.CollDenom), tc.expectedColl)
-				s.Require().Equal(balRes.Balances.AmountOf(common.GovDenom), tc.expectedGov)
-				s.Require().Equal(balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
+				s.Require().Equal(
+					balRes.Balances.AmountOf(common.CollDenom), tc.expectedColl)
+				s.Require().Equal(
+					balRes.Balances.AmountOf(common.GovDenom), tc.expectedGov)
+				s.Require().Equal(
+					balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
 
 			}
 		})
