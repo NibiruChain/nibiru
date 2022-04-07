@@ -1,5 +1,10 @@
 package types
 
+import (
+	"github.com/MatrixDao/matrix/x/common"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // DefaultIndex is the default capability global index
 const DefaultIndex uint64 = 1
 
@@ -7,7 +12,8 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		// this line is used by starport scaffolding # genesis/types/default
-		Params: DefaultParams(),
+		Params:               DefaultParams(),
+		ModuleAccountBalance: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
 	}
 }
 

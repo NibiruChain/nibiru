@@ -9,6 +9,7 @@ import (
 	// Matrix
 	"github.com/MatrixDao/matrix/app"
 	dexcmd "github.com/MatrixDao/matrix/x/dex/client/cli"
+	pricefeedcmd "github.com/MatrixDao/matrix/x/pricefeed/client/cli"
 	sccmd "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
 
 	// Cosmos-SDK
@@ -216,6 +217,7 @@ func queryCommand() *cobra.Command {
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
 		dexcmd.GetQueryCmd(),
+		pricefeedcmd.GetQueryCmd(),
 		sccmd.GetQueryCmd(),
 	)
 
@@ -245,8 +247,8 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 		dexcmd.GetTxCmd(),
-		sccmd.MintStableCmd(),
-		sccmd.BurnStableCmd(),
+		pricefeedcmd.GetTxCmd(),
+		sccmd.GetTxCmd(),
 	)
 
 	simapp.ModuleBasics.AddTxCommands(cmd)

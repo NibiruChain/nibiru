@@ -43,7 +43,7 @@ func MintStableCmd() *cobra.Command {
 
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			msg, err := NewBuildMintMsg(clientCtx, args[0])
+			msg, err := buildMintStableMsg(clientCtx, args[0])
 			if err != nil {
 				return err
 			}
@@ -58,9 +58,9 @@ func MintStableCmd() *cobra.Command {
 }
 
 /*
-NewBuildMintMsg
+buildMintStableMsg
 */
-func NewBuildMintMsg(
+func buildMintStableMsg(
 	clientCtx client.Context, tokenInStr string,
 ) (sdk.Msg, error) {
 
@@ -88,9 +88,11 @@ func BurnStableCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).
+				WithAccountRetriever(clientCtx.AccountRetriever)
 
-			msg, err := NewBuildBurnMsg(clientCtx, args[0])
+			msg, err := buildBurnStableMsg(clientCtx, args[0])
 			if err != nil {
 				return err
 			}
@@ -104,7 +106,7 @@ func BurnStableCmd() *cobra.Command {
 	return cmd
 }
 
-func NewBuildBurnMsg(
+func buildBurnStableMsg(
 	clientCtx client.Context, tokenInStr string,
 ) (sdk.Msg, error) {
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
