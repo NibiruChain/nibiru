@@ -27,13 +27,13 @@ func (k Keeper) MintStable(
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovPricePool)
+	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
 	if err != nil {
 		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollPricePool)
+	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return nil, err
 	}

@@ -74,9 +74,9 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := ptypes.Params{
 				Markets: []ptypes.Market{
-					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -84,11 +84,11 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovPricePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovCollPool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -194,9 +194,9 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := ptypes.Params{
 				Markets: []ptypes.Market{
-					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -204,11 +204,11 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovPricePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovCollPool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -299,9 +299,9 @@ func TestMsgBurnResponse_supply(t *testing.T) {
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := ptypes.Params{
 				Markets: []ptypes.Market{
-					{MarketID: common.GovPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollPricePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -309,11 +309,11 @@ func TestMsgBurnResponse_supply(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovPricePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovCollPool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollPricePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
