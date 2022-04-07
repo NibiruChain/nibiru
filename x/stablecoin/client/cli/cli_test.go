@@ -79,11 +79,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 	gammGen := stabletypes.DefaultGenesis()
+	gammGen.ModuleAccountBalance = sdk.NewCoin(common.CollDenom, sdk.NewInt(10000000000))
 
 	gammGenJson := s.cfg.Codec.MustMarshalJSON(gammGen)
-	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
-
 	genesisState[stabletypes.ModuleName] = gammGenJson
+
+	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
 	genesisState[pricefeedtypes.ModuleName] = pricefeedGenJson
 
 	s.cfg.GenesisState = genesisState
@@ -201,7 +202,8 @@ func (s IntegrationTestSuite) TestBurnCmd() {
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
 			sdk.NewInt64Coin(common.StableDenom, 100000000),
 		),
-		val)
+		val,
+	)
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -215,6 +217,8 @@ func (s IntegrationTestSuite) TestBurnCmd() {
 		args []string
 
 		expectedStable sdk.Int
+		expectedColl   sdk.Int
+		expectedGov    sdk.Int
 		expectErr      bool
 		respType       proto.Message
 		expectedCode   uint32
@@ -224,7 +228,9 @@ func (s IntegrationTestSuite) TestBurnCmd() {
 			args: append([]string{
 				"100000000uusdm",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
-			expectedStable: sdk.NewInt(1000000),
+			expectedStable: sdk.NewInt(0),
+			expectedColl:   sdk.NewInt(90000000),
+			expectedGov:    sdk.NewInt(1000000),
 			expectErr:      false,
 			respType:       &sdk.TxResponse{},
 			expectedCode:   0,
@@ -246,18 +252,17 @@ func (s IntegrationTestSuite) TestBurnCmd() {
 				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 				txResp := tc.respType.(*sdk.TxResponse)
-				fmt.Println(txResp)
-				fmt.Println(txResp.Code)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
-				fmt.Println(resp)
 				s.Require().NoError(err)
 
 				var balRes banktypes.QueryAllBalancesResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
 				s.Require().NoError(err)
 
+				s.Require().Equal(balRes.Balances.AmountOf(common.CollDenom), tc.expectedColl)
+				s.Require().Equal(balRes.Balances.AmountOf(common.GovDenom), tc.expectedGov)
 				s.Require().Equal(balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
 
 			}
