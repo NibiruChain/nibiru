@@ -1,9 +1,6 @@
 package math
 
 import (
-	"fmt"
-	"math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -15,26 +12,30 @@ import (
 // deltaY = balanceY * (1 - (xPrior/xAfter)^(xWeight/yWeight))
 // deltaY is positive when y's balance liquidity decreases.
 // deltaY is negative when y's balance liquidity increases.
-//
 // panics if yWeight is 0.
-func solveConstantProductInvariant(
+//
+// TODO(https://github.com/MatrixDao/matrix/issues/141): Currently always calculates the invariant assuming constant weight (xy=k).
+// Once we figure out the floating point arithmetic conversions for exponentiation, we can
+// add unequal weights.
+//
+func SolveConstantProductInvariant(
 	xPrior,
 	xAfter,
-	xWeight,
+	/*unused*/ _xWeight,
 	yPrior,
-	yWeight sdk.Dec,
+	/*unused*/ _yWeight sdk.Dec,
 ) (deltaY sdk.Dec) {
-	// weightRatio = (xWeight/yWeight)
-	weightRatio := xWeight.Quo(yWeight)
+	// // weightRatio = (xWeight/yWeight)
+	// weightRatio := xWeight.Quo(yWeight)
 
 	// r = xPrior/xAfter
 	r := xPrior.Quo(xAfter)
 
-	// amountY = balanceY * (1 - (y ^ weightRatio))
-	yToWeightRatio := sdk.MustNewDecFromStr(
-		fmt.Sprintf("%f", math.Pow(r.MustFloat64(), weightRatio.MustFloat64())),
-	)
-	paranthetical := sdk.OneDec().Sub(yToWeightRatio)
-	amountY := yPrior.Mul(paranthetical)
-	return amountY
+	// TODO(https://github.com/MatrixDao/matrix/issues/141): Figure out floating point arithmetic for exponentation.
+	// Naive calculation could lead to significant rounding errors with large numbers
+	// amountY = yPrior * (1 - (r ^ weightRatio))
+	// rToWeightRatio := sdk.MustNewDecFromStr(
+	// 	fmt.Sprintf("%f", math.Pow(r.MustFloat64(), weightRatio.MustFloat64())),
+	// )
+	return yPrior.Mul(sdk.OneDec().Sub(r))
 }
