@@ -221,3 +221,44 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 		})
 	}
 }
+
+func TestApplySwap(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		pool               Pool
+		tokenIn            sdk.Coin
+		tokenOut           sdk.Coin
+		expectedPoolAssets []PoolAsset
+	}{
+		{
+			name: "apply simple swap",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:  sdk.NewInt64Coin("aaa", 50),
+			tokenOut: sdk.NewInt64Coin("bbb", 75),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 150),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 125),
+				},
+			},
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.pool.ApplySwap(tc.tokenIn, tc.tokenOut)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedPoolAssets, tc.pool.PoolAssets)
+		})
+	}
+}

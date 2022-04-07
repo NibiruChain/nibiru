@@ -93,3 +93,33 @@ func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
 	tokenAmountInBeforeFee := tokenAmountIn.Quo(sdk.OneDec().Sub(pool.PoolParams.SwapFee)).Ceil().TruncateInt()
 	return sdk.NewCoin(tokenInDenom, tokenAmountInBeforeFee), nil
 }
+
+/*
+Applies a swap to the pool by adding tokenIn and removing tokenOut from pool asset balances.
+
+args:
+  - tokenIn: the amount of token to deposit
+  - tokenOut: the amount of token to withdraw
+
+ret:
+  - err: error if any
+*/
+func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
+	_, poolAssetIn, err := getPoolAssetAndIndex(pool.PoolAssets, tokenIn.Denom)
+	if err != nil {
+		return err
+	}
+
+	_, poolAssetOut, err := getPoolAssetAndIndex(pool.PoolAssets, tokenOut.Denom)
+	if err != nil {
+		return err
+	}
+
+	poolAssetIn.Token.Amount = poolAssetIn.Token.Amount.Add(tokenIn.Amount)
+	poolAssetOut.Token.Amount = poolAssetOut.Token.Amount.Sub(tokenOut.Amount)
+
+	return pool.UpdatePoolAssetBalances(sdk.NewCoins(
+		poolAssetIn.Token,
+		poolAssetOut.Token,
+	))
+}
