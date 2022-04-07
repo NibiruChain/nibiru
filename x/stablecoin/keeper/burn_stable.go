@@ -74,7 +74,7 @@ func (k Keeper) BurnStable(
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, msgCreator, coinsNeededToSend)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	for _, coin := range coinsNeededToSend {
 		events.EmitTransfer(ctx, coin, types.ModuleName, msgCreator.String())
