@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,30 +61,33 @@ func TestSetCollRatio_Input(t *testing.T) {
 
 func TestGetCollRatio_Input(t *testing.T) {
 
-	testName := "Get without set returns the default params"
+	testName := "GetCollRatio after setting default params returns expected value"
 	t.Run(testName, func(t *testing.T) {
 
 		matrixApp, ctx := testutil.NewMatrixApp()
-		// stablecoinKeeper := &matrixApp.StablecoinKeeper
+		stablecoinKeeper := &matrixApp.StablecoinKeeper
 
-		fmt.Println(matrixApp.StablecoinKeeper.GetParams(ctx))
-		// fmt.Println(stablecoinKeeper.GetParams(ctx))
-		// outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
-		// outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
-		// defaultCollRatioInt := sdk.NewInt(types.DefaultParams().CollRatio)
-		// require.True(t, outCollRatioInt == defaultCollRatioInt)
+		stablecoinKeeper.SetParams(ctx, types.DefaultParams())
+		expectedCollRatioInt := sdk.NewInt(types.DefaultParams().CollRatio)
+
+		outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
+		outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
+		require.EqualValues(t, expectedCollRatioInt, outCollRatioInt)
 	})
 
-	// testName = "Setting to a cust"
-	// t.Run(testName, func(t *testing.T) {
+	testName = "Setting to non-default value returns expected value"
+	t.Run(testName, func(t *testing.T) {
 
-	// 	matrixApp, ctx := testutil.NewMatrixApp()
-	// 	stablecoinKeeper := &matrixApp.StablecoinKeeper
+		matrixApp, ctx := testutil.NewMatrixApp()
+		stablecoinKeeper := &matrixApp.StablecoinKeeper
 
-	// 	outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
-	// 	outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
-	// 	defaultCollRatioInt := sdk.NewInt(types.DefaultParams().CollRatio)
-	// 	require.True(t, outCollRatioInt == defaultCollRatioInt)
-	// })
+		expectedCollRatio := sdk.MustNewDecFromStr("0.5")
+		expectedCollRatioInt := expectedCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
+		stablecoinKeeper.SetCollRatio(ctx, expectedCollRatio)
+
+		outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
+		outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
+		require.EqualValues(t, expectedCollRatioInt, outCollRatioInt)
+	})
 
 }

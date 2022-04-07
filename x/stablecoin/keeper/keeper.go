@@ -67,6 +67,20 @@ func (k Keeper) GetModuleAccountBalance(ctx sdk.Context) sdk.Coin {
 	return k.bankKeeper.GetBalance(ctx, moduleAccAddr, common.GovDenom)
 }
 
-func (k Keeper) SetCollBalance(ctx sdk.Context, moduleBalance sdk.Coin) {
+/* IncreaseModuleCollBalance is a function meant to be used during tests to
+mint the x/stablecoin module a different genesis collateral balance.
+*/
+func (k Keeper) IncreaseModuleCollBalance(ctx sdk.Context, moduleBalance sdk.Coin) {
 	k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(moduleBalance))
+}
+
+// GetParams get all parameters as types.Params
+func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.ParamSubspace.GetParamSet(ctx, &params)
+	return params
+}
+
+// SetParams set the params
+func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.ParamSubspace.SetParamSet(ctx, &params)
 }
