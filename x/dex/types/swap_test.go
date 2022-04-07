@@ -229,6 +229,7 @@ func TestApplySwap(t *testing.T) {
 		tokenIn            sdk.Coin
 		tokenOut           sdk.Coin
 		expectedPoolAssets []PoolAsset
+		shouldError        bool
 	}{
 		{
 			name: "apply simple swap",
@@ -252,13 +253,35 @@ func TestApplySwap(t *testing.T) {
 					Token: sdk.NewInt64Coin("bbb", 125),
 				},
 			},
+			shouldError: false,
+		},
+		{
+			name: "swap fails due to too large numbers",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:     sdk.NewInt64Coin("aaa", 1),
+			tokenOut:    sdk.NewInt64Coin("bbb", 200),
+			shouldError: true,
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.pool.ApplySwap(tc.tokenIn, tc.tokenOut)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedPoolAssets, tc.pool.PoolAssets)
+			if tc.shouldError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedPoolAssets, tc.pool.PoolAssets)
+			}
+
 		})
 	}
 }

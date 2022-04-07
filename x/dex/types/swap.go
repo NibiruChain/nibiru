@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"github.com/MatrixDao/matrix/x/dex/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -117,6 +119,9 @@ func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
 
 	poolAssetIn.Token.Amount = poolAssetIn.Token.Amount.Add(tokenIn.Amount)
 	poolAssetOut.Token.Amount = poolAssetOut.Token.Amount.Sub(tokenOut.Amount)
+	if poolAssetOut.Token.Amount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("zero liquidity left for token %s", poolAssetOut.Token.Denom)
+	}
 
 	return pool.UpdatePoolAssetBalances(sdk.NewCoins(
 		poolAssetIn.Token,
