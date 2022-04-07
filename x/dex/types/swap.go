@@ -107,6 +107,13 @@ ret:
   - err: error if any
 */
 func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
+	if tokenIn.Amount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("tokenIn (%s) cannot be zero", tokenIn.Denom)
+	}
+	if tokenOut.Amount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("tokenOut (%s) cannot be zero", tokenOut.Denom)
+	}
+
 	_, poolAssetIn, err := getPoolAssetAndIndex(pool.PoolAssets, tokenIn.Denom)
 	if err != nil {
 		return err
@@ -119,11 +126,8 @@ func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
 
 	poolAssetIn.Token.Amount = poolAssetIn.Token.Amount.Add(tokenIn.Amount)
 	poolAssetOut.Token.Amount = poolAssetOut.Token.Amount.Sub(tokenOut.Amount)
-	if poolAssetOut.Token.Amount.LTE(sdk.ZeroInt()) {
-		return fmt.Errorf("zero liquidity left for token %s", poolAssetOut.Token.Denom)
-	}
 
-	return pool.UpdatePoolAssetBalances(sdk.NewCoins(
+	return pool.updatePoolAssetBalances(sdk.NewCoins(
 		poolAssetIn.Token,
 		poolAssetOut.Token,
 	))

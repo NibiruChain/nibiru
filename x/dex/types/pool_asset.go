@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	fmt "fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -47,9 +48,12 @@ ret:
   - err: error if any
 
 */
-func (pool *Pool) UpdatePoolAssetBalances(tokens sdk.Coins) (err error) {
+func (pool *Pool) updatePoolAssetBalances(tokens sdk.Coins) (err error) {
 	// Ensures that there are no duplicate denoms, all denom's are valid,
 	// and amount is > 0
+	if len(tokens) != len(pool.PoolAssets) {
+		return errors.New("provided tokens do not match number of assets in pool")
+	}
 	if err = tokens.Validate(); err != nil {
 		return fmt.Errorf("provided coins are invalid, %v", err)
 	}

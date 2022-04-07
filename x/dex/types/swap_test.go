@@ -271,6 +271,38 @@ func TestApplySwap(t *testing.T) {
 			tokenOut:    sdk.NewInt64Coin("bbb", 200),
 			shouldError: true,
 		},
+		{
+			name: "swap fails due to zero tokenIn",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:     sdk.NewInt64Coin("aaa", 0),
+			tokenOut:    sdk.NewInt64Coin("bbb", 100),
+			shouldError: true,
+		},
+		{
+			name: "swap fails due to zero tokenOut",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:     sdk.NewInt64Coin("aaa", 100),
+			tokenOut:    sdk.NewInt64Coin("bbb", 0),
+			shouldError: true,
+		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
