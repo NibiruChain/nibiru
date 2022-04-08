@@ -59,8 +59,6 @@ func TestCreateLock(t *testing.T) {
 					Coins:    tc.coins,
 					EndTime:  ctx.BlockTime().Add(24 * time.Hour),
 				}, lock)
-
-				require.Equal(t, uint64(1), app.LockupKeeper.GetNextLockId(ctx))
 			}
 
 		})
