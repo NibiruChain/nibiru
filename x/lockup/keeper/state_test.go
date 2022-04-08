@@ -26,6 +26,13 @@ func TestLockState(t *testing.T) {
 	getLock, err := app.LockupKeeper.LocksState(ctx).Get(lock.LockId)
 	require.NoError(t, err)
 	require.Equal(t, lock, getLock)
+	// test delete
+	err = app.LockupKeeper.LocksState(ctx).Delete(lock)
+	require.NoError(t, err)
 	// test get not found
-
+	_, err = app.LockupKeeper.LocksState(ctx).Get(1)
+	require.ErrorIs(t, err, types.ErrLockupNotFound)
+	// test delete not found
+	err = app.LockupKeeper.LocksState(ctx).Delete(lock)
+	require.ErrorIs(t, err, types.ErrLockupNotFound)
 }
