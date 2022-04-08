@@ -8,4 +8,7 @@ option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 // Params defines the parameters for the module.
 message Params {
   int64 collRatio = 1;
+  string distr_epoch_identifier = 2
+  [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];
+
 }

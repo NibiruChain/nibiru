@@ -349,6 +349,9 @@ func NewMatrixApp(
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstype.StoreKey],
 	)
+	app.EpochsKeeper.SetHooks(
+		epochstype.NewMultiEpochHooks(app.StablecoinKeeper.Hooks()),
+	)
 
 	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
 		keys[lockuptypes.StoreKey], app.AccountKeeper, app.BankKeeper,
