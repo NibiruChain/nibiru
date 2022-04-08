@@ -2,9 +2,13 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
+	"github.com/MatrixDao/matrix/x/common"
+	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/MatrixDao/matrix/x/testutil/sample"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -92,6 +96,10 @@ func TestGetCollRatio_Input(t *testing.T) {
 
 }
 
+// ---------------------------------------------------------------
+// NeededCollUSD tests
+// ---------------------------------------------------------------
+
 type TestCaseGetNeededCollUSD struct {
 	name            string
 	protocolColl    sdk.Int
@@ -176,3 +184,54 @@ func TestGetNeededCollUSD_NoError(t *testing.T) {
 	}
 }
 
+func TestGetNeededCollUSD_NoPricePosted(t *testing.T) {
+
+	executeTest := func(t *testing.T, testCase TestCaseGetNeededCollUSD) {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+
+			matrixApp, ctx := testutil.NewMatrixApp()
+			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
+			stablecoinKeeper.IncreaseModuleCollBalance(
+				ctx, sdk.NewCoin(common.CollDenom, tc.protocolColl))
+			matrixApp.BankKeeper.MintCoins(
+				ctx, types.ModuleName,
+				sdk.NewCoins(sdk.NewCoin(common.StableDenom, tc.stableSupply)),
+			)
+
+			// Set up markets for the pricefeed keeper.
+			marketID := common.CollStablePool
+			oracle := sample.AccAddress()
+			pricefeedParams := pricefeedTypes.Params{
+				Markets: []pricefeedTypes.Market{
+					{MarketID: marketID, BaseAsset: common.CollDenom,
+						QuoteAsset: common.StableDenom,
+						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+				}}
+			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+
+			neededCollUSD, err := stablecoinKeeper.GetNeededCollUSD(ctx)
+			if tc.expectedPass {
+				require.NoError(t, err)
+				require.EqualValues(t, tc.neededCollUSD, neededCollUSD)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+
+	testCases := []TestCaseGetNeededCollUSD{
+		{
+			name:            "No price availabale for the collateral",
+			protocolColl:    sdk.NewInt(500),
+			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
+			stableSupply:    sdk.NewInt(1000),
+			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
+			neededCollUSD:   sdk.MustNewDecFromStr("100"), // = 600 - 500
+			expectedPass:    false,
+		}}
+	for _, testCase := range testCases {
+		executeTest(t, testCase)
+	}
+}

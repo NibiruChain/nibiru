@@ -85,7 +85,7 @@ func (k *Keeper) GetNeededCollAmount(
 	}
 	neededCollAmount = neededCollAmountDec.TruncateInt().Add(sdk.OneInt())
 
-	return neededCollAmount, nil
+	return neededCollAmount, err
 }
 
 /*
