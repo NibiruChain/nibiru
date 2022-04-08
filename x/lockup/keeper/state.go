@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"github.com/MatrixDao/matrix/x/lockup/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -94,9 +95,15 @@ func (s LockState) IterateLockedCoins(addr sdk.AccAddress) sdk.Coins {
 
 	coins := sdk.NewCoins()
 	for ; iter.Valid(); iter.Next() {
+
 		lock := new(types.Lock)
-		s.cdc.MustUnmarshal(iter.Value(), lock)
-		coins.Add(lock.Coins...)
+
+		primaryKey := iter.Key()[len(key):] // strip index key and just keep primary key
+		if !s.locks.Has(primaryKey) {
+			panic(fmt.Errorf("state corruption: %v", primaryKey))
+		}
+		s.cdc.MustUnmarshal(s.locks.Get(primaryKey), lock)
+		coins = coins.Add(lock.Coins...)
 	}
 
 	return coins
@@ -140,13 +147,10 @@ func (s LockState) keyAddrTime(addr string, endTime time.Time, pk []byte) []byte
 	timeBytes[0] ^= 0x80
 
 	key = append(key, timeBytes...)
+	// index key is composed
 
-	// index key composed
-	// now we append the primary key
-	// so we can do sorted iteration
-
+	// now add the primary key
 	key = append(key, pk...)
-
 	return key
 }
 

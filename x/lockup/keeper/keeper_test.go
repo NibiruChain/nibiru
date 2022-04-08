@@ -114,3 +114,22 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 		require.ErrorIs(t, err, types.ErrLockEndTime)
 	})
 }
+
+func TestLockupKeeper_AccountLockedCoins(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		app, _ := testutil.NewMatrixApp()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		_, err := app.LockupKeeper.LockTokens(ctx, addr, coins, time.Second*1000)
+		require.NoError(t, err)
+
+		lockedCoins, err := app.LockupKeeper.AccountLockedCoins(ctx, addr)
+		require.NoError(t, err)
+
+		require.Len(t, lockedCoins, 1)
+	})
+}
