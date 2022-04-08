@@ -90,3 +90,7 @@ func (k LockupKeeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedToke
 
 	return lock.Coins, nil
 }
+
+func (k LockupKeeper) AccountLockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
+	return k.LocksState(ctx).IterateLockedCoins(account), nil
+}
