@@ -57,7 +57,6 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	}
 
 	return *lock, nil
-
 }
 
 // UnlockTokens returns tokens back from the module account address to the lock owner.
