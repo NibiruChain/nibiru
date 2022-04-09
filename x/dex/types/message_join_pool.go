@@ -5,7 +5,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgJoinPool = "create_pool"
+const TypeMsgJoinPool = "join_pool"
 
 var _ sdk.Msg = &MsgJoinPool{}
 
