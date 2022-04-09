@@ -31,7 +31,7 @@ Throws an error if the final amount is less than zero.
 
 */
 func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (err error) {
-	if subAmt.LTE(sdk.ZeroInt()) {
+	if subAmt.LT(sdk.ZeroInt()) {
 		return errors.New("can't subtract a negative amount")
 	}
 
@@ -42,7 +42,7 @@ func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (e
 
 	// Update the supply of the asset
 	poolAsset.Token.Amount = poolAsset.Token.Amount.Sub(subAmt)
-	if poolAsset.Token.Amount.LTE(sdk.ZeroInt()) {
+	if poolAsset.Token.Amount.LT(sdk.ZeroInt()) {
 		return errors.New("can't set the pool's balance of a token to be zero or negative")
 	}
 	pool.PoolAssets[index] = poolAsset

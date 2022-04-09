@@ -96,12 +96,30 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "subtract all liquidity",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+					},
+				},
+			},
+			tokenDenom: "aaa",
+			subAmt:     sdk.NewInt(1_000_000),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 0),
+				},
+			},
+		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt)
-			require.Equal(t, tc.expectedPoolAssets, tc.pool.PoolAssets)
+			expectedCoins := poolAssetsCoins(tc.expectedPoolAssets)
+			actualCoins := poolAssetsCoins(tc.pool.PoolAssets)
+			require.Equal(t, expectedCoins, actualCoins)
 		})
 	}
-
 }
