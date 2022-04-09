@@ -91,12 +91,11 @@ Args:
   collDenom (string): 'Denom' of the collateral to be used for recollateralization.
 */
 func (k *Keeper) GovAmtFromRecollateralize(
-	ctx sdk.Context, collDenom string,
+	ctx sdk.Context,
 ) (govOut sdk.Int, err error) {
-	neededCollUSD, err := k.GetNeededCollUSD(ctx)
-	if err != nil {
-		return sdk.Int{}, err
-	}
+
+	neededCollUSD, _ := k.GetNeededCollUSD(ctx)
+
 	bonusRate := sdk.MustNewDecFromStr("0.002") // TODO: Replace with attribute
 	priceGovColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
 	if err != nil {
