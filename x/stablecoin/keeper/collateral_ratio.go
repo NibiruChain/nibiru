@@ -67,24 +67,19 @@ func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err e
 }
 
 func (k *Keeper) GetNeededCollAmount(
-	ctx sdk.Context, collDenom string,
+	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
-	neededUSD, err := k.GetNeededCollUSD(ctx)
-	if err != nil {
-		return sdk.Int{}, err
-	}
+	neededUSD, _ := k.GetNeededCollUSD(ctx)
 	priceCollStable, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	err = nil
 	neededCollAmountDec := neededUSD.Quo(priceCollStable.Price)
 	if neededCollAmountDec.IsInteger() {
 		return neededCollAmountDec.TruncateInt(), err
 	}
 	neededCollAmount = neededCollAmountDec.TruncateInt().Add(sdk.OneInt())
-
 	return neededCollAmount, err
 }
 
