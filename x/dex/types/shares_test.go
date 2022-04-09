@@ -246,7 +246,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 			numSharesIn: sdk.NewInt(25),
 			expectedTokensOut: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 25),
-				sdk.NewInt64Coin("foo", 50g),
+				sdk.NewInt64Coin("foo", 50),
 			),
 		},
 	} {

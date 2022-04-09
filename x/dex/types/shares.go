@@ -28,7 +28,7 @@ func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares 
 	minShareRatio := sdk.MaxSortableDec
 	maxShareRatio := sdk.ZeroDec()
 
-	poolLiquidity := GetPoolLiquidity(pool.PoolAssets)
+	poolLiquidity := poolAssetsCoins(pool.PoolAssets)
 
 	for i, coin := range tokensIn {
 		shareRatio := coin.Amount.ToDec().QuoInt(poolLiquidity.AmountOfNoDenomValidation(coin.Denom))
