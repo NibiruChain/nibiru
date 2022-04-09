@@ -70,3 +70,38 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 	}
 
 }
+
+func TestSubtractPoolAssetBalance(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		pool               Pool
+		tokenDenom         string
+		subAmt             sdk.Int
+		expectedPoolAssets []PoolAsset
+	}{
+		{
+			name: "subtract liquidity",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+					},
+				},
+			},
+			tokenDenom: "aaa",
+			subAmt:     sdk.NewInt(1_000),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 999_000),
+				},
+			},
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt)
+			require.Equal(t, tc.expectedPoolAssets, tc.pool.PoolAssets)
+		})
+	}
+
+}
