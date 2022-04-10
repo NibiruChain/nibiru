@@ -114,5 +114,5 @@ func (k *Keeper) GovAmtFromRecollateralize(
 Recollateralize
 */
 func (k *Keeper) Recollateralize(ctx sdk.Context, collRatio sdk.Dec) {
-	// TODO
+	// TODO https://github.com/MatrixDao/matrix/issues/118
 }
