@@ -45,14 +45,14 @@ collateral ratio.
 func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
 	stableSupply := k.GetSupplyUSDM(ctx)
 	targetCollRatio := k.GetCollRatio(ctx)
-	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	moduleCoins := k.bankKeeper.SpendableCoins(ctx, moduleAddr)
+	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+	moduleCoins := k.BankKeeper.SpendableCoins(ctx, moduleAddr)
 	collDenoms := []string{common.CollDenom}
 
 	currentTotalCollUSD := sdk.ZeroDec()
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
-		priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+		priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 		if err != nil {
 			return sdk.ZeroDec(), err
 		}
@@ -70,7 +70,7 @@ func (k *Keeper) GetNeededCollAmount(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSD, _ := k.GetNeededCollUSD(ctx)
-	priceCollStable, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -98,8 +98,8 @@ func (k *Keeper) GovAmtFromRecollateralize(
 
 	bonusRate := sdk.MustNewDecFromStr("0.002") // TODO: Replace with attribute
 
-	priceCollStable, err0 := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
-	priceGovColl, err1 := k.priceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	priceCollStable, err0 := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceGovColl, err1 := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
 	for _, err := range []error{err0, err1} {
 		if err != nil {
 			return sdk.Int{}, err

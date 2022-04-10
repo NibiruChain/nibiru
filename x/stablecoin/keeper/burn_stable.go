@@ -28,13 +28,13 @@ func (k Keeper) BurnStable(
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
 	if err != nil {
 		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (k Keeper) BurnStable(
 
 	// Send USDM from account to module
 	stablesToBurn := sdk.NewCoins(msg.Stable)
-	err = k.bankKeeper.SendCoinsFromAccountToModule(
+	err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgCreator, types.ModuleName, stablesToBurn)
 	if err != nil {
 		return nil, err
@@ -64,14 +64,14 @@ func (k Keeper) BurnStable(
 	govToSend := sdk.NewCoin(common.GovDenom, redeemGov)
 	coinsNeededToSend := sdk.NewCoins(collToSend, govToSend)
 
-	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(govToSend))
+	err = k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(govToSend))
 	if err != nil {
 		panic(err)
 	}
 	events.EmitMintMtrx(ctx, govToSend)
 
 	// Send tokens (GOV and COLL) to the account
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, msgCreator, coinsNeededToSend)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (k Keeper) BurnStable(
 	}
 
 	// Burn the USDM
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, stablesToBurn)
+	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, stablesToBurn)
 	if err != nil {
 		panic(err)
 	}

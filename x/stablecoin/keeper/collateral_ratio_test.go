@@ -120,11 +120,11 @@ func TestGetNeededCollUSD_NoError(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			stablecoinKeeper.IncreaseModuleCollBalance(
-				ctx, sdk.NewCoin(common.CollDenom, tc.protocolColl))
 			matrixApp.BankKeeper.MintCoins(
-				ctx, types.ModuleName,
-				sdk.NewCoins(sdk.NewCoin(common.StableDenom, tc.stableSupply)),
+				ctx, types.ModuleName, sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, tc.protocolColl),
+					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+				),
 			)
 
 			// Set up markets for the pricefeed keeper.
@@ -193,11 +193,11 @@ func TestGetNeededCollUSD_NoPricePosted(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			stablecoinKeeper.IncreaseModuleCollBalance(
-				ctx, sdk.NewCoin(common.CollDenom, tc.protocolColl))
 			matrixApp.BankKeeper.MintCoins(
-				ctx, types.ModuleName,
-				sdk.NewCoins(sdk.NewCoin(common.StableDenom, tc.stableSupply)),
+				ctx, types.ModuleName, sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, tc.protocolColl),
+					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+				),
 			)
 
 			// Set up markets for the pricefeed keeper.
@@ -276,11 +276,11 @@ func TestGetNeededCollAmount(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			stablecoinKeeper.IncreaseModuleCollBalance(
-				ctx, sdk.NewCoin(common.CollDenom, tc.protocolColl))
 			matrixApp.BankKeeper.MintCoins(
-				ctx, types.ModuleName,
-				sdk.NewCoins(sdk.NewCoin(common.StableDenom, tc.stableSupply)),
+				ctx, types.ModuleName, sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, tc.protocolColl),
+					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+				),
 			)
 
 			// Set up markets for the pricefeed keeper.
@@ -335,11 +335,11 @@ func TestGetNeededCollAmount(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			stablecoinKeeper.IncreaseModuleCollBalance(
-				ctx, sdk.NewCoin(common.CollDenom, tc.protocolColl))
 			matrixApp.BankKeeper.MintCoins(
-				ctx, types.ModuleName,
-				sdk.NewCoins(sdk.NewCoin(common.StableDenom, tc.stableSupply)),
+				ctx, types.ModuleName, sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, tc.protocolColl),
+					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+				),
 			)
 
 			// Set up markets for the pricefeed keeper.
@@ -387,11 +387,11 @@ func TestGovAmtFromRecollateralize(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			stablecoinKeeper.IncreaseModuleCollBalance(
-				ctx, sdk.NewCoin(common.CollDenom, tc.protocolColl))
 			matrixApp.BankKeeper.MintCoins(
-				ctx, types.ModuleName,
-				sdk.NewCoins(sdk.NewCoin(common.StableDenom, tc.stableSupply)),
+				ctx, types.ModuleName, sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, tc.protocolColl),
+					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+				),
 			)
 
 			// Set up markets for the pricefeed keeper.

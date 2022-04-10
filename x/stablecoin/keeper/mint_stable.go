@@ -27,13 +27,13 @@ func (k Keeper) MintStable(
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.priceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
 	if err != nil {
 		return nil, err
 	}
 
 	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.priceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (k Keeper) MintStable(
 func (k Keeper) sendInputCoinsToModule(
 	ctx sdk.Context, msgCreator sdk.AccAddress, coins sdk.Coins,
 ) (err error) {
-	err = k.bankKeeper.SendCoinsFromAccountToModule(
+	err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgCreator, types.ModuleName, coins)
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (k Keeper) sendInputCoinsToModule(
 func (k Keeper) sendMintedTokensToUser(
 	ctx sdk.Context, to sdk.AccAddress, stable sdk.Coin,
 ) error {
-	err := k.bankKeeper.SendCoinsFromModuleToAccount(
+	err := k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, to, sdk.NewCoins(stable))
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (k Keeper) sendMintedTokensToUser(
 
 // burnGovTokens burns governance coins
 func (k Keeper) burnGovTokens(ctx sdk.Context, neededGov sdk.Coin) error {
-	err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
+	err := k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (k Keeper) burnGovTokens(ctx sdk.Context, neededGov sdk.Coin) error {
 }
 
 func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
-	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stable))
+	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stable))
 	if err != nil {
 		return err
 	}
