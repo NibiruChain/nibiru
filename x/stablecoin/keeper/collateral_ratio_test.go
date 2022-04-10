@@ -228,6 +228,16 @@ func TestGetNeededCollAmount(t *testing.T) {
 			neededCollAmt:   sdk.NewInt(103),                 //  602.5 - 500 -> 103 required
 			expectedPass:    true,
 		},
+		{
+			name:            "under-collateralized; truncated integer amount; non-unit price",
+			protocolColl:    sdk.NewInt(500),
+			priceCollStable: sdk.MustNewDecFromStr("0.999"), // startCollUSD = 500 * 0.999 -> 499.5
+			stableSupply:    sdk.NewInt(1000),
+			targetCollRatio: sdk.MustNewDecFromStr("0.603"), // 0.603 * 1000 = 603
+			//  603 - 499.5 = 103.5 -> 104 required
+			neededCollAmt: sdk.NewInt(104),
+			expectedPass:  true,
+		},
 	}
 
 	for _, testCase := range testCases {
