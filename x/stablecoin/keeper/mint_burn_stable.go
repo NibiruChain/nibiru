@@ -44,11 +44,11 @@ func (k Keeper) MintStable(
 	collRatio, _ := sdk.NewDecFromStr("0.9")
 	govRatio := sdk.OneDec().Sub(collRatio)
 
-	neededCollUSD := msg.Stable.Amount.ToDec().Mul(collRatio)
+	neededCollUSD := collRatio.MulInt(msg.Stable.Amount)
 	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
 	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
 
-	neededGovUSD := msg.Stable.Amount.ToDec().Mul(govRatio)
+	neededGovUSD := govRatio.MulInt(msg.Stable.Amount)
 	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
 	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
 
@@ -169,9 +169,9 @@ func (k Keeper) BurnStable(
 	collRatio, _ := sdk.NewDecFromStr("0.9")
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 
-	redeemColl := msg.Stable.Amount.ToDec().Mul(collRatio).Quo(
+	redeemColl := collRatio.MulInt(msg.Stable.Amount).Quo(
 		priceColl.Price).TruncateInt()
-	redeemGov := msg.Stable.Amount.ToDec().Mul(govRatio).Quo(
+	redeemGov := govRatio.MulInt(msg.Stable.Amount).Quo(
 		priceGov.Price).TruncateInt()
 
 	// Send USDM from account to module

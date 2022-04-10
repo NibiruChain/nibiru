@@ -58,12 +58,11 @@ func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err e
 		if err != nil {
 			return sdk.ZeroDec(), err
 		}
-		collUSD := amtColl.ToDec().Mul(priceColl.Price)
+		collUSD := priceColl.Price.MulInt(amtColl)
 		currentTotalCollUSD = currentTotalCollUSD.Add(collUSD)
-
 	}
 
-	targetCollUSD := stableSupply.Amount.ToDec().Mul(targetCollRatio)
+	targetCollUSD := targetCollRatio.MulInt(stableSupply.Amount)
 	neededCollUSD = targetCollUSD.Sub(currentTotalCollUSD)
 	return neededCollUSD, err
 }
