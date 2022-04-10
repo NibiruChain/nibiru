@@ -77,11 +77,7 @@ func (k *Keeper) GetNeededCollAmount(
 	}
 
 	neededCollAmountDec := neededUSD.Quo(priceCollStable.Price)
-	if neededCollAmountDec.IsInteger() {
-		return neededCollAmountDec.TruncateInt(), err
-	}
-	neededCollAmount = neededCollAmountDec.TruncateInt().Add(sdk.OneInt())
-	return neededCollAmount, err
+	return neededCollAmountDec.Ceil().TruncateInt(), err
 }
 
 /*
@@ -95,17 +91,21 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	ctx sdk.Context,
 ) (govOut sdk.Int, err error) {
 
-	neededCollUSD, _ := k.GetNeededCollUSD(ctx)
+	neededCollUSD, err0 := k.GetNeededCollUSD(ctx)
+	if err != nil {
+		return sdk.Int{}, err
+	}
 
 	bonusRate := sdk.MustNewDecFromStr("0.002") // TODO: Replace with attribute
 
-	priceCollStable, err0 := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
-	priceGovColl, err1 := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
-	for _, err := range []error{err0, err1} {
+	priceCollStable, err1 := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceGovColl, err2 := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	for _, err := range []error{err0, err1, err2} {
 		if err != nil {
 			return sdk.Int{}, err
 		}
 	}
+
 	priceGov := priceGovColl.Price.Mul(priceCollStable.Price)
 	govOut = neededCollUSD.Mul(sdk.OneDec().Add(bonusRate)).Quo(priceGov).TruncateInt()
 	return govOut, err
