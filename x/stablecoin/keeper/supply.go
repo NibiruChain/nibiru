@@ -9,11 +9,11 @@ import (
 func (k Keeper) GetSupplyUSDM(
 	ctx sdk.Context,
 ) sdk.Coin {
-	return k.bankKeeper.GetSupply(ctx, common.StableDenom)
+	return k.BankKeeper.GetSupply(ctx, common.StableDenom)
 }
 
 func (k Keeper) GetSupplyMTRX(
 	ctx sdk.Context,
 ) sdk.Coin {
-	return k.bankKeeper.GetSupply(ctx, common.GovDenom)
+	return k.BankKeeper.GetSupply(ctx, common.GovDenom)
 }

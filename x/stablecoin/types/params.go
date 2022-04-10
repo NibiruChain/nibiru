@@ -30,7 +30,7 @@ func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec) Params {
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	genesisCollRatio := sdk.MustNewDecFromStr("0.9")
+	genesisCollRatio := sdk.OneDec()
 	feeRatio := sdk.MustNewDecFromStr("0.002")
 	efFeeRatio := sdk.MustNewDecFromStr("0.5")
 
@@ -96,6 +96,8 @@ func validateCollRatio(i interface{}) error {
 
 	if collRatio > 1_000_000 {
 		return fmt.Errorf("collateral Ratio is above max value(1e6): %d", collRatio)
+	} else if collRatio < 0 {
+		return fmt.Errorf("collateral Ratio is negative: %d", collRatio)
 	} else {
 		return nil
 	}
