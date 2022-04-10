@@ -9,6 +9,9 @@ import (
 )
 
 func TestGenesisState_Validate(t *testing.T) {
+	defaultFeeRatio := sdk.MustNewDecFromStr("0.002")
+	defaultFeeRatioEF := sdk.MustNewDecFromStr("0.5")
+
 	testCases := []struct {
 		description string
 		genState    *types.GenesisState
@@ -34,21 +37,24 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			description: "set non-default, valid collRatio at genesis",
 			genState: &types.GenesisState{
-				Params: types.NewParams(sdk.MustNewDecFromStr("0.7")),
+				Params: types.NewParams(
+					sdk.MustNewDecFromStr("0.7"), defaultFeeRatio, defaultFeeRatioEF),
 			},
 			expectValid: true,
 		},
 		{
 			description: "set invalid negative collRatio at genesis",
 			genState: &types.GenesisState{
-				Params: types.NewParams(sdk.MustNewDecFromStr("-0.5")),
+				Params: types.NewParams(
+					sdk.MustNewDecFromStr("-0.5"), defaultFeeRatio, defaultFeeRatioEF),
 			},
 			expectValid: false,
 		},
 		{
 			description: "set invalid > max collRatio at genesis",
 			genState: &types.GenesisState{
-				Params: types.NewParams(sdk.MustNewDecFromStr("1.5")),
+				Params: types.NewParams(
+					sdk.MustNewDecFromStr("1.5"), defaultFeeRatio, defaultFeeRatioEF),
 			},
 			expectValid: false,
 		},

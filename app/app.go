@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"github.com/MatrixDao/matrix/x/common"
 	"io"
 	"net/http"
 	"os"
@@ -142,15 +143,17 @@ var (
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		dextypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		stablecointypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
-		lockuptypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
+		authtypes.FeeCollectorName:            nil,
+		distrtypes.ModuleName:                 nil,
+		minttypes.ModuleName:                  {authtypes.Minter},
+		stakingtypes.BondedPoolName:           {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:        {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                   {authtypes.Burner},
+		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
+		common.TreasuryPoolModuleAccount:      {},
 	}
 )
 

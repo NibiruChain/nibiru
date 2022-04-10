@@ -10,6 +10,8 @@ var (
 	CollDenom   = "uust"
 	StableDenom = "uusdm"
 
+	TreasuryPoolModuleAccount = "treasury_pool"
+
 	WhitelistedColl = []string{CollDenom}
 
 	GovCollPool    = PoolNameFromDenoms([]string{GovDenom, CollDenom})

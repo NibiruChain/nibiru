@@ -79,7 +79,9 @@ func TestGetAndSetParams(t *testing.T) {
 		stableKeeper := &matrixApp.StablecoinKeeper
 
 		collRatio := sdk.MustNewDecFromStr("0.5")
-		params := types.NewParams(collRatio)
+		feeRatio := collRatio
+		feeRatioEF := collRatio
+		params := types.NewParams(collRatio, feeRatio, feeRatioEF)
 		stableKeeper.SetParams(ctx, params)
 
 		require.EqualValues(t, params, stableKeeper.GetParams(ctx))
