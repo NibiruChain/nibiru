@@ -50,6 +50,8 @@ func validateCollRatio(i interface{}) error {
 
 	if collRatio > 1_000_000 {
 		return fmt.Errorf("collateral Ratio is above max value(1e6): %o", collRatio)
+	} else if collRatio < 0 {
+		return fmt.Errorf("collateral Ratio is negative: %o", collRatio)
 	} else {
 		return nil
 	}
