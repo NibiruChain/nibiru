@@ -16,8 +16,7 @@ and burns.
 
 // GetCollRatio queries the 'collRatio'.
 func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
-	collRatio = sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1_000_000)
-	return collRatio
+	return sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1_000_000)
 }
 
 /*
@@ -50,9 +49,12 @@ func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err e
 	collDenoms := []string{common.CollDenom}
 
 	currentTotalCollUSD := sdk.ZeroDec()
+	pricePools := map[string]string{
+		common.CollDenom: common.CollStablePool,
+	}
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
-		priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+		priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, pricePools[collDenom])
 		if err != nil {
 			return sdk.ZeroDec(), err
 		}
