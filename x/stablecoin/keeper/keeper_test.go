@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/MatrixDao/matrix/app"
@@ -91,18 +90,10 @@ func TestGetAndSetParams(t *testing.T) {
 		matrixApp, ctx := testutil.NewMatrixApp()
 		stableKeeper := &matrixApp.StablecoinKeeper
 
-		getParamsPanicRaised := func() error {
-			defer func() error {
-				if err := recover(); err != nil {
-					return fmt.Errorf("panic occured: %s", err)
-				} else {
-					return nil
-				}
-			}()
-			err := fmt.Errorf("panic occured: %d", stableKeeper.GetParams(ctx))
-			return err
-		}
-		require.NoError(t, getParamsPanicRaised())
+		require.Panics(
+			t,
+			func() { stableKeeper.GetParams(ctx) },
+		)
 	})
 
 }
