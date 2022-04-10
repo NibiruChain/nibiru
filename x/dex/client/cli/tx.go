@@ -30,6 +30,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdCreatePool(),
+		CmdJoinPool(),
 	)
 
 	return cmd
