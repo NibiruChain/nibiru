@@ -107,8 +107,8 @@ func (k *Keeper) GovAmtFromRecollateralize(
 			return sdk.Int{}, err
 		}
 	}
-	priceGov := priceGovColl.Price.Mul(priceCollStable.Price)
-	govOut = neededCollUSD.Mul(sdk.OneDec().Add(bonusRate)).Quo(priceGov).TruncateInt()
+	priceGovStable := priceGovColl.Price.Mul(priceCollStable.Price)
+	govOut = neededCollUSD.Mul(sdk.OneDec().Add(bonusRate)).Quo(priceGovStable).TruncateInt()
 	return govOut, err
 }
 
