@@ -19,7 +19,6 @@ import (
 func (k Keeper) MintStable(
 	goCtx context.Context, msg *types.MsgMintStable,
 ) (*types.MsgMintStableResponse, error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	msgCreator, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -27,34 +26,28 @@ func (k Keeper) MintStable(
 		return nil, err
 	}
 
-	// priceGov: Price of the governance token in USD
-	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
-	if err != nil {
-		return nil, err
-	}
-
-	// priceColl: Price of the collateral token in USD
-	priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
-	if err != nil {
-		return nil, err
-	}
-
-	// The user deposits a mixture of collateral and GOV tokens based on the collateral ratio.
-	// TODO: Initialize these two vars based on the collateral ratio of the protocol.
-	collRatio, _ := sdk.NewDecFromStr("0.9")
+	params := k.GetParams(ctx)
+	feeRatio := params.GetFeeRatioAsDec()
+	collRatio := params.GetCollRatioAsDec()
+	efFeeRatio := params.GetEfFeeRatioAsDec()
 	govRatio := sdk.OneDec().Sub(collRatio)
 
-	neededCollUSD := collRatio.MulInt(msg.Stable.Amount)
-	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
-	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
-
-	neededGovUSD := govRatio.MulInt(msg.Stable.Amount)
-	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
-	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
+	// The user deposits a mixture of collateral and GOV tokens based on the collateral ratio.
+	neededColl, collFees, err := k.
+		calcNeededCollateralAndFees(ctx, msg.Stable, collRatio, feeRatio)
+	if err != nil {
+		return nil, err
+	}
+	neededGov, govFees, err := k.
+		calcNeededGovAndFees(ctx, msg.Stable, govRatio, feeRatio)
+	if err != nil {
+		return nil, err
+	}
 
 	coinsNeededToMint := sdk.NewCoins(neededColl, neededGov)
+	coinsNeededToMintPlusFees := coinsNeededToMint.Add(govFees, collFees)
 
-	err = k.CheckEnoughBalances(ctx, coinsNeededToMint, msgCreator)
+	err = k.CheckEnoughBalances(ctx, coinsNeededToMintPlusFees, msgCreator)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +67,60 @@ func (k Keeper) MintStable(
 		panic(err)
 	}
 
+	err = k.sendFeesToEF(ctx, msgCreator, efFeeRatio, sdk.NewCoins(collFees, govFees))
+	if err != nil {
+		panic(err)
+	}
+
 	err = k.sendMintedTokensToUser(ctx, msgCreator, msg.Stable)
 	if err != nil {
 		panic(err)
 	}
 
-	return &types.MsgMintStableResponse{Stable: msg.Stable}, nil
+	return &types.MsgMintStableResponse{
+		Stable:    msg.Stable,
+		UsedCoins: sdk.NewCoins(neededGov, neededColl),
+		FeesPayed: sdk.NewCoins(govFees, collFees),
+	}, nil
+}
+
+// calcNeededGovAndFees returns the needed governance tokens and fees
+func (k Keeper) calcNeededGovAndFees(
+	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
+) (sdk.Coin, sdk.Coin, error) {
+	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
+
+	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
+	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
+	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
+	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
+	govFee := sdk.NewCoin(common.GovDenom, govFeeAmt)
+
+	return neededGov, govFee, nil
+}
+
+// calcNeededCollateralAndFees returns the needed collateral and the collateral fees
+func (k Keeper) calcNeededCollateralAndFees(
+	ctx sdk.Context,
+	stable sdk.Coin,
+	collRatio sdk.Dec,
+	feeRatio sdk.Dec,
+) (sdk.Coin, sdk.Coin, error) {
+	priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
+
+	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
+	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
+	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
+	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
+	collFee := sdk.NewCoin(common.CollDenom, collFeeAmt)
+
+	return neededColl, collFee, nil
 }
 
 // sendInputCoinsToModule sends coins from the 'msg.Creator' to the module account
@@ -115,13 +156,13 @@ func (k Keeper) sendMintedTokensToUser(
 }
 
 // burnGovTokens burns governance coins
-func (k Keeper) burnGovTokens(ctx sdk.Context, neededGov sdk.Coin) error {
-	err := k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(neededGov))
+func (k Keeper) burnGovTokens(ctx sdk.Context, govTokens sdk.Coin) error {
+	err := k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(govTokens))
 	if err != nil {
 		return err
 	}
 
-	events.EmitBurnMtrx(ctx, neededGov)
+	events.EmitBurnMtrx(ctx, govTokens)
 
 	return nil
 }
@@ -137,9 +178,52 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 	return nil
 }
 
-func (k Keeper) BurnStable(
-	goCtx context.Context, msg *types.MsgBurnStable,
+// sendFeesToEF sends the coins to the Stable Ecosystem Fund and treasury pool
+func (k Keeper) sendFeesToEF(
+	ctx sdk.Context, account sdk.AccAddress, efFeeRatio sdk.Dec, coins sdk.Coins,
+) error {
+	efCoins := sdk.Coins{}
+	treasuryCoins := sdk.Coins{}
+	for _, c := range coins {
+		amountEf := c.Amount.ToDec().Mul(efFeeRatio).TruncateInt()
+		amountTreasury := c.Amount.Sub(amountEf)
+
+		if c.Denom == common.GovDenom {
+			stableCoins := sdk.NewCoins(sdk.NewCoin(c.Denom, amountEf))
+			err := k.BankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, stableCoins)
+			if err != nil {
+				return err
+			}
+
+			err = k.BankKeeper.BurnCoins(ctx, types.StableEFModuleAccount, stableCoins)
+			if err != nil {
+				return err
+			}
+		} else {
+			efCoins = efCoins.Add(sdk.NewCoin(c.Denom, amountEf))
+		}
+		treasuryCoins = treasuryCoins.Add(sdk.NewCoin(c.Denom, amountTreasury))
+	}
+
+	err := k.BankKeeper.SendCoinsFromAccountToModule(
+		ctx, account, types.StableEFModuleAccount, efCoins)
+	if err != nil {
+		return err
+	}
+
+	err = k.BankKeeper.SendCoinsFromAccountToModule(
+		ctx, account, common.TreasuryPoolModuleAccount, treasuryCoins,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 ) (*types.MsgBurnStableResponse, error) {
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	msgCreator, err := sdk.AccAddressFromBech32(msg.Creator)

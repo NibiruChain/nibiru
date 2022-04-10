@@ -6,7 +6,6 @@ import (
 
 	"github.com/MatrixDao/matrix/x/common"
 	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	ptypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 
@@ -54,36 +53,78 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
+func TestMsgMintStableResponse_Supply(t *testing.T) {
+	accFundsGovAmount := sdk.NewCoin(common.GovDenom, sdk.NewInt(10_000))
+	accFundsCollAmount := sdk.NewCoin(common.CollDenom, sdk.NewInt(900_000))
+	neededGovFees := sdk.NewCoin(common.GovDenom, sdk.NewInt(20))      // 0.002 fee
+	neededCollFees := sdk.NewCoin(common.CollDenom, sdk.NewInt(1_800)) // 0.002 fee
 
-	type TestCase struct {
+	accFundsAmt := sdk.NewCoins(
+		accFundsGovAmount.Add(neededGovFees),
+		accFundsCollAmount.Add(neededCollFees),
+	)
+
+	tests := []struct {
 		name        string
 		accFunds    sdk.Coins
 		msgMint     types.MsgMintStable
 		msgResponse types.MsgMintStableResponse
 		govPrice    sdk.Dec
 		collPrice   sdk.Dec
+		supplyMtrx  sdk.Coin
+		supplyUsdm  sdk.Coin
 		err         error
+	}{
+		{
+			name:     "Successful mint",
+			accFunds: accFundsAmt,
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			},
+			msgResponse: types.MsgMintStableResponse{
+				Stable:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				UsedCoins: sdk.NewCoins(accFundsCollAmount, accFundsGovAmount),
+				FeesPayed: sdk.NewCoins(neededCollFees, neededGovFees),
+			},
+			govPrice:   sdk.MustNewDecFromStr("10"),
+			collPrice:  sdk.MustNewDecFromStr("1"),
+			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
+			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
+			supplyUsdm: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			err:        nil,
+		},
 	}
 
-	executeTest := func(t *testing.T, testCase TestCase) {
-		tc := testCase
+	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp()
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
+			// We get module account, to create it.
+			matrixApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
+
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom,
+						QuoteAsset: common.GovDenom,
+						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+						QuoteAsset: common.StableDenom,
+						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
+
+			collRatio := sdk.MustNewDecFromStr("0.9")
+			feeRatio := sdk.MustNewDecFromStr("0.002")
+			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			matrixApp.StablecoinKeeper.SetParams(
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -119,10 +160,44 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
 				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
+
+			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
+			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
+
+			// Check balances in EF
+			efModuleBalance := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			collFeesInEf := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			require.Equal(t, sdk.NewCoins(sdk.NewCoin(common.CollDenom, collFeesInEf)), efModuleBalance)
+
+			// Check balances in Treasury
+			treasuryModuleBalance := matrixApp.BankKeeper.
+				GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount))
+			collFeesInTreasury := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			govFeesInTreasury := neededGovFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			require.Equal(
+				t,
+				sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, collFeesInTreasury),
+					sdk.NewCoin(common.GovDenom, govFeesInTreasury),
+				),
+				treasuryModuleBalance,
+			)
 		})
 	}
 
-	testCases := []TestCase{
+}
+
+func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
+
+	testCases := []struct {
+		name        string
+		accFunds    sdk.Coins
+		msgMint     types.MsgMintStable
+		msgResponse types.MsgMintStableResponse
+		govPrice    sdk.Dec
+		collPrice   sdk.Dec
+		err         error
+	}{
 		{
 			name: "User has no GOV",
 			accFunds: sdk.NewCoins(
@@ -191,63 +266,34 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			err: types.NotEnoughBalance.Wrap(
 				sdk.NewCoin(common.CollDenom, sdk.NewInt(1)).String()),
 		},
-		{
-			name: "Successful mint",
-			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(9001)),
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(9001)),
-			),
-			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
-			},
-			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
-			},
-			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       nil,
-		},
 	}
+
 	for _, testCase := range testCases {
-		executeTest(t, testCase)
-	}
-}
-
-func TestMsgMintStableResponse_Supply(t *testing.T) {
-
-	type TestCase struct {
-		name        string
-		accFunds    sdk.Coins
-		msgMint     types.MsgMintStable
-		msgResponse types.MsgMintStableResponse
-		govPrice    sdk.Dec
-		collPrice   sdk.Dec
-		supplyMtrx  sdk.Coin
-		supplyUsdm  sdk.Coin
-		err         error
-	}
-
-	executeTest := func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			matrixApp, ctx := testutil.NewMatrixApp()
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
+
+			// We get module account, to create it.
+			matrixApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom,
-						QuoteAsset: common.GovDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
+
+			collRatio := sdk.MustNewDecFromStr("0.9")
+			feeRatio := sdk.ZeroDec()
+			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			matrixApp.StablecoinKeeper.SetParams(
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -284,34 +330,9 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
 
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
+			balances := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			require.Equal(t, mintStableResponse.FeesPayed, balances)
 		})
-	}
-
-	testCases := []TestCase{
-		{
-			name: "Successful mint",
-			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(9001)),
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(9001)),
-			),
-			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
-			},
-			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
-			},
-			govPrice:   sdk.MustNewDecFromStr("10"),
-			collPrice:  sdk.MustNewDecFromStr("1"),
-			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(9000)),
-			supplyUsdm: sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
-			err:        nil,
-		},
-	}
-	for _, testCase := range testCases {
-		executeTest(t, testCase)
 	}
 }
 
@@ -375,8 +396,8 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
-			pfParams := ptypes.Params{
-				Markets: []ptypes.Market{
+			pfParams := pricefeedTypes.Params{
+				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
@@ -495,8 +516,8 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
-			pfParams := ptypes.Params{
-				Markets: []ptypes.Market{
+			pfParams := pricefeedTypes.Params{
+				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
@@ -600,8 +621,8 @@ func TestMsgBurnResponse_supply(t *testing.T) {
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
-			pfParams := ptypes.Params{
-				Markets: []ptypes.Market{
+			pfParams := pricefeedTypes.Params{
+				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,

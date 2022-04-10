@@ -32,8 +32,10 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	} else if collRatioTooLow {
 		return fmt.Errorf("input 'collRatio', %d, is negative", collRatio)
 	}
-	params := types.NewParams(collRatio)
+
+	params := types.NewParams(collRatio, collRatio, collRatio) // TODO this should be rethought for production
 	k.ParamSubspace.SetParamSet(ctx, &params)
+
 	return err
 }
 
