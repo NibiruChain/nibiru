@@ -480,7 +480,7 @@ func TestGovAmtFromRecollateralize(t *testing.T) {
 			name:            "correct computation - positive, new price",
 			protocolColl:    sdk.NewInt(50_000),
 			stableSupply:    sdk.NewInt(100_000),
-			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.6 * 1000 = 600
+			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.7 * 100_000 = 70_000
 			postedMarketIDs: []string{common.GovCollPool, common.CollStablePool},
 			priceCollStable: sdk.OneDec(),
 			priceGovColl:    sdk.NewDec(10),
