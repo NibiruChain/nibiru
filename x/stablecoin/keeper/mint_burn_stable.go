@@ -67,7 +67,7 @@ func (k Keeper) MintStable(
 		panic(err)
 	}
 
-	err = k.sendFeesToEF(ctx, msgCreator, efFeeRatio, sdk.NewCoins(collFees, govFees))
+	err = k.splitAndSendFeesToEfAndTreasury(ctx, msgCreator, efFeeRatio, sdk.NewCoins(collFees, govFees))
 	if err != nil {
 		panic(err)
 	}
@@ -178,8 +178,8 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 	return nil
 }
 
-// sendFeesToEF sends the coins to the Stable Ecosystem Fund and treasury pool
-func (k Keeper) sendFeesToEF(
+// splitAndSendFeesToEfAndTreasury sends the coins to the Stable Ecosystem Fund and treasury pool
+func (k Keeper) splitAndSendFeesToEfAndTreasury(
 	ctx sdk.Context, account sdk.AccAddress, efFeeRatio sdk.Dec, coins sdk.Coins,
 ) error {
 	efCoins := sdk.Coins{}

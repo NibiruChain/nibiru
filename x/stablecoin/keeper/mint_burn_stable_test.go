@@ -53,7 +53,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgMintStableResponse_Supply(t *testing.T) {
+func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 	accFundsGovAmount := sdk.NewCoin(common.GovDenom, sdk.NewInt(10_000))
 	accFundsCollAmount := sdk.NewCoin(common.CollDenom, sdk.NewInt(900_000))
 	neededGovFees := sdk.NewCoin(common.GovDenom, sdk.NewInt(20))      // 0.002 fee
@@ -188,7 +188,6 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 }
 
 func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
-
 	testCases := []struct {
 		name        string
 		accFunds    sdk.Coins
@@ -373,7 +372,6 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
-
 	type TestCase struct {
 		name         string
 		accFunds     sdk.Coins
@@ -493,8 +491,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 }
 
 func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
-
-	type TestCase struct {
+	tests := []struct {
 		name         string
 		accFunds     sdk.Coins
 		moduleFunds  sdk.Coins
@@ -504,10 +501,31 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 		collPrice    sdk.Dec
 		expectedPass bool
 		err          string
+	}{
+		{
+			name:      "Happy path",
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.StableDenom, 1_000_000_000),
+			),
+			moduleFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+			),
+			msgBurn: types.MsgBurnStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewInt64Coin(common.StableDenom, 10_000_000),
+			},
+			msgResponse: types.MsgBurnStableResponse{
+				Gov:        sdk.NewInt64Coin(common.GovDenom, 100_000),
+				Collateral: sdk.NewInt64Coin(common.CollDenom, 9_000_000),
+			},
+			expectedPass: true,
+		},
 	}
 
-	executeTest := func(t *testing.T, testCase TestCase) {
-		tc := testCase
+	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp()
@@ -566,32 +584,6 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
 		})
-	}
-
-	testCases := []TestCase{
-		{
-			name:      "Happy path",
-			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
-			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.StableDenom, 1000000000),
-			),
-			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 100000000),
-			),
-			msgBurn: types.MsgBurnStable{
-				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(common.StableDenom, 10000000),
-			},
-			msgResponse: types.MsgBurnStableResponse{
-				Gov:        sdk.NewInt64Coin(common.GovDenom, 100000),
-				Collateral: sdk.NewInt64Coin(common.CollDenom, 9000000),
-			},
-			expectedPass: true,
-		},
-	}
-	for _, test := range testCases {
-		executeTest(t, test)
 	}
 }
 
