@@ -142,7 +142,6 @@ from the pool and modifies the pool. Accounts for an exit fee, if any, on the po
 
 args:
   - exitingShares: the number of pool shares to exit from the pool
-  - exitFee: the
 */
 func (pool *Pool) ExitPool(exitingShares sdk.Int) (
 	exitedCoins sdk.Coins, err error,
