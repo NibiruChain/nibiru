@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	fmt "fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,15 +25,26 @@ func (poolAsset PoolAsset) Validate() error {
 }
 
 /*
-Returns all of the coins contained in the pool's assets.
+Subtracts an amount of coins from a pool's assets.
+Throws an error if the final amount is less than zero.
 
-ret:
-  - coins: the coin denoms and amounts that the pool contains, aka the pool total liquidity
+
 */
-func GetPoolLiquidity(poolAssets []PoolAsset) (coins sdk.Coins) {
-	coins = sdk.Coins{}
-	for _, asset := range poolAssets {
-		coins = coins.Add(asset.Token)
+func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (err error) {
+	if subAmt.LT(sdk.ZeroInt()) {
+		return errors.New("can't subtract a negative amount")
 	}
-	return coins
+
+	index, poolAsset, err := getPoolAssetAndIndex(pool.PoolAssets, assetDenom)
+	if err != nil {
+		return err
+	}
+
+	// Update the supply of the asset
+	poolAsset.Token.Amount = poolAsset.Token.Amount.Sub(subAmt)
+	if poolAsset.Token.Amount.LT(sdk.ZeroInt()) {
+		return errors.New("can't set the pool's balance of a token to be zero or negative")
+	}
+	pool.PoolAssets[index] = poolAsset
+	return nil
 }

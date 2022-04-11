@@ -71,44 +71,55 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 
 }
 
-func TestPoolAssetGetLiquidity(t *testing.T) {
+func TestSubtractPoolAssetBalance(t *testing.T) {
 	for _, tc := range []struct {
-		name              string
-		poolAssets        []PoolAsset
-		expectedLiquidity sdk.Coins
+		name               string
+		pool               Pool
+		tokenDenom         string
+		subAmt             sdk.Int
+		expectedPoolAssets []PoolAsset
 	}{
 		{
-			name: "get liquidity",
-			poolAssets: []PoolAsset{
-				{
-					Token:  sdk.NewInt64Coin("aaa", 1),
-					Weight: sdk.NewInt(1),
-				},
-				{
-					Token:  sdk.NewInt64Coin("bbb", 2),
-					Weight: sdk.NewInt(1),
-				},
-				{
-					Token:  sdk.NewInt64Coin("ccc", 3),
-					Weight: sdk.NewInt(1),
-				},
-				{
-					Token:  sdk.NewInt64Coin("ddd", 4),
-					Weight: sdk.NewInt(1),
+			name: "subtract liquidity",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+					},
 				},
 			},
-			expectedLiquidity: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 1),
-				sdk.NewInt64Coin("bbb", 2),
-				sdk.NewInt64Coin("ccc", 3),
-				sdk.NewInt64Coin("ddd", 4),
-			),
+			tokenDenom: "aaa",
+			subAmt:     sdk.NewInt(1_000),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 999_000),
+				},
+			},
+		},
+		{
+			name: "subtract all liquidity",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+					},
+				},
+			},
+			tokenDenom: "aaa",
+			subAmt:     sdk.NewInt(1_000_000),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 0),
+				},
+			},
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expectedLiquidity, GetPoolLiquidity(tc.poolAssets))
+			tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt)
+			expectedCoins := poolAssetsCoins(tc.expectedPoolAssets)
+			actualCoins := poolAssetsCoins(tc.pool.PoolAssets)
+			require.Equal(t, expectedCoins, actualCoins)
 		})
 	}
-
 }

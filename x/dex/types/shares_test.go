@@ -140,7 +140,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 		expectedTokensOut sdk.Coins
 	}{
 		{
-			name: "all coins withdrawn",
+			name: "all coins withdrawn, no exit fee",
 			pool: Pool{
 				PoolAssets: []PoolAsset{
 					{
@@ -151,6 +151,9 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
 			},
 			numSharesIn: sdk.NewInt(50),
 			expectedTokensOut: sdk.NewCoins(
@@ -159,7 +162,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 			),
 		},
 		{
-			name: "partial coins withdrawn",
+			name: "partial coins withdrawn, no exit fee",
 			pool: Pool{
 				PoolAssets: []PoolAsset{
 					{
@@ -170,6 +173,9 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
 			},
 			numSharesIn: sdk.NewInt(25),
 			expectedTokensOut: sdk.NewCoins(
@@ -178,7 +184,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 			),
 		},
 		{
-			name: "fractional coins withdrawn truncates to int",
+			name: "fractional coins withdrawn truncates to int, no exit fee",
 			pool: Pool{
 				PoolAssets: []PoolAsset{
 					{
@@ -189,11 +195,58 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 1000),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
 			},
 			numSharesIn: sdk.NewInt(25),
 			expectedTokensOut: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 2),
 				sdk.NewInt64Coin("foo", 5),
+			),
+		},
+		{
+			name: "all coins withdrawn, with exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.MustNewDecFromStr("0.5"),
+				},
+			},
+			numSharesIn: sdk.NewInt(50),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 100),
+			),
+		},
+		{
+			name: "partial coins withdrawn, with exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.MustNewDecFromStr("0.5"),
+				},
+			},
+			numSharesIn: sdk.NewInt(25),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 25),
+				sdk.NewInt64Coin("foo", 50),
 			),
 		},
 	} {
