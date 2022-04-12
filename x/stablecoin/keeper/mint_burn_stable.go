@@ -223,7 +223,6 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 
 func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 ) (*types.MsgBurnStableResponse, error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	msgCreator, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -235,23 +234,21 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, sdkerrors.Wrap(types.NoCoinFound, msg.Stable.Denom)
 	}
 
-	// priceGov: Price of the governance token in USD
 	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
 	if err != nil {
 		return nil, err
 	}
 
-	// priceColl: Price of the collateral token in USD
 	priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return nil, err
 	}
 
-	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
-	// based on the collateral ratio.
-	// TODO: Initialize 'collRatio' based on the collateral ratio of the protocol.
-	collRatio, _ := sdk.NewDecFromStr("0.9")
-	govRatio := sdk.NewDec(1).Sub(collRatio)
+	params := k.GetParams(ctx)
+	collRatio := params.GetCollRatioAsDec()
+	feeRatio := params.GetFeeRatioAsDec()
+	efFeeRatio := params.GetEfFeeRatioAsDec()
+	govRatio := sdk.OneDec().Sub(collRatio)
 
 	redeemColl := collRatio.MulInt(msg.Stable.Amount).Quo(
 		priceColl.Price).TruncateInt()
@@ -259,9 +256,18 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		priceGov.Price).TruncateInt()
 
 	// Send USDM from account to module
-	stablesToBurn := sdk.NewCoins(msg.Stable)
+	stablesToBurn := msg.Stable
+	feesFromStablesAmt := stablesToBurn.Amount.ToDec().Mul(feeRatio).RoundInt()
+	feesFromStables := sdk.NewCoin(common.StableDenom, feesFromStablesAmt)
+
+	redeemFeesColl := collRatio.MulInt(feesFromStablesAmt).
+		Quo(priceColl.Price).TruncateInt()
+	redeemFeesGov := govRatio.MulInt(feesFromStablesAmt).
+		Quo(priceGov.Price).TruncateInt()
+
+	stablesPlusFees := stablesToBurn.Add(feesFromStables)
 	err = k.BankKeeper.SendCoinsFromAccountToModule(
-		ctx, msgCreator, types.ModuleName, stablesToBurn)
+		ctx, msgCreator, types.ModuleName, sdk.NewCoins(stablesPlusFees))
 	if err != nil {
 		return nil, err
 	}
@@ -272,11 +278,16 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	govToSend := sdk.NewCoin(common.GovDenom, redeemGov)
 	coinsNeededToSend := sdk.NewCoins(collToSend, govToSend)
 
-	err = k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(govToSend))
+	feesCollToEF := sdk.NewCoin(common.CollDenom, redeemFeesColl)
+	feesGovToEF := sdk.NewCoin(common.GovDenom, redeemFeesGov)
+	feesToSendEF := sdk.NewCoins(feesCollToEF, feesGovToEF)
+
+	govPlusFeesToSend := govToSend.Add(feesGovToEF)
+	err = k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(govPlusFeesToSend))
 	if err != nil {
 		panic(err)
 	}
-	events.EmitMintMtrx(ctx, govToSend)
+	events.EmitMintMtrx(ctx, govPlusFeesToSend)
 
 	// Send tokens (GOV and COLL) to the account
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
@@ -288,8 +299,15 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		events.EmitTransfer(ctx, coin, types.ModuleName, msgCreator.String())
 	}
 
+	// Send fees from module to EF module account
+	moduleAccount := k.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
+	err = k.splitAndSendFeesToEfAndTreasury(ctx, moduleAccount.GetAddress(), efFeeRatio, feesToSendEF)
+	if err != nil {
+		return nil, err
+	}
+
 	// Burn the USDM
-	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, stablesToBurn)
+	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stablesToBurn))
 	if err != nil {
 		panic(err)
 	}
