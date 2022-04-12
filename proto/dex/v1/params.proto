@@ -11,4 +11,10 @@ message Params {
   option (gogoproto.goproto_stringer) = false;
 
   uint64 startingPoolNumber = 1;
+
+  repeated cosmos.base.v1beta1.Coin pool_creation_fee = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"pool_creation_fee\"",
+    (gogoproto.nullable) = false
+  ];
 }
