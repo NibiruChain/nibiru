@@ -221,6 +221,7 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 	return nil
 }
 
+// BurnStable
 func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 ) (*types.MsgBurnStableResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -271,7 +272,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	if err != nil {
 		return nil, err
 	}
-	events.EmitTransfer(ctx, msg.Stable, msgCreator.String(), types.ModuleName)
+	events.EmitTransfer(ctx, stablesPlusFees, msgCreator.String(), types.ModuleName)
 
 	// Mint GOV that will later be sent to the user.
 	collToSend := sdk.NewCoin(common.CollDenom, redeemColl)
@@ -307,7 +308,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	}
 
 	// Burn the USDM
-	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stablesToBurn))
+	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stablesPlusFees))
 	if err != nil {
 		panic(err)
 	}

@@ -519,8 +519,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				Gov:        sdk.NewInt64Coin(common.GovDenom, 100_000),
 				Collateral: sdk.NewInt64Coin(common.CollDenom, 9_000_000),
 			},
-			supplyMtrx:   sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
-			supplyUsdm:   sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
+			supplyMtrx:   sdk.NewCoin(common.GovDenom, sdk.NewInt(100_100)),
+			supplyUsdm:   sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_020_000)),
 			expectedPass: true,
 		},
 	}
@@ -533,7 +533,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			oracle := sample.AccAddress()
 
 			// Set up markets for the pricefeed keeper.
-			priceKeeper := &matrixApp.PriceKeeper
+			priceKeeper := matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
@@ -591,8 +591,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
 
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
+			require.Equal(t, tc.supplyMtrx, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx))
+			require.Equal(t, tc.supplyUsdm, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx))
 		})
 	}
 }
