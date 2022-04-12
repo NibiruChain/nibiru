@@ -377,7 +377,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 		accFunds     sdk.Coins
 		moduleFunds  sdk.Coins
 		msgBurn      types.MsgBurnStable
-		msgResponse  types.MsgBurnStableResponse
+		msgResponse  *types.MsgBurnStableResponse
 		govPrice     sdk.Dec
 		collPrice    sdk.Dec
 		expectedPass bool
@@ -390,7 +390,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Stable:  sdk.NewInt64Coin(common.StableDenom, 9001),
 			},
-			msgResponse: types.MsgBurnStableResponse{
+			msgResponse: &types.MsgBurnStableResponse{
 				Collateral: sdk.NewCoin(common.GovDenom, sdk.ZeroInt()),
 				Gov:        sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
 			},
@@ -413,9 +413,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.StableDenom, sdk.ZeroInt()),
 			},
-			msgResponse: types.MsgBurnStableResponse{
+			msgResponse: &types.MsgBurnStableResponse{
 				Gov:        sdk.NewCoin(common.GovDenom, sdk.ZeroInt()),
 				Collateral: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
+				FeesPayed:  sdk.NewCoins(),
 			},
 			expectedPass: true,
 			err:          types.NoCoinFound.Wrap(common.StableDenom).Error(),
@@ -482,7 +483,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			}
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
-				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
+				t, burnStableResponse, tc.msgResponse, "burnStableResponse")
 		})
 	}
 }
@@ -518,6 +519,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			msgResponse: types.MsgBurnStableResponse{
 				Gov:        sdk.NewInt64Coin(common.GovDenom, 100_000),
 				Collateral: sdk.NewInt64Coin(common.CollDenom, 9_000_000),
+				FeesPayed:  sdk.NewCoins(sdk.NewInt64Coin(common.StableDenom, 20000)),
 			},
 			supplyMtrx:   sdk.NewCoin(common.GovDenom, sdk.NewInt(100_100)),
 			supplyUsdm:   sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_020_000)),

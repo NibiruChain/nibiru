@@ -221,7 +221,8 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 	return nil
 }
 
-// BurnStable
+// BurnStable burns stable coin (plus fees) and returns the equivalent of collateral and gov token.
+// Fees are distributed into ecosystem funds.
 func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 ) (*types.MsgBurnStableResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -314,5 +315,9 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	}
 	events.EmitBurnStable(ctx, msg.Stable)
 
-	return &types.MsgBurnStableResponse{Collateral: collToSend, Gov: govToSend}, nil
+	return &types.MsgBurnStableResponse{
+		Collateral: collToSend,
+		Gov:        govToSend,
+		FeesPayed:  sdk.NewCoins(feesFromStables),
+	}, nil
 }
