@@ -219,12 +219,12 @@ func (k Keeper) NewPool(
 	}
 
 	if err = k.bankKeeper.SendCoins(ctx, sender, poolAccount.GetAddress(), coins); err != nil {
-		return 0, err
+		return uint64(0), err
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
 	if err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
-		return 0, err
+		return uint64(0), err
 	}
 
 	// Finally, add the share token's meta data to the bank keeper.
