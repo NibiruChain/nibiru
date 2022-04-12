@@ -28,8 +28,10 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
-	StartingPoolNumber uint64                                   `protobuf:"varint,1,opt,name=startingPoolNumber,proto3" json:"startingPoolNumber,omitempty"`
-	PoolCreationFee    github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=pool_creation_fee,json=poolCreationFee,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"pool_creation_fee" yaml:"pool_creation_fee"`
+	// The start pool number, i.e. the first pool number that isn't taken yet.
+	StartingPoolNumber uint64 `protobuf:"varint,1,opt,name=startingPoolNumber,proto3" json:"startingPoolNumber,omitempty"`
+	// The cost of creating a pool, taken from the pool creator's account.
+	PoolCreationFee github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=pool_creation_fee,json=poolCreationFee,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"pool_creation_fee" yaml:"pool_creation_fee"`
 }
 
 func (m *Params) Reset()      { *m = Params{} }
