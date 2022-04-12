@@ -26,6 +26,10 @@ message MsgMintStable {
 * mint transaction*/
 message MsgMintStableResponse {
   cosmos.base.v1beta1.Coin stable = 1 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin used_coins = 2
+    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin fees_payed = 3
+    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
 /* MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and 

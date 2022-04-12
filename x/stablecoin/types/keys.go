@@ -17,6 +17,5 @@ const (
 	MemStoreKey = "mem_stablecoin"
 )
 
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}
+// Stable Ecosystem Fund
+const StableEFModuleAccount = "stable_ef"

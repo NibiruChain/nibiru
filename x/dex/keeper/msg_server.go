@@ -80,3 +80,20 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		RemainingCoins:   remCoins,
 	}, nil
 }
+
+/*
+Handler for the MsgJoinPool transaction.
+
+args
+  ctx: the cosmos-sdk context
+  msg: a MsgJoinPool proto object
+
+ret
+  MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
+  error: an error if any occurred
+*/
+func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types.MsgExitPoolResponse, error) {
+	// TODO(https://github.com/MatrixDao/matrix/issues/46) implement this
+
+	return &types.MsgExitPoolResponse{}, nil
+}

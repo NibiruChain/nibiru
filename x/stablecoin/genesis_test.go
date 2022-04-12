@@ -16,7 +16,6 @@ func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params:               types.DefaultParams(),
 		ModuleAccountBalance: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
-		// this line is used by starport scaffolding # genesis/test/state
 	}
 
 	matrixApp, ctx := testutil.NewMatrixApp()

@@ -15,6 +15,9 @@ service Msg {
 
   // Join a pool as a liquidity provider.
   rpc JoinPool(MsgJoinPool) returns (MsgJoinPoolResponse);
+
+  // Exit a pool position by returning LP shares
+  rpc ExitPool(MsgExitPool) returns (MsgExitPoolResponse);
 }
 
 message MsgCreatePool {
@@ -59,6 +62,24 @@ message MsgJoinPoolResponse {
   // remaining tokens from attempting to join the pool
   repeated cosmos.base.v1beta1.Coin remainingCoins = 3 [
     (gogoproto.moretags) = "yaml:\"tokens_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgExitPool {
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+
+  uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+
+  cosmos.base.v1beta1.Coin poolShares = 3 [
+    (gogoproto.moretags) = "yaml:\"pool_shares\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgExitPoolResponse {
+  repeated cosmos.base.v1beta1.Coin tokensOut = 3 [
+    (gogoproto.moretags) = "yaml:\"tokens_out\"",
     (gogoproto.nullable) = false
   ];
 }

@@ -28,7 +28,7 @@ type BankKeeper interface {
 }
 
 type PriceKeeper interface {
-	GetCurrentPrice(sdk.Context, string) (pftypes.CurrentPrice, error)
+	GetCurrentPrice(ctx sdk.Context, marketID string) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
 	GetMarket(ctx sdk.Context, marketID string) (pftypes.Market, bool)
