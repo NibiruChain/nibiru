@@ -291,12 +291,13 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 
 	redeemCollCoin, redeemGovCoin := getEquivalentCollAndGovCoinsFromStable(collRatio, msg.Stable, priceColl, priceGov)
 
+	// Get fees as stable based on the amount of stables to burn (stables * feeRatio)
 	feesFromStablesAmt := msg.Stable.Amount.ToDec().Mul(params.GetFeeRatioAsDec()).RoundInt()
 	feesFromStables := sdk.NewCoin(common.StableDenom, feesFromStablesAmt)
 
 	feesCollToEF, feesGovToEF := getEquivalentCollAndGovCoinsFromStable(collRatio, feesFromStables, priceColl, priceGov)
-	feesToSendEF := sdk.NewCoins(feesCollToEF, feesGovToEF)
 
+	// mint governance tokens (gov tokens + fees)
 	govPlusFeesToMint := redeemGovCoin.Add(feesGovToEF)
 	err = k.mintGov(ctx, govPlusFeesToMint)
 	if err != nil {
@@ -309,6 +310,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, err
 	}
 
+	feesToSendEF := sdk.NewCoins(feesCollToEF, feesGovToEF)
 	err = k.splitAndSendFeesToEfAndTreasury(
 		ctx,
 		k.AccountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(),
@@ -319,6 +321,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, err
 	}
 
+	// We burn stables plus fees
 	stablesPlusFees := msg.Stable.Add(feesFromStables)
 	err = k.sendCoinsToModuleAccount(ctx, msgCreator, sdk.NewCoins(stablesPlusFees))
 	if err != nil {
