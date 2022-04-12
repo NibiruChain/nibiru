@@ -22,6 +22,7 @@ type (
 
 		accountKeeper types.AccountKeeper
 		bankKeeper    types.BankKeeper
+		distrKeeper   types.DistrKeeper
 	}
 )
 
@@ -44,6 +45,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	distrKeeper types.DistrKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -56,6 +58,7 @@ func NewKeeper(
 		paramstore:    ps,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
+		distrKeeper:   distrKeeper,
 	}
 }
 
@@ -199,6 +202,13 @@ func (k Keeper) NewPool(
 
 	if len(poolAssets) > types.MaxPoolAssets {
 		return uint64(0), types.ErrTooManyPoolAssets
+	}
+
+	// send pool creation fee to community pool
+	params := k.GetParams(ctx)
+	err = k.distrKeeper.FundCommunityPool(ctx, params.PoolCreationFee, sender)
+	if err != nil {
+		return uint64(0), err
 	}
 
 	poolId = k.GetNextPoolNumberAndIncrement(ctx)
