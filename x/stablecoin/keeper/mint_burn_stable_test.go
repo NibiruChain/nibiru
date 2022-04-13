@@ -517,12 +517,15 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				Stable:  sdk.NewInt64Coin(common.StableDenom, 10_000_000),
 			},
 			msgResponse: types.MsgBurnStableResponse{
-				Gov:        sdk.NewInt64Coin(common.GovDenom, 100_000),
-				Collateral: sdk.NewInt64Coin(common.CollDenom, 9_000_000),
-				FeesPayed:  sdk.NewCoins(sdk.NewInt64Coin(common.StableDenom, 20000)),
+				Gov:        sdk.NewInt64Coin(common.GovDenom, 100_000-200),       // amount - fees 0,02%
+				Collateral: sdk.NewInt64Coin(common.CollDenom, 9_000_000-18_000), // amount - fees 0,02%
+				FeesPayed: sdk.NewCoins(
+					sdk.NewInt64Coin(common.GovDenom, 200),
+					sdk.NewInt64Coin(common.CollDenom, 18_000),
+				),
 			},
-			supplyMtrx:   sdk.NewCoin(common.GovDenom, sdk.NewInt(100_100)),
-			supplyUsdm:   sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_020_000)),
+			supplyMtrx:   sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // matrix minus 0.5 of fees burned (the part that goes to EF)
+			supplyUsdm:   sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
 			expectedPass: true,
 		},
 	}

@@ -208,7 +208,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
-			sdk.NewInt64Coin(common.StableDenom, 50_000_000+100_000), // 1*10^8 + 0.02% fees
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
 		),
 		val,
 	)
@@ -243,7 +243,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				"50000000uusdm",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 			expectedStable: sdk.ZeroInt(),
-			expectedColl:   sdk.NewInt(50000000),
+			expectedColl:   sdk.NewInt(50000000 - 100000), // Collateral minus 0,02% fees
 			expectedGov:    sdk.ZeroInt(),
 			expectErr:      false,
 			respType:       &sdk.TxResponse{},

@@ -309,7 +309,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	feesToSendEF := sdk.NewCoins(govFees, collFees)
 	err = k.splitAndSendFeesToEfAndTreasury(
 		ctx,
-		k.AccountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(),
+		msgCreator,
 		params.GetEfFeeRatioAsDec(),
 		feesToSendEF,
 	)
