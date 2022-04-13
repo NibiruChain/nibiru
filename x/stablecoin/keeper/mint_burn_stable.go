@@ -8,7 +8,6 @@ package keeper
 import (
 	"context"
 	"github.com/MatrixDao/matrix/x/common"
-	pftypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin/events"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -281,25 +280,22 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, sdkerrors.Wrap(types.NoCoinFound, msg.Stable.Denom)
 	}
 
-	priceGov, priceColl, err := k.getCollAndGovPrices(ctx)
+	params := k.GetParams(ctx)
+	feeRatio := params.GetFeeRatioAsDec()
+	collRatio := params.GetCollRatioAsDec()
+	govRatio := sdk.OneDec().Sub(collRatio)
+
+	redeemGovCoin, govFees, err := k.calcNeededGovAndFees(ctx, msg.Stable, govRatio, feeRatio)
 	if err != nil {
 		return nil, err
 	}
 
-	params := k.GetParams(ctx)
-	collRatio := params.GetCollRatioAsDec()
+	redeemCollCoin, collFees, err := k.calcNeededCollateralAndFees(ctx, msg.Stable, collRatio, feeRatio)
+	if err != nil {
+		return nil, err
+	}
 
-	redeemCollCoin, redeemGovCoin := getEquivalentCollAndGovCoinsFromStable(collRatio, msg.Stable, priceColl, priceGov)
-
-	// Get fees as stable based on the amount of stables to burn (stables * feeRatio)
-	feesFromStablesAmt := msg.Stable.Amount.ToDec().Mul(params.GetFeeRatioAsDec()).RoundInt()
-	feesFromStables := sdk.NewCoin(common.StableDenom, feesFromStablesAmt)
-
-	feesCollToEF, feesGovToEF := getEquivalentCollAndGovCoinsFromStable(collRatio, feesFromStables, priceColl, priceGov)
-
-	// mint governance tokens (gov tokens + fees)
-	govPlusFeesToMint := redeemGovCoin.Add(feesGovToEF)
-	err = k.mintGov(ctx, govPlusFeesToMint)
+	err = k.mintGov(ctx, redeemGovCoin)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +306,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, err
 	}
 
-	feesToSendEF := sdk.NewCoins(feesCollToEF, feesGovToEF)
+	feesToSendEF := sdk.NewCoins(govFees, collFees)
 	err = k.splitAndSendFeesToEfAndTreasury(
 		ctx,
 		k.AccountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(),
@@ -321,56 +317,19 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, err
 	}
 
-	// We burn stables plus fees
-	stablesPlusFees := msg.Stable.Add(feesFromStables)
-	err = k.sendCoinsToModuleAccount(ctx, msgCreator, sdk.NewCoins(stablesPlusFees))
+	err = k.sendCoinsToModuleAccount(ctx, msgCreator, sdk.NewCoins(msg.Stable))
 	if err != nil {
 		return nil, err
 	}
 
-	err = k.burnStableTokens(ctx, stablesPlusFees)
+	err = k.burnStableTokens(ctx, msg.Stable)
 	if err != nil {
 		panic(err)
 	}
 
 	return &types.MsgBurnStableResponse{
-		Collateral: redeemCollCoin,
-		Gov:        redeemGovCoin,
-		FeesPayed:  sdk.NewCoins(feesFromStables),
+		Collateral: redeemCollCoin.Sub(collFees),
+		Gov:        redeemGovCoin.Sub(govFees),
+		FeesPayed:  sdk.NewCoins(govFees, collFees),
 	}, nil
-}
-
-// getCollAndGovPrices get the prices in Stable coin of collateral and governance tokens
-func (k Keeper) getCollAndGovPrices(ctx sdk.Context) (govPrice pftypes.CurrentPrice, collPrice pftypes.CurrentPrice, err error) {
-	govPrice, err = k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
-	if err != nil {
-		return pftypes.CurrentPrice{}, pftypes.CurrentPrice{}, err
-	}
-
-	collPrice, err = k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
-	if err != nil {
-		return pftypes.CurrentPrice{}, pftypes.CurrentPrice{}, err
-	}
-
-	return govPrice, collPrice, nil
-}
-
-// getEquivalentCollAndGovCoinsFromStable returns the equivalent collateral and governance coins given an amount
-// of Stable coins.
-func getEquivalentCollAndGovCoinsFromStable(
-	collRatio sdk.Dec,
-	stable sdk.Coin,
-	priceColl pftypes.CurrentPrice,
-	priceGov pftypes.CurrentPrice,
-) (collCoin sdk.Coin, govCoin sdk.Coin) {
-	govRatio := sdk.OneDec().Sub(collRatio)
-	redeemColl := collRatio.MulInt(stable.Amount).Quo(
-		priceColl.Price).TruncateInt()
-	collCoin = sdk.NewCoin(common.CollDenom, redeemColl)
-
-	redeemGov := govRatio.MulInt(stable.Amount).Quo(
-		priceGov.Price).TruncateInt()
-	govCoin = sdk.NewCoin(common.GovDenom, redeemGov)
-
-	return collCoin, govCoin
 }
