@@ -42,10 +42,10 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 }
 
 /*
-GetNeededCollUSD is the collateral value in USD needed to reach a target
+GetCollUSDForTargetCollRatio is the collateral value in USD needed to reach a target
 collateral ratio.
 */
-func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
+func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
 	stableSupply := k.GetSupplyUSDM(ctx)
 	targetCollRatio := k.GetCollRatio(ctx)
 	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
@@ -71,10 +71,10 @@ func (k *Keeper) GetNeededCollUSD(ctx sdk.Context) (neededCollUSD sdk.Dec, err e
 	return neededCollUSD, err
 }
 
-func (k *Keeper) GetNeededCollAmount(
+func (k *Keeper) GetCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
-	neededUSD, _ := k.GetNeededCollUSD(ctx)
+	neededUSD, _ := k.GetCollUSDForTargetCollRatio(ctx)
 	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return sdk.Int{}, err
@@ -90,6 +90,8 @@ recollateralize.
 Args:
   ctx (sdk.Context): Carries information about the current state of the application.
   collDenom (string): 'Denom' of the collateral to be used for recollateralization.
+Returns:
+  govOut (sdk.Int): Amount of GOV token rewarded for 'Recollateralize'.
 */
 func (k *Keeper) GovAmtFromRecollateralize(
 	ctx sdk.Context, collUSD sdk.Dec,
@@ -97,16 +99,12 @@ func (k *Keeper) GovAmtFromRecollateralize(
 
 	bonusRate := sdk.MustNewDecFromStr("0.002") // TODO: Replace with attribute
 
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
 	if err != nil {
 		return sdk.Int{}, err
 	}
-	priceGovColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-	priceGovStable := priceGovColl.Price.Mul(priceCollStable.Price)
-	govOut = collUSD.Mul(sdk.OneDec().Add(bonusRate)).Quo(priceGovStable).TruncateInt()
+	govOut = collUSD.Mul(sdk.OneDec().Add(bonusRate)).
+		Quo(priceGovStable.Price).TruncateInt()
 	return govOut, err
 }
 
@@ -114,7 +112,7 @@ func (k *Keeper) GovAmtFromFullRecollateralize(
 	ctx sdk.Context,
 ) (govOut sdk.Int, err error) {
 
-	neededCollUSD, err := k.GetNeededCollUSD(ctx)
+	neededCollUSD, err := k.GetCollUSDForTargetCollRatio(ctx)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -137,7 +135,7 @@ func (k Keeper) Recollateralize(
 	params := k.GetParams(ctx)
 	targetCollRatio := params.GetCollRatioAsDec()
 
-	neededCollAmt, err := k.GetNeededCollAmount(ctx)
+	neededCollAmt, err := k.GetCollAmtForTargetCollRatio(ctx)
 	if err != nil {
 		return response, err
 	} else if neededCollAmt.LTE(sdk.ZeroInt()) {
