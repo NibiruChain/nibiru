@@ -490,17 +490,19 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 func TestMsgBurnResponse_HappyPath(t *testing.T) {
 	tests := []struct {
-		name         string
-		accFunds     sdk.Coins
-		moduleFunds  sdk.Coins
-		msgBurn      types.MsgBurnStable
-		msgResponse  types.MsgBurnStableResponse
-		govPrice     sdk.Dec
-		collPrice    sdk.Dec
-		supplyMtrx   sdk.Coin
-		supplyUsdm   sdk.Coin
-		expectedPass bool
-		err          string
+		name          string
+		accFunds      sdk.Coins
+		moduleFunds   sdk.Coins
+		msgBurn       types.MsgBurnStable
+		msgResponse   types.MsgBurnStableResponse
+		govPrice      sdk.Dec
+		collPrice     sdk.Dec
+		supplyMtrx    sdk.Coin
+		supplyUsdm    sdk.Coin
+		ecosystemFund sdk.Coins
+		treasuryFund  sdk.Coins
+		expectedPass  bool
+		err           string
 	}{
 		{
 			name:      "Happy path",
@@ -524,9 +526,11 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 					sdk.NewInt64Coin(common.CollDenom, 18_000),
 				),
 			},
-			supplyMtrx:   sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // matrix minus 0.5 of fees burned (the part that goes to EF)
-			supplyUsdm:   sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
-			expectedPass: true,
+			supplyMtrx:    sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // matrix minus 0.5 of fees burned (the part that goes to EF)
+			supplyUsdm:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
+			ecosystemFund: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
+			treasuryFund:  sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
+			expectedPass:  true,
 		},
 	}
 
@@ -598,6 +602,10 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			require.Equal(t, tc.supplyMtrx, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx))
 			require.Equal(t, tc.supplyUsdm, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx))
+
+			// Funds sypplies
+			require.Equal(t, tc.ecosystemFund, matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount)))
+			require.Equal(t, tc.treasuryFund, matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount)))
 		})
 	}
 }
