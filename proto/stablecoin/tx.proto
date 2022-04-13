@@ -67,6 +67,6 @@ message MsgRecollateralize {
 
 /* MsgRecollateralizeResponse is the output of a successful 'Recollateralize' */
 message MsgRecollateralizeResponse {
-  // Gov (sdk.Coin): Output rewarded to the caller in exchange for her collateral.  
+  // Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.  
   cosmos.base.v1beta1.Coin Gov = 1 [(gogoproto.nullable) = false];
 }
