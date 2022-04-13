@@ -11,7 +11,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var _ types.QueryServer = Keeper{}
+type queryServer struct {
+	Keeper
+}
+
+func NewQuerier(k Keeper) queryServer {
+	return queryServer{Keeper: k}
+}
+
+var _ types.QueryServer = queryServer{}
 
 /*
 Handler for the QueryParamsRequest query.
@@ -24,7 +32,7 @@ ret
   QueryParamsResponse: the QueryParamsResponse proto object response, containing the params
   error: an error if any occurred
 */
-func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (k queryServer) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -44,7 +52,7 @@ ret
   QueryPoolResponse: the QueryPoolResponse proto object response, containing the pool
   error: an error if any occurred
 */
-func (k Keeper) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*types.QueryPoolResponse, error) {
+func (k queryServer) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*types.QueryPoolResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -67,7 +75,7 @@ ret
   QueryPoolNumberResponse: the QueryPoolNumberResponse proto object response, containing the next pool id number
   error: an error if any occurred
 */
-func (k Keeper) PoolNumber(goCtx context.Context, req *types.QueryPoolNumberRequest) (*types.QueryPoolNumberResponse, error) {
+func (k queryServer) PoolNumber(goCtx context.Context, req *types.QueryPoolNumberRequest) (*types.QueryPoolNumberResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -75,20 +83,12 @@ func (k Keeper) PoolNumber(goCtx context.Context, req *types.QueryPoolNumberRequ
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	var poolNumber uint64
 
-	store := ctx.KVStore(k.storeKey)
-
-	bz := store.Get(types.KeyNextGlobalPoolNumber)
+	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
 	if bz == nil {
-		k.Logger(ctx).Error("Could not get pool number. Not initialized.")
 		panic(fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis"))
 	} else {
 		val := gogotypes.UInt64Value{}
-
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-
+		k.cdc.MustUnmarshal(bz, &val)
 		poolNumber = val.GetValue()
 	}
 
