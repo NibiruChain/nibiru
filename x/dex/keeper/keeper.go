@@ -174,6 +174,7 @@ func (k Keeper) MintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipient
 	return nil
 }
 
+  amountPoolShares: the amount of pool shares to mint to the recipient
 /*
 Creates a brand new pool and writes it to the state.
 
