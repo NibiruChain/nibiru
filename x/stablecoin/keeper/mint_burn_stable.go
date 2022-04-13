@@ -188,19 +188,9 @@ func (k Keeper) burnStableTokens(ctx sdk.Context, stable sdk.Coin) error {
 	return nil
 }
 
-// mintCoins mints coins into module account
-func (k Keeper) mintCoins(ctx sdk.Context, coins sdk.Coins) error {
-	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, coins)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // mintStable mints MTRX tokens into module account
 func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
-	err := k.mintCoins(ctx, sdk.NewCoins(stable))
+	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stable))
 	if err != nil {
 		return err
 	}
@@ -212,7 +202,7 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 
 // mintGov mints governance tokens into module account
 func (k Keeper) mintGov(ctx sdk.Context, gov sdk.Coin) error {
-	err := k.mintCoins(ctx, sdk.NewCoins(gov))
+	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(gov))
 	if err != nil {
 		return err
 	}
