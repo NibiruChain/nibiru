@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/mock"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
@@ -26,7 +27,7 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write a pool number
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
@@ -41,7 +42,7 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	pool := types.Pool{
 		Id: 150,
@@ -71,16 +72,20 @@ func TestSetAndFetchPool(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
-	app.DexKeeper.SetNextPoolNumber(ctx, 1)
+	app, ctx := testutil.NewMatrixApp(true)
+
+	app.DexKeeper.SetParams(ctx, types.NewParams(
+		/*startingPoolNumber=*/ 1,
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)),
+	))
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
-	coins := sdk.NewCoins(
+
+	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-	)
-
-	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, coins)
+		sdk.NewCoin("umtrx", sdk.NewInt(1000_000_000)),
+	))
 	require.NoError(t, err)
 
 	poolId, err := app.DexKeeper.NewPool(ctx,
@@ -128,8 +133,47 @@ func TestNewPool(t *testing.T) {
 	}, retrievedPool)
 }
 
+func TestNewPoolNotEnoughFunds(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp(true)
+
+	app.DexKeeper.SetParams(ctx, types.NewParams(
+		/*startingPoolNumber=*/ 1,
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)),
+	))
+
+	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
+
+	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
+		sdk.NewCoin("uatom", sdk.NewInt(1000)),
+		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+		sdk.NewCoin("umtrx", sdk.NewInt(999_000_000)),
+	))
+	require.NoError(t, err)
+
+	_, err = app.DexKeeper.NewPool(ctx,
+		// sender
+		userAddr,
+		// poolParams
+		types.PoolParams{
+			SwapFee: sdk.NewDecWithPrec(3, 2),
+			ExitFee: sdk.NewDecWithPrec(3, 2),
+		},
+		// poolAssets
+		[]types.PoolAsset{
+			{
+				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+			{
+				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+		})
+	require.Error(t, err)
+}
+
 func TestNewPoolTooLittleAssets(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -149,7 +193,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 }
 
 func TestNewPoolTooManyAssets(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -193,7 +237,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 }
 
 func TestMintPoolShareToAccount(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
@@ -317,7 +361,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

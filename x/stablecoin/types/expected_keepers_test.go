@@ -19,7 +19,7 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	matrixApp, _ := testutil.NewMatrixApp()
+	matrixApp, _ := testutil.NewMatrixApp(true)
 	testCases := []TestCase{
 		{
 			name:           "PriceKeeper from x/pricefeed",

@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetNextLockId(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	for i := 0; i < 10; i++ {
 		require.Equal(t, uint64(i), app.LockupKeeper.GetNextLockId(ctx))

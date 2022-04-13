@@ -11,7 +11,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)
@@ -54,7 +54,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
 			resp, err := app.DexKeeper.Pool(sdk.WrapSDKContext(ctx), &types.QueryPoolRequest{
@@ -78,7 +78,7 @@ func TestQueryPoolFail(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 			resp, err := app.DexKeeper.Pool(sdk.WrapSDKContext(ctx), nil)
 			require.Error(t, err)
 			require.Nil(t, resp)

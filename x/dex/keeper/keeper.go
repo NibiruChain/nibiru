@@ -22,6 +22,7 @@ type (
 
 		accountKeeper types.AccountKeeper
 		bankKeeper    types.BankKeeper
+		distrKeeper   types.DistrKeeper
 	}
 )
 
@@ -44,6 +45,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	distrKeeper types.DistrKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -56,6 +58,7 @@ func NewKeeper(
 		paramstore:    ps,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
+		distrKeeper:   distrKeeper,
 	}
 }
 
@@ -201,6 +204,13 @@ func (k Keeper) NewPool(
 		return uint64(0), types.ErrTooManyPoolAssets
 	}
 
+	// send pool creation fee to community pool
+	params := k.GetParams(ctx)
+	err = k.distrKeeper.FundCommunityPool(ctx, params.PoolCreationFee, sender)
+	if err != nil {
+		return uint64(0), err
+	}
+
 	poolId = k.GetNextPoolNumberAndIncrement(ctx)
 	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
@@ -219,12 +229,12 @@ func (k Keeper) NewPool(
 	}
 
 	if err = k.bankKeeper.SendCoins(ctx, sender, poolAccount.GetAddress(), coins); err != nil {
-		return 0, err
+		return uint64(0), err
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
 	if err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
-		return 0, err
+		return uint64(0), err
 	}
 
 	// Finally, add the share token's meta data to the bank keeper.

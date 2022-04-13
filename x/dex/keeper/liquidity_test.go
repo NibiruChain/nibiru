@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetSetDenomLiquidity(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
 	app.DexKeeper.SetDenomLiquidity(ctx, "mtrx", sdk.NewInt(1000))
@@ -21,7 +21,7 @@ func TestGetSetDenomLiquidity(t *testing.T) {
 }
 
 func TestGetTotalLiquidity(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
 	app.DexKeeper.SetDenomLiquidity(ctx, "atom", sdk.NewInt(123))
@@ -39,7 +39,7 @@ func TestGetTotalLiquidity(t *testing.T) {
 }
 
 func TestSetTotalLiquidity(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
@@ -55,7 +55,7 @@ func TestSetTotalLiquidity(t *testing.T) {
 }
 
 func TestRecordTotalLiquidityIncrease(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
@@ -72,7 +72,7 @@ func TestRecordTotalLiquidityIncrease(t *testing.T) {
 }
 
 func TestRecordTotalLiquidityDecrease(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
