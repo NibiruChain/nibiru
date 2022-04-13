@@ -7,6 +7,10 @@ import (
 const (
 	// Will be parsed to string.
 	FlagPoolFile = "pool-file"
+
+	// Parsed into uint64
+	FlagPoolId        = "pool-id"
+	FlagPoolSharesOut = "pool-shares-out"
 )
 
 type createPoolInputs struct {
@@ -19,6 +23,14 @@ type createPoolInputs struct {
 func FlagSetCreatePool() *flag.FlagSet {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 
-	fs.String(FlagPoolFile, "", "Pool json file path (if this path is given, other create pool flags should not be used)")
+	fs.String(FlagPoolFile, "", "Pool json file path (if this path is given, other create pool flags should not be used).")
+	return fs
+}
+
+func FlagSetExitPool() *flag.FlagSet {
+	fs := flag.NewFlagSet("", flag.ContinueOnError)
+
+	fs.String(FlagPoolId, "", "The pool id to withdraw from.")
+	fs.String(FlagPoolSharesOut, "", "The amount of pool share tokens to burn.")
 	return fs
 }
