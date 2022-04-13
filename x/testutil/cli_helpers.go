@@ -94,6 +94,6 @@ func DefaultConfig() network.Config {
 
 func NewAppConstructor(encodingCfg simappparams.EncodingConfig) network.AppConstructor {
 	return func(val network.Validator) servertypes.Application {
-		return New()
+		return New(true)
 	}
 }

@@ -25,7 +25,7 @@ func TestNewMsgServerImpl(t *testing.T) {
 		})
 	}
 
-	matrixApp, _ := testutil.NewMatrixApp()
+	matrixApp, _ := testutil.NewMatrixApp(true)
 	testCases := []TestCase{
 		{
 			name:   "Default MatrixApp.StablecoinKeeper, should pass",
