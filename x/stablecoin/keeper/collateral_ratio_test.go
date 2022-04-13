@@ -336,9 +336,9 @@ func TestGetNeededCollAmount(t *testing.T) {
 
 }
 
-func TestGovAmtFromRecollateralize(t *testing.T) {
+func TestGovAmtFromFullRecollateralize(t *testing.T) {
 
-	type TestCaseGovAmtFromRecollateralize struct {
+	type TestCaseGovAmtFromFullRecollateralize struct {
 		name            string
 		protocolColl    sdk.Int
 		priceCollStable sdk.Dec
@@ -351,7 +351,7 @@ func TestGovAmtFromRecollateralize(t *testing.T) {
 		expectedPass bool
 	}
 
-	executeTest := func(t *testing.T, testCase TestCaseGovAmtFromRecollateralize) {
+	executeTest := func(t *testing.T, testCase TestCaseGovAmtFromFullRecollateralize) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 
@@ -394,7 +394,7 @@ func TestGovAmtFromRecollateralize(t *testing.T) {
 				require.NoError(t, err, "Error posting price for market: %d", marketID)
 			}
 
-			govOut, err := stablecoinKeeper.GovAmtFromRecollateralize(ctx)
+			govOut, err := stablecoinKeeper.GovAmtFromFullRecollateralize(ctx)
 			if tc.expectedPass {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.govOut, govOut)
@@ -404,7 +404,7 @@ func TestGovAmtFromRecollateralize(t *testing.T) {
 		})
 	}
 
-	testCases := []TestCaseGovAmtFromRecollateralize{
+	testCases := []TestCaseGovAmtFromFullRecollateralize{
 		{
 			name:            "no prices posted",
 			protocolColl:    sdk.NewInt(500),

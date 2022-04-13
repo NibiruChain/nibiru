@@ -1,9 +1,11 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MatrixDao/matrix/x/common"
+	"github.com/MatrixDao/matrix/x/stablecoin/events"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -90,28 +92,86 @@ Args:
   collDenom (string): 'Denom' of the collateral to be used for recollateralization.
 */
 func (k *Keeper) GovAmtFromRecollateralize(
-	ctx sdk.Context,
+	ctx sdk.Context, collUSD sdk.Dec,
 ) (govOut sdk.Int, err error) {
-
-	neededCollUSD, err0 := k.GetNeededCollUSD(ctx)
 
 	bonusRate := sdk.MustNewDecFromStr("0.002") // TODO: Replace with attribute
 
-	priceCollStable, err1 := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
-	priceGovColl, err2 := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
-	for _, err := range []error{err0, err1, err2} {
-		if err != nil {
-			return sdk.Int{}, err
-		}
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	priceGovColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	if err != nil {
+		return sdk.Int{}, err
 	}
 	priceGovStable := priceGovColl.Price.Mul(priceCollStable.Price)
-	govOut = neededCollUSD.Mul(sdk.OneDec().Add(bonusRate)).Quo(priceGovStable).TruncateInt()
+	govOut = collUSD.Mul(sdk.OneDec().Add(bonusRate)).Quo(priceGovStable).TruncateInt()
 	return govOut, err
+}
+
+func (k *Keeper) GovAmtFromFullRecollateralize(
+	ctx sdk.Context,
+) (govOut sdk.Int, err error) {
+
+	neededCollUSD, err := k.GetNeededCollUSD(ctx)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	return k.GovAmtFromRecollateralize(ctx, neededCollUSD)
 }
 
 /*
 Recollateralize
 */
-func (k *Keeper) Recollateralize(ctx sdk.Context, collRatio sdk.Dec) {
-	// TODO https://github.com/MatrixDao/matrix/issues/118
+func (k Keeper) Recollateralize(
+	goCtx context.Context, msg *types.MsgRecollateralize,
+) (response *types.MsgRecollateralizeResponse, err error) {
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	caller, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return response, err
+	}
+
+	params := k.GetParams(ctx)
+	targetCollRatio := params.GetCollRatioAsDec()
+
+	neededCollAmt, err := k.GetNeededCollAmount(ctx)
+	if err != nil {
+		return response, err
+	} else if neededCollAmt.LTE(sdk.ZeroInt()) {
+		return response, fmt.Errorf(
+			"protocol has sufficient COLL, so 'Recollateralize' is not needed")
+	}
+
+	// The caller doesn't need to be put in the full amount,
+	// just a positive amount that is at most the 'neededCollAmount'.
+	if msg.Coll.Amount.GT(neededCollAmt) {
+		return response, fmt.Errorf(
+			"too much collateral input, %v, when only %v is needed",
+			msg.Coll.Amount, neededCollAmt)
+	}
+
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	if err != nil {
+		return response, err
+	}
+	inCollUSD := priceCollStable.Price.MulInt(msg.Coll.Amount)
+	outGovAmount, err := k.GovAmtFromRecollateralize(ctx, inCollUSD)
+	if err != nil {
+		return response, err
+	}
+	outGov := sdk.NewCoin(common.GovDenom, outGovAmount)
+
+	events.EmitRecollateralize(
+		ctx,
+		/* inCoin    */ msg.Coll,
+		/* outCoin   */ outGov,
+		/* caller    */ caller.String(),
+		/* collRatio */ targetCollRatio,
+	)
+	return &types.MsgRecollateralizeResponse{
+		Gov: outGov,
+	}, err
 }
