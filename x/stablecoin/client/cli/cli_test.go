@@ -221,7 +221,6 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
 		fmt.Sprintf(
 			"--%s=%s", flags.FlagFees, defaultBondCoinsString),
 	}
@@ -243,7 +242,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				"50000000uusdm",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 			expectedStable: sdk.ZeroInt(),
-			expectedColl:   sdk.NewInt(50000000 - 100000), // Collateral minus 0,02% fees
+			expectedColl:   sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
 			expectedGov:    sdk.ZeroInt(),
 			expectErr:      false,
 			respType:       &sdk.TxResponse{},
