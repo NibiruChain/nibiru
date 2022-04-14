@@ -314,11 +314,6 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, err
 	}
 
-	err = k.sendCoinsToModuleAccount(ctx, msgCreator, sdk.NewCoins(msg.Stable))
-	if err != nil {
-		return nil, err
-	}
-
 	err = k.burnStableTokens(ctx, msg.Stable)
 	if err != nil {
 		panic(err)

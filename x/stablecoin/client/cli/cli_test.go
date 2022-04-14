@@ -243,7 +243,6 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		{
 			name: "Burn at 100% collRatio",
 			args: append([]string{
-				sdk.NewInt64Coin(common.StableDenom, 50_000_000).String(),
 				"50000000uusdm",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 			expectedStable:   sdk.ZeroInt(),
