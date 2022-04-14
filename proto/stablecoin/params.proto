@@ -7,8 +7,15 @@ option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 
 // Params defines the parameters for the module.
 message Params {
+  // collRatio is the ratio needed as collateral to exchange for stables
   int64 collRatio = 1;
-  string distr_epoch_identifier = 2
-  [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];
+  
+  // feeRatio is the ratio taken as fees when minting or burning stables
+  int64 feeRatio = 2;
+  // efFeeRatio is the ratio taken from the fees that goes to Ecosystem Fund
+  int64 efFeeRatio = 3;
 
+  // distr_epoch_identifier defines the frequnecy of update for the collateral ratio
+  string distr_epoch_identifier = 4
+  [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];
 }

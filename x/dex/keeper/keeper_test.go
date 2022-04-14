@@ -3,8 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/MatrixDao/matrix/x/testutil/mock"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +15,7 @@ import (
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
@@ -25,7 +27,7 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write a pool number
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
@@ -40,7 +42,7 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	pool := types.Pool{
 		Id: 150,
@@ -70,16 +72,20 @@ func TestSetAndFetchPool(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
-	app.DexKeeper.SetNextPoolNumber(ctx, 1)
+	app, ctx := testutil.NewMatrixApp(true)
+
+	app.DexKeeper.SetParams(ctx, types.NewParams(
+		/*startingPoolNumber=*/ 1,
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)),
+	))
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
-	coins := sdk.NewCoins(
+
+	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-	)
-
-	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, coins)
+		sdk.NewCoin("umtrx", sdk.NewInt(1000_000_000)),
+	))
 	require.NoError(t, err)
 
 	poolId, err := app.DexKeeper.NewPool(ctx,
@@ -125,11 +131,49 @@ func TestNewPool(t *testing.T) {
 		TotalWeight: sdk.NewInt(2 << 30),
 		TotalShares: sdk.NewCoin("matrix/pool/1", sdk.NewIntWithDecimal(100, 18)),
 	}, retrievedPool)
+}
 
+func TestNewPoolNotEnoughFunds(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp(true)
+
+	app.DexKeeper.SetParams(ctx, types.NewParams(
+		/*startingPoolNumber=*/ 1,
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)),
+	))
+
+	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
+
+	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
+		sdk.NewCoin("uatom", sdk.NewInt(1000)),
+		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+		sdk.NewCoin("umtrx", sdk.NewInt(999_000_000)),
+	))
+	require.NoError(t, err)
+
+	_, err = app.DexKeeper.NewPool(ctx,
+		// sender
+		userAddr,
+		// poolParams
+		types.PoolParams{
+			SwapFee: sdk.NewDecWithPrec(3, 2),
+			ExitFee: sdk.NewDecWithPrec(3, 2),
+		},
+		// poolAssets
+		[]types.PoolAsset{
+			{
+				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+			{
+				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+		})
+	require.Error(t, err)
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -149,7 +193,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 }
 
 func TestNewPoolTooManyAssets(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -193,7 +237,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 }
 
 func TestMintPoolShareToAccount(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
@@ -207,27 +251,6 @@ func TestMintPoolShareToAccount(t *testing.T) {
 
 func TestJoinPoolNoswap(t *testing.T) {
 	const shareDenom = "matrix/pool/1"
-
-	// helper function to create dummy test pools
-	mockPool := func(assets sdk.Coins, shares int64) types.Pool {
-		poolAssets := make([]types.PoolAsset, len(assets))
-		for i, asset := range assets {
-			poolAssets[i] = types.PoolAsset{
-				Token:  asset,
-				Weight: sdk.OneInt(),
-			}
-		}
-		return types.Pool{
-			Id: 1,
-			PoolParams: types.PoolParams{
-				SwapFee: sdk.SmallestDec(),
-				ExitFee: sdk.SmallestDec(),
-			},
-			PoolAssets:  poolAssets,
-			TotalShares: sdk.NewInt64Coin(shareDenom, shares),
-			TotalWeight: sdk.NewInt(2),
-		}
-	}
 
 	tests := []struct {
 		name                     string
@@ -245,7 +268,8 @@ func TestJoinPoolNoswap(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mockPool(
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
 					sdk.NewInt64Coin("foo", 100),
@@ -258,7 +282,8 @@ func TestJoinPoolNoswap(t *testing.T) {
 			expectedNumSharesOut:     sdk.NewInt64Coin(shareDenom, 100),
 			expectedRemCoins:         sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
-			expectedFinalPool: mockPool(
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 200),
 					sdk.NewInt64Coin("foo", 200),
@@ -266,12 +291,13 @@ func TestJoinPoolNoswap(t *testing.T) {
 				/*shares=*/ 200),
 		},
 		{
-			name: "join with some assets, none left over",
+			name: "join with some assets, none remaining",
 			joinerInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mockPool(
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
 					sdk.NewInt64Coin("foo", 100),
@@ -288,7 +314,8 @@ func TestJoinPoolNoswap(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 50),
 			),
-			expectedFinalPool: mockPool(
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
 					sdk.NewInt64Coin("foo", 150),
@@ -296,12 +323,13 @@ func TestJoinPoolNoswap(t *testing.T) {
 				/*shares=*/ 150),
 		},
 		{
-			name: "join with some assets, some left over",
+			name: "join with some assets, some remaining",
 			joinerInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mockPool(
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
 					sdk.NewInt64Coin("foo", 100),
@@ -320,7 +348,8 @@ func TestJoinPoolNoswap(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 50),
 			),
-			expectedFinalPool: mockPool(
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
 					sdk.NewInt64Coin("foo", 150),
@@ -332,7 +361,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

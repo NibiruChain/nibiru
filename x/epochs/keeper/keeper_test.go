@@ -22,7 +22,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	matrixApp, ctx := testutil.NewMatrixApp()
+	matrixApp, ctx := testutil.NewMatrixApp(true)
 	suite.app = matrixApp
 	suite.ctx = ctx
 

@@ -7,15 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/gorilla/mux"
-	"github.com/rakyll/statik/fs"
-	"github.com/spf13/cast"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	dbm "github.com/tendermint/tm-db"
-
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/dex"
 	dexkeeper "github.com/MatrixDao/matrix/x/dex/keeper"
 	dextypes "github.com/MatrixDao/matrix/x/dex/types"
@@ -41,6 +33,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -99,6 +92,13 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/gorilla/mux"
+	"github.com/rakyll/statik/fs"
+	"github.com/spf13/cast"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	dbm "github.com/tendermint/tm-db"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -146,16 +146,18 @@ var (
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		dextypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		stablecointypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
-		epochstype.ModuleName:          {},
-		lockuptypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
+		authtypes.FeeCollectorName:            nil,
+		distrtypes.ModuleName:                 nil,
+		minttypes.ModuleName:                  {authtypes.Minter},
+		stakingtypes.BondedPoolName:           {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:        {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                   {authtypes.Burner},
+		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		epochstype.ModuleName:                 {},
+		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
+		common.TreasuryPoolModuleAccount:      {},
 	}
 )
 
@@ -333,7 +335,7 @@ func NewMatrixApp(
 
 	app.DexKeeper = dexkeeper.NewKeeper(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper)
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
 
 	app.PriceKeeper = pricekeeper.NewKeeper(
 		appCodec, keys[pricetypes.StoreKey], memKeys[pricetypes.MemStoreKey],

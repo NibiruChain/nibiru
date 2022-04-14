@@ -23,12 +23,13 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 	GetSupply(ctx sdk.Context, denom string) sdk.Coin
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	// Methods imported from bank should be defined here
 }
 
 type PriceKeeper interface {
-	GetCurrentPrice(sdk.Context, string) (pftypes.CurrentPrice, error)
 	GetCurrentTWAPPrice(sdk.Context, string) (pftypes.CurrentPrice, error)
+	GetCurrentPrice(ctx sdk.Context, marketID string) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
 	GetMarket(ctx sdk.Context, marketID string) (pftypes.Market, bool)

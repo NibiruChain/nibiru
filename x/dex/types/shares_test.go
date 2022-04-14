@@ -132,6 +132,178 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 	}
 }
 
+func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		pool              Pool
+		numSharesIn       sdk.Int
+		expectedTokensOut sdk.Coins
+	}{
+		{
+			name: "all coins withdrawn, no exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
+			},
+			numSharesIn: sdk.NewInt(50),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 200),
+			),
+		},
+		{
+			name: "partial coins withdrawn, no exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
+			},
+			numSharesIn: sdk.NewInt(25),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 100),
+			),
+		},
+		{
+			name: "fractional coins withdrawn truncates to int, no exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 1000),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
+			},
+			numSharesIn: sdk.NewInt(25),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 2),
+				sdk.NewInt64Coin("foo", 5),
+			),
+		},
+		{
+			name: "all coins withdrawn, with exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.MustNewDecFromStr("0.5"),
+				},
+			},
+			numSharesIn: sdk.NewInt(50),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 100),
+			),
+		},
+		{
+			name: "partial coins withdrawn, with exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				PoolParams: PoolParams{
+					ExitFee: sdk.MustNewDecFromStr("0.5"),
+				},
+			},
+			numSharesIn: sdk.NewInt(25),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 25),
+				sdk.NewInt64Coin("foo", 50),
+			),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tokensOut, err := tc.pool.tokensOutFromExactShares(tc.numSharesIn)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTokensOut, tokensOut)
+		})
+	}
+}
+
+func TestTokensOutFromExactSharesErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		pool        Pool
+		numSharesIn sdk.Int
+	}{
+		{
+			name: "zero pool shares",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+			},
+			numSharesIn: sdk.NewInt(0),
+		},
+		{
+			name: "too many pool shares",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("bar", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("foo", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+			},
+			numSharesIn: sdk.NewInt(51),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.pool.tokensOutFromExactShares(tc.numSharesIn)
+			require.Error(t, err)
+		})
+	}
+}
+
 func TestUpdateLiquidityHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name                  string

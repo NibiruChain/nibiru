@@ -12,7 +12,7 @@ import (
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	chainStartTime := ctx.BlockTime()
 	chainStartHeight := ctx.BlockHeight()
@@ -37,7 +37,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

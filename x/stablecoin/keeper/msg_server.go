@@ -33,6 +33,7 @@ func (k msgServer) MsgMintStable(
 	if err != nil {
 		return nil, err
 	}
+
 	return mintStableResponse, nil
 }
 
