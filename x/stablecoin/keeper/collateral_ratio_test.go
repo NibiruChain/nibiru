@@ -339,7 +339,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 
 func TestGovAmtFromFullRecollateralize(t *testing.T) {
 
-	type TestCaseGovAmtFromFullRecollateralize struct {
+	testCases := []struct {
 		name            string
 		protocolColl    sdk.Int
 		priceCollStable sdk.Dec
@@ -350,62 +350,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 
 		govOut       sdk.Int
 		expectedPass bool
-	}
-
-	executeTest := func(t *testing.T, testCase TestCaseGovAmtFromFullRecollateralize) {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-
-			matrixApp, ctx := testutil.NewMatrixApp()
-			stablecoinKeeper := &matrixApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			matrixApp.BankKeeper.MintCoins(
-				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.stableSupply),
-				),
-			)
-
-			// Set up markets for the pricefeed keeper.
-			oracle := sample.AccAddress()
-			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			pricefeedParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-				}}
-			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
-
-			// Post prices to each specified market with the oracle.
-			prices := map[string]sdk.Dec{
-				common.CollStablePool: tc.priceCollStable,
-				common.GovStablePool:  tc.priceGovStable,
-			}
-			for _, marketID := range tc.postedMarketIDs {
-				_, err := matrixApp.PriceKeeper.SetPrice(
-					ctx, oracle, marketID, prices[marketID], priceExpiry)
-				require.NoError(t, err)
-
-				// Update the 'CurrentPrice' posted by the oracles.
-				err = matrixApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
-				require.NoError(t, err, "Error posting price for market: %d", marketID)
-			}
-
-			govOut, err := stablecoinKeeper.GovAmtFromFullRecollateralize(ctx)
-			if tc.expectedPass {
-				require.NoError(t, err)
-				require.EqualValues(t, tc.govOut, govOut)
-			} else {
-				require.Error(t, err)
-			}
-		})
-	}
-
-	testCases := []TestCaseGovAmtFromFullRecollateralize{
+	}{
 		{
 			name:            "no prices posted",
 			protocolColl:    sdk.NewInt(500),
@@ -477,7 +422,57 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		executeTest(t, testCase)
+
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+
+			matrixApp, ctx := testutil.NewMatrixApp()
+			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
+			matrixApp.BankKeeper.MintCoins(
+				ctx, types.ModuleName, sdk.NewCoins(
+					sdk.NewCoin(common.CollDenom, tc.protocolColl),
+					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+				),
+			)
+
+			// Set up markets for the pricefeed keeper.
+			oracle := sample.AccAddress()
+			priceExpiry := ctx.BlockTime().Add(time.Hour)
+			pricefeedParams := pricefeedTypes.Params{
+				Markets: []pricefeedTypes.Market{
+					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+						QuoteAsset: common.StableDenom,
+						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
+						QuoteAsset: common.StableDenom,
+						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+				}}
+			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+
+			// Post prices to each specified market with the oracle.
+			prices := map[string]sdk.Dec{
+				common.CollStablePool: tc.priceCollStable,
+				common.GovStablePool:  tc.priceGovStable,
+			}
+			for _, marketID := range tc.postedMarketIDs {
+				_, err := matrixApp.PriceKeeper.SetPrice(
+					ctx, oracle, marketID, prices[marketID], priceExpiry)
+				require.NoError(t, err)
+
+				// Update the 'CurrentPrice' posted by the oracles.
+				err = matrixApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
+				require.NoError(t, err, "Error posting price for market: %d", marketID)
+			}
+
+			govOut, err := stablecoinKeeper.GovAmtFromFullRecollateralize(ctx)
+			if tc.expectedPass {
+				require.NoError(t, err)
+				require.EqualValues(t, tc.govOut, govOut)
+			} else {
+				require.Error(t, err)
+			}
+		})
 	}
 
 }
@@ -497,7 +492,7 @@ func (scenario NeededCollScenario) CalcNeededUSD() (neededUSD sdk.Dec) {
 
 func TestRecollateralize(t *testing.T) {
 
-	type TestCase struct {
+	testCases := []struct {
 		name         string
 		expectedPass bool
 
@@ -509,9 +504,7 @@ func TestRecollateralize(t *testing.T) {
 
 		msg      types.MsgRecollateralize
 		response *types.MsgRecollateralizeResponse
-	}
-
-	testCases := []TestCase{
+	}{
 		{
 			name:            "both prices are $1",
 			postedMarketIDs: []string{common.CollStablePool, common.GovStablePool},
@@ -577,7 +570,7 @@ func TestRecollateralize(t *testing.T) {
 		},
 	}
 
-	executeTest := func(t *testing.T, testCase TestCase) {
+	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			require.EqualValues(t, tc.expectedNeededUSD, tc.scenario.CalcNeededUSD())
@@ -642,7 +635,4 @@ func TestRecollateralize(t *testing.T) {
 		)
 	}
 
-	for _, testCase := range testCases {
-		executeTest(t, testCase)
-	}
 }
