@@ -153,25 +153,29 @@ func (k Keeper) Recollateralize(
 
 	// The caller doesn't need to be put in the full amount,
 	// just a positive amount that is at most the 'neededCollAmount'.
+	inColl := sdk.NewCoin(msg.Coll.Denom, sdk.ZeroInt())
 	if msg.Coll.Amount.GT(neededCollAmt) {
+		inColl.Amount = neededCollAmt
+	} else if msg.Coll.Amount.LTE(sdk.ZeroInt()) {
 		return response, fmt.Errorf(
-			"too much collateral input, %v, when only %v is needed",
-			msg.Coll.Amount, neededCollAmt)
+			"collateral input, %v, must be positive", msg.Coll.String())
+	} else {
+		inColl.Amount = msg.Coll.Amount
 	}
 
 	// Send collateral from the caller to the module
-	err = k.checkEnoughBalance(ctx, msg.Coll, caller)
+	err = k.checkEnoughBalance(ctx, inColl, caller)
 	if err != nil {
 		return response, err
 	}
 	err = k.BankKeeper.SendCoinsFromAccountToModule(
-		ctx, caller, types.ModuleName, sdk.NewCoins(msg.Coll),
+		ctx, caller, types.ModuleName, sdk.NewCoins(inColl),
 	)
 	if err != nil {
 		return response, err
 	}
 	events.EmitTransfer(
-		ctx, msg.Coll,
+		ctx, inColl,
 		/* from */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
 		/* to   */ caller.String(),
 	)
@@ -181,7 +185,7 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	inCollUSD := priceCollStable.Price.MulInt(msg.Coll.Amount)
+	inCollUSD := priceCollStable.Price.MulInt(inColl.Amount)
 	outGovAmount, err := k.GovAmtFromRecollateralize(ctx, inCollUSD)
 	if err != nil {
 		return response, err
@@ -209,7 +213,7 @@ func (k Keeper) Recollateralize(
 
 	events.EmitRecollateralize(
 		ctx,
-		/* inCoin    */ msg.Coll,
+		/* inCoin    */ inColl,
 		/* outCoin   */ outGov,
 		/* caller    */ caller.String(),
 		/* collRatio */ targetCollRatio,
