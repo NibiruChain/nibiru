@@ -249,8 +249,8 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 
 	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
 	// based on the collateral ratio.
-	// TODO: Initialize 'collRatio' based on the collateral ratio of the protocol.
-	collRatio, _ := sdk.NewDecFromStr("0.9")
+	params := k.GetParams(ctx)
+	collRatio := params.GetCollRatioAsDec()
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 
 	redeemColl := collRatio.MulInt(msg.Stable.Amount).Quo(

@@ -398,6 +398,13 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
+			// Set stablecoin params
+			collRatio := sdk.MustNewDecFromStr("0.9")
+			feeRatio := sdk.MustNewDecFromStr("0.002")
+			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			matrixApp.StablecoinKeeper.SetParams(
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
@@ -518,6 +525,13 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
+			// Set stablecoin params
+			collRatio := sdk.MustNewDecFromStr("0.9")
+			feeRatio := sdk.MustNewDecFromStr("0.002")
+			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			matrixApp.StablecoinKeeper.SetParams(
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
@@ -622,6 +636,13 @@ func TestMsgBurnResponse_supply(t *testing.T) {
 			matrixApp, ctx := testutil.NewMatrixApp()
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
+
+			// Set stablecoin params
+			collRatio := sdk.MustNewDecFromStr("0.9")
+			feeRatio := sdk.MustNewDecFromStr("0.002")
+			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			matrixApp.StablecoinKeeper.SetParams(
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
