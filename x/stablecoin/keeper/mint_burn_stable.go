@@ -88,7 +88,7 @@ func (k Keeper) MintStable(
 func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -236,7 +236,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	}
 
 	// priceGov: Price of the governance token in USD
-	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
 	if err != nil {
 		return nil, err
 	}
@@ -249,8 +249,8 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 
 	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
 	// based on the collateral ratio.
-	// TODO: Initialize 'collRatio' based on the collateral ratio of the protocol.
-	collRatio, _ := sdk.NewDecFromStr("0.9")
+	params := k.GetParams(ctx)
+	collRatio := params.GetCollRatioAsDec()
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 
 	redeemColl := collRatio.MulInt(msg.Stable.Amount).Quo(

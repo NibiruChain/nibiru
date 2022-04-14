@@ -46,3 +46,14 @@ func (k msgServer) MsgBurnStable(
 	}
 	return burnStableResponse, nil
 }
+
+func (k msgServer) MsgRecollateralize(
+	goCtx context.Context, msg *types.MsgRecollateralize,
+) (*types.MsgRecollateralizeResponse, error) {
+
+	response, err := k.Recollateralize(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}

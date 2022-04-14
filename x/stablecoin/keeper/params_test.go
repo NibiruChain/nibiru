@@ -34,9 +34,10 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("2"),
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("1"),
+				sdk.MustNewDecFromStr("0.002"),
 			),
 			fmt.Errorf(
-				"collateral Ratio is above max value(1e6): %s",
+				"collateral ratio is above max value(1e6): %s",
 				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1_000_000)).TruncateInt()),
 		},
 		{
@@ -45,20 +46,22 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("2"),
 				sdk.MustNewDecFromStr("1"),
+				sdk.MustNewDecFromStr("0.002"),
 			),
 			fmt.Errorf(
-				"fee Ratio is above max value(1e6): %s",
+				"fee ratio is above max value(1e6): %s",
 				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1_000_000)).TruncateInt()),
 		},
 		{
-			"ef fee ratio bigger than 1",
+			"stable EF fee ratio bigger than 1",
 			types.NewParams(
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("2"),
+				sdk.MustNewDecFromStr("0.002"),
 			),
 			fmt.Errorf(
-				"ecosystem fund fee Ratio is above max value(1e6): %s",
+				"stable EF fee ratio is above max value(1e6): %s",
 				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1_000_000)).TruncateInt()),
 		},
 	}
