@@ -123,8 +123,9 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -296,8 +297,9 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.ZeroDec()
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -402,8 +404,9 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
@@ -529,8 +532,9 @@ func TestMsgBurnResponse_EnoughFunds(t *testing.T) {
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
@@ -641,8 +645,9 @@ func TestMsgBurnResponse_supply(t *testing.T) {
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &matrixApp.PriceKeeper
