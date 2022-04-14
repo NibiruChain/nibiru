@@ -48,25 +48,25 @@ func NewPricefeedGen() *pricefeedtypes.GenesisState {
 	return &pricefeedtypes.GenesisState{
 		Params: pricefeedtypes.Params{
 			Markets: []pricefeedtypes.Market{
-				{MarketID: common.GovCollPool, BaseAsset: common.GovDenom,
+				{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
 					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
 					Active: true},
-				{MarketID: common.CollStablePool, BaseAsset: common.StableDenom,
-					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
+				{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+					QuoteAsset: common.StableDenom, Oracles: []sdk.AccAddress{oracle},
 					Active: true},
 			},
 		},
 		PostedPrices: []pricefeedtypes.PostedPrice{
 			{
-				MarketID:      common.GovCollPool,
+				MarketID:      common.GovStablePool,
 				OracleAddress: oracle,
-				Price:         sdk.MustNewDecFromStr("10.00"),
+				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
 				MarketID:      common.CollStablePool,
 				OracleAddress: oracle,
-				Price:         sdk.MustNewDecFromStr("1"),
+				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 		},
@@ -238,17 +238,29 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		expectedCode   uint32
 	}{
 		{
-			name: "Burn correct amount",
+			name: "Burn at 100% collRatio",
 			args: append([]string{
 				"100000000uusdm",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 			expectedStable: sdk.NewInt(0),
-			expectedColl:   sdk.NewInt(90000000),
-			expectedGov:    sdk.NewInt(1000000),
+			expectedColl:   sdk.NewInt(100_000_000),
+			expectedGov:    sdk.NewInt(0),
 			expectErr:      false,
 			respType:       &sdk.TxResponse{},
 			expectedCode:   0,
 		},
+		// {
+		// 	name: "Burn at 90% collRatio",
+		// 	args: append([]string{
+		// 		"100000000uusdm",
+		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
+		// 	expectedStable: sdk.NewInt(0),
+		// 	expectedColl:   sdk.NewInt(90_000_000),
+		// 	expectedGov:    sdk.NewInt(1_000_000),
+		// 	expectErr:      false,
+		// 	respType:       &sdk.TxResponse{},
+		// 	expectedCode:   0,
+		// },
 	}
 
 	for _, tc := range testCases {
