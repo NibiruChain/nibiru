@@ -7,6 +7,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/stablecoin/events"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
@@ -87,7 +88,7 @@ func (k Keeper) MintStable(
 func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovCollPool)
+	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -279,13 +280,19 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	if err != nil {
 		return nil, err
 	}
-
 	redeemCollCoin, collFees, err := k.calcNeededCollateralAndFees(ctx, msg.Stable, collRatio, feeRatio)
 	if err != nil {
 		return nil, err
 	}
 
 	err = k.mintGov(ctx, redeemGovCoin)
+	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
+	// based on the collateral ratio.
+
+	// Send USDM from account to module
+	stablesToBurn := sdk.NewCoins(msg.Stable)
+	err = k.BankKeeper.SendCoinsFromAccountToModule(
+		ctx, msgCreator, types.ModuleName, stablesToBurn)
 	if err != nil {
 		return nil, err
 	}

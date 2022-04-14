@@ -111,8 +111,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom,
-						QuoteAsset: common.GovDenom,
+					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
+						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
@@ -123,13 +123,14 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovCollPool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
@@ -281,23 +282,28 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			priceKeeper := &matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.GovStablePool,
+						BaseAsset:  common.GovDenom,
+						QuoteAsset: common.StableDenom,
+						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+					{MarketID: common.CollStablePool,
+						BaseAsset:  common.CollDenom,
+						QuoteAsset: common.StableDenom,
+						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.ZeroDec()
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovCollPool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
@@ -431,11 +437,19 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
+			// Set stablecoin params
+			collRatio := sdk.MustNewDecFromStr("0.9")
+			feeRatio := sdk.MustNewDecFromStr("0.002")
+			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+			matrixApp.StablecoinKeeper.SetParams(
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
+
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
@@ -447,7 +461,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovCollPool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
@@ -541,28 +555,29 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
+			// Set stablecoin params
+			collRatio := sdk.MustNewDecFromStr("0.9")
+			feeRatio := sdk.MustNewDecFromStr("0.002")
+			feeRatioEF := sdk.MustNewDecFromStr("0.5")
+			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+			matrixApp.StablecoinKeeper.SetParams(
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
+
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovCollPool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
-			collRatio := sdk.MustNewDecFromStr("0.9")
-			feeRatio := sdk.MustNewDecFromStr("0.002")
-			efFeeRatio := sdk.MustNewDecFromStr("0.5")
-			params := types.NewParams(collRatio, feeRatio, efFeeRatio)
-
-			matrixApp.StablecoinKeeper.SetParams(ctx, params)
-
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovCollPool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(

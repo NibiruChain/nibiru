@@ -148,9 +148,10 @@ func (m *MsgMintStableResponse) GetFeesPayed() github_com_cosmos_cosmos_sdk_type
 	return nil
 }
 
-// MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and
-// Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
-// for the protocol.
+//
+//MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and
+//Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
+//for the protocol.
 type MsgBurnStable struct {
 	Creator string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Stable  types.Coin `protobuf:"bytes,2,opt,name=stable,proto3" json:"stable"`
@@ -265,43 +266,148 @@ func (m *MsgBurnStableResponse) GetFeesPayed() github_com_cosmos_cosmos_sdk_type
 	return nil
 }
 
+// MsgRecollateralize
+type MsgRecollateralize struct {
+	Creator string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Coll    types.Coin `protobuf:"bytes,2,opt,name=coll,proto3" json:"coll"`
+}
+
+func (m *MsgRecollateralize) Reset()         { *m = MsgRecollateralize{} }
+func (m *MsgRecollateralize) String() string { return proto.CompactTextString(m) }
+func (*MsgRecollateralize) ProtoMessage()    {}
+func (*MsgRecollateralize) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6ef74a087750083d, []int{4}
+}
+func (m *MsgRecollateralize) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRecollateralize) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRecollateralize.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRecollateralize) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRecollateralize.Merge(m, src)
+}
+func (m *MsgRecollateralize) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRecollateralize) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRecollateralize.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRecollateralize proto.InternalMessageInfo
+
+func (m *MsgRecollateralize) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgRecollateralize) GetColl() types.Coin {
+	if m != nil {
+		return m.Coll
+	}
+	return types.Coin{}
+}
+
+// MsgRecollateralizeResponse is the output of a successful 'Recollateralize'
+type MsgRecollateralizeResponse struct {
+	// Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.
+	Gov types.Coin `protobuf:"bytes,1,opt,name=gov,proto3" json:"gov"`
+}
+
+func (m *MsgRecollateralizeResponse) Reset()         { *m = MsgRecollateralizeResponse{} }
+func (m *MsgRecollateralizeResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRecollateralizeResponse) ProtoMessage()    {}
+func (*MsgRecollateralizeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6ef74a087750083d, []int{5}
+}
+func (m *MsgRecollateralizeResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRecollateralizeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRecollateralizeResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRecollateralizeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRecollateralizeResponse.Merge(m, src)
+}
+func (m *MsgRecollateralizeResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRecollateralizeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRecollateralizeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRecollateralizeResponse proto.InternalMessageInfo
+
+func (m *MsgRecollateralizeResponse) GetGov() types.Coin {
+	if m != nil {
+		return m.Gov
+	}
+	return types.Coin{}
+}
+
 func init() {
 	proto.RegisterType((*MsgMintStable)(nil), "MatrixDao.stablecoin.v1.MsgMintStable")
 	proto.RegisterType((*MsgMintStableResponse)(nil), "MatrixDao.stablecoin.v1.MsgMintStableResponse")
 	proto.RegisterType((*MsgBurnStable)(nil), "MatrixDao.stablecoin.v1.MsgBurnStable")
 	proto.RegisterType((*MsgBurnStableResponse)(nil), "MatrixDao.stablecoin.v1.MsgBurnStableResponse")
+	proto.RegisterType((*MsgRecollateralize)(nil), "MatrixDao.stablecoin.v1.MsgRecollateralize")
+	proto.RegisterType((*MsgRecollateralizeResponse)(nil), "MatrixDao.stablecoin.v1.MsgRecollateralizeResponse")
 }
 
 func init() { proto.RegisterFile("stablecoin/tx.proto", fileDescriptor_6ef74a087750083d) }
 
 var fileDescriptor_6ef74a087750083d = []byte{
-	// 414 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x94, 0xb1, 0x4e, 0xe3, 0x30,
-	0x18, 0xc7, 0xe3, 0xe6, 0xd4, 0x53, 0x7d, 0xba, 0x25, 0x77, 0xa7, 0x0b, 0x1d, 0xd2, 0xaa, 0x03,
-	0xea, 0x82, 0x4d, 0xca, 0xc0, 0x88, 0x54, 0x18, 0x58, 0x22, 0xa1, 0xb0, 0xb1, 0x54, 0x4e, 0x62,
-	0x42, 0x20, 0x8d, 0xa3, 0xd8, 0xad, 0xda, 0xb7, 0xe0, 0x31, 0x10, 0x4f, 0xd2, 0xb1, 0x6c, 0x4c,
-	0x80, 0xda, 0x87, 0x60, 0x45, 0x76, 0x42, 0x9b, 0x0a, 0x51, 0x95, 0xa1, 0x4c, 0xf9, 0x12, 0x7f,
-	0xdf, 0xff, 0x97, 0xfc, 0xff, 0x8e, 0xe1, 0x1f, 0x2e, 0x88, 0x17, 0x53, 0x9f, 0x45, 0x09, 0x16,
-	0x23, 0x94, 0x66, 0x4c, 0x30, 0xe3, 0xbf, 0x43, 0x44, 0x16, 0x8d, 0x4e, 0x08, 0x43, 0xcb, 0x65,
-	0x34, 0xb4, 0xeb, 0x96, 0xcf, 0x78, 0x9f, 0x71, 0xec, 0x11, 0x4e, 0xf1, 0xd0, 0xf6, 0xa8, 0x20,
-	0x36, 0x56, 0x8b, 0x6a, 0xb0, 0xfe, 0x37, 0x64, 0x21, 0x53, 0x25, 0x96, 0x55, 0xfe, 0xb4, 0xe5,
-	0xc1, 0xdf, 0x0e, 0x0f, 0x9d, 0x28, 0x11, 0xe7, 0x4a, 0xcd, 0x30, 0xe1, 0x4f, 0x3f, 0xa3, 0x44,
-	0xb0, 0xcc, 0x04, 0x4d, 0xd0, 0xae, 0xb9, 0xef, 0xb7, 0xc6, 0x21, 0xac, 0xe6, 0x44, 0xb3, 0xd2,
-	0x04, 0xed, 0x5f, 0x9d, 0x1d, 0x94, 0x13, 0x91, 0x24, 0xa2, 0x82, 0x88, 0x8e, 0x59, 0x94, 0x74,
-	0x7f, 0x4c, 0x9e, 0x1a, 0x9a, 0x5b, 0xb4, 0xb7, 0xee, 0x2a, 0xf0, 0xdf, 0x0a, 0xc4, 0xa5, 0x3c,
-	0x65, 0x09, 0xa7, 0x25, 0x49, 0xf0, 0x25, 0x49, 0xe3, 0x1a, 0xc2, 0x01, 0xa7, 0x41, 0x4f, 0x7e,
-	0x1f, 0x37, 0x2b, 0x4d, 0x7d, 0xfd, 0xf0, 0xbe, 0x1c, 0xbe, 0x7f, 0x6e, 0xb4, 0xc3, 0x48, 0x5c,
-	0x0d, 0x3c, 0xe4, 0xb3, 0x3e, 0x2e, 0xec, 0xca, 0x2f, 0x7b, 0x3c, 0xb8, 0xc1, 0x62, 0x9c, 0x52,
-	0xae, 0x06, 0xb8, 0x5b, 0x93, 0xf2, 0xaa, 0x94, 0xac, 0x4b, 0x4a, 0x79, 0x2f, 0x25, 0x63, 0x1a,
-	0x98, 0xfa, 0x16, 0x58, 0x52, 0xfe, 0x4c, 0xaa, 0x17, 0x71, 0x74, 0x07, 0x59, 0xb2, 0xbd, 0x38,
-	0x5e, 0x81, 0x8a, 0x63, 0x09, 0x59, 0xc4, 0x71, 0x04, 0xa1, 0xcf, 0xe2, 0x98, 0x08, 0x9a, 0x91,
-	0x78, 0xd3, 0x48, 0x4a, 0x23, 0x86, 0x0d, 0xf5, 0x90, 0x0d, 0x37, 0x7d, 0x21, 0xd9, 0xfb, 0x9d,
-	0xee, 0x76, 0x1e, 0x00, 0xd4, 0x1d, 0x1e, 0x1a, 0x01, 0x84, 0xa5, 0x1d, 0xbf, 0x8b, 0x3e, 0xf9,
-	0xa5, 0xd0, 0xca, 0xa6, 0xad, 0xa3, 0xcd, 0xfa, 0x16, 0x6e, 0x06, 0x10, 0x96, 0x82, 0x5c, 0x4b,
-	0x59, 0xf6, 0xad, 0xa7, 0x7c, 0xcc, 0xac, 0x7b, 0x3a, 0x99, 0x59, 0x60, 0x3a, 0xb3, 0xc0, 0xcb,
-	0xcc, 0x02, 0xb7, 0x73, 0x4b, 0x9b, 0xce, 0x2d, 0xed, 0x71, 0x6e, 0x69, 0x17, 0xa8, 0x64, 0xd1,
-	0x42, 0x13, 0xf7, 0x55, 0x85, 0x47, 0xb8, 0x7c, 0xb8, 0x48, 0xbb, 0xbc, 0xaa, 0x3a, 0x11, 0x0e,
-	0xde, 0x02, 0x00, 0x00, 0xff, 0xff, 0x92, 0x34, 0xfa, 0x35, 0x77, 0x04, 0x00, 0x00,
+	// 468 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x94, 0x31, 0x6f, 0xd3, 0x40,
+	0x14, 0xc7, 0x73, 0x49, 0x55, 0xd4, 0x87, 0x10, 0x92, 0x01, 0x61, 0x3c, 0xb8, 0x51, 0x06, 0x14,
+	0x09, 0x71, 0x47, 0x9a, 0x81, 0x11, 0x29, 0x30, 0xb0, 0x58, 0x20, 0xb3, 0xb1, 0x54, 0x67, 0xfb,
+	0x30, 0x86, 0xc4, 0x67, 0xf9, 0x5d, 0xa2, 0x94, 0x4f, 0xc1, 0xc7, 0x40, 0x7c, 0x10, 0xd4, 0xb1,
+	0x23, 0x13, 0xa0, 0xe4, 0x43, 0xb0, 0xa2, 0x3b, 0xbb, 0xb6, 0x5b, 0xc0, 0x72, 0x87, 0x74, 0xca,
+	0x8b, 0xef, 0xff, 0xfe, 0xbf, 0xbb, 0xf7, 0xde, 0x1d, 0xdc, 0x41, 0xc5, 0x83, 0xb9, 0x08, 0x65,
+	0x92, 0x32, 0xb5, 0xa6, 0x59, 0x2e, 0x95, 0xb4, 0xee, 0x7b, 0x5c, 0xe5, 0xc9, 0xfa, 0x05, 0x97,
+	0xb4, 0x5e, 0xa6, 0xab, 0x89, 0xe3, 0x86, 0x12, 0x17, 0x12, 0x59, 0xc0, 0x51, 0xb0, 0xd5, 0x24,
+	0x10, 0x8a, 0x4f, 0x98, 0x59, 0x34, 0x89, 0xce, 0xdd, 0x58, 0xc6, 0xd2, 0x84, 0x4c, 0x47, 0xc5,
+	0xd7, 0x51, 0x00, 0xb7, 0x3c, 0x8c, 0xbd, 0x24, 0x55, 0x6f, 0x8c, 0x9b, 0x65, 0xc3, 0x8d, 0x30,
+	0x17, 0x5c, 0xc9, 0xdc, 0x26, 0x43, 0x32, 0x3e, 0xf0, 0xcf, 0xff, 0x5a, 0x4f, 0x61, 0xbf, 0x20,
+	0xda, 0xfd, 0x21, 0x19, 0xdf, 0x3c, 0x7a, 0x40, 0x0b, 0x22, 0xd5, 0x44, 0x5a, 0x12, 0xe9, 0x73,
+	0x99, 0xa4, 0xb3, 0xbd, 0xd3, 0x1f, 0x87, 0x3d, 0xbf, 0x94, 0x8f, 0xbe, 0xf4, 0xe1, 0xde, 0x05,
+	0x88, 0x2f, 0x30, 0x93, 0x29, 0x8a, 0x86, 0x25, 0xb9, 0x92, 0xa5, 0xf5, 0x01, 0x60, 0x89, 0x22,
+	0x3a, 0xd6, 0xe7, 0x43, 0xbb, 0x3f, 0x1c, 0xb4, 0x27, 0x3f, 0xd1, 0xc9, 0x5f, 0x7f, 0x1e, 0x8e,
+	0xe3, 0x44, 0xbd, 0x5f, 0x06, 0x34, 0x94, 0x0b, 0x56, 0x96, 0xab, 0xf8, 0x79, 0x8c, 0xd1, 0x47,
+	0xa6, 0x4e, 0x32, 0x81, 0x26, 0x01, 0xfd, 0x03, 0x6d, 0x6f, 0x42, 0xcd, 0x7a, 0x27, 0x04, 0x1e,
+	0x67, 0xfc, 0x44, 0x44, 0xf6, 0x60, 0x07, 0x2c, 0x6d, 0xff, 0x5a, 0xbb, 0x97, 0xed, 0x98, 0x2d,
+	0xf3, 0x74, 0x77, 0xed, 0xf8, 0x4d, 0x4c, 0x3b, 0x6a, 0x48, 0xd5, 0x8e, 0x67, 0x00, 0xa1, 0x9c,
+	0xcf, 0xb9, 0x12, 0x39, 0x9f, 0x77, 0x6d, 0x49, 0x23, 0xc5, 0x9a, 0xc0, 0x20, 0x96, 0xab, 0xae,
+	0x1b, 0xd2, 0xda, 0x6b, 0xad, 0x6e, 0x08, 0x96, 0x87, 0xb1, 0x2f, 0xea, 0x1d, 0x27, 0x9f, 0xda,
+	0x4a, 0x3c, 0x85, 0x3d, 0x2d, 0xed, 0x7a, 0x1e, 0x23, 0x1e, 0xbd, 0x02, 0xe7, 0x6f, 0x48, 0x55,
+	0xe2, 0xb2, 0x42, 0xa4, 0x7b, 0x85, 0x8e, 0xbe, 0xf5, 0x61, 0xe0, 0x61, 0x6c, 0x45, 0x00, 0x8d,
+	0x7b, 0xfa, 0x90, 0xfe, 0xe7, 0x21, 0xa0, 0x17, 0xae, 0x9a, 0x43, 0xbb, 0xe9, 0xaa, 0x0d, 0x46,
+	0x00, 0x8d, 0xf1, 0x6b, 0xa5, 0xd4, 0xba, 0x76, 0xca, 0x3f, 0x26, 0x0d, 0xe1, 0xf6, 0xe5, 0x36,
+	0x3c, 0x6a, 0xb3, 0xb8, 0x24, 0x76, 0xa6, 0x57, 0x10, 0x9f, 0x43, 0x67, 0x2f, 0x4f, 0x37, 0x2e,
+	0x39, 0xdb, 0xb8, 0xe4, 0xd7, 0xc6, 0x25, 0x9f, 0xb7, 0x6e, 0xef, 0x6c, 0xeb, 0xf6, 0xbe, 0x6f,
+	0xdd, 0xde, 0x5b, 0xda, 0x98, 0xa6, 0xca, 0x98, 0x2d, 0x4c, 0xc4, 0xd6, 0xac, 0xf9, 0x0e, 0xeb,
+	0xc9, 0x0a, 0xf6, 0xcd, 0xe3, 0x39, 0xfd, 0x13, 0x00, 0x00, 0xff, 0xff, 0x55, 0x8e, 0xf7, 0xdd,
+	0xa2, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -316,8 +422,16 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// MintStable defines a method for trading a mixture of GOV and COLL to mint an
+	// equivalent value of stablecoins.
 	MintStable(ctx context.Context, in *MsgMintStable, opts ...grpc.CallOption) (*MsgMintStableResponse, error)
+	// BurnStable defines a method for redeeming/burning stablecoins to receive an
+	// equivalent value as a mixture of governance and collateral tokens.
 	BurnStable(ctx context.Context, in *MsgBurnStable, opts ...grpc.CallOption) (*MsgBurnStableResponse, error)
+	// Recollateralize defines a method for manually adding collateral to the
+	// protocol in exchange for an equivalent stablecoin value in governance tokens
+	// plus a small bonus.
+	Recollateralize(ctx context.Context, in *MsgRecollateralize, opts ...grpc.CallOption) (*MsgRecollateralizeResponse, error)
 }
 
 type msgClient struct {
@@ -346,10 +460,27 @@ func (c *msgClient) BurnStable(ctx context.Context, in *MsgBurnStable, opts ...g
 	return out, nil
 }
 
+func (c *msgClient) Recollateralize(ctx context.Context, in *MsgRecollateralize, opts ...grpc.CallOption) (*MsgRecollateralizeResponse, error) {
+	out := new(MsgRecollateralizeResponse)
+	err := c.cc.Invoke(ctx, "/MatrixDao.stablecoin.v1.Msg/Recollateralize", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// MintStable defines a method for trading a mixture of GOV and COLL to mint an
+	// equivalent value of stablecoins.
 	MintStable(context.Context, *MsgMintStable) (*MsgMintStableResponse, error)
+	// BurnStable defines a method for redeeming/burning stablecoins to receive an
+	// equivalent value as a mixture of governance and collateral tokens.
 	BurnStable(context.Context, *MsgBurnStable) (*MsgBurnStableResponse, error)
+	// Recollateralize defines a method for manually adding collateral to the
+	// protocol in exchange for an equivalent stablecoin value in governance tokens
+	// plus a small bonus.
+	Recollateralize(context.Context, *MsgRecollateralize) (*MsgRecollateralizeResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -361,6 +492,9 @@ func (*UnimplementedMsgServer) MintStable(ctx context.Context, req *MsgMintStabl
 }
 func (*UnimplementedMsgServer) BurnStable(ctx context.Context, req *MsgBurnStable) (*MsgBurnStableResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BurnStable not implemented")
+}
+func (*UnimplementedMsgServer) Recollateralize(ctx context.Context, req *MsgRecollateralize) (*MsgRecollateralizeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Recollateralize not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -403,6 +537,24 @@ func _Msg_BurnStable_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_Recollateralize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRecollateralize)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Recollateralize(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MatrixDao.stablecoin.v1.Msg/Recollateralize",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Recollateralize(ctx, req.(*MsgRecollateralize))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "MatrixDao.stablecoin.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -414,6 +566,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BurnStable",
 			Handler:    _Msg_BurnStable_Handler,
+		},
+		{
+			MethodName: "Recollateralize",
+			Handler:    _Msg_Recollateralize_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -618,6 +774,79 @@ func (m *MsgBurnStableResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgRecollateralize) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRecollateralize) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRecollateralize) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Coll.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRecollateralizeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRecollateralizeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRecollateralizeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Gov.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -698,6 +927,32 @@ func (m *MsgBurnStableResponse) Size() (n int) {
 			n += 1 + l + sovTx(uint64(l))
 		}
 	}
+	return n
+}
+
+func (m *MsgRecollateralize) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Coll.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgRecollateralizeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Gov.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -1214,6 +1469,204 @@ func (m *MsgBurnStableResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.FeesPayed = append(m.FeesPayed, types.Coin{})
 			if err := m.FeesPayed[len(m.FeesPayed)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRecollateralize) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRecollateralize: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRecollateralize: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coll", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Coll.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRecollateralizeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRecollateralizeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRecollateralizeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Gov", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Gov.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

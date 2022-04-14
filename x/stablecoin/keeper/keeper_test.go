@@ -79,7 +79,9 @@ func TestGetAndSetParams(t *testing.T) {
 		collRatio := sdk.MustNewDecFromStr("0.5")
 		feeRatio := collRatio
 		feeRatioEF := collRatio
-		params := types.NewParams(collRatio, feeRatio, feeRatioEF)
+		bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+		params := types.NewParams(
+			collRatio, feeRatio, feeRatioEF, bonusRateRecoll)
 		stableKeeper.SetParams(ctx, params)
 
 		require.EqualValues(t, params, stableKeeper.GetParams(ctx))
