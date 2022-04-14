@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"testing"
 	"time"
 
@@ -229,24 +230,28 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		name string
 		args []string
 
-		expectedStable sdk.Int
-		expectedColl   sdk.Int
-		expectedGov    sdk.Int
-		expectErr      bool
-		respType       proto.Message
-		expectedCode   uint32
+		expectedStable   sdk.Int
+		expectedColl     sdk.Int
+		expectedGov      sdk.Int
+		expectedTreasury sdk.Coins
+		expectedEf       sdk.Coins
+		expectErr        bool
+		respType         proto.Message
+		expectedCode     uint32
 	}{
 		{
 			name: "Burn correct amount",
 			args: append([]string{
 				"50000000uusdm",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
-			expectedStable: sdk.ZeroInt(),
-			expectedColl:   sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
-			expectedGov:    sdk.ZeroInt(),
-			expectErr:      false,
-			respType:       &sdk.TxResponse{},
-			expectedCode:   0,
+			expectedStable:   sdk.ZeroInt(),
+			expectedColl:     sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
+			expectedGov:      sdk.ZeroInt(),
+			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
+			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
+			expectErr:        false,
+			respType:         &sdk.TxResponse{},
+			expectedCode:     0,
 		},
 	}
 
@@ -284,6 +289,23 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				s.Require().Equal(
 					tc.expectedStable, balRes.Balances.AmountOf(common.StableDenom))
 
+				// Query treasury pool balance
+				resp, err = banktestutil.QueryBalancesExec(clientCtx, types.NewModuleAddress(common.TreasuryPoolModuleAccount))
+				s.Require().NoError(err)
+				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
+				s.Require().NoError(err)
+
+				s.Require().Equal(
+					tc.expectedTreasury, balRes.Balances)
+
+				// Query ecosystem fund balance
+				resp, err = banktestutil.QueryBalancesExec(clientCtx, types.NewModuleAddress(stabletypes.StableEFModuleAccount))
+				s.Require().NoError(err)
+				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
+				s.Require().NoError(err)
+
+				s.Require().Equal(
+					tc.expectedEf, balRes.Balances)
 			}
 		})
 	}
