@@ -10,6 +10,7 @@ import (
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
 
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -504,6 +505,7 @@ func TestRecollateralize(t *testing.T) {
 		scenario          NeededCollScenario
 		priceGovStable    sdk.Dec
 		expectedNeededUSD sdk.Dec
+		accFunds          sdk.Coins
 
 		msg      types.MsgRecollateralize
 		response *types.MsgRecollateralizeResponse
@@ -521,6 +523,9 @@ func TestRecollateralize(t *testing.T) {
 				// neededCollUSD =  (0.6 * 1000e3) - (500e3 *1) = 100_000
 			},
 			priceGovStable: sdk.OneDec(),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 1_000_000_000),
+			),
 
 			expectedNeededUSD: sdk.NewDec(100_000),
 			msg: types.MsgRecollateralize{
@@ -548,6 +553,9 @@ func TestRecollateralize(t *testing.T) {
 				// neededCollUSD =  (0.7 * 1000e3) - (500e3 *1.09999) = 150_000.5
 			},
 			priceGovStable: sdk.NewDec(5),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 1_000_000_000),
+			),
 
 			// Since 'neededCollUSD' is
 			expectedNeededUSD: sdk.MustNewDecFromStr("150000.5"),
@@ -583,6 +591,15 @@ func TestRecollateralize(t *testing.T) {
 					sdk.NewCoin(common.StableDenom, tc.scenario.stableSupply),
 				),
 			)
+			// Fund account
+			caller, err := sdk.AccAddressFromBech32(tc.msg.Creator)
+			if tc.expectedPass {
+				require.NoError(t, err)
+			}
+			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, caller, tc.accFunds)
+			if tc.expectedPass {
+				require.NoError(t, err)
+			}
 
 			// Set up markets for the pricefeed keeper.
 			oracle := sample.AccAddress()

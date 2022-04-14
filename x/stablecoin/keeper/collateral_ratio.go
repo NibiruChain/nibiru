@@ -151,6 +151,23 @@ func (k Keeper) Recollateralize(
 			msg.Coll.Amount, neededCollAmt)
 	}
 
+	// Send collateral from the caller to the module
+	err = k.checkEnoughBalance(ctx, msg.Coll, caller)
+	if err != nil {
+		return response, err
+	}
+	err = k.BankKeeper.SendCoinsFromAccountToModule(
+		ctx, caller, types.ModuleName, sdk.NewCoins(msg.Coll),
+	)
+	if err != nil {
+		return response, err
+	}
+	events.EmitTransfer(
+		ctx, msg.Coll,
+		k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+		caller.String())
+
+	// Compute GOV rewarded to user
 	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
 	if err != nil {
 		return response, err
@@ -161,6 +178,13 @@ func (k Keeper) Recollateralize(
 		return response, err
 	}
 	outGov := sdk.NewCoin(common.GovDenom, outGovAmount)
+
+	// Mint and send the GOV reward
+	err = k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(outGov))
+	if err != nil {
+		return response, err
+	}
+	events.EmitMintMtrx(ctx, outGov)
 
 	events.EmitRecollateralize(
 		ctx,
