@@ -104,7 +104,8 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	ctx sdk.Context, collUSD sdk.Dec,
 ) (govOut sdk.Int, err error) {
 
-	bonusRate := sdk.MustNewDecFromStr("0.002") // TODO: Replace with attribute
+	params := k.GetParams(ctx)
+	bonusRate := params.GetBonusRateRecollAsDec()
 
 	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
 	if err != nil {
