@@ -55,18 +55,18 @@ message MsgBurnStable {
 /* MsgBurnStableResponse specifies the amount of collateral and governance token the user will receive after their
 * burn transaction*/
 message MsgBurnStableResponse {
-  cosmos.base.v1beta1.Coin Collateral = 1 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin Gov = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
 }
 
 /* MsgRecollateralize  */
 message MsgRecollateralize {
-  string Creator = 1;
-  cosmos.base.v1beta1.Coin Coll = 2 [(gogoproto.nullable) = false];
+  string creator = 1;
+  cosmos.base.v1beta1.Coin coll = 2 [(gogoproto.nullable) = false];
 }
 
 /* MsgRecollateralizeResponse is the output of a successful 'Recollateralize' */
 message MsgRecollateralizeResponse {
   // Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.  
-  cosmos.base.v1beta1.Coin Gov = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin gov = 1 [(gogoproto.nullable) = false];
 }
