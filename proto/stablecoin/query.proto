@@ -10,10 +10,11 @@ option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Parameters queries the parameters of the module.
+  // Parameters queries the parameters of the x/stablecoin module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/MatrixDao/matrix/stablecoin/params";
+    option (google.api.http).get = "/matrix/stablecoin/params";
   }
+
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -23,4 +24,14 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryGovToMintStable is the request type for the Query/GovToMintStable RPC method
+message QueryGovToMintStable {
+  cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryGovToMintStableResponse is the response type for 'QueryGovToMintStable'
+message QueryGovToMintStableResponse {
+  cosmos.base.v1beta1.Coin gov = 1 [(gogoproto.nullable) = false];
 }
