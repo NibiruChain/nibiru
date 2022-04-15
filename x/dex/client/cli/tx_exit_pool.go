@@ -67,5 +67,8 @@ $ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100matrix/pool/1 --from vali
 	cmd.Flags().AddFlagSet(FlagSetExitPool())
 	flags.AddTxFlagsToCmd(cmd)
 
+	_ = cmd.MarkFlagRequired(FlagPoolId)
+	_ = cmd.MarkFlagRequired(FlagPoolSharesOut)
+
 	return cmd
 }
