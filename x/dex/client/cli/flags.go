@@ -36,6 +36,7 @@ func FlagSetJoinPool() *flag.FlagSet {
 
 	fs.Uint64(FlagPoolId, 0, "The id of pool")
 	fs.StringArray(FlagTokensIn, []string{""}, "Amount of each denom to send into the pool (specify multiple denoms with: --tokens-in=1ust --tokens-in=1usdm)")
+	return fs
 }
 
 func FlagSetExitPool() *flag.FlagSet {
