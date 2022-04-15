@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/MatrixDao/matrix/x/common"
-	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	ptypes "github.com/MatrixDao/matrix/x/pricefeed/types"
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/MatrixDao/matrix/x/testutil"
@@ -683,8 +682,8 @@ func TestRecollateralize(t *testing.T) {
 			// Set up markets for the pricefeed keeper.
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			pricefeedParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
+			pricefeedParams := ptypes.Params{
+				Markets: []ptypes.Market{
 					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
