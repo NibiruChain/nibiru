@@ -326,7 +326,7 @@ ret:
   - remCoins: the number of remaining coins from the user's initial deposit attempt
   - err: error if any
 */
-func (k Keeper) JoinPoolNoSwap(
+func (k Keeper) JoinPool(
 	ctx sdk.Context,
 	joinerAddr sdk.AccAddress,
 	poolId uint64,
@@ -338,15 +338,13 @@ func (k Keeper) JoinPoolNoSwap(
 		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
 	}
 
-	poolAddr, err := sdk.AccAddressFromBech32(pool.Address)
+	poolAddr := pool.GetAddress()
+
+	numShares, remCoins, err := pool.AddTokensToPool(tokensIn)
 	if err != nil {
-		return pool, numSharesOut, remCoins, err
+		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
 
-	numShares, remCoins, err := pool.JoinPool(tokensIn)
-	if err != nil {
-		return pool, numSharesOut, remCoins, err
-	}
 	tokensConsumed := tokensIn.Sub(remCoins)
 
 	// take coins from joiner to pool
@@ -366,7 +364,7 @@ func (k Keeper) JoinPoolNoSwap(
 		/*to=*/ joinerAddr,
 		/*amount=*/ numShares,
 	); err != nil {
-		return pool, numSharesOut, remCoins, err
+		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
 
 	// record changes to store
@@ -383,7 +381,7 @@ in proportion to the total amount of pool shares.
 For example, if a pool has 100 pool shares and ExitPool is called with 50 pool shares,
 half of the tokens (minus exit fees) are returned to the user.
 
-Inverse of JoinPoolNoSwap.
+Inverse of JoinPool.
 
 Throws an error if the provided pool shares doesn't match up with the pool's actual pool share.
 

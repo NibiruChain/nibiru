@@ -263,7 +263,7 @@ func TestBurnPoolShareFromAccount(t *testing.T) {
 	require.Equal(t, sdk.NewInt64Coin(shareDenom, 0), coin)
 }
 
-func TestJoinPoolNoswap(t *testing.T) {
+func TestJoinPool(t *testing.T) {
 	const shareDenom = "matrix/pool/1"
 
 	tests := []struct {
@@ -385,7 +385,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 			joinerAddr := sample.AccAddress()
 			simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds)
 
-			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPoolNoSwap(ctx, joinerAddr, 1, tc.tokensIn)
+			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFinalPool, pool)
 			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)

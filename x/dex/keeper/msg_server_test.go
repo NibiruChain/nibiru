@@ -46,7 +46,7 @@ func TestCreatePool(t *testing.T) {
 	// require.EqualValues(t, resp.PoolId, 1)
 }
 
-func TestJoinPool(t *testing.T) {
+func TestMsgServerJoinPool(t *testing.T) {
 	const shareDenom = "matrix/pool/1"
 	tests := []struct {
 		name                     string
