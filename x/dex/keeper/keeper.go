@@ -136,7 +136,7 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
 
 /*
 Writes a pool to the state.
-Panics if the pool proto could not be marshalled.
+Panics if the pool proto could not be marshaled.
 
 args:
   - ctx: the cosmos-sdk context
@@ -196,7 +196,6 @@ func (k Keeper) BurnPoolShareFromAccount(
 	fromAddr sdk.AccAddress,
 	poolSharesOut sdk.Coin,
 ) (err error) {
-
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		fromAddr,

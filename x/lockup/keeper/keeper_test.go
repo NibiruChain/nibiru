@@ -63,7 +63,6 @@ func TestCreateLock(t *testing.T) {
 
 				require.Equal(t, uint64(1), app.LockupKeeper.GetNextLockId(ctx))
 			}
-
 		})
 	}
 }

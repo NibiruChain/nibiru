@@ -7,7 +7,6 @@ import (
 )
 
 func TestCombineKeys(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		keys     [][]byte

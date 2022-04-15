@@ -45,7 +45,6 @@ func TestPoolAssetValidateError(t *testing.T) {
 			require.Errorf(t, tc.pa.Validate(), tc.errMsg)
 		})
 	}
-
 }
 
 func TestPoolAssetValidateSuccess(t *testing.T) {
@@ -68,7 +67,6 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 			require.NoError(t, tc.pa.Validate())
 		})
 	}
-
 }
 
 func TestSubtractPoolAssetBalance(t *testing.T) {

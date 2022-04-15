@@ -13,7 +13,6 @@ import (
 )
 
 func TestSwapExactAmountIn(t *testing.T) {
-
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins

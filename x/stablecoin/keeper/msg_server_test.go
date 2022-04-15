@@ -10,7 +10,6 @@ import (
 )
 
 func TestNewMsgServerImpl(t *testing.T) {
-
 	type TestCase struct {
 		name   string
 		keeper sckeeper.Keeper
