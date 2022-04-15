@@ -166,3 +166,16 @@ func (pool *Pool) ExitPool(exitingShares sdk.Int) (
 	pool.TotalShares = sdk.NewCoin(pool.TotalShares.Denom, pool.TotalShares.Amount.Sub(exitingShares))
 	return exitedCoins, nil
 }
+
+/*
+Returns the address of the pool.
+
+Panics if the pool address is not bech32 valid.
+*/
+func (pool Pool) GetAddress() sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(pool.Address)
+	if err != nil {
+		panic(fmt.Sprintf("could not bech32 decode address of pool with id: %d", pool.Id))
+	}
+	return addr
+}
