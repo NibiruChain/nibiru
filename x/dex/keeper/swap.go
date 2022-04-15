@@ -44,6 +44,24 @@ func (k Keeper) updatePoolForSwap(
 	return err
 }
 
+/*
+Given a poolId and the amount of tokens to swap in, returns the number of tokens out
+received, specified by the tokenOutDenom.
+
+For example, if pool 1 has 100foo and 100bar, this function can be called with
+tokenIn=10foo and tokenOutDenom=bar.
+
+args:
+  - ctx: the cosmos-sdk context
+  - sender: the address wishing to perform the swap
+  - poolId: the pool id number
+  - tokenIn: the amount of tokens to given to the pool
+  - tokenOutDenom: the denom of the token taken out of the pool
+
+ret:
+  - tokenOut: the amount of tokens taken out of the pool
+  - err: error if any
+*/
 func (k Keeper) SwapExactAmountIn(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
