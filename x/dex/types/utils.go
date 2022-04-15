@@ -20,26 +20,28 @@ ret:
   - poolAsset: the pool asset itself
   - err: error if any
 */
-func getPoolAssetAndIndex(poolAssets []PoolAsset, denom string) (index int, poolAsset PoolAsset, err error) {
+func (pool Pool) getPoolAssetAndIndex(denom string) (
+	index int, poolAsset PoolAsset, err error,
+) {
 	if denom == "" {
 		return -1, PoolAsset{}, fmt.Errorf("empty denom")
 	}
 
-	if len(poolAssets) == 0 {
+	if len(pool.PoolAssets) == 0 {
 		return -1, PoolAsset{}, fmt.Errorf("empty pool assets")
 	}
 
 	// binary search for the asset. poolAssets must be sorted.
-	i := sort.Search(len(poolAssets), func(i int) bool {
-		compare := strings.Compare(poolAssets[i].Token.Denom, denom)
+	i := sort.Search(len(pool.PoolAssets), func(i int) bool {
+		compare := strings.Compare(pool.PoolAssets[i].Token.Denom, denom)
 		return compare >= 0
 	})
 
-	if i < 0 || i >= len(poolAssets) || poolAssets[i].Token.Denom != denom {
+	if i < 0 || i >= len(pool.PoolAssets) || pool.PoolAssets[i].Token.Denom != denom {
 		return -1, PoolAsset{}, fmt.Errorf("did not find the PoolAsset (%s)", denom)
 	}
 
-	return i, poolAssets[i], nil
+	return i, pool.PoolAssets[i], nil
 }
 
 /*
@@ -51,9 +53,9 @@ ret:
 args:
   - poolAssets: the slice of pool assets
 */
-func poolAssetsCoins(poolAssets []PoolAsset) (coins sdk.Coins) {
-	coins = sdk.Coins{}
-	for _, asset := range poolAssets {
+func (pool Pool) PoolAssetsCoins() (sdk.Coins) {
+	coins := sdk.NewCoins()
+	for _, asset := range pool.PoolAssets {
 		coins = coins.Add(asset.Token)
 	}
 	return coins

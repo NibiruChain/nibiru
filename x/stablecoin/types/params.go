@@ -15,16 +15,20 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec) Params {
-	sixthPower := sdk.MustNewDecFromStr("1000000")
-	collRatioInt := collRatio.Mul(sixthPower).RoundInt()
-	feeRationInt := feeRatio.Mul(sixthPower).RoundInt()
-	efFeeRatioInt := efFeeRatio.Mul(sixthPower).RoundInt()
+func NewParams(
+	collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec, bonusRateRecoll sdk.Dec,
+) Params {
+	million := sdk.NewDec(1_000_000)
+	collRatioInt := collRatio.Mul(million).RoundInt()
+	feeRationInt := feeRatio.Mul(million).RoundInt()
+	efFeeRatioInt := efFeeRatio.Mul(million).RoundInt()
+	bonusRateRecollInt := bonusRateRecoll.Mul(million).RoundInt()
 
 	return Params{
-		CollRatio:  collRatioInt.Int64(),
-		FeeRatio:   feeRationInt.Int64(),
-		EfFeeRatio: efFeeRatioInt.Int64(),
+		CollRatio:       collRatioInt.Int64(),
+		FeeRatio:        feeRationInt.Int64(),
+		EfFeeRatio:      efFeeRatioInt.Int64(),
+		BonusRateRecoll: bonusRateRecollInt.Int64(),
 	}
 }
 
@@ -33,8 +37,9 @@ func DefaultParams() Params {
 	genesisCollRatio := sdk.OneDec()
 	feeRatio := sdk.MustNewDecFromStr("0.002")
 	efFeeRatio := sdk.MustNewDecFromStr("0.5")
+	bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 
-	return NewParams(genesisCollRatio, feeRatio, efFeeRatio)
+	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -54,6 +59,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			[]byte("EfFeeRatio"),
 			&p.EfFeeRatio,
 			validateEfFeeRatio,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("BonusRateRecoll"),
+			&p.BonusRateRecoll,
+			validateBonusRateRecoll,
 		),
 	}
 }
@@ -88,6 +98,11 @@ func (p *Params) GetEfFeeRatioAsDec() sdk.Dec {
 		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
+func (p *Params) GetBonusRateRecollAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.BonusRateRecoll)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
+
 func validateCollRatio(i interface{}) error {
 	collRatio, err := getAsInt64(i)
 	if err != nil {
@@ -95,9 +110,24 @@ func validateCollRatio(i interface{}) error {
 	}
 
 	if collRatio > 1_000_000 {
-		return fmt.Errorf("collateral Ratio is above max value(1e6): %d", collRatio)
+		return fmt.Errorf("collateral ratio is above max value(1e6): %d", collRatio)
 	} else if collRatio < 0 {
 		return fmt.Errorf("collateral Ratio is negative: %d", collRatio)
+	} else {
+		return nil
+	}
+}
+
+func validateBonusRateRecoll(i interface{}) error {
+	bonusRateRecoll, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if bonusRateRecoll > 1_000_000 {
+		return fmt.Errorf("collateral Ratio is above max value(1e6): %d", bonusRateRecoll)
+	} else if bonusRateRecoll < 0 {
+		return fmt.Errorf("collateral Ratio is negative: %d", bonusRateRecoll)
 	} else {
 		return nil
 	}
@@ -110,20 +140,24 @@ func validateFeeRatio(i interface{}) error {
 	}
 
 	if feeRatio > 1_000_000 {
-		return fmt.Errorf("fee Ratio is above max value(1e6): %d", feeRatio)
+		return fmt.Errorf("fee ratio is above max value(1e6): %d", feeRatio)
+	} else if feeRatio < 0 {
+		return fmt.Errorf("fee ratio is negative: %d", feeRatio)
 	} else {
 		return nil
 	}
 }
 
 func validateEfFeeRatio(i interface{}) error {
-	feeRatio, err := getAsInt64(i)
+	efFeeRatio, err := getAsInt64(i)
 	if err != nil {
 		return err
 	}
 
-	if feeRatio > 1_000_000 {
-		return fmt.Errorf("ecosystem fund fee Ratio is above max value(1e6): %d", feeRatio)
+	if efFeeRatio > 1_000_000 {
+		return fmt.Errorf("stable EF fee ratio is above max value(1e6): %d", efFeeRatio)
+	} else if efFeeRatio < 0 {
+		return fmt.Errorf("stable EF fee ratio is negative: %d", efFeeRatio)
 	} else {
 		return nil
 	}

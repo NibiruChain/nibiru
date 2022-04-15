@@ -93,7 +93,22 @@ ret
   error: an error if any occurred
 */
 func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types.MsgExitPoolResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/46) implement this
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
 
-	return &types.MsgExitPoolResponse{}, nil
+	tokensOut, err := k.Keeper.ExitPool(
+		sdk.UnwrapSDKContext(ctx),
+		sender,
+		msg.PoolId,
+		msg.PoolShares,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgExitPoolResponse{
+		TokensOut: tokensOut,
+	}, nil
 }

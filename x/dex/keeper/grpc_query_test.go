@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/MatrixDao/matrix/x/dex/keeper"
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/sample"
@@ -11,12 +12,14 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)
 
-	response, err := app.DexKeeper.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
+	queryServer := keeper.NewQuerier(app.DexKeeper)
+
+	response, err := queryServer.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
 }
@@ -54,10 +57,12 @@ func TestQueryPoolHappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
-			resp, err := app.DexKeeper.Pool(sdk.WrapSDKContext(ctx), &types.QueryPoolRequest{
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.Pool(sdk.WrapSDKContext(ctx), &types.QueryPoolRequest{
 				PoolId: 1,
 			})
 			require.NoError(t, err)
@@ -78,8 +83,9 @@ func TestQueryPoolFail(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
-			resp, err := app.DexKeeper.Pool(sdk.WrapSDKContext(ctx), nil)
+			app, ctx := testutil.NewMatrixApp(true)
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+			resp, err := queryServer.Pool(sdk.WrapSDKContext(ctx), nil)
 			require.Error(t, err)
 			require.Nil(t, resp)
 		})

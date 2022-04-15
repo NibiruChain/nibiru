@@ -11,6 +11,7 @@ import (
 func TestGenesisState_Validate(t *testing.T) {
 	defaultFeeRatio := sdk.MustNewDecFromStr("0.002")
 	defaultFeeRatioEF := sdk.MustNewDecFromStr("0.5")
+	defaultBonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 
 	testCases := []struct {
 		description string
@@ -38,7 +39,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			description: "set non-default, valid collRatio at genesis",
 			genState: &types.GenesisState{
 				Params: types.NewParams(
-					sdk.MustNewDecFromStr("0.7"), defaultFeeRatio, defaultFeeRatioEF),
+					sdk.MustNewDecFromStr("0.7"), defaultFeeRatio,
+					defaultFeeRatioEF, defaultBonusRateRecoll,
+				),
 			},
 			expectValid: true,
 		},
@@ -46,7 +49,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			description: "set invalid negative collRatio at genesis",
 			genState: &types.GenesisState{
 				Params: types.NewParams(
-					sdk.MustNewDecFromStr("-0.5"), defaultFeeRatio, defaultFeeRatioEF),
+					sdk.MustNewDecFromStr("-0.5"), defaultFeeRatio,
+					defaultFeeRatioEF, defaultBonusRateRecoll,
+				),
 			},
 			expectValid: false,
 		},
@@ -54,7 +59,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			description: "set invalid > max collRatio at genesis",
 			genState: &types.GenesisState{
 				Params: types.NewParams(
-					sdk.MustNewDecFromStr("1.5"), defaultFeeRatio, defaultFeeRatioEF),
+					sdk.MustNewDecFromStr("1.5"), defaultFeeRatio,
+					defaultFeeRatioEF, defaultBonusRateRecoll,
+				),
 			},
 			expectValid: false,
 		},

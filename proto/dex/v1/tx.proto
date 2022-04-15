@@ -5,19 +5,26 @@ import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
 // Msg defines the Msg service.
 service Msg {
   // Used to create a pool.
-  rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse);
+  rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse) {
+    option (google.api.http).post = "/matrix/dex/pool";
+  }
 
   // Join a pool as a liquidity provider.
-  rpc JoinPool(MsgJoinPool) returns (MsgJoinPoolResponse);
+  rpc JoinPool(MsgJoinPool) returns (MsgJoinPoolResponse) {
+    option (google.api.http).post = "/matrix/dex/{poolId}/join";
+  }
 
   // Exit a pool position by returning LP shares
-  rpc ExitPool(MsgExitPool) returns (MsgExitPoolResponse);
+  rpc ExitPool(MsgExitPool) returns (MsgExitPoolResponse) {
+    option (google.api.http).post = "/matrix/dex/{poolId}/exit";
+  }
 }
 
 message MsgCreatePool {

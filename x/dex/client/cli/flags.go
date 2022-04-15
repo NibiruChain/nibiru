@@ -13,6 +13,8 @@ const (
 
 	// Will be parsed to []sdk.Coin.
 	FlagTokensIn = "tokens-in"
+
+	FlagPoolSharesOut = "pool-shares-out"
 )
 
 type createPoolInputs struct {
@@ -34,6 +36,12 @@ func FlagSetJoinPool() *flag.FlagSet {
 
 	fs.Uint64(FlagPoolId, 0, "The id of pool")
 	fs.StringArray(FlagTokensIn, []string{""}, "Amount of each denom to send into the pool (specify multiple denoms with: --tokens-in=1ust --tokens-in=1usdm)")
+}
 
+func FlagSetExitPool() *flag.FlagSet {
+	fs := flag.NewFlagSet("", flag.ContinueOnError)
+
+	fs.String(FlagPoolId, "", "The pool id to withdraw from.")
+	fs.String(FlagPoolSharesOut, "", "The amount of pool share tokens to burn.")
 	return fs
 }
