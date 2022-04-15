@@ -8,15 +8,13 @@ import (
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// For integration testing
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
-
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TODO: Move to CLI for integrations
@@ -45,7 +43,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) _doSetupTest() {
-	matrixApp, ctx := testutil.NewMatrixApp()
+	matrixApp, ctx := testutil.NewMatrixApp(true)
 	suite.app = matrixApp
 	suite.ctx = ctx
 
@@ -64,7 +62,7 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get default Params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp()
+		matrixApp, ctx := testutil.NewMatrixApp(true)
 		stableKeeper := &matrixApp.StablecoinKeeper
 
 		params := types.DefaultParams()
@@ -75,13 +73,15 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get non-default params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp()
+		matrixApp, ctx := testutil.NewMatrixApp(true)
 		stableKeeper := &matrixApp.StablecoinKeeper
 
 		collRatio := sdk.MustNewDecFromStr("0.5")
 		feeRatio := collRatio
 		feeRatioEF := collRatio
-		params := types.NewParams(collRatio, feeRatio, feeRatioEF)
+		bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+		params := types.NewParams(
+			collRatio, feeRatio, feeRatioEF, bonusRateRecoll)
 		stableKeeper.SetParams(ctx, params)
 
 		require.EqualValues(t, params, stableKeeper.GetParams(ctx))
@@ -89,7 +89,7 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Calling Get without setting causes a panic"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp()
+		matrixApp, ctx := testutil.NewMatrixApp(false)
 		stableKeeper := &matrixApp.StablecoinKeeper
 
 		require.Panics(

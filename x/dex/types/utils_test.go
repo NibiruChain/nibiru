@@ -77,7 +77,10 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 	for _, testcase := range tests {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
-			index, poolAsset, err := getPoolAssetAndIndex(tc.poolAssets, tc.denom)
+			pool := Pool{
+				PoolAssets: tc.poolAssets,
+			}
+			index, poolAsset, err := pool.getPoolAssetAndIndex(tc.denom)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedIndex, index)
 			require.Equal(t, tc.expectedPoolAsset, poolAsset)
@@ -136,7 +139,10 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 	for _, testcase := range tests {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, err := getPoolAssetAndIndex(tc.poolAssets, tc.denom)
+			pool := Pool{
+				PoolAssets: tc.poolAssets,
+			}
+			_, _, err := pool.getPoolAssetAndIndex(tc.denom)
 			require.Errorf(t, err, tc.expectedError)
 		})
 	}
@@ -180,8 +186,10 @@ func TestPoolAssetsCoins(t *testing.T) {
 	for _, testcase := range tests {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
-			coins := poolAssetsCoins(tc.poolAssets)
-			require.Equal(t, tc.expectedCoins, coins)
+			pool := Pool{
+				PoolAssets: tc.poolAssets,
+			}
+			require.Equal(t, tc.expectedCoins, pool.PoolAssetsCoins())
 		})
 	}
 }

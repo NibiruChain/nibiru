@@ -11,24 +11,110 @@ option go_package = "github.com/MatrixDao/matrix/x/dex/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Queries the parameters of the dex module.
+  // Parameters of the dex module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/MatrixDao/matrix/dex/params";
-  }
-  // Queries the current pool id number.
-  rpc PoolNumber(QueryPoolNumberRequest) returns (QueryPoolNumberResponse) {
-    option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool_number";
+    option (google.api.http).get = "/matrix/dex/params";
   }
 
-  // Queries a pool by id.
+  // Next available pool id number.
+  rpc PoolNumber(QueryPoolNumberRequest) returns (QueryPoolNumberResponse) {
+    option (google.api.http).get = "/matrix/dex/pool_number";
+  }
+
+  // Fetch a pool by id.
   rpc Pool(QueryPoolRequest) returns (QueryPoolResponse) {
-    option (google.api.http).get = "/MatrixDao/matrix/dex/get_pool";
+    option (google.api.http).get = "/matrix/dex/pool";
+  }
+
+  // Returns all pools.
+  rpc Pools(QueryPoolsRequest) returns (QueryPoolsResponse) {
+    option (google.api.http).get = "/matrix/dex/pools";
+  }
+
+  // Parameters of a single pool.
+  rpc PoolParams(QueryPoolParamsRequest) returns (QueryPoolParamsResponse) {
+    option (google.api.http).get = "/matrix/dex/pools/{poolId}/params";
+  }
+
+  // Number of pools.
+  rpc NumPools(QueryNumPoolsRequest) returns (QueryNumPoolsResponse) {
+    option (google.api.http).get = "/matrix/dex/num_pools";
+  }
+
+  // Total liquidity across all pools.
+  rpc TotalLiquidity(QueryTotalLiquidityRequest)
+      returns (QueryTotalLiquidityResponse) {
+    option (google.api.http).get = "/matrix/dex/total_liquidity";
+  }
+
+  // Total liquidity in a single pool.
+  rpc TotalPoolLiquidity(QueryTotalPoolLiquidityRequest)
+      returns (QueryTotalPoolLiquidityResponse) {
+    option (google.api.http).get =
+        "/matrix/dex/pools/{poolId}/total_pool_liquidity";
+  }
+
+  // Total shares in a single pool.
+  rpc TotalShares(QueryTotalSharesRequest) returns (QueryTotalSharesResponse) {
+    option (google.api.http).get = "/matrix/dex/pools/{poolId}/total_shares";
+  }
+
+  // Instantaneous price of an asset in a pool.
+  rpc SpotPrice(QuerySpotPriceRequest) returns (QuerySpotPriceResponse) {
+    option (google.api.http).get = "/matrix/dex/pools/{poolId}/prices";
+  }
+
+  // Estimates the amount of assets returned given an exact amount of tokens to
+  // swap.
+  rpc EstimateSwapExactAmountIn(QuerySwapExactAmountInRequest)
+      returns (QuerySwapExactAmountInResponse) {
+    option (google.api.http).get =
+        "/matrix/dex/{poolId}/estimate/swap_exact_amount_in";
+  }
+
+  // Estimates the amount of tokens required to return the exact amount of
+  // assets requested.
+  rpc EstimateSwapExactAmountOut(QuerySwapExactAmountOutRequest)
+      returns (QuerySwapExactAmountOutResponse) {
+    option (google.api.http).get =
+        "/matrix/dex/{poolId}/estimate/swap_exact_amount_out";
+  }
+
+  // Estimates the amount of pool shares returned given an amount of tokens to
+  // join.
+  rpc EstimateJoinExactAmountIn(QueryJoinExactAmountInRequest)
+      returns (QueryJoinExactAmountInResponse) {
+    option (google.api.http).get =
+        "/matrix/dex/{poolId}/estimate/join_exact_amount_in";
+  }
+
+  // Estimates the amount of tokens required to obtain an exact amount of pool
+  // shares.
+  rpc EstimateJoinExactAmountOut(QueryJoinExactAmountOutRequest)
+      returns (QueryJoinExactAmountOutResponse) {
+    option (google.api.http).get =
+        "/matrix/dex/{poolId}/estimate/join_exact_amount_out";
+  }
+
+  // Estimates the amount of tokens returned to the user given an exact amount
+  // of pool shares.
+  rpc EstimateExitExactAmountIn(QueryExitExactAmountInRequest)
+      returns (QueryExitExactAmountInResponse) {
+    option (google.api.http).get =
+        "/matrix/dex/{poolId}/estimate/exit_exact_amount_in";
+  }
+
+  // Estimates the amount of pool shares required to extract an exact amount of
+  // tokens from the pool.
+  rpc EstimateExitExactAmountOut(QueryExitExactAmountOutRequest)
+      returns (QueryExitExactAmountOutResponse) {
+    option (google.api.http).get =
+        "/matrix/dex/{poolId}/estimate/exit_exact_amount_out";
   }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
 message QueryParamsRequest {}
-
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
@@ -36,7 +122,6 @@ message QueryParamsResponse {
 }
 
 message QueryPoolNumberRequest {}
-
 message QueryPoolNumberResponse {
   uint64 poolId = 1;
 }
@@ -44,7 +129,65 @@ message QueryPoolNumberResponse {
 message QueryPoolRequest {
   uint64 poolId = 1;
 }
-
 message QueryPoolResponse {
   Pool pool = 1;
 }
+
+message QueryPoolsRequest {}
+message QueryPoolsResponse {}
+
+message QueryPoolParamsRequest {
+  uint64 poolId = 1;
+}
+message QueryPoolParamsResponse {}
+
+message QueryNumPoolsRequest {}
+message QueryNumPoolsResponse {}
+
+message QueryTotalLiquidityRequest {}
+message QueryTotalLiquidityResponse {}
+
+message QueryTotalPoolLiquidityRequest {
+  uint64 poolId = 1;
+}
+message QueryTotalPoolLiquidityResponse {}
+
+message QueryTotalSharesRequest {
+  uint64 poolId = 1;
+}
+message QueryTotalSharesResponse {}
+
+message QuerySpotPriceRequest {
+  uint64 poolId = 1;
+}
+message QuerySpotPriceResponse {}
+
+message QuerySwapExactAmountInRequest {
+  uint64 poolId = 1;
+}
+message QuerySwapExactAmountInResponse {}
+
+message QuerySwapExactAmountOutRequest {
+  uint64 poolId = 1;
+}
+message QuerySwapExactAmountOutResponse {}
+
+message QueryJoinExactAmountInRequest {
+  uint64 poolId = 1;
+}
+message QueryJoinExactAmountInResponse {}
+
+message QueryJoinExactAmountOutRequest {
+  uint64 poolId = 1;
+}
+message QueryJoinExactAmountOutResponse {}
+
+message QueryExitExactAmountInRequest {
+  uint64 poolId = 1;
+}
+message QueryExitExactAmountInResponse {}
+
+message QueryExitExactAmountOutRequest {
+  uint64 poolId = 1;
+}
+message QueryExitExactAmountOutResponse {}

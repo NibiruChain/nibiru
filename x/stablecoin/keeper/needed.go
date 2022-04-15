@@ -1,5 +1,3 @@
-// Package keeper Module for minting USDM  Minting USDM
-// See Example B of https://docs.frax.finance/minting-and-redeeming
 package keeper
 
 import (

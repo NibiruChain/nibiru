@@ -12,7 +12,7 @@ import (
 )
 
 func TestKeeper_SetGetMarket(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	tstusdMarket := types.Market{
 		MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
@@ -53,7 +53,7 @@ func TestKeeper_SetGetMarket(t *testing.T) {
 }
 
 func TestKeeper_GetSetPrice(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	keeper := app.PriceKeeper
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
@@ -108,7 +108,7 @@ Test case where two oracles try to set prices for a market and only one of the
 oracles is valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracle(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	keeper := app.PriceKeeper
 	marketID := "tstusd"
 	price := sdk.MustNewDecFromStr("0.1")
@@ -140,7 +140,7 @@ Test case where several oracles try to set prices for a market
 and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracles(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	keeper := app.PriceKeeper
 
 	marketID := "tstusd"
@@ -175,7 +175,7 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 // TestKeeper_GetSetCurrentPrice Test Setting the median price of an Asset
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	keeper := app.PriceKeeper
 
 	mp := types.Params{
@@ -264,7 +264,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 	keeper := app.PriceKeeper
 
 	mp := types.Params{
