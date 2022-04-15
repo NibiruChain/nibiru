@@ -108,10 +108,9 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt)
+			require.NoError(t, tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt))
 			actualCoins := tc.pool.PoolAssetsCoins()
 			require.Equal(t, tc.expectedCoins, actualCoins)
 		})
 	}
 }
-

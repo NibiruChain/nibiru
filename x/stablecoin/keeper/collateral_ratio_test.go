@@ -88,7 +88,7 @@ func TestGetCollRatio_Input(t *testing.T) {
 
 		expectedCollRatio := sdk.MustNewDecFromStr("0.5")
 		expectedCollRatioInt := expectedCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
-		stablecoinKeeper.SetCollRatio(ctx, expectedCollRatio)
+		require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, expectedCollRatio))
 
 		outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
 		outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
@@ -117,13 +117,13 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, matrixApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			oracle := sample.AccAddress()
@@ -247,13 +247,13 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, matrixApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			marketID := common.CollStablePool
@@ -306,13 +306,13 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, matrixApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			marketID := common.CollStablePool
@@ -428,13 +428,13 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, matrixApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			oracle := sample.AccAddress()
@@ -577,13 +577,13 @@ func TestRecollateralize(t *testing.T) {
 
 			matrixApp, ctx := testutil.NewMatrixApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio)
-			matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
+			require.NoError(t, matrixApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.scenario.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.scenario.stableSupply),
 				),
-			)
+			))
 			// Fund account
 			caller, err := sdk.AccAddressFromBech32(tc.msg.Creator)
 			if tc.expectedPass {

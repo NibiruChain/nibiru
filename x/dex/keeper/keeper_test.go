@@ -254,10 +254,9 @@ func TestBurnPoolShareFromAccount(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp(true)
 
 	userAddr := sample.AccAddress()
-	simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.Coins{sdk.NewInt64Coin(shareDenom, 100)})
+	require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.Coins{sdk.NewInt64Coin(shareDenom, 100)}))
 
-	err := app.DexKeeper.BurnPoolShareFromAccount(ctx, userAddr, sdk.NewInt64Coin(shareDenom, 100))
-	require.NoError(t, err)
+	require.NoError(t, app.DexKeeper.BurnPoolShareFromAccount(ctx, userAddr, sdk.NewInt64Coin(shareDenom, 100)))
 
 	coin := app.BankKeeper.GetBalance(ctx, userAddr, shareDenom)
 	require.Equal(t, sdk.NewInt64Coin(shareDenom, 0), coin)
@@ -383,7 +382,7 @@ func TestJoinPoolNoswap(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := sample.AccAddress()
-			simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPoolNoSwap(ctx, joinerAddr, 1, tc.tokensIn)
 			require.NoError(t, err)
@@ -496,8 +495,8 @@ func TestExitPool(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := sample.AccAddress()
-			simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds)
-			simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 
 			tokensOut, err := app.DexKeeper.ExitPool(ctx, sender, 1, tc.poolSharesOut)
 			require.NoError(t, err)

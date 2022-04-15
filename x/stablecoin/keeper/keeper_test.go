@@ -7,7 +7,6 @@ import (
 	"github.com/MatrixDao/matrix/x/stablecoin/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// For integration testing
@@ -24,7 +23,6 @@ type KeeperTestSuite struct {
 	ctx sdk.Context
 	app *app.MatrixApp
 
-	clientCtx   client.Context
 	queryClient types.QueryClient
 }
 

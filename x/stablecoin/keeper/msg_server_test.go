@@ -14,7 +14,6 @@ func TestNewMsgServerImpl(t *testing.T) {
 	type TestCase struct {
 		name   string
 		keeper sckeeper.Keeper
-		err    error
 	}
 
 	executeTest := func(t *testing.T, testCase TestCase) {
@@ -30,7 +29,6 @@ func TestNewMsgServerImpl(t *testing.T) {
 		{
 			name:   "Default MatrixApp.StablecoinKeeper, should pass",
 			keeper: matrixApp.StablecoinKeeper,
-			err:    nil,
 		},
 	}
 

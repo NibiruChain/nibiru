@@ -285,7 +285,9 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 		return nil, err
 	}
 
-	err = k.mintGov(ctx, redeemGovCoin)
+	if err = k.mintGov(ctx, redeemGovCoin); err != nil {
+		return nil, err
+	}
 	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
 	// based on the collateral ratio.
 
