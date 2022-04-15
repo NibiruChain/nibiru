@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"github.com/MatrixDao/matrix/x/dex/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -21,12 +23,12 @@ ret:
 func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string) (
 	tokenOut sdk.Coin, err error,
 ) {
-	_, poolAssetIn, err := getPoolAssetAndIndex(pool.PoolAssets, tokenIn.Denom)
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
 	if err != nil {
 		return tokenOut, err
 	}
 
-	_, poolAssetOut, err := getPoolAssetAndIndex(pool.PoolAssets, tokenOutDenom)
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOutDenom)
 	if err != nil {
 		return tokenOut, err
 	}
@@ -64,12 +66,12 @@ ret:
 func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
 	tokenIn sdk.Coin, err error,
 ) {
-	_, poolAssetOut, err := getPoolAssetAndIndex(pool.PoolAssets, tokenOut.Denom)
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut.Denom)
 	if err != nil {
 		return tokenIn, err
 	}
 
-	_, poolAssetIn, err := getPoolAssetAndIndex(pool.PoolAssets, tokenInDenom)
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenInDenom)
 	if err != nil {
 		return tokenIn, err
 	}
@@ -92,4 +94,41 @@ func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
 	// Therefore we divide by (1 - swapfee) here
 	tokenAmountInBeforeFee := tokenAmountIn.Quo(sdk.OneDec().Sub(pool.PoolParams.SwapFee)).Ceil().TruncateInt()
 	return sdk.NewCoin(tokenInDenom, tokenAmountInBeforeFee), nil
+}
+
+/*
+Applies a swap to the pool by adding tokenIn and removing tokenOut from pool asset balances.
+
+args:
+  - tokenIn: the amount of token to deposit
+  - tokenOut: the amount of token to withdraw
+
+ret:
+  - err: error if any
+*/
+func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
+	if tokenIn.Amount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("tokenIn (%s) cannot be zero", tokenIn.Denom)
+	}
+	if tokenOut.Amount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("tokenOut (%s) cannot be zero", tokenOut.Denom)
+	}
+
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
+	if err != nil {
+		return err
+	}
+
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut.Denom)
+	if err != nil {
+		return err
+	}
+
+	poolAssetIn.Token.Amount = poolAssetIn.Token.Amount.Add(tokenIn.Amount)
+	poolAssetOut.Token.Amount = poolAssetOut.Token.Amount.Sub(tokenOut.Amount)
+
+	return pool.updatePoolAssetBalances(sdk.NewCoins(
+		poolAssetIn.Token,
+		poolAssetOut.Token,
+	))
 }
