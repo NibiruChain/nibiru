@@ -95,7 +95,7 @@ Where pool.json contains:
 			}
 
 			msg := types.NewMsgCreatePool(
-				clientCtx.GetFromAddress().String(),
+				/*sender=*/ clientCtx.GetFromAddress().String(),
 				poolAssets,
 				&types.PoolParams{
 					SwapFee: sdk.MustNewDecFromStr(pool.SwapFee),
@@ -103,15 +103,14 @@ Where pool.json contains:
 				},
 			)
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(FlagSetCreatePool())
 	flags.AddTxFlagsToCmd(cmd)
+
+	_ = cmd.MarkFlagRequired(FlagPoolFile)
 
 	return cmd
 }
