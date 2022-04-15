@@ -29,8 +29,17 @@ func New(shouldUseDefaultGenesis bool) *app.MatrixApp {
 
 	encoding := app.MakeTestEncodingConfig()
 
-	a := app.NewMatrixApp(logger, db, nil, true, map[int64]bool{}, nodeHome, 0, encoding,
-		simapp.EmptyAppOptions{})
+	a := app.NewMatrixApp(
+		logger,
+		db,
+		/*traceStore=*/ nil,
+		/*loadLatest=*/ true,
+		/*skipUpgradeHeights=*/ map[int64]bool{},
+		/*homePath=*/ nodeHome,
+		/*invCheckPeriod=*/ 0,
+		/*encodingConfig=*/ encoding,
+		/*appOpts=*/ simapp.EmptyAppOptions{},
+	)
 
 	var stateBytes []byte = []byte("{}")
 	if shouldUseDefaultGenesis {
