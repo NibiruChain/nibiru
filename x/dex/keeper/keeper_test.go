@@ -239,14 +239,28 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 func TestMintPoolShareToAccount(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp(true)
 
-	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
-	require.NoError(t, err)
+	userAddr := sample.AccAddress()
 
-	err = app.DexKeeper.MintPoolShareToAccount(ctx, 1, userAddr, sdk.NewIntWithDecimal(100, 18))
+	err := app.DexKeeper.MintPoolShareToAccount(ctx, 1, userAddr, sdk.NewIntWithDecimal(100, 18))
 	require.NoError(t, err)
 
 	coin := app.BankKeeper.GetBalance(ctx, userAddr, "matrix/pool/1")
 	require.Equal(t, sdk.NewIntWithDecimal(100, 18), coin.Amount)
+}
+
+func TestBurnPoolShareFromAccount(t *testing.T) {
+	const shareDenom = "matrix/pool/1"
+
+	app, ctx := testutil.NewMatrixApp(true)
+
+	userAddr := sample.AccAddress()
+	simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.Coins{sdk.NewInt64Coin(shareDenom, 100)})
+
+	err := app.DexKeeper.BurnPoolShareFromAccount(ctx, userAddr, sdk.NewInt64Coin(shareDenom, 100))
+	require.NoError(t, err)
+
+	coin := app.BankKeeper.GetBalance(ctx, userAddr, shareDenom)
+	require.Equal(t, sdk.NewInt64Coin(shareDenom, 0), coin)
 }
 
 func TestJoinPoolNoswap(t *testing.T) {
@@ -377,6 +391,119 @@ func TestJoinPoolNoswap(t *testing.T) {
 			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
+		})
+	}
+}
+
+func TestExitPool(t *testing.T) {
+	const shareDenom = "matrix/pool/1"
+
+	tests := []struct {
+		name                     string
+		joinerInitialFunds       sdk.Coins
+		initialPoolFunds         sdk.Coins
+		initialPool              types.Pool
+		poolSharesOut            sdk.Coin
+		expectedTokensOut        sdk.Coins
+		expectedJoinerFinalFunds sdk.Coins
+		expectedFinalPool        types.Pool
+	}{
+		{
+			name: "exit all pool shares",
+			joinerInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+				sdk.NewInt64Coin(shareDenom, 100),
+			),
+			initialPoolFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 100),
+				),
+				/*shares=*/ 100,
+			),
+			poolSharesOut: sdk.NewInt64Coin(shareDenom, 100),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 99),
+				sdk.NewInt64Coin("foo", 99),
+			),
+			expectedJoinerFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 199),
+				sdk.NewInt64Coin("foo", 199),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 1),
+					sdk.NewInt64Coin("foo", 1),
+				),
+				/*shares=*/ 0,
+			),
+		},
+		{
+			name: "exit half pool shares",
+			joinerInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+				sdk.NewInt64Coin(shareDenom, 100),
+			),
+			initialPoolFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 100),
+				),
+				/*shares=*/ 100,
+			),
+			poolSharesOut: sdk.NewInt64Coin(shareDenom, 50),
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 49),
+				sdk.NewInt64Coin("foo", 49),
+			),
+			expectedJoinerFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 149),
+				sdk.NewInt64Coin("foo", 149),
+				sdk.NewInt64Coin(shareDenom, 50),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 51),
+					sdk.NewInt64Coin("foo", 51),
+				),
+				/*shares=*/ 50,
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewMatrixApp(true)
+
+			poolAddr := sample.AccAddress()
+			tc.initialPool.Address = poolAddr.String()
+			tc.expectedFinalPool.Address = poolAddr.String()
+			app.DexKeeper.SetPool(ctx, tc.initialPool)
+
+			sender := sample.AccAddress()
+			simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds)
+			simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds)
+
+			tokensOut, err := app.DexKeeper.ExitPool(ctx, sender, 1, tc.poolSharesOut)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTokensOut, tokensOut)
+			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, sender))
+			require.Equal(t, tc.expectedFinalPool, app.DexKeeper.FetchPool(ctx, 1))
 		})
 	}
 }

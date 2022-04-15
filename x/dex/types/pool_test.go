@@ -16,6 +16,51 @@ func TestGetPoolShareDisplayDenom(t *testing.T) {
 	require.Equal(t, "MATRIX-POOL-123", GetPoolShareDisplayDenom(123))
 }
 
+func TestGetAddress(t *testing.T) {
+	tests := []struct {
+		name        string
+		pool        Pool
+		expectPanic bool
+	}{
+		{
+			name: "empty address",
+			pool: Pool{
+				Address: "",
+			},
+			expectPanic: true,
+		},
+		{
+			name: "invalid address",
+			pool: Pool{
+				Address: "asdf",
+			},
+			expectPanic: true,
+		},
+		{
+			name: "valid address",
+			pool: Pool{
+				Address: sample.AccAddress().String(),
+			},
+			expectPanic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectPanic {
+				require.Panics(t, func() {
+					tc.pool.GetAddress()
+				})
+			} else {
+				require.NotPanics(t, func() {
+					tc.pool.GetAddress()
+				})
+			}
+		})
+	}
+}
+
 func TestNewPool(t *testing.T) {
 	poolAccountAddr := sample.AccAddress()
 	poolParams := PoolParams{
