@@ -35,7 +35,7 @@ func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (e
 		return errors.New("can't subtract a negative amount")
 	}
 
-	index, poolAsset, err := getPoolAssetAndIndex(pool.PoolAssets, assetDenom)
+	index, poolAsset, err := pool.getPoolAssetAndIndex(assetDenom)
 	if err != nil {
 		return err
 	}
@@ -48,3 +48,4 @@ func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (e
 	pool.PoolAssets[index] = poolAsset
 	return nil
 }
+
