@@ -105,6 +105,7 @@ func (pool Pool) tokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 	poolLiquidity := pool.PoolBalances()
 	tokensOut = make(sdk.Coins, len(poolLiquidity))
 	for i, coin := range poolLiquidity {
+		// tokenOut = shareRatio * poolTokenAmt * (1 - exitFee)
 		tokenOutAmt := shareRatio.MulInt(coin.Amount).Mul(
 			sdk.OneDec().Sub(pool.PoolParams.ExitFee),
 		).TruncateInt()
