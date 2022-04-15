@@ -209,7 +209,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 		name                    string
 		pool                    Pool
 		exitingShares           sdk.Coin
-		expectedPoolAssets      []PoolAsset
+		expectedCoins           sdk.Coins
 		expectedRemainingShares sdk.Coin
 		expectedExitedCoins     sdk.Coins
 	}{
@@ -231,14 +231,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 			},
 			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 100),
 			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 0),
-			expectedPoolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 0),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 0),
-				},
-			},
+			expectedCoins:           nil,
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 100),
 				sdk.NewInt64Coin("bbb", 200),
@@ -262,14 +255,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 			},
 			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 100),
 			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 0),
-			expectedPoolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 50),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 100),
-				},
-			},
+			expectedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("bbb", 100),
+			),
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 50),
 				sdk.NewInt64Coin("bbb", 100),
@@ -293,14 +282,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 			},
 			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 50),
 			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 50),
-			expectedPoolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 50),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 100),
-				},
-			},
+			expectedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("bbb", 100),
+			),
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 50),
 				sdk.NewInt64Coin("bbb", 100),
@@ -324,14 +309,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 			},
 			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 50),
 			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 50),
-			expectedPoolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 75),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 150),
-				},
-			},
+			expectedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 75),
+				sdk.NewInt64Coin("bbb", 150),
+			),
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 25),
 				sdk.NewInt64Coin("bbb", 50),
@@ -355,14 +336,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 			},
 			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 74_747),
 			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 2_272_905),
-			expectedPoolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 33_488_356),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 63_391_639),
-				},
-			},
+			expectedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 33_488_356),
+				sdk.NewInt64Coin("bbb", 63_391_639),
+			),
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 1_097_889),
 				sdk.NewInt64Coin("bbb", 2_078_245),
@@ -373,7 +350,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			exitedCoins, err := tc.pool.ExitPool(tc.exitingShares.Amount)
 			require.NoError(t, err)
-			require.Equal(t, poolAssetsCoins(tc.expectedPoolAssets), poolAssetsCoins(tc.pool.PoolAssets))
+			require.Equal(t, tc.expectedCoins, tc.pool.PoolAssetsCoins())
 			// Comparing zero initialized sdk.Int with zero value sdk.Int leads to different results
 			if tc.expectedRemainingShares.IsZero() {
 				require.True(t, tc.pool.TotalShares.IsZero())

@@ -83,7 +83,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 
 			// set up pool address and funds
 			poolAddr := sample.AccAddress()
@@ -94,7 +94,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				app.BankKeeper,
 				ctx,
 				poolAddr,
-				types.GetPoolLiquidity(tc.initialPool.PoolAssets),
+				tc.initialPool.PoolAssetsCoins(),
 			)
 
 			// set up user's funds

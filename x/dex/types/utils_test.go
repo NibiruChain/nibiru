@@ -189,7 +189,7 @@ func TestPoolAssetsCoins(t *testing.T) {
 			pool := Pool{
 				PoolAssets: tc.poolAssets,
 			}
-			require.Equal(t, tc.expectedCoins, pool.poolAssetsCoins())
+			require.Equal(t, tc.expectedCoins, pool.PoolAssetsCoins())
 		})
 	}
 }
