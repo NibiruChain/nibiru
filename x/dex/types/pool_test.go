@@ -203,3 +203,184 @@ func TestJoinPoolInvalidInput(t *testing.T) {
 		})
 	}
 }
+
+func TestExitPoolHappyPath(t *testing.T) {
+	for _, tc := range []struct {
+		name                    string
+		pool                    Pool
+		exitingShares           sdk.Coin
+		expectedPoolAssets      []PoolAsset
+		expectedRemainingShares sdk.Coin
+		expectedExitedCoins     sdk.Coins
+	}{
+		{
+			name: "all coins withdrawn, no exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
+			},
+			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 100),
+			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 0),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 0),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 0),
+				},
+			},
+			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 100),
+				sdk.NewInt64Coin("bbb", 200),
+			),
+		},
+		{
+			name: "all coins withdrawn, exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+				PoolParams: PoolParams{
+					ExitFee: sdk.MustNewDecFromStr("0.5"),
+				},
+			},
+			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 100),
+			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 0),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 50),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+		},
+		{
+			name: "some coins withdrawn, no exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+				PoolParams: PoolParams{
+					ExitFee: sdk.ZeroDec(),
+				},
+			},
+			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 50),
+			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 50),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+		},
+		{
+			name: "some coins withdrawn, exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+				PoolParams: PoolParams{
+					ExitFee: sdk.MustNewDecFromStr("0.5"),
+				},
+			},
+			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 50),
+			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 75),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 150),
+				},
+			},
+			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 25),
+				sdk.NewInt64Coin("bbb", 50),
+			),
+		},
+		{
+			name: "real numbers",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 34_586_245),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 65_469_884),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 2_347_652),
+				PoolParams: PoolParams{
+					ExitFee: sdk.MustNewDecFromStr("0.003"),
+				},
+			},
+			exitingShares:           sdk.NewInt64Coin("matrix/pool/1", 74_747),
+			expectedRemainingShares: sdk.NewInt64Coin("matrix/pool/1", 2_272_905),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 33_488_356),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 63_391_639),
+				},
+			},
+			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 1_097_889),
+				sdk.NewInt64Coin("bbb", 2_078_245),
+			),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			exitedCoins, err := tc.pool.ExitPool(tc.exitingShares.Amount)
+			require.NoError(t, err)
+			require.Equal(t, poolAssetsCoins(tc.expectedPoolAssets), poolAssetsCoins(tc.pool.PoolAssets))
+			// Comparing zero initialized sdk.Int with zero value sdk.Int leads to different results
+			if tc.expectedRemainingShares.IsZero() {
+				require.True(t, tc.pool.TotalShares.IsZero())
+			} else {
+				require.Equal(t, tc.expectedRemainingShares, tc.pool.TotalShares)
+			}
+			require.Equal(t, tc.expectedExitedCoins, exitedCoins)
+		})
+	}
+}

@@ -8,12 +8,12 @@ import (
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// For integration testing
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -43,7 +43,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) _doSetupTest() {
-	matrixApp, ctx := testutil.NewMatrixApp()
+	matrixApp, ctx := testutil.NewMatrixApp(true)
 	suite.app = matrixApp
 	suite.ctx = ctx
 
@@ -52,4 +52,50 @@ func (suite *KeeperTestSuite) _doSetupTest() {
 	)
 	types.RegisterQueryServer(queryGrpcClientConn, suite.app.StablecoinKeeper)
 	suite.queryClient = types.NewQueryClient(queryGrpcClientConn)
+}
+
+// Params
+
+func TestGetAndSetParams(t *testing.T) {
+
+	var testName string
+
+	testName = "Get default Params"
+	t.Run(testName, func(t *testing.T) {
+		matrixApp, ctx := testutil.NewMatrixApp(true)
+		stableKeeper := &matrixApp.StablecoinKeeper
+
+		params := types.DefaultParams()
+		stableKeeper.SetParams(ctx, params)
+
+		require.EqualValues(t, params, stableKeeper.GetParams(ctx))
+	})
+
+	testName = "Get non-default params"
+	t.Run(testName, func(t *testing.T) {
+		matrixApp, ctx := testutil.NewMatrixApp(true)
+		stableKeeper := &matrixApp.StablecoinKeeper
+
+		collRatio := sdk.MustNewDecFromStr("0.5")
+		feeRatio := collRatio
+		feeRatioEF := collRatio
+		bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+		params := types.NewParams(
+			collRatio, feeRatio, feeRatioEF, bonusRateRecoll)
+		stableKeeper.SetParams(ctx, params)
+
+		require.EqualValues(t, params, stableKeeper.GetParams(ctx))
+	})
+
+	testName = "Calling Get without setting causes a panic"
+	t.Run(testName, func(t *testing.T) {
+		matrixApp, ctx := testutil.NewMatrixApp(false)
+		stableKeeper := &matrixApp.StablecoinKeeper
+
+		require.Panics(
+			t,
+			func() { stableKeeper.GetParams(ctx) },
+		)
+	})
+
 }

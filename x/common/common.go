@@ -10,8 +10,13 @@ var (
 	CollDenom   = "uust"
 	StableDenom = "uusdm"
 
-	GovPricePool  = PoolNameFromDenoms([]string{GovDenom, CollDenom})
-	CollPricePool = PoolNameFromDenoms([]string{CollDenom, StableDenom})
+	TreasuryPoolModuleAccount = "treasury_pool"
+
+	WhitelistedColl = []string{CollDenom}
+
+	GovCollPool    = PoolNameFromDenoms([]string{GovDenom, CollDenom})
+	GovStablePool  = PoolNameFromDenoms([]string{GovDenom, StableDenom})
+	CollStablePool = PoolNameFromDenoms([]string{CollDenom, StableDenom})
 )
 
 func PoolNameFromDenoms(denoms []string) string {

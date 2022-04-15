@@ -18,9 +18,9 @@ type Keeper struct {
 	memKey        sdk.StoreKey
 	ParamSubspace paramtypes.Subspace
 
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	priceKeeper   types.PriceKeeper
+	AccountKeeper types.AccountKeeper
+	BankKeeper    types.BankKeeper
+	PriceKeeper   types.PriceKeeper
 }
 
 // NewKeeper Creates a new x/stablecoin Keeper instance.
@@ -51,9 +51,9 @@ func NewKeeper(
 		memKey:        memKey,
 		ParamSubspace: paramSubspace,
 
-		accountKeeper: accountKeeper,
-		bankKeeper:    bankKeeper,
-		priceKeeper:   priceKeeper,
+		AccountKeeper: accountKeeper,
+		BankKeeper:    bankKeeper,
+		PriceKeeper:   priceKeeper,
 	}
 }
 
@@ -63,10 +63,17 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetModuleAccountBalance gets the airdrop coin balance of module account.
 func (k Keeper) GetModuleAccountBalance(ctx sdk.Context) sdk.Coin {
-	moduleAccAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	return k.bankKeeper.GetBalance(ctx, moduleAccAddr, common.GovDenom)
+	moduleAccAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+	return k.BankKeeper.GetBalance(ctx, moduleAccAddr, common.GovDenom)
 }
 
-func (k Keeper) SetCollBalance(ctx sdk.Context, moduleBalance sdk.Coin) {
-	k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(moduleBalance))
+// GetParams get all parameters as types.Params
+func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.ParamSubspace.GetParamSet(ctx, &params)
+	return params
+}
+
+// SetParams set the params
+func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.ParamSubspace.SetParamSet(ctx, &params)
 }

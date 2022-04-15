@@ -16,10 +16,9 @@ func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params:               types.DefaultParams(),
 		ModuleAccountBalance: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
-		// this line is used by starport scaffolding # genesis/test/state
 	}
 
-	matrixApp, ctx := testutil.NewMatrixApp()
+	matrixApp, ctx := testutil.NewMatrixApp(true)
 	k := matrixApp.StablecoinKeeper
 	stablecoin.InitGenesis(ctx, k, genesisState)
 	got := stablecoin.ExportGenesis(ctx, k)
@@ -27,6 +26,4 @@ func TestGenesis(t *testing.T) {
 
 	nullify.Fill(&genesisState)
 	nullify.Fill(got)
-
-	// this line is used by starport scaffolding # genesis/test/assert
 }

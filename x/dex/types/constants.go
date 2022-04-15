@@ -22,10 +22,10 @@ const (
 
 var (
 	// OneDisplayPoolShare represents one display pool share
-	OneDisplayPoolShare = sdk.NewIntWithDecimal(1, DisplayPoolShareExponent)
+	OneDisplayPoolShare sdk.Int = sdk.NewIntWithDecimal(1, DisplayPoolShareExponent)
 
 	// InitPoolSharesSupply is the amount of new shares to initialize a pool with.
-	InitPoolSharesSupply = OneDisplayPoolShare.MulRaw(100)
+	InitPoolSharesSupply sdk.Int = OneDisplayPoolShare.MulRaw(100)
 
 	// Pool creators can specify a weight in [1, MaxUserSpecifiedWeight)
 	// for every token in the balancer pool.

@@ -102,10 +102,44 @@ func (pool *Pool) JoinPool(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.
 	return numShares, remCoins, nil
 }
 
+/*
+Fetch the pool's address as an sdk.Address.
+*/
 func (pool Pool) GetAddress() (addr sdk.AccAddress) {
 	addr, err := sdk.AccAddressFromBech32(pool.Address)
 	if err != nil {
 		panic(fmt.Sprintf("could not bech32 decode address of pool with id: %d", pool.Id))
 	}
 	return addr
+}
+
+/*
+Given the amount of pool shares to exit, calculates the amount of coins to exit
+from the pool and modifies the pool. Accounts for an exit fee, if any, on the pool.
+
+args:
+  - exitingShares: the number of pool shares to exit from the pool
+*/
+func (pool *Pool) ExitPool(exitingShares sdk.Int) (
+	exitedCoins sdk.Coins, err error,
+) {
+	if exitingShares.GT(pool.TotalShares.Amount) {
+		return sdk.Coins{}, errors.New("too many shares out")
+	}
+
+	exitedCoins, err = pool.tokensOutFromExactShares(exitingShares)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+
+	// update the pool's balances
+	for _, exitedCoin := range exitedCoins {
+		err = pool.SubtractPoolAssetBalance(exitedCoin.Denom, exitedCoin.Amount)
+		if err != nil {
+			return sdk.Coins{}, err
+		}
+	}
+
+	pool.TotalShares = sdk.NewCoin(pool.TotalShares.Denom, pool.TotalShares.Amount.Sub(exitingShares))
+	return exitedCoins, nil
 }

@@ -28,7 +28,7 @@ func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares 
 	minShareRatio := sdk.MaxSortableDec
 	maxShareRatio := sdk.ZeroDec()
 
-	poolLiquidity := GetPoolLiquidity(pool.PoolAssets)
+	poolLiquidity := poolAssetsCoins(pool.PoolAssets)
 
 	for i, coin := range tokensIn {
 		shareRatio := coin.Amount.ToDec().QuoInt(poolLiquidity.AmountOfNoDenomValidation(coin.Denom))
@@ -98,11 +98,13 @@ func (pool Pool) tokensOutFromExactShares(numSharesIn sdk.Int) (tokensOut sdk.Co
 		return nil, errors.New("share ratio cannot be greater than one")
 	}
 
-	poolLiquidity := GetPoolLiquidity(pool.PoolAssets)
+	poolLiquidity := poolAssetsCoins(pool.PoolAssets)
 	tokensOut = make(sdk.Coins, len(poolLiquidity))
-
 	for i, coin := range poolLiquidity {
-		tokensOut[i] = sdk.NewCoin(coin.Denom, shareRatio.MulInt(coin.Amount).TruncateInt())
+		tokenOutAmt := shareRatio.MulInt(coin.Amount).Mul(
+			sdk.OneDec().Sub(pool.PoolParams.ExitFee),
+		).TruncateInt()
+		tokensOut[i] = sdk.NewCoin(coin.Denom, tokenOutAmt)
 	}
 
 	return tokensOut, nil
