@@ -22,7 +22,7 @@ ret:
   - remCoins: the remaining number of coins after adding the tokens
   - err: error if any
 */
-func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (
+func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	numShares sdk.Int, remCoins sdk.Coins, err error,
 ) {
 	coinShareRatios := make([]sdk.Dec, len(tokensIn))
@@ -32,7 +32,9 @@ func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (
 	poolLiquidity := pool.PoolBalances()
 
 	for i, coin := range tokensIn {
-		shareRatio := coin.Amount.ToDec().QuoInt(poolLiquidity.AmountOfNoDenomValidation(coin.Denom))
+		shareRatio := coin.Amount.ToDec().QuoInt(
+			poolLiquidity.AmountOfNoDenomValidation(coin.Denom),
+		)
 		if shareRatio.LT(minShareRatio) {
 			minShareRatio = shareRatio
 		}
@@ -85,7 +87,9 @@ ret:
   - tokensOut: the tokens withdrawn from the pool
   - err: error if any
 */
-func (pool Pool) tokensOutFromExactShares(numSharesIn sdk.Int) (tokensOut sdk.Coins, err error) {
+func (pool Pool) tokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
+	tokensOut sdk.Coins, err error,
+) {
 	if numSharesIn.IsZero() {
 		return nil, errors.New("num shares in must be greater than zero")
 	}

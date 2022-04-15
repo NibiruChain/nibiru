@@ -92,7 +92,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	}
 
 	// Calculate max amount of tokensIn we can deposit into pool (no swap)
-	numShares, remCoins, err = pool.maximalSharesFromExactRatioJoin(tokensIn)
+	numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
 	if err != nil {
 		return sdk.ZeroInt(), sdk.Coins{}, err
 	}
@@ -129,7 +129,7 @@ func (pool *Pool) ExitPool(exitingShares sdk.Int) (
 		return sdk.Coins{}, errors.New("too many shares out")
 	}
 
-	exitedCoins, err = pool.tokensOutFromExactShares(exitingShares)
+	exitedCoins, err = pool.tokensOutFromPoolSharesIn(exitingShares)
 	if err != nil {
 		return sdk.Coins{}, err
 	}
