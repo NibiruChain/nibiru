@@ -117,7 +117,7 @@ args:
   - numShares: the number of LP shares to increment
   - newLiquidity: the new tokens to deposit into the pool
 */
-func (pool *Pool) updateBalances(numShares sdk.Int, newLiquidity sdk.Coins) (
+func (pool *Pool) incrementBalances(numShares sdk.Int, newLiquidity sdk.Coins) (
 	err error,
 ) {
 	for _, coin := range newLiquidity {
