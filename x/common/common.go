@@ -15,6 +15,7 @@ var (
 	WhitelistedColl = []string{CollDenom}
 
 	GovCollPool    = PoolNameFromDenoms([]string{GovDenom, CollDenom})
+	GovStablePool  = PoolNameFromDenoms([]string{GovDenom, StableDenom})
 	CollStablePool = PoolNameFromDenoms([]string{CollDenom, StableDenom})
 )
 

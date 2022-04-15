@@ -63,3 +63,20 @@ func EmitBurnMtrx(ctx sdk.Context, coin sdk.Coin) {
 		_mintOrBurnEvent(EventTypeBurnMtrx, coin),
 	)
 }
+
+// EmitRecollateralize emits an event when a 'Recollateralize' occurs.
+func EmitRecollateralize(
+	ctx sdk.Context, inCoin sdk.Coin, outCoin sdk.Coin, caller string,
+	collRatio sdk.Dec,
+) {
+	const EventTypeRecollateralize = "recollateralize"
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		EventTypeRecollateralize,
+		sdk.NewAttribute("caller", caller),
+		sdk.NewAttribute("inDenom", inCoin.Denom),
+		sdk.NewAttribute("inAmount", inCoin.Amount.String()),
+		sdk.NewAttribute("outDenom", outCoin.Denom),
+		sdk.NewAttribute("outAmount", outCoin.Amount.String()),
+		sdk.NewAttribute("collRatio", collRatio.String()),
+	))
+}
