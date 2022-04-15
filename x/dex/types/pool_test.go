@@ -208,7 +208,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			numShares, remCoins, err := tc.pool.JoinPool(tc.tokensIn)
+			numShares, remCoins, err := tc.pool.AddTokensToPool(tc.tokensIn)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedNumShares, numShares)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
@@ -243,7 +243,7 @@ func TestJoinPoolInvalidInput(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, err := tc.pool.JoinPool(tc.tokensIn)
+			_, _, err := tc.pool.AddTokensToPool(tc.tokensIn)
 			require.Error(t, err)
 		})
 	}
@@ -395,7 +395,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			exitedCoins, err := tc.pool.ExitPool(tc.exitingShares.Amount)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedCoins, tc.pool.PoolAssetsCoins())
+			require.Equal(t, tc.expectedCoins, tc.pool.PoolBalances())
 			// Comparing zero initialized sdk.Int with zero value sdk.Int leads to different results
 			if tc.expectedRemainingShares.IsZero() {
 				require.True(t, tc.pool.TotalShares.IsZero())
