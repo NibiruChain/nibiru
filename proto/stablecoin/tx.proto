@@ -57,6 +57,8 @@ message MsgBurnStable {
 message MsgBurnStableResponse {
   cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin fees_payed = 3
+  [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
 /* MsgRecollateralize  */
