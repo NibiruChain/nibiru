@@ -177,7 +177,6 @@ func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipient
 	return nil
 }
 
-// BurnPoolShareFromAccount burns `amount` of the given pools shares held by `addr`.
 /*
 Burns takes an amount of pool shares from an account and burns them.
 It's the inverse of mintPoolShareToAccount.
@@ -191,7 +190,7 @@ args:
 ret:
   err: returns an error if something errored out
 */
-func (k Keeper) BurnPoolShareFromAccount(
+func (k Keeper) burnPoolShareFromAccount(
 	ctx sdk.Context,
 	fromAddr sdk.AccAddress,
 	poolSharesOut sdk.Coin,
@@ -427,7 +426,7 @@ func (k Keeper) ExitPool(
 		return sdk.Coins{}, err
 	}
 
-	if err = k.BurnPoolShareFromAccount(ctx, sender, poolSharesOut); err != nil {
+	if err = k.burnPoolShareFromAccount(ctx, sender, poolSharesOut); err != nil {
 		return sdk.Coins{}, err
 	}
 
