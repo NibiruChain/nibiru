@@ -159,7 +159,7 @@ args:
 ret:
   err: returns an error if something errored out
 */
-func (k Keeper) MintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
+func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
 	newCoins := sdk.Coins{
 		sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amountPoolShares),
 	}
@@ -180,7 +180,7 @@ func (k Keeper) MintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipient
 // BurnPoolShareFromAccount burns `amount` of the given pools shares held by `addr`.
 /*
 Burns takes an amount of pool shares from an account and burns them.
-It's the inverse of MintPoolShareToAccount.
+It's the inverse of mintPoolShareToAccount.
 
 args:
   ctx: the cosmos-sdk context
@@ -273,7 +273,7 @@ func (k Keeper) NewPool(
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
-	if err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
+	if err = k.mintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
 		return uint64(0), err
 	}
 
@@ -358,7 +358,7 @@ func (k Keeper) JoinPool(
 	}
 
 	// give joiner LP shares
-	if err = k.MintPoolShareToAccount(
+	if err = k.mintPoolShareToAccount(
 		ctx,
 		/*from=*/ pool.Id,
 		/*to=*/ joinerAddr,

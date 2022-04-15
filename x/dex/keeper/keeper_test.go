@@ -236,18 +236,6 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 	require.Equal(t, uint64(0), poolId)
 }
 
-func TestMintPoolShareToAccount(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
-
-	userAddr := sample.AccAddress()
-
-	err := app.DexKeeper.MintPoolShareToAccount(ctx, 1, userAddr, sdk.NewIntWithDecimal(100, 18))
-	require.NoError(t, err)
-
-	coin := app.BankKeeper.GetBalance(ctx, userAddr, "matrix/pool/1")
-	require.Equal(t, sdk.NewIntWithDecimal(100, 18), coin.Amount)
-}
-
 func TestBurnPoolShareFromAccount(t *testing.T) {
 	const shareDenom = "matrix/pool/1"
 
