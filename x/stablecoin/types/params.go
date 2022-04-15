@@ -15,16 +15,17 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec) Params {
+func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec, DistrEpochIdentifier string) Params {
 	sixthPower := sdk.MustNewDecFromStr("1000000")
 	collRatioInt := collRatio.Mul(sixthPower).RoundInt()
 	feeRationInt := feeRatio.Mul(sixthPower).RoundInt()
 	efFeeRatioInt := efFeeRatio.Mul(sixthPower).RoundInt()
 
 	return Params{
-		CollRatio:  collRatioInt.Int64(),
-		FeeRatio:   feeRationInt.Int64(),
-		EfFeeRatio: efFeeRatioInt.Int64(),
+		CollRatio:            collRatioInt.Int64(),
+		FeeRatio:             feeRationInt.Int64(),
+		EfFeeRatio:           efFeeRatioInt.Int64(),
+		DistrEpochIdentifier: DistrEpochIdentifier,
 	}
 }
 
@@ -33,8 +34,9 @@ func DefaultParams() Params {
 	genesisCollRatio := sdk.OneDec()
 	feeRatio := sdk.MustNewDecFromStr("0.002")
 	efFeeRatio := sdk.MustNewDecFromStr("0.5")
+	DistrEpochIdentifier := "15 min"
 
-	return NewParams(genesisCollRatio, feeRatio, efFeeRatio)
+	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, DistrEpochIdentifier)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -54,6 +56,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			[]byte("EfFeeRatio"),
 			&p.EfFeeRatio,
 			validateEfFeeRatio,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("DistrEpochIdentifier"),
+			&p.DistrEpochIdentifier,
+			validateDistrEpochIdentifier,
 		),
 	}
 }
@@ -127,6 +134,23 @@ func validateEfFeeRatio(i interface{}) error {
 	} else {
 		return nil
 	}
+}
+
+func validateDistrEpochIdentifier(i interface{}) error {
+	_, err := getAsString(i)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getAsString(i interface{}) (string, error) {
+	value, ok := i.(string)
+	if !ok {
+		return "invalid", fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return value, nil
+
 }
 
 func getAsInt64(i interface{}) (int64, error) {

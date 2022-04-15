@@ -124,7 +124,7 @@ func TestMsgMintStableResponse_Supply(t *testing.T) {
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, "15 min"))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -293,7 +293,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			feeRatio := sdk.ZeroDec()
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			matrixApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, "15 min"))
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)

@@ -34,6 +34,7 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("2"),
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("1"),
+				"15 min",
 			),
 			fmt.Errorf(
 				"collateral Ratio is above max value(1e6): %s",
@@ -45,6 +46,7 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("2"),
 				sdk.MustNewDecFromStr("1"),
+				"15 min",
 			),
 			fmt.Errorf(
 				"fee Ratio is above max value(1e6): %s",
@@ -56,6 +58,7 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("2"),
+				"15 min",
 			),
 			fmt.Errorf(
 				"ecosystem fund fee Ratio is above max value(1e6): %s",
