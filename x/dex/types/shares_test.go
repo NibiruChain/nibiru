@@ -344,7 +344,7 @@ func TestUpdateLiquidityHappyPath(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pool.updateLiquidity(tc.numShares, tc.newLiquidity)
+			err := tc.pool.updateBalances(tc.numShares, tc.newLiquidity)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedNumShares, tc.pool.TotalShares.Amount)
 			require.Equal(t, tc.expectedNewPoolAssets, tc.pool.PoolAssets)
@@ -388,7 +388,7 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pool.updateLiquidity(tc.numShares, tc.newLiquidity)
+			err := tc.pool.updateBalances(tc.numShares, tc.newLiquidity)
 			require.Error(t, err)
 		})
 	}

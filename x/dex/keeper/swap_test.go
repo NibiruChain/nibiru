@@ -94,7 +94,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				app.BankKeeper,
 				ctx,
 				poolAddr,
-				tc.initialPool.PoolAssetsCoins(),
+				tc.initialPool.PoolBalances(),
 			)
 
 			// set up user's funds

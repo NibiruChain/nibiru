@@ -21,14 +21,15 @@ ret:
   - numShares: the number of LP shares representing the maximal number of tokens added to the pool
   - remCoins: the remaining number of coins after adding the tokens
   - err: error if any
-
 */
-func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
+func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (
+	numShares sdk.Int, remCoins sdk.Coins, err error,
+) {
 	coinShareRatios := make([]sdk.Dec, len(tokensIn))
 	minShareRatio := sdk.MaxSortableDec
 	maxShareRatio := sdk.ZeroDec()
 
-	poolLiquidity := pool.PoolAssetsCoins()
+	poolLiquidity := pool.PoolBalances()
 
 	for i, coin := range tokensIn {
 		shareRatio := coin.Amount.ToDec().QuoInt(poolLiquidity.AmountOfNoDenomValidation(coin.Denom))
@@ -97,7 +98,7 @@ func (pool Pool) tokensOutFromExactShares(numSharesIn sdk.Int) (tokensOut sdk.Co
 		return nil, errors.New("share ratio cannot be greater than one")
 	}
 
-	poolLiquidity := pool.PoolAssetsCoins()
+	poolLiquidity := pool.PoolBalances()
 	tokensOut = make(sdk.Coins, len(poolLiquidity))
 	for i, coin := range poolLiquidity {
 		tokenOutAmt := shareRatio.MulInt(coin.Amount).Mul(
@@ -116,7 +117,9 @@ args:
   - numShares: the number of LP shares to increment
   - newLiquidity: the new tokens to deposit into the pool
 */
-func (pool *Pool) updateLiquidity(numShares sdk.Int, newLiquidity sdk.Coins) (err error) {
+func (pool *Pool) updateBalances(numShares sdk.Int, newLiquidity sdk.Coins) (
+	err error,
+) {
 	for _, coin := range newLiquidity {
 		i, poolAsset, err := pool.getPoolAssetAndIndex(coin.Denom)
 		if err != nil {
