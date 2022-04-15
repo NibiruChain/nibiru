@@ -251,7 +251,7 @@ func TestMintPoolShareToAccount(t *testing.T) {
 func TestBurnPoolShareFromAccount(t *testing.T) {
 	const shareDenom = "matrix/pool/1"
 
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewMatrixApp(true)
 
 	userAddr := sample.AccAddress()
 	simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.Coins{sdk.NewInt64Coin(shareDenom, 100)})
@@ -488,7 +488,7 @@ func TestExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

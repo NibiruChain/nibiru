@@ -276,7 +276,7 @@ func TestMsgServerExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp()
+			app, ctx := testutil.NewMatrixApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
