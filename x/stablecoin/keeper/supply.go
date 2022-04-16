@@ -17,3 +17,7 @@ func (k Keeper) GetGovSupply(
 ) sdk.Coin {
 	return k.BankKeeper.GetSupply(ctx, common.GovDenom)
 }
+
+func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
+	return sdk.Int{}
+}
