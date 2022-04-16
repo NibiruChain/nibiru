@@ -162,8 +162,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
 
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
+			require.Equal(t, matrixApp.StablecoinKeeper.GetGovSupply(ctx), tc.supplyMtrx)
+			require.Equal(t, matrixApp.StablecoinKeeper.GetStableSupply(ctx), tc.supplyUsdm)
 
 			// Check balances in EF
 			efModuleBalance := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
@@ -615,8 +615,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
 
-			require.Equal(t, tc.supplyMtrx, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx))
-			require.Equal(t, tc.supplyUsdm, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx))
+			require.Equal(t, tc.supplyMtrx, matrixApp.StablecoinKeeper.GetGovSupply(ctx))
+			require.Equal(t, tc.supplyUsdm, matrixApp.StablecoinKeeper.GetStableSupply(ctx))
 
 			// Funds sypplies
 			require.Equal(t, tc.ecosystemFund, matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount)))
