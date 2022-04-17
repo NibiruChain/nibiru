@@ -1,7 +1,9 @@
 package keeper
 
 import (
-	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
+	"testing"
+
+	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	types2 "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -9,10 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
-	"testing"
 )
 
-const UsdmPair = "BTC:USDM"
+const UsdmPair = "BTC:NUSD"
 
 func AmmKeeper(t *testing.T) (Keeper, sdktypes.Context) {
 	storeKey := sdktypes.NewKVStoreKey(ammtypes.StoreKey)

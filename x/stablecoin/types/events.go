@@ -4,8 +4,8 @@ package types
 const (
 	EventTypeMintStable = "stable_minted"
 	EventTypeBurnStable = "stable_burned"
-	EventTypeMintMtrx   = "mtrx_minted"
-	EventTypeBurnMtrx   = "mtrx_burned"
+	EventTypeMintGov    = "nibi_minted"
+	EventTypeBurnGov    = "nibi_burned"
 
 	AttributeFrom = "from"
 	AttributeTo   = "to"

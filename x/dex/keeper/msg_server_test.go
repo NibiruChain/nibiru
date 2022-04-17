@@ -3,11 +3,11 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/dex/keeper"
-	"github.com/MatrixDao/matrix/x/dex/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/mock"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 
 	msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
@@ -47,7 +47,7 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestJoinPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+	const shareDenom = "nibiru/pool/1"
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
@@ -157,7 +157,7 @@ func TestJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -185,7 +185,7 @@ func TestJoinPool(t *testing.T) {
 }
 
 func TestMsgServerExitPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+	const shareDenom = "nibiru/pool/1"
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
@@ -276,7 +276,7 @@ func TestMsgServerExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

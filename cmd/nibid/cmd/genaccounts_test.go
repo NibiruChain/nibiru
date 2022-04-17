@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	matrixd "github.com/MatrixDao/matrix/cmd/matrixd/cmd"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -53,7 +53,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := matrixd.AddGenesisAccountCmd(home)
+			cmd := nibid.AddGenesisAccountCmd(home)
 			cmd.SetArgs([]string{
 				tc.addr,
 				tc.denom,

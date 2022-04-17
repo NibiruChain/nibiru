@@ -1,4 +1,4 @@
-# Install matrixd
+# Install nibid
 
 
 ## Update the system
@@ -23,12 +23,12 @@ wget -q -O - https://git.io/vQhTU | bash -s -- --version 1.16
 After installed, open new terminal to properly load go
 
 
-## Clone the Matrix Repository
+## Clone the Nibiru Repository
 
 ```
 cd $HOME
-git clone https://github.com/MatrixDAO/matrix
-cd matrix
+git clone https://github.com/NibiruChain/nibiru
+cd nibiru
 git checkout v0.0.1
 make install
 ```
@@ -40,10 +40,10 @@ make install
 
 ## Upgrade
 
-The scheduled mainnet upgrade to `matrix-2` is planned for 
+The scheduled mainnet upgrade to `nibiru-2` is planned for 
 
 ```
-cd matrix
+cd nibiru
 git fetch tags
 git checkout v0.0.1
 make install
@@ -51,8 +51,8 @@ make install
 
  Testnet
 
-One the Matrix binary has been installed, for further information on joining the testnet, head over to the [testnet repo](https://github.com/MatrixDao/Networks/tree/main/Testnet).
+One the Nibiru binary has been installed, for further information on joining the testnet, head over to the [testnet repo](https://github.com/NibiruChain/Networks/tree/main/Testnet).
 
  Mainnet
 
-One the Matrix binary has been installed, for further information on joining mainnet, head over to the [mainnet repo](https://github.com/MatrixDao/Networks/tree/main/Mainnet).
+One the Nibiru binary has been installed, for further information on joining mainnet, head over to the [mainnet repo](https://github.com/NibiruChain/Networks/tree/main/Mainnet).

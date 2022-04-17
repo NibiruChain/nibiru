@@ -7,7 +7,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -223,7 +223,9 @@ func (k Keeper) GetRawPrices(ctx sdk.Context, marketId string) types.PostedPrice
 }
 
 // IterateRawPrices iterates over all raw prices in the store and performs a callback function
-func (k Keeper) IterateRawPricesByMarket(ctx sdk.Context, marketId string, cb func(record types.PostedPrice) (stop bool)) {
+func (k Keeper) IterateRawPricesByMarket(
+	ctx sdk.Context, marketId string, cb func(record types.PostedPrice) (stop bool),
+) {
 	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.RawPriceIteratorKey((marketId)))
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {

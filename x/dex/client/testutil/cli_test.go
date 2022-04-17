@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/dex/client/cli"
-	dexcli "github.com/MatrixDao/matrix/x/dex/client/cli"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/network"
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
+	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -100,7 +100,9 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees,
+					sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).
+						String()),
 			},
 			expectErr:    false,
 			respType:     &sdk.TxResponse{},
