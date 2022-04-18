@@ -36,7 +36,7 @@ fi
 
 # Set localnet settings
 BINARY=./build/matrixd
-CHAIN_ID=matrix-test-chain-0
+CHAIN_ID=nibiru-test-chain-0
 CHAIN_DIR=./data
 RPC_PORT=26657
 GRPC_PORT=9090
