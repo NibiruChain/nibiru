@@ -1,6 +1,5 @@
 # Nibiru Chain          <!-- omit in toc -->
 
-
 <!--  
 <p align="center">
  <img src="./nibiru-logo.svg" width="300"> 
@@ -31,7 +30,6 @@ Conceptual and technical documentation can be found in the [Nibiru docs](https:/
 
 If you have questions or concerns, feel free to connect with a developer or community member in the [Nibiru discord][nibiru-discord]. We also have active communities on Twitter and Telegram. 
 
-
 <!-- Markdown versions of the social badges 
 [![description][discord-badge]][nibiru-discord] 
 [![description][twitter-badge]][nibiru-twitter] 
@@ -39,11 +37,10 @@ If you have questions or concerns, feel free to connect with a developer or comm
 -->
 
 <p style="text-align:right">
-<a href="https://discord.com/invite/pgArXgAxDD"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a> 
+<a href="https://discord.com/invite/pgArXgAxDD"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a>
 <a href="https://twitter.com/NibiruChain"><img src="https://img.shields.io/badge/Twitter-1DA1F2?&logo=twitter&logoColor=white" alt="Tweet" height="22"/></a>
 <a href="example.com"><img src="https://img.shields.io/badge/Telegram-2CA5E0?&logo=telegram&logoColor=white" alt="Telegram" height="22"/></a>
 </p>
-
 
 ----
 
@@ -52,17 +49,31 @@ If you have questions or concerns, feel free to connect with a developer or comm
 Installation instructions for the `nibid` binary can be found in [INSTALL.md](./INSTALL.md).
 
 Recommended minimum specs:
+
 - 2CPU, 4GB RAM, 100GB SSD
 - Unix system: MacOS or Ubuntu 18+
 
+## Developing on the chain locally
+
+### Single Node
+
+On a fresh clone of the repo, simply run `make localnet` and open another terminal.  
+
+### Multiple Nodes
+
+Run the following commands to set up a local network of Docker containers running the chain.
+
+```sh
+make build-docker-nibidnode
+
+make localnet-start
+```
 
 ## License
 
 Copyright © Nibiru Labs, Inc. All rights reserved.
 
 Licensed under the [Apache v2 License](LICENSE.md).
-
-
 
 [nibiru-medium]: example.com
 [nibiru-telegram]: example.com
@@ -71,7 +82,7 @@ Licensed under the [Apache v2 License](LICENSE.md).
 [cosmos-sdk-repo]: https://github.com/cosmos/cosmos-sdk
 [go-unit-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml/badge.svg
 [go-unit-tests-workflow]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml
-[nibiru-twitter]: https://twitter.com/NibiruChain 
+[nibiru-twitter]: https://twitter.com/NibiruChain
 [nibiru-discord]: https://discord.com/invite/pgArXgAxDD
 
 [discord-badge]: https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white

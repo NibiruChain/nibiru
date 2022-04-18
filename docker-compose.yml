@@ -1,0 +1,64 @@
+version: '3'
+
+services:
+  nibidnode0:
+    container_name: nibidnode0
+    image: "nibiru/nibidnode"
+    ports:
+      - "26656-26657:26656-26657"
+      - "9090:9090"
+      - "1317:1317"
+    environment:
+      - ID=0
+    volumes:
+      - ./build:/nibid:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.2
+
+  nibidnode1:
+    container_name: nibidnode1
+    image: "nibiru/nibidnode"
+    ports:
+      - "26659-26660:26656-26657"
+    environment:
+      - ID=1
+    volumes:
+      - ./build:/nibid:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.3
+
+  nibidnode2:
+    container_name: nibidnode2
+    image: "nibiru/nibidnode"
+    environment:
+      - ID=2
+    ports:
+      - "26661-26662:26656-26657"
+    volumes:
+      - ./build:/nibid:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.4
+
+  nibidnode3:
+    container_name: nibidnode3
+    image: "nibiru/nibidnode"
+    environment:
+      - ID=3
+    ports:
+      - "26663-26664:26656-26657"
+    volumes:
+      - ./build:/nibid:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.5
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.11.0/16
