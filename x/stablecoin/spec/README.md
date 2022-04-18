@@ -1,7 +1,7 @@
 # `x/stablecoin`        <!-- omit in toc -->
 
 
-The stablecoin module is responsible for minting and burning USDM, maintenance of USDM's price stability, and orchestration of Matrix Protocol's collateral ratio.
+The stablecoin module is responsible for minting and burning NUSD, maintenance of NUSD's price stability, and orchestration of Matrix Protocol's collateral ratio.
 
 #### Table of Contents
 - Messages and Events - [[00_msgs_and_events.md]](00_msgs_and_events.md): [description]

@@ -31,8 +31,8 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 //
-//MsgMintStable: Msg to mint USDM. A user deposits MTRX and collateral and gets
-//USDM in return. The amount of USDM received depends on the current price set
+//MsgMintStable: Msg to mint NUSD. A user deposits NIBI and collateral and gets
+//NUSD in return. The amount of NUSD received depends on the current price set
 //by the pricefeed library and the current collateral ratio for the protocol.
 type MsgMintStable struct {
 	Creator string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
@@ -86,7 +86,7 @@ func (m *MsgMintStable) GetStable() types.Coin {
 	return types.Coin{}
 }
 
-// MsgMintStableResponse specifies the amount of USDM token the user will receive after their
+// MsgMintStableResponse specifies the amount of NUSD token the user will receive after their
 // mint transaction
 type MsgMintStableResponse struct {
 	Stable    types.Coin                               `protobuf:"bytes,1,opt,name=stable,proto3" json:"stable"`
@@ -149,7 +149,7 @@ func (m *MsgMintStableResponse) GetFeesPayed() github_com_cosmos_cosmos_sdk_type
 }
 
 //
-//MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and
+//MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral in return. The amount of NIBI and
 //Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
 //for the protocol.
 type MsgBurnStable struct {

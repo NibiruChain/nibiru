@@ -74,9 +74,10 @@ func TestSetAndFetchPool(t *testing.T) {
 func TestNewPool(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp(true)
 
+	poolCreationFeeCoin := sdk.NewInt64Coin(common.GovDenom, 1000_000_000)
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
-		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)),
+		/*poolCreationFee=*/ sdk.NewCoins(poolCreationFeeCoin),
 	))
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
@@ -84,7 +85,7 @@ func TestNewPool(t *testing.T) {
 	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-		sdk.NewCoin("umtrx", sdk.NewInt(1000_000_000)),
+		poolCreationFeeCoin,
 	))
 	require.NoError(t, err)
 
@@ -146,7 +147,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-		sdk.NewCoin("umtrx", sdk.NewInt(999_000_000)),
+		sdk.NewCoin("unibi", sdk.NewInt(999_000_000)),
 	))
 	require.NoError(t, err)
 

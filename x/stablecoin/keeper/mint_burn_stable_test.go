@@ -71,8 +71,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 		msgResponse types.MsgMintStableResponse
 		govPrice    sdk.Dec
 		collPrice   sdk.Dec
-		supplyMtrx  sdk.Coin
-		supplyUsdm  sdk.Coin
+		supplyNIBI  sdk.Coin
+		supplyNUSD  sdk.Coin
 		err         error
 	}{
 		{
@@ -89,9 +89,9 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			},
 			govPrice:   sdk.MustNewDecFromStr("10"),
 			collPrice:  sdk.MustNewDecFromStr("1"),
-			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
+			supplyNIBI: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
 			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
-			supplyUsdm: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			supplyNUSD: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			err:        nil,
 		},
 	}
@@ -148,7 +148,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Mint USDM -> Response contains Stable (sdk.Coin)
+			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
 			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
 				goCtx, &tc.msgMint)
@@ -162,8 +162,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
 
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
+			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyNIBI(ctx), tc.supplyNIBI)
+			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyNUSD(ctx), tc.supplyNUSD)
 
 			// Check balances in EF
 			efModuleBalance := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
@@ -321,7 +321,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Mint USDM -> Response contains Stable (sdk.Coin)
+			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
 			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
 				goCtx, &tc.msgMint)
@@ -484,7 +484,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Burn USDM -> Response contains GOV and COLL
+			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
 			burnStableResponse, err := matrixApp.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
@@ -511,8 +511,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 		msgResponse   types.MsgBurnStableResponse
 		govPrice      sdk.Dec
 		collPrice     sdk.Dec
-		supplyMtrx    sdk.Coin
-		supplyUsdm    sdk.Coin
+		supplyNIBI    sdk.Coin
+		supplyNUSD    sdk.Coin
 		ecosystemFund sdk.Coins
 		treasuryFund  sdk.Coins
 		expectedPass  bool
@@ -540,8 +540,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 					sdk.NewInt64Coin(common.CollDenom, 18_000),
 				),
 			},
-			supplyMtrx:    sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // matrix minus 0.5 of fees burned (the part that goes to EF)
-			supplyUsdm:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
+			supplyNIBI:    sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // matrix minus 0.5 of fees burned (the part that goes to EF)
+			supplyNUSD:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
 			ecosystemFund: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
 			treasuryFund:  sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
 			expectedPass:  true,
@@ -600,7 +600,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Burn USDM -> Response contains GOV and COLL
+			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
 			burnStableResponse, err := matrixApp.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
@@ -615,8 +615,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
 
-			require.Equal(t, tc.supplyMtrx, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx))
-			require.Equal(t, tc.supplyUsdm, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx))
+			require.Equal(t, tc.supplyNIBI, matrixApp.StablecoinKeeper.GetSupplyNIBI(ctx))
+			require.Equal(t, tc.supplyNUSD, matrixApp.StablecoinKeeper.GetSupplyNUSD(ctx))
 
 			// Funds sypplies
 			require.Equal(t, tc.ecosystemFund, matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount)))

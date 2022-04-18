@@ -17,7 +17,7 @@
 
 
 Matrix is a zone in the Cosmos that houses a decentralized ecosystem  consisting of  3 main applications:  
-① USDM: A partially collateralized, algorithmic stablecoin protocol  
+① NUSD: A partially collateralized, algorithmic stablecoin protocol  
 ② Derivatives: A platform for trading perpetual futures, enabling users to take long and short leveraged exposure in a capital efficient manner.   
 ③ DEX: An automated market maker for both standard swaps and "stable swaps" of multichain assets.  
 

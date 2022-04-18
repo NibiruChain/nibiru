@@ -28,7 +28,7 @@ func GetTxCmd() *cobra.Command {
 
 /*
 MintStableCmd is a CLI command that mints Matrix stablecoins.
-Example: "mint-sc 100usdm"
+Example: "mint-sc 100unusd"
 */
 func MintStableCmd() *cobra.Command {
 	cmd := &cobra.Command{

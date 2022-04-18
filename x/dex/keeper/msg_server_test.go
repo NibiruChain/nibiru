@@ -69,7 +69,7 @@ func TestCreatePool(t *testing.T) {
 				},
 			},
 			senderInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("umtrx", 1e9-1),
+				sdk.NewInt64Coin("unibi", 1e9-1),
 				sdk.NewInt64Coin("aaa", 1),
 				sdk.NewInt64Coin("bbb", 1),
 			),
@@ -89,7 +89,7 @@ func TestCreatePool(t *testing.T) {
 				},
 			},
 			senderInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("umtrx", 1e9),
+				sdk.NewInt64Coin("unibi", 1e9),
 			),
 			expectedErr: true,
 		},
@@ -107,7 +107,7 @@ func TestCreatePool(t *testing.T) {
 				},
 			},
 			senderInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("umtrx", 1e9),
+				sdk.NewInt64Coin("unibi", 1e9),
 				sdk.NewInt64Coin("aaa", 1),
 				sdk.NewInt64Coin("bbb", 1),
 			),

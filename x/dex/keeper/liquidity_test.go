@@ -12,10 +12,10 @@ func TestGetSetDenomLiquidity(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp(true)
 
 	// Write to store
-	app.DexKeeper.SetDenomLiquidity(ctx, "mtrx", sdk.NewInt(1000))
+	app.DexKeeper.SetDenomLiquidity(ctx, "nibi", sdk.NewInt(1000))
 
 	// Read from store
-	amount := app.DexKeeper.GetDenomLiquidity(ctx, "mtrx")
+	amount := app.DexKeeper.GetDenomLiquidity(ctx, "nibi")
 
 	require.EqualValues(t, sdk.NewInt(1000), amount)
 }
@@ -25,7 +25,7 @@ func TestGetTotalLiquidity(t *testing.T) {
 
 	// Write to store
 	app.DexKeeper.SetDenomLiquidity(ctx, "atom", sdk.NewInt(123))
-	app.DexKeeper.SetDenomLiquidity(ctx, "mtrx", sdk.NewInt(456))
+	app.DexKeeper.SetDenomLiquidity(ctx, "nibi", sdk.NewInt(456))
 	app.DexKeeper.SetDenomLiquidity(ctx, "foo", sdk.NewInt(789))
 
 	// Read from store
@@ -33,7 +33,7 @@ func TestGetTotalLiquidity(t *testing.T) {
 
 	require.EqualValues(t, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(123)),
-		sdk.NewCoin("mtrx", sdk.NewInt(456)),
+		sdk.NewCoin("nibi", sdk.NewInt(456)),
 		sdk.NewCoin("foo", sdk.NewInt(789)),
 	), coins)
 }
@@ -44,13 +44,13 @@ func TestSetTotalLiquidity(t *testing.T) {
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(123)),
-		sdk.NewCoin("mtrx", sdk.NewInt(456)),
+		sdk.NewCoin("nibi", sdk.NewInt(456)),
 		sdk.NewCoin("foo", sdk.NewInt(789)),
 	))
 
 	// Read from store
 	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "atom"), sdk.NewInt(123))
-	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "mtrx"), sdk.NewInt(456))
+	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "nibi"), sdk.NewInt(456))
 	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "foo"), sdk.NewInt(789))
 }
 
@@ -60,15 +60,15 @@ func TestRecordTotalLiquidityIncrease(t *testing.T) {
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(100)),
-		sdk.NewCoin("mtrx", sdk.NewInt(200)),
+		sdk.NewCoin("nibi", sdk.NewInt(200)),
 	))
 	app.DexKeeper.RecordTotalLiquidityIncrease(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(50)),
-		sdk.NewCoin("mtrx", sdk.NewInt(75)),
+		sdk.NewCoin("nibi", sdk.NewInt(75)),
 	))
 
 	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "atom"), sdk.NewInt(150))
-	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "mtrx"), sdk.NewInt(275))
+	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "nibi"), sdk.NewInt(275))
 }
 
 func TestRecordTotalLiquidityDecrease(t *testing.T) {
@@ -77,13 +77,13 @@ func TestRecordTotalLiquidityDecrease(t *testing.T) {
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(100)),
-		sdk.NewCoin("mtrx", sdk.NewInt(200)),
+		sdk.NewCoin("nibi", sdk.NewInt(200)),
 	))
 	app.DexKeeper.RecordTotalLiquidityDecrease(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(50)),
-		sdk.NewCoin("mtrx", sdk.NewInt(75)),
+		sdk.NewCoin("nibi", sdk.NewInt(75)),
 	))
 
 	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "atom"), sdk.NewInt(50))
-	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "mtrx"), sdk.NewInt(125))
+	require.EqualValues(t, app.DexKeeper.GetDenomLiquidity(ctx, "nibi"), sdk.NewInt(125))
 }

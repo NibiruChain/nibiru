@@ -48,19 +48,19 @@ func EmitBurnStable(ctx sdk.Context, coin sdk.Coin) {
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
-// EmitMintMtrx emits an event when MTRX is minted.
-func EmitMintMtrx(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeMintMtrx = "mint_mtrx"
+// EmitMintNIBI emits an event when NIBI is minted.
+func EmitMintNIBI(ctx sdk.Context, coin sdk.Coin) {
+	const EventTypeMintNIBI = "mint_nibi"
 	ctx.EventManager().EmitEvent(
-		_mintOrBurnEvent(EventTypeMintMtrx, coin),
+		_mintOrBurnEvent(EventTypeMintNIBI, coin),
 	)
 }
 
-// EmitBurnMtrx emits an event when MTRX is burned.
-func EmitBurnMtrx(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeBurnMtrx = "burn_mtrx"
+// EmitBurnNIBI emits an event when NIBI is burned.
+func EmitBurnNIBI(ctx sdk.Context, coin sdk.Coin) {
+	const EventTypeBurnNIBI = "burn_nibi"
 	ctx.EventManager().EmitEvent(
-		_mintOrBurnEvent(EventTypeBurnMtrx, coin),
+		_mintOrBurnEvent(EventTypeBurnNIBI, coin),
 	)
 }
 

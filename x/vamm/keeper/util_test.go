@@ -13,7 +13,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-const UsdmPair = "BTC:USDM"
+const NUSDPair = "BTC:NUSD"
 
 func AmmKeeper(t *testing.T) (Keeper, sdktypes.Context) {
 	storeKey := sdktypes.NewKVStoreKey(ammtypes.StoreKey)
@@ -41,7 +41,7 @@ func getSamplePool() *ammtypes.Pool {
 	fluctuationLimit, _ := sdktypes.NewDecFromStr("0.1")
 
 	pool := ammtypes.NewPool(
-		UsdmPair,
+		NUSDPair,
 		ratioLimit,
 		sdktypes.NewInt(10_000_000),
 		sdktypes.NewInt(5_000_000),

@@ -28,7 +28,7 @@ func NewParams(startingPoolNumber uint64, poolCreationFee sdk.Coins) Params {
 func DefaultParams() Params {
 	return Params{
 		StartingPoolNumber: 1,
-		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)), // 1000 MTRX
+		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)), // 1000 NIBI
 	}
 }
 
