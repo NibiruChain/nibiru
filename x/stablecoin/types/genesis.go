@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/MatrixDao/matrix/x/common"
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

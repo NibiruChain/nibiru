@@ -34,33 +34,33 @@ func _mintOrBurnEvent(eventType string, coin sdk.Coin) sdk.Event {
 	return event
 }
 
-// EmitMintStable emits an event when a Matrix Stablecoin is minted.
+// EmitMintStable emits an event when a Nibiru Stablecoin is minted.
 func EmitMintStable(ctx sdk.Context, coin sdk.Coin) {
 	const EventTypeMintStable = "mint_stable"
 	event := _mintOrBurnEvent(EventTypeMintStable, coin)
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
-// EmitBurnStable emits an event when a Matrix Stablecoin is burned.
+// EmitBurnStable emits an event when a Nibiru Stablecoin is burned.
 func EmitBurnStable(ctx sdk.Context, coin sdk.Coin) {
 	const EventTypeBurnStable = "burn_stable"
 	event := _mintOrBurnEvent(EventTypeBurnStable, coin)
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
-// EmitMintMtrx emits an event when MTRX is minted.
-func EmitMintMtrx(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeMintMtrx = "mint_mtrx"
+// EmitMintNIBI emits an event when NIBI is minted.
+func EmitMintNIBI(ctx sdk.Context, coin sdk.Coin) {
+	const EventTypeMintNIBI = "mint_nibi"
 	ctx.EventManager().EmitEvent(
-		_mintOrBurnEvent(EventTypeMintMtrx, coin),
+		_mintOrBurnEvent(EventTypeMintNIBI, coin),
 	)
 }
 
-// EmitBurnMtrx emits an event when MTRX is burned.
-func EmitBurnMtrx(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeBurnMtrx = "burn_mtrx"
+// EmitBurnNIBI emits an event when NIBI is burned.
+func EmitBurnNIBI(ctx sdk.Context, coin sdk.Coin) {
+	const EventTypeBurnNIBI = "burn_nibi"
 	ctx.EventManager().EmitEvent(
-		_mintOrBurnEvent(EventTypeBurnMtrx, coin),
+		_mintOrBurnEvent(EventTypeBurnNIBI, coin),
 	)
 }
 
