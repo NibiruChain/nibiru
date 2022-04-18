@@ -1,4 +1,4 @@
-# Install matrixd
+# Install nibid
 
 
 ## Update the system

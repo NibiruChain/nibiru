@@ -18,7 +18,7 @@ jobs:
       with:
         go-version: 1.16
 
-    - name: Build binaries for matrixd using the Makefile
+    - name: Build binaries for nibid using the Makefile
       run: make build
 
   test:

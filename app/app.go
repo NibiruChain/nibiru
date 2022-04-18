@@ -212,7 +212,7 @@ func init() {
 		panic(err)
 	}
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".matrixd")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
 // NewSimApp returns a reference to an initialized SimApp.
