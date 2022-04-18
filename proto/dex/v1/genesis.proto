@@ -1,5 +1,5 @@
 syntax = "proto3";
-package matrix.dex.v1;
+package nibiru.dex.v1;
 
 import "dex/v1/params.proto";
 import "gogoproto/gogo.proto";
