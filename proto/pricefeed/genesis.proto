@@ -1,10 +1,10 @@
 syntax = "proto3";
-package MatrixDao.pricefeed.v1;
+package NibiruChain.pricefeed.v1;
 
 import "gogoproto/gogo.proto";
 import "pricefeed/params.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/pricefeed/types";
+option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
 
 // GenesisState defines the pricefeed module's genesis state.
 message GenesisState {
