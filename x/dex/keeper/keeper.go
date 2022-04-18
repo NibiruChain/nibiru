@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -132,6 +133,44 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
 	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
 	return pool
+}
+
+/*
+Given a pair of denom, find the corresponding pool id if it exists.
+
+args:
+  - denomA: One denom
+  - denomB: A second denom
+
+ret:
+  - poolId: the pool id
+  - err: error if any
+*/
+func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
+	poolId uint64, err error,
+) {
+	if denomA == "" || denomB == "" {
+		return 0, fmt.Errorf("empty denom")
+	}
+
+	if denomA == denomB {
+		return 0, fmt.Errorf("same denom pool")
+	}
+
+	// Denom A is higher lexicographically
+	if strings.Compare(denomA, denomB) == -1 {
+		denomA, denomB = denomB, denomA
+	}
+
+	for poolId := sdk.NewInt(1).Uint64(); poolId <= k.GetNextPoolNumber(ctx); poolId++ {
+		pool := k.FetchPool(ctx, poolId)
+
+		if pool.PoolAssets[0].Token.Denom == denomA && pool.PoolAssets[1].Token.Denom == denomB {
+			return pool.Id, nil
+		}
+	}
+
+	return 0, fmt.Errorf("no pool for this pair")
 }
 
 /*

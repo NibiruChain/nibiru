@@ -71,6 +71,50 @@ func TestSetAndFetchPool(t *testing.T) {
 	require.Equal(t, pool, retrievedPool)
 }
 
+func TestGetFromPair(t *testing.T) {
+	app, ctx := testutil.NewMatrixApp(true)
+
+	pool := types.Pool{
+		Id: 1,
+		PoolParams: types.PoolParams{
+			SwapFee: sdk.NewDecWithPrec(3, 2),
+			ExitFee: sdk.NewDecWithPrec(3, 2),
+		},
+		PoolAssets: []types.PoolAsset{
+			types.PoolAsset{
+				Token:  sdk.NewCoin("tokenB", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+			types.PoolAsset{
+				Token:  sdk.NewCoin("tokenA", sdk.NewInt(1000)),
+				Weight: sdk.NewInt(1),
+			},
+		},
+		TotalWeight: sdk.NewInt(2),
+		TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+	}
+
+	app.DexKeeper.SetPool(ctx, pool)
+
+	retrievedPoolId, err := app.DexKeeper.GetFromPair(ctx, "tokenB", "tokenA")
+	require.NoError(t, err)
+	require.Equal(t, retrievedPoolId, sdk.NewInt(1).Uint64())
+
+	retrievedPoolId, err = app.DexKeeper.GetFromPair(ctx, "tokenA", "tokenB")
+	require.NoError(t, err)
+	require.Equal(t, retrievedPoolId, sdk.NewInt(1).Uint64())
+
+	_, err = app.DexKeeper.GetFromPair(ctx, "tokenA", "tokenA")
+	require.Error(t, err)
+
+	_, err = app.DexKeeper.GetFromPair(ctx, "", "tokenA")
+	require.Error(t, err)
+
+	_, err = app.DexKeeper.GetFromPair(ctx, "tokenA", "tokenC")
+	require.Error(t, err)
+
+}
+
 func TestNewPool(t *testing.T) {
 	app, ctx := testutil.NewMatrixApp(true)
 
