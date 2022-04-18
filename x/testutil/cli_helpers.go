@@ -72,7 +72,7 @@ func DefaultConfig() network.Config {
 		AppConstructor:    NewAppConstructor(encCfg),
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit:     1 * time.Second / 2,
-		ChainID:           "matrix-code-test",
+		ChainID:           "nibiru-code-test",
 		NumValidators:     1,
 		BondDenom:         sdk.DefaultBondDenom,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),

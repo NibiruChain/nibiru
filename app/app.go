@@ -102,7 +102,7 @@ import (
 )
 
 const (
-	AccountAddressPrefix = "matrix"
+	AccountAddressPrefix = "nibi"
 	Name                 = "matrix"
 )
 

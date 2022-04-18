@@ -31,7 +31,8 @@ import (
 )
 
 const (
-	oracleAddress = "matrix17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
+	// oracleAddress = "nibi17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
+	oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 )
 
 type IntegrationTestSuite struct {

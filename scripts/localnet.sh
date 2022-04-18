@@ -61,7 +61,7 @@ fi
 
 # Initialize nibid with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY init matrix-test-chain-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
+if $BINARY init nibiru-test-chain-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
