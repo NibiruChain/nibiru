@@ -24,4 +24,5 @@ message Params {
   // distr_epoch_identifier defines the frequnecy of update for the collateral ratio
   string distr_epoch_identifier = 5
   [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];  
+  
 }
