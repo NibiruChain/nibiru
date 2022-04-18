@@ -19,10 +19,10 @@ func (k Keeper) GetSupplyNIBI(
 }
 
 func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
-	return k.GetStableSupply(ctx).Amount
+	return k.GetSupplyNUSD(ctx).Amount
 }
 
 func (k Keeper) GetGovMarketCap(ctx sdk.Context) sdk.Int {
-	k.DexKeeper.FetchPool()
+	//k.DexKeeper.FetchPool()
 	return sdk.Int{}
 }
