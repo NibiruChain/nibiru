@@ -64,7 +64,7 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		return nil, err
 	}
 
-	pool, numSharesOut, remCoins, err := k.JoinPoolNoSwap(
+	pool, numSharesOut, remCoins, err := k.Keeper.JoinPool(
 		sdk.UnwrapSDKContext(ctx),
 		sender,
 		msg.PoolId,

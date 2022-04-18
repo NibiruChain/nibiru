@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/MatrixDao/matrix/x/common"
 	"github.com/MatrixDao/matrix/x/dex/client/cli"
 	dexcli "github.com/MatrixDao/matrix/x/dex/client/cli"
 	"github.com/MatrixDao/matrix/x/testutil"
@@ -27,16 +28,101 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
-
 	s.network = network.New(s.T(), s.cfg)
+}
 
-	_, err := s.network.WaitForHeight(1)
+func (s *IntegrationTestSuite) TearDownSuite() {
+	s.T().Log("tearing down integration test suite")
+	s.network.Cleanup()
+}
+
+func (s IntegrationTestSuite) TestCreatePoolCmd() {
+	val := s.network.Validators[0]
+
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		"NewCreatePoolAddr",
+		keyring.English,
+		sdk.FullFundraiserPath,
+		"",
+		hd.Secp256k1,
+	)
+	s.Require().NoError(err)
+	poolCreatorAddr := sdk.AccAddress(info.GetPubKey().Address())
+
+	_, err = banktestutil.MsgSendExec(
+		val.ClientCtx,
+		/*from=*/ val.Address,
+		/*to=*/ poolCreatorAddr,
+		/*amount=*/ sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
+			sdk.NewInt64Coin(fmt.Sprintf("%stoken", val.Moniker), 20000),
+			sdk.NewInt64Coin(common.GovDenom, 1e9), // for pool creation fee
+		),
+		/*extraArgs*/
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		testutil.DefaultFeeString(s.cfg),
+	)
 	s.Require().NoError(err)
 
+	testCases := []struct {
+		name           string
+		tokenWeights   string
+		initialDeposit string
+		swapFee        string
+		exitFee        string
+		extraArgs      []string
+		expectErr      bool
+		respType       proto.Message
+		expectedCode   uint32
+	}{
+		{
+			name:           "create pool with insufficient funds",
+			tokenWeights:   "1stake, 1node0token",
+			initialDeposit: "1000000000stake,10000000000node0token",
+			swapFee:        "0.003",
+			exitFee:        "0.003",
+			extraArgs:      []string{},
+			expectErr:      false,
+			respType:       &sdk.TxResponse{},
+			expectedCode:   5, // bankKeeper code for insufficient funds
+		},
+		{
+			name:           "create pool with sufficient funds",
+			tokenWeights:   "1stake, 1node0token",
+			initialDeposit: "10000stake,10000node0token",
+			swapFee:        "0.003",
+			exitFee:        "0.003",
+			extraArgs:      []string{},
+			expectErr:      false,
+			respType:       &sdk.TxResponse{},
+			expectedCode:   0,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, poolCreatorAddr, tc.tokenWeights, tc.initialDeposit, tc.swapFee, tc.exitFee, tc.extraArgs...)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
+
+func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 	val := s.network.Validators[0]
 
 	// create a new pool
-	_, err = ExecMsgCreatePool(
+	_, err := ExecMsgCreatePool(
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
@@ -47,18 +133,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	)
 	s.Require().NoError(err)
 
-	_, err = s.network.WaitForHeight(1)
-	s.Require().NoError(err)
-}
-
-func (s *IntegrationTestSuite) TearDownSuite() {
-	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
-}
-
-func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
-	val := s.network.Validators[0]
-
+	// create a new user address
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
 		"NewJoinPoolAddr",
 		keyring.English,
@@ -67,12 +142,13 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 		hd.Secp256k1,
 	)
 	s.Require().NoError(err)
-	newAddr := sdk.AccAddress(info.GetPubKey().Address())
+	poolCreatorAddr := sdk.AccAddress(info.GetPubKey().Address())
 
+	// fund the user
 	_, err = banktestutil.MsgSendExec(
 		val.ClientCtx,
 		/*from=*/ val.Address,
-		/*to=*/ newAddr,
+		/*to=*/ poolCreatorAddr,
 		/*amount=*/ sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
 			sdk.NewInt64Coin(fmt.Sprintf("%stoken", val.Moniker), 20000),
@@ -96,7 +172,7 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 			args: []string{
 				fmt.Sprintf("--%s=%d", cli.FlagPoolId, 1),
 				fmt.Sprintf("--%s=%s", cli.FlagTokensIn, "1000000000stake,10000000000node0token"),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, newAddr),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
@@ -111,7 +187,7 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 			args: []string{ // join-pool --pool-id=1 --tokens-in=100stake,100node0token --from=newAddr
 				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
 				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "100stake,100node0token"),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, newAddr),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
