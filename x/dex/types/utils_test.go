@@ -148,7 +148,7 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 	}
 }
 
-func TestPoolAssetsCoins(t *testing.T) {
+func TestPoolBalances(t *testing.T) {
 	tests := []struct {
 		name          string
 		poolAssets    []PoolAsset
@@ -189,7 +189,7 @@ func TestPoolAssetsCoins(t *testing.T) {
 			pool := Pool{
 				PoolAssets: tc.poolAssets,
 			}
-			require.Equal(t, tc.expectedCoins, pool.PoolAssetsCoins())
+			require.Equal(t, tc.expectedCoins, pool.PoolBalances())
 		})
 	}
 }

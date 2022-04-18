@@ -125,7 +125,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 				TotalWeight: sdk.OneInt(),
 				TotalShares: sdk.NewInt64Coin("matrix/pool/1", tc.existingShares),
 			}
-			numShares, remCoins, _ := pool.maximalSharesFromExactRatioJoin(tc.tokensIn)
+			numShares, remCoins, _ := pool.numSharesOutFromTokensIn(tc.tokensIn)
 			require.Equal(t, tc.expectedNumShares, numShares)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
 		})
@@ -252,7 +252,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tokensOut, err := tc.pool.tokensOutFromExactShares(tc.numSharesIn)
+			tokensOut, err := tc.pool.tokensOutFromPoolSharesIn(tc.numSharesIn)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedTokensOut, tokensOut)
 		})
@@ -298,7 +298,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := tc.pool.tokensOutFromExactShares(tc.numSharesIn)
+			_, err := tc.pool.tokensOutFromPoolSharesIn(tc.numSharesIn)
 			require.Error(t, err)
 		})
 	}
@@ -344,7 +344,7 @@ func TestUpdateLiquidityHappyPath(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pool.updateLiquidity(tc.numShares, tc.newLiquidity)
+			err := tc.pool.incrementBalances(tc.numShares, tc.newLiquidity)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedNumShares, tc.pool.TotalShares.Amount)
 			require.Equal(t, tc.expectedNewPoolAssets, tc.pool.PoolAssets)
@@ -388,7 +388,7 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.pool.updateLiquidity(tc.numShares, tc.newLiquidity)
+			err := tc.pool.incrementBalances(tc.numShares, tc.newLiquidity)
 			require.Error(t, err)
 		})
 	}

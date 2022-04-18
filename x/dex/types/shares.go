@@ -21,17 +21,20 @@ ret:
   - numShares: the number of LP shares representing the maximal number of tokens added to the pool
   - remCoins: the remaining number of coins after adding the tokens
   - err: error if any
-
 */
-func (pool Pool) maximalSharesFromExactRatioJoin(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
+func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
+	numShares sdk.Int, remCoins sdk.Coins, err error,
+) {
 	coinShareRatios := make([]sdk.Dec, len(tokensIn))
 	minShareRatio := sdk.MaxSortableDec
 	maxShareRatio := sdk.ZeroDec()
 
-	poolLiquidity := pool.PoolAssetsCoins()
+	poolLiquidity := pool.PoolBalances()
 
 	for i, coin := range tokensIn {
-		shareRatio := coin.Amount.ToDec().QuoInt(poolLiquidity.AmountOfNoDenomValidation(coin.Denom))
+		shareRatio := coin.Amount.ToDec().QuoInt(
+			poolLiquidity.AmountOfNoDenomValidation(coin.Denom),
+		)
 		if shareRatio.LT(minShareRatio) {
 			minShareRatio = shareRatio
 		}
@@ -84,7 +87,9 @@ ret:
   - tokensOut: the tokens withdrawn from the pool
   - err: error if any
 */
-func (pool Pool) tokensOutFromExactShares(numSharesIn sdk.Int) (tokensOut sdk.Coins, err error) {
+func (pool Pool) tokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
+	tokensOut sdk.Coins, err error,
+) {
 	if numSharesIn.IsZero() {
 		return nil, errors.New("num shares in must be greater than zero")
 	}
@@ -97,9 +102,10 @@ func (pool Pool) tokensOutFromExactShares(numSharesIn sdk.Int) (tokensOut sdk.Co
 		return nil, errors.New("share ratio cannot be greater than one")
 	}
 
-	poolLiquidity := pool.PoolAssetsCoins()
+	poolLiquidity := pool.PoolBalances()
 	tokensOut = make(sdk.Coins, len(poolLiquidity))
 	for i, coin := range poolLiquidity {
+		// tokenOut = shareRatio * poolTokenAmt * (1 - exitFee)
 		tokenOutAmt := shareRatio.MulInt(coin.Amount).Mul(
 			sdk.OneDec().Sub(pool.PoolParams.ExitFee),
 		).TruncateInt()
@@ -116,7 +122,9 @@ args:
   - numShares: the number of LP shares to increment
   - newLiquidity: the new tokens to deposit into the pool
 */
-func (pool *Pool) updateLiquidity(numShares sdk.Int, newLiquidity sdk.Coins) (err error) {
+func (pool *Pool) incrementBalances(numShares sdk.Int, newLiquidity sdk.Coins) (
+	err error,
+) {
 	for _, coin := range newLiquidity {
 		i, poolAsset, err := pool.getPoolAssetAndIndex(coin.Denom)
 		if err != nil {
