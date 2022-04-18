@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -187,8 +186,8 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 		{
 			name: "join pool with insufficient balance",
 			args: []string{
-				fmt.Sprintf("--%s=%d", cli.FlagPoolId, 1),
-				fmt.Sprintf("--%s=%s", cli.FlagTokensIn, "1000000000stake,10000000000node0token"),
+				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
+				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "1000000000stake,10000000000node0token"),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
