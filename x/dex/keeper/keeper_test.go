@@ -72,7 +72,7 @@ func TestSetAndFetchPool(t *testing.T) {
 }
 
 func TestGetFromPair(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 
 	pool := types.Pool{
 		Id: 1,
