@@ -3,7 +3,7 @@
 ##
 ## Input parameters
 ##
-BINARY=/nibid/${BINARY:-matrixd}
+BINARY=/nibid/${BINARY:-nibid}
 ID=${ID:-0}
 LOG=${LOG:-nibid.log}
 
@@ -23,7 +23,7 @@ fi
 ##
 ## Run binary with all parameters
 ##
-export NIBIDHOME="/nibid/node${ID}/matrixd"
+export NIBIDHOME="/nibid/node${ID}/nibid"
 
 if [ -d "$(dirname "${NIBIDHOME}"/"${LOG}")" ]; then
   "${BINARY}" --home "${NIBIDHOME}" "$@" | tee "${NIBIDHOME}/${LOG}"
