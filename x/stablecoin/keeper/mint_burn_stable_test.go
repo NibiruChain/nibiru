@@ -108,7 +108,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			matrixApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up markets for the pricefeed keeper.
-			priceKeeper := &matrixApp.PriceKeeper
+			priceKeeper := matrixApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,

@@ -19,5 +19,10 @@ func (k Keeper) GetGovSupply(
 }
 
 func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
+	return k.GetStableSupply(ctx).Amount
+}
+
+func (k Keeper) GetGovMarketCap(ctx sdk.Context) sdk.Int {
+	k.DexKeeper.FetchPool()
 	return sdk.Int{}
 }

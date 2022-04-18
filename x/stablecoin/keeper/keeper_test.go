@@ -54,7 +54,7 @@ func TestGetAndSetParams(t *testing.T) {
 func TestGetAndSetParams_Errors(t *testing.T) {
 	t.Run("Calling Get without setting causes a panic", func(t *testing.T) {
 		matrixApp, ctx := testutil.NewMatrixApp(false)
-		stableKeeper := &matrixApp.StablecoinKeeper
+		stableKeeper := matrixApp.StablecoinKeeper
 
 		require.Panics(
 			t,
