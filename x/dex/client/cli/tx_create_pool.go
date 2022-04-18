@@ -2,7 +2,6 @@ package cli
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -54,7 +53,7 @@ Where pool.json contains:
 				return err
 			}
 			if poolFile == "" {
-				return fmt.Errorf("must pass in a pool json using the --%s flag", FlagPoolFile)
+				return types.ErrMissingPoolFileFlag
 			}
 
 			contents, err := ioutil.ReadFile(poolFile)
@@ -79,13 +78,13 @@ Where pool.json contains:
 			}
 
 			if len(initialDepositCoins) != len(poolWeights) {
-				return errors.New("deposit tokens and token weights should have same length")
+				return types.ErrInvalidCreatePoolArgs
 			}
 
 			poolAssets := make([]types.PoolAsset, len(poolWeights))
 			for i := 0; i < len(poolWeights); i++ {
 				if poolWeights[i].Denom != initialDepositCoins[i].Denom {
-					return errors.New("deposit tokens and token weights should have same denom order")
+					return types.ErrInvalidCreatePoolArgs
 				}
 
 				poolAssets[i] = types.PoolAsset{
