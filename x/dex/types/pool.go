@@ -17,7 +17,7 @@ ret:
   poolDenom: the pool denomination name of the poolId
 */
 func GetPoolShareBaseDenom(poolId uint64) (poolDenom string) {
-	return fmt.Sprintf("matrix/pool/%d", poolId)
+	return fmt.Sprintf("nibiru/pool/%d", poolId)
 }
 
 /*
@@ -34,7 +34,7 @@ ret:
   poolDenom: the pool denomination name of the poolId
 */
 func GetPoolShareDisplayDenom(poolId uint64) (poolDenom string) {
-	return fmt.Sprintf("MATRIX-POOL-%d", poolId)
+	return fmt.Sprintf("NIBIRU-POOL-%d", poolId)
 }
 
 /*

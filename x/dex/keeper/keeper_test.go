@@ -61,7 +61,7 @@ func TestSetAndFetchPool(t *testing.T) {
 			},
 		},
 		TotalWeight: sdk.NewInt(2),
-		TotalShares: sdk.NewInt64Coin("matrix/pool/150", 100),
+		TotalShares: sdk.NewInt64Coin("nibiru/pool/150", 100),
 	}
 
 	app.DexKeeper.SetPool(ctx, pool)
@@ -130,7 +130,7 @@ func TestNewPool(t *testing.T) {
 			},
 		},
 		TotalWeight: sdk.NewInt(2 << 30),
-		TotalShares: sdk.NewCoin("matrix/pool/1", sdk.NewIntWithDecimal(100, 18)),
+		TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
 	}, retrievedPool)
 }
 
@@ -238,7 +238,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 }
 
 func TestJoinPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+	const shareDenom = "nibiru/pool/1"
 
 	tests := []struct {
 		name                     string
@@ -370,7 +370,7 @@ func TestJoinPool(t *testing.T) {
 }
 
 func TestExitPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+	const shareDenom = "nibiru/pool/1"
 
 	tests := []struct {
 		name                     string

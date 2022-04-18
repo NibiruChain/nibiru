@@ -49,7 +49,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalWeight: sdk.NewInt(2),
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 200),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
 			},
 		},
 	}

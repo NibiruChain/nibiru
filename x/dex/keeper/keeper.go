@@ -251,7 +251,7 @@ func (k Keeper) NewPool(
 	}
 
 	poolId = k.GetNextPoolNumberAndIncrement(ctx)
-	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
+	poolName := fmt.Sprintf("nibiru-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
 	k.accountKeeper.SetAccount(ctx, poolAccount)
@@ -280,7 +280,7 @@ func (k Keeper) NewPool(
 	poolShareBaseDenom := types.GetPoolShareBaseDenom(pool.Id)
 	poolShareDisplayDenom := types.GetPoolShareDisplayDenom(pool.Id)
 	k.bankKeeper.SetDenomMetaData(ctx, banktypes.Metadata{
-		Description: fmt.Sprintf("The share token of the matrix dex pool %d", pool.Id),
+		Description: fmt.Sprintf("The share token of the nibiru dex pool %d", pool.Id),
 		DenomUnits: []*banktypes.DenomUnit{
 			{
 				Denom:    poolShareBaseDenom,

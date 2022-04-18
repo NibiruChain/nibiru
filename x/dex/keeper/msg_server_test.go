@@ -146,7 +146,7 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestMsgServerJoinPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+	const shareDenom = "nibiru/pool/1"
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
@@ -284,7 +284,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 }
 
 func TestMsgServerExitPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+	const shareDenom = "nibiru/pool/1"
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
