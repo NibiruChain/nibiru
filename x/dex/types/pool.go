@@ -17,7 +17,7 @@ ret:
   poolDenom: the pool denomination name of the poolId
 */
 func GetPoolShareBaseDenom(poolId uint64) (poolDenom string) {
-	return fmt.Sprintf("matrix/pool/%d", poolId)
+	return fmt.Sprintf("nibiru/pool/%d", poolId)
 }
 
 /*
@@ -25,7 +25,7 @@ Returns the *display* denomination of a pool share token for a given poolId.
 Display denom means the denomination showed to the user, which could be many exponents greater than the base denom.
 e.g. 1 atom is the display denom, but 10^6 uatom is the base denom.
 
-In Matrix, a display denom is 10^18 base denoms.
+In Nibiru, a display denom is 10^18 base denoms.
 
 args:
   poolId: the pool id number
@@ -34,7 +34,7 @@ ret:
   poolDenom: the pool denomination name of the poolId
 */
 func GetPoolShareDisplayDenom(poolId uint64) (poolDenom string) {
-	return fmt.Sprintf("MATRIX-POOL-%d", poolId)
+	return fmt.Sprintf("NIBIRU-POOL-%d", poolId)
 }
 
 /*
@@ -84,19 +84,21 @@ ret:
   - remCoins: the number of coins remaining after the deposit
   - err: error if any
 */
-func (pool *Pool) JoinPool(tokensIn sdk.Coins) (numShares sdk.Int, remCoins sdk.Coins, err error) {
+func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
+	numShares sdk.Int, remCoins sdk.Coins, err error,
+) {
 	if tokensIn.Len() != len(pool.PoolAssets) {
-		return sdk.ZeroInt(), sdk.NewCoins(), errors.New("wrong number of assets to deposit into the pool")
+		return sdk.ZeroInt(), sdk.Coins{}, errors.New("wrong number of assets to deposit into the pool")
 	}
 
-	// Add all exact coins we can (no swap)
-	numShares, remCoins, err = pool.maximalSharesFromExactRatioJoin(tokensIn)
+	// Calculate max amount of tokensIn we can deposit into pool (no swap)
+	numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
 	if err != nil {
-		return sdk.ZeroInt(), sdk.NewCoins(), err
+		return sdk.ZeroInt(), sdk.Coins{}, err
 	}
 
-	if err := pool.updateLiquidity(numShares, tokensIn.Sub(remCoins)); err != nil {
-		return sdk.ZeroInt(), sdk.NewCoins(), err
+	if err := pool.incrementBalances(numShares, tokensIn.Sub(remCoins)); err != nil {
+		return sdk.ZeroInt(), sdk.Coins{}, err
 	}
 
 	return numShares, remCoins, nil
@@ -127,7 +129,7 @@ func (pool *Pool) ExitPool(exitingShares sdk.Int) (
 		return sdk.Coins{}, errors.New("too many shares out")
 	}
 
-	exitedCoins, err = pool.tokensOutFromExactShares(exitingShares)
+	exitedCoins, err = pool.tokensOutFromPoolSharesIn(exitingShares)
 	if err != nil {
 		return sdk.Coins{}, err
 	}

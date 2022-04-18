@@ -7,18 +7,18 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/MatrixDao/matrix/app"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
-	cli "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
-	utils "github.com/MatrixDao/matrix/x/testutil"
+	cli "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	utils "github.com/NibiruChain/nibiru/x/testutil"
 
-	"github.com/MatrixDao/matrix/x/common"
-	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 
-	pricefeedtypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/testutil/network"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -31,7 +31,8 @@ import (
 )
 
 const (
-	oracleAddress = "matrix17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
+	// oracleAddress = "nibi17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
+	oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 )
 
 type IntegrationTestSuite struct {
@@ -157,7 +158,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		{
 			name: "Mint correct amount",
 			args: append([]string{
-				"1000000uusdm",
+				"1000000unusd",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter2")}, commonArgs...),
 			expectedStable: sdk.NewInt(1000000),
 			expectErr:      false,
@@ -243,7 +244,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		{
 			name: "Burn at 100% collRatio",
 			args: append([]string{
-				"50000000uusdm",
+				"50000000unusd",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 			expectedStable:   sdk.ZeroInt(),
 			expectedColl:     sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
@@ -257,7 +258,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		// {
 		// 	name: "Burn at 90% collRatio",
 		// 	args: append([]string{
-		// 		"100000000uusdm",
+		// 		"100000000unusd",
 		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 		// 	expectedStable: sdk.NewInt(0),
 		// 	expectedColl:   sdk.NewInt(90_000_000),

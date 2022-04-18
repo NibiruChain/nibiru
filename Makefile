@@ -64,9 +64,6 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 ###                                  Build                                  ###
 ###############################################################################
 
-# add build args for the build command
-build: BUILD_ARGS=-o $(BUILDDIR)/
-
 # command for make build and make install
 build install: go.sum $(BUILDDIR)/
 	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...

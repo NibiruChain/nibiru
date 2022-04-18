@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -64,7 +64,7 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		return nil, err
 	}
 
-	pool, numSharesOut, remCoins, err := k.JoinPoolNoSwap(
+	pool, numSharesOut, remCoins, err := k.Keeper.JoinPool(
 		sdk.UnwrapSDKContext(ctx),
 		sender,
 		msg.PoolId,
