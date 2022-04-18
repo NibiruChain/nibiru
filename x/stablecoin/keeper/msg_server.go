@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 type msgServer struct {

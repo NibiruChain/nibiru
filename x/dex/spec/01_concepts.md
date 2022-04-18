@@ -11,7 +11,7 @@ liquidity pools that are dictated by an AMM for swaps.
 
 ### Creation of Pool
 
-When a pool is created, a fixed amount of 100 LP shares is minted and sent to the pool creator. The base pool share denom is in the format of matrix/pool/{poolId} and is displayed in the format of MATRIX-POOL-{poolId} to the user. One MATRIX-POOL-{poolId} token is equivalent to 10^18 matrix/pool/{poolId} tokens.
+When a pool is created, a fixed amount of 100 LP shares is minted and sent to the pool creator. The base pool share denom is in the format of nibiru/pool/{poolId} and is displayed in the format of NIBIRU-POOL-{poolId} to the user. One NIBIRU-POOL-{poolId} token is equivalent to 10^18 nibiru/pool/{poolId} tokens.
 
 Pool assets are sorted in alphabetical order by defualt.
 
