@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -32,8 +32,8 @@ $ %s tx dex create-pool --pool-file="path/to/pool.json" --from validator --keyri
 
 Where pool.json contains:
 {
-	"weights": "1usdm,1ust",
-	"initial-deposit": "100usdm,100ust",
+	"weights": "1unusd,1uust",
+	"initial-deposit": "100unusd,100uust",
 	"swap-fee": "0.01",
 	"exit-fee": "0.01"
 }

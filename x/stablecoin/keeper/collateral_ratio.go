@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/stablecoin/events"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/stablecoin/events"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -53,7 +53,7 @@ GetCollUSDForTargetCollRatio is the collateral value in USD needed to reach a ta
 collateral ratio.
 */
 func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
-	stableSupply := k.GetSupplyUSDM(ctx)
+	stableSupply := k.GetSupplyNUSD(ctx)
 	targetCollRatio := k.GetCollRatio(ctx)
 	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	moduleCoins := k.BankKeeper.SpendableCoins(ctx, moduleAddr)
@@ -197,7 +197,7 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	events.EmitMintMtrx(ctx, outGov)
+	events.EmitMintNIBI(ctx, outGov)
 
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, caller, sdk.NewCoins(outGov),
