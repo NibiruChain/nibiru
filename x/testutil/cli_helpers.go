@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MatrixDao/matrix/app"
-	"github.com/MatrixDao/matrix/x/testutil/network"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -72,7 +72,7 @@ func DefaultConfig() network.Config {
 		AppConstructor:    NewAppConstructor(encCfg),
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit:     1 * time.Second / 2,
-		ChainID:           "matrix-code-test",
+		ChainID:           "nibiru-code-test",
 		NumValidators:     1,
 		BondDenom:         sdk.DefaultBondDenom,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
@@ -81,8 +81,8 @@ func DefaultConfig() network.Config {
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.Coins(
 			sdk.NewCoins(
-				sdk.NewCoin("uusdm", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-				sdk.NewCoin("umtrx", sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+				sdk.NewCoin("unusd", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+				sdk.NewCoin("unibi", sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 				sdk.NewCoin("uust", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
 			)),
 		PruningStrategy: storetypes.PruningOptionNothing,

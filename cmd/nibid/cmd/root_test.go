@@ -3,9 +3,9 @@ package cmd_test
 import (
 	"testing"
 
-	// Matrix
-	"github.com/MatrixDao/matrix/app"
-	matrixd "github.com/MatrixDao/matrix/cmd/matrixd/cmd"
+	// Nibiru
+	"github.com/NibiruChain/nibiru/app"
+	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
 
 	// Cosmos-SDK
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestRootCmdConfig(t *testing.T) {
-	rootCmd, _ := matrixd.NewRootCmd()
+	rootCmd, _ := nibid.NewRootCmd()
 	cmds := []string{
 		"config",
 	}
