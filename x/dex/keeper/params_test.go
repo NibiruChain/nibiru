@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetParams(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)

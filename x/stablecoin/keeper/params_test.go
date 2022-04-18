@@ -12,7 +12,7 @@ import (
 )
 
 func TestGetParams(t *testing.T) {
-	matrixApp, ctx := testutil.NewMatrixApp(true)
+	matrixApp, ctx := testutil.NewNibiruApp(true)
 	stableKeeper := &matrixApp.StablecoinKeeper
 
 	params := types.DefaultParams()

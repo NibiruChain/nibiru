@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	// Matrix
+	// Nibiru
 	"github.com/NibiruChain/nibiru/app"
 	dexcmd "github.com/NibiruChain/nibiru/x/dex/client/cli"
 	pricefeedcmd "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
@@ -289,7 +289,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	return app.NewMatrixApp(
+	return app.NewNibiruApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
@@ -315,20 +315,20 @@ func (a appCreator) appExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions) (servertypes.ExportedApp, error) {
 
-	var appl *app.MatrixApp
+	var appl *app.NibiruApp
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
 	if height != -1 {
-		appl = app.NewMatrixApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
+		appl = app.NewNibiruApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 
 		if err := appl.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		appl = app.NewMatrixApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
+		appl = app.NewNibiruApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 	}
 
 	return appl.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)

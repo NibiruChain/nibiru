@@ -30,7 +30,7 @@ Matrix is built with the [Cosmos SDK][cosmos-sdk-repo], Tendermint Consensus, an
 
 [Medium]: example.com
 [Telegram]: example.com
-[matrix-website]: https://github.com/MatrixDao
+[matrix-website]: https://github.com/NibiruChain
 [cosmos-sdk-repo]: https://github.com/cosmos/cosmos-sdk
 [go-unit-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml/badge.svg
 [go-unit-tests-workflow]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml

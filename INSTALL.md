@@ -51,8 +51,8 @@ make install
 
  Testnet
 
-One the Matrix binary has been installed, for further information on joining the testnet, head over to the [testnet repo](https://github.com/MatrixDao/Networks/tree/main/Testnet).
+One the Matrix binary has been installed, for further information on joining the testnet, head over to the [testnet repo](https://github.com/NibiruChain/Networks/tree/main/Testnet).
 
  Mainnet
 
-One the Matrix binary has been installed, for further information on joining mainnet, head over to the [mainnet repo](https://github.com/MatrixDao/Networks/tree/main/Mainnet).
+One the Matrix binary has been installed, for further information on joining mainnet, head over to the [mainnet repo](https://github.com/NibiruChain/Networks/tree/main/Mainnet).

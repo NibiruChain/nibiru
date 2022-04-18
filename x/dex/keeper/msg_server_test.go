@@ -118,7 +118,7 @@ func TestCreatePool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 			if tc.creatorAddr == nil {
@@ -256,7 +256,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -375,7 +375,7 @@ func TestMsgServerExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

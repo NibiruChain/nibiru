@@ -11,7 +11,7 @@ import (
 )
 
 // Verifies that the expected keepers (e.g. 'KeeperName') in x/stablecoin are
-// implemented on the corresponding 'MatrixApp.KeeperName' field
+// implemented on the corresponding 'NibiruApp.KeeperName' field
 func TestExpectedKeepers(t *testing.T) {
 	type TestCase struct {
 		name           string
@@ -19,7 +19,7 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	matrixApp, _ := testutil.NewMatrixApp(true)
+	matrixApp, _ := testutil.NewNibiruApp(true)
 	testCases := []TestCase{
 		{
 			name:           "PriceKeeper from x/pricefeed",

@@ -48,5 +48,3 @@ replace github.com/NibiruChain/nibiru/x/stablecoin => ./x/stablecoin
 replace github.com/NibiruChain/nibiru/x/testutil => ./x/testutil
 
 replace github.com/NibiruChain/nibiru/app => ./app
-
-// replace "github.com/MatrixDao/x/stablecoin/starport/cmdrunner" => ./x/stablecoin/starport/cmdrunner

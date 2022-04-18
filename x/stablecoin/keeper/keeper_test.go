@@ -22,7 +22,7 @@ type KeeperTestSuite struct {
 	suite.Suite
 
 	ctx sdk.Context
-	app *app.MatrixApp
+	app *app.NibiruApp
 
 	clientCtx   client.Context
 	queryClient types.QueryClient
@@ -43,7 +43,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) _doSetupTest() {
-	matrixApp, ctx := testutil.NewMatrixApp(true)
+	matrixApp, ctx := testutil.NewNibiruApp(true)
 	suite.app = matrixApp
 	suite.ctx = ctx
 
@@ -62,7 +62,7 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get default Params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(true)
+		matrixApp, ctx := testutil.NewNibiruApp(true)
 		stableKeeper := &matrixApp.StablecoinKeeper
 
 		params := types.DefaultParams()
@@ -73,7 +73,7 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get non-default params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(true)
+		matrixApp, ctx := testutil.NewNibiruApp(true)
 		stableKeeper := &matrixApp.StablecoinKeeper
 
 		collRatio := sdk.MustNewDecFromStr("0.5")
@@ -89,7 +89,7 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Calling Get without setting causes a panic"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(false)
+		matrixApp, ctx := testutil.NewNibiruApp(false)
 		stableKeeper := &matrixApp.StablecoinKeeper
 
 		require.Panics(

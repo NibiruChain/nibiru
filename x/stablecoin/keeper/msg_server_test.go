@@ -25,10 +25,10 @@ func TestNewMsgServerImpl(t *testing.T) {
 		})
 	}
 
-	matrixApp, _ := testutil.NewMatrixApp(true)
+	matrixApp, _ := testutil.NewNibiruApp(true)
 	testCases := []TestCase{
 		{
-			name:   "Default MatrixApp.StablecoinKeeper, should pass",
+			name:   "Default NibiruApp.StablecoinKeeper, should pass",
 			keeper: matrixApp.StablecoinKeeper,
 			err:    nil,
 		},

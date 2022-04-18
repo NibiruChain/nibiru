@@ -100,7 +100,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
@@ -271,7 +271,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
@@ -433,7 +433,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
@@ -551,7 +551,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 

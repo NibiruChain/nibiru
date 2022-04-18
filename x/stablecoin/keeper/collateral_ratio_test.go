@@ -27,7 +27,7 @@ func TestSetCollRatio_Input(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 
 			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
@@ -69,7 +69,7 @@ func TestGetCollRatio_Input(t *testing.T) {
 	testName := "GetCollRatio after setting default params returns expected value"
 	t.Run(testName, func(t *testing.T) {
 
-		matrixApp, ctx := testutil.NewMatrixApp(true)
+		matrixApp, ctx := testutil.NewNibiruApp(true)
 		stablecoinKeeper := &matrixApp.StablecoinKeeper
 
 		stablecoinKeeper.SetParams(ctx, types.DefaultParams())
@@ -83,7 +83,7 @@ func TestGetCollRatio_Input(t *testing.T) {
 	testName = "Setting to non-default value returns expected value"
 	t.Run(testName, func(t *testing.T) {
 
-		matrixApp, ctx := testutil.NewMatrixApp(true)
+		matrixApp, ctx := testutil.NewNibiruApp(true)
 		stablecoinKeeper := &matrixApp.StablecoinKeeper
 
 		expectedCollRatio := sdk.MustNewDecFromStr("0.5")
@@ -115,7 +115,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
 			matrixApp.BankKeeper.MintCoins(
@@ -245,7 +245,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
 			matrixApp.BankKeeper.MintCoins(
@@ -304,7 +304,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
 			matrixApp.BankKeeper.MintCoins(
@@ -426,7 +426,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
 			matrixApp.BankKeeper.MintCoins(
@@ -575,7 +575,7 @@ func TestRecollateralize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require.EqualValues(t, tc.expectedNeededUSD, tc.scenario.CalcNeededUSD())
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			matrixApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &matrixApp.StablecoinKeeper
 			stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio)
 			matrixApp.BankKeeper.MintCoins(
