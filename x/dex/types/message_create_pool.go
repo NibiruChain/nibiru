@@ -43,5 +43,27 @@ func (msg *MsgCreatePool) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+
+	if len(msg.PoolAssets) < MinPoolAssets {
+		return ErrTooFewPoolAssets.Wrapf("invalid number of assets (%d)", len(msg.PoolAssets))
+	}
+	if len(msg.PoolAssets) > MaxPoolAssets {
+		return ErrTooManyPoolAssets.Wrapf("invalid number of assets (%d)", len(msg.PoolAssets))
+	}
+
+	for _, asset := range msg.PoolAssets {
+		if asset.Weight.LTE(sdk.ZeroInt()) {
+			return ErrInvalidTokenWeight.Wrapf("invalid token weight %d for denom %s", asset.Weight, asset.Token.Denom)
+		}
+	}
+
+	if msg.PoolParams.SwapFee.LT(sdk.ZeroDec()) || msg.PoolParams.SwapFee.GT(sdk.OneDec()) {
+		return ErrInvalidSwapFee.Wrapf("invalid swap fee: %s", msg.PoolParams.SwapFee)
+	}
+
+	if msg.PoolParams.ExitFee.LT(sdk.ZeroDec()) || msg.PoolParams.ExitFee.GT(sdk.OneDec()) {
+		return ErrInvalidExitFee.Wrapf("invalid exit fee: %s", msg.PoolParams.ExitFee)
+	}
+
 	return nil
 }
