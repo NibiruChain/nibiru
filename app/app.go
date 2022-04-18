@@ -7,19 +7,19 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/dex"
-	dexkeeper "github.com/MatrixDao/matrix/x/dex/keeper"
-	dextypes "github.com/MatrixDao/matrix/x/dex/types"
-	"github.com/MatrixDao/matrix/x/lockup"
-	lockupkeeper "github.com/MatrixDao/matrix/x/lockup/keeper"
-	lockuptypes "github.com/MatrixDao/matrix/x/lockup/types"
-	"github.com/MatrixDao/matrix/x/pricefeed"
-	pricekeeper "github.com/MatrixDao/matrix/x/pricefeed/keeper"
-	pricetypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/stablecoin"
-	stablecoinkeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	stablecointypes "github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/dex"
+	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
+	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/lockup"
+	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
+	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed"
+	pricekeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	pricetypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin"
+	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -102,11 +102,11 @@ import (
 )
 
 const (
-	AccountAddressPrefix = "matrix"
-	Name                 = "matrix"
+	AccountAddressPrefix = "nibi"
+	Name                 = "nibiru"
 )
 
-const appName = "Matrix"
+const appName = "Nibiru"
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -157,13 +157,13 @@ var (
 )
 
 var (
-	_ servertypes.Application = (*MatrixApp)(nil)
+	_ servertypes.Application = (*NibiruApp)(nil)
 )
 
 // SimApp extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
-type MatrixApp struct {
+type NibiruApp struct {
 	*baseapp.BaseApp
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
@@ -212,15 +212,15 @@ func init() {
 		panic(err)
 	}
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".matrixd")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
 // NewSimApp returns a reference to an initialized SimApp.
-func NewMatrixApp(
+func NewNibiruApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
-) *MatrixApp {
+) *NibiruApp {
 
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -246,7 +246,7 @@ func NewMatrixApp(
 	memKeys := sdk.NewMemoryStoreKeys(
 		capabilitytypes.MemStoreKey, "testingkey", stablecointypes.MemStoreKey, pricetypes.MemStoreKey)
 
-	app := &MatrixApp{
+	app := &NibiruApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
@@ -507,20 +507,20 @@ func NewMatrixApp(
 }
 
 // Name returns the name of the App
-func (app *MatrixApp) Name() string { return app.BaseApp.Name() }
+func (app *NibiruApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *MatrixApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *NibiruApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
-func (app *MatrixApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
 // InitChainer application update at chain initialization
-func (app *MatrixApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
@@ -530,12 +530,12 @@ func (app *MatrixApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 }
 
 // LoadHeight loads a particular height
-func (app *MatrixApp) LoadHeight(height int64) error {
+func (app *NibiruApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *MatrixApp) ModuleAccountAddrs() map[string]bool {
+func (app *NibiruApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
@@ -548,7 +548,7 @@ func (app *MatrixApp) ModuleAccountAddrs() map[string]bool {
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *MatrixApp) LegacyAmino() *codec.LegacyAmino {
+func (app *NibiruApp) LegacyAmino() *codec.LegacyAmino {
 	return app.legacyAmino
 }
 
@@ -556,52 +556,52 @@ func (app *MatrixApp) LegacyAmino() *codec.LegacyAmino {
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *MatrixApp) AppCodec() codec.Codec {
+func (app *NibiruApp) AppCodec() codec.Codec {
 	return app.appCodec
 }
 
 // InterfaceRegistry returns App's InterfaceRegistry
-func (app *MatrixApp) InterfaceRegistry() types.InterfaceRegistry {
+func (app *NibiruApp) InterfaceRegistry() types.InterfaceRegistry {
 	return app.interfaceRegistry
 }
 
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *MatrixApp) GetKey(storeKey string) *storetypes.KVStoreKey {
+func (app *NibiruApp) GetKey(storeKey string) *storetypes.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *MatrixApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
+func (app *NibiruApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *MatrixApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
+func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *MatrixApp) GetSubspace(moduleName string) paramstypes.Subspace {
+func (app *NibiruApp) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
 	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *MatrixApp) SimulationManager() *module.SimulationManager {
+func (app *NibiruApp) SimulationManager() *module.SimulationManager {
 	return app.sm
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *MatrixApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 	// Register legacy tx routes.
@@ -622,12 +622,12 @@ func (app *MatrixApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
-func (app *MatrixApp) RegisterTxService(clientCtx client.Context) {
+func (app *NibiruApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
-func (app *MatrixApp) RegisterTendermintService(clientCtx client.Context) {
+func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
 }
 

@@ -4,14 +4,14 @@ import (
 	"reflect"
 	"testing"
 
-	sctypes "github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/stretchr/testify/assert"
 )
 
 // Verifies that the expected keepers (e.g. 'KeeperName') in x/stablecoin are
-// implemented on the corresponding 'MatrixApp.KeeperName' field
+// implemented on the corresponding 'NibiruApp.KeeperName' field
 func TestExpectedKeepers(t *testing.T) {
 	type TestCase struct {
 		name           string
@@ -19,22 +19,22 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	matrixApp, _ := testutil.NewMatrixApp(true)
+	nibiruApp, _ := testutil.NewNibiruApp(true)
 	testCases := []TestCase{
 		{
 			name:           "PriceKeeper from x/pricefeed",
 			expectedKeeper: (*sctypes.PriceKeeper)(nil),
-			appKeeper:      matrixApp.PriceKeeper,
+			appKeeper:      nibiruApp.PriceKeeper,
 		},
 		{
 			name:           "BankKeeper from the cosmos-sdk",
 			expectedKeeper: (*sctypes.BankKeeper)(nil),
-			appKeeper:      matrixApp.BankKeeper,
+			appKeeper:      nibiruApp.BankKeeper,
 		},
 		{
 			name:           "AccountKeeper from the cosmos-sdk",
 			expectedKeeper: (*sctypes.AccountKeeper)(nil),
-			appKeeper:      matrixApp.AccountKeeper,
+			appKeeper:      nibiruApp.AccountKeeper,
 		},
 	}
 

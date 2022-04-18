@@ -13,9 +13,9 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/client/cli"
-	"github.com/MatrixDao/matrix/x/pricefeed/keeper"
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
+	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

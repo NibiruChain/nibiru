@@ -6,9 +6,9 @@ import (
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/MatrixDao/matrix/x/lockup/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -44,7 +44,7 @@ func TestCreateLock(t *testing.T) {
 	for _, testcase := range tests {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 			simapp.FundAccount(app.BankKeeper, ctx, tc.ownerAddr, tc.accountInitialFunds)
 
 			lock, err := app.LockupKeeper.LockTokens(ctx, tc.ownerAddr, tc.coins, tc.duration)
@@ -70,7 +70,7 @@ func TestCreateLock(t *testing.T) {
 
 func TestLockupKeeper_UnlockTokens(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testutil.NewMatrixApp(true)
+		app, _ := testutil.NewNibiruApp(true)
 		addr := sample.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
@@ -95,14 +95,14 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 	})
 
 	t.Run("lock not found", func(t *testing.T) {
-		app, ctx := testutil.NewMatrixApp(true)
+		app, ctx := testutil.NewNibiruApp(true)
 
 		_, err := app.LockupKeeper.UnlockTokens(ctx, 1)
 		require.ErrorIs(t, err, types.ErrLockupNotFound)
 	})
 
 	t.Run("lock not matured", func(t *testing.T) {
-		app, _ := testutil.NewMatrixApp(true)
+		app, _ := testutil.NewNibiruApp(true)
 		addr := sample.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
