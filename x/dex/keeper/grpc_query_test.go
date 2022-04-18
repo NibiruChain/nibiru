@@ -3,10 +3,10 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/dex/keeper"
-	"github.com/MatrixDao/matrix/x/dex/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

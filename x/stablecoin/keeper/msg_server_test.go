@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	sckeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	"github.com/MatrixDao/matrix/x/testutil"
+	sckeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/stretchr/testify/require"
 )

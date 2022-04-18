@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

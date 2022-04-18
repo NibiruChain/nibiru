@@ -7,7 +7,7 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
+	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
 )
 
 func TestSwapInput_Errors(t *testing.T) {

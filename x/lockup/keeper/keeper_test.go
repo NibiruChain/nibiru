@@ -6,9 +6,9 @@ import (
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/MatrixDao/matrix/x/lockup/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

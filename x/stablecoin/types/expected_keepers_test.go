@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	sctypes "github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/stretchr/testify/assert"
 )

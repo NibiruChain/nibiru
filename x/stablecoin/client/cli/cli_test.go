@@ -7,18 +7,18 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/MatrixDao/matrix/app"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
-	cli "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
-	utils "github.com/MatrixDao/matrix/x/testutil"
+	cli "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	utils "github.com/NibiruChain/nibiru/x/testutil"
 
-	"github.com/MatrixDao/matrix/x/common"
-	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 
-	pricefeedtypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/testutil/network"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"

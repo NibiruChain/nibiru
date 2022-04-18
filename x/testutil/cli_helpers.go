@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MatrixDao/matrix/app"
-	"github.com/MatrixDao/matrix/x/testutil/network"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"

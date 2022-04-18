@@ -27,7 +27,7 @@ After installed, open new terminal to properly load go
 
 ```
 cd $HOME
-git clone https://github.com/MatrixDAO/matrix
+git clone https://github.com/NibiruChain/nibiru
 cd matrix
 git checkout v0.0.1
 make install

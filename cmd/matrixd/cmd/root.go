@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 
 	// Matrix
-	"github.com/MatrixDao/matrix/app"
-	dexcmd "github.com/MatrixDao/matrix/x/dex/client/cli"
-	pricefeedcmd "github.com/MatrixDao/matrix/x/pricefeed/client/cli"
-	sccmd "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
+	"github.com/NibiruChain/nibiru/app"
+	dexcmd "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	pricefeedcmd "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
+	sccmd "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 
 	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"

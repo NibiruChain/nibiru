@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	matrixd "github.com/MatrixDao/matrix/cmd/matrixd/cmd"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	matrixd "github.com/NibiruChain/nibiru/cmd/matrixd/cmd"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

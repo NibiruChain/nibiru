@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/stablecoin/events"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/stablecoin/events"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

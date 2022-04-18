@@ -8,7 +8,7 @@
 -->
 
 [![Matrix Test workflow][go-unit-tests-badge]][go-unit-tests-workflow]
-[![GitHub](https://img.shields.io/github/license/matrix-labs/matrix.svg)](https://github.com/MatrixDao/matrix/blob/master/LICENSE.md)
+[![GitHub](https://img.shields.io/github/license/matrix-labs/matrix.svg)](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
 [![Discord Chat](https://img.shields.io/discord/704389840614981673.svg)][matrix-discord]
 [<img align="right" alt="Matrix Telegram" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/telegram.svg" />][Telegram]
 [<img align="right" alt="Personal Website" width="22px" src="https://raw.githubusercontent.com/iconic/open-iconic/master/svg/globe.svg" />][matrix-website]
@@ -32,17 +32,17 @@ Matrix is built with the [Cosmos SDK][cosmos-sdk-repo], Tendermint Consensus, an
 [Telegram]: example.com
 [matrix-website]: https://github.com/MatrixDao
 [cosmos-sdk-repo]: https://github.com/cosmos/cosmos-sdk
-[go-unit-tests-badge]: https://github.com/MatrixDao/matrix/actions/workflows/go.yml/badge.svg
-[go-unit-tests-workflow]: https://github.com/MatrixDao/matrix/actions/workflows/go.yml
+[go-unit-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml/badge.svg
+[go-unit-tests-workflow]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml
 [matrix-twitter]: https://twitter.com/matrix_platform 
 [matrix-discord]: https://discord.com/invite/pgArXgAxDD
   
 
 <!--
 [![Twitter Follow](https://img.shields.io/twitter/follow/matrix_platform.svg?label=Follow&style=social)][matrix-twitter]
-[![version](https://img.shields.io/github/tag/matrix-labs/matrix.svg)](https://github.com/matrixdao/matrix/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/matrixdao/matrix)](https://goreportcard.com/report/github.com/matrixdao/matrix) 
-[![API Reference](https://godoc.org/github.com/MatrixDao/matrix?status.svg)](https://godoc.org/github.com/MatrixDao/matrix)
+[![version](https://img.shields.io/github/tag/matrix-labs/matrix.svg)](https://github.com/NibiruChain/nibiru/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/NibiruChain/nibiru)](https://goreportcard.com/report/github.com/NibiruChain/nibiru) 
+[![API Reference](https://godoc.org/github.com/NibiruChain/nibiru?status.svg)](https://godoc.org/github.com/NibiruChain/nibiru)
 -->
 
 ----

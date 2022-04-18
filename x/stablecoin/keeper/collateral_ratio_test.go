@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MatrixDao/matrix/x/common"
-	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/common"
+	pricefeedTypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"

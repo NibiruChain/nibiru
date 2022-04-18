@@ -3,7 +3,7 @@ package types
 import (
 	fmt "fmt"
 
-	"github.com/MatrixDao/matrix/x/common"
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"

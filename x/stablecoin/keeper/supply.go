@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/MatrixDao/matrix/x/common"
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func (k Keeper) GetSupplyUSDM(

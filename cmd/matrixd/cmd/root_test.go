@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	// Matrix
-	"github.com/MatrixDao/matrix/app"
-	matrixd "github.com/MatrixDao/matrix/cmd/matrixd/cmd"
+	"github.com/NibiruChain/nibiru/app"
+	matrixd "github.com/NibiruChain/nibiru/cmd/matrixd/cmd"
 
 	// Cosmos-SDK
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"

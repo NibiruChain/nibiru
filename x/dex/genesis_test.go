@@ -3,10 +3,10 @@ package dex_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/dex"
-	"github.com/MatrixDao/matrix/x/dex/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/nullify"
+	"github.com/NibiruChain/nibiru/x/dex"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 	"github.com/stretchr/testify/require"
 )
 

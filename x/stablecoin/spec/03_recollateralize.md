@@ -31,4 +31,4 @@ mtrxOut = (collNeeded * priceColl) * (1 + bonusRate) / priceMTRX
 ```
 
 #### References: 
-- https://github.com/MatrixDao/matrix/issues/118
+- https://github.com/NibiruChain/nibiru/issues/118
