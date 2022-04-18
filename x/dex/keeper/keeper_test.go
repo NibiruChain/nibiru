@@ -72,7 +72,7 @@ func TestSetAndFetchPool(t *testing.T) {
 }
 
 func TestGetFromPair(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 
 	pool := types.Pool{
 		Id: 1,
@@ -91,7 +91,7 @@ func TestGetFromPair(t *testing.T) {
 			},
 		},
 		TotalWeight: sdk.NewInt(2),
-		TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+		TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 	}
 
 	app.DexKeeper.SetPool(ctx, pool)
