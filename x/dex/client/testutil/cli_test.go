@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/dex/client/cli"
 	dexcli "github.com/MatrixDao/matrix/x/dex/client/cli"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/MatrixDao/matrix/x/testutil"
 	"github.com/MatrixDao/matrix/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -17,6 +17,7 @@ import (
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -170,8 +171,8 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 		{
 			name: "join pool with insufficient balance",
 			args: []string{
-				fmt.Sprintf("--%s=%d", cli.FlagPoolId, 1),
-				fmt.Sprintf("--%s=%s", cli.FlagTokensIn, "1000000000stake,10000000000node0token"),
+				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
+				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "1000000000stake,10000000000node0token"),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -215,6 +216,87 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
+	val := s.network.Validators[0]
+
+	testCases := []struct {
+		name      string
+		args      []string
+		expectErr bool
+	}{
+		{
+			"query total liquidity", // osmosisd query gamm total-liquidity
+			[]string{
+				fmt.Sprintf("--%s=%s", tmcli.OutputFlag, "json"),
+			},
+			false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := dexcli.CmdTotalLiquidity()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				resp := types.QueryTotalLiquidityResponse{}
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestGetCmdTotalPoolLiquidity() {
+	val := s.network.Validators[0]
+
+	testCases := []struct {
+		name      string
+		args      []string
+		expectErr bool
+	}{
+		{
+			"query non existing pool liquidity", // osmosisd query gamm total-liquidity
+			[]string{
+				"2",
+				fmt.Sprintf("--%s=%s", tmcli.OutputFlag, "json"),
+			},
+			true,
+		},
+		{
+			"query existing pool liquidity", // osmosisd query gamm total-liquidity
+			[]string{
+				"1",
+				fmt.Sprintf("--%s=%s", tmcli.OutputFlag, "json"),
+			},
+			false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := dexcli.CmdTotalPoolLiquidity()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				resp := types.QueryTotalPoolLiquidityResponse{}
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
 			}
 		})
 	}
