@@ -1,5 +1,5 @@
 syntax = "proto3";
-package matrix.dex.v1;
+package nibiru.dex.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
@@ -7,61 +7,61 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/dex/types";
+option go_package = "github.com/NibiruChain/nibiru/x/dex/types";
 
 // Query defines the gRPC querier service.
 service Query {
   // Parameters of the dex module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/matrix/dex/params";
+    option (google.api.http).get = "/nibiru/dex/params";
   }
 
   // Next available pool id number.
   rpc PoolNumber(QueryPoolNumberRequest) returns (QueryPoolNumberResponse) {
-    option (google.api.http).get = "/matrix/dex/pool_number";
+    option (google.api.http).get = "/nibiru/dex/pool_number";
   }
 
   // Fetch a pool by id.
   rpc Pool(QueryPoolRequest) returns (QueryPoolResponse) {
-    option (google.api.http).get = "/matrix/dex/pool";
+    option (google.api.http).get = "/nibiru/dex/pool";
   }
 
   // Returns all pools.
   rpc Pools(QueryPoolsRequest) returns (QueryPoolsResponse) {
-    option (google.api.http).get = "/matrix/dex/pools";
+    option (google.api.http).get = "/nibiru/dex/pools";
   }
 
   // Parameters of a single pool.
   rpc PoolParams(QueryPoolParamsRequest) returns (QueryPoolParamsResponse) {
-    option (google.api.http).get = "/matrix/dex/pools/{poolId}/params";
+    option (google.api.http).get = "/nibiru/dex/pools/{poolId}/params";
   }
 
   // Number of pools.
   rpc NumPools(QueryNumPoolsRequest) returns (QueryNumPoolsResponse) {
-    option (google.api.http).get = "/matrix/dex/num_pools";
+    option (google.api.http).get = "/nibiru/dex/num_pools";
   }
 
   // Total liquidity across all pools.
   rpc TotalLiquidity(QueryTotalLiquidityRequest)
       returns (QueryTotalLiquidityResponse) {
-    option (google.api.http).get = "/matrix/dex/total_liquidity";
+    option (google.api.http).get = "/nibiru/dex/total_liquidity";
   }
 
   // Total liquidity in a single pool.
   rpc TotalPoolLiquidity(QueryTotalPoolLiquidityRequest)
       returns (QueryTotalPoolLiquidityResponse) {
     option (google.api.http).get =
-        "/matrix/dex/pools/{poolId}/total_pool_liquidity";
+        "/nibiru/dex/pools/{poolId}/total_pool_liquidity";
   }
 
   // Total shares in a single pool.
   rpc TotalShares(QueryTotalSharesRequest) returns (QueryTotalSharesResponse) {
-    option (google.api.http).get = "/matrix/dex/pools/{poolId}/total_shares";
+    option (google.api.http).get = "/nibiru/dex/pools/{poolId}/total_shares";
   }
 
   // Instantaneous price of an asset in a pool.
   rpc SpotPrice(QuerySpotPriceRequest) returns (QuerySpotPriceResponse) {
-    option (google.api.http).get = "/matrix/dex/pools/{poolId}/prices";
+    option (google.api.http).get = "/nibiru/dex/pools/{poolId}/prices";
   }
 
   // Estimates the amount of assets returned given an exact amount of tokens to
@@ -69,7 +69,7 @@ service Query {
   rpc EstimateSwapExactAmountIn(QuerySwapExactAmountInRequest)
       returns (QuerySwapExactAmountInResponse) {
     option (google.api.http).get =
-        "/matrix/dex/{poolId}/estimate/swap_exact_amount_in";
+        "/nibiru/dex/{poolId}/estimate/swap_exact_amount_in";
   }
 
   // Estimates the amount of tokens required to return the exact amount of
@@ -77,7 +77,7 @@ service Query {
   rpc EstimateSwapExactAmountOut(QuerySwapExactAmountOutRequest)
       returns (QuerySwapExactAmountOutResponse) {
     option (google.api.http).get =
-        "/matrix/dex/{poolId}/estimate/swap_exact_amount_out";
+        "/nibiru/dex/{poolId}/estimate/swap_exact_amount_out";
   }
 
   // Estimates the amount of pool shares returned given an amount of tokens to
@@ -85,7 +85,7 @@ service Query {
   rpc EstimateJoinExactAmountIn(QueryJoinExactAmountInRequest)
       returns (QueryJoinExactAmountInResponse) {
     option (google.api.http).get =
-        "/matrix/dex/{poolId}/estimate/join_exact_amount_in";
+        "/nibiru/dex/{poolId}/estimate/join_exact_amount_in";
   }
 
   // Estimates the amount of tokens required to obtain an exact amount of pool
@@ -93,7 +93,7 @@ service Query {
   rpc EstimateJoinExactAmountOut(QueryJoinExactAmountOutRequest)
       returns (QueryJoinExactAmountOutResponse) {
     option (google.api.http).get =
-        "/matrix/dex/{poolId}/estimate/join_exact_amount_out";
+        "/nibiru/dex/{poolId}/estimate/join_exact_amount_out";
   }
 
   // Estimates the amount of tokens returned to the user given an exact amount
@@ -101,7 +101,7 @@ service Query {
   rpc EstimateExitExactAmountIn(QueryExitExactAmountInRequest)
       returns (QueryExitExactAmountInResponse) {
     option (google.api.http).get =
-        "/matrix/dex/{poolId}/estimate/exit_exact_amount_in";
+        "/nibiru/dex/{poolId}/estimate/exit_exact_amount_in";
   }
 
   // Estimates the amount of pool shares required to extract an exact amount of
@@ -109,7 +109,7 @@ service Query {
   rpc EstimateExitExactAmountOut(QueryExitExactAmountOutRequest)
       returns (QueryExitExactAmountOutResponse) {
     option (google.api.http).get =
-        "/matrix/dex/{poolId}/estimate/exit_exact_amount_out";
+        "/nibiru/dex/{poolId}/estimate/exit_exact_amount_out";
   }
 }
 

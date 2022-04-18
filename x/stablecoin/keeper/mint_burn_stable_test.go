@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MatrixDao/matrix/x/common"
-	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common"
+	pricefeedTypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,8 +71,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 		msgResponse types.MsgMintStableResponse
 		govPrice    sdk.Dec
 		collPrice   sdk.Dec
-		supplyMtrx  sdk.Coin
-		supplyUsdm  sdk.Coin
+		supplyNIBI  sdk.Coin
+		supplyNUSD  sdk.Coin
 		err         error
 	}{
 		{
@@ -89,9 +89,9 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			},
 			govPrice:   sdk.MustNewDecFromStr("10"),
 			collPrice:  sdk.MustNewDecFromStr("1"),
-			supplyMtrx: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
+			supplyNIBI: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
 			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
-			supplyUsdm: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			supplyNUSD: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			err:        nil,
 		},
 	}
@@ -100,15 +100,15 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
 			// We get module account, to create it.
-			matrixApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
+			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up markets for the pricefeed keeper.
-			priceKeeper := &matrixApp.PriceKeeper
+			priceKeeper := &nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
@@ -124,7 +124,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
-			matrixApp.StablecoinKeeper.SetParams(
+			nibiruApp.StablecoinKeeper.SetParams(
 				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Post prices to each market with the oracle.
@@ -145,12 +145,12 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			}
 
 			// Fund account
-			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
+			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Mint USDM -> Response contains Stable (sdk.Coin)
+			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
-			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
+			mintStableResponse, err := nibiruApp.StablecoinKeeper.MintStable(
 				goCtx, &tc.msgMint)
 
 			if tc.err != nil {
@@ -162,17 +162,17 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
 
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx), tc.supplyMtrx)
-			require.Equal(t, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx), tc.supplyUsdm)
+			require.Equal(t, nibiruApp.StablecoinKeeper.GetSupplyNIBI(ctx), tc.supplyNIBI)
+			require.Equal(t, nibiruApp.StablecoinKeeper.GetSupplyNUSD(ctx), tc.supplyNUSD)
 
 			// Check balances in EF
-			efModuleBalance := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			efModuleBalance := nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
 			collFeesInEf := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
 			require.Equal(t, sdk.NewCoins(sdk.NewCoin(common.CollDenom, collFeesInEf)), efModuleBalance)
 
 			// Check balances in Treasury
-			treasuryModuleBalance := matrixApp.BankKeeper.
-				GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount))
+			treasuryModuleBalance := nibiruApp.BankKeeper.
+				GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount))
 			collFeesInTreasury := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
 			govFeesInTreasury := neededGovFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
 			require.Equal(
@@ -271,15 +271,15 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
 
 			// We get module account, to create it.
-			matrixApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
+			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up markets for the pricefeed keeper.
-			priceKeeper := &matrixApp.PriceKeeper
+			priceKeeper := &nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovStablePool,
@@ -297,7 +297,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			feeRatio := sdk.ZeroDec()
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
-			matrixApp.StablecoinKeeper.SetParams(
+			nibiruApp.StablecoinKeeper.SetParams(
 				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Post prices to each market with the oracle.
@@ -318,12 +318,12 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			}
 
 			// Fund account
-			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
+			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Mint USDM -> Response contains Stable (sdk.Coin)
+			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
-			mintStableResponse, err := matrixApp.StablecoinKeeper.MintStable(
+			mintStableResponse, err := nibiruApp.StablecoinKeeper.MintStable(
 				goCtx, &tc.msgMint)
 
 			if tc.err != nil {
@@ -335,7 +335,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
 
-			balances := matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			balances := nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
 			require.Equal(t, mintStableResponse.FeesPayed, balances)
 		})
 	}
@@ -433,7 +433,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
@@ -442,11 +442,11 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
-			matrixApp.StablecoinKeeper.SetParams(
+			nibiruApp.StablecoinKeeper.SetParams(
 				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Set up markets for the pricefeed keeper.
-			priceKeeper := matrixApp.PriceKeeper
+			priceKeeper := nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
@@ -456,7 +456,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
-			matrixApp.StablecoinKeeper.SetParams(ctx, types.DefaultParams())
+			nibiruApp.StablecoinKeeper.SetParams(ctx, types.DefaultParams())
 
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -476,17 +476,17 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			}
 
 			// Add collaterals to the module
-			err = matrixApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds)
+			err = nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds)
 			if err != nil {
 				panic(err)
 			}
 
-			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
+			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Burn USDM -> Response contains GOV and COLL
+			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
-			burnStableResponse, err := matrixApp.StablecoinKeeper.BurnStable(
+			burnStableResponse, err := nibiruApp.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
 
 			if !tc.expectedPass {
@@ -511,8 +511,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 		msgResponse   types.MsgBurnStableResponse
 		govPrice      sdk.Dec
 		collPrice     sdk.Dec
-		supplyMtrx    sdk.Coin
-		supplyUsdm    sdk.Coin
+		supplyNIBI    sdk.Coin
+		supplyNUSD    sdk.Coin
 		ecosystemFund sdk.Coins
 		treasuryFund  sdk.Coins
 		expectedPass  bool
@@ -540,8 +540,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 					sdk.NewInt64Coin(common.CollDenom, 18_000),
 				),
 			},
-			supplyMtrx:    sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // matrix minus 0.5 of fees burned (the part that goes to EF)
-			supplyUsdm:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
+			supplyNIBI:    sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
+			supplyNUSD:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
 			ecosystemFund: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
 			treasuryFund:  sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
 			expectedPass:  true,
@@ -551,7 +551,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()
 
@@ -560,11 +560,11 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
-			matrixApp.StablecoinKeeper.SetParams(
+			nibiruApp.StablecoinKeeper.SetParams(
 				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
 
 			// Set up markets for the pricefeed keeper.
-			priceKeeper := matrixApp.PriceKeeper
+			priceKeeper := nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
 				Markets: []pricefeedTypes.Market{
 					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
@@ -592,17 +592,17 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			}
 
 			// Add collaterals to the module
-			err = matrixApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds)
+			err = nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds)
 			if err != nil {
 				panic(err)
 			}
 
-			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, acc, tc.accFunds)
+			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
 			require.NoError(t, err)
 
-			// Burn USDM -> Response contains GOV and COLL
+			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
-			burnStableResponse, err := matrixApp.StablecoinKeeper.BurnStable(
+			burnStableResponse, err := nibiruApp.StablecoinKeeper.BurnStable(
 				goCtx, &tc.msgBurn)
 
 			if !tc.expectedPass {
@@ -615,12 +615,12 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
 
-			require.Equal(t, tc.supplyMtrx, matrixApp.StablecoinKeeper.GetSupplyMTRX(ctx))
-			require.Equal(t, tc.supplyUsdm, matrixApp.StablecoinKeeper.GetSupplyUSDM(ctx))
+			require.Equal(t, tc.supplyNIBI, nibiruApp.StablecoinKeeper.GetSupplyNIBI(ctx))
+			require.Equal(t, tc.supplyNUSD, nibiruApp.StablecoinKeeper.GetSupplyNUSD(ctx))
 
 			// Funds sypplies
-			require.Equal(t, tc.ecosystemFund, matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount)))
-			require.Equal(t, tc.treasuryFund, matrixApp.BankKeeper.GetAllBalances(ctx, matrixApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount)))
+			require.Equal(t, tc.ecosystemFund, nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount)))
+			require.Equal(t, tc.treasuryFund, nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount)))
 		})
 	}
 }

@@ -3,9 +3,9 @@ package stablecoin
 import (
 	"math/rand"
 
-	scsim "github.com/MatrixDao/matrix/x/stablecoin/simulation"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	scsim "github.com/NibiruChain/nibiru/x/stablecoin/simulation"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"

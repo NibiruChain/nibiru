@@ -35,7 +35,7 @@ else
 fi
 
 # Set localnet settings
-BINARY=./build/matrixd
+BINARY=./build/nibid
 CHAIN_ID=nibiru-test-chain-0
 CHAIN_DIR=./data
 RPC_PORT=26657
@@ -43,10 +43,10 @@ GRPC_PORT=9090
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 GENESIS_COINS=1000000000stake,1000000000validatortoken
 
-# Stop matrixd if it is already running
+# Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
     echo_error "Terminating $BINARY..."
-    killall matrixd
+    killall nibid
 fi
 
 # Remove previous data
@@ -59,9 +59,9 @@ if ! mkdir -p $CHAIN_DIR 2>/dev/null; then
   exit 1
 fi
 
-# Initialize matrixd with "localnet" chain id
+# Initialize nibid with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY init matrix-test-chain-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
+if $BINARY init nibiru-test-chain-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"

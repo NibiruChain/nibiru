@@ -1,8 +1,8 @@
 package pricefeed
 
 import (
-	"github.com/MatrixDao/matrix/x/pricefeed/keeper"
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

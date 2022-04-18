@@ -3,9 +3,9 @@ package pricefeed
 import (
 	"math/rand"
 
-	pricefeedsimulation "github.com/MatrixDao/matrix/x/pricefeed/simulation"
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	pricefeedsimulation "github.com/NibiruChain/nibiru/x/pricefeed/simulation"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"

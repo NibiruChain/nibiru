@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/MatrixDao/matrix/app"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -17,19 +17,19 @@ import (
 )
 
 // New creates application instance with in-memory database and disabled logging.
-func New(shouldUseDefaultGenesis bool) *app.MatrixApp {
+func New(shouldUseDefaultGenesis bool) *app.NibiruApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
 
-	nodeHome := filepath.Join(userHomeDir, ".matrix")
+	nodeHome := filepath.Join(userHomeDir, ".nibid")
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeTestEncodingConfig()
 
-	a := app.NewMatrixApp(
+	a := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
@@ -59,11 +59,11 @@ func New(shouldUseDefaultGenesis bool) *app.MatrixApp {
 	return a
 }
 
-func NewMatrixApp(shouldUseDefaultGenesis bool) (*app.MatrixApp, sdk.Context) {
-	newMatrixApp := New(shouldUseDefaultGenesis)
-	ctx := newMatrixApp.NewContext(false, tmproto.Header{})
+func NewNibiruApp(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
+	newNibiruApp := New(shouldUseDefaultGenesis)
+	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
-	return newMatrixApp, ctx
+	return newNibiruApp, ctx
 }
 
 var DefaultConsensusParams = &abci.ConsensusParams{

@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 /*

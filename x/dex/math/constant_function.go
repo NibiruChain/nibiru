@@ -14,7 +14,7 @@ import (
 // deltaY is negative when y's balance liquidity increases.
 // panics if yWeight is 0.
 //
-// TODO(https://github.com/MatrixDao/matrix/issues/141): Currently always calculates the invariant assuming constant weight (xy=k).
+// TODO(https://github.com/NibiruChain/nibiru/issues/141): Currently always calculates the invariant assuming constant weight (xy=k).
 // Once we figure out the floating point arithmetic conversions for exponentiation, we can
 // add unequal weights.
 //
@@ -31,7 +31,7 @@ func SolveConstantProductInvariant(
 	// r = xPrior/xAfter
 	r := xPrior.Quo(xAfter)
 
-	// TODO(https://github.com/MatrixDao/matrix/issues/141): Figure out floating point arithmetic for exponentation.
+	// TODO(https://github.com/NibiruChain/nibiru/issues/141): Figure out floating point arithmetic for exponentation.
 	// Naive calculation could lead to significant rounding errors with large numbers
 	// amountY = yPrior * (1 - (r ^ weightRatio))
 	// rToWeightRatio := sdk.MustNewDecFromStr(

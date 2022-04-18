@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/types/time"
 
-	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
+	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
 )
 
 func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
@@ -16,7 +16,7 @@ func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing
 	err := ammKeeper.addReserveSnapshot(ctx, getSamplePool())
 	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
 
-	_, _, err = ammKeeper.getLastReserveSnapshot(ctx, UsdmPair)
+	_, _, err = ammKeeper.getLastReserveSnapshot(ctx, NUSDPair)
 	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
 }
 
@@ -38,7 +38,7 @@ func TestKeeper_SaveReserveSnapshot(t *testing.T) {
 	err := ammKeeper.saveReserveSnapshot(ctx, 1, pool)
 	require.NoError(t, err)
 
-	snapshot, _, err := ammKeeper.getLastReserveSnapshot(ctx, UsdmPair)
+	snapshot, _, err := ammKeeper.getLastReserveSnapshot(ctx, NUSDPair)
 	require.NoError(t, err)
 
 	require.Equal(t, expectedSnapshot, snapshot)

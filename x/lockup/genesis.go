@@ -1,8 +1,8 @@
 package lockup
 
 import (
-	"github.com/MatrixDao/matrix/x/lockup/keeper"
-	"github.com/MatrixDao/matrix/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

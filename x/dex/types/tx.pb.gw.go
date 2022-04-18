@@ -382,11 +382,11 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_Msg_CreatePool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"matrix", "dex", "pool"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_CreatePool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "pool"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_JoinPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"matrix", "dex", "poolId", "join"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_JoinPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "poolId", "join"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_ExitPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"matrix", "dex", "poolId", "exit"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_ExitPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "poolId", "exit"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

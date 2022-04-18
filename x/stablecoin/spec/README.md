@@ -1,7 +1,7 @@
 # `x/stablecoin`        <!-- omit in toc -->
 
 
-The stablecoin module is responsible for minting and burning USDM, maintenance of USDM's price stability, and orchestration of Matrix Protocol's collateral ratio.
+The stablecoin module is responsible for minting and burning NUSD, maintenance of NUSD's price stability, and orchestration of Nibiru Protocol's collateral ratio.
 
 #### Table of Contents
 - Messages and Events - [[00_msgs_and_events.md]](00_msgs_and_events.md): [description]
@@ -30,7 +30,7 @@ In a new terminal, run the following command:
 
 ```sh
 // send a transaction to mint stablecoin
-$ matrixd tx stablecoin mint 1000validatortoken --from validator --home data/localnet --chain-id localnet
+$ nibid tx stablecoin mint 1000validatortoken --from validator --home data/localnet --chain-id localnet
 
 // query the balance
-$ matrixd q bank balances cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v
+$ nibid q bank balances cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v

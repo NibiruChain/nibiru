@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	// Matrix
-	"github.com/MatrixDao/matrix/app"
-	dexcmd "github.com/MatrixDao/matrix/x/dex/client/cli"
-	pricefeedcmd "github.com/MatrixDao/matrix/x/pricefeed/client/cli"
-	sccmd "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
+	// Nibiru
+	"github.com/NibiruChain/nibiru/app"
+	dexcmd "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	pricefeedcmd "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
+	sccmd "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 
 	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -43,7 +43,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
-// NewRootCmd creates a new root command for matrixd. It is called once in the
+// NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	encodingConfig := app.MakeTestEncodingConfig()
@@ -60,7 +60,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	rootCmd := &cobra.Command{
-		Use:   "matrixd",
+		Use:   "nibid",
 		Short: "simulation app",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
@@ -158,7 +158,7 @@ commands, then builds the rosetta root command given a protocol buffers
 serializer/deserializer.
 
 Args:
-  rootCmd: The root command called once in the 'main.go' of 'matrixd'.
+  rootCmd: The root command called once in the 'main.go' of 'nibid'.
   encodingConfig: EncodingConfig specifies the concrete encoding types to use
     for a given app. This is provided for compatibility between protobuf and
     amino implementations.
@@ -289,7 +289,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	return app.NewMatrixApp(
+	return app.NewNibiruApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
@@ -315,20 +315,20 @@ func (a appCreator) appExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions) (servertypes.ExportedApp, error) {
 
-	var appl *app.MatrixApp
+	var appl *app.NibiruApp
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
 	if height != -1 {
-		appl = app.NewMatrixApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
+		appl = app.NewNibiruApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 
 		if err := appl.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		appl = app.NewMatrixApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
+		appl = app.NewNibiruApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 	}
 
 	return appl.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)

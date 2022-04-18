@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 )

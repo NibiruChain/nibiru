@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,10 +20,8 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		{
 			desc:     "valid genesis state",
-			genState: &types.GenesisState{
-
-			},
-			valid: true,
+			genState: &types.GenesisState{},
+			valid:    true,
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {

@@ -1,4 +1,4 @@
-module github.com/MatrixDao/matrix
+module github.com/NibiruChain/nibiru
 
 go 1.16
 
@@ -43,10 +43,8 @@ replace github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210
 replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 
 // x/stablecoin dependencies
-replace github.com/MatrixDao/matrix/x/stablecoin => ./x/stablecoin
+replace github.com/NibiruChain/nibiru/x/stablecoin => ./x/stablecoin
 
-replace github.com/MatrixDao/matrix/x/testutil => ./x/testutil
+replace github.com/NibiruChain/nibiru/x/testutil => ./x/testutil
 
-replace github.com/MatrixDao/matrix/app => ./app
-
-// replace "github.com/MatrixDao/x/stablecoin/starport/cmdrunner" => ./x/stablecoin/starport/cmdrunner
+replace github.com/NibiruChain/nibiru/app => ./app

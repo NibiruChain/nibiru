@@ -8,7 +8,7 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgLockTokens{}, "matrix/lockup/lock-tokens", nil)
+	cdc.RegisterConcrete(&MsgLockTokens{}, "nibiru/lockup/lock-tokens", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {

@@ -123,7 +123,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 				PoolParams:  PoolParams{},
 				PoolAssets:  tc.poolAssets,
 				TotalWeight: sdk.OneInt(),
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", tc.existingShares),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", tc.existingShares),
 			}
 			numShares, remCoins, _ := pool.numSharesOutFromTokensIn(tc.tokensIn)
 			require.Equal(t, tc.expectedNumShares, numShares)
@@ -150,7 +150,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("foo", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 50),
 				PoolParams: PoolParams{
 					ExitFee: sdk.ZeroDec(),
 				},
@@ -172,7 +172,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("foo", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 50),
 				PoolParams: PoolParams{
 					ExitFee: sdk.ZeroDec(),
 				},
@@ -194,7 +194,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("foo", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 1000),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1000),
 				PoolParams: PoolParams{
 					ExitFee: sdk.ZeroDec(),
 				},
@@ -216,7 +216,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("foo", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 50),
 				PoolParams: PoolParams{
 					ExitFee: sdk.MustNewDecFromStr("0.5"),
 				},
@@ -238,7 +238,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("foo", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 50),
 				PoolParams: PoolParams{
 					ExitFee: sdk.MustNewDecFromStr("0.5"),
 				},
@@ -276,7 +276,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 						Token: sdk.NewInt64Coin("foo", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 50),
 			},
 			numSharesIn: sdk.NewInt(0),
 		},
@@ -291,7 +291,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 						Token: sdk.NewInt64Coin("foo", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 50),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 50),
 			},
 			numSharesIn: sdk.NewInt(51),
 		},
@@ -324,7 +324,7 @@ func TestUpdateLiquidityHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("bbb", 200),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 			},
 			numShares: sdk.NewInt(10),
 			newLiquidity: sdk.NewCoins(
@@ -367,7 +367,7 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 						Token: sdk.NewInt64Coin("aaa", 100),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 			},
 			numShares: sdk.NewInt(10),
 			newLiquidity: sdk.NewCoins(
@@ -378,7 +378,7 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 			name: "no existing liquidity",
 			pool: Pool{
 				PoolAssets:  []PoolAsset{},
-				TotalShares: sdk.NewInt64Coin("matrix/pool/1", 100),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 			},
 			numShares: sdk.NewInt(10),
 			newLiquidity: sdk.NewCoins(

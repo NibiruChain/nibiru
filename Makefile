@@ -17,22 +17,22 @@ proto-gen:
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-	go build $(BUILD_FLAGS) -o build/matrixd.exe ./cmd/matrixd
+	go build $(BUILD_FLAGS) -o build/nibid.exe ./cmd/nibid
 else
-	go build $(BUILD_FLAGS) -o build/matrixd ./cmd/matrixd
+	go build $(BUILD_FLAGS) -o build/nibid ./cmd/nibid
 endif
 
 build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install: go.sum
-	go install $(BUILD_FLAGS) ./cmd/matrixd
+	go install $(BUILD_FLAGS) ./cmd/nibid
 
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true
 	$(DOCKER) run --volume=$(CURDIR):/sources:ro \
         --env TARGET_PLATFORMS='linux/amd64 darwin/amd64 linux/arm64' \
-        --env APP=matrixd \
+        --env APP=nibid \
         --env VERSION=$(VERSION) \
         --env COMMIT=$(COMMIT) \
         --env LEDGER_ENABLED=$(LEDGER_ENABLED) \

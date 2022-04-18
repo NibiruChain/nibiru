@@ -1,10 +1,10 @@
 syntax = "proto3";
-package MatrixDao.stablecoin.v1;
+package NibiruChain.stablecoin.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
+option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 
 // Msg defines the x/stablecoin Msg service.
 service Msg {
@@ -23,8 +23,8 @@ service Msg {
 }
 
 /* 
-MsgMintStable: Msg to mint USDM. A user deposits MTRX and collateral and gets 
-USDM in return. The amount of USDM received depends on the current price set 
+MsgMintStable: Msg to mint NUSD. A user deposits NIBI and collateral and gets 
+NUSD in return. The amount of NUSD received depends on the current price set 
 by the pricefeed library and the current collateral ratio for the protocol.
 */
 message MsgMintStable {
@@ -32,7 +32,7 @@ message MsgMintStable {
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
 }
 
-/* MsgMintStableResponse specifies the amount of USDM token the user will receive after their
+/* MsgMintStableResponse specifies the amount of NUSD token the user will receive after their
 * mint transaction*/
 message MsgMintStableResponse {
   cosmos.base.v1beta1.Coin stable = 1 [(gogoproto.nullable) = false];
@@ -43,7 +43,7 @@ message MsgMintStableResponse {
 }
 
 /* 
-MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and 
+MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral in return. The amount of NIBI and 
 Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
 for the protocol.
 */

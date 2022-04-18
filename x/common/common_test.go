@@ -3,7 +3,7 @@ package common_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/common"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/stretchr/testify/require"
 )
 

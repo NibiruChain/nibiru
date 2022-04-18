@@ -1,5 +1,5 @@
 /*
-Package keeper that mints Matrix stablecoins, maintains their price stability,
+Package keeper that mints Nibiru stablecoins, maintains their price stability,
 and ensures that the protocol remains collateralized enough for stablecoins to
 be redeemed.
 */
@@ -8,9 +8,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/stablecoin/events"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/stablecoin/events"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -173,7 +173,7 @@ func (k Keeper) burnGovTokens(ctx sdk.Context, govTokens sdk.Coin) error {
 		return err
 	}
 
-	events.EmitBurnMtrx(ctx, govTokens)
+	events.EmitBurnNIBI(ctx, govTokens)
 
 	return nil
 }
@@ -189,7 +189,7 @@ func (k Keeper) burnStableTokens(ctx sdk.Context, stable sdk.Coin) error {
 	return nil
 }
 
-// mintStable mints MTRX tokens into module account
+// mintStable mints NIBI tokens into module account
 func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stable))
 	if err != nil {
@@ -208,7 +208,7 @@ func (k Keeper) mintGov(ctx sdk.Context, gov sdk.Coin) error {
 		return err
 	}
 
-	events.EmitMintMtrx(ctx, gov)
+	events.EmitMintNIBI(ctx, gov)
 
 	return nil
 }
@@ -289,7 +289,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
 	// based on the collateral ratio.
 
-	// Send USDM from account to module
+	// Send NUSD from account to module
 	stablesToBurn := sdk.NewCoins(msg.Stable)
 	err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgCreator, types.ModuleName, stablesToBurn)

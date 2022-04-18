@@ -7,7 +7,7 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	ammtypes "github.com/MatrixDao/matrix/x/vamm/types"
+	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
 )
 
 func TestSwapInput_Errors(t *testing.T) {
@@ -29,7 +29,7 @@ func TestSwapInput_Errors(t *testing.T) {
 		},
 		{
 			"base amount less than base limit in Long",
-			UsdmPair,
+			NUSDPair,
 			ammtypes.Direction_ADD_TO_AMM,
 			sdktypes.NewInt(500_000),
 			sdktypes.NewInt(454_500),
@@ -37,7 +37,7 @@ func TestSwapInput_Errors(t *testing.T) {
 		},
 		{
 			"base amount more than base limit in Short",
-			UsdmPair,
+			NUSDPair,
 			ammtypes.Direction_REMOVE_FROM_AMM,
 			sdktypes.NewInt(1_000_000),
 			sdktypes.NewInt(454_500),
@@ -45,7 +45,7 @@ func TestSwapInput_Errors(t *testing.T) {
 		},
 		{
 			"quote input bigger than reserve ratio",
-			UsdmPair,
+			NUSDPair,
 			ammtypes.Direction_REMOVE_FROM_AMM,
 			sdktypes.NewInt(10_000_000),
 			sdktypes.NewInt(10),
@@ -53,7 +53,7 @@ func TestSwapInput_Errors(t *testing.T) {
 		},
 		{
 			"over fluctuation limit fails",
-			UsdmPair,
+			NUSDPair,
 			ammtypes.Direction_ADD_TO_AMM,
 			sdktypes.NewInt(1_000_000),
 			sdktypes.NewInt(454544),
@@ -68,7 +68,7 @@ func TestSwapInput_Errors(t *testing.T) {
 
 			err := keeper.CreatePool(
 				ctx,
-				UsdmPair,
+				NUSDPair,
 				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
 				sdktypes.NewInt(10_000_000),       // 10
 				sdktypes.NewInt(5_000_000),        // 5
@@ -134,7 +134,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 
 			err := keeper.CreatePool(
 				ctx,
-				UsdmPair,
+				NUSDPair,
 				sdktypes.MustNewDecFromStr("0.9"),  // 0.9 ratio
 				sdktypes.NewInt(10_000_000),        // 10 tokens
 				sdktypes.NewInt(5_000_000),         // 5 tokens
@@ -144,7 +144,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 
 			res, err := keeper.SwapInput(
 				ctx,
-				UsdmPair,
+				NUSDPair,
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
@@ -152,7 +152,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)
 
-			pool, err := keeper.getPool(ctx, UsdmPair)
+			pool, err := keeper.getPool(ctx, NUSDPair)
 			quoteAmount, err := pool.GetPoolQuoteAssetReserveAsInt()
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedQuoteReserve, quoteAmount)
@@ -169,7 +169,7 @@ func TestCreatePool(t *testing.T) {
 
 	err := ammKeeper.CreatePool(
 		ctx,
-		UsdmPair,
+		NUSDPair,
 		sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
 		sdktypes.NewInt(10_000_000),       // 10 tokens
 		sdktypes.NewInt(5_000_000),        // 5 tokens
@@ -177,7 +177,7 @@ func TestCreatePool(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	exists := ammKeeper.existsPool(ctx, UsdmPair)
+	exists := ammKeeper.existsPool(ctx, NUSDPair)
 	require.True(t, exists)
 
 	notExist := ammKeeper.existsPool(ctx, "BTC:OTHER")

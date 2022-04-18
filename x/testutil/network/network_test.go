@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/MatrixDao/matrix/x/testutil/network"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 )
 
 type IntegrationTestSuite struct {

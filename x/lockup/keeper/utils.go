@@ -3,7 +3,7 @@ package keeper
 import (
 	"bytes"
 
-	"github.com/MatrixDao/matrix/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
