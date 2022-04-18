@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -72,7 +72,7 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 		swapFee        string
 		exitFee        string
 		extraArgs      []string
-		expectErr      bool
+		expectedErr    error
 		respType       proto.Message
 		expectedCode   uint32
 	}{
@@ -83,9 +83,26 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 			swapFee:        "0.003",
 			exitFee:        "0.003",
 			extraArgs:      []string{},
-			expectErr:      false,
 			respType:       &sdk.TxResponse{},
 			expectedCode:   5, // bankKeeper code for insufficient funds
+		},
+		{
+			name:           "create pool with invalid weights",
+			tokenWeights:   "0stake, 1node0token",
+			initialDeposit: "10000stake,10000node0token",
+			swapFee:        "0.003",
+			exitFee:        "0.003",
+			extraArgs:      []string{},
+			expectedErr:    types.ErrInvalidCreatePoolArgs,
+		},
+		{
+			name:           "create pool with deposit not matching weights",
+			tokenWeights:   "1stake, 1node0token",
+			initialDeposit: "10000foo,10000node0token",
+			swapFee:        "0.003",
+			exitFee:        "0.003",
+			extraArgs:      []string{},
+			expectedErr:    types.ErrInvalidCreatePoolArgs,
 		},
 		{
 			name:           "create pool with sufficient funds",
@@ -94,7 +111,6 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 			swapFee:        "0.003",
 			exitFee:        "0.003",
 			extraArgs:      []string{},
-			expectErr:      false,
 			respType:       &sdk.TxResponse{},
 			expectedCode:   0,
 		},
@@ -105,8 +121,8 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 
 		s.Run(tc.name, func() {
 			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, poolCreatorAddr, tc.tokenWeights, tc.initialDeposit, tc.swapFee, tc.exitFee, tc.extraArgs...)
-			if tc.expectErr {
-				s.Require().Error(err)
+			if tc.expectedErr != nil {
+				s.Require().ErrorIs(err, tc.expectedErr)
 			} else {
 				s.Require().NoError(err, out.String())
 				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
@@ -170,8 +186,8 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 		{
 			name: "join pool with insufficient balance",
 			args: []string{
-				fmt.Sprintf("--%s=%d", cli.FlagPoolId, 1),
-				fmt.Sprintf("--%s=%s", cli.FlagTokensIn, "1000000000stake,10000000000node0token"),
+				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
+				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "1000000000stake,10000000000node0token"),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
