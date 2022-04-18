@@ -106,7 +106,7 @@ const (
 	Name                 = "matrix"
 )
 
-const appName = "Matrix"
+const appName = "Nibiru"
 
 var (
 	// DefaultNodeHome default home directories for the application daemon

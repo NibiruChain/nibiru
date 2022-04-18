@@ -10,8 +10,8 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	matrixApp, ctx := testutil.NewNibiruApp(true)
-	keeper := &matrixApp.StablecoinKeeper
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	keeper := &nibiruApp.StablecoinKeeper
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()
 	keeper.SetParams(ctx, params)

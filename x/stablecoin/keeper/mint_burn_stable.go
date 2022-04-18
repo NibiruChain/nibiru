@@ -1,5 +1,5 @@
 /*
-Package keeper that mints Matrix stablecoins, maintains their price stability,
+Package keeper that mints Nibiru stablecoins, maintains their price stability,
 and ensures that the protocol remains collateralized enough for stablecoins to
 be redeemed.
 */

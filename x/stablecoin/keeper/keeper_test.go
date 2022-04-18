@@ -43,8 +43,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) _doSetupTest() {
-	matrixApp, ctx := testutil.NewNibiruApp(true)
-	suite.app = matrixApp
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	suite.app = nibiruApp
 	suite.ctx = ctx
 
 	queryGrpcClientConn := baseapp.NewQueryServerTestHelper(
@@ -62,8 +62,8 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get default Params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewNibiruApp(true)
-		stableKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(true)
+		stableKeeper := &nibiruApp.StablecoinKeeper
 
 		params := types.DefaultParams()
 		stableKeeper.SetParams(ctx, params)
@@ -73,8 +73,8 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get non-default params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewNibiruApp(true)
-		stableKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(true)
+		stableKeeper := &nibiruApp.StablecoinKeeper
 
 		collRatio := sdk.MustNewDecFromStr("0.5")
 		feeRatio := collRatio
@@ -89,8 +89,8 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Calling Get without setting causes a panic"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewNibiruApp(false)
-		stableKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(false)
+		stableKeeper := &nibiruApp.StablecoinKeeper
 
 		require.Panics(
 			t,

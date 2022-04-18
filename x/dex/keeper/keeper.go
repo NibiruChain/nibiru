@@ -293,7 +293,7 @@ func (k Keeper) NewPool(
 		},
 		Base:    poolShareBaseDenom,
 		Display: poolShareDisplayDenom,
-		Name:    fmt.Sprintf("Matrix Pool %d Share Token", pool.Id),
+		Name:    fmt.Sprintf("Nibiru Pool %d Share Token", pool.Id),
 		Symbol:  poolShareDisplayDenom,
 	})
 

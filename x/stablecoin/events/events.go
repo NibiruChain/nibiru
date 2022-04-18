@@ -34,14 +34,14 @@ func _mintOrBurnEvent(eventType string, coin sdk.Coin) sdk.Event {
 	return event
 }
 
-// EmitMintStable emits an event when a Matrix Stablecoin is minted.
+// EmitMintStable emits an event when a Nibiru Stablecoin is minted.
 func EmitMintStable(ctx sdk.Context, coin sdk.Coin) {
 	const EventTypeMintStable = "mint_stable"
 	event := _mintOrBurnEvent(EventTypeMintStable, coin)
 	ctx.EventManager().EmitEvents(sdk.Events{event})
 }
 
-// EmitBurnStable emits an event when a Matrix Stablecoin is burned.
+// EmitBurnStable emits an event when a Nibiru Stablecoin is burned.
 func EmitBurnStable(ctx sdk.Context, coin sdk.Coin) {
 	const EventTypeBurnStable = "burn_stable"
 	event := _mintOrBurnEvent(EventTypeBurnStable, coin)
