@@ -3,7 +3,7 @@ package cmd_test
 import (
 	"testing"
 
-	// Matrix
+	// Nibiru
 	"github.com/NibiruChain/nibiru/app"
 	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
 

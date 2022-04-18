@@ -1,4 +1,4 @@
-# Matrix Modules
+# Nibiru Modules
 
 - [common](common/spec/README.md): TODO
 
