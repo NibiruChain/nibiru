@@ -23,7 +23,7 @@ func New(shouldUseDefaultGenesis bool) *app.NibiruApp {
 		panic(err)
 	}
 
-	nodeHome := filepath.Join(userHomeDir, ".matrix")
+	nodeHome := filepath.Join(userHomeDir, ".nibid")
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 

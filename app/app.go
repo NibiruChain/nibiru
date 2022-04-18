@@ -103,7 +103,7 @@ import (
 
 const (
 	AccountAddressPrefix = "nibi"
-	Name                 = "matrix"
+	Name                 = "nibiru"
 )
 
 const appName = "Nibiru"
