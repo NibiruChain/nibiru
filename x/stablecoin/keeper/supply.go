@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -48,6 +49,9 @@ func (k Keeper) GetLiquidityRatio(ctx sdk.Context) (sdk.Dec, error) {
 	}
 
 	stableMarketCap := k.GetStableMarketCap(ctx)
+	if stableMarketCap.Equal(sdk.ZeroInt()) {
+		return sdk.Dec{}, fmt.Errorf("stable maket cap is equal to zero")
+	}
 
 	return govMarketCap.ToDec().Quo(stableMarketCap.ToDec()), nil
 }

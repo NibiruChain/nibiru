@@ -65,3 +65,44 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 
 	require.Equal(t, sdktypes.NewInt(2_000_000), marketCap) // 1 * 10^6 * 2 (price of gov token)
 }
+
+func TestKeeper_GetLiquidityRatio(t *testing.T) {
+	matrixApp, ctx := testutil.NewNibiruApp(false)
+	keeper := matrixApp.StablecoinKeeper
+
+	poolAccountAddr := sample.AccAddress()
+	poolParams := types2.PoolParams{
+		SwapFee: sdktypes.NewDecWithPrec(3, 2),
+		ExitFee: sdktypes.NewDecWithPrec(3, 2),
+	}
+	poolAssets := []types2.PoolAsset{
+		{
+			Token:  sdktypes.NewInt64Coin(common.GovDenom, 2_000_000),
+			Weight: sdktypes.NewInt(100),
+		},
+		{
+			Token:  sdktypes.NewInt64Coin(common.StableDenom, 1_000_000),
+			Weight: sdktypes.NewInt(100),
+		},
+	}
+
+	pool, err := types2.NewPool(1, poolAccountAddr, poolParams, poolAssets)
+	require.NoError(t, err)
+	keeper.DexKeeper = mock.NewKeeper(pool)
+
+	// We set some supply
+	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
+		sdktypes.NewInt64Coin(common.GovDenom, 1_000_000),
+	))
+	require.NoError(t, err)
+
+	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
+		sdktypes.NewInt64Coin(common.StableDenom, 1_000_000),
+	))
+	require.NoError(t, err)
+
+	liquidityRatio, err := keeper.GetLiquidityRatio(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, sdktypes.MustNewDecFromStr("2"), liquidityRatio) // 2 * 1 * 10^6 / Stable 1 * 10^6
+}
