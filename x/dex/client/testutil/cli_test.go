@@ -246,7 +246,7 @@ func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
 		expectErr bool
 	}{
 		{
-			"query total liquidity", // osmosisd query gamm total-liquidity
+			"query total liquidity", // nibid query dex total-liquidity
 			[]string{
 				fmt.Sprintf("--%s=%s", tmcli.OutputFlag, "json"),
 			},
