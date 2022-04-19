@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -15,12 +16,13 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice) (*t
 		return nil, err
 	}
 
-	_, err = k.GetOracle(ctx, msg.MarketID, from)
+	pairID := common.PoolNameFromDenoms([]string{msg.Token0, msg.Token1})
+	_, err = k.GetOracle(ctx, pairID, from)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = k.SetPrice(ctx, from, msg.MarketID, msg.Price, msg.Expiry)
+	_, err = k.SetPrice(ctx, from, msg.Token0, msg.Token1, msg.Price, msg.Expiry)
 
 	if err != nil {
 		return nil, err

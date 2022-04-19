@@ -11,23 +11,22 @@ option (gogoproto.verbose_equal_all) = true;
 
 // Params defines the parameters for the module.
 message Params {
-  repeated Market markets = 1 [(gogoproto.castrepeated) = "Markets", (gogoproto.nullable) = false];
+  repeated Pair pairs = 1 [(gogoproto.castrepeated) = "Pairs", (gogoproto.nullable) = false];
 }
 
-// Market defines an asset in the pricefeed.
-message Market {
-  string         market_id   = 1 [(gogoproto.customname) = "MarketID"];
-  string         base_asset  = 2;
-  string         quote_asset = 3;
-  repeated bytes oracles     = 4 [
+// Pair defines an asset in the pricefeed.
+message Pair {
+  string         token0  = 1;
+  string         token1 = 2;
+  repeated bytes oracles     = 3 [
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
   ];
-  bool active = 5;
+  bool active = 4;
 }
 
-// PostedPrice defines a price for market posted by a specific oracle.
+// PostedPrice defines a price for an asset pair posted by a specific oracle.
 message PostedPrice {
-  string market_id      = 1 [(gogoproto.customname) = "MarketID"];
+  string pair_id      = 1 [(gogoproto.customname) = "PairID"];
   bytes  oracle_address = 2 [
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
   ];
@@ -35,10 +34,10 @@ message PostedPrice {
   google.protobuf.Timestamp expiry = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 }
 
-// CurrentPrice defines a current price for a particular market in the pricefeed
+// CurrentPrice defines the current price for an asset pair in the pricefeed
 // module.
 message CurrentPrice {
-  string market_id = 1 [(gogoproto.customname) = "MarketID"];
+  string pair_id = 1 [(gogoproto.customname) = "PairID"];
   string price = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 

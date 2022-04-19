@@ -21,8 +21,8 @@ func TestPostPrice(t *testing.T) {
 	unauthorizedAddrs := addrs[2:]
 
 	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: authorizedOracles, Active: true},
+		Pairs: []types.Pair{
+			{Token1: "tst", Token0: "usd", Oracles: authorizedOracles, Active: true},
 		},
 	}
 	k.SetParams(ctx, mp)
@@ -30,21 +30,28 @@ func TestPostPrice(t *testing.T) {
 	tests := []struct {
 		giveMsg      string
 		giveOracle   sdk.AccAddress
-		giveMarketId string
+		giveToken0   string
+		giveToken1   string
 		giveExpiry   time.Time
 		wantAccepted bool
 		errorKind    error
 	}{
-		{"authorized", authorizedOracles[0], "tstusd", ctx.BlockTime().UTC().Add(time.Hour * 1), true, nil},
-		{"expired", authorizedOracles[0], "tstusd", ctx.BlockTime().UTC().Add(-time.Hour * 1), false, types.ErrExpired},
-		{"invalid", authorizedOracles[0], "invalid", ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidMarket},
-		{"unauthorized", unauthorizedAddrs[0], "tstusd", ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
+		{"authorized", authorizedOracles[0], "tst", "usd",
+			ctx.BlockTime().UTC().Add(time.Hour * 1), true, nil},
+		{"expired", authorizedOracles[0], "tst", "usd",
+			ctx.BlockTime().UTC().Add(-time.Hour * 1), false, types.ErrExpired},
+		{"invalid", authorizedOracles[0], "invalid", "invalid",
+			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidPair},
+		{"unauthorized", unauthorizedAddrs[0], "tst", "usd",
+			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.giveMsg, func(t *testing.T) {
 			// Use MsgServer over keeper methods directly to tests against valid oracles
-			msg := types.NewMsgPostPrice(tt.giveOracle.String(), tt.giveMarketId, sdk.MustNewDecFromStr("0.5"), tt.giveExpiry)
+			msg := types.NewMsgPostPrice(
+				tt.giveOracle.String(), tt.giveToken0, tt.giveToken1,
+				sdk.MustNewDecFromStr("0.5"), tt.giveExpiry)
 			_, err := msgSrv.PostPrice(sdk.WrapSDKContext(ctx), msg)
 
 			if tt.wantAccepted {

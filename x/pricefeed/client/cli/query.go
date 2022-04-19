@@ -33,7 +33,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(CmdOracles())
 
-	cmd.AddCommand(CmdMarkets())
+	cmd.AddCommand(CmdPairs())
 
 	// this line is used by starport scaffolding # 1
 

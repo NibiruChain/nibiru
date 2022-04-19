@@ -26,10 +26,10 @@ func TestKeeper_SaveReserveSnapshot(t *testing.T) {
 	pool := getSamplePool()
 
 	expectedSnapshot := ammtypes.ReserveSnapshot{
-		QuoteAssetReserve: pool.QuoteAssetReserve,
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		Timestamp:         expectedTime.Unix(),
-		BlockNumber:       int64(expectedBlockHeight),
+		Token0Reserve: pool.Token0Reserve,
+		Token1Reserve: pool.Token1Reserve,
+		Timestamp:     expectedTime.Unix(),
+		BlockNumber:   int64(expectedBlockHeight),
 	}
 
 	ammKeeper, ctx := AmmKeeper(t)
@@ -74,7 +74,7 @@ func TestKeeper_updateSnapshot_doesNotIncrementCounter(t *testing.T) {
 	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
 
 	// update the snapshot, counter should not be incremented
-	pool.QuoteAssetReserve = "20000"
+	pool.Token0Reserve = "20000"
 	err = ammKeeper.updateSnapshot(ctx, 1, pool)
 	require.NoError(t, err)
 
@@ -82,7 +82,7 @@ func TestKeeper_updateSnapshot_doesNotIncrementCounter(t *testing.T) {
 
 	savedSnap, _, err := ammKeeper.getLastReserveSnapshot(ctx, pool.Pair)
 	require.NoError(t, err)
-	require.Equal(t, pool.QuoteAssetReserve, savedSnap.QuoteAssetReserve)
+	require.Equal(t, pool.Token0Reserve, savedSnap.Token0Reserve)
 }
 
 func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
@@ -95,10 +95,10 @@ func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
 	pool := getSamplePool()
 
 	expectedSnapshot := ammtypes.ReserveSnapshot{
-		QuoteAssetReserve: pool.QuoteAssetReserve,
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		Timestamp:         expectedTime.Unix(),
-		BlockNumber:       expectedHeight,
+		Token0Reserve: pool.Token0Reserve,
+		Token1Reserve: pool.Token1Reserve,
+		Timestamp:     expectedTime.Unix(),
+		BlockNumber:   expectedHeight,
 	}
 
 	err := ammKeeper.saveReserveSnapshot(ctx, 0, pool)
@@ -112,8 +112,8 @@ func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
 
 	// We save another different snapshot
 	differentSnapshot := expectedSnapshot
-	differentSnapshot.QuoteAssetReserve = "12341234"
-	pool.QuoteAssetReserve = differentSnapshot.QuoteAssetReserve
+	differentSnapshot.Token0Reserve = "12341234"
+	pool.Token0Reserve = differentSnapshot.Token0Reserve
 	err = ammKeeper.saveReserveSnapshot(ctx, counter, pool)
 	require.NoError(t, err)
 

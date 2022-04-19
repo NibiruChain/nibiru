@@ -18,23 +18,23 @@ var _ = strconv.Itoa(0)
 
 func CmdPostPrice() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "post-price [market-id] [price] [expiry]",
+		Use:   "post-price [token0] [token1] [price] [expiry]",
 		Short: "Broadcast message PostPrice",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argMarketId := args[0]
+			token0, token1 := args[0], args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			price, err := sdk.NewDecFromStr(args[1])
+			price, err := sdk.NewDecFromStr(args[2])
 			if err != nil {
 				return err
 			}
 
-			expiryInt, err := strconv.ParseInt(args[2], 10, 64)
+			expiryInt, err := strconv.ParseInt(args[3], 10, 64)
 			if err != nil {
 				return fmt.Errorf("invalid expiry %s: %w", args[2], err)
 			}
@@ -47,7 +47,7 @@ func CmdPostPrice() *cobra.Command {
 
 			msg := types.NewMsgPostPrice(
 				clientCtx.GetFromAddress().String(),
-				argMarketId,
+				token0, token1,
 				price,
 				expiry,
 			)

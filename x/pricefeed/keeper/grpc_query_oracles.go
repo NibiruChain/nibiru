@@ -16,7 +16,7 @@ func (k Keeper) Oracles(goCtx context.Context, req *types.QueryOraclesRequest) (
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	oracles, err := k.GetOracles(ctx, req.MarketId)
+	oracles, err := k.GetOracles(ctx, req.PairId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}

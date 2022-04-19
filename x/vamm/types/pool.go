@@ -16,8 +16,8 @@ func NewPool(
 	return &Pool{
 		Pair:                  pair,
 		TradeLimitRatio:       tradeLimitRatio.String(),
-		QuoteAssetReserve:     quoteAssetReserve.String(),
-		BaseAssetReserve:      baseAssetReserve.String(),
+		Token0Reserve:         quoteAssetReserve.String(),
+		Token1Reserve:         baseAssetReserve.String(),
 		FluctuationLimitRatio: fluctuationLimitRatio.String(),
 	}
 }
@@ -25,10 +25,10 @@ func NewPool(
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
 func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Int) (bool, error) {
-	quoteAssetReserve, ok := sdk.NewIntFromString(p.QuoteAssetReserve)
+	quoteAssetReserve, ok := sdk.NewIntFromString(p.Token0Reserve)
 	if !ok {
 		return false, fmt.Errorf("error with pool quote asset reserve value: %s",
-			p.QuoteAssetReserve)
+			p.Token0Reserve)
 	}
 
 	tradeLimitRatio, err := sdk.NewDecFromStr(p.TradeLimitRatio)
@@ -45,12 +45,12 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 		return sdk.ZeroInt(), nil
 	}
 
-	baseAssetReserve, err := p.GetPoolBaseAssetReserveAsInt()
+	baseAssetReserve, err := p.GetPoolToken1ReserveAsInt()
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	quoteAssetReserve, err := p.GetPoolQuoteAssetReserveAsInt()
+	quoteAssetReserve, err := p.GetPoolToken0ReserveAsInt()
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -82,45 +82,45 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 	return baseAssetBought.TruncateInt(), nil
 }
 
-// GetPoolBaseAssetReserveAsInt returns the base asset reserve value from a pool as sdk.Int
-func (p *Pool) GetPoolBaseAssetReserveAsInt() (sdk.Int, error) {
-	baseAssetReserve, ok := sdk.NewIntFromString(p.BaseAssetReserve)
+// GetPoolToken1ReserveAsInt returns the base asset reserve value from a pool as sdk.Int
+func (p *Pool) GetPoolToken1ReserveAsInt() (sdk.Int, error) {
+	baseAssetReserve, ok := sdk.NewIntFromString(p.Token1Reserve)
 	if !ok {
-		return sdk.Int{}, fmt.Errorf("error with pool base asset reserve value: %s", p.BaseAssetReserve)
+		return sdk.Int{}, fmt.Errorf("error with pool base asset reserve value: %s", p.Token1Reserve)
 	}
 
 	return baseAssetReserve, nil
 }
 
-// GetPoolQuoteAssetReserveAsInt returns the quote asset reserve value from pool as sdk.Int
-func (p *Pool) GetPoolQuoteAssetReserveAsInt() (sdk.Int, error) {
-	quoteAssetReserve, ok := sdk.NewIntFromString(p.QuoteAssetReserve)
+// GetPoolToken0ReserveAsInt returns the quote asset reserve value from pool as sdk.Int
+func (p *Pool) GetPoolToken0ReserveAsInt() (sdk.Int, error) {
+	quoteAssetReserve, ok := sdk.NewIntFromString(p.Token0Reserve)
 	if !ok {
-		return sdk.Int{}, fmt.Errorf("error with pool quote asset reserve value: %s", p.QuoteAssetReserve)
+		return sdk.Int{}, fmt.Errorf("error with pool quote asset reserve value: %s", p.Token0Reserve)
 	}
 
 	return quoteAssetReserve, nil
 }
 
-// IncreaseQuoteAssetReserve increases the quote reserve by amount
-func (p *Pool) IncreaseQuoteAssetReserve(amount sdk.Int) {
-	quoteAssetReserve, _ := p.GetPoolQuoteAssetReserveAsInt()
-	p.QuoteAssetReserve = quoteAssetReserve.Add(amount).String()
+// IncreaseToken0Reserve increases the quote reserve by amount
+func (p *Pool) IncreaseToken0Reserve(amount sdk.Int) {
+	quoteAssetReserve, _ := p.GetPoolToken0ReserveAsInt()
+	p.Token0Reserve = quoteAssetReserve.Add(amount).String()
 }
 
-// DecreaseBaseAssetReserve decreases the base reserve by amount
-func (p *Pool) DecreaseBaseAssetReserve(amount sdk.Int) {
-	baseAssetReserve, _ := p.GetPoolBaseAssetReserveAsInt()
-	p.BaseAssetReserve = baseAssetReserve.Sub(amount).String()
+// DecreaseToken1Reserve decreases the base reserve by amount
+func (p *Pool) DecreaseToken1Reserve(amount sdk.Int) {
+	baseAssetReserve, _ := p.GetPoolToken1ReserveAsInt()
+	p.Token1Reserve = baseAssetReserve.Sub(amount).String()
 }
 
-// DecreaseQuoteAssetReserve descreases the quote asset reserve by amount
-func (p *Pool) DecreaseQuoteAssetReserve(amount sdk.Int) {
-	quoteAssetReserve, _ := p.GetPoolQuoteAssetReserveAsInt()
-	p.QuoteAssetReserve = quoteAssetReserve.Sub(amount).String()
+// DecreaseToken0Reserve descreases the quote asset reserve by amount
+func (p *Pool) DecreaseToken0Reserve(amount sdk.Int) {
+	quoteAssetReserve, _ := p.GetPoolToken0ReserveAsInt()
+	p.Token0Reserve = quoteAssetReserve.Sub(amount).String()
 }
 
-func (p *Pool) IncreaseBaseAssetReserve(amount sdk.Int) {
-	baseAssetReserve, _ := p.GetPoolBaseAssetReserveAsInt()
-	p.BaseAssetReserve = baseAssetReserve.Add(amount).String()
+func (p *Pool) IncreaseToken1Reserve(amount sdk.Int) {
+	baseAssetReserve, _ := p.GetPoolToken1ReserveAsInt()
+	p.Token1Reserve = baseAssetReserve.Add(amount).String()
 }

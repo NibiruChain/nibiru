@@ -8,20 +8,20 @@ import (
 
 // Parameter keys
 var (
-	KeyMarkets     = []byte("Markets")
-	DefaultMarkets = []Market{}
+	KeyPairs     = []byte("Pairs")
+	DefaultPairs = []Pair{}
 )
 
 // NewParams creates a new AssetParams object
-func NewParams(markets []Market) Params {
+func NewParams(markets []Pair) Params {
 	return Params{
-		Markets: markets,
+		Pairs: markets,
 	}
 }
 
 // DefaultParams default params for pricefeed
 func DefaultParams() Params {
-	return NewParams(DefaultMarkets)
+	return NewParams(DefaultPairs)
 }
 
 // ParamKeyTable Key declaration for parameters
@@ -33,17 +33,17 @@ func ParamKeyTable() paramtypes.KeyTable {
 // pairs of pricefeed module's parameters.
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyMarkets, &p.Markets, validateMarketParams),
+		paramtypes.NewParamSetPair(KeyPairs, &p.Pairs, validatePairParams),
 	}
 }
 
 // Validate ensure that params have valid values
 func (p Params) Validate() error {
-	return validateMarketParams(p.Markets)
+	return validatePairParams(p.Pairs)
 }
 
-func validateMarketParams(i interface{}) error {
-	markets, ok := i.(Markets)
+func validatePairParams(i interface{}) error {
+	markets, ok := i.(Pairs)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

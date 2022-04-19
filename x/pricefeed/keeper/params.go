@@ -18,26 +18,26 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
 
-// GetMarkets returns the markets from params
-func (k Keeper) GetMarkets(ctx sdk.Context) types.Markets {
-	return k.GetParams(ctx).Markets
+// GetPairs returns the markets from params
+func (k Keeper) GetPairs(ctx sdk.Context) types.Pairs {
+	return k.GetParams(ctx).Pairs
 }
 
 // GetOracles returns the oracles in the pricefeed store
-func (k Keeper) GetOracles(ctx sdk.Context, marketID string) ([]sdk.AccAddress, error) {
-	for _, m := range k.GetMarkets(ctx) {
-		if marketID == m.MarketID {
+func (k Keeper) GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error) {
+	for _, m := range k.GetPairs(ctx) {
+		if pairID == m.PairID() {
 			return m.Oracles, nil
 		}
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidMarket, marketID)
+	return nil, sdkerrors.Wrap(types.ErrInvalidPair, pairID)
 }
 
 // GetOracle returns the oracle from the store or an error if not found
 func (k Keeper) GetOracle(
-	ctx sdk.Context, marketID string, address sdk.AccAddress,
+	ctx sdk.Context, pairID string, address sdk.AccAddress,
 ) (sdk.AccAddress, error) {
-	oracles, err := k.GetOracles(ctx, marketID)
+	oracles, err := k.GetOracles(ctx, pairID)
 	if err != nil {
 		// Error already wrapped
 		return nil, err
@@ -50,16 +50,16 @@ func (k Keeper) GetOracle(
 	return nil, sdkerrors.Wrap(types.ErrInvalidOracle, address.String())
 }
 
-// GetMarket returns the market if it is in the pricefeed system
-func (k Keeper) GetMarket(ctx sdk.Context, marketID string) (types.Market, bool) {
-	markets := k.GetMarkets(ctx)
+// GetPair returns the market if it is in the pricefeed system
+func (k Keeper) GetPair(ctx sdk.Context, pairID string) (types.Pair, bool) {
+	markets := k.GetPairs(ctx)
 
 	for i := range markets {
-		if markets[i].MarketID == marketID {
+		if markets[i].PairID() == pairID {
 			return markets[i], true
 		}
 	}
-	return types.Market{}, false
+	return types.Pair{}, false
 }
 
 // GetAuthorizedAddresses returns a list of addresses that have special authorization within this module, eg the oracles of all markets.
@@ -67,7 +67,7 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 	var oracles []sdk.AccAddress
 	uniqueOracles := map[string]bool{}
 
-	for _, m := range k.GetMarkets(ctx) {
+	for _, m := range k.GetPairs(ctx) {
 		for _, o := range m.Oracles {
 			// de-dup list of oracles
 			if _, found := uniqueOracles[o.String()]; !found {

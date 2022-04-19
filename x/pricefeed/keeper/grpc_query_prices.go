@@ -18,7 +18,7 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 
 	var currentPrices types.CurrentPriceResponses
 	for _, cp := range k.GetCurrentPrices(ctx) {
-		if cp.MarketID != "" {
+		if cp.PairID != "" {
 			currentPrices = append(currentPrices, types.CurrentPriceResponse(cp))
 		}
 	}

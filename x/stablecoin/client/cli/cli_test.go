@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -43,29 +43,29 @@ type IntegrationTestSuite struct {
 }
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
-func NewPricefeedGen() *pricefeedtypes.GenesisState {
+func NewPricefeedGen() *pftypes.GenesisState {
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
 
-	return &pricefeedtypes.GenesisState{
-		Params: pricefeedtypes.Params{
-			Markets: []pricefeedtypes.Market{
-				{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
-					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
-					Active: true},
-				{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
-					QuoteAsset: common.StableDenom, Oracles: []sdk.AccAddress{oracle},
-					Active: true},
+	return &pftypes.GenesisState{
+		Params: pftypes.Params{
+			Pairs: []pftypes.Pair{
+				{Token0: common.GovStablePool.Token0,
+					Token1:  common.GovStablePool.Token1,
+					Oracles: []sdk.AccAddress{oracle}, Active: true},
+				{Token0: common.CollStablePool.Token0,
+					Token1:  common.CollStablePool.Token1,
+					Oracles: []sdk.AccAddress{oracle}, Active: true},
 			},
 		},
-		PostedPrices: []pricefeedtypes.PostedPrice{
+		PostedPrices: []pftypes.PostedPrice{
 			{
-				MarketID:      common.GovStablePool,
+				PairID:        common.GovStablePool.PairID(),
 				OracleAddress: oracle,
 				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				MarketID:      common.CollStablePool,
+				PairID:        common.CollStablePool.PairID(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),
@@ -89,7 +89,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState[stabletypes.ModuleName] = stableGenJson
 
 	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
-	genesisState[pricefeedtypes.ModuleName] = pricefeedGenJson
+	genesisState[pftypes.ModuleName] = pricefeedGenJson
 
 	s.cfg.GenesisState = genesisState
 
@@ -303,7 +303,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 					tc.expectedStable, balRes.Balances.AmountOf(common.StableDenom))
 
 				// Query treasury pool balance
-				resp, err = banktestutil.QueryBalancesExec(clientCtx, types.NewModuleAddress(common.TreasuryPoolModuleAccount))
+				resp, err = banktestutil.QueryBalancesExec(
+					clientCtx, types.NewModuleAddress(common.TreasuryPoolModuleAccount))
 				s.Require().NoError(err)
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
 				s.Require().NoError(err)
@@ -312,7 +313,9 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 					tc.expectedTreasury, balRes.Balances)
 
 				// Query ecosystem fund balance
-				resp, err = banktestutil.QueryBalancesExec(clientCtx, types.NewModuleAddress(stabletypes.StableEFModuleAccount))
+				resp, err = banktestutil.QueryBalancesExec(
+					clientCtx,
+					types.NewModuleAddress(stabletypes.StableEFModuleAccount))
 				s.Require().NoError(err)
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
 				s.Require().NoError(err)
