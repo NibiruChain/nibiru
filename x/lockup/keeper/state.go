@@ -60,6 +60,7 @@ func (s LockState) Create(l *types.Lock) {
 
 	id := s.nextPrimaryKey()
 	pk := sdk.Uint64ToBigEndian(id) // TODO(mercilex): processed twice, maybe next primary key can return the bytes version
+	l.LockId = id                   // sets lock ID so that is mapped in state
 
 	addrTimeIndex := s.keyAddrTime(l.Owner, l.EndTime, pk)
 	addrIndex := s.keyAddr(l.Owner, pk)
@@ -70,7 +71,6 @@ func (s LockState) Create(l *types.Lock) {
 	s.addrIndex.Set(addrIndex, []byte{})         // maps addr to lock ID
 	s.timeIndex.Set(timeIndex, []byte{})         // maps unlock time to lock ID
 
-	l.LockId = id
 }
 
 func (s LockState) Delete(l *types.Lock) error {
@@ -95,6 +95,23 @@ func (s LockState) Get(id uint64) (*types.Lock, error) {
 		s.cdc.MustUnmarshal(lockBytes, lock)
 		return lock, nil
 	}
+}
+
+// UnlockedIDsByAddress returns the list of types.Lock IDs which can be
+// unlocked given the lock owner sdk.AccAddress.
+func (s LockState) UnlockedIDsByAddress(addr sdk.AccAddress) []uint64 {
+	key := s.keyAddrTime(addr.String(), s.ctx.BlockTime(), nil)
+	iter := s.addrTimeIndex.Iterator(nil, key)
+	defer iter.Close()
+
+	var ids []uint64
+
+	for ; iter.Valid(); iter.Next() {
+		primaryKey := iter.Key()[len(key):]
+		ids = append(ids, sdk.BigEndianToUint64(primaryKey))
+	}
+
+	return ids
 }
 
 func (s LockState) IterateLockedCoins(addr sdk.AccAddress) sdk.Coins {

@@ -194,3 +194,29 @@ func TestLockupKeeper_LockedCoins(t *testing.T) {
 		require.Equal(t, gotLockedCoins, coinsThatRemainLocked)
 	})
 }
+
+func TestLockupKeeper_UnlockAvailableCoins(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		app, _ := testutil.NewNibiruApp(false)
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+
+		addr := sample.AccAddress()
+		// lock some coins
+		coins1 := sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1000)))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins1))
+		_, err := app.LockupKeeper.LockTokens(ctx, addr, coins1, time.Second*1)
+		require.NoError(t, err)
+
+		coins2 := sdk.NewCoins(sdk.NewCoin("osmo", sdk.NewInt(10000)))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins2))
+		_, err = app.LockupKeeper.LockTokens(ctx, addr, coins2, time.Second*2)
+		require.NoError(t, err)
+
+		ctx = app.NewContext(false, tmproto.Header{Time: ctx.BlockTime().Add(10 * time.Second)}) // new context 10 seconds forward which means only 1 set is unlocked
+
+		unlockedCoins, err := app.LockupKeeper.UnlockAvailableCoins(ctx, addr)
+		require.NoError(t, err)
+
+		require.Equal(t, unlockedCoins.Sort(), coins2.Add(coins1...).Sort())
+	})
+}
