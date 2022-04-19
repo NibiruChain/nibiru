@@ -1,0 +1,22 @@
+syntax = "proto3";
+package matrix.lockup.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/MatrixDao/matrix/x/lockup/types";
+
+service Query {
+  rpc LockedCoins(QueryLockedCoinsRequest) returns (QueryLockedCoinsResponse);
+}
+
+message QueryLockedCoinsRequest {
+  string address = 1;
+}
+
+message QueryLockedCoinsResponse {
+  repeated cosmos.base.v1beta1.Coin locked_coins = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}

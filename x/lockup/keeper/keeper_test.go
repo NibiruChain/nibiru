@@ -60,8 +60,6 @@ func TestCreateLock(t *testing.T) {
 					Coins:    tc.coins,
 					EndTime:  ctx.BlockTime().Add(24 * time.Hour),
 				}, lock)
-
-				require.Equal(t, uint64(1), app.LockupKeeper.GetNextLockId(ctx))
 			}
 		})
 	}
@@ -114,5 +112,31 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 
 		_, err = app.LockupKeeper.UnlockTokens(ctx, lock.LockId) // we use the same ctx which means lock up duration did not mature yet
 		require.ErrorIs(t, err, types.ErrLockEndTime)
+	})
+}
+
+func TestLockupKeeper_AccountLockedCoins(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		app, _ := testutil.NewNibiruApp(true)
+		addr := sample.AccAddress()
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+
+		// 1st lock
+		coins1 := sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1000)))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins1))
+		_, err := app.LockupKeeper.LockTokens(ctx, addr, coins1, time.Second*1000)
+		require.NoError(t, err)
+
+		// 2nd lock
+		coins2 := sdk.NewCoins(sdk.NewCoin("osmo", sdk.NewInt(10000)))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins2))
+		_, err = app.LockupKeeper.LockTokens(ctx, addr, coins2, time.Second*1500)
+		require.NoError(t, err)
+
+		// query locks
+		lockedCoins, err := app.LockupKeeper.AccountLockedCoins(ctx, addr)
+		require.NoError(t, err)
+
+		require.Equal(t, lockedCoins, coins1.Add(coins2...).Sort())
 	})
 }
