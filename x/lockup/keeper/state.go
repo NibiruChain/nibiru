@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/MatrixDao/matrix/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"

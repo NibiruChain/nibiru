@@ -5,18 +5,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MatrixDao/matrix/app"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
-	cli "github.com/MatrixDao/matrix/x/stablecoin/client/cli"
-	utils "github.com/MatrixDao/matrix/x/testutil"
+	cli "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	utils "github.com/NibiruChain/nibiru/x/testutil"
 
-	"github.com/MatrixDao/matrix/x/common"
-	stabletypes "github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 
-	pricefeedtypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/testutil/network"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -29,7 +31,8 @@ import (
 )
 
 const (
-	oracleAddress = "matrix17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
+	// oracleAddress = "nibi17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
+	oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 )
 
 type IntegrationTestSuite struct {
@@ -39,8 +42,6 @@ type IntegrationTestSuite struct {
 	network *network.Network
 }
 
-type MsgPostPrices []pricefeedtypes.MsgPostPrice
-
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pricefeedtypes.GenesisState {
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
@@ -48,25 +49,25 @@ func NewPricefeedGen() *pricefeedtypes.GenesisState {
 	return &pricefeedtypes.GenesisState{
 		Params: pricefeedtypes.Params{
 			Markets: []pricefeedtypes.Market{
-				{MarketID: common.GovPricePool, BaseAsset: common.GovDenom,
+				{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
 					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
 					Active: true},
-				{MarketID: common.CollPricePool, BaseAsset: common.StableDenom,
-					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
+				{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+					QuoteAsset: common.StableDenom, Oracles: []sdk.AccAddress{oracle},
 					Active: true},
 			},
 		},
 		PostedPrices: []pricefeedtypes.PostedPrice{
 			{
-				MarketID:      common.GovPricePool,
+				MarketID:      common.GovStablePool,
 				OracleAddress: oracle,
-				Price:         sdk.MustNewDecFromStr("10.00"),
+				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				MarketID:      common.CollPricePool,
+				MarketID:      common.CollStablePool,
 				OracleAddress: oracle,
-				Price:         sdk.MustNewDecFromStr("1"),
+				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 		},
@@ -133,16 +134,15 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	s.fillWalletFromValidator(
 		minterAddr,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
-			sdk.NewInt64Coin(common.GovDenom, 100000000),
-			sdk.NewInt64Coin(common.CollDenom, 100000000),
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
 		),
 		val)
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
 
@@ -158,7 +158,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		{
 			name: "Mint correct amount",
 			args: append([]string{
-				"1000000uusdm",
+				"1000000unusd",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter2")}, commonArgs...),
 			expectedStable: sdk.NewInt(1000000),
 			expectErr:      false,
@@ -194,7 +194,6 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 
 				s.Require().Equal(
 					balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
-
 			}
 		})
 	}
@@ -211,17 +210,19 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
-			sdk.NewInt64Coin(common.StableDenom, 100000000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
 		),
 		val,
 	)
+
+	err = s.network.WaitForNextBlock()
+	s.Require().NoError(err)
 
 	defaultBondCoinsString := sdk.NewCoins(
 		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, "test"),
 		fmt.Sprintf(
 			"--%s=%s", flags.FlagFees, defaultBondCoinsString),
 	}
@@ -230,25 +231,41 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		name string
 		args []string
 
-		expectedStable sdk.Int
-		expectedColl   sdk.Int
-		expectedGov    sdk.Int
-		expectErr      bool
-		respType       proto.Message
-		expectedCode   uint32
+		expectedStable   sdk.Int
+		expectedColl     sdk.Int
+		expectedGov      sdk.Int
+		expectedTreasury sdk.Coins
+		expectedEf       sdk.Coins
+		expectErr        bool
+		respType         proto.Message
+		expectedCode     uint32
 	}{
 		{
-			name: "Burn correct amount",
+			name: "Burn at 100% collRatio",
 			args: append([]string{
-				"100000000uusdm",
+				"50000000unusd",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
-			expectedStable: sdk.NewInt(0),
-			expectedColl:   sdk.NewInt(90000000),
-			expectedGov:    sdk.NewInt(1000000),
-			expectErr:      false,
-			respType:       &sdk.TxResponse{},
-			expectedCode:   0,
+			expectedStable:   sdk.ZeroInt(),
+			expectedColl:     sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
+			expectedGov:      sdk.ZeroInt(),
+			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
+			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
+			expectErr:        false,
+			respType:         &sdk.TxResponse{},
+			expectedCode:     0,
 		},
+		// {
+		// 	name: "Burn at 90% collRatio",
+		// 	args: append([]string{
+		// 		"100000000unusd",
+		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
+		// 	expectedStable: sdk.NewInt(0),
+		// 	expectedColl:   sdk.NewInt(90_000_000),
+		// 	expectedGov:    sdk.NewInt(1_000_000),
+		// 	expectErr:      false,
+		// 	respType:       &sdk.TxResponse{},
+		// 	expectedCode:   0,
+		// },
 	}
 
 	for _, tc := range testCases {
@@ -279,12 +296,29 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				s.Require().NoError(err)
 
 				s.Require().Equal(
-					balRes.Balances.AmountOf(common.CollDenom), tc.expectedColl)
+					tc.expectedColl, balRes.Balances.AmountOf(common.CollDenom))
 				s.Require().Equal(
-					balRes.Balances.AmountOf(common.GovDenom), tc.expectedGov)
+					tc.expectedGov, balRes.Balances.AmountOf(common.GovDenom))
 				s.Require().Equal(
-					balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
+					tc.expectedStable, balRes.Balances.AmountOf(common.StableDenom))
 
+				// Query treasury pool balance
+				resp, err = banktestutil.QueryBalancesExec(clientCtx, types.NewModuleAddress(common.TreasuryPoolModuleAccount))
+				s.Require().NoError(err)
+				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
+				s.Require().NoError(err)
+
+				s.Require().Equal(
+					tc.expectedTreasury, balRes.Balances)
+
+				// Query ecosystem fund balance
+				resp, err = banktestutil.QueryBalancesExec(clientCtx, types.NewModuleAddress(stabletypes.StableEFModuleAccount))
+				s.Require().NoError(err)
+				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
+				s.Require().NoError(err)
+
+				s.Require().Equal(
+					tc.expectedEf, balRes.Balances)
 			}
 		})
 	}

@@ -1,7 +1,7 @@
 package lockup
 
 import (
-	"github.com/MatrixDao/matrix/x/lockup/keeper"
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

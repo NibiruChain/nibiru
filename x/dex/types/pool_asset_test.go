@@ -45,7 +45,6 @@ func TestPoolAssetValidateError(t *testing.T) {
 			require.Errorf(t, tc.pa.Validate(), tc.errMsg)
 		})
 	}
-
 }
 
 func TestPoolAssetValidateSuccess(t *testing.T) {
@@ -68,47 +67,48 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 			require.NoError(t, tc.pa.Validate())
 		})
 	}
-
 }
 
-func TestPoolAssetGetLiquidity(t *testing.T) {
+func TestSubtractPoolAssetBalance(t *testing.T) {
 	for _, tc := range []struct {
-		name              string
-		poolAssets        []PoolAsset
-		expectedLiquidity sdk.Coins
+		name          string
+		pool          Pool
+		tokenDenom    string
+		subAmt        sdk.Int
+		expectedCoins sdk.Coins
 	}{
 		{
-			name: "get liquidity",
-			poolAssets: []PoolAsset{
-				{
-					Token:  sdk.NewInt64Coin("aaa", 1),
-					Weight: sdk.NewInt(1),
-				},
-				{
-					Token:  sdk.NewInt64Coin("bbb", 2),
-					Weight: sdk.NewInt(1),
-				},
-				{
-					Token:  sdk.NewInt64Coin("ccc", 3),
-					Weight: sdk.NewInt(1),
-				},
-				{
-					Token:  sdk.NewInt64Coin("ddd", 4),
-					Weight: sdk.NewInt(1),
+			name: "subtract liquidity",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+					},
 				},
 			},
-			expectedLiquidity: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 1),
-				sdk.NewInt64Coin("bbb", 2),
-				sdk.NewInt64Coin("ccc", 3),
-				sdk.NewInt64Coin("ddd", 4),
-			),
+			tokenDenom:    "aaa",
+			subAmt:        sdk.NewInt(1_000),
+			expectedCoins: sdk.NewCoins(sdk.NewInt64Coin("aaa", 999_000)),
+		},
+		{
+			name: "subtract all liquidity",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+					},
+				},
+			},
+			tokenDenom:    "aaa",
+			subAmt:        sdk.NewInt(1_000_000),
+			expectedCoins: nil,
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expectedLiquidity, GetPoolLiquidity(tc.poolAssets))
+			require.NoError(t, tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt))
+			actualCoins := tc.pool.PoolBalances()
+			require.Equal(t, tc.expectedCoins, actualCoins)
 		})
 	}
-
 }

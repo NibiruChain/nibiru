@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	matrixd "github.com/MatrixDao/matrix/cmd/matrixd/cmd"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -24,7 +24,6 @@ var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
 
 // Tests "add-genesis-account", a command that adds a genesis account to genesis.json
 func TestAddGenesisAccountCmd(t *testing.T) {
-
 	type TestCase struct {
 		name        string
 		addr        string
@@ -35,7 +34,6 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 	var executeTest = func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			home := t.TempDir()
 			logger := log.NewNopLogger()
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
@@ -53,7 +51,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := matrixd.AddGenesisAccountCmd(home)
+			cmd := nibid.AddGenesisAccountCmd(home)
 			cmd.SetArgs([]string{
 				tc.addr,
 				tc.denom,

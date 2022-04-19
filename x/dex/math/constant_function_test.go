@@ -37,7 +37,7 @@ func TestSolveConstantProductInvariantHappyPath(t *testing.T) {
 			yWeight:        sdk.NewDecWithPrec(5, 1),
 			expectedDeltaY: sdk.NewDecWithPrec(1122, 2),
 		},
-		// TODO(https://github.com/MatrixDao/matrix/issues/141): allow for uneven weights
+		// TODO(https://github.com/NibiruChain/nibiru/issues/141): allow for uneven weights
 		// {
 		// 	// 44*(1-(86/35)^(.75/.25))
 		// 	name:           "difficult numbers - uneven weights",

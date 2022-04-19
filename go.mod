@@ -1,9 +1,9 @@
-module github.com/MatrixDao/matrix
+module github.com/NibiruChain/nibiru
 
 go 1.16
 
 require (
-	github.com/cosmos/cosmos-sdk v0.45.2
+	github.com/cosmos/cosmos-sdk v0.45.3
 	github.com/dustin/go-humanize v1.0.1-0.20200219035652-afde56e7acac // indirect
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
@@ -17,11 +17,11 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/spf13/cast v1.4.1
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stretchr/testify v1.7.0
-	github.com/tendermint/tendermint v0.34.16
+	github.com/stretchr/testify v1.7.1
+	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.6
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
@@ -43,10 +43,8 @@ replace github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210
 replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 
 // x/stablecoin dependencies
-replace github.com/MatrixDao/matrix/x/stablecoin => ./x/stablecoin
+replace github.com/NibiruChain/nibiru/x/stablecoin => ./x/stablecoin
 
-replace github.com/MatrixDao/matrix/x/testutil => ./x/testutil
+replace github.com/NibiruChain/nibiru/x/testutil => ./x/testutil
 
-replace github.com/MatrixDao/matrix/app => ./app
-
-// replace "github.com/MatrixDao/x/stablecoin/starport/cmdrunner" => ./x/stablecoin/starport/cmdrunner
+replace github.com/NibiruChain/nibiru/app => ./app

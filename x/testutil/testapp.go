@@ -1,14 +1,14 @@
 package testutil
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/MatrixDao/matrix/app"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -17,38 +17,56 @@ import (
 )
 
 // New creates application instance with in-memory database and disabled logging.
-func New() *app.MatrixApp {
+func New(shouldUseDefaultGenesis bool) *app.NibiruApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
 
-	nodeHome := filepath.Join(userHomeDir, ".matrix")
+	nodeHome := filepath.Join(userHomeDir, ".nibid")
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeTestEncodingConfig()
 
-	a := app.NewMatrixApp(logger, db, nil, true, map[int64]bool{}, nodeHome, 0, encoding,
-		simapp.EmptyAppOptions{})
+	a := app.NewNibiruApp(
+		logger,
+		db,
+		/*traceStore=*/ nil,
+		/*loadLatest=*/ true,
+		/*skipUpgradeHeights=*/ map[int64]bool{},
+		/*homePath=*/ nodeHome,
+		/*invCheckPeriod=*/ 0,
+		/*encodingConfig=*/ encoding,
+		/*appOpts=*/ simapp.EmptyAppOptions{},
+	)
+
+	var stateBytes []byte = []byte("{}")
+	if shouldUseDefaultGenesis {
+		genesisState := app.NewDefaultGenesisState(encoding.Marshaler)
+		stateBytes, err = json.MarshalIndent(genesisState, "", " ")
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// InitChain updates deliverState which is required when app.NewContext is called
 	a.InitChain(abci.RequestInitChain{
-		ConsensusParams: defaultConsensusParams,
-		AppStateBytes:   []byte("{}"),
+		ConsensusParams: DefaultConsensusParams,
+		AppStateBytes:   stateBytes,
 	})
 
 	return a
 }
 
-func NewMatrixApp() (*app.MatrixApp, sdk.Context) {
-	newMatrixApp := New()
-	ctx := newMatrixApp.NewContext(false, tmproto.Header{})
+func NewNibiruApp(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
+	newNibiruApp := New(shouldUseDefaultGenesis)
+	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
-	return newMatrixApp, ctx
+	return newNibiruApp, ctx
 }
 
-var defaultConsensusParams = &abci.ConsensusParams{
+var DefaultConsensusParams = &abci.ConsensusParams{
 	Block: &abci.BlockParams{
 		MaxBytes: 200000,
 		MaxGas:   2000000,

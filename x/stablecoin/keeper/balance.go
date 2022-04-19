@@ -3,12 +3,12 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 // checkEnoughBalance
 func (k Keeper) checkEnoughBalance(ctx sdk.Context, coinToSpend sdk.Coin, acc sdk.AccAddress) error {
-	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
+	accCoins := k.BankKeeper.SpendableCoins(ctx, acc)
 	for _, coin := range accCoins {
 		if coin.Denom == coinToSpend.Denom {
 			hasEnoughBalance := coin.Amount.GTE(coinToSpend.Amount)

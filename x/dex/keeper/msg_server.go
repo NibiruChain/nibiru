@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -31,7 +31,6 @@ ret
   error: an error if any occurred
 */
 func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
-
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, err
@@ -64,7 +63,7 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		return nil, err
 	}
 
-	pool, numSharesOut, remCoins, err := k.JoinPoolNoSwap(
+	pool, numSharesOut, remCoins, err := k.Keeper.JoinPool(
 		sdk.UnwrapSDKContext(ctx),
 		sender,
 		msg.PoolId,
@@ -78,5 +77,37 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		Pool:             &pool,
 		NumPoolSharesOut: numSharesOut,
 		RemainingCoins:   remCoins,
+	}, nil
+}
+
+/*
+Handler for the MsgJoinPool transaction.
+
+args
+  ctx: the cosmos-sdk context
+  msg: a MsgJoinPool proto object
+
+ret
+  MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
+  error: an error if any occurred
+*/
+func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types.MsgExitPoolResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	tokensOut, err := k.Keeper.ExitPool(
+		sdk.UnwrapSDKContext(ctx),
+		sender,
+		msg.PoolId,
+		msg.PoolShares,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgExitPoolResponse{
+		TokensOut: tokensOut,
 	}, nil
 }

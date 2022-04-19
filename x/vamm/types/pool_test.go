@@ -9,7 +9,7 @@ import (
 
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	pool := NewPool(
-		"BTC:USDM",
+		"BTC:NUSD",
 		sdk.MustNewDecFromStr("0.9"), // 0.9
 		sdk.NewInt(10_000_000),       // 10
 		sdk.NewInt(10_000_000),       // 10
@@ -53,9 +53,8 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			pool := NewPool(
-				"BTC:USDM",
+				"BTC:NUSD",
 				sdk.MustNewDecFromStr("0.9"), // 0.9
 				sdk.NewInt(10_000_000),       // 10
 				sdk.NewInt(5_000_000),        // 5
@@ -87,9 +86,8 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			pool := NewPool(
-				"BTC:USDM",
+				"BTC:NUSD",
 				sdk.MustNewDecFromStr("0.9"), // 0.9
 				sdk.NewInt(10_000_000),       // 10
 				sdk.NewInt(5_000_000),        // 5
@@ -104,7 +102,7 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 
 func TestIncreaseQuoteAssetReserve(t *testing.T) {
 	pool := NewPool(
-		"ATOM:USDM",
+		"ATOM:NUSD",
 		sdk.MustNewDecFromStr("0.9"),
 		sdk.NewInt(1_000_000),
 		sdk.NewInt(1_000_000),
@@ -121,7 +119,7 @@ func TestIncreaseQuoteAssetReserve(t *testing.T) {
 
 func TestIncreaseDecreaseReserves(t *testing.T) {
 	pool := NewPool(
-		"ATOM:USDM",
+		"ATOM:NUSD",
 		sdk.MustNewDecFromStr("0.9"),
 		sdk.NewInt(1_000_000),
 		sdk.NewInt(1_000_000),

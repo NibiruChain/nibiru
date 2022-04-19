@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -27,13 +27,13 @@ func GetTxCmd() *cobra.Command {
 }
 
 /*
-MintStableCmd is a CLI command that mints Matrix stablecoins.
-Example: "mint-sc 100usdm"
+MintStableCmd is a CLI command that mints Nibiru stablecoins.
+Example: "mint-sc 100unusd"
 */
 func MintStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint-sc [token-in]",
-		Short: "Mint Matrix stablecoin",
+		Short: "Mint Nibiru stablecoin",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -63,7 +63,6 @@ buildMintStableMsg
 func buildMintStableMsg(
 	clientCtx client.Context, tokenInStr string,
 ) (sdk.Msg, error) {
-
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 	if err != nil {
 		return nil, err
@@ -80,7 +79,7 @@ func buildMintStableMsg(
 func BurnStableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn-sc [token-in]",
-		Short: "Burn Matrix stablecoin commands",
+		Short: "Burn Nibiru stablecoin commands",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
