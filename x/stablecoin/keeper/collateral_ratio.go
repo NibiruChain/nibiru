@@ -50,9 +50,9 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 }
 
 /*
-UpdateCollRatio updates the value of the current collateral ratio knowing the price is either above or below the peg
+updateCollRatio updates the value of the current collateral ratio knowing the price is either above or below the peg
 */
-func (k *Keeper) UpdateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
+func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
 
 	nibiruStep := sdk.MustNewDecFromStr("0.0025")
 	var adjustment sdk.Dec
@@ -83,9 +83,9 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	}
 
 	if stablePrice.Price.GTE(upperBound) {
-		err = k.UpdateCollRatio(ctx, true)
+		err = k.updateCollRatio(ctx, true)
 	} else if stablePrice.Price.LTE(lowerBound) {
-		err = k.UpdateCollRatio(ctx, false)
+		err = k.updateCollRatio(ctx, false)
 	}
 	if err != nil {
 		return err
