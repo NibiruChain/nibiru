@@ -170,7 +170,7 @@ func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
 
 /*
 Writes a pool to the state.
-Panics if the pool proto could not be marshalled.
+Panics if the pool proto could not be marshaled.
 
 args:
   - ctx: the cosmos-sdk context
@@ -253,7 +253,6 @@ func (k Keeper) burnPoolShareFromAccount(
 	fromAddr sdk.AccAddress,
 	poolSharesOut sdk.Coin,
 ) (err error) {
-
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		fromAddr,

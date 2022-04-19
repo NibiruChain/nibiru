@@ -11,7 +11,7 @@
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
 [<img align="right" alt="Nibiru Telegram" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/telegram.svg" />][nibiru-telegram]
 [<img align="right" alt="Personal Website" width="22px" src="https://raw.githubusercontent.com/iconic/open-iconic/master/svg/globe.svg" />][nibiru-website]
-[<img align="right" alt="Nibiru Discord" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@v3/icons/discord.svg" />][nibiru-discord] 
+[<img align="right" alt="Nibiru Discord" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@v3/icons/discord.svg" />][nibiru-discord]
 [<img align="right" alt="Nibiru Medium Blog" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/medium.svg" />][nibiru-medium]
 
 **Nibiru Chain** is a proof-of-stake blockchain and member of a family of interconnected blockchains that comprise the Cosmos Ecosystem. Nibiru powers three main decentralized applications:
@@ -19,16 +19,16 @@
 - **Nibiru Perpetuals Exchange**: On the perps exchange, users can take leveraged exposure and trade on a plethora of assets: completely on-chain, completely non-custodially, and with minimal gas fees.
 - **Nibiru AMM**: An automated market maker for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
 - **Nibiru Stablecoin**: Nibiru employs a two-token economic model, where NIBI is the governance and utility token for the protocol and NUSD is a capital-efficient, partially collateralized algorithmic stablecoin created by the protocol.
- 
+
 Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo], accurately prices assets using a system of front-run resistant oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  
 
-### ⚙️ — Documentation 
+### ⚙️ — Documentation
 
-Conceptual and technical documentation can be found in the [Nibiru docs](https://docs.nibiru.io). Each module also contains a detailed specification in its "spec" directory (e.g. [`x/stablecoin/spec`](https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin/spec)). 
+Conceptual and technical documentation can be found in the [Nibiru docs](https://docs.nibiru.io). Each module also contains a detailed specification in its "spec" directory (e.g. [`x/stablecoin/spec`](https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin/spec)).
 
 ### 💬 — Community
 
-If you have questions or concerns, feel free to connect with a developer or community member in the [Nibiru discord][nibiru-discord]. We also have active communities on Twitter and Telegram. 
+If you have questions or concerns, feel free to connect with a developer or community member in the [Nibiru discord][nibiru-discord]. We also have active communities on Twitter and Telegram.
 
 <!-- Markdown versions of the social badges 
 [![description][discord-badge]][nibiru-discord] 
@@ -58,6 +58,16 @@ Recommended minimum specs:
 ### Single Node
 
 On a fresh clone of the repo, simply run `make localnet` and open another terminal.  
+
+# Linter
+
+We use the [golangci-lint](https://golangci-lint.run/) linter. Install it and run
+
+```sh
+golangci-lint run
+```
+
+at the root directory. You can also install the VSCode or Goland IDE plugins.
 
 ### Multiple Nodes
 

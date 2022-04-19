@@ -13,7 +13,6 @@ import (
 )
 
 func TestSwapExactAmountIn(t *testing.T) {
-
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
@@ -90,16 +89,16 @@ func TestSwapExactAmountIn(t *testing.T) {
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
-			simapp.FundAccount(
+			require.NoError(t, simapp.FundAccount(
 				app.BankKeeper,
 				ctx,
 				poolAddr,
 				tc.initialPool.PoolBalances(),
-			)
+			))
 
 			// set up user's funds
 			joinerAddr := sample.AccAddress()
-			simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			tokenOut, err := app.DexKeeper.SwapExactAmountIn(ctx, joinerAddr, 1, tc.tokenIn, tc.tokenOutDenom)
 			require.NoError(t, err)
