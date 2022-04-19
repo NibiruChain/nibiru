@@ -3,9 +3,8 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/MatrixDao/matrix/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -136,44 +135,6 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
 }
 
 /*
-Given a pair of denom, find the corresponding pool id if it exists.
-
-args:
-  - denomA: One denom
-  - denomB: A second denom
-
-ret:
-  - poolId: the pool id
-  - err: error if any
-*/
-func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
-	poolId uint64, err error,
-) {
-	if denomA == "" || denomB == "" {
-		return 0, fmt.Errorf("empty denom")
-	}
-
-	if denomA == denomB {
-		return 0, fmt.Errorf("same denom pool")
-	}
-
-	// Denom A is higher lexicographically
-	if strings.Compare(denomA, denomB) == -1 {
-		denomA, denomB = denomB, denomA
-	}
-
-	for poolId := sdk.NewInt(1).Uint64(); poolId <= k.GetNextPoolNumber(ctx); poolId++ {
-		pool := k.FetchPool(ctx, poolId)
-
-		if pool.PoolAssets[0].Token.Denom == denomA && pool.PoolAssets[1].Token.Denom == denomB {
-			return pool.Id, nil
-		}
-	}
-
-	return 0, fmt.Errorf("no pool for this pair")
-}
-
-/*
 Writes a pool to the state.
 Panics if the pool proto could not be marshalled.
 
@@ -198,7 +159,7 @@ args:
 ret:
   err: returns an error if something errored out
 */
-func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
+func (k Keeper) MintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
 	newCoins := sdk.Coins{
 		sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amountPoolShares),
 	}
@@ -216,9 +177,10 @@ func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipient
 	return nil
 }
 
+// BurnPoolShareFromAccount burns `amount` of the given pools shares held by `addr`.
 /*
 Burns takes an amount of pool shares from an account and burns them.
-It's the inverse of mintPoolShareToAccount.
+It's the inverse of MintPoolShareToAccount.
 
 args:
   ctx: the cosmos-sdk context
@@ -229,7 +191,7 @@ args:
 ret:
   err: returns an error if something errored out
 */
-func (k Keeper) burnPoolShareFromAccount(
+func (k Keeper) BurnPoolShareFromAccount(
 	ctx sdk.Context,
 	fromAddr sdk.AccAddress,
 	poolSharesOut sdk.Coin,
@@ -290,7 +252,7 @@ func (k Keeper) NewPool(
 	}
 
 	poolId = k.GetNextPoolNumberAndIncrement(ctx)
-	poolName := fmt.Sprintf("nibiru-pool-%d", poolId)
+	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
 	k.accountKeeper.SetAccount(ctx, poolAccount)
@@ -311,7 +273,7 @@ func (k Keeper) NewPool(
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
-	if err = k.mintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
+	if err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
 		return uint64(0), err
 	}
 
@@ -319,7 +281,7 @@ func (k Keeper) NewPool(
 	poolShareBaseDenom := types.GetPoolShareBaseDenom(pool.Id)
 	poolShareDisplayDenom := types.GetPoolShareDisplayDenom(pool.Id)
 	k.bankKeeper.SetDenomMetaData(ctx, banktypes.Metadata{
-		Description: fmt.Sprintf("The share token of the nibiru dex pool %d", pool.Id),
+		Description: fmt.Sprintf("The share token of the matrix dex pool %d", pool.Id),
 		DenomUnits: []*banktypes.DenomUnit{
 			{
 				Denom:    poolShareBaseDenom,
@@ -332,7 +294,7 @@ func (k Keeper) NewPool(
 		},
 		Base:    poolShareBaseDenom,
 		Display: poolShareDisplayDenom,
-		Name:    fmt.Sprintf("Nibiru Pool %d Share Token", pool.Id),
+		Name:    fmt.Sprintf("Matrix Pool %d Share Token", pool.Id),
 		Symbol:  poolShareDisplayDenom,
 	})
 
@@ -364,7 +326,7 @@ ret:
   - remCoins: the number of remaining coins from the user's initial deposit attempt
   - err: error if any
 */
-func (k Keeper) JoinPool(
+func (k Keeper) JoinPoolNoSwap(
 	ctx sdk.Context,
 	joinerAddr sdk.AccAddress,
 	poolId uint64,
@@ -376,13 +338,15 @@ func (k Keeper) JoinPool(
 		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
 	}
 
-	poolAddr := pool.GetAddress()
-
-	numShares, remCoins, err := pool.AddTokensToPool(tokensIn)
+	poolAddr, err := sdk.AccAddressFromBech32(pool.Address)
 	if err != nil {
-		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
+		return pool, numSharesOut, remCoins, err
 	}
 
+	numShares, remCoins, err := pool.JoinPool(tokensIn)
+	if err != nil {
+		return pool, numSharesOut, remCoins, err
+	}
 	tokensConsumed := tokensIn.Sub(remCoins)
 
 	// take coins from joiner to pool
@@ -396,13 +360,13 @@ func (k Keeper) JoinPool(
 	}
 
 	// give joiner LP shares
-	if err = k.mintPoolShareToAccount(
+	if err = k.MintPoolShareToAccount(
 		ctx,
 		/*from=*/ pool.Id,
 		/*to=*/ joinerAddr,
 		/*amount=*/ numShares,
 	); err != nil {
-		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
+		return pool, numSharesOut, remCoins, err
 	}
 
 	// record changes to store
@@ -419,7 +383,7 @@ in proportion to the total amount of pool shares.
 For example, if a pool has 100 pool shares and ExitPool is called with 50 pool shares,
 half of the tokens (minus exit fees) are returned to the user.
 
-Inverse of JoinPool.
+Inverse of JoinPoolNoSwap.
 
 Throws an error if the provided pool shares doesn't match up with the pool's actual pool share.
 
@@ -465,7 +429,7 @@ func (k Keeper) ExitPool(
 		return sdk.Coins{}, err
 	}
 
-	if err = k.burnPoolShareFromAccount(ctx, sender, poolSharesOut); err != nil {
+	if err = k.BurnPoolShareFromAccount(ctx, sender, poolSharesOut); err != nil {
 		return sdk.Coins{}, err
 	}
 
