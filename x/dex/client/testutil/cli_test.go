@@ -318,6 +318,104 @@ func (s *IntegrationTestSuite) TestGetCmdTotalPoolLiquidity() {
 	}
 }
 
+func (s IntegrationTestSuite) TestGetCmdTotalPoolLiquidity2() {
+	val := s.network.Validators[0]
+
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		"NewCreatePoolAddr",
+		keyring.English,
+		sdk.FullFundraiserPath,
+		"",
+		hd.Secp256k1,
+	)
+	s.Require().NoError(err)
+	poolCreatorAddr := sdk.AccAddress(info.GetPubKey().Address())
+
+	_, err = banktestutil.MsgSendExec(
+		val.ClientCtx,
+		/*from=*/ val.Address,
+		/*to=*/ poolCreatorAddr,
+		/*amount=*/ sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
+			sdk.NewInt64Coin(fmt.Sprintf("%stoken", val.Moniker), 20000),
+			sdk.NewInt64Coin(common.GovDenom, 1e9), // for pool creation fee
+		),
+		/*extraArgs*/
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		testutil.DefaultFeeString(s.cfg),
+	)
+	s.Require().NoError(err)
+
+	testCases := []struct {
+		name           string
+		tokenWeights   string
+		initialDeposit string
+		swapFee        string
+		exitFee        string
+		extraArgs      []string
+		parseArgs      []string
+		expectedPass   bool
+		expectedError  string
+		respType       proto.Message
+	}{
+		{
+			name:           "create pool with sufficient funds",
+			tokenWeights:   "1stake, 1node0token",
+			initialDeposit: "10000stake,10000node0token",
+			swapFee:        "0.003",
+			exitFee:        "0.003",
+			extraArgs:      []string{},
+			parseArgs:      []string{"1"},
+			respType:       &sdk.TxResponse{},
+			expectedPass:   true,
+		},
+		{
+			name:           "create pool with sufficient funds",
+			tokenWeights:   "1stake, 1node0token",
+			initialDeposit: "10000stake,10000node0token",
+			swapFee:        "0.003",
+			exitFee:        "0.003",
+			extraArgs:      []string{},
+			parseArgs:      []string{"2"},
+			respType:       &sdk.TxResponse{},
+			expectedError:  "pool id was not found",
+			expectedPass:   false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			_, err := ExecMsgCreatePool(
+				s.T(),
+				val.ClientCtx,
+				poolCreatorAddr,
+				tc.tokenWeights,
+				tc.initialDeposit,
+				tc.swapFee,
+				tc.exitFee,
+				tc.extraArgs...,
+			)
+			s.Require().NoError(err)
+
+			cmd := dexcli.CmdTotalPoolLiquidity()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.parseArgs)
+
+			if !tc.expectedPass {
+				s.Require().Contains(out.String(), tc.expectedError)
+			} else {
+				resp := types.QueryTotalPoolLiquidityResponse{}
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+			}
+		})
+	}
+}
+
 func TestIntegrationTestSuite(t *testing.T) {
 	cfg := testutil.DefaultConfig()
 	suite.Run(t, &IntegrationTestSuite{cfg: cfg})
