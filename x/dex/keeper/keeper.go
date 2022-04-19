@@ -149,28 +149,23 @@ ret:
 func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
 	poolId uint64, err error,
 ) {
-	if denomA == "" || denomB == "" {
-		return 0, fmt.Errorf("empty denom")
-	}
+	store := ctx.KVStore(k.storeKey)
 
-	if denomA == denomB {
-		return 0, fmt.Errorf("same denom pool")
-	}
+	var PoolId types.PoolIdentifier
 
-	// Denom A is higher lexicographically
-	if strings.Compare(denomA, denomB) == -1 {
+	if strings.Compare(denomA, denomB) == 1 {
 		denomA, denomB = denomB, denomA
 	}
 
-	for poolId := sdk.NewInt(1).Uint64(); poolId <= k.GetNextPoolNumber(ctx); poolId++ {
-		pool := k.FetchPool(ctx, poolId)
+	StringKey := denomA + ":" + denomB
 
-		if pool.PoolAssets[0].Token.Denom == denomA && pool.PoolAssets[1].Token.Denom == denomB {
-			return pool.Id, nil
-		}
+	k.cdc.MustUnmarshal(store.Get(types.GetDenomPrefixPoolIds(StringKey)), &PoolId)
+
+	if PoolId.Pair == "" {
+		return sdk.NewInt(0).Uint64(), fmt.Errorf("no pool for this pair")
 	}
 
-	return 0, fmt.Errorf("no pool for this pair")
+	return PoolId.Id, nil
 }
 
 /*
@@ -184,6 +179,30 @@ args:
 func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetKeyPrefixPools(pool.Id), k.cdc.MustMarshal(&pool))
+
+	k.SetPoolIdByDenom(ctx, pool)
+}
+
+/*
+Writes a pool to the state accessible with the PoolId.
+Panics if the pool proto could not be marshalled.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the Pool proto object
+*/
+func (k Keeper) SetPoolIdByDenom(ctx sdk.Context, pool types.Pool) {
+	denomA := pool.PoolAssets[0].Token.Denom
+	denomB := pool.PoolAssets[1].Token.Denom
+
+	if strings.Compare(denomA, denomB) == 1 {
+		denomA, denomB = denomB, denomA
+	}
+
+	StringKey := denomA + ":" + denomB
+
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetDenomPrefixPoolIds(StringKey), k.cdc.MustMarshal(&types.PoolIdentifier{Id: pool.Id, Pair: StringKey}))
 }
 
 /*

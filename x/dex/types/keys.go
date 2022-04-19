@@ -30,9 +30,15 @@ var (
 	KeyNextGlobalPoolNumber = []byte{0x01}
 	// KeyPrefixPools defines prefix to store pools
 	KeyPrefixPools = []byte{0x02}
+	// KeyPrefixPoolIds defines prefix to store pool ids
+	KeyPrefixPoolIds = []byte{0x02}
 	// KeyTotalLiquidity defines key to store total liquidity
 	KeyTotalLiquidity = []byte{0x03}
 )
+
+func GetDenomPrefixPoolIds(denomPair string) []byte {
+	return append(KeyPrefixPoolIds, []byte(denomPair)...)
+}
 
 func GetKeyPrefixPools(poolId uint64) []byte {
 	return append(KeyPrefixPools, sdk.Uint64ToBigEndian(poolId)...)
