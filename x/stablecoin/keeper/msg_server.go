@@ -50,7 +50,6 @@ func (k msgServer) MsgBurnStable(
 func (k msgServer) MsgRecollateralize(
 	goCtx context.Context, msg *types.MsgRecollateralize,
 ) (*types.MsgRecollateralizeResponse, error) {
-
 	response, err := k.Recollateralize(goCtx, msg)
 	if err != nil {
 		return nil, err
