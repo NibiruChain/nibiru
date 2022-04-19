@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/dex/types";
 
@@ -144,13 +145,30 @@ message QueryPoolParamsResponse {}
 message QueryNumPoolsRequest {}
 message QueryNumPoolsResponse {}
 
+// --------------------------------------------
+// Query total liquidity the protocol
 message QueryTotalLiquidityRequest {}
-message QueryTotalLiquidityResponse {}
+message QueryTotalLiquidityResponse {  
+  repeated cosmos.base.v1beta1.Coin liquidity = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"liquidity\"",
+    (gogoproto.nullable) = false
+  ];
+}
 
+// --------------------------------------------
+// Query total liquidity for a pool
 message QueryTotalPoolLiquidityRequest {
   uint64 poolId = 1;
 }
-message QueryTotalPoolLiquidityResponse {}
+
+message QueryTotalPoolLiquidityResponse {  
+  repeated cosmos.base.v1beta1.Coin liquidity = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"liquidity\"",
+    (gogoproto.nullable) = false
+  ];
+}
 
 message QueryTotalSharesRequest {
   uint64 poolId = 1;

@@ -115,15 +115,33 @@ func (k queryServer) NumPools(context.Context, *types.QueryNumPoolsRequest) (*ty
 }
 
 // Total liquidity across all pools.
-func (k queryServer) TotalLiquidity(context.Context, *types.QueryTotalLiquidityRequest) (*types.QueryTotalLiquidityResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/162)
-	return nil, nil
+func (k queryServer) TotalLiquidity(ctx context.Context, req *types.QueryTotalLiquidityRequest) (*types.QueryTotalLiquidityResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	return &types.QueryTotalLiquidityResponse{
+		Liquidity: k.Keeper.GetTotalLiquidity(sdkCtx),
+	}, nil
 }
 
 // Total liquidity in a single pool.
-func (k queryServer) TotalPoolLiquidity(context.Context, *types.QueryTotalPoolLiquidityRequest) (*types.QueryTotalPoolLiquidityResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/167)
-	return nil, nil
+func (k queryServer) TotalPoolLiquidity(ctx context.Context, req *types.QueryTotalPoolLiquidityRequest) (*types.QueryTotalPoolLiquidityResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	pool := k.FetchPool(sdkCtx, req.PoolId)
+
+	if pool.Address == "" {
+		return &types.QueryTotalPoolLiquidityResponse{}, status.Error(codes.NotFound, "pool id was not found")
+	}
+	return &types.QueryTotalPoolLiquidityResponse{
+		Liquidity: k.bankKeeper.GetAllBalances(sdkCtx, pool.GetAddress()),
+	}, nil
 }
 
 // Total shares in a single pool.

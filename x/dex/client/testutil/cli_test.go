@@ -17,6 +17,7 @@ import (
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -66,53 +67,67 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 	s.Require().NoError(err)
 
 	testCases := []struct {
-		name           string
-		tokenWeights   string
-		initialDeposit string
-		swapFee        string
-		exitFee        string
-		extraArgs      []string
-		expectedErr    error
-		respType       proto.Message
-		expectedCode   uint32
+		name              string
+		tokenWeights      string
+		initialDeposit    string
+		swapFee           string
+		exitFee           string
+		extraArgs         []string
+		expectedErr       error
+		respType          proto.Message
+		expectedCode      uint32
+		queryexpectedPass bool
+		queryexpectedErr  string
+		queryArgs         []string
 	}{
 		{
-			name:           "create pool with insufficient funds",
-			tokenWeights:   "1stake, 1node0token",
-			initialDeposit: "1000000000stake,10000000000node0token",
-			swapFee:        "0.003",
-			exitFee:        "0.003",
-			extraArgs:      []string{},
-			respType:       &sdk.TxResponse{},
-			expectedCode:   5, // bankKeeper code for insufficient funds
+			name:              "create pool with insufficient funds",
+			tokenWeights:      "1stake, 1node0token",
+			initialDeposit:    "1000000000stake,10000000000node0token",
+			swapFee:           "0.003",
+			exitFee:           "0.003",
+			extraArgs:         []string{},
+			respType:          &sdk.TxResponse{},
+			expectedCode:      5, // bankKeeper code for insufficient funds
+			queryexpectedPass: false,
+			queryexpectedErr:  "pool id was not found",
+			queryArgs:         []string{"1"},
 		},
 		{
-			name:           "create pool with invalid weights",
-			tokenWeights:   "0stake, 1node0token",
-			initialDeposit: "10000stake,10000node0token",
-			swapFee:        "0.003",
-			exitFee:        "0.003",
-			extraArgs:      []string{},
-			expectedErr:    types.ErrInvalidCreatePoolArgs,
+			name:              "create pool with invalid weights",
+			tokenWeights:      "0stake, 1node0token",
+			initialDeposit:    "10000stake,10000node0token",
+			swapFee:           "0.003",
+			exitFee:           "0.003",
+			extraArgs:         []string{},
+			expectedErr:       types.ErrInvalidCreatePoolArgs,
+			queryexpectedPass: false,
+			queryexpectedErr:  "pool id was not found",
+			queryArgs:         []string{"1"},
 		},
 		{
-			name:           "create pool with deposit not matching weights",
-			tokenWeights:   "1stake, 1node0token",
-			initialDeposit: "10000foo,10000node0token",
-			swapFee:        "0.003",
-			exitFee:        "0.003",
-			extraArgs:      []string{},
-			expectedErr:    types.ErrInvalidCreatePoolArgs,
+			name:              "create pool with deposit not matching weights",
+			tokenWeights:      "1stake, 1node0token",
+			initialDeposit:    "10000foo,10000node0token",
+			swapFee:           "0.003",
+			exitFee:           "0.003",
+			extraArgs:         []string{},
+			expectedErr:       types.ErrInvalidCreatePoolArgs,
+			queryexpectedPass: false,
+			queryexpectedErr:  "pool id was not found",
+			queryArgs:         []string{"1"},
 		},
 		{
-			name:           "create pool with sufficient funds",
-			tokenWeights:   "1stake, 1node0token",
-			initialDeposit: "10000stake,10000node0token",
-			swapFee:        "0.003",
-			exitFee:        "0.003",
-			extraArgs:      []string{},
-			respType:       &sdk.TxResponse{},
-			expectedCode:   0,
+			name:              "create pool with sufficient funds",
+			tokenWeights:      "1stake, 1node0token",
+			initialDeposit:    "10000stake,10000node0token",
+			swapFee:           "0.003",
+			exitFee:           "0.003",
+			extraArgs:         []string{},
+			respType:          &sdk.TxResponse{},
+			expectedCode:      0,
+			queryexpectedPass: true,
+			queryArgs:         []string{"1"},
 		},
 	}
 
@@ -129,6 +144,18 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+
+				// Query balance
+				cmd := dexcli.CmdTotalPoolLiquidity()
+				out, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, tc.queryArgs)
+
+				if !tc.queryexpectedPass {
+					s.Require().Contains(out.String(), tc.queryexpectedErr)
+				} else {
+					resp := types.QueryTotalPoolLiquidityResponse{}
+					s.Require().NoError(err, out.String())
+					s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+				}
 			}
 		})
 	}
@@ -231,6 +258,42 @@ func (s IntegrationTestSuite) TestNewJoinPoolCmd() {
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
+	val := s.network.Validators[0]
+
+	testCases := []struct {
+		name      string
+		args      []string
+		expectErr bool
+	}{
+		{
+			"query total liquidity", // nibid query dex total-liquidity
+			[]string{
+				fmt.Sprintf("--%s=%s", tmcli.OutputFlag, "json"),
+			},
+			false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := dexcli.CmdTotalLiquidity()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				resp := types.QueryTotalLiquidityResponse{}
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
 			}
 		})
 	}
