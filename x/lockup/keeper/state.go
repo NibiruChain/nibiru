@@ -19,6 +19,11 @@ var (
 	lockIDKey = []byte{0x0} // lock ID key
 )
 
+const (
+	// LockStartID is the ID of the first lock.
+	LockStartID uint64 = 0
+)
+
 func (k LockupKeeper) LocksState(ctx sdk.Context) LockState {
 	return newLockState(ctx, k.storeKey, k.cdc)
 }
@@ -115,7 +120,7 @@ func (s LockState) nextPrimaryKey() uint64 {
 
 	switch idBytes {
 	case nil:
-		id = 0
+		id = LockStartID
 	default:
 		id = sdk.BigEndianToUint64(idBytes)
 	}
