@@ -30,6 +30,10 @@ func (pair AssetPair) Name() string {
 	return PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
 }
 
+func (pair AssetPair) PairID() string {
+	return pair.Name()
+}
+
 func (pair AssetPair) String() string {
 	return fmt.Sprintf("%s:%s", pair.Token0, pair.Token1)
 }
@@ -40,6 +44,14 @@ func (pair AssetPair) IsProperOrder() bool {
 
 func (pair AssetPair) Inverse() AssetPair {
 	return AssetPair{pair.Token1, pair.Token0}
+}
+
+func (pair AssetPair) Proper() AssetPair {
+	if pair.IsProperOrder() {
+		return pair
+	} else {
+		return pair.Inverse()
+	}
 }
 
 func NewAssetPair(token0 string, token1 string) AssetPair {

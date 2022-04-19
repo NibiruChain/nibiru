@@ -29,6 +29,6 @@ func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*typ
 	}
 
 	return &types.QueryPriceResponse{
-		Price: types.CurrentPriceResponse{req.PairId, currentPrice.Price},
+		Price: types.CurrentPriceResponse{PairID: req.PairId, Price: currentPrice.Price},
 	}, nil
 }

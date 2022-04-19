@@ -66,8 +66,7 @@ func (k Keeper) SetPrice(
 	// TODO: test this behavior when setting the inverse pair
 	pairName := common.RawPoolNameFromDenoms(token0, token1)
 	pairID := common.PoolNameFromDenoms([]string{token0, token1})
-	if pairName != pairID {
-		token0, token1 = token1, token0
+	if (pairName != pairID) && (!price.Equal(sdk.ZeroDec())) {
 		price = sdk.OneDec().Quo(price)
 	}
 
@@ -98,10 +97,8 @@ func (k Keeper) SetPrice(
 
 // SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
 func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
+
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	if !assetPair.IsProperOrder() {
-		token0, token1 = token1, token0
-	}
 	pairID := assetPair.Name()
 	tokens := common.DenomsFromPoolName(pairID)
 	token0, token1 = tokens[0], tokens[1]
