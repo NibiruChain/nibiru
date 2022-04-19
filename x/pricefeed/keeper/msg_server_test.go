@@ -59,7 +59,6 @@ func TestPostPrice(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				require.ErrorIs(t, tt.errorKind, err)
-
 			}
 		})
 	}

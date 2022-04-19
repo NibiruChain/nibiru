@@ -63,7 +63,6 @@ buildMintStableMsg
 func buildMintStableMsg(
 	clientCtx client.Context, tokenInStr string,
 ) (sdk.Msg, error) {
-
 	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 	if err != nil {
 		return nil, err

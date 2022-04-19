@@ -34,7 +34,6 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	priceKeeper types.PriceKeeper,
 ) Keeper {
-
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
 		panic("The stablecoin module account has not been set")

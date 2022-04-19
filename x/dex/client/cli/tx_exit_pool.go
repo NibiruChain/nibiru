@@ -30,7 +30,6 @@ $ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100nibiru/pool/1 --from vali
 		),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
