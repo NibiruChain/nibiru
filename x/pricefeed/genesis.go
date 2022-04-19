@@ -1,6 +1,8 @@
 package pricefeed
 
 import (
+	"strings"
+
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,7 +17,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// Iterate through the posted prices and set them in the store if they are not expired
 	for _, pp := range genState.PostedPrices {
 		if pp.Expiry.After(ctx.BlockTime()) {
-			_, err := k.SetPrice(ctx, pp.OracleAddress, pp.PairID, pp.Price, pp.Expiry)
+			tokens := strings.Split(pp.PairID, ":")
+			token0, token1 := tokens[0], tokens[1]
+			_, err := k.SetPrice(ctx, pp.OracleAddress, token0, token1, pp.Price, pp.Expiry)
 			if err != nil {
 				panic(err)
 			}
@@ -28,12 +32,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if !market.Active {
 			continue
 		}
-		rps := k.GetRawPrices(ctx, market.PairID)
+		rps := k.GetRawPrices(ctx, market.PairID())
 
 		if len(rps) == 0 {
 			continue
 		}
-		err := k.SetCurrentPrices(ctx, market.PairID)
+		err := k.SetCurrentPrices(ctx, market.Token0, market.Token1)
 		if err != nil {
 			panic(err)
 		}
@@ -46,7 +50,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 	var postedPrices []types.PostedPrice
 	for _, market := range k.GetPairs(ctx) {
-		pp := k.GetRawPrices(ctx, market.PairID)
+		pp := k.GetRawPrices(ctx, market.PairID())
 		postedPrices = append(postedPrices, pp...)
 	}
 	genesis.PostedPrices = postedPrices
