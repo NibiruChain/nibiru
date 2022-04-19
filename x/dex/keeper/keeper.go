@@ -135,6 +135,32 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
 }
 
 /*
+Given a pair of denom, find the corresponding pool id if it exists.
+
+args:
+  - denomA: One denom
+  - denomB: A second denom
+
+ret:
+  - poolId: the pool id
+  - err: error if any
+*/
+func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string) (
+	pool types.Pool, err error,
+) {
+	store := ctx.KVStore(k.storeKey)
+
+	poolid := sdk.BigEndianToUint64(store.Get(types.GetDenomPrefixPoolIds(denomA, denomB)))
+	pool = k.FetchPool(ctx, poolid)
+
+	if pool.Address == "" {
+		return pool, fmt.Errorf("no pool for this pair")
+	}
+
+	return pool, nil
+}
+
+/*
 Writes a pool to the state.
 Panics if the pool proto could not be marshaled.
 
@@ -145,6 +171,27 @@ args:
 func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetKeyPrefixPools(pool.Id), k.cdc.MustMarshal(&pool))
+
+	k.SetPoolIdByDenom(ctx, pool)
+}
+
+/*
+Writes a pool to the state accessible with the PoolId.
+Panics if the pool proto could not be marshalled.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the Pool proto object
+*/
+func (k Keeper) SetPoolIdByDenom(ctx sdk.Context, pool types.Pool) {
+	denomA := pool.PoolAssets[0].Token.Denom
+	denomB := pool.PoolAssets[1].Token.Denom
+
+	store := ctx.KVStore(k.storeKey)
+	store.Set(
+		types.GetDenomPrefixPoolIds(denomA, denomB),
+		sdk.Uint64ToBigEndian(pool.Id),
+	)
 }
 
 /*
