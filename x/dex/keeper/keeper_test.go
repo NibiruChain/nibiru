@@ -71,6 +71,143 @@ func TestSetAndFetchPool(t *testing.T) {
 	require.Equal(t, pool, retrievedPool)
 }
 
+func TestFetchPoolFromPair(t *testing.T) {
+	tests := []struct {
+		name           string
+		firstToken     string
+		secondToken    string
+		expectedPass   bool
+		expectedPoolId uint64
+	}{
+		{
+			name:           "Correct parse pool 1",
+			firstToken:     "tokenA",
+			secondToken:    "tokenB",
+			expectedPass:   true,
+			expectedPoolId: uint64(1),
+		},
+		{
+			name:           "Correct parse pool 1 inverted",
+			firstToken:     "tokenB",
+			secondToken:    "tokenA",
+			expectedPass:   true,
+			expectedPoolId: sdk.NewInt(1).Uint64(),
+		},
+		{
+			name:           "Correct parse pool 2",
+			firstToken:     "tokenB",
+			secondToken:    "tokenC",
+			expectedPass:   true,
+			expectedPoolId: sdk.NewInt(2).Uint64(),
+		},
+		{
+			name:           "Correct parse pool 2 inverted",
+			firstToken:     "tokenC",
+			secondToken:    "tokenB",
+			expectedPass:   true,
+			expectedPoolId: sdk.NewInt(2).Uint64(),
+		},
+		{
+			name:           "Correct parse pool 2 inverted",
+			firstToken:     "tokenC",
+			secondToken:    "tokenB",
+			expectedPass:   true,
+			expectedPoolId: sdk.NewInt(2).Uint64(),
+		},
+		{
+			name:         "Incorrect token denom, raise",
+			firstToken:   "tokenA",
+			secondToken:  "tokenC",
+			expectedPass: false,
+		},
+		{
+			name:         "Incorrect token denom, inverted",
+			firstToken:   "tokenC",
+			secondToken:  "tokenA",
+			expectedPass: false,
+		},
+		{
+			name:         "Incorrect token denom, same token",
+			firstToken:   "tokenA",
+			secondToken:  "tokenA",
+			expectedPass: false,
+		},
+		{
+			name:         "Incorrect token denom, missing token",
+			firstToken:   "",
+			secondToken:  "tokenA",
+			expectedPass: false,
+		},
+		{
+			name:         "Incorrect token denom, missing tokens",
+			firstToken:   "",
+			secondToken:  "",
+			expectedPass: false,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+
+			app, ctx := testutil.NewNibiruApp(true)
+
+			app.DexKeeper.SetPool(ctx, types.Pool{
+				Id: 1,
+				PoolParams: types.PoolParams{
+					SwapFee: sdk.NewDecWithPrec(3, 2),
+					ExitFee: sdk.NewDecWithPrec(3, 2),
+				},
+				PoolAssets: []types.PoolAsset{
+					types.PoolAsset{
+						Token:  sdk.NewCoin("tokenB", sdk.NewInt(1000)),
+						Weight: sdk.NewInt(1),
+					},
+					types.PoolAsset{
+						Token:  sdk.NewCoin("tokenA", sdk.NewInt(1000)),
+						Weight: sdk.NewInt(1),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+				Address:     "address1",
+			})
+
+			app.DexKeeper.SetPool(ctx, types.Pool{
+				Id: 2,
+				PoolParams: types.PoolParams{
+					SwapFee: sdk.NewDecWithPrec(3, 2),
+					ExitFee: sdk.NewDecWithPrec(3, 2),
+				},
+				PoolAssets: []types.PoolAsset{
+					types.PoolAsset{
+						Token:  sdk.NewCoin("tokenB", sdk.NewInt(1000)),
+						Weight: sdk.NewInt(1),
+					},
+					types.PoolAsset{
+						Token:  sdk.NewCoin("tokenC", sdk.NewInt(1000)),
+						Weight: sdk.NewInt(1),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+				Address:     "address2",
+			})
+
+			retrievedPool, err := app.DexKeeper.FetchPoolFromPair(ctx, tc.firstToken, tc.secondToken)
+			retrievedPoolId := retrievedPool.Id
+			if tc.expectedPass {
+				require.NoError(t, err)
+
+				require.Equal(t, tc.expectedPoolId, retrievedPoolId)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+
+}
+
 func TestNewPool(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
 
