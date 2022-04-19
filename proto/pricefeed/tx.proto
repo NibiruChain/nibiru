@@ -18,11 +18,15 @@ service Msg {
 message MsgPostPrice {
   option (gogoproto.goproto_getters) = false;
 
-  // address of client
-  string from      = 1;
-  string market_id = 2 [(gogoproto.customname) = "MarketID"];
-  string price = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
-  google.protobuf.Timestamp expiry = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  // From: address of oracle
+  string from = 1;
+  // Token0: denominator unit of the price, a.k.a. quote asset
+  string token0 = 2 ;
+  // Token1: numerator unit of price, a.k.a. base asset
+  string token1 = 3 ;
+  // Price: Price of the trading pair in units of token1 / token0.
+  string price = 4 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  google.protobuf.Timestamp expiry = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 }
 
 // MsgPostPriceResponse defines the Msg/PostPrice response type.

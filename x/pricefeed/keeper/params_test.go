@@ -11,10 +11,9 @@ import (
 func TestGetParams(t *testing.T) {
 	k, ctx := testkeeper.PricefeedKeeper(t)
 	params_set := types.Params{
-		Markets: []types.Market{
-			{MarketID: "btc:usd", BaseAsset: "btc", QuoteAsset: "usd", Oracles: nil, Active: true},
-			{MarketID: "xrp:usd", BaseAsset: "xrp", QuoteAsset: "usd", Oracles: nil, Active: true},
-			{MarketID: "xrp:usd:30", BaseAsset: "xrp", QuoteAsset: "usd", Oracles: nil, Active: true},
+		Pairs: []types.Pair{
+			{Token1: "btc", Token0: "usd", Oracles: nil, Active: true},
+			{Token1: "xrp", Token0: "usd", Oracles: nil, Active: true},
 		},
 	}
 
