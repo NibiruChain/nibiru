@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MatrixDao/matrix/x/common"
-	pricefeedTypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/common"
+	pricefeedTypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,8 +25,8 @@ func TestSetCollRatio_Input(t *testing.T) {
 	executeTest := func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
-			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
 			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
 			if tc.expectedPass {
@@ -65,8 +65,8 @@ func TestSetCollRatio_Input(t *testing.T) {
 func TestGetCollRatio_Input(t *testing.T) {
 	testName := "GetCollRatio after setting default params returns expected value"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(true)
-		stablecoinKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(true)
+		stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
 		stablecoinKeeper.SetParams(ctx, types.DefaultParams())
 		expectedCollRatioInt := sdk.NewInt(types.DefaultParams().CollRatio)
@@ -78,8 +78,8 @@ func TestGetCollRatio_Input(t *testing.T) {
 
 	testName = "Setting to non-default value returns expected value"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(true)
-		stablecoinKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(true)
+		stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
 		expectedCollRatio := sdk.MustNewDecFromStr("0.5")
 		expectedCollRatioInt := expectedCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
@@ -107,10 +107,10 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 	executeTest := func(t *testing.T, testCase TestCaseGetCollUSDForTargetCollRatio) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
-			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
-			require.NoError(t, matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
@@ -129,19 +129,19 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
-			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
 			// Post prices to each specified market with the oracle.
 			prices := map[string]sdk.Dec{
 				common.CollStablePool: tc.priceCollStable,
 			}
 			for _, marketID := range tc.postedMarketIDs {
-				_, err := matrixApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PriceKeeper.SetPrice(
 					ctx, oracle, marketID, prices[marketID], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = matrixApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
 				require.NoError(t, err, "Error posting price for market: %d", marketID)
 			}
 
@@ -235,10 +235,10 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
-			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
-			require.NoError(t, matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
@@ -255,16 +255,16 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
-			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
 			// Post prices to each market with the oracle.
-			_, err := matrixApp.PriceKeeper.SetPrice(
+			_, err := nibiruApp.PriceKeeper.SetPrice(
 				ctx, oracle, marketID, tc.priceCollStable, priceExpiry)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, market := range pricefeedParams.Markets {
-				err = matrixApp.PriceKeeper.SetCurrentPrices(ctx, market.MarketID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, market.MarketID)
 				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
@@ -293,10 +293,10 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
-			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
-			require.NoError(t, matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
@@ -312,7 +312,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
-			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
 			neededCollAmount, err := stablecoinKeeper.GetCollAmtForTargetCollRatio(ctx)
 			if tc.expectedPass {
@@ -411,10 +411,10 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewMatrixApp(true)
-			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
-			require.NoError(t, matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
@@ -433,7 +433,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
-			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
 			// Post prices to each specified market with the oracle.
 			prices := map[string]sdk.Dec{
@@ -441,12 +441,12 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				common.GovStablePool:  tc.priceGovStable,
 			}
 			for _, marketID := range tc.postedMarketIDs {
-				_, err := matrixApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PriceKeeper.SetPrice(
 					ctx, oracle, marketID, prices[marketID], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = matrixApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
 				require.NoError(t, err, "Error posting price for market: %d", marketID)
 			}
 
@@ -558,10 +558,10 @@ func TestRecollateralize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require.EqualValues(t, tc.expectedNeededUSD, tc.scenario.CalcNeededUSD())
 
-			matrixApp, ctx := testutil.NewMatrixApp(true)
-			stablecoinKeeper := &matrixApp.StablecoinKeeper
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
-			require.NoError(t, matrixApp.BankKeeper.MintCoins(
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.scenario.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.scenario.stableSupply),
@@ -572,7 +572,7 @@ func TestRecollateralize(t *testing.T) {
 			if tc.expectedPass {
 				require.NoError(t, err)
 			}
-			err = simapp.FundAccount(matrixApp.BankKeeper, ctx, caller, tc.accFunds)
+			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, caller, tc.accFunds)
 			if tc.expectedPass {
 				require.NoError(t, err)
 			}
@@ -589,7 +589,7 @@ func TestRecollateralize(t *testing.T) {
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
-			matrixApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
 			// Post prices to each specified market with the oracle.
 			prices := map[string]sdk.Dec{
@@ -597,12 +597,12 @@ func TestRecollateralize(t *testing.T) {
 				common.GovStablePool:  tc.priceGovStable,
 			}
 			for _, marketID := range tc.postedMarketIDs {
-				_, err := matrixApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PriceKeeper.SetPrice(
 					ctx, oracle, marketID, prices[marketID], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = matrixApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
 				require.NoError(t, err, "Error posting price for market: %d", marketID)
 			}
 

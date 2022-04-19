@@ -3,8 +3,8 @@ package testkeeper
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/keeper"
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"

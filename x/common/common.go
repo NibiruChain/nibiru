@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	GovDenom    = "umtrx"
+	GovDenom    = "unibi"
 	CollDenom   = "uust"
-	StableDenom = "uusdm"
+	StableDenom = "unusd"
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 

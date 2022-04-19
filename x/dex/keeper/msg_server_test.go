@@ -3,11 +3,11 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/dex/keeper"
-	"github.com/MatrixDao/matrix/x/dex/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/mock"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -15,39 +15,138 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
-
-	msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
-
-	// Setup
-	app.DexKeeper.SetNextPoolNumber(ctx, 1)
-	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
-
-	msgCreatePool := types.MsgCreatePool{
-		Creator: addr.String(),
-		PoolParams: &types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+	tests := []struct {
+		name               string
+		creatorAddr        sdk.AccAddress
+		poolParams         types.PoolParams
+		poolAssets         []types.PoolAsset
+		senderInitialFunds sdk.Coins
+		expectedErr        bool
+	}{
+		{
+			name:        "invalid creator addr",
+			creatorAddr: []byte{},
+			poolParams:  types.PoolParams{},
+			poolAssets:  []types.PoolAsset{},
+			expectedErr: true,
 		},
-		PoolAssets: []types.PoolAsset{
-			{
-				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+		{
+			name:        "not enough assets",
+			poolParams:  types.PoolParams{},
+			poolAssets:  []types.PoolAsset{},
+			expectedErr: true,
+		},
+		{
+			name:       "too many assets",
+			poolParams: types.PoolParams{},
+			poolAssets: []types.PoolAsset{
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("aaa", 1),
+					Weight: sdk.OneInt(),
+				},
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("bbb", 1),
+					Weight: sdk.OneInt(),
+				},
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("ccc", 1),
+					Weight: sdk.OneInt(),
+				},
 			},
-			{
-				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+			expectedErr: true,
+		},
+		{
+			name:       "insufficient pool creation fee",
+			poolParams: types.PoolParams{},
+			poolAssets: []types.PoolAsset{
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("aaa", 1),
+					Weight: sdk.OneInt(),
+				},
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("bbb", 1),
+					Weight: sdk.OneInt(),
+				},
 			},
+			senderInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 1e9-1),
+				sdk.NewInt64Coin("aaa", 1),
+				sdk.NewInt64Coin("bbb", 1),
+			),
+			expectedErr: true,
+		},
+		{
+			name:       "insufficient initial deposit",
+			poolParams: types.PoolParams{},
+			poolAssets: []types.PoolAsset{
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("aaa", 1),
+					Weight: sdk.OneInt(),
+				},
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("bbb", 1),
+					Weight: sdk.OneInt(),
+				},
+			},
+			senderInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 1e9),
+			),
+			expectedErr: true,
+		},
+		{
+			name:       "successful pool creation",
+			poolParams: types.PoolParams{},
+			poolAssets: []types.PoolAsset{
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("aaa", 1),
+					Weight: sdk.OneInt(),
+				},
+				types.PoolAsset{
+					Token:  sdk.NewInt64Coin("bbb", 1),
+					Weight: sdk.OneInt(),
+				},
+			},
+			senderInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 1e9),
+				sdk.NewInt64Coin("aaa", 1),
+				sdk.NewInt64Coin("bbb", 1),
+			),
+			expectedErr: false,
 		},
 	}
 
-	_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
-	require.Error(t, err)
-	// require.EqualValues(t, resp.PoolId, 1)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
+
+			if tc.creatorAddr == nil {
+				tc.creatorAddr = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
+			}
+			if tc.senderInitialFunds != nil {
+				simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds)
+			}
+
+			msgCreatePool := types.MsgCreatePool{
+				Creator:    tc.creatorAddr.String(),
+				PoolParams: &tc.poolParams,
+				PoolAssets: tc.poolAssets,
+			}
+
+			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
+			if tc.expectedErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+
 }
 
-func TestJoinPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+func TestMsgServerJoinPool(t *testing.T) {
+	const shareDenom = "nibiru/pool/1"
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
@@ -157,7 +256,7 @@ func TestJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -185,7 +284,7 @@ func TestJoinPool(t *testing.T) {
 }
 
 func TestMsgServerExitPool(t *testing.T) {
-	const shareDenom = "matrix/pool/1"
+	const shareDenom = "nibiru/pool/1"
 	tests := []struct {
 		name                     string
 		joinerInitialFunds       sdk.Coins
@@ -276,7 +375,7 @@ func TestMsgServerExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewMatrixApp(true)
+			app, ctx := testutil.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

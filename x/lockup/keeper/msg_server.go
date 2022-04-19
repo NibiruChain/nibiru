@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
 
 type msgServer struct {

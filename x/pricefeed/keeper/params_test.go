@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/testutil/testkeeper"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/testkeeper"
 	"github.com/stretchr/testify/require"
 )
 

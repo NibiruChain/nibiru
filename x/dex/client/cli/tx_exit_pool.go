@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -23,7 +23,7 @@ func CmdExitPool() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100matrix/pool/1 --from validator --keyring-backend test --home data/localnet --chain-id localnet
+$ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100nibiru/pool/1 --from validator --keyring-backend test --home data/localnet --chain-id localnet
 `,
 				version.AppName,
 			),

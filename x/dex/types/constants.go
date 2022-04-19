@@ -8,7 +8,7 @@ const (
 	// minimum number of assets a pool may have
 	MinPoolAssets = 2
 	// maximum number of assets a pool may have
-	MaxPoolAssets = 8
+	MaxPoolAssets = 2
 
 	// the exponent of a pool display share compared to a pool base share (one pool display share = 10^18 pool base shares)
 	DisplayPoolShareExponent = 18
