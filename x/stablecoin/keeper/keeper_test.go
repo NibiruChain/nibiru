@@ -7,7 +7,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// For integration testing
@@ -24,7 +23,6 @@ type KeeperTestSuite struct {
 	ctx sdk.Context
 	app *app.NibiruApp
 
-	clientCtx   client.Context
 	queryClient types.QueryClient
 }
 
@@ -57,7 +55,6 @@ func (suite *KeeperTestSuite) _doSetupTest() {
 // Params
 
 func TestGetAndSetParams(t *testing.T) {
-
 	var testName string
 
 	testName = "Get default Params"
@@ -97,5 +94,4 @@ func TestGetAndSetParams(t *testing.T) {
 			func() { stableKeeper.GetParams(ctx) },
 		)
 	})
-
 }

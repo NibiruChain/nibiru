@@ -357,7 +357,7 @@ func TestJoinPool(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := sample.AccAddress()
-			simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn)
 			require.NoError(t, err)
@@ -470,8 +470,8 @@ func TestExitPool(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := sample.AccAddress()
-			simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds)
-			simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 
 			tokensOut, err := app.DexKeeper.ExitPool(ctx, sender, 1, tc.poolSharesOut)
 			require.NoError(t, err)

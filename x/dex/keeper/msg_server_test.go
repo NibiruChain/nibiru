@@ -40,15 +40,15 @@ func TestCreatePool(t *testing.T) {
 			name:       "too many assets",
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("aaa", 1),
 					Weight: sdk.OneInt(),
 				},
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bbb", 1),
 					Weight: sdk.OneInt(),
 				},
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("ccc", 1),
 					Weight: sdk.OneInt(),
 				},
@@ -59,11 +59,11 @@ func TestCreatePool(t *testing.T) {
 			name:       "insufficient pool creation fee",
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("aaa", 1),
 					Weight: sdk.OneInt(),
 				},
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bbb", 1),
 					Weight: sdk.OneInt(),
 				},
@@ -79,11 +79,11 @@ func TestCreatePool(t *testing.T) {
 			name:       "insufficient initial deposit",
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("aaa", 1),
 					Weight: sdk.OneInt(),
 				},
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bbb", 1),
 					Weight: sdk.OneInt(),
 				},
@@ -97,11 +97,11 @@ func TestCreatePool(t *testing.T) {
 			name:       "successful pool creation",
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("aaa", 1),
 					Weight: sdk.OneInt(),
 				},
-				types.PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bbb", 1),
 					Weight: sdk.OneInt(),
 				},
@@ -125,7 +125,7 @@ func TestCreatePool(t *testing.T) {
 				tc.creatorAddr = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 			}
 			if tc.senderInitialFunds != nil {
-				simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds)
+				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
 			}
 
 			msgCreatePool := types.MsgCreatePool{
@@ -142,7 +142,6 @@ func TestCreatePool(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestMsgServerJoinPool(t *testing.T) {
@@ -264,7 +263,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := sample.AccAddress()
-			simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 			resp, err := msgServer.JoinPool(
@@ -383,8 +382,8 @@ func TestMsgServerExitPool(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := sample.AccAddress()
-			simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds)
-			simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 			resp, err := msgServer.ExitPool(

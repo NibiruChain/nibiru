@@ -153,6 +153,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			require.Equal(t, res, tc.resp)
 
 			pool, err := keeper.getPool(ctx, NUSDPair)
+			require.NoError(t, err)
 			quoteAmount, err := pool.GetPoolQuoteAssetReserveAsInt()
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedQuoteReserve, quoteAmount)

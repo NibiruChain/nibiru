@@ -194,7 +194,6 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 
 				s.Require().Equal(
 					balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
-
 			}
 		})
 	}

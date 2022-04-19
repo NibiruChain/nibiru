@@ -45,7 +45,7 @@ func TestCreateLock(t *testing.T) {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testutil.NewNibiruApp(true)
-			simapp.FundAccount(app.BankKeeper, ctx, tc.ownerAddr, tc.accountInitialFunds)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.ownerAddr, tc.accountInitialFunds))
 
 			lock, err := app.LockupKeeper.LockTokens(ctx, tc.ownerAddr, tc.coins, tc.duration)
 			if tc.shouldErr {
@@ -63,7 +63,6 @@ func TestCreateLock(t *testing.T) {
 
 				require.Equal(t, uint64(1), app.LockupKeeper.GetNextLockId(ctx))
 			}
-
 		})
 	}
 }

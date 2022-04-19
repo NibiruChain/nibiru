@@ -1,0 +1,16 @@
+# Options for analysis running. See https://golangci-lint.run/usage/configuration/ for config options.
+run:
+  timeout: 5m
+issues:
+  max-issues-per-linter: 0 # infinite
+  max-same-issues: 0 # infinite
+  fix: true
+linters:
+  enable:
+    - whitespace
+    - misspell
+linters-settings:
+  misspell:
+    locale: US
+severity:
+  default-severity: error

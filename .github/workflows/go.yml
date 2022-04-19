@@ -2,36 +2,33 @@ name: Go
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ "master", "**" ]
+    branches: ["**"]
 
 jobs:
-
-  build: 
+  build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.16
 
-    - name: Build binaries for nibid using the Makefile
-      run: make build
+      - name: Build binaries for nibid using the Makefile
+        run: make build
 
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
 
-    - name: Run all tests.
-      run: go test -v ./...
-
-
+      - name: Run all tests.
+        run: go test -v ./...

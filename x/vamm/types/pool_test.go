@@ -53,7 +53,6 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			pool := NewPool(
 				"BTC:NUSD",
 				sdk.MustNewDecFromStr("0.9"), // 0.9
@@ -87,7 +86,6 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			pool := NewPool(
 				"BTC:NUSD",
 				sdk.MustNewDecFromStr("0.9"), // 0.9

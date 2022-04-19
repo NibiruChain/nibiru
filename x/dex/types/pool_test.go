@@ -455,7 +455,7 @@ func TestUpdatePoolAssetTokens(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pool := MockPool(tc.poolAssets)
-			pool.updatePoolAssetBalances(tc.newAssets)
+			require.NoError(t, pool.updatePoolAssetBalances(tc.newAssets))
 			require.Equal(t, tc.expectedPoolAssets, pool.PoolAssets)
 		})
 	}

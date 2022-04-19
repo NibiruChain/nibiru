@@ -313,7 +313,6 @@ func TestApplySwap(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedPoolAssets, tc.pool.PoolAssets)
 			}
-
 		})
 	}
 }
