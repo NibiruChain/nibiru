@@ -117,7 +117,7 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 
 func TestLockupKeeper_AccountLockedCoins(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testutil.NewMatrixApp()
+		app, _ := testutil.NewNibiruApp(true)
 		addr := sample.AccAddress()
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
