@@ -53,7 +53,7 @@ ret:
 args:
   - poolAssets: the slice of pool assets
 */
-func (pool Pool) PoolAssetsCoins() (sdk.Coins) {
+func (pool Pool) PoolBalances() sdk.Coins {
 	coins := sdk.NewCoins()
 	for _, asset := range pool.PoolAssets {
 		coins = coins.Add(asset.Token)

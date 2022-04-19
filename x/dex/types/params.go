@@ -3,7 +3,7 @@ package types
 import (
 	fmt "fmt"
 
-	"github.com/MatrixDao/matrix/x/common"
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
@@ -28,7 +28,7 @@ func NewParams(startingPoolNumber uint64, poolCreationFee sdk.Coins) Params {
 func DefaultParams() Params {
 	return Params{
 		StartingPoolNumber: 1,
-		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)), // 1000 MTRX
+		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)), // 1000 NIBI
 	}
 }
 

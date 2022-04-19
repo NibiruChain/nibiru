@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -40,7 +40,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				Params: types.NewParams(
 					sdk.MustNewDecFromStr("0.7"), defaultFeeRatio,
-					defaultFeeRatioEF, defaultBonusRateRecoll, "15 min",
+					defaultFeeRatioEF, defaultBonusRateRecoll,
 				),
 			},
 			expectValid: true,
@@ -50,7 +50,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				Params: types.NewParams(
 					sdk.MustNewDecFromStr("-0.5"), defaultFeeRatio,
-					defaultFeeRatioEF, defaultBonusRateRecoll, "15 min",
+					defaultFeeRatioEF, defaultBonusRateRecoll,
 				),
 			},
 			expectValid: false,
@@ -60,7 +60,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				Params: types.NewParams(
 					sdk.MustNewDecFromStr("1.5"), defaultFeeRatio,
-					defaultFeeRatioEF, defaultBonusRateRecoll, "15 min",
+					defaultFeeRatioEF, defaultBonusRateRecoll,
 				),
 			},
 			expectValid: false,

@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/app"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -21,7 +21,7 @@ type KeeperTestSuite struct {
 	suite.Suite
 
 	ctx sdk.Context
-	app *app.MatrixApp
+	app *app.NibiruApp
 
 	queryClient types.QueryClient
 }
@@ -41,8 +41,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) _doSetupTest() {
-	matrixApp, ctx := testutil.NewMatrixApp(true)
-	suite.app = matrixApp
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	suite.app = nibiruApp
 	suite.ctx = ctx
 
 	queryGrpcClientConn := baseapp.NewQueryServerTestHelper(
@@ -60,8 +60,8 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get default Params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(true)
-		stableKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(true)
+		stableKeeper := &nibiruApp.StablecoinKeeper
 
 		params := types.DefaultParams()
 		stableKeeper.SetParams(ctx, params)
@@ -71,16 +71,15 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Get non-default params"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(true)
-		stableKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(true)
+		stableKeeper := &nibiruApp.StablecoinKeeper
 
 		collRatio := sdk.MustNewDecFromStr("0.5")
 		feeRatio := collRatio
 		feeRatioEF := collRatio
-		DistrEpochIdentifier := "15 min"
 		bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
 		params := types.NewParams(
-			collRatio, feeRatio, feeRatioEF, bonusRateRecoll, DistrEpochIdentifier)
+			collRatio, feeRatio, feeRatioEF, bonusRateRecoll)
 		stableKeeper.SetParams(ctx, params)
 
 		require.EqualValues(t, params, stableKeeper.GetParams(ctx))
@@ -88,8 +87,8 @@ func TestGetAndSetParams(t *testing.T) {
 
 	testName = "Calling Get without setting causes a panic"
 	t.Run(testName, func(t *testing.T) {
-		matrixApp, ctx := testutil.NewMatrixApp(false)
-		stableKeeper := &matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(false)
+		stableKeeper := &nibiruApp.StablecoinKeeper
 
 		require.Panics(
 			t,

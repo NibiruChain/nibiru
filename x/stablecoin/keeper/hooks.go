@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	epochstypes "github.com/MatrixDao/matrix/x/epochs/types"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

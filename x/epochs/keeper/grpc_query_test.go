@@ -4,7 +4,7 @@ import (
 	gocontext "context"
 	"time"
 
-	"github.com/MatrixDao/matrix/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestQueryEpochInfos() {

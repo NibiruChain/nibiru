@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/dex/math"
+	"github.com/NibiruChain/nibiru/x/dex/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

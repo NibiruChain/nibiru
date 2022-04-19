@@ -16,7 +16,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams(
-	collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec, bonusRateRecoll sdk.Dec, DistrEpochIdentifier string,
+	collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec, bonusRateRecoll sdk.Dec,
 ) Params {
 	million := sdk.NewDec(1_000_000)
 	collRatioInt := collRatio.Mul(million).RoundInt()
@@ -25,11 +25,10 @@ func NewParams(
 	bonusRateRecollInt := bonusRateRecoll.Mul(million).RoundInt()
 
 	return Params{
-		CollRatio:            collRatioInt.Int64(),
-		FeeRatio:             feeRationInt.Int64(),
-		EfFeeRatio:           efFeeRatioInt.Int64(),
-		BonusRateRecoll:      bonusRateRecollInt.Int64(),
-		DistrEpochIdentifier: DistrEpochIdentifier,
+		CollRatio:       collRatioInt.Int64(),
+		FeeRatio:        feeRationInt.Int64(),
+		EfFeeRatio:      efFeeRatioInt.Int64(),
+		BonusRateRecoll: bonusRateRecollInt.Int64(),
 	}
 }
 
@@ -39,9 +38,8 @@ func DefaultParams() Params {
 	feeRatio := sdk.MustNewDecFromStr("0.002")
 	efFeeRatio := sdk.MustNewDecFromStr("0.5")
 	bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
-	DistrEpochIdentifier := "15 min"
 
-	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll, DistrEpochIdentifier)
+	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -61,11 +59,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			[]byte("EfFeeRatio"),
 			&p.EfFeeRatio,
 			validateEfFeeRatio,
-		),
-		paramtypes.NewParamSetPair(
-			[]byte("DistrEpochIdentifier"),
-			&p.DistrEpochIdentifier,
-			validateDistrEpochIdentifier,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("BonusRateRecoll"),

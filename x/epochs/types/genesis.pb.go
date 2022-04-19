@@ -166,8 +166,8 @@ func (m *GenesisState) GetEpochs() []EpochInfo {
 }
 
 func init() {
-	proto.RegisterType((*EpochInfo)(nil), "matrix.epochs.v1beta1.EpochInfo")
-	proto.RegisterType((*GenesisState)(nil), "matrix.epochs.v1beta1.GenesisState")
+	proto.RegisterType((*EpochInfo)(nil), "nibiru.epochs.v1beta1.EpochInfo")
+	proto.RegisterType((*GenesisState)(nil), "nibiru.epochs.v1beta1.GenesisState")
 }
 
 func init() { proto.RegisterFile("epochs/genesis.proto", fileDescriptor_b167152c9528ab6c) }

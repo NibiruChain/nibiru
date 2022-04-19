@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MatrixDao/matrix/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 

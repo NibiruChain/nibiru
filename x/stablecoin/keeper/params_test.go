@@ -7,13 +7,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestGetParams(t *testing.T) {
-	matrixApp, ctx := testutil.NewMatrixApp(true)
-	stableKeeper := &matrixApp.StablecoinKeeper
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	stableKeeper := &nibiruApp.StablecoinKeeper
 
 	params := types.DefaultParams()
 
@@ -35,7 +35,6 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("0.002"),
-				"15 min",
 			),
 			fmt.Errorf(
 				"collateral ratio is above max value(1e6): %s",
@@ -48,7 +47,6 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("2"),
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("0.002"),
-				"15 min",
 			),
 			fmt.Errorf(
 				"fee ratio is above max value(1e6): %s",
@@ -61,7 +59,6 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("1"),
 				sdk.MustNewDecFromStr("2"),
 				sdk.MustNewDecFromStr("0.002"),
-				"15 min",
 			),
 			fmt.Errorf(
 				"stable EF fee ratio is above max value(1e6): %s",

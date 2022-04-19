@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/stablecoin/events"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/stablecoin/events"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -36,13 +36,13 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	}
 	params := k.GetParams(ctx)
 
+	params := k.GetParams(ctx)
 	// TODO this should be rethought for production
 	newParams := types.NewParams(
 		collRatio,
 		params.GetFeeRatioAsDec(),
 		params.GetEfFeeRatioAsDec(),
 		params.GetBonusRateRecollAsDec(),
-		"15 min",
 	)
 	k.ParamSubspace.SetParamSet(ctx, &newParams)
 
@@ -50,55 +50,11 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 }
 
 /*
-UpdateCollRatio updaet the value of the current collateral ratio knowing the price is either up or down the peg
-*/
-func (k *Keeper) UpdateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
-
-	matrixStep := sdk.MustNewDecFromStr("0.0025")
-	var adjustment sdk.Dec
-
-	if isPriceUp {
-		adjustment = matrixStep
-	} else {
-		adjustment = matrixStep.Mul(sdk.MustNewDecFromStr("-1"))
-	}
-	currCollRatio := k.GetCollRatio(ctx)
-	k.SetCollRatio(ctx, currCollRatio.Add(adjustment))
-
-	return err
-}
-
-/*
-Evaluate Coll ratio updates the collateral ratio if the price is out of the bounds.
-*/
-func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
-
-	upperBound := sdk.MustNewDecFromStr("1.0001")
-	lowerBound := sdk.MustNewDecFromStr("0.9999")
-
-	// Should take TWAP price
-	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(ctx, common.CollStablePool)
-	if err != nil {
-		return err
-	}
-
-	if stablePrice.Price.GTE(upperBound) {
-		err = k.UpdateCollRatio(ctx, true)
-	} else if stablePrice.Price.LTE(lowerBound) {
-		err = k.UpdateCollRatio(ctx, false)
-	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-/*
 GetCollUSDForTargetCollRatio is the collateral value in USD needed to reach a target
 collateral ratio.
 */
 func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
-	stableSupply := k.GetSupplyUSDM(ctx)
+	stableSupply := k.GetSupplyNUSD(ctx)
 	targetCollRatio := k.GetCollRatio(ctx)
 	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	moduleCoins := k.BankKeeper.SpendableCoins(ctx, moduleAddr)
@@ -242,7 +198,7 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	events.EmitMintMtrx(ctx, outGov)
+	events.EmitMintNIBI(ctx, outGov)
 
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, caller, sdk.NewCoins(outGov),

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	dexcli "github.com/MatrixDao/matrix/x/dex/client/cli"
+	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/testutil"

@@ -3,8 +3,8 @@ package epochs
 import (
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/epochs/keeper"
-	"github.com/MatrixDao/matrix/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
