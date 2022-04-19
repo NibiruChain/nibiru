@@ -48,24 +48,24 @@ func NewPricefeedGen() *pricefeedtypes.GenesisState {
 
 	return &pricefeedtypes.GenesisState{
 		Params: pricefeedtypes.Params{
-			Markets: []pricefeedtypes.Market{
-				{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
+			Pairs: []pricefeedtypes.Pair{
+				{PairID: common.GovStablePool.String(), BaseAsset: common.GovDenom,
 					QuoteAsset: common.CollDenom, Oracles: []sdk.AccAddress{oracle},
 					Active: true},
-				{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+				{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom,
 					QuoteAsset: common.StableDenom, Oracles: []sdk.AccAddress{oracle},
 					Active: true},
 			},
 		},
 		PostedPrices: []pricefeedtypes.PostedPrice{
 			{
-				MarketID:      common.GovStablePool,
+				PairID:        common.GovStablePool.String(),
 				OracleAddress: oracle,
 				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				MarketID:      common.CollStablePool,
+				PairID:        common.CollStablePool.String(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),

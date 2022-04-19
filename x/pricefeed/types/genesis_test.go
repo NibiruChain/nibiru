@@ -34,7 +34,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "dup market param",
 			genState: NewGenesisState(
-				NewParams([]Market{
+				NewParams([]Pair{
 					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
 					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
 				}),
@@ -45,7 +45,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid posted price",
 			genState: NewGenesisState(
-				NewParams([]Market{}),
+				NewParams([]Pair{}),
 				[]PostedPrice{NewPostedPrice("xrp", nil, sdk.OneDec(), now)},
 			),
 			valid: false,
@@ -53,7 +53,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "duplicated posted price",
 			genState: NewGenesisState(
-				NewParams([]Market{}),
+				NewParams([]Pair{}),
 				[]PostedPrice{
 					NewPostedPrice("xrp", addr, sdk.OneDec(), now),
 					NewPostedPrice("xrp", addr, sdk.OneDec(), now),

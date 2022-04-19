@@ -9,10 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// NewMarket returns a new Market
-func NewMarket(id, base, quote string, oracles []sdk.AccAddress, active bool) Market {
-	return Market{
-		MarketID:   id,
+// NewPair returns a new Pair
+func NewPair(id, base, quote string, oracles []sdk.AccAddress, active bool) Pair {
+	return Pair{
+		PairID:     id,
 		BaseAsset:  base,
 		QuoteAsset: quote,
 		Oracles:    oracles,
@@ -21,8 +21,8 @@ func NewMarket(id, base, quote string, oracles []sdk.AccAddress, active bool) Ma
 }
 
 // Validate performs a basic validation of the market params
-func (m Market) Validate() error {
-	if strings.TrimSpace(m.MarketID) == "" {
+func (m Pair) Validate() error {
+	if strings.TrimSpace(m.PairID) == "" {
 		return errors.New("market id cannot be blank")
 	}
 	if err := sdk.ValidateDenom(m.BaseAsset); err != nil {
@@ -44,39 +44,39 @@ func (m Market) Validate() error {
 	return nil
 }
 
-// ToMarketResponse returns a new MarketResponse from a Market
-func (m Market) ToMarketResponse() MarketResponse {
-	return NewMarketResponse(m.MarketID, m.BaseAsset, m.QuoteAsset, m.Oracles, m.Active)
+// ToPairResponse returns a new PairResponse from a Pair
+func (m Pair) ToPairResponse() PairResponse {
+	return NewPairResponse(m.PairID, m.BaseAsset, m.QuoteAsset, m.Oracles, m.Active)
 }
 
-// Markets is a slice of Market
-type Markets []Market
+// Pairs is a slice of Pair
+type Pairs []Pair
 
 // Validate checks if all the markets are valid and there are no duplicated
 // entries.
-func (ms Markets) Validate() error {
-	seenMarkets := make(map[string]bool)
+func (ms Pairs) Validate() error {
+	seenPairs := make(map[string]bool)
 	for _, m := range ms {
-		if seenMarkets[m.MarketID] {
-			return fmt.Errorf("duplicated market %s", m.MarketID)
+		if seenPairs[m.PairID] {
+			return fmt.Errorf("duplicated market %s", m.PairID)
 		}
 		if err := m.Validate(); err != nil {
 			return err
 		}
-		seenMarkets[m.MarketID] = true
+		seenPairs[m.PairID] = true
 	}
 	return nil
 }
 
-// NewMarketResponse returns a new MarketResponse
-func NewMarketResponse(id, base, quote string, oracles []sdk.AccAddress, active bool) MarketResponse {
+// NewPairResponse returns a new PairResponse
+func NewPairResponse(id, base, quote string, oracles []sdk.AccAddress, active bool) PairResponse {
 	var strOracles []string
 	for _, oracle := range oracles {
 		strOracles = append(strOracles, oracle.String())
 	}
 
-	return MarketResponse{
-		MarketID:   id,
+	return PairResponse{
+		PairID:     id,
 		BaseAsset:  base,
 		QuoteAsset: quote,
 		Oracles:    strOracles,
@@ -84,29 +84,29 @@ func NewMarketResponse(id, base, quote string, oracles []sdk.AccAddress, active 
 	}
 }
 
-// MarketResponses is a slice of MarketResponse
-type MarketResponses []MarketResponse
+// PairResponses is a slice of PairResponse
+type PairResponses []PairResponse
 
 // NewCurrentPrice returns an instance of CurrentPrice
-func NewCurrentPrice(marketID string, price sdk.Dec) CurrentPrice {
-	return CurrentPrice{MarketID: marketID, Price: price}
+func NewCurrentPrice(pairID string, price sdk.Dec) CurrentPrice {
+	return CurrentPrice{PairID: pairID, Price: price}
 }
 
 // CurrentPrices is a slice of CurrentPrice
 type CurrentPrices []CurrentPrice
 
 // NewCurrentPriceResponse returns an instance of CurrentPriceResponse
-func NewCurrentPriceResponse(marketID string, price sdk.Dec) CurrentPriceResponse {
-	return CurrentPriceResponse{MarketID: marketID, Price: price}
+func NewCurrentPriceResponse(pairID string, price sdk.Dec) CurrentPriceResponse {
+	return CurrentPriceResponse{PairID: pairID, Price: price}
 }
 
 // CurrentPriceResponses is a slice of CurrentPriceResponse
 type CurrentPriceResponses []CurrentPriceResponse
 
 // NewPostedPrice returns a new PostedPrice
-func NewPostedPrice(marketID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPrice {
+func NewPostedPrice(pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPrice {
 	return PostedPrice{
-		MarketID:      marketID,
+		PairID:        pairID,
 		OracleAddress: oracle,
 		Price:         price,
 		Expiry:        expiry,
@@ -115,7 +115,7 @@ func NewPostedPrice(marketID string, oracle sdk.AccAddress, price sdk.Dec, expir
 
 // Validate performs a basic check of a PostedPrice params.
 func (pp PostedPrice) Validate() error {
-	if strings.TrimSpace(pp.MarketID) == "" {
+	if strings.TrimSpace(pp.PairID) == "" {
 		return errors.New("market id cannot be blank")
 	}
 	if len(pp.OracleAddress) == 0 {
@@ -138,23 +138,23 @@ type PostedPrices []PostedPrice
 func (pps PostedPrices) Validate() error {
 	seenPrices := make(map[string]bool)
 	for _, pp := range pps {
-		if !pp.OracleAddress.Empty() && seenPrices[pp.MarketID+pp.OracleAddress.String()] {
-			return fmt.Errorf("duplicated posted price for marked id %s and oracle address %s", pp.MarketID, pp.OracleAddress)
+		if !pp.OracleAddress.Empty() && seenPrices[pp.PairID+pp.OracleAddress.String()] {
+			return fmt.Errorf("duplicated posted price for marked id %s and oracle address %s", pp.PairID, pp.OracleAddress)
 		}
 
 		if err := pp.Validate(); err != nil {
 			return err
 		}
-		seenPrices[pp.MarketID+pp.OracleAddress.String()] = true
+		seenPrices[pp.PairID+pp.OracleAddress.String()] = true
 	}
 
 	return nil
 }
 
 // NewPostedPrice returns a new PostedPrice
-func NewPostedPriceResponse(marketID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPriceResponse {
+func NewPostedPriceResponse(pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPriceResponse {
 	return PostedPriceResponse{
-		MarketID:      marketID,
+		PairID:        pairID,
 		OracleAddress: oracle.String(),
 		Price:         price,
 		Expiry:        expiry,

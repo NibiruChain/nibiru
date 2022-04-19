@@ -19,10 +19,10 @@ var _ sdk.Msg = &MsgPostPrice{}
 
 func NewMsgPostPrice(creator string, marketId string, price sdk.Dec, expiry time.Time) *MsgPostPrice {
 	return &MsgPostPrice{
-		From:     creator,
-		MarketID: marketId,
-		Price:    price,
-		Expiry:   expiry,
+		From:   creator,
+		PairID: marketId,
+		Price:  price,
+		Expiry: expiry,
 	}
 }
 

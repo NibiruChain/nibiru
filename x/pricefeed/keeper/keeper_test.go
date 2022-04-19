@@ -11,44 +11,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestKeeper_SetGetMarket(t *testing.T) {
+func TestKeeper_SetGetPair(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
 
-	tstusdMarket := types.Market{
-		MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
+	tstusdPair := types.Pair{
+		PairID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
 		Oracles: []sdk.AccAddress{}, Active: true}
-	tst2usdMarket := types.Market{MarketID: "tst2usd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true}
+	tst2usdPair := types.Pair{PairID: "tst2usd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: []sdk.AccAddress{}, Active: true}
 
 	mp := types.Params{
-		Markets: types.Markets{tstusdMarket},
+		Pairs: types.Pairs{tstusdPair},
 	}
 	keeper := app.PriceKeeper
 	keeper.SetParams(ctx, mp)
 
-	markets := keeper.GetMarkets(ctx)
+	markets := keeper.GetPairs(ctx)
 	require.Equal(t, len(markets), 1)
-	require.Equal(t, markets[0].MarketID, "tstusd")
+	require.Equal(t, markets[0].PairID, "tstusd")
 
-	_, found := keeper.GetMarket(ctx, "tstusd")
+	_, found := keeper.GetPair(ctx, "tstusd")
 	require.True(t, found, "market should be found")
 
-	_, found = keeper.GetMarket(ctx, "invalidmarket")
+	_, found = keeper.GetPair(ctx, "invalidmarket")
 	require.False(t, found, "invalidmarket should not be found")
 
 	mp = types.Params{
-		Markets: []types.Market{
-			tstusdMarket,
-			tst2usdMarket,
+		Pairs: []types.Pair{
+			tstusdPair,
+			tst2usdPair,
 		},
 	}
 
 	keeper.SetParams(ctx, mp)
-	markets = keeper.GetMarkets(ctx)
+	markets = keeper.GetPairs(ctx)
 	require.Equal(t, len(markets), 2)
-	require.Equal(t, markets[0].MarketID, "tstusd")
-	require.Equal(t, markets[1].MarketID, "tst2usd")
+	require.Equal(t, markets[0].PairID, "tstusd")
+	require.Equal(t, markets[1].PairID, "tst2usd")
 
-	_, found = keeper.GetMarket(ctx, "nan")
+	_, found = keeper.GetPair(ctx, "nan")
 	require.False(t, found)
 }
 
@@ -58,17 +58,17 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
 	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
+		Pairs: []types.Pair{
+			{PairID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, mp)
 
 	prices := []struct {
-		oracle   sdk.AccAddress
-		marketID string
-		price    sdk.Dec
-		total    int
+		oracle sdk.AccAddress
+		pairID string
+		price  sdk.Dec
+		total  int
 	}{
 		{addrs[0], "tstusd", sdk.MustNewDecFromStr("0.33"), 1},
 		{addrs[1], "tstusd", sdk.MustNewDecFromStr("0.35"), 2},
@@ -81,7 +81,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 		pp, err := keeper.SetPrice(
 			ctx,
 			p.oracle,
-			p.marketID,
+			p.pairID,
 			p.price,
 			time.Now().UTC().Add(1*time.Hour),
 		)
@@ -110,27 +110,27 @@ oracles is valid (i.e. registered with keeper.SetParams).
 func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
 	keeper := app.PriceKeeper
-	marketID := "tstusd"
+	pairID := "tstusd"
 	price := sdk.MustNewDecFromStr("0.1")
 
 	// Register addrs[1] as the oracle.
 	_, addrs := sample.PrivKeyAddressPairs(2)
 	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: marketID, BaseAsset: "tst", QuoteAsset: "usd",
+		Pairs: []types.Pair{
+			{PairID: pairID, BaseAsset: "tst", QuoteAsset: "usd",
 				Oracles: addrs[:1], Active: true},
 		}}
 	keeper.SetParams(ctx, mp)
 
 	// Set price with valid oracle given (addrs[1])
 	_, err := keeper.SetPrice(
-		ctx, addrs[0], marketID, price, time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[0], pairID, price, time.Now().UTC().Add(1*time.Hour),
 	)
 	require.NoError(t, err)
 
 	// Set price with invalid oracle given (addrs[1])
 	_, err = keeper.SetPrice(
-		ctx, addrs[1], marketID, price, time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[1], pairID, price, time.Now().UTC().Add(1*time.Hour),
 	)
 	require.Error(t, err)
 }
@@ -143,13 +143,13 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
 	keeper := app.PriceKeeper
 
-	marketID := "tstusd"
+	pairID := "tstusd"
 	price := sdk.MustNewDecFromStr("0.1")
 
 	_, addrs := sample.PrivKeyAddressPairs(10)
 	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: marketID, BaseAsset: "tst", QuoteAsset: "usd",
+		Pairs: []types.Pair{
+			{PairID: pairID, BaseAsset: "tst", QuoteAsset: "usd",
 				Oracles: addrs[:5], Active: true},
 		},
 	}
@@ -159,13 +159,13 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 		if i < 5 {
 			// Valid oracle addresses. This shouldn't raise an error.
 			_, err := keeper.SetPrice(
-				ctx, addr, marketID, price, time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, pairID, price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.NoError(t, err)
 		} else {
 			// Invalid oracle addresses. This should raise errors.
 			_, err := keeper.SetPrice(
-				ctx, addr, marketID, price, time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, pairID, price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.Error(t, err)
 		}
@@ -179,8 +179,8 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	keeper := app.PriceKeeper
 
 	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
+		Pairs: []types.Pair{
+			{PairID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd",
 				Oracles: addrs, Active: true},
 		},
 	}
@@ -268,8 +268,8 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	keeper := app.PriceKeeper
 
 	mp := types.Params{
-		Markets: []types.Market{
-			{MarketID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
+		Pairs: []types.Pair{
+			{PairID: "tstusd", BaseAsset: "tst", QuoteAsset: "usd", Oracles: addrs, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, mp)

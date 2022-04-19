@@ -61,7 +61,7 @@ func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sd
 
 	currentTotalCollUSD := sdk.ZeroDec()
 	pricePools := map[string]string{
-		common.CollDenom: common.CollStablePool,
+		common.CollDenom: common.CollStablePool.String(),
 	}
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
@@ -82,7 +82,7 @@ func (k *Keeper) GetCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSD, _ := k.GetCollUSDForTargetCollRatio(ctx)
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool.String())
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -107,7 +107,7 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	params := k.GetParams(ctx)
 	bonusRate := params.GetBonusRateRecollAsDec()
 
-	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
+	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool.String())
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -181,7 +181,7 @@ func (k Keeper) Recollateralize(
 	)
 
 	// Compute GOV rewarded to user
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool.String())
 	if err != nil {
 		return response, err
 	}

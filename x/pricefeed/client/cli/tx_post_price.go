@@ -22,7 +22,7 @@ func CmdPostPrice() *cobra.Command {
 		Short: "Broadcast message PostPrice",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argMarketId := args[0]
+			argPairId := args[0]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -47,7 +47,7 @@ func CmdPostPrice() *cobra.Command {
 
 			msg := types.NewMsgPostPrice(
 				clientCtx.GetFromAddress().String(),
-				argMarketId,
+				argPairId,
 				price,
 				expiry,
 			)

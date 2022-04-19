@@ -110,11 +110,11 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: common.GovStablePool.String(), BaseAsset: common.GovDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
@@ -130,17 +130,17 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+			for _, market := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, market.PairID)
 				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
@@ -281,12 +281,12 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: common.GovStablePool.String(),
 						BaseAsset:  common.GovDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool,
+					{PairID: common.CollStablePool.String(),
 						BaseAsset:  common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
@@ -303,17 +303,17 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+			for _, market := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, market.PairID)
 				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
@@ -448,10 +448,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: common.GovStablePool.String(), BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -461,17 +461,17 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+			for _, market := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, market.PairID)
 				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
@@ -566,10 +566,10 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			// Set up markets for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: common.GovStablePool.String(), BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -577,17 +577,17 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			// Post prices to each market with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
+			for _, market := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, market.PairID)
 				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 

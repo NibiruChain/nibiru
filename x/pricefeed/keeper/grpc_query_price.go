@@ -16,11 +16,11 @@ func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*typ
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_, found := k.GetMarket(ctx, req.MarketId)
+	_, found := k.GetPair(ctx, req.PairId)
 	if !found {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
-	currentPrice, sdkErr := k.GetCurrentPrice(ctx, req.MarketId)
+	currentPrice, sdkErr := k.GetCurrentPrice(ctx, req.PairId)
 	if sdkErr != nil {
 		return nil, sdkErr
 	}

@@ -103,7 +103,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 		name            string
 		protocolColl    sdk.Int
 		priceCollStable sdk.Dec
-		postedMarketIDs []string
+		postedPairIDs   []string
 		stableSupply    sdk.Int
 		targetCollRatio sdk.Dec
 		neededCollUSD   sdk.Dec
@@ -129,11 +129,11 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
+					{PairID: common.GovStablePool.String(), BaseAsset: common.GovDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
@@ -141,16 +141,16 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			prices := map[string]sdk.Dec{
-				common.CollStablePool: tc.priceCollStable,
+				common.CollStablePool.String(): tc.priceCollStable,
 			}
-			for _, marketID := range tc.postedMarketIDs {
+			for _, pairID := range tc.postedPairIDs {
 				_, err := nibiruApp.PriceKeeper.SetPrice(
-					ctx, oracle, marketID, prices[marketID], priceExpiry)
+					ctx, oracle, pairID, prices[pairID], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
-				require.NoError(t, err, "Error posting price for market: %d", marketID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pairID)
+				require.NoError(t, err, "Error posting price for market: %d", pairID)
 			}
 
 			neededCollUSD, err := stablecoinKeeper.GetCollUSDForTargetCollRatio(ctx)
@@ -168,7 +168,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			name:            "Too little collateral gives correct positive value",
 			protocolColl:    sdk.NewInt(500),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
-			postedMarketIDs: []string{common.CollStablePool},
+			postedPairIDs:   []string{common.CollStablePool.String()},
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			neededCollUSD:   sdk.MustNewDecFromStr("100"), // = 600 - 500
@@ -177,7 +177,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			name:            "Too much collateral gives correct negative value",
 			protocolColl:    sdk.NewInt(600),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 600 * 1 = 600
-			postedMarketIDs: []string{common.CollStablePool},
+			postedPairIDs:   []string{common.CollStablePool.String()},
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.5"),  // 0.5 * 1000 = 500
 			neededCollUSD:   sdk.MustNewDecFromStr("-100"), // = 500 - 600
@@ -186,7 +186,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			name:            "No price availabale for the collateral",
 			protocolColl:    sdk.NewInt(500),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
-			postedMarketIDs: []string{},
+			postedPairIDs:   []string{},
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			neededCollUSD:   sdk.MustNewDecFromStr("100"), // = 600 - 500
@@ -256,12 +256,12 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 			)
 
 			// Set up markets for the pricefeed keeper.
-			marketID := common.CollStablePool
+			pairID := common.CollStablePool.String()
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: marketID, BaseAsset: common.CollDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: pairID, BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
@@ -269,12 +269,12 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 
 			// Post prices to each market with the oracle.
 			_, err := nibiruApp.PriceKeeper.SetPrice(
-				ctx, oracle, marketID, tc.priceCollStable, priceExpiry)
+				ctx, oracle, pairID, tc.priceCollStable, priceExpiry)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pricefeedParams.Markets {
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, market.MarketID)
+			for _, market := range pricefeedParams.Pairs {
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, market.PairID)
 				require.NoError(t, err, "Error posting price for market: %d", market)
 			}
 
@@ -315,11 +315,11 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 			)
 
 			// Set up markets for the pricefeed keeper.
-			marketID := common.CollStablePool
+			pairID := common.CollStablePool.String()
 			oracle := sample.AccAddress()
 			pricefeedParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: marketID, BaseAsset: common.CollDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: pairID, BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
@@ -346,7 +346,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 		priceGovStable  sdk.Dec
 		stableSupply    sdk.Int
 		targetCollRatio sdk.Dec
-		postedMarketIDs []string
+		postedPairIDs   []string
 
 		govOut       sdk.Int
 		expectedPass bool
@@ -356,7 +356,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:    sdk.NewInt(500),
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"),
-			postedMarketIDs: []string{},
+			postedPairIDs:   []string{},
 			govOut:          sdk.Int{},
 			expectedPass:    false,
 		},
@@ -366,7 +366,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceCollStable: sdk.OneDec(),
-			postedMarketIDs: []string{common.CollStablePool},
+			postedPairIDs:   []string{common.CollStablePool.String()},
 			govOut:          sdk.Int{},
 			expectedPass:    false,
 		},
@@ -376,7 +376,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceGovStable:  sdk.OneDec(),
-			postedMarketIDs: []string{common.GovStablePool},
+			postedPairIDs:   []string{common.GovStablePool.String()},
 			govOut:          sdk.Int{},
 			expectedPass:    false,
 		},
@@ -385,7 +385,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:    sdk.NewInt(5_000),
 			stableSupply:    sdk.NewInt(10_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.7 * 10_000 = 7_000
-			postedMarketIDs: []string{common.GovStablePool, common.CollStablePool},
+			postedPairIDs:   []string{common.GovStablePool.String(), common.CollStablePool.String()},
 			priceCollStable: sdk.OneDec(),
 			priceGovStable:  sdk.NewDec(2),
 			// govOut = neededCollUSD * (1 + bonusRate) / priceGov
@@ -398,7 +398,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:    sdk.NewInt(50_000),
 			stableSupply:    sdk.NewInt(100_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.7 * 100_000 = 70_000
-			postedMarketIDs: []string{common.GovStablePool, common.CollStablePool},
+			postedPairIDs:   []string{common.GovStablePool.String(), common.CollStablePool.String()},
 			priceCollStable: sdk.OneDec(),
 			priceGovStable:  sdk.NewDec(10),
 			// govOut = neededCollUSD * (1 + bonusRate) / priceGov
@@ -411,7 +411,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:    sdk.NewInt(70_000),
 			stableSupply:    sdk.NewInt(100_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.5"), // 0.5 * 100_000 = 50_000
-			postedMarketIDs: []string{common.GovStablePool, common.CollStablePool},
+			postedPairIDs:   []string{common.GovStablePool.String(), common.CollStablePool.String()},
 			priceCollStable: sdk.OneDec(),
 			priceGovStable:  sdk.NewDec(10),
 			// govOut = neededCollUSD * (1 + bonusRate) / priceGov
@@ -440,11 +440,11 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
+					{PairID: common.GovStablePool.String(), BaseAsset: common.GovDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
@@ -452,17 +452,17 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			prices := map[string]sdk.Dec{
-				common.CollStablePool: tc.priceCollStable,
-				common.GovStablePool:  tc.priceGovStable,
+				common.CollStablePool.String(): tc.priceCollStable,
+				common.GovStablePool.String():  tc.priceGovStable,
 			}
-			for _, marketID := range tc.postedMarketIDs {
+			for _, pairID := range tc.postedPairIDs {
 				_, err := nibiruApp.PriceKeeper.SetPrice(
-					ctx, oracle, marketID, prices[marketID], priceExpiry)
+					ctx, oracle, pairID, prices[pairID], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
-				require.NoError(t, err, "Error posting price for market: %d", marketID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pairID)
+				require.NoError(t, err, "Error posting price for market: %d", pairID)
 			}
 
 			govOut, err := stablecoinKeeper.GovAmtFromFullRecollateralize(ctx)
@@ -496,7 +496,7 @@ func TestRecollateralize(t *testing.T) {
 		name         string
 		expectedPass bool
 
-		postedMarketIDs   []string
+		postedPairIDs     []string
 		scenario          NeededCollScenario
 		priceGovStable    sdk.Dec
 		expectedNeededUSD sdk.Dec
@@ -506,8 +506,8 @@ func TestRecollateralize(t *testing.T) {
 		response *types.MsgRecollateralizeResponse
 	}{
 		{
-			name:            "both prices are $1",
-			postedMarketIDs: []string{common.CollStablePool, common.GovStablePool},
+			name:          "both prices are $1",
+			postedPairIDs: []string{common.CollStablePool.String(), common.GovStablePool.String()},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
 				priceCollStable: sdk.OneDec(),
@@ -536,8 +536,8 @@ func TestRecollateralize(t *testing.T) {
 			expectedPass: true,
 		},
 		{
-			name:            "arbitrary valid prices",
-			postedMarketIDs: []string{common.CollStablePool, common.GovStablePool},
+			name:          "arbitrary valid prices",
+			postedPairIDs: []string{common.CollStablePool.String(), common.GovStablePool.String()},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
 				priceCollStable: sdk.MustNewDecFromStr("1.099999"),
@@ -598,11 +598,11 @@ func TestRecollateralize(t *testing.T) {
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
+					{PairID: common.GovStablePool.String(), BaseAsset: common.GovDenom,
 						QuoteAsset: common.StableDenom,
 						Oracles:    []sdk.AccAddress{oracle}, Active: true},
 				}}
@@ -610,17 +610,17 @@ func TestRecollateralize(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			prices := map[string]sdk.Dec{
-				common.CollStablePool: tc.scenario.priceCollStable,
-				common.GovStablePool:  tc.priceGovStable,
+				common.CollStablePool.String(): tc.scenario.priceCollStable,
+				common.GovStablePool.String():  tc.priceGovStable,
 			}
-			for _, marketID := range tc.postedMarketIDs {
+			for _, pairID := range tc.postedPairIDs {
 				_, err := nibiruApp.PriceKeeper.SetPrice(
-					ctx, oracle, marketID, prices[marketID], priceExpiry)
+					ctx, oracle, pairID, prices[pairID], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, marketID)
-				require.NoError(t, err, "Error posting price for market: %d", marketID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pairID)
+				require.NoError(t, err, "Error posting price for market: %d", pairID)
 			}
 
 			goCtx := sdk.WrapSDKContext(ctx)
