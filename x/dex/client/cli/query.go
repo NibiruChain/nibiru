@@ -139,7 +139,7 @@ func CmdTotalLiquidity() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query total-liquidity.
 Example:
-$ %s query gamm total-liquidity
+$ %s query dex total-liquidity
 `, version.AppName,
 			),
 		),
