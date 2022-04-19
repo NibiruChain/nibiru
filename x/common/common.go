@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 var (
@@ -39,6 +40,14 @@ func (pair AssetPair) IsProperOrder() bool {
 
 func (pair AssetPair) Inverse() AssetPair {
 	return AssetPair{pair.Token1, pair.Token0}
+}
+
+func NewAssetPair(token0 string, token1 string) AssetPair {
+	return AssetPair{Token0: token0, Token1: token1}
+}
+
+func DenomsFromPoolName(pool string) (denoms []string) {
+	return strings.Split(pool, ":")
 }
 
 // PoolNameFromDenoms returns a sorted string representing a pool of assets

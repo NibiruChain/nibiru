@@ -28,12 +28,12 @@ type BankKeeper interface {
 }
 
 type PriceKeeper interface {
-	GetCurrentPrice(ctx sdk.Context, pairID string) (pftypes.CurrentPrice, error)
+	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
 	GetPair(ctx sdk.Context, pairID string) (pftypes.Pair, bool)
 	GetPairs(ctx sdk.Context) pftypes.Pairs
 	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
-	SetCurrentPrices(ctx sdk.Context, pairID string) error
+	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
 }
