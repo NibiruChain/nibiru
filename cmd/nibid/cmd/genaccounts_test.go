@@ -24,7 +24,6 @@ var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
 
 // Tests "add-genesis-account", a command that adds a genesis account to genesis.json
 func TestAddGenesisAccountCmd(t *testing.T) {
-
 	type TestCase struct {
 		name        string
 		addr        string
@@ -35,7 +34,6 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 	var executeTest = func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			home := t.TempDir()
 			logger := log.NewNopLogger()
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
