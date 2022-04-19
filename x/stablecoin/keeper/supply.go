@@ -30,5 +30,12 @@ func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
 
 	pool := k.DexKeeper.FetchPool(ctx, pairID)
 
-	return sdk.Int{}
+	price, err := pool.CalcSpotPrice(common.GovDenom, common.StableDenom)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	nibiSupply := k.GetSupplyNIBI(ctx)
+
+	return nibiSupply.Amount.ToDec().Mul(price).RoundInt(), nil
 }
