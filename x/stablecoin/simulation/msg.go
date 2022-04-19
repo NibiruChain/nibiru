@@ -20,7 +20,6 @@ func SimulateMsgMintStable(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-
 		simAcc, _ := simtypes.RandomAcc(r, accs)
 		// How much stable should get minted?
 		simStable := sdk.NewCoin(common.StableDenom, sdk.NewInt(100))
