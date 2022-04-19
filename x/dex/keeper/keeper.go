@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -151,21 +150,13 @@ func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
 ) {
 	store := ctx.KVStore(k.storeKey)
 
-	var PoolId types.PoolIdentifier
+	poolid := sdk.BigEndianToUint64(store.Get(types.GetDenomPrefixPoolIds(denomA, denomB)))
 
-	if strings.Compare(denomA, denomB) == 1 {
-		denomA, denomB = denomB, denomA
-	}
-
-	StringKey := denomA + ":" + denomB
-
-	k.cdc.MustUnmarshal(store.Get(types.GetDenomPrefixPoolIds(StringKey)), &PoolId)
-
-	if PoolId.Pair == "" {
+	if poolid == 0 {
 		return sdk.NewInt(0).Uint64(), fmt.Errorf("no pool for this pair")
 	}
 
-	return PoolId.Id, nil
+	return poolid, nil
 }
 
 /*
@@ -195,14 +186,11 @@ func (k Keeper) SetPoolIdByDenom(ctx sdk.Context, pool types.Pool) {
 	denomA := pool.PoolAssets[0].Token.Denom
 	denomB := pool.PoolAssets[1].Token.Denom
 
-	if strings.Compare(denomA, denomB) == 1 {
-		denomA, denomB = denomB, denomA
-	}
-
-	StringKey := denomA + ":" + denomB
-
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetDenomPrefixPoolIds(StringKey), k.cdc.MustMarshal(&types.PoolIdentifier{Id: pool.Id, Pair: StringKey}))
+	store.Set(
+		types.GetDenomPrefixPoolIds(denomA, denomB),
+		sdk.Uint64ToBigEndian(pool.Id),
+	)
 }
 
 /*

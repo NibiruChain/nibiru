@@ -1,6 +1,9 @@
 package types
 
 import (
+	"sort"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -36,8 +39,10 @@ var (
 	KeyTotalLiquidity = []byte{0x03}
 )
 
-func GetDenomPrefixPoolIds(denomPair string) []byte {
-	return append(KeyPrefixPoolIds, []byte(denomPair)...)
+func GetDenomPrefixPoolIds(denoms ...string) []byte {
+	sort.Strings(denoms)
+	concatenation := strings.Join(denoms[:], "")
+	return append(KeyPrefixPoolIds, []byte(concatenation)...)
 }
 
 func GetKeyPrefixPools(poolId uint64) []byte {

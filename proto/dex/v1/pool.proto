@@ -36,14 +36,6 @@ message PoolAsset {
   ];
 }
 
-// Use for the denom/poolid kv store
-message PoolIdentifier {
-  // The pool id.
-  uint64 id =1;
-  // The denom
-  string pair=2;
-}
-
 message Pool {
   option (gogoproto.goproto_getters) = false;
 
