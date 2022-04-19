@@ -26,7 +26,7 @@ func (k Keeper) GetPairs(ctx sdk.Context) types.Pairs {
 // GetOracles returns the oracles in the pricefeed store
 func (k Keeper) GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error) {
 	for _, m := range k.GetPairs(ctx) {
-		if pairID == m.PairID {
+		if pairID == m.PairID() {
 			return m.Oracles, nil
 		}
 	}
@@ -55,7 +55,7 @@ func (k Keeper) GetPair(ctx sdk.Context, pairID string) (types.Pair, bool) {
 	markets := k.GetPairs(ctx)
 
 	for i := range markets {
-		if markets[i].PairID == pairID {
+		if markets[i].PairID() == pairID {
 			return markets[i], true
 		}
 	}

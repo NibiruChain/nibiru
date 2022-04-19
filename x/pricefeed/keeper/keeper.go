@@ -7,6 +7,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -53,12 +54,21 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) SetPrice(
 	ctx sdk.Context,
 	oracle sdk.AccAddress,
-	pairID string,
+	token0 string,
+	token1 string,
 	price sdk.Dec,
 	expiry time.Time) (types.PostedPrice, error) {
 	// If the expiry is less than or equal to the current blockheight, we consider the price valid
 	if !expiry.After(ctx.BlockTime()) {
 		return types.PostedPrice{}, types.ErrExpired
+	}
+
+	// TODO: test this behavior when setting the inverse pair
+	pairName := common.RawPoolNameFromDenoms(token0, token1)
+	pairID := common.PoolNameFromDenoms([]string{token0, token1})
+	if pairName != pairID {
+		token0, token1 = token1, token0
+		price = sdk.OneDec().Quo(price)
 	}
 
 	_, err := k.GetOracle(ctx, pairID, oracle)
@@ -87,7 +97,9 @@ func (k Keeper) SetPrice(
 }
 
 // SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
-func (k Keeper) SetCurrentPrices(ctx sdk.Context, pairID string) error {
+func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
+	pairID := common.PoolNameFromDenoms([]string{token0, token1})
+
 	_, ok := k.GetPair(ctx, pairID)
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidPair, pairID)
@@ -172,6 +184,7 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 
 // GetCurrentPrice fetches the current median price of all oracles for a specific market
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, pairID string) (types.CurrentPrice, error) {
+
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.CurrentPriceKey(pairID))
 
