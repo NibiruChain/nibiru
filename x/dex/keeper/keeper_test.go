@@ -72,7 +72,6 @@ func TestSetAndFetchPool(t *testing.T) {
 }
 
 func TestGetFromPair(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		firstToken     string
