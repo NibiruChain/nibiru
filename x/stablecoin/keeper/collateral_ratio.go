@@ -57,7 +57,7 @@ func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
 	nibiruStep := sdk.MustNewDecFromStr("0.0025")
 	var adjustment sdk.Dec
 
-	if isPriceUp {
+	if !isPriceUp {
 		adjustment = nibiruStep
 	} else {
 		adjustment = nibiruStep.Mul(sdk.MustNewDecFromStr("-1"))

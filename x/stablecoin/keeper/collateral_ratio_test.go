@@ -119,7 +119,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			name:              "Price is higher than peg",
 			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("1.1"),
-			expectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			expectedPass:      true,
 		},
 		{
@@ -140,7 +140,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			name:              "Price is lower than peg",
 			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			expectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
 			expectedPass:      true,
 		},
 	}
