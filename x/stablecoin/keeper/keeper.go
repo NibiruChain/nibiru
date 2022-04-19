@@ -6,7 +6,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	dex "github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +21,7 @@ type Keeper struct {
 	AccountKeeper types.AccountKeeper
 	BankKeeper    types.BankKeeper
 	PriceKeeper   types.PriceKeeper
-	DexKeeper     dex.Keeper
+	DexKeeper     types.DexKeeper
 }
 
 // NewKeeper Creates a new x/stablecoin Keeper instance.
@@ -35,7 +34,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	priceKeeper types.PriceKeeper,
-	dexKeeper dex.Keeper,
+	dexKeeper types.DexKeeper,
 ) Keeper {
 
 	// Ensure that the module account is set.
