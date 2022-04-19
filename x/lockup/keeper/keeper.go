@@ -99,3 +99,8 @@ func (k LockupKeeper) AccountLockedCoins(ctx sdk.Context, account sdk.AccAddress
 func (k LockupKeeper) AccountUnlockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
 	return k.LocksState(ctx).IterateUnlockedCoins(account), nil
 }
+
+// TotalLockedCoins returns the module account locked coins.
+func (k LockupKeeper) TotalLockedCoins(ctx sdk.Context) (coins sdk.Coins, err error) {
+	return k.LocksState(ctx).IterateTotalLockedCoins(), nil
+}

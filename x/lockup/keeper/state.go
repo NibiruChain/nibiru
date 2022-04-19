@@ -15,6 +15,7 @@ var (
 	lockObjectNamespace = append(lockNamespace, 0x1) // maps lock ID => lock bytes
 	lockAddrTimeIndex   = append(lockNamespace, 0x2) // maps address and unlock time => lock ID
 	lockAddrIndex       = append(lockNamespace, 0x3) // maps address => lock ID
+	lockTimeIndex       = append(lockNamespace, 0x4) // maps unlock time => lock ID
 
 	lockIDKey = []byte{0x0} // lock ID key
 )
@@ -37,6 +38,7 @@ func newLockState(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) Lock
 		locks:         prefix.NewStore(store, lockObjectNamespace),
 		addrTimeIndex: prefix.NewStore(store, lockAddrTimeIndex),
 		addrIndex:     prefix.NewStore(store, lockAddrIndex),
+		timeIndex:     prefix.NewStore(store, lockTimeIndex),
 	}
 }
 
@@ -47,6 +49,7 @@ type LockState struct {
 	locks         sdk.KVStore
 	addrTimeIndex sdk.KVStore
 	addrIndex     sdk.KVStore
+	timeIndex     sdk.KVStore
 }
 
 // Create creates a new types.Lock, and sets the lock ID.
@@ -60,10 +63,12 @@ func (s LockState) Create(l *types.Lock) {
 
 	addrTimeIndex := s.keyAddrTime(l.Owner, l.EndTime, pk)
 	addrIndex := s.keyAddr(l.Owner, pk)
+	timeIndex := s.keyTime(l.EndTime, pk)
 
 	s.locks.Set(pk, s.cdc.MustMarshal(l))        // save lock object
 	s.addrTimeIndex.Set(addrTimeIndex, []byte{}) // maps addr + unlock time to lock ID
 	s.addrIndex.Set(addrIndex, []byte{})         // maps addr to lock ID
+	s.timeIndex.Set(timeIndex, []byte{})         // maps unlock time to lock ID
 
 	l.LockId = id
 }
@@ -75,9 +80,9 @@ func (s LockState) Delete(l *types.Lock) error {
 	}
 
 	s.locks.Delete(lockPrimaryKey)                                            // clear object
-	s.addrTimeIndex.Delete(s.keyAddrTime(l.Owner, l.EndTime, lockPrimaryKey)) // clear index
-	s.addrIndex.Delete(s.keyAddr(l.Owner, lockPrimaryKey))                    // clear index
-
+	s.addrTimeIndex.Delete(s.keyAddrTime(l.Owner, l.EndTime, lockPrimaryKey)) // clear address and unlock time index
+	s.addrIndex.Delete(s.keyAddr(l.Owner, lockPrimaryKey))                    // clear address index
+	s.timeIndex.Delete(s.keyTime(l.EndTime, lockPrimaryKey))                  // clear unlock time index
 	return nil
 }
 
@@ -137,6 +142,28 @@ func (s LockState) IterateUnlockedCoins(addr sdk.AccAddress) sdk.Coins {
 
 }
 
+// IterateTotalLockedCoins returns the total amount of locked coins
+func (s LockState) IterateTotalLockedCoins() sdk.Coins {
+	key := s.keyTime(s.ctx.BlockTime(), nil)
+
+	iter := s.timeIndex.Iterator(key, nil)
+	defer iter.Close()
+
+	coins := sdk.NewCoins()
+	for ; iter.Valid(); iter.Next() {
+		lock := new(types.Lock)
+
+		primaryKey := iter.Key()[len(key):] // strip index key and just keep primary key
+		if !s.locks.Has(primaryKey) {
+			panic(fmt.Errorf("state corruption: %v", primaryKey))
+		}
+		s.cdc.MustUnmarshal(s.locks.Get(primaryKey), lock)
+		coins = coins.Add(lock.Coins...)
+	}
+
+	return coins
+}
+
 func (s LockState) nextPrimaryKey() uint64 {
 	idBytes := s.id.Get(lockIDKey)
 	var id uint64
@@ -189,4 +216,22 @@ func (s LockState) keyAddr(addr string, pk []byte) []byte {
 
 	key := append([]byte(addr), 0xFF) // addr + null termination, assumes no 0xff in string
 	return append(key, pk...)         // append primary key for iteration
+}
+
+func (s LockState) keyTime(endTime time.Time, pk []byte) []byte {
+	key := make([]byte, 8, 8+len(pk)) // size of primary key + size of time in bytes, init 8 elements
+
+	timeUnixNano := endTime.UnixNano()
+
+	key[0] = byte(timeUnixNano >> 56)
+	key[1] = byte(timeUnixNano >> 48)
+	key[2] = byte(timeUnixNano >> 40)
+	key[3] = byte(timeUnixNano >> 32)
+	key[4] = byte(timeUnixNano >> 24)
+	key[5] = byte(timeUnixNano >> 16)
+	key[6] = byte(timeUnixNano >> 8)
+	key[7] = byte(timeUnixNano)
+	key[0] ^= 0x80
+
+	return append(key, pk...)
 }
