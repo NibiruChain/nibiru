@@ -71,7 +71,7 @@ func TestSetAndFetchPool(t *testing.T) {
 	require.Equal(t, pool, retrievedPool)
 }
 
-func TestGetFromPair(t *testing.T) {
+func TestFetchPoolFromPair(t *testing.T) {
 	tests := []struct {
 		name           string
 		firstToken     string
@@ -194,7 +194,7 @@ func TestGetFromPair(t *testing.T) {
 				Address:     "address2",
 			})
 
-			retrievedPool, err := app.DexKeeper.GetFromPair(ctx, tc.firstToken, tc.secondToken)
+			retrievedPool, err := app.DexKeeper.FetchPoolFromPair(ctx, tc.firstToken, tc.secondToken)
 			retrievedPoolId := retrievedPool.Id
 			if tc.expectedPass {
 				require.NoError(t, err)

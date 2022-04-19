@@ -145,7 +145,7 @@ ret:
   - poolId: the pool id
   - err: error if any
 */
-func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
+func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string) (
 	pool types.Pool, err error,
 ) {
 	store := ctx.KVStore(k.storeKey)
