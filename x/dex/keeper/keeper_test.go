@@ -85,7 +85,7 @@ func TestGetFromPair(t *testing.T) {
 			firstToken:     "tokenA",
 			secondToken:    "tokenB",
 			expectedPass:   true,
-			expectedPoolId: sdk.NewInt(1).Uint64(),
+			expectedPoolId: uint64(1),
 		},
 		{
 			name:           "Correct parse pool 1 inverted",
