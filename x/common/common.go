@@ -6,15 +6,16 @@ import (
 )
 
 var (
-	GovDenom    = "umtrx"
+	GovDenom    = "unibi"
 	CollDenom   = "uust"
-	StableDenom = "uusdm"
+	StableDenom = "unusd"
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 
 	WhitelistedColl = []string{CollDenom}
 
 	GovCollPool    = PoolNameFromDenoms([]string{GovDenom, CollDenom})
+	GovStablePool  = PoolNameFromDenoms([]string{GovDenom, StableDenom})
 	CollStablePool = PoolNameFromDenoms([]string{CollDenom, StableDenom})
 )
 

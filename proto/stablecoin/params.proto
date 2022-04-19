@@ -1,9 +1,9 @@
 syntax = "proto3";
-package MatrixDao.stablecoin.v1;
+package NibiruChain.stablecoin.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
+option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 
 // Params defines the parameters for the module.
 message Params {
@@ -14,8 +14,12 @@ message Params {
   int64 feeRatio = 2;
   // efFeeRatio is the ratio taken from the fees that goes to Ecosystem Fund
   int64 efFeeRatio = 3;
+  
+  /* BonusRateRecoll is the percentage of extra stablecoin value given to the caller 
+  of 'Recollateralize' in units of governance tokens.*/
+  int64 bonus_rate_recoll = 4;
 
   // distr_epoch_identifier defines the frequnecy of update for the collateral ratio
-  string distr_epoch_identifier = 4
-  [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];
+  string distr_epoch_identifier = 5
+  [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];  
 }

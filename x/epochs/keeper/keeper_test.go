@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MatrixDao/matrix/app"
-	"github.com/MatrixDao/matrix/x/epochs/keeper"
-	"github.com/MatrixDao/matrix/x/epochs/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -16,14 +16,14 @@ import (
 type KeeperTestSuite struct {
 	suite.Suite
 
-	app         *app.MatrixApp
+	app         *app.NibiruApp
 	ctx         sdk.Context
 	queryClient types.QueryClient
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	matrixApp, ctx := testutil.NewMatrixApp(true)
-	suite.app = matrixApp
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	suite.app = nibiruApp
 	suite.ctx = ctx
 
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())

@@ -6,12 +6,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/MatrixDao/matrix/app"
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/epochs"
-	ptypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/epochs"
+	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +23,7 @@ type test struct {
 }
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *app.MatrixApp
+	var app *app.NibiruApp
 	var ctx sdk.Context
 
 	tests := []test{
@@ -107,7 +107,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		app, ctx = testutil.NewMatrixApp(true)
+		app, ctx = testutil.NewNibiruApp(true)
 
 		ctx = ctx.WithBlockHeight(1)
 

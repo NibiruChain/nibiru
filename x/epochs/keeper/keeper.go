@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"

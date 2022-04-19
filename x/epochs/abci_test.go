@@ -7,14 +7,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MatrixDao/matrix/app"
-	"github.com/MatrixDao/matrix/x/epochs"
-	"github.com/MatrixDao/matrix/x/epochs/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/epochs"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *app.MatrixApp
+	var app *app.NibiruApp
 	var ctx sdk.Context
 
 	now := time.Now()
@@ -102,7 +102,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		app, ctx = testutil.NewMatrixApp(true)
+		app, ctx = testutil.NewNibiruApp(true)
 
 		// On init genesis, default epochs information is set
 		// To check init genesis again, should make it fresh status
@@ -143,7 +143,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
@@ -215,7 +215,7 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	}
 
 	now := time.Now()
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

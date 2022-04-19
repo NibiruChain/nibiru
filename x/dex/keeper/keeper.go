@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -159,7 +159,7 @@ args:
 ret:
   err: returns an error if something errored out
 */
-func (k Keeper) MintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
+func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
 	newCoins := sdk.Coins{
 		sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amountPoolShares),
 	}
@@ -171,6 +171,45 @@ func (k Keeper) MintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipient
 
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipientAddr, newCoins)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
+Burns takes an amount of pool shares from an account and burns them.
+It's the inverse of mintPoolShareToAccount.
+
+args:
+  ctx: the cosmos-sdk context
+  poolId: the pool id number
+  recipientAddr: the address of the recipient
+  amountPoolShares: the amount of pool shares to mint to the recipient
+
+ret:
+  err: returns an error if something errored out
+*/
+func (k Keeper) burnPoolShareFromAccount(
+	ctx sdk.Context,
+	fromAddr sdk.AccAddress,
+	poolSharesOut sdk.Coin,
+) (err error) {
+
+	if err = k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx,
+		fromAddr,
+		types.ModuleName,
+		sdk.Coins{poolSharesOut},
+	); err != nil {
+		return err
+	}
+
+	if err = k.bankKeeper.BurnCoins(
+		ctx,
+		types.ModuleName,
+		sdk.Coins{poolSharesOut},
+	); err != nil {
 		return err
 	}
 
@@ -212,7 +251,7 @@ func (k Keeper) NewPool(
 	}
 
 	poolId = k.GetNextPoolNumberAndIncrement(ctx)
-	poolName := fmt.Sprintf("matrix-pool-%d", poolId)
+	poolName := fmt.Sprintf("nibiru-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
 	k.accountKeeper.SetAccount(ctx, poolAccount)
@@ -233,7 +272,7 @@ func (k Keeper) NewPool(
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
-	if err = k.MintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
+	if err = k.mintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
 		return uint64(0), err
 	}
 
@@ -241,7 +280,7 @@ func (k Keeper) NewPool(
 	poolShareBaseDenom := types.GetPoolShareBaseDenom(pool.Id)
 	poolShareDisplayDenom := types.GetPoolShareDisplayDenom(pool.Id)
 	k.bankKeeper.SetDenomMetaData(ctx, banktypes.Metadata{
-		Description: fmt.Sprintf("The share token of the matrix dex pool %d", pool.Id),
+		Description: fmt.Sprintf("The share token of the nibiru dex pool %d", pool.Id),
 		DenomUnits: []*banktypes.DenomUnit{
 			{
 				Denom:    poolShareBaseDenom,
@@ -254,7 +293,7 @@ func (k Keeper) NewPool(
 		},
 		Base:    poolShareBaseDenom,
 		Display: poolShareDisplayDenom,
-		Name:    fmt.Sprintf("Matrix Pool %d Share Token", pool.Id),
+		Name:    fmt.Sprintf("Nibiru Pool %d Share Token", pool.Id),
 		Symbol:  poolShareDisplayDenom,
 	})
 
@@ -267,9 +306,26 @@ func (k Keeper) NewPool(
 /*
 Joins a pool without swapping leftover assets if the ratios don't exactly match the pool's asset ratios.
 
+For example, if a pool has 100 pool shares, 100foo, 100bar,
+and JoinPool is called with 75foo and bar, only 50foo and 50bar would be deposited.
+25foo in remCoins would be returned to the user, along with 50 pool shares would be minted
+and given to the user.
 
+Inverse of ExitPool.
+
+args:
+  - ctx: the cosmos-sdk context
+  - joinerAddr: the user who wishes to withdraw tokens
+  - poolId: the pool's numeric id
+  - tokensIn: the amount of liquidity to provide
+
+ret:
+  - pool: the updated pool after joining
+  - numSharesOut: the pool shares minted and returned to the user
+  - remCoins: the number of remaining coins from the user's initial deposit attempt
+  - err: error if any
 */
-func (k Keeper) JoinPoolNoSwap(
+func (k Keeper) JoinPool(
 	ctx sdk.Context,
 	joinerAddr sdk.AccAddress,
 	poolId uint64,
@@ -281,15 +337,13 @@ func (k Keeper) JoinPoolNoSwap(
 		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
 	}
 
-	poolAddr, err := sdk.AccAddressFromBech32(pool.Address)
+	poolAddr := pool.GetAddress()
+
+	numShares, remCoins, err := pool.AddTokensToPool(tokensIn)
 	if err != nil {
-		return pool, numSharesOut, remCoins, err
+		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
 
-	numShares, remCoins, err := pool.JoinPool(tokensIn)
-	if err != nil {
-		return pool, numSharesOut, remCoins, err
-	}
 	tokensConsumed := tokensIn.Sub(remCoins)
 
 	// take coins from joiner to pool
@@ -303,13 +357,13 @@ func (k Keeper) JoinPoolNoSwap(
 	}
 
 	// give joiner LP shares
-	if err = k.MintPoolShareToAccount(
+	if err = k.mintPoolShareToAccount(
 		ctx,
 		/*from=*/ pool.Id,
 		/*to=*/ joinerAddr,
 		/*amount=*/ numShares,
 	); err != nil {
-		return pool, numSharesOut, remCoins, err
+		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
 
 	// record changes to store
@@ -317,4 +371,68 @@ func (k Keeper) JoinPoolNoSwap(
 	k.RecordTotalLiquidityIncrease(ctx, tokensConsumed)
 
 	return pool, sdk.NewCoin(pool.TotalShares.Denom, numShares), remCoins, nil
+}
+
+/*
+Exits a pool by taking out tokens relative to the amount of pool shares
+in proportion to the total amount of pool shares.
+
+For example, if a pool has 100 pool shares and ExitPool is called with 50 pool shares,
+half of the tokens (minus exit fees) are returned to the user.
+
+Inverse of JoinPool.
+
+Throws an error if the provided pool shares doesn't match up with the pool's actual pool share.
+
+args:
+  - ctx: the cosmos-sdk context
+  - sender: the user who wishes to withdraw tokens
+  - poolId: the pool's numeric id
+  - poolSharesOut: the amount of pool shares to burn
+
+ret:
+  - tokensOut: the amount of liquidity withdrawn from the pool
+  - err: error if any
+*/
+func (k Keeper) ExitPool(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	poolId uint64,
+	poolSharesOut sdk.Coin,
+) (tokensOut sdk.Coins, err error) {
+	pool := k.FetchPool(ctx, poolId)
+
+	// sanity checks
+	if poolSharesOut.Denom != pool.TotalShares.Denom {
+		return sdk.Coins{},
+			fmt.Errorf("invalid pool share denom. expected %s, got %s",
+				pool.TotalShares.Denom,
+				poolSharesOut.Denom,
+			)
+	}
+	if poolSharesOut.Amount.GT(pool.TotalShares.Amount) ||
+		poolSharesOut.Amount.LTE(sdk.ZeroInt()) {
+		return sdk.Coins{}, errors.New("invalid number of pool shares")
+	}
+
+	// calculate withdrawn liquidity
+	tokensOut, err = pool.ExitPool(poolSharesOut.Amount)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+
+	// apply exchange of pool shares for tokens
+	if err = k.bankKeeper.SendCoins(ctx, pool.GetAddress(), sender, tokensOut); err != nil {
+		return sdk.Coins{}, err
+	}
+
+	if err = k.burnPoolShareFromAccount(ctx, sender, poolSharesOut); err != nil {
+		return sdk.Coins{}, err
+	}
+
+	// record state changes
+	k.SetPool(ctx, pool)
+	k.RecordTotalLiquidityDecrease(ctx, tokensOut)
+
+	return tokensOut, nil
 }

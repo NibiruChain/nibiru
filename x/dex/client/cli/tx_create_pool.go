@@ -2,13 +2,12 @@ package cli
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -32,8 +31,8 @@ $ %s tx dex create-pool --pool-file="path/to/pool.json" --from validator --keyri
 
 Where pool.json contains:
 {
-	"weights": "1usdm,1ust",
-	"initial-deposit": "100usdm,100ust",
+	"weights": "1unusd,1uust",
+	"initial-deposit": "100unusd,100uust",
 	"swap-fee": "0.01",
 	"exit-fee": "0.01"
 }
@@ -54,7 +53,7 @@ Where pool.json contains:
 				return err
 			}
 			if poolFile == "" {
-				return fmt.Errorf("must pass in a pool json using the --%s flag", FlagPoolFile)
+				return types.ErrMissingPoolFileFlag
 			}
 
 			contents, err := ioutil.ReadFile(poolFile)
@@ -79,13 +78,13 @@ Where pool.json contains:
 			}
 
 			if len(initialDepositCoins) != len(poolWeights) {
-				return errors.New("deposit tokens and token weights should have same length")
+				return types.ErrInvalidCreatePoolArgs
 			}
 
 			poolAssets := make([]types.PoolAsset, len(poolWeights))
 			for i := 0; i < len(poolWeights); i++ {
 				if poolWeights[i].Denom != initialDepositCoins[i].Denom {
-					return errors.New("deposit tokens and token weights should have same denom order")
+					return types.ErrInvalidCreatePoolArgs
 				}
 
 				poolAssets[i] = types.PoolAsset{
@@ -95,7 +94,7 @@ Where pool.json contains:
 			}
 
 			msg := types.NewMsgCreatePool(
-				clientCtx.GetFromAddress().String(),
+				/*sender=*/ clientCtx.GetFromAddress().String(),
 				poolAssets,
 				&types.PoolParams{
 					SwapFee: sdk.MustNewDecFromStr(pool.SwapFee),
@@ -103,15 +102,14 @@ Where pool.json contains:
 				},
 			)
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(FlagSetCreatePool())
 	flags.AddTxFlagsToCmd(cmd)
+
+	_ = cmd.MarkFlagRequired(FlagPoolFile)
 
 	return cmd
 }

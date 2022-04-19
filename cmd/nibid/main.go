@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/MatrixDao/matrix/app"
-	"github.com/MatrixDao/matrix/cmd/matrixd/cmd"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/cmd/nibid/cmd"
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 )

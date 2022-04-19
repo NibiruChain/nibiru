@@ -221,3 +221,99 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 		})
 	}
 }
+
+func TestApplySwap(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		pool               Pool
+		tokenIn            sdk.Coin
+		tokenOut           sdk.Coin
+		expectedPoolAssets []PoolAsset
+		shouldError        bool
+	}{
+		{
+			name: "apply simple swap",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:  sdk.NewInt64Coin("aaa", 50),
+			tokenOut: sdk.NewInt64Coin("bbb", 75),
+			expectedPoolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 150),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 125),
+				},
+			},
+			shouldError: false,
+		},
+		{
+			name: "swap fails due to too large numbers",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:     sdk.NewInt64Coin("aaa", 1),
+			tokenOut:    sdk.NewInt64Coin("bbb", 200),
+			shouldError: true,
+		},
+		{
+			name: "swap fails due to zero tokenIn",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:     sdk.NewInt64Coin("aaa", 0),
+			tokenOut:    sdk.NewInt64Coin("bbb", 100),
+			shouldError: true,
+		},
+		{
+			name: "swap fails due to zero tokenOut",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+			},
+			tokenIn:     sdk.NewInt64Coin("aaa", 100),
+			tokenOut:    sdk.NewInt64Coin("bbb", 0),
+			shouldError: true,
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.pool.ApplySwap(tc.tokenIn, tc.tokenOut)
+			if tc.shouldError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedPoolAssets, tc.pool.PoolAssets)
+			}
+
+		})
+	}
+}

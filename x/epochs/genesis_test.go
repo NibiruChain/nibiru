@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MatrixDao/matrix/x/epochs"
-	"github.com/MatrixDao/matrix/x/epochs/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/x/epochs"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 
 	chainStartTime := ctx.BlockTime()
 	chainStartHeight := ctx.BlockHeight()
@@ -46,7 +46,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp(true)
+	app, ctx := testutil.NewNibiruApp(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

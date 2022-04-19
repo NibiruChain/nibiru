@@ -17,11 +17,11 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/MatrixDao/matrix/x/epochs/client/cli"
-	"github.com/MatrixDao/matrix/x/epochs/client/rest"
-	"github.com/MatrixDao/matrix/x/epochs/keeper"
-	"github.com/MatrixDao/matrix/x/epochs/simulation"
-	"github.com/MatrixDao/matrix/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/epochs/client/cli"
+	"github.com/NibiruChain/nibiru/x/epochs/client/rest"
+	"github.com/NibiruChain/nibiru/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/x/epochs/simulation"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 var (
