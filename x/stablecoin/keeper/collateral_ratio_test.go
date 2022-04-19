@@ -658,21 +658,6 @@ func TestRecollateralize(t *testing.T) {
 					t, err, "Error posting price for pair: %d", assetPair.String())
 			}
 
-			// // Post prices to each specified market with the oracle.
-			// prices := map[common.AssetPair]sdk.Dec{
-			// 	common.NewAssetPair(common.GovDenom, common.StableDenom):    tc.priceGovStable,
-			// 	common.NewAssetPair(common.StableDenom, common.StableDenom): tc.scenario.priceCollStable,
-			// }
-			// for _, pair := range tc.postedAssetPairs {
-			// 	_, err := nibiruApp.PriceKeeper.SetPrice(
-			// 		ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
-			// 	require.NoError(t, err)
-
-			// 	// Update the 'CurrentPrice' posted by the oracles.
-			// 	err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-			// 	require.NoError(t, err, "Error posting price for pair: %d", pair.String())
-			// }
-
 			goCtx := sdk.WrapSDKContext(ctx)
 			response, err := stablecoinKeeper.Recollateralize(goCtx, &tc.msg)
 			if tc.expectedPass {

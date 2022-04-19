@@ -15,9 +15,8 @@ var (
 
 	WhitelistedColl = []string{CollDenom}
 
-	GovCollPool    = AssetPair{GovDenom, CollDenom}
-	GovStablePool  = AssetPair{GovDenom, StableDenom}
-	CollStablePool = AssetPair{CollDenom, StableDenom}
+	GovStablePool  = AssetPair{Token0: GovDenom, Token1: StableDenom}
+	CollStablePool = AssetPair{Token0: CollDenom, Token1: StableDenom}
 )
 
 type AssetPair struct {
@@ -54,10 +53,6 @@ func (pair AssetPair) Proper() AssetPair {
 	}
 }
 
-func NewAssetPair(token0 string, token1 string) AssetPair {
-	return AssetPair{Token0: token0, Token1: token1}
-}
-
 func DenomsFromPoolName(pool string) (denoms []string) {
 	return strings.Split(pool, ":")
 }
@@ -65,18 +60,12 @@ func DenomsFromPoolName(pool string) (denoms []string) {
 // PoolNameFromDenoms returns a sorted string representing a pool of assets
 func PoolNameFromDenoms(denoms []string) string {
 	sort.Strings(denoms) // alphabetically sort in-place
-	poolName := denoms[0]
-	for idx, denom := range denoms {
-		if idx != 0 {
-			poolName += fmt.Sprintf(":%s", denom)
-		}
-	}
-	return poolName
+	return RawPoolNameFromDenoms(denoms)
 }
 
 // RawPoolNameFromDenoms returns a string representing a pool of assets in the
 // exact order the denoms were given as args
-func RawPoolNameFromDenoms(denoms ...string) string {
+func RawPoolNameFromDenoms(denoms []string) string {
 	poolName := denoms[0]
 	for idx, denom := range denoms {
 		if idx != 0 {

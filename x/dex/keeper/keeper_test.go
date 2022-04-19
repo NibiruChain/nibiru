@@ -51,11 +51,11 @@ func TestSetAndFetchPool(t *testing.T) {
 			ExitFee: sdk.NewDecWithPrec(3, 2),
 		},
 		PoolAssets: []types.PoolAsset{
-			types.PoolAsset{
+			{
 				Token:  sdk.NewCoin("validatortoken", sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
-			types.PoolAsset{
+			{
 				Token:  sdk.NewCoin("stake", sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
@@ -81,11 +81,11 @@ func TestGetFromPair(t *testing.T) {
 			ExitFee: sdk.NewDecWithPrec(3, 2),
 		},
 		PoolAssets: []types.PoolAsset{
-			types.PoolAsset{
+			{
 				Token:  sdk.NewCoin("tokenB", sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
-			types.PoolAsset{
+			{
 				Token:  sdk.NewCoin("tokenA", sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
@@ -98,7 +98,7 @@ func TestGetFromPair(t *testing.T) {
 
 	retrievedPoolId, err := app.DexKeeper.GetFromPair(ctx, "tokenB", "tokenA")
 	require.NoError(t, err)
-	require.Equal(t, retrievedPoolId, sdk.NewInt(1).Uint64())
+	require.Equal(t, retrievedPoolId, uint(1))
 
 	retrievedPoolId, err = app.DexKeeper.GetFromPair(ctx, "tokenA", "tokenB")
 	require.NoError(t, err)

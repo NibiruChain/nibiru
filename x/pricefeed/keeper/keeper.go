@@ -64,7 +64,7 @@ func (k Keeper) SetPrice(
 	}
 
 	// TODO: test this behavior when setting the inverse pair
-	pairName := common.RawPoolNameFromDenoms(token0, token1)
+	pairName := common.RawPoolNameFromDenoms([]string{token0, token1})
 	pairID := common.PoolNameFromDenoms([]string{token0, token1})
 	if (pairName != pairID) && (!price.Equal(sdk.ZeroDec())) {
 		price = sdk.OneDec().Quo(price)
@@ -190,7 +190,7 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 // GetCurrentPrice fetches the current median price of all oracles for a specific market
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
-	assetPair := common.NewAssetPair(token0, token1)
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	pairID := assetPair.Name()
 
 	store := ctx.KVStore(k.storeKey)
