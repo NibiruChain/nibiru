@@ -92,8 +92,6 @@ func (k Keeper) SimSetPrice(
 	ctx sdk.Context,
 	marketID string,
 	price sdk.Dec) (types.PostedPrice, error) {
-	// If the expiry is less than or equal to the current blockheight, we consider the price valid
-
 	store := ctx.KVStore(k.storeKey)
 	expiry := ctx.BlockTime().UTC().Add(time.Hour * 1)
 
