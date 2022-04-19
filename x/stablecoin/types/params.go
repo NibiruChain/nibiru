@@ -17,10 +17,9 @@ func ParamKeyTable() paramtypes.KeyTable {
 // NewParams creates a new Params instance
 func NewParams(collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec, bonusRateRecoll sdk.Dec, DistrEpochIdentifier string) Params {
 	million := sdk.NewDec(1_000_000)
-	sixthPower := sdk.MustNewDecFromStr("1000000")
-	collRatioInt := collRatio.Mul(sixthPower).RoundInt()
-	feeRationInt := feeRatio.Mul(sixthPower).RoundInt()
-	efFeeRatioInt := efFeeRatio.Mul(sixthPower).RoundInt()
+	collRatioInt := collRatio.Mul(million).RoundInt()
+	feeRationInt := feeRatio.Mul(million).RoundInt()
+	efFeeRatioInt := efFeeRatio.Mul(million).RoundInt()
 	bonusRateRecollInt := bonusRateRecoll.Mul(million).RoundInt()
 
 	return Params{
