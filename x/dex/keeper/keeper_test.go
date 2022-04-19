@@ -170,6 +170,7 @@ func TestGetFromPair(t *testing.T) {
 				},
 				TotalWeight: sdk.NewInt(2),
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+				Address:     "address1",
 			})
 
 			app.DexKeeper.SetPool(ctx, types.Pool{
@@ -190,9 +191,11 @@ func TestGetFromPair(t *testing.T) {
 				},
 				TotalWeight: sdk.NewInt(2),
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+				Address:     "address2",
 			})
 
-			retrievedPoolId, err := app.DexKeeper.GetFromPair(ctx, tc.firstToken, tc.secondToken)
+			retrievedPool, err := app.DexKeeper.GetFromPair(ctx, tc.firstToken, tc.secondToken)
+			retrievedPoolId := retrievedPool.Id
 			if tc.expectedPass {
 				require.NoError(t, err)
 

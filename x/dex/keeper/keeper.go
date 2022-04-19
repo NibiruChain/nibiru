@@ -146,17 +146,18 @@ ret:
   - err: error if any
 */
 func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
-	poolId uint64, err error,
+	pool types.Pool, err error,
 ) {
 	store := ctx.KVStore(k.storeKey)
 
 	poolid := sdk.BigEndianToUint64(store.Get(types.GetDenomPrefixPoolIds(denomA, denomB)))
+	pool = k.FetchPool(ctx, poolid)
 
-	if poolid == 0 {
-		return sdk.NewInt(0).Uint64(), fmt.Errorf("no pool for this pair")
+	if pool.Address == "" {
+		return pool, fmt.Errorf("no pool for this pair")
 	}
 
-	return poolid, nil
+	return pool, nil
 }
 
 /*
