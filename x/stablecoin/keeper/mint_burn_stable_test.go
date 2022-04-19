@@ -99,7 +99,6 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 			oracle := sample.AccAddress()
@@ -185,7 +184,6 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			)
 		})
 	}
-
 }
 
 func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
@@ -432,7 +430,6 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 			oracle := sample.AccAddress()

@@ -45,7 +45,6 @@ func TestPoolAssetValidateError(t *testing.T) {
 			require.Errorf(t, tc.pa.Validate(), tc.errMsg)
 		})
 	}
-
 }
 
 func TestPoolAssetValidateSuccess(t *testing.T) {
@@ -68,7 +67,6 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 			require.NoError(t, tc.pa.Validate())
 		})
 	}
-
 }
 
 func TestSubtractPoolAssetBalance(t *testing.T) {
@@ -108,7 +106,7 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt)
+			require.NoError(t, tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt))
 			actualCoins := tc.pool.PoolBalances()
 			require.Equal(t, tc.expectedCoins, actualCoins)
 		})
