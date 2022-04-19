@@ -20,7 +20,8 @@ message MsgPostPrice {
 
   // address of client
   string from      = 1;
-  string pair_id = 2 [(gogoproto.customname) = "PairID"];
+  string token0 = 2 ;
+  string token1 = 5 ;
   string price = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   google.protobuf.Timestamp expiry = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 }

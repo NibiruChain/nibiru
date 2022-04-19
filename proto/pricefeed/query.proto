@@ -141,8 +141,8 @@ message CurrentPriceResponse {
 // PairResponse defines an asset in the pricefeed.
 message PairResponse {
   string          pair_id   = 1 [(gogoproto.customname) = "PairID"];
-  string          base_asset  = 2;
-  string          quote_asset = 3;
+  string          token0  = 2;
+  string          token1 = 3;
   repeated string oracles     = 4;
   bool            active      = 5;
 }

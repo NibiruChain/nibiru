@@ -38,26 +38,26 @@ func TestPairNameFromDenoms(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			outPoolName := common.PairNameFromDenoms(tc.denoms)
+			outPoolName := common.PoolNameFromDenoms(tc.denoms)
 			require.Equal(t, tc.poolName, outPoolName)
 		})
 	}
 }
 
-func TestPair(t *testing.T) {
+func TestAssetPair(t *testing.T) {
 	testCases := []struct {
 		name   string
-		pair   common.Pair
+		pair   common.AssetPair
 		proper bool
 	}{
 		{
 			name:   "proper and improper order pairs are inverses-1",
-			pair:   common.Pair{"atom", "osmo"},
+			pair:   common.AssetPair{"atom", "osmo"},
 			proper: true,
 		},
 		{
 			name:   "proper and improper order pairs are inverses-2",
-			pair:   common.Pair{"osmo", "atom"},
+			pair:   common.AssetPair{"osmo", "atom"},
 			proper: false,
 		},
 	}

@@ -6,30 +6,51 @@ import (
 	"strings"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (pair Pair) PairID() string {
+	return common.PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
+}
+
 // NewPair returns a new Pair
-func NewPair(id, base, quote string, oracles []sdk.AccAddress, active bool) Pair {
+func NewPair(token0 string, token1 string, oracles []sdk.AccAddress, active bool) Pair {
 	return Pair{
-		PairID:     id,
-		BaseAsset:  base,
-		QuoteAsset: quote,
-		Oracles:    oracles,
-		Active:     active,
+		Token0:  token0,
+		Token1:  token1,
+		Oracles: oracles,
+		Active:  active,
 	}
+}
+
+// name is the name of the pool that corresponds to the two assets on this pair.
+func (pair Pair) Name() string {
+	return common.PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
+}
+
+func (pair Pair) AsString() string {
+	return fmt.Sprintf("%s:%s", pair.Token0, pair.Token1)
+}
+
+func (pair Pair) IsProperOrder() bool {
+	return pair.Name() == pair.AsString()
+}
+
+func (pair Pair) Inverse() Pair {
+	return Pair{pair.Token1, pair.Token0, pair.Oracles, pair.Active}
 }
 
 // Validate performs a basic validation of the market params
 func (m Pair) Validate() error {
-	if strings.TrimSpace(m.PairID) == "" {
+	if strings.TrimSpace(m.PairID()) == "" {
 		return errors.New("market id cannot be blank")
 	}
-	if err := sdk.ValidateDenom(m.BaseAsset); err != nil {
-		return fmt.Errorf("invalid base asset: %w", err)
+	if err := sdk.ValidateDenom(m.Token1); err != nil {
+		return fmt.Errorf("invalid token1 asset: %w", err)
 	}
-	if err := sdk.ValidateDenom(m.QuoteAsset); err != nil {
-		return fmt.Errorf("invalid quote asset: %w", err)
+	if err := sdk.ValidateDenom(m.Token0); err != nil {
+		return fmt.Errorf("invalid token0 asset: %w", err)
 	}
 	seenOracles := make(map[string]bool)
 	for i, oracle := range m.Oracles {
@@ -46,7 +67,7 @@ func (m Pair) Validate() error {
 
 // ToPairResponse returns a new PairResponse from a Pair
 func (m Pair) ToPairResponse() PairResponse {
-	return NewPairResponse(m.PairID, m.BaseAsset, m.QuoteAsset, m.Oracles, m.Active)
+	return NewPairResponse(m.Token1, m.Token0, m.Oracles, m.Active)
 }
 
 // Pairs is a slice of Pair
@@ -57,30 +78,32 @@ type Pairs []Pair
 func (ms Pairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, m := range ms {
-		if seenPairs[m.PairID] {
-			return fmt.Errorf("duplicated market %s", m.PairID)
+		pairID := common.PoolNameFromDenoms([]string{m.Token0, m.Token1})
+		if seenPairs[pairID] {
+			return fmt.Errorf("duplicated market %s", pairID)
 		}
 		if err := m.Validate(); err != nil {
 			return err
 		}
-		seenPairs[m.PairID] = true
+		seenPairs[pairID] = true
 	}
 	return nil
 }
 
 // NewPairResponse returns a new PairResponse
-func NewPairResponse(id, base, quote string, oracles []sdk.AccAddress, active bool) PairResponse {
+func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, active bool) PairResponse {
 	var strOracles []string
 	for _, oracle := range oracles {
 		strOracles = append(strOracles, oracle.String())
 	}
 
+	pairID := common.PoolNameFromDenoms([]string{token0, token1})
 	return PairResponse{
-		PairID:     id,
-		BaseAsset:  base,
-		QuoteAsset: quote,
-		Oracles:    strOracles,
-		Active:     active,
+		PairID:  pairID,
+		Token1:  token1,
+		Token0:  token0,
+		Oracles: strOracles,
+		Active:  active,
 	}
 }
 
@@ -152,7 +175,9 @@ func (pps PostedPrices) Validate() error {
 }
 
 // NewPostedPrice returns a new PostedPrice
-func NewPostedPriceResponse(pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPriceResponse {
+func NewPostedPriceResponse(
+	pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time,
+) PostedPriceResponse {
 	return PostedPriceResponse{
 		PairID:        pairID,
 		OracleAddress: oracle.String(),

@@ -35,8 +35,8 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "dup market param",
 			genState: NewGenesisState(
 				NewParams([]Pair{
-					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
-					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
+					{"xrp", "bnb", []sdk.AccAddress{addr}, true},
+					{"xrp", "bnb", []sdk.AccAddress{addr}, true},
 				}),
 				[]PostedPrice{NewPostedPrice("xrp", addr, sdk.OneDec(), now)},
 			),

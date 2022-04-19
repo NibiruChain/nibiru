@@ -16,13 +16,12 @@ message Params {
 
 // Pair defines an asset in the pricefeed.
 message Pair {
-  string         pair_id   = 1 [(gogoproto.customname) = "PairID"];
-  string         base_asset  = 2;
-  string         quote_asset = 3;
-  repeated bytes oracles     = 4 [
+  string         token0  = 1;
+  string         token1 = 2;
+  repeated bytes oracles     = 3 [
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
   ];
-  bool active = 5;
+  bool active = 4;
 }
 
 // PostedPrice defines a price for an asset pair posted by a specific oracle.

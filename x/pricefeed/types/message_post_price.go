@@ -17,10 +17,11 @@ const (
 
 var _ sdk.Msg = &MsgPostPrice{}
 
-func NewMsgPostPrice(creator string, marketId string, price sdk.Dec, expiry time.Time) *MsgPostPrice {
+func NewMsgPostPrice(creator string, token0 string, token1 string, price sdk.Dec, expiry time.Time) *MsgPostPrice {
 	return &MsgPostPrice{
 		From:   creator,
-		PairID: marketId,
+		Token0: token0,
+		Token1: token1,
 		Price:  price,
 		Expiry: expiry,
 	}
