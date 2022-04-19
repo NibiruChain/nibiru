@@ -39,3 +39,15 @@ func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
 
 	return nibiSupply.Amount.ToDec().Mul(price).RoundInt(), nil
 }
+
+// GetLiquidityRatio returns the liquidity ratio defined as govMarketCap / stableMarketCap
+func (k Keeper) GetLiquidityRatio(ctx sdk.Context) (sdk.Dec, error) {
+	govMarketCap, err := k.GetGovMarketCap(ctx)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+
+	stableMarketCap := k.GetStableMarketCap(ctx)
+
+	return govMarketCap.ToDec().Quo(stableMarketCap.ToDec()), nil
+}
