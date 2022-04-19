@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -146,31 +145,19 @@ ret:
   - poolId: the pool id
   - err: error if any
 */
-func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (
-	poolId uint64, err error,
+func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string) (
+	pool types.Pool, err error,
 ) {
-	if denomA == "" || denomB == "" {
-		return 0, fmt.Errorf("empty denom")
+	store := ctx.KVStore(k.storeKey)
+
+	poolid := sdk.BigEndianToUint64(store.Get(types.GetDenomPrefixPoolIds(denomA, denomB)))
+	pool = k.FetchPool(ctx, poolid)
+
+	if pool.Address == "" {
+		return pool, fmt.Errorf("no pool for this pair")
 	}
 
-	if denomA == denomB {
-		return 0, fmt.Errorf("same denom pool")
-	}
-
-	// Denom A is higher lexicographically
-	if strings.Compare(denomA, denomB) == -1 {
-		denomA, denomB = denomB, denomA
-	}
-
-	for poolId := sdk.NewInt(1).Uint64(); poolId <= k.GetNextPoolNumber(ctx); poolId++ {
-		pool := k.FetchPool(ctx, poolId)
-
-		if pool.PoolAssets[0].Token.Denom == denomA && pool.PoolAssets[1].Token.Denom == denomB {
-			return pool.Id, nil
-		}
-	}
-
-	return 0, fmt.Errorf("no pool for this pair")
+	return pool, nil
 }
 
 /*
@@ -184,6 +171,27 @@ args:
 func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetKeyPrefixPools(pool.Id), k.cdc.MustMarshal(&pool))
+
+	k.SetPoolIdByDenom(ctx, pool)
+}
+
+/*
+Writes a pool to the state accessible with the PoolId.
+Panics if the pool proto could not be marshalled.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the Pool proto object
+*/
+func (k Keeper) SetPoolIdByDenom(ctx sdk.Context, pool types.Pool) {
+	denomA := pool.PoolAssets[0].Token.Denom
+	denomB := pool.PoolAssets[1].Token.Denom
+
+	store := ctx.KVStore(k.storeKey)
+	store.Set(
+		types.GetDenomPrefixPoolIds(denomA, denomB),
+		sdk.Uint64ToBigEndian(pool.Id),
+	)
 }
 
 /*
