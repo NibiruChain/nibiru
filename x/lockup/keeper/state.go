@@ -114,6 +114,29 @@ func (s LockState) IterateLockedCoins(addr sdk.AccAddress) sdk.Coins {
 	return coins
 }
 
+func (s LockState) IterateUnlockedCoins(addr sdk.AccAddress) sdk.Coins {
+	key := s.keyAddrTime(addr.String(), s.ctx.BlockTime(), nil)
+
+	iter := s.addrTimeIndex.Iterator(nil, key)
+	defer iter.Close()
+
+	coins := sdk.NewCoins()
+	for ; iter.Valid(); iter.Next() {
+
+		lock := new(types.Lock)
+
+		primaryKey := iter.Key()[len(key):] // strip index key and just keep primary key
+		if !s.locks.Has(primaryKey) {
+			panic(fmt.Errorf("state corruption: %v", primaryKey))
+		}
+		s.cdc.MustUnmarshal(s.locks.Get(primaryKey), lock)
+		coins = coins.Add(lock.Coins...)
+	}
+
+	return coins
+
+}
+
 func (s LockState) nextPrimaryKey() uint64 {
 	idBytes := s.id.Get(lockIDKey)
 	var id uint64
