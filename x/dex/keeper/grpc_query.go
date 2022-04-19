@@ -57,7 +57,7 @@ func (k queryServer) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	pool := k.FetchPool(sdk.UnwrapSDKContext(goCtx), req.PoolId)
+	pool, _ := k.FetchPool(sdk.UnwrapSDKContext(goCtx), req.PoolId)
 
 	return &types.QueryPoolResponse{
 		Pool: &pool,
@@ -134,7 +134,7 @@ func (k queryServer) TotalPoolLiquidity(ctx context.Context, req *types.QueryTot
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	pool := k.FetchPool(sdkCtx, req.PoolId)
+	pool, _ := k.FetchPool(sdkCtx, req.PoolId)
 
 	if pool.Address == "" {
 		return &types.QueryTotalPoolLiquidityResponse{}, status.Error(codes.NotFound, "pool id was not found")
