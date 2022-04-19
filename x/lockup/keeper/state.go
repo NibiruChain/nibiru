@@ -11,7 +11,7 @@ import (
 
 var (
 	lockNamespace       = []byte{0x0}
-	lockIDNamespace     = append(lockNamespace, 0x0) // maps current lock ID
+	lockIDNamespace     = append(lockNamespace, 0x0) // maps next lock ID
 	lockObjectNamespace = append(lockNamespace, 0x1) // maps lock ID => lock bytes
 	lockAddrTimeIndex   = append(lockNamespace, 0x2) // maps address and unlock time => lock ID
 	lockAddrIndex       = append(lockNamespace, 0x3) // maps address => lock ID
