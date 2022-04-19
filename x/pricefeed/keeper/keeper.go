@@ -98,7 +98,13 @@ func (k Keeper) SetPrice(
 
 // SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
 func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
-	pairID := common.PoolNameFromDenoms([]string{token0, token1})
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	if !assetPair.IsProperOrder() {
+		token0, token1 = token1, token0
+	}
+	pairID := assetPair.Name()
+	tokens := common.DenomsFromPoolName(pairID)
+	token0, token1 = tokens[0], tokens[1]
 
 	_, ok := k.GetPair(ctx, pairID)
 	if !ok {
@@ -106,18 +112,20 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	}
 	// store current price
 	validPrevPrice := true
-	prevPrice, err := k.GetCurrentPrice(ctx, pairID)
+	prevPrice, err := k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {
 		validPrevPrice = false
 	}
 
-	prices := k.GetRawPrices(ctx, pairID)
+	postedPrices := k.GetRawPrices(ctx, pairID)
 
 	var notExpiredPrices []types.CurrentPrice
 	// filter out expired prices
-	for _, v := range prices {
-		if v.Expiry.After(ctx.BlockTime()) {
-			notExpiredPrices = append(notExpiredPrices, types.NewCurrentPrice(v.PairID, v.Price))
+	for _, post := range postedPrices {
+		if post.Expiry.After(ctx.BlockTime()) {
+			notExpiredPrices = append(
+				notExpiredPrices,
+				types.NewCurrentPrice(token0, token1, post.Price))
 		}
 	}
 
@@ -144,7 +152,7 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 		)
 	}
 
-	currentPrice := types.NewCurrentPrice(pairID, medianPrice)
+	currentPrice := types.NewCurrentPrice(token0, token1, medianPrice)
 	k.setCurrentPrice(ctx, pairID, currentPrice)
 
 	return nil
@@ -183,7 +191,10 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 }
 
 // GetCurrentPrice fetches the current median price of all oracles for a specific market
-func (k Keeper) GetCurrentPrice(ctx sdk.Context, pairID string) (types.CurrentPrice, error) {
+func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
+) (currPrice types.CurrentPrice, err error) {
+	assetPair := common.NewAssetPair(token0, token1)
+	pairID := assetPair.Name()
 
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.CurrentPriceKey(pairID))
@@ -191,14 +202,25 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, pairID string) (types.CurrentPr
 	if bz == nil {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
+
 	var price types.CurrentPrice
-	err := k.cdc.Unmarshal(bz, &price)
+	err = k.cdc.Unmarshal(bz, &price)
 	if err != nil {
 		return types.CurrentPrice{}, err
 	}
 	if price.Price.Equal(sdk.ZeroDec()) {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
+
+	if !assetPair.IsProperOrder() {
+		// Return the inverse price if the tokens are not in "proper" order.
+		inversePrice := sdk.OneDec().Quo(price.Price)
+		return types.NewCurrentPrice(
+			/* token0 */ token1,
+			/* token1 */ token0,
+			/* price */ inversePrice), nil
+	}
+
 	return price, nil
 }
 

@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -20,11 +21,14 @@ func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*typ
 	if !found {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
-	currentPrice, sdkErr := k.GetCurrentPrice(ctx, req.PairId)
+	tokens := common.DenomsFromPoolName(req.PairId)
+	token0, token1 := tokens[0], tokens[1]
+	currentPrice, sdkErr := k.GetCurrentPrice(ctx, token0, token1)
 	if sdkErr != nil {
 		return nil, sdkErr
 	}
 
 	return &types.QueryPriceResponse{
-		Price: types.CurrentPriceResponse(currentPrice)}, nil
+		Price: types.CurrentPriceResponse{req.PairId, currentPrice.Price},
+	}, nil
 }

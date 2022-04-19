@@ -26,7 +26,7 @@ func NewPair(token0 string, token1 string, oracles []sdk.AccAddress, active bool
 
 // name is the name of the pool that corresponds to the two assets on this pair.
 func (pair Pair) Name() string {
-	return common.PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
+	return pair.PairID()
 }
 
 func (pair Pair) AsString() string {
@@ -110,9 +110,19 @@ func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, act
 // PairResponses is a slice of PairResponse
 type PairResponses []PairResponse
 
-// NewCurrentPrice returns an instance of CurrentPrice
-func NewCurrentPrice(pairID string, price sdk.Dec) CurrentPrice {
-	return CurrentPrice{PairID: pairID, Price: price}
+/*
+NewCurrentPrice returns an instance of CurrentPrice
+
+Args:
+  token0 (string):
+  token1 (string):
+  price (sdk.Dec): Price in units of token1 / token0
+Returns:
+  (CurrentPrice): Price for the asset pair.
+*/
+func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	return CurrentPrice{PairID: assetPair.Name(), Price: price}
 }
 
 // CurrentPrices is a slice of CurrentPrice

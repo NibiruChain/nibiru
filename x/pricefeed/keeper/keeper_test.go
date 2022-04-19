@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -235,7 +234,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get current price
-	price, err := keeper.GetCurrentPrice(ctx, "tst:usd")
+	price, err := keeper.GetCurrentPrice(ctx, "tst", "usd")
 	require.Nil(t, err)
 
 	expCurPrice := sdk.MustNewDecFromStr("0.34")
@@ -256,7 +255,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	err = keeper.SetCurrentPrices(ctx, token0, token1)
 	require.NoError(t, err)
 
-	price, err = keeper.GetCurrentPrice(ctx, "tst:usd")
+	price, err = keeper.GetCurrentPrice(ctx, "tst", "usd")
 	require.Nil(t, err)
 
 	exp := sdk.MustNewDecFromStr("0.345")
@@ -308,6 +307,6 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	err = keeper.SetCurrentPrices(ctx, token0, token1)
 	require.ErrorIs(t, types.ErrNoValidPrice, err, "there should be no valid prices to be set")
 
-	_, err = keeper.GetCurrentPrice(ctx, common.PoolNameFromDenoms([]string{token0, token1}))
+	_, err = keeper.GetCurrentPrice(ctx, token0, token1)
 	require.ErrorIs(t, types.ErrNoValidPrice, err, "current prices should be invalid")
 }

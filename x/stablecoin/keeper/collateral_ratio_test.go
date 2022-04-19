@@ -100,13 +100,13 @@ func TestGetCollRatio_Input(t *testing.T) {
 func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 
 	type TestCaseGetCollUSDForTargetCollRatio struct {
-		name            string
-		protocolColl    sdk.Int
-		priceCollStable sdk.Dec
-		postedPairIDs   []string
-		stableSupply    sdk.Int
-		targetCollRatio sdk.Dec
-		neededCollUSD   sdk.Dec
+		name             string
+		protocolColl     sdk.Int
+		priceCollStable  sdk.Dec
+		postedAssetPairs []common.AssetPair
+		stableSupply     sdk.Int
+		targetCollRatio  sdk.Dec
+		neededCollUSD    sdk.Dec
 
 		expectedPass bool
 	}
@@ -130,27 +130,27 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pricefeedTypes.Params{
 				Pairs: []pricefeedTypes.Pair{
-					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{PairID: common.GovStablePool.String(), BaseAsset: common.GovDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+					{Token0: common.CollDenom,
+						Token1:  common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{Token0: common.GovDenom,
+						Token1:  common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
 			// Post prices to each specified market with the oracle.
-			prices := map[string]sdk.Dec{
-				common.CollStablePool.String(): tc.priceCollStable,
+			prices := map[common.AssetPair]sdk.Dec{
+				common.CollStablePool: tc.priceCollStable,
 			}
-			for _, pairID := range tc.postedPairIDs {
+			for _, pair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PriceKeeper.SetPrice(
-					ctx, oracle, pairID, prices[pairID], priceExpiry)
+					ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pairID)
-				require.NoError(t, err, "Error posting price for market: %d", pairID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			neededCollUSD, err := stablecoinKeeper.GetCollUSDForTargetCollRatio(ctx)
@@ -168,7 +168,9 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			name:            "Too little collateral gives correct positive value",
 			protocolColl:    sdk.NewInt(500),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
-			postedPairIDs:   []string{common.CollStablePool.String()},
+			postedAssetPairs: []common.AssetPair{
+				common.CollStablePool,
+			},
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			neededCollUSD:   sdk.MustNewDecFromStr("100"), // = 600 - 500
@@ -177,20 +179,22 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			name:            "Too much collateral gives correct negative value",
 			protocolColl:    sdk.NewInt(600),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 600 * 1 = 600
-			postedPairIDs:   []string{common.CollStablePool.String()},
+			postedAssetPairs: []common.AssetPair{
+				common.CollStablePool,
+			},
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.5"),  // 0.5 * 1000 = 500
 			neededCollUSD:   sdk.MustNewDecFromStr("-100"), // = 500 - 600
 			expectedPass:    true,
 		}, {
-			name:            "No price availabale for the collateral",
-			protocolColl:    sdk.NewInt(500),
-			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
-			postedPairIDs:   []string{},
-			stableSupply:    sdk.NewInt(1000),
-			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
-			neededCollUSD:   sdk.MustNewDecFromStr("100"), // = 600 - 500
-			expectedPass:    false,
+			name:             "No price availabale for the collateral",
+			protocolColl:     sdk.NewInt(500),
+			priceCollStable:  sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
+			postedAssetPairs: []common.AssetPair{},
+			stableSupply:     sdk.NewInt(1000),
+			targetCollRatio:  sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
+			neededCollUSD:    sdk.MustNewDecFromStr("100"), // = 600 - 500
+			expectedPass:     false,
 		},
 	}
 	for _, testCase := range testCases {

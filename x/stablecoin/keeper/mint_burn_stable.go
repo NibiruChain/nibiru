@@ -88,7 +88,7 @@ func (k Keeper) MintStable(
 func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool.String())
+	priceGov, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool.Name())
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -109,7 +109,7 @@ func (k Keeper) calcNeededCollateralAndFees(
 	collRatio sdk.Dec,
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool.String())
+	priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool.Name())
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -286,6 +286,9 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	}
 
 	err = k.mintGov(ctx, redeemGovCoin)
+	if err != nil {
+		return nil, err
+	}
 	// The user receives a mixure of collateral (COLL) and governance (GOV) tokens
 	// based on the collateral ratio.
 
