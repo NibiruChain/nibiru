@@ -2,10 +2,13 @@ package keeper
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 )
+
+var LiquidityRatioBands = sdk.MustNewDecFromStr("0.001")
 
 func (k Keeper) GetSupplyNUSD(
 	ctx sdk.Context,
@@ -54,4 +57,16 @@ func (k Keeper) GetLiquidityRatio(ctx sdk.Context) (sdk.Dec, error) {
 	}
 
 	return govMarketCap.ToDec().Quo(stableMarketCap.ToDec()), nil
+}
+
+func (k Keeper) GetLiquidityRatioBands(ctx sdk.Context) (lowBand, upBand sdk.Dec, err error) {
+	liquidityRatio, err := k.GetLiquidityRatio(ctx)
+	if err != nil {
+		return sdk.Dec{}, sdk.Dec{}, err
+	}
+
+	lowBand = liquidityRatio.Mul(sdk.OneDec().Sub(LiquidityRatioBands))
+	upBand = liquidityRatio.Mul(sdk.OneDec().Add(LiquidityRatioBands))
+
+	return lowBand, upBand, nil
 }

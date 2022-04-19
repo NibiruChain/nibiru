@@ -66,7 +66,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	require.Equal(t, sdktypes.NewInt(2_000_000), marketCap) // 1 * 10^6 * 2 (price of gov token)
 }
 
-func TestKeeper_GetLiquidityRatio(t *testing.T) {
+func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	matrixApp, ctx := testutil.NewNibiruApp(false)
 	keeper := matrixApp.StablecoinKeeper
 
@@ -105,4 +105,10 @@ func TestKeeper_GetLiquidityRatio(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, sdktypes.MustNewDecFromStr("2"), liquidityRatio) // 2 * 1 * 10^6 / Stable 1 * 10^6
+
+	lowBand, upBand, err := keeper.GetLiquidityRatioBands(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, sdktypes.MustNewDecFromStr("1.998"), lowBand)
+	require.Equal(t, sdktypes.MustNewDecFromStr("2.002"), upBand)
 }
