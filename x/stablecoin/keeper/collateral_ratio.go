@@ -50,7 +50,7 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 }
 
 /*
-UpdateCollRatio updaet the value of the current collateral ratio knowing the price is either up or down the peg
+UpdateCollRatio updates the value of the current collateral ratio knowing the price is either above or below the peg
 */
 func (k *Keeper) UpdateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
 
