@@ -1,10 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/MatrixDao/matrix/x/lockup/keeper"
-	"github.com/MatrixDao/matrix/x/lockup/types"
-	"github.com/MatrixDao/matrix/x/testutil"
-	"github.com/MatrixDao/matrix/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestLockState(t *testing.T) {
-	app, ctx := testutil.NewMatrixApp()
+	app, ctx := testutil.NewNibiruApp(true)
 	lock := &types.Lock{
 		LockId:   0,
 		Owner:    sample.AccAddress().String(),
