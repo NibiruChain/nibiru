@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 type msgServer struct {
@@ -33,6 +33,7 @@ func (k msgServer) MsgMintStable(
 	if err != nil {
 		return nil, err
 	}
+
 	return mintStableResponse, nil
 }
 
@@ -44,4 +45,14 @@ func (k msgServer) MsgBurnStable(
 		return nil, err
 	}
 	return burnStableResponse, nil
+}
+
+func (k msgServer) MsgRecollateralize(
+	goCtx context.Context, msg *types.MsgRecollateralize,
+) (*types.MsgRecollateralizeResponse, error) {
+	response, err := k.Recollateralize(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }

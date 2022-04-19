@@ -2,9 +2,10 @@ package keeper
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/MatrixDao/matrix/x/vamm/types"
+	"github.com/NibiruChain/nibiru/x/vamm/types"
 )
 
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.

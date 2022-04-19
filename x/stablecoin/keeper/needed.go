@@ -1,21 +1,18 @@
-// Package keeper Module for minting USDM  Minting USDM
-// See Example B of https://docs.frax.finance/minting-and-redeeming
 package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Computes the amount of MTRX needed to mint USDM given some COLL amount.
+// Computes the amount of NIBI needed to mint NUSD given some COLL amount.
 // Args:
 //   collAmt sdk.Int: Amount of COLL given.
 // Returns:
-//   neededGovAmt sdk.Int: Amount of MTRX needed.
-//   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
+//   neededGovAmt sdk.Int: Amount of NIBI needed.
+//   mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededGovAmtGivenColl(
 	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededGovAmt sdk.Int, mintableStableAmt sdk.Int) {
-
 	collUSD := collAmt.ToDec().Mul(priceColl)
 	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
 
@@ -24,16 +21,15 @@ func NeededGovAmtGivenColl(
 	return neededGovAmt, mintableStableAmt
 }
 
-// Computes the amount of COLL needed to mint USDM given some MTRX amount.
+// Computes the amount of COLL needed to mint NUSD given some NIBI amount.
 // Args:
-//   govAmt sdk.Int: Amount of  MTRX given.
+//   govAmt sdk.Int: Amount of  NIBI given.
 // Returns:
 //   neededCollAmt sdk.Int: Amount of COLL needed.
-//   mintableStableAmt sdk.Int: Amount of USDM that can be minted.
+//   mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededCollAmtGivenGov(
 	govAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededCollAmt sdk.Int, mintableStableAmt sdk.Int) {
-
 	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)

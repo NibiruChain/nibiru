@@ -1,10 +1,10 @@
 syntax = "proto3";
-package MatrixDao.pricefeed.v1;
+package NibiruChain.pricefeed.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/pricefeed/types";
+option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
 option (gogoproto.equal_all)         = true;
 option (gogoproto.verbose_equal_all) = true;
 

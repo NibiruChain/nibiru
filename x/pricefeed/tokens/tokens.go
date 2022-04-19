@@ -9,10 +9,10 @@ import (
 )
 
 type Native struct {
-	HumanDisplay        string // "mtrx"
+	HumanDisplay        string // "nibi"
 	HumanExponent       int64  // 18
-	Base                string // "amtrx"
-	BaseDisplay         string // "amtrx"
+	Base                string // "anibi"
+	BaseDisplay         string // "anibi"
 	BaseExponent        int64  // 0
 	DefaultBondDenom    string
 	Bech32PrefixAccAddr string
@@ -56,11 +56,11 @@ const ibcPlaceholder string = "ibc/..."
 
 var (
 	NATIVE_MAP = map[string]Native{
-		"mtrx": NewNativeToken("mtrx", 18, "amtrx", "amtrx"),
+		"nibi": NewNativeToken("nibi", 18, "anibi", "anibi"),
 	}
 	// TODO Use IBC addresses from https://docs.osmosis.zone/developing/assets/asset-info.html
 	IBC_MAP = map[string]IBCToken{
-		"usdm": NewIBCToken("usdm", 18, "ausdm", "ausdm"),
+		"nusd": NewIBCToken("nusd", 6, "unusd", "unusd"),
 		"osmo": NewIBCToken("osmo", 6, "uosmo", ibcPlaceholder),
 		"ust":  NewIBCToken("ust", 6, "uust", ibcPlaceholder),
 		"ion":  NewIBCToken("ion", 6, "uion", ibcPlaceholder),

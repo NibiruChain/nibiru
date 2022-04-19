@@ -3,7 +3,7 @@ package keeper
 // Everything to do with total liquidity in the dex and liquidity of specific coin denoms.
 
 import (
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

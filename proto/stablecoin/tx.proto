@@ -1,20 +1,30 @@
 syntax = "proto3";
-package MatrixDao.stablecoin.v1;
+package NibiruChain.stablecoin.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
+option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 
-// Msg defines the Msg service.
+// Msg defines the x/stablecoin Msg service.
 service Msg {
-      rpc MintStable(MsgMintStable) returns (MsgMintStableResponse);
-      rpc BurnStable(MsgBurnStable) returns (MsgBurnStableResponse);
+  /* MintStable defines a method for trading a mixture of GOV and COLL to mint an 
+  equivalent value of stablecoins. */
+  rpc MintStable(MsgMintStable) returns (MsgMintStableResponse);
+
+  /* BurnStable defines a method for redeeming/burning stablecoins to receive an 
+  equivalent value as a mixture of governance and collateral tokens. */
+  rpc BurnStable(MsgBurnStable) returns (MsgBurnStableResponse);
+
+  /* Recollateralize defines a method for manually adding collateral to the 
+  protocol in exchange for an equivalent stablecoin value in governance tokens 
+  plus a small bonus. */
+  rpc Recollateralize(MsgRecollateralize) returns (MsgRecollateralizeResponse);
 }
 
 /* 
-MsgMintStable: Msg to mint USDM. A user deposits MTRX and collateral and gets 
-USDM in return. The amount of USDM received depends on the current price set 
+MsgMintStable: Msg to mint NUSD. A user deposits NIBI and collateral and gets 
+NUSD in return. The amount of NUSD received depends on the current price set 
 by the pricefeed library and the current collateral ratio for the protocol.
 */
 message MsgMintStable {
@@ -22,15 +32,21 @@ message MsgMintStable {
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
 }
 
-/* MsgMintStableResponse specifies the amount of USDM token the user will receive after their
+/* MsgMintStableResponse specifies the amount of NUSD token the user will receive after their
 * mint transaction*/
 message MsgMintStableResponse {
   cosmos.base.v1beta1.Coin stable = 1 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin used_coins = 2
+    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin fees_payed = 3
+    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
-/* MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and 
-* Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
-* for the protocol.*/
+/* 
+MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral in return. The amount of NIBI and 
+Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
+for the protocol.
+*/
 message MsgBurnStable {
   string creator = 1;
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
@@ -41,4 +57,18 @@ message MsgBurnStable {
 message MsgBurnStableResponse {
   cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin fees_payed = 3
+  [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+}
+
+/* MsgRecollateralize  */
+message MsgRecollateralize {
+  string creator = 1;
+  cosmos.base.v1beta1.Coin coll = 2 [(gogoproto.nullable) = false];
+}
+
+/* MsgRecollateralizeResponse is the output of a successful 'Recollateralize' */
+message MsgRecollateralizeResponse {
+  // Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.  
+  cosmos.base.v1beta1.Coin gov = 1 [(gogoproto.nullable) = false];
 }
