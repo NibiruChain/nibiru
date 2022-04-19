@@ -14,12 +14,34 @@ var (
 
 	WhitelistedColl = []string{CollDenom}
 
-	GovCollPool    = PoolNameFromDenoms([]string{GovDenom, CollDenom})
-	GovStablePool  = PoolNameFromDenoms([]string{GovDenom, StableDenom})
-	CollStablePool = PoolNameFromDenoms([]string{CollDenom, StableDenom})
+	GovCollPool    = Pair{GovDenom, CollDenom}
+	GovStablePool  = Pair{GovDenom, StableDenom}
+	CollStablePool = Pair{CollDenom, StableDenom}
 )
 
-func PoolNameFromDenoms(denoms []string) string {
+type Pair struct {
+	Token0 string
+	Token1 string
+}
+
+// name is the name of the pool that corresponds to the two assets on this pair.
+func (pair Pair) Name() string {
+	return PairNameFromDenoms([]string{pair.Token0, pair.Token1})
+}
+
+func (pair Pair) String() string {
+	return fmt.Sprintf("%s:%s", pair.Token0, pair.Token1)
+}
+
+func (pair Pair) IsProperOrder() bool {
+	return pair.Name() == pair.String()
+}
+
+func (pair Pair) Inverse() Pair {
+	return Pair{pair.Token1, pair.Token0}
+}
+
+func PairNameFromDenoms(denoms []string) string {
 	sort.Strings(denoms) // alphabetically sort in-place
 	poolName := denoms[0]
 	for idx, denom := range denoms {
