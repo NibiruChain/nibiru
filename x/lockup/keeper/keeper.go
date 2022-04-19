@@ -90,6 +90,23 @@ func (k LockupKeeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedToke
 	return lock.Coins, nil
 }
 
+// UnlockAvailableCoins unlocks all the available coins for the provided account sdk.AccAddress.
+func (k LockupKeeper) UnlockAvailableCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
+	ids := k.LocksState(ctx).UnlockedIDsByAddress(account)
+
+	coins = sdk.NewCoins()
+	for _, id := range ids {
+		unlockedCoins, err := k.UnlockTokens(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("state corruption: %w", err))
+		}
+
+		coins = coins.Add(unlockedCoins...)
+	}
+
+	return coins, nil
+}
+
 // AccountLockedCoins returns the locked coins of the given sdk.AccAddress
 func (k LockupKeeper) AccountLockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
 	return k.LocksState(ctx).IterateLockedCoins(account), nil
@@ -98,4 +115,9 @@ func (k LockupKeeper) AccountLockedCoins(ctx sdk.Context, account sdk.AccAddress
 // AccountUnlockedCoins returns the unlocked coins of the given sdk.AccAddress
 func (k LockupKeeper) AccountUnlockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
 	return k.LocksState(ctx).IterateUnlockedCoins(account), nil
+}
+
+// TotalLockedCoins returns the module account locked coins.
+func (k LockupKeeper) TotalLockedCoins(ctx sdk.Context) (coins sdk.Coins, err error) {
+	return k.LocksState(ctx).IterateTotalLockedCoins(), nil
 }
