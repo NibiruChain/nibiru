@@ -527,7 +527,7 @@ func TestRecollateralize(t *testing.T) {
 		name         string
 		expectedPass bool
 
-		postedPairIDs     []string
+		postedAssetPairs  []common.AssetPair
 		scenario          NeededCollScenario
 		priceGovStable    sdk.Dec
 		expectedNeededUSD sdk.Dec
@@ -537,8 +537,11 @@ func TestRecollateralize(t *testing.T) {
 		response *types.MsgRecollateralizeResponse
 	}{
 		{
-			name:          "both prices are $1",
-			postedPairIDs: []string{common.CollStablePool.String(), common.GovStablePool.String()},
+			name: "both prices are $1",
+			postedAssetPairs: []common.AssetPair{
+				common.GovStablePool,
+				common.CollStablePool,
+			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
 				priceCollStable: sdk.OneDec(),
@@ -567,8 +570,11 @@ func TestRecollateralize(t *testing.T) {
 			expectedPass: true,
 		},
 		{
-			name:          "arbitrary valid prices",
-			postedPairIDs: []string{common.CollStablePool.String(), common.GovStablePool.String()},
+			name: "arbitrary valid prices",
+			postedAssetPairs: []common.AssetPair{
+				common.GovStablePool,
+				common.CollStablePool,
+			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
 				priceCollStable: sdk.MustNewDecFromStr("1.099999"),
@@ -630,29 +636,59 @@ func TestRecollateralize(t *testing.T) {
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pricefeedTypes.Params{
 				Pairs: []pricefeedTypes.Pair{
-					{PairID: common.CollStablePool.String(), BaseAsset: common.CollDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{PairID: common.GovStablePool.String(), BaseAsset: common.GovDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+					{Token0: common.CollDenom, Token1: common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{Token0: common.GovDenom, Token1: common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
-			// Post prices to each specified market with the oracle.
-			prices := map[string]sdk.Dec{
-				common.CollStablePool.String(): tc.scenario.priceCollStable,
-				common.GovStablePool.String():  tc.priceGovStable,
+			prices := map[common.AssetPair]sdk.Dec{
+				common.GovStablePool:  tc.priceGovStable,
+				common.CollStablePool: tc.scenario.priceCollStable,
 			}
-			for _, pairID := range tc.postedPairIDs {
+			for _, pair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PriceKeeper.SetPrice(
-					ctx, oracle, pairID, prices[pairID], priceExpiry)
+					ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pairID)
-				require.NoError(t, err, "Error posting price for market: %d", pairID)
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
+
+			// Post prices to each specified market with the oracle.
+			prices = map[common.AssetPair]sdk.Dec{
+				common.CollStablePool: tc.scenario.priceCollStable,
+				common.GovStablePool:  tc.priceGovStable,
+			}
+			for _, assetPair := range tc.postedAssetPairs {
+				_, err := nibiruApp.PriceKeeper.SetPrice(
+					ctx, oracle, assetPair.Token0, assetPair.Token1,
+					prices[assetPair], priceExpiry)
+				require.NoError(t, err)
+
+				// Update the 'CurrentPrice' posted by the oracles.
+				err = nibiruApp.PriceKeeper.SetCurrentPrices(
+					ctx, assetPair.Token0, assetPair.Token1)
+				require.NoError(
+					t, err, "Error posting price for pair: %d", assetPair.String())
+			}
+
+			// // Post prices to each specified market with the oracle.
+			// prices := map[common.AssetPair]sdk.Dec{
+			// 	common.NewAssetPair(common.GovDenom, common.StableDenom):    tc.priceGovStable,
+			// 	common.NewAssetPair(common.StableDenom, common.StableDenom): tc.scenario.priceCollStable,
+			// }
+			// for _, pair := range tc.postedAssetPairs {
+			// 	_, err := nibiruApp.PriceKeeper.SetPrice(
+			// 		ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
+			// 	require.NoError(t, err)
+
+			// 	// Update the 'CurrentPrice' posted by the oracles.
+			// 	err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+			// 	require.NoError(t, err, "Error posting price for pair: %d", pair.String())
+			// }
 
 			goCtx := sdk.WrapSDKContext(ctx)
 			response, err := stablecoinKeeper.Recollateralize(goCtx, &tc.msg)
