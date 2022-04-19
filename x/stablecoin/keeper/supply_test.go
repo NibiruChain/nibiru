@@ -63,5 +63,5 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	marketCap, err := keeper.GetGovMarketCap(ctx)
 	require.NoError(t, err)
 
-	require.Equal(t, sdktypes.NewInt(2_000_000), marketCap)
+	require.Equal(t, sdktypes.NewInt(2_000_000), marketCap) // 1 * 10^6 * 2 (price of gov token)
 }
