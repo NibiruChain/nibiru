@@ -2,9 +2,9 @@
 
 **TLDR**: A user can call `Buyback` when there's too much collateral in the protocol according to the target collateral ratio. The user swaps NIBI for UST at a 0% transaction fee and the protocol burns the NIBI it buys from the user.
 
-**`collRatio`**: The collateral ratio, or 'collRatio' (sdk.Dec), is a value beteween 0 and 1 that determines what proportion of collateral and governance token is used during stablecoin mints and burns.
+**`collRatio`**: The collateral ratio, or `collRatio` (sdk.Dec), is a value beteween 0 and 1 that determines what proportion of collateral and governance token is used during stablecoin mints and burns.
 
-**`liqRatio`**: The liquidity ratio, or 'collRatio' (sdk.Dec), is a the proportion of the circulating NIBI liquidity relvative to the NUSD (stable) value.
+**`liqRatio`**: The liquidity ratio, or `liqRatio` (sdk.Dec), is a the proportion of the circulating NIBI liquidity relvative to the NUSD (stable) value.
 
 ### When is a "buyback" possible?
 
