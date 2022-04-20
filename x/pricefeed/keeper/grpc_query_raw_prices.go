@@ -16,15 +16,15 @@ func (k Keeper) RawPrices(goCtx context.Context, req *types.QueryRawPricesReques
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_, found := k.GetMarket(ctx, req.MarketId)
+	_, found := k.GetPair(ctx, req.PairId)
 	if !found {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
 
 	var prices types.PostedPriceResponses
-	for _, rp := range k.GetRawPrices(ctx, req.MarketId) {
+	for _, rp := range k.GetRawPrices(ctx, req.PairId) {
 		prices = append(prices, types.PostedPriceResponse{
-			MarketID:      rp.MarketID,
+			PairID:        rp.PairID,
 			OracleAddress: rp.OracleAddress.String(),
 			Price:         rp.Price,
 			Expiry:        rp.Expiry,
