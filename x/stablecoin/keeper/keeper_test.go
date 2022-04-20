@@ -40,8 +40,8 @@ func TestGetAndSetParams(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			matrixApp, ctx := testutil.NewNibiruApp(true)
-			stableKeeper := matrixApp.StablecoinKeeper
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			stableKeeper := nibiruApp.StablecoinKeeper
 
 			params := tc.requiredParams()
 			stableKeeper.SetParams(ctx, params)
@@ -53,8 +53,8 @@ func TestGetAndSetParams(t *testing.T) {
 
 func TestGetAndSetParams_Errors(t *testing.T) {
 	t.Run("Calling Get without setting causes a panic", func(t *testing.T) {
-		matrixApp, ctx := testutil.NewNibiruApp(false)
-		stableKeeper := matrixApp.StablecoinKeeper
+		nibiruApp, ctx := testutil.NewNibiruApp(false)
+		stableKeeper := nibiruApp.StablecoinKeeper
 
 		require.Panics(
 			t,

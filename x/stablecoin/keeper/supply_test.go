@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	types2 "github.com/NibiruChain/nibiru/x/dex/types"
+	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/mock"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -15,8 +15,8 @@ import (
 )
 
 func TestKeeper_GetStableMarketCap(t *testing.T) {
-	matrixApp, ctx := testutil.NewNibiruApp(false)
-	k := matrixApp.StablecoinKeeper
+	nibiruApp, ctx := testutil.NewNibiruApp(false)
+	k := nibiruApp.StablecoinKeeper
 
 	// We set some supply
 	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
@@ -31,15 +31,15 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
-	matrixApp, ctx := testutil.NewNibiruApp(false)
-	keeper := matrixApp.StablecoinKeeper
+	nibiruApp, ctx := testutil.NewNibiruApp(false)
+	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()
-	poolParams := types2.PoolParams{
+	poolParams := dextypes.PoolParams{
 		SwapFee: sdktypes.NewDecWithPrec(3, 2),
 		ExitFee: sdktypes.NewDecWithPrec(3, 2),
 	}
-	poolAssets := []types2.PoolAsset{
+	poolAssets := []dextypes.PoolAsset{
 		{
 			Token:  sdktypes.NewInt64Coin(common.GovDenom, 2_000_000),
 			Weight: sdktypes.NewInt(100),
@@ -50,7 +50,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 		},
 	}
 
-	pool, err := types2.NewPool(1, poolAccountAddr, poolParams, poolAssets)
+	pool, err := dextypes.NewPool(1, poolAccountAddr, poolParams, poolAssets)
 	require.NoError(t, err)
 	keeper.DexKeeper = mock.NewKeeper(pool)
 
@@ -67,15 +67,15 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
-	matrixApp, ctx := testutil.NewNibiruApp(false)
-	keeper := matrixApp.StablecoinKeeper
+	nibiruApp, ctx := testutil.NewNibiruApp(false)
+	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()
-	poolParams := types2.PoolParams{
+	poolParams := dextypes.PoolParams{
 		SwapFee: sdktypes.NewDecWithPrec(3, 2),
 		ExitFee: sdktypes.NewDecWithPrec(3, 2),
 	}
-	poolAssets := []types2.PoolAsset{
+	poolAssets := []dextypes.PoolAsset{
 		{
 			Token:  sdktypes.NewInt64Coin(common.GovDenom, 2_000_000),
 			Weight: sdktypes.NewInt(100),
@@ -86,7 +86,7 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 		},
 	}
 
-	pool, err := types2.NewPool(1, poolAccountAddr, poolParams, poolAssets)
+	pool, err := dextypes.NewPool(1, poolAccountAddr, poolParams, poolAssets)
 	require.NoError(t, err)
 	keeper.DexKeeper = mock.NewKeeper(pool)
 
