@@ -32,22 +32,22 @@ var (
 )
 
 // CurrentPriceKey returns the prefix for the current price
-func CurrentPriceKey(marketID string) []byte {
-	return append(CurrentPricePrefix, []byte(marketID)...)
+func CurrentPriceKey(pairID string) []byte {
+	return append(CurrentPricePrefix, []byte(pairID)...)
 }
 
 // RawPriceIteratorKey returns the prefix for the raw price for a single market
-func RawPriceIteratorKey(marketID string) []byte {
+func RawPriceIteratorKey(pairID string) []byte {
 	return append(
 		RawPriceFeedPrefix,
-		lengthPrefixWithByte([]byte(marketID))...,
+		lengthPrefixWithByte([]byte(pairID))...,
 	)
 }
 
 // RawPriceKey returns the prefix for the raw price
-func RawPriceKey(marketID string, oracleAddr sdk.AccAddress) []byte {
+func RawPriceKey(pairID string, oracleAddr sdk.AccAddress) []byte {
 	return append(
-		RawPriceIteratorKey(marketID),
+		RawPriceIteratorKey(pairID),
 		lengthPrefixWithByte(oracleAddr)...,
 	)
 }

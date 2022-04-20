@@ -52,7 +52,9 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 GetCollUSDForTargetCollRatio is the collateral value in USD needed to reach a target
 collateral ratio.
 */
-func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
+func (k *Keeper) GetCollUSDForTargetCollRatio(
+	ctx sdk.Context,
+) (neededCollUSD sdk.Dec, err error) {
 	stableSupply := k.GetSupplyNUSD(ctx)
 	targetCollRatio := k.GetCollRatio(ctx)
 	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
@@ -60,12 +62,11 @@ func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sd
 	collDenoms := []string{common.CollDenom}
 
 	currentTotalCollUSD := sdk.ZeroDec()
-	pricePools := map[string]string{
-		common.CollDenom: common.CollStablePool,
-	}
+
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
-		priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, pricePools[collDenom])
+		priceColl, err := k.PriceKeeper.GetCurrentPrice(
+			ctx, collDenom, common.StableDenom)
 		if err != nil {
 			return sdk.ZeroDec(), err
 		}
@@ -82,7 +83,8 @@ func (k *Keeper) GetCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSD, _ := k.GetCollUSDForTargetCollRatio(ctx)
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -106,7 +108,8 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	params := k.GetParams(ctx)
 	bonusRate := params.GetBonusRateRecollAsDec()
 
-	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
+	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.GovDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -178,7 +181,8 @@ func (k Keeper) Recollateralize(
 	)
 
 	// Compute GOV rewarded to user
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return response, err
 	}

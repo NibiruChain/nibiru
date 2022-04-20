@@ -100,7 +100,7 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	}
 }
 
-func TestIncreaseQuoteAssetReserve(t *testing.T) {
+func TestIncreaseToken0Reserve(t *testing.T) {
 	pool := NewPool(
 		"ATOM:NUSD",
 		sdk.MustNewDecFromStr("0.9"),
@@ -109,9 +109,9 @@ func TestIncreaseQuoteAssetReserve(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"),
 	)
 
-	pool.IncreaseQuoteAssetReserve(sdk.NewInt(100))
+	pool.IncreaseToken0Reserve(sdk.NewInt(100))
 
-	quoteAssetReserve, err := pool.GetPoolQuoteAssetReserveAsInt()
+	quoteAssetReserve, err := pool.GetPoolToken0ReserveAsInt()
 	require.NoError(t, err)
 
 	require.Equal(t, sdk.NewInt(1_000_100), quoteAssetReserve)
@@ -126,27 +126,27 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"),
 	)
 
-	// DecreaseBaseAsset
-	pool.DecreaseBaseAssetReserve(sdk.NewInt(100))
-	baseAssetReserve, err := pool.GetPoolBaseAssetReserveAsInt()
+	// DecreaseToken1
+	pool.DecreaseToken1Reserve(sdk.NewInt(100))
+	baseAssetReserve, err := pool.GetPoolToken1ReserveAsInt()
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewInt(999_900), baseAssetReserve)
 
 	// Increase Base Asset
-	pool.IncreaseBaseAssetReserve(sdk.NewInt(100))
-	baseAssetReserve, err = pool.GetPoolBaseAssetReserveAsInt()
+	pool.IncreaseToken1Reserve(sdk.NewInt(100))
+	baseAssetReserve, err = pool.GetPoolToken1ReserveAsInt()
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewInt(1_000_000), baseAssetReserve)
 
-	// DecreaseQuoteAsset
-	pool.DecreaseQuoteAssetReserve(sdk.NewInt(100))
-	quoteAssetReserve, err := pool.GetPoolQuoteAssetReserveAsInt()
+	// DecreaseToken0
+	pool.DecreaseToken0Reserve(sdk.NewInt(100))
+	quoteAssetReserve, err := pool.GetPoolToken0ReserveAsInt()
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewInt(999_900), quoteAssetReserve)
 
 	// Increase Quote Asset
-	pool.IncreaseQuoteAssetReserve(sdk.NewInt(100))
-	quoteAssetReserve, err = pool.GetPoolQuoteAssetReserveAsInt()
+	pool.IncreaseToken0Reserve(sdk.NewInt(100))
+	quoteAssetReserve, err = pool.GetPoolToken0ReserveAsInt()
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewInt(1_000_000), quoteAssetReserve)
 }
