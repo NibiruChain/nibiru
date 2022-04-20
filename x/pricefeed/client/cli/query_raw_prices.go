@@ -25,7 +25,7 @@ func CmdRawPrices() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			params := &types.QueryRawPricesRequest{
-				MarketId: args[0],
+				PairId: args[0],
 			}
 
 			res, err := queryClient.RawPrices(cmd.Context(), params)

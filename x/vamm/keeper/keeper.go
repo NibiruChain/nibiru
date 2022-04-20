@@ -89,8 +89,8 @@ func (k Keeper) SwapInput(
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventSwapInput,
-			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
-			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeToken0Amount, quoteAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeToken1Amount, baseAssetAmount.String()),
 		),
 	)
 
@@ -160,14 +160,14 @@ func (k Keeper) updateReserve(
 	skipFluctuationCheck bool,
 ) error {
 	if dir == types.Direction_ADD_TO_AMM {
-		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
-		pool.DecreaseBaseAssetReserve(baseAssetAmount)
+		pool.IncreaseToken0Reserve(quoteAssetAmount)
+		pool.DecreaseToken1Reserve(baseAssetAmount)
 		// TODO baseAssetDeltaThisFunding
 		// TODO totalPositionSize
 		// TODO cumulativeNotional
 	} else {
-		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
-		pool.IncreaseBaseAssetReserve(baseAssetAmount)
+		pool.DecreaseToken0Reserve(quoteAssetAmount)
+		pool.IncreaseToken1Reserve(baseAssetAmount)
 		// TODO baseAssetDeltaThisFunding
 		// TODO totalPositionSize
 		// TODO cumulativeNotional
@@ -224,12 +224,12 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 
 func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
 	fluctuationLimitRatio, _ := sdk.NewDecFromStr(pool.FluctuationLimitRatio)
-	quoteAssetReserve, _ := pool.GetPoolQuoteAssetReserveAsInt()
-	baseAssetReserve, _ := pool.GetPoolBaseAssetReserveAsInt()
+	quoteAssetReserve, _ := pool.GetPoolToken0ReserveAsInt()
+	baseAssetReserve, _ := pool.GetPoolToken1ReserveAsInt()
 	price := quoteAssetReserve.ToDec().Quo(baseAssetReserve.ToDec())
 
-	snapshotQuote, _ := sdk.NewDecFromStr(snapshot.QuoteAssetReserve)
-	snapshotBase, _ := sdk.NewDecFromStr(snapshot.BaseAssetReserve)
+	snapshotQuote, _ := sdk.NewDecFromStr(snapshot.Token0Reserve)
+	snapshotBase, _ := sdk.NewDecFromStr(snapshot.Token1Reserve)
 	lastPrice := snapshotQuote.Quo(snapshotBase)
 	upperLimit := lastPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
 	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
