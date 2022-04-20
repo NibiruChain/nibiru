@@ -57,12 +57,12 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 // ---------------------------------------------------------------------------
 
 /*
-GetCollUSDForTargetCollRatio is the collateral value in USD needed to reach a target
+GetUSDValForTargetCollRatio is the collateral value in USD needed to reach a target
 collateral ratio.
 */
-func (k *Keeper) GetCollUSDForTargetCollRatio(
+func (k *Keeper) GetUSDValForTargetCollRatio(
 	ctx sdk.Context,
-) (neededCollUSD sdk.Dec, err error) {
+) (neededStable sdk.Dec, err error) {
 	stableSupply := k.GetSupplyNUSD(ctx)
 	targetCollRatio := k.GetCollRatio(ctx)
 	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
@@ -83,71 +83,36 @@ func (k *Keeper) GetCollUSDForTargetCollRatio(
 	}
 
 	targetCollUSD := targetCollRatio.MulInt(stableSupply.Amount)
-	neededCollUSD = targetCollUSD.Sub(currentTotalCollUSD)
-	return neededCollUSD, err
+	neededStable = targetCollUSD.Sub(currentTotalCollUSD)
+	return neededStable, err
 }
 
-func (k *Keeper) GetCollAmtForTargetCollRatio(
+func (k *Keeper) RecollateralizeCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
-	neededUSD, _ := k.GetCollUSDForTargetCollRatio(ctx)
+	neededUSDForRecoll, _ := k.GetUSDValForTargetCollRatio(ctx)
 	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	neededCollAmountDec := neededUSD.Quo(priceCollStable.Price)
+	neededCollAmountDec := neededUSDForRecoll.Quo(priceCollStable.Price)
 	return neededCollAmountDec.Ceil().TruncateInt(), err
 }
 
 /*
-GovAmtFromRecollateralize computes the GOV token given as a reward for calling
-recollateralize.
-Args:
-  ctx (sdk.Context): Carries information about the current state of the application.
-  collDenom (string): 'Denom' of the collateral to be used for recollateralization.
-Returns:
-  govOut (sdk.Int): Amount of GOV token rewarded for 'Recollateralize'.
-*/
-func (k *Keeper) GovAmtFromRecollateralize(
-	ctx sdk.Context, collUSD sdk.Dec,
-) (govOut sdk.Int, err error) {
-	params := k.GetParams(ctx)
-	bonusRate := params.GetBonusRateRecollAsDec()
-
-	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
-		ctx, common.GovDenom, common.StableDenom)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-	govOut = collUSD.Mul(sdk.OneDec().Add(bonusRate)).
-		Quo(priceGovStable.Price).TruncateInt()
-	return govOut, err
-}
-
-func (k *Keeper) GovAmtFromFullRecollateralize(
-	ctx sdk.Context,
-) (govOut sdk.Int, err error) {
-	neededCollUSD, err := k.GetCollUSDForTargetCollRatio(ctx)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-	return k.GovAmtFromRecollateralize(ctx, neededCollUSD)
-}
-
-/*
-Recollateralize is a function that incentivizes the caller to add up to the 
-amount of collateral needed to reach some target collateral ratio 
-(`collRatioTarget`). Recollateralize checks if the USD value of collateral in 
-the protocol is below the required amount defined by the current collateral ratio. 
+Recollateralize is a function that incentivizes the caller to add up to the
+amount of collateral needed to reach some target collateral ratio
+(`collRatioTarget`). Recollateralize checks if the USD value of collateral in
+the protocol is below the required amount defined by the current collateral ratio.
 Nibiru's NUSD stablecoin is taken to be the dollar that determines USD value.
 
-Args: 
+Args:
   msg (MsgRecollateralize) {
     Creator (string): Caller of 'Recollateralize'
 	Coll (sdk.Coin): Input collateral that will be sold to the protocol.
-  } 
+  }
 
 Returns:
   response (MsgRecollateralizeResponse) {
@@ -167,7 +132,7 @@ func (k Keeper) Recollateralize(
 	params := k.GetParams(ctx)
 	targetCollRatio := params.GetCollRatioAsDec()
 
-	neededCollAmt, err := k.GetCollAmtForTargetCollRatio(ctx)
+	neededCollAmt, err := k.RecollateralizeCollAmtForTargetCollRatio(ctx)
 	if err != nil {
 		return response, err
 	} else if neededCollAmt.LTE(sdk.ZeroInt()) {
@@ -199,9 +164,10 @@ func (k Keeper) Recollateralize(
 		return response, err
 	}
 	events.EmitTransfer(
-		ctx, inColl,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-		/* to   */ caller.String(),
+		ctx,
+		/* coin */ inColl,
+		/* from */ caller.String(),
+		/* to   */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
 	)
 
 	// Compute GOV rewarded to user
@@ -210,8 +176,8 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	inCollUSD := priceCollStable.Price.MulInt(inColl.Amount)
-	outGovAmount, err := k.GovAmtFromRecollateralize(ctx, inCollUSD)
+	inUSD := priceCollStable.Price.MulInt(inColl.Amount)
+	outGovAmount, err := k.GovAmtFromRecollateralize(ctx, inUSD)
 	if err != nil {
 		return response, err
 	}
@@ -248,6 +214,191 @@ func (k Keeper) Recollateralize(
 	}, err
 }
 
+/*
+GovAmtFromRecollateralize computes the GOV token given as a reward for calling
+recollateralize.
+
+Args:
+  ctx (sdk.Context): Carries information about the current state of the application.
+  inUSD (sdk.Dec): Value in NUSD stablecoin to be used for recollateralization.
+Returns:
+  govOut (sdk.Int): Amount of GOV token rewarded for 'Recollateralize'.
+*/
+func (k *Keeper) GovAmtFromRecollateralize(
+	ctx sdk.Context, inUSD sdk.Dec,
+) (govOut sdk.Int, err error) {
+	params := k.GetParams(ctx)
+	bonusRate := params.GetBonusRateRecollAsDec()
+
+	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.GovDenom, common.StableDenom)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	govOut = inUSD.Mul(sdk.OneDec().Add(bonusRate)).
+		Quo(priceGovStable.Price).TruncateInt()
+	return govOut, err
+}
+
+func (k *Keeper) GovAmtFromFullRecollateralize(
+	ctx sdk.Context,
+) (govOut sdk.Int, err error) {
+	neededCollUSD, err := k.GetUSDValForTargetCollRatio(ctx)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	return k.GovAmtFromRecollateralize(ctx, neededCollUSD)
+}
+
 // ---------------------------------------------------------------------------
 // Buyback
 // ---------------------------------------------------------------------------
+
+func (k *Keeper) BuybackGovAmtForTargetCollRatio(
+	ctx sdk.Context,
+) (neededGovAmt sdk.Int, err error) {
+	neededUSDForRecoll, _ := k.GetUSDValForTargetCollRatio(ctx)
+	neededUSDForBuyback := neededUSDForRecoll.Neg()
+	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.GovDenom, common.StableDenom)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	neededGovAmtDec := neededUSDForBuyback.Quo(priceGovStable.Price)
+	neededGovAmt = neededGovAmtDec.Ceil().TruncateInt()
+	return neededGovAmt, err
+}
+
+func (k Keeper) Buyback(
+	goCtx context.Context, msg *types.MsgBuyback,
+) (response *types.MsgBuybackResponse, err error) {
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	caller, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return response, err
+	}
+
+	params := k.GetParams(ctx)
+	targetCollRatio := params.GetCollRatioAsDec()
+
+	neededGovAmt, err := k.BuybackGovAmtForTargetCollRatio(ctx)
+	if err != nil {
+		return response, err
+	} else if neededGovAmt.LTE(sdk.ZeroInt()) {
+		return response, fmt.Errorf(
+			"protocol has insufficient COLL, so 'Buyback' is not needed")
+	}
+
+	// The caller doesn't need to be put in the full amount,
+	// just a positive amount that is at most the 'neededCollAmount'.
+	inGov := sdk.NewCoin(msg.Gov.Denom, sdk.ZeroInt())
+	if msg.Gov.Amount.GT(neededGovAmt) {
+		inGov.Amount = neededGovAmt
+	} else if msg.Gov.Amount.LTE(sdk.ZeroInt()) {
+		return response, fmt.Errorf(
+			"collateral input, %v, must be positive", msg.Gov.String())
+	} else {
+		inGov.Amount = msg.Gov.Amount
+	}
+
+	// Send NIBI from the caller to the module
+	err = k.checkEnoughBalance(ctx, inGov, caller)
+	if err != nil {
+		return response, err
+	}
+	err = k.BankKeeper.SendCoinsFromAccountToModule(
+		ctx, caller, types.ModuleName, sdk.NewCoins(inGov),
+	)
+	if err != nil {
+		return response, err
+	}
+	events.EmitTransfer(
+		ctx,
+		/* coin */ inGov,
+		/* from */ caller.String(),
+		/* to   */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+	)
+
+	// Burn the NIBI that was sent by the caller.
+	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(inGov))
+	if err != nil {
+		return response, err
+	}
+	events.EmitBurnNIBI(ctx, inGov)
+
+	// Compute USD (stable) value of the GOV sent by the caller: 'inUSD'
+	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.GovDenom, common.StableDenom)
+	if err != nil {
+		return response, err
+	}
+	inUSD := priceGovStable.Price.MulInt(inGov.Amount)
+
+	// Compute collateral amount sent to caller: 'outColl'
+	outCollAmount, err := k.CollAmtFromBuyback(ctx, inUSD)
+	if err != nil {
+		return response, err
+	}
+	outColl := sdk.NewCoin(common.CollDenom, outCollAmount)
+
+	// Send COLL from the module to the caller
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, caller, sdk.NewCoins(outColl),
+	)
+	if err != nil {
+		return response, err
+	}
+	events.EmitTransfer(
+		ctx, outColl,
+		/* from */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+		/* to   */ caller.String(),
+	)
+
+	events.EmitBuyback(
+		ctx,
+		/* inCoin    */ inGov,
+		/* outCoin   */ outColl,
+		/* caller    */ caller.String(),
+		/* collRatio */ targetCollRatio,
+	)
+	return response, err
+}
+
+/*
+CollAmtFromBuyback computes the COLL (collateral) given as a reward for calling
+buyback.
+
+Args:
+  ctx (sdk.Context): Carries information about the current state of the application.
+  valUSD (sdk.Dec): Value in NUSD stablecoin to be used for buyback.
+Returns:
+  collAmt (sdk.Int): Amount of COLL token rewarded for 'Buyback'.
+*/
+func (k *Keeper) CollAmtFromBuyback(
+	ctx sdk.Context, valUSD sdk.Dec,
+) (collAmt sdk.Int, err error) {
+	params := k.GetParams(ctx)
+	bonusRate := params.GetBonusRateRecollAsDec()
+
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.CollDenom, common.StableDenom)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	collAmt = valUSD.Mul(sdk.OneDec().Add(bonusRate)).
+		Quo(priceCollStable.Price).TruncateInt()
+	return collAmt, err
+}
+
+func (k *Keeper) CollAmtFromFullBuyback(
+	ctx sdk.Context,
+) (collAmt sdk.Int, err error) {
+	neededUSDForRecoll, err := k.GetUSDValForTargetCollRatio(ctx)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+	neededUSDForBuyback := neededUSDForRecoll.Neg()
+	return k.CollAmtFromBuyback(ctx, neededUSDForBuyback)
+}

@@ -91,8 +91,8 @@ func TestGetCollRatio_Input(t *testing.T) {
 	})
 }
 
-func TestGetCollUSDForTargetCollRatio(t *testing.T) {
-	type TestCaseGetCollUSDForTargetCollRatio struct {
+func TestGetUSDValForTargetCollRatio(t *testing.T) {
+	type TestCaseGetUSDValForTargetCollRatio struct {
 		name             string
 		protocolColl     sdk.Int
 		priceCollStable  sdk.Dec
@@ -104,7 +104,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 		expectedPass bool
 	}
 
-	executeTest := func(t *testing.T, testCase TestCaseGetCollUSDForTargetCollRatio) {
+	executeTest := func(t *testing.T, testCase TestCaseGetUSDValForTargetCollRatio) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
@@ -145,7 +145,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
-			neededCollUSD, err := stablecoinKeeper.GetCollUSDForTargetCollRatio(ctx)
+			neededCollUSD, err := stablecoinKeeper.GetUSDValForTargetCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.neededCollUSD, neededCollUSD)
@@ -155,7 +155,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 		})
 	}
 
-	testCases := []TestCaseGetCollUSDForTargetCollRatio{
+	testCases := []TestCaseGetUSDValForTargetCollRatio{
 		{
 			name:            "Too little collateral gives correct positive value",
 			protocolColl:    sdk.NewInt(500),
@@ -194,8 +194,8 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 	}
 }
 
-func TestGetCollAmtForTargetCollRatio(t *testing.T) {
-	type TestCaseGetCollAmtForTargetCollRatio struct {
+func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
+	type TestCaseRecollateralizeCollAmtForTargetCollRatio struct {
 		name            string
 		protocolColl    sdk.Int
 		priceCollStable sdk.Dec
@@ -205,7 +205,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 		expectedPass    bool
 	}
 
-	testCases := []TestCaseGetCollAmtForTargetCollRatio{
+	testCases := []TestCaseRecollateralizeCollAmtForTargetCollRatio{
 		{
 			name:            "under-collateralized; untruncated integer amount",
 			protocolColl:    sdk.NewInt(500),
@@ -272,7 +272,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 				require.NoError(t, err, "Error posting price for market: %d", pfPair.AsString())
 			}
 
-			neededCollAmount, err := stablecoinKeeper.GetCollAmtForTargetCollRatio(ctx)
+			neededCollAmount, err := stablecoinKeeper.RecollateralizeCollAmtForTargetCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.neededCollAmt, neededCollAmount)
@@ -282,7 +282,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 		})
 	}
 
-	testCases = []TestCaseGetCollAmtForTargetCollRatio{
+	testCases = []TestCaseRecollateralizeCollAmtForTargetCollRatio{
 		{
 			name:            "error from price not being posted",
 			protocolColl:    sdk.NewInt(500),
@@ -317,7 +317,7 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 				}}
 			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
 
-			neededCollAmount, err := stablecoinKeeper.GetCollAmtForTargetCollRatio(ctx)
+			neededCollAmount, err := stablecoinKeeper.RecollateralizeCollAmtForTargetCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.neededCollAmt, neededCollAmount)
