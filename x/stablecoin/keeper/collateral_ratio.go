@@ -363,7 +363,9 @@ func (k Keeper) Buyback(
 		/* caller    */ caller.String(),
 		/* collRatio */ targetCollRatio,
 	)
-	return response, err
+	return &types.MsgBuybackResponse{
+		Coll: outColl,
+	}, err
 }
 
 /*
@@ -379,15 +381,13 @@ Returns:
 func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,
 ) (collAmt sdk.Int, err error) {
-	params := k.GetParams(ctx)
-	bonusRate := params.GetBonusRateRecollAsDec()
 
 	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
 	}
-	collAmt = valUSD.Mul(sdk.OneDec().Add(bonusRate)).
+	collAmt = valUSD.
 		Quo(priceCollStable.Price).TruncateInt()
 	return collAmt, err
 }
