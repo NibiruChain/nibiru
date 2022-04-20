@@ -10,10 +10,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// ---------------------------------------------------------------------------
+// Collateral Ratio Getters and Setters
+// ---------------------------------------------------------------------------
+
 /*
-The collateral ratio, or 'collRatio' (sdk.Dec), is a value beteween 0 and 1 that determines
-what proportion of collateral and governance token is used during stablecoin mints
-and burns.
+The collateral ratio, or 'collRatio' (sdk.Dec), is a value beteween 0 and 1 that
+determines what proportion of collateral and governance token is used during
+stablecoin mints and burns.
 */
 
 // GetCollRatio queries the 'collRatio'.
@@ -47,6 +51,10 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 
 	return err
 }
+
+// ---------------------------------------------------------------------------
+// Recollateralize
+// ---------------------------------------------------------------------------
 
 /*
 GetCollUSDForTargetCollRatio is the collateral value in USD needed to reach a target
@@ -223,3 +231,7 @@ func (k Keeper) Recollateralize(
 		Gov: outGov,
 	}, err
 }
+
+// ---------------------------------------------------------------------------
+// Buyback
+// ---------------------------------------------------------------------------
