@@ -15,7 +15,9 @@ func (pair Pair) PairID() string {
 }
 
 // NewPair returns a new Pair
-func NewPair(token0 string, token1 string, oracles []sdk.AccAddress, active bool) Pair {
+func NewPair(
+	token0 string, token1 string, oracles []sdk.AccAddress, active bool,
+) Pair {
 	return Pair{
 		Token0:  token0,
 		Token1:  token1,
@@ -26,7 +28,8 @@ func NewPair(token0 string, token1 string, oracles []sdk.AccAddress, active bool
 
 // name is the name of the pool that corresponds to the two assets on this pair.
 func (pair Pair) Name() string {
-	return pair.PairID()
+	assets := common.AssetPair{Token0: pair.Token0, Token1: pair.Token1}
+	return assets.Name()
 }
 
 func (pair Pair) AsString() string {
@@ -34,7 +37,8 @@ func (pair Pair) AsString() string {
 }
 
 func (pair Pair) IsProperOrder() bool {
-	return pair.Name() == pair.AsString()
+	assets := common.AssetPair{Token0: pair.Token0, Token1: pair.Token1}
+	return assets.IsProperOrder()
 }
 
 func (pair Pair) Inverse() Pair {
