@@ -137,7 +137,23 @@ func (k *Keeper) GovAmtFromFullRecollateralize(
 }
 
 /*
-Recollateralize
+Recollateralize is a function that incentivizes the caller to add up to the 
+amount of collateral needed to reach some target collateral ratio 
+(`collRatioTarget`). Recollateralize checks if the USD value of collateral in 
+the protocol is below the required amount defined by the current collateral ratio. 
+Nibiru's NUSD stablecoin is taken to be the dollar that determines USD value.
+
+Args: 
+  msg (MsgRecollateralize) {
+    Creator (string): Caller of 'Recollateralize'
+	Coll (sdk.Coin): Input collateral that will be sold to the protocol.
+  } 
+
+Returns:
+  response (MsgRecollateralizeResponse) {
+    Gov (sdk.Coin): Governance received as a reward for recollateralizing Nibiru.
+  }
+  err: Error condition for if the function succeeds or fails.
 */
 func (k Keeper) Recollateralize(
 	goCtx context.Context, msg *types.MsgRecollateralize,
