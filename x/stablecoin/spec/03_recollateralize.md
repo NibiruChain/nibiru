@@ -1,8 +1,15 @@
-# Recollateralize
+# Recollateralize           <!-- omit in toc -->
 
-**Recollateralize** is a function that incentivizes the caller to add up to the amount of collateral needed to reach some **target collateral ratio** (`collRatioTarget`). Recollateralize checks if the USD value of collateral in the protocol is below the required amount defined by the current collateral ratio.
+**Recollateralize** is a function that incentivizes the caller to add up to the amount of collateral needed to reach some **target collateral ratio** (`collRatioTarget`). Recollateralize checks if the USD value of collateral in the protocol is below the required amount defined by the current collateral ratio. Here, Nibiru's NUSD stablecoin is taken to be the dollar that determines USD value.
+
+- [Concepts](#concepts)
+  - [How much collateral is needed to reach a certain `collRatio`?](#how-much-collateral-is-needed-to-reach-a-certain-collratio)
+  - [Incentives for the caller of `Recollateralize`](#incentives-for-the-caller-of-recollateralize)
+- [Implementation](#implementation)
 
 ## Concepts
+
+**`collRatio`**: The collateral ratio, or 'collRatio' (sdk.Dec), is a value beteween 0 and 1 that determines what proportion of collateral and governance token is used during stablecoin mints and burns.
 
 ### How much collateral is needed to reach a certain `collRatio`?
 
@@ -29,6 +36,11 @@ Thus, the caller receives an amount of NIBI, `nibiOut`:
 nibiOut * priceNIBI = (collNeeded * priceColl) * (1 + bonusRate)
 nibiOut = (collNeeded * priceColl) * (1 + bonusRate) / priceNIBI
 ```
+
+## Implementation
+
+See [[collateral_ratio.go]](../keeper/collateral_ratio.go)
+
 
 #### References: 
 - https://github.com/NibiruChain/nibiru/issues/118
