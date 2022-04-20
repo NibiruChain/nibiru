@@ -1,8 +1,8 @@
 package types // noalias
 
 import (
+	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -24,7 +24,6 @@ type BankKeeper interface {
 	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	// Methods imported from bank should be defined here
 }
 
 type PriceKeeper interface {
@@ -36,4 +35,9 @@ type PriceKeeper interface {
 	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+}
+
+type DexKeeper interface {
+	GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error)
+	FetchPool(ctx sdk.Context, poolId uint64) (pool dextypes.Pool)
 }

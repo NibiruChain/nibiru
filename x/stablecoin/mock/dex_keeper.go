@@ -1,0 +1,24 @@
+package mock
+
+import (
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+type Keeper struct {
+	pool types.Pool
+}
+
+func NewKeeper(pool types.Pool) Keeper {
+	return Keeper{
+		pool: pool,
+	}
+}
+
+func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error) {
+	return 1, nil
+}
+
+func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
+	return k.pool
+}

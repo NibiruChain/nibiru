@@ -21,6 +21,7 @@ type Keeper struct {
 	AccountKeeper types.AccountKeeper
 	BankKeeper    types.BankKeeper
 	PriceKeeper   types.PriceKeeper
+	DexKeeper     types.DexKeeper
 }
 
 // NewKeeper Creates a new x/stablecoin Keeper instance.
@@ -33,6 +34,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	priceKeeper types.PriceKeeper,
+	dexKeeper types.DexKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
@@ -53,6 +55,7 @@ func NewKeeper(
 		AccountKeeper: accountKeeper,
 		BankKeeper:    bankKeeper,
 		PriceKeeper:   priceKeeper,
+		DexKeeper:     dexKeeper,
 	}
 }
 

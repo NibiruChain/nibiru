@@ -482,3 +482,8 @@ func (k Keeper) ExitPool(
 
 	return tokensOut, nil
 }
+
+// TODO implement
+func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error) {
+	return 0, nil
+}

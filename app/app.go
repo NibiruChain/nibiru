@@ -338,7 +338,7 @@ func NewNibiruApp(
 	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
 		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
 		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
+		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.DexKeeper,
 	)
 
 	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
