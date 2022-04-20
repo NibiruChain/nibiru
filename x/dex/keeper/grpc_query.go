@@ -134,10 +134,10 @@ func (k queryServer) TotalPoolLiquidity(ctx context.Context, req *types.QueryTot
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	pool, _ := k.FetchPool(sdkCtx, req.PoolId)
+	pool, err := k.FetchPool(sdkCtx, req.PoolId)
 
-	if pool.Address == "" {
-		return &types.QueryTotalPoolLiquidityResponse{}, status.Error(codes.NotFound, "pool id was not found")
+	if err != nil {
+		return &types.QueryTotalPoolLiquidityResponse{}, err
 	}
 	return &types.QueryTotalPoolLiquidityResponse{
 		Liquidity: k.bankKeeper.GetAllBalances(sdkCtx, pool.GetAddress()),

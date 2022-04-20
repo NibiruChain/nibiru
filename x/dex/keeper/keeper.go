@@ -158,7 +158,7 @@ func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string)
 	pool, err = k.FetchPool(ctx, poolid)
 
 	if err != nil {
-		return pool, fmt.Errorf("no pool for this pair")
+		return pool, err
 	}
 
 	return pool, nil
