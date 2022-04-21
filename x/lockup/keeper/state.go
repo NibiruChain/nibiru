@@ -100,7 +100,8 @@ func (s LockState) Get(id uint64) (*types.Lock, error) {
 // unlocked given the lock owner sdk.AccAddress.
 func (s LockState) UnlockedIDsByAddress(addr sdk.AccAddress) []uint64 {
 	key := s.keyAddrTime(addr.String(), s.ctx.BlockTime(), nil)
-	iter := s.addrTimeIndex.Iterator(nil, key)
+	iter := prefix.NewStore(s.addrTimeIndex, s.keyAddr(addr.String(), nil)). // this creates a store which prefixes over addr's lock namespace
+											Iterator(nil, s.keyTime(s.ctx.BlockTime(), nil)) // this iterates over locks with end time <= current time
 	defer iter.Close()
 
 	var ids []uint64
@@ -114,16 +115,15 @@ func (s LockState) UnlockedIDsByAddress(addr sdk.AccAddress) []uint64 {
 }
 
 func (s LockState) IterateLockedCoins(addr sdk.AccAddress) sdk.Coins {
-	key := s.keyAddrTime(addr.String(), s.ctx.BlockTime(), nil)
-
-	iter := s.addrTimeIndex.Iterator(key, nil)
+	iter := prefix.NewStore(s.addrTimeIndex, s.keyAddr(addr.String(), nil)). // this creates a store which prefixes over addr's lock namespace
+											Iterator(s.keyTime(s.ctx.BlockTime(), nil), nil) // this iterates over locks with end time >= current time
 	defer iter.Close()
 
 	coins := sdk.NewCoins()
 	for ; iter.Valid(); iter.Next() {
 		lock := new(types.Lock)
 
-		primaryKey := iter.Key()[len(key):] // strip index key and just keep primary key
+		primaryKey := iter.Key()[8:] // we're stripping the size of the time in form of bytes of the key to get only the primary key
 		if !s.locks.Has(primaryKey) {
 			panic(fmt.Errorf("state corruption: %v", primaryKey))
 		}
@@ -135,16 +135,15 @@ func (s LockState) IterateLockedCoins(addr sdk.AccAddress) sdk.Coins {
 }
 
 func (s LockState) IterateUnlockedCoins(addr sdk.AccAddress) sdk.Coins {
-	key := s.keyAddrTime(addr.String(), s.ctx.BlockTime(), nil)
-
-	iter := s.addrTimeIndex.Iterator(nil, key)
+	iter := prefix.NewStore(s.addrTimeIndex, s.keyAddr(addr.String(), nil)). // this creates a store which prefixes over addr's lock namespace
+											Iterator(nil, s.keyTime(s.ctx.BlockTime(), nil)) // this iterates over locks with end time <= current time
 	defer iter.Close()
 
 	coins := sdk.NewCoins()
 	for ; iter.Valid(); iter.Next() {
 		lock := new(types.Lock)
 
-		primaryKey := iter.Key()[len(key):] // strip index key and just keep primary key
+		primaryKey := iter.Key()[8:] // strip index key and just keep primary key
 		if !s.locks.Has(primaryKey) {
 			panic(fmt.Errorf("state corruption: %v", primaryKey))
 		}
