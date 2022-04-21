@@ -152,7 +152,6 @@ Returns:
 func (k *Keeper) GovAmtFromRecollateralize(
 	ctx sdk.Context, collUSD sdk.Dec,
 ) (govOut sdk.Int, err error) {
-
 	params := k.GetParams(ctx)
 	bonusRate := params.GetBonusRateRecollAsDec()
 
@@ -168,7 +167,6 @@ func (k *Keeper) GovAmtFromRecollateralize(
 func (k *Keeper) GovAmtFromFullRecollateralize(
 	ctx sdk.Context,
 ) (govOut sdk.Int, err error) {
-
 	neededCollUSD, err := k.GetCollUSDForTargetCollRatio(ctx)
 	if err != nil {
 		return sdk.Int{}, err
@@ -182,7 +180,6 @@ Recollateralize
 func (k Keeper) Recollateralize(
 	goCtx context.Context, msg *types.MsgRecollateralize,
 ) (response *types.MsgRecollateralizeResponse, err error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	caller, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {

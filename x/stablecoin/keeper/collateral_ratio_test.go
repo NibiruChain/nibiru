@@ -16,7 +16,6 @@ import (
 )
 
 func TestSetCollRatio_Input(t *testing.T) {
-
 	type TestCase struct {
 		name         string
 		inCollRatio  sdk.Dec
@@ -26,7 +25,6 @@ func TestSetCollRatio_Input(t *testing.T) {
 	executeTest := func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
@@ -150,10 +148,8 @@ func TestSetCollRatioUpdate(t *testing.T) {
 }
 
 func TestGetCollRatio_Input(t *testing.T) {
-
 	testName := "GetCollRatio after setting default params returns expected value"
 	t.Run(testName, func(t *testing.T) {
-
 		nibiruApp, ctx := testutil.NewNibiruApp(true)
 		stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
@@ -167,23 +163,20 @@ func TestGetCollRatio_Input(t *testing.T) {
 
 	testName = "Setting to non-default value returns expected value"
 	t.Run(testName, func(t *testing.T) {
-
 		nibiruApp, ctx := testutil.NewNibiruApp(true)
 		stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
 		expectedCollRatio := sdk.MustNewDecFromStr("0.5")
 		expectedCollRatioInt := expectedCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
-		stablecoinKeeper.SetCollRatio(ctx, expectedCollRatio)
+		require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, expectedCollRatio))
 
 		outCollRatio := stablecoinKeeper.GetCollRatio(ctx)
 		outCollRatioInt := outCollRatio.Mul(sdk.MustNewDecFromStr("1000000")).RoundInt()
 		require.EqualValues(t, expectedCollRatioInt, outCollRatioInt)
 	})
-
 }
 
 func TestGetCollUSDForTargetCollRatio(t *testing.T) {
-
 	type TestCaseGetCollUSDForTargetCollRatio struct {
 		name            string
 		protocolColl    sdk.Int
@@ -199,16 +192,15 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 	executeTest := func(t *testing.T, testCase TestCaseGetCollUSDForTargetCollRatio) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			nibiruApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			oracle := sample.AccAddress()
@@ -268,7 +260,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			neededCollUSD:   sdk.MustNewDecFromStr("-100"), // = 500 - 600
 			expectedPass:    true,
 		}, {
-			name:            "No price availabale for the collateral",
+			name:            "No price available for the collateral",
 			protocolColl:    sdk.NewInt(500),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
 			postedMarketIDs: []string{},
@@ -284,7 +276,6 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 }
 
 func TestGetCollAmtForTargetCollRatio(t *testing.T) {
-
 	type TestCaseGetCollAmtForTargetCollRatio struct {
 		name            string
 		protocolColl    sdk.Int
@@ -329,16 +320,15 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			nibiruApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			marketID := common.CollStablePool
@@ -388,16 +378,15 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			nibiruApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			marketID := common.CollStablePool
@@ -419,11 +408,9 @@ func TestGetCollAmtForTargetCollRatio(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestGovAmtFromFullRecollateralize(t *testing.T) {
-
 	testCases := []struct {
 		name            string
 		protocolColl    sdk.Int
@@ -507,19 +494,17 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio)
-			nibiruApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.stableSupply),
 				),
-			)
+			))
 
 			// Set up markets for the pricefeed keeper.
 			oracle := sample.AccAddress()
@@ -559,7 +544,6 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 type NeededCollScenario struct {
@@ -576,7 +560,6 @@ func (scenario NeededCollScenario) CalcNeededUSD() (neededUSD sdk.Dec) {
 }
 
 func TestRecollateralize(t *testing.T) {
-
 	testCases := []struct {
 		name         string
 		expectedPass bool
@@ -662,13 +645,13 @@ func TestRecollateralize(t *testing.T) {
 
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
-			stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio)
-			nibiruApp.BankKeeper.MintCoins(
+			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, tc.scenario.protocolColl),
 					sdk.NewCoin(common.StableDenom, tc.scenario.stableSupply),
 				),
-			)
+			))
 			// Fund account
 			caller, err := sdk.AccAddressFromBech32(tc.msg.Creator)
 			if tc.expectedPass {
@@ -719,5 +702,4 @@ func TestRecollateralize(t *testing.T) {
 		},
 		)
 	}
-
 }

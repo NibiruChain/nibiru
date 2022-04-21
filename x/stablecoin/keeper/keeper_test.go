@@ -55,7 +55,6 @@ func (suite *KeeperTestSuite) _doSetupTest() {
 // Params
 
 func TestGetAndSetParams(t *testing.T) {
-
 	var testName string
 
 	testName = "Get default Params"
@@ -108,5 +107,4 @@ func TestGetAndSetParams(t *testing.T) {
 			func() { stableKeeper.GetParams(ctx) },
 		)
 	})
-
 }
