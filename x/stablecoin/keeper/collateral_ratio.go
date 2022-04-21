@@ -392,9 +392,11 @@ func (k *Keeper) CollAmtFromBuyback(
 	return collAmt, err
 }
 
+// TODO hygiene: cover with test cases
 func (k *Keeper) CollAmtFromFullBuyback(
 	ctx sdk.Context,
 ) (collAmt sdk.Int, err error) {
+
 	neededUSDForRecoll, err := k.GetUSDValForTargetCollRatio(ctx)
 	if err != nil {
 		return sdk.Int{}, err
