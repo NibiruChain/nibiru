@@ -259,15 +259,15 @@ func validatePriceLowerBound(i interface{}) error {
 }
 
 func validatePriceUpperBound(i interface{}) error {
-	priceLowerBound, err := getAsInt64(i)
+	priceUpperBound, err := getAsInt64(i)
 	if err != nil {
 		return err
 	}
 
-	if priceLowerBound > 2_000_000 {
-		return fmt.Errorf("PriceUpperBound is above max value(1e6): %d", priceLowerBound)
-	} else if priceLowerBound < 0 {
-		return fmt.Errorf("PriceUpperBound is negative: %d", priceLowerBound)
+	if priceUpperBound > 2_000_000 {
+		return fmt.Errorf("PriceUpperBound is above max value(1e6): %d", priceUpperBound)
+	} else if priceUpperBound < 0 {
+		return fmt.Errorf("PriceUpperBound is negative: %d", priceUpperBound)
 	} else {
 		return nil
 	}
