@@ -46,6 +46,10 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 		params.GetFeeRatioAsDec(),
 		params.GetEfFeeRatioAsDec(),
 		params.GetBonusRateRecollAsDec(),
+		"15 min",
+		params.GetAdjustmentStepAsDec(),
+		params.GetPriceLowerBoundAsDec(),
+		params.GetPriceUpperBoundAsDec(),
 	)
 	k.ParamSubspace.SetParamSet(ctx, &newParams)
 
@@ -57,7 +61,55 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 // ---------------------------------------------------------------------------
 
 /*
-GetCollUSDForTargetCollRatio is the collateral value in USD needed to reach a target
+updateCollRatio updates the value of the current collateral ratio knowing the price is either above or below the peg
+*/
+func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
+	params := k.GetParams(ctx)
+	nibiruStep := params.GetAdjustmentStepAsDec()
+	var adjustment sdk.Dec
+
+	if !isPriceUp {
+		adjustment = nibiruStep
+	} else {
+		adjustment = nibiruStep.Mul(sdk.MustNewDecFromStr("-1"))
+	}
+	currCollRatio := k.GetCollRatio(ctx)
+	err = k.SetCollRatio(ctx, currCollRatio.Add(adjustment))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
+Evaluate Coll ratio updates the collateral ratio if the price is out of the bounds.
+*/
+func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
+	params := k.GetParams(ctx)
+
+	lowerBound := params.GetPriceLowerBoundAsDec()
+	upperBound := params.GetPriceUpperBoundAsDec()
+
+	// Should take TWAP price
+	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(ctx, common.StableDenom, common.CollDenom)
+	if err != nil {
+		return err
+	}
+
+	if stablePrice.Price.GTE(upperBound) {
+		err = k.updateCollRatio(ctx, true)
+	} else if stablePrice.Price.LTE(lowerBound) {
+		err = k.updateCollRatio(ctx, false)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
+GetNeededCollUSD is the collateral value in USD needed to reach a target
 collateral ratio.
 */
 func (k *Keeper) GetCollUSDForTargetCollRatio(
