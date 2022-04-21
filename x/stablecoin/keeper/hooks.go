@@ -40,5 +40,8 @@ func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNu
 }
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	h.k.AfterEpochEnd(ctx, epochIdentifier, epochNumber)
+	err := h.k.AfterEpochEnd(ctx, epochIdentifier, epochNumber)
+	if err != nil {
+		panic(err)
+	}
 }

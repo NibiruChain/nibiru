@@ -35,7 +35,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-
 			},
 		},
 		{
@@ -48,7 +47,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 31))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-
 			},
 		},
 		// Test that incrementing _exactly_ 1 month increments the epoch count.
@@ -62,7 +60,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-
 			},
 		},
 		{
@@ -77,7 +74,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 				ctx.WithBlockHeight(4).WithBlockTime(now.Add(time.Hour * 24 * 33))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-
 			},
 		},
 		{
@@ -96,7 +92,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 				numBlocksSinceStart, _ = app.EpochsKeeper.NumBlocksSinceEpochStart(ctx, "monthly")
 				require.Equal(t, int64(1), numBlocksSinceStart)
-
 			},
 		},
 	}

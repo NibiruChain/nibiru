@@ -121,10 +121,14 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 		app.PriceKeeper.SetParams(ctx, markets)
 
-		app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, test.price)
-		app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+		_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, test.price)
+		require.NoError(t, err)
 
-		app.StablecoinKeeper.SetCollRatio(ctx, test.InCollRatio)
+		err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+		require.NoError(t, err)
+
+		err = app.StablecoinKeeper.SetCollRatio(ctx, test.InCollRatio)
+		require.NoError(t, err)
 
 		test.fn()
 

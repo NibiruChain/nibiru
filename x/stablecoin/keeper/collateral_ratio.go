@@ -74,9 +74,12 @@ func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
 		adjustment = nibiruStep.Mul(sdk.MustNewDecFromStr("-1"))
 	}
 	currCollRatio := k.GetCollRatio(ctx)
-	k.SetCollRatio(ctx, currCollRatio.Add(adjustment))
+	err = k.SetCollRatio(ctx, currCollRatio.Add(adjustment))
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 /*
