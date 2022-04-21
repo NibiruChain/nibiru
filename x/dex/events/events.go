@@ -22,12 +22,30 @@ func EmitJoinPool(
 	numSharesOut sdk.Coin,
 	remCoins sdk.Coins,
 ) {
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	ctx.EventManager().EmitEvent(
+		NewJoinPoolEvent(
+			sender,
+			poolId,
+			tokensIn,
+			numSharesOut,
+			remCoins,
+		),
+	)
+}
+
+func NewJoinPoolEvent(
+	sender sdk.AccAddress,
+	poolId uint64,
+	tokensIn sdk.Coins,
+	numSharesOut sdk.Coin,
+	remCoins sdk.Coins,
+) sdk.Event {
+	return sdk.NewEvent(
 		EventTypeJoinPool,
 		sdk.NewAttribute(AttributeSender, sender.String()),
 		sdk.NewAttribute(AttributePoolId, fmt.Sprintf("%d", poolId)),
 		sdk.NewAttribute(AttributeTokensIn, tokensIn.String()),
 		sdk.NewAttribute(AttributeNumSharesOut, numSharesOut.String()),
 		sdk.NewAttribute(AttributeNumRemCoins, remCoins.String()),
-	))
+	)
 }

@@ -1,20 +1,20 @@
 package keeper_test
 
 import (
-	"fmt"
-	events2 "github.com/NibiruChain/nibiru/x/dex/events"
-	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	dexevents "github.com/NibiruChain/nibiru/x/dex/events"
+	"github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
@@ -511,17 +511,15 @@ func TestMsgServer_JoinPool(t *testing.T) {
 			require.Equal(t, tc.expectedRemCoins, sdk.Coins(resp.RemainingCoins))
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
 
-			events := ctx.EventManager().Events()
-			expectedEvent := sdk.NewEvent(
-				events2.EventTypeJoinPool,
-				sdk.NewAttribute(events2.AttributeSender, joinerAddr.String()),
-				sdk.NewAttribute(events2.AttributePoolId, fmt.Sprintf("%d", 1)),
-				sdk.NewAttribute(events2.AttributeTokensIn, tc.tokensIn.String()),
-				sdk.NewAttribute(events2.AttributeNumSharesOut, resp.NumPoolSharesOut.String()),
-				sdk.NewAttribute(events2.AttributeNumRemCoins, sdk.Coins(resp.RemainingCoins).String()),
+			expectedEvent := dexevents.NewJoinPoolEvent(
+				joinerAddr,
+				1,
+				tc.tokensIn,
+				resp.NumPoolSharesOut,
+				resp.RemainingCoins,
 			)
 
-			require.Contains(t, events, expectedEvent)
+			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
 		})
 	}
 }
