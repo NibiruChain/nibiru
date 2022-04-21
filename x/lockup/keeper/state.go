@@ -99,7 +99,6 @@ func (s LockState) Get(id uint64) (*types.Lock, error) {
 // UnlockedIDsByAddress returns the list of types.Lock IDs which can be
 // unlocked given the lock owner sdk.AccAddress.
 func (s LockState) UnlockedIDsByAddress(addr sdk.AccAddress) []uint64 {
-	key := s.keyAddrTime(addr.String(), s.ctx.BlockTime(), nil)
 	iter := prefix.NewStore(s.addrTimeIndex, s.keyAddr(addr.String(), nil)). // this creates a store which prefixes over addr's lock namespace
 											Iterator(nil, s.keyTime(s.ctx.BlockTime(), nil)) // this iterates over locks with end time <= current time
 	defer iter.Close()
@@ -107,7 +106,7 @@ func (s LockState) UnlockedIDsByAddress(addr sdk.AccAddress) []uint64 {
 	var ids []uint64
 
 	for ; iter.Valid(); iter.Next() {
-		primaryKey := iter.Key()[len(key):]
+		primaryKey := iter.Key()[8:]
 		ids = append(ids, sdk.BigEndianToUint64(primaryKey))
 	}
 
