@@ -6,6 +6,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedTypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -55,6 +56,92 @@ func TestSetCollRatio_Input(t *testing.T) {
 			name:         "Negative CollRatio not allowed",
 			inCollRatio:  sdk.OneDec().Neg(),
 			expectedPass: false,
+		},
+	}
+	for _, testCase := range testCases {
+		executeTest(t, testCase)
+	}
+}
+
+func TestSetCollRatioUpdate(t *testing.T) {
+	type TestCase struct {
+		name              string
+		inCollRatio       sdk.Dec
+		price             sdk.Dec
+		expectedCollRatio sdk.Dec
+		expectedPass      bool
+	}
+
+	executeTest := func(t *testing.T, testCase TestCase) {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
+			priceKeeper := &nibiruApp.PriceKeeper
+
+			oracle := sample.AccAddress()
+			pairs := ptypes.NewParams([]ptypes.Pair{
+				{
+					Token0:  common.StableDenom,
+					Token1:  common.CollDenom,
+					Oracles: []sdk.AccAddress{oracle},
+					Active:  true,
+				},
+			})
+
+			priceKeeper.SetParams(ctx, pairs)
+
+			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
+			require.NoError(t, err)
+
+			_, err = priceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, tc.price)
+			require.NoError(t, err)
+
+			err = priceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+			require.NoError(t, err)
+
+			err = stablecoinKeeper.EvaluateCollRatio(ctx)
+			if tc.expectedPass {
+				require.NoError(
+					t, err, "Error setting the CollRatio: %d", tc.inCollRatio)
+
+				currCollRatio := stablecoinKeeper.GetCollRatio(ctx)
+				require.Equal(t, tc.expectedCollRatio, currCollRatio)
+				return
+			}
+			require.Error(t, err)
+		})
+	}
+
+	testCases := []TestCase{
+		{
+			name:              "Price is higher than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("1.1"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
+			expectedPass:      true,
+		},
+		{
+			name:              "Price is slightly higher than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("1.00000001"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8"),
+			expectedPass:      true,
+		},
+		{
+			name:              "Price is slightly lower than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("0.99999999991"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8"),
+			expectedPass:      true,
+		},
+		{
+			name:              "Price is lower than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("0.9"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			expectedPass:      true,
 		},
 	}
 	for _, testCase := range testCases {
