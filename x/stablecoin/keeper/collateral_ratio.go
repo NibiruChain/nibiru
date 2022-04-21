@@ -43,6 +43,9 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 		params.GetEfFeeRatioAsDec(),
 		params.GetBonusRateRecollAsDec(),
 		"15 min",
+		params.GetAdjustmentStepAsDec(),
+		params.GetPriceLowerBoundAsDec(),
+		params.GetPriceUpperBoundAsDec(),
 	)
 	k.ParamSubspace.SetParamSet(ctx, &newParams)
 
@@ -53,8 +56,8 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 updateCollRatio updates the value of the current collateral ratio knowing the price is either above or below the peg
 */
 func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
-
-	nibiruStep := sdk.MustNewDecFromStr("0.0025")
+	params := k.GetParams(ctx)
+	nibiruStep := params.GetAdjustmentStepAsDec()
 	var adjustment sdk.Dec
 
 	if !isPriceUp {
@@ -72,9 +75,10 @@ func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
 Evaluate Coll ratio updates the collateral ratio if the price is out of the bounds.
 */
 func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
+	params := k.GetParams(ctx)
 
-	upperBound := sdk.MustNewDecFromStr("1.0001")
-	lowerBound := sdk.MustNewDecFromStr("0.9999")
+	lowerBound := params.GetPriceLowerBoundAsDec()
+	upperBound := params.GetPriceUpperBoundAsDec()
 
 	// Should take TWAP price
 	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(ctx, common.CollStablePool)

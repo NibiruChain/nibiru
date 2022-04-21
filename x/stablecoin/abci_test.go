@@ -30,7 +30,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			// Price higher than peg, wait for correct amount of time
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("1.1"),
+			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -56,7 +56,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			// Price higher than peg, but we don't wait for enough time, coll ratio should be the same
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("1.1"),
+			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -73,7 +73,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			// Price higher than peg, and we wait for 2 updates, coll ratio should be updated twice
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("1.1"),
+			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.805"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -90,7 +90,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			// Price higher than peg, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("1.1"),
+			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
