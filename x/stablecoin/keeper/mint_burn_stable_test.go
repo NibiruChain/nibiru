@@ -123,8 +123,20 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+			adjustmentStep := sdk.MustNewDecFromStr("0.0025")
+			priceLowerBound := sdk.MustNewDecFromStr("0.9999")
+			priceUpperBound := sdk.MustNewDecFromStr("1.0001")
+
 			nibiruApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
+				ctx, types.NewParams(
+					collRatio,
+					feeRatio,
+					feeRatioEF,
+					bonusRateRecoll,
+					"15 min",
+					adjustmentStep,
+					priceLowerBound,
+					priceUpperBound))
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -297,8 +309,20 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			feeRatio := sdk.ZeroDec()
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+			adjustmentStep := sdk.MustNewDecFromStr("0.0025")
+			priceLowerBound := sdk.MustNewDecFromStr("0.9999")
+			priceUpperBound := sdk.MustNewDecFromStr("1.0001")
+
 			nibiruApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
+				ctx, types.NewParams(
+					collRatio,
+					feeRatio,
+					feeRatioEF,
+					bonusRateRecoll,
+					"15 min",
+					adjustmentStep,
+					priceLowerBound,
+					priceUpperBound))
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -441,8 +465,20 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+			adjustmentStep := sdk.MustNewDecFromStr("0.0025")
+			priceLowerBound := sdk.MustNewDecFromStr("0.9999")
+			priceUpperBound := sdk.MustNewDecFromStr("1.0001")
+
 			nibiruApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
+				ctx, types.NewParams(
+					collRatio,
+					feeRatio,
+					feeRatioEF,
+					bonusRateRecoll,
+					"15 min",
+					adjustmentStep,
+					priceLowerBound,
+					priceUpperBound))
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
@@ -559,8 +595,14 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
 			bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+			adjustmentStep := sdk.MustNewDecFromStr("0.0025")
+			priceLowerBound := sdk.MustNewDecFromStr("0.9999")
+			priceUpperBound := sdk.MustNewDecFromStr("1.0001")
+
 			nibiruApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll))
+				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll, "15 min", adjustmentStep,
+					priceLowerBound,
+					priceUpperBound))
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
