@@ -4,7 +4,7 @@ order: 5
 
 # Parameters
 
-The bank module contains the following parameters:
+The dex module contains the following parameters:
 
 | Key                | Type          | Example      |
 | ------------------ | ------------- | ------------ |
