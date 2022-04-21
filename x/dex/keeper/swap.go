@@ -73,7 +73,10 @@ func (k Keeper) SwapExactAmountIn(
 		return tokenOut, errors.New("cannot trade same denomination in and out")
 	}
 
-	pool := k.FetchPool(ctx, poolId)
+	pool, err := k.FetchPool(ctx, poolId)
+	if err != nil {
+		return tokenOut, err
+	}
 
 	tokenOut, err = pool.CalcOutAmtGivenIn(tokenIn, tokenOutDenom)
 	if err != nil {

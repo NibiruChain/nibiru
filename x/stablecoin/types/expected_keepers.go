@@ -39,5 +39,5 @@ type PriceKeeper interface {
 
 type DexKeeper interface {
 	GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error)
-	FetchPool(ctx sdk.Context, poolId uint64) (pool dextypes.Pool)
+	FetchPool(ctx sdk.Context, poolId uint64) (pool dextypes.Pool, err error)
 }
