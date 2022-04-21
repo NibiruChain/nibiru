@@ -70,7 +70,6 @@ func (s LockState) Create(l *types.Lock) {
 	s.addrTimeIndex.Set(addrTimeIndex, []byte{}) // maps addr + unlock time to lock ID
 	s.addrIndex.Set(addrIndex, []byte{})         // maps addr to lock ID
 	s.timeIndex.Set(timeIndex, []byte{})         // maps unlock time to lock ID
-
 }
 
 func (s LockState) Delete(l *types.Lock) error {
@@ -122,7 +121,6 @@ func (s LockState) IterateLockedCoins(addr sdk.AccAddress) sdk.Coins {
 
 	coins := sdk.NewCoins()
 	for ; iter.Valid(); iter.Next() {
-
 		lock := new(types.Lock)
 
 		primaryKey := iter.Key()[len(key):] // strip index key and just keep primary key
@@ -144,7 +142,6 @@ func (s LockState) IterateUnlockedCoins(addr sdk.AccAddress) sdk.Coins {
 
 	coins := sdk.NewCoins()
 	for ; iter.Valid(); iter.Next() {
-
 		lock := new(types.Lock)
 
 		primaryKey := iter.Key()[len(key):] // strip index key and just keep primary key
@@ -156,7 +153,6 @@ func (s LockState) IterateUnlockedCoins(addr sdk.AccAddress) sdk.Coins {
 	}
 
 	return coins
-
 }
 
 // IterateTotalLockedCoins returns the total amount of locked coins

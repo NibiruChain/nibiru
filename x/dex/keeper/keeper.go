@@ -128,10 +128,14 @@ args
 ret
   pool: a Pool proto object
 */
-func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool) {
+func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err error) {
 	store := ctx.KVStore(k.storeKey)
 	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
-	return pool
+
+	if len(pool.PoolAssets) == 0 {
+		return pool, fmt.Errorf("no pool for this id")
+	}
+	return pool, nil
 }
 
 /*
@@ -151,10 +155,10 @@ func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string)
 	store := ctx.KVStore(k.storeKey)
 
 	poolid := sdk.BigEndianToUint64(store.Get(types.GetDenomPrefixPoolIds(denomA, denomB)))
-	pool = k.FetchPool(ctx, poolid)
+	pool, err = k.FetchPool(ctx, poolid)
 
-	if pool.Address == "" {
-		return pool, fmt.Errorf("no pool for this pair")
+	if err != nil {
+		return pool, err
 	}
 
 	return pool, nil
@@ -177,7 +181,7 @@ func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 
 /*
 Writes a pool to the state accessible with the PoolId.
-Panics if the pool proto could not be marshalled.
+Panics if the pool proto could not be marshaled.
 
 args:
   - ctx: the cosmos-sdk context
@@ -377,7 +381,7 @@ func (k Keeper) JoinPool(
 	poolId uint64,
 	tokensIn sdk.Coins,
 ) (pool types.Pool, numSharesOut sdk.Coin, remCoins sdk.Coins, err error) {
-	pool = k.FetchPool(ctx, poolId)
+	pool, _ = k.FetchPool(ctx, poolId)
 
 	if len(tokensIn) != len(pool.PoolAssets) {
 		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
@@ -446,7 +450,7 @@ func (k Keeper) ExitPool(
 	poolId uint64,
 	poolSharesOut sdk.Coin,
 ) (tokensOut sdk.Coins, err error) {
-	pool := k.FetchPool(ctx, poolId)
+	pool, _ := k.FetchPool(ctx, poolId)
 
 	// sanity checks
 	if poolSharesOut.Denom != pool.TotalShares.Denom {
