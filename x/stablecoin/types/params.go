@@ -16,19 +16,34 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams(
-	collRatio sdk.Dec, feeRatio sdk.Dec, efFeeRatio sdk.Dec, bonusRateRecoll sdk.Dec,
+	collRatio sdk.Dec,
+	feeRatio sdk.Dec,
+	efFeeRatio sdk.Dec,
+	bonusRateRecoll sdk.Dec,
+	DistrEpochIdentifier string,
+	adjustmentStep sdk.Dec,
+	priceLowerBound sdk.Dec,
+	priceUpperBound sdk.Dec,
 ) Params {
 	million := sdk.NewDec(1_000_000)
-	collRatioInt := collRatio.Mul(million).RoundInt()
-	feeRationInt := feeRatio.Mul(million).RoundInt()
-	efFeeRatioInt := efFeeRatio.Mul(million).RoundInt()
-	bonusRateRecollInt := bonusRateRecoll.Mul(million).RoundInt()
+	collRatioInt := collRatio.Mul(million).RoundInt().Int64()
+	feeRationInt := feeRatio.Mul(million).RoundInt().Int64()
+	efFeeRatioInt := efFeeRatio.Mul(million).RoundInt().Int64()
+	bonusRateRecollInt := bonusRateRecoll.Mul(million).RoundInt().Int64()
+
+	adjustmentStepInt := adjustmentStep.Mul(million).RoundInt().Int64()
+	priceLowerBoundInt := priceLowerBound.Mul(million).RoundInt().Int64()
+	priceUpperBoundInt := priceUpperBound.Mul(million).RoundInt().Int64()
 
 	return Params{
-		CollRatio:       collRatioInt.Int64(),
-		FeeRatio:        feeRationInt.Int64(),
-		EfFeeRatio:      efFeeRatioInt.Int64(),
-		BonusRateRecoll: bonusRateRecollInt.Int64(),
+		CollRatio:            collRatioInt,
+		FeeRatio:             feeRationInt,
+		EfFeeRatio:           efFeeRatioInt,
+		BonusRateRecoll:      bonusRateRecollInt,
+		DistrEpochIdentifier: DistrEpochIdentifier,
+		AdjustmentStep:       adjustmentStepInt,
+		PriceLowerBound:      priceLowerBoundInt,
+		PriceUpperBound:      priceUpperBoundInt,
 	}
 }
 
@@ -38,8 +53,15 @@ func DefaultParams() Params {
 	feeRatio := sdk.MustNewDecFromStr("0.002")
 	efFeeRatio := sdk.MustNewDecFromStr("0.5")
 	bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+	DistrEpochIdentifier := "15 min"
+	adjustmentStep := sdk.MustNewDecFromStr("0.0025")
+	priceLowerBound := sdk.MustNewDecFromStr("0.9999")
+	priceUpperBound := sdk.MustNewDecFromStr("1.0001")
 
-	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll)
+	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll, DistrEpochIdentifier,
+		adjustmentStep,
+		priceLowerBound,
+		priceUpperBound)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -64,6 +86,26 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			[]byte("BonusRateRecoll"),
 			&p.BonusRateRecoll,
 			validateBonusRateRecoll,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("DistrEpochIdentifier"),
+			&p.DistrEpochIdentifier,
+			validateDistrEpochIdentifier,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("AdjustmentStep"),
+			&p.AdjustmentStep,
+			validateAdjustmentStep,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("PriceLowerBound"),
+			&p.PriceLowerBound,
+			validatePriceLowerBound,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("PriceUpperBound"),
+			&p.PriceUpperBound,
+			validatePriceUpperBound,
 		),
 	}
 }
@@ -100,6 +142,21 @@ func (p *Params) GetEfFeeRatioAsDec() sdk.Dec {
 
 func (p *Params) GetBonusRateRecollAsDec() sdk.Dec {
 	return sdk.NewIntFromUint64(uint64(p.BonusRateRecoll)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
+
+func (p *Params) GetAdjustmentStepAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.AdjustmentStep)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
+
+func (p *Params) GetPriceLowerBoundAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.PriceLowerBound)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
+
+func (p *Params) GetPriceUpperBoundAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.PriceUpperBound)).
 		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
@@ -161,6 +218,67 @@ func validateEfFeeRatio(i interface{}) error {
 	} else {
 		return nil
 	}
+}
+
+func validateDistrEpochIdentifier(i interface{}) error {
+	_, err := getAsString(i)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateAdjustmentStep(i interface{}) error {
+	adjustmentStep, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if adjustmentStep > 1_000_000 {
+		return fmt.Errorf("AdjustmentStep is above max value(1e6): %d", adjustmentStep)
+	} else if adjustmentStep < 0 {
+		return fmt.Errorf("AdjustmentStep is negative: %d", adjustmentStep)
+	} else {
+		return nil
+	}
+}
+
+func validatePriceLowerBound(i interface{}) error {
+	priceLowerBound, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if priceLowerBound > 1_000_000 {
+		return fmt.Errorf("PriceLowerBound is above max value(1e6): %d", priceLowerBound)
+	} else if priceLowerBound < 0 {
+		return fmt.Errorf("PriceLowerBound is negative: %d", priceLowerBound)
+	} else {
+		return nil
+	}
+}
+
+func validatePriceUpperBound(i interface{}) error {
+	priceUpperBound, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if priceUpperBound > 2_000_000 {
+		return fmt.Errorf("PriceUpperBound is above max value(1e6): %d", priceUpperBound)
+	} else if priceUpperBound < 0 {
+		return fmt.Errorf("PriceUpperBound is negative: %d", priceUpperBound)
+	} else {
+		return nil
+	}
+}
+
+func getAsString(i interface{}) (string, error) {
+	value, ok := i.(string)
+	if !ok {
+		return "invalid", fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return value, nil
 }
 
 func getAsInt64(i interface{}) (int64, error) {
