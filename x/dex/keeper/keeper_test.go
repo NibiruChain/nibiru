@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"fmt"
+	events2 "github.com/NibiruChain/nibiru/x/dex/events"
+	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -372,7 +375,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 	require.Equal(t, uint64(0), poolId)
 }
 
-func TestJoinPool(t *testing.T) {
+func TestMsgServer_JoinPool(t *testing.T) {
 	const shareDenom = "nibiru/pool/1"
 
 	tests := []struct {
@@ -494,12 +497,31 @@ func TestJoinPool(t *testing.T) {
 			joinerAddr := sample.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
-			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn)
+			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
+
+			resp, err := msgServer.JoinPool(sdk.WrapSDKContext(ctx), &types.MsgJoinPool{
+				Sender:   joinerAddr.String(),
+				PoolId:   1,
+				TokensIn: tc.tokensIn,
+			})
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedFinalPool, pool)
-			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
-			require.Equal(t, tc.expectedRemCoins, remCoins)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedFinalPool, *resp.Pool)
+			require.Equal(t, tc.expectedNumSharesOut, resp.NumPoolSharesOut)
+			require.Equal(t, tc.expectedRemCoins, sdk.Coins(resp.RemainingCoins))
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
+
+			events := ctx.EventManager().Events()
+			expectedEvent := sdk.NewEvent(
+				events2.EventTypeJoinPool,
+				sdk.NewAttribute(events2.AttributeSender, joinerAddr.String()),
+				sdk.NewAttribute(events2.AttributePoolId, fmt.Sprintf("%d", 1)),
+				sdk.NewAttribute(events2.AttributeTokensIn, tc.tokensIn.String()),
+				sdk.NewAttribute(events2.AttributeNumSharesOut, resp.NumPoolSharesOut.String()),
+				sdk.NewAttribute(events2.AttributeNumRemCoins, sdk.Coins(resp.RemainingCoins).String()),
+			)
+
+			require.Contains(t, events, expectedEvent)
 		})
 	}
 }

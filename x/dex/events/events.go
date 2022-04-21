@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	attributeSender       = "sender"
+	AttributeSender       = "sender"
 	EventTypeJoinPool     = "join_pool"
-	attributePoolId       = "pool_id"
-	attributeTokensIn     = "tokens_in"
-	attributeNumSharesOut = "shares_out"
-	attributeNumRemCoins  = "rem_coins"
+	AttributePoolId       = "pool_id"
+	AttributeTokensIn     = "tokens_in"
+	AttributeNumSharesOut = "shares_out"
+	AttributeNumRemCoins  = "rem_coins"
 )
 
 func EmitJoinPool(
@@ -24,10 +24,10 @@ func EmitJoinPool(
 ) {
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypeJoinPool,
-		sdk.NewAttribute(attributeSender, sender.String()),
-		sdk.NewAttribute(attributePoolId, fmt.Sprintf("%d", poolId)),
-		sdk.NewAttribute(attributeTokensIn, tokensIn.String()),
-		sdk.NewAttribute(attributeNumSharesOut, numSharesOut.String()),
-		sdk.NewAttribute(attributeNumRemCoins, remCoins.String()),
+		sdk.NewAttribute(AttributeSender, sender.String()),
+		sdk.NewAttribute(AttributePoolId, fmt.Sprintf("%d", poolId)),
+		sdk.NewAttribute(AttributeTokensIn, tokensIn.String()),
+		sdk.NewAttribute(AttributeNumSharesOut, numSharesOut.String()),
+		sdk.NewAttribute(AttributeNumRemCoins, remCoins.String()),
 	))
 }
