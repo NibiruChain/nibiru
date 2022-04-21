@@ -32,7 +32,10 @@ func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
 		return sdk.Int{}, err
 	}
 
-	pool := k.DexKeeper.FetchPool(ctx, pairID)
+	pool, err := k.DexKeeper.FetchPool(ctx, pairID)
+	if err != nil {
+		return sdk.Int{}, err
+	}
 
 	price, err := pool.CalcSpotPrice(common.GovDenom, common.StableDenom)
 	if err != nil {
