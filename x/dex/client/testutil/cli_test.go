@@ -90,7 +90,7 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 			respType:          &sdk.TxResponse{},
 			expectedCode:      5, // bankKeeper code for insufficient funds
 			queryexpectedPass: false,
-			queryexpectedErr:  "pool id was not found",
+			queryexpectedErr:  "no pool for this id",
 			queryArgs:         []string{"1"},
 		},
 		{
@@ -102,7 +102,7 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 			extraArgs:         []string{},
 			expectedErr:       types.ErrInvalidCreatePoolArgs,
 			queryexpectedPass: false,
-			queryexpectedErr:  "pool id was not found",
+			queryexpectedErr:  "no pool for this id",
 			queryArgs:         []string{"1"},
 		},
 		{
@@ -114,7 +114,7 @@ func (s IntegrationTestSuite) TestCreatePoolCmd() {
 			extraArgs:         []string{},
 			expectedErr:       types.ErrInvalidCreatePoolArgs,
 			queryexpectedPass: false,
-			queryexpectedErr:  "pool id was not found",
+			queryexpectedErr:  "no pool for this id",
 			queryArgs:         []string{"1"},
 		},
 		{

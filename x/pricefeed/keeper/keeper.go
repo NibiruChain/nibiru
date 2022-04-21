@@ -97,7 +97,6 @@ func (k Keeper) SetPrice(
 
 // SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
 func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
-
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	pairID := assetPair.Name()
 	tokens := common.DenomsFromPoolName(pairID)
