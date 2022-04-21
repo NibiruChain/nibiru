@@ -29,8 +29,14 @@ func TestGetAndSetParams(t *testing.T) {
 				feeRatio := collRatio
 				feeRatioEF := collRatio
 				bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
+				adjustmentStep := sdk.MustNewDecFromStr("0.0035")
+				priceLowerBound := sdk.MustNewDecFromStr("0.9990")
+				priceUpperBound := sdk.MustNewDecFromStr("1.0002")
+
 				params := types.NewParams(
-					collRatio, feeRatio, feeRatioEF, bonusRateRecoll)
+					collRatio, feeRatio, feeRatioEF, bonusRateRecoll, "15 min", adjustmentStep,
+					priceLowerBound,
+					priceUpperBound)
 
 				return params
 			},

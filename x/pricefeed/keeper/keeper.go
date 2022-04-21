@@ -9,6 +9,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,6 +78,40 @@ func (k Keeper) SetPrice(
 
 	store := ctx.KVStore(k.storeKey)
 
+	newRawPrice := types.NewPostedPrice(pairID, oracle, price, expiry)
+
+	// Emit an event containing the oracle's new price
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOracleUpdatedPrice,
+			sdk.NewAttribute(types.AttributePairID, pairID),
+			sdk.NewAttribute(types.AttributeOracle, oracle.String()),
+			sdk.NewAttribute(types.AttributePairPrice, price.String()),
+			sdk.NewAttribute(types.AttributeExpiry, expiry.UTC().String()),
+		),
+	)
+
+	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
+	store.Set(types.RawPriceKey(pairID, oracle), k.cdc.MustMarshal(&newRawPrice))
+	return newRawPrice, nil
+}
+
+// SimSetPrice simulate SetPrice without needing an oracle and for one hour
+func (k Keeper) SimSetPrice(
+	ctx sdk.Context,
+	token0 string,
+	token1 string,
+	price sdk.Dec) (types.PostedPrice, error) {
+	store := ctx.KVStore(k.storeKey)
+	expiry := ctx.BlockTime().UTC().Add(time.Hour * 1)
+
+	pairName := common.RawPoolNameFromDenoms([]string{token0, token1})
+	pairID := common.PoolNameFromDenoms([]string{token0, token1})
+	if (pairName != pairID) && (!price.Equal(sdk.ZeroDec())) {
+		price = sdk.OneDec().Quo(price)
+	}
+
+	oracle := sample.AccAddress()
 	newRawPrice := types.NewPostedPrice(pairID, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
@@ -218,6 +253,12 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	}
 
 	return price, nil
+}
+
+// GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
+// TODO: Replace this with actual TWAP logic
+func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (types.CurrentPrice, error) {
+	return k.GetCurrentPrice(ctx, token0, token1)
 }
 
 // IterateCurrentPrices iterates over all current price objects in the store and performs a callback function
