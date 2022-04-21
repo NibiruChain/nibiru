@@ -41,7 +41,6 @@ func (k LockupKeeper) Logger(ctx sdk.Context) log.Logger {
 // LockTokens lock tokens from an account for specified duration.
 func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	coins sdk.Coins, duration time.Duration) (types.Lock, error) {
-
 	// create new lock object
 	lock := &types.Lock{
 		Owner:    owner.String(),

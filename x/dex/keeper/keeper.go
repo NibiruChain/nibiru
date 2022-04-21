@@ -133,7 +133,7 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err 
 	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
 
 	if len(pool.PoolAssets) == 0 {
-		return pool, fmt.Errorf("no pool for this pair")
+		return pool, fmt.Errorf("no pool for this id")
 	}
 	return pool, nil
 }
@@ -181,7 +181,7 @@ func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 
 /*
 Writes a pool to the state accessible with the PoolId.
-Panics if the pool proto could not be marshalled.
+Panics if the pool proto could not be marshaled.
 
 args:
   - ctx: the cosmos-sdk context

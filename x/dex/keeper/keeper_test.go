@@ -149,7 +149,6 @@ func TestFetchPoolFromPair(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			app, ctx := testutil.NewNibiruApp(true)
 
 			app.DexKeeper.SetPool(ctx, types.Pool{
@@ -205,7 +204,6 @@ func TestFetchPoolFromPair(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestNewPool(t *testing.T) {
@@ -614,7 +612,7 @@ func TestExitPool(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedTokensOut, tokensOut)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, sender))
-			pool, err := app.DexKeeper.FetchPool(ctx, 1)
+			pool, _ := app.DexKeeper.FetchPool(ctx, 1)
 			require.Equal(t, tc.expectedFinalPool, pool)
 		})
 	}

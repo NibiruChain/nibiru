@@ -179,7 +179,7 @@ func TestGetCollUSDForTargetCollRatio(t *testing.T) {
 			neededCollUSD:   sdk.MustNewDecFromStr("-100"), // = 500 - 600
 			expectedPass:    true,
 		}, {
-			name:             "No price availabale for the collateral",
+			name:             "No price available for the collateral",
 			protocolColl:     sdk.NewInt(500),
 			priceCollStable:  sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
 			postedAssetPairs: []common.AssetPair{},

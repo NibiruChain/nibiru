@@ -102,7 +102,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 
 			tokenOut, err := app.DexKeeper.SwapExactAmountIn(ctx, joinerAddr, 1, tc.tokenIn, tc.tokenOutDenom)
 			require.NoError(t, err)
-			pool, err := app.DexKeeper.FetchPool(ctx, 1)
+			pool, _ := app.DexKeeper.FetchPool(ctx, 1)
 			require.Equal(t, tc.expectedFinalPool, pool)
 			require.Equal(t, tc.expectedTokenOut, tokenOut)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
