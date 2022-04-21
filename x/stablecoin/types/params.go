@@ -279,7 +279,6 @@ func getAsString(i interface{}) (string, error) {
 		return "invalid", fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return value, nil
-
 }
 
 func getAsInt64(i interface{}) (int64, error) {

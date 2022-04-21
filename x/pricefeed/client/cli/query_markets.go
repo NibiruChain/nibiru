@@ -11,7 +11,7 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdMarkets() *cobra.Command {
+func CmdPairs() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
 		Short: "Query markets",
@@ -24,9 +24,9 @@ func CmdMarkets() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryMarketsRequest{}
+			params := &types.QueryPairsRequest{}
 
-			res, err := queryClient.Markets(cmd.Context(), params)
+			res, err := queryClient.Pairs(cmd.Context(), params)
 			if err != nil {
 				return err
 			}

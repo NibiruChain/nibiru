@@ -67,7 +67,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 3))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-
 			},
 		},
 		{
@@ -84,7 +83,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*30))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-
 			},
 		},
 		{
@@ -101,7 +99,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*16))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-
 			},
 		},
 	}
@@ -112,21 +109,20 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		ctx = ctx.WithBlockHeight(1)
 
 		oracle := sample.AccAddress()
-		markets := ptypes.NewParams([]ptypes.Market{
+		markets := ptypes.NewParams([]ptypes.Pair{
 
 			{
-				MarketID:   common.CollStablePool,
-				BaseAsset:  common.CollDenom,
-				QuoteAsset: common.StableDenom,
-				Oracles:    []sdk.AccAddress{oracle},
-				Active:     true,
+				Token0:  common.CollDenom,
+				Token1:  common.StableDenom,
+				Oracles: []sdk.AccAddress{oracle},
+				Active:  true,
 			},
 		})
 
 		app.PriceKeeper.SetParams(ctx, markets)
 
-		app.PriceKeeper.SimSetPrice(ctx, common.CollStablePool, test.price)
-		app.PriceKeeper.SetCurrentPrices(ctx, common.CollStablePool)
+		app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, test.price)
+		app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
 
 		app.StablecoinKeeper.SetCollRatio(ctx, test.InCollRatio)
 
@@ -134,6 +130,5 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 		currCollRatio := app.StablecoinKeeper.GetCollRatio(ctx)
 		require.Equal(t, test.ExpectedCollRatio, currCollRatio)
-
 	}
 }

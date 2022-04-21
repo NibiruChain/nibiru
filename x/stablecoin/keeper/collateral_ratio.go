@@ -10,10 +10,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// ---------------------------------------------------------------------------
+// Collateral Ratio Getters and Setters
+// ---------------------------------------------------------------------------
+
 /*
-The collateral ratio, or 'collRatio' (sdk.Dec), is a value beteween 0 and 1 that determines
-what proportion of collateral and governance token is used during stablecoin mints
-and burns.
+The collateral ratio, or 'collRatio' (sdk.Dec), is a value beteween 0 and 1 that
+determines what proportion of collateral and governance token is used during
+stablecoin mints and burns.
 */
 
 // GetCollRatio queries the 'collRatio'.
@@ -52,6 +56,10 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	return err
 }
 
+// ---------------------------------------------------------------------------
+// Recollateralize
+// ---------------------------------------------------------------------------
+
 /*
 updateCollRatio updates the value of the current collateral ratio knowing the price is either above or below the peg
 */
@@ -81,7 +89,7 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	upperBound := params.GetPriceUpperBoundAsDec()
 
 	// Should take TWAP price
-	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(ctx, common.CollStablePool)
+	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(ctx, common.StableDenom, common.CollDenom)
 	if err != nil {
 		return err
 	}
@@ -101,7 +109,9 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 GetNeededCollUSD is the collateral value in USD needed to reach a target
 collateral ratio.
 */
-func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sdk.Dec, err error) {
+func (k *Keeper) GetCollUSDForTargetCollRatio(
+	ctx sdk.Context,
+) (neededCollUSD sdk.Dec, err error) {
 	stableSupply := k.GetSupplyNUSD(ctx)
 	targetCollRatio := k.GetCollRatio(ctx)
 	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
@@ -109,12 +119,11 @@ func (k *Keeper) GetCollUSDForTargetCollRatio(ctx sdk.Context) (neededCollUSD sd
 	collDenoms := []string{common.CollDenom}
 
 	currentTotalCollUSD := sdk.ZeroDec()
-	pricePools := map[string]string{
-		common.CollDenom: common.CollStablePool,
-	}
+
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
-		priceColl, err := k.PriceKeeper.GetCurrentPrice(ctx, pricePools[collDenom])
+		priceColl, err := k.PriceKeeper.GetCurrentPrice(
+			ctx, collDenom, common.StableDenom)
 		if err != nil {
 			return sdk.ZeroDec(), err
 		}
@@ -131,7 +140,8 @@ func (k *Keeper) GetCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSD, _ := k.GetCollUSDForTargetCollRatio(ctx)
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -155,7 +165,8 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	params := k.GetParams(ctx)
 	bonusRate := params.GetBonusRateRecollAsDec()
 
-	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.GovStablePool)
+	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.GovDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -227,7 +238,8 @@ func (k Keeper) Recollateralize(
 	)
 
 	// Compute GOV rewarded to user
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(ctx, common.CollStablePool)
+	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return response, err
 	}
@@ -268,3 +280,7 @@ func (k Keeper) Recollateralize(
 		Gov: outGov,
 	}, err
 }
+
+// ---------------------------------------------------------------------------
+// Buyback
+// ---------------------------------------------------------------------------

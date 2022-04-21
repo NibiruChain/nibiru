@@ -106,16 +106,16 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// We get module account, to create it.
 			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
-			// Set up markets for the pricefeed keeper.
+			// Set up pairs for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool, BaseAsset: common.GovDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+				Pairs: []pricefeedTypes.Pair{
+					{Token0: common.GovDenom,
+						Token1:  common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{Token0: common.CollDenom,
+						Token1:  common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
@@ -138,21 +138,21 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 					priceLowerBound,
 					priceUpperBound))
 
-			// Post prices to each market with the oracle.
+			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
-				require.NoError(t, err, "Error posting price for market: %d", market)
+			for _, pair := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Fund account
@@ -177,7 +177,9 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			require.Equal(t, nibiruApp.StablecoinKeeper.GetSupplyNUSD(ctx), tc.supplyNUSD)
 
 			// Check balances in EF
-			efModuleBalance := nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
+			efModuleBalance := nibiruApp.BankKeeper.GetAllBalances(
+				ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount),
+			)
 			collFeesInEf := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
 			require.Equal(t, sdk.NewCoins(sdk.NewCoin(common.CollDenom, collFeesInEf)), efModuleBalance)
 
@@ -288,18 +290,18 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			// We get module account, to create it.
 			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
-			// Set up markets for the pricefeed keeper.
+			// Set up pairs for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool,
-						BaseAsset:  common.GovDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool,
-						BaseAsset:  common.CollDenom,
-						QuoteAsset: common.StableDenom,
-						Oracles:    []sdk.AccAddress{oracle}, Active: true},
+				Pairs: []pricefeedTypes.Pair{
+					{
+						Token1:  common.GovDenom,
+						Token0:  common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
+					{
+						Token1:  common.CollDenom,
+						Token0:  common.StableDenom,
+						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
@@ -322,21 +324,21 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 					priceLowerBound,
 					priceUpperBound))
 
-			// Post prices to each market with the oracle.
+			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
-				require.NoError(t, err, "Error posting price for market: %d", market)
+			for _, pair := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				require.NoError(t, err, "Error posting price for pair: %d", pair)
 			}
 
 			// Fund account
@@ -478,34 +480,34 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 					priceLowerBound,
 					priceUpperBound))
 
-			// Set up markets for the pricefeed keeper.
+			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{Token1: common.StableDenom, Token0: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{Token1: common.StableDenom, Token0: common.CollDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
 			nibiruApp.StablecoinKeeper.SetParams(ctx, types.DefaultParams())
 
-			// Post prices to each market with the oracle.
+			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
-				require.NoError(t, err, "Error posting price for market: %d", market)
+			for _, pair := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Add collaterals to the module
@@ -602,32 +604,32 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 					priceLowerBound,
 					priceUpperBound))
 
-			// Set up markets for the pricefeed keeper.
+			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
 			pfParams := pricefeedTypes.Params{
-				Markets: []pricefeedTypes.Market{
-					{MarketID: common.GovStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.GovDenom,
+				Pairs: []pricefeedTypes.Pair{
+					{Token1: common.StableDenom, Token0: common.GovDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{MarketID: common.CollStablePool, BaseAsset: common.CollDenom, QuoteAsset: common.StableDenom,
+					{Token1: common.StableDenom, Token0: common.CollDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
-			// Post prices to each market with the oracle.
+			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, market := range pfParams.Markets {
-				err = priceKeeper.SetCurrentPrices(ctx, market.MarketID)
-				require.NoError(t, err, "Error posting price for market: %d", market)
+			for _, pair := range pfParams.Pairs {
+				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				require.NoError(t, err, "Error posting price for pair: %d", pair)
 			}
 
 			// Add collaterals to the module
@@ -658,8 +660,16 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			require.Equal(t, tc.supplyNUSD, nibiruApp.StablecoinKeeper.GetSupplyNUSD(ctx))
 
 			// Funds sypplies
-			require.Equal(t, tc.ecosystemFund, nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount)))
-			require.Equal(t, tc.treasuryFund, nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount)))
+			require.Equal(t,
+				tc.ecosystemFund,
+				nibiruApp.BankKeeper.GetAllBalances(
+					ctx,
+					nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount)))
+			require.Equal(t,
+				tc.treasuryFund,
+				nibiruApp.BankKeeper.GetAllBalances(
+					ctx,
+					nibiruApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount)))
 		})
 	}
 }

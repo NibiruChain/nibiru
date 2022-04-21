@@ -13,10 +13,9 @@ func TestParamsQuery(t *testing.T) {
 	keeper, ctx := testkeeper.PricefeedKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.Params{
-		Markets: []types.Market{
-			{MarketID: "btc:usd", BaseAsset: "btc", QuoteAsset: "usd", Oracles: nil, Active: true},
-			{MarketID: "xrp:usd", BaseAsset: "xrp", QuoteAsset: "usd", Oracles: nil, Active: true},
-			{MarketID: "xrp:usd:30", BaseAsset: "xrp", QuoteAsset: "usd", Oracles: nil, Active: true},
+		Pairs: []types.Pair{
+			{Token1: "btc", Token0: "usd", Oracles: nil, Active: true},
+			{Token1: "xrp", Token0: "usd", Oracles: nil, Active: true},
 		},
 	}
 	keeper.SetParams(ctx, params)

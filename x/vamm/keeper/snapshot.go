@@ -32,8 +32,8 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 		sdk.NewEvent(
 			types.EventSnapshotSaved,
 			sdk.NewAttribute(types.AttributeBlockHeight, fmt.Sprintf("%d", ctx.BlockHeight())),
-			sdk.NewAttribute(types.AttributeQuoteReserve, pool.QuoteAssetReserve),
-			sdk.NewAttribute(types.AttributeBaseReserve, pool.BaseAssetReserve),
+			sdk.NewAttribute(types.AttributeQuoteReserve, pool.Token0Reserve),
+			sdk.NewAttribute(types.AttributeBaseReserve, pool.Token1Reserve),
 		),
 	)
 
@@ -66,10 +66,10 @@ func (k Keeper) updateSnapshot(ctx sdk.Context, counter int64, pool *types.Pool)
 
 func (k Keeper) saveSnapshotInStore(ctx sdk.Context, pool *types.Pool, counter int64) error {
 	snapshot := &types.ReserveSnapshot{
-		QuoteAssetReserve: pool.QuoteAssetReserve,
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		Timestamp:         ctx.BlockTime().Unix(),
-		BlockNumber:       ctx.BlockHeight(),
+		Token0Reserve: pool.Token0Reserve,
+		Token1Reserve: pool.Token1Reserve,
+		Timestamp:     ctx.BlockTime().Unix(),
+		BlockNumber:   ctx.BlockHeight(),
 	}
 	bz, err := k.codec.Marshal(snapshot)
 	if err != nil {
