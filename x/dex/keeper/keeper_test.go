@@ -511,7 +511,7 @@ func TestMsgServer_JoinPool(t *testing.T) {
 			require.Equal(t, tc.expectedRemCoins, sdk.Coins(resp.RemainingCoins))
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
 
-			expectedEvent := dexevents.NewJoinPoolEvent(
+			expectedEvent := dexevents.NewPoolJoinedEvent(
 				joinerAddr,
 				1,
 				tc.tokensIn,

@@ -7,9 +7,10 @@ import (
 
 const (
 	EventTypePoolCreated = "pool_created"
-	EventTypeJoinPool    = "join_pool"
+	EventTypePoolJoined = "pool_joined"
 
 	AttributeCreator      = "creator"
+
 	AttributeSender       = "sender"
 	AttributePoolId       = "pool_id"
 	AttributeTokensIn     = "tokens_in"
@@ -17,7 +18,7 @@ const (
 	AttributeNumRemCoins  = "rem_coins"
 )
 
-func EmitJoinPool(
+func EmitPoolJoinedEvent(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	poolId uint64,
@@ -26,7 +27,7 @@ func EmitJoinPool(
 	remCoins sdk.Coins,
 ) {
 	ctx.EventManager().EmitEvent(
-		NewJoinPoolEvent(
+		NewPoolJoinedEvent(
 			sender,
 			poolId,
 			tokensIn,
@@ -36,7 +37,7 @@ func EmitJoinPool(
 	)
 }
 
-func NewJoinPoolEvent(
+func NewPoolJoinedEvent(
 	sender sdk.AccAddress,
 	poolId uint64,
 	tokensIn sdk.Coins,
@@ -44,7 +45,7 @@ func NewJoinPoolEvent(
 	remCoins sdk.Coins,
 ) sdk.Event {
 	return sdk.NewEvent(
-		EventTypeJoinPool,
+		EventTypePoolJoined,
 		sdk.NewAttribute(AttributeSender, sender.String()),
 		sdk.NewAttribute(AttributePoolId, fmt.Sprintf("%d", poolId)),
 		sdk.NewAttribute(AttributeTokensIn, tokensIn.String()),
