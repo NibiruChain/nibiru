@@ -73,16 +73,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 func (s IntegrationTestSuite) TestACreatePoolCmd() {
 	val := s.network.Validators[0]
 
-	// Ensure balance is ok
-	fmt.Println("_______________________ A")
-	resp, err := banktestutil.QueryBalancesExec(val.ClientCtx, s.testAccount)
-	s.Require().NoError(err)
-
-	var balRes banktypes.QueryAllBalancesResponse
-	err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
-	s.Require().NoError(err)
-	fmt.Println(balRes)
-
 	testCases := []struct {
 		name              string
 		tokenWeights      string
@@ -180,18 +170,9 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 
 func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 	val := s.network.Validators[0]
-	// Ensure balance is ok
-	fmt.Println("_______________________ B")
-	resp, err := banktestutil.QueryBalancesExec(val.ClientCtx, s.testAccount)
-	s.Require().NoError(err)
-
-	var balRes banktypes.QueryAllBalancesResponse
-	err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
-	s.Require().NoError(err)
-	fmt.Println(balRes)
 
 	// create a new pool
-	_, err = ExecMsgCreatePool(
+	_, err := ExecMsgCreatePool(
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
@@ -264,15 +245,6 @@ func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 
 func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 	val := s.network.Validators[0]
-	// Ensure balance is ok
-	fmt.Println("_______________________ C")
-	resp, err := banktestutil.QueryBalancesExec(val.ClientCtx, s.testAccount)
-	s.Require().NoError(err)
-
-	var balRes banktypes.QueryAllBalancesResponse
-	err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
-	s.Require().NoError(err)
-	fmt.Println(balRes)
 
 	testCases := []struct {
 		name               string

@@ -214,7 +214,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			neededUSD:       sdk.MustNewDecFromStr("-100"), // = 500 - 600
 			expectedPass:    true,
 		}, {
-			name:             "No price availabale for the collateral",
+			name:             "No price available for the collateral",
 			protocolColl:     sdk.NewInt(500),
 			priceCollStable:  sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
 			postedAssetPairs: []common.AssetPair{},
@@ -759,7 +759,6 @@ func TestRecollateralize(t *testing.T) {
 }
 
 func TestBuyback_MsgFormat(t *testing.T) {
-
 	for _, testCase := range []struct {
 		name   string
 		caller string
@@ -800,7 +799,6 @@ func TestBuyback_MsgFormat(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestBuyback(t *testing.T) {
@@ -1113,11 +1111,9 @@ func TestBuyback(t *testing.T) {
 		},
 		)
 	}
-
 }
 
 func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
-
 	testCases := []struct {
 		name         string
 		scenario     NeededCollScenario
