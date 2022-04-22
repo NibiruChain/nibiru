@@ -76,7 +76,7 @@ func Test_LocksState_232(t *testing.T) {
 
 	ctx = app.NewContext(false, tmproto.Header{Time: ctx.BlockTime().Add(1*time.Hour + 1*time.Second)})
 
-	// iterating over addr2 must only return lock3, note: we iterate over addr2 because it's bigger than addr1
+	// iterating over addr2 must only return lock4, note: we iterate over addr2 because it's bigger than addr1
 	// since unlocked coins goes backwards from addr2-blockTime, if the impl was wrong then addr1 both locked
 	// and unlocked coins would be included.
 	coins, err := app.LockupKeeper.AccountUnlockedCoins(ctx, addr2)
