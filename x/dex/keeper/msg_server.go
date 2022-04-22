@@ -81,7 +81,7 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		return nil, err
 	}
 
-	events.EmitJoinPool(
+	events.EmitPoolJoinedEvent(
 		sdkContext,
 		sender,
 		msg.PoolId,
