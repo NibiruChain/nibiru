@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-
+	"github.com/NibiruChain/nibiru/x/dex/events"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -58,13 +58,15 @@ ret
   error: an error if any occurred
 */
 func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types.MsgJoinPoolResponse, error) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
 
 	pool, numSharesOut, remCoins, err := k.Keeper.JoinPool(
-		sdk.UnwrapSDKContext(ctx),
+		sdkContext,
 		sender,
 		msg.PoolId,
 		msg.TokensIn,
@@ -72,6 +74,15 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 	if err != nil {
 		return nil, err
 	}
+
+	events.EmitJoinPool(
+		sdkContext,
+		sender,
+		msg.PoolId,
+		msg.TokensIn,
+		numSharesOut,
+		remCoins,
+	)
 
 	return &types.MsgJoinPoolResponse{
 		Pool:             &pool,
