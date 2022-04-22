@@ -56,3 +56,13 @@ func (k msgServer) MsgRecollateralize(
 	}
 	return response, nil
 }
+
+func (k msgServer) MsgBuyback(
+	goCtx context.Context, msg *types.MsgBuyback,
+) (*types.MsgBuybackResponse, error) {
+	response, err := k.Buyback(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}

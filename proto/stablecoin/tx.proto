@@ -20,6 +20,12 @@ service Msg {
   protocol in exchange for an equivalent stablecoin value in governance tokens 
   plus a small bonus. */
   rpc Recollateralize(MsgRecollateralize) returns (MsgRecollateralizeResponse);
+
+  /* Buyback defines a method for manually adding NIBI to the protocol 
+  in exchange for an equivalent stablecoin value in collateral, effectively 
+  executing a share buyback for Nibiru Chain. The NIBI purchased by the protocol 
+  is then burned, distributing value to all NIBI hodlers. */
+  rpc Buyback(MsgBuyback) returns (MsgBuybackResponse);
 }
 
 /* 
@@ -71,4 +77,18 @@ message MsgRecollateralize {
 message MsgRecollateralizeResponse {
   // Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.  
   cosmos.base.v1beta1.Coin gov = 1 [(gogoproto.nullable) = false];
+}
+
+/* MsgBuyback  */
+message MsgBuyback {
+  string creator = 1;
+  /* Gov (sdk.Coin): Tokens the caller wants to sell to the protocol in exchange 
+    for collateral. */
+  cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
+}
+
+/* MsgBuybackResponse is the output of a successful 'Buyback' */
+message MsgBuybackResponse {
+  // Coll (sdk.Coin): Tokens sold to the caller in exchange for her collateral.  
+  cosmos.base.v1beta1.Coin coll = 1 [(gogoproto.nullable) = false];
 }
