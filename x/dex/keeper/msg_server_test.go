@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/dex/events"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
@@ -122,7 +123,7 @@ func TestCreatePool(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 			if tc.creatorAddr == nil {
-				tc.creatorAddr = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
+				tc.creatorAddr = ed25519.GenPrivKey().PubKey().Address().Bytes()
 			}
 			if tc.senderInitialFunds != nil {
 				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
@@ -137,8 +138,12 @@ func TestCreatePool(t *testing.T) {
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr {
 				require.Error(t, err)
+
+				require.NotContains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
 			} else {
 				require.NoError(t, err)
+
+				require.Contains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
 			}
 		})
 	}

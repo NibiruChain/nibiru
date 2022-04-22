@@ -41,6 +41,12 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 		return nil, err
 	}
 
+	events.EmitPoolCreatedEvent(
+		sdk.UnwrapSDKContext(goCtx),
+		sender,
+		poolId,
+	)
+
 	return &types.MsgCreatePoolResponse{
 		PoolId: poolId,
 	}, nil
