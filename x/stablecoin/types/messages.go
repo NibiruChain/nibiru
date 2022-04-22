@@ -115,3 +115,45 @@ func (msg *MsgRecollateralize) ValidateBasic() error {
 	}
 	return nil
 }
+
+// ----------------------------------------------------------------
+// MsgBuyback
+// ----------------------------------------------------------------
+
+var _ sdk.Msg = &MsgBuyback{}
+
+func NewMsgBuyback(creator string, coin sdk.Coin) *MsgBuyback {
+	return &MsgBuyback{
+		Creator: creator,
+		Gov:     coin,
+	}
+}
+
+func (msg *MsgBuyback) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgBuyback) Type() string {
+	return "recoll"
+}
+
+func (msg *MsgBuyback) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgBuyback) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgBuyback) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	return nil
+}
