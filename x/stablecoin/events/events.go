@@ -80,3 +80,20 @@ func EmitRecollateralize(
 		sdk.NewAttribute("collRatio", collRatio.String()),
 	))
 }
+
+// EmitBuyback emits an event when a 'Buyback' occurs.
+func EmitBuyback(
+	ctx sdk.Context, inCoin sdk.Coin, outCoin sdk.Coin, caller string,
+	collRatio sdk.Dec,
+) {
+	const EventTypeBuyback = "buyback"
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		EventTypeBuyback,
+		sdk.NewAttribute("caller", caller),
+		sdk.NewAttribute("inDenom", inCoin.Denom),
+		sdk.NewAttribute("inAmount", inCoin.Amount.String()),
+		sdk.NewAttribute("outDenom", outCoin.Denom),
+		sdk.NewAttribute("outAmount", outCoin.Amount.String()),
+		sdk.NewAttribute("collRatio", collRatio.String()),
+	))
+}
