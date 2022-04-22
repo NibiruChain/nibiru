@@ -17,4 +17,7 @@ var (
 	// create-pool tx cli errors
 	ErrMissingPoolFileFlag   = sdkerrors.Register(ModuleName, 6, "must pass in a pool json using the --pool-file flag")
 	ErrInvalidCreatePoolArgs = sdkerrors.Register(ModuleName, 7, "deposit tokens and token weights should have same length and denom order")
+
+	// ErrNonExistingPool is used when the requested pool does not exist
+	ErrNonExistingPool = sdkerrors.Register(ModuleName, 8, "insufficient funds")
 )

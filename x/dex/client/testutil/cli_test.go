@@ -15,6 +15,7 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
@@ -294,6 +295,196 @@ func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
 				resp := types.QueryTotalLiquidityResponse{}
 				s.Require().NoError(err, out.String())
 				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+			}
+		})
+	}
+}
+
+func (s IntegrationTestSuite) TestNewExitPoolCmd() {
+	val := s.network.Validators[0]
+
+	// create a new pool
+	_, err := ExecMsgCreatePool(
+		s.T(),
+		val.ClientCtx,
+		/*owner-*/ val.Address,
+		/*tokenWeights=*/ "5stake,5node0token",
+		/*initialDeposit=*/ "100stake,100node0token",
+		/*swapFee=*/ "0.01",
+		/*exitFee=*/ "0.01",
+	)
+	s.Require().NoError(err)
+
+	// create a new user address
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		"NewExitPoolAddr",
+		keyring.English,
+		sdk.FullFundraiserPath,
+		"",
+		hd.Secp256k1,
+	)
+	s.Require().NoError(err)
+	poolCreatorAddr := sdk.AccAddress(info.GetPubKey().Address())
+
+	// fund the user
+	_, err = banktestutil.MsgSendExec(
+		val.ClientCtx,
+		/*from=*/ val.Address,
+		/*to=*/ poolCreatorAddr,
+		/*amount=*/ sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
+			sdk.NewInt64Coin(fmt.Sprintf("%stoken", val.Moniker), 20000),
+		),
+		/*extraArgs*/
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		testutil.DefaultFeeString(s.cfg),
+	)
+	s.Require().NoError(err)
+
+	// join the pool with 100stake and 100node0token
+	cmd := dexcli.CmdJoinPool()
+	clientCtx := val.ClientCtx
+
+	_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
+		fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "100stake,100node0token"),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	})
+	s.Require().NoError(err)
+
+	testCases := []struct {
+		name               string
+		args               []string
+		expectErr          bool
+		respType           proto.Message
+		expectedCode       uint32
+		expectedStake      sdk.Int
+		expectedOtherToken sdk.Int
+	}{
+		{
+			name: "exit pool from invalid pool",
+			args: []string{
+				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 2),
+				fmt.Sprintf("--%s=%s", dexcli.FlagPoolSharesOut, "100nibiru/pool/1"),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
+
+				// common args
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+			},
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       8, // dex.types.ErrNonExistingPool
+			expectedStake:      sdk.NewInt(-10),
+			expectedOtherToken: sdk.NewInt(0),
+		},
+		{
+			name: "exit pool for too many shares",
+			args: []string{
+				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
+				fmt.Sprintf("--%s=%s", dexcli.FlagPoolSharesOut, "200000000000000000000nibiru/pool/1"),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
+
+				// common args
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+			},
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       5, // bankKeeper code for insufficient funds
+			expectedStake:      sdk.NewInt(-10),
+			expectedOtherToken: sdk.NewInt(0),
+		},
+		{
+			name: "exit pool for zero shares",
+			args: []string{
+				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
+				fmt.Sprintf("--%s=%s", dexcli.FlagPoolSharesOut, "0nibiru/pool/1"),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
+
+				// common args
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+			},
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       1,
+			expectedStake:      sdk.NewInt(-10),
+			expectedOtherToken: sdk.NewInt(0),
+		},
+		{
+			name: "exit pool with sufficient balance",
+			args: []string{
+				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
+				fmt.Sprintf("--%s=%s", dexcli.FlagPoolSharesOut, "100000000000000000000nibiru/pool/1"),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, poolCreatorAddr),
+
+				// common args
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+			},
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       0,
+			expectedStake:      sdk.NewInt(100 - 10 - 1), // Received stake minus 10stake tx fee minus 1 exit pool fee
+			expectedOtherToken: sdk.NewInt(100 - 1),      // Received node0token minus 1 exit pool fee
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			// Get original balance
+			resp, err := banktestutil.QueryBalancesExec(clientCtx, poolCreatorAddr)
+			s.Require().NoError(err)
+			var originalBalRes banktypes.QueryAllBalancesResponse
+			err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalRes)
+			s.Require().NoError(err)
+
+			cmd := dexcli.CmdExitPool()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+
+				// Ensure balance is ok
+				resp, err := banktestutil.QueryBalancesExec(clientCtx, poolCreatorAddr)
+				s.Require().NoError(err)
+
+				var balRes banktypes.QueryAllBalancesResponse
+				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
+				s.Require().NoError(err)
+
+				s.Require().Equal(
+					balRes.Balances.AmountOf("node0token").Sub(
+						originalBalRes.Balances.AmountOf("node0token")).Sub(
+						tc.expectedOtherToken).Int64(),
+					sdk.NewInt(0).Int64(),
+				)
+
+				s.Require().Equal(
+					balRes.Balances.AmountOf("stake").Sub(
+						originalBalRes.Balances.AmountOf("stake")).Sub(
+						tc.expectedStake).Int64(),
+					sdk.NewInt(0).Int64(),
+				)
 			}
 		})
 	}

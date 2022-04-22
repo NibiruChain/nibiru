@@ -133,7 +133,7 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err 
 	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
 
 	if len(pool.PoolAssets) == 0 {
-		return pool, fmt.Errorf("no pool for this id")
+		return pool, types.ErrNonExistingPool
 	}
 	return pool, nil
 }
@@ -450,7 +450,10 @@ func (k Keeper) ExitPool(
 	poolId uint64,
 	poolSharesOut sdk.Coin,
 ) (tokensOut sdk.Coins, err error) {
-	pool, _ := k.FetchPool(ctx, poolId)
+	pool, err := k.FetchPool(ctx, poolId)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
 
 	// sanity checks
 	if poolSharesOut.Denom != pool.TotalShares.Denom {
@@ -471,12 +474,13 @@ func (k Keeper) ExitPool(
 		return sdk.Coins{}, err
 	}
 
-	// apply exchange of pool shares for tokens
-	if err = k.bankKeeper.SendCoins(ctx, pool.GetAddress(), sender, tokensOut); err != nil {
+	// burn before sending the tokens to ensure enough share are available
+	if err = k.burnPoolShareFromAccount(ctx, sender, poolSharesOut); err != nil {
 		return sdk.Coins{}, err
 	}
 
-	if err = k.burnPoolShareFromAccount(ctx, sender, poolSharesOut); err != nil {
+	// apply exchange of pool shares for tokens
+	if err = k.bankKeeper.SendCoins(ctx, pool.GetAddress(), sender, tokensOut); err != nil {
 		return sdk.Coins{}, err
 	}
 
