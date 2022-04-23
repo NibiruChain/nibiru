@@ -41,6 +41,12 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 		return nil, err
 	}
 
+	events.EmitPoolCreatedEvent(
+		sdk.UnwrapSDKContext(goCtx),
+		sender,
+		poolId,
+	)
+
 	return &types.MsgCreatePoolResponse{
 		PoolId: poolId,
 	}, nil
@@ -75,7 +81,7 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		return nil, err
 	}
 
-	events.EmitJoinPool(
+	events.EmitPoolJoinedEvent(
 		sdkContext,
 		sender,
 		msg.PoolId,
