@@ -35,12 +35,15 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgPostPrice represents a method for creating a new post price
 type MsgPostPrice struct {
-	// address of client
-	From   string                                 `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	Token0 string                                 `protobuf:"bytes,2,opt,name=token0,proto3" json:"token0,omitempty"`
-	Token1 string                                 `protobuf:"bytes,5,opt,name=token1,proto3" json:"token1,omitempty"`
-	Price  github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
-	Expiry time.Time                              `protobuf:"bytes,4,opt,name=expiry,proto3,stdtime" json:"expiry"`
+	// From: address of oracle
+	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	// Token0: denominator unit of the price, a.k.a. quote asset
+	Token0 string `protobuf:"bytes,2,opt,name=token0,proto3" json:"token0,omitempty"`
+	// Token1: numerator unit of price, a.k.a. base asset
+	Token1 string `protobuf:"bytes,3,opt,name=token1,proto3" json:"token1,omitempty"`
+	// Price: Price of the trading pair in units of token1 / token0.
+	Price  github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
+	Expiry time.Time                              `protobuf:"bytes,5,opt,name=expiry,proto3,stdtime" json:"expiry"`
 }
 
 func (m *MsgPostPrice) Reset()         { *m = MsgPostPrice{} }
@@ -133,17 +136,17 @@ var fileDescriptor_27d54c954ce5f810 = []byte{
 	0x31, 0x55, 0x3c, 0x60, 0x52, 0x0d, 0x83, 0x28, 0x23, 0x34, 0x3e, 0x00, 0x3c, 0xed, 0x4b, 0x7f,
 	0x20, 0xa4, 0x1a, 0xa4, 0x72, 0x08, 0xc1, 0xe2, 0x38, 0x16, 0x81, 0x09, 0xea, 0xa0, 0x55, 0x71,
 	0x74, 0x8d, 0x6a, 0xb0, 0xac, 0xc4, 0x94, 0x85, 0xe7, 0xe6, 0x3f, 0x8d, 0xee, 0xbb, 0x23, 0xde,
-	0x36, 0x4b, 0x39, 0xbc, 0x8d, 0x7a, 0xb0, 0xa4, 0xdf, 0x66, 0x16, 0x52, 0xb8, 0x4b, 0x56, 0x1b,
+	0x36, 0x0b, 0x39, 0xbc, 0x8d, 0x7a, 0xb0, 0xa4, 0xdf, 0x66, 0x16, 0x53, 0xb8, 0x4b, 0x56, 0x1b,
 	0xdb, 0x78, 0xdf, 0xd8, 0x4d, 0x9f, 0xab, 0xc9, 0xcc, 0x25, 0x9e, 0x08, 0xa8, 0x27, 0x64, 0x20,
 	0xe4, 0xfe, 0x38, 0x93, 0xa3, 0x29, 0x55, 0x8b, 0x88, 0x49, 0xd2, 0x63, 0x9e, 0x93, 0x0d, 0xa3,
-	0x2b, 0x58, 0x66, 0xf3, 0x88, 0xc7, 0x0b, 0xb3, 0x58, 0x07, 0xad, 0x93, 0x8e, 0x45, 0x32, 0x33,
+	0x2b, 0x58, 0x66, 0xf3, 0x88, 0xc7, 0x0b, 0xb3, 0x54, 0x07, 0xad, 0x93, 0x8e, 0x45, 0x32, 0x33,
 	0xe4, 0x60, 0x86, 0xdc, 0x1d, 0xcc, 0x74, 0xff, 0xa7, 0x2b, 0x96, 0x9f, 0x36, 0x70, 0xf6, 0x33,
 	0x97, 0xc5, 0xe7, 0x17, 0xdb, 0x68, 0xd4, 0x60, 0x35, 0xef, 0xce, 0x61, 0x32, 0x12, 0xa1, 0x64,
 	0x9d, 0x07, 0x58, 0xe8, 0x4b, 0x1f, 0x79, 0xb0, 0xf2, 0xe3, 0xbc, 0x49, 0x7e, 0x0b, 0x97, 0xe4,
 	0x35, 0x2c, 0xf2, 0x37, 0xde, 0x61, 0x57, 0xf7, 0x76, 0xfb, 0x85, 0xc1, 0x6b, 0x82, 0xc1, 0x2a,
 	0xc1, 0x60, 0x9d, 0x60, 0xb0, 0x4d, 0x30, 0x58, 0xee, 0xb0, 0xb1, 0xde, 0x61, 0xe3, 0x6d, 0x87,
 	0x8d, 0x7b, 0x9a, 0x0b, 0x26, 0xa7, 0x4d, 0x43, 0x5d, 0xd3, 0x39, 0xcd, 0xfd, 0x84, 0x34, 0x25,
-	0xb7, 0xac, 0x23, 0xb8, 0xf8, 0x0e, 0x00, 0x00, 0xff, 0xff, 0xf0, 0x6d, 0x0c, 0x46, 0x23, 0x02,
+	0xb7, 0xac, 0x23, 0xb8, 0xf8, 0x0e, 0x00, 0x00, 0xff, 0xff, 0x93, 0x6e, 0x9c, 0xcb, 0x23, 0x02,
 	0x00, 0x00,
 }
 
@@ -376,13 +379,6 @@ func (m *MsgPostPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Token1) > 0 {
-		i -= len(m.Token1)
-		copy(dAtA[i:], m.Token1)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Token1)))
-		i--
-		dAtA[i] = 0x2a
-	}
 	n1, err1 := github_com_gogo_protobuf_types.StdTimeMarshalTo(m.Expiry, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(m.Expiry):])
 	if err1 != nil {
 		return 0, err1
@@ -390,7 +386,7 @@ func (m *MsgPostPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i -= n1
 	i = encodeVarintTx(dAtA, i, uint64(n1))
 	i--
-	dAtA[i] = 0x22
+	dAtA[i] = 0x2a
 	{
 		size := m.Price.Size()
 		i -= size
@@ -400,7 +396,14 @@ func (m *MsgPostPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x1a
+	dAtA[i] = 0x22
+	if len(m.Token1) > 0 {
+		i -= len(m.Token1)
+		copy(dAtA[i:], m.Token1)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Token1)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.Token0) > 0 {
 		i -= len(m.Token0)
 		copy(dAtA[i:], m.Token0)
@@ -466,14 +469,14 @@ func (m *MsgPostPrice) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = m.Price.Size()
-	n += 1 + l + sovTx(uint64(l))
-	l = github_com_gogo_protobuf_types.SizeOfStdTime(m.Expiry)
-	n += 1 + l + sovTx(uint64(l))
 	l = len(m.Token1)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
+	l = m.Price.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = github_com_gogo_protobuf_types.SizeOfStdTime(m.Expiry)
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -587,6 +590,38 @@ func (m *MsgPostPrice) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Token1", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Token1 = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Price", wireType)
 			}
 			var stringLen uint64
@@ -619,7 +654,7 @@ func (m *MsgPostPrice) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 4:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Expiry", wireType)
 			}
@@ -651,38 +686,6 @@ func (m *MsgPostPrice) Unmarshal(dAtA []byte) error {
 			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(&m.Expiry, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Token1", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Token1 = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

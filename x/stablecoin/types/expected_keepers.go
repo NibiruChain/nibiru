@@ -4,15 +4,15 @@ import (
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
-	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
-	SetAccount(sdk.Context, types.AccountI)
+	GetModuleAccount(ctx sdk.Context, moduleName string) authtypes.ModuleAccountI
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
+	SetAccount(sdk.Context, authtypes.AccountI)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
