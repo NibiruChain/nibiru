@@ -47,7 +47,6 @@ import (
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -453,8 +452,7 @@ func NewNibiruApp(
 	app.transferModule = transfer.NewAppModule(app.TransferKeeper)
 
 	/* Create IBC module and set routers */
-	var transferStack porttypes.IBCModule
-	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	var transferStack porttypes.IBCModule = transfer.NewIBCModule(app.TransferKeeper)
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -827,7 +825,7 @@ func makeConfig(mb module.BasicManager) simEncodingConfig {
 	encodingConfig := simEncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Codec:             protoCodec,
-		TxConfig:          tx.NewTxConfig(protoCodec, tx.DefaultSignModes),
+		TxConfig:          authtx.NewTxConfig(protoCodec, authtx.DefaultSignModes),
 		Amino:             cdc,
 	}
 
