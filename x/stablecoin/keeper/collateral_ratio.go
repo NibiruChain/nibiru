@@ -46,6 +46,10 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 		params.GetFeeRatioAsDec(),
 		params.GetEfFeeRatioAsDec(),
 		params.GetBonusRateRecollAsDec(),
+		"15 min",
+		params.GetAdjustmentStepAsDec(),
+		params.GetPriceLowerBoundAsDec(),
+		params.GetPriceUpperBoundAsDec(),
 	)
 	k.ParamSubspace.SetParamSet(ctx, &newParams)
 
@@ -57,10 +61,60 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 // ---------------------------------------------------------------------------
 
 /*
-GetUSDValForTargetCollRatio is the collateral value in USD needed to reach a target
-collateral ratio.
+updateCollRatio updates the value of the target collateral ratio based on
+whether the price of NUSD is above or below peg
 */
-func (k *Keeper) GetUSDValForTargetCollRatio(
+func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
+	params := k.GetParams(ctx)
+	nibiruStep := params.GetAdjustmentStepAsDec()
+	var adjustment sdk.Dec
+
+	if !isPriceUp {
+		adjustment = nibiruStep
+	} else {
+		adjustment = nibiruStep.Mul(sdk.MustNewDecFromStr("-1"))
+	}
+	currCollRatio := k.GetCollRatio(ctx)
+	err = k.SetCollRatio(ctx, currCollRatio.Add(adjustment))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
+Evaluate Coll ratio updates the collateral ratio if the price is out of the bounds.
+*/
+func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
+	params := k.GetParams(ctx)
+
+	lowerBound := params.GetPriceLowerBoundAsDec()
+	upperBound := params.GetPriceUpperBoundAsDec()
+
+	// Should take TWAP price
+	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(
+		ctx, common.StableDenom, common.CollDenom)
+	if err != nil {
+		return err
+	}
+
+	if stablePrice.Price.GTE(upperBound) {
+		err = k.updateCollRatio(ctx, true)
+	} else if stablePrice.Price.LTE(lowerBound) {
+		err = k.updateCollRatio(ctx, false)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
+StableRequiredForTargetCollRatio is the collateral value in USD needed to reach
+a target collateral ratio.
+*/
+func (k *Keeper) StableRequiredForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededStable sdk.Dec, err error) {
 	stableSupply := k.GetSupplyNUSD(ctx)
@@ -90,7 +144,7 @@ func (k *Keeper) GetUSDValForTargetCollRatio(
 func (k *Keeper) RecollateralizeCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
-	neededUSDForRecoll, _ := k.GetUSDValForTargetCollRatio(ctx)
+	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
@@ -243,7 +297,7 @@ func (k *Keeper) GovAmtFromRecollateralize(
 func (k *Keeper) GovAmtFromFullRecollateralize(
 	ctx sdk.Context,
 ) (govOut sdk.Int, err error) {
-	neededCollUSD, err := k.GetUSDValForTargetCollRatio(ctx)
+	neededCollUSD, err := k.StableRequiredForTargetCollRatio(ctx)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -257,7 +311,7 @@ func (k *Keeper) GovAmtFromFullRecollateralize(
 func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededGovAmt sdk.Int, err error) {
-	neededUSDForRecoll, _ := k.GetUSDValForTargetCollRatio(ctx)
+	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	neededUSDForBuyback := neededUSDForRecoll.Neg()
 	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
 		ctx, common.GovDenom, common.StableDenom)
@@ -397,7 +451,7 @@ func (k *Keeper) CollAmtFromFullBuyback(
 	ctx sdk.Context,
 ) (collAmt sdk.Int, err error) {
 
-	neededUSDForRecoll, err := k.GetUSDValForTargetCollRatio(ctx)
+	neededUSDForRecoll, err := k.StableRequiredForTargetCollRatio(ctx)
 	if err != nil {
 		return sdk.Int{}, err
 	}

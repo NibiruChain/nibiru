@@ -7,6 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedTypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -63,6 +64,92 @@ func TestSetCollRatio_Input(t *testing.T) {
 	}
 }
 
+func TestSetCollRatioUpdate(t *testing.T) {
+	type TestCase struct {
+		name              string
+		inCollRatio       sdk.Dec
+		price             sdk.Dec
+		expectedCollRatio sdk.Dec
+		expectedPass      bool
+	}
+
+	executeTest := func(t *testing.T, testCase TestCase) {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
+
+			stablecoinKeeper := &nibiruApp.StablecoinKeeper
+			priceKeeper := &nibiruApp.PriceKeeper
+
+			oracle := sample.AccAddress()
+			pairs := ptypes.NewParams([]ptypes.Pair{
+				{
+					Token0:  common.StableDenom,
+					Token1:  common.CollDenom,
+					Oracles: []sdk.AccAddress{oracle},
+					Active:  true,
+				},
+			})
+
+			priceKeeper.SetParams(ctx, pairs)
+
+			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
+			require.NoError(t, err)
+
+			_, err = priceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, tc.price)
+			require.NoError(t, err)
+
+			err = priceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+			require.NoError(t, err)
+
+			err = stablecoinKeeper.EvaluateCollRatio(ctx)
+			if tc.expectedPass {
+				require.NoError(
+					t, err, "Error setting the CollRatio: %d", tc.inCollRatio)
+
+				currCollRatio := stablecoinKeeper.GetCollRatio(ctx)
+				require.Equal(t, tc.expectedCollRatio, currCollRatio)
+				return
+			}
+			require.Error(t, err)
+		})
+	}
+
+	testCases := []TestCase{
+		{
+			name:              "Price is higher than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("1.1"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
+			expectedPass:      true,
+		},
+		{
+			name:              "Price is slightly higher than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("1.00000001"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8"),
+			expectedPass:      true,
+		},
+		{
+			name:              "Price is slightly lower than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("0.99999999991"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8"),
+			expectedPass:      true,
+		},
+		{
+			name:              "Price is lower than peg",
+			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
+			price:             sdk.MustNewDecFromStr("0.9"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			expectedPass:      true,
+		},
+	}
+	for _, testCase := range testCases {
+		executeTest(t, testCase)
+	}
+}
+
 func TestGetCollRatio_Input(t *testing.T) {
 	testName := "GetCollRatio after setting default params returns expected value"
 	t.Run(testName, func(t *testing.T) {
@@ -92,7 +179,7 @@ func TestGetCollRatio_Input(t *testing.T) {
 	})
 }
 
-func TestGetUSDValForTargetCollRatio(t *testing.T) {
+func TestStableRequiredForTargetCollRatio(t *testing.T) {
 	testCases := []struct {
 		name             string
 		protocolColl     sdk.Int
@@ -179,7 +266,7 @@ func TestGetUSDValForTargetCollRatio(t *testing.T) {
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
-			neededUSD, err := stablecoinKeeper.GetUSDValForTargetCollRatio(ctx)
+			neededUSD, err := stablecoinKeeper.StableRequiredForTargetCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.neededUSD, neededUSD)
@@ -721,11 +808,12 @@ func TestBuyback(t *testing.T) {
 		name         string
 		expectedPass bool
 
-		postedAssetPairs  []common.AssetPair
-		scenario          NeededCollScenario
-		priceGovStable    sdk.Dec
-		expectedNeededUSD sdk.Dec
-		accFunds          sdk.Coins
+		postedAssetPairs      []common.AssetPair
+		scenario              NeededCollScenario
+		priceGovStable        sdk.Dec
+		expectedNeededUSD     sdk.Dec
+		accFunds              sdk.Coins
+		expectedAccFundsAfter sdk.Coins
 
 		msg      types.MsgBuyback
 		response *types.MsgBuybackResponse
@@ -745,7 +833,11 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.GovDenom, 1_000_000),
+			),
+			expectedAccFundsAfter: sdk.NewCoins(
+				sdk.NewInt64Coin(common.GovDenom, 900_000),  // accFunds - inGov.Amount
+				sdk.NewInt64Coin(common.CollDenom, 100_000), // response.Coll
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
@@ -777,7 +869,11 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.NewDec(5),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.GovDenom, 1_000_000),
+			),
+			expectedAccFundsAfter: sdk.NewCoins(
+				sdk.NewInt64Coin(common.GovDenom, 953_000),  // accFunds - inGov.Amount
+				sdk.NewInt64Coin(common.CollDenom, 213_636), // response.Coll
 			),
 
 			expectedNeededUSD: sdk.MustNewDecFromStr("-234999.15"),
@@ -814,7 +910,11 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.GovDenom, 1_000_000),
+			),
+			expectedAccFundsAfter: sdk.NewCoins(
+				sdk.NewInt64Coin(common.GovDenom, 900_000),  // accFunds - inGov.Amount
+				sdk.NewInt64Coin(common.CollDenom, 100_000), // response.Coll
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
@@ -851,10 +951,7 @@ func TestBuyback(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
 			},
-			response: &types.MsgBuybackResponse{
-				// Coll.Amount = inUSD *  / priceCollStable
-				Coll: sdk.NewCoin(common.CollDenom, sdk.NewInt(100_000)),
-			},
+			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
 		},
 		{
@@ -880,14 +977,11 @@ func TestBuyback(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
 			},
-			response: &types.MsgBuybackResponse{
-				// Coll.Amount = inUSD *  / priceCollStable
-				Coll: sdk.NewCoin(common.CollDenom, sdk.NewInt(100_000)),
-			},
+			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
 		},
 		{
-			name: "fail: missing collaterak price post",
+			name: "fail: missing collateral price post",
 			postedAssetPairs: []common.AssetPair{
 				common.GovStablePool,
 			},
@@ -908,10 +1002,7 @@ func TestBuyback(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
 			},
-			response: &types.MsgBuybackResponse{
-				// Coll.Amount = inUSD *  / priceCollStable
-				Coll: sdk.NewCoin(common.CollDenom, sdk.NewInt(100_000)),
-			},
+			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
 		},
 		{
@@ -936,10 +1027,7 @@ func TestBuyback(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
 			},
-			response: &types.MsgBuybackResponse{
-				// Coll.Amount = inUSD *  / priceCollStable
-				Coll: sdk.NewCoin(common.CollDenom, sdk.NewInt(100_000)),
-			},
+			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
 		},
 	}
@@ -1016,6 +1104,9 @@ func TestBuyback(t *testing.T) {
 			if tc.expectedPass {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.response, response)
+				require.EqualValues(t,
+					tc.expectedAccFundsAfter,
+					nibiruApp.BankKeeper.GetAllBalances(ctx, caller))
 			} else {
 				require.Error(t, err)
 			}
@@ -1038,21 +1129,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 		outGovAmt sdk.Int
 	}{
 		{
-			name:             "both prices $1, correct amount out",
-			postedAssetPairs: []common.AssetPair{},
-			scenario: NeededCollScenario{
-				protocolColl:    sdk.NewInt(700_000),
-				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1_000_000),
-				collRatio:       sdk.MustNewDecFromStr("0.6"),
-				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
-			},
-			priceGovStable: sdk.OneDec(),
-			outGovAmt:      sdk.NewInt(100_000),
-			expectedPass:   false,
-		},
-		{
-			name: "both prices $1, correct amount out, no prices",
+			name: "both prices $1, correct amount out",
 			postedAssetPairs: []common.AssetPair{
 				common.GovStablePool,
 				common.CollStablePool,
@@ -1067,6 +1144,20 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 			priceGovStable: sdk.OneDec(),
 			outGovAmt:      sdk.NewInt(100_000),
 			expectedPass:   true,
+		},
+		{
+			name:             "both prices $1, correct amount out, no prices",
+			postedAssetPairs: []common.AssetPair{},
+			scenario: NeededCollScenario{
+				protocolColl:    sdk.NewInt(700_000),
+				priceCollStable: sdk.OneDec(),
+				stableSupply:    sdk.NewInt(1_000_000),
+				collRatio:       sdk.MustNewDecFromStr("0.6"),
+				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
+			},
+			priceGovStable: sdk.OneDec(),
+			outGovAmt:      sdk.NewInt(100_000),
+			expectedPass:   false,
 		},
 		{
 			name: "both prices $1, only coll price posted",
