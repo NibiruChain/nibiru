@@ -798,12 +798,6 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 
 /* EncodingConfig specifies the concrete encoding types to use for a given app.
    This is provided for compatibility between protobuf and amino implementations. */
-type simEncodingConfig struct {
-	InterfaceRegistry codectypes.InterfaceRegistry
-	Codec             codec.Codec
-	TxConfig          client.TxConfig
-	Amino             *codec.LegacyAmino
-}
 
 func simRegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	sdk.RegisterLegacyAminoCodec(cdc)
@@ -817,14 +811,14 @@ func simRegisterInterfaces(registry codectypes.InterfaceRegistry) {
 }
 
 // makeConfig creates an EncodingConfig for testing
-func makeConfig(mb module.BasicManager) simEncodingConfig {
+func makeConfig(mb module.BasicManager) EncodingConfig {
 	cdc := codec.NewLegacyAmino()
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	protoCodec := codec.NewProtoCodec(interfaceRegistry)
 
-	encodingConfig := simEncodingConfig{
+	encodingConfig := EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
-		Codec:             protoCodec,
+		Marshaler:         protoCodec,
 		TxConfig:          authtx.NewTxConfig(protoCodec, authtx.DefaultSignModes),
 		Amino:             cdc,
 	}
