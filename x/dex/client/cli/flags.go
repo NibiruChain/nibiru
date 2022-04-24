@@ -42,7 +42,7 @@ func FlagSetJoinPool() *flag.FlagSet {
 func FlagSetExitPool() *flag.FlagSet {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 
-	fs.String(FlagPoolId, "", "The pool id to withdraw from.")
+	fs.Uint64(FlagPoolId, 0, "The pool id to withdraw from.")
 	fs.String(FlagPoolSharesOut, "", "The amount of pool share tokens to burn.")
 	return fs
 }

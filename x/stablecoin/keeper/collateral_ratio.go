@@ -327,7 +327,6 @@ func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 func (k Keeper) Buyback(
 	goCtx context.Context, msg *types.MsgBuyback,
 ) (response *types.MsgBuybackResponse, err error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	caller, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -435,7 +434,6 @@ Returns:
 func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,
 ) (collAmt sdk.Int, err error) {
-
 	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
@@ -450,7 +448,6 @@ func (k *Keeper) CollAmtFromBuyback(
 func (k *Keeper) CollAmtFromFullBuyback(
 	ctx sdk.Context,
 ) (collAmt sdk.Int, err error) {
-
 	neededUSDForRecoll, err := k.StableRequiredForTargetCollRatio(ctx)
 	if err != nil {
 		return sdk.Int{}, err
