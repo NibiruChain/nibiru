@@ -21,6 +21,8 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		MintStableCmd(),
 		BurnStableCmd(),
+		BuybackCmd(),
+		RecollateralizeCmd(),
 	)
 
 	return txCmd
@@ -41,11 +43,16 @@ func MintStableCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			msg, err := buildMintStableMsg(clientCtx, args[0])
+			inCoin, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return err
+			}
+			msg := &types.MsgMintStable{
+				Creator: clientCtx.GetFromAddress().String(),
+				Stable:  inCoin,
 			}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
@@ -55,25 +62,6 @@ func MintStableCmd() *cobra.Command {
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
-}
-
-/*
-buildMintStableMsg
-*/
-func buildMintStableMsg(
-	clientCtx client.Context, tokenInStr string,
-) (sdk.Msg, error) {
-	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
-	if err != nil {
-		return nil, err
-	}
-
-	msg := &types.MsgMintStable{
-		Creator: clientCtx.GetFromAddress().String(),
-		Stable:  tokenIn,
-	}
-
-	return msg, nil
 }
 
 func BurnStableCmd() *cobra.Command {
@@ -91,10 +79,48 @@ func BurnStableCmd() *cobra.Command {
 				WithTxConfig(clientCtx.TxConfig).
 				WithAccountRetriever(clientCtx.AccountRetriever)
 
-			msg, err := buildBurnStableMsg(clientCtx, args[0])
+			inCoin, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return err
 			}
+			msg := &types.MsgBurnStable{
+				Creator: clientCtx.GetFromAddress().String(),
+				Stable:  inCoin,
+			}
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func BuybackCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "buyback [token-in]",
+		Short: "sell shares to the protocol in exchange for collateral (UST)",
+		Long: `A user can call 'buyback' when there's too much collateral in the 
+		 protocol according to the target collateral ratio. The user swaps NIBI 
+		 for UST at a 0% transaction fee and the protocol burns the NIBI it 
+		 buys from the user.`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			inCoin, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgBuyback{
+				Creator: clientCtx.GetFromAddress().String(),
+				Gov:     inCoin}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
@@ -105,18 +131,39 @@ func BurnStableCmd() *cobra.Command {
 	return cmd
 }
 
-func buildBurnStableMsg(
-	clientCtx client.Context, tokenInStr string,
-) (sdk.Msg, error) {
-	tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
-	if err != nil {
-		return nil, err
+// TODO: test
+func RecollateralizeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "recoll [token-in]",
+		Short: "sell UST to the protocol in exchange for bonus value in NIBI",
+		Long: `Recollateralize is a function that incentivizes the caller to add up to 
+		the amount of collateral needed to reach some target collateral ratio. 
+		Recollateralize checks if the USD value of collateral in the protocol is 
+		below the required amount defined by the current collateral ratio.
+		Nibiru's NUSD stablecoin is taken to be the dollar that determines USD value.`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			inCoin, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgRecollateralize{
+				Creator: clientCtx.GetFromAddress().String(),
+				Coll:    inCoin}
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
 	}
 
-	msg := &types.MsgBurnStable{
-		Creator: clientCtx.GetFromAddress().String(),
-		Stable:  tokenIn,
-	}
+	flags.AddTxFlagsToCmd(cmd)
 
-	return msg, nil
+	return cmd
 }
