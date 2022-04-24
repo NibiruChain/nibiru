@@ -18,7 +18,7 @@ var _ = strconv.Itoa(0)
 
 func CmdExitPool() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exit-pool [flags]",
+		Use:   "exit-pool",
 		Short: "exit a pool by burning pool share tokens",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
@@ -28,14 +28,15 @@ $ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100nibiru/pool/1 --from vali
 				version.AppName,
 			),
 		),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
+			flagSet := cmd.Flags()
 
-			poolId, err := cmd.Flags().GetUint64(FlagPoolId)
+			poolId, err := flagSet.GetUint64(FlagPoolId)
 			if err != nil {
 				return err
 			}
