@@ -19,10 +19,11 @@ import (
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		memKey     storetypes.StoreKey
-		paramstore paramtypes.Subspace
+		cdc          codec.BinaryCodec
+		storeKey     storetypes.StoreKey
+		TWAPstoreKey storetypes.StoreKey
+		memKey       storetypes.StoreKey
+		paramstore   paramtypes.Subspace
 	}
 )
 
@@ -194,6 +195,58 @@ func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice typ
 	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
 }
 
+// Update the twap price for a token0, token1 pair
+func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
+	tokens := common.DenomsFromPoolName(pairID)
+	token0, token1 := tokens[0], tokens[1]
+
+	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, token0, token1)
+	if err != nil {
+		return err
+	}
+
+	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
+	if err != nil {
+		return err
+	}
+
+	blockHeight := ctx.BlockHeight()
+
+	/*
+		newDenominator is an int64 with a max value of 18,446,744,073,709,551,615.
+		The value of newDenominator on block i is: sum(1 + 2 + ... + i) = i * (i+1) / 2
+		Which means that this would break under i * (i+1) / 2 > 18,446,744,073,709,551,615 => i > 6,074,000,999
+
+		Assuming 1 block per second, this means this becomes an issue in 192 years
+	*/
+	newDenominator := currentTWAP.Denominator + uint64(blockHeight)
+
+	// sdk.Dec don't have upper limit (2^63 theoretically)
+	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDec(blockHeight)))
+
+	newTWAP := types.CurrentTWAP{
+		PairID:      pairID,
+		Numerator:   newNumerator,
+		Denominator: newDenominator,
+		Price:       newNumerator.Quo(sdk.NewDecFromInt(sdk.NewIntFromUint64(newDenominator))),
+	}
+	store := ctx.KVStore(k.TWAPstoreKey)
+	store.Set(types.CurrentTWAPPriceKey(pairID), k.cdc.MustMarshal(&newTWAP))
+
+	return nil
+}
+
+// updateTWAPPrices update the twap price with the updates of the block
+func (k Keeper) updateTWAPPrices(ctx sdk.Context) error {
+	for _, currentPrice := range k.GetCurrentPrices(ctx) {
+		err := k.updateTWAPPrice(ctx, currentPrice.PairID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // CalculateMedianPrice calculates the median prices for the input prices.
 func (k Keeper) CalculateMedianPrice(prices []types.CurrentPrice) sdk.Dec {
 	l := len(prices)
@@ -256,9 +309,38 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 }
 
 // GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
-// TODO: Replace this with actual TWAP logic
-func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (types.CurrentPrice, error) {
-	return k.GetCurrentPrice(ctx, token0, token1)
+func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	pairID := assetPair.Name()
+
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.CurrentTWAPPriceKey(pairID))
+
+	if bz == nil {
+		return types.CurrentTWAP{}, types.ErrNoValidPrice
+	}
+
+	var price types.CurrentTWAP
+	err = k.cdc.Unmarshal(bz, &price)
+	if err != nil {
+		return types.CurrentTWAP{}, err
+	}
+	if price.Price.Equal(sdk.ZeroDec()) {
+		return types.CurrentTWAP{}, types.ErrNoValidPrice
+	}
+
+	if !assetPair.IsProperOrder() {
+		// Return the inverse price if the tokens are not in "proper" order.
+		inversePrice := sdk.OneDec().Quo(price.Price)
+		return types.NewCurrentTWAP(
+			/* token0 */ token1,
+			/* token1 */ token0,
+			/* numerator */ price.Numerator,
+			/* denominator */ price.Denominator,
+			/* price */ inversePrice), nil
+	}
+
+	return price, nil
 }
 
 // IterateCurrentPrices iterates over all current price objects in the store and performs a callback function
