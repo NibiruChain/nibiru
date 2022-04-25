@@ -210,12 +210,13 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		currentTWAP = types.CurrentTWAP{
 			PairID:      pairID,
 			Numerator:   sdk.MustNewDecFromStr("0"),
-			Denominator: uint64(1),
+			Denominator: uint64(0),
 			Price:       sdk.MustNewDecFromStr("0"),
 		}
 	}
 
-	blockHeight := ctx.BlockHeight()
+	// Adding one so we don't have 0 price at the start
+	blockHeight := ctx.BlockHeight() + 1
 
 	/*
 		newDenominator is an int64 with a max value of 18,446,744,073,709,551,615.
@@ -227,7 +228,7 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	newDenominator := currentTWAP.Denominator + uint64(blockHeight)
 
 	// sdk.Dec don't have upper limit (2^63 theoretically)
-	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDec(1 + blockHeight)))
+	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDec(blockHeight)))
 
 	newTWAP := types.CurrentTWAP{
 		PairID:      pairID,
