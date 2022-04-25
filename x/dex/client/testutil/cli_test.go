@@ -115,7 +115,7 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 		{
 			name:              "create pool with deposit not matching weights",
 			tokenWeights:      "1stake, 1node0token",
-			initialDeposit:    "10000foo,10000node0token",
+			initialDeposit:    "1000foo,10000node0token",
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
