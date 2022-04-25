@@ -61,8 +61,8 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 // ---------------------------------------------------------------------------
 
 /*
-StableRequiredForTargetCollRatio is the collateral value in USD needed to reach a target
-updateCollRatio updates the value of the target collateral ratio knowing the price is either above or below the peg
+updateCollRatio updates the value of the target collateral ratio based on
+whether the price of NUSD is above or below peg
 */
 func (k *Keeper) updateCollRatio(ctx sdk.Context, isPriceUp bool) (err error) {
 	params := k.GetParams(ctx)
@@ -93,7 +93,8 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	upperBound := params.GetPriceUpperBoundAsDec()
 
 	// Should take TWAP price
-	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(ctx, common.StableDenom, common.CollDenom)
+	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(
+		ctx, common.StableDenom, common.CollDenom)
 	if err != nil {
 		return err
 	}
@@ -110,8 +111,8 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 }
 
 /*
-StableRequiredForTargetCollRatio is the collateral value in USD needed to reach a target
-collateral ratio.
+StableRequiredForTargetCollRatio is the collateral value in USD needed to reach
+a target collateral ratio.
 */
 func (k *Keeper) StableRequiredForTargetCollRatio(
 	ctx sdk.Context,
@@ -326,7 +327,6 @@ func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 func (k Keeper) Buyback(
 	goCtx context.Context, msg *types.MsgBuyback,
 ) (response *types.MsgBuybackResponse, err error) {
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	caller, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -434,7 +434,6 @@ Returns:
 func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,
 ) (collAmt sdk.Int, err error) {
-
 	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
@@ -449,7 +448,6 @@ func (k *Keeper) CollAmtFromBuyback(
 func (k *Keeper) CollAmtFromFullBuyback(
 	ctx sdk.Context,
 ) (collAmt sdk.Int, err error) {
-
 	neededUSDForRecoll, err := k.StableRequiredForTargetCollRatio(ctx)
 	if err != nil {
 		return sdk.Int{}, err
