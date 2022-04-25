@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/NibiruChain/nibiru/x/dex/events"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -109,13 +110,15 @@ ret
   error: an error if any occurred
 */
 func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types.MsgExitPoolResponse, error) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
 
 	tokensOut, err := k.Keeper.ExitPool(
-		sdk.UnwrapSDKContext(ctx),
+		sdkContext,
 		sender,
 		msg.PoolId,
 		msg.PoolShares,
@@ -123,6 +126,8 @@ func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types
 	if err != nil {
 		return nil, err
 	}
+
+	events.EmitPoolExitedEvent(sdkContext, sender, msg.PoolId, msg.PoolShares, tokensOut)
 
 	return &types.MsgExitPoolResponse{
 		TokensOut: tokensOut,
