@@ -33,7 +33,10 @@ func (k Keeper) Hooks() Hooks {
 
 // epochs hooks.
 func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	h.k.BeforeEpochStart(ctx, epochIdentifier, epochNumber)
+	err := h.k.BeforeEpochStart(ctx, epochIdentifier, epochNumber)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
