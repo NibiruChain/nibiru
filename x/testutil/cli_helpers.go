@@ -2,10 +2,11 @@ package testutil
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/testutil/network"
