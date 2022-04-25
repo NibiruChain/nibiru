@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"github.com/NibiruChain/nibiru/x/dex/events"
 	"testing"
 
@@ -22,20 +23,20 @@ func TestCreatePool(t *testing.T) {
 		poolParams         types.PoolParams
 		poolAssets         []types.PoolAsset
 		senderInitialFunds sdk.Coins
-		expectedErr        bool
+		expectedErr        error
 	}{
 		{
 			name:        "invalid creator addr",
 			creatorAddr: []byte{},
 			poolParams:  types.PoolParams{},
 			poolAssets:  []types.PoolAsset{},
-			expectedErr: true,
+			expectedErr: fmt.Errorf("empty address string is not allowed"),
 		},
 		{
 			name:        "not enough assets",
 			poolParams:  types.PoolParams{},
 			poolAssets:  []types.PoolAsset{},
-			expectedErr: true,
+			expectedErr: types.ErrTooFewPoolAssets,
 		},
 		{
 			name:       "too many assets",
@@ -54,7 +55,22 @@ func TestCreatePool(t *testing.T) {
 					Weight: sdk.OneInt(),
 				},
 			},
-			expectedErr: true,
+			expectedErr: types.ErrTooManyPoolAssets,
+		},
+		{
+			name:       "asset not whitelisted",
+			poolParams: types.PoolParams{},
+			poolAssets: []types.PoolAsset{
+				{
+					Token:  sdk.NewInt64Coin("aaa", 1),
+					Weight: sdk.OneInt(),
+				},
+				{
+					Token:  sdk.NewInt64Coin("bbb", 1),
+					Weight: sdk.OneInt(),
+				},
+			},
+			expectedErr: fmt.Errorf("%s\n", "test"),
 		},
 		{
 			name:       "insufficient pool creation fee",
@@ -74,7 +90,7 @@ func TestCreatePool(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 1),
 				sdk.NewInt64Coin("bbb", 1),
 			),
-			expectedErr: true,
+			expectedErr: fmt.Errorf("999999999unibi is smaller than 1000000000unibi: insufficient funds"),
 		},
 		{
 			name:       "insufficient initial deposit",
@@ -92,7 +108,7 @@ func TestCreatePool(t *testing.T) {
 			senderInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1e9),
 			),
-			expectedErr: true,
+			expectedErr: fmt.Errorf("0aaa is smaller than 1aaa: insufficient funds"),
 		},
 		{
 			name:       "successful pool creation",
@@ -112,7 +128,7 @@ func TestCreatePool(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 1),
 				sdk.NewInt64Coin("bbb", 1),
 			),
-			expectedErr: false,
+			expectedErr: nil,
 		},
 	}
 
@@ -136,13 +152,11 @@ func TestCreatePool(t *testing.T) {
 			}
 
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
-			if tc.expectedErr {
-				require.Error(t, err)
-
+			if tc.expectedErr != nil {
+				require.EqualError(t, err, tc.expectedErr.Error())
 				require.NotContains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
 			} else {
 				require.NoError(t, err)
-
 				require.Contains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
 			}
 		})
