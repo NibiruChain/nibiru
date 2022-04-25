@@ -9,8 +9,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	dexevents "github.com/NibiruChain/nibiru/x/dex/events"
-	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
@@ -375,7 +373,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 	require.Equal(t, uint64(0), poolId)
 }
 
-func TestMsgServer_JoinPool(t *testing.T) {
+func TestJoinPool(t *testing.T) {
 	const shareDenom = "nibiru/pool/1"
 
 	tests := []struct {
@@ -497,29 +495,11 @@ func TestMsgServer_JoinPool(t *testing.T) {
 			joinerAddr := sample.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
-			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
-
-			resp, err := msgServer.JoinPool(sdk.WrapSDKContext(ctx), &types.MsgJoinPool{
-				Sender:   joinerAddr.String(),
-				PoolId:   1,
-				TokensIn: tc.tokensIn,
-			})
+			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn)
 			require.NoError(t, err)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedFinalPool, *resp.Pool)
-			require.Equal(t, tc.expectedNumSharesOut, resp.NumPoolSharesOut)
-			require.Equal(t, tc.expectedRemCoins, sdk.Coins(resp.RemainingCoins))
-			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
-
-			expectedEvent := dexevents.NewPoolJoinedEvent(
-				joinerAddr,
-				1,
-				tc.tokensIn,
-				resp.NumPoolSharesOut,
-				resp.RemainingCoins,
-			)
-
-			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
+			require.Equal(t, tc.expectedFinalPool, pool)
+			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
+			require.Equal(t, tc.expectedRemCoins, remCoins)
 		})
 	}
 }
@@ -532,7 +512,7 @@ func TestExitPool(t *testing.T) {
 		joinerInitialFunds       sdk.Coins
 		initialPoolFunds         sdk.Coins
 		initialPool              types.Pool
-		poolSharesOut            sdk.Coin
+		poolSharesIn             sdk.Coin
 		expectedTokensOut        sdk.Coins
 		expectedJoinerFinalFunds sdk.Coins
 		expectedFinalPool        types.Pool
@@ -556,7 +536,7 @@ func TestExitPool(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			poolSharesOut: sdk.NewInt64Coin(shareDenom, 100),
+			poolSharesIn: sdk.NewInt64Coin(shareDenom, 100),
 			expectedTokensOut: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 99),
 				sdk.NewInt64Coin("foo", 99),
@@ -593,7 +573,7 @@ func TestExitPool(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			poolSharesOut: sdk.NewInt64Coin(shareDenom, 50),
+			poolSharesIn: sdk.NewInt64Coin(shareDenom, 50),
 			expectedTokensOut: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 49),
 				sdk.NewInt64Coin("foo", 49),
@@ -628,7 +608,7 @@ func TestExitPool(t *testing.T) {
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 
-			tokensOut, err := app.DexKeeper.ExitPool(ctx, sender, 1, tc.poolSharesOut)
+			tokensOut, err := app.DexKeeper.ExitPool(ctx, sender, 1, tc.poolSharesIn)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedTokensOut, tokensOut)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, sender))
