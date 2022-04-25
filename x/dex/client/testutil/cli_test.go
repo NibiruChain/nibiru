@@ -89,8 +89,8 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 	}{
 		{
 			name:              "create pool with insufficient funds",
-			tokenWeights:      "1stake, 1node0token",
-			initialDeposit:    "1000000000stake,10000000000node0token",
+			tokenWeights:      fmt.Sprintf("1%s, 1%s", common.GovDenom, common.StableDenom),
+			initialDeposit:    fmt.Sprintf("1000000000%s,10000000000%s", common.GovDenom, common.StableDenom),
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
@@ -102,8 +102,8 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 		},
 		{
 			name:              "create pool with invalid weights",
-			tokenWeights:      "0stake, 1node0token",
-			initialDeposit:    "10000stake,10000node0token",
+			tokenWeights:      fmt.Sprintf("0%s, 1%s", common.GovDenom, common.StableDenom),
+			initialDeposit:    fmt.Sprintf("10000%s,10000%s", common.GovDenom, common.StableDenom),
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
@@ -114,8 +114,8 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 		},
 		{
 			name:              "create pool with deposit not matching weights",
-			tokenWeights:      "1stake, 1node0token",
-			initialDeposit:    "10000foo,10000node0token",
+			tokenWeights:      fmt.Sprintf("1%s, 1%s", common.GovDenom, common.StableDenom),
+			initialDeposit:    fmt.Sprintf("10000%s,100000%s", common.GovDenom, common.StableDenom),
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
