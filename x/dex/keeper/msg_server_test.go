@@ -305,7 +305,7 @@ func TestMsgServerExitPool(t *testing.T) {
 		joinerInitialFunds       sdk.Coins
 		initialPoolFunds         sdk.Coins
 		initialPool              types.Pool
-		poolSharesOut            sdk.Coin
+		poolSharesIn             sdk.Coin
 		expectedTokensOut        sdk.Coins
 		expectedJoinerFinalFunds sdk.Coins
 		expectedFinalPool        types.Pool
@@ -329,7 +329,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			poolSharesOut: sdk.NewInt64Coin(shareDenom, 100),
+			poolSharesIn: sdk.NewInt64Coin(shareDenom, 100),
 			expectedTokensOut: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 99),
 				sdk.NewInt64Coin("foo", 99),
@@ -366,7 +366,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			poolSharesOut: sdk.NewInt64Coin(shareDenom, 50),
+			poolSharesIn: sdk.NewInt64Coin(shareDenom, 50),
 			expectedTokensOut: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 49),
 				sdk.NewInt64Coin("foo", 49),
@@ -404,9 +404,8 @@ func TestMsgServerExitPool(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 			resp, err := msgServer.ExitPool(
 				sdk.WrapSDKContext(ctx),
-				types.NewMsgExitPool(sender.String(), tc.initialPool.Id, tc.poolSharesOut),
+				types.NewMsgExitPool(sender.String(), tc.initialPool.Id, tc.poolSharesIn),
 			)
-
 			require.NoError(t, err)
 			require.Equal(t,
 				types.MsgExitPoolResponse{
@@ -418,6 +417,15 @@ func TestMsgServerExitPool(t *testing.T) {
 				tc.expectedJoinerFinalFunds,
 				app.BankKeeper.GetAllBalances(ctx, sender),
 			)
+
+			expectedEvent := dexevents.NewPoolExitedEvent(
+				sender,
+				1,
+				tc.poolSharesIn,
+				resp.TokensOut,
+			)
+
+			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
 		})
 	}
 }
