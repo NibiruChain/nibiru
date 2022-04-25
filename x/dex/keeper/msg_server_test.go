@@ -1,8 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/dex/events"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/dex/events"
+	dexevents "github.com/NibiruChain/nibiru/x/dex/events"
 
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
@@ -283,6 +285,15 @@ func TestMsgServerJoinPool(t *testing.T) {
 				RemainingCoins:   tc.expectedRemCoins,
 			}, *resp)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
+
+			expectedEvent := dexevents.NewPoolJoinedEvent(
+				joinerAddr,
+				1,
+				tc.tokensIn,
+				resp.NumPoolSharesOut,
+				resp.RemainingCoins,
+			)
+			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
 		})
 	}
 }
