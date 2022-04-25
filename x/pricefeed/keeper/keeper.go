@@ -19,11 +19,10 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeKey     storetypes.StoreKey
-		TWAPstoreKey storetypes.StoreKey
-		memKey       storetypes.StoreKey
-		paramstore   paramtypes.Subspace
+		cdc        codec.BinaryCodec
+		storeKey   storetypes.StoreKey
+		memKey     storetypes.StoreKey
+		paramstore paramtypes.Subspace
 	}
 )
 
@@ -200,14 +199,20 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	tokens := common.DenomsFromPoolName(pairID)
 	token0, token1 := tokens[0], tokens[1]
 
-	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, token0, token1)
+	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {
 		return err
 	}
 
-	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
+	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, token0, token1)
+	// Err there means no twap price have been set yet for this pair
 	if err != nil {
-		return err
+		currentTWAP = types.CurrentTWAP{
+			PairID:      pairID,
+			Numerator:   sdk.MustNewDecFromStr("0"),
+			Denominator: uint64(1),
+			Price:       sdk.MustNewDecFromStr("0"),
+		}
 	}
 
 	blockHeight := ctx.BlockHeight()
@@ -222,7 +227,7 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	newDenominator := currentTWAP.Denominator + uint64(blockHeight)
 
 	// sdk.Dec don't have upper limit (2^63 theoretically)
-	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDec(blockHeight)))
+	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDec(1 + blockHeight)))
 
 	newTWAP := types.CurrentTWAP{
 		PairID:      pairID,
@@ -230,14 +235,14 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		Denominator: newDenominator,
 		Price:       newNumerator.Quo(sdk.NewDecFromInt(sdk.NewIntFromUint64(newDenominator))),
 	}
-	store := ctx.KVStore(k.TWAPstoreKey)
-	store.Set(types.CurrentTWAPPriceKey(pairID), k.cdc.MustMarshal(&newTWAP))
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
 
 	return nil
 }
 
-// updateTWAPPrices update the twap price with the updates of the block
-func (k Keeper) updateTWAPPrices(ctx sdk.Context) error {
+// UpdateTWAPPrices update the twap price with the updates of the block
+func (k Keeper) UpdateTWAPPrices(ctx sdk.Context) error {
 	for _, currentPrice := range k.GetCurrentPrices(ctx) {
 		err := k.updateTWAPPrice(ctx, currentPrice.PairID)
 		if err != nil {
@@ -314,10 +319,10 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	pairID := assetPair.Name()
 
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPPriceKey(pairID))
+	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pairID))
 
 	if bz == nil {
-		return types.CurrentTWAP{}, types.ErrNoValidPrice
+		return types.CurrentTWAP{}, types.ErrNoValidTWAP
 	}
 
 	var price types.CurrentTWAP

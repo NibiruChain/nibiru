@@ -5,7 +5,7 @@ import (
 )
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context) error {
-	err := k.updateTWAPPrices(ctx)
+	err := k.UpdateTWAPPrices(ctx)
 	if err != nil {
 		return err
 	}

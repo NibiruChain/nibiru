@@ -40,8 +40,8 @@ func CurrentPriceKey(pairID string) []byte {
 }
 
 // CurrentTWAPPriceKey returns the prefix for the current TWAP price
-func CurrentTWAPPriceKey(pairID string) []byte {
-	return append(TWAPPricePrefix, []byte(pairID)...)
+func CurrentTWAPPriceKey(twapPairID string) []byte {
+	return append(TWAPPricePrefix, []byte(twapPairID)...)
 }
 
 // RawPriceIteratorKey returns the prefix for the raw price for a single market

@@ -102,6 +102,9 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			err = priceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
 			require.NoError(t, err)
 
+			err = priceKeeper.UpdateTWAPPrices(ctx)
+			require.NoError(t, err)
+
 			err = stablecoinKeeper.EvaluateCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(
