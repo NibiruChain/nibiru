@@ -17,10 +17,11 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(startingPoolNumber uint64, poolCreationFee sdk.Coins) Params {
+func NewParams(startingPoolNumber uint64, poolCreationFee sdk.Coins, whitelistedAssets []string) Params {
 	return Params{
 		StartingPoolNumber: startingPoolNumber,
 		PoolCreationFee:    poolCreationFee,
+		WhitelistedAsset:   whitelistedAssets,
 	}
 }
 
@@ -29,6 +30,11 @@ func DefaultParams() Params {
 	return Params{
 		StartingPoolNumber: 1,
 		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)), // 1000 NIBI
+		WhitelistedAsset: []string{
+			common.GovDenom,
+			common.CollDenom,
+			common.StableDenom,
+		},
 	}
 }
 
@@ -37,7 +43,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair([]byte("StartingPoolNumber"), &p.StartingPoolNumber, validatePoolNumber),
 		paramtypes.NewParamSetPair([]byte("PoolCreationFee"), &p.PoolCreationFee, validatePoolCreationFee),
-	}
+		paramtypes.NewParamSetPair([]byte("WhitelistedAsset"), &p.WhitelistedAsset, func(value interface{}) error { return nil })}
 }
 
 func validatePoolNumber(i interface{}) error {
@@ -75,4 +81,14 @@ func (p Params) Validate() error {
 func (p Params) String() string {
 	out, _ := yaml.Marshal(p)
 	return string(out)
+}
+
+// GetWhitelistedAssetsAsMap returns the whitelisted assets as map, util for
+// checking if a value is on the whitelist.
+func (p Params) GetWhitelistedAssetsAsMap() map[string]bool {
+	whitelistedAssets := make(map[string]bool)
+	for _, a := range p.WhitelistedAsset {
+		whitelistedAssets[a] = true
+	}
+	return whitelistedAssets
 }
