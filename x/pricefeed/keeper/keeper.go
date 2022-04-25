@@ -194,7 +194,17 @@ func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice typ
 	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
 }
 
-// Update the twap price for a token0, token1 pair
+/* updateTWAPPrice updates the twap price for a token0, token1 pair
+We use the blockheight to update the twap price instead of the time.
+
+Calculation is done as follow:
+	$$P_{TWAP} = \frac {\sum {P_j \times Bh_j }}{\sum{Bh_j}} $$
+With
+	P_j: current posted price for the pair of tokens
+	Bh_j: current block height
+
+*/
+
 func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	tokens := common.DenomsFromPoolName(pairID)
 	token0, token1 := tokens[0], tokens[1]
