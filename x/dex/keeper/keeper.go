@@ -293,6 +293,10 @@ func (k Keeper) NewPool(
 		return uint64(0), types.ErrTooManyPoolAssets
 	}
 
+	if !k.areAllAssetsWhitelisted(ctx, poolAssets) {
+		return uint64(0), types.ErrTokenNotAllowed
+	}
+
 	// send pool creation fee to community pool
 	params := k.GetParams(ctx)
 	err = k.distrKeeper.FundCommunityPool(ctx, params.PoolCreationFee, sender)
@@ -351,6 +355,18 @@ func (k Keeper) NewPool(
 	k.RecordTotalLiquidityIncrease(ctx, coins)
 
 	return poolId, nil
+}
+
+// areAllAssetsWhitelisted checks if all assets are in whitelist
+func (k Keeper) areAllAssetsWhitelisted(ctx sdk.Context, assets []types.PoolAsset) bool {
+	whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
+	for _, a := range assets {
+		if _, ok := whitelistedAssets[a.Token.Denom]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 /*
