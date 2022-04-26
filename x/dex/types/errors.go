@@ -20,7 +20,7 @@ var (
 	ErrInvalidCreatePoolArgs = sdkerrors.Register(ModuleName, 7, "deposit tokens and token weights should have same length and denom order")
 
 	// Invalid MsgSwapAsset
-	ErrInvalidPoolId        = sdkerrors.Register(ModuleName, 8, "invalid pool id")
-	ErrInvalidTokenIn      = sdkerrors.Register(ModuleName, 9, "invalid tokens in")
-	ErrInvalidTokenOutDenom = sdkerrors.Register(ModuleName, 10, "invalid token out denom")
+	ErrInvalidPoolId        = sdkerrors.Register(ModuleName, 9, "invalid pool id")
+	ErrInvalidTokenIn       = sdkerrors.Register(ModuleName, 10, "invalid tokens in")
+	ErrInvalidTokenOutDenom = sdkerrors.Register(ModuleName, 11, "invalid token out denom")
 )
