@@ -41,7 +41,7 @@ func New(shouldUseDefaultGenesis bool) *app.NibiruApp {
 		/*appOpts=*/ simapp.EmptyAppOptions{},
 	)
 
-	var stateBytes []byte = []byte("{}")
+	var stateBytes = []byte("{}")
 	if shouldUseDefaultGenesis {
 		genesisState := app.NewDefaultGenesisState(encoding.Marshaler)
 		stateBytes, err = json.MarshalIndent(genesisState, "", " ")

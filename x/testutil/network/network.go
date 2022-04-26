@@ -116,7 +116,7 @@ func DefaultConfig() Config {
 		MinGasPrices:      fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		BondedTokens:      sdk.TokensFromConsensusPower(200, sdk.DefaultPowerReduction),
 		PruningStrategy:   storetypes.PruningOptionNothing,
 		CleanupDir:        true,
 		SigningAlgo:       string(hd.Secp256k1Type),
@@ -495,4 +495,9 @@ func (n *Network) Cleanup() {
 	}
 
 	n.T.Log("finished cleaning up test network")
+}
+
+// UpdateStartingToken allows to update the starting tokens of an existing
+func (cfg *Config) UpdateStartingToken(startingTokens sdk.Coins) {
+	cfg.StartingTokens = startingTokens
 }

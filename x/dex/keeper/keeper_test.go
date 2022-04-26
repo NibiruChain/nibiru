@@ -214,6 +214,10 @@ func TestNewPool(t *testing.T) {
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(poolCreationFeeCoin),
+		/*whitelistedAssets*/ []string{
+			"uatom",
+			"uosmo",
+		},
 	))
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
@@ -276,6 +280,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.GovDenom, 1000_000_000)),
+		/*whitelistedAssets*/ []string{},
 	))
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
@@ -326,6 +331,30 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 
 	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
 	require.ErrorIs(t, err, types.ErrTooFewPoolAssets)
+	require.Equal(t, uint64(0), poolId)
+}
+
+func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
+	app, ctx := testutil.NewNibiruApp(true)
+	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
+	require.NoError(t, err)
+
+	poolParams := types.PoolParams{
+		SwapFee: sdk.NewDecWithPrec(3, 2),
+		ExitFee: sdk.NewDecWithPrec(3, 2),
+	}
+
+	poolAssets := []types.PoolAsset{
+		{
+			Token: sdk.NewCoin("uatom1", sdk.NewInt(1000)),
+		},
+		{
+			Token: sdk.NewCoin("uatom2", sdk.NewInt(1000)),
+		},
+	}
+
+	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	require.ErrorIs(t, err, types.ErrTokenNotAllowed)
 	require.Equal(t, uint64(0), poolId)
 }
 

@@ -13,6 +13,7 @@ var (
 	ErrInvalidSwapFee     = sdkerrors.Register(ModuleName, 3, "invalid pool swap fee, must be between [0, 1]")
 	ErrInvalidExitFee     = sdkerrors.Register(ModuleName, 4, "invalid pool exit fee, must be between [0, 1]")
 	ErrInvalidTokenWeight = sdkerrors.Register(ModuleName, 5, "token weight must be greater than zero")
+	ErrTokenNotAllowed    = sdkerrors.Register(ModuleName, 8, "token not allowed")
 
 	// create-pool tx cli errors
 	ErrMissingPoolFileFlag   = sdkerrors.Register(ModuleName, 6, "must pass in a pool json using the --pool-file flag")

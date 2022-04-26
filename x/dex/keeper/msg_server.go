@@ -32,18 +32,20 @@ ret
   error: an error if any occurred
 */
 func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, err
 	}
 
-	poolId, err := k.NewPool(sdk.UnwrapSDKContext(goCtx), sender, *msg.PoolParams, msg.PoolAssets)
+	poolId, err := k.NewPool(ctx, sender, *msg.PoolParams, msg.PoolAssets)
 	if err != nil {
 		return nil, err
 	}
 
 	events.EmitPoolCreatedEvent(
-		sdk.UnwrapSDKContext(goCtx),
+		ctx,
 		sender,
 		poolId,
 	)
