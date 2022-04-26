@@ -1,20 +1,22 @@
 package keeper_test
 
 import (
+	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/NibiruChain/nibiru/x/dex/events"
 	dexevents "github.com/NibiruChain/nibiru/x/dex/events"
-
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 func TestCreatePool(t *testing.T) {
@@ -24,20 +26,20 @@ func TestCreatePool(t *testing.T) {
 		poolParams         types.PoolParams
 		poolAssets         []types.PoolAsset
 		senderInitialFunds sdk.Coins
-		expectedErr        bool
+		expectedErr        error
 	}{
 		{
 			name:        "invalid creator addr",
 			creatorAddr: []byte{},
 			poolParams:  types.PoolParams{},
 			poolAssets:  []types.PoolAsset{},
-			expectedErr: true,
+			expectedErr: fmt.Errorf("empty address string is not allowed"),
 		},
 		{
 			name:        "not enough assets",
 			poolParams:  types.PoolParams{},
 			poolAssets:  []types.PoolAsset{},
-			expectedErr: true,
+			expectedErr: types.ErrTooFewPoolAssets,
 		},
 		{
 			name:       "too many assets",
@@ -56,10 +58,25 @@ func TestCreatePool(t *testing.T) {
 					Weight: sdk.OneInt(),
 				},
 			},
-			expectedErr: true,
+			expectedErr: types.ErrTooManyPoolAssets,
 		},
 		{
-			name:       "insufficient pool creation fee",
+			name:       "asset not whitelisted 1",
+			poolParams: types.PoolParams{},
+			poolAssets: []types.PoolAsset{
+				{
+					Token:  sdk.NewInt64Coin(common.CollDenom, 1),
+					Weight: sdk.OneInt(),
+				},
+				{
+					Token:  sdk.NewInt64Coin("aaaa", 1),
+					Weight: sdk.OneInt(),
+				},
+			},
+			expectedErr: types.ErrTokenNotAllowed,
+		},
+		{
+			name:       "asset not whitelisted 2",
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
 				{
@@ -67,7 +84,22 @@ func TestCreatePool(t *testing.T) {
 					Weight: sdk.OneInt(),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bbb", 1),
+					Token:  sdk.NewInt64Coin(common.CollDenom, 1),
+					Weight: sdk.OneInt(),
+				},
+			},
+			expectedErr: types.ErrTokenNotAllowed,
+		},
+		{
+			name:       "insufficient pool creation fee",
+			poolParams: types.PoolParams{},
+			poolAssets: []types.PoolAsset{
+				{
+					Token:  sdk.NewInt64Coin(common.CollDenom, 1),
+					Weight: sdk.OneInt(),
+				},
+				{
+					Token:  sdk.NewInt64Coin(common.StableDenom, 1),
 					Weight: sdk.OneInt(),
 				},
 			},
@@ -76,45 +108,45 @@ func TestCreatePool(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 1),
 				sdk.NewInt64Coin("bbb", 1),
 			),
-			expectedErr: true,
+			expectedErr: fmt.Errorf("999999999unibi is smaller than 1000000000unibi: insufficient funds"),
 		},
 		{
 			name:       "insufficient initial deposit",
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("aaa", 1),
+					Token:  sdk.NewInt64Coin(common.GovDenom, 1),
 					Weight: sdk.OneInt(),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bbb", 1),
+					Token:  sdk.NewInt64Coin(common.CollDenom, 1),
 					Weight: sdk.OneInt(),
 				},
 			},
 			senderInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1e9),
 			),
-			expectedErr: true,
+			expectedErr: fmt.Errorf("0unibi is smaller than 1unibi: insufficient funds"),
 		},
 		{
 			name:       "successful pool creation",
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("aaa", 1),
+					Token:  sdk.NewInt64Coin(common.StableDenom, 1),
 					Weight: sdk.OneInt(),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bbb", 1),
+					Token:  sdk.NewInt64Coin(common.CollDenom, 1),
 					Weight: sdk.OneInt(),
 				},
 			},
 			senderInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("unibi", 1e9),
-				sdk.NewInt64Coin("aaa", 1),
-				sdk.NewInt64Coin("bbb", 1),
+				sdk.NewInt64Coin(common.GovDenom, 1e9),
+				sdk.NewInt64Coin(common.StableDenom, 1),
+				sdk.NewInt64Coin(common.CollDenom, 1),
 			),
-			expectedErr: false,
+			expectedErr: nil,
 		},
 	}
 
@@ -138,13 +170,11 @@ func TestCreatePool(t *testing.T) {
 			}
 
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
-			if tc.expectedErr {
-				require.Error(t, err)
-
+			if tc.expectedErr != nil {
+				require.EqualError(t, err, tc.expectedErr.Error())
 				require.NotContains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
 			} else {
 				require.NoError(t, err)
-
 				require.Contains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
 			}
 		})
