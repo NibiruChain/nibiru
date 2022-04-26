@@ -44,5 +44,18 @@ func (msg *MsgSwapAssets) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+
+	if msg.PoolId == 0 {
+		return ErrInvalidPoolId.Wrapf("pool id cannot be %d", msg.PoolId)
+	}
+
+	if msg.TokensIn.Amount.LTE(sdk.ZeroInt()) {
+		return ErrInvalidTokensIn.Wrapf("invalid argument %s", msg.TokensIn.String())
+	}
+
+	if msg.TokenOutDenom == "" {
+		return ErrInvalidTokenOutDenom.Wrap("cannot be empty")
+	}
+
 	return nil
 }
