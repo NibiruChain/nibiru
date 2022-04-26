@@ -34,35 +34,18 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 	s.network = network.New(s.T(), s.cfg)
 
-	val := s.network.Validators[0]
-
 	// create a new user address
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
-		"NewAddr",
-		keyring.English,
-		sdk.FullFundraiserPath,
-		"iron fossil rug jazz mosquito sand kangaroo noble motor jungle job silk naive assume poverty afford twist critic start solid actual fetch flat fix",
-		hd.Secp256k1,
-	)
-	s.Require().NoError(err)
-	s.testAccount = sdk.AccAddress(info.GetPubKey().Address())
+	s.testAccount = s.NewAccount("NewAddr")
 
 	// fund the user
-	_, err = banktestutil.MsgSendExec(
-		val.ClientCtx,
-		/*from=*/ val.Address,
-		/*to=*/ s.testAccount,
-		/*amount=*/ sdk.NewCoins(
+	s.FundAccount(
+		s.testAccount,
+		sdk.NewCoins(
 			sdk.NewInt64Coin(common.StableDenom, 20000),
 			sdk.NewInt64Coin(common.CollDenom, 20000),
 			sdk.NewInt64Coin(common.GovDenom, 2e9), // for pool creation fee and more for tx fees
 		),
-		/*extraArgs*/
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutil.DefaultFeeString(s.cfg),
 	)
-	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -428,4 +411,55 @@ func TestIntegrationTestSuite(t *testing.T) {
 		),
 	)
 	suite.Run(t, &IntegrationTestSuite{cfg: cfg})
+}
+
+/***************************** Convenience Methods ****************************/
+
+/*
+Adds tokens from val[0] to a recipient address.
+
+args:
+  - recipient: the recipient address
+  - tokens: the amount of tokens to transfer
+*/
+func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coins) {
+	val := s.network.Validators[0]
+
+	// fund the user
+	_, err := banktestutil.MsgSendExec(
+		val.ClientCtx,
+		/*from=*/ val.Address,
+		/*to=*/ recipient,
+		/*amount=*/ tokens,
+		/*extraArgs*/
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		testutil.DefaultFeeString(s.cfg),
+	)
+	s.Require().NoError(err)
+}
+
+/*
+Creates a new account and returns the address.
+
+args:
+  - uid: a unique identifier to ensure duplicate accounts are not created
+
+ret:
+  - addr: the address of the new account
+*/
+func (s *IntegrationTestSuite) NewAccount(uid string) (addr sdk.AccAddress) {
+	val := s.network.Validators[0]
+
+	// create a new user address
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		uid,
+		keyring.English,
+		sdk.FullFundraiserPath,
+		"iron fossil rug jazz mosquito sand kangaroo noble motor jungle job silk naive assume poverty afford twist critic start solid actual fetch flat fix",
+		hd.Secp256k1,
+	)
+	s.Require().NoError(err)
+
+	return sdk.AccAddress(info.GetPubKey().Address())
 }
