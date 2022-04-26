@@ -20,6 +20,6 @@ var (
 
 	// Invalid MsgSwapAsset
 	ErrInvalidPoolId        = sdkerrors.Register(ModuleName, 8, "invalid pool id")
-	ErrInvalidTokensIn      = sdkerrors.Register(ModuleName, 9, "invalid tokens in")
+	ErrInvalidTokenIn      = sdkerrors.Register(ModuleName, 9, "invalid tokens in")
 	ErrInvalidTokenOutDenom = sdkerrors.Register(ModuleName, 10, "invalid token out denom")
 )

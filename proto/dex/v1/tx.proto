@@ -101,8 +101,8 @@ message MsgSwapAssets {
 
   uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
 
-  cosmos.base.v1beta1.Coin tokensIn = 3 [
-    (gogoproto.moretags) = "yaml:\"tokens_in\"",
+  cosmos.base.v1beta1.Coin tokenIn = 3 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
     (gogoproto.nullable) = false
   ];
 
@@ -110,8 +110,8 @@ message MsgSwapAssets {
 }
 
 message MsgSwapAssetsResponse {
-  cosmos.base.v1beta1.Coin tokensOut = 3 [
-    (gogoproto.moretags) = "yaml:\"tokens_out\"",
+  cosmos.base.v1beta1.Coin tokenOut = 3 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
 }

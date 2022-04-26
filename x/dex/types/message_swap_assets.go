@@ -9,11 +9,11 @@ const TypeMsgSwapAssets = "swap_assets"
 
 var _ sdk.Msg = &MsgSwapAssets{}
 
-func NewMsgSwapAssets(sender string, poolId uint64, tokensIn sdk.Coin, tokenOutDenom string) *MsgSwapAssets {
+func NewMsgSwapAssets(sender string, poolId uint64, tokenIn sdk.Coin, tokenOutDenom string) *MsgSwapAssets {
 	return &MsgSwapAssets{
 		Sender:        sender,
 		PoolId:        poolId,
-		TokensIn:      tokensIn,
+		TokenIn:       tokenIn,
 		TokenOutDenom: tokenOutDenom,
 	}
 }
@@ -49,8 +49,8 @@ func (msg *MsgSwapAssets) ValidateBasic() error {
 		return ErrInvalidPoolId.Wrapf("pool id cannot be %d", msg.PoolId)
 	}
 
-	if msg.TokensIn.Amount.LTE(sdk.ZeroInt()) {
-		return ErrInvalidTokensIn.Wrapf("invalid argument %s", msg.TokensIn.String())
+	if msg.TokenIn.Amount.LTE(sdk.ZeroInt()) {
+		return ErrInvalidTokenIn.Wrapf("invalid argument %s", msg.TokenIn.String())
 	}
 
 	if msg.TokenOutDenom == "" {

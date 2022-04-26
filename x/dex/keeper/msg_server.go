@@ -155,11 +155,11 @@ func (k msgServer) SwapAssets(ctx context.Context, msg *types.MsgSwapAssets) (
 		return nil, err
 	}
 
-	tokensOut, err := k.Keeper.SwapExactAmountIn(
+	tokenOut, err := k.Keeper.SwapExactAmountIn(
 		sdkContext,
 		sender,
 		msg.PoolId,
-		msg.TokensIn,
+		msg.TokenIn,
 		msg.TokenOutDenom,
 	)
 	if err != nil {
@@ -169,6 +169,6 @@ func (k msgServer) SwapAssets(ctx context.Context, msg *types.MsgSwapAssets) (
 	// TODO(https://github.com/NibiruChain/nibiru/issues/197): Add event emission
 
 	return &types.MsgSwapAssetsResponse{
-		TokensOut: tokensOut,
+		TokenOut: tokenOut,
 	}, nil
 }
