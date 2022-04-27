@@ -325,7 +325,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 
 	var price types.CurrentTWAP
 	k.cdc.MustUnmarshal(bz, &price)
-	if price.Price.Equal(sdk.ZeroDec()) {
+	if price.Price.IsZero() {
 		return types.CurrentTWAP{}, types.ErrNoValidPrice
 	}
 
