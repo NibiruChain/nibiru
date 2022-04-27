@@ -44,7 +44,6 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 			/*isCollateralValid*/ true,
 		))
 	}
-	return
 }
 
 // ___________________________________________________________________________________________________
