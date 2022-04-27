@@ -220,13 +220,13 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		currentTWAP = types.CurrentTWAP{
 			PairID:      pairID,
 			Numerator:   sdk.MustNewDecFromStr("0"),
-			Denominator: uint64(0),
+			Denominator: sdk.NewInt(0),
 			Price:       sdk.MustNewDecFromStr("0"),
 		}
 	}
 
 	// Adding one so we don't have 0 price at the start
-	blockHeight := ctx.BlockHeight() + 1
+	blockHeight := sdk.NewInt(ctx.BlockTime().Unix())
 
 	/*
 		newDenominator is an int64 with a max value of 18,446,744,073,709,551,615.
@@ -235,16 +235,16 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 
 		Assuming 1 block per second, this means this becomes an issue in 192 years
 	*/
-	newDenominator := currentTWAP.Denominator + uint64(blockHeight)
+	newDenominator := currentTWAP.Denominator.Add(blockHeight)
 
 	// sdk.Dec don't have upper limit (2^63 theoretically)
-	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDec(blockHeight)))
+	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDecFromInt(blockHeight)))
 
 	newTWAP := types.CurrentTWAP{
 		PairID:      pairID,
 		Numerator:   newNumerator,
 		Denominator: newDenominator,
-		Price:       newNumerator.Quo(sdk.NewDecFromInt(sdk.NewIntFromUint64(newDenominator))),
+		Price:       newNumerator.Quo(sdk.NewDecFromInt(newDenominator)),
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
