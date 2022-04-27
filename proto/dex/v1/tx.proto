@@ -25,6 +25,11 @@ service Msg {
   rpc ExitPool(MsgExitPool) returns (MsgExitPoolResponse) {
     option (google.api.http).post = "/nibiru/dex/{poolId}/exit";
   }
+
+  // Swap assets in a pool
+  rpc SwapAssets(MsgSwapAssets) returns (MsgSwapAssetsResponse) {
+    option (google.api.http).post = "/nibiru/dex/{poolId}/swap";
+  }
 }
 
 message MsgCreatePool {
@@ -87,6 +92,26 @@ message MsgExitPool {
 message MsgExitPoolResponse {
   repeated cosmos.base.v1beta1.Coin tokensOut = 3 [
     (gogoproto.moretags) = "yaml:\"tokens_out\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgSwapAssets {
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+
+  uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+
+  cosmos.base.v1beta1.Coin tokenIn = 3 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
+    (gogoproto.nullable) = false
+  ];
+
+  string tokenOutDenom = 4 [(gogoproto.moretags) = "yaml:\"token_out_denom\""];
+}
+
+message MsgSwapAssetsResponse {
+  cosmos.base.v1beta1.Coin tokenOut = 3 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
 }
