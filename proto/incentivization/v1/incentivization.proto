@@ -1,0 +1,34 @@
+syntax="proto3";
+
+package nibiru.incentivization.v1;
+
+service Msg {
+  // CreateIncentivizationProgram allows an entity to create an incentivization program for a liquidity pool.
+  rpc CreateIncentivizationProgram(MsgCreateIncentivizationProgram) returns (MsgCreateIncentivizationProgramResponse);
+  // FundIncentivizationProgram allows an entity to fund an already existing incentivization program with more coins.
+  rpc FundIncentivizationProgram(MsgFundIncentivizationProgram) returns (MsgFundIncentivizationProgramResponse);
+}
+
+
+// MsgCreateIncentivizationProgram is the request needed for the CreateIncentivizationProgram RPC.
+message MsgCreateIncentivizationProgram {
+  // lp_denom defines the liquidity pool denom that we want to incentivize.
+  string lp_denom = 1;
+  // sender defines the sender of the msg that needs to be signed.
+  string sender = 2;
+  // duration defines what lock duration is needed
+}
+
+// MsgCreateIncentivizationProgramResponse is the response returned by the CreateIncentivizationProgram RPC.
+message MsgCreateIncentivizationProgramResponse {
+  // program_id defines the incentivization program unique identifier.
+  uint64 program_id = 1;
+}
+
+message MsgFundIncentivizationProgram {
+
+}
+
+message MsgFundIncentivizationProgramResponse {
+
+}
