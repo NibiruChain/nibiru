@@ -11,7 +11,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	params := k.GetParams(ctx)
-	if epochIdentifier == params.DistrEpochIdentifier {
+	if epochIdentifier == params.DistrEpochIdentifier || !params.IsCollateralValid {
 		err := k.EvaluateCollRatio(ctx)
 
 		params = k.GetParams(ctx)
