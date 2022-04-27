@@ -53,9 +53,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		/*from=*/ val.Address,
 		/*to=*/ s.testAccount,
 		/*amount=*/ sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
-			sdk.NewInt64Coin(fmt.Sprintf("%stoken", val.Moniker), 20000),
-			sdk.NewInt64Coin(common.GovDenom, 1e9), // for pool creation fee
+			sdk.NewInt64Coin(common.StableDenom, 20000),
+			sdk.NewInt64Coin(common.CollDenom, 20000),
+			sdk.NewInt64Coin(common.GovDenom, 2e9), // for pool creation fee and more for tx fees
 		),
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -89,45 +89,45 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 	}{
 		{
 			name:              "create pool with insufficient funds",
-			tokenWeights:      "1stake, 1node0token",
-			initialDeposit:    "1000000000stake,10000000000node0token",
+			tokenWeights:      fmt.Sprintf("1%s, 1%s", common.GovDenom, common.StableDenom),
+			initialDeposit:    fmt.Sprintf("1000000000%s,10000000000%s", common.GovDenom, common.StableDenom),
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
 			respType:          &sdk.TxResponse{},
 			expectedCode:      5, // bankKeeper code for insufficient funds
 			queryexpectedPass: false,
-			queryexpectedErr:  "no pool for this id",
+			queryexpectedErr:  "pool not found",
 			queryArgs:         []string{"1"},
 		},
 		{
 			name:              "create pool with invalid weights",
-			tokenWeights:      "0stake, 1node0token",
-			initialDeposit:    "10000stake,10000node0token",
+			tokenWeights:      fmt.Sprintf("0%s, 1%s", common.GovDenom, common.StableDenom),
+			initialDeposit:    fmt.Sprintf("10000%s,10000%s", common.GovDenom, common.StableDenom),
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
 			expectedErr:       types.ErrInvalidCreatePoolArgs,
 			queryexpectedPass: false,
-			queryexpectedErr:  "no pool for this id",
+			queryexpectedErr:  "pool not found",
 			queryArgs:         []string{"1"},
 		},
 		{
 			name:              "create pool with deposit not matching weights",
-			tokenWeights:      "1stake, 1node0token",
-			initialDeposit:    "1000foo,10000node0token",
+			tokenWeights:      "1unibi, 1uust",
+			initialDeposit:    "1000foo,10000uust",
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
 			expectedErr:       types.ErrInvalidCreatePoolArgs,
 			queryexpectedPass: false,
-			queryexpectedErr:  "no pool for this id",
+			queryexpectedErr:  "pool not found",
 			queryArgs:         []string{"1"},
 		},
 		{
 			name:              "create pool with sufficient funds",
-			tokenWeights:      "1stake, 1node0token",
-			initialDeposit:    "100stake,100node0token",
+			tokenWeights:      "1unibi, 1uust",
+			initialDeposit:    "100unibi,100uust",
 			swapFee:           "0.01",
 			exitFee:           "0.01",
 			extraArgs:         []string{},
@@ -176,8 +176,8 @@ func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
-		/*tokenWeights=*/ "5stake,5node0token",
-		/*initialDeposit=*/ "100stake,100node0token",
+		/*tokenWeights=*/ "5unibi,5uust",
+		/*initialDeposit=*/ "100unibi,100uust",
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
 	)
@@ -194,12 +194,12 @@ func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 			name: "join pool with insufficient balance",
 			args: []string{
 				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
-				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "1000000000stake,10000000000node0token"),
+				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "1000000000unibi,10000000000uust"),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.testAccount),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
 			},
 			expectErr:    false,
 			respType:     &sdk.TxResponse{},
@@ -207,14 +207,14 @@ func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 		},
 		{
 			name: "join pool with sufficient balance",
-			args: []string{ // join-pool --pool-id=1 --tokens-in=100stake,100node0token --from=newAddr
+			args: []string{ // join-pool --pool-id=1 --tokens-in=100unibi,100uust --from=newAddr
 				fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, 1),
-				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "100stake,100node0token"),
+				fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, "100unibi,100uust"),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.testAccount),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
 			},
 			expectErr:    false,
 			respType:     &sdk.TxResponse{},
@@ -252,7 +252,7 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 		expectErr          bool
 		respType           proto.Message
 		expectedCode       uint32
-		expectedStake      sdk.Int
+		expectedunibi      sdk.Int
 		expectedOtherToken sdk.Int
 	}{
 		{
@@ -265,12 +265,12 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
 			},
 			expectErr:          false,
 			respType:           &sdk.TxResponse{},
 			expectedCode:       1, // dex.types.ErrNonExistingPool
-			expectedStake:      sdk.NewInt(-10),
+			expectedunibi:      sdk.NewInt(-10),
 			expectedOtherToken: sdk.NewInt(0),
 		},
 		{
@@ -283,12 +283,12 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
 			},
 			expectErr:          false,
 			respType:           &sdk.TxResponse{},
 			expectedCode:       1,
-			expectedStake:      sdk.NewInt(-10),
+			expectedunibi:      sdk.NewInt(-10),
 			expectedOtherToken: sdk.NewInt(0),
 		},
 		{
@@ -301,12 +301,12 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
 			},
 			expectErr:          false,
 			respType:           &sdk.TxResponse{},
 			expectedCode:       1,
-			expectedStake:      sdk.NewInt(-10),
+			expectedunibi:      sdk.NewInt(-10),
 			expectedOtherToken: sdk.NewInt(0),
 		},
 		{
@@ -319,13 +319,13 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
 			},
 			expectErr:          false,
 			respType:           &sdk.TxResponse{},
 			expectedCode:       0,
-			expectedStake:      sdk.NewInt(100 - 10 - 1), // Received stake minus 10stake tx fee minus 1 exit pool fee
-			expectedOtherToken: sdk.NewInt(100 - 1),      // Received node0token minus 1 exit pool fee
+			expectedunibi:      sdk.NewInt(100 - 10 - 1), // Received unibi minus 10unibi tx fee minus 1 exit pool fee
+			expectedOtherToken: sdk.NewInt(100 - 1),      // Received uust minus 1 exit pool fee
 		},
 	}
 
@@ -365,16 +365,16 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				fmt.Println(balRes)
 
 				s.Require().Equal(
-					balRes.Balances.AmountOf("node0token").Sub(
-						originalBalRes.Balances.AmountOf("node0token")).Sub(
+					balRes.Balances.AmountOf("uust").Sub(
+						originalBalRes.Balances.AmountOf("uust")).Sub(
 						tc.expectedOtherToken).Int64(),
 					sdk.NewInt(0).Int64(),
 				)
 
 				s.Require().Equal(
-					balRes.Balances.AmountOf("stake").Sub(
-						originalBalRes.Balances.AmountOf("stake")).Sub(
-						tc.expectedStake).Int64(),
+					balRes.Balances.AmountOf("unibi").Sub(
+						originalBalRes.Balances.AmountOf("unibi")).Sub(
+						tc.expectedunibi).Int64(),
 					sdk.NewInt(0).Int64(),
 				)
 			}
@@ -418,7 +418,104 @@ func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
 	}
 }
 
+func (s *IntegrationTestSuite) TestESwapAssets() {
+	val := s.network.Validators[0]
+
+	testCases := []struct {
+		name          string
+		poolId        uint64
+		tokenIn       string
+		tokenOutDenom string
+		respType      proto.Message
+		expectedCode  uint32
+		expectErr     bool
+	}{
+		{
+			name:          "zero pool id",
+			poolId:        0,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uust",
+			expectErr:     true,
+		},
+		{
+			name:          "invalid token in",
+			poolId:        1,
+			tokenIn:       "0unibi",
+			tokenOutDenom: "uust",
+			expectErr:     true,
+		},
+		{
+			name:          "invalid token out denom",
+			poolId:        1,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "",
+			expectErr:     true,
+		},
+		{
+			name:          "pool not found",
+			poolId:        1000000,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uust",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrPoolNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "token in denom not found",
+			poolId:        1,
+			tokenIn:       "50foo",
+			tokenOutDenom: "uust",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "token out denom not found",
+			poolId:        1,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "foo",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "successful swap",
+			poolId:        1,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uust",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  0,
+			expectErr:     false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		ctx := val.ClientCtx
+
+		s.Run(tc.name, func() {
+			out, err := ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
+
 func TestIntegrationTestSuite(t *testing.T) {
 	cfg := testutil.DefaultConfig()
+	cfg.UpdateStartingToken(
+		sdk.NewCoins(
+			sdk.NewInt64Coin(common.StableDenom, 20000),
+			sdk.NewInt64Coin(common.CollDenom, 20000),
+			sdk.NewInt64Coin(common.GovDenom, 2e9), // for pool creation fee and more for tx fees
+		),
+	)
 	suite.Run(t, &IntegrationTestSuite{cfg: cfg})
 }
