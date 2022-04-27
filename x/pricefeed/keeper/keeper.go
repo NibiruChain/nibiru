@@ -101,9 +101,8 @@ func (k Keeper) SimSetPrice(
 	ctx sdk.Context,
 	token0 string,
 	token1 string,
-	price sdk.Dec) (types.PostedPrice, error) {
+	price sdk.Dec, expiry time.Time) (types.PostedPrice, error) {
 	store := ctx.KVStore(k.storeKey)
-	expiry := ctx.BlockTime().UTC().Add(time.Hour * 1)
 
 	pairName := common.RawPoolNameFromDenoms([]string{token0, token1})
 	pairID := common.PoolNameFromDenoms([]string{token0, token1})
@@ -186,6 +185,12 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	currentPrice := types.NewCurrentPrice(token0, token1, medianPrice)
 	k.setCurrentPrice(ctx, pairID, currentPrice)
 
+	// Update the TWA prices
+	err = k.updateTWAPPrice(ctx, pairID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -239,17 +244,6 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
 
-	return nil
-}
-
-// UpdateTWAPPrices update the twap price with the updates of the block
-func (k Keeper) UpdateTWAPPrices(ctx sdk.Context) error {
-	for _, currentPrice := range k.GetCurrentPrices(ctx) {
-		err := k.updateTWAPPrice(ctx, currentPrice.PairID)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
