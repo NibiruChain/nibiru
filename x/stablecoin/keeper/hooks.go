@@ -9,7 +9,7 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) (err error) {
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	params := k.GetParams(ctx)
 	if epochIdentifier == params.DistrEpochIdentifier {
 		err := k.EvaluateCollRatio(ctx)
@@ -27,7 +27,6 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 				params.GetPriceUpperBoundAsDec(),
 				/*isCollateralValid*/ false,
 			))
-			return err
 		}
 
 		k.SetParams(ctx, types.NewParams(
@@ -65,8 +64,5 @@ func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNu
 }
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	err := h.k.AfterEpochEnd(ctx, epochIdentifier, epochNumber)
-	if err != nil {
-		panic(err)
-	}
+	h.k.AfterEpochEnd(ctx, epochIdentifier, epochNumber)
 }
