@@ -465,20 +465,20 @@ func TestMsgServerSwapAssets(t *testing.T) {
 		name string
 
 		// test setup
-		joinerInitialFunds sdk.Coins
-		initialPool        types.Pool
-		tokenIn            sdk.Coin
-		tokenOutDenom      string
+		userInitialFunds sdk.Coins
+		initialPool      types.Pool
+		tokenIn          sdk.Coin
+		tokenOutDenom    string
 
 		// expected results
-		expectedError            error
-		expectedTokenOut         sdk.Coin
-		expectedJoinerFinalFunds sdk.Coins
-		expectedFinalPool        types.Pool
+		expectedError          error
+		expectedTokenOut       sdk.Coin
+		expectedUserFinalFunds sdk.Coins
+		expectedFinalPool      types.Pool
 	}{
 		{
 			name: "regular swap",
-			joinerInitialFunds: sdk.NewCoins(
+			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
 			),
 			initialPool: mock.DexPool(
@@ -492,7 +492,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			tokenIn:          sdk.NewInt64Coin("unibi", 100),
 			tokenOutDenom:    "unusd",
 			expectedTokenOut: sdk.NewInt64Coin("unusd", 50),
-			expectedJoinerFinalFunds: sdk.NewCoins(
+			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unusd", 50),
 			),
 			expectedFinalPool: mock.DexPool(
@@ -507,7 +507,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 		},
 		{
 			name: "not enough user funds",
-			joinerInitialFunds: sdk.NewCoins(
+			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1),
 			),
 			initialPool: mock.DexPool(
@@ -520,7 +520,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			),
 			tokenIn:       sdk.NewInt64Coin("unibi", 100),
 			tokenOutDenom: "unusd",
-			expectedJoinerFinalFunds: sdk.NewCoins(
+			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1),
 			),
 			expectedFinalPool: mock.DexPool(
@@ -557,7 +557,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 
 			// fund user account
 			sender := sample.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
 			resp, err := msgServer.SwapAssets(
@@ -591,7 +591,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 
 			// check user's final funds
 			require.Equal(t,
-				tc.expectedJoinerFinalFunds,
+				tc.expectedUserFinalFunds,
 				app.BankKeeper.GetAllBalances(ctx, sender),
 			)
 
