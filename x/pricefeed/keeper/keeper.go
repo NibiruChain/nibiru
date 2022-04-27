@@ -294,10 +294,7 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	}
 
 	var price types.CurrentPrice
-	err = k.cdc.Unmarshal(bz, &price)
-	if err != nil {
-		return types.CurrentPrice{}, err
-	}
+	k.cdc.MustUnmarshal(bz, &price)
 	if price.Price.Equal(sdk.ZeroDec()) {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
@@ -327,10 +324,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	}
 
 	var price types.CurrentTWAP
-	err = k.cdc.Unmarshal(bz, &price)
-	if err != nil {
-		return types.CurrentTWAP{}, err
-	}
+	k.cdc.MustUnmarshal(bz, &price)
 	if price.Price.Equal(sdk.ZeroDec()) {
 		return types.CurrentTWAP{}, types.ErrNoValidPrice
 	}
