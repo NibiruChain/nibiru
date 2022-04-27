@@ -97,7 +97,7 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 			respType:          &sdk.TxResponse{},
 			expectedCode:      5, // bankKeeper code for insufficient funds
 			queryexpectedPass: false,
-			queryexpectedErr:  "no pool for this id",
+			queryexpectedErr:  "pool not found",
 			queryArgs:         []string{"1"},
 		},
 		{
@@ -109,7 +109,7 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 			extraArgs:         []string{},
 			expectedErr:       types.ErrInvalidCreatePoolArgs,
 			queryexpectedPass: false,
-			queryexpectedErr:  "no pool for this id",
+			queryexpectedErr:  "pool not found",
 			queryArgs:         []string{"1"},
 		},
 		{
@@ -121,7 +121,7 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 			extraArgs:         []string{},
 			expectedErr:       types.ErrInvalidCreatePoolArgs,
 			queryexpectedPass: false,
-			queryexpectedErr:  "no pool for this id",
+			queryexpectedErr:  "pool not found",
 			queryArgs:         []string{"1"},
 		},
 		{
@@ -413,6 +413,96 @@ func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
 				resp := types.QueryTotalLiquidityResponse{}
 				s.Require().NoError(err, out.String())
 				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestESwapAssets() {
+	val := s.network.Validators[0]
+
+	testCases := []struct {
+		name          string
+		poolId        uint64
+		tokenIn       string
+		tokenOutDenom string
+		respType      proto.Message
+		expectedCode  uint32
+		expectErr     bool
+	}{
+		{
+			name:          "zero pool id",
+			poolId:        0,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uust",
+			expectErr:     true,
+		},
+		{
+			name:          "invalid token in",
+			poolId:        1,
+			tokenIn:       "0unibi",
+			tokenOutDenom: "uust",
+			expectErr:     true,
+		},
+		{
+			name:          "invalid token out denom",
+			poolId:        1,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "",
+			expectErr:     true,
+		},
+		{
+			name:          "pool not found",
+			poolId:        1000000,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uust",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrPoolNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "token in denom not found",
+			poolId:        1,
+			tokenIn:       "50foo",
+			tokenOutDenom: "uust",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "token out denom not found",
+			poolId:        1,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "foo",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "successful swap",
+			poolId:        1,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uust",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  0,
+			expectErr:     false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		ctx := val.ClientCtx
+
+		s.Run(tc.name, func() {
+			out, err := ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 			}
 		})
 	}

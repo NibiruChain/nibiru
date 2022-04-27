@@ -18,4 +18,13 @@ var (
 	// create-pool tx cli errors
 	ErrMissingPoolFileFlag   = sdkerrors.Register(ModuleName, 6, "must pass in a pool json using the --pool-file flag")
 	ErrInvalidCreatePoolArgs = sdkerrors.Register(ModuleName, 7, "deposit tokens and token weights should have same length and denom order")
+
+	// Invalid MsgSwapAsset
+	ErrInvalidPoolId        = sdkerrors.Register(ModuleName, 9, "invalid pool id")
+	ErrInvalidTokenIn       = sdkerrors.Register(ModuleName, 10, "invalid tokens in")
+	ErrInvalidTokenOutDenom = sdkerrors.Register(ModuleName, 11, "invalid token out denom")
+
+	// Errors when swapping assets
+	ErrPoolNotFound       = sdkerrors.Register(ModuleName, 12, "pool not found")
+	ErrTokenDenomNotFound = sdkerrors.Register(ModuleName, 13, "token denom not found in pool")
 )

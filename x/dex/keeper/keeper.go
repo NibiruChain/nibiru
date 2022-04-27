@@ -133,7 +133,7 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err 
 	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
 
 	if len(pool.PoolAssets) == 0 {
-		return pool, fmt.Errorf("no pool for this id")
+		return pool, types.ErrPoolNotFound.Wrapf("could not find pool with id %d", poolId)
 	}
 	return pool, nil
 }
