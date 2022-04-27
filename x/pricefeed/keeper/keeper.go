@@ -331,7 +331,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	if err != nil {
 		return types.CurrentTWAP{}, err
 	}
-	if price.Price.Equal(sdk.ZeroDec()) {
+	if price.Price.IsZero() {
 		return types.CurrentTWAP{}, types.ErrNoValidPrice
 	}
 
