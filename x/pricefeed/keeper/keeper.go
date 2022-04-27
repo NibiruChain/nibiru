@@ -201,7 +201,7 @@ Calculation is done as follow:
 	$$P_{TWAP} = \frac {\sum {P_j \times Bh_j }}{\sum{Bh_j}} $$
 With
 	P_j: current posted price for the pair of tokens
-	Bh_j: current block height
+	Bh_j: current block timestamp
 
 */
 
@@ -225,20 +225,10 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		}
 	}
 
-	// Adding one so we don't have 0 price at the start
-	blockHeight := sdk.NewInt(ctx.BlockTime().Unix())
+	blockUnixTime := sdk.NewInt(ctx.BlockTime().Unix())
 
-	/*
-		newDenominator is an int64 with a max value of 18,446,744,073,709,551,615.
-		The value of newDenominator on block i is: sum(1 + 2 + ... + i) = i * (i+1) / 2
-		Which means that this would break under i * (i+1) / 2 > 18,446,744,073,709,551,615 => i > 6,074,000,999
-
-		Assuming 1 block per second, this means this becomes an issue in 192 years
-	*/
-	newDenominator := currentTWAP.Denominator.Add(blockHeight)
-
-	// sdk.Dec don't have upper limit (2^63 theoretically)
-	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDecFromInt(blockHeight)))
+	newDenominator := currentTWAP.Denominator.Add(blockUnixTime)
+	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDecFromInt(blockUnixTime)))
 
 	newTWAP := types.CurrentTWAP{
 		PairID:      pairID,
