@@ -104,3 +104,27 @@ func ExecMsgExitPool(
 
 	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdExitPool(), args)
 }
+
+// ExecMsgSwapAssets broadcast a swap assets message.
+func ExecMsgSwapAssets(
+	t *testing.T,
+	clientCtx client.Context,
+	poolId uint64,
+	sender fmt.Stringer,
+	tokenIn string,
+	tokenOutDenom string,
+	extraArgs ...string,
+) (testutil.BufferWriter, error) {
+	args := []string{
+		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", dexcli.FlagTokenIn, tokenIn),
+		fmt.Sprintf("--%s=%s", dexcli.FlagTokenOutDenom, tokenOutDenom),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
+		fmt.Sprintf("--%s=%d", flags.FlagGas, 300_000),
+	}
+
+	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
+
+	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdSwapAssets(), args)
+}
