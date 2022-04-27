@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/pricefeed"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -135,4 +136,63 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		currCollRatio := app.StablecoinKeeper.GetCollRatio(ctx)
 		require.Equal(t, test.ExpectedCollRatio, currCollRatio)
 	}
+}
+
+func TestEpochInfoChangesCollateralValidity(t *testing.T) {
+	var app *app.NibiruApp
+	var ctx sdk.Context
+
+	runBlock := func(duration time.Duration) {
+		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
+		epochs.BeginBlocker(ctx, app.EpochsKeeper)
+		pricefeed.EndBlocker(ctx, app.PriceKeeper)
+	}
+
+	app, ctx = testutil.NewNibiruApp(true)
+
+	ctx = ctx.WithBlockHeight(1)
+
+	oracle := sample.AccAddress()
+	markets := ptypes.NewParams([]ptypes.Pair{
+
+		{
+			Token0:  common.CollDenom,
+			Token1:  common.StableDenom,
+			Oracles: []sdk.AccAddress{oracle},
+			Active:  true,
+		},
+	})
+
+	app.PriceKeeper.SetParams(ctx, markets)
+
+	// Sim set price set the price for one hour
+	_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"))
+	require.NoError(t, err)
+
+	err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+	require.NoError(t, err)
+
+	err = app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8"))
+	require.NoError(t, err)
+
+	// Pass 15 minute, collateral should be valid
+	runBlock(time.Minute * 16)
+	runBlock(time.Minute)
+
+	require.Equal(t, true, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
+
+	// Pass 1 hour, collateral should be not valid because price are expired
+	runBlock(time.Hour + time.Minute*16)
+	runBlock(time.Minute)
+
+	require.Equal(t, false, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
+
+	// Post price, collateral should be valid again
+	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"))
+	require.NoError(t, err)
+
+	runBlock(time.Minute * 16)
+	runBlock(time.Minute)
+
+	require.Equal(t, true, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
 }

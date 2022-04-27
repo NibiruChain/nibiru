@@ -30,6 +30,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 				params.GetPriceUpperBoundAsDec(),
 				/*isCollateralValid*/ false,
 			))
+			return
 		}
 
 		k.SetParams(ctx, types.NewParams(
