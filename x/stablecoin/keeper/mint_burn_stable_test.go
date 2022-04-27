@@ -136,7 +136,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound, true))
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -322,7 +322,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound, true))
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -478,7 +478,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound, true))
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
@@ -602,7 +602,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			nibiruApp.StablecoinKeeper.SetParams(
 				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll, "15 min", adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound, true))
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper

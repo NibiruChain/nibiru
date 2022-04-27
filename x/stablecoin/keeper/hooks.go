@@ -2,6 +2,7 @@ package keeper
 
 import (
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	types "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,9 +14,33 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	if epochIdentifier == params.DistrEpochIdentifier {
 		err := k.EvaluateCollRatio(ctx)
 
+		params = k.GetParams(ctx)
 		if err != nil {
+			k.SetParams(ctx, types.NewParams(
+				params.GetCollRatioAsDec(),
+				params.GetFeeRatioAsDec(),
+				params.GetEfFeeRatioAsDec(),
+				params.GetBonusRateRecollAsDec(),
+				params.DistrEpochIdentifier,
+				params.GetAdjustmentStepAsDec(),
+				params.GetPriceLowerBoundAsDec(),
+				params.GetPriceUpperBoundAsDec(),
+				/*isCollateralValid*/ false,
+			))
 			return err
 		}
+
+		k.SetParams(ctx, types.NewParams(
+			params.GetCollRatioAsDec(),
+			params.GetFeeRatioAsDec(),
+			params.GetEfFeeRatioAsDec(),
+			params.GetBonusRateRecollAsDec(),
+			params.DistrEpochIdentifier,
+			params.GetAdjustmentStepAsDec(),
+			params.GetPriceLowerBoundAsDec(),
+			params.GetPriceUpperBoundAsDec(),
+			/*isCollateralValid*/ true,
+		))
 	}
 	return
 }

@@ -46,10 +46,11 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 		params.GetFeeRatioAsDec(),
 		params.GetEfFeeRatioAsDec(),
 		params.GetBonusRateRecollAsDec(),
-		"15 min",
+		params.DistrEpochIdentifier,
 		params.GetAdjustmentStepAsDec(),
 		params.GetPriceLowerBoundAsDec(),
 		params.GetPriceUpperBoundAsDec(),
+		params.IsCollateralValid,
 	)
 	k.ParamSubspace.SetParamSet(ctx, &newParams)
 

@@ -39,6 +39,7 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("0.0025"),
 				sdk.MustNewDecFromStr("0.9999"),
 				sdk.MustNewDecFromStr("1.0001"),
+				true,
 			),
 			fmt.Errorf(
 				"collateral ratio is above max value(1e6): %s",
@@ -55,6 +56,7 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("0.0025"),
 				sdk.MustNewDecFromStr("0.9999"),
 				sdk.MustNewDecFromStr("1.0001"),
+				true,
 			),
 			fmt.Errorf(
 				"fee ratio is above max value(1e6): %s",
@@ -71,6 +73,7 @@ func TestNewParams_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("0.0025"),
 				sdk.MustNewDecFromStr("0.9999"),
 				sdk.MustNewDecFromStr("1.0001"),
+				false,
 			),
 			fmt.Errorf(
 				"stable EF fee ratio is above max value(1e6): %s",
