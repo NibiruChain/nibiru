@@ -14,6 +14,11 @@ func (k Keeper) updatePoolForSwap(
 	tokenIn sdk.Coin,
 	tokenOut sdk.Coin,
 ) (err error) {
+	if err = pool.ApplySwap(tokenIn, tokenOut); err != nil {
+		return err
+	}
+	k.SetPool(ctx, pool)
+
 	if err = k.bankKeeper.SendCoins(
 		ctx,
 		/*from=*/ sender,
@@ -31,11 +36,6 @@ func (k Keeper) updatePoolForSwap(
 	); err != nil {
 		return err
 	}
-
-	if err = pool.ApplySwap(tokenIn, tokenOut); err != nil {
-		return err
-	}
-	k.SetPool(ctx, pool)
 
 	k.RecordTotalLiquidityIncrease(ctx, sdk.Coins{tokenIn})
 	k.RecordTotalLiquidityDecrease(ctx, sdk.Coins{tokenOut})
@@ -70,6 +70,10 @@ func (k Keeper) SwapExactAmountIn(
 ) (tokenOut sdk.Coin, err error) {
 	if tokenIn.Denom == tokenOutDenom {
 		return sdk.Coin{}, types.ErrSameTokenDenom
+	}
+
+	if err = k.checkEnoughBalance(ctx, tokenIn, sender); err != nil {
+		return sdk.Coin{}, err
 	}
 
 	pool, err := k.FetchPool(ctx, poolId)

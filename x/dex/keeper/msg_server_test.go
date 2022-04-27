@@ -534,8 +534,10 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedError: sdkerrors.ErrInsufficientFunds,
 		},
 		{
-			name:             "invalid token in denom",
-			userInitialFunds: sdk.NewCoins(),
+			name: "invalid token in denom",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("foo", 100),
+			),
 			initialPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
@@ -544,9 +546,11 @@ func TestMsgServerSwapAssets(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			tokenIn:                sdk.NewInt64Coin("foo", 100),
-			tokenOutDenom:          "unusd",
-			expectedUserFinalFunds: sdk.NewCoins(),
+			tokenIn:       sdk.NewInt64Coin("foo", 100),
+			tokenOutDenom: "unusd",
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("foo", 100),
+			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
