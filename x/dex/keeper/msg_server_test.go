@@ -533,6 +533,86 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			),
 			expectedError: sdkerrors.ErrInsufficientFunds,
 		},
+		{
+			name:             "invalid token in denom",
+			userInitialFunds: sdk.NewCoins(),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:                sdk.NewInt64Coin("foo", 100),
+			tokenOutDenom:          "unusd",
+			expectedUserFinalFunds: sdk.NewCoins(),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			expectedError: types.ErrTokenDenomNotFound,
+		},
+		{
+			name: "invalid token out denom",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:       sdk.NewInt64Coin("unibi", 100),
+			tokenOutDenom: "foo",
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			expectedError: types.ErrTokenDenomNotFound,
+		},
+		{
+			name: "same token in and token out denom",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:       sdk.NewInt64Coin("unibi", 100),
+			tokenOutDenom: "unibi",
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			expectedError: types.ErrSameTokenDenom,
+		},
 	}
 
 	for _, tc := range tests {
