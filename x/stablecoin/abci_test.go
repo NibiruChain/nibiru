@@ -16,6 +16,7 @@ import (
 )
 
 type test struct {
+	Name              string
 	InCollRatio       sdk.Dec
 	ExpectedCollRatio sdk.Dec
 	price             sdk.Dec
@@ -28,7 +29,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 	tests := []test{
 		{
-			// Price higher than peg, wait for correct amount of time
+			Name:              "Price higher than peg, wait for correct amount of time",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
@@ -41,7 +42,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			},
 		},
 		{
-			// Price at peg, coll ratio should be the same
+			Name:              "Price at peg, coll ratio should be the same",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("1"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8"),
@@ -54,7 +55,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			},
 		},
 		{
-			// Price higher than peg, but we don't wait for enough time, coll ratio should be the same
+			Name:              "Price higher than peg, but we don't wait for enough time, coll ratio should be the same",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8"),
@@ -70,7 +71,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			},
 		},
 		{
-			// Price higher than peg, and we wait for 2 updates, coll ratio should be updated twice
+			Name:              "Price higher than peg, and we wait for 2 updates, coll ratio should be updated twice",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.805"),
@@ -86,7 +87,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			},
 		},
 		{
-			// Price higher than peg, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once
+			Name:              "Price higher than peg, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
@@ -103,36 +104,39 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		app, ctx = testutil.NewNibiruApp(true)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			app, ctx = testutil.NewNibiruApp(true)
 
-		ctx = ctx.WithBlockHeight(1)
+			ctx = ctx.WithBlockHeight(1)
 
-		oracle := sample.AccAddress()
-		markets := ptypes.NewParams([]ptypes.Pair{
+			oracle := sample.AccAddress()
+			markets := ptypes.NewParams([]ptypes.Pair{
 
-			{
-				Token0:  common.CollDenom,
-				Token1:  common.StableDenom,
-				Oracles: []sdk.AccAddress{oracle},
-				Active:  true,
-			},
+				{
+					Token0:  common.CollDenom,
+					Token1:  common.StableDenom,
+					Oracles: []sdk.AccAddress{oracle},
+					Active:  true,
+				},
+			})
+
+			app.PriceKeeper.SetParams(ctx, markets)
+
+			_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, tc.price, ctx.BlockTime().UTC().Add(time.Hour*1))
+			require.NoError(t, err)
+
+			err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+			require.NoError(t, err)
+
+			err = app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio)
+			require.NoError(t, err)
+
+			tc.fn()
+
+			currCollRatio := app.StablecoinKeeper.GetCollRatio(ctx)
+			require.Equal(t, tc.ExpectedCollRatio, currCollRatio)
 		})
-
-		app.PriceKeeper.SetParams(ctx, markets)
-
-		_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, test.price)
-		require.NoError(t, err)
-
-		err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
-		require.NoError(t, err)
-
-		err = app.StablecoinKeeper.SetCollRatio(ctx, test.InCollRatio)
-		require.NoError(t, err)
-
-		test.fn()
-
-		currCollRatio := app.StablecoinKeeper.GetCollRatio(ctx)
-		require.Equal(t, test.ExpectedCollRatio, currCollRatio)
 	}
 }

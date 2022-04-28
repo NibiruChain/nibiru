@@ -101,9 +101,8 @@ func (k Keeper) SimSetPrice(
 	ctx sdk.Context,
 	token0 string,
 	token1 string,
-	price sdk.Dec) (types.PostedPrice, error) {
+	price sdk.Dec, expiry time.Time) (types.PostedPrice, error) {
 	store := ctx.KVStore(k.storeKey)
-	expiry := ctx.BlockTime().UTC().Add(time.Hour * 1)
 
 	pairName := common.RawPoolNameFromDenoms([]string{token0, token1})
 	pairID := common.PoolNameFromDenoms([]string{token0, token1})
@@ -186,12 +185,66 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	currentPrice := types.NewCurrentPrice(token0, token1, medianPrice)
 	k.setCurrentPrice(ctx, pairID, currentPrice)
 
+	// Update the TWA prices
+	err = k.updateTWAPPrice(ctx, pairID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice types.CurrentPrice) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
+}
+
+/* updateTWAPPrice updates the twap price for a token0, token1 pair
+We use the blocktime to update the twap price.
+
+Calculation is done as follow:
+	$$P_{TWAP} = \frac {\sum {P_j \times Bh_j }}{\sum{Bh_j}} $$
+With
+	P_j: current posted price for the pair of tokens
+	Bh_j: current block timestamp
+
+*/
+
+func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
+	tokens := common.DenomsFromPoolName(pairID)
+	token0, token1 := tokens[0], tokens[1]
+
+	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
+	if err != nil {
+		return err
+	}
+
+	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, token0, token1)
+	// Err there means no twap price have been set yet for this pair
+	if err != nil {
+		currentTWAP = types.CurrentTWAP{
+			PairID:      pairID,
+			Numerator:   sdk.MustNewDecFromStr("0"),
+			Denominator: sdk.NewInt(0),
+			Price:       sdk.MustNewDecFromStr("0"),
+		}
+	}
+
+	blockUnixTime := sdk.NewInt(ctx.BlockTime().Unix())
+
+	newDenominator := currentTWAP.Denominator.Add(blockUnixTime)
+	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDecFromInt(blockUnixTime)))
+
+	newTWAP := types.CurrentTWAP{
+		PairID:      pairID,
+		Numerator:   newNumerator,
+		Denominator: newDenominator,
+		Price:       newNumerator.Quo(sdk.NewDecFromInt(newDenominator)),
+	}
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
+
+	return nil
 }
 
 // CalculateMedianPrice calculates the median prices for the input prices.
@@ -235,10 +288,7 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	}
 
 	var price types.CurrentPrice
-	err = k.cdc.Unmarshal(bz, &price)
-	if err != nil {
-		return types.CurrentPrice{}, err
-	}
+	k.cdc.MustUnmarshal(bz, &price)
 	if price.Price.Equal(sdk.ZeroDec()) {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
@@ -256,9 +306,35 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 }
 
 // GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
-// TODO: Replace this with actual TWAP logic
-func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (types.CurrentPrice, error) {
-	return k.GetCurrentPrice(ctx, token0, token1)
+func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	pairID := assetPair.Name()
+
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pairID))
+
+	if bz == nil {
+		return types.CurrentTWAP{}, types.ErrNoValidTWAP
+	}
+
+	var price types.CurrentTWAP
+	k.cdc.MustUnmarshal(bz, &price)
+	if price.Price.IsZero() {
+		return types.CurrentTWAP{}, types.ErrNoValidPrice
+	}
+
+	if !assetPair.IsProperOrder() {
+		// Return the inverse price if the tokens are not in "proper" order.
+		inversePrice := sdk.OneDec().Quo(price.Price)
+		return types.NewCurrentTWAP(
+			/* token0 */ token1,
+			/* token1 */ token0,
+			/* numerator */ price.Numerator,
+			/* denominator */ price.Denominator,
+			/* price */ inversePrice), nil
+	}
+
+	return price, nil
 }
 
 // IterateCurrentPrices iterates over all current price objects in the store and performs a callback function
