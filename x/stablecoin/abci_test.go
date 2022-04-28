@@ -179,15 +179,22 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	err = app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8"))
 	require.NoError(t, err)
 
-	// Pass 15 minute, collateral should be valid
-	runBlock(time.Minute * 16)
-	runBlock(time.Minute)
+	// We wait for first epoch to start
+	/*
+		On the very first epoch in the chain, the epoch module waits until the second block having
+		`epochInfo.StartTime.After(ctx.BlockTime())` to call the epoch end for the first time.
+	*/
+	runBlock(time.Minute*15 + time.Second)
+
+	// Pass 1 second, this is the second block after the first 15min epoch is set, it will run the epochEnd hooks from
+	// epoch module minute
+	runBlock(time.Second)
 
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Pass 1 hour, collateral should be not valid because price are expired
-	runBlock(time.Hour + time.Minute*16)
-	runBlock(time.Minute)
+	runBlock(time.Hour)        // Price are set as expired at the end of this block
+	runBlock(time.Minute * 15) // Collateral ratio fail because no existing price since last block
 
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
@@ -195,8 +202,8 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
-	runBlock(time.Second)
-	runBlock(time.Second)
+	runBlock(time.Second) // Median price and TWAP are computed again at the end of this block
+	runBlock(time.Second) // The very next block have a collateral ratio valid without having to wait for the next epoch
 
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 }
