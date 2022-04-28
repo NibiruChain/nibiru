@@ -33,5 +33,5 @@ message Params {
   int64 priceUpperBound = 8;
 
   // isCollateralRatioValid checks if the collateral ratio is correctly updated
-  bool isCollateralRatioValid =9;
+  bool isCollateralRatioValid = 9;
 }
