@@ -170,7 +170,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	app.PriceKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
-	_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"))
+	_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
 	err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
@@ -192,7 +192,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"))
+	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
 	runBlock(time.Second)
