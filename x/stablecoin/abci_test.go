@@ -191,8 +191,8 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"))
 	require.NoError(t, err)
 
-	runBlock(time.Minute * 16)
-	runBlock(time.Minute)
+	runBlock(time.Second)
+	runBlock(time.Second)
 
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 }

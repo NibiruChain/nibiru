@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	types "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,8 +11,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	params := k.GetParams(ctx)
-	fmt.Println("Epoch ends")
-	if epochIdentifier == params.DistrEpochIdentifier || !params.IsCollateralRatioValid {
+	if epochIdentifier == params.DistrEpochIdentifier {
 		err := k.EvaluateCollRatio(ctx)
 
 		params = k.GetParams(ctx)
