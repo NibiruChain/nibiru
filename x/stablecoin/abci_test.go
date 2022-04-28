@@ -179,13 +179,13 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	runBlock(time.Minute * 16)
 	runBlock(time.Minute)
 
-	require.Equal(t, true, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
+	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
 
 	// Pass 1 hour, collateral should be not valid because price are expired
 	runBlock(time.Hour + time.Minute*16)
 	runBlock(time.Minute)
 
-	require.Equal(t, false, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
+	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
 
 	// Post price, collateral should be valid again
 	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"))
@@ -194,5 +194,5 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	runBlock(time.Minute * 16)
 	runBlock(time.Minute)
 
-	require.Equal(t, true, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
+	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralValid)
 }

@@ -83,16 +83,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
 			},
-			msgResponse: types.MsgMintStableResponse{
-				Stable:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
-				UsedCoins: sdk.NewCoins(accFundsCollAmount, accFundsGovAmount),
-				FeesPayed: sdk.NewCoins(neededCollFees, neededGovFees),
-			},
-			govPrice:   sdk.MustNewDecFromStr("10"),
-			collPrice:  sdk.MustNewDecFromStr("1"),
-			supplyNIBI: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
-			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
-			supplyNUSD:        sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			govPrice:          sdk.MustNewDecFromStr("10"),
+			collPrice:         sdk.MustNewDecFromStr("1"),
 			err:               types.NoValidCollateralRatio,
 			isCollateralValid: false,
 		},
@@ -158,7 +150,10 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound, tc.isCollateralValid))
+					priceUpperBound,
+					tc.isCollateralValid,
+				),
+			)
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -344,7 +339,10 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound, true))
+					priceUpperBound,
+					true,
+				),
+			)
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -500,7 +498,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound, true))
+					priceUpperBound,
+					true,
+				),
+			)
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
@@ -579,7 +580,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 		isCollateralValid bool
 	}{
 		{
-			name:      "Happy path",
+			name:      "invalid collateral ratio",
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
@@ -592,16 +593,6 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				Creator: sample.AccAddress().String(),
 				Stable:  sdk.NewInt64Coin(common.StableDenom, 10_000_000),
 			},
-			msgResponse: types.MsgBurnStableResponse{
-				Gov:        sdk.NewInt64Coin(common.GovDenom, 100_000-200),       // amount - fees 0,02%
-				Collateral: sdk.NewInt64Coin(common.CollDenom, 9_000_000-18_000), // amount - fees 0,02%
-				FeesPayed: sdk.NewCoins(
-					sdk.NewInt64Coin(common.GovDenom, 200),
-					sdk.NewInt64Coin(common.CollDenom, 18_000),
-				),
-			},
-			supplyNIBI:        sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
-			supplyNUSD:        sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
 			ecosystemFund:     sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
 			treasuryFund:      sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
 			expectedPass:      false,
@@ -656,9 +647,18 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			priceUpperBound := sdk.MustNewDecFromStr("1.0001")
 
 			nibiruApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll, "15 min", adjustmentStep,
+				ctx, types.NewParams(
+					collRatio,
+					feeRatio,
+					feeRatioEF,
+					bonusRateRecoll,
+					"15 min",
+					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound, tc.isCollateralValid))
+					priceUpperBound,
+					tc.isCollateralValid,
+				),
+			)
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
@@ -703,10 +703,10 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				goCtx, &tc.msgBurn)
 
 			if !tc.expectedPass {
-				require.Error(t, err)
 				require.ErrorIs(t, err, tc.err)
 				return
 			}
+
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
