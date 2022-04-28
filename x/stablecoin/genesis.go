@@ -1,8 +1,8 @@
 package stablecoin
 
 import (
-	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -12,7 +12,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// this line is used by starport scaffolding # genesis/module/init
 
 	if genState.ModuleAccountBalance.Amount.GT(sdk.ZeroInt()) {
-		k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(genState.ModuleAccountBalance))
+		if err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(genState.ModuleAccountBalance)); err != nil {
+			panic(err)
+		}
 	}
 	k.SetParams(ctx, genState.Params)
 }

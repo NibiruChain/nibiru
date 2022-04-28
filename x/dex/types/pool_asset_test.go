@@ -45,7 +45,6 @@ func TestPoolAssetValidateError(t *testing.T) {
 			require.Errorf(t, tc.pa.Validate(), tc.errMsg)
 		})
 	}
-
 }
 
 func TestPoolAssetValidateSuccess(t *testing.T) {
@@ -68,16 +67,15 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 			require.NoError(t, tc.pa.Validate())
 		})
 	}
-
 }
 
 func TestSubtractPoolAssetBalance(t *testing.T) {
 	for _, tc := range []struct {
-		name               string
-		pool               Pool
-		tokenDenom         string
-		subAmt             sdk.Int
-		expectedPoolAssets []PoolAsset
+		name          string
+		pool          Pool
+		tokenDenom    string
+		subAmt        sdk.Int
+		expectedCoins sdk.Coins
 	}{
 		{
 			name: "subtract liquidity",
@@ -88,13 +86,9 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 					},
 				},
 			},
-			tokenDenom: "aaa",
-			subAmt:     sdk.NewInt(1_000),
-			expectedPoolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 999_000),
-				},
-			},
+			tokenDenom:    "aaa",
+			subAmt:        sdk.NewInt(1_000),
+			expectedCoins: sdk.NewCoins(sdk.NewInt64Coin("aaa", 999_000)),
 		},
 		{
 			name: "subtract all liquidity",
@@ -105,21 +99,16 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 					},
 				},
 			},
-			tokenDenom: "aaa",
-			subAmt:     sdk.NewInt(1_000_000),
-			expectedPoolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 0),
-				},
-			},
+			tokenDenom:    "aaa",
+			subAmt:        sdk.NewInt(1_000_000),
+			expectedCoins: nil,
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt)
-			expectedCoins := poolAssetsCoins(tc.expectedPoolAssets)
-			actualCoins := poolAssetsCoins(tc.pool.PoolAssets)
-			require.Equal(t, expectedCoins, actualCoins)
+			require.NoError(t, tc.pool.SubtractPoolAssetBalance(tc.tokenDenom, tc.subAmt))
+			actualCoins := tc.pool.PoolBalances()
+			require.Equal(t, tc.expectedCoins, actualCoins)
 		})
 	}
 }

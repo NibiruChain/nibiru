@@ -9,9 +9,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/client/cli"
-	"github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -80,8 +80,9 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(
 	clientCtx client.Context, mux *runtime.ServeMux,
 ) {
-	types.RegisterQueryHandlerClient(
-		context.Background(), mux, types.NewQueryClient(clientCtx))
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+		panic(err)
+	}
 }
 
 // GetTxCmd returns the capability module's root tx command.

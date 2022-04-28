@@ -3,15 +3,15 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
-	"github.com/MatrixDao/matrix/x/testutil"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParamsQuery(t *testing.T) {
-	matrixApp, ctx := testutil.NewMatrixApp(true)
-	keeper := &matrixApp.StablecoinKeeper
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	keeper := &nibiruApp.StablecoinKeeper
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()
 	keeper.SetParams(ctx, params)

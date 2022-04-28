@@ -3,18 +3,16 @@ package keeper_test
 import (
 	"testing"
 
-	sckeeper "github.com/MatrixDao/matrix/x/stablecoin/keeper"
-	"github.com/MatrixDao/matrix/x/testutil"
+	sckeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewMsgServerImpl(t *testing.T) {
-
 	type TestCase struct {
 		name   string
 		keeper sckeeper.Keeper
-		err    error
 	}
 
 	executeTest := func(t *testing.T, testCase TestCase) {
@@ -25,12 +23,11 @@ func TestNewMsgServerImpl(t *testing.T) {
 		})
 	}
 
-	matrixApp, _ := testutil.NewMatrixApp(true)
+	nibiruApp, _ := testutil.NewNibiruApp(true)
 	testCases := []TestCase{
 		{
-			name:   "Default MatrixApp.StablecoinKeeper, should pass",
-			keeper: matrixApp.StablecoinKeeper,
-			err:    nil,
+			name:   "Default NibiruApp.StablecoinKeeper, should pass",
+			keeper: nibiruApp.StablecoinKeeper,
 		},
 	}
 

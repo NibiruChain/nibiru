@@ -1,10 +1,10 @@
 syntax = "proto3";
-package matrix.dex.v1;
+package nibiru.dex.v1;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/dex/types";
+option go_package = "github.com/NibiruChain/nibiru/x/dex/types";
 
 // Params defines the parameters for the module.
 message Params {
@@ -19,4 +19,7 @@ message Params {
     (gogoproto.moretags) = "yaml:\"pool_creation_fee\"",
     (gogoproto.nullable) = false
   ];
+
+  // The assets that can be used to create liquidity pools
+  repeated string whitelisted_asset = 3;
 }

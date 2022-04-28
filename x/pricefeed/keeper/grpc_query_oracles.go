@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,7 +16,7 @@ func (k Keeper) Oracles(goCtx context.Context, req *types.QueryOraclesRequest) (
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	oracles, err := k.GetOracles(ctx, req.MarketId)
+	oracles, err := k.GetOracles(ctx, req.PairId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}

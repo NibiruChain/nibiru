@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc/codes"
@@ -57,7 +57,10 @@ func (k queryServer) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	pool := k.FetchPool(sdk.UnwrapSDKContext(goCtx), req.PoolId)
+	pool, err := k.FetchPool(sdk.UnwrapSDKContext(goCtx), req.PoolId)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryPoolResponse{
 		Pool: &pool,
@@ -98,84 +101,102 @@ func (k queryServer) PoolNumber(goCtx context.Context, req *types.QueryPoolNumbe
 }
 
 func (k queryServer) Pools(context.Context, *types.QueryPoolsRequest) (*types.QueryPoolsResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/165)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/165)
 	return nil, nil
 }
 
 // Parameters of a single pool.
 func (k queryServer) PoolParams(context.Context, *types.QueryPoolParamsRequest) (*types.QueryPoolParamsResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/166)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/166)
 	return nil, nil
 }
 
 // Number of pools.
 func (k queryServer) NumPools(context.Context, *types.QueryNumPoolsRequest) (*types.QueryNumPoolsResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/164)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/164)
 	return nil, nil
 }
 
 // Total liquidity across all pools.
-func (k queryServer) TotalLiquidity(context.Context, *types.QueryTotalLiquidityRequest) (*types.QueryTotalLiquidityResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/162)
-	return nil, nil
+func (k queryServer) TotalLiquidity(ctx context.Context, req *types.QueryTotalLiquidityRequest) (*types.QueryTotalLiquidityResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	return &types.QueryTotalLiquidityResponse{
+		Liquidity: k.Keeper.GetTotalLiquidity(sdkCtx),
+	}, nil
 }
 
 // Total liquidity in a single pool.
-func (k queryServer) TotalPoolLiquidity(context.Context, *types.QueryTotalPoolLiquidityRequest) (*types.QueryTotalPoolLiquidityResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/167)
-	return nil, nil
+func (k queryServer) TotalPoolLiquidity(ctx context.Context, req *types.QueryTotalPoolLiquidityRequest) (*types.QueryTotalPoolLiquidityResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	pool, err := k.FetchPool(sdkCtx, req.PoolId)
+
+	if err != nil {
+		return &types.QueryTotalPoolLiquidityResponse{}, err
+	}
+	return &types.QueryTotalPoolLiquidityResponse{
+		Liquidity: k.bankKeeper.GetAllBalances(sdkCtx, pool.GetAddress()),
+	}, nil
 }
 
 // Total shares in a single pool.
 func (k queryServer) TotalShares(context.Context, *types.QueryTotalSharesRequest) (*types.QueryTotalSharesResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/163)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/163)
 	return nil, nil
 }
 
 // Instantaneous price of an asset in a pool.
 func (k queryServer) SpotPrice(context.Context, *types.QuerySpotPriceRequest) (*types.QuerySpotPriceResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/168)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/168)
 	return nil, nil
 }
 
 // Estimates the amount of assets returned given an exact amount of tokens to
 // swap.
 func (k queryServer) EstimateSwapExactAmountIn(context.Context, *types.QuerySwapExactAmountInRequest) (*types.QuerySwapExactAmountInResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/169)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/169)
 	return nil, nil
 }
 
 // Estimates the amount of tokens required to return the exact amount of
 // assets requested.
 func (k queryServer) EstimateSwapExactAmountOut(context.Context, *types.QuerySwapExactAmountOutRequest) (*types.QuerySwapExactAmountOutResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/169)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/169)
 	return nil, nil
 }
 
 // Estimates the amount of pool shares returned given an amount of tokens to
 // join.
 func (k queryServer) EstimateJoinExactAmountIn(context.Context, *types.QueryJoinExactAmountInRequest) (*types.QueryJoinExactAmountInResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/170)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/170)
 	return nil, nil
 }
 
 // Estimates the amount of tokens required to obtain an exact amount of pool
 // shares.
 func (k queryServer) EstimateJoinExactAmountOut(context.Context, *types.QueryJoinExactAmountOutRequest) (*types.QueryJoinExactAmountOutResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/170)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/170)
 	return nil, nil
 }
 
 // Estimates the amount of tokens returned to the user given an exact amount
 // of pool shares.
 func (k queryServer) EstimateExitExactAmountIn(context.Context, *types.QueryExitExactAmountInRequest) (*types.QueryExitExactAmountInResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/171)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/171)
 	return nil, nil
 }
 
 // Estimates the amount of pool shares required to extract an exact amount of
 // tokens from the pool.
 func (k queryServer) EstimateExitExactAmountOut(context.Context, *types.QueryExitExactAmountOutRequest) (*types.QueryExitExactAmountOutResponse, error) {
-	// TODO(https://github.com/MatrixDao/matrix/issues/171)
+	// TODO(https://github.com/NibiruChain/nibiru/issues/171)
 	return nil, nil
 }

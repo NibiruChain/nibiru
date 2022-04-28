@@ -32,7 +32,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
-	Markets Markets `protobuf:"bytes,1,rep,name=markets,proto3,castrepeated=Markets" json:"markets"`
+	Pairs Pairs `protobuf:"bytes,1,rep,name=pairs,proto3,castrepeated=Pairs" json:"pairs"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }
@@ -68,34 +68,33 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
-func (m *Params) GetMarkets() Markets {
+func (m *Params) GetPairs() Pairs {
 	if m != nil {
-		return m.Markets
+		return m.Pairs
 	}
 	return nil
 }
 
-// Market defines an asset in the pricefeed.
-type Market struct {
-	MarketID   string                                          `protobuf:"bytes,1,opt,name=market_id,json=marketId,proto3" json:"market_id,omitempty"`
-	BaseAsset  string                                          `protobuf:"bytes,2,opt,name=base_asset,json=baseAsset,proto3" json:"base_asset,omitempty"`
-	QuoteAsset string                                          `protobuf:"bytes,3,opt,name=quote_asset,json=quoteAsset,proto3" json:"quote_asset,omitempty"`
-	Oracles    []github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,rep,name=oracles,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"oracles,omitempty"`
-	Active     bool                                            `protobuf:"varint,5,opt,name=active,proto3" json:"active,omitempty"`
+// Pair defines an asset in the pricefeed.
+type Pair struct {
+	Token0  string                                          `protobuf:"bytes,1,opt,name=token0,proto3" json:"token0,omitempty"`
+	Token1  string                                          `protobuf:"bytes,2,opt,name=token1,proto3" json:"token1,omitempty"`
+	Oracles []github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,rep,name=oracles,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"oracles,omitempty"`
+	Active  bool                                            `protobuf:"varint,4,opt,name=active,proto3" json:"active,omitempty"`
 }
 
-func (m *Market) Reset()         { *m = Market{} }
-func (m *Market) String() string { return proto.CompactTextString(m) }
-func (*Market) ProtoMessage()    {}
-func (*Market) Descriptor() ([]byte, []int) {
+func (m *Pair) Reset()         { *m = Pair{} }
+func (m *Pair) String() string { return proto.CompactTextString(m) }
+func (*Pair) ProtoMessage()    {}
+func (*Pair) Descriptor() ([]byte, []int) {
 	return fileDescriptor_76ce94fb65bc3a91, []int{1}
 }
-func (m *Market) XXX_Unmarshal(b []byte) error {
+func (m *Pair) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Market) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Pair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Market.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Pair.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -105,56 +104,49 @@ func (m *Market) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Market) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Market.Merge(m, src)
+func (m *Pair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pair.Merge(m, src)
 }
-func (m *Market) XXX_Size() int {
+func (m *Pair) XXX_Size() int {
 	return m.Size()
 }
-func (m *Market) XXX_DiscardUnknown() {
-	xxx_messageInfo_Market.DiscardUnknown(m)
+func (m *Pair) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pair.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Market proto.InternalMessageInfo
+var xxx_messageInfo_Pair proto.InternalMessageInfo
 
-func (m *Market) GetMarketID() string {
+func (m *Pair) GetToken0() string {
 	if m != nil {
-		return m.MarketID
+		return m.Token0
 	}
 	return ""
 }
 
-func (m *Market) GetBaseAsset() string {
+func (m *Pair) GetToken1() string {
 	if m != nil {
-		return m.BaseAsset
+		return m.Token1
 	}
 	return ""
 }
 
-func (m *Market) GetQuoteAsset() string {
-	if m != nil {
-		return m.QuoteAsset
-	}
-	return ""
-}
-
-func (m *Market) GetOracles() []github_com_cosmos_cosmos_sdk_types.AccAddress {
+func (m *Pair) GetOracles() []github_com_cosmos_cosmos_sdk_types.AccAddress {
 	if m != nil {
 		return m.Oracles
 	}
 	return nil
 }
 
-func (m *Market) GetActive() bool {
+func (m *Pair) GetActive() bool {
 	if m != nil {
 		return m.Active
 	}
 	return false
 }
 
-// PostedPrice defines a price for market posted by a specific oracle.
+// PostedPrice defines a price for an asset pair posted by a specific oracle.
 type PostedPrice struct {
-	MarketID      string                                        `protobuf:"bytes,1,opt,name=market_id,json=marketId,proto3" json:"market_id,omitempty"`
+	PairID        string                                        `protobuf:"bytes,1,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`
 	OracleAddress github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=oracle_address,json=oracleAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"oracle_address,omitempty"`
 	Price         github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,3,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
 	Expiry        time.Time                                     `protobuf:"bytes,4,opt,name=expiry,proto3,stdtime" json:"expiry"`
@@ -193,9 +185,9 @@ func (m *PostedPrice) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_PostedPrice proto.InternalMessageInfo
 
-func (m *PostedPrice) GetMarketID() string {
+func (m *PostedPrice) GetPairID() string {
 	if m != nil {
-		return m.MarketID
+		return m.PairID
 	}
 	return ""
 }
@@ -214,11 +206,11 @@ func (m *PostedPrice) GetExpiry() time.Time {
 	return time.Time{}
 }
 
-// CurrentPrice defines a current price for a particular market in the pricefeed
+// CurrentPrice defines the current price for an asset pair in the pricefeed
 // module.
 type CurrentPrice struct {
-	MarketID string                                 `protobuf:"bytes,1,opt,name=market_id,json=marketId,proto3" json:"market_id,omitempty"`
-	Price    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
+	PairID string                                 `protobuf:"bytes,1,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`
+	Price  github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
 }
 
 func (m *CurrentPrice) Reset()         { *m = CurrentPrice{} }
@@ -254,55 +246,106 @@ func (m *CurrentPrice) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CurrentPrice proto.InternalMessageInfo
 
-func (m *CurrentPrice) GetMarketID() string {
+func (m *CurrentPrice) GetPairID() string {
 	if m != nil {
-		return m.MarketID
+		return m.PairID
+	}
+	return ""
+}
+
+// CurrentTWAP states defines the numerator and denominator for the TWAP calculation
+type CurrentTWAP struct {
+	PairID      string                                 `protobuf:"bytes,1,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`
+	Numerator   github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=numerator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"numerator"`
+	Denominator github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=denominator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"denominator"`
+	Price       github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
+}
+
+func (m *CurrentTWAP) Reset()         { *m = CurrentTWAP{} }
+func (m *CurrentTWAP) String() string { return proto.CompactTextString(m) }
+func (*CurrentTWAP) ProtoMessage()    {}
+func (*CurrentTWAP) Descriptor() ([]byte, []int) {
+	return fileDescriptor_76ce94fb65bc3a91, []int{4}
+}
+func (m *CurrentTWAP) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CurrentTWAP) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CurrentTWAP.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CurrentTWAP) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CurrentTWAP.Merge(m, src)
+}
+func (m *CurrentTWAP) XXX_Size() int {
+	return m.Size()
+}
+func (m *CurrentTWAP) XXX_DiscardUnknown() {
+	xxx_messageInfo_CurrentTWAP.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CurrentTWAP proto.InternalMessageInfo
+
+func (m *CurrentTWAP) GetPairID() string {
+	if m != nil {
+		return m.PairID
 	}
 	return ""
 }
 
 func init() {
-	proto.RegisterType((*Params)(nil), "MatrixDao.pricefeed.v1.Params")
-	proto.RegisterType((*Market)(nil), "MatrixDao.pricefeed.v1.Market")
-	proto.RegisterType((*PostedPrice)(nil), "MatrixDao.pricefeed.v1.PostedPrice")
-	proto.RegisterType((*CurrentPrice)(nil), "MatrixDao.pricefeed.v1.CurrentPrice")
+	proto.RegisterType((*Params)(nil), "NibiruChain.pricefeed.v1.Params")
+	proto.RegisterType((*Pair)(nil), "NibiruChain.pricefeed.v1.Pair")
+	proto.RegisterType((*PostedPrice)(nil), "NibiruChain.pricefeed.v1.PostedPrice")
+	proto.RegisterType((*CurrentPrice)(nil), "NibiruChain.pricefeed.v1.CurrentPrice")
+	proto.RegisterType((*CurrentTWAP)(nil), "NibiruChain.pricefeed.v1.CurrentTWAP")
 }
 
 func init() { proto.RegisterFile("pricefeed/params.proto", fileDescriptor_76ce94fb65bc3a91) }
 
 var fileDescriptor_76ce94fb65bc3a91 = []byte{
-	// 488 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x53, 0x31, 0x6f, 0xd3, 0x40,
-	0x14, 0xce, 0x25, 0xad, 0x93, 0x5c, 0x02, 0x48, 0x16, 0x8a, 0x4c, 0x24, 0xce, 0x56, 0x06, 0x64,
-	0x86, 0x9e, 0xd5, 0xb2, 0xb2, 0xc4, 0x64, 0x89, 0x50, 0x45, 0x64, 0x18, 0x10, 0x4b, 0x74, 0x39,
-	0x5f, 0x8d, 0xd5, 0x9a, 0x33, 0x77, 0x97, 0x2a, 0x9d, 0xf8, 0x0b, 0x9d, 0xf8, 0x0d, 0x88, 0x5f,
-	0xd2, 0xb1, 0x63, 0xc5, 0x90, 0x16, 0xe7, 0x5f, 0x30, 0x21, 0xdf, 0xd9, 0x81, 0x81, 0x81, 0xc0,
-	0xe4, 0x7b, 0xdf, 0xfb, 0xde, 0x77, 0xef, 0x7d, 0xf7, 0x0c, 0x07, 0xb9, 0x48, 0x29, 0x3b, 0x61,
-	0x2c, 0x0e, 0x72, 0x22, 0x48, 0x26, 0x71, 0x2e, 0xb8, 0xe2, 0xf6, 0xe0, 0x98, 0x28, 0x91, 0xae,
-	0x26, 0x84, 0xe3, 0x2d, 0x03, 0x9f, 0x1f, 0x0e, 0x1f, 0x51, 0x2e, 0x33, 0x2e, 0xe7, 0x9a, 0x15,
-	0x98, 0xc0, 0x94, 0x0c, 0x1f, 0x26, 0x3c, 0xe1, 0x06, 0x2f, 0x4f, 0x15, 0xea, 0x26, 0x9c, 0x27,
-	0x67, 0x2c, 0xd0, 0xd1, 0x62, 0x79, 0x12, 0xa8, 0x34, 0x63, 0x52, 0x91, 0x2c, 0x37, 0x84, 0xd1,
-	0x6b, 0x68, 0xcd, 0xf4, 0xcd, 0xf6, 0x14, 0xb6, 0x33, 0x22, 0x4e, 0x99, 0x92, 0x0e, 0xf0, 0x5a,
-	0x7e, 0xef, 0x08, 0xe1, 0x3f, 0x77, 0x81, 0x8f, 0x35, 0x2d, 0x7c, 0x70, 0xb5, 0x76, 0x1b, 0x5f,
-	0x6f, 0xdd, 0xb6, 0x89, 0x65, 0x54, 0xd7, 0x8f, 0x6e, 0x00, 0xb4, 0x0c, 0x68, 0x3f, 0x85, 0x5d,
-	0x83, 0xce, 0xd3, 0xd8, 0x01, 0x1e, 0xf0, 0xbb, 0x61, 0xbf, 0x58, 0xbb, 0x1d, 0x93, 0x9e, 0x4e,
-	0xa2, 0x8e, 0x49, 0x4f, 0x63, 0xfb, 0x31, 0x84, 0x0b, 0x22, 0xd9, 0x9c, 0x48, 0xc9, 0x94, 0xd3,
-	0x2c, 0xb9, 0x51, 0xb7, 0x44, 0xc6, 0x25, 0x60, 0xbb, 0xb0, 0xf7, 0x71, 0xc9, 0x55, 0x9d, 0x6f,
-	0xe9, 0x3c, 0xd4, 0x90, 0x21, 0xbc, 0x84, 0x6d, 0x2e, 0x08, 0x3d, 0x63, 0xd2, 0xd9, 0xf3, 0x5a,
-	0x7e, 0x3f, 0x3c, 0xfc, 0xb1, 0x76, 0x0f, 0x92, 0x54, 0xbd, 0x5f, 0x2e, 0x30, 0xe5, 0x59, 0xe5,
-	0x57, 0xf5, 0x39, 0x90, 0xf1, 0x69, 0xa0, 0x2e, 0x72, 0x26, 0xf1, 0x98, 0xd2, 0x71, 0x1c, 0x0b,
-	0x26, 0x65, 0x54, 0x2b, 0xd8, 0x03, 0x68, 0x11, 0xaa, 0xd2, 0x73, 0xe6, 0xec, 0x7b, 0xc0, 0xef,
-	0x44, 0x55, 0x34, 0xfa, 0xdc, 0x84, 0xbd, 0x19, 0x97, 0x8a, 0xc5, 0xb3, 0xd2, 0x92, 0x5d, 0xe6,
-	0x7b, 0x0b, 0xef, 0x1b, 0xf5, 0x39, 0x31, 0xb7, 0xe9, 0x19, 0xff, 0xa9, 0xcd, 0x7b, 0x46, 0xa8,
-	0x0a, 0xed, 0x09, 0xdc, 0xd7, 0x0f, 0x64, 0x4c, 0x09, 0x71, 0xf9, 0x30, 0xdf, 0xd6, 0xee, 0x93,
-	0xbf, 0x10, 0x9d, 0x30, 0x1a, 0x99, 0x62, 0xfb, 0x39, 0xb4, 0xd8, 0x2a, 0x4f, 0xc5, 0x85, 0xb3,
-	0xe7, 0x01, 0xbf, 0x77, 0x34, 0xc4, 0x66, 0x79, 0x70, 0xbd, 0x3c, 0xf8, 0x4d, 0xbd, 0x3c, 0x61,
-	0xa7, 0xbc, 0xe2, 0xf2, 0xd6, 0x05, 0x51, 0x55, 0x33, 0xfa, 0x04, 0xfb, 0x2f, 0x96, 0x42, 0xb0,
-	0x0f, 0x6a, 0x67, 0x63, 0xb6, 0xed, 0x37, 0xff, 0xa3, 0xfd, 0xf0, 0xd5, 0xdd, 0x77, 0x04, 0xbe,
-	0x14, 0x08, 0x5c, 0x15, 0x08, 0x5c, 0x17, 0x08, 0xdc, 0x15, 0x08, 0x5c, 0x6e, 0x50, 0xe3, 0x7a,
-	0x83, 0x1a, 0x37, 0x1b, 0xd4, 0x78, 0xf7, 0xbb, 0xc9, 0xdb, 0xd5, 0x0e, 0x32, 0x7d, 0x0a, 0x56,
-	0xc1, 0xaf, 0x7f, 0x51, 0x6b, 0x2f, 0x2c, 0x3d, 0xf7, 0xb3, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff,
-	0x50, 0x1c, 0xeb, 0x7f, 0xa5, 0x03, 0x00, 0x00,
+	// 520 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xbb, 0x6e, 0xdb, 0x30,
+	0x14, 0x35, 0xfd, 0x50, 0x12, 0x3a, 0xe9, 0x20, 0x14, 0x81, 0xea, 0x41, 0x32, 0x5c, 0xa0, 0xf0,
+	0x12, 0xaa, 0x4e, 0xd7, 0x2e, 0x7e, 0x2c, 0x46, 0x1f, 0x50, 0x85, 0x00, 0x2d, 0xba, 0x18, 0xb4,
+	0xc4, 0x38, 0x44, 0x22, 0x51, 0x20, 0xe9, 0x20, 0xfe, 0x0b, 0x8f, 0x05, 0xfa, 0x03, 0x45, 0xbf,
+	0x24, 0x63, 0xc6, 0xa2, 0x83, 0x93, 0xca, 0x7f, 0xd1, 0xa9, 0x20, 0x29, 0x3f, 0x96, 0x02, 0x79,
+	0x4c, 0xe2, 0xb9, 0xba, 0xf7, 0x9c, 0x73, 0xef, 0x95, 0x08, 0x0f, 0x33, 0x4e, 0x23, 0x72, 0x4a,
+	0x48, 0xec, 0x67, 0x98, 0xe3, 0x44, 0xa0, 0x8c, 0x33, 0xc9, 0x6c, 0xe7, 0x23, 0x1d, 0x53, 0x3e,
+	0xed, 0x9f, 0x61, 0x9a, 0xa2, 0x75, 0x0e, 0xba, 0xec, 0x34, 0x5e, 0x44, 0x4c, 0x24, 0x4c, 0x8c,
+	0x74, 0x9e, 0x6f, 0x80, 0x29, 0x6a, 0x3c, 0x9f, 0xb0, 0x09, 0x33, 0x71, 0x75, 0x2a, 0xa2, 0xde,
+	0x84, 0xb1, 0xc9, 0x05, 0xf1, 0x35, 0x1a, 0x4f, 0x4f, 0x7d, 0x49, 0x13, 0x22, 0x24, 0x4e, 0x32,
+	0x93, 0xd0, 0xfa, 0x00, 0xad, 0x40, 0x6b, 0xdb, 0x7d, 0x58, 0xcb, 0x30, 0xe5, 0xc2, 0x01, 0xcd,
+	0x4a, 0xbb, 0x7e, 0xec, 0xa2, 0xff, 0xb9, 0x40, 0x01, 0xa6, 0xbc, 0x77, 0x70, 0xbd, 0xf0, 0x4a,
+	0x3f, 0x6f, 0xbd, 0x9a, 0x42, 0x22, 0x34, 0xb5, 0xad, 0xef, 0x00, 0x56, 0x55, 0xc0, 0x3e, 0x84,
+	0x96, 0x64, 0xe7, 0x24, 0x7d, 0xed, 0x80, 0x26, 0x68, 0xef, 0x85, 0x05, 0x5a, 0xc7, 0x3b, 0x4e,
+	0x79, 0x2b, 0xde, 0xb1, 0xdf, 0xc1, 0x1d, 0xc6, 0x71, 0x74, 0x41, 0x84, 0x53, 0x69, 0x56, 0xda,
+	0xfb, 0xbd, 0xce, 0xdf, 0x85, 0x77, 0x34, 0xa1, 0xf2, 0x6c, 0x3a, 0x46, 0x11, 0x4b, 0x8a, 0x66,
+	0x8b, 0xc7, 0x91, 0x88, 0xcf, 0x7d, 0x39, 0xcb, 0x88, 0x40, 0xdd, 0x28, 0xea, 0xc6, 0x31, 0x27,
+	0x42, 0x84, 0x2b, 0x06, 0x25, 0x82, 0x23, 0x49, 0x2f, 0x89, 0x53, 0x6d, 0x82, 0xf6, 0x6e, 0x58,
+	0xa0, 0xd6, 0xbc, 0x0c, 0xeb, 0x01, 0x13, 0x92, 0xc4, 0x81, 0xea, 0xc7, 0x7e, 0x09, 0x77, 0x94,
+	0xed, 0x11, 0x8d, 0x8d, 0xcb, 0x1e, 0xcc, 0x17, 0x9e, 0xa5, 0xfc, 0x0f, 0x07, 0xa1, 0xa5, 0x5e,
+	0x0d, 0x63, 0xfb, 0x0b, 0x7c, 0x66, 0x78, 0x47, 0xd8, 0xe8, 0x68, 0xe7, 0x8f, 0x32, 0x78, 0x60,
+	0x88, 0x0a, 0x68, 0x0f, 0x60, 0x4d, 0xcf, 0xd5, 0xa9, 0x68, 0x71, 0xa4, 0x26, 0xfa, 0x7b, 0xe1,
+	0xbd, 0xba, 0x07, 0xe9, 0x80, 0x44, 0xa1, 0x29, 0xb6, 0xdf, 0x42, 0x8b, 0x5c, 0x65, 0x94, 0xcf,
+	0x74, 0xb3, 0xf5, 0xe3, 0x06, 0x32, 0x3b, 0x47, 0xab, 0x9d, 0xa3, 0x93, 0xd5, 0xce, 0x7b, 0xbb,
+	0x4a, 0x62, 0x7e, 0xeb, 0x81, 0xb0, 0xa8, 0x69, 0xcd, 0xe0, 0x7e, 0x7f, 0xca, 0x39, 0x49, 0xe5,
+	0x03, 0x46, 0xb2, 0x36, 0x5e, 0x7e, 0x82, 0xf1, 0xd6, 0xb7, 0x32, 0xac, 0x17, 0xda, 0x27, 0x9f,
+	0xbb, 0xc1, 0xfd, 0xa4, 0xdf, 0xc3, 0xbd, 0x74, 0x9a, 0x10, 0x8e, 0x25, 0xe3, 0x8f, 0x94, 0xdf,
+	0x10, 0xd8, 0x01, 0xac, 0xc7, 0x24, 0x65, 0x09, 0x4d, 0x35, 0xdf, 0xc3, 0xf7, 0x30, 0x4c, 0x65,
+	0xb8, 0x4d, 0xb1, 0x19, 0x4d, 0xf5, 0x09, 0xa3, 0xe9, 0x7d, 0xba, 0xfb, 0xe3, 0x82, 0x1f, 0xb9,
+	0x0b, 0xae, 0x73, 0x17, 0xdc, 0xe4, 0x2e, 0xb8, 0xcb, 0x5d, 0x30, 0x5f, 0xba, 0xa5, 0x9b, 0xa5,
+	0x5b, 0xfa, 0xb5, 0x74, 0x4b, 0x5f, 0xfd, 0x2d, 0xc2, 0xad, 0x1f, 0xd5, 0x4f, 0xf5, 0xd9, 0xbf,
+	0xf2, 0x37, 0x77, 0x8b, 0x66, 0x1f, 0x5b, 0xfa, 0x73, 0x78, 0xf3, 0x2f, 0x00, 0x00, 0xff, 0xff,
+	0x02, 0x43, 0x14, 0x7b, 0x75, 0x04, 0x00, 0x00,
 }
 
 func (this *Params) VerboseEqual(that interface{}) error {
@@ -330,12 +373,12 @@ func (this *Params) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Params but is not nil && this == nil")
 	}
-	if len(this.Markets) != len(that1.Markets) {
-		return fmt.Errorf("Markets this(%v) Not Equal that(%v)", len(this.Markets), len(that1.Markets))
+	if len(this.Pairs) != len(that1.Pairs) {
+		return fmt.Errorf("Pairs this(%v) Not Equal that(%v)", len(this.Pairs), len(that1.Pairs))
 	}
-	for i := range this.Markets {
-		if !this.Markets[i].Equal(&that1.Markets[i]) {
-			return fmt.Errorf("Markets this[%v](%v) Not Equal that[%v](%v)", i, this.Markets[i], i, that1.Markets[i])
+	for i := range this.Pairs {
+		if !this.Pairs[i].Equal(&that1.Pairs[i]) {
+			return fmt.Errorf("Pairs this[%v](%v) Not Equal that[%v](%v)", i, this.Pairs[i], i, that1.Pairs[i])
 		}
 	}
 	return nil
@@ -359,17 +402,17 @@ func (this *Params) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if len(this.Markets) != len(that1.Markets) {
+	if len(this.Pairs) != len(that1.Pairs) {
 		return false
 	}
-	for i := range this.Markets {
-		if !this.Markets[i].Equal(&that1.Markets[i]) {
+	for i := range this.Pairs {
+		if !this.Pairs[i].Equal(&that1.Pairs[i]) {
 			return false
 		}
 	}
 	return true
 }
-func (this *Market) VerboseEqual(that interface{}) error {
+func (this *Pair) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -377,31 +420,28 @@ func (this *Market) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*Market)
+	that1, ok := that.(*Pair)
 	if !ok {
-		that2, ok := that.(Market)
+		that2, ok := that.(Pair)
 		if ok {
 			that1 = &that2
 		} else {
-			return fmt.Errorf("that is not of type *Market")
+			return fmt.Errorf("that is not of type *Pair")
 		}
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt.Errorf("that is type *Market but is nil && this != nil")
+		return fmt.Errorf("that is type *Pair but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Market but is not nil && this == nil")
+		return fmt.Errorf("that is type *Pair but is not nil && this == nil")
 	}
-	if this.MarketID != that1.MarketID {
-		return fmt.Errorf("MarketID this(%v) Not Equal that(%v)", this.MarketID, that1.MarketID)
+	if this.Token0 != that1.Token0 {
+		return fmt.Errorf("Token0 this(%v) Not Equal that(%v)", this.Token0, that1.Token0)
 	}
-	if this.BaseAsset != that1.BaseAsset {
-		return fmt.Errorf("BaseAsset this(%v) Not Equal that(%v)", this.BaseAsset, that1.BaseAsset)
-	}
-	if this.QuoteAsset != that1.QuoteAsset {
-		return fmt.Errorf("QuoteAsset this(%v) Not Equal that(%v)", this.QuoteAsset, that1.QuoteAsset)
+	if this.Token1 != that1.Token1 {
+		return fmt.Errorf("Token1 this(%v) Not Equal that(%v)", this.Token1, that1.Token1)
 	}
 	if len(this.Oracles) != len(that1.Oracles) {
 		return fmt.Errorf("Oracles this(%v) Not Equal that(%v)", len(this.Oracles), len(that1.Oracles))
@@ -416,14 +456,14 @@ func (this *Market) VerboseEqual(that interface{}) error {
 	}
 	return nil
 }
-func (this *Market) Equal(that interface{}) bool {
+func (this *Pair) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*Market)
+	that1, ok := that.(*Pair)
 	if !ok {
-		that2, ok := that.(Market)
+		that2, ok := that.(Pair)
 		if ok {
 			that1 = &that2
 		} else {
@@ -435,13 +475,10 @@ func (this *Market) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.MarketID != that1.MarketID {
+	if this.Token0 != that1.Token0 {
 		return false
 	}
-	if this.BaseAsset != that1.BaseAsset {
-		return false
-	}
-	if this.QuoteAsset != that1.QuoteAsset {
+	if this.Token1 != that1.Token1 {
 		return false
 	}
 	if len(this.Oracles) != len(that1.Oracles) {
@@ -482,8 +519,8 @@ func (this *PostedPrice) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *PostedPrice but is not nil && this == nil")
 	}
-	if this.MarketID != that1.MarketID {
-		return fmt.Errorf("MarketID this(%v) Not Equal that(%v)", this.MarketID, that1.MarketID)
+	if this.PairID != that1.PairID {
+		return fmt.Errorf("PairID this(%v) Not Equal that(%v)", this.PairID, that1.PairID)
 	}
 	if !bytes.Equal(this.OracleAddress, that1.OracleAddress) {
 		return fmt.Errorf("OracleAddress this(%v) Not Equal that(%v)", this.OracleAddress, that1.OracleAddress)
@@ -515,7 +552,7 @@ func (this *PostedPrice) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.MarketID != that1.MarketID {
+	if this.PairID != that1.PairID {
 		return false
 	}
 	if !bytes.Equal(this.OracleAddress, that1.OracleAddress) {
@@ -554,8 +591,8 @@ func (this *CurrentPrice) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *CurrentPrice but is not nil && this == nil")
 	}
-	if this.MarketID != that1.MarketID {
-		return fmt.Errorf("MarketID this(%v) Not Equal that(%v)", this.MarketID, that1.MarketID)
+	if this.PairID != that1.PairID {
+		return fmt.Errorf("PairID this(%v) Not Equal that(%v)", this.PairID, that1.PairID)
 	}
 	if !this.Price.Equal(that1.Price) {
 		return fmt.Errorf("Price this(%v) Not Equal that(%v)", this.Price, that1.Price)
@@ -581,7 +618,79 @@ func (this *CurrentPrice) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.MarketID != that1.MarketID {
+	if this.PairID != that1.PairID {
+		return false
+	}
+	if !this.Price.Equal(that1.Price) {
+		return false
+	}
+	return true
+}
+func (this *CurrentTWAP) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*CurrentTWAP)
+	if !ok {
+		that2, ok := that.(CurrentTWAP)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *CurrentTWAP")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *CurrentTWAP but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *CurrentTWAP but is not nil && this == nil")
+	}
+	if this.PairID != that1.PairID {
+		return fmt.Errorf("PairID this(%v) Not Equal that(%v)", this.PairID, that1.PairID)
+	}
+	if !this.Numerator.Equal(that1.Numerator) {
+		return fmt.Errorf("Numerator this(%v) Not Equal that(%v)", this.Numerator, that1.Numerator)
+	}
+	if !this.Denominator.Equal(that1.Denominator) {
+		return fmt.Errorf("Denominator this(%v) Not Equal that(%v)", this.Denominator, that1.Denominator)
+	}
+	if !this.Price.Equal(that1.Price) {
+		return fmt.Errorf("Price this(%v) Not Equal that(%v)", this.Price, that1.Price)
+	}
+	return nil
+}
+func (this *CurrentTWAP) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*CurrentTWAP)
+	if !ok {
+		that2, ok := that.(CurrentTWAP)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.PairID != that1.PairID {
+		return false
+	}
+	if !this.Numerator.Equal(that1.Numerator) {
+		return false
+	}
+	if !this.Denominator.Equal(that1.Denominator) {
 		return false
 	}
 	if !this.Price.Equal(that1.Price) {
@@ -609,10 +718,10 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Markets) > 0 {
-		for iNdEx := len(m.Markets) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Pairs) > 0 {
+		for iNdEx := len(m.Pairs) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Markets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Pairs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -626,7 +735,7 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Market) Marshal() (dAtA []byte, err error) {
+func (m *Pair) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -636,12 +745,12 @@ func (m *Market) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Market) MarshalTo(dAtA []byte) (int, error) {
+func (m *Pair) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Market) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Pair) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -654,7 +763,7 @@ func (m *Market) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x28
+		dAtA[i] = 0x20
 	}
 	if len(m.Oracles) > 0 {
 		for iNdEx := len(m.Oracles) - 1; iNdEx >= 0; iNdEx-- {
@@ -662,27 +771,20 @@ func (m *Market) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			copy(dAtA[i:], m.Oracles[iNdEx])
 			i = encodeVarintParams(dAtA, i, uint64(len(m.Oracles[iNdEx])))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x1a
 		}
 	}
-	if len(m.QuoteAsset) > 0 {
-		i -= len(m.QuoteAsset)
-		copy(dAtA[i:], m.QuoteAsset)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.QuoteAsset)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.BaseAsset) > 0 {
-		i -= len(m.BaseAsset)
-		copy(dAtA[i:], m.BaseAsset)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.BaseAsset)))
+	if len(m.Token1) > 0 {
+		i -= len(m.Token1)
+		copy(dAtA[i:], m.Token1)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.Token1)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.MarketID) > 0 {
-		i -= len(m.MarketID)
-		copy(dAtA[i:], m.MarketID)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.MarketID)))
+	if len(m.Token0) > 0 {
+		i -= len(m.Token0)
+		copy(dAtA[i:], m.Token0)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.Token0)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -734,10 +836,10 @@ func (m *PostedPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.MarketID) > 0 {
-		i -= len(m.MarketID)
-		copy(dAtA[i:], m.MarketID)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.MarketID)))
+	if len(m.PairID) > 0 {
+		i -= len(m.PairID)
+		copy(dAtA[i:], m.PairID)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.PairID)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -774,10 +876,70 @@ func (m *CurrentPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0x12
-	if len(m.MarketID) > 0 {
-		i -= len(m.MarketID)
-		copy(dAtA[i:], m.MarketID)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.MarketID)))
+	if len(m.PairID) > 0 {
+		i -= len(m.PairID)
+		copy(dAtA[i:], m.PairID)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.PairID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CurrentTWAP) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CurrentTWAP) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CurrentTWAP) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Price.Size()
+		i -= size
+		if _, err := m.Price.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x22
+	{
+		size := m.Denominator.Size()
+		i -= size
+		if _, err := m.Denominator.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.Numerator.Size()
+		i -= size
+		if _, err := m.Numerator.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.PairID) > 0 {
+		i -= len(m.PairID)
+		copy(dAtA[i:], m.PairID)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.PairID)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -801,8 +963,8 @@ func (m *Params) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Markets) > 0 {
-		for _, e := range m.Markets {
+	if len(m.Pairs) > 0 {
+		for _, e := range m.Pairs {
 			l = e.Size()
 			n += 1 + l + sovParams(uint64(l))
 		}
@@ -810,21 +972,17 @@ func (m *Params) Size() (n int) {
 	return n
 }
 
-func (m *Market) Size() (n int) {
+func (m *Pair) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.MarketID)
+	l = len(m.Token0)
 	if l > 0 {
 		n += 1 + l + sovParams(uint64(l))
 	}
-	l = len(m.BaseAsset)
-	if l > 0 {
-		n += 1 + l + sovParams(uint64(l))
-	}
-	l = len(m.QuoteAsset)
+	l = len(m.Token1)
 	if l > 0 {
 		n += 1 + l + sovParams(uint64(l))
 	}
@@ -846,7 +1004,7 @@ func (m *PostedPrice) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.MarketID)
+	l = len(m.PairID)
 	if l > 0 {
 		n += 1 + l + sovParams(uint64(l))
 	}
@@ -867,10 +1025,29 @@ func (m *CurrentPrice) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.MarketID)
+	l = len(m.PairID)
 	if l > 0 {
 		n += 1 + l + sovParams(uint64(l))
 	}
+	l = m.Price.Size()
+	n += 1 + l + sovParams(uint64(l))
+	return n
+}
+
+func (m *CurrentTWAP) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.PairID)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	l = m.Numerator.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.Denominator.Size()
+	n += 1 + l + sovParams(uint64(l))
 	l = m.Price.Size()
 	n += 1 + l + sovParams(uint64(l))
 	return n
@@ -913,7 +1090,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Markets", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pairs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -940,8 +1117,8 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Markets = append(m.Markets, Market{})
-			if err := m.Markets[len(m.Markets)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Pairs = append(m.Pairs, Pair{})
+			if err := m.Pairs[len(m.Pairs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -966,7 +1143,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Market) Unmarshal(dAtA []byte) error {
+func (m *Pair) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -989,15 +1166,15 @@ func (m *Market) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Market: wiretype end group for non-group")
+			return fmt.Errorf("proto: Pair: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Market: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Pair: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MarketID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Token0", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1025,11 +1202,11 @@ func (m *Market) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MarketID = string(dAtA[iNdEx:postIndex])
+			m.Token0 = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BaseAsset", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Token1", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1057,41 +1234,9 @@ func (m *Market) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BaseAsset = string(dAtA[iNdEx:postIndex])
+			m.Token1 = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field QuoteAsset", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthParams
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthParams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.QuoteAsset = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Oracles", wireType)
 			}
@@ -1123,7 +1268,7 @@ func (m *Market) Unmarshal(dAtA []byte) error {
 			m.Oracles = append(m.Oracles, make([]byte, postIndex-iNdEx))
 			copy(m.Oracles[len(m.Oracles)-1], dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Active", wireType)
 			}
@@ -1195,7 +1340,7 @@ func (m *PostedPrice) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MarketID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PairID", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1223,7 +1368,7 @@ func (m *PostedPrice) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MarketID = string(dAtA[iNdEx:postIndex])
+			m.PairID = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -1378,7 +1523,7 @@ func (m *CurrentPrice) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MarketID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PairID", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1406,9 +1551,193 @@ func (m *CurrentPrice) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MarketID = string(dAtA[iNdEx:postIndex])
+			m.PairID = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Price", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Price.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipParams(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthParams
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CurrentTWAP) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowParams
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CurrentTWAP: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CurrentTWAP: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PairID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PairID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Numerator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Numerator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denominator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Denominator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Price", wireType)
 			}

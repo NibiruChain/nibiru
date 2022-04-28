@@ -1,5 +1,5 @@
 syntax = "proto3";
-package matrix.dex.v1;
+package nibiru.dex.v1;
 
 import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
@@ -7,23 +7,28 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/dex/types";
+option go_package = "github.com/NibiruChain/nibiru/x/dex/types";
 
 // Msg defines the Msg service.
 service Msg {
   // Used to create a pool.
   rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse) {
-    option (google.api.http).post = "/matrix/dex/pool";
+    option (google.api.http).post = "/nibiru/dex/pool";
   }
 
   // Join a pool as a liquidity provider.
   rpc JoinPool(MsgJoinPool) returns (MsgJoinPoolResponse) {
-    option (google.api.http).post = "/matrix/dex/{poolId}/join";
+    option (google.api.http).post = "/nibiru/dex/{poolId}/join";
   }
 
   // Exit a pool position by returning LP shares
   rpc ExitPool(MsgExitPool) returns (MsgExitPoolResponse) {
-    option (google.api.http).post = "/matrix/dex/{poolId}/exit";
+    option (google.api.http).post = "/nibiru/dex/{poolId}/exit";
+  }
+
+  // Swap assets in a pool
+  rpc SwapAssets(MsgSwapAssets) returns (MsgSwapAssetsResponse) {
+    option (google.api.http).post = "/nibiru/dex/{poolId}/swap";
   }
 }
 
@@ -87,6 +92,26 @@ message MsgExitPool {
 message MsgExitPoolResponse {
   repeated cosmos.base.v1beta1.Coin tokensOut = 3 [
     (gogoproto.moretags) = "yaml:\"tokens_out\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgSwapAssets {
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+
+  uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+
+  cosmos.base.v1beta1.Coin tokenIn = 3 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
+    (gogoproto.nullable) = false
+  ];
+
+  string tokenOutDenom = 4 [(gogoproto.moretags) = "yaml:\"token_out_denom\""];
+}
+
+message MsgSwapAssetsResponse {
+  cosmos.base.v1beta1.Coin tokenOut = 3 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
 }

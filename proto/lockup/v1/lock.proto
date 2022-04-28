@@ -1,12 +1,12 @@
 syntax = "proto3";
-package matrix.lockup.v1;
+package nibiru.lockup.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/lockup/types";
+option go_package = "github.com/NibiruChain/nibiru/x/lockup/types";
 
 // Lock represents a users locked tokens for a period of time.
 // It stores owner, duration, unlock time and the amount of coins locked.

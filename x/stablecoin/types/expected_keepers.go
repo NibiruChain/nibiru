@@ -1,8 +1,8 @@
 package types // noalias
 
 import (
-	pftypes "github.com/MatrixDao/matrix/x/pricefeed/types"
-
+	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -24,16 +24,21 @@ type BankKeeper interface {
 	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	// Methods imported from bank should be defined here
 }
 
 type PriceKeeper interface {
-	GetCurrentPrice(ctx sdk.Context, marketID string) (pftypes.CurrentPrice, error)
+	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
+	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
-	GetMarket(ctx sdk.Context, marketID string) (pftypes.Market, bool)
-	GetMarkets(ctx sdk.Context) pftypes.Markets
-	GetOracle(ctx sdk.Context, marketID string, address sdk.AccAddress) (sdk.AccAddress, error)
-	GetOracles(ctx sdk.Context, marketID string) ([]sdk.AccAddress, error)
-	SetCurrentPrices(ctx sdk.Context, marketID string) error
+	GetPair(ctx sdk.Context, pairID string) (pftypes.Pair, bool)
+	GetPairs(ctx sdk.Context) pftypes.Pairs
+	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress) (sdk.AccAddress, error)
+	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
+	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+}
+
+type DexKeeper interface {
+	GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error)
+	FetchPool(ctx sdk.Context, poolId uint64) (pool dextypes.Pool, err error)
 }

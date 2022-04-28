@@ -1,10 +1,10 @@
 syntax = "proto3";
-package MatrixDao.stablecoin.v1;
+package NibiruChain.stablecoin.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/stablecoin/types";
+option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 
 // Msg defines the x/stablecoin Msg service.
 service Msg {
@@ -20,11 +20,17 @@ service Msg {
   protocol in exchange for an equivalent stablecoin value in governance tokens 
   plus a small bonus. */
   rpc Recollateralize(MsgRecollateralize) returns (MsgRecollateralizeResponse);
+
+  /* Buyback defines a method for manually adding NIBI to the protocol 
+  in exchange for an equivalent stablecoin value in collateral, effectively 
+  executing a share buyback for Nibiru Chain. The NIBI purchased by the protocol 
+  is then burned, distributing value to all NIBI hodlers. */
+  rpc Buyback(MsgBuyback) returns (MsgBuybackResponse);
 }
 
 /* 
-MsgMintStable: Msg to mint USDM. A user deposits MTRX and collateral and gets 
-USDM in return. The amount of USDM received depends on the current price set 
+MsgMintStable: Msg to mint NUSD. A user deposits NIBI and collateral and gets 
+NUSD in return. The amount of NUSD received depends on the current price set 
 by the pricefeed library and the current collateral ratio for the protocol.
 */
 message MsgMintStable {
@@ -32,7 +38,7 @@ message MsgMintStable {
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
 }
 
-/* MsgMintStableResponse specifies the amount of USDM token the user will receive after their
+/* MsgMintStableResponse specifies the amount of NUSD token the user will receive after their
 * mint transaction*/
 message MsgMintStableResponse {
   cosmos.base.v1beta1.Coin stable = 1 [(gogoproto.nullable) = false];
@@ -43,7 +49,7 @@ message MsgMintStableResponse {
 }
 
 /* 
-MsgBurnStable allows users to burn USDM in exchange for MTRX and collateral in return. The amount of MTRX and 
+MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral in return. The amount of NIBI and 
 Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
 for the protocol.
 */
@@ -57,6 +63,8 @@ message MsgBurnStable {
 message MsgBurnStableResponse {
   cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin fees_payed = 3
+  [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
 /* MsgRecollateralize  */
@@ -69,4 +77,18 @@ message MsgRecollateralize {
 message MsgRecollateralizeResponse {
   // Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.  
   cosmos.base.v1beta1.Coin gov = 1 [(gogoproto.nullable) = false];
+}
+
+/* MsgBuyback  */
+message MsgBuyback {
+  string creator = 1;
+  /* Gov (sdk.Coin): Tokens the caller wants to sell to the protocol in exchange 
+    for collateral. */
+  cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
+}
+
+/* MsgBuybackResponse is the output of a successful 'Buyback' */
+message MsgBuybackResponse {
+  // Coll (sdk.Coin): Tokens sold to the caller in exchange for her collateral.  
+  cosmos.base.v1beta1.Coin coll = 1 [(gogoproto.nullable) = false];
 }

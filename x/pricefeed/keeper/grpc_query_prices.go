@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,7 +18,7 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 
 	var currentPrices types.CurrentPriceResponses
 	for _, cp := range k.GetCurrentPrices(ctx) {
-		if cp.MarketID != "" {
+		if cp.PairID != "" {
 			currentPrices = append(currentPrices, types.CurrentPriceResponse(cp))
 		}
 	}

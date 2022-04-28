@@ -5,8 +5,8 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/MatrixDao/matrix/x/common"
-	"github.com/MatrixDao/matrix/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -21,6 +21,7 @@ type Keeper struct {
 	AccountKeeper types.AccountKeeper
 	BankKeeper    types.BankKeeper
 	PriceKeeper   types.PriceKeeper
+	DexKeeper     types.DexKeeper
 }
 
 // NewKeeper Creates a new x/stablecoin Keeper instance.
@@ -33,8 +34,8 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	priceKeeper types.PriceKeeper,
+	dexKeeper types.DexKeeper,
 ) Keeper {
-
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
 		panic("The stablecoin module account has not been set")
@@ -54,6 +55,7 @@ func NewKeeper(
 		AccountKeeper: accountKeeper,
 		BankKeeper:    bankKeeper,
 		PriceKeeper:   priceKeeper,
+		DexKeeper:     dexKeeper,
 	}
 }
 
