@@ -308,6 +308,17 @@ func (k *Keeper) GovAmtFromFullRecollateralize(
 // Buyback
 // ---------------------------------------------------------------------------
 
+/*
+BuybackGovAmtForTargetCollRatio returns the governance tokens that the protocol can
+buyback in order to have the optimal collateral ration.
+
+Args:
+  ctx (sdk.Context): Carries information about the current state of the application.
+Returns:
+  neededGovAmt (sdk.Int): The needed Governance amount that the protocol can buyback in order to
+  achieve the optimal collateral ratio.
+  err (error): The error containing information if something went wrong.
+*/
 func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededGovAmt sdk.Int, err error) {
@@ -324,6 +335,7 @@ func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 	return neededGovAmt, err
 }
 
+// Buyback buys governance tokens back from the user in order to release over collateralization.
 func (k Keeper) Buyback(
 	goCtx context.Context, msg *types.MsgBuyback,
 ) (response *types.MsgBuybackResponse, err error) {
