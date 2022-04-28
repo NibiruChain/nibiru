@@ -2,7 +2,6 @@ package pricefeed
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -18,7 +17,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		}
 
 		err := k.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-		fmt.Println("\t\t", err)
 		if err != nil && !errors.Is(err, types.ErrNoValidPrice) {
 			panic(err)
 		}

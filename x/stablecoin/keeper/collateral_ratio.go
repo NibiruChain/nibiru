@@ -50,7 +50,7 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 		params.GetAdjustmentStepAsDec(),
 		params.GetPriceLowerBoundAsDec(),
 		params.GetPriceUpperBoundAsDec(),
-		params.IsCollateralValid,
+		params.IsCollateralRatioValid,
 	)
 	k.ParamSubspace.SetParamSet(ctx, &newParams)
 

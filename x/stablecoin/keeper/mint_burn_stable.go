@@ -27,7 +27,7 @@ func (k Keeper) MintStable(
 	}
 
 	params := k.GetParams(ctx)
-	if !params.IsCollateralValid {
+	if !params.IsCollateralRatioValid {
 		return nil, types.NoValidCollateralRatio
 	}
 
@@ -278,7 +278,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	}
 
 	params := k.GetParams(ctx)
-	if !params.IsCollateralValid {
+	if !params.IsCollateralRatioValid {
 		return nil, types.NoValidCollateralRatio
 	}
 

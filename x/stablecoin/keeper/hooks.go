@@ -14,7 +14,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	params := k.GetParams(ctx)
 	fmt.Println("Epoch ends")
-	if epochIdentifier == params.DistrEpochIdentifier || !params.IsCollateralValid {
+	if epochIdentifier == params.DistrEpochIdentifier || !params.IsCollateralRatioValid {
 		err := k.EvaluateCollRatio(ctx)
 
 		params = k.GetParams(ctx)
@@ -28,7 +28,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 				params.GetAdjustmentStepAsDec(),
 				params.GetPriceLowerBoundAsDec(),
 				params.GetPriceUpperBoundAsDec(),
-				/*isCollateralValid*/ false,
+				/*isCollateralRatioValid*/ false,
 			))
 			return
 		}
@@ -42,7 +42,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 			params.GetAdjustmentStepAsDec(),
 			params.GetPriceLowerBoundAsDec(),
 			params.GetPriceUpperBoundAsDec(),
-			/*isCollateralValid*/ true,
+			/*isCollateralRatioValid*/ true,
 		))
 	}
 }

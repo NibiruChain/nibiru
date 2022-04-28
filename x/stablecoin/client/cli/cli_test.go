@@ -84,8 +84,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 	stableGen := stabletypes.DefaultGenesis()
 
-	// IsCollateralValid behavior testted in x/stablecoin/abci_test.go
-	stableGen.Params.IsCollateralValid = true
+	// IsCollateralRatioValid behavior testted in x/stablecoin/abci_test.go
+	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(common.CollDenom, sdk.NewInt(10000000000))
 
 	stableGenJson := s.cfg.Codec.MustMarshalJSON(stableGen)
@@ -98,7 +98,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.network = network.New(s.T(), s.cfg)
 
-	_, err := s.network.WaitForHeight(10)
+	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 }
 
