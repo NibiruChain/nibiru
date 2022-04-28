@@ -3,8 +3,8 @@ package stablecoin
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 // EndBlocker updates the current pricefeed
@@ -14,31 +14,16 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		err := k.EvaluateCollRatio(ctx)
 
 		params := k.GetParams(ctx)
-		if err != nil {
-			k.SetParams(ctx, types.NewParams(
-				params.GetCollRatioAsDec(),
-				params.GetFeeRatioAsDec(),
-				params.GetEfFeeRatioAsDec(),
-				params.GetBonusRateRecollAsDec(),
-				params.DistrEpochIdentifier,
-				params.GetAdjustmentStepAsDec(),
-				params.GetPriceLowerBoundAsDec(),
-				params.GetPriceUpperBoundAsDec(),
-				/*isCollateralRatioValid*/ false,
-			))
-			return
-		}
+		params.IsCollateralRatioValid = err == nil
 
-		k.SetParams(ctx, types.NewParams(
-			params.GetCollRatioAsDec(),
-			params.GetFeeRatioAsDec(),
-			params.GetEfFeeRatioAsDec(),
-			params.GetBonusRateRecollAsDec(),
-			params.DistrEpochIdentifier,
-			params.GetAdjustmentStepAsDec(),
-			params.GetPriceLowerBoundAsDec(),
-			params.GetPriceUpperBoundAsDec(),
-			/*isCollateralRatioValid*/ true,
-		))
+		k.SetParams(ctx, params)
+	}
+
+	_, err := k.PriceKeeper.GetCurrentTWAPPrice(ctx, common.StableDenom, common.CollDenom)
+	if err != nil {
+		params := k.GetParams(ctx)
+		params.IsCollateralRatioValid = false
+
+		k.SetParams(ctx, params)
 	}
 }

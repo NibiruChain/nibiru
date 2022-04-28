@@ -193,8 +193,8 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Pass 1 hour, collateral should be not valid because price are expired
-	runBlock(time.Hour)        // Price are set as expired at the end of this block
-	runBlock(time.Minute * 15) // Collateral ratio fail because no existing price since last block
+	runBlock(time.Hour)   // Price are set as expired at the end of this block
+	runBlock(time.Second) // Collateral ratio fail because no existing price since last block
 
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
