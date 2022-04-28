@@ -21,4 +21,6 @@ var (
 	ErrInvalidOracle = sdkerrors.Register(ModuleName, 6, "Oracle does not exist or not authorized")
 	// ErrAssetNotFound error for not found asset
 	ErrAssetNotFound = sdkerrors.Register(ModuleName, 7, "Asset not found")
+	// ErrNoValidTWAP error for not found asset
+	ErrNoValidTWAP = sdkerrors.Register(ModuleName, 8, "TWA price not found")
 )

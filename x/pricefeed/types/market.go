@@ -129,6 +129,21 @@ func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
 	return CurrentPrice{PairID: assetPair.Name(), Price: price}
 }
 
+/*
+NewCurrentTWAP returns an instance of CurrentTWAP
+
+Args:
+  token0 (string):
+  token1 (string):
+  price (sdk.Dec): Price in units of token1 / token0
+Returns:
+  (CurrentTWAP): Current TWAP price for the asset pair.
+*/
+func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Int, price sdk.Dec) CurrentTWAP {
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	return CurrentTWAP{PairID: assetPair.Name(), Numerator: numerator, Denominator: denominator, Price: price}
+}
+
 // CurrentPrices is a slice of CurrentPrice
 type CurrentPrices []CurrentPrice
 
