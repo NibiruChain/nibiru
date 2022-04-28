@@ -307,6 +307,12 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 
 // GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
 func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
+	// Ensure we still have valid prices
+	_, err = k.GetCurrentPrice(ctx, token0, token1)
+	if err != nil {
+		return types.CurrentTWAP{}, types.ErrNoValidPrice
+	}
+
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	pairID := assetPair.Name()
 
