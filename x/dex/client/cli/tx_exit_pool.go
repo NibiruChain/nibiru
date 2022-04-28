@@ -23,7 +23,7 @@ func CmdExitPool() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100nibiru/pool/1 --from validator --keyring-backend test --home data/localnet --chain-id localnet
+$ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100nibiru/pool/1 --from validator
 `,
 				version.AppName,
 			),
