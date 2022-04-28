@@ -41,7 +41,7 @@ CHAIN_DIR=./data
 RPC_PORT=26657
 GRPC_PORT=9090
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
-GENESIS_COINS=1000000000stake,1000000000validatortoken,1000000000unibi
+GENESIS_COINS=1000000000stake,1000000000validatortoken,1000000000unibi,10000000000000unusd
 
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
