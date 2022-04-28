@@ -5,43 +5,31 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// checkEnoughBalance
-func (k Keeper) checkEnoughBalance(
+/*
+Checks if account has enough balance to spend coins.
+
+args:
+  - ctx: cosmos-sdk context
+  - coinsToSpend: the coins that the account wishes to spend
+  - account: the address of the account spending the coins
+
+ret:
+  - error: an error if insufficient balance
+*/
+func (k Keeper) CheckEnoughBalances(
 	ctx sdk.Context,
-	coinToSpend sdk.Coin,
-	acc sdk.AccAddress,
+	coinsToSpend sdk.Coins,
+	account sdk.AccAddress,
 ) error {
-	accCoins := k.bankKeeper.SpendableCoins(ctx, acc)
-	for _, coin := range accCoins {
-		if coin.Denom == coinToSpend.Denom {
-			hasEnoughBalance := coin.Amount.GTE(coinToSpend.Amount)
-			if hasEnoughBalance {
-				return nil
-			} else {
-				break
-			}
-		}
+	accCoins := k.bankKeeper.SpendableCoins(ctx, account)
+
+	if accCoins.IsAllGTE(coinsToSpend) {
+		return nil
 	}
 
 	return sdkerrors.ErrInsufficientFunds.Wrapf(
 		"acc %s does not have enough to spend %s",
-		acc.String(),
-		coinToSpend.String(),
+		account.String(),
+		coinsToSpend.String(),
 	)
-}
-
-// CheckEnoughBalances checks if account address has enough balance of coins.
-func (k Keeper) CheckEnoughBalances(
-	ctx sdk.Context,
-	coins sdk.Coins,
-	account sdk.AccAddress,
-) error {
-	for _, coin := range coins {
-		err := k.checkEnoughBalance(ctx, coin, account)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

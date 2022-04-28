@@ -87,12 +87,12 @@ func (k Keeper) SwapExactAmountIn(
 	}
 
 	// check sender has enough tokenIn
-	if err = k.checkEnoughBalance(ctx, tokenIn, sender); err != nil {
+	if err = k.CheckEnoughBalances(ctx, sdk.Coins{tokenIn}, sender); err != nil {
 		return sdk.Coin{}, err
 	}
 
 	// check pool has enough tokenOut
-	if err = k.checkEnoughBalance(ctx, tokenOut, pool.GetAddress()); err != nil {
+	if err = k.CheckEnoughBalances(ctx, sdk.Coins{tokenOut}, pool.GetAddress()); err != nil {
 		return sdk.Coin{}, err
 	}
 
