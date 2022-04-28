@@ -40,19 +40,11 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	}
 
 	params := k.GetParams(ctx)
-	// TODO this should be rethought for production
-	newParams := types.NewParams(
-		collRatio,
-		params.GetFeeRatioAsDec(),
-		params.GetEfFeeRatioAsDec(),
-		params.GetBonusRateRecollAsDec(),
-		params.DistrEpochIdentifier,
-		params.GetAdjustmentStepAsDec(),
-		params.GetPriceLowerBoundAsDec(),
-		params.GetPriceUpperBoundAsDec(),
-		params.IsCollateralRatioValid,
-	)
-	k.ParamSubspace.SetParamSet(ctx, &newParams)
+	million := sdk.NewDec(1_000_000)
+	collRatioInt := collRatio.Mul(million).RoundInt().Int64()
+
+	params.CollRatio = collRatioInt
+	k.ParamSubspace.SetParamSet(ctx, &params)
 
 	return err
 }
