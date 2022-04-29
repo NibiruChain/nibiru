@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -54,7 +55,7 @@ func TestCreateLock(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				require.Equal(t, types.Lock{
+				require.Equal(t, &types.Lock{
 					LockId:   0,
 					Owner:    tc.ownerAddr.String(),
 					Duration: tc.duration,
@@ -285,5 +286,40 @@ func TestLockupKeeper_UnlockAvailableCoins(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, unlockedCoins.Sort(), coins2.Add(coins1...).Sort())
+	})
+}
+
+func TestLockupKeeper_LocksByDenomUnlockingAfter(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		app, _ := testutil.NewNibiruApp(false)
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now().UTC()})
+
+		addr := sample.AccAddress()
+		locked := sdk.Coins{sdk.NewInt64Coin("atom", 100)}
+		unlocked := sdk.Coins{sdk.NewInt64Coin("atom", 50)}
+
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, locked))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, unlocked))
+
+		lock1, err := app.LockupKeeper.LockTokens(ctx, addr, locked, 1*time.Second)
+		require.NoError(t, err)
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock1.LockId)
+		require.NoError(t, err)
+		expected, err := app.LockupKeeper.LockTokens(ctx, addr, unlocked, 10*time.Second)
+		require.NoError(t, err)
+
+		processed := 0
+		app.LockupKeeper.LocksByDenomUnlockingAfter(ctx, locked.GetDenomByIndex(0), 1*time.Second, func(lock *types.Lock) (stop bool) {
+			require.Equal(t, expected.LockId, lock.LockId)
+			require.Equal(t, expected.Coins, lock.Coins)
+			require.Equal(t, expected.Duration, lock.Duration)
+			require.Equal(t, expected.Owner, lock.Owner)
+			require.Equal(t, expected.EndTime, lock.EndTime)
+
+			processed++
+			return false
+		})
+
+		require.Equal(t, 1, processed)
 	})
 }
