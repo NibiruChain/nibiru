@@ -76,6 +76,7 @@ func Test_LocksState_232(t *testing.T) {
 	_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock2.LockId)
 	require.NoError(t, err)
 	_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock4.LockId)
+	require.NoError(t, err)
 
 	// create a new ctx which is 1hour + 1sec ahead in time of current context, which means
 	// lock2 and lock4 will be available
