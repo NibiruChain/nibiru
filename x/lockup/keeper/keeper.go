@@ -11,6 +11,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var (
+	// MaxTime is the maximum golang time that can be represented.
+	// It is a date so forward in the future that identifies a
+	// lockup which did not yet start to unlock.
+	// NOTE: this is not maximum golang time because, since we encode it
+	// using timestampb.Timestamp under the hood we need to adhere to proto time
+	// rules.
+	MaxTime = time.Date(9999, time.December, 31, 23, 59, 59, 0, time.UTC)
+)
+
 // LockupKeeper provides a way to manage module storage.
 type LockupKeeper struct {
 	cdc      codec.Codec
@@ -45,7 +55,7 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	lock := &types.Lock{
 		Owner:    owner.String(),
 		Duration: duration,
-		EndTime:  ctx.BlockTime().Add(duration),
+		EndTime:  MaxTime, // we set MaxTime here which means not unlocking.
 		Coins:    coins,
 	}
 
@@ -87,6 +97,30 @@ func (k LockupKeeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedToke
 	}
 
 	return lock.Coins, nil
+}
+
+// InitiateUnlocking starts the unlocking process of a lockup.
+func (k LockupKeeper) InitiateUnlocking(ctx sdk.Context, lockID uint64) (updatedLock *types.Lock, err error) {
+	// we get the lockup
+	lock, err := k.LocksState(ctx).Get(lockID)
+	if err != nil {
+		return nil, err
+	}
+
+	// we check if unlocking did not yet start
+	if !lock.EndTime.Equal(MaxTime) {
+		return nil, types.ErrAlreadyUnlocking.Wrapf("unlock for lock %d was already initiated and will mature at %s", lockID, lock.EndTime)
+	}
+
+	// if it did not yet start we update the lock's end time
+	// which initiates the unlocking of the assets.
+	lock.EndTime = ctx.BlockTime().Add(lock.Duration)
+	err = k.LocksState(ctx).Update(lock)
+	if err != nil {
+		panic(err)
+	}
+
+	return lock, nil
 }
 
 // UnlockAvailableCoins unlocks all the available coins for the provided account sdk.AccAddress.
