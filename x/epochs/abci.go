@@ -17,11 +17,12 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 	k.IterateEpochInfo(ctx, func(index int64, epochInfo types.EpochInfo) (stop bool) {
 		logger := k.Logger(ctx)
 
-		// Epoch hasn't started, and the current block time > initial epoch start time
-		shouldInitialEpochStart := !epochInfo.EpochCountingStarted && ctx.BlockTime().After(epochInfo.StartTime)
+		// Epoch has not started yet, and the current block time >= initial epoch start time.
+		shouldInitialEpochStart := !epochInfo.EpochCountingStarted && !epochInfo.StartTime.After(ctx.BlockTime())
 
 		epochEndTime := epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
-		shouldEpochStart := (ctx.BlockTime().After(epochEndTime) && ctx.BlockTime().After(epochInfo.StartTime)) || shouldInitialEpochStart
+		// StartTime is set to a pinpointed timestamp that is after the default value of CurrentEpochStartTime (=0).
+		shouldEpochStart := (!epochInfo.StartTime.After(ctx.BlockTime()) && ctx.BlockTime().After(epochEndTime)) || shouldInitialEpochStart
 
 		if !shouldEpochStart {
 			return false
