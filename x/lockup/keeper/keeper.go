@@ -17,8 +17,8 @@ var (
 	// lockup which did not yet start to unlock.
 	// NOTE: this is not maximum golang time because, since we encode it
 	// using timestampb.Timestamp under the hood we need to adhere to proto time
-	// rules.
-	MaxTime = time.Date(9999, time.December, 31, 23, 59, 59, 0, time.UTC)
+	// rules. Equivalent to: time.Date(9999, time.December, 31, 23, 59, 59, 0, time.UTC)
+	MaxTime = time.Unix(253402297199, 0).UTC()
 )
 
 // LockupKeeper provides a way to manage module storage.
@@ -50,7 +50,7 @@ func (k LockupKeeper) Logger(ctx sdk.Context) log.Logger {
 
 // LockTokens lock tokens from an account for specified duration.
 func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
-	coins sdk.Coins, duration time.Duration) (types.Lock, error) {
+	coins sdk.Coins, duration time.Duration) (*types.Lock, error) {
 	// create new lock object
 	lock := &types.Lock{
 		Owner:    owner.String(),
@@ -62,10 +62,10 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	k.LocksState(ctx).Create(lock)
 	// move coins from owner to module account
 	if err := k.bk.SendCoinsFromAccountToModule(ctx, owner, types.ModuleName, coins); err != nil {
-		return types.Lock{}, err
+		return nil, err
 	}
 
-	return *lock, nil
+	return lock, nil
 }
 
 // UnlockTokens returns tokens back from the module account address to the lock owner.
@@ -153,4 +153,26 @@ func (k LockupKeeper) AccountUnlockedCoins(ctx sdk.Context, account sdk.AccAddre
 // TotalLockedCoins returns the module account locked coins.
 func (k LockupKeeper) TotalLockedCoins(ctx sdk.Context) (coins sdk.Coins, err error) {
 	return k.LocksState(ctx).IterateTotalLockedCoins(), nil
+}
+
+// LocksByDenom allows to iterate over types.Lock associated with a denom.
+// CONTRACT: no writes on store can happen until the function exits.
+func (k LockupKeeper) LocksByDenom(ctx sdk.Context, do func(lock *types.Lock) (stop bool)) (coins sdk.Coins, err error) {
+	panic("impl")
+}
+
+// LocksByDenomUnlockingAfter allows to iterate over types.Lock associated with a denom that unlock
+// after the provided duration.
+// CONTRACT: no writes on store can happen until the function exits.
+func (k LockupKeeper) LocksByDenomUnlockingAfter(ctx sdk.Context, denom string, duration time.Duration, do func(lock *types.Lock) (stop bool)) {
+	endTime := ctx.BlockTime().Add(duration)
+	state := k.LocksState(ctx)
+	state.IterateCoinsByDenomUnlockingAfter(denom, endTime, func(id uint64) (stop bool) {
+		lock, err := state.Get(id)
+		if err != nil {
+			panic(err)
+		}
+
+		return do(lock)
+	})
 }
