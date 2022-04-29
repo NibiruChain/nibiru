@@ -50,6 +50,12 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 		poolId,
 	)
 
+	pool, err := k.FetchPool(ctx, poolId)
+	if err != nil {
+		return nil, err
+	}
+	k.AfterPoolCreation(ctx, pool)
+
 	return &types.MsgCreatePoolResponse{
 		PoolId: poolId,
 	}, nil

@@ -16,10 +16,11 @@ import (
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
-		paramstore paramtypes.Subspace
+		cdc      codec.BinaryCodec
+		storeKey sdk.StoreKey
+		hooks    types.DexHooks
 
+		paramstore    paramtypes.Subspace
 		accountKeeper types.AccountKeeper
 		bankKeeper    types.BankKeeper
 		distrKeeper   types.DistrKeeper
@@ -506,4 +507,15 @@ func (k Keeper) ExitPool(
 // TODO implement
 func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error) {
 	return 0, nil
+}
+
+// Set the lockup hooks.
+func (k *Keeper) SetHooks(dexHook types.DexHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set epochs hooks twice")
+	}
+
+	k.hooks = dexHook
+
+	return k
 }
