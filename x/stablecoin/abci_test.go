@@ -143,18 +143,18 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochInfoChangesCollateralValidity(t *testing.T) {
-	var app *app.NibiruApp
-	var ctx sdk.Context
+	app, ctx := testutil.NewNibiruApp(true)
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
+		pricefeed.BeginBlocker(ctx, app.PriceKeeper)
 		epochs.BeginBlocker(ctx, app.EpochsKeeper)
-		pricefeed.EndBlocker(ctx, app.PriceKeeper)
 	}
 
-	app, ctx = testutil.NewNibiruApp(true)
-
-	ctx = ctx.WithBlockHeight(1)
+	// start at t=1sec with blockheight 1
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Unix(1, 0))
+	pricefeed.BeginBlocker(ctx, app.PriceKeeper)
+	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 	oracle := sample.AccAddress()
 	markets := ptypes.NewParams([]ptypes.Pair{
@@ -170,7 +170,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	app.PriceKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
-	_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
+	_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
 
 	err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
@@ -184,17 +184,12 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 		On the very first epoch in the chain, the epoch module waits until the second block having
 		`epochInfo.StartTime.After(ctx.BlockTime())` to call the epoch end for the first time.
 	*/
-	runBlock(time.Minute*15 + time.Second)
-
-	// Pass 1 second, this is the second block after the first 15min epoch is set, it will run the epochEnd hooks from
-	// epoch module minute
-	runBlock(time.Second)
+	runBlock(time.Minute * 15)
 
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Pass 1 hour, collateral should be not valid because price are expired
-	runBlock(time.Hour)   // Price are set as expired at the end of this block
-	runBlock(time.Second) // Collateral ratio fail because no existing price since last block
+	runBlock(time.Hour) // Price are set as expired at the end of this block
 
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
@@ -202,8 +197,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
-	runBlock(time.Second) // Median price and TWAP are computed again at the end of this block
-	runBlock(time.Second) // The very next block have a collateral ratio valid without having to wait for the next epoch
+	runBlock(time.Second) // Median price and TWAP are computed again at the end of a new block
 
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 }
