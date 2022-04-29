@@ -59,7 +59,6 @@ func (k Keeper) SetPrice(
 	price sdk.Dec,
 	expiry time.Time,
 ) (types.PostedPrice, error) {
-
 	// If the posted price expires before the current block, it is invalid.
 	if expiry.Before(ctx.BlockTime()) {
 		return types.PostedPrice{}, types.ErrExpired

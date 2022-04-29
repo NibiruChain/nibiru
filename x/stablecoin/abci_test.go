@@ -150,6 +150,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
+	token0, token1 := common.StableDenom, common.CollDenom
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
@@ -175,7 +176,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	app.PriceKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
-	_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
+	_, err := app.PriceKeeper.SetPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
 	require.NoError(t, app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom))
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
@@ -189,7 +190,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	_, err = app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
+	_, err = app.PriceKeeper.SetPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block
