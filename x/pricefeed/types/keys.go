@@ -29,11 +29,19 @@ var (
 
 	// RawPriceFeedPrefix prefix for the raw pricefeed of an asset
 	RawPriceFeedPrefix = []byte{0x01}
+
+	// TWAPPricePrefix prefix for the current price of an asset
+	TWAPPricePrefix = []byte{0x02}
 )
 
 // CurrentPriceKey returns the prefix for the current price
 func CurrentPriceKey(pairID string) []byte {
 	return append(CurrentPricePrefix, []byte(pairID)...)
+}
+
+// CurrentTWAPPriceKey returns the prefix for the current TWAP price
+func CurrentTWAPPriceKey(twapPairID string) []byte {
+	return append(TWAPPricePrefix, []byte(twapPairID)...)
 }
 
 // RawPriceIteratorKey returns the prefix for the raw price for a single market
