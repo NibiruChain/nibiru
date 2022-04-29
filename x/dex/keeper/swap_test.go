@@ -9,73 +9,166 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSwapExactAmountIn(t *testing.T) {
 	tests := []struct {
-		name                     string
-		joinerInitialFunds       sdk.Coins
-		initialPool              types.Pool
-		tokenIn                  sdk.Coin
-		tokenOutDenom            string
-		expectedTokenOut         sdk.Coin
-		expectedFinalPool        types.Pool
-		expectedJoinerFinalFunds sdk.Coins
+		name string
+
+		// test setup
+		userInitialFunds sdk.Coins
+		initialPool      types.Pool
+		tokenIn          sdk.Coin
+		tokenOutDenom    string
+
+		// expected results
+		expectedError          error
+		expectedTokenOut       sdk.Coin
+		expectedUserFinalFunds sdk.Coins
+		expectedFinalPool      types.Pool
 	}{
 		{
-			name: "join with all of user's assets",
-			joinerInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("bar", 100),
+			name: "regular swap",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
 			),
 			initialPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin("bar", 1_000_000),
-					sdk.NewInt64Coin("foo", 1_000_000),
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
 				),
-				/*shares=*/ 100),
-			tokenIn:          sdk.NewInt64Coin("bar", 100),
-			tokenOutDenom:    "foo",
-			expectedTokenOut: sdk.NewInt64Coin("foo", 99),
-			expectedJoinerFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("foo", 99),
+				/*shares=*/ 100,
+			),
+			tokenIn:          sdk.NewInt64Coin("unibi", 100),
+			tokenOutDenom:    "unusd",
+			expectedTokenOut: sdk.NewInt64Coin("unusd", 50),
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unusd", 50),
 			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin("bar", 1_000_100),
-					sdk.NewInt64Coin("foo", 999_901),
+					sdk.NewInt64Coin("unibi", 200),
+					sdk.NewInt64Coin("unusd", 50),
 				),
-				/*shares=*/ 100),
+				/*shares=*/ 100,
+			),
+			expectedError: nil,
 		},
 		{
-			name: "join with some of user's assets",
-			joinerInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("bar", 100),
+			name: "not enough user funds",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 1),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:       sdk.NewInt64Coin("unibi", 100),
+			tokenOutDenom: "unusd",
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 1),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			expectedError: sdkerrors.ErrInsufficientFunds,
+		},
+		{
+			name: "invalid token in denom",
+			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
 			initialPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin("bar", 1_000_000),
-					sdk.NewInt64Coin("foo", 1_000_000),
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
 				),
-				/*shares=*/ 100),
-			tokenIn:          sdk.NewInt64Coin("bar", 50),
-			tokenOutDenom:    "foo",
-			expectedTokenOut: sdk.NewInt64Coin("foo", 49),
-			expectedJoinerFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("bar", 50),
-				sdk.NewInt64Coin("foo", 149),
+				/*shares=*/ 100,
+			),
+			tokenIn:       sdk.NewInt64Coin("foo", 100),
+			tokenOutDenom: "unusd",
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("foo", 100),
 			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin("bar", 1_000_050),
-					sdk.NewInt64Coin("foo", 999_951),
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
 				),
-				/*shares=*/ 100),
+				/*shares=*/ 100,
+			),
+			expectedError: types.ErrTokenDenomNotFound,
+		},
+		{
+			name: "invalid token out denom",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:       sdk.NewInt64Coin("unibi", 100),
+			tokenOutDenom: "foo",
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			expectedError: types.ErrTokenDenomNotFound,
+		},
+		{
+			name: "same token in and token out denom",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:       sdk.NewInt64Coin("unibi", 100),
+			tokenOutDenom: "unibi",
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			expectedError: types.ErrSameTokenDenom,
 		},
 	}
 
@@ -84,28 +177,44 @@ func TestSwapExactAmountIn(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testutil.NewNibiruApp(true)
 
-			// set up pool address and funds
+			// fund pool account
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
+			require.NoError(t,
+				simapp.FundAccount(
+					app.BankKeeper,
+					ctx,
+					poolAddr,
+					tc.initialPool.PoolBalances(),
+				),
+			)
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
-			require.NoError(t, simapp.FundAccount(
-				app.BankKeeper,
-				ctx,
-				poolAddr,
-				tc.initialPool.PoolBalances(),
-			))
 
-			// set up user's funds
-			joinerAddr := sample.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
+			// fund user account
+			sender := sample.AccAddress()
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
-			tokenOut, err := app.DexKeeper.SwapExactAmountIn(ctx, joinerAddr, 1, tc.tokenIn, tc.tokenOutDenom)
+			// swap assets
+			tokenOut, err := app.DexKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tc.tokenIn, tc.tokenOutDenom)
+
+			if tc.expectedError != nil {
+				require.ErrorIs(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedTokenOut, tokenOut)
+			}
+
+			// check user's final funds
+			require.Equal(t,
+				tc.expectedUserFinalFunds,
+				app.BankKeeper.GetAllBalances(ctx, sender),
+			)
+
+			// check final pool state
+			finalPool, err := app.DexKeeper.FetchPool(ctx, tc.initialPool.Id)
 			require.NoError(t, err)
-			pool, _ := app.DexKeeper.FetchPool(ctx, 1)
-			require.Equal(t, tc.expectedFinalPool, pool)
-			require.Equal(t, tc.expectedTokenOut, tokenOut)
-			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
+			require.Equal(t, tc.expectedFinalPool, finalPool)
 		})
 	}
 }
