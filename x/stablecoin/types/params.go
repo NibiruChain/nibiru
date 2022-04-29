@@ -24,6 +24,7 @@ func NewParams(
 	adjustmentStep sdk.Dec,
 	priceLowerBound sdk.Dec,
 	priceUpperBound sdk.Dec,
+	isCollateralRatioValid bool,
 ) Params {
 	million := sdk.NewDec(1_000_000)
 	collRatioInt := collRatio.Mul(million).RoundInt().Int64()
@@ -36,14 +37,15 @@ func NewParams(
 	priceUpperBoundInt := priceUpperBound.Mul(million).RoundInt().Int64()
 
 	return Params{
-		CollRatio:            collRatioInt,
-		FeeRatio:             feeRationInt,
-		EfFeeRatio:           efFeeRatioInt,
-		BonusRateRecoll:      bonusRateRecollInt,
-		DistrEpochIdentifier: DistrEpochIdentifier,
-		AdjustmentStep:       adjustmentStepInt,
-		PriceLowerBound:      priceLowerBoundInt,
-		PriceUpperBound:      priceUpperBoundInt,
+		CollRatio:              collRatioInt,
+		FeeRatio:               feeRationInt,
+		EfFeeRatio:             efFeeRatioInt,
+		BonusRateRecoll:        bonusRateRecollInt,
+		DistrEpochIdentifier:   DistrEpochIdentifier,
+		AdjustmentStep:         adjustmentStepInt,
+		PriceLowerBound:        priceLowerBoundInt,
+		PriceUpperBound:        priceUpperBoundInt,
+		IsCollateralRatioValid: isCollateralRatioValid,
 	}
 }
 
@@ -57,11 +59,12 @@ func DefaultParams() Params {
 	adjustmentStep := sdk.MustNewDecFromStr("0.0025")
 	priceLowerBound := sdk.MustNewDecFromStr("0.9999")
 	priceUpperBound := sdk.MustNewDecFromStr("1.0001")
+	isCollateralRatioValid := false // Will be valid once we start posting prices and updating the collateral
 
 	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll, DistrEpochIdentifier,
 		adjustmentStep,
 		priceLowerBound,
-		priceUpperBound)
+		priceUpperBound, isCollateralRatioValid)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -106,6 +109,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			[]byte("PriceUpperBound"),
 			&p.PriceUpperBound,
 			validatePriceUpperBound,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("IsCollateralRatioValid"),
+			&p.IsCollateralRatioValid,
+			validateIsCollateralRatioValid,
 		),
 	}
 }
@@ -173,6 +181,14 @@ func validateCollRatio(i interface{}) error {
 	} else {
 		return nil
 	}
+}
+
+func validateIsCollateralRatioValid(i interface{}) error {
+	_, ok := i.(bool)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
 }
 
 func validateBonusRateRecoll(i interface{}) error {

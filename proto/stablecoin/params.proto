@@ -31,4 +31,7 @@ message Params {
 
   // priceUpperBound is the upper bound for the stable coin to trigger a collateral ratio update
   int64 priceUpperBound = 8;
+
+  // isCollateralRatioValid checks if the collateral ratio is correctly updated
+  bool isCollateralRatioValid = 9;
 }
