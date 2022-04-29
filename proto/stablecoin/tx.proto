@@ -42,29 +42,32 @@ message MsgMintStable {
 * mint transaction*/
 message MsgMintStableResponse {
   cosmos.base.v1beta1.Coin stable = 1 [(gogoproto.nullable) = false];
-  repeated cosmos.base.v1beta1.Coin used_coins = 2
-    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
-  repeated cosmos.base.v1beta1.Coin fees_payed = 3
-    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin used_coins = 2 [
+      (gogoproto.nullable) = false, 
+      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin fees_payed = 3 [
+      (gogoproto.nullable) = false, 
+      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
 /* 
-MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral in return. The amount of NIBI and 
-Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
-for the protocol.
+MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral. 
+The amount of NIBI and Collateral received depends on the current price set by 
+the x/pricefeed library and the current collateral ratio.
 */
 message MsgBurnStable {
   string creator = 1;
   cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
 }
 
-/* MsgBurnStableResponse specifies the amount of collateral and governance token the user will receive after their
-* burn transaction*/
+/* MsgBurnStableResponse specifies the amount of collateral and governance 
+   token the user will receive after their burn transaction. */
 message MsgBurnStableResponse {
   cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
-  repeated cosmos.base.v1beta1.Coin fees_payed = 3
-  [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin fees_payed = 3 [
+      (gogoproto.nullable) = false, 
+      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
 /* MsgRecollateralize  */

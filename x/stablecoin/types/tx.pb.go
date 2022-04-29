@@ -149,9 +149,9 @@ func (m *MsgMintStableResponse) GetFeesPayed() github_com_cosmos_cosmos_sdk_type
 }
 
 //
-//MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral in return. The amount of NIBI and
-//Collateral received depends on the current price set by the pricefeed library and the current collateral ratio
-//for the protocol.
+//MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral.
+//The amount of NIBI and Collateral received depends on the current price set by
+//the x/pricefeed library and the current collateral ratio.
 type MsgBurnStable struct {
 	Creator string     `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Stable  types.Coin `protobuf:"bytes,2,opt,name=stable,proto3" json:"stable"`
@@ -204,8 +204,8 @@ func (m *MsgBurnStable) GetStable() types.Coin {
 	return types.Coin{}
 }
 
-// MsgBurnStableResponse specifies the amount of collateral and governance token the user will receive after their
-// burn transaction
+// MsgBurnStableResponse specifies the amount of collateral and governance
+// token the user will receive after their burn transaction.
 type MsgBurnStableResponse struct {
 	Collateral types.Coin                               `protobuf:"bytes,1,opt,name=collateral,proto3" json:"collateral"`
 	Gov        types.Coin                               `protobuf:"bytes,2,opt,name=gov,proto3" json:"gov"`
