@@ -65,11 +65,17 @@ func Test_LocksState_232(t *testing.T) {
 	// create locks
 	lock1, err := app.LockupKeeper.LockTokens(ctx, addr1, addr1LockedFunds, 2*time.Hour)
 	require.NoError(t, err)
-	_, err = app.LockupKeeper.LockTokens(ctx, addr1, addr1UnlockedFunds, 1*time.Hour)
+	lock2, err := app.LockupKeeper.LockTokens(ctx, addr1, addr1UnlockedFunds, 1*time.Hour)
 	require.NoError(t, err)
 	_, err = app.LockupKeeper.LockTokens(ctx, addr2, addr2LockedFunds, 2*time.Hour)
 	require.NoError(t, err)
 	lock4, err := app.LockupKeeper.LockTokens(ctx, addr2, addr2UnlockedFunds, 1*time.Hour)
+	require.NoError(t, err)
+
+	// initiate unlock for lock2 and lock4
+	_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock2.LockId)
+	require.NoError(t, err)
+	_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock4.LockId)
 	require.NoError(t, err)
 
 	// create a new ctx which is 1hour + 1sec ahead in time of current context, which means
