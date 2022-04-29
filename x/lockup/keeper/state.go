@@ -220,6 +220,8 @@ func (s LockState) IterateTotalLockedCoins() sdk.Coins {
 }
 
 func (s LockState) IterateCoinsByDenomUnlockingAfter(denom string, unlockingAfter time.Time, f func(id uint64) (stop bool)) {
+	// NOTE(mercilex): here we're adding 1 sec because our indexing precision is in seconds
+	// maybe the most proper way would be to increase by one byte the value of the keyTime key.
 	iter := prefix.NewStore(s.denomTimeIndex, s.keyDenom(denom, nil)). // iterate only over a certain denom
 										Iterator(s.keyTime(unlockingAfter.Add(1*time.Second), nil), nil) // after the provided time
 
