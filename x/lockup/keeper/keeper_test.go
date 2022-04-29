@@ -16,7 +16,6 @@ import (
 )
 
 func TestCreateLock(t *testing.T) {
-
 	tests := []struct {
 		name                string
 		accountInitialFunds sdk.Coins

@@ -77,7 +77,6 @@ func (s LockState) index(pk []byte, l *types.Lock) {
 }
 
 func (s LockState) unindex(pk []byte, l *types.Lock) {
-
 	s.addrTimeIndex.Delete(s.keyAddrTime(l.Owner, l.EndTime, pk)) // clear address and unlock time index
 	s.addrIndex.Delete(s.keyAddr(l.Owner, pk))                    // clear address index
 	s.timeIndex.Delete(s.keyTime(l.EndTime, pk))                  // clear unlock time index
