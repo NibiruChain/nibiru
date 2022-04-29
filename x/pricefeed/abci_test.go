@@ -21,7 +21,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
-		pricefeed.EndBlocker(ctx, app.PriceKeeper)
+		pricefeed.BeginBlocker(ctx, app.PriceKeeper)
 	}
 	setPrice := func(price string) {
 		_, err := app.PriceKeeper.SimSetPrice(

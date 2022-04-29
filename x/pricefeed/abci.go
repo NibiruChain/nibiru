@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// EndBlocker updates the current pricefeed
-func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+// BeginBlocker updates the current pricefeed
+func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Update the current price of each asset.
 	for _, pair := range k.GetPairs(ctx) {
 		if !pair.Active {
