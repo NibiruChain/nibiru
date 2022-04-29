@@ -168,7 +168,7 @@ func (k msgServer) SwapAssets(ctx context.Context, msg *types.MsgSwapAssets) (
 		return nil, err
 	}
 
-	// TODO(https://github.com/NibiruChain/nibiru/issues/197): Add event emission
+	events.EmitAssetsSwappedEvent(sdkContext, sender, msg.PoolId, msg.TokenIn, tokenOut)
 
 	return &types.MsgSwapAssetsResponse{
 		TokenOut: tokenOut,
