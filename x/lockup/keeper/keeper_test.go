@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"testing"
 	"time"
 
@@ -58,11 +59,62 @@ func TestCreateLock(t *testing.T) {
 					Owner:    tc.ownerAddr.String(),
 					Duration: tc.duration,
 					Coins:    tc.coins,
-					EndTime:  ctx.BlockTime().Add(24 * time.Hour),
+					EndTime:  keeper.MaxTime,
 				}, lock)
 			}
 		})
 	}
+}
+
+func TestLockupKeeper_InitiateUnlocking(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		app, _ := testutil.NewNibiruApp(false)
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
+
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+
+		// fund account
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		// we lock some coins
+		lockDuration := 1 * time.Hour
+		lock, err := app.LockupKeeper.LockTokens(ctx, addr, coins, lockDuration)
+		require.NoError(t, err)
+		// we initiate the unlock phase
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock.LockId)
+		require.NoError(t, err)
+		// we check if the lockup was updated correctly
+		updatedLock, err := app.LockupKeeper.LocksState(ctx).Get(lock.LockId)
+		require.NoError(t, err)
+		require.Equal(t, updatedLock.EndTime, ctx.BlockTime().Add(lock.Duration))
+	})
+	t.Run("err lock does not exist", func(t *testing.T) {
+		app, ctx := testutil.NewNibiruApp(false)
+		_, err := app.LockupKeeper.InitiateUnlocking(ctx, 0)
+		require.ErrorIs(t, err, types.ErrLockupNotFound)
+	})
+	t.Run("err already unlocking", func(t *testing.T) {
+		app, _ := testutil.NewNibiruApp(false)
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
+
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+
+		// fund account
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		// we lock some coins
+		lockDuration := 1 * time.Hour
+		lock, err := app.LockupKeeper.LockTokens(ctx, addr, coins, lockDuration)
+		require.NoError(t, err)
+		// we initiate the unlock phase
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock.LockId)
+		require.NoError(t, err)
+		// we initiate another unlock phase on a lock which is already unlocking
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock.LockId)
+		require.ErrorIs(t, err, types.ErrAlreadyUnlocking)
+	})
 }
 
 func TestLockupKeeper_UnlockTokens(t *testing.T) {
@@ -77,7 +129,9 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 
 		lock, err := app.LockupKeeper.LockTokens(ctx, addr, coins, time.Second*1000)
 		require.NoError(t, err)
-
+		// initiate unlock
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock.LockId)
+		require.NoError(t, err)
 		// unlock coins
 		ctx = app.NewContext(false, tmproto.Header{Time: ctx.BlockTime().Add(lock.Duration + 1*time.Second)}) // instantiate a new context with oldBlockTime+lock duration+1 second
 
@@ -150,7 +204,7 @@ func TestLockupKeeper_AccountUnlockedCoins(t *testing.T) {
 		// 1st lock
 		coins1 := sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1000)))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins1))
-		_, err := app.LockupKeeper.LockTokens(ctx, addr, coins1, time.Second*1000)
+		unlocking, err := app.LockupKeeper.LockTokens(ctx, addr, coins1, time.Second*1000)
 		require.NoError(t, err)
 
 		// 2nd lock
@@ -159,6 +213,9 @@ func TestLockupKeeper_AccountUnlockedCoins(t *testing.T) {
 		_, err = app.LockupKeeper.LockTokens(ctx, addr, coins2, time.Second*1500)
 		require.NoError(t, err)
 
+		// initiate unlock for 1st coins
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, unlocking.LockId)
+		require.NoError(t, err)
 		// query unlocked coins
 		ctx = app.NewContext(false, tmproto.Header{Time: time.Now().Add(1100 * time.Second)}) // we create a new context in which only the first coins are unlocked
 		unlockedCoins, err := app.LockupKeeper.AccountUnlockedCoins(ctx, addr)
@@ -177,13 +234,17 @@ func TestLockupKeeper_LockedCoins(t *testing.T) {
 		// 1st lock which will become unlocked
 		coinsThatUnlock := sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1000)))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coinsThatUnlock))
-		_, err := app.LockupKeeper.LockTokens(ctx, addr, coinsThatUnlock, time.Second*1)
+		unlockingLockup, err := app.LockupKeeper.LockTokens(ctx, addr, coinsThatUnlock, time.Second*1)
 		require.NoError(t, err)
 
 		// 2nd lock which is locked in this test case
 		coinsThatRemainLocked := sdk.NewCoins(sdk.NewCoin("osmo", sdk.NewInt(10000)))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coinsThatRemainLocked))
 		_, err = app.LockupKeeper.LockTokens(ctx, addr, coinsThatRemainLocked, time.Second*1500)
+		require.NoError(t, err)
+
+		// initiate unlock
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, unlockingLockup.LockId)
 		require.NoError(t, err)
 
 		ctx = app.NewContext(false, tmproto.Header{Time: ctx.BlockTime().Add(10 * time.Second)}) // new context 10 seconds forward which means only 1 set is unlocked
@@ -204,12 +265,18 @@ func TestLockupKeeper_UnlockAvailableCoins(t *testing.T) {
 		// lock some coins
 		coins1 := sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1000)))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins1))
-		_, err := app.LockupKeeper.LockTokens(ctx, addr, coins1, time.Second*1)
+		lock1, err := app.LockupKeeper.LockTokens(ctx, addr, coins1, time.Second*1)
 		require.NoError(t, err)
 
 		coins2 := sdk.NewCoins(sdk.NewCoin("osmo", sdk.NewInt(10000)))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins2))
-		_, err = app.LockupKeeper.LockTokens(ctx, addr, coins2, time.Second*2)
+		lock2, err := app.LockupKeeper.LockTokens(ctx, addr, coins2, time.Second*2)
+		require.NoError(t, err)
+
+		// initiate unlocking
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock1.LockId)
+		require.NoError(t, err)
+		_, err = app.LockupKeeper.InitiateUnlocking(ctx, lock2.LockId)
 		require.NoError(t, err)
 
 		ctx = app.NewContext(false, tmproto.Header{Time: ctx.BlockTime().Add(10 * time.Second)}) // new context 10 seconds forward which means only 1 set is unlocked

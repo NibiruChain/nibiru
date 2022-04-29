@@ -62,14 +62,42 @@ func (s LockState) Create(l *types.Lock) {
 	pk := sdk.Uint64ToBigEndian(id) // TODO(mercilex): processed twice, maybe next primary key can return the bytes version
 	l.LockId = id                   // sets lock ID so that is mapped in state
 
+	s.locks.Set(pk, s.cdc.MustMarshal(l)) // save lock object
+	s.index(pk, l)                        // generate indexes
+}
+
+func (s LockState) index(pk []byte, l *types.Lock) {
 	addrTimeIndex := s.keyAddrTime(l.Owner, l.EndTime, pk)
 	addrIndex := s.keyAddr(l.Owner, pk)
 	timeIndex := s.keyTime(l.EndTime, pk)
 
-	s.locks.Set(pk, s.cdc.MustMarshal(l))        // save lock object
 	s.addrTimeIndex.Set(addrTimeIndex, []byte{}) // maps addr + unlock time to lock ID
 	s.addrIndex.Set(addrIndex, []byte{})         // maps addr to lock ID
 	s.timeIndex.Set(timeIndex, []byte{})         // maps unlock time to lock ID
+}
+
+func (s LockState) unindex(pk []byte, l *types.Lock) {
+	s.addrTimeIndex.Delete(s.keyAddrTime(l.Owner, l.EndTime, pk)) // clear address and unlock time index
+	s.addrIndex.Delete(s.keyAddr(l.Owner, pk))                    // clear address index
+	s.timeIndex.Delete(s.keyTime(l.EndTime, pk))                  // clear unlock time index
+}
+
+func (s LockState) Update(update *types.Lock) error {
+	pk := sdk.Uint64ToBigEndian(update.LockId)
+	// get old lock
+	oldLockBytes := s.locks.Get(pk)
+	if oldLockBytes == nil {
+		return types.ErrLockupNotFound.Wrapf("%d", update.LockId)
+	}
+
+	oldLock := new(types.Lock)
+	s.cdc.MustUnmarshal(oldLockBytes, oldLock)
+	// update indexes
+	s.unindex(pk, oldLock)
+	s.index(pk, update)
+	// update lock
+	s.locks.Set(pk, s.cdc.MustMarshal(update))
+	return nil
 }
 
 func (s LockState) Delete(l *types.Lock) error {
@@ -78,10 +106,8 @@ func (s LockState) Delete(l *types.Lock) error {
 		return types.ErrLockupNotFound.Wrapf("%d", l.LockId)
 	}
 
-	s.locks.Delete(lockPrimaryKey)                                            // clear object
-	s.addrTimeIndex.Delete(s.keyAddrTime(l.Owner, l.EndTime, lockPrimaryKey)) // clear address and unlock time index
-	s.addrIndex.Delete(s.keyAddr(l.Owner, lockPrimaryKey))                    // clear address index
-	s.timeIndex.Delete(s.keyTime(l.EndTime, lockPrimaryKey))                  // clear unlock time index
+	s.locks.Delete(lockPrimaryKey) // clear object
+	s.unindex(lockPrimaryKey, l)   // unindex
 	return nil
 }
 
@@ -200,16 +226,16 @@ func (s LockState) keyAddrTime(addr string, endTime time.Time, pk []byte) []byte
 
 	// proper sorted big endian int64 x.x
 	timeBytes := make([]byte, 8)
-	timeUnixNano := endTime.UnixNano()
+	timeUnix := endTime.Unix()
 
-	timeBytes[0] = byte(timeUnixNano >> 56)
-	timeBytes[1] = byte(timeUnixNano >> 48)
-	timeBytes[2] = byte(timeUnixNano >> 40)
-	timeBytes[3] = byte(timeUnixNano >> 32)
-	timeBytes[4] = byte(timeUnixNano >> 24)
-	timeBytes[5] = byte(timeUnixNano >> 16)
-	timeBytes[6] = byte(timeUnixNano >> 8)
-	timeBytes[7] = byte(timeUnixNano)
+	timeBytes[0] = byte(timeUnix >> 56)
+	timeBytes[1] = byte(timeUnix >> 48)
+	timeBytes[2] = byte(timeUnix >> 40)
+	timeBytes[3] = byte(timeUnix >> 32)
+	timeBytes[4] = byte(timeUnix >> 24)
+	timeBytes[5] = byte(timeUnix >> 16)
+	timeBytes[6] = byte(timeUnix >> 8)
+	timeBytes[7] = byte(timeUnix)
 	timeBytes[0] ^= 0x80
 
 	key = append(key, timeBytes...)
@@ -232,16 +258,16 @@ func (s LockState) keyAddr(addr string, pk []byte) []byte {
 func (s LockState) keyTime(endTime time.Time, pk []byte) []byte {
 	key := make([]byte, 8, 8+len(pk)) // size of primary key + size of time in bytes, init 8 elements
 
-	timeUnixNano := endTime.UnixNano()
+	timeUnix := endTime.Unix()
 
-	key[0] = byte(timeUnixNano >> 56)
-	key[1] = byte(timeUnixNano >> 48)
-	key[2] = byte(timeUnixNano >> 40)
-	key[3] = byte(timeUnixNano >> 32)
-	key[4] = byte(timeUnixNano >> 24)
-	key[5] = byte(timeUnixNano >> 16)
-	key[6] = byte(timeUnixNano >> 8)
-	key[7] = byte(timeUnixNano)
+	key[0] = byte(timeUnix >> 56)
+	key[1] = byte(timeUnix >> 48)
+	key[2] = byte(timeUnix >> 40)
+	key[3] = byte(timeUnix >> 32)
+	key[4] = byte(timeUnix >> 24)
+	key[5] = byte(timeUnix >> 16)
+	key[6] = byte(timeUnix >> 8)
+	key[7] = byte(timeUnix)
 	key[0] ^= 0x80
 
 	return append(key, pk...)
