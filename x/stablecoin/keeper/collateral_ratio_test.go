@@ -96,7 +96,13 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
 			require.NoError(t, err)
 
-			_, err = priceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, tc.price, ctx.BlockTime().UTC().Add(time.Hour*1))
+			_, err = priceKeeper.SetPrice(
+				ctx,
+				oracle,
+				/* token0 */ common.StableDenom,
+				/* token1 */ common.CollDenom,
+				/* price */ tc.price,
+				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
 			err = priceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
