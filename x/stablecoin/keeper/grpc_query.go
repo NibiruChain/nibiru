@@ -51,3 +51,29 @@ func (k Keeper) CirculatingSupplies(
 		NUSD: k.GetSupplyNUSD(ctx),
 	}, nil
 }
+
+func (k Keeper) LiquidityRatioInfo(
+	goCtx context.Context, req *types.QueryLiquidityRatioInfoRequest,
+) (res *types.QueryLiquidityRatioInfoResponse, err error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	liqRatio, err := k.GetLiquidityRatio(ctx)
+	if err != nil {
+		return res, err
+	}
+	lowerBand, upperBand, err := k.GetLiquidityRatioBands(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	return &types.QueryLiquidityRatioInfoResponse{
+		Info: types.LiquidityRatioInfo{
+			LiquidityRatio: liqRatio,
+			UpperBand:      upperBand,
+			LowerBand:      lowerBand,
+		},
+	}, nil
+}
