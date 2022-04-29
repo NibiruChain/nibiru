@@ -83,6 +83,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 	stableGen := stabletypes.DefaultGenesis()
+
+	// IsCollateralRatioValid behavior testted in x/stablecoin/abci_test.go
+	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(common.CollDenom, sdk.NewInt(10000000000))
 
 	stableGenJson := s.cfg.Codec.MustMarshalJSON(stableGen)
