@@ -124,7 +124,13 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			app.PriceKeeper.SetParams(ctx, markets)
 
-			_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, tc.price, ctx.BlockTime().UTC().Add(time.Hour*1))
+			_, err := app.PriceKeeper.SetPrice(
+				ctx,
+				oracle,
+				/* token0 */ common.StableDenom,
+				/* token1 */ common.CollDenom,
+				/* price */ tc.price,
+				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
 			err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
