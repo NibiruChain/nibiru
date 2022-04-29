@@ -166,27 +166,20 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 			Active:  true,
 		},
 	})
-
 	app.PriceKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
 	_, err := app.PriceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
-
-	err = app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
-	require.NoError(t, err)
-
-	err = app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8"))
-	require.NoError(t, err)
+	require.NoError(t, app.PriceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom))
+	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
 
 	// Mint block #2
 	runBlock(time.Minute * 15)
-
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Mint block #3, collateral should be not valid because price are expired
 	runBlock(time.Hour) // Collateral ratio is set to invalid at the beginning of this block
-
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
@@ -195,6 +188,5 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block
 	runBlock(time.Second) // Collateral ratio is set to valid at the beginning of this block
-
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 }
