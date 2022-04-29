@@ -14,12 +14,6 @@ func (k Keeper) updatePoolForSwap(
 	tokenIn sdk.Coin,
 	tokenOut sdk.Coin,
 ) (err error) {
-	if err = pool.ApplySwap(tokenIn, tokenOut); err != nil {
-		return err
-	}
-
-	k.SetPool(ctx, pool)
-
 	if err = k.bankKeeper.SendCoins(
 		ctx,
 		/*from=*/ sender,
@@ -37,6 +31,11 @@ func (k Keeper) updatePoolForSwap(
 	); err != nil {
 		return err
 	}
+
+	if err = pool.ApplySwap(tokenIn, tokenOut); err != nil {
+		return err
+	}
+	k.SetPool(ctx, pool)
 
 	k.RecordTotalLiquidityIncrease(ctx, sdk.Coins{tokenIn})
 	k.RecordTotalLiquidityDecrease(ctx, sdk.Coins{tokenOut})
@@ -70,26 +69,36 @@ func (k Keeper) SwapExactAmountIn(
 	tokenOutDenom string,
 ) (tokenOut sdk.Coin, err error) {
 	if tokenIn.Denom == tokenOutDenom {
-		return tokenOut, errors.New("cannot trade same denomination in and out")
+		return sdk.Coin{}, types.ErrSameTokenDenom
 	}
 
 	pool, err := k.FetchPool(ctx, poolId)
 	if err != nil {
-		return tokenOut, err
+		return sdk.Coin{}, err
 	}
 
+	// calculate tokenOut and validate
 	tokenOut, err = pool.CalcOutAmtGivenIn(tokenIn, tokenOutDenom)
 	if err != nil {
-		return tokenOut, err
+		return sdk.Coin{}, err
+	}
+	if tokenOut.Amount.LTE(sdk.ZeroInt()) {
+		return sdk.Coin{}, errors.New("tokenOut amount must be greater than zero")
 	}
 
-	if tokenOut.Amount.LTE(sdk.ZeroInt()) {
-		return tokenOut, errors.New("tokenOut amount must be greater than zero")
+	// check sender has enough tokenIn
+	if err = k.CheckEnoughBalances(ctx, sdk.Coins{tokenIn}, sender); err != nil {
+		return sdk.Coin{}, err
+	}
+
+	// check pool has enough tokenOut
+	if err = k.CheckEnoughBalances(ctx, sdk.Coins{tokenOut}, pool.GetAddress()); err != nil {
+		return sdk.Coin{}, err
 	}
 
 	err = k.updatePoolForSwap(ctx, pool, sender, tokenIn, tokenOut)
 	if err != nil {
-		return tokenOut, err
+		return sdk.Coin{}, err
 	}
 
 	return tokenOut, nil

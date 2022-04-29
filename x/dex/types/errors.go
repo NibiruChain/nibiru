@@ -27,4 +27,5 @@ var (
 	// Errors when swapping assets
 	ErrPoolNotFound       = sdkerrors.Register(ModuleName, 12, "pool not found")
 	ErrTokenDenomNotFound = sdkerrors.Register(ModuleName, 13, "token denom not found in pool")
+	ErrSameTokenDenom     = sdkerrors.Register(ModuleName, 14, "cannot use same token denom to swap in and out")
 )
