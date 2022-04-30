@@ -65,16 +65,29 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 	)
 
 	tests := []struct {
-		name        string
-		accFunds    sdk.Coins
-		msgMint     types.MsgMintStable
-		msgResponse types.MsgMintStableResponse
-		govPrice    sdk.Dec
-		collPrice   sdk.Dec
-		supplyNIBI  sdk.Coin
-		supplyNUSD  sdk.Coin
-		err         error
+		name                   string
+		accFunds               sdk.Coins
+		msgMint                types.MsgMintStable
+		msgResponse            types.MsgMintStableResponse
+		govPrice               sdk.Dec
+		collPrice              sdk.Dec
+		supplyNIBI             sdk.Coin
+		supplyNUSD             sdk.Coin
+		err                    error
+		isCollateralRatioValid bool
 	}{
+		{
+			name:     "Not able to mint because of no posted prices",
+			accFunds: accFundsAmt,
+			msgMint: types.MsgMintStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			},
+			govPrice:               sdk.MustNewDecFromStr("10"),
+			collPrice:              sdk.MustNewDecFromStr("1"),
+			err:                    types.NoValidCollateralRatio,
+			isCollateralRatioValid: false,
+		},
 		{
 			name:     "Successful mint",
 			accFunds: accFundsAmt,
@@ -91,8 +104,9 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			collPrice:  sdk.MustNewDecFromStr("1"),
 			supplyNIBI: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
 			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
-			supplyNUSD: sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
-			err:        nil,
+			supplyNUSD:             sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			err:                    nil,
+			isCollateralRatioValid: true,
 		},
 	}
 
@@ -136,7 +150,10 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound,
+					tc.isCollateralRatioValid,
+				),
+			)
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -322,7 +339,10 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound,
+					true,
+				),
+			)
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -478,7 +498,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 					"15 min",
 					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound,
+					true,
+				),
+			)
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
@@ -491,7 +514,9 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				}}
 			priceKeeper.SetParams(ctx, pfParams)
 
-			nibiruApp.StablecoinKeeper.SetParams(ctx, types.DefaultParams())
+			defaultParams := types.DefaultParams()
+			defaultParams.IsCollateralRatioValid = true
+			nibiruApp.StablecoinKeeper.SetParams(ctx, defaultParams)
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
@@ -539,20 +564,41 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 func TestMsgBurnResponse_HappyPath(t *testing.T) {
 	tests := []struct {
-		name          string
-		accFunds      sdk.Coins
-		moduleFunds   sdk.Coins
-		msgBurn       types.MsgBurnStable
-		msgResponse   types.MsgBurnStableResponse
-		govPrice      sdk.Dec
-		collPrice     sdk.Dec
-		supplyNIBI    sdk.Coin
-		supplyNUSD    sdk.Coin
-		ecosystemFund sdk.Coins
-		treasuryFund  sdk.Coins
-		expectedPass  bool
-		err           string
+		name                   string
+		accFunds               sdk.Coins
+		moduleFunds            sdk.Coins
+		msgBurn                types.MsgBurnStable
+		msgResponse            types.MsgBurnStableResponse
+		govPrice               sdk.Dec
+		collPrice              sdk.Dec
+		supplyNIBI             sdk.Coin
+		supplyNUSD             sdk.Coin
+		ecosystemFund          sdk.Coins
+		treasuryFund           sdk.Coins
+		expectedPass           bool
+		err                    error
+		isCollateralRatioValid bool
 	}{
+		{
+			name:      "invalid collateral ratio",
+			govPrice:  sdk.MustNewDecFromStr("10"),
+			collPrice: sdk.MustNewDecFromStr("1"),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.StableDenom, 1_000_000_000),
+			),
+			moduleFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+			),
+			msgBurn: types.MsgBurnStable{
+				Creator: sample.AccAddress().String(),
+				Stable:  sdk.NewInt64Coin(common.StableDenom, 10_000_000),
+			},
+			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
+			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
+			expectedPass:           false,
+			isCollateralRatioValid: false,
+			err:                    types.NoValidCollateralRatio,
+		},
 		{
 			name:      "Happy path",
 			govPrice:  sdk.MustNewDecFromStr("10"),
@@ -575,11 +621,12 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 					sdk.NewInt64Coin(common.CollDenom, 18_000),
 				),
 			},
-			supplyNIBI:    sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
-			supplyNUSD:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
-			ecosystemFund: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
-			treasuryFund:  sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
-			expectedPass:  true,
+			supplyNIBI:             sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
+			supplyNUSD:             sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
+			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
+			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
+			expectedPass:           true,
+			isCollateralRatioValid: true,
 		},
 	}
 
@@ -600,9 +647,18 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			priceUpperBound := sdk.MustNewDecFromStr("1.0001")
 
 			nibiruApp.StablecoinKeeper.SetParams(
-				ctx, types.NewParams(collRatio, feeRatio, feeRatioEF, bonusRateRecoll, "15 min", adjustmentStep,
+				ctx, types.NewParams(
+					collRatio,
+					feeRatio,
+					feeRatioEF,
+					bonusRateRecoll,
+					"15 min",
+					adjustmentStep,
 					priceLowerBound,
-					priceUpperBound))
+					priceUpperBound,
+					tc.isCollateralRatioValid,
+				),
+			)
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PriceKeeper
@@ -647,11 +703,10 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				goCtx, &tc.msgBurn)
 
 			if !tc.expectedPass {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.err)
-
+				require.ErrorIs(t, err, tc.err)
 				return
 			}
+
 			require.NoError(t, err)
 			testutil.RequireEqualWithMessage(
 				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")

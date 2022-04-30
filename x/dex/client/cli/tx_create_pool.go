@@ -27,7 +27,7 @@ func CmdCreatePool() *cobra.Command {
 Pool initialization parameters must be provided through a pool JSON file.
 
 Example:
-$ %s tx dex create-pool --pool-file="path/to/pool.json" --from validator --keyring-backend test --home data/localnet --chain-id localnet
+$ %s tx dex create-pool --pool-file="path/to/pool.json" --from validator
 
 Where pool.json contains:
 {

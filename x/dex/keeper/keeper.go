@@ -133,7 +133,7 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err 
 	k.cdc.MustUnmarshal(store.Get(types.GetKeyPrefixPools(poolId)), &pool)
 
 	if len(pool.PoolAssets) == 0 {
-		return pool, fmt.Errorf("no pool for this id")
+		return pool, types.ErrPoolNotFound.Wrapf("could not find pool with id %d", poolId)
 	}
 	return pool, nil
 }
@@ -293,6 +293,10 @@ func (k Keeper) NewPool(
 		return uint64(0), types.ErrTooManyPoolAssets
 	}
 
+	if !k.areAllAssetsWhitelisted(ctx, poolAssets) {
+		return uint64(0), types.ErrTokenNotAllowed
+	}
+
 	// send pool creation fee to community pool
 	params := k.GetParams(ctx)
 	err = k.distrKeeper.FundCommunityPool(ctx, params.PoolCreationFee, sender)
@@ -351,6 +355,18 @@ func (k Keeper) NewPool(
 	k.RecordTotalLiquidityIncrease(ctx, coins)
 
 	return poolId, nil
+}
+
+// areAllAssetsWhitelisted checks if all assets are in whitelist
+func (k Keeper) areAllAssetsWhitelisted(ctx sdk.Context, assets []types.PoolAsset) bool {
+	whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
+	for _, a := range assets {
+		if _, ok := whitelistedAssets[a.Token.Denom]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 /*

@@ -15,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstype "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/ibcnibi"
 	"github.com/NibiruChain/nibiru/x/lockup"
 	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
@@ -156,11 +155,12 @@ var (
 		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
-		ibc.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		// ibc 'AppModuleBasic's
+		ibc.AppModuleBasic{},
+		transfer.AppModuleBasic{}, // ibc-transfer module
 		// native x/
 		dex.AppModuleBasic{},
 		pricefeed.AppModuleBasic{},
@@ -232,8 +232,9 @@ type NibiruApp struct {
 
 	// IBC keepers
 	/* IBCKeeper defines each ICS keeper for IBC. IBCKeeper must be a pointer in
-	the app, so we can SetRouter on it correctly*/
-	IBCKeeper      *ibckeeper.Keeper
+	   the app, so we can SetRouter on it correctly. */
+	IBCKeeper *ibckeeper.Keeper
+	/* TransferKeeper is for cross-chain fungible token transfers. */
 	TransferKeeper ibctransferkeeper.Keeper
 
 	// Nibiru keepers
@@ -242,8 +243,6 @@ type NibiruApp struct {
 	PriceKeeper      pricekeeper.Keeper
 	EpochsKeeper     epochskeeper.Keeper
 	LockupKeeper     lockupkeeper.LockupKeeper
-
-	transferModule transfer.AppModule
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -325,14 +324,17 @@ func NewNibiruApp(
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).
 		WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
 
+	/* Add CapabilityKeeper and ScopeToModule for the ibc module
+	   This allows authentication of object-capability permissions for each of
+	   the IBC channels.
+	*/
 	app.CapabilityKeeper = capabilitykeeper.NewKeeper(
 		appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
-	// Add ScopeToModule for the ibc module
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
-	app.CapabilityKeeper.Seal()
+	// app.CapabilityKeeper.Seal()
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -435,27 +437,29 @@ func NewNibiruApp(
 		scopedIBCKeeper,
 	)
 
-	ics4keeper := ibcnibi.NewICS4Keeper(appCodec, keys[ibchost.StoreKey],
-		app.GetSubspace(ibchost.ModuleName), app.AccountKeeper,
-		app.BankKeeper, app.StakingKeeper, app.DistrKeeper)
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
-		/* ibctransfertypes.ICS4Wrapper */ ics4keeper,
+		/* ibctransfertypes.ICS4Wrapper */ app.IBCKeeper.ChannelKeeper,
 		/* ibctransfertypes.ChannelKeeper */ app.IBCKeeper.ChannelKeeper,
 		/* ibctransfertypes.PortKeeper */ &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
-	app.transferModule = transfer.NewAppModule(app.TransferKeeper)
 
-	/* Create IBC module and set routers */
+	/* Create IBC module and a static IBC router */
 	var transferStack porttypes.IBCModule = transfer.NewIBCModule(app.TransferKeeper)
 	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+	/* Add an ibc-transfer module route, then set it and seal it. */
+	ibcRouter.AddRoute(
+		/* module    */ ibctransfertypes.ModuleName,
+		/* ibcModule */ transferStack)
+	/* SetRouter finalizes all routes by sealing the router.
+	   No more routes can be added. */
 	app.IBCKeeper.SetRouter(ibcRouter)
+	transferModule := transfer.NewAppModule(app.TransferKeeper)
 
 	/****  Module Options ****/
 
@@ -505,7 +509,7 @@ func NewNibiruApp(
 		epochsModule,
 		// ibc
 		ibc.NewAppModule(app.IBCKeeper),
-		app.transferModule,
+		transferModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -516,19 +520,20 @@ func NewNibiruApp(
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName,
 		distrtypes.ModuleName, slashingtypes.ModuleName,
-		evidencetypes.ModuleName, stakingtypes.ModuleName,
+		evidencetypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName,
 		crisistypes.ModuleName, genutiltypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, paramstypes.ModuleName, vestingtypes.ModuleName,
-		// ibc modules
-		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
 		pricetypes.ModuleName,
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
+		stakingtypes.ModuleName,
+		// ibc modules
+		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -560,15 +565,15 @@ func NewNibiruApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
-		// ibc
-		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
 		pricetypes.ModuleName,
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
+		// ibc
+		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -590,7 +595,6 @@ func NewNibiruApp(
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
@@ -606,8 +610,9 @@ func NewNibiruApp(
 		epochsModule,
 		stablecoinModule,
 		// ibc
+		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
-		app.transferModule,
+		transferModule,
 	)
 
 	app.sm.RegisterStoreDecoders()

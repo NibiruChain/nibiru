@@ -38,7 +38,7 @@ func (pool Pool) getPoolAssetAndIndex(denom string) (
 	})
 
 	if i < 0 || i >= len(pool.PoolAssets) || pool.PoolAssets[i].Token.Denom != denom {
-		return -1, PoolAsset{}, fmt.Errorf("did not find the PoolAsset (%s)", denom)
+		return -1, PoolAsset{}, ErrTokenDenomNotFound.Wrapf("could not find denom %s in pool id %d", denom, pool.Id)
 	}
 
 	return i, pool.PoolAssets[i], nil

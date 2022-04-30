@@ -96,7 +96,13 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
 			require.NoError(t, err)
 
-			_, err = priceKeeper.SimSetPrice(ctx, common.StableDenom, common.CollDenom, tc.price)
+			_, err = priceKeeper.SetPrice(
+				ctx,
+				oracle,
+				/* token0 */ common.StableDenom,
+				/* token1 */ common.CollDenom,
+				/* price */ tc.price,
+				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
 			err = priceKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
@@ -214,7 +220,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			neededUSD:       sdk.MustNewDecFromStr("-100"), // = 500 - 600
 			expectedPass:    true,
 		}, {
-			name:             "No price availabale for the collateral",
+			name:             "No price available for the collateral",
 			protocolColl:     sdk.NewInt(500),
 			priceCollStable:  sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
 			postedAssetPairs: []common.AssetPair{},
@@ -759,7 +765,6 @@ func TestRecollateralize(t *testing.T) {
 }
 
 func TestBuyback_MsgFormat(t *testing.T) {
-
 	for _, testCase := range []struct {
 		name   string
 		caller string
@@ -800,7 +805,6 @@ func TestBuyback_MsgFormat(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestBuyback(t *testing.T) {
@@ -1113,11 +1117,9 @@ func TestBuyback(t *testing.T) {
 		},
 		)
 	}
-
 }
 
 func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
-
 	testCases := []struct {
 		name         string
 		scenario     NeededCollScenario

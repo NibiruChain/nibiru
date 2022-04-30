@@ -6,13 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -69,7 +70,7 @@ func DefaultConfig() network.Config {
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor:    NewAppConstructor(encCfg),
+		AppConstructor:    NewAppConstructor(),
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit:     1 * time.Second / 2,
 		ChainID:           "nibiru-code-test",
@@ -79,12 +80,12 @@ func DefaultConfig() network.Config {
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		StartingTokens: sdk.Coins(
-			sdk.NewCoins(
-				sdk.NewCoin("unusd", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-				sdk.NewCoin("unibi", sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
-				sdk.NewCoin("uust", sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			)),
+		StartingTokens: sdk.NewCoins(
+			sdk.NewCoin(common.StableDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.GovDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.CollDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin("stake", sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+		),
 		PruningStrategy: storetypes.PruningOptionNothing,
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
@@ -92,7 +93,7 @@ func DefaultConfig() network.Config {
 	}
 }
 
-func NewAppConstructor(encodingCfg simappparams.EncodingConfig) network.AppConstructor {
+func NewAppConstructor() network.AppConstructor {
 	return func(val network.Validator) servertypes.Application {
 		return New(true)
 	}

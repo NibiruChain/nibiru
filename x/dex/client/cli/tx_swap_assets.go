@@ -16,14 +16,14 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdExitPool() *cobra.Command {
+func CmdSwapAssets() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exit-pool",
-		Short: "exit a pool by burning pool share tokens",
+		Use:   "swap-assets",
+		Short: "swap assets by specifying tokens in and a token out denom",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100nibiru/pool/1 --from validator
+$ %s tx dex swap-assets --pool-id 1 --tokens-in 100stake --token-out-denom validatortoken --from validator
 `,
 				version.AppName,
 			),
@@ -41,34 +41,41 @@ $ %s tx dex exit-pool --pool-id 1 --pool-shares-out 100nibiru/pool/1 --from vali
 				return err
 			}
 
-			poolSharesOut, err := cmd.Flags().GetString(FlagPoolSharesOut)
+			tokenInStr, err := cmd.Flags().GetString(FlagTokenIn)
 			if err != nil {
 				return err
 			}
 
-			parsedPoolSharesOut, err := sdk.ParseCoinNormalized(poolSharesOut)
+			tokenIn, err := sdk.ParseCoinNormalized(tokenInStr)
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgExitPool(
+			tokenOutDenom, err := cmd.Flags().GetString(FlagTokenOutDenom)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgSwapAssets(
 				clientCtx.GetFromAddress().String(),
 				poolId,
-				parsedPoolSharesOut,
+				tokenIn,
+				tokenOutDenom,
 			)
-
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
-	cmd.Flags().AddFlagSet(FlagSetExitPool())
+	cmd.Flags().AddFlagSet(FlagSetSwapAssets())
 	flags.AddTxFlagsToCmd(cmd)
 
 	_ = cmd.MarkFlagRequired(FlagPoolId)
-	_ = cmd.MarkFlagRequired(FlagPoolSharesOut)
+	_ = cmd.MarkFlagRequired(FlagTokenIn)
+	_ = cmd.MarkFlagRequired(FlagTokenOutDenom)
 
 	return cmd
 }
