@@ -35,7 +35,6 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
-	"github.com/cosmos/cosmos-sdk/std"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -95,7 +94,6 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	cryptocodec "github.com/tharsis/ethermint/crypto/codec"
 
 	// IBC imports
 	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
@@ -784,7 +782,10 @@ func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
 // Functions for ibc-go TestingApp
 // ------------------------------------------------------------------------
 
-// GetBaseApp() implementes the TestingApp interface
+/* GetBaseApp, GetStakingKeeper, GetIBCKeeper, and GetScopedIBCKeeper are part
+   of the implementation of the TestingApp interface
+*/
+
 func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
@@ -804,40 +805,8 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 /* EncodingConfig specifies the concrete encoding types to use for a given app.
    This is provided for compatibility between protobuf and amino implementations. */
 
-func simRegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	sdk.RegisterLegacyAminoCodec(cdc)
-	cryptocodec.RegisterCrypto(cdc)
-	codec.RegisterEvidences(cdc)
-}
-
-func simRegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	std.RegisterInterfaces(registry)
-	// cryptocodec.RegisterCrypto(registry)
-}
-
-// makeConfig creates an EncodingConfig for testing
-func makeConfig(mb module.BasicManager) EncodingConfig {
-	cdc := codec.NewLegacyAmino()
-	interfaceRegistry := codectypes.NewInterfaceRegistry()
-	protoCodec := codec.NewProtoCodec(interfaceRegistry)
-
-	encodingConfig := EncodingConfig{
-		InterfaceRegistry: interfaceRegistry,
-		Marshaler:         protoCodec,
-		TxConfig:          authtx.NewTxConfig(protoCodec, authtx.DefaultSignModes),
-		Amino:             cdc,
-	}
-
-	simRegisterLegacyAminoCodec(encodingConfig.Amino)
-	mb.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	simRegisterInterfaces(encodingConfig.InterfaceRegistry)
-	mb.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	return encodingConfig
-
-}
-
 func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return makeConfig(ModuleBasics).TxConfig
+	return MakeTestEncodingConfig().TxConfig
 }
 
 // ------------------------------------------------------------------------
