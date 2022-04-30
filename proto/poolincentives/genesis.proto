@@ -1,0 +1,14 @@
+syntax = "proto3";
+package NibiruChain.nibiru.poolincentives;
+
+import "gogoproto/gogo.proto";
+import "poolincentives/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/NibiruChain/nibiru/x/poolincentives/types";
+
+// GenesisState defines the poolincentives module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  // this line is used by starport scaffolding # genesis/proto/state
+}
