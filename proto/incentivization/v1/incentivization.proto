@@ -2,6 +2,13 @@ syntax="proto3";
 
 package nibiru.incentivization.v1;
 
+option go_package = "github.com/NibiruChain/nibiru/x/incentivization/types";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "gogoproto/gogo.proto";
+
+
 service Msg {
   // CreateIncentivizationProgram allows an entity to create an incentivization program for a liquidity pool.
   rpc CreateIncentivizationProgram(MsgCreateIncentivizationProgram) returns (MsgCreateIncentivizationProgramResponse);
@@ -12,11 +19,18 @@ service Msg {
 
 // MsgCreateIncentivizationProgram is the request needed for the CreateIncentivizationProgram RPC.
 message MsgCreateIncentivizationProgram {
-  // lp_denom defines the liquidity pool denom that we want to incentivize.
-  string lp_denom = 1;
   // sender defines the sender of the msg that needs to be signed.
-  string sender = 2;
-  // duration defines what lock duration is needed
+  string sender = 1;
+  // lp_denom defines the liquidity pool denom that we want to incentivize.
+  string lp_denom = 2;
+  // min_lockup_duration defines the minimum lockup duration
+  // required on the lp_denom to get the incentivization.
+  google.protobuf.Duration min_lockup_duration = 3 [(gogoproto.stdduration) = true];
+  // start_time identifies when the incentivization starts.
+  google.protobuf.Timestamp start_time = 4 [(gogoproto.stdtime) = true];
+  // epochs defines the number of epochs the incentivization
+  // program will last.
+  int64 epochs = 5;
 }
 
 // MsgCreateIncentivizationProgramResponse is the response returned by the CreateIncentivizationProgram RPC.
@@ -31,4 +45,23 @@ message MsgFundIncentivizationProgram {
 
 message MsgFundIncentivizationProgramResponse {
 
+}
+
+// IncentivizationProgram defines how an incentivization program looks like.
+message IncentivizationProgram {
+  // id defines the unique uint64 id of the program
+  uint64 id = 1;
+  // escrow_address defines the escrow module account address
+  // for the incentivization program.
+  string escrow_address = 2;
+  // remaining_epochs defines the number of epochs left before the incentivization
+  // program can be considered finalized.
+  int64 remaining_epochs = 3;
+  // lp_denom defines the liquidity pool denom that is being incentivized.
+  string lp_denom = 4;
+  // min_lockup_duration defines the minimum lp_denom lockup period
+  // required to get the epochs' rewards.
+  google.protobuf.Duration min_lockup_duration = 5 [(gogoproto.stdduration) = true];
+  // start_time defines the incentivization program start time.
+  google.protobuf.Timestamp start_time = 6 [(gogoproto.stdtime) = true];
 }
