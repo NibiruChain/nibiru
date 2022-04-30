@@ -26,6 +26,9 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	if options.SigGasConsumer == nil {
 		options.SigGasConsumer = ante.DefaultSigVerificationGasConsumer
 	}
+	if options.IBCKeeper == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "ibc keeper is required for AnteHandler")
+	}
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
