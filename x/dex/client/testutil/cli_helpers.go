@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,7 +17,7 @@ import (
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
 }
 
 // ExecMsgCreatePool broadcast a pool creation message.
@@ -58,4 +59,72 @@ func ExecMsgCreatePool(
 	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdCreatePool(), args)
+}
+
+// ExecMsgJoinPool broadcast a join pool message.
+func ExecMsgJoinPool(
+	t *testing.T,
+	clientCtx client.Context,
+	poolId uint64,
+	sender fmt.Stringer,
+	tokensIn string,
+	extraArgs ...string,
+) (testutil.BufferWriter, error) {
+	args := []string{
+		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, tokensIn),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
+		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
+	}
+
+	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
+
+	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdJoinPool(), args)
+}
+
+// ExecMsgExitPool broadcast an exit pool message.
+func ExecMsgExitPool(
+	t *testing.T,
+	clientCtx client.Context,
+	poolId uint64,
+	sender fmt.Stringer,
+	poolSharesOut string,
+	extraArgs ...string,
+) (testutil.BufferWriter, error) {
+	args := []string{
+		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", dexcli.FlagPoolSharesOut, poolSharesOut),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
+		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
+	}
+
+	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
+
+	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdExitPool(), args)
+}
+
+// ExecMsgSwapAssets broadcast a swap assets message.
+func ExecMsgSwapAssets(
+	t *testing.T,
+	clientCtx client.Context,
+	poolId uint64,
+	sender fmt.Stringer,
+	tokenIn string,
+	tokenOutDenom string,
+	extraArgs ...string,
+) (testutil.BufferWriter, error) {
+	args := []string{
+		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", dexcli.FlagTokenIn, tokenIn),
+		fmt.Sprintf("--%s=%s", dexcli.FlagTokenOutDenom, tokenOutDenom),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
+		fmt.Sprintf("--%s=%d", flags.FlagGas, 300_000),
+	}
+
+	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
+
+	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdSwapAssets(), args)
 }

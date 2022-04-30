@@ -19,4 +19,7 @@ message Params {
     (gogoproto.moretags) = "yaml:\"pool_creation_fee\"",
     (gogoproto.nullable) = false
   ];
+
+  // The assets that can be used to create liquidity pools
+  repeated string whitelisted_asset = 3;
 }
