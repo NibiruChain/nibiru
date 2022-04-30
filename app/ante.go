@@ -49,5 +49,4 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil
-
 }

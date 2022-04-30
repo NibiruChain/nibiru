@@ -42,11 +42,17 @@ func SetupNibiruTestingApp() (
 				Oracles: []sdk.AccAddress{oracle}, Active: true},
 		},
 	})
-	nibiruApp.PriceKeeper.SetPrice(
+	_, err := nibiruApp.PriceKeeper.SetPrice(
 		ctx, oracle, token0, token1, sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
 	)
-	nibiruApp.PriceKeeper.SetCurrentPrices(ctx, token0, token1)
+	if err != nil {
+		return nil, defaultGenesis
+	}
+	err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, token0, token1)
+	if err != nil {
+		return nil, defaultGenesis
+	}
 
 	// Create genesis state
 	encCdc := app.MakeTestEncodingConfig()
@@ -115,7 +121,8 @@ func (suite *IBCTestSuite) SetupTest() {
 	suite.coordinator.SetupConnections(suite.path)
 	suite.Require().Equal("connection-0", suite.path.EndpointA.ConnectionID)
 
-	suite.coordinator.ChanOpenInitOnBothChains(suite.path)
+	err := suite.coordinator.ChanOpenInitOnBothChains(suite.path)
+	suite.Require().NoError(err)
 	suite.Require().Equal("channel-0", suite.path.EndpointA.ChannelID)
 	// clientID, connectionID, channelID filled
 
@@ -132,7 +139,6 @@ func (suite IBCTestSuite) TestInitialization() {
 }
 
 func (suite IBCTestSuite) TestClient_BeginBlocker() {
-
 	// set localhost client
 	setLocalHostClient := func() {
 		revision := ibcclienttypes.ParseChainID(suite.chainA.GetContext().ChainID())
@@ -163,7 +169,6 @@ func (suite IBCTestSuite) TestClient_BeginBlocker() {
 		suite.Require().Equal(prevHeight.Increment(), localHostClient.GetLatestHeight())
 		prevHeight = localHostClient.GetLatestHeight().(ibcclienttypes.Height)
 	}
-
 }
 
 func NewPacket(
@@ -172,7 +177,6 @@ func NewPacket(
 	coin sdk.Coin,
 	timeoutHeight ibcclienttypes.Height,
 ) channeltypes.Packet {
-
 	transfer := transfertypes.NewFungibleTokenPacketData(
 		coin.Denom, coin.Amount.String(), sender, receiver)
 	bz := transfertypes.ModuleCdc.MustMarshalJSON(&transfer)
