@@ -98,8 +98,8 @@ func NewIBCTestingTransferPath(
 	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
 	path.EndpointA.ChannelConfig.Order = channeltypes.UNORDERED
 	path.EndpointB.ChannelConfig.Order = channeltypes.UNORDERED
-	path.EndpointA.ChannelConfig.Version = "ics20-1"
-	path.EndpointB.ChannelConfig.Version = "ics20-1"
+	path.EndpointA.ChannelConfig.Version = transfertypes.Version // "ics20-1"
+	path.EndpointB.ChannelConfig.Version = transfertypes.Version // "ics20-1"
 	return path
 }
 
@@ -117,13 +117,16 @@ func (suite *IBCTestSuite) SetupTest() {
 
 	suite.coordinator.SetupClients(suite.path)
 	suite.Require().Equal("07-tendermint-0", suite.path.EndpointA.ClientID)
+	suite.Require().Equal("07-tendermint-0", suite.path.EndpointB.ClientID)
 
 	suite.coordinator.SetupConnections(suite.path)
 	suite.Require().Equal("connection-0", suite.path.EndpointA.ConnectionID)
+	suite.Require().Equal("connection-0", suite.path.EndpointB.ConnectionID)
 
 	err := suite.coordinator.ChanOpenInitOnBothChains(suite.path)
 	suite.Require().NoError(err)
 	suite.Require().Equal("channel-0", suite.path.EndpointA.ChannelID)
+	suite.Require().Equal("channel-0", suite.path.EndpointB.ChannelID)
 	// clientID, connectionID, channelID filled
 
 	/* NOTE: Investigate the difference between individual Setup calls and
@@ -136,6 +139,39 @@ func (suite IBCTestSuite) TestInitialization() {
 
 	var err error = suite.coordinator.ConnOpenInitOnBothChains(suite.path)
 	suite.Require().NoError(err)
+	suite.Require().Equal("channel-0", suite.path.EndpointA.ChannelID)
+}
+
+func (suite IBCTestSuite) TestCoordinatorSetup() {
+	suite.SetupTest()
+	var err error
+
+	// Construct and execute a MsgChannelOpenTry on both endpoints.
+	err = suite.path.EndpointB.ChanOpenTry()
+	suite.Require().NoError(err)
+	err = suite.path.EndpointA.ChanOpenTry()
+	suite.Require().NoError(err)
+
+	// Update the IBC client associated with the 'EndpointA'
+	err = suite.path.EndpointA.UpdateClient()
+	suite.Require().NoError(err)
+
+	// --------------------------------------------------------
+	// Below is work in progress
+	// TODO: https://github.com/NibiruChain/nibiru/issues/245
+	// suite.path.EndpointA.ChanOpenAck() raises an error due to failed proof
+	// --------------------------------------------------------
+
+	// err = suite.path.EndpointA.ChanOpenAck()
+	// suite.Require().NoError(err)
+
+	// err = suite.path.EndpointB.ChanOpenConfirm()
+	// suite.Require().NoError(err)
+
+	// // ensure counterparty is up to date
+	// err = suite.path.EndpointA.UpdateClient()
+	// suite.Require().NoError(err)
+	// suite.coordinator.Setup(suite.path)
 }
 
 func (suite IBCTestSuite) TestClient_BeginBlocker() {
@@ -207,7 +243,9 @@ func (suite IBCTestSuite) TestSentPacket() {
 
 	fmt.Println(ack, packet1)
 
-	// ---------------------------- Below is work in progress
+	// --------------------------------------------------------
+	// Below is work in progress
+	// TODO: https://github.com/NibiruChain/nibiru/issues/245
 	// --------------------------------------------------------
 
 	// // send on endpointA
