@@ -70,12 +70,11 @@ func (k Keeper) CreateIncentivizationProgram(
 
 	// we create a new instance of an incentivization program
 
-	nextID := k.IncentivizationProgramsState(ctx).PeekNextID()                                           // we need to peek the next ID to create a new module account
-	escrowAccount := k.ak.NewAccount(ctx, authtypes.NewEmptyModuleAccount(newEscrowAccountName(nextID))) // that holds the escrowed funds.
+	nextID := k.IncentivizationProgramsState(ctx).PeekNextID()                                           // we need to peek the next ID to create a new
+	escrowAccount := k.ak.NewAccount(ctx, authtypes.NewEmptyModuleAccount(newEscrowAccountName(nextID))) // module account that holds the escrowed funds.
 	k.ak.SetAccount(ctx, escrowAccount)
 
 	program := &types.IncentivizationProgram{
-		Id:                0,
 		EscrowAddress:     escrowAccount.GetAddress().String(),
 		RemainingEpochs:   epochs,
 		LpDenom:           lpDenom,

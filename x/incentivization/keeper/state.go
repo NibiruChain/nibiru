@@ -73,9 +73,33 @@ func (s IncentivizationProgramState) Create(program *types.IncentivizationProgra
 	s.index(pk, program)
 }
 
+func (s IncentivizationProgramState) Get(id uint64) (*types.IncentivizationProgram, error) {
+	bytes := s.incentivizationPrograms.Get(sdk.Uint64ToBigEndian(id))
+	if bytes == nil {
+		return nil, types.ErrIncentivizationProgramNotFound.Wrapf("%d", id)
+	}
+
+	program := new(types.IncentivizationProgram)
+	s.cdc.MustUnmarshal(bytes, program)
+	return program, nil
+}
+
 func (s IncentivizationProgramState) index(pk []byte, program *types.IncentivizationProgram) {
 	s.denomMap.Set([]byte(program.LpDenom), []byte{})
 	s.denomToIncentivizationProgramIndex.Set(s.denomKey(program.LpDenom, pk), []byte{})
+}
+
+func (s IncentivizationProgramState) unindex(pk []byte, program *types.IncentivizationProgram) {
+	s.denomToIncentivizationProgramIndex.Delete(s.denomKey(program.LpDenom, pk))
+	// now we check if there are more lp denoms
+	iter := s.denomToIncentivizationProgramIndex.Iterator(s.denomKey(program.LpDenom, nil), nil)
+	defer iter.Close()
+	// in case the iter is not valid, it means that there are no more
+	// incentivization programs associated with the given denom.
+	// Hence we clear the denom map.
+	if !iter.Valid() {
+		s.denomMap.Delete([]byte(program.LpDenom))
+	}
 }
 
 func (s IncentivizationProgramState) nextPrimaryKey() uint64 {

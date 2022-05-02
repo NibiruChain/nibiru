@@ -432,6 +432,7 @@ func NewNibiruApp(
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -445,6 +446,7 @@ func NewNibiruApp(
 		pricetypes.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are

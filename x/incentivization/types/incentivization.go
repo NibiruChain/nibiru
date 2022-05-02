@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"time"
 )
 
 func DefaultGenesis() *GenesisState {
@@ -29,4 +31,53 @@ func (m *GenesisState) Validate() error {
 	}
 
 	return nil
+}
+
+// msg impl
+
+var (
+	_ sdk.Msg = (*MsgCreateIncentivizationProgram)(nil)
+	_ sdk.Msg = (*MsgFundIncentivizationProgram)(nil)
+)
+
+func (m *MsgCreateIncentivizationProgram) ValidateBasic() error {
+	if m.StartTime != nil && *m.StartTime == (time.Time{}) {
+		return fmt.Errorf("invalid time")
+	}
+	if m.LpDenom == "" {
+		return fmt.Errorf("invalid denom")
+	}
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return err
+	}
+
+	if m.Epochs == 0 {
+		return fmt.Errorf("invalid epochs")
+	}
+
+	if m.MinLockupDuration == nil || *m.MinLockupDuration == 0 {
+		return fmt.Errorf("invalid duration")
+	}
+
+	if err := m.InitialFunds.Validate(); err != nil {
+		return fmt.Errorf("invalid initial funds")
+	}
+	return nil
+}
+
+func (m *MsgCreateIncentivizationProgram) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{addr}
+}
+
+func (m *MsgFundIncentivizationProgram) ValidateBasic() error {
+	panic("implement me")
+}
+
+func (m *MsgFundIncentivizationProgram) GetSigners() []sdk.AccAddress {
+	panic("implement me")
 }
