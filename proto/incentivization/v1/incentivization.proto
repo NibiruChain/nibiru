@@ -8,6 +8,8 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "gogoproto/gogo.proto";
 
+import "cosmos/base/v1beta1/coin.proto";
+
 
 service Msg {
   // CreateIncentivizationProgram allows an entity to create an incentivization program for a liquidity pool.
@@ -31,6 +33,12 @@ message MsgCreateIncentivizationProgram {
   // epochs defines the number of epochs the incentivization
   // program will last.
   int64 epochs = 5;
+  // initial_funds defines the initial funds to bootstrap the incentivization program's escrow.
+  // This is optional.
+  repeated cosmos.base.v1beta1.Coin initial_funds = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
 // MsgCreateIncentivizationProgramResponse is the response returned by the CreateIncentivizationProgram RPC.
@@ -61,7 +69,15 @@ message IncentivizationProgram {
   string lp_denom = 4;
   // min_lockup_duration defines the minimum lp_denom lockup period
   // required to get the epochs' rewards.
-  google.protobuf.Duration min_lockup_duration = 5 [(gogoproto.stdduration) = true];
+  google.protobuf.Duration min_lockup_duration = 5 [(gogoproto.stdduration) = true, (gogoproto.nullable) = false];
   // start_time defines the incentivization program start time.
-  google.protobuf.Timestamp start_time = 6 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp start_time = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+message GenesisState {
+  repeated IncentivizationProgram incentivization_programs = 1;
+}
+
+service Query {
+
 }

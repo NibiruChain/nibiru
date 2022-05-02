@@ -37,23 +37,37 @@ func newIncentivizationProgramState(ctx sdk.Context, key sdk.StoreKey, cdc codec
 }
 
 type IncentivizationProgramState struct {
-	cdc                                codec.Codec
-	ctx                                sdk.Context
+	cdc codec.Codec
+	ctx sdk.Context
+
 	programID                          sdk.KVStore
 	incentivizationPrograms            sdk.KVStore // maps objects
 	denomToIncentivizationProgramIndex sdk.KVStore // maps denom to incentivization program
 	denomMap                           sdk.KVStore // provides the current list of incentivized denomss through a map
 }
 
+// PeekNextID returns the next ID without actually increasing the counter.
+func (s IncentivizationProgramState) PeekNextID() uint64 {
+	id := s.programID.Get(incentivizationProgramIDKey)
+	switch id {
+	case nil:
+		return 0
+	default:
+		return sdk.BigEndianToUint64(id)
+	}
+}
+
 func (s IncentivizationProgramState) Create(program *types.IncentivizationProgram) {
 	if program.Id != 0 {
 		panic("incentivization program id must not be set")
+	}
+	if program.EscrowAddress != "" {
+		panic("incentivization program escrow address must not be set")
 	}
 	id := s.nextPrimaryKey()
 	pk := sdk.Uint64ToBigEndian(id) // TODO(mercilex): inefficient, doing this twice
 
 	program.Id = id
-
 	s.incentivizationPrograms.Set(pk, s.cdc.MustMarshal(program))
 
 	s.index(pk, program)

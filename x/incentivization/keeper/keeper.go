@@ -1,11 +1,14 @@
 package keeper
 
 import (
+	"fmt"
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
 	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"time"
 )
@@ -19,10 +22,29 @@ const (
 	MinEpochs int64 = 7
 )
 
+const (
+	// FundsModuleAccountAddressPrefix defines the prefix
+	// of module accounts created that contain an
+	// incentivization program funds.
+	FundsModuleAccountAddressPrefix = "incentivization_escrow_"
+)
+
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeperI, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.LockupKeeper) Keeper {
+	return Keeper{
+		cdc:      cdc,
+		storeKey: storeKey,
+		ak:       ak,
+		bk:       bk,
+		dk:       dk,
+		lk:       lk,
+	}
+}
+
 type Keeper struct {
 	cdc      codec.Codec
 	storeKey sdk.StoreKey
 
+	ak authkeeper.AccountKeeperI
 	bk bankkeeper.Keeper
 	dk dexkeeper.Keeper
 	lk lockupkeeper.LockupKeeper
@@ -46,12 +68,33 @@ func (k Keeper) CreateIncentivizationProgram(
 		return nil, types.ErrStartTimeInPast.Wrapf("current time %s, got: %s", ctx.BlockTime(), starTime)
 	}
 
-	panic("impl")
+	// we create a new instance of an incentivization program
 
+	nextID := k.IncentivizationProgramsState(ctx).PeekNextID()                                           // we need to peek the next ID to create a new module account
+	escrowAccount := k.ak.NewAccount(ctx, authtypes.NewEmptyModuleAccount(newEscrowAccountName(nextID))) // that holds the escrowed funds.
+	k.ak.SetAccount(ctx, escrowAccount)
+
+	program := &types.IncentivizationProgram{
+		Id:                0,
+		EscrowAddress:     escrowAccount.GetAddress().String(),
+		RemainingEpochs:   epochs,
+		LpDenom:           lpDenom,
+		MinLockupDuration: minLockupDuration,
+		StartTime:         starTime,
+	}
+
+	k.IncentivizationProgramsState(ctx).Create(program)
+
+	return program, nil
 }
 
 // Distribute distributes incentivization rewards to accounts
 // that meet incentivization program criteria.
 func (k Keeper) Distribute(ctx sdk.Context) error {
 	panic("impl")
+}
+
+// newEscrowAccountName returns the escrow module account name
+func newEscrowAccountName(id uint64) string {
+	return fmt.Sprintf("%s%d", FundsModuleAccountAddressPrefix, id)
 }
