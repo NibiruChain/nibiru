@@ -61,9 +61,6 @@ func (s IncentivizationProgramState) Create(program *types.IncentivizationProgra
 	if program.Id != 0 {
 		panic("incentivization program id must not be set")
 	}
-	if program.EscrowAddress != "" {
-		panic("incentivization program escrow address must not be set")
-	}
 	id := s.nextPrimaryKey()
 	pk := sdk.Uint64ToBigEndian(id) // TODO(mercilex): inefficient, doing this twice
 

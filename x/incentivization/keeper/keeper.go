@@ -71,7 +71,7 @@ func (k Keeper) CreateIncentivizationProgram(
 	// we create a new instance of an incentivization program
 
 	nextID := k.IncentivizationProgramsState(ctx).PeekNextID()                                           // we need to peek the next ID to create a new
-	escrowAccount := k.ak.NewAccount(ctx, authtypes.NewEmptyModuleAccount(newEscrowAccountName(nextID))) // module account that holds the escrowed funds.
+	escrowAccount := k.ak.NewAccount(ctx, authtypes.NewEmptyModuleAccount(NewEscrowAccountName(nextID))) // module account that holds the escrowed funds.
 	k.ak.SetAccount(ctx, escrowAccount)
 
 	program := &types.IncentivizationProgram{
@@ -93,7 +93,7 @@ func (k Keeper) Distribute(ctx sdk.Context) error {
 	panic("impl")
 }
 
-// newEscrowAccountName returns the escrow module account name
-func newEscrowAccountName(id uint64) string {
+// NewEscrowAccountName returns the escrow module account name
+func NewEscrowAccountName(id uint64) string {
 	return fmt.Sprintf("%s%d", FundsModuleAccountAddressPrefix, id)
 }

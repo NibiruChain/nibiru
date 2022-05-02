@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
 )
@@ -80,4 +81,10 @@ func (m *MsgFundIncentivizationProgram) ValidateBasic() error {
 
 func (m *MsgFundIncentivizationProgram) GetSigners() []sdk.AccAddress {
 	panic("implement me")
+}
+
+// codec bs
+
+func RegisterInterfaces(r codectypes.InterfaceRegistry) {
+	r.RegisterImplementations((*sdk.Msg)(nil), &MsgFundIncentivizationProgram{}, &MsgCreateIncentivizationProgram{})
 }
