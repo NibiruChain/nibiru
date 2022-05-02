@@ -17,8 +17,8 @@ var (
 	// lockup which did not yet start to unlock.
 	// NOTE: this is not maximum golang time because, since we encode it
 	// using timestampb.Timestamp under the hood we need to adhere to proto time
-	// rules. Equivalent to: time.Date(9999, time.December, 31, 23, 59, 59, 0, time.Local)
-	MaxTime = time.Unix(253402297199, 0)
+	// rules. Equivalent to: time.Date(9999, time.December, 31, 23, 59, 59, 0, time.UTC)
+	MaxTime = time.Unix(253402297199, 0).UTC()
 )
 
 // LockupKeeper provides a way to manage module storage.

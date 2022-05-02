@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -291,7 +292,7 @@ func TestLockupKeeper_UnlockAvailableCoins(t *testing.T) {
 func TestLockupKeeper_LocksByDenomUnlockingAfter(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app, _ := testutil.NewNibiruApp(false)
-		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+		ctx := app.NewContext(false, tmproto.Header{Time: time.Now().UTC()})
 
 		addr := sample.AccAddress()
 		locked := sdk.Coins{sdk.NewInt64Coin("atom", 100)}

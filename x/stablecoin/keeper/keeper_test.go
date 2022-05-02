@@ -36,7 +36,7 @@ func TestGetAndSetParams(t *testing.T) {
 				params := types.NewParams(
 					collRatio, feeRatio, feeRatioEF, bonusRateRecoll, "15 min", adjustmentStep,
 					priceLowerBound,
-					priceUpperBound)
+					priceUpperBound, true)
 
 				return params
 			},

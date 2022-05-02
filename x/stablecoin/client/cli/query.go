@@ -116,7 +116,6 @@ func CmdQueryLiquidityRatioInfo() *cobra.Command {
 		Short: "liqRatio and the liqRatio bands",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 

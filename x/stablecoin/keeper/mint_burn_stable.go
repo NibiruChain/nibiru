@@ -27,6 +27,10 @@ func (k Keeper) MintStable(
 	}
 
 	params := k.GetParams(ctx)
+	if !params.IsCollateralRatioValid {
+		return nil, types.NoValidCollateralRatio
+	}
+
 	feeRatio := params.GetFeeRatioAsDec()
 	collRatio := params.GetCollRatioAsDec()
 	efFeeRatio := params.GetEfFeeRatioAsDec()
@@ -274,6 +278,10 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 	}
 
 	params := k.GetParams(ctx)
+	if !params.IsCollateralRatioValid {
+		return nil, types.NoValidCollateralRatio
+	}
+
 	feeRatio := params.GetFeeRatioAsDec()
 	collRatio := params.GetCollRatioAsDec()
 	govRatio := sdk.OneDec().Sub(collRatio)
