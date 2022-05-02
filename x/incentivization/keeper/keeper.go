@@ -87,6 +87,20 @@ func (k Keeper) CreateIncentivizationProgram(
 	return program, nil
 }
 
+func (k Keeper) FundIncentivizationProgram(ctx sdk.Context, id uint64, funder sdk.AccAddress, funds sdk.Coins) error {
+	program, err := k.IncentivizationProgramsState(ctx).Get(id)
+	if err != nil {
+		return err
+	}
+
+	// we transfer money from funder to the program escrow address
+	if err := k.bk.SendCoinsFromAccountToModule(ctx, funder, program.EscrowAddress, funds); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Distribute distributes incentivization rewards to accounts
 // that meet incentivization program criteria.
 func (k Keeper) Distribute(ctx sdk.Context) error {
