@@ -29,7 +29,7 @@ const (
 	FundsModuleAccountAddressPrefix = "incentivization_escrow_"
 )
 
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeperI, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.LockupKeeper) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.LockupKeeper) Keeper {
 	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
@@ -44,7 +44,7 @@ type Keeper struct {
 	cdc      codec.Codec
 	storeKey sdk.StoreKey
 
-	ak authkeeper.AccountKeeperI
+	ak authkeeper.AccountKeeper
 	bk bankkeeper.Keeper
 	dk dexkeeper.Keeper
 	lk lockupkeeper.LockupKeeper
@@ -93,8 +93,16 @@ func (k Keeper) FundIncentivizationProgram(ctx sdk.Context, id uint64, funder sd
 		return err
 	}
 
+	escrowAddr, err := sdk.AccAddressFromBech32(program.EscrowAddress)
+	if err != nil {
+		panic(err)
+	}
+
 	// we transfer money from funder to the program escrow address
-	if err := k.bk.SendCoinsFromAccountToModule(ctx, funder, program.EscrowAddress, funds); err != nil {
+	// NOTE(mercilex): can't use send coins from module to account because
+	// due to how GetModuleAccount works, which fetches information in a
+	// stateless way. TRAGEDY. ABSOLUTE TRAGEDY.
+	if err := k.bk.SendCoins(ctx, funder, escrowAddr, funds); err != nil {
 		return err
 	}
 

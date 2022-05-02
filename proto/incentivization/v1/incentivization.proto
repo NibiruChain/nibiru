@@ -51,8 +51,10 @@ message MsgCreateIncentivizationProgramResponse {
 message MsgFundIncentivizationProgram {
   // sender is the sender of the requests
   string sender = 1;
+  // id marks the incentivization program id.
+  uint64 id = 2;
   // funds is the amount of money sender deposits in the program funding escrow.
-  repeated cosmos.base.v1beta1.Coin funds = 2 [
+  repeated cosmos.base.v1beta1.Coin funds = 3 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];

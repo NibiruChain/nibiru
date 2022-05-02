@@ -3,6 +3,9 @@ package keeper_test
 import (
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -22,5 +25,26 @@ func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 
 		require.Equal(t, uint64(0), createdProgram.Id)
 		require.Equal(t, authtypes.NewModuleAddress(keeper.NewEscrowAccountName(0)).String(), createdProgram.EscrowAddress)
+	})
+}
+
+func TestKeeper_FundIncentivizationProgram(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		app, ctx := testutil.NewNibiruApp(false)
+		addr := sample.AccAddress()
+		fundingAmount := sdk.NewCoins(sdk.NewInt64Coin("test", 100))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, fundingAmount))
+
+		createdProgram, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "denom", 48*time.Hour, ctx.BlockTime(), 1000)
+		require.NoError(t, err)
+
+		err = app.IncentivizationKeeper.FundIncentivizationProgram(ctx, createdProgram.Id, addr, fundingAmount)
+		require.NoError(t, err)
+
+		escrowAddr, err := sdk.AccAddressFromBech32(createdProgram.EscrowAddress)
+		require.NoError(t, err)
+
+		balance := app.BankKeeper.GetAllBalances(ctx, escrowAddr)
+		require.Equal(t, balance, fundingAmount)
 	})
 }
