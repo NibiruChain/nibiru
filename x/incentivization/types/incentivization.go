@@ -76,11 +76,27 @@ func (m *MsgCreateIncentivizationProgram) GetSigners() []sdk.AccAddress {
 }
 
 func (m *MsgFundIncentivizationProgram) ValidateBasic() error {
-	panic("implement me")
+	if err := m.Funds.Validate(); err != nil {
+		return err
+	}
+	if m.Funds.IsZero() {
+		return fmt.Errorf("no funding provided")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *MsgFundIncentivizationProgram) GetSigners() []sdk.AccAddress {
-	panic("implement me")
+	addr, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{addr}
 }
 
 // codec bs
