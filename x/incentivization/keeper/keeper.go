@@ -53,7 +53,6 @@ type Keeper struct {
 func (k Keeper) CreateIncentivizationProgram(
 	ctx sdk.Context,
 	lpDenom string, minLockupDuration time.Duration, starTime time.Time, epochs int64) (*types.IncentivizationProgram, error) {
-
 	// TODO(mercilex): assert lp denom from dex keeper
 
 	if epochs < MinEpochs {

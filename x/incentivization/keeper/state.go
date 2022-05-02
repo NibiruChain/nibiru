@@ -86,7 +86,7 @@ func (s IncentivizationProgramState) index(pk []byte, program *types.Incentiviza
 	s.denomToIncentivizationProgramIndex.Set(s.denomKey(program.LpDenom, pk), []byte{})
 }
 
-func (s IncentivizationProgramState) unindex(pk []byte, program *types.IncentivizationProgram) {
+/*func (s IncentivizationProgramState) unindex(pk []byte, program *types.IncentivizationProgram) {
 	s.denomToIncentivizationProgramIndex.Delete(s.denomKey(program.LpDenom, pk))
 	// now we check if there are more lp denoms
 	iter := s.denomToIncentivizationProgramIndex.Iterator(s.denomKey(program.LpDenom, nil), nil)
@@ -97,7 +97,7 @@ func (s IncentivizationProgramState) unindex(pk []byte, program *types.Incentivi
 	if !iter.Valid() {
 		s.denomMap.Delete([]byte(program.LpDenom))
 	}
-}
+}*/
 
 func (s IncentivizationProgramState) nextPrimaryKey() uint64 {
 	idBytes := s.programID.Get(incentivizationProgramIDKey)
