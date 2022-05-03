@@ -34,7 +34,6 @@ var (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	// this line is used by starport scaffolding # genesis/module/init
 
 	if genState.ModuleAccountBalance.Amount.GT(sdk.ZeroInt()) {
 		if err := k.BankKeeper.MintCoins(
@@ -194,6 +193,8 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 
 	// See https://github.com/cosmos/cosmos-sdk/issues/5569 on why we do this.
 	am.ak.GetModuleAccount(ctx, types.PerpEFModuleAccount)
+	am.ak.GetModuleAccount(ctx, types.VaultModuleAccount)
+	am.ak.GetModuleAccount(ctx, types.FeePoolModuleAccount)
 
 	return []abci.ValidatorUpdate{}
 }

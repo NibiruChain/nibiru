@@ -17,6 +17,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/lockup"
 	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/perp"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	pricekeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricetypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -141,6 +144,7 @@ var (
 		pricefeed.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
+		perp.AppModuleBasic{},
 		lockup.AppModuleBasic{},
 	)
 
@@ -154,6 +158,7 @@ var (
 		govtypes.ModuleName:                   {authtypes.Burner},
 		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		epochstype.ModuleName:                 {},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
@@ -198,6 +203,7 @@ type NibiruApp struct {
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	DexKeeper        dexkeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
+	PerpKeeper       perpkeeper.Keeper
 	PriceKeeper      pricekeeper.Keeper
 	EpochsKeeper     epochskeeper.Keeper
 	LockupKeeper     lockupkeeper.LockupKeeper
@@ -242,14 +248,17 @@ func NewNibiruApp(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
-		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey, epochstype.StoreKey,
-		lockuptypes.StoreKey,
+		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey,
+		epochstype.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
 	// not include this key.
 	memKeys := sdk.NewMemoryStoreKeys(
-		capabilitytypes.MemStoreKey, "testingkey", stablecointypes.MemStoreKey, pricetypes.MemStoreKey)
+		capabilitytypes.MemStoreKey, "testingkey",
+		stablecointypes.MemStoreKey, pricetypes.MemStoreKey,
+		perptypes.MemStoreKey,
+	)
 
 	app := &NibiruApp{
 		BaseApp:           bApp,
@@ -347,6 +356,12 @@ func NewNibiruApp(
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.DexKeeper,
 	)
 
+	app.PerpKeeper = perpkeeper.NewKeeper(
+		appCodec, keys[perptypes.StoreKey], memKeys[perptypes.MemStoreKey],
+		app.GetSubspace(perptypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
+	)
+
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstype.StoreKey],
 	)
@@ -374,6 +389,10 @@ func NewNibiruApp(
 		app.PriceKeeper,
 	)
 	lockupModule := lockup.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper)
+	perpModule := perp.NewAppModule(
+		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
+		app.PriceKeeper,
+	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -402,6 +421,7 @@ func NewNibiruApp(
 		stablecoinModule,
 		lockupModule,
 		epochsModule,
+		perpModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -419,6 +439,7 @@ func NewNibiruApp(
 		pricetypes.ModuleName,
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
+		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
@@ -432,6 +453,7 @@ func NewNibiruApp(
 		epochstype.ModuleName,
 		pricetypes.ModuleName,
 		stablecointypes.ModuleName,
+		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 	)
 
@@ -450,6 +472,7 @@ func NewNibiruApp(
 		pricetypes.ModuleName,
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
+		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 	)
 
@@ -687,6 +710,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(pricetypes.ModuleName)
 	paramsKeeper.Subspace(epochstype.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
+	paramsKeeper.Subspace(perptypes.ModuleName)
 
 	return paramsKeeper
 }

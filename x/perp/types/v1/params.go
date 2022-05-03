@@ -34,7 +34,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func DefaultParams() Params {
 	return Params{
 		Stopped:                true,
-		MaintenanceMarginRatio: sdk.Int{},
+		MaintenanceMarginRatio: sdk.OneInt(),
 	}
 }
 
@@ -62,7 +62,7 @@ func validateStopped(i interface{}) error {
 }
 
 func validateMaintenanceMarginRatio(i interface{}) error {
-	_, ok := i.(string)
+	_, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
