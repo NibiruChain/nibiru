@@ -1,5 +1,5 @@
 syntax = "proto3";
-package NibiruChain.stablecoin.v1;
+package nibiru.stablecoin.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
@@ -13,23 +13,23 @@ option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 service Query {
   // Parameters queries the parameters of the x/stablecoin module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/NibiruChain/nibiru/stablecoin/params";
+    option (google.api.http).get = "/nibiru/stablecoin/params";
   }
 
   // ModuleAccountBalances queries the account balance of x/stablecoin.
   rpc ModuleAccountBalances(QueryModuleAccountBalances)
   returns (QueryModuleAccountBalancesResponse) {
-    option (google.api.http).get = "/NibiruChain/nibiru/stablecoin/module_account_balance";
+    option (google.api.http).get = "/nibiru/stablecoin/module_account_balance";
   }
 
   rpc CirculatingSupplies(QueryCirculatingSupplies)
   returns (QueryCirculatingSuppliesResponse) {
-    option (google.api.http).get = "/NibiruChain/nibiru/stablecoin/circulating_supplies";
+    option (google.api.http).get = "/nibiru/stablecoin/circulating_supplies";
   }
 
   rpc LiquidityRatioInfo(QueryLiquidityRatioInfoRequest)
   returns (QueryLiquidityRatioInfoResponse) {
-    option (google.api.http).get = "/NibiruChain/nibiru/stablecoin/liquidity_ratio_info";
+    option (google.api.http).get = "/nibiru/stablecoin/liquidity_ratio_info";
   }
 
 }
