@@ -149,6 +149,9 @@ func (k queryServer) PoolParams(goCtx context.Context, req *types.QueryPoolParam
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	pool, err := k.FetchPool(ctx, req.PoolId)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryPoolParamsResponse{
 		PoolParams: &pool.PoolParams,
