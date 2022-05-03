@@ -34,19 +34,21 @@ type BankKeeper interface {
 }
 
 type PriceKeeper interface {
-	GetCurrentPrice(sdk.Context, string) (pftypes.CurrentPrice, error)
+	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
+	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
-	GetPair(ctx sdk.Context, marketID string) (pftypes.Pair, bool)
+	GetPair(ctx sdk.Context, pairID string) (pftypes.Pair, bool)
 	// Returns the pairs from the x/pricefeed params
 	GetPairs(ctx sdk.Context) pftypes.Pairs
-	GetOracle(ctx sdk.Context, marketID string, address sdk.AccAddress) (sdk.AccAddress, error)
-	GetOracles(ctx sdk.Context, marketID string) ([]sdk.AccAddress, error)
-	SetCurrentPrices(ctx sdk.Context, marketID string) error
+	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
+	) (sdk.AccAddress, error)
+	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
+	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
 }
 
 // ----------------------------------------------------------
-// Vpool Interfaces
+// Vpool Interface
 // ----------------------------------------------------------
 
 type VirtualPoolDirection uint8
@@ -59,12 +61,19 @@ const (
 type VirtualPool interface {
 	Pair() string
 	QuoteTokenDenom() string
-	SwapInput(ctx sdk.Context, ammDir VirtualPoolDirection, inputAmount, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error)
-	SwapOutput(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int, limit sdk.Int) (sdk.Int, error)
+	SwapInput(
+		ctx sdk.Context, ammDir VirtualPoolDirection, inputAmount,
+		minOutputAmount sdk.Int, canOverFluctuationLimit bool,
+	) (sdk.Int, error)
+	SwapOutput(
+		ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int, limit sdk.Int,
+	) (sdk.Int, error)
 	GetOpenInterestNotionalCap(ctx sdk.Context) (sdk.Int, error)
 	GetMaxHoldingBaseAsset(ctx sdk.Context) (sdk.Int, error)
-	GetOutputTWAP(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int) (sdk.Int, error)
-	GetOutputPrice(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int) (sdk.Int, error)
+	GetOutputTWAP(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
+	) (sdk.Int, error)
+	GetOutputPrice(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
+	) (sdk.Int, error)
 	GetUnderlyingPrice(ctx sdk.Context) (sdk.Int, error)
 	GetSpotPrice(ctx sdk.Context) (sdk.Int, error)
 	CalcFee(notional sdk.Int) (sdk.Int, sdk.Int, error)
