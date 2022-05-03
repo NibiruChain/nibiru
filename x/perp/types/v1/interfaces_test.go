@@ -15,7 +15,6 @@ import (
    'NibiruApp.KeeperName'
 */
 func TestExpectedKeepers(t *testing.T) {
-
 	nibiruApp, _ := testutil.NewNibiruApp(true)
 	testCases := []struct {
 		name           string
@@ -48,5 +47,4 @@ func TestExpectedKeepers(t *testing.T) {
 			assert.True(t, isImplementingExpectedMethods)
 		})
 	}
-
 }

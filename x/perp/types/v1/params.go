@@ -30,14 +30,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	}
 }
 
-// NewParams creates a new Params instance
-func NewParams(
-	stopped bool,
-	mmRatio sdk.Int,
-) Params {
+// DefaultParams returns the default parameters for the x/perp module.
+func DefaultParams() Params {
 	return Params{
-		Stopped:                stopped,
-		MaintenanceMarginRatio: mmRatio,
+		Stopped:                true,
+		MaintenanceMarginRatio: sdk.Int{},
 	}
 }
 

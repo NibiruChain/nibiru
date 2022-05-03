@@ -1,20 +1,32 @@
 package keeper
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
-	v1 "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
 	errNotFound = errors.New("not found")
 )
 
-func (k Keeper) Params() ParamsState {
-	return (ParamsState)(k)
+var _ types.QueryServer = Keeper{}
+
+func (k Keeper) Params(
+	goCtx context.Context, req *types.QueryParamsRequest,
+) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
 func (k Keeper) Positions() PositionsState {
@@ -38,7 +50,7 @@ func (p ParamsState) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(p.storeKey), paramsNamespace)
 }
 
-func (p ParamsState) Get(ctx sdk.Context) (*v1.Params, error) {
+func (p ParamsState) Get(ctx sdk.Context) (*types.Params, error) {
 	kv := p.getKV(ctx)
 
 	value := kv.Get(paramsKey)
@@ -46,12 +58,12 @@ func (p ParamsState) Get(ctx sdk.Context) (*v1.Params, error) {
 		return nil, fmt.Errorf("not found")
 	}
 
-	params := new(v1.Params)
+	params := new(types.Params)
 	p.cdc.MustUnmarshal(value, params)
 	return params, nil
 }
 
-func (p ParamsState) Set(ctx sdk.Context, params *v1.Params) {
+func (p ParamsState) Set(ctx sdk.Context, params *types.Params) {
 	kv := p.getKV(ctx)
 	kv.Set(paramsKey, p.cdc.MustMarshal(params))
 }
@@ -64,7 +76,7 @@ func (p PositionsState) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(p.storeKey), positionsNamespace)
 }
 
-func (p PositionsState) keyFromType(position *v1.Position) []byte {
+func (p PositionsState) keyFromType(position *types.Position) []byte {
 	return p.keyFromRaw(position.Pair, position.Address)
 }
 
@@ -73,7 +85,7 @@ func (p PositionsState) keyFromRaw(pair, address string) []byte {
 	return []byte(pair + address)
 }
 
-func (p PositionsState) Create(ctx sdk.Context, position *v1.Position) error {
+func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error {
 	key := p.keyFromType(position)
 	kv := p.getKV(ctx)
 	if kv.Has(key) {
@@ -84,7 +96,7 @@ func (p PositionsState) Create(ctx sdk.Context, position *v1.Position) error {
 	return nil
 }
 
-func (p PositionsState) Get(ctx sdk.Context, pair, address string) (*v1.Position, error) {
+func (p PositionsState) Get(ctx sdk.Context, pair, address string) (*types.Position, error) {
 	kv := p.getKV(ctx)
 
 	key := p.keyFromRaw(pair, address)
@@ -93,13 +105,13 @@ func (p PositionsState) Get(ctx sdk.Context, pair, address string) (*v1.Position
 		return nil, errNotFound
 	}
 
-	position := new(v1.Position)
+	position := new(types.Position)
 	p.cdc.MustUnmarshal(valueBytes, position)
 
 	return position, nil
 }
 
-func (p PositionsState) Update(ctx sdk.Context, position *v1.Position) error {
+func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error {
 	kv := p.getKV(ctx)
 	key := p.keyFromType(position)
 
@@ -111,7 +123,7 @@ func (p PositionsState) Update(ctx sdk.Context, position *v1.Position) error {
 	return nil
 }
 
-func (p PositionsState) Set(ctx sdk.Context, position *v1.Position) {
+func (p PositionsState) Set(ctx sdk.Context, position *types.Position) {
 	p.getKV(ctx).Set(p.keyFromType(position), p.cdc.MustMarshal(position))
 }
 
@@ -123,7 +135,7 @@ func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(p.storeKey), pairMetadataNamespace)
 }
 
-func (p PairMetadata) Get(ctx sdk.Context, pair string) (*v1.PairMetadata, error) {
+func (p PairMetadata) Get(ctx sdk.Context, pair string) (*types.PairMetadata, error) {
 	kv := p.getKV(ctx)
 
 	v := kv.Get([]byte(pair))
@@ -131,13 +143,13 @@ func (p PairMetadata) Get(ctx sdk.Context, pair string) (*v1.PairMetadata, error
 		return nil, errNotFound
 	}
 
-	pairMetadata := new(v1.PairMetadata)
+	pairMetadata := new(types.PairMetadata)
 	p.cdc.MustUnmarshal(v, pairMetadata)
 
 	return pairMetadata, nil
 }
 
-func (p PairMetadata) Set(ctx sdk.Context, metadata *v1.PairMetadata) {
+func (p PairMetadata) Set(ctx sdk.Context, metadata *types.PairMetadata) {
 	kv := p.getKV(ctx)
 	kv.Set([]byte(metadata.Pair), p.cdc.MustMarshal(metadata))
 }
