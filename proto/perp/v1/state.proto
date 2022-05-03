@@ -3,6 +3,7 @@ syntax="proto3";
 package nibiru.perp.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package="github.com/NibiruChain/nibiru/x/perp/types/v1";
 
@@ -11,6 +12,15 @@ message Params {
   bool stopped = 1;
 
   string maintenance_margin_ratio = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+}
+
+// GenesisState defines the perp  module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin module_account_balance = 2 [
+    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Position identifies a user position in a given pair.
