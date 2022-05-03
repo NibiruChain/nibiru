@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	gogotypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -100,9 +102,40 @@ func (k queryServer) PoolNumber(goCtx context.Context, req *types.QueryPoolNumbe
 	}, nil
 }
 
-func (k queryServer) Pools(context.Context, *types.QueryPoolsRequest) (*types.QueryPoolsResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/165)
-	return nil, nil
+func (k queryServer) Pools(goCtx context.Context, req *types.QueryPoolsRequest) (
+	*types.QueryPoolsResponse, error,
+) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	store := ctx.KVStore(k.Keeper.storeKey)
+	poolStore := prefix.NewStore(store, types.KeyPrefixPools)
+
+	pools := []*types.Pool{}
+	pageRes, err := query.Paginate(
+		poolStore,
+		req.Pagination,
+		func(key []byte, value []byte) error {
+			var pool types.Pool
+			err := k.Keeper.cdc.Unmarshal(value, &pool)
+			if err != nil {
+				return err
+			}
+			pools = append(pools, &pool)
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &types.QueryPoolsResponse{
+		Pools:      pools,
+		Pagination: pageRes,
+	}, nil
 }
 
 // Parameters of a single pool.
