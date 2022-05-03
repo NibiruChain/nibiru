@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "github.com/NibiruChain/nibiru/x/derivatives/types/v1"
+	v1 "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -18,30 +18,9 @@ type Keeper struct {
 	pfk v1.PriceKeeper
 }
 
-type VirtualAMMDirection uint8
-
-const (
-	VirtualAMMDirection_AddToAMM = iota
-	VirtualAMMDirection_RemoveFromAMM
-)
-
-type VirtualAMM interface {
-	Pair() string
-	QuoteTokenDenom() string
-	SwapInput(ctx sdk.Context, ammDir VirtualAMMDirection, inputAmount, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error)
-	SwapOutput(ctx sdk.Context, dir VirtualAMMDirection, abs sdk.Int, limit sdk.Int) (sdk.Int, error)
-	GetOpenInterestNotionalCap(ctx sdk.Context) (sdk.Int, error)
-	GetMaxHoldingBaseAsset(ctx sdk.Context) (sdk.Int, error)
-	GetOutputTWAP(ctx sdk.Context, dir VirtualAMMDirection, abs sdk.Int) (sdk.Int, error)
-	GetOutputPrice(ctx sdk.Context, dir VirtualAMMDirection, abs sdk.Int) (sdk.Int, error)
-	GetUnderlyingPrice(ctx sdk.Context) (sdk.Int, error)
-	GetSpotPrice(ctx sdk.Context) (sdk.Int, error)
-	CalcFee(notional sdk.Int) (sdk.Int, sdk.Int, error)
-}
-
 // TODO test: openPosition
 func (k Keeper) openPosition(
-	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) error {
 	// TODO(mercilex): missing checks
@@ -146,7 +125,7 @@ func (k Keeper) openPosition(
 
 // TODO test: increasePosition
 func (k Keeper) increasePosition(
-	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 
@@ -217,7 +196,7 @@ func (k Keeper) increasePosition(
 }
 
 // TODO test: updateOpenInterestNotional
-func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm VirtualAMM, amount sdk.Int, trader string) error {
+func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm v1.VirtualPool, amount sdk.Int, trader string) error {
 	maxOpenInterest, err := vamm.GetOpenInterestNotionalCap(ctx)
 	if err != nil {
 		return err
@@ -251,7 +230,7 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm VirtualAMM, amo
 
 // TODO test: calcRemainMarginWithFundingPayment
 func (k Keeper) calcRemainMarginWithFundingPayment(
-	ctx sdk.Context, vamm VirtualAMM,
+	ctx sdk.Context, vamm v1.VirtualPool,
 	oldPosition *v1.Position, marginDelta sdk.Int,
 ) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
 	latestCumulativePremiumFraction sdk.Int, err error) {
@@ -280,7 +259,7 @@ func (k Keeper) calcRemainMarginWithFundingPayment(
 }
 
 // TODO test: getLatestCumulativePremiumFraction
-func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm VirtualAMM) (sdk.Int, error) {
+func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.VirtualPool) (sdk.Int, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
 	if err != nil {
 		return sdk.Int{}, err
@@ -290,7 +269,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm Virtual
 }
 
 // TODO test: getPositionNotionalAndUnrealizedPnL
-func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm VirtualAMM,
+func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.VirtualPool,
 	trader string, pnlCalcOption v1.PnLCalcOption) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
 
@@ -305,12 +284,12 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm Virtua
 	}
 
 	isShortPosition := position.Size_.IsNegative()
-	var dir VirtualAMMDirection
+	var dir v1.VirtualPoolDirection
 	switch isShortPosition {
 	case true:
-		dir = VirtualAMMDirection_RemoveFromAMM
+		dir = v1.VirtualPoolDirection_RemoveFromAMM
 	default:
-		dir = VirtualAMMDirection_AddToAMM
+		dir = v1.VirtualPoolDirection_AddToAMM
 	}
 
 	switch pnlCalcOption {
@@ -347,7 +326,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm Virtua
 
 // TODO test: openReversePosition
 func (k Keeper) openReversePosition(
-	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int, canOverFluctuationLimit bool) (positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
 
@@ -372,7 +351,7 @@ func (k Keeper) openReversePosition(
 
 // TODO test: reducePosition
 func (k Keeper) reducePosition(
-	ctx sdk.Context, vamm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
 	canOverFluctuationLimit bool) (positionResp *v1.PositionResp, err error) {
 
@@ -434,7 +413,7 @@ func (k Keeper) reducePosition(
 
 // TODO test: closeAndOpenReversePosition
 func (k Keeper) closeAndOpenReversePosition(
-	ctx sdk.Context, amm VirtualAMM, side v1.Side, trader string,
+	ctx sdk.Context, amm v1.VirtualPool, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) (positionResp *v1.PositionResp, err error) {
 
@@ -482,7 +461,7 @@ func (k Keeper) closeAndOpenReversePosition(
 }
 
 // TODO test: closePosition
-func (k Keeper) closePosition(ctx sdk.Context, vamm VirtualAMM, trader string, quoteAssetAmountLimit sdk.Int) (
+func (k Keeper) closePosition(ctx sdk.Context, vamm v1.VirtualPool, trader string, quoteAssetAmountLimit sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 
 	positionResp = new(v1.PositionResp)
@@ -510,12 +489,12 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm VirtualAMM, trader string, q
 	positionResp.FundingPayment = fundingPayment
 	positionResp.MarginToVault = remainMargin.MulRaw(-1)
 
-	var vammDir VirtualAMMDirection
+	var vammDir v1.VirtualPoolDirection
 	switch oldPosition.Size_.GTE(sdk.ZeroInt()) {
 	case true:
-		vammDir = VirtualAMMDirection_AddToAMM
+		vammDir = v1.VirtualPoolDirection_AddToAMM
 	case false:
-		vammDir = VirtualAMMDirection_RemoveFromAMM
+		vammDir = v1.VirtualPoolDirection_RemoveFromAMM
 	}
 	positionResp.ExchangedQuoteAssetAmount, err = vamm.SwapOutput(ctx, vammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
 	if err != nil {
@@ -536,7 +515,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm VirtualAMM, trader string, q
 }
 
 // TODO test: clearPosition
-func (k Keeper) clearPosition(ctx sdk.Context, vamm VirtualAMM, trader string) error {
+func (k Keeper) clearPosition(ctx sdk.Context, vamm v1.VirtualPool, trader string) error {
 	return k.Positions().Update(ctx, &v1.Position{
 		Address:                             trader,
 		Pair:                                vamm.Pair(),
@@ -551,7 +530,7 @@ func (k Keeper) clearPosition(ctx sdk.Context, vamm VirtualAMM, trader string) e
 
 // TODO test: transferFee
 func (k Keeper) transferFee(
-	ctx sdk.Context, trader sdk.AccAddress, vamm VirtualAMM,
+	ctx sdk.Context, trader sdk.AccAddress, vamm v1.VirtualPool,
 	positionNotional sdk.Int,
 ) (sdk.Int, error) {
 	toll, spread, err := vamm.CalcFee(positionNotional)
@@ -568,7 +547,7 @@ func (k Keeper) transferFee(
 	}
 
 	if hasSpread {
-		err = k.bk.SendCoinsFromAccountToModule(ctx, trader, v1.InsuranceFundModuleAccount,
+		err = k.bk.SendCoinsFromAccountToModule(ctx, trader, v1.PerpEFModuleAccount,
 			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), spread)))
 		if err != nil {
 			return sdk.Int{}, err
@@ -586,7 +565,7 @@ func (k Keeper) transferFee(
 }
 
 // TODO test: getPreferencePositionNotionalAndUnrealizedPnL
-func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm VirtualAMM, trader string, pnLPreferenceOption v1.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
+func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.VirtualPool, trader string, pnLPreferenceOption v1.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
 	if err != nil {
@@ -627,15 +606,15 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, v
 }
 
 // TODO test: swapInput
-func swapInput(ctx sdk.Context, vamm VirtualAMM,
+func swapInput(ctx sdk.Context, vamm v1.VirtualPool,
 	side v1.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
 
-	var vammDir VirtualAMMDirection
+	var vammDir v1.VirtualPoolDirection
 	switch side {
 	case v1.Side_Side_BUY:
-		vammDir = VirtualAMMDirection_AddToAMM
+		vammDir = v1.VirtualPoolDirection_AddToAMM
 	case v1.Side_Side_SELL:
-		vammDir = VirtualAMMDirection_RemoveFromAMM
+		vammDir = v1.VirtualPoolDirection_RemoveFromAMM
 	default:
 		panic("invalid side")
 	}
@@ -646,9 +625,9 @@ func swapInput(ctx sdk.Context, vamm VirtualAMM,
 	}
 
 	switch vammDir {
-	case VirtualAMMDirection_AddToAMM:
+	case v1.VirtualPoolDirection_AddToAMM:
 		return outputAmount, nil
-	case VirtualAMMDirection_RemoveFromAMM:
+	case v1.VirtualPoolDirection_RemoveFromAMM:
 		inverseSign := outputAmount.MulRaw(-1)
 		return inverseSign, nil
 	default:

@@ -3,12 +3,12 @@ package keeper
 import (
 	"fmt"
 
-	v1 "github.com/NibiruChain/nibiru/x/derivatives/types/v1"
+	v1 "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, amm VirtualAMM, trader string) (sdk.Int, error) {
+func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.VirtualPool, trader string) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, amm.Pair(), trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
@@ -27,7 +27,7 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm VirtualAMM, trader string) (
 }
 
 // TODO test: _GetMarginRatio
-func (k Keeper) _GetMarginRatio(ctx sdk.Context, amm VirtualAMM, position *v1.Position, unrealizedPnL, positionNotional sdk.Int) (sdk.Int, error) {
+func (k Keeper) _GetMarginRatio(ctx sdk.Context, amm v1.VirtualPool, position *v1.Position, unrealizedPnL, positionNotional sdk.Int) (sdk.Int, error) {
 	// todo(mercilex): maybe inefficient re-get
 	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, position, unrealizedPnL)
 	if err != nil {

@@ -7,6 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
+// ----------------------------------------------------------
+// Keeper Interfaces
+// ----------------------------------------------------------
+
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
 	// Methods imported from account should be defined here
@@ -39,4 +43,29 @@ type PriceKeeper interface {
 	GetOracle(ctx sdk.Context, marketID string, address sdk.AccAddress) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, marketID string) ([]sdk.AccAddress, error)
 	SetCurrentPrices(ctx sdk.Context, marketID string) error
+}
+
+// ----------------------------------------------------------
+// Vpool Interfaces
+// ----------------------------------------------------------
+
+type VirtualPoolDirection uint8
+
+const (
+	VirtualPoolDirection_AddToAMM = iota
+	VirtualPoolDirection_RemoveFromAMM
+)
+
+type VirtualPool interface {
+	Pair() string
+	QuoteTokenDenom() string
+	SwapInput(ctx sdk.Context, ammDir VirtualPoolDirection, inputAmount, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error)
+	SwapOutput(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int, limit sdk.Int) (sdk.Int, error)
+	GetOpenInterestNotionalCap(ctx sdk.Context) (sdk.Int, error)
+	GetMaxHoldingBaseAsset(ctx sdk.Context) (sdk.Int, error)
+	GetOutputTWAP(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int) (sdk.Int, error)
+	GetOutputPrice(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int) (sdk.Int, error)
+	GetUnderlyingPrice(ctx sdk.Context) (sdk.Int, error)
+	GetSpotPrice(ctx sdk.Context) (sdk.Int, error)
+	CalcFee(notional sdk.Int) (sdk.Int, sdk.Int, error)
 }

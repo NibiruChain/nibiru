@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "github.com/NibiruChain/nibiru/x/derivatives/types/v1"
+	v1 "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

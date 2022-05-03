@@ -1,13 +1,13 @@
 syntax="proto3";
 
-package nibiru.derivatives.v1;
+package nibiru.perp.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package="github.com/NibiruChain/nibiru/x/derivatives/types/v1";
+option go_package="github.com/NibiruChain/nibiru/x/perp/types/v1";
 
 message Params {
-  // stopped identifies if the derivatives exchange is stopped or not
+  // stopped identifies if the perp exchange is stopped or not
   bool stopped = 1;
 
   string maintenance_margin_ratio = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
@@ -40,7 +40,7 @@ message PositionResp {
   string unrealized_pnl_after = 8 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
 }
 
-message VirtualAMMInfo {
+message VirtualPoolInfo {
   string pair = 1;
   int64 last_restriction_block = 2;
   repeated string cumulative_premium_fractions = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
