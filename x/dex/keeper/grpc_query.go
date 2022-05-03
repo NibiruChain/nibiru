@@ -106,9 +106,20 @@ func (k queryServer) Pools(context.Context, *types.QueryPoolsRequest) (*types.Qu
 }
 
 // Parameters of a single pool.
-func (k queryServer) PoolParams(context.Context, *types.QueryPoolParamsRequest) (*types.QueryPoolParamsResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/166)
-	return nil, nil
+func (k queryServer) PoolParams(goCtx context.Context, req *types.QueryPoolParamsRequest) (
+	resp *types.QueryPoolParamsResponse, err error,
+) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pool, err := k.FetchPool(ctx, req.PoolId)
+
+	return &types.QueryPoolParamsResponse{
+		PoolParams: &pool.PoolParams,
+	}, nil
 }
 
 // Number of pools.

@@ -91,3 +91,55 @@ func TestQueryPoolFail(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryPoolParams(t *testing.T) {
+	tests := []struct {
+		name               string
+		existingPool       types.Pool
+		expectedPoolParams types.PoolParams
+	}{
+		{
+			name: "successful fetch pool params",
+			existingPool: types.Pool{
+				Id:      1,
+				Address: sample.AccAddress().String(),
+				PoolParams: types.PoolParams{
+					SwapFee: sdk.MustNewDecFromStr("0.03"),
+					ExitFee: sdk.MustNewDecFromStr("0.03"),
+				},
+				PoolAssets: []types.PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
+			},
+			expectedPoolParams: types.PoolParams{
+				SwapFee: sdk.MustNewDecFromStr("0.03"),
+				ExitFee: sdk.MustNewDecFromStr("0.03"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+			app.DexKeeper.SetPool(ctx, tc.existingPool)
+
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.PoolParams(sdk.WrapSDKContext(ctx), &types.QueryPoolParamsRequest{
+				PoolId: 1,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedPoolParams, *resp.PoolParams)
+		})
+	}
+}

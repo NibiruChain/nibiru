@@ -140,7 +140,9 @@ message QueryPoolsResponse {}
 message QueryPoolParamsRequest {
   uint64 poolId = 1;
 }
-message QueryPoolParamsResponse {}
+message QueryPoolParamsResponse {
+  PoolParams poolParams = 1;
+}
 
 message QueryNumPoolsRequest {}
 message QueryNumPoolsResponse {}
