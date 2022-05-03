@@ -34,7 +34,6 @@ var (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-
 	if genState.ModuleAccountBalance.Amount.GT(sdk.ZeroInt()) {
 		if err := k.BankKeeper.MintCoins(
 			ctx, types.ModuleName, sdk.NewCoins(genState.ModuleAccountBalance),

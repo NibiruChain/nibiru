@@ -8,6 +8,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var (
+	_ = Keeper.openPosition
+	_ = Keeper.increasePosition
+	_ = swapInput
+	_ = Keeper.transferFee
+)
+
 // TODO test: openPosition
 func (k Keeper) openPosition(
 	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
@@ -314,8 +321,6 @@ func (k Keeper) openReversePosition(
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *v1.PositionResp, err error) {
-	positionResp = new(v1.PositionResp)
-
 	openNotional := quoteAssetAmount.Mul(leverage)
 	oldPositionNotional, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
 	if err != nil {
