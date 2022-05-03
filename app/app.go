@@ -2,6 +2,9 @@ package app
 
 import (
 	"encoding/json"
+	"github.com/NibiruChain/nibiru/x/incentivization"
+	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
+	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
 	"io"
 	"net/http"
 	"os"
@@ -142,6 +145,7 @@ var (
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
 		lockup.AppModuleBasic{},
+		incentivization.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -182,25 +186,26 @@ type NibiruApp struct {
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	AccountKeeper    authkeeper.AccountKeeper
-	BankKeeper       bankkeeper.Keeper
-	CapabilityKeeper *capabilitykeeper.Keeper
-	StakingKeeper    stakingkeeper.Keeper
-	SlashingKeeper   slashingkeeper.Keeper
-	MintKeeper       mintkeeper.Keeper
-	DistrKeeper      distrkeeper.Keeper
-	GovKeeper        govkeeper.Keeper
-	CrisisKeeper     crisiskeeper.Keeper
-	UpgradeKeeper    upgradekeeper.Keeper
-	ParamsKeeper     paramskeeper.Keeper
-	AuthzKeeper      authzkeeper.Keeper
-	EvidenceKeeper   evidencekeeper.Keeper
-	FeeGrantKeeper   feegrantkeeper.Keeper
-	DexKeeper        dexkeeper.Keeper
-	StablecoinKeeper stablecoinkeeper.Keeper
-	PriceKeeper      pricekeeper.Keeper
-	EpochsKeeper     epochskeeper.Keeper
-	LockupKeeper     lockupkeeper.LockupKeeper
+	AccountKeeper         authkeeper.AccountKeeper
+	BankKeeper            bankkeeper.Keeper
+	CapabilityKeeper      *capabilitykeeper.Keeper
+	StakingKeeper         stakingkeeper.Keeper
+	SlashingKeeper        slashingkeeper.Keeper
+	MintKeeper            mintkeeper.Keeper
+	DistrKeeper           distrkeeper.Keeper
+	GovKeeper             govkeeper.Keeper
+	CrisisKeeper          crisiskeeper.Keeper
+	UpgradeKeeper         upgradekeeper.Keeper
+	ParamsKeeper          paramskeeper.Keeper
+	AuthzKeeper           authzkeeper.Keeper
+	EvidenceKeeper        evidencekeeper.Keeper
+	FeeGrantKeeper        feegrantkeeper.Keeper
+	DexKeeper             dexkeeper.Keeper
+	StablecoinKeeper      stablecoinkeeper.Keeper
+	PriceKeeper           pricekeeper.Keeper
+	EpochsKeeper          epochskeeper.Keeper
+	LockupKeeper          lockupkeeper.LockupKeeper
+	IncentivizationKeeper incentivizationkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -243,7 +248,7 @@ func NewNibiruApp(
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
 		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey, epochstype.StoreKey,
-		lockuptypes.StoreKey,
+		lockuptypes.StoreKey, incentivizationtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -358,6 +363,10 @@ func NewNibiruApp(
 		keys[lockuptypes.StoreKey], app.AccountKeeper, app.BankKeeper,
 		app.DistrKeeper)
 
+	app.IncentivizationKeeper = incentivizationkeeper.NewKeeper(appCodec,
+		keys[incentivizationtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.DexKeeper, app.LockupKeeper,
+	)
+
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
@@ -374,6 +383,8 @@ func NewNibiruApp(
 		app.PriceKeeper,
 	)
 	lockupModule := lockup.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper)
+
+	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -402,6 +413,7 @@ func NewNibiruApp(
 		stablecoinModule,
 		lockupModule,
 		epochsModule,
+		incentivizationModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -420,6 +432,7 @@ func NewNibiruApp(
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -433,6 +446,7 @@ func NewNibiruApp(
 		pricetypes.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -451,6 +465,7 @@ func NewNibiruApp(
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
 		lockuptypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -485,6 +500,8 @@ func NewNibiruApp(
 		pricefeedModule,
 		epochsModule,
 		stablecoinModule,
+		lockupModule,
+		incentivizationModule,
 	)
 
 	app.sm.RegisterStoreDecoders()
