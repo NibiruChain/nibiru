@@ -1,7 +1,7 @@
 package v1
 
 import (
-	pftypes "github.com/MatrixDao/matrix/x/pricefeed/types"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -33,8 +33,9 @@ type PriceKeeper interface {
 	GetCurrentPrice(sdk.Context, string) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
-	GetMarket(ctx sdk.Context, marketID string) (pftypes.Market, bool)
-	GetMarkets(ctx sdk.Context) pftypes.Markets
+	GetPair(ctx sdk.Context, marketID string) (pftypes.Pair, bool)
+	// Returns the pairs from the x/pricefeed params
+	GetPairs(ctx sdk.Context) pftypes.Pairs
 	GetOracle(ctx sdk.Context, marketID string, address sdk.AccAddress) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, marketID string) ([]sdk.AccAddress, error)
 	SetCurrentPrices(ctx sdk.Context, marketID string) error

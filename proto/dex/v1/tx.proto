@@ -1,16 +1,35 @@
 syntax = "proto3";
-package matrix.dex.v1;
+package nibiru.dex.v1;
 
 import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "google/api/annotations.proto";
 
-option go_package = "github.com/MatrixDao/matrix/x/dex/types";
+option go_package = "github.com/NibiruChain/nibiru/x/dex/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // Used to create a pool
-  rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse);
+  // Used to create a pool.
+  rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse) {
+    option (google.api.http).post = "/nibiru/dex/pool";
+  }
+
+  // Join a pool as a liquidity provider.
+  rpc JoinPool(MsgJoinPool) returns (MsgJoinPoolResponse) {
+    option (google.api.http).post = "/nibiru/dex/{poolId}/join";
+  }
+
+  // Exit a pool position by returning LP shares
+  rpc ExitPool(MsgExitPool) returns (MsgExitPoolResponse) {
+    option (google.api.http).post = "/nibiru/dex/{poolId}/exit";
+  }
+
+  // Swap assets in a pool
+  rpc SwapAssets(MsgSwapAssets) returns (MsgSwapAssetsResponse) {
+    option (google.api.http).post = "/nibiru/dex/{poolId}/swap";
+  }
 }
 
 message MsgCreatePool {
@@ -23,4 +42,76 @@ message MsgCreatePool {
 
 message MsgCreatePoolResponse {
   uint64 poolId = 1;
+}
+
+/*
+Message to join a pool (identified by poolId) with a set of tokens to deposit.
+*/
+message MsgJoinPool {
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+
+  uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+
+  repeated cosmos.base.v1beta1.Coin tokensIn = 3 [
+    (gogoproto.moretags) = "yaml:\"tokens_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+/*
+Response when a user joins a pool.
+*/
+message MsgJoinPoolResponse {
+  // the final state of the pool after a join
+  Pool pool = 1;
+
+  // sum of LP tokens minted from the join
+  cosmos.base.v1beta1.Coin numPoolSharesOut = 2 [
+    (gogoproto.moretags) = "yaml:\"num_pool_shares_out\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // remaining tokens from attempting to join the pool
+  repeated cosmos.base.v1beta1.Coin remainingCoins = 3 [
+    (gogoproto.moretags) = "yaml:\"tokens_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgExitPool {
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+
+  uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+
+  cosmos.base.v1beta1.Coin poolShares = 3 [
+    (gogoproto.moretags) = "yaml:\"pool_shares\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgExitPoolResponse {
+  repeated cosmos.base.v1beta1.Coin tokensOut = 3 [
+    (gogoproto.moretags) = "yaml:\"tokens_out\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgSwapAssets {
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+
+  uint64 poolId = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+
+  cosmos.base.v1beta1.Coin tokenIn = 3 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
+    (gogoproto.nullable) = false
+  ];
+
+  string tokenOutDenom = 4 [(gogoproto.moretags) = "yaml:\"token_out_denom\""];
+}
+
+message MsgSwapAssetsResponse {
+  cosmos.base.v1beta1.Coin tokenOut = 3 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
+    (gogoproto.nullable) = false
+  ];
 }

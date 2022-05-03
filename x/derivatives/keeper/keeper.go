@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "github.com/MatrixDao/matrix/x/derivatives/types/v1"
+	v1 "github.com/NibiruChain/nibiru/x/derivatives/types/v1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

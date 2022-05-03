@@ -25,10 +25,30 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
+	// collRatio is the ratio needed as collateral to exchange for stables
+	CollRatio int64 `protobuf:"varint,1,opt,name=collRatio,proto3" json:"collRatio,omitempty"`
+	// feeRatio is the ratio taken as fees when minting or burning stables
+	FeeRatio int64 `protobuf:"varint,2,opt,name=feeRatio,proto3" json:"feeRatio,omitempty"`
+	// efFeeRatio is the ratio taken from the fees that goes to Ecosystem Fund
+	EfFeeRatio int64 `protobuf:"varint,3,opt,name=efFeeRatio,proto3" json:"efFeeRatio,omitempty"`
+	// BonusRateRecoll is the percentage of extra stablecoin value given to the caller
+	// of 'Recollateralize' in units of governance tokens.
+	BonusRateRecoll int64 `protobuf:"varint,4,opt,name=bonus_rate_recoll,json=bonusRateRecoll,proto3" json:"bonus_rate_recoll,omitempty"`
+	// distr_epoch_identifier defines the frequnecy of update for the collateral ratio
+	DistrEpochIdentifier string `protobuf:"bytes,5,opt,name=distr_epoch_identifier,json=distrEpochIdentifier,proto3" json:"distr_epoch_identifier,omitempty" yaml:"distr_epoch_identifier"`
+	// adjustmentStep is the size of the step taken when updating the collateral ratio
+	AdjustmentStep int64 `protobuf:"varint,6,opt,name=adjustmentStep,proto3" json:"adjustmentStep,omitempty"`
+	// priceLowerBound is the lower bound for the stable coin to trigger a collateral ratio update
+	PriceLowerBound int64 `protobuf:"varint,7,opt,name=priceLowerBound,proto3" json:"priceLowerBound,omitempty"`
+	// priceUpperBound is the upper bound for the stable coin to trigger a collateral ratio update
+	PriceUpperBound int64 `protobuf:"varint,8,opt,name=priceUpperBound,proto3" json:"priceUpperBound,omitempty"`
+	// isCollateralRatioValid checks if the collateral ratio is correctly updated
+	IsCollateralRatioValid bool `protobuf:"varint,9,opt,name=isCollateralRatioValid,proto3" json:"isCollateralRatioValid,omitempty"`
 }
 
-func (m *Params) Reset()      { *m = Params{} }
-func (*Params) ProtoMessage() {}
+func (m *Params) Reset()         { *m = Params{} }
+func (m *Params) String() string { return proto.CompactTextString(m) }
+func (*Params) ProtoMessage()    {}
 func (*Params) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f563aa317ffb7645, []int{0}
 }
@@ -59,24 +79,101 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
+func (m *Params) GetCollRatio() int64 {
+	if m != nil {
+		return m.CollRatio
+	}
+	return 0
+}
+
+func (m *Params) GetFeeRatio() int64 {
+	if m != nil {
+		return m.FeeRatio
+	}
+	return 0
+}
+
+func (m *Params) GetEfFeeRatio() int64 {
+	if m != nil {
+		return m.EfFeeRatio
+	}
+	return 0
+}
+
+func (m *Params) GetBonusRateRecoll() int64 {
+	if m != nil {
+		return m.BonusRateRecoll
+	}
+	return 0
+}
+
+func (m *Params) GetDistrEpochIdentifier() string {
+	if m != nil {
+		return m.DistrEpochIdentifier
+	}
+	return ""
+}
+
+func (m *Params) GetAdjustmentStep() int64 {
+	if m != nil {
+		return m.AdjustmentStep
+	}
+	return 0
+}
+
+func (m *Params) GetPriceLowerBound() int64 {
+	if m != nil {
+		return m.PriceLowerBound
+	}
+	return 0
+}
+
+func (m *Params) GetPriceUpperBound() int64 {
+	if m != nil {
+		return m.PriceUpperBound
+	}
+	return 0
+}
+
+func (m *Params) GetIsCollateralRatioValid() bool {
+	if m != nil {
+		return m.IsCollateralRatioValid
+	}
+	return false
+}
+
 func init() {
-	proto.RegisterType((*Params)(nil), "MatrixDao.stablecoin.v1.Params")
+	proto.RegisterType((*Params)(nil), "NibiruChain.stablecoin.v1.Params")
 }
 
 func init() { proto.RegisterFile("stablecoin/params.proto", fileDescriptor_f563aa317ffb7645) }
 
 var fileDescriptor_f563aa317ffb7645 = []byte{
-	// 154 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2f, 0x2e, 0x49, 0x4c,
-	0xca, 0x49, 0x4d, 0xce, 0xcf, 0xcc, 0xd3, 0x2f, 0x48, 0x2c, 0x4a, 0xcc, 0x2d, 0xd6, 0x2b, 0x28,
-	0xca, 0x2f, 0xc9, 0x17, 0x12, 0xf7, 0x4d, 0x2c, 0x29, 0xca, 0xac, 0x70, 0x49, 0xcc, 0xd7, 0x43,
-	0x28, 0xd1, 0x2b, 0x33, 0x94, 0x12, 0x49, 0xcf, 0x4f, 0xcf, 0x07, 0xab, 0xd1, 0x07, 0xb1, 0x20,
-	0xca, 0x95, 0xf8, 0xb8, 0xd8, 0x02, 0xc0, 0xda, 0xad, 0x58, 0x66, 0x2c, 0x90, 0x67, 0x70, 0xf2,
-	0x38, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96,
-	0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0xbd, 0xf4, 0xcc, 0x92, 0x8c,
-	0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0xb8, 0x1d, 0xfa, 0xb9, 0x60, 0x96, 0x7e, 0x85, 0x3e,
-	0x92, 0x7b, 0x4a, 0x2a, 0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0x16, 0x18, 0x03, 0x02, 0x00, 0x00,
-	0xff, 0xff, 0x3d, 0x10, 0x1a, 0x28, 0xaa, 0x00, 0x00, 0x00,
+	// 372 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x92, 0xc1, 0x4a, 0xeb, 0x40,
+	0x14, 0x86, 0x9b, 0xdb, 0x7b, 0x7b, 0xdb, 0x59, 0xdc, 0x72, 0x87, 0x52, 0x63, 0xd1, 0x58, 0xbb,
+	0x90, 0xe0, 0x22, 0x51, 0x04, 0x17, 0x2e, 0x5b, 0x14, 0x14, 0x11, 0x89, 0xa8, 0xe0, 0x26, 0x4c,
+	0x92, 0xd3, 0x76, 0x24, 0xc9, 0x0c, 0x33, 0x13, 0xb5, 0x6f, 0xe1, 0xde, 0x17, 0x72, 0xd9, 0xa5,
+	0x2b, 0x91, 0xf6, 0x0d, 0x7c, 0x02, 0xe9, 0x84, 0xb6, 0xa1, 0xe8, 0xee, 0xcc, 0xf7, 0x7f, 0x73,
+	0x38, 0xcc, 0x19, 0xb4, 0x26, 0x15, 0x09, 0x62, 0x08, 0x19, 0x4d, 0x5d, 0x4e, 0x04, 0x49, 0xa4,
+	0xc3, 0x05, 0x53, 0x0c, 0xaf, 0x5f, 0xd0, 0x80, 0x8a, 0xac, 0x37, 0x24, 0x34, 0x75, 0x96, 0x92,
+	0xf3, 0xb0, 0xdf, 0x6a, 0x0c, 0xd8, 0x80, 0x69, 0xcb, 0x9d, 0x55, 0xf9, 0x85, 0xce, 0x4b, 0x19,
+	0x55, 0x2e, 0x75, 0x07, 0xbc, 0x81, 0x6a, 0x21, 0x8b, 0x63, 0x8f, 0x28, 0xca, 0x4c, 0xa3, 0x6d,
+	0xd8, 0x65, 0x6f, 0x09, 0x70, 0x0b, 0x55, 0xfb, 0x00, 0x79, 0xf8, 0x4b, 0x87, 0x8b, 0x33, 0xb6,
+	0x10, 0x82, 0xfe, 0xc9, 0x3c, 0x2d, 0xeb, 0xb4, 0x40, 0xf0, 0x2e, 0xfa, 0x1f, 0xb0, 0x34, 0x93,
+	0xbe, 0x20, 0x0a, 0x7c, 0x01, 0xb3, 0xae, 0xe6, 0x6f, 0xad, 0xd5, 0x75, 0xe0, 0x11, 0x05, 0x9e,
+	0xc6, 0xf8, 0x16, 0x35, 0x23, 0x2a, 0x95, 0xf0, 0x81, 0xb3, 0x70, 0xe8, 0xd3, 0x08, 0x52, 0x45,
+	0xfb, 0x14, 0x84, 0xf9, 0xa7, 0x6d, 0xd8, 0xb5, 0xee, 0xf6, 0xe7, 0xfb, 0xd6, 0xe6, 0x88, 0x24,
+	0xf1, 0x51, 0xe7, 0x7b, 0xaf, 0xe3, 0x35, 0x74, 0x70, 0x3c, 0xe3, 0xa7, 0x0b, 0x8c, 0x77, 0xd0,
+	0x3f, 0x12, 0xdd, 0x67, 0x52, 0x25, 0x90, 0xaa, 0x2b, 0x05, 0xdc, 0xac, 0xe8, 0x09, 0x56, 0x28,
+	0xb6, 0x51, 0x9d, 0x0b, 0x1a, 0xc2, 0x39, 0x7b, 0x04, 0xd1, 0x65, 0x59, 0x1a, 0x99, 0x7f, 0xf3,
+	0x51, 0x57, 0xf0, 0xc2, 0xbc, 0xe6, 0x7c, 0x6e, 0x56, 0x0b, 0xe6, 0x12, 0xe3, 0x43, 0xd4, 0xa4,
+	0xb2, 0xc7, 0xe2, 0x98, 0x28, 0x10, 0x24, 0x7f, 0xd1, 0x1b, 0x12, 0xd3, 0xc8, 0xac, 0xb5, 0x0d,
+	0xbb, 0xea, 0xfd, 0x90, 0x76, 0xcf, 0x5e, 0x27, 0x96, 0x31, 0x9e, 0x58, 0xc6, 0xc7, 0xc4, 0x32,
+	0x9e, 0xa7, 0x56, 0x69, 0x3c, 0xb5, 0x4a, 0x6f, 0x53, 0xab, 0x74, 0xb7, 0x37, 0xa0, 0x6a, 0x98,
+	0x05, 0x4e, 0xc8, 0x12, 0xb7, 0xb0, 0x73, 0x37, 0xd5, 0xb5, 0xfb, 0xe4, 0x16, 0x7e, 0x88, 0x1a,
+	0x71, 0x90, 0x41, 0x45, 0x2f, 0xfc, 0xe0, 0x2b, 0x00, 0x00, 0xff, 0xff, 0xa0, 0xf7, 0x44, 0xc0,
+	0x3c, 0x02, 0x00, 0x00,
 }
 
 func (m *Params) Marshal() (dAtA []byte, err error) {
@@ -99,6 +196,58 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.IsCollateralRatioValid {
+		i--
+		if m.IsCollateralRatioValid {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.PriceUpperBound != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.PriceUpperBound))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.PriceLowerBound != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.PriceLowerBound))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.AdjustmentStep != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.AdjustmentStep))
+		i--
+		dAtA[i] = 0x30
+	}
+	if len(m.DistrEpochIdentifier) > 0 {
+		i -= len(m.DistrEpochIdentifier)
+		copy(dAtA[i:], m.DistrEpochIdentifier)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.DistrEpochIdentifier)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.BonusRateRecoll != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.BonusRateRecoll))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.EfFeeRatio != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.EfFeeRatio))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.FeeRatio != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.FeeRatio))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.CollRatio != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.CollRatio))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -119,6 +268,34 @@ func (m *Params) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.CollRatio != 0 {
+		n += 1 + sovParams(uint64(m.CollRatio))
+	}
+	if m.FeeRatio != 0 {
+		n += 1 + sovParams(uint64(m.FeeRatio))
+	}
+	if m.EfFeeRatio != 0 {
+		n += 1 + sovParams(uint64(m.EfFeeRatio))
+	}
+	if m.BonusRateRecoll != 0 {
+		n += 1 + sovParams(uint64(m.BonusRateRecoll))
+	}
+	l = len(m.DistrEpochIdentifier)
+	if l > 0 {
+		n += 1 + l + sovParams(uint64(l))
+	}
+	if m.AdjustmentStep != 0 {
+		n += 1 + sovParams(uint64(m.AdjustmentStep))
+	}
+	if m.PriceLowerBound != 0 {
+		n += 1 + sovParams(uint64(m.PriceLowerBound))
+	}
+	if m.PriceUpperBound != 0 {
+		n += 1 + sovParams(uint64(m.PriceUpperBound))
+	}
+	if m.IsCollateralRatioValid {
+		n += 2
+	}
 	return n
 }
 
@@ -157,6 +334,191 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: Params: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CollRatio", wireType)
+			}
+			m.CollRatio = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CollRatio |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FeeRatio", wireType)
+			}
+			m.FeeRatio = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FeeRatio |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EfFeeRatio", wireType)
+			}
+			m.EfFeeRatio = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EfFeeRatio |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BonusRateRecoll", wireType)
+			}
+			m.BonusRateRecoll = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BonusRateRecoll |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistrEpochIdentifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DistrEpochIdentifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AdjustmentStep", wireType)
+			}
+			m.AdjustmentStep = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AdjustmentStep |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PriceLowerBound", wireType)
+			}
+			m.PriceLowerBound = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PriceLowerBound |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PriceUpperBound", wireType)
+			}
+			m.PriceUpperBound = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PriceUpperBound |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IsCollateralRatioValid", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.IsCollateralRatioValid = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipParams(dAtA[iNdEx:])

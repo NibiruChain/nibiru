@@ -3,7 +3,7 @@ package cli
 import (
 	"strconv"
 
-	"github.com/MatrixDao/matrix/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -17,7 +17,6 @@ func CmdPrice() *cobra.Command {
 		Short: "Query price",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err

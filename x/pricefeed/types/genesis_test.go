@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	//keepertest "github.com/MatrixDao/matrix/x/testutil/keeper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -30,18 +28,15 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		{
 			desc:     "valid genesis state",
-			genState: &GenesisState{
-
-				// this line is used by starport scaffolding # types/genesis/validField
-			},
-			valid: true,
+			genState: &GenesisState{},
+			valid:    true,
 		},
 		{
 			desc: "dup market param",
 			genState: NewGenesisState(
-				NewParams([]Market{
-					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
-					{"market", "xrp", "bnb", []sdk.AccAddress{addr}, true},
+				NewParams([]Pair{
+					{"xrp", "bnb", []sdk.AccAddress{addr}, true},
+					{"xrp", "bnb", []sdk.AccAddress{addr}, true},
 				}),
 				[]PostedPrice{NewPostedPrice("xrp", addr, sdk.OneDec(), now)},
 			),
@@ -50,7 +45,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid posted price",
 			genState: NewGenesisState(
-				NewParams([]Market{}),
+				NewParams([]Pair{}),
 				[]PostedPrice{NewPostedPrice("xrp", nil, sdk.OneDec(), now)},
 			),
 			valid: false,
@@ -58,7 +53,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "duplicated posted price",
 			genState: NewGenesisState(
-				NewParams([]Market{}),
+				NewParams([]Pair{}),
 				[]PostedPrice{
 					NewPostedPrice("xrp", addr, sdk.OneDec(), now),
 					NewPostedPrice("xrp", addr, sdk.OneDec(), now),

@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	v1 "github.com/MatrixDao/matrix/x/derivatives/types/v1"
+	v1 "github.com/NibiruChain/nibiru/x/derivatives/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

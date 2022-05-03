@@ -3,7 +3,8 @@ package keeper
 import (
 	"context"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/events"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -43,7 +44,133 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 		return nil, err
 	}
 
+	events.EmitPoolCreatedEvent(
+		ctx,
+		sender,
+		poolId,
+	)
+
 	return &types.MsgCreatePoolResponse{
 		PoolId: poolId,
+	}, nil
+}
+
+/*
+Handler for the MsgJoinPool transaction.
+
+args
+  ctx: the cosmos-sdk context
+  msg: a MsgJoinPool proto object
+
+ret
+  MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
+  error: an error if any occurred
+*/
+func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types.MsgJoinPoolResponse, error) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, numSharesOut, remCoins, err := k.Keeper.JoinPool(
+		sdkContext,
+		sender,
+		msg.PoolId,
+		msg.TokensIn,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	events.EmitPoolJoinedEvent(
+		sdkContext,
+		sender,
+		msg.PoolId,
+		msg.TokensIn,
+		numSharesOut,
+		remCoins,
+	)
+
+	return &types.MsgJoinPoolResponse{
+		Pool:             &pool,
+		NumPoolSharesOut: numSharesOut,
+		RemainingCoins:   remCoins,
+	}, nil
+}
+
+/*
+Handler for the MsgExitPool transaction.
+
+args
+  ctx: the cosmos-sdk context
+  msg: a MsgExitPool proto object
+
+ret
+  MsgExitPoolResponse: the MsgExitPoolResponse proto object response, containing the amount of tokens returned to the user
+  error: an error if any occurred
+*/
+func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types.MsgExitPoolResponse, error) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	tokensOut, err := k.Keeper.ExitPool(
+		sdkContext,
+		sender,
+		msg.PoolId,
+		msg.PoolShares,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	events.EmitPoolExitedEvent(sdkContext, sender, msg.PoolId, msg.PoolShares, tokensOut)
+
+	return &types.MsgExitPoolResponse{
+		TokensOut: tokensOut,
+	}, nil
+}
+
+/*
+Handler for the MsgJoinPool transaction.
+
+args
+  ctx: the cosmos-sdk context
+  msg: a MsgJoinPool proto object
+
+ret
+  MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
+  error: an error if any occurred
+*/
+func (k msgServer) SwapAssets(ctx context.Context, msg *types.MsgSwapAssets) (
+	*types.MsgSwapAssetsResponse, error,
+) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenOut, err := k.Keeper.SwapExactAmountIn(
+		sdkContext,
+		sender,
+		msg.PoolId,
+		msg.TokenIn,
+		msg.TokenOutDenom,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	events.EmitAssetsSwappedEvent(sdkContext, sender, msg.PoolId, msg.TokenIn, tokenOut)
+
+	return &types.MsgSwapAssetsResponse{
+		TokenOut: tokenOut,
 	}, nil
 }

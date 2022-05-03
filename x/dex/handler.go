@@ -3,8 +3,8 @@ package dex
 import (
 	"fmt"
 
-	"github.com/MatrixDao/matrix/x/dex/keeper"
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -19,6 +19,15 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case *types.MsgCreatePool:
 			res, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgJoinPool:
+			res, err := msgServer.JoinPool(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgExitPool:
+			res, err := msgServer.ExitPool(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgSwapAssets:
+			res, err := msgServer.SwapAssets(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)

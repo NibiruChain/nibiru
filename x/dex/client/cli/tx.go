@@ -2,20 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/MatrixDao/matrix/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
-)
-
-var (
-	DefaultRelativePacketTimeoutTimestamp = uint64((time.Duration(10) * time.Minute).Nanoseconds())
-)
-
-const (
-	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
-	listSeparator              = ","
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -28,7 +18,12 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdCreatePool())
+	cmd.AddCommand(
+		CmdCreatePool(),
+		CmdJoinPool(),
+		CmdExitPool(),
+		CmdSwapAssets(),
+	)
 
 	return cmd
 }
