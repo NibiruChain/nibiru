@@ -35,7 +35,7 @@ var paramsKey = []byte{0x0}
 type ParamsState Keeper
 
 func (p ParamsState) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(p.key), paramsNamespace)
+	return prefix.NewStore(ctx.KVStore(p.storeKey), paramsNamespace)
 }
 
 func (p ParamsState) Get(ctx sdk.Context) (*v1.Params, error) {
@@ -61,7 +61,7 @@ var positionsNamespace = []byte{0x1}
 type PositionsState Keeper
 
 func (p PositionsState) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(p.key), positionsNamespace)
+	return prefix.NewStore(ctx.KVStore(p.storeKey), positionsNamespace)
 }
 
 func (p PositionsState) keyFromType(position *v1.Position) []byte {
@@ -120,7 +120,7 @@ var pairMetadataNamespace = []byte{0x2}
 type PairMetadata Keeper
 
 func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(p.key), pairMetadataNamespace)
+	return prefix.NewStore(ctx.KVStore(p.storeKey), pairMetadataNamespace)
 }
 
 func (p PairMetadata) Get(ctx sdk.Context, pair string) (*v1.PairMetadata, error) {
@@ -147,7 +147,7 @@ var whitelistNamespace = []byte{0x3}
 type Whitelist Keeper
 
 func (w Whitelist) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(w.key), whitelistNamespace)
+	return prefix.NewStore(ctx.KVStore(w.storeKey), whitelistNamespace)
 }
 
 func (w Whitelist) IsWhitelisted(ctx sdk.Context, address string) bool {

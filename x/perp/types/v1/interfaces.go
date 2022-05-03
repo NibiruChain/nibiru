@@ -15,6 +15,8 @@ import (
 type AccountKeeper interface {
 	// Methods imported from account should be defined here
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
+	GetModuleAddress(name string) sdk.AccAddress
+	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -31,6 +33,7 @@ type BankKeeper interface {
 		amt sdk.Coins,
 	) error
 	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 type PriceKeeper interface {
