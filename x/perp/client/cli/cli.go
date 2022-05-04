@@ -20,7 +20,7 @@ import (
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	// Group stablecoin queries under a subcommand
-	stablecoinQueryCmd := &cobra.Command{
+	perpQueryCmd := &cobra.Command{
 		Use: types.ModuleName,
 		Short: fmt.Sprintf(
 			"Querying commands for the %s module", types.ModuleName),
@@ -33,10 +33,10 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryParams(),
 	}
 	for _, cmd := range cmds {
-		stablecoinQueryCmd.AddCommand(cmd)
+		perpQueryCmd.AddCommand(cmd)
 	}
 
-	return stablecoinQueryCmd
+	return perpQueryCmd
 }
 
 func CmdQueryParams() *cobra.Command {
