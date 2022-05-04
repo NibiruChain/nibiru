@@ -145,14 +145,10 @@ func AppStateRandomizedFn(
 
 	// generate a random amount of initial stake coins and collateral
 	// number of bonded accounts
-	var initialGov, initialColl, numInitiallyBonded int64
+	var initialStake, numInitiallyBonded int64
 	appParams.GetOrGenerate(
-		cdc, simappparams.StakePerAccount, &initialGov, r,
-		func(r *rand.Rand) { initialGov = r.Int63n(1e12) },
-	)
-	appParams.GetOrGenerate(
-		cdc, simappparams.StakePerAccount, &initialColl, r,
-		func(r *rand.Rand) { initialColl = r.Int63n(1e12) },
+		cdc, simappparams.StakePerAccount, &initialStake, r,
+		func(r *rand.Rand) { initialStake = r.Int63n(1e12) },
 	)
 	appParams.GetOrGenerate(
 		cdc, simappparams.InitiallyBondedValidators, &numInitiallyBonded, r,
