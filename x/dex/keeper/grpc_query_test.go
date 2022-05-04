@@ -485,3 +485,126 @@ func TestQuerySpotPrice(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryEstimateSwapExactAmountIn(t *testing.T) {
+	tests := []struct {
+		name             string
+		existingPool     types.Pool
+		tokenIn          sdk.Coin
+		tokenOutDenom    string
+		expectedTokenOut sdk.Coin
+	}{
+		{
+			name: "simple swap",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:          sdk.NewInt64Coin("unusd", 100),
+			tokenOutDenom:    "unibi",
+			expectedTokenOut: sdk.NewInt64Coin("unibi", 50),
+		},
+		{
+			name: "complex swap",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 34844867),
+					sdk.NewInt64Coin("unusd", 4684496849),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:       sdk.NewInt64Coin("unibi", 586848),
+			tokenOutDenom: "unusd",
+			// https://www.wolframalpha.com/input?i=4684496849+-+%2834844867+*+4684496849+%2F+%2834844867%2B586848%29+%29
+			expectedTokenOut: sdk.NewInt64Coin("unusd", 77588330),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.EstimateSwapExactAmountIn(
+				sdk.WrapSDKContext(ctx),
+				&types.QuerySwapExactAmountInRequest{
+					PoolId:        1,
+					TokenIn:       tc.tokenIn,
+					TokenOutDenom: tc.tokenOutDenom,
+				},
+			)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTokenOut, resp.TokenOut)
+		})
+	}
+}
+
+func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
+	tests := []struct {
+		name            string
+		existingPool    types.Pool
+		tokenOut        sdk.Coin
+		tokenInDenom    string
+		expectedTokenIn sdk.Coin
+	}{
+		{
+			name: "simple swap",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenOut:     sdk.NewInt64Coin("unibi", 50),
+			tokenInDenom: "unusd",
+			// there's a swap fee that we take the ceiling of to round int
+			expectedTokenIn: sdk.NewInt64Coin("unusd", 101),
+		},
+		{
+			name: "complex swap",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 34844867),
+					sdk.NewInt64Coin("unusd", 4684496849),
+				),
+				/*shares=*/ 100,
+			),
+			tokenOut:     sdk.NewInt64Coin("unusd", 77588330),
+			tokenInDenom: "unibi",
+			// https://www.wolframalpha.com/input?i=4684496849+-+%2834844867+*+4684496849+%2F+%2834844867%2B586848%29+%29
+			expectedTokenIn: sdk.NewInt64Coin("unibi", 586848),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.EstimateSwapExactAmountOut(
+				sdk.WrapSDKContext(ctx),
+				&types.QuerySwapExactAmountOutRequest{
+					PoolId:       1,
+					TokenOut:     tc.tokenOut,
+					TokenInDenom: tc.tokenInDenom,
+				},
+			)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTokenIn, resp.TokenIn)
+		})
+	}
+}

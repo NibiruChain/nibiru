@@ -235,17 +235,41 @@ func (k queryServer) SpotPrice(ctx context.Context, req *types.QuerySpotPriceReq
 // Estimates the amount of assets returned given an exact amount of tokens to
 // swap.
 func (k queryServer) EstimateSwapExactAmountIn(
-	context.Context, *types.QuerySwapExactAmountInRequest,
+	ctx context.Context, req *types.QuerySwapExactAmountInRequest,
 ) (*types.QuerySwapExactAmountInResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/169)
-	return nil, nil
+	pool, err := k.FetchPool(sdk.UnwrapSDKContext(ctx), req.PoolId)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenOut, err := pool.CalcOutAmtGivenIn(req.TokenIn, req.TokenOutDenom)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QuerySwapExactAmountInResponse{
+		TokenOut: tokenOut,
+	}, nil
 }
 
 // Estimates the amount of tokens required to return the exact amount of
 // assets requested.
-func (k queryServer) EstimateSwapExactAmountOut(context.Context, *types.QuerySwapExactAmountOutRequest) (*types.QuerySwapExactAmountOutResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/169)
-	return nil, nil
+func (k queryServer) EstimateSwapExactAmountOut(
+	ctx context.Context, req *types.QuerySwapExactAmountOutRequest,
+) (*types.QuerySwapExactAmountOutResponse, error) {
+	pool, err := k.FetchPool(sdk.UnwrapSDKContext(ctx), req.PoolId)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenIn, err := pool.CalcInAmtGivenOut(req.TokenOut, req.TokenInDenom)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QuerySwapExactAmountOutResponse{
+		TokenIn: tokenIn,
+	}, nil
 }
 
 // Estimates the amount of pool shares returned given an amount of tokens to
