@@ -274,9 +274,21 @@ func (k queryServer) EstimateSwapExactAmountOut(
 
 // Estimates the amount of pool shares returned given an amount of tokens to
 // join.
-func (k queryServer) EstimateJoinExactAmountIn(context.Context, *types.QueryJoinExactAmountInRequest) (*types.QueryJoinExactAmountInResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/170)
-	return nil, nil
+func (k queryServer) EstimateJoinExactAmountIn(
+	ctx context.Context, req *types.QueryJoinExactAmountInRequest,
+) (*types.QueryJoinExactAmountInResponse, error) {
+	pool, err := k.FetchPool(sdk.UnwrapSDKContext(ctx), req.PoolId)
+	if err != nil {
+		return nil, err
+	}
+	numShares, remCoins, err := pool.AddTokensToPool(req.TokensIn)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryJoinExactAmountInResponse{
+		PoolSharesOut: numShares,
+		RemCoins:      remCoins,
+	}, nil
 }
 
 // Estimates the amount of tokens required to obtain an exact amount of pool
