@@ -320,6 +320,7 @@ func (k Keeper) NewPool(
 	for _, asset := range poolAssets {
 		coins = append(coins, asset.Token)
 	}
+	coins = sdk.NewCoins(coins...)
 
 	if err = k.bankKeeper.SendCoins(ctx, sender, poolAccount.GetAddress(), coins); err != nil {
 		return uint64(0), err
