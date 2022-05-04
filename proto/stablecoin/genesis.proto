@@ -1,5 +1,5 @@
 syntax = "proto3";
-package NibiruChain.stablecoin.v1;
+package nibiru.stablecoin.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";

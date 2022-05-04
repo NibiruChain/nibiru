@@ -1,0 +1,145 @@
+syntax="proto3";
+
+package nibiru.perp.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package="github.com/NibiruChain/nibiru/x/perp/types/v1";
+
+message Params {
+  // stopped identifies if the perp exchange is stopped or not
+  bool stopped = 1;
+
+  string maintenance_margin_ratio = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+}
+
+// GenesisState defines the perp  module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin module_account_balance = 2 [
+    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Position identifies a user position in a given pair.
+message Position {
+  // address identifies the address owner of this position
+  string address = 1;
+  // pair identifies the pair associated with this position
+  string pair = 2;
+
+  string size = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false]; // signed int
+  string margin = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false]; // int
+  string open_notional = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false]; // int
+  string last_update_cumulative_premium_fraction = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false]; // int
+  int64 liquidity_history_index = 7;
+  int64 block_number = 8;
+}
+
+message PositionResp {
+  Position position = 1;
+
+  string exchanged_quote_asset_amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string bad_debt = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string exchanged_position_size = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string funding_payment = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string realized_pnl = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string margin_to_vault = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string unrealized_pnl_after = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+}
+
+message VirtualPoolInfo {
+  string pair = 1;
+  int64 last_restriction_block = 2;
+  repeated string cumulative_premium_fractions = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+}
+
+enum Side {
+  Side_UNDEFINED = 0;
+  Side_BUY = 1;
+  Side_SELL = 2;
+}
+
+enum PnLCalcOption {
+  PnlCalcOption_UNDEFINED = 0;
+  PnLCalcOption_SPOT_PRICE = 1;
+  PnLCalcOption_TWAP = 2;
+  PnLCalcOption_ORACLE = 3;
+}
+
+enum PnLPreferenceOption {
+  PnLPreferenceOption_UNDEFINED = 0;
+  PnLPreferenceOption_MAX = 1;
+  PnLPreferenceOption_MIN = 2;
+}
+
+message PairMetadata {
+  string pair = 1;
+  string open_interest_notional = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+  repeated string cumulative_premium_fractions = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+}
+
+message PositionChangedEvent {
+  string trader = 1;
+  string pair  = 2;
+  string margin = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string position_notional = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string exchanged_position_size = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string fee = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string position_size_after = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string realized_pnl = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string unrealized_pnl_after = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string bad_debt = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string liquidation_penalty = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string spot_price = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+  string funding_payment = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+}

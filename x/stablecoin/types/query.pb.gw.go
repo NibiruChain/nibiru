@@ -314,13 +314,13 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"NibiruChain", "nibiru", "stablecoin", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "stablecoin", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ModuleAccountBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"NibiruChain", "nibiru", "stablecoin", "module_account_balance"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ModuleAccountBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "stablecoin", "module_account_balance"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_CirculatingSupplies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"NibiruChain", "nibiru", "stablecoin", "circulating_supplies"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_CirculatingSupplies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "stablecoin", "circulating_supplies"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_LiquidityRatioInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"NibiruChain", "nibiru", "stablecoin", "liquidity_ratio_info"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_LiquidityRatioInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "stablecoin", "liquidity_ratio_info"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

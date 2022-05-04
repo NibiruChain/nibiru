@@ -17,7 +17,7 @@ import (
 )
 
 // New creates application instance with in-memory database and disabled logging.
-func New(shouldUseDefaultGenesis bool) *app.NibiruApp {
+func NewTestApp(shouldUseDefaultGenesis bool) *app.NibiruApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -29,7 +29,7 @@ func New(shouldUseDefaultGenesis bool) *app.NibiruApp {
 
 	encoding := app.MakeTestEncodingConfig()
 
-	a := app.NewNibiruApp(
+	testApp := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
@@ -51,16 +51,18 @@ func New(shouldUseDefaultGenesis bool) *app.NibiruApp {
 	}
 
 	// InitChain updates deliverState which is required when app.NewContext is called
-	a.InitChain(abci.RequestInitChain{
+	testApp.InitChain(abci.RequestInitChain{
 		ConsensusParams: DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 
-	return a
+	return testApp
 }
 
+/* NewNibiruApp creates an 'app.NibiruApp' instance with an in-memory
+   'tmdb.MemDB' and fresh 'sdk.Context'. */
 func NewNibiruApp(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
-	newNibiruApp := New(shouldUseDefaultGenesis)
+	newNibiruApp := NewTestApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
 	return newNibiruApp, ctx

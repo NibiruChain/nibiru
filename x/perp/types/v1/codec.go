@@ -1,4 +1,4 @@
-package types
+package v1
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -8,16 +8,15 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgCreatePool{}, "dex/CreatePool", nil)
+	cdc.RegisterConcrete(&MsgFoo{}, "perp/Foo", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		/* interface */ (*sdk.Msg)(nil),
 		/* implementations */
-		&MsgCreatePool{},
-		&MsgJoinPool{},
-	)
+		&MsgFoo{},
+	) // &MsgFoo{},
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

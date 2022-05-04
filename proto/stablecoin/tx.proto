@@ -1,8 +1,9 @@
 syntax = "proto3";
-package NibiruChain.stablecoin.v1;
+package nibiru.stablecoin.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 
@@ -10,22 +11,30 @@ option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 service Msg {
   /* MintStable defines a method for trading a mixture of GOV and COLL to mint an 
   equivalent value of stablecoins. */
-  rpc MintStable(MsgMintStable) returns (MsgMintStableResponse);
+  rpc MintStable(MsgMintStable) returns (MsgMintStableResponse) {
+    option (google.api.http).post = "/nibiru/stablecoin/mint-sc";
+  }
 
   /* BurnStable defines a method for redeeming/burning stablecoins to receive an 
   equivalent value as a mixture of governance and collateral tokens. */
-  rpc BurnStable(MsgBurnStable) returns (MsgBurnStableResponse);
+  rpc BurnStable(MsgBurnStable) returns (MsgBurnStableResponse) {
+    option (google.api.http).post = "/nibiru/stablecoin/burn-sc";
+  }
 
   /* Recollateralize defines a method for manually adding collateral to the 
   protocol in exchange for an equivalent stablecoin value in governance tokens 
   plus a small bonus. */
-  rpc Recollateralize(MsgRecollateralize) returns (MsgRecollateralizeResponse);
+  rpc Recollateralize(MsgRecollateralize) returns (MsgRecollateralizeResponse) {
+    option (google.api.http).post = "/nibiru/stablecoin/recoll";
+  }
 
   /* Buyback defines a method for manually adding NIBI to the protocol 
   in exchange for an equivalent stablecoin value in collateral, effectively 
   executing a share buyback for Nibiru Chain. The NIBI purchased by the protocol 
   is then burned, distributing value to all NIBI hodlers. */
-  rpc Buyback(MsgBuyback) returns (MsgBuybackResponse);
+  rpc Buyback(MsgBuyback) returns (MsgBuybackResponse) {
+    option (google.api.http).post = "/nibiru/stablecoin/buyback";
+  }
 }
 
 /* 

@@ -95,6 +95,6 @@ func DefaultConfig() network.Config {
 
 func NewAppConstructor() network.AppConstructor {
 	return func(val network.Validator) servertypes.Application {
-		return New(true)
+		return NewTestApp(true)
 	}
 }

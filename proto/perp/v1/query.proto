@@ -1,0 +1,31 @@
+syntax="proto3";
+
+package nibiru.perp.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "perp/v1/state.proto";
+
+option go_package="github.com/NibiruChain/nibiru/x/perp/types/v1";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the x/perp module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/nibiru/perp/params";
+  }
+
+}
+
+// ---------------------------------------- Params
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// ---------------------------------------- OtherQuery

@@ -1,0 +1,25 @@
+syntax="proto3";
+
+package nibiru.perp.v1;
+
+import "google/api/annotations.proto";
+
+option go_package="github.com/NibiruChain/nibiru/x/perp/types/v1";
+
+// Query defines the gRPC querier service.
+service Msg {
+  // Parameters queries the parameters of the x/perp module.
+  rpc Foo(MsgFoo) returns (MsgFooResponse) {
+    option (google.api.http).post = "/nibiru/perp/foo";
+  }
+
+}
+
+/* MsgFoo: Msg to foo. */
+message MsgFoo {
+    string sender = 1;
+}
+
+message MsgFooResponse {
+    string response_payload = 1;
+}
