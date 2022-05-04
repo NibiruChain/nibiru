@@ -153,7 +153,9 @@ message QueryPoolParamsResponse {
 }
 
 message QueryNumPoolsRequest {}
-message QueryNumPoolsResponse {}
+message QueryNumPoolsResponse {
+  uint64 numPools = 1;
+}
 
 // --------------------------------------------
 // Query total liquidity the protocol
@@ -183,22 +185,61 @@ message QueryTotalPoolLiquidityResponse {
 message QueryTotalSharesRequest {
   uint64 poolId = 1;
 }
-message QueryTotalSharesResponse {}
+message QueryTotalSharesResponse {
+  // sum of all LP tokens sent out
+  cosmos.base.v1beta1.Coin totalShares = 1 [
+    (gogoproto.moretags) = "yaml:\"total_shares\"",
+    (gogoproto.nullable) = false
+  ];
+}
 
+// Returns the amount of tokenInDenom to produce 1 tokenOutDenom
+// For example, if the price of NIBI = 9.123 NUSD, then setting tokenInDenom=NUSD
+// and tokenOutDenom=NIBI would give "9.123".
 message QuerySpotPriceRequest {
   uint64 poolId = 1;
+  // the denomination of the token you are giving into the pool
+  string tokenInDenom = 2;
+  // the denomination of the token you are taking out of the pool
+  string tokenOutDenom = 3;
 }
-message QuerySpotPriceResponse {}
+message QuerySpotPriceResponse {
+  string spotPrice = 1;
+}
 
+// Given an exact amount of tokens in and a target tokenOutDenom, calculates
+// the expected amount of tokens out received from a swap.
 message QuerySwapExactAmountInRequest {
   uint64 poolId = 1;
+  cosmos.base.v1beta1.Coin tokenIn = 2 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
+    (gogoproto.nullable) = false
+  ];
+  string tokenOutDenom = 3;
 }
-message QuerySwapExactAmountInResponse {}
+message QuerySwapExactAmountInResponse {
+  cosmos.base.v1beta1.Coin tokenOut = 2 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
+    (gogoproto.nullable) = false
+  ];
+}
 
+// Given an exact amount of tokens out and a target tokenInDenom, calculates
+// the expected amount of tokens in required to do the swap.
 message QuerySwapExactAmountOutRequest {
   uint64 poolId = 1;
+  cosmos.base.v1beta1.Coin tokenOut = 2 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
+    (gogoproto.nullable) = false
+  ];
+  string tokenInDenom = 3;
 }
-message QuerySwapExactAmountOutResponse {}
+message QuerySwapExactAmountOutResponse {
+  cosmos.base.v1beta1.Coin tokenIn = 2 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
 
 message QueryJoinExactAmountInRequest {
   uint64 poolId = 1;
