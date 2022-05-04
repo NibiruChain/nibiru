@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	simulation "github.com/NibiruChain/nibiru/x/simulation"
@@ -13,7 +14,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 )
 
-func SimulateMsgCreatePool(
+func SimulateMsgCreatePool2(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
@@ -32,7 +33,7 @@ func SimulateMsgCreatePool(
 }
 
 // SimulateMsgCreateBalancerPool generates a MsgCreatePool with random values.
-func SimulateMsgCreateBalancerPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
+func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -43,9 +44,22 @@ func SimulateMsgCreateBalancerPool(ak types.AccountKeeper, bk types.BankKeeper, 
 			Creator: simAccount.Address.String(),
 		}
 
+		million := 1_000_000
 		if simCoins.Len() <= 1 {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "Account doesn't have 2 different coin types"), nil, nil
+			// Fund account with collateral and governance tokens
+			newTokens := sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(int64(10*million))),
+				sdk.NewCoin(common.CollDenom, sdk.NewInt(int64(10*million))),
+			)
+
+			bk.MintCoins(ctx, types.ModuleName, newTokens)
+			bk.SendCoinsFromModuleToAccount(
+				ctx,
+				types.ModuleName,
+				simAccount.Address,
+				newTokens,
+			)
+
+			simCoins = bk.SpendableCoins(ctx, simAccount.Address)
 		}
 
 		poolAssets := genPoolAssets(r, simAccount, simCoins)
