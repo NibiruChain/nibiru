@@ -78,3 +78,17 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 	}
 	return oracles
 }
+
+// Whitelists 'oracles' for all of the current pairs.
+// TODO test: https://github.com/NibiruChain/nibiru/issues/305
+func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
+	startParams := k.GetParams(ctx)
+	var endPairs types.Pairs
+	for _, pair := range startParams.Pairs {
+		endPairs = append(endPairs,
+			types.Pair{Token0: pair.Token0, Token1: pair.Token1,
+				Oracles: append(pair.Oracles, oracles...), Active: pair.Active})
+	}
+	endParams := types.NewParams(endPairs)
+	k.SetParams(ctx, endParams)
+}
