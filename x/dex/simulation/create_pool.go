@@ -53,16 +53,24 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 				sdk.NewCoin(common.StableDenom, sdk.NewInt(int64(10*million))),
 			)
 
-			bk.MintCoins(ctx, types.ModuleName, newTokens)
-			bk.SendCoinsFromModuleToAccount(
+			err := bk.MintCoins(ctx, types.ModuleName, newTokens)
+			if err != nil {
+				panic(err)
+			}
+			err = bk.SendCoinsFromModuleToAccount(
 				ctx,
 				types.ModuleName,
 				simAccount.Address,
 				newTokens,
 			)
+			if err != nil {
+				panic(err)
+			}
 
 			simCoins = bk.SpendableCoins(ctx, simAccount.Address)
 		}
+
+		whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
 
 		poolAssets := genPoolAssets(r, simAccount, simCoins, whitelistedAssets)
 		poolParams := genBalancerPoolParams(r, ctx.BlockTime(), poolAssets)

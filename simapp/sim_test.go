@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	testutil "github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdkSimapp "github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/store"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
@@ -53,7 +51,7 @@ func fullAppSimulation(tb testing.TB, is_testing bool) {
 		}
 	}()
 
-	nibiru := testutil.New( /*shouldUseDefaultGenesis*/ true)
+	nibiru := testutil.NewTestApp( /*shouldUseDefaultGenesis*/ true)
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -80,11 +78,4 @@ func fullAppSimulation(tb testing.TB, is_testing bool) {
 	if config.Commit {
 		sdkSimapp.PrintStats(db)
 	}
-	panic(nil)
-}
-
-// interBlockCacheOpt returns a BaseApp option function that sets the persistent
-// inter-block write-through cache.
-func interBlockCacheOpt() func(*baseapp.BaseApp) {
-	return baseapp.SetInterBlockCache(store.NewCommitKVStoreCacheManager())
 }
