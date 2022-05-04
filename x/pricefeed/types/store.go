@@ -3,19 +3,23 @@ package types
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Parameter keys
 var (
 	KeyPairs     = []byte("Pairs")
-	DefaultPairs = []Pair{}
+	DefaultPairs = []Pair{
+		{Token0: common.CollDenom, Token1: common.StableDenom, Active: true},
+		{Token0: common.GovDenom, Token1: common.StableDenom, Active: true},
+	}
 )
 
 // NewParams creates a new AssetParams object
-func NewParams(markets []Pair) Params {
+func NewParams(pairs []Pair) Params {
 	return Params{
-		Pairs: markets,
+		Pairs: pairs,
 	}
 }
 
