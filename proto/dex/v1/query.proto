@@ -134,13 +134,23 @@ message QueryPoolResponse {
   Pool pool = 1;
 }
 
-message QueryPoolsRequest {}
-message QueryPoolsResponse {}
+message QueryPoolsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+message QueryPoolsResponse {
+  repeated Pool pools = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
 
 message QueryPoolParamsRequest {
   uint64 poolId = 1;
 }
-message QueryPoolParamsResponse {}
+message QueryPoolParamsResponse {
+  PoolParams poolParams = 1;
+}
 
 message QueryNumPoolsRequest {}
 message QueryNumPoolsResponse {}

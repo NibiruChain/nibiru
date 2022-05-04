@@ -15,7 +15,7 @@ func DexPool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 		}
 	}
 	return types.Pool{
-		Id: 1,
+		Id: poolId,
 		PoolParams: types.PoolParams{
 			SwapFee: sdk.SmallestDec(),
 			ExitFee: sdk.SmallestDec(),

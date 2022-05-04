@@ -33,10 +33,10 @@ var (
 	KeyNextGlobalPoolNumber = []byte{0x01}
 	// KeyPrefixPools defines prefix to store pools
 	KeyPrefixPools = []byte{0x02}
-	// KeyPrefixPoolIds defines prefix to store pool ids by denoms in the pool
-	KeyPrefixPoolIds = []byte{0x02}
 	// KeyTotalLiquidity defines key to store total liquidity
 	KeyTotalLiquidity = []byte{0x03}
+	// KeyPrefixPoolIds defines prefix to store pool ids by denoms in the pool
+	KeyPrefixPoolIds = []byte{0x04}
 )
 
 func GetDenomPrefixPoolIds(denoms ...string) []byte {
