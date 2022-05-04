@@ -294,8 +294,7 @@ func (k queryServer) EstimateJoinExactAmountIn(
 // Estimates the amount of tokens required to obtain an exact amount of pool
 // shares.
 func (k queryServer) EstimateJoinExactAmountOut(context.Context, *types.QueryJoinExactAmountOutRequest) (*types.QueryJoinExactAmountOutResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/170)
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "Not Implemented")
 }
 
 // Estimates the amount of tokens returned to the user given an exact amount
@@ -308,6 +307,5 @@ func (k queryServer) EstimateExitExactAmountIn(context.Context, *types.QueryExit
 // Estimates the amount of pool shares required to extract an exact amount of
 // tokens from the pool.
 func (k queryServer) EstimateExitExactAmountOut(context.Context, *types.QueryExitExactAmountOutRequest) (*types.QueryExitExactAmountOutResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/171)
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "Not Implemented")
 }
