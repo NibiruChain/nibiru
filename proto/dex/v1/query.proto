@@ -273,8 +273,21 @@ message QueryJoinExactAmountOutResponse {}
 
 message QueryExitExactAmountInRequest {
   uint64 poolId = 1;
+  // amount of pool shares to return to pool
+  string poolSharesIn = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"pool_shares_in\"",
+    (gogoproto.nullable) = false
+  ];
 }
-message QueryExitExactAmountInResponse {}
+message QueryExitExactAmountInResponse {
+  // coins obtained after exiting
+  repeated cosmos.base.v1beta1.Coin tokensOut = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"tokens_out\"",
+    (gogoproto.nullable) = false
+  ];
+}
 
 message QueryExitExactAmountOutRequest {
   uint64 poolId = 1;
