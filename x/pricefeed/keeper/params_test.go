@@ -53,7 +53,6 @@ func TestGetParams(t *testing.T) {
 }
 
 func TestWhitelistOracles(t *testing.T) {
-
 	var noOracles []sdk.AccAddress
 
 	testCases := []struct {
@@ -111,5 +110,4 @@ func TestWhitelistOracles(t *testing.T) {
 		},
 		)
 	}
-
 }
