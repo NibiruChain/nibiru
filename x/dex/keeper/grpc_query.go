@@ -200,9 +200,17 @@ func (k queryServer) TotalPoolLiquidity(ctx context.Context, req *types.QueryTot
 }
 
 // Total shares in a single pool.
-func (k queryServer) TotalShares(context.Context, *types.QueryTotalSharesRequest) (*types.QueryTotalSharesResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/163)
-	return nil, nil
+func (k queryServer) TotalShares(ctx context.Context, req *types.QueryTotalSharesRequest) (
+	*types.QueryTotalSharesResponse, error,
+) {
+	pool, err := k.FetchPool(sdk.UnwrapSDKContext(ctx), req.PoolId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryTotalSharesResponse{
+		TotalShares: pool.TotalShares,
+	}, nil
 }
 
 // Instantaneous price of an asset in a pool.

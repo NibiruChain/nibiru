@@ -369,3 +369,44 @@ func TestQueryPoolParams(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryTotalShares(t *testing.T) {
+	tests := []struct {
+		name                string
+		existingPool        types.Pool
+		expectedTotalShares sdk.Coin
+	}{
+		{
+			name: "successfully get existing shares",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			expectedTotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+
+			app.DexKeeper.SetPool(ctx, tc.existingPool)
+
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.TotalShares(
+				sdk.WrapSDKContext(ctx),
+				&types.QueryTotalSharesRequest{
+					PoolId: 1,
+				},
+			)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTotalShares, resp.TotalShares)
+		})
+	}
+}

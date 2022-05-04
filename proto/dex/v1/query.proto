@@ -185,7 +185,13 @@ message QueryTotalPoolLiquidityResponse {
 message QueryTotalSharesRequest {
   uint64 poolId = 1;
 }
-message QueryTotalSharesResponse {}
+message QueryTotalSharesResponse {
+  // sum of all LP tokens sent out
+  cosmos.base.v1beta1.Coin totalShares = 1 [
+    (gogoproto.moretags) = "yaml:\"total_shares\"",
+    (gogoproto.nullable) = false
+  ];
+}
 
 message QuerySpotPriceRequest {
   uint64 poolId = 1;
