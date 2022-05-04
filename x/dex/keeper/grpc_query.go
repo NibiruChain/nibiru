@@ -159,9 +159,14 @@ func (k queryServer) PoolParams(goCtx context.Context, req *types.QueryPoolParam
 }
 
 // Number of pools.
-func (k queryServer) NumPools(context.Context, *types.QueryNumPoolsRequest) (*types.QueryNumPoolsResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/164)
-	return nil, nil
+func (k queryServer) NumPools(ctx context.Context, _ *types.QueryNumPoolsRequest) (
+	*types.QueryNumPoolsResponse, error,
+) {
+	return &types.QueryNumPoolsResponse{
+		// next pool number is the id of the next pool,
+		// so we have one less than that in number of pools (id starts at 1)
+		NumPools: k.GetNextPoolNumber(sdk.UnwrapSDKContext(ctx)) - 1,
+	}, nil
 }
 
 // Total liquidity across all pools.

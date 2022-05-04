@@ -153,7 +153,9 @@ message QueryPoolParamsResponse {
 }
 
 message QueryNumPoolsRequest {}
-message QueryNumPoolsResponse {}
+message QueryNumPoolsResponse {
+  uint64 numPools = 1;
+}
 
 // --------------------------------------------
 // Query total liquidity the protocol
