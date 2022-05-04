@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -12,10 +11,8 @@ import (
 var (
 	KeyPairs     = []byte("Pairs")
 	DefaultPairs = []Pair{
-		{Token0: common.CollDenom, Token1: common.StableDenom,
-			Oracles: []sdk.AccAddress{}, Active: true},
-		{Token0: common.GovDenom, Token1: common.StableDenom,
-			Oracles: []sdk.AccAddress{}, Active: true},
+		{Token0: common.CollDenom, Token1: common.StableDenom, Active: true},
+		{Token0: common.GovDenom, Token1: common.StableDenom, Active: true},
 	}
 )
 
