@@ -3,6 +3,7 @@ package simulation
 import (
 	"math/rand"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
@@ -56,8 +57,8 @@ func GenAndDeliverTxWithRandFees(
 		return simtypes.NoOpMsg(moduleName, msg.Type(), "message doesn't leave room for fees"), nil, err
 	}
 
-	// Only allow fees in "uosmo"
-	coins = sdk.NewCoins(sdk.NewCoin("uosmo", coins.AmountOf("uosmo")))
+	// Only allow fees in common.GovDenom
+	coins = sdk.NewCoins(sdk.NewCoin(common.GovDenom, coins.AmountOf(common.GovDenom)))
 
 	fees, err = simtypes.RandomFees(r, ctx, coins)
 	if err != nil {
