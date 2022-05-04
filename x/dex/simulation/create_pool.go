@@ -46,9 +46,11 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 
 		million := 1_000_000
 		if simCoins.Len() <= 1 {
-			// Fund account with collateral and governance tokens
-			newTokens := sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(int64(10*million))),
+			// Fund account with tokens
+			newTokens := sdk.NewCoins(
+				sdk.NewCoin(common.GovDenom, sdk.NewInt(int64(10*million))),
 				sdk.NewCoin(common.CollDenom, sdk.NewInt(int64(10*million))),
+				sdk.NewCoin(common.StableDenom, sdk.NewInt(int64(10*million))),
 			)
 
 			bk.MintCoins(ctx, types.ModuleName, newTokens)
@@ -62,7 +64,7 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 			simCoins = bk.SpendableCoins(ctx, simAccount.Address)
 		}
 
-		poolAssets := genPoolAssets(r, simAccount, simCoins)
+		poolAssets := genPoolAssets(r, simAccount, simCoins, whitelistedAssets)
 		poolParams := genBalancerPoolParams(r, ctx.BlockTime(), poolAssets)
 
 		balances := bk.GetAllBalances(ctx, simAccount.Address)
@@ -72,9 +74,9 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 		}
 
 		// set the pool params to set the pool creation fee to dust amount of denom
-		k.SetParams(ctx, types.Params{
-			PoolCreationFee: sdk.Coins{sdk.NewInt64Coin(denoms[0], 1)},
-		})
+		params := k.GetParams(ctx)
+		params.PoolCreationFee = sdk.Coins{sdk.NewInt64Coin(denoms[0], 1)}
+		k.SetParams(ctx, params)
 
 		msg.PoolParams = &poolParams
 		msg.PoolAssets = poolAssets
@@ -102,7 +104,7 @@ func PoolAssetsCoins(assets []types.PoolAsset) sdk.Coins {
 	for _, asset := range assets {
 		coins = coins.Add(asset.Token)
 	}
-	return coins
+	return sdk.NewCoins(coins...)
 }
 
 // genBalancerPoolParams creates random parameters for the swap and exit fee of the pool
@@ -122,17 +124,27 @@ func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.Poo
 }
 
 // genPoolAssets creates a pool asset object based on current balance of the account
-func genPoolAssets(r *rand.Rand, acct simtypes.Account, coins sdk.Coins) []types.PoolAsset {
-	// selecting random number between [2, Min(coins.Len, 6)]
-	numCoins := 2 + r.Intn(Min(coins.Len(), 6)-1)
+func genPoolAssets(
+	r *rand.Rand,
+	acct simtypes.Account,
+	coins sdk.Coins,
+	whitelistedAssets map[string]bool) []types.PoolAsset {
 	denomIndices := r.Perm(coins.Len())
 	assets := []types.PoolAsset{}
-	for _, denomIndex := range denomIndices[:numCoins] {
+
+	for _, denomIndex := range denomIndices {
 		denom := coins[denomIndex].Denom
-		amt, _ := simtypes.RandPositiveInt(r, coins[denomIndex].Amount.QuoRaw(100))
-		reserveAmt := sdk.NewCoin(denom, amt)
-		weight := sdk.NewInt(r.Int63n(9) + 1)
-		assets = append(assets, types.PoolAsset{Token: reserveAmt, Weight: weight})
+
+		if _, ok := whitelistedAssets[denom]; ok {
+			amt, _ := simtypes.RandPositiveInt(r, coins[denomIndex].Amount.QuoRaw(100))
+			reserveAmt := sdk.NewCoin(denom, amt)
+			weight := sdk.NewInt(r.Int63n(9) + 1)
+			assets = append(assets, types.PoolAsset{Token: reserveAmt, Weight: weight})
+
+			if len(assets) == 2 {
+				break
+			}
+		}
 	}
 
 	return assets
