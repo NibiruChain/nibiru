@@ -7,15 +7,22 @@ option go_package = "github.com/NibiruChain/nibiru/x/incentivization/types";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 
 import "cosmos/base/v1beta1/coin.proto";
 
 
 service Msg {
   // CreateIncentivizationProgram allows an entity to create an incentivization program for a liquidity pool.
-  rpc CreateIncentivizationProgram(MsgCreateIncentivizationProgram) returns (MsgCreateIncentivizationProgramResponse);
+  rpc CreateIncentivizationProgram(MsgCreateIncentivizationProgram
+  ) returns (MsgCreateIncentivizationProgramResponse) {
+    option (google.api.http).post = "/nibiru/incentivization/create";
+  }
   // FundIncentivizationProgram allows an entity to fund an already existing incentivization program with more coins.
-  rpc FundIncentivizationProgram(MsgFundIncentivizationProgram) returns (MsgFundIncentivizationProgramResponse);
+  rpc FundIncentivizationProgram(MsgFundIncentivizationProgram
+  ) returns (MsgFundIncentivizationProgramResponse) {
+    option (google.api.http).post = "/nibiru/incentivization/fund";
+  }
 }
 
 

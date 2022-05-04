@@ -12,7 +12,9 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	registry.RegisterImplementations((*sdk.Msg)(nil),
+	registry.RegisterImplementations(
+		/* interface */ (*sdk.Msg)(nil),
+		/* implementations */
 		&MsgCreatePool{},
 		&MsgJoinPool{},
 	)
