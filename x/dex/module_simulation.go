@@ -29,14 +29,14 @@ const (
 	defaultWeightMsgCreatePool int = 100
 )
 
-// GenerateGenesisState creates a randomized GenState of the module
+// GenerateGenesisState creates a default GenState of the module
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	accs := make([]string, len(simState.Accounts))
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	dexGenesis := types.GenesisState{}
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&dexGenesis)
+	dexGenesis := types.DefaultGenesis()
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(dexGenesis)
 }
 
 // ProposalContents doesn't return any content functions for governance proposals
