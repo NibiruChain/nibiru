@@ -410,3 +410,78 @@ func TestQueryTotalShares(t *testing.T) {
 		})
 	}
 }
+
+func TestQuerySpotPrice(t *testing.T) {
+	tests := []struct {
+		name          string
+		existingPool  types.Pool
+		token0Denom   string
+		token1Denom   string
+		expectedPrice sdk.Dec
+	}{
+		{
+			name: "same quantity",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			token0Denom:   "unibi",
+			token1Denom:   "unusd",
+			expectedPrice: sdk.MustNewDecFromStr("1"),
+		},
+		{
+			name: "price of 2 unusd per unibi",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 200),
+				),
+				/*shares=*/ 100,
+			),
+			token0Denom:   "unibi",
+			token1Denom:   "unusd",
+			expectedPrice: sdk.MustNewDecFromStr("2"),
+		},
+		{
+			name: "price of 0.5 unibi per unusd",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 200),
+				),
+				/*shares=*/ 100,
+			),
+			token0Denom:   "unusd",
+			token1Denom:   "unibi",
+			expectedPrice: sdk.MustNewDecFromStr("0.5"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+
+			app.DexKeeper.SetPool(ctx, tc.existingPool)
+
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.SpotPrice(
+				sdk.WrapSDKContext(ctx),
+				&types.QuerySpotPriceRequest{
+					PoolId:      1,
+					Token1Denom: tc.token1Denom,
+					Token0Denom: tc.token0Denom,
+				},
+			)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedPrice, sdk.MustNewDecFromStr(resp.SpotPrice))
+		})
+	}
+}

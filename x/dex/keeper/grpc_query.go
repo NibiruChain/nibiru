@@ -214,9 +214,22 @@ func (k queryServer) TotalShares(ctx context.Context, req *types.QueryTotalShare
 }
 
 // Instantaneous price of an asset in a pool.
-func (k queryServer) SpotPrice(context.Context, *types.QuerySpotPriceRequest) (*types.QuerySpotPriceResponse, error) {
-	// TODO(https://github.com/NibiruChain/nibiru/issues/168)
-	return nil, nil
+func (k queryServer) SpotPrice(ctx context.Context, req *types.QuerySpotPriceRequest) (
+	*types.QuerySpotPriceResponse, error,
+) {
+	pool, err := k.FetchPool(sdk.UnwrapSDKContext(ctx), req.PoolId)
+	if err != nil {
+		return nil, err
+	}
+
+	price, err := pool.CalcSpotPrice(req.Token1Denom, req.Token0Denom)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QuerySpotPriceResponse{
+		SpotPrice: price.String(),
+	}, nil
 }
 
 // Estimates the amount of assets returned given an exact amount of tokens to
