@@ -1,4 +1,4 @@
-package stablecoin
+package perp
 
 import (
 	"fmt"
@@ -6,12 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 /*
-NewHandler returns an sdk.Handler for "x/stablecoin" messages.
+NewHandler returns an sdk.Handler for "x/perp" messages.
 A handler defines the core state transition functions of an application.
 First, the handler performs stateful checks to make sure each 'msg' is valid.
 At this stage, the 'msg.ValidateBasic()' method has already been called, meaning
@@ -25,17 +25,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case *types.MsgMintStable:
-			res, err := msgServer.MintStable(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgBurnStable:
-			res, err := msgServer.BurnStable(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRecollateralize:
-			res, err := msgServer.Recollateralize(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgBuyback:
-			res, err := msgServer.Buyback(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgFoo:
+			res, err := msgServer.Foo(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf(
