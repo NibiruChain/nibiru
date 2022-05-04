@@ -193,15 +193,15 @@ message QueryTotalSharesResponse {
   ];
 }
 
-// Returns the spot price of token1 / token0.
-// For example, if the price of NIBI was 10 NUSD, then sending token1Denom=NUSD
-// and token0Denom=NIBI, you would get 10.000 as the answer (since its 10NUSD/1NIBI).
+// Returns the amount of tokenInDenom to produce 1 tokenOutDenom
+// For example, if the price of NIBI = 9.123 NUSD, then setting tokenInDenom=NUSD
+// and tokenOutDenom=NIBI would give "9.123".
 message QuerySpotPriceRequest {
   uint64 poolId = 1;
-  // numerator denomination
-  string token1Denom = 2;
-  // denominator denomination
-  string token0Denom = 3;
+  // the denomination of the token you are giving into the pool
+  string tokenInDenom = 2;
+  // the denomination of the token you are taking out of the pool
+  string tokenOutDenom = 3;
 }
 message QuerySpotPriceResponse {
   string spotPrice = 1;

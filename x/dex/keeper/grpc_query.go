@@ -222,7 +222,7 @@ func (k queryServer) SpotPrice(ctx context.Context, req *types.QuerySpotPriceReq
 		return nil, err
 	}
 
-	price, err := pool.CalcSpotPrice(req.Token1Denom, req.Token0Denom)
+	price, err := pool.CalcSpotPrice(req.TokenInDenom, req.TokenOutDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,9 @@ func (k queryServer) SpotPrice(ctx context.Context, req *types.QuerySpotPriceReq
 
 // Estimates the amount of assets returned given an exact amount of tokens to
 // swap.
-func (k queryServer) EstimateSwapExactAmountIn(context.Context, *types.QuerySwapExactAmountInRequest) (*types.QuerySwapExactAmountInResponse, error) {
+func (k queryServer) EstimateSwapExactAmountIn(
+	context.Context, *types.QuerySwapExactAmountInRequest,
+) (*types.QuerySwapExactAmountInResponse, error) {
 	// TODO(https://github.com/NibiruChain/nibiru/issues/169)
 	return nil, nil
 }

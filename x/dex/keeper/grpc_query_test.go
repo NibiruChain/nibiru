@@ -415,8 +415,8 @@ func TestQuerySpotPrice(t *testing.T) {
 	tests := []struct {
 		name          string
 		existingPool  types.Pool
-		token0Denom   string
-		token1Denom   string
+		tokenInDenom  string
+		tokenOutDenom string
 		expectedPrice sdk.Dec
 	}{
 		{
@@ -429,8 +429,8 @@ func TestQuerySpotPrice(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			token0Denom:   "unibi",
-			token1Denom:   "unusd",
+			tokenInDenom:  "unusd",
+			tokenOutDenom: "unibi",
 			expectedPrice: sdk.MustNewDecFromStr("1"),
 		},
 		{
@@ -443,8 +443,8 @@ func TestQuerySpotPrice(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			token0Denom:   "unibi",
-			token1Denom:   "unusd",
+			tokenInDenom:  "unusd",
+			tokenOutDenom: "unibi",
 			expectedPrice: sdk.MustNewDecFromStr("2"),
 		},
 		{
@@ -457,8 +457,8 @@ func TestQuerySpotPrice(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			token0Denom:   "unusd",
-			token1Denom:   "unibi",
+			tokenInDenom:  "unibi",
+			tokenOutDenom: "unusd",
 			expectedPrice: sdk.MustNewDecFromStr("0.5"),
 		},
 	}
@@ -475,9 +475,9 @@ func TestQuerySpotPrice(t *testing.T) {
 			resp, err := queryServer.SpotPrice(
 				sdk.WrapSDKContext(ctx),
 				&types.QuerySpotPriceRequest{
-					PoolId:      1,
-					Token1Denom: tc.token1Denom,
-					Token0Denom: tc.token0Denom,
+					PoolId:        1,
+					TokenInDenom:  tc.tokenInDenom,
+					TokenOutDenom: tc.tokenOutDenom,
 				},
 			)
 			require.NoError(t, err)
