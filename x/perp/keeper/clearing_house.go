@@ -15,7 +15,7 @@ var (
 	_ = Keeper.transferFee
 )
 
-// TODO test: openPosition
+// TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openPosition(
 	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
@@ -117,7 +117,7 @@ func (k Keeper) openPosition(
 	})
 }
 
-// TODO test: increasePosition
+// TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
 	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
@@ -188,7 +188,7 @@ func (k Keeper) increasePosition(
 	return
 }
 
-// TODO test: updateOpenInterestNotional
+// TODO test: updateOpenInterestNotional | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm v1.VirtualPool, amount sdk.Int, trader string) error {
 	maxOpenInterest, err := vamm.GetOpenInterestNotionalCap(ctx)
 	if err != nil {
@@ -221,7 +221,7 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm v1.VirtualPool,
 	return nil
 }
 
-// TODO test: calcRemainMarginWithFundingPayment
+// TODO test: calcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) calcRemainMarginWithFundingPayment(
 	ctx sdk.Context, vamm v1.VirtualPool,
 	oldPosition *v1.Position, marginDelta sdk.Int,
@@ -250,7 +250,7 @@ func (k Keeper) calcRemainMarginWithFundingPayment(
 	return
 }
 
-// TODO test: getLatestCumulativePremiumFraction
+// TODO test: getLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.VirtualPool) (sdk.Int, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
 	if err != nil {
@@ -260,7 +260,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.Virt
 	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }
 
-// TODO test: getPositionNotionalAndUnrealizedPnL
+// TODO test: getPositionNotionalAndUnrealizedPnL | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.VirtualPool,
 	trader string, pnlCalcOption v1.PnLCalcOption) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
@@ -315,7 +315,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.Vir
 	return
 }
 
-// TODO test: openReversePosition
+// TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openReversePosition(
 	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int,
@@ -340,7 +340,7 @@ func (k Keeper) openReversePosition(
 	}
 }
 
-// TODO test: reducePosition
+// TODO test: reducePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) reducePosition(
 	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
 	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
@@ -404,7 +404,7 @@ func (k Keeper) reducePosition(
 	return positionResp, nil
 }
 
-// TODO test: closeAndOpenReversePosition
+// TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context, amm v1.VirtualPool, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
@@ -452,7 +452,7 @@ func (k Keeper) closeAndOpenReversePosition(
 	return positionResp, nil
 }
 
-// TODO test: closePosition
+// TODO test: closePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) closePosition(ctx sdk.Context, vamm v1.VirtualPool, trader string, quoteAssetAmountLimit sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
@@ -505,7 +505,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm v1.VirtualPool, trader strin
 	return positionResp, nil
 }
 
-// TODO test: clearPosition
+// TODO test: clearPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) clearPosition(ctx sdk.Context, vamm v1.VirtualPool, trader string) error {
 	return k.Positions().Update(ctx, &v1.Position{
 		Address:                             trader,
@@ -519,7 +519,7 @@ func (k Keeper) clearPosition(ctx sdk.Context, vamm v1.VirtualPool, trader strin
 	})
 }
 
-// TODO test: transferFee
+// TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
 	ctx sdk.Context, trader sdk.AccAddress, vamm v1.VirtualPool,
 	positionNotional sdk.Int,
@@ -596,7 +596,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, v
 	}
 }
 
-// TODO test: swapInput
+// TODO test: swapInput | https://github.com/NibiruChain/nibiru/issues/299
 func swapInput(ctx sdk.Context, vamm v1.VirtualPool,
 	side v1.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
 	var vammDir v1.VirtualPoolDirection
@@ -624,3 +624,4 @@ func swapInput(ctx sdk.Context, vamm v1.VirtualPool,
 		panic("invalid side")
 	}
 }
+
