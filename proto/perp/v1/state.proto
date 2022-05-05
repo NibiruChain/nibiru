@@ -26,7 +26,8 @@ message GenesisState {
   ];
 }
 
-// Position identifies a user position in a given pair.
+// Position identifies and records information on a user's position on one of 
+// the virtual liquidity pools.
 message Position {
   // address identifies the address owner of this position
   string address = 1;
@@ -39,13 +40,17 @@ message Position {
   string margin = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
     (gogoproto.nullable) = false]; // int
+
+  // OpenNotional is the quote denom value of the position when opening. 
   string open_notional = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
-    (gogoproto.nullable) = false]; // int
+    (gogoproto.nullable) = false]; 
   string last_update_cumulative_premium_fraction = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
     (gogoproto.nullable) = false]; // int
   int64 liquidity_history_index = 7;
+
+  // BlockNumber is the block number of the change to the position.
   int64 block_number = 8;
 }
 

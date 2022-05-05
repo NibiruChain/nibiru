@@ -17,7 +17,7 @@ var (
 
 // TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openPosition(
-	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.IVirtualPool, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) error {
 	// TODO(mercilex): missing checks
@@ -52,7 +52,7 @@ func (k Keeper) openPosition(
 	}
 
 	// update position in state
-	k.Positions().Set(ctx, positionResp.Position)
+	k.Positions().Set(ctx, vamm.Pair(), trader, positionResp.Position)
 
 	if !positionExists && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(ctx, vamm, trader)
@@ -119,7 +119,7 @@ func (k Keeper) openPosition(
 
 // TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
-	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.IVirtualPool, side v1.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
@@ -189,7 +189,7 @@ func (k Keeper) increasePosition(
 }
 
 // TODO test: updateOpenInterestNotional | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm v1.VirtualPool, amount sdk.Int, trader string) error {
+func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm v1.IVirtualPool, amount sdk.Int, trader string) error {
 	maxOpenInterest, err := vamm.GetOpenInterestNotionalCap(ctx)
 	if err != nil {
 		return err
@@ -223,7 +223,7 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm v1.VirtualPool,
 
 // TODO test: calcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) calcRemainMarginWithFundingPayment(
-	ctx sdk.Context, vamm v1.VirtualPool,
+	ctx sdk.Context, vamm v1.IVirtualPool,
 	oldPosition *v1.Position, marginDelta sdk.Int,
 ) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
 	latestCumulativePremiumFraction sdk.Int, err error) {
@@ -251,7 +251,7 @@ func (k Keeper) calcRemainMarginWithFundingPayment(
 }
 
 // TODO test: getLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.VirtualPool) (sdk.Int, error) {
+func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.IVirtualPool) (sdk.Int, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
 	if err != nil {
 		return sdk.Int{}, err
@@ -261,7 +261,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.Virt
 }
 
 // TODO test: getPositionNotionalAndUnrealizedPnL | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.VirtualPool,
+func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.IVirtualPool,
 	trader string, pnlCalcOption v1.PnLCalcOption) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
 	position, err := k.Positions().Get(ctx, vamm.Pair(), trader) // tODO(mercilex): inefficient refetch
@@ -300,7 +300,8 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.Vir
 			err = err2
 			return
 		}
-		positionNotional = positionSizeAbs.Mul(oraclePrice)
+		// TODO: Replace price variables with sdk.Dec instead of sdk.Int
+		positionNotional = positionSizeAbs.Mul(oraclePrice.TruncateInt())
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
@@ -317,7 +318,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.Vir
 
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openReversePosition(
-	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.IVirtualPool, side v1.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *v1.PositionResp, err error) {
@@ -342,7 +343,7 @@ func (k Keeper) openReversePosition(
 
 // TODO test: reducePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) reducePosition(
-	ctx sdk.Context, vamm v1.VirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.IVirtualPool, side v1.Side, trader string,
 	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *v1.PositionResp, err error) {
@@ -406,7 +407,7 @@ func (k Keeper) reducePosition(
 
 // TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) closeAndOpenReversePosition(
-	ctx sdk.Context, amm v1.VirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, amm v1.IVirtualPool, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) (positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
@@ -453,7 +454,7 @@ func (k Keeper) closeAndOpenReversePosition(
 }
 
 // TODO test: closePosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) closePosition(ctx sdk.Context, vamm v1.VirtualPool, trader string, quoteAssetAmountLimit sdk.Int) (
+func (k Keeper) closePosition(ctx sdk.Context, vamm v1.IVirtualPool, trader string, quoteAssetAmountLimit sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
 
@@ -497,7 +498,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm v1.VirtualPool, trader strin
 		return nil, err
 	}
 
-	err = k.clearPosition(ctx, vamm, trader)
+	err = k.ClearPosition(ctx, vamm, trader)
 	if err != nil {
 		return nil, err
 	}
@@ -505,23 +506,9 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm v1.VirtualPool, trader strin
 	return positionResp, nil
 }
 
-// TODO test: clearPosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) clearPosition(ctx sdk.Context, vamm v1.VirtualPool, trader string) error {
-	return k.Positions().Update(ctx, &v1.Position{
-		Address:                             trader,
-		Pair:                                vamm.Pair(),
-		Size_:                               sdk.ZeroInt(),
-		Margin:                              sdk.ZeroInt(),
-		OpenNotional:                        sdk.ZeroInt(),
-		LastUpdateCumulativePremiumFraction: sdk.ZeroInt(),
-		LiquidityHistoryIndex:               0,
-		BlockNumber:                         ctx.BlockHeight(),
-	})
-}
-
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
-	ctx sdk.Context, trader sdk.AccAddress, vamm v1.VirtualPool,
+	ctx sdk.Context, trader sdk.AccAddress, vamm v1.IVirtualPool,
 	positionNotional sdk.Int,
 ) (sdk.Int, error) {
 	toll, spread, err := vamm.CalcFee(positionNotional)
@@ -556,7 +543,7 @@ func (k Keeper) transferFee(
 }
 
 // TODO test: getPreferencePositionNotionalAndUnrealizedPnL
-func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.VirtualPool, trader string, pnLPreferenceOption v1.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
+func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.IVirtualPool, trader string, pnLPreferenceOption v1.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, v1.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
 	if err != nil {
@@ -597,7 +584,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, v
 }
 
 // TODO test: swapInput | https://github.com/NibiruChain/nibiru/issues/299
-func swapInput(ctx sdk.Context, vamm v1.VirtualPool,
+func swapInput(ctx sdk.Context, vamm v1.IVirtualPool,
 	side v1.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
 	var vammDir v1.VirtualPoolDirection
 	switch side {
@@ -624,4 +611,3 @@ func swapInput(ctx sdk.Context, vamm v1.VirtualPool,
 		panic("invalid side")
 	}
 }
-
