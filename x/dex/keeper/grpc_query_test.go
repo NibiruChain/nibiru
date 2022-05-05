@@ -608,3 +608,135 @@ func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
+	tests := []struct {
+		name                  string
+		existingPool          types.Pool
+		tokensIn              sdk.Coins
+		expectedPoolSharesOut sdk.Int
+		expectedRemCoins      sdk.Coins
+	}{
+		{
+			name: "complete join",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 100),
+				sdk.NewInt64Coin("unusd", 100),
+			),
+			expectedPoolSharesOut: sdk.NewIntFromUint64(100),
+			expectedRemCoins:      sdk.NewCoins(),
+		},
+		{
+			name: "leftover coins",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 50),
+				sdk.NewInt64Coin("unusd", 75),
+			),
+			expectedPoolSharesOut: sdk.NewIntFromUint64(50),
+			expectedRemCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("unusd", 25),
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.EstimateJoinExactAmountIn(
+				sdk.WrapSDKContext(ctx),
+				&types.QueryJoinExactAmountInRequest{
+					PoolId:   1,
+					TokensIn: tc.tokensIn,
+				},
+			)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedPoolSharesOut, resp.PoolSharesOut)
+			require.Equal(t, tc.expectedRemCoins, resp.RemCoins)
+		})
+	}
+}
+
+func TestQueryEstimateExitExactAmountIn(t *testing.T) {
+	tests := []struct {
+		name              string
+		existingPool      types.Pool
+		poolSharesIn      sdk.Int
+		expectedTokensOut sdk.Coins
+	}{
+		{
+			name: "complete exit",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			poolSharesIn: sdk.NewIntFromUint64(100),
+			// exit fee leaves some tokens in pool
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 99),
+				sdk.NewInt64Coin("unusd", 99),
+			),
+		},
+		{
+			name: "leftover coins",
+			existingPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("unibi", 100),
+					sdk.NewInt64Coin("unusd", 100),
+				),
+				/*shares=*/ 100,
+			),
+			poolSharesIn: sdk.NewIntFromUint64(50),
+			// exit fee leaves some tokens in pool
+			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 49),
+				sdk.NewInt64Coin("unusd", 49),
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.DexKeeper)
+
+			resp, err := queryServer.EstimateExitExactAmountIn(
+				sdk.WrapSDKContext(ctx),
+				&types.QueryExitExactAmountInRequest{
+					PoolId:       1,
+					PoolSharesIn: tc.poolSharesIn,
+				},
+			)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTokensOut, resp.TokensOut)
+		})
+	}
+}
