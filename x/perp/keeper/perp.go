@@ -32,6 +32,5 @@ func (k Keeper) GetPosition(
 func (k Keeper) SetPosition(
 	ctx sdk.Context, vpool types.IVirtualPool, owner string,
 	position *types.Position) {
-
 	k.Positions().Set(ctx, vpool.Pair(), owner, position)
 }

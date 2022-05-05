@@ -77,7 +77,6 @@ func TestGetAndSetPosition(t *testing.T) {
 			tc.test()
 		})
 	}
-
 }
 
 func TestClearPosition(t *testing.T) {
@@ -130,8 +129,10 @@ func TestClearPosition(t *testing.T) {
 				t.Log("attempt to clear all positions")
 				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(3)
 
-				nibiruApp.PerpKeeper.ClearPosition(
-					ctx, vpoolMock, traders[0].String())
+				require.NoError(t,
+					nibiruApp.PerpKeeper.ClearPosition(
+						ctx, vpoolMock, traders[0].String()),
+				)
 
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolMock, traders[0].String())
@@ -149,8 +150,10 @@ func TestClearPosition(t *testing.T) {
 
 				t.Log("clearing position of trader 1...")
 				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(2)
-				nibiruApp.PerpKeeper.ClearPosition(
-					ctx, vpoolMock, traders[1].String())
+				require.NoError(t,
+					nibiruApp.PerpKeeper.ClearPosition(
+						ctx, vpoolMock, traders[1].String()),
+				)
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolMock, traders[1].String())
 				require.NoError(t, err)
@@ -169,5 +172,4 @@ func TestClearPosition(t *testing.T) {
 			tc.test()
 		})
 	}
-
 }
