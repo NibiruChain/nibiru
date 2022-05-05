@@ -165,6 +165,21 @@ func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string)
 }
 
 /*
+FeatchAllPools fetch all pools from the store and returns them.
+*/
+func (k Keeper) FetchAllPools(ctx sdk.Context) (pools []types.Pool) {
+	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.KeyPrefixPools)
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		var pool types.Pool
+		k.cdc.MustUnmarshal(iterator.Value(), &pool)
+		pools = append(pools, pool)
+	}
+
+	return pools
+}
+
+/*
 Writes a pool to the state.
 Panics if the pool proto could not be marshaled.
 
