@@ -24,7 +24,6 @@ var (
 )
 
 const (
-	opWeightMsgCreatePool = "op_weight_msg_create_chain"
 	// TODO: Determine the simulation weight value
 	defaultWeight int = 100
 )
@@ -65,6 +64,9 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 	), simulation.NewWeightedOperation(
 		defaultWeight,
 		dexsimulation.SimulateJoinPool(am.accountKeeper, am.bankKeeper, am.keeper),
+	), simulation.NewWeightedOperation(
+		defaultWeight,
+		dexsimulation.SimulateExitPool(am.accountKeeper, am.bankKeeper, am.keeper),
 	),
 	)
 

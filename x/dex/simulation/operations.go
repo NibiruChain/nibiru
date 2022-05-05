@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -91,7 +92,7 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 				types.ModuleName, msg.Type(), "No pool existing yet for account tokens"), nil, nil
 		}
 
-		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
+		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.01")).Add(sdk.MustNewDecFromStr("0.05"))
 		frequencyFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1"))
 
 		intensity := intensityFactor.Mul(sdk.NewDecFromInt(balanceIn)).TruncateInt()
@@ -189,6 +190,66 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 	}
 }
 
+/*
+	SimulateExitPool generates a MsgExitPool with random values
+	This function has a 33% chance of swapping a random fraction of the balance of a random token
+*/
+func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
+
+		// Search for pool in sim coins
+		randomIndices := r.Perm(simCoins.Len())
+		var shareTokenOut sdk.Coin
+
+		for _, index := range randomIndices {
+			coin := simCoins[index]
+			if strings.Contains(coin.Denom, "nibiru/pool/") {
+				shareTokenOut = coin
+				break
+			}
+		}
+		msg := &types.MsgExitPool{}
+
+		if shareTokenOut.Denom == "" {
+			return simtypes.NoOpMsg(
+				types.ModuleName, msg.Type(), "No pool share token found in wallet"), nil, nil
+		}
+
+		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
+
+		tokenOut := sdk.NewCoin(
+			shareTokenOut.Denom,
+			intensityFactor.Mul(sdk.NewDecFromInt(shareTokenOut.Amount)).TruncateInt(),
+		)
+
+		// Ugly but does the job
+		poolId := uint64(sdk.MustNewDecFromStr(strings.Replace(tokenOut.Denom, "nibiru/pool/", "", 1)).TruncateInt().Int64())
+
+		msg = &types.MsgExitPool{
+			Sender:     simAccount.Address.String(),
+			PoolId:     poolId,
+			PoolShares: tokenOut}
+
+		txGen := simapp.MakeTestEncodingConfig().TxConfig
+
+		return simulation.GenAndDeliverTxWithRandFees(
+			/*r*/ r,
+			/*app*/ app,
+			/*txGen*/ txGen,
+			/*msg*/ msg,
+			/*coinsSpentInMsg*/ sdk.NewCoins(tokenOut),
+			/*ctx*/ ctx,
+			/*simAccount*/ simAccount,
+			/*ak*/ ak,
+			/*bk*/ bk,
+			/*moduleName*/ types.ModuleName)
+	}
+}
+
 // PoolAssetsCoins returns all the coins corresponding to a slice of pool assets.
 func PoolAssetsCoins(assets []types.PoolAsset) sdk.Coins {
 	coins := sdk.Coins{}
@@ -227,7 +288,7 @@ func genPoolAssets(
 		denom := coins[denomIndex].Denom
 
 		if _, ok := whitelistedAssets[denom]; ok {
-			amt, _ := simtypes.RandPositiveInt(r, coins[denomIndex].Amount.QuoRaw(100))
+			amt, _ := simtypes.RandPositiveInt(r, coins[denomIndex].Amount.QuoRaw(10))
 			reserveAmt := sdk.NewCoin(denom, amt)
 			weight := sdk.NewInt(r.Int63n(9) + 1)
 			assets = append(assets, types.PoolAsset{Token: reserveAmt, Weight: weight})
