@@ -26,7 +26,7 @@ var (
 const (
 	opWeightMsgCreatePool = "op_weight_msg_create_chain"
 	// TODO: Determine the simulation weight value
-	defaultWeightMsgCreatePool int = 100
+	defaultWeight int = 100
 )
 
 // GenerateGenesisState creates a default GenState of the module
@@ -56,16 +56,17 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
 
-	var weightMsgCreatePool int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgCreatePool, &weightMsgCreatePool, nil,
-		func(_ *rand.Rand) {
-			weightMsgCreatePool = defaultWeightMsgCreatePool
-		},
-	)
 	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgCreatePool,
+		defaultWeight,
 		dexsimulation.SimulateMsgCreatePool(am.accountKeeper, am.bankKeeper, am.keeper),
-	))
+	), simulation.NewWeightedOperation(
+		defaultWeight,
+		dexsimulation.SimulateMsgSwap(am.accountKeeper, am.bankKeeper, am.keeper),
+	), simulation.NewWeightedOperation(
+		defaultWeight,
+		dexsimulation.SimulateJoinPool(am.accountKeeper, am.bankKeeper, am.keeper),
+	),
+	)
 
 	return operations
 }
