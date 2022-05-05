@@ -300,7 +300,8 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.IVi
 			err = err2
 			return
 		}
-		positionNotional = positionSizeAbs.Mul(oraclePrice)
+		// TODO: Replace price variables with sdk.Dec instead of sdk.Int
+		positionNotional = positionSizeAbs.Mul(oraclePrice.TruncateInt())
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
