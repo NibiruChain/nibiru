@@ -8,9 +8,14 @@ import (
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
+	IterateAccounts(ctx sdk.Context, process func(authtypes.AccountI) (stop bool))
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
 	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
 	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
+	GetModuleAddress(name string) sdk.AccAddress
+	GetModuleAccount(ctx sdk.Context, moduleName string) authtypes.ModuleAccountI
+
+	SetModuleAccount(sdk.Context, authtypes.ModuleAccountI)
 	// Methods imported from account should be defined here
 }
 
