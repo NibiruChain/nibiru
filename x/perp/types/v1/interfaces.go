@@ -15,7 +15,7 @@ type IClearingHouse interface {
 	) (*Position, error)
 	SetPosition(
 		ctx sdk.Context, vpool IVirtualPool, owner string, position *Position,
-	) error
+	)
 }
 
 // ----------------------------------------------------------

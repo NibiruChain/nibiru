@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -33,7 +31,7 @@ func (k Keeper) GetPosition(
 
 func (k Keeper) SetPosition(
 	ctx sdk.Context, vpool types.IVirtualPool, owner string,
-	position *types.Position,
-) error {
-	return fmt.Errorf("not implemented")
+	position *types.Position) {
+
+	k.Positions().Set(ctx, vpool.Pair(), owner, position)
 }

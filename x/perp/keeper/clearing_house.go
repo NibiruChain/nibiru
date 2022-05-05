@@ -52,7 +52,7 @@ func (k Keeper) openPosition(
 	}
 
 	// update position in state
-	k.Positions().Set(ctx, positionResp.Position)
+	k.Positions().Set(ctx, vamm.Pair(), trader, positionResp.Position)
 
 	if !positionExists && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(ctx, vamm, trader)
