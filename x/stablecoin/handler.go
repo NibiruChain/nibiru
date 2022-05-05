@@ -17,7 +17,6 @@ First, the handler performs stateful checks to make sure each 'msg' is valid.
 At this stage, the 'msg.ValidateBasic()' method has already been called, meaning
 stateless checks on the message (like making sure parameters are correctly
 formatted) have already been performed.
-Q: Why perform these checks before
 */
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)

@@ -8,6 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/incentivization"
+	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
+	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex"
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
@@ -18,6 +22,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/lockup"
 	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/perp"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	pricekeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricetypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -168,7 +175,9 @@ var (
 		pricefeed.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
+		perp.AppModuleBasic{},
 		lockup.AppModuleBasic{},
+		incentivization.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -182,6 +191,7 @@ var (
 		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		epochstype.ModuleName:                 {},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
@@ -232,22 +242,26 @@ type NibiruApp struct {
 	FeeGrantKeeper feegrantkeeper.Keeper
 
 	// IBC keepers
-	/* IBCKeeper defines each ICS keeper for IBC. IBCKeeper must be a pointer in
-	   the app, so we can SetRouter on it correctly. */
-	IBCKeeper *ibckeeper.Keeper
+	// -----------
 	/* EvidenceKeeper is responsible for managing persistence, state transitions
 	   and query handling for the evidence module. It is required to set up
 	   the IBC light client misbehavior evidence route. */
 	EvidenceKeeper evidencekeeper.Keeper
+	/* IBCKeeper defines each ICS keeper for IBC. IBCKeeper must be a pointer in
+	   the app, so we can SetRouter on it correctly. */
+	IBCKeeper *ibckeeper.Keeper
 	/* TransferKeeper is for cross-chain fungible token transfers. */
 	TransferKeeper ibctransferkeeper.Keeper
 
 	// Nibiru keepers
-	DexKeeper        dexkeeper.Keeper
-	StablecoinKeeper stablecoinkeeper.Keeper
-	PriceKeeper      pricekeeper.Keeper
-	EpochsKeeper     epochskeeper.Keeper
-	LockupKeeper     lockupkeeper.LockupKeeper
+	// -----------
+	DexKeeper             dexkeeper.Keeper
+	StablecoinKeeper      stablecoinkeeper.Keeper
+	PriceKeeper           pricekeeper.Keeper
+	EpochsKeeper          epochskeeper.Keeper
+	LockupKeeper          lockupkeeper.LockupKeeper
+	PerpKeeper            perpkeeper.Keeper
+	IncentivizationKeeper incentivizationkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -298,15 +312,18 @@ func NewNibiruApp(
 		// ibc keys
 		ibchost.StoreKey, ibctransfertypes.StoreKey,
 		// nibiru keys
-		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey, epochstype.StoreKey,
-		lockuptypes.StoreKey,
+		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey,
+		epochstype.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
+		incentivizationtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
 	// not include this key.
 	memKeys := sdk.NewMemoryStoreKeys(
-		capabilitytypes.MemStoreKey, "testingkey", stablecointypes.MemStoreKey,
-		pricetypes.MemStoreKey)
+		capabilitytypes.MemStoreKey, "testingkey",
+		stablecointypes.MemStoreKey, pricetypes.MemStoreKey,
+		perptypes.MemStoreKey,
+	)
 
 	app := &NibiruApp{
 		BaseApp:           bApp,
@@ -395,6 +412,12 @@ func NewNibiruApp(
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.DexKeeper,
 	)
 
+	app.PerpKeeper = perpkeeper.NewKeeper(
+		appCodec, keys[perptypes.StoreKey], memKeys[perptypes.MemStoreKey],
+		app.GetSubspace(perptypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
+	)
+
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstype.StoreKey],
 	)
@@ -468,6 +491,11 @@ func NewNibiruApp(
 	)
 
 	// -------------------------- Module Options --------------------------
+	app.IncentivizationKeeper = incentivizationkeeper.NewKeeper(appCodec,
+		keys[incentivizationtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.DexKeeper, app.LockupKeeper,
+	)
+
+	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
@@ -484,6 +512,12 @@ func NewNibiruApp(
 		app.PriceKeeper,
 	)
 	lockupModule := lockup.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper)
+	perpModule := perp.NewAppModule(
+		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
+		app.PriceKeeper,
+	)
+
+	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -516,6 +550,8 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
+		perpModule,
+		incentivizationModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -535,11 +571,13 @@ func NewNibiruApp(
 		pricetypes.ModuleName,
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
+		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		stakingtypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -556,7 +594,9 @@ func NewNibiruApp(
 		epochstype.ModuleName,
 		pricetypes.ModuleName,
 		stablecointypes.ModuleName,
+		perptypes.ModuleName,
 		lockuptypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -576,10 +616,12 @@ func NewNibiruApp(
 		pricetypes.ModuleName,
 		epochstype.ModuleName,
 		stablecointypes.ModuleName,
+		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		incentivizationtypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -619,6 +661,8 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
+		lockupModule,
+		incentivizationModule,
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -865,6 +909,7 @@ func initParamsKeeper(
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(perptypes.ModuleName)
 
 	return paramsKeeper
 }
