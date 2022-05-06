@@ -9,6 +9,7 @@ import (
 	// Nibiru
 	"github.com/NibiruChain/nibiru/app"
 	dexcmd "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	perpcmd "github.com/NibiruChain/nibiru/x/perp/client/cli"
 	pricefeedcmd "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	sccmd "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 
@@ -219,6 +220,7 @@ func queryCommand() *cobra.Command {
 		dexcmd.GetQueryCmd(),
 		pricefeedcmd.GetQueryCmd(),
 		sccmd.GetQueryCmd(),
+		perpcmd.GetQueryCmd(),
 	)
 
 	// Adds all query commands to the 'rootQueryCmd'
@@ -249,6 +251,7 @@ func txCommand() *cobra.Command {
 		dexcmd.GetTxCmd(),
 		pricefeedcmd.GetTxCmd(),
 		sccmd.GetTxCmd(),
+		perpcmd.GetTxCmd(),
 	)
 
 	simapp.ModuleBasics.AddTxCommands(cmd)

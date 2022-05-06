@@ -10,12 +10,14 @@ import (
 )
 
 var (
-	lockNamespace       = []byte{0x0}
-	lockIDNamespace     = append(lockNamespace, 0x0) // maps next lock ID
-	lockObjectNamespace = append(lockNamespace, 0x1) // maps lock ID => lock bytes
-	lockAddrTimeIndex   = append(lockNamespace, 0x2) // maps address and unlock time => lock ID
-	lockAddrIndex       = append(lockNamespace, 0x3) // maps address => lock ID
-	lockTimeIndex       = append(lockNamespace, 0x4) // maps unlock time => lock ID
+	lockNamespace            = []byte{0x0}
+	lockIDNamespace          = append(lockNamespace, 0x0) // maps next lock ID
+	lockObjectNamespace      = append(lockNamespace, 0x1) // maps lock ID => lock bytes
+	lockAddrTimeIndex        = append(lockNamespace, 0x2) // maps address and unlock time => lock ID
+	lockAddrIndex            = append(lockNamespace, 0x3) // maps address => lock ID
+	lockTimeIndex            = append(lockNamespace, 0x4) // maps unlock time => lock ID
+	lockDenomIndex           = append(lockNamespace, 0x5) // maps denom to lock ID
+	lockDenomUnlockTimeIndex = append(lockNamespace, 0x6) // maps denom + unlock time to lock ID
 
 	lockIDKey = []byte{0x0} // lock ID key
 )
@@ -32,24 +34,28 @@ func (k LockupKeeper) LocksState(ctx sdk.Context) LockState {
 func newLockState(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) LockState {
 	store := ctx.KVStore(key) // get keeper KV
 	return LockState{
-		ctx:           ctx,
-		cdc:           cdc,
-		id:            prefix.NewStore(store, lockIDNamespace),
-		locks:         prefix.NewStore(store, lockObjectNamespace),
-		addrTimeIndex: prefix.NewStore(store, lockAddrTimeIndex),
-		addrIndex:     prefix.NewStore(store, lockAddrIndex),
-		timeIndex:     prefix.NewStore(store, lockTimeIndex),
+		ctx:            ctx,
+		cdc:            cdc,
+		id:             prefix.NewStore(store, lockIDNamespace),
+		locks:          prefix.NewStore(store, lockObjectNamespace),
+		addrTimeIndex:  prefix.NewStore(store, lockAddrTimeIndex),
+		addrIndex:      prefix.NewStore(store, lockAddrIndex),
+		timeIndex:      prefix.NewStore(store, lockTimeIndex),
+		denomIndex:     prefix.NewStore(store, lockDenomIndex),
+		denomTimeIndex: prefix.NewStore(store, lockDenomUnlockTimeIndex),
 	}
 }
 
 type LockState struct {
-	ctx           sdk.Context
-	cdc           codec.BinaryCodec
-	id            sdk.KVStore
-	locks         sdk.KVStore
-	addrTimeIndex sdk.KVStore
-	addrIndex     sdk.KVStore
-	timeIndex     sdk.KVStore
+	ctx            sdk.Context
+	cdc            codec.BinaryCodec
+	id             sdk.KVStore
+	locks          sdk.KVStore
+	addrTimeIndex  sdk.KVStore
+	addrIndex      sdk.KVStore
+	timeIndex      sdk.KVStore
+	denomIndex     sdk.KVStore
+	denomTimeIndex sdk.KVStore
 }
 
 // Create creates a new types.Lock, and sets the lock ID.
@@ -74,12 +80,24 @@ func (s LockState) index(pk []byte, l *types.Lock) {
 	s.addrTimeIndex.Set(addrTimeIndex, []byte{}) // maps addr + unlock time to lock ID
 	s.addrIndex.Set(addrIndex, []byte{})         // maps addr to lock ID
 	s.timeIndex.Set(timeIndex, []byte{})         // maps unlock time to lock ID
+
+	for _, coin := range l.Coins {
+		s.denomIndex.Set(s.keyDenom(coin.Denom, pk), []byte{})                    // maps denom to lock ID
+		s.denomTimeIndex.Set(s.keyDenomTime(coin.Denom, l.EndTime, pk), []byte{}) // maps denom unlock time to lock ID
+	}
 }
 
 func (s LockState) unindex(pk []byte, l *types.Lock) {
 	s.addrTimeIndex.Delete(s.keyAddrTime(l.Owner, l.EndTime, pk)) // clear address and unlock time index
 	s.addrIndex.Delete(s.keyAddr(l.Owner, pk))                    // clear address index
 	s.timeIndex.Delete(s.keyTime(l.EndTime, pk))                  // clear unlock time index
+
+	// clears associations between lock ID
+	// and coins locked and their unlock time.
+	for _, coin := range l.Coins {
+		s.denomIndex.Delete(s.keyDenom(coin.Denom, pk))
+		s.denomTimeIndex.Delete(s.keyDenomTime(coin.Denom, l.EndTime, pk))
+	}
 }
 
 func (s LockState) Update(update *types.Lock) error {
@@ -201,6 +219,32 @@ func (s LockState) IterateTotalLockedCoins() sdk.Coins {
 	return coins
 }
 
+func (s LockState) IterateCoinsByDenomUnlockingAfter(denom string, unlockingAfter time.Time, f func(id uint64) (stop bool)) {
+	// NOTE(mercilex): here we're adding 1 sec because our indexing precision is in seconds
+	// maybe the most proper way would be to increase by one byte the value of the keyTime key.
+	iter := prefix.NewStore(s.denomTimeIndex, s.keyDenom(denom, nil)). // iterate only over a certain denom
+										Iterator(s.keyTime(unlockingAfter.Add(1*time.Second), nil), nil) // after the provided time
+
+	for ; iter.Valid(); iter.Next() {
+		primaryKey := sdk.BigEndianToUint64(iter.Key()[8:])
+		if f(primaryKey) {
+			break
+		}
+	}
+}
+
+func (s LockState) IterateCoinsByDenomUnlockingBefore(denom string, unlockingBefore time.Time, f func(id uint64) (stop bool)) {
+	iter := prefix.NewStore(s.denomTimeIndex, s.keyDenom(denom, nil)). // iterate only over a certain denom
+										Iterator(nil, s.keyTime(unlockingBefore.Add(-1*time.Second), nil)) // before the provided time
+
+	for ; iter.Valid(); iter.Next() {
+		primaryKey := sdk.BigEndianToUint64(iter.Key()[8:])
+		if f(primaryKey) {
+			break
+		}
+	}
+}
+
 func (s LockState) nextPrimaryKey() uint64 {
 	idBytes := s.id.Get(lockIDKey)
 	var id uint64
@@ -271,4 +315,15 @@ func (s LockState) keyTime(endTime time.Time, pk []byte) []byte {
 	key[0] ^= 0x80
 
 	return append(key, pk...)
+}
+
+func (s LockState) keyDenom(denom string, pk []byte) []byte {
+	// TODO(mercilex): maybe more efficient
+	denomKey := append([]byte(denom), 0xFF)
+	return append(denomKey, pk...)
+}
+
+func (s LockState) keyDenomTime(denom string, t time.Time, pk []byte) []byte {
+	// TODO(mercilex): maybe more efficient
+	return append(append([]byte(denom), 0xFF), s.keyTime(t, pk)...)
 }
