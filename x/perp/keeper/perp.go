@@ -5,10 +5,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	_ types.IClearingHouse = (*Keeper)(nil)
-)
-
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) ClearPosition(ctx sdk.Context, pair string, trader string) error {
 	return k.Positions().Update(ctx, &types.Position{
