@@ -212,18 +212,21 @@ func (m *GenesisState) GetModuleAccountBalance() types.Coin {
 	return types.Coin{}
 }
 
-// Position identifies a user position in a given pair.
+// Position identifies and records information on a user's position on one of
+// the virtual liquidity pools.
 type Position struct {
 	// address identifies the address owner of this position
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	// pair identifies the pair associated with this position
-	Pair                                string                                 `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	Size_                               github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=size,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"size"`
-	Margin                              github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=margin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"margin"`
+	Pair   string                                 `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
+	Size_  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=size,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"size"`
+	Margin github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=margin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"margin"`
+	// OpenNotional is the quote denom value of the position when opening.
 	OpenNotional                        github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=open_notional,json=openNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"open_notional"`
 	LastUpdateCumulativePremiumFraction github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=last_update_cumulative_premium_fraction,json=lastUpdateCumulativePremiumFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"last_update_cumulative_premium_fraction"`
 	LiquidityHistoryIndex               int64                                  `protobuf:"varint,7,opt,name=liquidity_history_index,json=liquidityHistoryIndex,proto3" json:"liquidity_history_index,omitempty"`
-	BlockNumber                         int64                                  `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
+	// BlockNumber is the block number of the change to the position.
+	BlockNumber int64 `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
 }
 
 func (m *Position) Reset()         { *m = Position{} }

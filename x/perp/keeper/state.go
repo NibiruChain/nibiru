@@ -123,8 +123,10 @@ func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error 
 	return nil
 }
 
-func (p PositionsState) Set(ctx sdk.Context, position *types.Position) {
-	p.getKV(ctx).Set(p.keyFromType(position), p.cdc.MustMarshal(position))
+func (p PositionsState) Set(ctx sdk.Context, pair, owner string, position *types.Position) {
+	positionID := p.keyFromRaw(pair, owner)
+	kvStore := p.getKV(ctx)
+	kvStore.Set(positionID, p.cdc.MustMarshal(position))
 }
 
 var pairMetadataNamespace = []byte{0x2}
