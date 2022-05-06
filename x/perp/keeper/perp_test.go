@@ -35,14 +35,11 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				mockCtrl := gomock.NewController(t)
-				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
 				vpoolPair := "osmo:nusd"
 
 				trader := sample.AccAddress()
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 				_, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, trader.String())
 				require.Error(t, err)
@@ -55,7 +52,7 @@ func TestGetAndSetPosition(t *testing.T) {
 					Margin:  sdk.OneInt(),
 				}
 				nibiruApp.PerpKeeper.SetPosition(
-					ctx, vpoolMock, trader.String(), dummyPosition)
+					ctx, vpoolPair, trader.String(), dummyPosition)
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, trader.String())
 				require.NoError(t, err)
@@ -105,9 +102,8 @@ func TestClearPosition(t *testing.T) {
 						Size_:   sdk.OneInt(),
 						Margin:  sdk.OneInt(),
 					}
-					vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 					nibiruApp.PerpKeeper.SetPosition(
-						ctx, vpoolMock, trader.String(), dummyPosition)
+						ctx, vpoolPair, trader.String(), dummyPosition)
 					outPosition, err := nibiruApp.PerpKeeper.GetPosition(
 						ctx, vpoolPair, trader.String())
 					require.NoError(t, err)
