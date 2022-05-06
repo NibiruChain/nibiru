@@ -10,10 +10,10 @@ var (
 )
 
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) ClearPosition(ctx sdk.Context, vpool types.IVirtualPool, trader string) error {
+func (k Keeper) ClearPosition(ctx sdk.Context, pair string, trader string) error {
 	return k.Positions().Update(ctx, &types.Position{
 		Address:                             trader,
-		Pair:                                vpool.Pair(),
+		Pair:                                pair,
 		Size_:                               sdk.ZeroInt(),
 		Margin:                              sdk.ZeroInt(),
 		OpenNotional:                        sdk.ZeroInt(),

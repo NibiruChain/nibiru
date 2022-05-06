@@ -6,10 +6,7 @@ import (
 
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/golang/mock/gomock"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
@@ -77,8 +74,6 @@ func TestClearPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				mockCtrl := gomock.NewController(t)
-				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
 				vpoolPair := "osmo:nusd"
 
 				traders := []sdk.AccAddress{
@@ -114,11 +109,10 @@ func TestClearPosition(t *testing.T) {
 				}
 
 				t.Log("attempt to clear all positions")
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 
 				require.NoError(t,
 					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolMock, traders[0].String()),
+						ctx, vpoolPair, traders[0].String()),
 				)
 
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
@@ -136,10 +130,9 @@ func TestClearPosition(t *testing.T) {
 				t.Log("trader 1 has a position and trader 0 does not.")
 
 				t.Log("clearing position of trader 1...")
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 				require.NoError(t,
 					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolMock, traders[1].String()),
+						ctx, vpoolPair, traders[1].String()),
 				)
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traders[1].String())

@@ -498,7 +498,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm v1.IVirtualPool, trader stri
 		return nil, err
 	}
 
-	err = k.ClearPosition(ctx, vamm, trader)
+	err = k.ClearPosition(ctx, vamm.Pair(), trader)
 	if err != nil {
 		return nil, err
 	}
