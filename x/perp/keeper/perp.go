@@ -24,9 +24,9 @@ func (k Keeper) ClearPosition(ctx sdk.Context, vpool types.IVirtualPool, trader 
 }
 
 func (k Keeper) GetPosition(
-	ctx sdk.Context, vpool types.IVirtualPool, owner string,
+	ctx sdk.Context, pair, owner string,
 ) (*types.Position, error) {
-	return k.Positions().Get(ctx, vpool.Pair(), owner)
+	return k.Positions().Get(ctx, pair, owner)
 }
 
 func (k Keeper) SetPosition(

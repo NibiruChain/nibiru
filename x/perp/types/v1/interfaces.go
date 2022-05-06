@@ -11,7 +11,7 @@ import (
 type IClearingHouse interface {
 	ClearPosition(ctx sdk.Context, vpool IVirtualPool, owner string) error
 	GetPosition(
-		ctx sdk.Context, vpool IVirtualPool, owner string,
+		ctx sdk.Context, pair string, owner string,
 	) (*Position, error)
 	SetPosition(
 		ctx sdk.Context, vpool IVirtualPool, owner string, position *Position,

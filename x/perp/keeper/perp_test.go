@@ -23,15 +23,11 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
-				mockCtrl := gomock.NewController(t)
-				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
-
 				trader := sample.AccAddress()
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
-				vpoolMock.EXPECT().Pair().Return("osmo:nusd").Times(1)
 				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
+					ctx, "osmo:nusd", trader.String())
 				require.Error(t, err)
 				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
 			},
@@ -48,7 +44,7 @@ func TestGetAndSetPosition(t *testing.T) {
 
 				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
+					ctx, vpoolPair, trader.String())
 				require.Error(t, err)
 				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
 
@@ -58,11 +54,10 @@ func TestGetAndSetPosition(t *testing.T) {
 					Size_:   sdk.OneInt(),
 					Margin:  sdk.OneInt(),
 				}
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(2)
 				nibiruApp.PerpKeeper.SetPosition(
 					ctx, vpoolMock, trader.String(), dummyPosition)
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
+					ctx, vpoolPair, trader.String())
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPosition, outPosition)
 			},
@@ -95,10 +90,9 @@ func TestClearPosition(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 				t.Log("vpool contains no positions to start")
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(2)
 				for _, trader := range traders {
 					_, err := nibiruApp.PerpKeeper.GetPosition(
-						ctx, vpoolMock, trader.String())
+						ctx, vpoolPair, trader.String())
 					require.Error(t, err)
 					require.ErrorContains(t, err, fmt.Errorf("not found").Error())
 				}
@@ -111,11 +105,11 @@ func TestClearPosition(t *testing.T) {
 						Size_:   sdk.OneInt(),
 						Margin:  sdk.OneInt(),
 					}
-					vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(2)
+					vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 					nibiruApp.PerpKeeper.SetPosition(
 						ctx, vpoolMock, trader.String(), dummyPosition)
 					outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-						ctx, vpoolMock, trader.String())
+						ctx, vpoolPair, trader.String())
 					require.NoError(t, err)
 					require.EqualValues(t, dummyPosition, outPosition)
 					t.Logf("position created successfully on vpool, %v, for trader %v",
@@ -124,7 +118,7 @@ func TestClearPosition(t *testing.T) {
 				}
 
 				t.Log("attempt to clear all positions")
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(3)
+				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 
 				require.NoError(t,
 					nibiruApp.PerpKeeper.ClearPosition(
@@ -132,7 +126,7 @@ func TestClearPosition(t *testing.T) {
 				)
 
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, traders[0].String())
+					ctx, vpoolPair, traders[0].String())
 				require.NoError(t, err)
 				require.EqualValues(t,
 					perptypes.ZeroPosition(ctx, vpoolPair, traders[0].String()),
@@ -140,19 +134,19 @@ func TestClearPosition(t *testing.T) {
 				)
 
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, traders[1].String())
+					ctx, vpoolPair, traders[1].String())
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPositions[1], outPosition)
 				t.Log("trader 1 has a position and trader 0 does not.")
 
 				t.Log("clearing position of trader 1...")
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(2)
+				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
 				require.NoError(t,
 					nibiruApp.PerpKeeper.ClearPosition(
 						ctx, vpoolMock, traders[1].String()),
 				)
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, traders[1].String())
+					ctx, vpoolPair, traders[1].String())
 				require.NoError(t, err)
 				require.EqualValues(t,
 					perptypes.ZeroPosition(ctx, vpoolPair, traders[1].String()),
