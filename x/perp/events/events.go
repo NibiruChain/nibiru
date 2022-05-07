@@ -68,7 +68,7 @@ func EmitPositionChange(
 	owner sdk.AccAddress,
 	vpool string,
 	margin sdk.Int,
-	leveragedMargin sdk.Dec,
+	notional sdk.Dec,
 	vsizeChange sdk.Dec,
 	txFee sdk.Int,
 	vsizeAfter sdk.Dec,
@@ -85,7 +85,7 @@ func EmitPositionChange(
 		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin", margin.String()),
-		sdk.NewAttribute("leveragedMargin", leveragedMargin.String()),
+		sdk.NewAttribute("notional", notional.String()),
 		sdk.NewAttribute("vsizeChange", vsizeChange.String()),
 		sdk.NewAttribute("txFee", txFee.String()),
 		sdk.NewAttribute("vsizeAfter", vsizeAfter.String()),
@@ -95,5 +95,43 @@ func EmitPositionChange(
 		sdk.NewAttribute("liquidationPenalty", liquidationPenalty.String()),
 		sdk.NewAttribute("vPrice", vPrice.String()),
 		sdk.NewAttribute("fundingPayment", fundingPayment.String()),
+	))
+}
+
+/*
+EmitPositionLiquidated emits an event when a liquidation occurs.
+
+Args:
+  ctx
+  vpool string: identifier of the corresponding virtual pool for the position
+  owner sdk.AccAddress: owner of the position.
+  notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
+    the virtual price on 'vpool'.
+  vsize sdk.Dec: virtual size of the position, defined as margin * leverage.
+  liquidator sdk.AccAddress: Address of the account that executed the tx.
+  liquidationFee sdk.Int: Commission (in margin units) received by 'liquidator'.
+  badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
+    Bad debt is negative net margin past the liquidation point of a position.
+*/
+func EmitPositionLiquidated(
+	ctx sdk.Context,
+	vpool string,
+	owner sdk.AccAddress,
+	notional sdk.Dec,
+	vsize sdk.Dec,
+	liquidator sdk.AccAddress,
+	liquidationFee sdk.Int,
+	badDebt sdk.Dec,
+) {
+	const EventTypePositionLiquidated = "position_liquidated"
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		EventTypePositionLiquidated,
+		sdk.NewAttribute(AttributeVpool, vpool),
+		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute("notional", notional.String()),
+		sdk.NewAttribute("vsize", vsize.String()),
+		sdk.NewAttribute("liquidator", liquidator.String()),
+		sdk.NewAttribute("liquidationFee", liquidationFee.String()),
+		sdk.NewAttribute("badDebt", badDebt.String()),
 	))
 }
