@@ -37,7 +37,7 @@ func EmitTransfer(
 EmitPositionChange emits an event when a position (vpool-trader) is changed.
 
 Args:
-  ctx sdk.Context:
+  ctx sdk.Context: Carries information about the current state of the application.
   owner sdk.AccAddress: owner of the position.
   vpool string: identifier of the corresponding virtual pool for the position
   margin sdk.Int: amount of quote token (y) backing the position.
@@ -102,7 +102,7 @@ func EmitPositionChange(
 EmitPositionLiquidated emits an event when a liquidation occurs.
 
 Args:
-  ctx
+  ctx sdk.Context: Carries information about the current state of the application.
   vpool string: identifier of the corresponding virtual pool for the position
   owner sdk.AccAddress: owner of the position.
   notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
@@ -133,5 +133,29 @@ func EmitPositionLiquidated(
 		sdk.NewAttribute("liquidator", liquidator.String()),
 		sdk.NewAttribute("liquidationFee", liquidationFee.String()),
 		sdk.NewAttribute("badDebt", badDebt.String()),
+	))
+}
+
+/* EmitPositionSettled emits an event when a position is settled.
+
+Args:
+  ctx sdk.Context: Carries information about the current state of the application.
+  vpool string: Identifier for the virtual pool of the position.
+  owner sdk.AccAddress: Owner of the position.
+  settled sdk.Coin: Settled coin as dictated by the settlement price of the vpool.
+*/
+func EmitPositionSettled(
+	ctx sdk.Context,
+	vpool string,
+	owner sdk.AccAddress,
+	settled sdk.Coin,
+) {
+	const EventTypePositionSettled = "position_settled"
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		EventTypePositionSettled,
+		sdk.NewAttribute(AttributeVpool, vpool),
+		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute("settle_amt", settled.Amount.String()),
+		sdk.NewAttribute("settle_denom", settled.Denom),
 	))
 }
