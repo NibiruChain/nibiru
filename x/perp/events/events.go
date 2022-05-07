@@ -127,7 +127,7 @@ func EmitPositionLiquidate(
 	liquidationFee sdk.Int,
 	badDebt sdk.Dec,
 ) {
-	const EventTypePositionLiquidate = "position_liquidated"
+	const EventTypePositionLiquidate = "position_liquidate"
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypePositionLiquidate,
 		sdk.NewAttribute(AttributeVpool, vpool),
@@ -140,7 +140,7 @@ func EmitPositionLiquidate(
 	))
 }
 
-/* EmitPositionSettled emits an event when a position is settled.
+/* EmitPositionSettle emits an event when a position is settled.
 
 Args:
   ctx sdk.Context: Carries information about the current state of the application.
@@ -148,15 +148,15 @@ Args:
   owner sdk.AccAddress: Owner of the position.
   settled sdk.Coin: Settled coin as dictated by the settlement price of the vpool.
 */
-func EmitPositionSettled(
+func EmitPositionSettle(
 	ctx sdk.Context,
 	vpool string,
 	owner sdk.AccAddress,
 	settled sdk.Coin,
 ) {
-	const EventTypePositionSettled = "position_settled"
+	const EventTypePositionSettle = "position_settle"
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		EventTypePositionSettled,
+		EventTypePositionSettle,
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
 		sdk.NewAttribute("settle_amt", settled.Amount.String()),
@@ -178,5 +178,33 @@ func EmitMarginRatioChange(
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypeMarginRatioChange,
 		sdk.NewAttribute("margin_ratio", marginRatio.String()),
+	))
+}
+
+/* EmitMarginChange emits an event when the protocol margin ratio changes.
+
+Args:
+  ctx sdk.Context: Carries information about the current state of the application.
+  owner sdk.AccAddress: Owner of the position.
+  vpool string: Identifier for the virtual pool of the position.
+  marginAmt sdk.Int: Delta of the position margin. If positive, margin was added.
+  fundingPayment sdk.Int: The position 'owner' may realize a funding payment if
+    there is no bad debt upon margin removal based on the delta of the position
+	margin and latest cumulative premium fraction.
+*/
+func EmitMarginChange(
+	ctx sdk.Context,
+	owner sdk.AccAddress,
+	vpool string,
+	marginAmt sdk.Int,
+	fundingPayment sdk.Int,
+) {
+	const EventTypeMarginChange = "margin_change"
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		EventTypeMarginChange,
+		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributeVpool, vpool),
+		sdk.NewAttribute("margin_amt", marginAmt.String()),
+		sdk.NewAttribute("funding_payment", fundingPayment.String()),
 	))
 }
