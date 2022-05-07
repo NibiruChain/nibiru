@@ -24,7 +24,6 @@ func TestGetAndSetPosition(t *testing.T) {
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
 				mockCtrl := gomock.NewController(t)
-				defer mockCtrl.Finish()
 				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
 
 				trader := sample.AccAddress()
@@ -41,7 +40,6 @@ func TestGetAndSetPosition(t *testing.T) {
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
 				mockCtrl := gomock.NewController(t)
-				defer mockCtrl.Finish()
 				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
 				vpoolPair := "osmo:nusd"
 
@@ -88,7 +86,6 @@ func TestClearPosition(t *testing.T) {
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
 				mockCtrl := gomock.NewController(t)
-				defer mockCtrl.Finish()
 				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
 				vpoolPair := "osmo:nusd"
 

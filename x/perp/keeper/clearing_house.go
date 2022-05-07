@@ -261,10 +261,12 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.IVir
 }
 
 // TODO test: getPositionNotionalAndUnrealizedPnL | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.IVirtualPool,
-	trader string, pnlCalcOption v1.PnLCalcOption) (
+func (k Keeper) getPositionNotionalAndUnrealizedPnL(
+	ctx sdk.Context, vamm v1.IVirtualPool, trader string,
+	pnlCalcOption v1.PnLCalcOption,
+) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
-	position, err := k.Positions().Get(ctx, vamm.Pair(), trader) // tODO(mercilex): inefficient refetch
+	position, err := k.GetPosition(ctx, vamm, trader) // tODO(mercilex): inefficient refetch
 	if err != nil {
 		return
 	}

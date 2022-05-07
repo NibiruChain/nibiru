@@ -23,12 +23,6 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, trader stri
 		return sdk.Int{}, err
 	}
 
-	return k._GetMarginRatio(ctx, amm, position, unrealizedPnL, positionNotional)
-}
-
-// TODO test: _GetMarginRatio
-func (k Keeper) _GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, position *v1.Position, unrealizedPnL, positionNotional sdk.Int) (sdk.Int, error) {
-	// todo(mercilex): maybe inefficient re-get
 	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, position, unrealizedPnL)
 	if err != nil {
 		return sdk.Int{}, err
