@@ -1,6 +1,12 @@
 /*
 The "events" package implements functions to emit sdk.Events, which are
-application blockchain interface (ABCI) events.
+Tendermint application blockchain interface (ABCI) events.
+These are returned by ABCI methods such as CheckTx, DeliverTx, and Query.
+
+Events allow applications to associate metadata about ABCI method execution with
+the transactions and blocks this metadata relates to. Events returned via these
+ABCI methods do not impact Tendermint consensus in any way and instead exist to
+power subscriptions and queries of Tendermint state.
 */
 package events
 
@@ -33,8 +39,7 @@ func EmitTransfer(
 	))
 }
 
-/*
-EmitPositionChange emits an event when a position (vpool-trader) is changed.
+/* EmitPositionChange emits an event when a position (vpool-trader) is changed.
 
 Args:
   ctx sdk.Context: Carries information about the current state of the application.
@@ -98,8 +103,7 @@ func EmitPositionChange(
 	))
 }
 
-/*
-EmitPositionLiquidated emits an event when a liquidation occurs.
+/* EmitPositionLiquidate emits an event when a liquidation occurs.
 
 Args:
   ctx sdk.Context: Carries information about the current state of the application.
@@ -113,7 +117,7 @@ Args:
   badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
     Bad debt is negative net margin past the liquidation point of a position.
 */
-func EmitPositionLiquidated(
+func EmitPositionLiquidate(
 	ctx sdk.Context,
 	vpool string,
 	owner sdk.AccAddress,
@@ -123,9 +127,9 @@ func EmitPositionLiquidated(
 	liquidationFee sdk.Int,
 	badDebt sdk.Dec,
 ) {
-	const EventTypePositionLiquidated = "position_liquidated"
+	const EventTypePositionLiquidate = "position_liquidated"
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		EventTypePositionLiquidated,
+		EventTypePositionLiquidate,
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
 		sdk.NewAttribute("notional", notional.String()),
@@ -157,5 +161,22 @@ func EmitPositionSettled(
 		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
 		sdk.NewAttribute("settle_amt", settled.Amount.String()),
 		sdk.NewAttribute("settle_denom", settled.Denom),
+	))
+}
+
+/* EmitMarginRatioChange emits an event when the protocol margin ratio changes.
+
+Args:
+  ctx sdk.Context: Carries information about the current state of the application.
+  vpool string: Identifier for the virtual pool of the position.
+*/
+func EmitMarginRatioChange(
+	ctx sdk.Context,
+	marginRatio sdk.Dec,
+) {
+	const EventTypeMarginRatioChange = "margin_ratio_change"
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		EventTypeMarginRatioChange,
+		sdk.NewAttribute("margin_ratio", marginRatio.String()),
 	))
 }
