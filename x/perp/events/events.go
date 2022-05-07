@@ -38,26 +38,29 @@ EmitPositionChange emits an event when a position (vpool-trader) is changed.
 
 Args:
   ctx sdk.Context:
-  owner sdk.AccAddress:
-  vpool string: identifier of the position\'s corresponding virtual pool
+  owner sdk.AccAddress: owner of the position.
+  vpool string: identifier of the corresponding virtual pool for the position
   margin sdk.Int: amount of quote token (y) backing the position.
-  leveragedMargin sdk.Dec: margin * leverage
-  vsizeChange sdk.Dec: magnitude of the change to vsize
+  notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
+    the virtual price on 'vpool'.
+  vsizeChange sdk.Dec: magnitude of the change to vsize. The virtual size of a
+    position is margin * leverage.
   txFee sdk.Int: transaction fee payed
-  vSizeAfter sdk.Dec: position virtual size after the change
+  vsizeAfter sdk.Dec: position virtual size after the change
   realizedPnlAfter: realize profits and losses after the change
-  badDebt sdk.Dec: // TODO
+  badDebt sdk.Int: Amount of bad debt cleared by the PerpEF during the change.
+    Bad debt is negative net margin past the liquidation point of a position.
   unrealizedPnlAfter: unrealized profits and losses after the change
   liquidationPenalty: amt of margin (y) lost due to liquidation
   vPrice sdk.Dec: vPrice defined as yRes / xRes for a vpool, where yRes is the
     quote reserves and xRes is the base reserves.
   fundingPayment sdk.Dec: A funding payment made or received by the trader on
     the current position. 'fundingPayment' is positive if 'owner' is the sender
-	and negative if 'owner' is the receiver of the payment. It's magnitude is
+	and negative if 'owner' is the receiver of the payment. Its magnitude is
 	abs(vSize * fundingRate). Funding payments act to converge the mark price
-	(vPrice) and index price (average price on majorexchanges).
-// TODO When does EmitPositionChange happen?
-// TODO Is there a way to split this into different events without creating too
+	(vPrice) and index price (average price on major exchanges).
+
+// TODO Q: Is there a way to split this into different events without creating too
 // much complexity?
 */
 func EmitPositionChange(
@@ -68,7 +71,7 @@ func EmitPositionChange(
 	leveragedMargin sdk.Dec,
 	vsizeChange sdk.Dec,
 	txFee sdk.Int,
-	vSizeAfter sdk.Dec,
+	vsizeAfter sdk.Dec,
 	realizedPnlAfter sdk.Dec,
 	badDebt sdk.Dec,
 	unrealizedPnlAfter sdk.Dec,
@@ -85,7 +88,7 @@ func EmitPositionChange(
 		sdk.NewAttribute("leveragedMargin", leveragedMargin.String()),
 		sdk.NewAttribute("vsizeChange", vsizeChange.String()),
 		sdk.NewAttribute("txFee", txFee.String()),
-		sdk.NewAttribute("vSizeAfter", vSizeAfter.String()),
+		sdk.NewAttribute("vsizeAfter", vsizeAfter.String()),
 		sdk.NewAttribute("realizedPnlAfter", realizedPnlAfter.String()),
 		sdk.NewAttribute("badDebt", badDebt.String()),
 		sdk.NewAttribute("unrealizedPnlAfter", unrealizedPnlAfter.String()),
