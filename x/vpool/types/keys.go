@@ -1,6 +1,9 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"github.com/NibiruChain/nibiru/x/common"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 const (
 	ModuleName = "vpool"
@@ -19,16 +22,16 @@ var (
 )
 
 // GetPoolKey returns pool key for KVStore
-func GetPoolKey(pair string) []byte {
+func GetPoolKey(pair common.Pair) []byte {
 	return append(PoolKey, []byte(pair)...)
 }
 
 // GetPoolReserveSnapshotCounter returns the KVStore for the Snapshot Pool counters.
-func GetPoolReserveSnapshotCounter(pair string) []byte {
+func GetPoolReserveSnapshotCounter(pair common.Pair) []byte {
 	return append(PoolReserveSnapshotCounter, []byte(pair)...)
 }
 
 // GetPoolReserveSnapshotKey returns the KVStore for the pool reserve snapshots.
-func GetPoolReserveSnapshotKey(pair string, counter int64) []byte {
+func GetPoolReserveSnapshotKey(counter int64) []byte {
 	return append(PoolReserveSnapshots, sdk.Uint64ToBigEndian(uint64(counter))...)
 }

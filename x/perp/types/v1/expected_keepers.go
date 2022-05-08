@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -52,6 +53,6 @@ type PriceKeeper interface {
 }
 
 type VpoolKeeper interface {
-	SwapInput(ctx sdk.Context, pair string, dir pooltypes.Direction, quoteAssetAmount sdk.Int, baseAmountLimit sdk.Int,
+	SwapInput(ctx sdk.Context, pair common.Pair, dir pooltypes.Direction, quoteAssetAmount sdk.Int, baseAmountLimit sdk.Int,
 	) (sdk.Int, error)
 }

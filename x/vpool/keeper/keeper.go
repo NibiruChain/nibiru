@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,7 +29,7 @@ func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
 // SwapInput swaps pair token
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
-	pair string,
+	pair common.Pair,
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
@@ -98,7 +99,7 @@ func (k Keeper) SwapInput(
 }
 
 // getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair string) (*types.Pool, error) {
+func (k Keeper) getPool(ctx sdk.Context, pair common.Pair) (*types.Pool, error) {
 	store := k.getStore(ctx)
 
 	bz := store.Get(types.GetPoolKey(pair))
@@ -146,7 +147,7 @@ func (k Keeper) savePool(
 		return err
 	}
 
-	store.Set(types.GetPoolKey(pool.Pair), bz)
+	store.Set(types.GetPoolKey(common.Pair(pool.Pair)), bz)
 
 	return nil
 }
@@ -190,7 +191,7 @@ func (k Keeper) updateReserve(
 }
 
 // existsPool returns true if pool exists, false if not.
-func (k Keeper) existsPool(ctx sdk.Context, pair string) bool {
+func (k Keeper) existsPool(ctx sdk.Context, pair common.Pair) bool {
 	store := k.getStore(ctx)
 	return store.Has(types.GetPoolKey(pair))
 }
@@ -202,13 +203,13 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 	}
 
 	if fluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, pool.Pair)
+		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, common.Pair(pool.Pair))
 		if err != nil {
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}
 
 		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 1 {
-			latestSnapshot, err = k.getSnapshotByCounter(ctx, pool.Pair, counter-1)
+			latestSnapshot, err = k.getSnapshotByCounter(ctx, counter-1)
 			if err != nil {
 				return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
 			}

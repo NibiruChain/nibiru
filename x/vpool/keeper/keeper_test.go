@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +14,7 @@ import (
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
-		pair        string
+		pair        common.Pair
 		direction   ammtypes.Direction
 		quoteAmount sdktypes.Int
 		baseLimit   sdktypes.Int
