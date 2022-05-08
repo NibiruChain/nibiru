@@ -22,6 +22,11 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
+func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.Pair) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
 	return ctx.KVStore(k.storeKey)
 }

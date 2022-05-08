@@ -137,7 +137,7 @@ func (k Keeper) increasePosition(
 
 	// check if trader is not in whitelist to check max position size
 	if !k.Whitelist().IsWhitelisted(ctx, trader) {
-		maxHoldingBaseAsset, err := vamm.GetMaxHoldingBaseAsset(ctx)
+		maxHoldingBaseAsset, err := k.VpoolKeeper.GetMaxHoldingBaseAsset(ctx, pair)
 		if err != nil {
 			return nil, err
 		}
