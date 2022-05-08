@@ -98,7 +98,7 @@ func (m *MockIVirtualPool) EXPECT() *MockIVirtualPoolMockRecorder {
 }
 
 // CalcFee mocks base method.
-func (m *MockIVirtualPool) CalcFee(quoteAmt sdk.Int) (sdk.Int, sdk.Int, error) {
+func (m *MockIVirtualPool) CalcFee(_ sdk.Context, quoteAmt sdk.Int) (sdk.Int, sdk.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CalcFee", quoteAmt)
 	ret0, _ := ret[0].(sdk.Int)
@@ -108,7 +108,7 @@ func (m *MockIVirtualPool) CalcFee(quoteAmt sdk.Int) (sdk.Int, sdk.Int, error) {
 }
 
 // CalcFee indicates an expected call of CalcFee.
-func (mr *MockIVirtualPoolMockRecorder) CalcFee(quoteAmt interface{}) *gomock.Call {
+func (mr *MockIVirtualPoolMockRecorder) CalcFee(_ sdk.Context, quoteAmt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcFee", reflect.TypeOf((*MockIVirtualPool)(nil).CalcFee), quoteAmt)
 }
