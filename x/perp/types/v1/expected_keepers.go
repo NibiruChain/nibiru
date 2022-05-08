@@ -1,10 +1,11 @@
 package v1
 
 import (
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	pooltypes "github.com/NibiruChain/nibiru/x/vamm/types"
 )
 
 // ----------------------------------------------------------
@@ -48,4 +49,14 @@ type PriceKeeper interface {
 	) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+}
+
+type AmmKeeper interface {
+	SwapInput(
+		ctx sdk.Context,
+		pair string,
+		dir pooltypes.Direction,
+		quoteAssetAmount sdk.Int,
+		baseAmountLimit sdk.Int,
+	) (sdk.Int, error)
 }
