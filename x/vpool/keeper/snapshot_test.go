@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/types/time"
 
-	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
+	ammtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {

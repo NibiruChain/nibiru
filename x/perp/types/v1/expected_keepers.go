@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	pooltypes "github.com/NibiruChain/nibiru/x/vamm/types"
+	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // ----------------------------------------------------------
@@ -51,7 +51,7 @@ type PriceKeeper interface {
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
 }
 
-type AmmKeeper interface {
+type VpoolKeeper interface {
 	SwapInput(
 		ctx sdk.Context,
 		pair string,

@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/vamm/types"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.

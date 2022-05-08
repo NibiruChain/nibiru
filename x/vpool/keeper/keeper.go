@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/vamm/types"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {
