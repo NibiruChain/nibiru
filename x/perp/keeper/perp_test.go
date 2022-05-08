@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
 
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
@@ -32,19 +33,20 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair := "osmo:nusd"
+				vpoolPair, err := common.NewPairFromStr("osmo:nusd")
+				require.NoError(t, err)
 
 				trader := sample.AccAddress()
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
-				_, err := nibiruApp.PerpKeeper.GetPosition(
+				_, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, trader.String())
 				require.Error(t, err)
 				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
 
 				dummyPosition := &perptypes.Position{
 					Address: trader.String(),
-					Pair:    vpoolPair,
+					Pair:    vpoolPair.String(),
 					Size_:   sdk.OneInt(),
 					Margin:  sdk.OneInt(),
 				}
@@ -74,7 +76,8 @@ func TestClearPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair := "osmo:nusd"
+				vpoolPair, err := common.NewPairFromStr("osmo:nusd")
+				require.NoError(t, err)
 
 				traders := []sdk.AccAddress{
 					sample.AccAddress(), sample.AccAddress(),
@@ -93,7 +96,7 @@ func TestClearPosition(t *testing.T) {
 				for _, trader := range traders {
 					dummyPosition := &perptypes.Position{
 						Address: trader.String(),
-						Pair:    vpoolPair,
+						Pair:    vpoolPair.String(),
 						Size_:   sdk.OneInt(),
 						Margin:  sdk.OneInt(),
 					}

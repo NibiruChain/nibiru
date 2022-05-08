@@ -2,14 +2,15 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	v1 "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, trader string) (sdk.Int, error) {
-	position, err := k.Positions().Get(ctx, amm.Pair(), trader) // TODO(mercilex): inefficient position get
+func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, pair common.Pair, trader string) (sdk.Int, error) {
+	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -18,7 +19,13 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, trader stri
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
 
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLPreferenceOption_PnLPreferenceOption_MAX)
+	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
+		ctx,
+		amm,
+		pair,
+		trader,
+		v1.PnLPreferenceOption_PnLPreferenceOption_MAX,
+	)
 	if err != nil {
 		return sdk.Int{}, err
 	}

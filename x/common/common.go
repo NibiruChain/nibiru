@@ -97,3 +97,7 @@ func (p Pair) GetBaseToken() string {
 func (p Pair) GetQuoteToken() string {
 	return strings.Split(string(p), ":")[1]
 }
+
+func (p Pair) String() string {
+	return string(p)
+}
