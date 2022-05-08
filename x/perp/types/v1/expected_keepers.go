@@ -52,11 +52,6 @@ type PriceKeeper interface {
 }
 
 type VpoolKeeper interface {
-	SwapInput(
-		ctx sdk.Context,
-		pair string,
-		dir pooltypes.Direction,
-		quoteAssetAmount sdk.Int,
-		baseAmountLimit sdk.Int,
+	SwapInput(ctx sdk.Context, pair string, dir pooltypes.Direction, quoteAssetAmount sdk.Int, baseAmountLimit sdk.Int,
 	) (sdk.Int, error)
 }
