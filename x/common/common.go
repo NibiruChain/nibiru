@@ -13,10 +13,14 @@ var (
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 
+	PairSeparator = ":"
+
 	WhitelistedColl = []string{CollDenom}
 
 	GovStablePool  = AssetPair{Token0: GovDenom, Token1: StableDenom}
 	CollStablePool = AssetPair{Token0: CollDenom, Token1: StableDenom}
+
+	ErrInvalidTokenPair = fmt.Errorf("invalid token pair")
 )
 
 type AssetPair struct {
@@ -73,4 +77,23 @@ func RawPoolNameFromDenoms(denoms []string) string {
 		}
 	}
 	return poolName
+}
+
+type Pair string
+
+func NewPairFromStr(pair string) (Pair, error) {
+	split := strings.Split(pair, PairSeparator)
+	if len(split) != 2 {
+		return "", ErrInvalidTokenPair
+	}
+
+	return Pair(pair), nil
+}
+
+func (p Pair) GetBaseToken() string {
+	return strings.Split(string(p), ":")[0]
+}
+
+func (p Pair) GetQuoteToken() interface{} {
+	return strings.Split(string(p), ":")[1]
 }

@@ -8,13 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	_ = Keeper.openPosition
-	_ = Keeper.increasePosition
-	_ = swapInput
-	_ = Keeper.transferFee
-)
-
 // TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openPosition(
 	ctx sdk.Context, vamm v1.IVirtualPool, pair string, side v1.Side, trader string,
