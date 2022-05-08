@@ -17,13 +17,13 @@ var (
 
 // TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openPosition(
-	ctx sdk.Context, vamm v1.IVirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.IVirtualPool, pair string, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) error {
 	// TODO(mercilex): missing checks
 	params := k.GetParams(ctx)
 
-	position, err := k.Positions().Get(ctx, vamm.Pair(), trader)
+	position, err := k.Positions().Get(ctx, pair, trader)
 	positionExists := errors.Is(err, errNotFound)
 
 	var positionResp *v1.PositionResp
@@ -33,7 +33,7 @@ func (k Keeper) openPosition(
 		position.Size_.IsPositive() && side == v1.Side_Side_BUY,
 		position.Size_.IsNegative() && side == v1.Side_Side_SELL:
 		positionResp, err = k.increasePosition(
-			ctx, vamm, side, trader,
+			ctx, vamm, pair, side, trader,
 			quoteAssetAmount.Mul(leverage),
 			baseAssetAmountLimit,
 			leverage)
@@ -44,7 +44,7 @@ func (k Keeper) openPosition(
 	// everything else decreases the position
 	default:
 		positionResp, err = k.openReversePosition(
-			ctx, vamm, side, trader,
+			ctx, vamm, pair, side, trader,
 			quoteAssetAmount, leverage, baseAssetAmountLimit, false)
 		if err != nil {
 			return err
@@ -52,7 +52,7 @@ func (k Keeper) openPosition(
 	}
 
 	// update position in state
-	k.Positions().Set(ctx, vamm.Pair(), trader, positionResp.Position)
+	k.Positions().Set(ctx, pair, trader, positionResp.Position)
 
 	if !positionExists && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(ctx, vamm, trader)
@@ -119,12 +119,12 @@ func (k Keeper) openPosition(
 
 // TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
-	ctx sdk.Context, vamm v1.IVirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.IVirtualPool, pair string, side v1.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
 	positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
 
-	oldPosition, err := k.Positions().Get(ctx, vamm.Pair(), trader) // TODO(mercilex) we already have the info from the caller
+	oldPosition, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex) we already have the info from the caller
 	if err != nil {
 		panic(err)
 	}
@@ -318,7 +318,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm v1.IVi
 
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openReversePosition(
-	ctx sdk.Context, vamm v1.IVirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, vamm v1.IVirtualPool, pair string, side v1.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *v1.PositionResp, err error) {
@@ -337,7 +337,7 @@ func (k Keeper) openReversePosition(
 			canOverFluctuationLimit)
 	// close and reverse
 	default:
-		return k.closeAndOpenReversePosition(ctx, vamm, side, trader, quoteAssetAmount, leverage, baseAssetAmountLimit)
+		return k.closeAndOpenReversePosition(ctx, vamm, pair, side, trader, quoteAssetAmount, leverage, baseAssetAmountLimit)
 	}
 }
 
@@ -407,7 +407,7 @@ func (k Keeper) reducePosition(
 
 // TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) closeAndOpenReversePosition(
-	ctx sdk.Context, amm v1.IVirtualPool, side v1.Side, trader string,
+	ctx sdk.Context, amm v1.IVirtualPool, pair string, side v1.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) (positionResp *v1.PositionResp, err error) {
 	positionResp = new(v1.PositionResp)
@@ -434,7 +434,7 @@ func (k Keeper) closeAndOpenReversePosition(
 
 		var increasePositionResp *v1.PositionResp
 		increasePositionResp, err = k.increasePosition(
-			ctx, amm, side, trader, openNotional, updatedBaseAssetAmountLimit, leverage)
+			ctx, amm, pair, side, trader, openNotional, updatedBaseAssetAmountLimit, leverage)
 		if err != nil {
 			return nil, err
 		}
