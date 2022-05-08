@@ -1,4 +1,4 @@
-syntax="proto3";
+syntax = "proto3";
 
 package nibiru.perp.v1;
 
@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package="github.com/NibiruChain/nibiru/x/perp/types/v1";
+option go_package="github.com/NibiruChain/nibiru/x/perp/types";
 
 message Params {
   // stopped identifies if the perp exchange is stopped or not
@@ -87,22 +87,19 @@ message VirtualPoolInfo {
 }
 
 enum Side {
-  Side_UNDEFINED = 0;
-  Side_BUY = 1;
-  Side_SELL = 2;
+  BUY = 0;
+  SELL = 1;
 }
 
 enum PnLCalcOption {
-  PnlCalcOption_UNDEFINED = 0;
-  PnLCalcOption_SPOT_PRICE = 1;
-  PnLCalcOption_TWAP = 2;
-  PnLCalcOption_ORACLE = 3;
+  SPOT_PRICE = 0;
+  TWAP = 1;
+  ORACLE = 2;
 }
 
 enum PnLPreferenceOption {
-  PnLPreferenceOption_UNDEFINED = 0;
-  PnLPreferenceOption_MAX = 1;
-  PnLPreferenceOption_MIN = 2;
+  MAX = 0;
+  MIN = 1;
 }
 
 message PairMetadata {

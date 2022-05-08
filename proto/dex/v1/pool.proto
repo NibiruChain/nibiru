@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package nibiru.dex.v1;
 
 import "gogoproto/gogo.proto";

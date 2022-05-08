@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 	sdk "github.com/cosmos/cosmos-sdk/types"

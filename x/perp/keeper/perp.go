@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
