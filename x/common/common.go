@@ -94,6 +94,6 @@ func (p Pair) GetBaseToken() string {
 	return strings.Split(string(p), ":")[0]
 }
 
-func (p Pair) GetQuoteToken() interface{} {
+func (p Pair) GetQuoteToken() string {
 	return strings.Split(string(p), ":")[1]
 }
