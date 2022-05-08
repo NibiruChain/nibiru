@@ -30,8 +30,8 @@ func (k Keeper) openPosition(
 	switch {
 	// increase position case
 	case !positionExists,
-		position.Size_.IsPositive() && side == types.Side_Side_BUY,
-		position.Size_.IsNegative() && side == types.Side_Side_SELL:
+		position.Size_.IsPositive() && side == types.Side_BUY,
+		position.Size_.IsNegative() && side == types.Side_SELL:
 		positionResp, err = k.increasePosition(
 			ctx, vamm, side, trader,
 			quoteAssetAmount.Mul(leverage),
@@ -165,7 +165,7 @@ func (k Keeper) increasePosition(
 		return nil, err
 	}
 
-	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -284,17 +284,17 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm types.
 	}
 
 	switch pnlCalcOption {
-	case types.PnLCalcOption_PnLCalcOption_TWAP:
+	case types.PnLCalcOption_TWAP:
 		positionNotional, err = vamm.GetOutputTWAP(ctx, dir, positionSizeAbs)
 		if err != nil {
 			return
 		}
-	case types.PnLCalcOption_PnLCalcOption_SPOT_PRICE:
+	case types.PnLCalcOption_SPOT_PRICE:
 		positionNotional, err = vamm.GetOutputPrice(ctx, dir, positionSizeAbs)
 		if err != nil {
 			return
 		}
-	case types.PnLCalcOption_PnLCalcOption_ORACLE:
+	case types.PnLCalcOption_ORACLE:
 		oraclePrice, err2 := vamm.GetUnderlyingPrice(ctx)
 		if err2 != nil {
 			err = err2
@@ -323,7 +323,7 @@ func (k Keeper) openReversePosition(
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
 	openNotional := quoteAssetAmount.Mul(leverage)
-	oldPositionNotional, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	oldPositionNotional, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +465,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, trader s
 	if oldPosition.Size_.IsZero() {
 		return nil, fmt.Errorf("zero position size")
 	}
-	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -545,12 +545,12 @@ func (k Keeper) transferFee(
 // TODO test: getPreferencePositionNotionalAndUnrealizedPnL
 func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, vamm types.IVirtualPool, trader string, pnLPreferenceOption types.PnLPreferenceOption) (sdk.Int, sdk.Int, error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
-	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_PnLCalcOption_SPOT_PRICE)
+	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return sdk.Int{}, sdk.Int{}, err
 	}
 
-	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_PnLCalcOption_TWAP)
+	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, trader, types.PnLCalcOption_TWAP)
 	if err != nil {
 		return sdk.Int{}, sdk.Int{}, err
 	}
@@ -558,7 +558,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, v
 	// todo(mercilex): logic can be simplified here but keeping it for now as perp reference
 	switch pnLPreferenceOption {
 	// if MAX PNL
-	case types.PnLPreferenceOption_PnLPreferenceOption_MAX:
+	case types.PnLPreferenceOption_MAX:
 		// spotPNL > twapPnL
 		switch spotPricePnl.GT(twapPricePnL) {
 		// true: spotPNL > twapPNL -> return spot pnl, spot position notional
@@ -569,7 +569,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(ctx sdk.Context, v
 			return twapPricePnL, twapPositionNotional, nil
 		}
 	// if min PNL
-	case types.PnLPreferenceOption_PnLPreferenceOption_MIN:
+	case types.PnLPreferenceOption_MIN:
 		switch spotPricePnl.GT(twapPricePnL) {
 		// true: spotPNL > twapPNL -> return twapPNL, twapPositionNotional
 		case true:
@@ -588,9 +588,9 @@ func swapInput(ctx sdk.Context, vamm types.IVirtualPool,
 	side types.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
 	var vammDir types.VirtualPoolDirection
 	switch side {
-	case types.Side_Side_BUY:
+	case types.Side_BUY:
 		vammDir = types.VirtualPoolDirection_AddToAMM
-	case types.Side_Side_SELL:
+	case types.Side_SELL:
 		vammDir = types.VirtualPoolDirection_RemoveFromAMM
 	default:
 		panic("invalid side")

@@ -18,7 +18,7 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, trader s
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
 
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, types.PnLPreferenceOption_PnLPreferenceOption_MAX)
+	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, types.PnLPreferenceOption_MAX)
 	if err != nil {
 		return sdk.Int{}, err
 	}
