@@ -22,6 +22,11 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
+func (k Keeper) GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
 	//TODO implement me
 	panic("implement me")
