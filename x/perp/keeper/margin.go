@@ -3,13 +3,50 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var (
+	/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
+	They also serve as a reminder of which functions still need MVP unit or
+	integration tests */
+	_ = requireMoreMarginRatio
+)
+
+func (k Keeper) AddMargin(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	trader sdk.AccAddress,
+	addedMargin sdk.Int,
+) (err error) {
+	position, err := k.Positions().Get(ctx, pair, trader.String())
+	if err != nil {
+		return err
+	}
+
+	position.Margin = position.Margin.Add(addedMargin)
+
+	if err = k.BankKeeper.SendCoinsFromAccountToModule(
+		ctx,
+		trader,
+		types.ModuleName,
+		sdk.NewCoins(
+			sdk.NewCoin(common.StableDenom, addedMargin),
+		),
+	); err != nil {
+		return err
+	}
+
+	k.Positions().Set(ctx, pair, trader.String(), position)
+
+	return nil
+}
+
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, trader string) (sdk.Int, error) {
-	position, err := k.Positions().Get(ctx, amm.Pair(), trader) // TODO(mercilex): inefficient position get
+func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, pair common.TokenPair, trader string) (sdk.Int, error) {
+	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -18,7 +55,13 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, trader s
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
 
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, types.PnLPreferenceOption_MAX)
+	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
+		ctx,
+		amm,
+		pair,
+		trader,
+		types.PnLPreferenceOption_MAX,
+	)
 	if err != nil {
 		return sdk.Int{}, err
 	}

@@ -1,6 +1,7 @@
 package common_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -76,4 +77,54 @@ func TestAssetPair(t *testing.T) {
 			require.True(t, true)
 		})
 	}
+}
+
+func TestPair_Constructor(t *testing.T) {
+	tests := []struct {
+		name      string
+		tokenPair string
+		err       error
+	}{
+		{
+			"only one token",
+			common.GovDenom,
+			common.ErrInvalidTokenPair,
+		},
+		{
+			"more than 2 tokens",
+			fmt.Sprintf("%s%s%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom,
+				common.PairSeparator, common.CollDenom),
+			common.ErrInvalidTokenPair,
+		},
+		{
+			"different separator",
+			fmt.Sprintf("%s%s%s", common.GovDenom, "%", common.StableDenom),
+			common.ErrInvalidTokenPair,
+		},
+		{
+			"correct pair",
+			fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom),
+			nil,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := common.NewTokenPairFromStr(tc.tokenPair)
+			if tc.err != nil {
+				require.Equal(t, tc.err, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestPair_GetBaseToken(t *testing.T) {
+	pair, err := common.NewTokenPairFromStr("uatom:unibi")
+	require.NoError(t, err)
+
+	require.Equal(t, "uatom", pair.GetBaseToken())
+	require.Equal(t, "unibi", pair.GetQuoteToken())
 }

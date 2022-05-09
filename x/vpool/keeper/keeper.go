@@ -6,7 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/vamm/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {
@@ -21,6 +22,16 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
+func (k Keeper) GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
 	return ctx.KVStore(k.storeKey)
 }
@@ -28,7 +39,7 @@ func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
 // SwapInput swaps pair token
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
-	pair string,
+	pair common.TokenPair,
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
@@ -98,7 +109,7 @@ func (k Keeper) SwapInput(
 }
 
 // getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair string) (*types.Pool, error) {
+func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (*types.Pool, error) {
 	store := k.getStore(ctx)
 
 	bz := store.Get(types.GetPoolKey(pair))
@@ -146,7 +157,7 @@ func (k Keeper) savePool(
 		return err
 	}
 
-	store.Set(types.GetPoolKey(pool.Pair), bz)
+	store.Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
 
 	return nil
 }
@@ -190,7 +201,7 @@ func (k Keeper) updateReserve(
 }
 
 // existsPool returns true if pool exists, false if not.
-func (k Keeper) existsPool(ctx sdk.Context, pair string) bool {
+func (k Keeper) existsPool(ctx sdk.Context, pair common.TokenPair) bool {
 	store := k.getStore(ctx)
 	return store.Has(types.GetPoolKey(pair))
 }
@@ -202,13 +213,13 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 	}
 
 	if fluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, pool.Pair)
+		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 		if err != nil {
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}
 
 		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 1 {
-			latestSnapshot, err = k.getSnapshotByCounter(ctx, pool.Pair, counter-1)
+			latestSnapshot, err = k.getSnapshotByCounter(ctx, counter-1)
 			if err != nil {
 				return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
 			}
