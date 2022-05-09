@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/NibiruChain/nibiru/x/common"
+	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -123,7 +124,7 @@ func (k Keeper) increasePosition(
 		panic(err)
 	}
 
-	positionResp.ExchangedPositionSize, err = swapInput(ctx, vamm, side, openNotional, minPositionSize, false)
+	positionResp.ExchangedPositionSize, err = k.swapInput(ctx, pair, side, openNotional, minPositionSize, false)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +177,7 @@ func (k Keeper) increasePosition(
 	positionResp.FundingPayment = fundingPayment
 	positionResp.Position = &types.Position{
 		Address:                             trader,
-		Pair:                                vamm.Pair(),
+		Pair:                                pair.String(),
 		Size_:                               newSize,
 		Margin:                              remainMargin,
 		OpenNotional:                        oldPosition.OpenNotional.Add(positionResp.ExchangedQuoteAssetAmount),
@@ -375,8 +376,8 @@ func (k Keeper) reducePosition(
 		return nil, err
 	}
 
-	positionResp.ExchangedPositionSize, err = swapInput(
-		ctx, vamm, side, openNotional, baseAssetAmountLimit, canOverFluctuationLimit,
+	positionResp.ExchangedPositionSize, err = k.swapInput(
+		ctx, pair, side, openNotional, baseAssetAmountLimit, canOverFluctuationLimit,
 	)
 	if err != nil {
 		return nil, err
@@ -618,19 +619,20 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 }
 
 // TODO test: swapInput | https://github.com/NibiruChain/nibiru/issues/299
-func swapInput(ctx sdk.Context, vamm types.IVirtualPool,
+// TODO: Check Can Over Fluctuation Limit
+func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 	side types.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
-	var vammDir types.VirtualPoolDirection
+	var vammDir pooltypes.Direction
 	switch side {
 	case types.Side_BUY:
-		vammDir = types.VirtualPoolDirection_AddToAMM
+		vammDir = pooltypes.Direction_ADD_TO_AMM
 	case types.Side_SELL:
-		vammDir = types.VirtualPoolDirection_RemoveFromAMM
+		vammDir = pooltypes.Direction_REMOVE_FROM_AMM
 	default:
 		panic("invalid side")
 	}
 
-	outputAmount, err := vamm.SwapInput(ctx, vammDir, inputAmount, minOutputAmount, canOverFluctuationLimit)
+	outputAmount, err := k.VpoolKeeper.SwapInput(ctx, pair, vammDir, inputAmount, minOutputAmount)
 	if err != nil {
 		return sdk.Int{}, err
 	}
