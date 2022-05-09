@@ -3,7 +3,7 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/vamm/types"
 	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	types2 "github.com/cosmos/cosmos-sdk/codec/types"
@@ -35,11 +35,12 @@ func AmmKeeper(t *testing.T) (Keeper, sdktypes.Context) {
 		codec.NewLegacyAmino(),
 		storeKey,
 		memStoreKey,
-		"PricefeedParams",
+		"VammParams",
 	)
 	k := NewKeeper(
 		codec.NewProtoCodec(registry),
 		storeKey,
+		memStoreKey,
 		paramsSubspace,
 	)
 

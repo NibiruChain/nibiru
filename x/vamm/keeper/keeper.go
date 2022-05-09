@@ -10,7 +10,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
-func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey, ps paramtypes.Subspace) Keeper {
+func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey, memKey sdk.StoreKey, ps paramtypes.Subspace) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
@@ -19,6 +19,7 @@ func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey, ps paramtypes.Sub
 	return Keeper{
 		codec:      codec,
 		storeKey:   storeKey,
+		memKey:     memKey,
 		paramstore: ps,
 	}
 }
@@ -26,6 +27,7 @@ func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey, ps paramtypes.Sub
 type Keeper struct {
 	codec      codec.BinaryCodec
 	storeKey   sdk.StoreKey
+	memKey     sdk.StoreKey
 	paramstore paramtypes.Subspace
 }
 

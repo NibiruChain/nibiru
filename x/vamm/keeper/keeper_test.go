@@ -7,6 +7,7 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/vamm/types"
 	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
 )
 
@@ -183,4 +184,18 @@ func TestCreatePool(t *testing.T) {
 
 	notExist := ammKeeper.existsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
+}
+
+func TestComputeFee(t *testing.T) {
+	ammKeeper, ctx := AmmKeeper(t)
+
+	params := types.Params{
+		TollRatio:   10_000,
+		SpreadRatio: 15_000,
+	}
+
+	ammKeeper.SetParams(ctx, params)
+	fmt.Println(ammKeeper.GetParams(ctx))
+
+	require.Equal(t, ammKeeper.GetParams(ctx), types.DefaultParams())
 }
