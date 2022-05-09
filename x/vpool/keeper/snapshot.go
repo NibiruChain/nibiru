@@ -2,16 +2,17 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/vamm/types"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
 func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	blockNumber := ctx.BlockHeight()
-	lastSnapshot, lastCounter, err := k.getLastReserveSnapshot(ctx, pool.Pair)
+	lastSnapshot, lastCounter, err := k.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 	if err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func (k Keeper) saveReserveSnapshot(ctx sdk.Context, lastCounter int64, pool *ty
 		return err
 	}
 
-	k.updateSnapshotCounter(ctx, pool.Pair, counter)
+	k.updateSnapshotCounter(ctx, common.TokenPair(pool.Pair), counter)
 
 	return nil
 }
@@ -77,13 +78,13 @@ func (k Keeper) saveSnapshotInStore(ctx sdk.Context, pool *types.Pool, counter i
 	}
 
 	store := k.getStore(ctx)
-	store.Set(types.GetPoolReserveSnapshotKey(pool.Pair, counter), bz)
+	store.Set(types.GetPoolReserveSnapshotKey(counter), bz)
 
 	return nil
 }
 
 // getSnapshotCounter returns the counter and if it has been found or not.
-func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair string) (int64, bool) {
+func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair common.TokenPair) (int64, bool) {
 	store := k.getStore(ctx)
 
 	bz := store.
@@ -97,20 +98,20 @@ func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair string) (int64, bool) {
 	return int64(sc), true
 }
 
-func (k Keeper) updateSnapshotCounter(ctx sdk.Context, pair string, counter int64) {
+func (k Keeper) updateSnapshotCounter(ctx sdk.Context, pair common.TokenPair, counter int64) {
 	store := k.getStore(ctx)
 
 	store.Set(types.GetPoolReserveSnapshotCounter(pair), sdk.Uint64ToBigEndian(uint64(counter)))
 }
 
 // getLastReserveSnapshot returns the last snapshot that was saved
-func (k Keeper) getLastReserveSnapshot(ctx sdk.Context, pair string) (types.ReserveSnapshot, int64, error) {
+func (k Keeper) getLastReserveSnapshot(ctx sdk.Context, pair common.TokenPair) (types.ReserveSnapshot, int64, error) {
 	counter, found := k.getSnapshotCounter(ctx, pair)
 	if !found {
 		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
 	}
 
-	snapshot, err := k.getSnapshotByCounter(ctx, pair, counter)
+	snapshot, err := k.getSnapshotByCounter(ctx, counter)
 	if err != nil {
 		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
 	}
@@ -119,9 +120,9 @@ func (k Keeper) getLastReserveSnapshot(ctx sdk.Context, pair string) (types.Rese
 }
 
 // getSnapshotByCounter returns the snapshot saved by counter num
-func (k Keeper) getSnapshotByCounter(ctx sdk.Context, pair string, counter int64) (types.ReserveSnapshot, error) {
+func (k Keeper) getSnapshotByCounter(ctx sdk.Context, counter int64) (types.ReserveSnapshot, error) {
 	store := k.getStore(ctx)
-	bz := store.Get(types.GetPoolReserveSnapshotKey(pair, counter))
+	bz := store.Get(types.GetPoolReserveSnapshotKey(counter))
 	if bz == nil {
 		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
 			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))

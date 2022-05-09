@@ -5,20 +5,6 @@ import (
 )
 
 // ----------------------------------------------------------
-// ClearingHouse Interface
-// ----------------------------------------------------------
-
-type IClearingHouse interface {
-	ClearPosition(ctx sdk.Context, vpool IVirtualPool, owner string) error
-	GetPosition(
-		ctx sdk.Context, vpool IVirtualPool, owner string,
-	) (*Position, error)
-	SetPosition(
-		ctx sdk.Context, vpool IVirtualPool, owner string, position *Position,
-	)
-}
-
-// ----------------------------------------------------------
 // Vpool Interface
 // ----------------------------------------------------------
 

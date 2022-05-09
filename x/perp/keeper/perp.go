@@ -1,19 +1,17 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-)
 
-var (
-	_ types.IClearingHouse = (*Keeper)(nil)
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) ClearPosition(ctx sdk.Context, vpool types.IVirtualPool, trader string) error {
+func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, trader string) error {
 	return k.Positions().Update(ctx, &types.Position{
 		Address:                             trader,
-		Pair:                                vpool.Pair(),
+		Pair:                                pair.String(),
 		Size_:                               sdk.ZeroInt(),
 		Margin:                              sdk.ZeroInt(),
 		OpenNotional:                        sdk.ZeroInt(),
@@ -24,13 +22,13 @@ func (k Keeper) ClearPosition(ctx sdk.Context, vpool types.IVirtualPool, trader 
 }
 
 func (k Keeper) GetPosition(
-	ctx sdk.Context, vpool types.IVirtualPool, owner string,
+	ctx sdk.Context, pair common.TokenPair, owner string,
 ) (*types.Position, error) {
-	return k.Positions().Get(ctx, vpool.Pair(), owner)
+	return k.Positions().Get(ctx, pair, owner)
 }
 
 func (k Keeper) SetPosition(
-	ctx sdk.Context, vpool types.IVirtualPool, owner string,
+	ctx sdk.Context, pair common.TokenPair, owner string,
 	position *types.Position) {
-	k.Positions().Set(ctx, vpool.Pair(), owner, position)
+	k.Positions().Set(ctx, pair, owner, position)
 }
