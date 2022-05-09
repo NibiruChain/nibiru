@@ -2,12 +2,16 @@ syntax = "proto3";
 package nibiru.lockup.v1;
 
 import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/lockup/types";
 
 service Query {
-  rpc LockedCoins(QueryLockedCoinsRequest) returns (QueryLockedCoinsResponse);
+  rpc LockedCoins(QueryLockedCoinsRequest) returns (QueryLockedCoinsResponse) {
+    option (google.api.http).get = "/nibiru/lockup/locked_coins";
+  }
+
 }
 
 message QueryLockedCoinsRequest {

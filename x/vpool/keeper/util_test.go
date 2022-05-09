@@ -3,7 +3,7 @@ package keeper
 import (
 	"testing"
 
-	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
+	ammtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	types2 "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"

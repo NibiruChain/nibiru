@@ -7,10 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NibiruChain/nibiru/x/incentivization"
-	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
-
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex"
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
@@ -18,6 +14,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstype "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/incentivization"
+	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
+	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
 	"github.com/NibiruChain/nibiru/x/lockup"
 	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
@@ -30,6 +29,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -213,6 +214,7 @@ type NibiruApp struct {
 	EpochsKeeper          epochskeeper.Keeper
 	LockupKeeper          lockupkeeper.LockupKeeper
 	IncentivizationKeeper incentivizationkeeper.Keeper
+	VpoolKeeper           vpoolkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -256,7 +258,7 @@ func NewNibiruApp(
 		authzkeeper.StoreKey,
 		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey,
 		epochstype.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
-		incentivizationtypes.StoreKey,
+		incentivizationtypes.StoreKey, vpooltypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -363,10 +365,12 @@ func NewNibiruApp(
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.DexKeeper,
 	)
 
+	app.VpoolKeeper = vpoolkeeper.NewKeeper(appCodec, keys[vpooltypes.StoreKey])
+
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey], memKeys[perptypes.MemStoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
+		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.VpoolKeeper,
 	)
 
 	app.EpochsKeeper = epochskeeper.NewKeeper(
@@ -711,7 +715,7 @@ func GetMaccPerms() map[string][]string {
 	return dupMaccPerms
 }
 
-// initParamsKeeper init params keeper and its subspaces
+// initParamsKeeper init params vpoolkeeper and its subspaces
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
 	tkey storetypes.StoreKey) paramskeeper.Keeper {

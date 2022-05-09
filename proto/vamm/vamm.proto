@@ -2,7 +2,7 @@ syntax="proto3";
 
 package nibiru.vamm.v1;
 
-option go_package = "github.com/NibiruChain/nibiru/x/vamm/types";
+option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 enum Direction {
   UNDEFINED = 0;
