@@ -1,4 +1,4 @@
-package v1
+package types
 
 import (
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
