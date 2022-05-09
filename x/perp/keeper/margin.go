@@ -2,14 +2,14 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 
-	v1 "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, pair common.Pair, trader string) (sdk.Int, error) {
+func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, pair common.Pair, trader string) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
@@ -24,18 +24,12 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, pair common
 		amm,
 		pair,
 		trader,
-		v1.PnLPreferenceOption_PnLPreferenceOption_MAX,
+		types.PnLPreferenceOption_MAX,
 	)
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	return k._GetMarginRatio(ctx, amm, position, unrealizedPnL, positionNotional)
-}
-
-// TODO test: _GetMarginRatio
-func (k Keeper) _GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, position *v1.Position, unrealizedPnL, positionNotional sdk.Int) (sdk.Int, error) {
-	// todo(mercilex): maybe inefficient re-get
 	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, position, unrealizedPnL)
 	if err != nil {
 		return sdk.Int{}, err

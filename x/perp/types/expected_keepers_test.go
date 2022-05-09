@@ -1,10 +1,10 @@
-package v1_test
+package types_test
 
 import (
 	"reflect"
 	"testing"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/stretchr/testify/assert"
@@ -23,17 +23,17 @@ func TestExpectedKeepers(t *testing.T) {
 	}{
 		{
 			name:           "PriceKeeper from x/pricefeed",
-			expectedKeeper: (*perptypes.PriceKeeper)(nil),
+			expectedKeeper: (*types.PriceKeeper)(nil),
 			appKeeper:      nibiruApp.PriceKeeper,
 		},
 		{
 			name:           "BankKeeper from the cosmos-sdk",
-			expectedKeeper: (*perptypes.BankKeeper)(nil),
+			expectedKeeper: (*types.BankKeeper)(nil),
 			appKeeper:      nibiruApp.BankKeeper,
 		},
 		{
 			name:           "AccountKeeper from the cosmos-sdk",
-			expectedKeeper: (*perptypes.AccountKeeper)(nil),
+			expectedKeeper: (*types.AccountKeeper)(nil),
 			appKeeper:      nibiruApp.AccountKeeper,
 		},
 	}

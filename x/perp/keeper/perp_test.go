@@ -5,7 +5,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,7 +44,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
 
-				dummyPosition := &perptypes.Position{
+				dummyPosition := &types.Position{
 					Address: trader.String(),
 					Pair:    vpoolPair.String(),
 					Size_:   sdk.OneInt(),
@@ -92,9 +92,9 @@ func TestClearPosition(t *testing.T) {
 					require.ErrorContains(t, err, fmt.Errorf("not found").Error())
 				}
 
-				var dummyPositions []*perptypes.Position
+				var dummyPositions []*types.Position
 				for _, trader := range traders {
-					dummyPosition := &perptypes.Position{
+					dummyPosition := &types.Position{
 						Address: trader.String(),
 						Pair:    vpoolPair.String(),
 						Size_:   sdk.OneInt(),
@@ -122,7 +122,7 @@ func TestClearPosition(t *testing.T) {
 					ctx, vpoolPair, traders[0].String())
 				require.NoError(t, err)
 				require.EqualValues(t,
-					perptypes.ZeroPosition(ctx, vpoolPair, traders[0].String()),
+					types.ZeroPosition(ctx, vpoolPair, traders[0].String()),
 					outPosition,
 				)
 
@@ -141,7 +141,7 @@ func TestClearPosition(t *testing.T) {
 					ctx, vpoolPair, traders[1].String())
 				require.NoError(t, err)
 				require.EqualValues(t,
-					perptypes.ZeroPosition(ctx, vpoolPair, traders[1].String()),
+					types.ZeroPosition(ctx, vpoolPair, traders[1].String()),
 					outPosition,
 				)
 				t.Log("Success, all trader positions have been cleared.")
