@@ -131,7 +131,7 @@ func (k Keeper) increasePosition(
 
 	newSize := oldPosition.Size_.Add(positionResp.ExchangedPositionSize)
 
-	err = k.updateOpenInterestNotional(ctx, vamm, openNotional, trader)
+	err = k.updateOpenInterestNotional(ctx, vamm, pair, openNotional, trader)
 	if err != nil {
 		return nil, err
 	}
@@ -190,8 +190,8 @@ func (k Keeper) increasePosition(
 }
 
 // TODO test: updateOpenInterestNotional | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm types.IVirtualPool, amount sdk.Int, trader string) error {
-	maxOpenInterest, err := vamm.GetOpenInterestNotionalCap(ctx)
+func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, amount sdk.Int, trader string) error {
+	maxOpenInterest, err := k.VpoolKeeper.GetOpenInterestNotionalCap(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -366,7 +366,7 @@ func (k Keeper) reducePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
-	err = k.updateOpenInterestNotional(ctx, vamm, openNotional.MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, vamm, pair, openNotional.MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +510,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair com
 		return nil, err
 	}
 
-	err = k.updateOpenInterestNotional(ctx, vamm, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, vamm, pair, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
