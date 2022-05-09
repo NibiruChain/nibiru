@@ -7,10 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NibiruChain/nibiru/x/incentivization"
-	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
-
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex"
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
