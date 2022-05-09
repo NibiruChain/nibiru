@@ -147,7 +147,7 @@ func (k Keeper) increasePosition(
 
 	newSize := oldPosition.Size_.Add(positionResp.ExchangedPositionSize)
 
-	err = k.updateOpenInterestNotional(ctx, vamm, pair, openNotional, trader)
+	err = k.updateOpenInterestNotional(ctx, pair, openNotional, trader)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (k Keeper) increasePosition(
 
 	remainMargin, _, fundingPayment, latestCumulativePremiumFraction, err := k.calcRemainMarginWithFundingPayment(
 		ctx,
-		vamm,
+		pair,
 		oldPosition,
 		increaseMarginRequirement,
 	)
@@ -206,7 +206,7 @@ func (k Keeper) increasePosition(
 }
 
 // TODO test: updateOpenInterestNotional | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, amount sdk.Int, trader string) error {
+func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, pair common.TokenPair, amount sdk.Int, trader string) error {
 	maxOpenInterest, err := k.VpoolKeeper.GetOpenInterestNotionalCap(ctx, pair)
 	if err != nil {
 		return err
@@ -215,7 +215,7 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm types.IVirtualP
 		return nil
 	}
 
-	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
+	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
 	if err != nil {
 		return err
 	}
@@ -240,11 +240,11 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm types.IVirtualP
 
 // TODO test: calcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) calcRemainMarginWithFundingPayment(
-	ctx sdk.Context, vamm types.IVirtualPool,
+	ctx sdk.Context, pair common.TokenPair,
 	oldPosition *types.Position, marginDelta sdk.Int,
 ) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
 	latestCumulativePremiumFraction sdk.Int, err error) {
-	latestCumulativePremiumFraction, err = k.getLatestCumulativePremiumFraction(ctx, vamm)
+	latestCumulativePremiumFraction, err = k.getLatestCumulativePremiumFraction(ctx, pair)
 	if err != nil {
 		return
 	}
@@ -268,8 +268,8 @@ func (k Keeper) calcRemainMarginWithFundingPayment(
 }
 
 // TODO test: getLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm types.IVirtualPool) (sdk.Int, error) {
-	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
+func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -382,7 +382,7 @@ func (k Keeper) reducePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
-	err = k.updateOpenInterestNotional(ctx, vamm, pair, openNotional.MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, pair, openNotional.MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +405,7 @@ func (k Keeper) reducePosition(
 	}
 	var remainMargin, latestCumulativePremiumFraction sdk.Int
 	remainMargin, positionResp.BadDebt, positionResp.FundingPayment, latestCumulativePremiumFraction, err =
-		k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, positionResp.RealizedPnl)
+		k.calcRemainMarginWithFundingPayment(ctx, pair, oldPosition, positionResp.RealizedPnl)
 	if err != nil {
 		return nil, err
 	}
@@ -503,7 +503,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair com
 		return nil, err
 	}
 
-	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, unrealizedPnL)
+	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(ctx, pair, oldPosition, unrealizedPnL)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +526,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair com
 		return nil, err
 	}
 
-	err = k.updateOpenInterestNotional(ctx, vamm, pair, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, pair, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
