@@ -8,6 +8,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var (
+	/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
+	They also serve as a reminder of which functions still need MVP unit or
+	integration tests */
+	_ = requireMoreMarginRatio
+)
+
 func (k Keeper) AddMargin(
 	ctx sdk.Context,
 	pair common.TokenPair,

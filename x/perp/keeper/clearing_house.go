@@ -3,11 +3,27 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
+They also serve as a reminder of which functions still need MVP unit or
+integration tests */
+var (
+	_ = Keeper.swapInput
+	_ = Keeper.closePosition
+	_ = Keeper.increasePosition
+	_ = Keeper.reducePosition
+	_ = Keeper.updateOpenInterestNotional
+	_ = Keeper.closeAndOpenReversePosition
+	_ = Keeper.openReversePosition
+	_ = Keeper.openPosition
+	_ = Keeper.transferFee
 )
 
 // TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
