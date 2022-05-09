@@ -155,12 +155,13 @@ func (k Keeper) increasePosition(
 
 	increaseMarginRequirement := openNotional.Quo(leverage)
 
-	remainMargin, _, fundingPayment, latestCumulativePremiumFraction, err := k.calcRemainMarginWithFundingPayment(
-		ctx,
-		vamm,
-		oldPosition,
-		increaseMarginRequirement,
-	)
+	remainMargin, _, fundingPayment, latestCumulativePremiumFraction, err := k.
+		calcRemainMarginWithFundingPayment(
+			ctx,
+			vamm.Pair(),
+			oldPosition,
+			increaseMarginRequirement,
+		)
 	if err != nil {
 		return nil, err
 	}
@@ -221,38 +222,9 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, vamm v1.IVirtualPool
 	return nil
 }
 
-// TODO test: calcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) calcRemainMarginWithFundingPayment(
-	ctx sdk.Context, vamm v1.IVirtualPool,
-	oldPosition *v1.Position, marginDelta sdk.Int,
-) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
-	latestCumulativePremiumFraction sdk.Int, err error) {
-	latestCumulativePremiumFraction, err = k.getLatestCumulativePremiumFraction(ctx, vamm)
-	if err != nil {
-		return
-	}
-
-	if !oldPosition.Size_.IsZero() { // TODO(mercilex): what if this does evaluate to false?
-		fundingPayment = latestCumulativePremiumFraction.
-			Sub(oldPosition.LastUpdateCumulativePremiumFraction).
-			Mul(oldPosition.Size_)
-	}
-
-	signedRemainMargin := marginDelta.Sub(fundingPayment).Add(oldPosition.Margin)
-	switch signedRemainMargin.IsNegative() {
-	case true:
-		badDebt = signedRemainMargin.Abs()
-	case false:
-		badDebt = sdk.ZeroInt()
-		remainMargin = signedRemainMargin.Abs()
-	}
-
-	return
-}
-
-// TODO test: getLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm v1.IVirtualPool) (sdk.Int, error) {
-	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
+// TODO test: GetLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
+func (k Keeper) GetLatestCumulativePremiumFraction(ctx sdk.Context, vpool string) (sdk.Int, error) {
+	pairMetadata, err := k.PairMetadata().Get(ctx, vpool)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -374,7 +346,8 @@ func (k Keeper) reducePosition(
 	}
 	var remainMargin, latestCumulativePremiumFraction sdk.Int
 	remainMargin, positionResp.BadDebt, positionResp.FundingPayment, latestCumulativePremiumFraction, err =
-		k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, positionResp.RealizedPnl)
+		k.calcRemainMarginWithFundingPayment(
+			ctx, vamm.Pair(), oldPosition, positionResp.RealizedPnl)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +445,8 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm v1.IVirtualPool, trader stri
 		return nil, err
 	}
 
-	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, unrealizedPnL)
+	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(
+		ctx, vamm.Pair(), oldPosition, unrealizedPnL)
 	if err != nil {
 		return nil, err
 	}

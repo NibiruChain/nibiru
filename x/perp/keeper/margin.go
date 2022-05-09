@@ -18,12 +18,14 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm v1.IVirtualPool, trader stri
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
 
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, v1.PnLPreferenceOption_PnLPreferenceOption_MAX)
+	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
+		ctx, amm, trader, v1.PnLPreferenceOption_PnLPreferenceOption_MAX)
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, position, unrealizedPnL)
+	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(
+		ctx, amm.Pair(), position, unrealizedPnL)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -61,4 +63,33 @@ func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEq
 	}
 
 	return nil
+}
+
+// TODO test: calcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
+func (k Keeper) calcRemainMarginWithFundingPayment(
+	ctx sdk.Context, vpool string,
+	oldPosition *v1.Position, marginDelta sdk.Int,
+) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
+	latestCumulativePremiumFraction sdk.Int, err error) {
+	latestCumulativePremiumFraction, err = k.GetLatestCumulativePremiumFraction(ctx, vpool)
+	if err != nil {
+		return
+	}
+
+	if !oldPosition.Size_.IsZero() { // TODO(mercilex): what if this does evaluate to false?
+		fundingPayment = latestCumulativePremiumFraction.
+			Sub(oldPosition.LastUpdateCumulativePremiumFraction).
+			Mul(oldPosition.Size_)
+	}
+
+	signedRemainMargin := marginDelta.Sub(fundingPayment).Add(oldPosition.Margin)
+	switch signedRemainMargin.IsNegative() {
+	case true:
+		badDebt = signedRemainMargin.Abs()
+	case false:
+		badDebt = sdk.ZeroInt()
+		remainMargin = signedRemainMargin.Abs()
+	}
+
+	return
 }
