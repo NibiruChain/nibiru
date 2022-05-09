@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 type msgServer struct {
