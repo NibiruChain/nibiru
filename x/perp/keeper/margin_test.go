@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/golang/mock/gomock"
 
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,58 +23,11 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 			name: "uninitialized vpool has no metadata",
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				vpool := "xxx:yyy"
+				vpool := common.TokenPair("xxx:yyy")
 				lcpf, err := nibiruApp.PerpKeeper.GetLatestCumulativePremiumFraction(
 					ctx, vpool)
 				require.Error(t, err)
 				require.EqualValues(t, sdk.Int{}, lcpf)
-			},
-		},
-		{
-			name: "get - no positions set raises vpool not found error",
-			test: func() {
-				mockCtrl := gomock.NewController(t)
-				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
-
-				trader := sample.AccAddress()
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
-
-				vpoolMock.EXPECT().Pair().Return("osmo:nusd").Times(1)
-				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
-				require.Error(t, err)
-				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
-			},
-		},
-		{
-			name: "set - creating position with set works and shows up in get",
-			test: func() {
-				mockCtrl := gomock.NewController(t)
-				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
-				vpoolPair := "osmo:nusd"
-
-				trader := sample.AccAddress()
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
-
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
-				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
-				require.Error(t, err)
-				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
-
-				dummyPosition := &perptypes.Position{
-					Address: trader.String(),
-					Pair:    vpoolPair,
-					Size_:   sdk.OneInt(),
-					Margin:  sdk.OneInt(),
-				}
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(2)
-				nibiruApp.PerpKeeper.SetPosition(
-					ctx, vpoolMock, trader.String(), dummyPosition)
-				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
-				require.NoError(t, err)
-				require.EqualValues(t, dummyPosition, outPosition)
 			},
 		},
 	}
@@ -96,48 +48,15 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 		{
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
-				mockCtrl := gomock.NewController(t)
-				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
+				vpool := common.TokenPair("osmo:nusd")
 
-				trader := sample.AccAddress()
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
-				vpoolMock.EXPECT().Pair().Return("osmo:nusd").Times(1)
-				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
+				marginDelta := sdk.OneInt()
+				_, _, _, _, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
+					ctx, vpool, &types.Position{}, marginDelta)
 				require.Error(t, err)
 				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
-			},
-		},
-		{
-			name: "set - creating position with set works and shows up in get",
-			test: func() {
-				mockCtrl := gomock.NewController(t)
-				vpoolMock := mock.NewMockIVirtualPool(mockCtrl)
-				vpoolPair := "osmo:nusd"
-
-				trader := sample.AccAddress()
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
-
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(1)
-				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
-				require.Error(t, err)
-				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
-
-				dummyPosition := &perptypes.Position{
-					Address: trader.String(),
-					Pair:    vpoolPair,
-					Size_:   sdk.OneInt(),
-					Margin:  sdk.OneInt(),
-				}
-				vpoolMock.EXPECT().Pair().Return(vpoolPair).Times(2)
-				nibiruApp.PerpKeeper.SetPosition(
-					ctx, vpoolMock, trader.String(), dummyPosition)
-				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolMock, trader.String())
-				require.NoError(t, err)
-				require.EqualValues(t, dummyPosition, outPosition)
 			},
 		},
 	}
@@ -146,6 +65,65 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			tc.test()
+		})
+	}
+}
+
+func TestAddMargin(t *testing.T) {
+	tests := []struct {
+		name           string
+		initialMargin  sdk.Int
+		addedMargin    sdk.Int
+		expectedMargin sdk.Int
+	}{
+		{
+			name:           "add margin",
+			initialMargin:  sdk.NewIntFromUint64(100),
+			addedMargin:    sdk.NewIntFromUint64(100),
+			expectedMargin: sdk.NewIntFromUint64(200),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testutil.NewNibiruApp(true)
+
+			tokenPair, err := common.NewTokenPairFromStr("atom:nusd")
+			require.NoError(t, err)
+
+			t.Log("add margin funds (NUSD) to trader's account")
+			traderAddr := sample.AccAddress()
+			err = simapp.FundAccount(
+				app.BankKeeper,
+				ctx,
+				traderAddr,
+				sdk.NewCoins(
+					sdk.NewCoin(common.StableDenom, tc.addedMargin),
+				),
+			)
+			require.NoErrorf(t, err, "fund account call should work")
+
+			t.Log("establish initial position")
+			app.PerpKeeper.SetPosition(
+				ctx,
+				tokenPair,
+				traderAddr.String(),
+				&types.Position{
+					Address: traderAddr.String(),
+					Pair:    tokenPair.String(),
+					Size_:   sdk.NewIntFromUint64(9999),
+					Margin:  tc.initialMargin,
+				},
+			)
+
+			require.NoError(t,
+				app.PerpKeeper.AddMargin(ctx, tokenPair, traderAddr, tc.addedMargin))
+
+			position, err := app.PerpKeeper.GetPosition(
+				ctx, tokenPair, traderAddr.String())
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedMargin, position.Margin)
 		})
 	}
 }

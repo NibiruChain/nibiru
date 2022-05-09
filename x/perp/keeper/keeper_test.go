@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
