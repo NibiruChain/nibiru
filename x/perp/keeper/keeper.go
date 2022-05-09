@@ -20,6 +20,42 @@ type Keeper struct {
 	BankKeeper    types.BankKeeper
 	AccountKeeper types.AccountKeeper
 	PriceKeeper   types.PriceKeeper
+	VpoolKeeper   types.VpoolKeeper
+}
+
+// NewKeeper Creates a new x/perp Keeper instance.
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey,
+	memKey sdk.StoreKey,
+	paramSubspace paramtypes.Subspace,
+
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	priceKeeper types.PriceKeeper,
+	vpoolKeeper types.VpoolKeeper,
+) Keeper {
+	// Ensure that the module account is set.
+	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
+		panic("The x/perp module account has not been set")
+	}
+
+	// Set param.types.'KeyTable' if it has not already been set
+	if !paramSubspace.HasKeyTable() {
+		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
+	}
+
+	return Keeper{
+		cdc:           cdc,
+		storeKey:      storeKey,
+		memKey:        memKey,
+		ParamSubspace: paramSubspace,
+
+		AccountKeeper: accountKeeper,
+		BankKeeper:    bankKeeper,
+		PriceKeeper:   priceKeeper,
+		VpoolKeeper:   vpoolKeeper,
+	}
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -41,37 +77,4 @@ func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 // SetParams set the params
 func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.ParamSubspace.SetParamSet(ctx, &params)
-}
-
-// NewKeeper Creates a new x/perp Keeper instance.
-func NewKeeper(
-	cdc codec.BinaryCodec,
-	storeKey,
-	memKey sdk.StoreKey,
-	paramSubspace paramtypes.Subspace,
-
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
-	priceKeeper types.PriceKeeper,
-) Keeper {
-	// Ensure that the module account is set.
-	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
-		panic("The x/perp module account has not been set")
-	}
-
-	// Set param.types.'KeyTable' if it has not already been set
-	if !paramSubspace.HasKeyTable() {
-		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
-	}
-
-	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		memKey:        memKey,
-		ParamSubspace: paramSubspace,
-
-		AccountKeeper: accountKeeper,
-		BankKeeper:    bankKeeper,
-		PriceKeeper:   priceKeeper,
-	}
 }

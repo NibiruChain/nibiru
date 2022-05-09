@@ -2,18 +2,19 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	ammtypes "github.com/NibiruChain/nibiru/x/vamm/types"
+	ammtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
-		pair        string
+		pair        common.TokenPair
 		direction   ammtypes.Direction
 		quoteAmount sdktypes.Int
 		baseLimit   sdktypes.Int
