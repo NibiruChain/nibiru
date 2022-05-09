@@ -31,20 +31,6 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, trader s
 	return remainMargin.Sub(badDebt).Quo(positionNotional), nil
 }
 
-/*
-function requireMoreMarginRatio(
-        SignedDecimal.signedDecimal memory _marginRatio,
-        Decimal.decimal memory _baseMarginRatio,
-        bool _largerThanOrEqualTo
-    ) private pure {
-        int256 remainingMarginRatio = _marginRatio.subD(_baseMarginRatio).toInt();
-        require(
-            _largerThanOrEqualTo ? remainingMarginRatio >= 0 : remainingMarginRatio < 0,
-            "Margin ratio not meet criteria"
-        );
-    }
-*/
-
 // TODO test: requireMoreMarginRatio
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEqualTo bool) error {
 	// TODO(mercilex): look at this and make sure it's legit compared ot the counterparty above ^
