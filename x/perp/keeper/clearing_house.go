@@ -511,7 +511,7 @@ func (k Keeper) transferFee(
 	ctx sdk.Context, trader sdk.AccAddress, vamm types.IVirtualPool,
 	positionNotional sdk.Int,
 ) (sdk.Int, error) {
-	toll, spread, err := vamm.CalcFee(ctx, positionNotional)
+	toll, spread, err := k.CalcFee(ctx, positionNotional)
 	if err != nil {
 		return sdk.Int{}, err
 	}

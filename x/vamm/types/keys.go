@@ -5,9 +5,6 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 const (
 	ModuleName = "vamm"
 	StoreKey   = "vammkey"
-
-	// MemStoreKey defines the in-memory store key
-	MemStoreKey = "mem_vamm"
 )
 
 /*
