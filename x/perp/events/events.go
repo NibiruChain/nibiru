@@ -50,7 +50,7 @@ Args:
     the virtual price on 'vpool'.
   vsizeChange sdk.Dec: magnitude of the change to vsize. The virtual size of a
     position is margin * leverage.
-  txFee sdk.Int: transaction fee payed
+  txFee sdk.Int: transaction fee paid
   vsizeAfter sdk.Dec: position virtual size after the change
   realizedPnlAfter: realize profits and losses after the change
   badDebt sdk.Int: Amount of bad debt cleared by the PerpEF during the change.
