@@ -343,7 +343,7 @@ func NewNibiruApp(
 		),
 	)
 
-	// create evidence vpoolkeeper with router
+	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
 	)
