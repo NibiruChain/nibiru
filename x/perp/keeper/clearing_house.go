@@ -3,11 +3,27 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
+They also serve as a reminder of which functions still need MVP unit or
+integration tests */
+var (
+	_ = Keeper.swapInput
+	_ = Keeper.closePosition
+	_ = Keeper.increasePosition
+	_ = Keeper.reducePosition
+	_ = Keeper.updateOpenInterestNotional
+	_ = Keeper.closeAndOpenReversePosition
+	_ = Keeper.openReversePosition
+	_ = Keeper.openPosition
+	_ = Keeper.transferFee
 )
 
 // TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
@@ -131,7 +147,7 @@ func (k Keeper) increasePosition(
 
 	newSize := oldPosition.Size_.Add(positionResp.ExchangedPositionSize)
 
-	err = k.updateOpenInterestNotional(ctx, pair, openNotional, trader)
+	err = k.updateOpenInterestNotional(ctx, pair, pair, openNotional, trader)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +206,7 @@ func (k Keeper) increasePosition(
 }
 
 // TODO test: updateOpenInterestNotional | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, pair common.TokenPair, amount sdk.Int, trader string) error {
+func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, pair common.TokenPair, pair common.TokenPair, amount sdk.Int, trader string) error {
 	maxOpenInterest, err := k.VpoolKeeper.GetOpenInterestNotionalCap(ctx, pair)
 	if err != nil {
 		return err
@@ -366,7 +382,7 @@ func (k Keeper) reducePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
-	err = k.updateOpenInterestNotional(ctx, pair, openNotional.MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, pair, pair, openNotional.MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +526,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair com
 		return nil, err
 	}
 
-	err = k.updateOpenInterestNotional(ctx, pair, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, pair, pair, unrealizedPnL.Add(badDebt).Add(oldPosition.OpenNotional).MulRaw(-1), trader)
 	if err != nil {
 		return nil, err
 	}
