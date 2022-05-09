@@ -66,7 +66,7 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, pair com
 		return sdk.Int{}, err
 	}
 
-	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, amm, position, unrealizedPnL)
+	remainMargin, badDebt, _, _, err := k.calcRemainMarginWithFundingPayment(ctx, pair, position, unrealizedPnL)
 	if err != nil {
 		return sdk.Int{}, err
 	}
