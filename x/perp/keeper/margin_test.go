@@ -35,9 +35,9 @@ func TestAddMargin(t *testing.T) {
 			tokenPair, err := common.NewTokenPairFromStr("atom:nusd")
 			require.NoError(t, err)
 
-			// add margin funds (NUSD) to trader's account
+			t.Log("add margin funds (NUSD) to trader's account")
 			traderAddr := sample.AccAddress()
-			simapp.FundAccount(
+			err = simapp.FundAccount(
 				app.BankKeeper,
 				ctx,
 				traderAddr,
@@ -45,8 +45,9 @@ func TestAddMargin(t *testing.T) {
 					sdk.NewCoin(common.StableDenom, tc.addedMargin),
 				),
 			)
+			require.NoErrorf(t, err, "fund account call should work")
 
-			// establish initial position
+			t.Log("establish initial position")
 			app.PerpKeeper.SetPosition(
 				ctx,
 				tokenPair,
@@ -59,9 +60,11 @@ func TestAddMargin(t *testing.T) {
 				},
 			)
 
-			require.NoError(t, app.PerpKeeper.AddMargin(ctx, tokenPair, traderAddr, tc.addedMargin))
+			require.NoError(t,
+				app.PerpKeeper.AddMargin(ctx, tokenPair, traderAddr, tc.addedMargin))
 
-			position, err := app.PerpKeeper.GetPosition(ctx, tokenPair, traderAddr.String())
+			position, err := app.PerpKeeper.GetPosition(
+				ctx, tokenPair, traderAddr.String())
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedMargin, position.Margin)
 		})
