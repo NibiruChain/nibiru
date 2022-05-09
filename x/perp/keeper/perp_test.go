@@ -33,7 +33,7 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewTokenPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
 				trader := sample.AccAddress()
@@ -76,7 +76,7 @@ func TestClearPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewTokenPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
 				traders := []sdk.AccAddress{

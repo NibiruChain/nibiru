@@ -9,7 +9,7 @@ import (
 )
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, pair common.Pair, trader string) (sdk.Int, error) {
+func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, pair common.TokenPair, trader string) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err

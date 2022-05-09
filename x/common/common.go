@@ -79,25 +79,25 @@ func RawPoolNameFromDenoms(denoms []string) string {
 	return poolName
 }
 
-type Pair string
+type TokenPair string
 
-func NewPairFromStr(pair string) (Pair, error) {
+func NewTokenPairFromStr(pair string) (TokenPair, error) {
 	split := strings.Split(pair, PairSeparator)
 	if len(split) != 2 {
 		return "", ErrInvalidTokenPair
 	}
 
-	return Pair(pair), nil
+	return TokenPair(pair), nil
 }
 
-func (p Pair) GetBaseToken() string {
+func (p TokenPair) GetBaseToken() string {
 	return strings.Split(string(p), ":")[0]
 }
 
-func (p Pair) GetQuoteToken() string {
+func (p TokenPair) GetQuoteToken() string {
 	return strings.Split(string(p), ":")[1]
 }
 
-func (p Pair) String() string {
+func (p TokenPair) String() string {
 	return string(p)
 }

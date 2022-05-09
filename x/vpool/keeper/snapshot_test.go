@@ -81,7 +81,7 @@ func TestKeeper_updateSnapshot_doesNotIncrementCounter(t *testing.T) {
 
 	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
 
-	savedSnap, _, err := ammKeeper.getLastReserveSnapshot(ctx, common.Pair(pool.Pair))
+	savedSnap, _, err := ammKeeper.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 	require.NoError(t, err)
 	require.Equal(t, pool.Token0Reserve, savedSnap.Token0Reserve)
 }
@@ -107,7 +107,7 @@ func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
 
 	// Last counter updated
 	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
-	snapshot, counter, err := ammKeeper.getLastReserveSnapshot(ctx, common.Pair(pool.Pair))
+	snapshot, counter, err := ammKeeper.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 	require.NoError(t, err)
 	require.Equal(t, expectedSnapshot, snapshot)
 
@@ -126,7 +126,7 @@ func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
 }
 
 func requireLastSnapshotCounterEqual(t *testing.T, ctx sdktypes.Context, keeper Keeper, pool *ammtypes.Pool, counter int64) {
-	c, found := keeper.getSnapshotCounter(ctx, common.Pair(pool.Pair))
+	c, found := keeper.getSnapshotCounter(ctx, common.TokenPair(pool.Pair))
 	require.True(t, found)
 	require.Equal(t, counter, c)
 }

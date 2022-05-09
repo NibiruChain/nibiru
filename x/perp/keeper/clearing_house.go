@@ -11,7 +11,7 @@ import (
 
 // TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openPosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.Pair, side types.Side, trader string,
+	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) error {
 	// TODO(mercilex): missing checks
@@ -113,7 +113,7 @@ func (k Keeper) openPosition(
 
 // TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.Pair, side types.Side, trader string,
+	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
 	positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
@@ -262,7 +262,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm types.I
 
 // TODO test: getPositionNotionalAndUnrealizedPnL | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.Pair,
+	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair,
 	trader string, pnlCalcOption types.PnLCalcOption,
 ) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
@@ -320,7 +320,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openReversePosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.Pair, side types.Side, trader string,
+	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
@@ -359,7 +359,7 @@ func (k Keeper) openReversePosition(
 
 // TODO test: reducePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) reducePosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.Pair, side types.Side, trader string,
+	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
 	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
@@ -423,7 +423,7 @@ func (k Keeper) reducePosition(
 
 // TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) closeAndOpenReversePosition(
-	ctx sdk.Context, amm types.IVirtualPool, pair common.Pair, side types.Side, trader string,
+	ctx sdk.Context, amm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
@@ -470,7 +470,7 @@ func (k Keeper) closeAndOpenReversePosition(
 }
 
 // TODO test: closePosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair common.Pair, trader string, quoteAssetAmountLimit sdk.Int) (
+func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, trader string, quoteAssetAmountLimit sdk.Int) (
 	positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
@@ -562,7 +562,7 @@ func (k Keeper) transferFee(
 func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
 	vamm types.IVirtualPool,
-	pair common.Pair,
+	pair common.TokenPair,
 	trader string,
 	pnLPreferenceOption types.PnLPreferenceOption,
 ) (sdk.Int, sdk.Int, error) {

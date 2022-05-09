@@ -12,7 +12,7 @@ const (
 	FeePoolModuleAccount = "fee_pool"
 )
 
-func ZeroPosition(ctx sdk.Context, vpair common.Pair, trader string) *Position {
+func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Position {
 	return &Position{
 		Address:                             trader,
 		Pair:                                vpair.String(),

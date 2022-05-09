@@ -111,7 +111,7 @@ func TestPair_Constructor(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := common.NewPairFromStr(tc.tokenPair)
+			_, err := common.NewTokenPairFromStr(tc.tokenPair)
 			if tc.err != nil {
 				require.Equal(t, tc.err, err)
 			} else {
@@ -122,7 +122,7 @@ func TestPair_Constructor(t *testing.T) {
 }
 
 func TestPair_GetBaseToken(t *testing.T) {
-	pair, err := common.NewPairFromStr("uatom:unibi")
+	pair, err := common.NewTokenPairFromStr("uatom:unibi")
 	require.NoError(t, err)
 
 	require.Equal(t, "uatom", pair.GetBaseToken())

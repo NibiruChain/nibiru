@@ -22,12 +22,12 @@ var (
 )
 
 // GetPoolKey returns pool key for KVStore
-func GetPoolKey(pair common.Pair) []byte {
+func GetPoolKey(pair common.TokenPair) []byte {
 	return append(PoolKey, []byte(pair)...)
 }
 
 // GetPoolReserveSnapshotCounter returns the KVStore for the Snapshot Pool counters.
-func GetPoolReserveSnapshotCounter(pair common.Pair) []byte {
+func GetPoolReserveSnapshotCounter(pair common.TokenPair) []byte {
 	return append(PoolReserveSnapshotCounter, []byte(pair)...)
 }
 

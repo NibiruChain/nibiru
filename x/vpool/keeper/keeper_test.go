@@ -14,7 +14,7 @@ import (
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
-		pair        common.Pair
+		pair        common.TokenPair
 		direction   ammtypes.Direction
 		quoteAmount sdktypes.Int
 		baseLimit   sdktypes.Int

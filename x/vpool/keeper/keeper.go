@@ -22,7 +22,7 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
-func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.Pair) (sdk.Int, error) {
+func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -34,7 +34,7 @@ func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
 // SwapInput swaps pair token
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
-	pair common.Pair,
+	pair common.TokenPair,
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
@@ -104,7 +104,7 @@ func (k Keeper) SwapInput(
 }
 
 // getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair common.Pair) (*types.Pool, error) {
+func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (*types.Pool, error) {
 	store := k.getStore(ctx)
 
 	bz := store.Get(types.GetPoolKey(pair))
@@ -152,7 +152,7 @@ func (k Keeper) savePool(
 		return err
 	}
 
-	store.Set(types.GetPoolKey(common.Pair(pool.Pair)), bz)
+	store.Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
 
 	return nil
 }
@@ -196,7 +196,7 @@ func (k Keeper) updateReserve(
 }
 
 // existsPool returns true if pool exists, false if not.
-func (k Keeper) existsPool(ctx sdk.Context, pair common.Pair) bool {
+func (k Keeper) existsPool(ctx sdk.Context, pair common.TokenPair) bool {
 	store := k.getStore(ctx)
 	return store.Has(types.GetPoolKey(pair))
 }
@@ -208,7 +208,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 	}
 
 	if fluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, common.Pair(pool.Pair))
+		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 		if err != nil {
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}

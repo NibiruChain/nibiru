@@ -78,10 +78,10 @@ func (p PositionsState) getKV(ctx sdk.Context) sdk.KVStore {
 }
 
 func (p PositionsState) keyFromType(position *types.Position) []byte {
-	return p.keyFromRaw(common.Pair(position.Pair), position.Address)
+	return p.keyFromRaw(common.TokenPair(position.Pair), position.Address)
 }
 
-func (p PositionsState) keyFromRaw(pair common.Pair, address string) []byte {
+func (p PositionsState) keyFromRaw(pair common.TokenPair, address string) []byte {
 	// TODO(mercilex): not sure if namespace overlap safe | update(mercilex) it is not overlap safe
 	return []byte(pair.String() + address)
 }
@@ -97,7 +97,7 @@ func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error 
 	return nil
 }
 
-func (p PositionsState) Get(ctx sdk.Context, pair common.Pair, address string) (*types.Position, error) {
+func (p PositionsState) Get(ctx sdk.Context, pair common.TokenPair, address string) (*types.Position, error) {
 	kv := p.getKV(ctx)
 
 	key := p.keyFromRaw(pair, address)
@@ -124,7 +124,7 @@ func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error 
 	return nil
 }
 
-func (p PositionsState) Set(ctx sdk.Context, pair common.Pair, owner string, position *types.Position) {
+func (p PositionsState) Set(ctx sdk.Context, pair common.TokenPair, owner string, position *types.Position) {
 	positionID := p.keyFromRaw(pair, owner)
 	kvStore := p.getKV(ctx)
 	kvStore.Set(positionID, p.cdc.MustMarshal(position))
