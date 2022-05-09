@@ -152,7 +152,7 @@ func (k Keeper) increasePosition(
 
 	remainMargin, _, fundingPayment, latestCumulativePremiumFraction, err := k.calcRemainMarginWithFundingPayment(
 		ctx,
-		vamm,
+		pair,
 		oldPosition,
 		increaseMarginRequirement,
 	)
@@ -224,11 +224,11 @@ func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, pair common.TokenPai
 
 // TODO test: calcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) calcRemainMarginWithFundingPayment(
-	ctx sdk.Context, vamm types.IVirtualPool,
+	ctx sdk.Context, pair common.TokenPair,
 	oldPosition *types.Position, marginDelta sdk.Int,
 ) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
 	latestCumulativePremiumFraction sdk.Int, err error) {
-	latestCumulativePremiumFraction, err = k.getLatestCumulativePremiumFraction(ctx, vamm)
+	latestCumulativePremiumFraction, err = k.getLatestCumulativePremiumFraction(ctx, pair)
 	if err != nil {
 		return
 	}
@@ -252,8 +252,8 @@ func (k Keeper) calcRemainMarginWithFundingPayment(
 }
 
 // TODO test: getLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, vamm types.IVirtualPool) (sdk.Int, error) {
-	pairMetadata, err := k.PairMetadata().Get(ctx, vamm.Pair())
+func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -389,7 +389,7 @@ func (k Keeper) reducePosition(
 	}
 	var remainMargin, latestCumulativePremiumFraction sdk.Int
 	remainMargin, positionResp.BadDebt, positionResp.FundingPayment, latestCumulativePremiumFraction, err =
-		k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, positionResp.RealizedPnl)
+		k.calcRemainMarginWithFundingPayment(ctx, pair, oldPosition, positionResp.RealizedPnl)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +487,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair com
 		return nil, err
 	}
 
-	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(ctx, vamm, oldPosition, unrealizedPnL)
+	remainMargin, badDebt, fundingPayment, _, err := k.calcRemainMarginWithFundingPayment(ctx, pair, oldPosition, unrealizedPnL)
 	if err != nil {
 		return nil, err
 	}
