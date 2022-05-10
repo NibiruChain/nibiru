@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
+	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	reflect "reflect"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -32,9 +34,9 @@ func (m *MockIClearingHouse) EXPECT() *MockIClearingHouseMockRecorder {
 }
 
 // ClearPosition mocks base method.
-func (m *MockIClearingHouse) ClearPosition(ctx sdk.Context, vpool types.IVirtualPool, owner string) error {
+func (m *MockIClearingHouse) ClearPosition(ctx sdk.Context, pair common.TokenPair, owner string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ClearPosition", ctx, vpool, owner)
+	ret := m.ctrl.Call(m, "ClearPosition", ctx, pair, owner)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -46,9 +48,9 @@ func (mr *MockIClearingHouseMockRecorder) ClearPosition(ctx, vpool, owner interf
 }
 
 // GetPosition mocks base method.
-func (m *MockIClearingHouse) GetPosition(ctx sdk.Context, vpool types.IVirtualPool, owner string) (*types.Position, error) {
+func (m *MockIClearingHouse) GetPosition(ctx sdk.Context, pair common.TokenPair, owner string) (*types.Position, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPosition", ctx, vpool, owner)
+	ret := m.ctrl.Call(m, "GetPosition", ctx, pair, owner)
 	ret0, _ := ret[0].(*types.Position)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -61,9 +63,9 @@ func (mr *MockIClearingHouseMockRecorder) GetPosition(ctx, vpool, owner interfac
 }
 
 // SetPosition mocks base method.
-func (m *MockIClearingHouse) SetPosition(ctx sdk.Context, vpool types.IVirtualPool, owner string, position *types.Position) error {
+func (m *MockIClearingHouse) SetPosition(ctx sdk.Context, pair common.TokenPair, owner string, position *types.Position) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetPosition", ctx, vpool, owner, position)
+	ret := m.ctrl.Call(m, "SetPosition", ctx, pair, owner, position)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -144,7 +146,7 @@ func (mr *MockIVirtualPoolMockRecorder) GetOpenInterestNotionalCap(ctx interface
 }
 
 // GetOutputPrice mocks base method.
-func (m *MockIVirtualPool) GetOutputPrice(ctx sdk.Context, dir types.VirtualPoolDirection, abs sdk.Int) (sdk.Int, error) {
+func (m *MockIVirtualPool) GetOutputPrice(ctx sdk.Context, dir pooltypes.Direction, abs sdk.Int) (sdk.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOutputPrice", ctx, dir, abs)
 	ret0, _ := ret[0].(sdk.Int)
@@ -159,7 +161,7 @@ func (mr *MockIVirtualPoolMockRecorder) GetOutputPrice(ctx, dir, abs interface{}
 }
 
 // GetOutputTWAP mocks base method.
-func (m *MockIVirtualPool) GetOutputTWAP(ctx sdk.Context, dir types.VirtualPoolDirection, abs sdk.Int) (sdk.Int, error) {
+func (m *MockIVirtualPool) GetOutputTWAP(ctx sdk.Context, dir pooltypes.Direction, abs sdk.Int) (sdk.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOutputTWAP", ctx, dir, abs)
 	ret0, _ := ret[0].(sdk.Int)
@@ -232,7 +234,7 @@ func (mr *MockIVirtualPoolMockRecorder) QuoteTokenDenom() *gomock.Call {
 }
 
 // SwapInput mocks base method.
-func (m *MockIVirtualPool) SwapInput(ctx sdk.Context, ammDir types.VirtualPoolDirection, inputAmount, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
+func (m *MockIVirtualPool) SwapInput(ctx sdk.Context, ammDir pooltypes.Direction, inputAmount, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapInput", ctx, ammDir, inputAmount, minOutputAmount, canOverFluctuationLimit)
 	ret0, _ := ret[0].(sdk.Int)
@@ -247,7 +249,7 @@ func (mr *MockIVirtualPoolMockRecorder) SwapInput(ctx, ammDir, inputAmount, minO
 }
 
 // SwapOutput mocks base method.
-func (m *MockIVirtualPool) SwapOutput(ctx sdk.Context, dir types.VirtualPoolDirection, abs, limit sdk.Int) (sdk.Int, error) {
+func (m *MockIVirtualPool) SwapOutput(ctx sdk.Context, dir pooltypes.Direction, abs, limit sdk.Int) (sdk.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapOutput", ctx, dir, abs, limit)
 	ret0, _ := ret[0].(sdk.Int)
