@@ -158,21 +158,3 @@ func TestSwapInput_HappyPath(t *testing.T) {
 	}
 }
 
-func TestCreatePool(t *testing.T) {
-	ammKeeper, ctx := VpoolKeeper(t)
-
-	ammKeeper.CreatePool(
-		ctx,
-		NUSDPair,
-		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-		sdk.NewInt(10_000_000),       // 10 tokens
-		sdk.NewInt(5_000_000),        // 5 tokens
-		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-	)
-
-	exists := ammKeeper.existsPool(ctx, NUSDPair)
-	require.True(t, exists)
-
-	notExist := ammKeeper.existsPool(ctx, "BTC:OTHER")
-	require.False(t, notExist)
-}

@@ -1,9 +1,8 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type PricefeedKeeper interface {
