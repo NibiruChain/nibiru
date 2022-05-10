@@ -3,12 +3,16 @@ package keeper
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreatePool(t *testing.T) {
-	vpoolKeeper, ctx := VpoolKeeper(t)
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPriceKeeper(gomock.NewController(t)),
+	)
 
 	vpoolKeeper.CreatePool(
 		ctx,

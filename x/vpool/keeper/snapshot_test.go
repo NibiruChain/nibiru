@@ -4,14 +4,18 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/types/time"
 )
 
 func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
-	vpoolKeeper, ctx := VpoolKeeper(t)
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPriceKeeper(gomock.NewController(t)),
+	)
 
 	err := vpoolKeeper.addReserveSnapshot(ctx, getSamplePool())
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
@@ -32,7 +36,9 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 		BlockNumber:       int64(expectedBlockHeight),
 	}
 
-	vpoolKeeper, ctx := VpoolKeeper(t)
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPriceKeeper(gomock.NewController(t)),
+	)
 	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight)).WithBlockTime(expectedTime)
 	vpoolKeeper.saveSnapshot(ctx, pool, 0)
 	vpoolKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
@@ -44,7 +50,9 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 }
 
 func TestNewKeeper_getSnapshot(t *testing.T) {
-	vpoolKeeper, ctx := VpoolKeeper(t)
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPriceKeeper(gomock.NewController(t)),
+	)
 	expectedHeight := int64(123)
 	expectedTime := time.Now()
 

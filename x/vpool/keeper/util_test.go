@@ -3,13 +3,11 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
@@ -17,7 +15,9 @@ import (
 
 const NUSDPair = "BTC:NUSD"
 
-func VpoolKeeper(t *testing.T) (Keeper, sdk.Context) {
+func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
+	vpoolKeeper Keeper, ctx sdk.Context,
+) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 
 	db := tmdb.NewMemDB()
@@ -25,15 +25,14 @@ func VpoolKeeper(t *testing.T) (Keeper, sdk.Context) {
 	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
-	k := NewKeeper(
+	vpoolKeeper = NewKeeper(
 		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
 		storeKey,
-		mock.NewMockPriceKeeper(gomock.NewController(t)),
+		pricefeedKeeper,
 	)
+	ctx = sdk.NewContext(stateStore, tmproto.Header{}, false, nil)
 
-	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, nil)
-
-	return k, ctx
+	return vpoolKeeper, ctx
 }
 
 func getSamplePool() *types.Pool {
