@@ -641,9 +641,9 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 	var vammDir pooltypes.Direction
 	switch side {
 	case types.Side_BUY:
-		vammDir = pooltypes.Direction_ADD_TO_AMM
+		vammDir = pooltypes.Direction_ADD_TO_POOL
 	case types.Side_SELL:
-		vammDir = pooltypes.Direction_REMOVE_FROM_AMM
+		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
 	default:
 		panic("invalid side")
 	}

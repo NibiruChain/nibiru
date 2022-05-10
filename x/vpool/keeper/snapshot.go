@@ -2,11 +2,10 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/common"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/x/vpool/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
@@ -33,8 +32,8 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 		sdk.NewEvent(
 			types.EventSnapshotSaved,
 			sdk.NewAttribute(types.AttributeBlockHeight, fmt.Sprintf("%d", ctx.BlockHeight())),
-			sdk.NewAttribute(types.AttributeQuoteReserve, pool.Token0Reserve),
-			sdk.NewAttribute(types.AttributeBaseReserve, pool.Token1Reserve),
+			sdk.NewAttribute(types.AttributeQuoteReserve, pool.QuoteAssetReserve.String()),
+			sdk.NewAttribute(types.AttributeBaseReserve, pool.BaseAssetReserve.String()),
 		),
 	)
 
@@ -67,8 +66,8 @@ func (k Keeper) updateSnapshot(ctx sdk.Context, counter int64, pool *types.Pool)
 
 func (k Keeper) saveSnapshotInStore(ctx sdk.Context, pool *types.Pool, counter int64) error {
 	snapshot := &types.ReserveSnapshot{
-		Token0Reserve: pool.Token0Reserve,
-		Token1Reserve: pool.Token1Reserve,
+		Token0Reserve: pool.BaseAssetReserve.String(),
+		Token1Reserve: pool.QuoteAssetReserve.String(),
 		Timestamp:     ctx.BlockTime().Unix(),
 		BlockNumber:   ctx.BlockHeight(),
 	}

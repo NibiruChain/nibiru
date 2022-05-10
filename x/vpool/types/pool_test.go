@@ -17,19 +17,13 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	)
 
 	// less that max ratio
-	isEnough, err := pool.HasEnoughQuoteReserve(sdk.NewInt(8_000_000))
-	require.NoError(t, err)
-	require.True(t, isEnough)
+	require.True(t, pool.HasEnoughQuoteReserve(sdk.NewInt(8_000_000)))
 
 	// equal to ratio limit
-	isEnough, err = pool.HasEnoughQuoteReserve(sdk.NewInt(9_000_000))
-	require.NoError(t, err)
-	require.True(t, isEnough)
+	require.True(t, pool.HasEnoughQuoteReserve(sdk.NewInt(9_000_000)))
 
 	// more than ratio limit
-	isEnough, err = pool.HasEnoughQuoteReserve(sdk.NewInt(9_000_001))
-	require.NoError(t, err)
-	require.False(t, isEnough)
+	require.False(t, pool.HasEnoughQuoteReserve(sdk.NewInt(9_000_001)))
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
@@ -46,7 +40,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 		{
 			"quote amount != 0",
 			sdk.NewInt(5_000_000),
-			sdk.NewInt(1_666_665),
+			sdk.NewInt(1_666_666),
 		},
 	}
 
@@ -61,7 +55,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				sdk.MustNewDecFromStr("0.1"),
 			)
 
-			amount, err := pool.GetBaseAmountByQuoteAmount(Direction_ADD_TO_AMM, tc.quoteAmount)
+			amount, err := pool.GetBaseAmountByQuoteAmount(Direction_ADD_TO_POOL, tc.quoteAmount)
 			require.NoError(t, err)
 			require.True(t, amount.Equal(tc.expectedBaseAmount), "expected base: %s, got: %s", tc.expectedBaseAmount.String(), amount.String())
 		})
@@ -77,7 +71,7 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	}{
 		{
 			"quote after is zero",
-			Direction_REMOVE_FROM_AMM,
+			Direction_REMOVE_FROM_POOL,
 			sdk.NewInt(10_000_000),
 			ErrQuoteReserveAtZero,
 		},
@@ -100,23 +94,6 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	}
 }
 
-func TestIncreaseToken0Reserve(t *testing.T) {
-	pool := NewPool(
-		"ATOM:NUSD",
-		sdk.MustNewDecFromStr("0.9"),
-		sdk.NewInt(1_000_000),
-		sdk.NewInt(1_000_000),
-		sdk.MustNewDecFromStr("0.1"),
-	)
-
-	pool.IncreaseToken0Reserve(sdk.NewInt(100))
-
-	quoteAssetReserve, err := pool.GetPoolToken0ReserveAsInt()
-	require.NoError(t, err)
-
-	require.Equal(t, sdk.NewInt(1_000_100), quoteAssetReserve)
-}
-
 func TestIncreaseDecreaseReserves(t *testing.T) {
 	pool := NewPool(
 		"ATOM:NUSD",
@@ -126,27 +103,19 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"),
 	)
 
-	// DecreaseToken1
-	pool.DecreaseToken1Reserve(sdk.NewInt(100))
-	baseAssetReserve, err := pool.GetPoolToken1ReserveAsInt()
-	require.NoError(t, err)
-	require.Equal(t, sdk.NewInt(999_900), baseAssetReserve)
+	t.Log("decrease quote asset reserve")
+	pool.DecreaseQuoteAssetReserve(sdk.NewInt(100))
+	require.Equal(t, sdk.NewInt(999_900), pool.QuoteAssetReserve)
 
-	// Increase Base Asset
-	pool.IncreaseToken1Reserve(sdk.NewInt(100))
-	baseAssetReserve, err = pool.GetPoolToken1ReserveAsInt()
-	require.NoError(t, err)
-	require.Equal(t, sdk.NewInt(1_000_000), baseAssetReserve)
+	t.Log("increase quote asset reserve")
+	pool.IncreaseQuoteAssetReserve(sdk.NewInt(100))
+	require.Equal(t, sdk.NewInt(1_000_000), pool.QuoteAssetReserve)
 
-	// DecreaseToken0
-	pool.DecreaseToken0Reserve(sdk.NewInt(100))
-	quoteAssetReserve, err := pool.GetPoolToken0ReserveAsInt()
-	require.NoError(t, err)
-	require.Equal(t, sdk.NewInt(999_900), quoteAssetReserve)
+	t.Log("decrease base asset reserve")
+	pool.DecreaseBaseAssetReserve(sdk.NewInt(100))
+	require.Equal(t, sdk.NewInt(999_900), pool.BaseAssetReserve)
 
-	// Increase Quote Asset
-	pool.IncreaseToken0Reserve(sdk.NewInt(100))
-	quoteAssetReserve, err = pool.GetPoolToken0ReserveAsInt()
-	require.NoError(t, err)
-	require.Equal(t, sdk.NewInt(1_000_000), quoteAssetReserve)
+	t.Log("incrase base asset reserve")
+	pool.IncreaseBaseAssetReserve(sdk.NewInt(100))
+	require.Equal(t, sdk.NewInt(1_000_000), pool.BaseAssetReserve)
 }
