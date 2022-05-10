@@ -125,6 +125,6 @@ func TestPair_GetBaseToken(t *testing.T) {
 	pair, err := common.NewTokenPairFromStr("uatom:unibi")
 	require.NoError(t, err)
 
-	require.Equal(t, "uatom", pair.GetBaseToken())
-	require.Equal(t, "unibi", pair.GetQuoteToken())
+	require.Equal(t, "uatom", pair.GetBaseTokenDenom())
+	require.Equal(t, "unibi", pair.GetQuoteTokenDenom())
 }

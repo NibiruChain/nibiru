@@ -45,7 +45,7 @@ func (k Keeper) AddMargin(
 }
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, pair common.TokenPair, trader string) (sdk.Int, error) {
+func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader string) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
@@ -57,7 +57,6 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, pair com
 
 	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
 		ctx,
-		amm,
 		pair,
 		trader,
 		types.PnLPreferenceOption_MAX,

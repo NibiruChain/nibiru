@@ -139,7 +139,7 @@ message PositionChangedEvent {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
     (gogoproto.nullable) = false];
   string spot_price = 12 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
   string funding_payment = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
