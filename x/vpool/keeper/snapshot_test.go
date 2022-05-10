@@ -1,92 +1,49 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
 
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/types/time"
-
-	ammtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
 	ammKeeper, ctx := AmmKeeper(t)
 
 	err := ammKeeper.addReserveSnapshot(ctx, getSamplePool())
-	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
+	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 
-	_, _, err = ammKeeper.getLastReserveSnapshot(ctx, NUSDPair)
-	require.Error(t, err, ammtypes.ErrNoLastSnapshotSaved)
+	_, _, err = ammKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
+	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 }
 
-func TestKeeper_SaveReserveSnapshot(t *testing.T) {
+func TestKeeper_SaveSnapshot(t *testing.T) {
 	expectedTime := time.Now()
 	expectedBlockHeight := 123
 	pool := getSamplePool()
 
-	expectedSnapshot := ammtypes.ReserveSnapshot{
-		Token0Reserve: pool.Token0Reserve,
-		Token1Reserve: pool.Token1Reserve,
-		Timestamp:     expectedTime.Unix(),
-		BlockNumber:   int64(expectedBlockHeight),
+	expectedSnapshot := types.ReserveSnapshot{
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		Timestamp:         expectedTime.Unix(),
+		BlockNumber:       int64(expectedBlockHeight),
 	}
 
 	ammKeeper, ctx := AmmKeeper(t)
 	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight)).WithBlockTime(expectedTime)
+	ammKeeper.saveSnapshot(ctx, pool, 0)
+	ammKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
 
-	err := ammKeeper.saveReserveSnapshot(ctx, 1, pool)
+	snapshot, counter, err := ammKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
 	require.NoError(t, err)
-
-	snapshot, _, err := ammKeeper.getLastReserveSnapshot(ctx, NUSDPair)
-	require.NoError(t, err)
-
 	require.Equal(t, expectedSnapshot, snapshot)
+	require.Equal(t, uint64(0), counter)
 }
 
-func TestKeeper_saveReserveSnapshot_IncrementsCounter(t *testing.T) {
-	ammKeeper, ctx := AmmKeeper(t)
-	ctx = ctx.WithBlockHeight(int64(123)).WithBlockTime(time.Now())
-
-	pool := getSamplePool()
-
-	err := ammKeeper.saveReserveSnapshot(ctx, 0, pool)
-	require.NoError(t, err)
-
-	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
-
-	// Save another one, counter should be incremented to 2
-	err = ammKeeper.saveReserveSnapshot(ctx, 1, pool)
-	require.NoError(t, err)
-
-	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 2)
-}
-
-func TestKeeper_updateSnapshot_doesNotIncrementCounter(t *testing.T) {
-	ammKeeper, ctx := AmmKeeper(t)
-	ctx = ctx.WithBlockHeight(int64(123)).WithBlockTime(time.Now())
-
-	pool := getSamplePool()
-
-	err := ammKeeper.saveReserveSnapshot(ctx, 0, pool)
-	require.NoError(t, err)
-
-	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
-
-	// update the snapshot, counter should not be incremented
-	pool.Token0Reserve = "20000"
-	err = ammKeeper.updateSnapshot(ctx, 1, pool)
-	require.NoError(t, err)
-
-	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
-
-	savedSnap, _, err := ammKeeper.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
-	require.NoError(t, err)
-	require.Equal(t, pool.Token0Reserve, savedSnap.Token0Reserve)
-}
-
-func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
+func TestNewKeeper_getSnapshot(t *testing.T) {
 	ammKeeper, ctx := AmmKeeper(t)
 	expectedHeight := int64(123)
 	expectedTime := time.Now()
@@ -95,37 +52,38 @@ func TestNewKeeper_getSnapshotByCounter(t *testing.T) {
 
 	pool := getSamplePool()
 
-	expectedSnapshot := ammtypes.ReserveSnapshot{
-		Token0Reserve: pool.Token0Reserve,
-		Token1Reserve: pool.Token1Reserve,
-		Timestamp:     expectedTime.Unix(),
-		BlockNumber:   expectedHeight,
+	firstSnapshot := types.ReserveSnapshot{
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		Timestamp:         expectedTime.Unix(),
+		BlockNumber:       expectedHeight,
 	}
 
-	err := ammKeeper.saveReserveSnapshot(ctx, 0, pool)
-	require.NoError(t, err)
+	t.Log("Save snapshot 0")
+	ammKeeper.saveSnapshot(ctx, pool, 0)
+	ammKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
 
-	// Last counter updated
-	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 1)
-	snapshot, counter, err := ammKeeper.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
+	t.Log("Check snapshot 0")
+	requireLastSnapshotCounterEqual(t, ctx, ammKeeper, pool, 0)
+	oldSnapshot, counter, err := ammKeeper.getLatestReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 	require.NoError(t, err)
-	require.Equal(t, expectedSnapshot, snapshot)
+	require.Equal(t, firstSnapshot, oldSnapshot)
+	require.Equal(t, uint64(0), counter)
 
-	// We save another different snapshot
-	differentSnapshot := expectedSnapshot
-	differentSnapshot.Token0Reserve = "12341234"
-	pool.Token0Reserve = differentSnapshot.Token0Reserve
-	err = ammKeeper.saveReserveSnapshot(ctx, counter, pool)
-	require.NoError(t, err)
+	t.Log("We save another different snapshot")
+	differentSnapshot := firstSnapshot
+	differentSnapshot.BaseAssetReserve = sdk.NewIntFromUint64(12341234)
+	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
+	ammKeeper.saveSnapshot(ctx, pool, 1)
 
-	// We get the snapshot 1
-	savedSnap, err := ammKeeper.getSnapshotByCounter(ctx, 1)
+	t.Log("Fetch snapshot 1")
+	newSnapshot, err := ammKeeper.getSnapshot(ctx, common.TokenPair(pool.Pair), 1)
 	require.NoError(t, err)
-	require.Equal(t, expectedSnapshot, savedSnap)
-	require.NotEqual(t, differentSnapshot, snapshot)
+	require.Equal(t, differentSnapshot, newSnapshot)
+	require.NotEqual(t, differentSnapshot, oldSnapshot)
 }
 
-func requireLastSnapshotCounterEqual(t *testing.T, ctx sdktypes.Context, keeper Keeper, pool *ammtypes.Pool, counter int64) {
+func requireLastSnapshotCounterEqual(t *testing.T, ctx sdk.Context, keeper Keeper, pool *types.Pool, counter uint64) {
 	c, found := keeper.getSnapshotCounter(ctx, common.TokenPair(pool.Pair))
 	require.True(t, found)
 	require.Equal(t, counter, c)

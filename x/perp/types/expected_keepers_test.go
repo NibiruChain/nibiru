@@ -36,6 +36,11 @@ func TestExpectedKeepers(t *testing.T) {
 			expectedKeeper: (*types.AccountKeeper)(nil),
 			appKeeper:      nibiruApp.AccountKeeper,
 		},
+		{
+			name:           "VpoolKeeper from x/vpool",
+			expectedKeeper: (*types.VpoolKeeper)(nil),
+			appKeeper:      nibiruApp.VpoolKeeper,
+		},
 	}
 
 	for _, testCase := range testCases {
