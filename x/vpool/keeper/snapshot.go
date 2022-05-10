@@ -66,10 +66,10 @@ func (k Keeper) updateSnapshot(ctx sdk.Context, counter int64, pool *types.Pool)
 
 func (k Keeper) saveSnapshotInStore(ctx sdk.Context, pool *types.Pool, counter int64) error {
 	snapshot := &types.ReserveSnapshot{
-		Token0Reserve: pool.BaseAssetReserve.String(),
-		Token1Reserve: pool.QuoteAssetReserve.String(),
-		Timestamp:     ctx.BlockTime().Unix(),
-		BlockNumber:   ctx.BlockHeight(),
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		Timestamp:         ctx.BlockTime().Unix(),
+		BlockNumber:       ctx.BlockHeight(),
 	}
 	bz, err := k.codec.Marshal(snapshot)
 	if err != nil {

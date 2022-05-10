@@ -230,9 +230,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
 	price := pool.QuoteAssetReserve.ToDec().Quo(pool.BaseAssetReserve.ToDec())
 
-	snapshotQuote, _ := sdk.NewDecFromStr(snapshot.Token1Reserve)
-	snapshotBase, _ := sdk.NewDecFromStr(snapshot.Token0Reserve)
-	lastPrice := snapshotQuote.Quo(snapshotBase)
+	lastPrice := snapshot.QuoteAssetReserve.ToDec().Quo(snapshot.BaseAssetReserve.ToDec())
 	upperLimit := lastPrice.Mul(sdk.OneDec().Add(pool.FluctuationLimitRatio))
 	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(pool.FluctuationLimitRatio))
 
