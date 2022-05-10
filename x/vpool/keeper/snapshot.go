@@ -47,7 +47,10 @@ func (k Keeper) saveSnapshot(
 		BlockNumber:       ctx.BlockHeight(),
 	}
 	bz := k.codec.MustMarshal(snapshot)
-	ctx.KVStore(k.storeKey).Set(types.GetSnapshotKey(counter), bz)
+	ctx.KVStore(k.storeKey).Set(
+		types.GetSnapshotKey(common.TokenPair(pool.Pair), counter),
+		bz,
+	)
 }
 
 // getSnapshotCounter returns the counter and if it has been found or not.
@@ -82,7 +85,7 @@ func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.TokenPair)
 		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
 	}
 
-	snapshot, err = k.getSnapshot(ctx, counter)
+	snapshot, err = k.getSnapshot(ctx, pair, counter)
 	if err != nil {
 		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
 	}
@@ -91,10 +94,10 @@ func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.TokenPair)
 }
 
 // getSnapshot returns the snapshot saved by counter num
-func (k Keeper) getSnapshot(ctx sdk.Context, counter uint64) (
+func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint64) (
 	snapshot types.ReserveSnapshot, err error,
 ) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(counter))
+	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, counter))
 	if bz == nil {
 		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
 			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))

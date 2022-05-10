@@ -11,9 +11,9 @@ const (
 )
 
 /*
-PoolKey 			       | 0x00 + PairString | The Pool struct
-PoolReserveSnapshotCounter | 0x01 + PairString | Integer
-PoolReserveSnapshots       | 0x02 + Counter    | Snapshot
+PoolKey 			       | 0x00 + PairString 			 | The Pool struct
+PoolReserveSnapshotCounter | 0x01 + PairString 			 | Integer
+PoolReserveSnapshots       | 0x02 + PairString + Counter | Snapshot
 */
 var (
 	PoolKey                    = []byte{0x00}
@@ -32,6 +32,12 @@ func GetSnapshotCounterKey(pair common.TokenPair) []byte {
 }
 
 // GetSnapshotKey returns the KVStore for the pool reserve snapshots.
-func GetSnapshotKey(counter uint64) []byte {
-	return append(PoolReserveSnapshots, sdk.Uint64ToBigEndian(counter)...)
+func GetSnapshotKey(pair common.TokenPair, counter uint64) []byte {
+	return append(
+		PoolReserveSnapshots,
+		append(
+			[]byte(pair),
+			sdk.Uint64ToBigEndian(counter)...,
+		)...,
+	)
 }

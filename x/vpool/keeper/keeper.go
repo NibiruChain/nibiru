@@ -199,8 +199,8 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}
 
-		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 1 {
-			latestSnapshot, err = k.getSnapshot(ctx, counter-1)
+		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 0 {
+			latestSnapshot, err = k.getSnapshot(ctx, common.TokenPair(pool.Pair), counter-1)
 			if err != nil {
 				return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
 			}

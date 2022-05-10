@@ -77,7 +77,7 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 	ammKeeper.saveSnapshot(ctx, pool, 1)
 
 	t.Log("Fetch snapshot 1")
-	newSnapshot, err := ammKeeper.getSnapshot(ctx, 1)
+	newSnapshot, err := ammKeeper.getSnapshot(ctx, common.TokenPair(pool.Pair), 1)
 	require.NoError(t, err)
 	require.Equal(t, differentSnapshot, newSnapshot)
 	require.NotEqual(t, differentSnapshot, oldSnapshot)
