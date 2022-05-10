@@ -67,9 +67,10 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader st
 
 	remainMargin, badDebt, _, _, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
-		/* pair */ common.TokenPair(amm.Pair()),
+		/* pair */ pair,
 		/* oldPosition */ position,
-		/* marginDelta */ unrealizedPnL)
+		/* marginDelta */ unrealizedPnL,
+	)
 	if err != nil {
 		return sdk.Int{}, err
 	}
