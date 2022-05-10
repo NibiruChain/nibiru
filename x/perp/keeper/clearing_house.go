@@ -28,7 +28,7 @@ var (
 
 // TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openPosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
+	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) error {
 	// TODO(mercilex): missing checks
@@ -106,7 +106,7 @@ func (k Keeper) openPosition(
 		return err
 	}
 
-	spotPrice, err := vamm.GetSpotPrice(ctx)
+	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -293,12 +293,12 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	}
 
 	isShortPosition := position.Size_.IsNegative()
-	var dir types.VirtualPoolDirection
+	var dir pooltypes.Direction
 	switch isShortPosition {
 	case true:
-		dir = types.VirtualPoolDirection_RemoveFromAMM
+		dir = pooltypes.Direction_REMOVE_FROM_AMM
 	default:
-		dir = types.VirtualPoolDirection_AddToAMM
+		dir = pooltypes.Direction_ADD_TO_AMM
 	}
 
 	switch pnlCalcOption {
@@ -511,12 +511,12 @@ func (k Keeper) closePosition(ctx sdk.Context, pair common.TokenPair, trader str
 	positionResp.FundingPayment = fundingPayment
 	positionResp.MarginToVault = remainMargin.MulRaw(-1)
 
-	var vammDir types.VirtualPoolDirection
+	var vammDir pooltypes.Direction
 	switch oldPosition.Size_.GTE(sdk.ZeroInt()) {
 	case true:
-		vammDir = types.VirtualPoolDirection_AddToAMM
+		vammDir = pooltypes.Direction_ADD_TO_AMM
 	case false:
-		vammDir = types.VirtualPoolDirection_RemoveFromAMM
+		vammDir = pooltypes.Direction_REMOVE_FROM_AMM
 	}
 	positionResp.ExchangedQuoteAssetAmount, err = k.VpoolKeeper.SwapOutput(ctx, pair, vammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
 	if err != nil {
@@ -648,9 +648,9 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 	}
 
 	switch vammDir {
-	case types.VirtualPoolDirection_AddToAMM:
+	case pooltypes.Direction_ADD_TO_AMM:
 		return outputAmount, nil
-	case types.VirtualPoolDirection_RemoveFromAMM:
+	case pooltypes.Direction_REMOVE_FROM_AMM:
 		inverseSign := outputAmount.MulRaw(-1)
 		return inverseSign, nil
 	default:

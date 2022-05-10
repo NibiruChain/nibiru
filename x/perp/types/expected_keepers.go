@@ -56,13 +56,13 @@ type VpoolKeeper interface {
 	SwapInput(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, quoteAssetAmount sdk.Int, baseAmountLimit sdk.Int,
 	) (sdk.Int, error)
 	SwapOutput(
-		ctx sdk.Context, pair common.TokenPair, dir VirtualPoolDirection, abs sdk.Int, limit sdk.Int,
+		ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int, limit sdk.Int,
 	) (sdk.Int, error)
 	GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
 	GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
-	GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir VirtualPoolDirection, abs sdk.Int,
+	GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int,
 	) (sdk.Int, error)
-	GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir VirtualPoolDirection, abs sdk.Int,
+	GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int,
 	) (sdk.Int, error)
 	GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
 	GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
