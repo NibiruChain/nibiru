@@ -37,6 +37,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&p.SpreadRatio,
 			validateSpreadRatio,
 		),
+		paramtypes.NewParamSetPair(
+			[]byte("LiquidationFee"),
+			&p.LiquidationFee,
+			validateLiquidationFee,
+		),
 	}
 }
 
@@ -46,17 +51,20 @@ func NewParams(
 	maintenanceMarginRatio sdk.Int,
 	tollRatio sdk.Dec,
 	spreadRatio sdk.Dec,
+	liquidationFee sdk.Dec,
 ) Params {
 	million := sdk.NewDec(1_000_000)
 
 	tollRatioInt := tollRatio.Mul(million).RoundInt().Int64()
 	spreadRationInt := spreadRatio.Mul(million).RoundInt().Int64()
+	liquidationFeeInt := liquidationFee.Mul(million).RoundInt().Int64()
 
 	return Params{
 		Stopped:                stopped,
 		MaintenanceMarginRatio: maintenanceMarginRatio,
 		TollRatio:              tollRatioInt,
 		SpreadRatio:            spreadRationInt,
+		LiquidationFee:         liquidationFeeInt,
 	}
 }
 
@@ -64,12 +72,14 @@ func NewParams(
 func DefaultParams() Params {
 	tollRatio := sdk.MustNewDecFromStr("0.001")
 	spreadRatio := sdk.MustNewDecFromStr("0.001")
+	liquidationFee := sdk.MustNewDecFromStr("0.0125")
 
 	return NewParams(
 		/*Stopped=*/ true,
 		/*MaintenanceMarginRatio=*/ sdk.OneInt(),
 		/*TollRatio=*/ tollRatio,
 		/*SpreadRatio=*/ spreadRatio,
+		/*LiquidationFee=*/ liquidationFee,
 	)
 }
 
@@ -83,6 +93,11 @@ func (p *Params) GetTollRatioAsDec() sdk.Dec {
 		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
+func (p *Params) GetLiquidationFeeRatioAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.LiquidationFee)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
+
 // Validate validates the set of params
 func (p *Params) Validate() error {
 	err := validateStopped(p.Stopped)
@@ -91,6 +106,11 @@ func (p *Params) Validate() error {
 	}
 
 	err = validateMaintenanceMarginRatio(p.MaintenanceMarginRatio)
+	if err != nil {
+		return err
+	}
+
+	err = validateLiquidationFee(p.LiquidationFee)
 	if err != nil {
 		return err
 	}
@@ -128,6 +148,21 @@ func validateSpreadRatio(i interface{}) error {
 		return fmt.Errorf("spread ratio is above max value(1e6): %d", spreadRatio)
 	} else if spreadRatio < 0 {
 		return fmt.Errorf("spread ratio is negative: %d", spreadRatio)
+	} else {
+		return nil
+	}
+}
+
+func validateLiquidationFee(i interface{}) error {
+	liquidationFee, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if liquidationFee > 1_000_000 {
+		return fmt.Errorf("spread ratio is above max value(1e6): %d", liquidationFee)
+	} else if liquidationFee < 0 {
+		return fmt.Errorf("spread ratio is negative: %d", liquidationFee)
 	} else {
 		return nil
 	}
