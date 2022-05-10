@@ -41,7 +41,7 @@ func (k Keeper) CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int
 	panic("implement me")
 }
 
-func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int, limit sdk.Int) (sdk.Dec, error) {
+func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int, limit sdk.Int) (sdk.Int, error) {
 	//TODO implement me
 	panic("implement me")
 }
