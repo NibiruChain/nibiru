@@ -2,63 +2,62 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
 
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	ammtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestSwapInput_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
 		pair        common.TokenPair
-		direction   ammtypes.Direction
-		quoteAmount sdktypes.Int
-		baseLimit   sdktypes.Int
+		direction   types.Direction
+		quoteAmount sdk.Int
+		baseLimit   sdk.Int
 		error       error
 	}{
 		{
 			"pair not supported",
 			"BTC:UST",
-			ammtypes.Direction_ADD_TO_AMM,
-			sdktypes.NewInt(10),
-			sdktypes.NewInt(10),
-			ammtypes.ErrPairNotSupported,
+			types.Direction_ADD_TO_POOL,
+			sdk.NewInt(10),
+			sdk.NewInt(10),
+			types.ErrPairNotSupported,
 		},
 		{
 			"base amount less than base limit in Long",
 			NUSDPair,
-			ammtypes.Direction_ADD_TO_AMM,
-			sdktypes.NewInt(500_000),
-			sdktypes.NewInt(454_500),
-			fmt.Errorf("base amount (238094) is less than selected limit (454500)"),
+			types.Direction_ADD_TO_POOL,
+			sdk.NewInt(500_000),
+			sdk.NewInt(454_500),
+			fmt.Errorf("base amount (238095) is less than selected limit (454500)"),
 		},
 		{
 			"base amount more than base limit in Short",
 			NUSDPair,
-			ammtypes.Direction_REMOVE_FROM_AMM,
-			sdktypes.NewInt(1_000_000),
-			sdktypes.NewInt(454_500),
+			types.Direction_REMOVE_FROM_POOL,
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(454_500),
 			fmt.Errorf("base amount (555556) is greater than selected limit (454500)"),
 		},
 		{
 			"quote input bigger than reserve ratio",
 			NUSDPair,
-			ammtypes.Direction_REMOVE_FROM_AMM,
-			sdktypes.NewInt(10_000_000),
-			sdktypes.NewInt(10),
-			ammtypes.ErrOvertradingLimit,
+			types.Direction_REMOVE_FROM_POOL,
+			sdk.NewInt(10_000_000),
+			sdk.NewInt(10),
+			types.ErrOvertradingLimit,
 		},
 		{
 			"over fluctuation limit fails",
 			NUSDPair,
-			ammtypes.Direction_ADD_TO_AMM,
-			sdktypes.NewInt(1_000_000),
-			sdktypes.NewInt(454544),
-			fmt.Errorf("error updating reserve: %w", ammtypes.ErrOverFluctuationLimit),
+			types.Direction_ADD_TO_POOL,
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(454544),
+			fmt.Errorf("error updating reserve: %w", types.ErrOverFluctuationLimit),
 		},
 	}
 
@@ -70,10 +69,10 @@ func TestSwapInput_Errors(t *testing.T) {
 			err := keeper.CreatePool(
 				ctx,
 				NUSDPair,
-				sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
-				sdktypes.NewInt(10_000_000),       // 10
-				sdktypes.NewInt(5_000_000),        // 5
-				sdktypes.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
+				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+				sdk.NewInt(10_000_000),       // 10
+				sdk.NewInt(5_000_000),        // 5
+				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
 			)
 			require.NoError(t, err)
 
@@ -92,39 +91,39 @@ func TestSwapInput_Errors(t *testing.T) {
 func TestSwapInput_HappyPath(t *testing.T) {
 	tests := []struct {
 		name                 string
-		direction            ammtypes.Direction
-		quoteAmount          sdktypes.Int
-		baseLimit            sdktypes.Int
-		expectedQuoteReserve sdktypes.Int
-		expectedBaseReserve  sdktypes.Int
-		resp                 sdktypes.Int
+		direction            types.Direction
+		quoteAmount          sdk.Int
+		baseLimit            sdk.Int
+		expectedQuoteReserve sdk.Int
+		expectedBaseReserve  sdk.Int
+		resp                 sdk.Int
 	}{
 		{
 			"quote amount == 0",
-			ammtypes.Direction_ADD_TO_AMM,
-			sdktypes.NewInt(0),
-			sdktypes.NewInt(10),
-			sdktypes.NewInt(10_000_000),
-			sdktypes.NewInt(5_000_000),
-			sdktypes.ZeroInt(),
+			types.Direction_ADD_TO_POOL,
+			sdk.NewInt(0),
+			sdk.NewInt(10),
+			sdk.NewInt(10_000_000),
+			sdk.NewInt(5_000_000),
+			sdk.ZeroInt(),
 		},
 		{
 			"normal swap add",
-			ammtypes.Direction_ADD_TO_AMM,
-			sdktypes.NewInt(1_000_000),
-			sdktypes.NewInt(454_500),
-			sdktypes.NewInt(11_000_000),
-			sdktypes.NewInt(4_545_456),
-			sdktypes.NewInt(454_544),
+			types.Direction_ADD_TO_POOL,
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(454_500),
+			sdk.NewInt(11_000_000),
+			sdk.NewInt(4_545_455),
+			sdk.NewInt(454_545),
 		},
 		{
 			"normal swap remove",
-			ammtypes.Direction_REMOVE_FROM_AMM,
-			sdktypes.NewInt(1_000_000),
-			sdktypes.NewInt(555_560),
-			sdktypes.NewInt(9_000_000),
-			sdktypes.NewInt(5_555_556),
-			sdktypes.NewInt(555_556),
+			types.Direction_REMOVE_FROM_POOL,
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(555_560),
+			sdk.NewInt(9_000_000),
+			sdk.NewInt(5_555_556),
+			sdk.NewInt(555_556),
 		},
 	}
 
@@ -136,10 +135,10 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			err := keeper.CreatePool(
 				ctx,
 				NUSDPair,
-				sdktypes.MustNewDecFromStr("0.9"),  // 0.9 ratio
-				sdktypes.NewInt(10_000_000),        // 10 tokens
-				sdktypes.NewInt(5_000_000),         // 5 tokens
-				sdktypes.MustNewDecFromStr("0.25"), // 0.25 ratio
+				sdk.MustNewDecFromStr("0.9"),  // 0.9 ratio
+				sdk.NewInt(10_000_000),        // 10 tokens
+				sdk.NewInt(5_000_000),         // 5 tokens
+				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
 			require.NoError(t, err)
 
@@ -155,13 +154,8 @@ func TestSwapInput_HappyPath(t *testing.T) {
 
 			pool, err := keeper.getPool(ctx, NUSDPair)
 			require.NoError(t, err)
-			quoteAmount, err := pool.GetPoolToken0ReserveAsInt()
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedQuoteReserve, quoteAmount)
-
-			baseAmount, err := pool.GetPoolToken1ReserveAsInt()
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedBaseReserve, baseAmount)
+			require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
+			require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
 		})
 	}
 }
@@ -172,10 +166,10 @@ func TestCreatePool(t *testing.T) {
 	err := ammKeeper.CreatePool(
 		ctx,
 		NUSDPair,
-		sdktypes.MustNewDecFromStr("0.9"), // 0.9 ratio
-		sdktypes.NewInt(10_000_000),       // 10 tokens
-		sdktypes.NewInt(5_000_000),        // 5 tokens
-		sdktypes.MustNewDecFromStr("0.1"), // 0.9 ratio
+		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+		sdk.NewInt(10_000_000),       // 10 tokens
+		sdk.NewInt(5_000_000),        // 5 tokens
+		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 	)
 	require.NoError(t, err)
 
