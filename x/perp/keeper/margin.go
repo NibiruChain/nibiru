@@ -67,7 +67,7 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader st
 
 	remainMargin, badDebt, _, _, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
-		/* pair */ common.TokenPair(amm.Pair()),
+		/* pair */ pair,
 		/* oldPosition */ position,
 		/* marginDelta */ unrealizedPnL)
 	if err != nil {
@@ -76,20 +76,6 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader st
 
 	return remainMargin.Sub(badDebt).Quo(positionNotional), nil
 }
-
-/*
-function requireMoreMarginRatio(
-        SignedDecimal.signedDecimal memory _marginRatio,
-        Decimal.decimal memory _baseMarginRatio,
-        bool _largerThanOrEqualTo
-    ) private pure {
-        int256 remainingMarginRatio = _marginRatio.subD(_baseMarginRatio).toInt();
-        require(
-            _largerThanOrEqualTo ? remainingMarginRatio >= 0 : remainingMarginRatio < 0,
-            "Margin ratio not meet criteria"
-        );
-    }
-*/
 
 // TODO test: requireMoreMarginRatio
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEqualTo bool) error {
