@@ -33,6 +33,7 @@ type IVirtualPool interface {
 	) (sdk.Int, error)
 	GetUnderlyingPrice(ctx sdk.Context) (sdk.Dec, error)
 	GetSpotPrice(ctx sdk.Context) (sdk.Int, error)
+	IsOverSpreadLimit(ctx sdk.Context) bool
 	// Inside the perp keeper for now, will be moved once vamm is finished
 	//CalcFee(ctx sdk.Context, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
 }

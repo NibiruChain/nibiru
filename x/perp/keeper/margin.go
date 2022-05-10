@@ -45,7 +45,7 @@ func (k Keeper) AddMargin(
 }
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader string) (sdk.Int, error) {
+func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader string, priceOption types.MarginCalculationPriceOption) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
@@ -55,12 +55,35 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader st
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
 
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
-		ctx,
-		pair,
-		trader,
-		types.PnLPreferenceOption_MAX,
+	var (
+		unrealizedPnL    sdk.Int
+		positionNotional sdk.Int
 	)
+
+	switch priceOption {
+	case types.MarginCalculationPriceOption_MAX_PNL:
+		unrealizedPnL, positionNotional, err = k.getPreferencePositionNotionalAndUnrealizedPnL(
+			ctx,
+			pair,
+			trader,
+			types.PnLPreferenceOption_MAX,
+		)
+	case types.MarginCalculationPriceOption_INDEX:
+		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
+			ctx,
+			pair,
+			trader,
+			types.PnLCalcOption_ORACLE,
+		)
+	case types.MarginCalculationPriceOption_SPOT:
+		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
+			ctx,
+			pair,
+			trader,
+			types.PnLCalcOption_SPOT_PRICE,
+		)
+	}
+
 	if err != nil {
 		return sdk.Int{}, err
 	}
