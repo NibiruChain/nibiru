@@ -45,9 +45,9 @@ func (k Keeper) openPosition(
 		position.Size_.IsNegative() && side == types.Side_SELL:
 		positionResp, err = k.increasePosition(
 			ctx, pair, side, trader,
-			quoteAssetAmount.Mul(leverage),
-			baseAssetAmountLimit,
-			leverage)
+			/* openNotional */ quoteAssetAmount.Mul(leverage),
+			/* minPositionSize */ baseAssetAmountLimit,
+			/* leverage */ leverage)
 		if err != nil {
 			return err
 		}

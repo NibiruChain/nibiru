@@ -71,7 +71,8 @@ func (k Keeper) GetMarginRatio(
 		ctx,
 		/* pair */ pair,
 		/* oldPosition */ position,
-		/* marginDelta */ unrealizedPnL)
+		/* marginDelta */ unrealizedPnL,
+	)
 	if err != nil {
 		return sdk.Int{}, err
 	}
