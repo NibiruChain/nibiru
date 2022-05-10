@@ -94,6 +94,75 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 	}
 }
 
+func TestGetQuoteAmountByBaseAmount(t *testing.T) {
+	tests := []struct {
+		name                string
+		baseAssetReserve    sdk.Int
+		quoteAssetReserve   sdk.Int
+		baseAmount          sdk.Int
+		direction           Direction
+		expectedQuoteAmount sdk.Int
+		expectedErr         error
+	}{
+		{
+			name:                "base amount zero",
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(0),
+			direction:           Direction_ADD_TO_POOL,
+			expectedQuoteAmount: sdk.NewIntFromUint64(0),
+		},
+		{
+			name:                "simple add base to pool",
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(500),
+			direction:           Direction_ADD_TO_POOL,
+			expectedQuoteAmount: sdk.NewIntFromUint64(333), // rounds down to 666
+		},
+		{
+			name:                "simple remove base from pool",
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(500),
+			direction:           Direction_REMOVE_FROM_POOL,
+			expectedQuoteAmount: sdk.NewIntFromUint64(1000),
+		},
+		{
+			name:              "too much base removed results in error",
+			baseAssetReserve:  sdk.NewIntFromUint64(1000),
+			quoteAssetReserve: sdk.NewIntFromUint64(1000),
+			baseAmount:        sdk.NewIntFromUint64(1000),
+			direction:         Direction_REMOVE_FROM_POOL,
+			expectedErr:       ErrBaseReserveAtZero,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			pool := NewPool(
+				/*pair=*/ "BTC:NUSD",
+				/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
+				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
+				/*baseAssetReserve=*/ tc.baseAssetReserve,
+				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
+			)
+
+			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr,
+					"expected error: %w, got: %w", tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				require.EqualValuesf(t, tc.expectedQuoteAmount, amount,
+					"expected quote: %s, got: %s", tc.expectedQuoteAmount.String(), amount.String(),
+				)
+			}
+		})
+	}
+}
+
 func TestIncreaseDecreaseReserves(t *testing.T) {
 	pool := NewPool(
 		"ATOM:NUSD",

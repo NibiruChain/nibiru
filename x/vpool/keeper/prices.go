@@ -62,9 +62,23 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (
 	return currentPrice.Price, nil
 }
 
-func (k Keeper) GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
-	//TODO implement me
-	panic("implement me")
+func (k Keeper) GetOutputPrice(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	dir types.Direction,
+	quoteAmount sdk.Int,
+) (price sdk.Dec, err error) {
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	baseAmountOut, err := pool.GetBaseAmountByQuoteAmount(dir, quoteAmount)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	return quoteAmount.ToDec().Quo(baseAmountOut.ToDec()), nil
 }
 
 func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {

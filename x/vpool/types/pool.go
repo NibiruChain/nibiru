@@ -57,6 +57,53 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 	}
 }
 
+/*
+GetQuoteAmountByBaseAmount returns the amount of quote asset you will get out
+by giving a specified amount of base asset
+
+args:
+  - dir: add to pool or remove from pool
+  - baseAmount: the amount of base asset to add to/remove from the pool
+
+ret:
+  - quoteAmountOut: the amount of quote assets required to make this hypothetical swap
+					always an absolute value
+  - err: error
+*/
+func (p *Pool) GetQuoteAmountByBaseAmount(
+	dir Direction, baseAmount sdk.Int,
+) (quoteAmountOut sdk.Int, err error) {
+	if baseAmount.IsZero() {
+		return sdk.ZeroInt(), nil
+	}
+
+	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve).ToDec() // x * y = k
+
+	var baseAssetsAfter sdk.Dec
+	if dir == Direction_ADD_TO_POOL {
+		baseAssetsAfter = p.BaseAssetReserve.Add(baseAmount).ToDec()
+	} else {
+		baseAssetsAfter = p.BaseAssetReserve.Sub(baseAmount).ToDec()
+	}
+
+	if baseAssetsAfter.LTE(sdk.ZeroDec()) {
+		return sdk.Int{}, ErrBaseReserveAtZero.Wrapf(
+			"base assets below zero after trying to swap %d base assets",
+			baseAmount.Int64(),
+		)
+	}
+
+	quoteAssetsAfter := invariant.Quo(baseAssetsAfter)
+	quoteAssetsTransferred := quoteAssetsAfter.Sub(p.QuoteAssetReserve.ToDec()).Abs()
+
+	// protocol always rounds to more favorable integer
+	if dir == Direction_ADD_TO_POOL {
+		return quoteAssetsTransferred.TruncateInt(), nil
+	} else {
+		return quoteAssetsTransferred.Ceil().TruncateInt(), nil
+	}
+}
+
 // IncreaseBaseAssetReserve increases the quote reserve by amount
 func (p *Pool) IncreaseBaseAssetReserve(amount sdk.Int) {
 	p.BaseAssetReserve = p.BaseAssetReserve.Add(amount)
