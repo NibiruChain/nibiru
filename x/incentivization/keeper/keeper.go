@@ -5,6 +5,7 @@ import (
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
 	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
+	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -96,6 +97,8 @@ func (k Keeper) FundIncentivizationProgram(ctx sdk.Context, id uint64, funder sd
 	if err != nil {
 		panic(err)
 	}
+	// TODO(mercilex): maybe some extra checks on minimum sendable
+	// TODO(mercilex): protect through a deposit of NIBI coins
 
 	// we transfer money from funder to the program escrow address
 	// NOTE(mercilex): can't use send coins from module to account because
@@ -110,8 +113,92 @@ func (k Keeper) FundIncentivizationProgram(ctx sdk.Context, id uint64, funder sd
 
 // Distribute distributes incentivization rewards to accounts
 // that meet incentivization program criteria.
-func (k Keeper) Distribute(ctx sdk.Context) error {
-	panic("impl")
+func (k Keeper) Distribute(ctx sdk.Context) {
+	// TODO(mercilex): this is highly inefficient, better algo needed.
+	state := k.IncentivizationProgramsState(ctx)
+	// iterate over every active program
+	state.IteratePrograms(func(program *types.IncentivizationProgram) (stop bool) {
+		// we get the escrow address balance
+		escrowAddr, err := sdk.AccAddressFromBech32(program.EscrowAddress)
+		if err != nil {
+			panic(err)
+		}
+		// we get the balance
+		balance := k.bk.GetAllBalances(ctx, escrowAddr)
+		// basically this balance needs to be divided by epochs remaining
+		toDistribute := sdk.NewCoins()
+		for i := range balance { // iterate over every coin in balance
+			coin := balance[i]
+			amountToDistribute := coin.Amount.QuoRaw(program.RemainingEpochs) // divide amount by number of epochs remaining
+			coinToDistribute := sdk.NewCoin(coin.Denom, amountToDistribute)   // then add the single coin to the coins to distribute
+			toDistribute = toDistribute.Add(coinToDistribute)
+		}
+		// iterate over every account with locked coins
+		totalLocked := sdk.NewCoins()
+		var coinsByLocker []struct {
+			addr  string
+			coins sdk.Coins
+		}
+		k.lk.LocksByDenomUnlockingAfter(ctx, program.LpDenom, program.MinLockupDuration, func(lock *lockuptypes.Lock) (stop bool) {
+			totalLocked = totalLocked.Add(lock.Coins...) // we add to the total locked coins
+			coinsByLocker = append(coinsByLocker, struct {
+				addr  string
+				coins sdk.Coins
+			}{addr: lock.Owner, coins: lock.Coins})
+			return false
+		})
+
+		// we calculate weights based on amounts
+		for _, lockedCoins := range coinsByLocker {
+			percentageToDistr := calcWeight(totalLocked, lockedCoins.coins)
+			addr, err := sdk.AccAddressFromBech32(lockedCoins.addr)
+			if err != nil {
+				panic(err)
+			}
+			err = k.bk.SendCoins(ctx, escrowAddr, addr, coinsPercentage(toDistribute, percentageToDistr))
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		// update program
+		program.RemainingEpochs -= 1
+		switch program.RemainingEpochs {
+		case 0:
+			// TODO(mercilex): delete program
+		default:
+			// todo(mercilex): update program
+		}
+		return false
+	})
+}
+
+func coinsPercentage(distribute sdk.Coins, percentage sdk.Int) sdk.Coins {
+	// TODO(mercilex): this not right because of precision
+	c := sdk.NewCoins()
+	for _, coin := range distribute {
+		c = c.Add(sdk.NewCoin(coin.Denom, coin.Amount.QuoRaw(100).Mul(percentage)))
+	}
+
+	return c
+}
+
+func calcWeight(total sdk.Coins, owned sdk.Coins) sdk.Int {
+	sumWeights := sdk.ZeroInt()
+	n := int64(0)
+	for _, totalCoin := range total {
+		n++
+		// check if the lock has the denom
+		ownedCoin := owned.AmountOfNoDenomValidation(totalCoin.Denom)
+		if ownedCoin.IsZero() {
+			continue
+		}
+		// totalCoin : 100 = ownedCoin : x
+		weight := ownedCoin.MulRaw(100).Quo(totalCoin.Amount)
+		sumWeights = sumWeights.Add(weight)
+	}
+
+	return sumWeights.QuoRaw(n)
 }
 
 // NewEscrowAccountName returns the escrow module account name
