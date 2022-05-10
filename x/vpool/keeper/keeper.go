@@ -21,7 +21,7 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
-func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -41,7 +41,7 @@ func (k Keeper) CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int
 	panic("implement me")
 }
 
-func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int, limit sdk.Int) (sdk.Int, error) {
+func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int, limit sdk.Int) (sdk.Dec, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -51,12 +51,12 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.
 	panic("implement me")
 }
 
-func (k Keeper) GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Int, error) {
+func (k Keeper) GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Int, error) {
+func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
 	//TODO implement me
 	panic("implement me")
 }
