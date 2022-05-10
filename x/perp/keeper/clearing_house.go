@@ -296,9 +296,9 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	var dir pooltypes.Direction
 	switch isShortPosition {
 	case true:
-		dir = pooltypes.Direction_REMOVE_FROM_AMM
+		dir = pooltypes.Direction_REMOVE_FROM_POOL
 	default:
-		dir = pooltypes.Direction_ADD_TO_AMM
+		dir = pooltypes.Direction_ADD_TO_POOL
 	}
 
 	switch pnlCalcOption {
@@ -514,9 +514,9 @@ func (k Keeper) closePosition(ctx sdk.Context, pair common.TokenPair, trader str
 	var vammDir pooltypes.Direction
 	switch oldPosition.Size_.GTE(sdk.ZeroInt()) {
 	case true:
-		vammDir = pooltypes.Direction_ADD_TO_AMM
+		vammDir = pooltypes.Direction_ADD_TO_POOL
 	case false:
-		vammDir = pooltypes.Direction_REMOVE_FROM_AMM
+		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
 	}
 	positionResp.ExchangedQuoteAssetAmount, err = k.VpoolKeeper.SwapOutput(ctx, pair, vammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
 	if err != nil {
@@ -648,9 +648,9 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 	}
 
 	switch vammDir {
-	case pooltypes.Direction_ADD_TO_AMM:
+	case pooltypes.Direction_ADD_TO_POOL:
 		return outputAmount, nil
-	case pooltypes.Direction_REMOVE_FROM_AMM:
+	case pooltypes.Direction_REMOVE_FROM_POOL:
 		inverseSign := outputAmount.MulRaw(-1)
 		return inverseSign, nil
 	default:
