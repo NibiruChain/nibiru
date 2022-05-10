@@ -22,6 +22,11 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
+func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir perptypes.VirtualPoolDirection, abs sdk.Int, limit sdk.Int) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
 	//TODO implement me
 	panic("implement me")

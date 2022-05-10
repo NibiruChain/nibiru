@@ -442,7 +442,7 @@ func (k Keeper) closeAndOpenReversePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
-	closePositionResp, err := k.closePosition(ctx, amm, pair, trader, sdk.ZeroInt())
+	closePositionResp, err := k.closePosition(ctx, pair, trader, sdk.ZeroInt())
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +484,7 @@ func (k Keeper) closeAndOpenReversePosition(
 }
 
 // TODO test: closePosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, trader string, quoteAssetAmountLimit sdk.Int) (
+func (k Keeper) closePosition(ctx sdk.Context, pair common.TokenPair, trader string, quoteAssetAmountLimit sdk.Int) (
 	positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
@@ -518,7 +518,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair com
 	case false:
 		vammDir = types.VirtualPoolDirection_RemoveFromAMM
 	}
-	positionResp.ExchangedQuoteAssetAmount, err = vamm.SwapOutput(ctx, vammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
+	positionResp.ExchangedQuoteAssetAmount, err = k.VpoolKeeper.SwapOutput(ctx, pair, vammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
 	if err != nil {
 		return nil, err
 	}
