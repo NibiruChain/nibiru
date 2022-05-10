@@ -99,22 +99,6 @@ func (m *MockIVirtualPool) EXPECT() *MockIVirtualPoolMockRecorder {
 	return m.recorder
 }
 
-// CalcFee mocks base method.
-func (m *MockIVirtualPool) CalcFee(quoteAmt sdk.Int) (sdk.Int, sdk.Int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CalcFee", quoteAmt)
-	ret0, _ := ret[0].(sdk.Int)
-	ret1, _ := ret[1].(sdk.Int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// CalcFee indicates an expected call of CalcFee.
-func (mr *MockIVirtualPoolMockRecorder) CalcFee(quoteAmt interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcFee", reflect.TypeOf((*MockIVirtualPool)(nil).CalcFee), quoteAmt)
-}
-
 // GetMaxHoldingBaseAsset mocks base method.
 func (m *MockIVirtualPool) GetMaxHoldingBaseAsset(ctx sdk.Context) (sdk.Int, error) {
 	m.ctrl.T.Helper()

@@ -15,6 +15,11 @@ message Params {
   string maintenance_margin_ratio = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
     (gogoproto.nullable) = false];
+
+  // tollRatio is the ratio transferred to the the fee pool
+  int64 tollRatio = 3;
+  // efFeeRatio is the ratio transferred to the PerpEF.
+  int64 spreadRatio = 4;    
 }
 
 // GenesisState defines the perp  module's genesis state.
