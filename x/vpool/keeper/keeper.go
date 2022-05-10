@@ -22,6 +22,26 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 }
 
+func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+//CalcFee calculates the total tx fee for exchanging 'quoteAmt' of tokens on
+//the exchange.
+//
+//Args:
+//  quoteAmt (sdk.Int):
+//
+//Returns:
+//  toll (sdk.Int): Amount of tokens transferred to the the fee pool.
+//  spread (sdk.Int): Amount of tokens transferred to the PerpEF.
+//
+func (k Keeper) CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir perptypes.VirtualPoolDirection, abs sdk.Int, limit sdk.Int) (sdk.Int, error) {
 	//TODO implement me
 	panic("implement me")

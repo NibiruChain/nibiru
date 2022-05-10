@@ -64,5 +64,7 @@ type VpoolKeeper interface {
 	) (sdk.Int, error)
 	GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir VirtualPoolDirection, abs sdk.Int,
 	) (sdk.Int, error)
+	GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
 	GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
+	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
 }

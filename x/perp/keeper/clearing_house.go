@@ -66,7 +66,7 @@ func (k Keeper) openPosition(
 	k.Positions().Set(ctx, pair, trader, positionResp.Position)
 
 	if !positionExists && !positionResp.Position.Size_.IsZero() {
-		marginRatio, err := k.GetMarginRatio(ctx, vamm, pair, trader)
+		marginRatio, err := k.GetMarginRatio(ctx, pair, trader)
 		if err != nil {
 			return err
 		}
@@ -89,19 +89,19 @@ func (k Keeper) openPosition(
 	case positionResp.MarginToVault.IsPositive():
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), positionResp.MarginToVault)))
+			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault)))
 		if err != nil {
 			return err
 		}
 	case positionResp.MarginToVault.IsNegative():
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.VaultModuleAccount, traderAddr,
-			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), positionResp.MarginToVault.Abs())))
+			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs())))
 		if err != nil {
 			return err
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, traderAddr, vamm, positionResp.ExchangedQuoteAssetAmount)
+	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (k Keeper) openPosition(
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		Trader:                trader,
-		Pair:                  vamm.Pair(),
+		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
@@ -538,10 +538,10 @@ func (k Keeper) closePosition(ctx sdk.Context, pair common.TokenPair, trader str
 
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
-	ctx sdk.Context, trader sdk.AccAddress, vamm types.IVirtualPool,
+	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress,
 	positionNotional sdk.Int,
 ) (sdk.Int, error) {
-	toll, spread, err := vamm.CalcFee(positionNotional)
+	toll, spread, err := k.VpoolKeeper.CalcFee(ctx, pair, positionNotional)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -556,14 +556,14 @@ func (k Keeper) transferFee(
 
 	if hasSpread {
 		err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.PerpEFModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), spread)))
+			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread)))
 		if err != nil {
 			return sdk.Int{}, err
 		}
 	}
 	if hasToll {
 		err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.FeePoolModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(vamm.QuoteTokenDenom(), toll)))
+			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), toll)))
 		if err != nil {
 			return sdk.Int{}, err
 		}
@@ -575,7 +575,6 @@ func (k Keeper) transferFee(
 // TODO test: getPreferencePositionNotionalAndUnrealizedPnL
 func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	vamm types.IVirtualPool,
 	pair common.TokenPair,
 	trader string,
 	pnLPreferenceOption types.PnLPreferenceOption,
