@@ -57,11 +57,7 @@ func (k Keeper) SwapInput(
 	}
 
 	if dir == types.Direction_REMOVE_FROM_POOL {
-		enoughReserve := pool.HasEnoughQuoteReserve(quoteAssetAmount)
-		if err != nil {
-			return sdk.Int{}, err
-		}
-		if !enoughReserve {
+		if !pool.HasEnoughQuoteReserve(quoteAssetAmount) {
 			return sdk.Int{}, types.ErrOvertradingLimit
 		}
 	}
@@ -71,28 +67,32 @@ func (k Keeper) SwapInput(
 		return sdk.Int{}, err
 	}
 
-	if !baseAmountLimit.Equal(sdk.ZeroInt()) {
-		if dir == types.Direction_ADD_TO_POOL {
-			if baseAssetAmount.LT(baseAmountLimit) {
-				return sdk.Int{}, fmt.Errorf(
-					"base amount (%s) is less than selected limit (%s)",
-					baseAssetAmount.String(),
-					baseAmountLimit.String(),
-				)
-			}
-		} else {
-			if baseAssetAmount.GT(baseAmountLimit) {
-				return sdk.Int{}, fmt.Errorf(
-					"base amount (%s) is greater than selected limit (%s)",
-					baseAssetAmount.String(),
-					baseAmountLimit.String(),
-				)
-			}
+	if !baseAmountLimit.IsZero() {
+		// if going long and the base amount retrieved from the pool is less than the limit
+		if dir == types.Direction_ADD_TO_POOL && baseAssetAmount.LT(baseAmountLimit) {
+			return sdk.Int{}, fmt.Errorf(
+				"base amount (%s) is less than selected limit (%s)",
+				baseAssetAmount.String(),
+				baseAmountLimit.String(),
+			)
+			// if going short and the base amount retrieved from the pool is greater than the limit
+		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAssetAmount.GT(baseAmountLimit) {
+			return sdk.Int{}, fmt.Errorf(
+				"base amount (%s) is greater than selected limit (%s)",
+				baseAssetAmount.String(),
+				baseAmountLimit.String(),
+			)
 		}
 	}
 
-	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount, false)
-	if err != nil {
+	if err = k.updateReserve(
+		ctx,
+		pool,
+		dir,
+		quoteAssetAmount,
+		baseAssetAmount,
+		/*skipFluctuationCheck=*/ false,
+	); err != nil {
 		return sdk.Int{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
@@ -108,17 +108,16 @@ func (k Keeper) SwapInput(
 }
 
 // getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (*types.Pool, error) {
-	store := k.getStore(ctx)
-
-	bz := store.Get(types.GetPoolKey(pair))
-	var pool types.Pool
-
-	err := k.codec.Unmarshal(bz, &pool)
-	if err != nil {
-		return nil, err
+func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (
+	*types.Pool, error,
+) {
+	bz := k.getStore(ctx).Get(types.GetPoolKey(pair))
+	if bz == nil {
+		return nil, fmt.Errorf("Could not find vpool for pair %s", pair.String())
 	}
 
+	var pool types.Pool
+	k.codec.MustUnmarshal(bz, &pool)
 	return &pool, nil
 }
 
