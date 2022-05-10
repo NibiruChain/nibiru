@@ -62,12 +62,59 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (
 	return currentPrice.Price, nil
 }
 
+/*
+Returns the amount of quote assets required to achieve a move of baseAmount in a direction.
+e.g. if removing <baseAmount> base assets from the pool, returns the amount of quote assets do so.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the trading token pair
+  - dir: add or remove
+  - baseAmount: the amount of base asset
+
+ret:
+  - quoteAmount: the amount of quote assets required to make the desired swap
+  - err: error
+*/
 func (k Keeper) GetOutputPrice(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
+	baseAmount sdk.Int,
+) (quoteAmount sdk.Dec, err error) {
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	quoteAmountInt, err := pool.GetQuoteAmountByBaseAmount(dir, baseAmount)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	return quoteAmountInt.ToDec(), nil
+}
+
+/*
+Returns the amount of base assets required to achieve a move of quoteAmount in a direction.
+e.g. if removing <quoteAmount> quote assets from the pool, returns the amount of base assets do so.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the trading token pair
+  - dir: add or remove
+  - quoteAmount: the amount of quote asset
+
+ret:
+  - baseAmount: the amount of base assets required to make the desired swap
+  - err: error
+*/
+func (k Keeper) GetInputPrice(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	dir types.Direction,
 	quoteAmount sdk.Int,
-) (price sdk.Dec, err error) {
+) (baseAmount sdk.Dec, err error) {
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
@@ -78,7 +125,7 @@ func (k Keeper) GetOutputPrice(
 		return sdk.ZeroDec(), err
 	}
 
-	return quoteAmount.ToDec().Quo(baseAmountOut.ToDec()), nil
+	return baseAmountOut.ToDec(), nil
 }
 
 func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {

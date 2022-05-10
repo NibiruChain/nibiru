@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -93,6 +94,84 @@ func TestGetSpotPrice(t *testing.T) {
 			price, err := vpoolKeeper.GetSpotPrice(ctx, tc.pair)
 			require.NoError(t, err)
 			require.EqualValues(t, tc.expectedPrice, price)
+		})
+	}
+}
+
+func TestGetOutputPrice(t *testing.T) {
+	tests := []struct {
+		name                string
+		pair                common.TokenPair
+		quoteAssetReserve   sdk.Int
+		baseAssetReserve    sdk.Int
+		baseAmount          sdk.Int
+		direction           types.Direction
+		expectedQuoteAmount sdk.Dec
+		expectedErr         error
+	}{
+		{
+			name:                "zero base asset means zero price",
+			pair:                common.TokenPair("btc:nusd"),
+			quoteAssetReserve:   sdk.NewIntFromUint64(40_000),
+			baseAssetReserve:    sdk.NewIntFromUint64(10_000),
+			baseAmount:          sdk.NewIntFromUint64(0),
+			direction:           types.Direction_ADD_TO_POOL,
+			expectedQuoteAmount: sdk.ZeroDec(),
+		},
+		{
+			name:                "simple add base to pool",
+			pair:                common.TokenPair("btc:nusd"),
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(500),
+			direction:           types.Direction_ADD_TO_POOL,
+			expectedQuoteAmount: sdk.MustNewDecFromStr("333"), // rounds down
+		},
+		{
+			name:                "simple remove base from pool",
+			pair:                common.TokenPair("btc:nusd"),
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(500),
+			direction:           types.Direction_REMOVE_FROM_POOL,
+			expectedQuoteAmount: sdk.MustNewDecFromStr("1000"),
+		},
+		{
+			name:              "too much base removed results in error",
+			pair:              common.TokenPair("btc:nusd"),
+			baseAssetReserve:  sdk.NewIntFromUint64(1000),
+			quoteAssetReserve: sdk.NewIntFromUint64(1000),
+			baseAmount:        sdk.NewIntFromUint64(1000),
+			direction:         types.Direction_REMOVE_FROM_POOL,
+			expectedErr:       types.ErrBaseReserveAtZero,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPriceKeeper(gomock.NewController(t)))
+
+			vpoolKeeper.CreatePool(
+				ctx,
+				tc.pair.String(),
+				/*tradeLimitRatio=*/ sdk.OneDec(),
+				tc.quoteAssetReserve,
+				tc.baseAssetReserve,
+				/*fluctuationLimitRatio=*/ sdk.OneDec(),
+			)
+
+			quoteAmount, err := vpoolKeeper.GetOutputPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr,
+					"expected error: %w, got: %w", tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				require.EqualValuesf(t, tc.expectedQuoteAmount, quoteAmount,
+					"expected quote: %s, got: %s", tc.expectedQuoteAmount.String(), quoteAmount.String(),
+				)
+			}
 		})
 	}
 }
