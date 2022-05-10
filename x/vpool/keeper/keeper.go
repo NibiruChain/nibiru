@@ -3,11 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {
@@ -32,10 +31,6 @@ func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (
 	panic("implement me")
 }
 
-func (k Keeper) getStore(ctx sdk.Context) sdk.KVStore {
-	return ctx.KVStore(k.storeKey)
-}
-
 // SwapInput swaps pair token
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
@@ -57,12 +52,8 @@ func (k Keeper) SwapInput(
 		return sdk.Int{}, err
 	}
 
-	if dir == types.Direction_REMOVE_FROM_AMM {
-		enoughReserve, err := pool.HasEnoughQuoteReserve(quoteAssetAmount)
-		if err != nil {
-			return sdk.Int{}, err
-		}
-		if !enoughReserve {
+	if dir == types.Direction_REMOVE_FROM_POOL {
+		if !pool.HasEnoughQuoteReserve(quoteAssetAmount) {
 			return sdk.Int{}, types.ErrOvertradingLimit
 		}
 	}
@@ -72,36 +63,40 @@ func (k Keeper) SwapInput(
 		return sdk.Int{}, err
 	}
 
-	if !baseAmountLimit.Equal(sdk.ZeroInt()) {
-		if dir == types.Direction_ADD_TO_AMM {
-			if baseAssetAmount.LT(baseAmountLimit) {
-				return sdk.Int{}, fmt.Errorf(
-					"base amount (%s) is less than selected limit (%s)",
-					baseAssetAmount.String(),
-					baseAmountLimit.String(),
-				)
-			}
-		} else {
-			if baseAssetAmount.GT(baseAmountLimit) {
-				return sdk.Int{}, fmt.Errorf(
-					"base amount (%s) is greater than selected limit (%s)",
-					baseAssetAmount.String(),
-					baseAmountLimit.String(),
-				)
-			}
+	if !baseAmountLimit.IsZero() {
+		// if going long and the base amount retrieved from the pool is less than the limit
+		if dir == types.Direction_ADD_TO_POOL && baseAssetAmount.LT(baseAmountLimit) {
+			return sdk.Int{}, fmt.Errorf(
+				"base amount (%s) is less than selected limit (%s)",
+				baseAssetAmount.String(),
+				baseAmountLimit.String(),
+			)
+			// if going short and the base amount retrieved from the pool is greater than the limit
+		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAssetAmount.GT(baseAmountLimit) {
+			return sdk.Int{}, fmt.Errorf(
+				"base amount (%s) is greater than selected limit (%s)",
+				baseAssetAmount.String(),
+				baseAmountLimit.String(),
+			)
 		}
 	}
 
-	err = k.updateReserve(ctx, pool, dir, quoteAssetAmount, baseAssetAmount, false)
-	if err != nil {
+	if err = k.updateReserve(
+		ctx,
+		pool,
+		dir,
+		quoteAssetAmount,
+		baseAssetAmount,
+		/*skipFluctuationCheck=*/ false,
+	); err != nil {
 		return sdk.Int{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventSwapInput,
-			sdk.NewAttribute(types.AttributeToken0Amount, quoteAssetAmount.String()),
-			sdk.NewAttribute(types.AttributeToken1Amount, baseAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
 		),
 	)
 
@@ -109,17 +104,16 @@ func (k Keeper) SwapInput(
 }
 
 // getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (*types.Pool, error) {
-	store := k.getStore(ctx)
-
-	bz := store.Get(types.GetPoolKey(pair))
-	var pool types.Pool
-
-	err := k.codec.Unmarshal(bz, &pool)
-	if err != nil {
-		return nil, err
+func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (
+	*types.Pool, error,
+) {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
+	if bz == nil {
+		return nil, fmt.Errorf("Could not find vpool for pair %s", pair.String())
 	}
 
+	var pool types.Pool
+	k.codec.MustUnmarshal(bz, &pool)
 	return &pool, nil
 }
 
@@ -130,36 +124,27 @@ func (k Keeper) CreatePool(
 	tradeLimitRatio sdk.Dec, // integer with 6 decimals, 1_000_000 means 1.0
 	quoteAssetReserve sdk.Int,
 	baseAssetReserve sdk.Int,
-	fluctuationLimitRation sdk.Dec,
-) error {
-	pool := types.NewPool(pair, tradeLimitRatio, quoteAssetReserve, baseAssetReserve, fluctuationLimitRation)
+	fluctuationLimitRatio sdk.Dec,
+) {
+	pool := types.NewPool(
+		pair,
+		tradeLimitRatio,
+		quoteAssetReserve,
+		baseAssetReserve,
+		fluctuationLimitRatio,
+	)
 
-	err := k.savePool(ctx, pool)
-	if err != nil {
-		return err
-	}
-
-	err = k.saveReserveSnapshot(ctx, 0, pool)
-	if err != nil {
-		return fmt.Errorf("error saving snapshot on pool creation: %w", err)
-	}
-
-	return nil
+	k.savePool(ctx, pool)
+	k.saveSnapshot(ctx, pool, 0)
+	k.saveSnapshotCounter(ctx, common.TokenPair(pair), 0)
 }
 
 func (k Keeper) savePool(
 	ctx sdk.Context,
 	pool *types.Pool,
-) error {
-	store := ctx.KVStore(k.storeKey)
-	bz, err := k.codec.Marshal(pool)
-	if err != nil {
-		return err
-	}
-
-	store.Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
-
-	return nil
+) {
+	bz := k.codec.MustMarshal(pool)
+	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
 }
 
 func (k Keeper) updateReserve(
@@ -170,15 +155,15 @@ func (k Keeper) updateReserve(
 	baseAssetAmount sdk.Int,
 	skipFluctuationCheck bool,
 ) error {
-	if dir == types.Direction_ADD_TO_AMM {
-		pool.IncreaseToken0Reserve(quoteAssetAmount)
-		pool.DecreaseToken1Reserve(baseAssetAmount)
+	if dir == types.Direction_ADD_TO_POOL {
+		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.DecreaseBaseAssetReserve(baseAssetAmount)
 		// TODO baseAssetDeltaThisFunding
 		// TODO totalPositionSize
 		// TODO cumulativeNotional
 	} else {
-		pool.DecreaseToken0Reserve(quoteAssetAmount)
-		pool.IncreaseToken1Reserve(baseAssetAmount)
+		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.IncreaseBaseAssetReserve(baseAssetAmount)
 		// TODO baseAssetDeltaThisFunding
 		// TODO totalPositionSize
 		// TODO cumulativeNotional
@@ -197,29 +182,25 @@ func (k Keeper) updateReserve(
 		return fmt.Errorf("error creating snapshot: %w", err)
 	}
 
-	return k.savePool(ctx, pool)
+	k.savePool(ctx, pool)
+
+	return nil
 }
 
 // existsPool returns true if pool exists, false if not.
 func (k Keeper) existsPool(ctx sdk.Context, pair common.TokenPair) bool {
-	store := k.getStore(ctx)
-	return store.Has(types.GetPoolKey(pair))
+	return ctx.KVStore(k.storeKey).Has(types.GetPoolKey(pair))
 }
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
-	fluctuationLimitRatio, err := sdk.NewDecFromStr(pool.FluctuationLimitRatio)
-	if err != nil {
-		return fmt.Errorf("error getting fluctuation limit ratio for pool: %s", pool.Pair)
-	}
-
-	if fluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		latestSnapshot, counter, err := k.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
+	if pool.FluctuationLimitRatio.GT(sdk.ZeroDec()) {
+		latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 		if err != nil {
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}
 
-		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 1 {
-			latestSnapshot, err = k.getSnapshotByCounter(ctx, counter-1)
+		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 0 {
+			latestSnapshot, err = k.getSnapshot(ctx, common.TokenPair(pool.Pair), counter-1)
 			if err != nil {
 				return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
 			}
@@ -234,16 +215,11 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 }
 
 func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
-	fluctuationLimitRatio, _ := sdk.NewDecFromStr(pool.FluctuationLimitRatio)
-	quoteAssetReserve, _ := pool.GetPoolToken0ReserveAsInt()
-	baseAssetReserve, _ := pool.GetPoolToken1ReserveAsInt()
-	price := quoteAssetReserve.ToDec().Quo(baseAssetReserve.ToDec())
+	price := pool.QuoteAssetReserve.ToDec().Quo(pool.BaseAssetReserve.ToDec())
 
-	snapshotQuote, _ := sdk.NewDecFromStr(snapshot.Token0Reserve)
-	snapshotBase, _ := sdk.NewDecFromStr(snapshot.Token1Reserve)
-	lastPrice := snapshotQuote.Quo(snapshotBase)
-	upperLimit := lastPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
-	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+	lastPrice := snapshot.QuoteAssetReserve.ToDec().Quo(snapshot.BaseAssetReserve.ToDec())
+	upperLimit := lastPrice.Mul(sdk.OneDec().Add(pool.FluctuationLimitRatio))
+	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(pool.FluctuationLimitRatio))
 
 	if price.GT(upperLimit) || price.LT(lowerLimit) {
 		return true
