@@ -44,7 +44,7 @@ func (k Keeper) openPosition(
 		position.Size_.IsPositive() && side == types.Side_BUY,
 		position.Size_.IsNegative() && side == types.Side_SELL:
 		positionResp, err = k.increasePosition(
-			ctx, vamm, pair, side, trader,
+			ctx, pair, side, trader,
 			quoteAssetAmount.Mul(leverage),
 			baseAssetAmountLimit,
 			leverage)
@@ -130,7 +130,7 @@ func (k Keeper) openPosition(
 
 // TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
+	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
 	positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
@@ -465,7 +465,7 @@ func (k Keeper) closeAndOpenReversePosition(
 
 		var increasePositionResp *types.PositionResp
 		increasePositionResp, err = k.increasePosition(
-			ctx, amm, pair, side, trader, openNotional, updatedBaseAssetAmountLimit, leverage)
+			ctx, pair, side, trader, openNotional, updatedBaseAssetAmountLimit, leverage)
 		if err != nil {
 			return nil, err
 		}
