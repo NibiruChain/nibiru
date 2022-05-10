@@ -71,14 +71,29 @@ func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (
 	panic("implement me")
 }
 
-// SwapInput swaps pair token
+/*
+SwapInput trades quoteAssets in exchange for baseAssets.
+The "input" asset here refers to quoteAsset, which is usually a stablecoin like NUSD.
+The base asset is a crypto asset like BTC or ETH.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: a token pair like BTC:NUSD
+  - dir: either add or remove from pool
+  - quoteAssetAmount: the amount of quote asset being traded
+  - baseAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
+
+ret:
+  - baseAssetAmount: the amount of base asset traded from the pool
+  - err: error
+*/
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
-) (sdk.Int, error) {
+) (baseAssetAmount sdk.Int, err error) {
 	if !k.existsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
 	}
@@ -98,7 +113,7 @@ func (k Keeper) SwapInput(
 		}
 	}
 
-	baseAssetAmount, err := pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
+	baseAssetAmount, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -142,8 +157,6 @@ func (k Keeper) SwapInput(
 
 	return baseAssetAmount, nil
 }
-
-
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
 	if pool.FluctuationLimitRatio.GT(sdk.ZeroDec()) {
