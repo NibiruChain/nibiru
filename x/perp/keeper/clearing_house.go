@@ -55,7 +55,7 @@ func (k Keeper) openPosition(
 	// everything else decreases the position
 	default:
 		positionResp, err = k.openReversePosition(
-			ctx, vamm, pair, side, trader,
+			ctx, pair, side, trader,
 			quoteAssetAmount, leverage, baseAssetAmountLimit, false)
 		if err != nil {
 			return err
@@ -336,7 +336,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openReversePosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
+	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
@@ -367,7 +367,7 @@ func (k Keeper) openReversePosition(
 		)
 	// close and reverse
 	default:
-		return k.closeAndOpenReversePosition(ctx, vamm, pair, side, trader, quoteAssetAmount, leverage, baseAssetAmountLimit)
+		return k.closeAndOpenReversePosition(ctx, pair, side, trader, quoteAssetAmount, leverage, baseAssetAmountLimit)
 	}
 }
 
@@ -437,7 +437,7 @@ func (k Keeper) reducePosition(
 
 // TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) closeAndOpenReversePosition(
-	ctx sdk.Context, amm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
+	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
