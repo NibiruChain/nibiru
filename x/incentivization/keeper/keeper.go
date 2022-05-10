@@ -173,18 +173,18 @@ func (k Keeper) Distribute(ctx sdk.Context) {
 	})
 }
 
-func coinsPercentage(distribute sdk.Coins, percentage sdk.Int) sdk.Coins {
-	// TODO(mercilex): this not right because of precision
+func coinsPercentage(distribute sdk.Coins, percentage sdk.Dec) sdk.Coins {
 	c := sdk.NewCoins()
 	for _, coin := range distribute {
-		c = c.Add(sdk.NewCoin(coin.Denom, coin.Amount.QuoRaw(100).Mul(percentage)))
+		distr := sdk.NewDecFromInt(coin.Amount).Mul(percentage).QuoInt64(100)
+		c = c.Add(sdk.NewCoin(coin.Denom, distr.RoundInt()))
 	}
 
 	return c
 }
 
-func calcWeight(total sdk.Coins, owned sdk.Coins) sdk.Int {
-	sumWeights := sdk.ZeroInt()
+func calcWeight(total sdk.Coins, owned sdk.Coins) sdk.Dec {
+	sumWeights := sdk.ZeroDec()
 	n := int64(0)
 	for _, totalCoin := range total {
 		n++
@@ -194,11 +194,11 @@ func calcWeight(total sdk.Coins, owned sdk.Coins) sdk.Int {
 			continue
 		}
 		// totalCoin : 100 = ownedCoin : x
-		weight := ownedCoin.MulRaw(100).Quo(totalCoin.Amount)
+		weight := sdk.NewDecFromInt(ownedCoin).Quo(sdk.NewDecFromInt(totalCoin.Amount)).MulInt64(100)
 		sumWeights = sumWeights.Add(weight)
 	}
 
-	return sumWeights.QuoRaw(n)
+	return sumWeights.QuoInt64(n)
 }
 
 // NewEscrowAccountName returns the escrow module account name
