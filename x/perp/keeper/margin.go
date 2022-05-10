@@ -8,7 +8,8 @@ import (
 )
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, trader string) (sdk.Int, error) {
+func (k Keeper) GetMarginRatio(
+	ctx sdk.Context, amm types.IVirtualPool, trader string, priceOption types.MarginCalculationPriceOption) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, amm.Pair(), trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
@@ -18,7 +19,17 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, amm types.IVirtualPool, trader s
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
 
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, types.PnLPreferenceOption_MAX)
+	var (
+		unrealizedPnL    sdk.Int
+		positionNotional sdk.Int
+	)
+
+	if priceOption == types.MarginCalculationPriceOption_SPOT {
+		unrealizedPnL, positionNotional, err = k.getPreferencePositionNotionalAndUnrealizedPnL(ctx, amm, trader, types.PnLPreferenceOption_MAX)
+	} else if priceOption == types.MarginCalculationPriceOption_INDEX {
+		unrealizedPnL, positionNotional, err = k.getPositionNotionalAndUnrealizedPnL(ctx, amm, trader, types.PnLCalcOption_ORACLE)
+	}
+
 	if err != nil {
 		return sdk.Int{}, err
 	}

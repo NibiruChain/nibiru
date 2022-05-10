@@ -102,6 +102,11 @@ enum PnLPreferenceOption {
   MIN = 1;
 }
 
+enum MarginCalculationPriceOption {
+  SPOT = 0;
+  INDEX = 1;
+}
+
 message PairMetadata {
   string pair = 1;
   string open_interest_notional = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
