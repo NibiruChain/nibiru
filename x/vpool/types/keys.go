@@ -21,7 +21,7 @@ var (
 	PoolReserveSnapshots       = []byte{0x02}
 )
 
-// PoolKey returns pool key for KVStore
+// GetPoolKey returns pool key for KVStore
 func GetPoolKey(pair common.TokenPair) []byte {
 	return append(PoolKey, []byte(pair)...)
 }
