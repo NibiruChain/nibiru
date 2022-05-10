@@ -90,11 +90,11 @@ func NewTokenPairFromStr(pair string) (TokenPair, error) {
 	return TokenPair(pair), nil
 }
 
-func (p TokenPair) GetBaseToken() string {
+func (p TokenPair) GetBaseTokenDenom() string {
 	return strings.Split(string(p), ":")[0]
 }
 
-func (p TokenPair) GetQuoteToken() string {
+func (p TokenPair) GetQuoteTokenDenom() string {
 	return strings.Split(string(p), ":")[1]
 }
 
