@@ -3,11 +3,13 @@ package keeper
 import (
 	"testing"
 
-	ammtypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	types2 "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
@@ -15,36 +17,34 @@ import (
 
 const NUSDPair = "BTC:NUSD"
 
-func AmmKeeper(t *testing.T) (Keeper, sdktypes.Context) {
-	storeKey := sdktypes.NewKVStoreKey(ammtypes.StoreKey)
+func VpoolKeeper(t *testing.T) (Keeper, sdk.Context) {
+	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 
 	db := tmdb.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, sdktypes.StoreTypeIAVL, db)
-
+	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
-	registry := types2.NewInterfaceRegistry()
-
 	k := NewKeeper(
-		codec.NewProtoCodec(registry),
+		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
 		storeKey,
+		mock.NewMockPriceKeeper(gomock.NewController(t)),
 	)
 
-	ctx := sdktypes.NewContext(stateStore, tmproto.Header{}, false, nil)
+	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, nil)
 
 	return k, ctx
 }
 
-func getSamplePool() *ammtypes.Pool {
-	ratioLimit, _ := sdktypes.NewDecFromStr("0.9")
-	fluctuationLimit, _ := sdktypes.NewDecFromStr("0.1")
+func getSamplePool() *types.Pool {
+	ratioLimit, _ := sdk.NewDecFromStr("0.9")
+	fluctuationLimit, _ := sdk.NewDecFromStr("0.1")
 
-	pool := ammtypes.NewPool(
+	pool := types.NewPool(
 		NUSDPair,
 		ratioLimit,
-		sdktypes.NewInt(10_000_000),
-		sdktypes.NewInt(5_000_000),
+		sdk.NewInt(10_000_000),
+		sdk.NewInt(5_000_000),
 		fluctuationLimit,
 	)
 

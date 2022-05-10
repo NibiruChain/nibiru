@@ -11,7 +11,7 @@ import (
 )
 
 func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
-	ammKeeper, ctx := AmmKeeper(t)
+	ammKeeper, ctx := VpoolKeeper(t)
 
 	err := ammKeeper.addReserveSnapshot(ctx, getSamplePool())
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
@@ -32,7 +32,7 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 		BlockNumber:       int64(expectedBlockHeight),
 	}
 
-	ammKeeper, ctx := AmmKeeper(t)
+	ammKeeper, ctx := VpoolKeeper(t)
 	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight)).WithBlockTime(expectedTime)
 	ammKeeper.saveSnapshot(ctx, pool, 0)
 	ammKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
@@ -44,7 +44,7 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 }
 
 func TestNewKeeper_getSnapshot(t *testing.T) {
-	ammKeeper, ctx := AmmKeeper(t)
+	ammKeeper, ctx := VpoolKeeper(t)
 	expectedHeight := int64(123)
 	expectedTime := time.Now()
 

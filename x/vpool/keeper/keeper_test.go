@@ -64,7 +64,7 @@ func TestSwapInput_Errors(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, ctx := AmmKeeper(t)
+			keeper, ctx := VpoolKeeper(t)
 
 			keeper.CreatePool(
 				ctx,
@@ -129,7 +129,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, ctx := AmmKeeper(t)
+			keeper, ctx := VpoolKeeper(t)
 
 			keeper.CreatePool(
 				ctx,
@@ -159,7 +159,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 }
 
 func TestCreatePool(t *testing.T) {
-	ammKeeper, ctx := AmmKeeper(t)
+	ammKeeper, ctx := VpoolKeeper(t)
 
 	ammKeeper.CreatePool(
 		ctx,

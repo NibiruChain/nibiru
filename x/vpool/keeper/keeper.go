@@ -9,16 +9,22 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {
+func NewKeeper(
+	codec codec.BinaryCodec,
+	storeKey sdk.StoreKey,
+	pricefeedKeeper types.PricefeedKeeper,
+) Keeper {
 	return Keeper{
-		codec:    codec,
-		storeKey: storeKey,
+		codec:           codec,
+		storeKey:        storeKey,
+		pricefeedKeeper: pricefeedKeeper,
 	}
 }
 
 type Keeper struct {
-	codec    codec.BinaryCodec
-	storeKey sdk.StoreKey
+	codec           codec.BinaryCodec
+	storeKey        sdk.StoreKey
+	pricefeedKeeper types.PricefeedKeeper
 }
 
 func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
@@ -46,7 +52,12 @@ func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Dir
 	panic("implement me")
 }
 
-func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
+/*
+Retrieves the underlying asset's oracle price from PricefeedKeeper.
+*/
+func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (
+	price sdk.Dec, err error,
+) {
 	//TODO implement me
 	panic("implement me")
 }
