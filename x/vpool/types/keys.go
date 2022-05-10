@@ -7,7 +7,7 @@ import (
 
 const (
 	ModuleName = "vpool"
-	StoreKey   = "vammkey"
+	StoreKey   = "vpoolkey"
 )
 
 /*
@@ -21,17 +21,17 @@ var (
 	PoolReserveSnapshots       = []byte{0x02}
 )
 
-// GetPoolKey returns pool key for KVStore
+// PoolKey returns pool key for KVStore
 func GetPoolKey(pair common.TokenPair) []byte {
 	return append(PoolKey, []byte(pair)...)
 }
 
-// GetPoolReserveSnapshotCounter returns the KVStore for the Snapshot Pool counters.
-func GetPoolReserveSnapshotCounter(pair common.TokenPair) []byte {
+// GetSnapshotCounterKey returns the KVStore for the Snapshot Pool counters.
+func GetSnapshotCounterKey(pair common.TokenPair) []byte {
 	return append(PoolReserveSnapshotCounter, []byte(pair)...)
 }
 
-// GetPoolReserveSnapshotKey returns the KVStore for the pool reserve snapshots.
-func GetPoolReserveSnapshotKey(counter int64) []byte {
-	return append(PoolReserveSnapshots, sdk.Uint64ToBigEndian(uint64(counter))...)
+// GetSnapshotKey returns the KVStore for the pool reserve snapshots.
+func GetSnapshotKey(counter uint64) []byte {
+	return append(PoolReserveSnapshots, sdk.Uint64ToBigEndian(counter)...)
 }
