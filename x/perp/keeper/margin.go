@@ -128,10 +128,12 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	}
 
 	signedRemainMargin := marginDelta.Sub(fundingPayment).Add(oldPosition.Margin)
-	switch signedRemainMargin.IsNegative() {
-	case true:
+
+	if signedRemainMargin.IsNegative() {
+		// the remaining margin is negative, liquidators didn't do their job
+		// and we have negative margin that must come out of the ecosystem fund
 		badDebt = signedRemainMargin.Abs()
-	case false:
+	} else {
 		badDebt = sdk.ZeroInt()
 		remainMargin = signedRemainMargin.Abs()
 	}
