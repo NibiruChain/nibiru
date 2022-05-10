@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -20,6 +20,21 @@ func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {
 type Keeper struct {
 	codec    codec.BinaryCodec
 	storeKey sdk.StoreKey
+}
+
+func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (k Keeper) GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir perptypes.VirtualPoolDirection, abs sdk.Int) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir perptypes.VirtualPoolDirection, abs sdk.Int) (sdk.Int, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (k Keeper) GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {

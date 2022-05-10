@@ -178,7 +178,6 @@ func (k Keeper) increasePosition(
 
 	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		vamm,
 		pair,
 		trader,
 		types.PnLCalcOption_SPOT_PRICE,
@@ -279,7 +278,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, pair common.
 
 // TODO test: getPositionNotionalAndUnrealizedPnL | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair,
+	ctx sdk.Context, pair common.TokenPair,
 	trader string, pnlCalcOption types.PnLCalcOption,
 ) (
 	positionNotional, unrealizedPnL sdk.Int, err error) {
@@ -304,17 +303,17 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		positionNotional, err = vamm.GetOutputTWAP(ctx, dir, positionSizeAbs)
+		positionNotional, err = k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
 			return
 		}
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotional, err = vamm.GetOutputPrice(ctx, dir, positionSizeAbs)
+		positionNotional, err = k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
 			return
 		}
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err2 := vamm.GetUnderlyingPrice(ctx)
+		oraclePrice, err2 := k.VpoolKeeper.GetUnderlyingPrice(ctx, pair)
 		if err2 != nil {
 			err = err2
 			return
@@ -344,7 +343,6 @@ func (k Keeper) openReversePosition(
 	openNotional := quoteAssetAmount.Mul(leverage)
 	oldPositionNotional, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		vamm,
 		pair,
 		trader,
 		types.PnLCalcOption_SPOT_PRICE,
@@ -498,7 +496,7 @@ func (k Keeper) closePosition(ctx sdk.Context, vamm types.IVirtualPool, pair com
 	if oldPosition.Size_.IsZero() {
 		return nil, fmt.Errorf("zero position size")
 	}
-	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vamm, pair, trader, types.PnLCalcOption_SPOT_PRICE)
+	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(ctx, pair, trader, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -586,7 +584,6 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		vamm,
 		pair,
 		trader,
 		types.PnLCalcOption_SPOT_PRICE,
@@ -597,7 +594,6 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 
 	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		vamm,
 		pair,
 		trader,
 		types.PnLCalcOption_TWAP,
