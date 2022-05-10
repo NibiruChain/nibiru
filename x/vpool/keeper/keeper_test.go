@@ -66,7 +66,7 @@ func TestSwapInput_Errors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			keeper, ctx := AmmKeeper(t)
 
-			err := keeper.CreatePool(
+			keeper.CreatePool(
 				ctx,
 				NUSDPair,
 				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
@@ -74,9 +74,8 @@ func TestSwapInput_Errors(t *testing.T) {
 				sdk.NewInt(5_000_000),        // 5
 				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
 			)
-			require.NoError(t, err)
 
-			_, err = keeper.SwapInput(
+			_, err := keeper.SwapInput(
 				ctx,
 				tc.pair,
 				tc.direction,
@@ -132,7 +131,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			keeper, ctx := AmmKeeper(t)
 
-			err := keeper.CreatePool(
+			keeper.CreatePool(
 				ctx,
 				NUSDPair,
 				sdk.MustNewDecFromStr("0.9"),  // 0.9 ratio
@@ -140,7 +139,6 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				sdk.NewInt(5_000_000),         // 5 tokens
 				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
-			require.NoError(t, err)
 
 			res, err := keeper.SwapInput(
 				ctx,
@@ -163,7 +161,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 func TestCreatePool(t *testing.T) {
 	ammKeeper, ctx := AmmKeeper(t)
 
-	err := ammKeeper.CreatePool(
+	ammKeeper.CreatePool(
 		ctx,
 		NUSDPair,
 		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
@@ -171,7 +169,6 @@ func TestCreatePool(t *testing.T) {
 		sdk.NewInt(5_000_000),        // 5 tokens
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 	)
-	require.NoError(t, err)
 
 	exists := ammKeeper.existsPool(ctx, NUSDPair)
 	require.True(t, exists)

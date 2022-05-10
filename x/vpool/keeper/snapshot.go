@@ -10,22 +10,17 @@ import (
 
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
 func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
-	blockNumber := ctx.BlockHeight()
-	lastSnapshot, lastCounter, err := k.getLastReserveSnapshot(ctx, common.TokenPair(pool.Pair))
+	lastSnapshot, lastCounter, err := k.getLatestReserveSnapshot(ctx, common.TokenPair(pool.Pair))
 	if err != nil {
 		return err
 	}
 
-	if blockNumber == lastSnapshot.BlockNumber {
-		err = k.updateSnapshot(ctx, lastCounter, pool)
-		if err != nil {
-			return fmt.Errorf("error updating snapshot: %w", err)
-		}
+	if ctx.BlockHeight() == lastSnapshot.BlockNumber {
+		k.saveSnapshot(ctx, pool, lastCounter)
 	} else {
-		err = k.saveReserveSnapshot(ctx, lastCounter, pool)
-		if err != nil {
-			return fmt.Errorf("error saving snapshot: %w", err)
-		}
+		newCounter := lastCounter + 1
+		k.saveSnapshot(ctx, pool, newCounter)
+		k.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), newCounter)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -40,98 +35,75 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	return nil
 }
 
-// saveReserveSnapshot saves reserve snapshot and increments counter
-func (k Keeper) saveReserveSnapshot(ctx sdk.Context, lastCounter int64, pool *types.Pool) error {
-	counter := lastCounter + 1
-
-	err := k.saveSnapshotInStore(ctx, pool, counter)
-	if err != nil {
-		return err
-	}
-
-	k.updateSnapshotCounter(ctx, common.TokenPair(pool.Pair), counter)
-
-	return nil
-}
-
-// updateSnapshot saves the snapshot but does not increase the counter
-func (k Keeper) updateSnapshot(ctx sdk.Context, counter int64, pool *types.Pool) error {
-	err := k.saveSnapshotInStore(ctx, pool, counter)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (k Keeper) saveSnapshotInStore(ctx sdk.Context, pool *types.Pool, counter int64) error {
+func (k Keeper) saveSnapshot(
+	ctx sdk.Context,
+	pool *types.Pool,
+	counter uint64,
+) {
 	snapshot := &types.ReserveSnapshot{
-		Token0Reserve: pool.BaseAssetReserve.String(),
-		Token1Reserve: pool.QuoteAssetReserve.String(),
-		Timestamp:     ctx.BlockTime().Unix(),
-		BlockNumber:   ctx.BlockHeight(),
+		BaseAssetReserve:  pool.BaseAssetReserve,
+		QuoteAssetReserve: pool.QuoteAssetReserve,
+		Timestamp:         ctx.BlockTime().Unix(),
+		BlockNumber:       ctx.BlockHeight(),
 	}
-	bz, err := k.codec.Marshal(snapshot)
-	if err != nil {
-		return err
-	}
-
-	store := k.getStore(ctx)
-	store.Set(types.GetPoolReserveSnapshotKey(counter), bz)
-
-	return nil
+	bz := k.codec.MustMarshal(snapshot)
+	ctx.KVStore(k.storeKey).Set(
+		types.GetSnapshotKey(common.TokenPair(pool.Pair), counter),
+		bz,
+	)
 }
 
 // getSnapshotCounter returns the counter and if it has been found or not.
-func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair common.TokenPair) (int64, bool) {
-	store := k.getStore(ctx)
-
-	bz := store.
-		Get(types.GetPoolReserveSnapshotCounter(pair))
+func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair common.TokenPair) (
+	snapshotCounter uint64, found bool,
+) {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotCounterKey(pair))
 	if bz == nil {
-		return 0, false
+		return uint64(0), false
 	}
 
-	sc := sdk.BigEndianToUint64(bz)
-
-	return int64(sc), true
+	return sdk.BigEndianToUint64(bz), true
 }
 
-func (k Keeper) updateSnapshotCounter(ctx sdk.Context, pair common.TokenPair, counter int64) {
-	store := k.getStore(ctx)
-
-	store.Set(types.GetPoolReserveSnapshotCounter(pair), sdk.Uint64ToBigEndian(uint64(counter)))
+func (k Keeper) saveSnapshotCounter(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	counter uint64,
+) {
+	ctx.KVStore(k.storeKey).Set(
+		types.GetSnapshotCounterKey(pair),
+		sdk.Uint64ToBigEndian(counter),
+	)
 }
 
-// getLastReserveSnapshot returns the last snapshot that was saved
-func (k Keeper) getLastReserveSnapshot(ctx sdk.Context, pair common.TokenPair) (types.ReserveSnapshot, int64, error) {
+// getLatestReserveSnapshot returns the last snapshot that was saved
+func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.TokenPair) (
+	snapshot types.ReserveSnapshot, counter uint64, err error,
+) {
 	counter, found := k.getSnapshotCounter(ctx, pair)
 	if !found {
 		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
 	}
 
-	snapshot, err := k.getSnapshotByCounter(ctx, counter)
+	snapshot, err = k.getSnapshot(ctx, pair, counter)
 	if err != nil {
 		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
 	}
 
-	return snapshot, counter, err
+	return snapshot, counter, nil
 }
 
-// getSnapshotByCounter returns the snapshot saved by counter num
-func (k Keeper) getSnapshotByCounter(ctx sdk.Context, counter int64) (types.ReserveSnapshot, error) {
-	store := k.getStore(ctx)
-	bz := store.Get(types.GetPoolReserveSnapshotKey(counter))
+// getSnapshot returns the snapshot saved by counter num
+func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint64) (
+	snapshot types.ReserveSnapshot, err error,
+) {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, counter))
 	if bz == nil {
 		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
 			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))
 	}
 
-	var snapshot types.ReserveSnapshot
-	err := k.codec.Unmarshal(bz, &snapshot)
-	if err != nil {
-		return types.ReserveSnapshot{}, fmt.Errorf("problem decoding snapshot")
-	}
+	k.codec.MustUnmarshal(bz, &snapshot)
 
 	return snapshot, nil
 }

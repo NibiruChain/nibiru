@@ -12,11 +12,20 @@ enum Direction {
   REMOVE_FROM_POOL = 1;
 }
 
+// a snapshot of the vpool's reserves at a given point in time
 message ReserveSnapshot {
- string token0_reserve = 1;
- string token1_reserve = 2;
- int64 timestamp = 3;
- int64 block_number = 4;
+  string base_asset_reserve = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+
+  // quote asset is usually the margin asset, e.g. NUSD
+  string quote_asset_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
+
+  // seconds since unix epoch
+  int64 timestamp = 3;
+  int64 block_number = 4;
 }
 
 // A virtual pool used only for price discovery of perpetual futures contracts.
