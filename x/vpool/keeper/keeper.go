@@ -99,8 +99,8 @@ func (k Keeper) SwapInput(
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventSwapInput,
-			sdk.NewAttribute(types.AttributeToken0Amount, quoteAssetAmount.String()),
-			sdk.NewAttribute(types.AttributeToken1Amount, baseAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
+			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
 		),
 	)
 
