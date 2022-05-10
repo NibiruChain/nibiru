@@ -356,7 +356,6 @@ func (k Keeper) openReversePosition(
 	case true:
 		return k.reducePosition(
 			ctx,
-			vamm,
 			pair,
 			side,
 			trader,
@@ -374,7 +373,7 @@ func (k Keeper) openReversePosition(
 
 // TODO test: reducePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) reducePosition(
-	ctx sdk.Context, vamm types.IVirtualPool, pair common.TokenPair, side types.Side, trader string,
+	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
@@ -425,7 +424,7 @@ func (k Keeper) reducePosition(
 
 	positionResp.Position = &types.Position{
 		Address:                             trader,
-		Pair:                                vamm.Pair(),
+		Pair:                                pair.String(),
 		Size_:                               oldPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remainMargin,
 		OpenNotional:                        remainOpenNotional.Abs(),
