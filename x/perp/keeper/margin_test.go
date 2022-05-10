@@ -52,7 +52,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 				marginDelta := sdk.OneInt()
-				_, _, _, _, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
+				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, vpool, &types.Position{}, marginDelta)
 				require.Error(t, err)
 				require.ErrorContains(t, err, fmt.Errorf("not found").Error())

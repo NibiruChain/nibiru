@@ -45,7 +45,9 @@ func (k Keeper) AddMargin(
 }
 
 // TODO test: GetMarginRatio
-func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader string) (sdk.Int, error) {
+func (k Keeper) GetMarginRatio(
+	ctx sdk.Context, pair common.TokenPair, trader string,
+) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
 		return sdk.Int{}, err
@@ -65,7 +67,7 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader st
 		return sdk.Int{}, err
 	}
 
-	remainMargin, badDebt, _, _, err := k.CalcRemainMarginWithFundingPayment(
+	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
 		/* pair */ pair,
 		/* oldPosition */ position,
@@ -74,7 +76,8 @@ func (k Keeper) GetMarginRatio(ctx sdk.Context, pair common.TokenPair, trader st
 		return sdk.Int{}, err
 	}
 
-	return remainMargin.Sub(badDebt).Quo(positionNotional), nil
+	marginRatio := remaining.margin.Sub(remaining.badDebt).Quo(positionNotional)
+	return marginRatio, err
 }
 
 // TODO test: requireMoreMarginRatio
@@ -95,33 +98,53 @@ func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEq
 	return nil
 }
 
+type Remaining struct {
+	// margin sdk.Int: amount of quote token (y) backing the position.
+	margin sdk.Int
+
+	/* badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
+	   Bad debt is negative net margin past the liquidation point of a position. */
+	badDebt sdk.Int
+
+	/* fundingPayment sdk.Dec: A funding payment made or received by the trader on
+	    the current position. 'fundingPayment' is positive if 'owner' is the sender
+		and negative if 'owner' is the receiver of the payment. Its magnitude is
+		abs(vSize * fundingRate). Funding payments act to converge the mark price
+		(vPrice) and index price (average price on major exchanges). */
+	fPayment sdk.Int
+
+	/* latestCPF: latest cumulative premium fraction */
+	latestCPF sdk.Int
+}
+
 // TODO test: CalcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context, pair common.TokenPair,
 	oldPosition *types.Position, marginDelta sdk.Int,
-) (remainMargin sdk.Int, badDebt sdk.Int, fundingPayment sdk.Int,
-	latestCumulativePremiumFraction sdk.Int, err error) {
-	latestCumulativePremiumFraction, err = k.GetLatestCumulativePremiumFraction(ctx, pair)
+) (remaining Remaining, err error,
+) {
+
+	remaining.latestCPF, err = k.GetLatestCumulativePremiumFraction(ctx, pair)
 	if err != nil {
 		return
 	}
 
 	if !oldPosition.Size_.IsZero() { // TODO(mercilex): what if this does evaluate to false?
-		fundingPayment = latestCumulativePremiumFraction.
+		remaining.fPayment = remaining.latestCPF.
 			Sub(oldPosition.LastUpdateCumulativePremiumFraction).
 			Mul(oldPosition.Size_)
 	}
 
-	signedRemainMargin := marginDelta.Sub(fundingPayment).Add(oldPosition.Margin)
+	signedRemainMargin := marginDelta.Sub(remaining.fPayment).Add(oldPosition.Margin)
 
 	if signedRemainMargin.IsNegative() {
 		// the remaining margin is negative, liquidators didn't do their job
 		// and we have negative margin that must come out of the ecosystem fund
-		badDebt = signedRemainMargin.Abs()
+		remaining.badDebt = signedRemainMargin.Abs()
 	} else {
-		badDebt = sdk.ZeroInt()
-		remainMargin = signedRemainMargin.Abs()
+		remaining.badDebt = sdk.ZeroInt()
+		remaining.margin = signedRemainMargin.Abs()
 	}
 
-	return
+	return remaining, err
 }

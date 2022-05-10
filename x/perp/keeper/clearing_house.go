@@ -166,7 +166,7 @@ func (k Keeper) increasePosition(
 
 	increaseMarginRequirement := openNotional.Quo(leverage)
 
-	remainMargin, _, fundingPayment, latestCumulativePremiumFraction, err := k.
+	remaining, err := k.
 		CalcRemainMarginWithFundingPayment(
 			ctx,
 			pair,
@@ -190,14 +190,14 @@ func (k Keeper) increasePosition(
 	positionResp.ExchangedQuoteAssetAmount = openNotional
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
 	positionResp.MarginToVault = increaseMarginRequirement
-	positionResp.FundingPayment = fundingPayment
+	positionResp.FundingPayment = remaining.fPayment
 	positionResp.Position = &types.Position{
 		Address:                             trader,
 		Pair:                                pair.String(),
 		Size_:                               newSize,
-		Margin:                              remainMargin,
+		Margin:                              remaining.margin,
 		OpenNotional:                        oldPosition.OpenNotional.Add(positionResp.ExchangedQuoteAssetAmount),
-		LastUpdateCumulativePremiumFraction: latestCumulativePremiumFraction,
+		LastUpdateCumulativePremiumFraction: remaining.latestCPF,
 		LiquidityHistoryIndex:               oldPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
@@ -372,10 +372,10 @@ func (k Keeper) reducePosition(
 		var realizedPnL = unrealizedPnL.Mul(positionResp.ExchangedPositionSize.Abs()).Quo(oldPosition.Size_.Abs())
 		positionResp.RealizedPnl = realizedPnL
 	}
-	var remainMargin, latestCumulativePremiumFraction sdk.Int
-	remainMargin, positionResp.BadDebt, positionResp.FundingPayment, latestCumulativePremiumFraction, err =
-		k.CalcRemainMarginWithFundingPayment(
-			ctx, pair, oldPosition, positionResp.RealizedPnl)
+	remaining, err := k.CalcRemainMarginWithFundingPayment(
+		ctx, pair, oldPosition, positionResp.RealizedPnl)
+	positionResp.BadDebt = remaining.badDebt
+	positionResp.FundingPayment = remaining.fPayment
 	if err != nil {
 		return nil, err
 	}
@@ -399,9 +399,9 @@ func (k Keeper) reducePosition(
 		Address:                             trader,
 		Pair:                                pair.String(),
 		Size_:                               oldPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                              remainMargin,
+		Margin:                              remaining.margin,
 		OpenNotional:                        remainOpenNotional.Abs(),
-		LastUpdateCumulativePremiumFraction: latestCumulativePremiumFraction,
+		LastUpdateCumulativePremiumFraction: remaining.latestCPF,
 		LiquidityHistoryIndex:               oldPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
@@ -477,17 +477,17 @@ func (k Keeper) closePosition(
 		return nil, err
 	}
 
-	remainMargin, badDebt, fundingPayment, _, err := k.CalcRemainMarginWithFundingPayment(
+	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, pair, oldPosition, unrealizedPnL)
 	if err != nil {
 		return nil, err
 	}
 
-	positionResp.ExchangedPositionSize = oldPosition.Size_.MulRaw(-1)
+	positionResp.ExchangedPositionSize = oldPosition.Size_.Neg()
 	positionResp.RealizedPnl = unrealizedPnL
-	positionResp.BadDebt = badDebt
-	positionResp.FundingPayment = fundingPayment
-	positionResp.MarginToVault = remainMargin.MulRaw(-1)
+	positionResp.BadDebt = remaining.badDebt
+	positionResp.FundingPayment = remaining.fPayment
+	positionResp.MarginToVault = remaining.margin.Neg()
 
 	var vammDir pooltypes.Direction
 	switch oldPosition.Size_.GTE(sdk.ZeroInt()) {
@@ -508,8 +508,8 @@ func (k Keeper) closePosition(
 		return nil, err
 	}
 
-	err = k.updateOpenInterestNotional(ctx, pair, unrealizedPnL.Add(badDebt).
-		Add(oldPosition.OpenNotional).MulRaw(-1), trader)
+	err = k.updateOpenInterestNotional(ctx, pair, unrealizedPnL.Add(remaining.badDebt).
+		Add(oldPosition.OpenNotional).Neg(), trader)
 	if err != nil {
 		return nil, err
 	}
