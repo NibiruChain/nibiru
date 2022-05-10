@@ -5,20 +5,6 @@ import (
 )
 
 // ----------------------------------------------------------
-// ClearingHouse Interface
-// ----------------------------------------------------------
-
-type IClearingHouse interface {
-	ClearPosition(ctx sdk.Context, vpool IVirtualPool, owner string) error
-	GetPosition(
-		ctx sdk.Context, vpool IVirtualPool, owner string,
-	) (*Position, error)
-	SetPosition(
-		ctx sdk.Context, vpool IVirtualPool, owner string, position *Position,
-	)
-}
-
-// ----------------------------------------------------------
 // Vpool Interface
 // ----------------------------------------------------------
 
@@ -47,15 +33,6 @@ type IVirtualPool interface {
 	) (sdk.Int, error)
 	GetUnderlyingPrice(ctx sdk.Context) (sdk.Dec, error)
 	GetSpotPrice(ctx sdk.Context) (sdk.Int, error)
-	/* CalcFee calculates the total tx fee for exchanging 'quoteAmt' of tokens on
-	the exchange.
-
-	Args:
-	  quoteAmt (sdk.Int):
-
-	Returns:
-	  toll (sdk.Int): Amount of tokens transferred to the the fee pool.
-	  spread (sdk.Int): Amount of tokens transferred to the PerpEF.
-	*/
-	CalcFee(quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
+	// Inside the perp keeper for now, will be moved once vamm is finished
+	//CalcFee(ctx sdk.Context, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
 }

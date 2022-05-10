@@ -1,10 +1,12 @@
 package types
 
 import (
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // ----------------------------------------------------------
@@ -48,4 +50,21 @@ type PriceKeeper interface {
 	) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+}
+
+type VpoolKeeper interface {
+	SwapInput(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, quoteAssetAmount sdk.Int, baseAmountLimit sdk.Int,
+	) (sdk.Int, error)
+	SwapOutput(
+		ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int, limit sdk.Int,
+	) (sdk.Int, error)
+	GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
+	GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
+	GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int,
+	) (sdk.Dec, error)
+	GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int,
+	) (sdk.Dec, error)
+	GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
+	GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
+	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
 }
