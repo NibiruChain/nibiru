@@ -303,23 +303,23 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		positionNotional, err = k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs)
+		positionNotionalDec, err := k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
-			return
+			return sdk.ZeroInt(), sdk.ZeroInt(), err
 		}
+		positionNotional = positionNotionalDec.TruncateInt()
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotional, err = k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
+		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
-			return
+			return sdk.ZeroInt(), sdk.ZeroInt(), err
 		}
+		positionNotional = positionNotionalDec.TruncateInt()
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err2 := k.VpoolKeeper.GetUnderlyingPrice(ctx, pair)
-		if err2 != nil {
-			err = err2
-			return
+		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(ctx, pair)
+		if err != nil {
+			return sdk.ZeroInt(), sdk.ZeroInt(), err
 		}
-		// TODO: Replace price variables with sdk.Dec instead of sdk.Int
-		positionNotional = positionSizeAbs.Mul(oraclePrice.TruncateInt())
+		positionNotional = oraclePrice.TruncateInt().Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
