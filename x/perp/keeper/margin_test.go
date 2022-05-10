@@ -8,18 +8,19 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetLatestCumulativePremiumFraction(t *testing.T) {
+func TestOpenPosition_LongSetup(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()
 	}{
 		{
-			name: "uninitialized vpool has no metadata",
+			name: "uninitialized vpool has no metadata | GetLatestCumulativePremiumFraction",
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 				vpool := common.TokenPair("xxx:yyy")
@@ -27,6 +28,59 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 					ctx, vpool)
 				require.Error(t, err)
 				require.EqualValues(t, sdk.Int{}, lcpf)
+			},
+		},
+		{
+			name: "open pos - uninitialized pool raised pair not supported error",
+			test: func() {
+				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				pair := common.TokenPair("xxx:yyy")
+				alice := sample.AccAddress()
+
+				t.Log("open a position on invalid 'pair'")
+				side := types.Side_BUY
+				quote := sdk.NewInt(60)
+				leverage := sdk.NewInt(10)
+				baseLimit := sdk.NewInt(150)
+				err := nibiruApp.PerpKeeper.OpenPosition(
+					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+				require.Error(t, err)
+				require.ErrorContains(t, err, vpooltypes.ErrPairNotSupported.Error())
+			},
+		},
+		{
+			name: "open pos returns 0 margin when trader has underwater position",
+			test: func() {
+				// BELOW IS WIP; please ignore
+				t.Log("Setup Nibiru app, pair, and trader")
+				// nibiruApp, ctx := testutil.NewNibiruApp(true)
+				// pair := common.TokenPair("xxx:yyy")
+				// alice := sample.AccAddress()
+
+				// t.Log("Setup vpool defined by pair")
+				// nibiruApp.VpoolKeeper.CreatePool(
+				// 		ctx,
+				// 		NUSDPair,
+				// 		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+				// 		sdk.NewInt(10_000_000),       //
+				// 		sdk.NewInt(5_000_000),        // 5 tokens
+				// 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+				// 	)
+
+				// exists := ammKeeper.existsPool(ctx, NUSDPair)
+				// require.True(t, exists)
+
+				// side := types.Side_BUY
+				// quote := sdk.NewInt(60)
+				// leverage := sdk.NewInt(10)
+				// baseLimit := sdk.NewInt(150)
+				// err := nibiruApp.PerpKeeper.OpenPosition(
+				// 	ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+
+				// require.Error(t, err)
+				// require.ErrorContains(t, err, vpooltypes.ErrPairNotSupported.Error())
+				// require.EqualValues(t, sdk.Int{}, lcpf)
 			},
 		},
 	}

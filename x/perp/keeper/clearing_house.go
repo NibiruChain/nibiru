@@ -22,27 +22,35 @@ var (
 	_ = Keeper.updateOpenInterestNotional
 	_ = Keeper.closeAndOpenReversePosition
 	_ = Keeper.openReversePosition
-	_ = Keeper.openPosition
+	_ = Keeper.OpenPosition
 	_ = Keeper.transferFee
 )
 
-// TODO test: openPosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) openPosition(
+// TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
+func (k Keeper) OpenPosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
-) error {
+) (err error) {
 	// TODO(mercilex): missing checks
 	params := k.GetParams(ctx)
 
-	position, err := k.Positions().Get(ctx, pair, trader)
-	positionExists := errors.Is(err, errNotFound)
+	position, err := k.GetPosition(ctx, pair, trader)
+	var isNewPosition bool = errors.Is(err, errNotFound)
+	if isNewPosition {
+		position = types.ZeroPosition(ctx, pair, trader)
+		k.SetPosition(ctx, pair, trader, position)
+	} else if err != nil && !isNewPosition {
+		return err
+	}
 
 	var positionResp *types.PositionResp
+	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
+	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
+	var openSideMatchesPosition bool = (sameSideLong || sameSideShort)
 	switch {
-	// increase position case
-	case !positionExists,
-		position.Size_.IsPositive() && side == types.Side_BUY,
-		position.Size_.IsNegative() && side == types.Side_SELL:
+	case isNewPosition || openSideMatchesPosition:
+		// increase position case
+
 		positionResp, err = k.increasePosition(
 			ctx, pair, side, trader,
 			/* openNotional */ quoteAssetAmount.Mul(leverage),
@@ -63,14 +71,15 @@ func (k Keeper) openPosition(
 	}
 
 	// update position in state
-	k.Positions().Set(ctx, pair, trader, positionResp.Position)
+	k.SetPosition(ctx, pair, trader, positionResp.Position)
 
-	if !positionExists && !positionResp.Position.Size_.IsZero() {
+	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(ctx, pair, trader)
 		if err != nil {
 			return err
 		}
-		if err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, true); err != nil {
+		if err = requireMoreMarginRatio(
+			marginRatio, params.MaintenanceMarginRatio, true); err != nil {
 			// TODO(mercilex): should panic? it's a require
 			return err
 		}
@@ -131,16 +140,18 @@ func (k Keeper) openPosition(
 // TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
-	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int) (
-	positionResp *types.PositionResp, err error) {
-	positionResp = new(types.PositionResp)
+	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int,
+) (positionResp *types.PositionResp, err error) {
 
-	oldPosition, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex) we already have the info from the caller
+	positionResp = &types.PositionResp{}
+
+	oldPosition, err := k.GetPosition(ctx, pair, trader) // TODO(mercilex) we already have the info from the caller
 	if err != nil {
 		panic(err)
 	}
 
-	positionResp.ExchangedPositionSize, err = k.swapInput(ctx, pair, side, openNotional, minPositionSize, false)
+	positionResp.ExchangedPositionSize, err = k.swapInput(
+		ctx, pair, side, openNotional, minPositionSize, false)
 	if err != nil {
 		return nil, err
 	}
@@ -628,7 +639,8 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 		panic("invalid side")
 	}
 
-	outputAmount, err := k.VpoolKeeper.SwapInput(ctx, pair, vammDir, inputAmount, minOutputAmount)
+	outputAmount, err := k.VpoolKeeper.SwapInput(
+		ctx, pair, vammDir, inputAmount, minOutputAmount)
 	if err != nil {
 		return sdk.Int{}, err
 	}
