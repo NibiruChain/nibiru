@@ -187,45 +187,7 @@ func (k Keeper) savePool(
 	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
 }
 
-func (k Keeper) updateReserve(
-	ctx sdk.Context,
-	pool *types.Pool,
-	dir types.Direction,
-	quoteAssetAmount sdk.Int,
-	baseAssetAmount sdk.Int,
-	skipFluctuationCheck bool,
-) error {
-	if dir == types.Direction_ADD_TO_POOL {
-		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
-		pool.DecreaseBaseAssetReserve(baseAssetAmount)
-		// TODO baseAssetDeltaThisFunding
-		// TODO totalPositionSize
-		// TODO cumulativeNotional
-	} else {
-		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
-		pool.IncreaseBaseAssetReserve(baseAssetAmount)
-		// TODO baseAssetDeltaThisFunding
-		// TODO totalPositionSize
-		// TODO cumulativeNotional
-	}
 
-	// Check if its over Fluctuation Limit Ratio.
-	if !skipFluctuationCheck {
-		err := k.checkFluctuationLimitRatio(ctx, pool)
-		if err != nil {
-			return err
-		}
-	}
-
-	err := k.addReserveSnapshot(ctx, pool)
-	if err != nil {
-		return fmt.Errorf("error creating snapshot: %w", err)
-	}
-
-	k.savePool(ctx, pool)
-
-	return nil
-}
 
 // existsPool returns true if pool exists, false if not.
 func (k Keeper) existsPool(ctx sdk.Context, pair common.TokenPair) bool {
