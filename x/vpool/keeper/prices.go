@@ -6,9 +6,33 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
-	//TODO implement me
-	panic("implement me")
+/*
+GetSpotPrice retrieves the price of the base asset denominated in quote asset.
+
+The convention is the amount of quote assets required to buy one base asset.
+
+e.g. If the tokenPair is BTC:NUSD, the method would return sdk.Dec(40,000.00)
+because the instantaneous tangent slope on the vpool curve is 40,000.00,
+so it would cost ~40,000.00 to buy one BTC:NUSD perp.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair to get price for
+
+ret:
+  - price: the price of the token pair as sdk.Dec
+  - err: error
+*/
+func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (
+	price sdk.Dec, err error,
+) {
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	return pool.QuoteAssetReserve.ToDec().
+		Quo(pool.BaseAssetReserve.ToDec()), nil
 }
 
 /*
