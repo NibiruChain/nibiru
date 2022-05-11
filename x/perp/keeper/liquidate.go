@@ -8,12 +8,22 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type LiquidationOutput struct {
+	FeeToInsuranceFund        sdk.Int
+	LiquidationPenalty        sdk.Int
+	ExchangedQuoteAssetAmount sdk.Int
+	ExchangedPositionSize     sdk.Int
+	BadDebt                   sdk.Int
+	FeeToLiquidator           sdk.Int
+	PositionResp              *types.PositionResp
+	IsPartialLiquidation      bool
+}
+
 /*Liquidate allows to liquidate the trader position if the margin is below the required margin maintenance ratio.*/
 func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string, sender sdk.AccAddress) error {
 	var (
 		feeToInsuranceFund sdk.Int
-		liquidationPenalty sdk.Int
-		isPartialClose     bool
+		liquidationOuptut  LiquidationOutput
 	)
 
 	marginRatio, err := k.GetMarginRatio(ctx, pair, trader, types.MarginCalculationPriceOption_MAX_PNL)
@@ -48,46 +58,58 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	}
 
 	if marginRatioBasedOnSpot.GTE(sdk.NewInt(params.PartialLiquidationRatio)) {
-		feeToInsuranceFund, err = k.createPartialLiquidation(ctx, pair, trader, position)
+		liquidationOuptut, err = k.createPartialLiquidation(ctx, pair, trader, position)
 		if err != nil {
 			return err
 		}
-		isPartialClose = true
 	} else {
-		feeToInsuranceFund, liquidationPenalty, err = k.createLiquidation(ctx, pair, trader, position)
+		liquidationOuptut, err = k.createLiquidation(ctx, pair, trader, position)
 		if err != nil {
 			return err
 		}
-
-		isPartialClose = false
 	}
 
 	if feeToInsuranceFund.GT(sdk.ZeroInt()) {
-		k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.ModuleName, sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), feeToInsuranceFund)))
+		k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx,
+			trader,
+			types.ModuleName,
+			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), feeToInsuranceFund)),
+		)
 	}
 	k.withdraw(ctx, pair.GetQuoteTokenDenom(), sender, feeToLiquidator)
 
-	events.EmitPositionLiquidate(ctx, pair, trader, positionNotional, position.Size_, sender)
+	events.EmitPositionLiquidate(
+		/*ctx= */ ctx,
+		/*vpool= */ pair.String(),
+		/*owner= */ trader,
+		/*notional= */ liquidationOuptut.PositionResp.ExchangedQuoteAssetAmount.ToDec(),
+		/*vsize= */ liquidationOuptut.PositionResp.ExchangedPositionSize.ToDec(),
+		/*liquidator= */ sender,
+		/*liquidationFee= */ liquidationOuptut.FeeToLiquidator,
+		/*badDebt= */ liquidationOuptut.BadDebt.ToDec(),
+	)
 
 	return nil
 }
 
 //createLiquidation create a liquidation of a position and compute the fee to insurance fund
 func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, trader string, position *types.Position) (
-	feeToInsuranceFund sdk.Int, liquidationPenalty sdk.Int, err error) {
+	liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 
-	liquidationPenalty = position.Margin
-	positionResp, err := k.closePosition(ctx, pair, trader, sdk.ZeroInt())
+	liquidationOutput.LiquidationPenalty = position.Margin
+	liquidationOutput.PositionResp, err = k.closePosition(ctx, pair, trader, sdk.ZeroInt())
 
 	if err != nil {
 		return
 	}
 
-	remainMargin := positionResp.MarginToVault.Abs()
+	remainMargin := liquidationOutput.PositionResp.MarginToVault.Abs()
 
-	feeToLiquidator := sdk.NewDecFromInt(positionResp.ExchangedQuoteAssetAmount).Mul(params.GetLiquidationFeeAsDec()).Quo(sdk.MustNewDecFromStr("2")).TruncateInt()
-	totalBadDebt := positionResp.BadDebt
+	feeToLiquidator := sdk.NewDecFromInt(
+		liquidationOutput.PositionResp.ExchangedQuoteAssetAmount).Mul(params.GetLiquidationFeeAsDec()).Quo(sdk.MustNewDecFromStr("2")).TruncateInt()
+	totalBadDebt := liquidationOutput.PositionResp.BadDebt
 
 	// if the remainMargin is not enough for liquidationFee, count it as bad debt
 	// else, then the rest will be transferred to insuranceFund
@@ -106,14 +128,17 @@ func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, trader
 		}
 	}
 	if remainMargin.GT(sdk.ZeroInt()) {
-		feeToInsuranceFund = remainMargin
+		liquidationOutput.FeeToInsuranceFund = remainMargin
 	}
+
+	liquidationOutput.BadDebt = totalBadDebt
+	liquidationOutput.FeeToLiquidator = feeToLiquidator
 
 	return
 }
 
 //createPartialLiquidation create a partial liquidation of a position and compute the fee to insurance fund
-func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair, trader string, position *types.Position) (feeToInsuranceFund sdk.Int, err error) {
+func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair, trader string, position *types.Position) (liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 	var (
 		dir  vtypes.Direction
@@ -135,7 +160,7 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 		/*abs= */ sdk.NewDecFromInt(position.Size_).Mul(params.GetPartialLiquidationRatioAsDec()).Abs(),
 	)
 	if err != nil {
-		return feeToInsuranceFund, err
+		return
 	}
 
 	positionResp, err := k.openReversePosition(
@@ -149,7 +174,7 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 		/*canOverFluctuationLimit= */ true,
 	)
 	if err != nil {
-		return feeToInsuranceFund, err
+		return
 	}
 
 	// half of the liquidationFee goes to liquidator & another half goes to insurance fund
@@ -159,6 +184,10 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationPenalty)
 	k.SetPosition(ctx, pair, trader, positionResp.Position)
 
-	feeToInsuranceFund = liquidationPenalty.Sub(feeToLiquidator)
+	liquidationOutput.FeeToInsuranceFund = liquidationPenalty.Sub(feeToLiquidator)
+	liquidationOutput.PositionResp = positionResp
+	liquidationOutput.FeeToLiquidator = feeToLiquidator
+	liquidationOutput.LiquidationPenalty = liquidationPenalty
+
 	return
 }
