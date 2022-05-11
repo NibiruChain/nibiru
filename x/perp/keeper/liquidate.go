@@ -44,7 +44,6 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string)
 		feeToLiquidator = positionResp.exchangedQuoteAssetAmount.mulD(liquidationFeeRatio).divScalar(2);
 	*/
 
-	var liquidationPenalty sdk.Int
 	liquidationPenalty = position.Margin
 	positionResp, resp := k.closePosition(ctx, pair, trader, sdk.ZeroInt())
 	remainMargin := positionResp.MarginToVault.Abs()

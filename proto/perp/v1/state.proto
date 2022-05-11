@@ -22,7 +22,10 @@ message Params {
   int64 spreadRatio = 4;
 
   // liquidationFee is the fee split between IF and Liquidator.
-  int64 liquidationFee = 5;;
+  int64 liquidationFee = 5;
+
+  // partialLiquidationRatio is the share we try to liquidate if the margin is higher than liquidation fee
+  int64 partialLiquidationRatio = 6;
 }
 
 // GenesisState defines the perp  module's genesis state.
