@@ -365,36 +365,6 @@ func (mr *MockVpoolKeeperMockRecorder) CalcFee(arg0, arg1, arg2 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcFee", reflect.TypeOf((*MockVpoolKeeper)(nil).CalcFee), arg0, arg1, arg2)
 }
 
-// GetMaxHoldingBaseAsset mocks base method.
-func (m *MockVpoolKeeper) GetMaxHoldingBaseAsset(arg0 types1.Context, arg1 common.TokenPair) (types1.Int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMaxHoldingBaseAsset", arg0, arg1)
-	ret0, _ := ret[0].(types1.Int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetMaxHoldingBaseAsset indicates an expected call of GetMaxHoldingBaseAsset.
-func (mr *MockVpoolKeeperMockRecorder) GetMaxHoldingBaseAsset(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxHoldingBaseAsset", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaxHoldingBaseAsset), arg0, arg1)
-}
-
-// GetOpenInterestNotionalCap mocks base method.
-func (m *MockVpoolKeeper) GetOpenInterestNotionalCap(arg0 types1.Context, arg1 common.TokenPair) (types1.Int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOpenInterestNotionalCap", arg0, arg1)
-	ret0, _ := ret[0].(types1.Int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOpenInterestNotionalCap indicates an expected call of GetOpenInterestNotionalCap.
-func (mr *MockVpoolKeeperMockRecorder) GetOpenInterestNotionalCap(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpenInterestNotionalCap", reflect.TypeOf((*MockVpoolKeeper)(nil).GetOpenInterestNotionalCap), arg0, arg1)
-}
-
 // GetOutputPrice mocks base method.
 func (m *MockVpoolKeeper) GetOutputPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
