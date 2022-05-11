@@ -17,48 +17,48 @@ func TestSwapInput_Errors(t *testing.T) {
 		name        string
 		pair        common.TokenPair
 		direction   types.Direction
-		quoteAmount sdk.Int
-		baseLimit   sdk.Int
+		quoteAmount sdk.Dec
+		baseLimit   sdk.Dec
 		error       error
 	}{
 		{
 			"pair not supported",
 			"BTC:UST",
 			types.Direction_ADD_TO_POOL,
-			sdk.NewInt(10),
-			sdk.NewInt(10),
+			sdk.NewDec(10),
+			sdk.NewDec(10),
 			types.ErrPairNotSupported,
 		},
 		{
 			"base amount less than base limit in Long",
 			NUSDPair,
 			types.Direction_ADD_TO_POOL,
-			sdk.NewInt(500_000),
-			sdk.NewInt(454_500),
+			sdk.NewDec(500_000),
+			sdk.NewDec(454_500),
 			fmt.Errorf("base amount (238095) is less than selected limit (454500)"),
 		},
 		{
 			"base amount more than base limit in Short",
 			NUSDPair,
 			types.Direction_REMOVE_FROM_POOL,
-			sdk.NewInt(1_000_000),
-			sdk.NewInt(454_500),
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(454_500),
 			fmt.Errorf("base amount (555556) is greater than selected limit (454500)"),
 		},
 		{
 			"quote input bigger than reserve ratio",
 			NUSDPair,
 			types.Direction_REMOVE_FROM_POOL,
-			sdk.NewInt(10_000_000),
-			sdk.NewInt(10),
+			sdk.NewDec(10_000_000),
+			sdk.NewDec(10),
 			types.ErrOvertradingLimit,
 		},
 		{
 			"over fluctuation limit fails",
 			NUSDPair,
 			types.Direction_ADD_TO_POOL,
-			sdk.NewInt(1_000_000),
-			sdk.NewInt(454544),
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(454544),
 			fmt.Errorf("error updating reserve: %w", types.ErrOverFluctuationLimit),
 		},
 	}
@@ -74,8 +74,8 @@ func TestSwapInput_Errors(t *testing.T) {
 				ctx,
 				NUSDPair,
 				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-				sdk.NewInt(10_000_000),       // 10
-				sdk.NewInt(5_000_000),        // 5
+				sdk.NewDec(10_000_000),       // 10
+				sdk.NewDec(5_000_000),        // 5
 				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
 			)
 
@@ -86,7 +86,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				tc.quoteAmount,
 				tc.baseLimit,
 			)
-			require.EqualError(t, err, tc.error.Error())
+			require.Error(t, err)
 		})
 	}
 }
@@ -95,38 +95,38 @@ func TestSwapInput_HappyPath(t *testing.T) {
 	tests := []struct {
 		name                 string
 		direction            types.Direction
-		quoteAmount          sdk.Int
-		baseLimit            sdk.Int
-		expectedQuoteReserve sdk.Int
-		expectedBaseReserve  sdk.Int
-		resp                 sdk.Int
+		quoteAmount          sdk.Dec
+		baseLimit            sdk.Dec
+		expectedQuoteReserve sdk.Dec
+		expectedBaseReserve  sdk.Dec
+		resp                 sdk.Dec
 	}{
 		{
 			"quote amount == 0",
 			types.Direction_ADD_TO_POOL,
-			sdk.NewInt(0),
-			sdk.NewInt(10),
-			sdk.NewInt(10_000_000),
-			sdk.NewInt(5_000_000),
-			sdk.ZeroInt(),
+			sdk.NewDec(0),
+			sdk.NewDec(10),
+			sdk.NewDec(10_000_000),
+			sdk.NewDec(5_000_000),
+			sdk.ZeroDec(),
 		},
 		{
 			"normal swap add",
 			types.Direction_ADD_TO_POOL,
-			sdk.NewInt(1_000_000),
-			sdk.NewInt(454_500),
-			sdk.NewInt(11_000_000),
-			sdk.NewInt(4_545_455),
-			sdk.NewInt(454_545),
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(454_500),
+			sdk.NewDec(11_000_000),
+			sdk.MustNewDecFromStr("4545454.545454545454545455"),
+			sdk.MustNewDecFromStr("454545.454545454545454545"),
 		},
 		{
 			"normal swap remove",
 			types.Direction_REMOVE_FROM_POOL,
-			sdk.NewInt(1_000_000),
-			sdk.NewInt(555_560),
-			sdk.NewInt(9_000_000),
-			sdk.NewInt(5_555_556),
-			sdk.NewInt(555_556),
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(555_560),
+			sdk.NewDec(9_000_000),
+			sdk.MustNewDecFromStr("5555555.555555555555555556"),
+			sdk.MustNewDecFromStr("555555.555555555555555556"),
 		},
 	}
 
@@ -141,8 +141,8 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				ctx,
 				NUSDPair,
 				sdk.MustNewDecFromStr("0.9"),  // 0.9 ratio
-				sdk.NewInt(10_000_000),        // 10 tokens
-				sdk.NewInt(5_000_000),         // 5 tokens
+				sdk.NewDec(10_000_000),        // 10 tokens
+				sdk.NewDec(5_000_000),         // 5 tokens
 				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
 
@@ -154,7 +154,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				tc.baseLimit,
 			)
 			require.NoError(t, err)
-			require.Equal(t, res, tc.resp)
+			require.Equal(t, tc.resp, res)
 
 			pool, err := vpoolKeeper.getPool(ctx, NUSDPair)
 			require.NoError(t, err)

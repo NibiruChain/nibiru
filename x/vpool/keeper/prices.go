@@ -31,8 +31,7 @@ func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (
 		return sdk.ZeroDec(), err
 	}
 
-	return pool.QuoteAssetReserve.ToDec().
-		Quo(pool.BaseAssetReserve.ToDec()), nil
+	return pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve), nil
 }
 
 /*
@@ -80,19 +79,14 @@ func (k Keeper) GetOutputPrice(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
-	baseAmount sdk.Int,
+	baseAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
 
-	quoteAmountInt, err := pool.GetQuoteAmountByBaseAmount(dir, baseAmount)
-	if err != nil {
-		return sdk.ZeroDec(), err
-	}
-
-	return quoteAmountInt.ToDec(), nil
+	return pool.GetQuoteAmountByBaseAmount(dir, baseAmount)
 }
 
 /*
@@ -113,19 +107,14 @@ func (k Keeper) GetInputPrice(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
-	quoteAmount sdk.Int,
+	quoteAmount sdk.Dec,
 ) (baseAmount sdk.Dec, err error) {
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
 
-	baseAmountOut, err := pool.GetBaseAmountByQuoteAmount(dir, quoteAmount)
-	if err != nil {
-		return sdk.ZeroDec(), err
-	}
-
-	return baseAmountOut.ToDec(), nil
+	return pool.GetBaseAmountByQuoteAmount(dir, quoteAmount)
 }
 
 func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
