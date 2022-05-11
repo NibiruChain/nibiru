@@ -46,7 +46,7 @@ func (k Keeper) AddMargin(
 
 // TODO test: GetMarginRatio
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, pair common.TokenPair, trader string,priceOption types.MarginCalculationPriceOption
+	ctx sdk.Context, pair common.TokenPair, trader string, priceOption types.MarginCalculationPriceOption,
 ) (sdk.Int, error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {

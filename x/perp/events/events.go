@@ -120,7 +120,7 @@ Args:
 func EmitPositionLiquidate(
 	ctx sdk.Context,
 	vpool string,
-	owner sdk.AccAddress,
+	trader string,
 	notional sdk.Dec,
 	vsize sdk.Dec,
 	liquidator sdk.AccAddress,
@@ -131,7 +131,7 @@ func EmitPositionLiquidate(
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypePositionLiquidate,
 		sdk.NewAttribute(AttributeVpool, vpool),
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePosittionOwner, trader),
 		sdk.NewAttribute("notional", notional.String()),
 		sdk.NewAttribute("vsize", vsize.String()),
 		sdk.NewAttribute("liquidator", liquidator.String()),

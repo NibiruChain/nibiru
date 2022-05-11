@@ -70,24 +70,19 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	}
 
 	if feeToInsuranceFund.GT(sdk.ZeroInt()) {
-		k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx,
-			trader,
-			types.ModuleName,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), feeToInsuranceFund)),
-		)
+		k.transferToInsuranceFund(ctx, trader, pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToInsuranceFund)
 	}
-	k.withdraw(ctx, pair.GetQuoteTokenDenom(), sender, feeToLiquidator)
+	k.withdraw(ctx, pair.GetQuoteTokenDenom(), sender, liquidationOuptut.feeToLiquidator)
 
 	events.EmitPositionLiquidate(
-		/*ctx= */ ctx,
-		/*vpool= */ pair.String(),
-		/*owner= */ trader,
-		/*notional= */ liquidationOuptut.PositionResp.ExchangedQuoteAssetAmount.ToDec(),
-		/*vsize= */ liquidationOuptut.PositionResp.ExchangedPositionSize.ToDec(),
-		/*liquidator= */ sender,
-		/*liquidationFee= */ liquidationOuptut.FeeToLiquidator,
-		/*badDebt= */ liquidationOuptut.BadDebt.ToDec(),
+		/* ctx */ ctx,
+		/* vpool */ pair.String(),
+		/* owner */ trader,
+		/* notional */ liquidationOuptut.PositionResp.ExchangedQuoteAssetAmount.ToDec(),
+		/* vsize */ liquidationOuptut.PositionResp.ExchangedPositionSize.ToDec(),
+		/* liquidator */ sender,
+		/* liquidationFee */ liquidationOuptut.FeeToLiquidator,
+		/* badDebt */ liquidationOuptut.BadDebt.ToDec(),
 	)
 
 	return nil
@@ -164,14 +159,14 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 	}
 
 	positionResp, err := k.openReversePosition(
-		/*ctx= */ ctx,
-		/*pair= */ pair,
-		/*side= */ side,
-		/*trader= */ trader,
-		/*quoteAssetAmount= */ partiallyLiquidatedPositionNotional.TruncateInt(),
-		/*leverage= */ sdk.OneInt(),
-		/*baseAssetAmountLimit= */ sdk.ZeroInt(),
-		/*canOverFluctuationLimit= */ true,
+		/* ctx */ ctx,
+		/* pair */ pair,
+		/* side */ side,
+		/* trader */ trader,
+		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional.TruncateInt(),
+		/* leverage */ sdk.OneInt(),
+		/* baseAssetAmountLimit */ sdk.ZeroInt(),
+		/* canOverFluctuationLimit */ true,
 	)
 	if err != nil {
 		return

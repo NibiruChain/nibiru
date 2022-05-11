@@ -77,7 +77,7 @@ func (k Keeper) OpenPosition(
 	k.SetPosition(ctx, pair, trader, positionResp.Position)
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
-		marginRatio, err := k.GetMarginRatio(ctx, pair, trader)
+		marginRatio, err := k.GetMarginRatio(ctx, pair, trader, types.MarginCalculationPriceOption_MAX_PNL)
 		if err != nil {
 			return err
 		}
