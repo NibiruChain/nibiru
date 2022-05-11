@@ -93,7 +93,7 @@ func (p *Params) GetTollRatioAsDec() sdk.Dec {
 		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
-func (p *Params) GetLiquidationFeeRatioAsDec() sdk.Dec {
+func (p *Params) GetLiquidationFeeAsDec() sdk.Dec {
 	return sdk.NewIntFromUint64(uint64(p.LiquidationFee)).
 		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }

@@ -21,8 +21,8 @@ message Params {
   // efFeeRatio is the ratio transferred to the PerpEF.
   int64 spreadRatio = 4;
 
-  // efFeeRatio is the ratio transferred to the PerpEF.
-  int64 liquidationFee = 5;
+  // liquidationFee is the fee split between IF and Liquidator.
+  int64 liquidationFee = 5;;
 }
 
 // GenesisState defines the perp  module's genesis state.
