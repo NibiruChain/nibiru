@@ -199,7 +199,8 @@ func (k Keeper) increasePosition(
 	return
 }
 
-// TODO test: getLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
+// getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
+// specific pair.
 func (k Keeper) getLatestCumulativePremiumFraction(
 	ctx sdk.Context, pair common.TokenPair,
 ) (sdk.Int, error) {
