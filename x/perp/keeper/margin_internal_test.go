@@ -7,33 +7,33 @@ import (
 
 func Test_requireMoreMarginRatio(t *testing.T) {
 	type test struct {
-		marginRatio, baseMarginRatio sdk.Int
+		marginRatio, baseMarginRatio sdk.Dec
 		largerThanEqualTo            bool
 		wantErr                      bool
 	}
 
 	cases := map[string]test{
 		"ok - largeThanOrEqualTo true": {
-			marginRatio:       sdk.NewInt(2),
-			baseMarginRatio:   sdk.NewInt(1),
+			marginRatio:       sdk.NewDec(2),
+			baseMarginRatio:   sdk.NewDec(1),
 			largerThanEqualTo: true,
 			wantErr:           false,
 		},
 		"ok - largerThanOrEqualTo false": {
-			marginRatio:       sdk.NewInt(1),
-			baseMarginRatio:   sdk.NewInt(2),
+			marginRatio:       sdk.NewDec(1),
+			baseMarginRatio:   sdk.NewDec(2),
 			largerThanEqualTo: false,
 			wantErr:           false,
 		},
 		"fails - largerThanEqualTo true": {
-			marginRatio:       sdk.NewInt(1),
-			baseMarginRatio:   sdk.NewInt(2),
+			marginRatio:       sdk.NewDec(1),
+			baseMarginRatio:   sdk.NewDec(2),
 			largerThanEqualTo: true,
 			wantErr:           true,
 		},
 		"fails - largerThanEqualTo false": {
-			marginRatio:       sdk.NewInt(2),
-			baseMarginRatio:   sdk.NewInt(1),
+			marginRatio:       sdk.NewDec(2),
+			baseMarginRatio:   sdk.NewDec(1),
 			largerThanEqualTo: false,
 			wantErr:           true,
 		},
