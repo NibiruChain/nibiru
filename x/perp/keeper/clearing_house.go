@@ -21,7 +21,6 @@ var (
 	_ = Keeper.reducePosition
 	_ = Keeper.closeAndOpenReversePosition
 	_ = Keeper.openReversePosition
-	_ = Keeper.OpenPosition
 	_ = Keeper.transferFee
 )
 
@@ -30,15 +29,22 @@ func (k Keeper) OpenPosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
 ) error {
+	// require trader
 	traderAddr, err := sdk.AccAddressFromBech32(trader)
 	if err != nil {
 		return err
 	}
+	// require vpool
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return err
+	}
+	// require params
 	params := k.GetParams(ctx)
 	// TODO: missing checks
 
 	position, err := k.GetPosition(ctx, pair, trader)
-	var isNewPosition bool = errors.Is(err, types.ErrNotFound)
+	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, trader)
 		k.SetPosition(ctx, pair, trader, position)
@@ -142,7 +148,6 @@ func (k Keeper) increasePosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int,
 ) (positionResp *types.PositionResp, err error) {
-
 	positionResp = &types.PositionResp{}
 
 	oldPosition, err := k.GetPosition(ctx, pair, trader) // TODO(mercilex) we already have the info from the caller

@@ -8,7 +8,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -46,7 +45,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
 				require.Error(t, err)
-				require.ErrorContains(t, err, vpooltypes.ErrPairNotSupported.Error())
+				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
 		},
 		{
@@ -80,7 +79,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				fmt.Println(err.Error())
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrNotFound.Error())
+				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
 		},
 		{
@@ -152,7 +151,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, vpool, &types.Position{}, marginDelta)
 				require.Error(t, err)
-				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
+				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
 		},
 	}
@@ -222,4 +221,8 @@ func TestAddMargin(t *testing.T) {
 			require.Equal(t, tc.expectedMargin, position.Margin)
 		})
 	}
+}
+
+func TestRemoveMargin(t *testing.T) {
+
 }

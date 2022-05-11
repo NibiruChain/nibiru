@@ -15,7 +15,6 @@ const (
 )
 
 var (
-	ErrNotFound         = errors.New("not found")
 	ErrPositionNotFound = errors.New("no position found")
 	ErrPairNotFound     = errors.New("pair doesn't have live vpool")
 )

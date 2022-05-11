@@ -44,7 +44,6 @@ func (k Keeper) RemoveMargin(
 	trader sdk.AccAddress,
 	margin sdk.Int,
 ) error {
-
 	// require valid token amount
 	switch {
 	case margin.IsNegative():
