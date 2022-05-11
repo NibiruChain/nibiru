@@ -26,8 +26,7 @@ type Keeper struct {
 // NewKeeper Creates a new x/perp Keeper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey,
-	memKey sdk.StoreKey,
+	storeKey sdk.StoreKey,
 	paramSubspace paramtypes.Subspace,
 
 	accountKeeper types.AccountKeeper,
@@ -48,7 +47,6 @@ func NewKeeper(
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
-		memKey:        memKey,
 		ParamSubspace: paramSubspace,
 
 		AccountKeeper: accountKeeper,

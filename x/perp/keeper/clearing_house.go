@@ -272,6 +272,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(ctx sdk.Context, pair common.
 	if err != nil {
 		return sdk.Int{}, err
 	}
+
 	// this should never fail
 	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }
