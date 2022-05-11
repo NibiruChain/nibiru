@@ -29,18 +29,44 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	tests := []struct {
 		name               string
+		baseAssetReserve   sdk.Int
+		quoteAssetReserve  sdk.Int
 		quoteAmount        sdk.Int
+		direction          Direction
 		expectedBaseAmount sdk.Int
+		expectedErr        error
 	}{
 		{
-			"quote amount == 0",
-			sdk.NewInt(0),
-			sdk.NewInt(0),
+			name:               "quote amount zero",
+			baseAssetReserve:   sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:  sdk.NewIntFromUint64(1000),
+			quoteAmount:        sdk.NewIntFromUint64(0),
+			direction:          Direction_ADD_TO_POOL,
+			expectedBaseAmount: sdk.NewIntFromUint64(0),
 		},
 		{
-			"quote amount != 0",
-			sdk.NewInt(5_000_000),
-			sdk.NewInt(1_666_666),
+			name:               "simple add quote to pool",
+			baseAssetReserve:   sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:  sdk.NewIntFromUint64(1000),
+			quoteAmount:        sdk.NewIntFromUint64(500),
+			direction:          Direction_ADD_TO_POOL,
+			expectedBaseAmount: sdk.NewIntFromUint64(333), // rounds down
+		},
+		{
+			name:               "simple remove quote from pool",
+			baseAssetReserve:   sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:  sdk.NewIntFromUint64(1000),
+			quoteAmount:        sdk.NewIntFromUint64(500),
+			direction:          Direction_REMOVE_FROM_POOL,
+			expectedBaseAmount: sdk.NewIntFromUint64(1000),
+		},
+		{
+			name:              "too much quote removed results in error",
+			baseAssetReserve:  sdk.NewIntFromUint64(1000),
+			quoteAssetReserve: sdk.NewIntFromUint64(1000),
+			quoteAmount:       sdk.NewIntFromUint64(1000),
+			direction:         Direction_REMOVE_FROM_POOL,
+			expectedErr:       ErrQuoteReserveAtZero,
 		},
 	}
 
@@ -48,32 +74,68 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pool := NewPool(
-				"BTC:NUSD",
-				sdk.MustNewDecFromStr("0.9"), // 0.9
-				sdk.NewInt(10_000_000),       // 10
-				sdk.NewInt(5_000_000),        // 5
-				sdk.MustNewDecFromStr("0.1"),
+				/*pair=*/ "BTC:NUSD",
+				/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
+				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
+				/*baseAssetReserve=*/ tc.baseAssetReserve,
+				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
 			)
 
-			amount, err := pool.GetBaseAmountByQuoteAmount(Direction_ADD_TO_POOL, tc.quoteAmount)
-			require.NoError(t, err)
-			require.True(t, amount.Equal(tc.expectedBaseAmount), "expected base: %s, got: %s", tc.expectedBaseAmount.String(), amount.String())
+			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr,
+					"expected error: %w, got: %w", tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				require.EqualValuesf(t, tc.expectedBaseAmount, amount,
+					"expected quote: %s, got: %s", tc.expectedBaseAmount.String(), amount.String(),
+				)
+			}
 		})
 	}
 }
 
-func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
+func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 	tests := []struct {
-		name          string
-		direction     Direction
-		quoteAmount   sdk.Int
-		expectedError error
+		name                string
+		baseAssetReserve    sdk.Int
+		quoteAssetReserve   sdk.Int
+		baseAmount          sdk.Int
+		direction           Direction
+		expectedQuoteAmount sdk.Int
+		expectedErr         error
 	}{
 		{
-			"quote after is zero",
-			Direction_REMOVE_FROM_POOL,
-			sdk.NewInt(10_000_000),
-			ErrQuoteReserveAtZero,
+			name:                "base amount zero",
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(0),
+			direction:           Direction_ADD_TO_POOL,
+			expectedQuoteAmount: sdk.NewIntFromUint64(0),
+		},
+		{
+			name:                "simple add base to pool",
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(500),
+			direction:           Direction_ADD_TO_POOL,
+			expectedQuoteAmount: sdk.NewIntFromUint64(333), // rounds down
+		},
+		{
+			name:                "simple remove base from pool",
+			baseAssetReserve:    sdk.NewIntFromUint64(1000),
+			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
+			baseAmount:          sdk.NewIntFromUint64(500),
+			direction:           Direction_REMOVE_FROM_POOL,
+			expectedQuoteAmount: sdk.NewIntFromUint64(1000),
+		},
+		{
+			name:              "too much base removed results in error",
+			baseAssetReserve:  sdk.NewIntFromUint64(1000),
+			quoteAssetReserve: sdk.NewIntFromUint64(1000),
+			baseAmount:        sdk.NewIntFromUint64(1000),
+			direction:         Direction_REMOVE_FROM_POOL,
+			expectedErr:       ErrBaseReserveAtZero,
 		},
 	}
 
@@ -81,15 +143,23 @@ func TestGetBaseAmountByQuoteAmount_Error(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pool := NewPool(
-				"BTC:NUSD",
-				sdk.MustNewDecFromStr("0.9"), // 0.9
-				sdk.NewInt(10_000_000),       // 10
-				sdk.NewInt(5_000_000),        // 5
-				sdk.MustNewDecFromStr("0.1"),
+				/*pair=*/ "BTC:NUSD",
+				/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
+				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
+				/*baseAssetReserve=*/ tc.baseAssetReserve,
+				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
 			)
 
-			_, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
-			require.Equal(t, tc.expectedError, err)
+			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr,
+					"expected error: %w, got: %w", tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				require.EqualValuesf(t, tc.expectedQuoteAmount, amount,
+					"expected quote: %s, got: %s", tc.expectedQuoteAmount.String(), amount.String(),
+				)
+			}
 		})
 	}
 }

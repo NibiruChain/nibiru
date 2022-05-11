@@ -8,6 +8,46 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) updateReserve(
+	ctx sdk.Context,
+	pool *types.Pool,
+	dir types.Direction,
+	quoteAssetAmount sdk.Int,
+	baseAssetAmount sdk.Int,
+	skipFluctuationCheck bool,
+) error {
+	if dir == types.Direction_ADD_TO_POOL {
+		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.DecreaseBaseAssetReserve(baseAssetAmount)
+		// TODO baseAssetDeltaThisFunding
+		// TODO totalPositionSize
+		// TODO cumulativeNotional
+	} else {
+		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.IncreaseBaseAssetReserve(baseAssetAmount)
+		// TODO baseAssetDeltaThisFunding
+		// TODO totalPositionSize
+		// TODO cumulativeNotional
+	}
+
+	// Check if its over Fluctuation Limit Ratio.
+	if !skipFluctuationCheck {
+		err := k.checkFluctuationLimitRatio(ctx, pool)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := k.addReserveSnapshot(ctx, pool)
+	if err != nil {
+		return fmt.Errorf("error creating snapshot: %w", err)
+	}
+
+	k.savePool(ctx, pool)
+
+	return nil
+}
+
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
 func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	lastSnapshot, lastCounter, err := k.getLatestReserveSnapshot(ctx, common.TokenPair(pool.Pair))
@@ -33,6 +73,21 @@ func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
 	)
 
 	return nil
+}
+
+// getSnapshot returns the snapshot saved by counter num
+func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint64) (
+	snapshot types.ReserveSnapshot, err error,
+) {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, counter))
+	if bz == nil {
+		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
+			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))
+	}
+
+	k.codec.MustUnmarshal(bz, &snapshot)
+
+	return snapshot, nil
 }
 
 func (k Keeper) saveSnapshot(
@@ -91,19 +146,4 @@ func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.TokenPair)
 	}
 
 	return snapshot, counter, nil
-}
-
-// getSnapshot returns the snapshot saved by counter num
-func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint64) (
-	snapshot types.ReserveSnapshot, err error,
-) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, counter))
-	if bz == nil {
-		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
-			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))
-	}
-
-	k.codec.MustUnmarshal(bz, &snapshot)
-
-	return snapshot, nil
 }

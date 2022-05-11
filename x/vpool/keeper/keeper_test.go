@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -64,9 +66,11 @@ func TestSwapInput_Errors(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, ctx := AmmKeeper(t)
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPriceKeeper(gomock.NewController(t)),
+			)
 
-			keeper.CreatePool(
+			vpoolKeeper.CreatePool(
 				ctx,
 				NUSDPair,
 				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
@@ -75,7 +79,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
 			)
 
-			_, err := keeper.SwapInput(
+			_, err := vpoolKeeper.SwapInput(
 				ctx,
 				tc.pair,
 				tc.direction,
@@ -129,9 +133,11 @@ func TestSwapInput_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, ctx := AmmKeeper(t)
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPriceKeeper(gomock.NewController(t)),
+			)
 
-			keeper.CreatePool(
+			vpoolKeeper.CreatePool(
 				ctx,
 				NUSDPair,
 				sdk.MustNewDecFromStr("0.9"),  // 0.9 ratio
@@ -140,7 +146,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
 
-			res, err := keeper.SwapInput(
+			res, err := vpoolKeeper.SwapInput(
 				ctx,
 				NUSDPair,
 				tc.direction,
@@ -150,29 +156,10 @@ func TestSwapInput_HappyPath(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, res, tc.resp)
 
-			pool, err := keeper.getPool(ctx, NUSDPair)
+			pool, err := vpoolKeeper.getPool(ctx, NUSDPair)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 			require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
 		})
 	}
-}
-
-func TestCreatePool(t *testing.T) {
-	ammKeeper, ctx := AmmKeeper(t)
-
-	ammKeeper.CreatePool(
-		ctx,
-		NUSDPair,
-		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-		sdk.NewInt(10_000_000),       // 10 tokens
-		sdk.NewInt(5_000_000),        // 5 tokens
-		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-	)
-
-	exists := ammKeeper.existsPool(ctx, NUSDPair)
-	require.True(t, exists)
-
-	notExist := ammKeeper.existsPool(ctx, "BTC:OTHER")
-	require.False(t, notExist)
 }

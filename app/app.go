@@ -365,7 +365,11 @@ func NewNibiruApp(
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.DexKeeper,
 	)
 
-	app.VpoolKeeper = vpoolkeeper.NewKeeper(appCodec, keys[vpooltypes.StoreKey])
+	app.VpoolKeeper = vpoolkeeper.NewKeeper(
+		appCodec,
+		keys[vpooltypes.StoreKey],
+		app.PriceKeeper,
+	)
 
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey], memKeys[perptypes.MemStoreKey],
