@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
@@ -20,6 +21,17 @@ func NewMsgServerImpl(keeper *LockupKeeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 func (server msgServer) LockTokens(goCtx context.Context, msg *types.MsgLockTokens) (*types.MsgLockTokensResponse, error) {
-	// TODO(heisenberg): implement
-	return &types.MsgLockTokensResponse{LockId: 0}, nil
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	addr, err := sdk.AccAddressFromBech32(msg.Owner)
+	if err != nil {
+		return nil, err
+	}
+
+	lockID, err := server.keeper.LockTokens(ctx, addr, msg.Coins, msg.Duration)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgLockTokensResponse{LockId: lockID.LockId}, nil
 }
