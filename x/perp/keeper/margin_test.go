@@ -224,5 +224,140 @@ func TestAddMargin(t *testing.T) {
 }
 
 func TestRemoveMargin(t *testing.T) {
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "negative margin remove - fail",
+			test: func() {
+				removeAmt := sdk.NewInt(-5)
 
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				alice := sample.AccAddress()
+				pair := common.TokenPair("osmo:nusd")
+				err := nibiruApp.PerpKeeper.RemoveMargin(
+					ctx, pair, alice, removeAmt)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "negative margin")
+			},
+		},
+		{
+			name: "zero margin remove - fail",
+			test: func() {
+				removeAmt := sdk.ZeroInt()
+
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				alice := sample.AccAddress()
+				pair := common.TokenPair("osmo:nusd")
+				err := nibiruApp.PerpKeeper.RemoveMargin(
+					ctx, pair, alice, removeAmt)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "zero margin")
+			},
+		},
+		{
+			name: "vpool not set by keeper - fail",
+			test: func() {
+				removeAmt := sdk.NewInt(5)
+
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				alice := sample.AccAddress()
+				pair := common.TokenPair("osmo:nusd")
+				err := nibiruApp.PerpKeeper.RemoveMargin(
+					ctx, pair, alice, removeAmt)
+				require.Error(t, err)
+				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+			},
+		},
+		{
+			name: "no position from which to remove margin - fail",
+			test: func() {
+				t.Log("Setup Nibiru app, pair, and trader")
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				alice := sample.AccAddress()
+				pair := common.TokenPair("osmo:nusd")
+
+				t.Log("Setup vpool defined by pair")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				perpKeeper := &nibiruApp.PerpKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					pair.String(),
+					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					/* y */ sdk.NewDec(10_000_000), //
+					/* x */ sdk.NewDec(5_000_000), // 5 tokens
+					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
+				)
+
+				removeAmt := sdk.NewInt(5)
+				err := perpKeeper.RemoveMargin(
+					ctx, pair, alice, removeAmt)
+				require.Error(t, err)
+				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
+			},
+		},
+		{
+			name: "remove margin - happy path 1",
+			test: func() {
+				t.Log("Setup Nibiru app, pair, and trader")
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				alice := sample.AccAddress()
+				pair := common.TokenPair("xxx:yyy")
+
+				t.Log("Setup vpool defined by pair")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				perpKeeper := &nibiruApp.PerpKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					pair.String(),
+					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					/* y */ sdk.NewDec(10_000_000), //
+					/* x */ sdk.NewDec(5_000_000), // 5 tokens
+					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
+				)
+				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair:                       pair.String(),
+					CumulativePremiumFractions: []sdk.Int{sdk.OneInt()},
+				})
+
+				t.Log("Fund trader (Alice) account with sufficient quote")
+				var err error
+				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+				require.NoError(t, err)
+
+				t.Log("Open long position with 5x leverage")
+				side := types.Side_BUY
+				quote := sdk.NewInt(60)
+				leverage := sdk.NewInt(10)
+				baseLimit := sdk.NewInt(150)
+				err = nibiruApp.PerpKeeper.OpenPosition(
+					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+				require.NoError(t, err)
+
+				t.Log("Attempt to remove 10% of the position")
+				removeAmt := sdk.NewInt(6)
+				// TODO: Blocker - Need GetOutputTWAP from prices.go
+				// The test will panic b/c it's missing that implementation.
+				require.Panics(t,
+					func() {
+						err = perpKeeper.RemoveMargin(ctx, pair, alice, removeAmt)
+						require.Error(t, err)
+					})
+				// Desired behavior ↓
+				// err = perpKeeper.RemoveMargin(
+				// 	ctx, pair, alice, removeAmt)
+				// require.NoError(t, err)
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
 }
