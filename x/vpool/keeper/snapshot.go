@@ -98,7 +98,7 @@ func (k Keeper) saveSnapshot(
 	snapshot := &types.ReserveSnapshot{
 		BaseAssetReserve:  pool.BaseAssetReserve,
 		QuoteAssetReserve: pool.QuoteAssetReserve,
-		Timestamp:         ctx.BlockTime().Unix(),
+		TimestampMs:       ctx.BlockTime().UnixMilli(),
 		BlockNumber:       ctx.BlockHeight(),
 	}
 	bz := k.codec.MustMarshal(snapshot)
@@ -146,4 +146,72 @@ func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.TokenPair)
 	}
 
 	return snapshot, counter, nil
+}
+
+/*
+An object parameter for getPriceWithSnapshot().
+
+Specifies how to read the price from a single snapshot. There are three ways:
+SPOT: spot price
+QUOTE_ASSET_SWAP: price when swapping x amount of quote assets
+BASE_ASSET_SWAP: price when swapping y amount of base assets
+*/
+type snapshotPriceOptions struct {
+	// required
+	pair           common.TokenPair
+	twapCalcOption types.TwapCalcOption
+
+	// required only if twapCalcOption == QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
+	direction   types.Direction
+	assetAmount sdk.Dec
+}
+
+/*
+Pure function that returns a price from a snapshot.
+
+Can choose from three types of calc options: SPOT, QUOTE_ASSET_SWAP, and BASE_ASSET_SWAP.
+QUOTE_ASSET_SWAP and BASE_ASSET_SWAP require the `direction`` and `assetAmount`` args.
+SPOT does not require `direction` and `assetAmount`.
+
+args:
+  - pair: the token pair
+  - snapshot: a reserve snapshot
+  - twapCalcOption: SPOT, QUOTE_ASSET_SWAP, or BASE_ASSET_SWAP
+  - direction: add or remove; only required for QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
+  - assetAmount: the amount of base or quote asset; only required for QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
+
+ret:
+  - price: the price as sdk.Dec
+  - err: error
+*/
+func getPriceWithSnapshot(
+	snapshot types.ReserveSnapshot,
+	snapshotPriceOpts snapshotPriceOptions,
+) (price sdk.Dec, err error) {
+	switch snapshotPriceOpts.twapCalcOption {
+	case types.TwapCalcOption_SPOT:
+		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve), nil
+
+	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
+		pool := types.NewPool(
+			snapshotPriceOpts.pair.String(),
+			sdk.OneDec(),
+			snapshot.QuoteAssetReserve,
+			snapshot.BaseAssetReserve,
+			sdk.OneDec(),
+		)
+		return pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
+
+	case types.TwapCalcOption_BASE_ASSET_SWAP:
+		pool := types.NewPool(
+			snapshotPriceOpts.pair.String(),
+			sdk.OneDec(),
+			snapshot.QuoteAssetReserve,
+			snapshot.BaseAssetReserve,
+			sdk.OneDec(),
+		)
+		return pool.GetQuoteAmountByBaseAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
+	}
+
+	return sdk.ZeroDec(), nil
 }

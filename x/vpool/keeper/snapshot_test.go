@@ -32,7 +32,7 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 	expectedSnapshot := types.ReserveSnapshot{
 		BaseAssetReserve:  pool.BaseAssetReserve,
 		QuoteAssetReserve: pool.QuoteAssetReserve,
-		Timestamp:         expectedTime.Unix(),
+		TimestampMs:       expectedTime.UnixMilli(),
 		BlockNumber:       int64(expectedBlockHeight),
 	}
 
@@ -63,7 +63,7 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 	firstSnapshot := types.ReserveSnapshot{
 		BaseAssetReserve:  pool.BaseAssetReserve,
 		QuoteAssetReserve: pool.QuoteAssetReserve,
-		Timestamp:         expectedTime.Unix(),
+		TimestampMs:       expectedTime.UnixMilli(),
 		BlockNumber:       expectedHeight,
 	}
 
@@ -95,4 +95,92 @@ func requireLastSnapshotCounterEqual(t *testing.T, ctx sdk.Context, keeper Keepe
 	c, found := keeper.getSnapshotCounter(ctx, common.TokenPair(pool.Pair))
 	require.True(t, found)
 	require.Equal(t, counter, c)
+}
+
+func TestGetSnapshotPrice(t *testing.T) {
+	tests := []struct {
+		name              string
+		pair              common.TokenPair
+		quoteAssetReserve sdk.Dec
+		baseAssetReserve  sdk.Dec
+		twapCalcOption    types.TwapCalcOption
+		direction         types.Direction
+		assetAmount       sdk.Dec
+		expectedPrice     sdk.Dec
+	}{
+		{
+			name:              "spot price calc",
+			pair:              common.TokenPair("btc:nusd"),
+			quoteAssetReserve: sdk.NewDec(40_000),
+			baseAssetReserve:  sdk.NewDec(2),
+			twapCalcOption:    types.TwapCalcOption_SPOT,
+			expectedPrice:     sdk.NewDec(20_000),
+		},
+		{
+			name:              "quote asset swap add to pool calc",
+			pair:              common.TokenPair("btc:nusd"),
+			quoteAssetReserve: sdk.NewDec(3_000),
+			baseAssetReserve:  sdk.NewDec(1_000),
+			twapCalcOption:    types.TwapCalcOption_QUOTE_ASSET_SWAP,
+			direction:         types.Direction_ADD_TO_POOL,
+			assetAmount:       sdk.NewDec(3_000),
+			expectedPrice:     sdk.NewDec(500),
+		},
+		{
+			name:              "quote asset swap remove from pool calc",
+			pair:              common.TokenPair("btc:nusd"),
+			quoteAssetReserve: sdk.NewDec(3_000),
+			baseAssetReserve:  sdk.NewDec(1_000),
+			twapCalcOption:    types.TwapCalcOption_QUOTE_ASSET_SWAP,
+			direction:         types.Direction_REMOVE_FROM_POOL,
+			assetAmount:       sdk.NewDec(1_500),
+			expectedPrice:     sdk.NewDec(1_000),
+		},
+		{
+			name:              "base asset swap add to pool calc",
+			pair:              common.TokenPair("btc:nusd"),
+			quoteAssetReserve: sdk.NewDec(3_000),
+			baseAssetReserve:  sdk.NewDec(1_000),
+			twapCalcOption:    types.TwapCalcOption_BASE_ASSET_SWAP,
+			direction:         types.Direction_ADD_TO_POOL,
+			assetAmount:       sdk.NewDec(500),
+			expectedPrice:     sdk.NewDec(1_000),
+		},
+		{
+			name:              "base asset swap remove from pool calc",
+			pair:              common.TokenPair("btc:nusd"),
+			quoteAssetReserve: sdk.NewDec(3_000),
+			baseAssetReserve:  sdk.NewDec(1_000),
+			twapCalcOption:    types.TwapCalcOption_BASE_ASSET_SWAP,
+			direction:         types.Direction_REMOVE_FROM_POOL,
+			assetAmount:       sdk.NewDec(500),
+			expectedPrice:     sdk.NewDec(3_000),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			snapshot := types.ReserveSnapshot{
+				QuoteAssetReserve: tc.quoteAssetReserve,
+				BaseAssetReserve:  tc.baseAssetReserve,
+			}
+
+			snapshotPriceOpts := snapshotPriceOptions{
+				pair:           tc.pair,
+				twapCalcOption: tc.twapCalcOption,
+				direction:      tc.direction,
+				assetAmount:    tc.assetAmount,
+			}
+
+			price, err := getPriceWithSnapshot(
+				snapshot,
+				snapshotPriceOpts,
+			)
+
+			require.NoError(t, err)
+			require.EqualValuesf(t, tc.expectedPrice, price,
+				"expected %s, got %s", tc.expectedPrice.String(), price.String())
+		})
+	}
 }
