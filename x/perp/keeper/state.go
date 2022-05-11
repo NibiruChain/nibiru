@@ -134,7 +134,7 @@ func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(p.storeKey), pairMetadataNamespace)
 }
 
-func (p PairMetadata) Get(ctx sdk.Context, pair string) (*types.PairMetadata, error) {
+func (p PairMetadata) Get(ctx sdk.Context, pair common.TokenPair) (*types.PairMetadata, error) {
 	kv := p.getKV(ctx)
 
 	v := kv.Get([]byte(pair))

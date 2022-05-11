@@ -203,7 +203,7 @@ func (k Keeper) increasePosition(
 func (k Keeper) GetLatestCumulativePremiumFraction(
 	ctx sdk.Context, pair common.TokenPair,
 ) (sdk.Int, error) {
-	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
+	pairMetadata, err := k.PairMetadata().Get(ctx, pair)
 	if err != nil {
 		return sdk.Int{}, err
 	}
