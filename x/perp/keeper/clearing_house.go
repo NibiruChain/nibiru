@@ -309,7 +309,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 		positionNotional = positionNotionalDec.TruncateInt()
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
+		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs.ToDec())
 		if err != nil {
 			return sdk.ZeroInt(), sdk.ZeroInt(), err
 		}
@@ -518,7 +518,7 @@ func (k Keeper) closePosition(ctx sdk.Context, pair common.TokenPair, trader str
 	case false:
 		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
 	}
-	positionResp.ExchangedQuoteAssetAmount, err = k.VpoolKeeper.SwapOutput(ctx, pair, vammDir, oldPosition.Size_.Abs(), quoteAssetAmountLimit)
+	positionResp.ExchangedQuoteAssetAmount, err = k.VpoolKeeper.SwapOutput(ctx, pair, vammDir, oldPosition.Size_.Abs().ToDec(), quoteAssetAmountLimit.ToDec())
 	if err != nil {
 		return nil, err
 	}
@@ -642,16 +642,16 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 		panic("invalid side")
 	}
 
-	outputAmount, err := k.VpoolKeeper.SwapInput(ctx, pair, vammDir, inputAmount, minOutputAmount)
+	outputAmount, err := k.VpoolKeeper.SwapInput(ctx, pair, vammDir, inputAmount.ToDec(), minOutputAmount.ToDec())
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
 	switch vammDir {
 	case pooltypes.Direction_ADD_TO_POOL:
-		return outputAmount, nil
+		return outputAmount.TruncateInt(), nil
 	case pooltypes.Direction_REMOVE_FROM_POOL:
-		inverseSign := outputAmount.MulRaw(-1)
+		inverseSign := outputAmount.TruncateInt().MulRaw(-1)
 		return inverseSign, nil
 	default:
 		panic("invalid side")
