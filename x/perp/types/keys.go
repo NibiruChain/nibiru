@@ -1,9 +1,5 @@
 package types
 
-import (
-	"strings"
-)
-
 var (
 	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
@@ -13,6 +9,4 @@ var (
 
 	// QuerierRoute defines the module's query routing key.
 	QuerierRoute = ModuleName
-
-	MemStoreKey = strings.Join([]string{"mem", ModuleName}, "_")
 )
