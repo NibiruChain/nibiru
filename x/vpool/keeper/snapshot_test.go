@@ -17,7 +17,9 @@ func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing
 		mock.NewMockPriceKeeper(gomock.NewController(t)),
 	)
 
-	err := vpoolKeeper.addReserveSnapshot(ctx, getSamplePool())
+	pool := getSamplePool()
+
+	err := vpoolKeeper.addReserveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 
 	_, _, err = vpoolKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
@@ -40,7 +42,7 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 		mock.NewMockPriceKeeper(gomock.NewController(t)),
 	)
 	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight)).WithBlockTime(expectedTime)
-	vpoolKeeper.saveSnapshot(ctx, pool, 0)
+	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve, 0)
 	vpoolKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
 
 	snapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
@@ -68,7 +70,7 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 	}
 
 	t.Log("Save snapshot 0")
-	vpoolKeeper.saveSnapshot(ctx, pool, 0)
+	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve, 0)
 	vpoolKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
 
 	t.Log("Check snapshot 0")
@@ -82,7 +84,7 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 	differentSnapshot := firstSnapshot
 	differentSnapshot.BaseAssetReserve = sdk.NewDec(12_341_234)
 	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
-	vpoolKeeper.saveSnapshot(ctx, pool, 1)
+	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve, 1)
 
 	t.Log("Fetch snapshot 1")
 	newSnapshot, err := vpoolKeeper.getSnapshot(ctx, common.TokenPair(pool.Pair), 1)

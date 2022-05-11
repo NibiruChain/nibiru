@@ -26,7 +26,7 @@ func (k Keeper) CreatePool(
 	)
 
 	k.savePool(ctx, pool)
-	k.saveSnapshot(ctx, pool, 0)
+	k.saveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve, 0)
 	k.saveSnapshotCounter(ctx, common.TokenPair(pair), 0)
 }
 

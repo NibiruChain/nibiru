@@ -38,7 +38,7 @@ func (k Keeper) updateReserve(
 		}
 	}
 
-	err := k.addReserveSnapshot(ctx, pool)
+	err := k.addReserveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	if err != nil {
 		return fmt.Errorf("error creating snapshot: %w", err)
 	}
@@ -49,26 +49,31 @@ func (k Keeper) updateReserve(
 }
 
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
-func (k Keeper) addReserveSnapshot(ctx sdk.Context, pool *types.Pool) error {
-	lastSnapshot, lastCounter, err := k.getLatestReserveSnapshot(ctx, common.TokenPair(pool.Pair))
+func (k Keeper) addReserveSnapshot(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	quoteAssetReserve sdk.Dec,
+	baseAssetReserve sdk.Dec,
+) error {
+	lastSnapshot, lastCounter, err := k.getLatestReserveSnapshot(ctx, pair)
 	if err != nil {
 		return err
 	}
 
 	if ctx.BlockHeight() == lastSnapshot.BlockNumber {
-		k.saveSnapshot(ctx, pool, lastCounter)
+		k.saveSnapshot(ctx, pair, quoteAssetReserve, baseAssetReserve, lastCounter)
 	} else {
 		newCounter := lastCounter + 1
-		k.saveSnapshot(ctx, pool, newCounter)
-		k.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), newCounter)
+		k.saveSnapshot(ctx, pair, quoteAssetReserve, baseAssetReserve, newCounter)
+		k.saveSnapshotCounter(ctx, pair, newCounter)
 	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventSnapshotSaved,
 			sdk.NewAttribute(types.AttributeBlockHeight, fmt.Sprintf("%d", ctx.BlockHeight())),
-			sdk.NewAttribute(types.AttributeQuoteReserve, pool.QuoteAssetReserve.String()),
-			sdk.NewAttribute(types.AttributeBaseReserve, pool.BaseAssetReserve.String()),
+			sdk.NewAttribute(types.AttributeQuoteReserve, quoteAssetReserve.String()),
+			sdk.NewAttribute(types.AttributeBaseReserve, baseAssetReserve.String()),
 		),
 	)
 
@@ -92,19 +97,21 @@ func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint
 
 func (k Keeper) saveSnapshot(
 	ctx sdk.Context,
-	pool *types.Pool,
+	pair common.TokenPair,
+	quoteAssetReserve sdk.Dec,
+	baseAssetReserve sdk.Dec,
 	counter uint64,
 ) {
 	snapshot := &types.ReserveSnapshot{
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		QuoteAssetReserve: pool.QuoteAssetReserve,
+		BaseAssetReserve:  baseAssetReserve,
+		QuoteAssetReserve: quoteAssetReserve,
 		TimestampMs:       ctx.BlockTime().UnixMilli(),
 		BlockNumber:       ctx.BlockHeight(),
 	}
-	bz := k.codec.MustMarshal(snapshot)
+
 	ctx.KVStore(k.storeKey).Set(
-		types.GetSnapshotKey(common.TokenPair(pool.Pair), counter),
-		bz,
+		types.GetSnapshotKey(pair, counter),
+		k.codec.MustMarshal(snapshot),
 	)
 }
 
