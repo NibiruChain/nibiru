@@ -199,8 +199,8 @@ func (k Keeper) increasePosition(
 	return
 }
 
-// TODO test: GetLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) GetLatestCumulativePremiumFraction(
+// TODO test: getLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
+func (k Keeper) getLatestCumulativePremiumFraction(
 	ctx sdk.Context, pair common.TokenPair,
 ) (sdk.Int, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, pair)

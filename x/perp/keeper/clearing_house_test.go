@@ -37,7 +37,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 
 	tokenPair, err := common.NewTokenPairFromStr(pair)
 	require.NoError(t, err)
-	latestCumulativePremiumFraction, err := keeper.GetLatestCumulativePremiumFraction(ctx, tokenPair)
+	latestCumulativePremiumFraction, err := keeper.getLatestCumulativePremiumFraction(ctx, tokenPair)
 	require.NoError(t, err)
 
 	require.Equal(t, sdk.NewInt(2), latestCumulativePremiumFraction)
