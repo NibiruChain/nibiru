@@ -58,8 +58,6 @@ type VpoolKeeper interface {
 	SwapOutput(
 		ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int, limit sdk.Int,
 	) (sdk.Int, error)
-	GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
-	GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
 	GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int,
 	) (sdk.Dec, error)
 	GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int,
