@@ -23,9 +23,9 @@ func TestCreatePool(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 	)
 
-	exists := vpoolKeeper.existsPool(ctx, NUSDPair)
+	exists := vpoolKeeper.ExistsPool(ctx, NUSDPair)
 	require.True(t, exists)
 
-	notExist := vpoolKeeper.existsPool(ctx, "BTC:OTHER")
+	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }

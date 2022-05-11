@@ -27,7 +27,6 @@ type Keeper struct {
 	pricefeedKeeper types.PricefeedKeeper
 }
 
-
 //CalcFee calculates the total tx fee for exchanging 'quoteAmt' of tokens on
 //the exchange.
 //
@@ -44,18 +43,6 @@ func (k Keeper) CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int
 }
 
 func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int, limit sdk.Int) (sdk.Int, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-
-
-func (k Keeper) GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -83,7 +70,7 @@ func (k Keeper) SwapInput(
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
 ) (baseAssetAmount sdk.Int, err error) {
-	if !k.existsPool(ctx, pair) {
+	if !k.ExistsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
 	}
 
