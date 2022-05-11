@@ -80,7 +80,7 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 
 	t.Log("We save another different snapshot")
 	differentSnapshot := firstSnapshot
-	differentSnapshot.BaseAssetReserve = sdk.NewIntFromUint64(12341234)
+	differentSnapshot.BaseAssetReserve = sdk.NewDec(12_341_234)
 	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
 	vpoolKeeper.saveSnapshot(ctx, pool, 1)
 

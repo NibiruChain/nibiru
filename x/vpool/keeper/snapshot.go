@@ -12,8 +12,8 @@ func (k Keeper) updateReserve(
 	ctx sdk.Context,
 	pool *types.Pool,
 	dir types.Direction,
-	quoteAssetAmount sdk.Int,
-	baseAssetAmount sdk.Int,
+	quoteAssetAmount sdk.Dec,
+	baseAssetAmount sdk.Dec,
 	skipFluctuationCheck bool,
 ) error {
 	if dir == types.Direction_ADD_TO_POOL {

@@ -62,8 +62,8 @@ func TestOpenPosition_Setup(t *testing.T) {
 					ctx,
 					pair.String(),
 					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					sdk.NewInt(10_000_000),       //
-					sdk.NewInt(5_000_000),        // 5 tokens
+					sdk.NewDec(10_000_000),       //
+					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 				)
 
@@ -97,8 +97,8 @@ func TestOpenPosition_Setup(t *testing.T) {
 					ctx,
 					pair.String(),
 					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					sdk.NewInt(10_000_000),       //
-					sdk.NewInt(5_000_000),        // 5 tokens
+					sdk.NewDec(10_000_000),       //
+					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 				)
 
