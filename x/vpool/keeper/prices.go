@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"time"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -120,4 +122,77 @@ func (k Keeper) GetInputPrice(
 func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (k Keeper) CalcTwap(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	twapCalcOption types.TwapCalcOption,
+	direction types.Direction,
+	assetAmount sdk.Dec,
+	lookbackInterval time.Duration,
+) (price sdk.Dec, err error) {
+	currentSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pair)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+
+	snapshotPriceOpts := snapshotPriceOptions{
+		pair:           pair,
+		twapCalcOption: twapCalcOption,
+		direction:      direction,
+		assetAmount:    assetAmount,
+	}
+	currentPrice, err := getPriceWithSnapshot(currentSnapshot, snapshotPriceOpts)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+
+	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
+	if currentSnapshot.TimestampMs <= lowerLimitTimestampMs || counter == 0 {
+		return currentPrice, nil
+	}
+
+	cumulativePeriodMs := ctx.BlockTime().UnixMilli() - currentSnapshot.TimestampMs
+	weightedPrice := currentPrice.Mul(sdk.NewDec(cumulativePeriodMs))
+
+	for {
+		if counter == 0 {
+			// no snapshots left, use what we have
+			return weightedPrice.Quo(sdk.NewDec(cumulativePeriodMs)), nil
+		}
+
+		prevTimestampMs := currentSnapshot.TimestampMs
+
+		counter -= 1
+		currentSnapshot, err = k.getSnapshot(ctx, pair, counter)
+		if err != nil {
+			return sdk.Dec{}, err
+		}
+
+		snapshotPriceOpts := snapshotPriceOptions{
+			pair:           pair,
+			twapCalcOption: twapCalcOption,
+			direction:      direction,
+			assetAmount:    assetAmount,
+		}
+		currentPrice, err := getPriceWithSnapshot(currentSnapshot, snapshotPriceOpts)
+		if err != nil {
+			return sdk.Dec{}, err
+		}
+
+		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
+			// if our current snapshot is below the lower limit timestamp,
+			// add a fractional weighted price
+			timeElapsedMs := prevTimestampMs - lowerLimitTimestampMs
+			weightedPrice = weightedPrice.Add(currentPrice.Mul(sdk.NewDec(timeElapsedMs)))
+			break
+		}
+
+		timeElapsedMs := prevTimestampMs - currentSnapshot.TimestampMs
+		weightedPrice = weightedPrice.Add(currentPrice.Mul(sdk.NewDec(timeElapsedMs)))
+		cumulativePeriodMs += timeElapsedMs
+	}
+
+	return weightedPrice.Quo(sdk.NewDec(lookbackInterval.Milliseconds())), nil
 }

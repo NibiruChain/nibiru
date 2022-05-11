@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -250,6 +251,96 @@ func TestGetInputPrice(t *testing.T) {
 					"expected quote: %s, got: %s", tc.expectedBaseAmount.String(), baseAmount.String(),
 				)
 			}
+		})
+	}
+}
+
+func TestCalcTwap(t *testing.T) {
+	tests := []struct {
+		name               string
+		pair               common.TokenPair
+		reserveSnapshots   []types.ReserveSnapshot
+		currentBlocktime   time.Time
+		currentBlockheight int64
+		lookbackInterval   time.Duration
+		twapCalcOption     types.TwapCalcOption
+		direction          types.Direction
+		assetAmount        sdk.Dec
+		expectedPrice      sdk.Dec
+		expectedErr        error
+	}{
+		{
+			name: "spot price twap calc",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(90),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(85),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(95),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       30,
+					BlockNumber:       3,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_SPOT,
+			expectedPrice:      sdk.MustNewDecFromStr("8.75"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPriceKeeper(gomock.NewController(t)))
+			ctx = ctx.WithBlockTime(time.UnixMilli(0)).WithBlockHeight(0)
+
+			t.Log("Create an empty pool for the first block, it's snapshot won't be used")
+			vpoolKeeper.CreatePool(
+				ctx,
+				tc.pair.String(),
+				sdk.ZeroDec(),
+				sdk.ZeroDec(),
+				sdk.ZeroDec(),
+				sdk.ZeroDec(),
+			)
+
+			for i, snapshot := range tc.reserveSnapshots {
+				vpoolKeeper.saveSnapshot(
+					ctx,
+					tc.pair,
+					uint64(i+1),
+					snapshot.QuoteAssetReserve,
+					snapshot.BaseAssetReserve,
+					time.UnixMilli(snapshot.TimestampMs),
+					snapshot.BlockNumber,
+				)
+			}
+			vpoolKeeper.saveSnapshotCounter(ctx, tc.pair, uint64(len(tc.reserveSnapshots)))
+			ctx = ctx.WithBlockTime(tc.currentBlocktime).WithBlockHeight(tc.currentBlockheight)
+
+			price, err := vpoolKeeper.CalcTwap(ctx,
+				tc.pair,
+				tc.twapCalcOption,
+				tc.direction,
+				tc.assetAmount,
+				tc.lookbackInterval,
+			)
+			require.NoError(t, err)
+			require.EqualValuesf(t, tc.expectedPrice, price,
+				"expected %s, got %s", tc.expectedPrice.String(), price.String())
 		})
 	}
 }
