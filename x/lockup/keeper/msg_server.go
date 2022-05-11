@@ -35,3 +35,10 @@ func (server msgServer) LockTokens(goCtx context.Context, msg *types.MsgLockToke
 
 	return &types.MsgLockTokensResponse{LockId: lockID.LockId}, nil
 }
+
+func (server msgServer) InitiateUnlock(ctx context.Context, unlock *types.MsgInitiateUnlock) (*types.MsgInitiateUnlockResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	_, err := server.keeper.UnlockTokens(sdkCtx, unlock.LockId)
+	return &types.MsgInitiateUnlockResponse{}, err
+}
