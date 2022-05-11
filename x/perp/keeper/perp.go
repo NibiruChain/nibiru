@@ -12,10 +12,10 @@ func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, trader str
 	return k.Positions().Update(ctx, &types.Position{
 		Address:                             trader,
 		Pair:                                pair.String(),
-		Size_:                               sdk.ZeroInt(),
-		Margin:                              sdk.ZeroInt(),
-		OpenNotional:                        sdk.ZeroInt(),
-		LastUpdateCumulativePremiumFraction: sdk.ZeroInt(),
+		Size_:                               sdk.ZeroDec(),
+		Margin:                              sdk.ZeroDec(),
+		OpenNotional:                        sdk.ZeroDec(),
+		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 		LiquidityHistoryIndex:               0,
 		BlockNumber:                         ctx.BlockHeight(),
 	})

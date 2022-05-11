@@ -28,7 +28,7 @@ var (
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) OpenPosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
-	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
+	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Dec,
 ) error {
 	traderAddr, err := sdk.AccAddressFromBech32(trader)
 	if err != nil {
@@ -98,19 +98,19 @@ func (k Keeper) OpenPosition(
 	case positionResp.MarginToVault.IsPositive():
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault)))
+			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.TruncateInt())))
 		if err != nil {
 			return err
 		}
 	case positionResp.MarginToVault.IsNegative():
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.VaultModuleAccount, traderAddr,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs())))
+			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs().TruncateInt())))
 		if err != nil {
 			return err
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount)
+	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount.TruncateInt())
 	if err != nil {
 		return err
 	}
@@ -126,12 +126,12 @@ func (k Keeper) OpenPosition(
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		Fee:                   transferredFee,
+		Fee:                   transferredFee.ToDec(), // TODO(mercilex): this feels like should be a coin?
 		PositionSizeAfter:     positionResp.Position.Size_,
 		RealizedPnl:           positionResp.RealizedPnl,
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
 		BadDebt:               positionResp.BadDebt,
-		LiquidationPenalty:    sdk.ZeroInt(),
+		LiquidationPenalty:    sdk.ZeroDec(),
 		SpotPrice:             spotPrice,
 		FundingPayment:        positionResp.FundingPayment,
 	})
@@ -140,7 +140,7 @@ func (k Keeper) OpenPosition(
 // TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
-	openNotional sdk.Int, minPositionSize sdk.Int, leverage sdk.Int,
+	openNotional, minPositionSize, leverage sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{}
 
@@ -202,10 +202,10 @@ func (k Keeper) increasePosition(
 // TODO test: GetLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) GetLatestCumulativePremiumFraction(
 	ctx sdk.Context, pair common.TokenPair,
-) (sdk.Int, error) {
+) (sdk.Dec, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
 	if err != nil {
-		return sdk.Int{}, err
+		return sdk.Dec{}, err
 	}
 
 	// this should never fail
@@ -217,7 +217,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context, pair common.TokenPair,
 	trader string, pnlCalcOption types.PnLCalcOption,
 ) (
-	positionNotional, unrealizedPnL sdk.Int, err error) {
+	positionNotional, unrealizedPnL sdk.Dec, err error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // tODO(mercilex): inefficient refetch
 	if err != nil {
 		return
@@ -225,7 +225,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	positionSizeAbs := position.Size_.Abs()
 	if positionSizeAbs.IsZero() {
-		return sdk.ZeroInt(), sdk.ZeroInt(), nil
+		return sdk.ZeroDec(), sdk.ZeroDec(), nil
 	}
 
 	isShortPosition := position.Size_.IsNegative()
@@ -239,23 +239,23 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs)
+		positionNotionalDec, err := k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs.TruncateInt()) // TODO(mercilex): vpool here should accept sdk.Dec
 		if err != nil {
-			return sdk.ZeroInt(), sdk.ZeroInt(), err
+			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = positionNotionalDec.TruncateInt()
+		positionNotional = positionNotionalDec
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs.ToDec())
+		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
-			return sdk.ZeroInt(), sdk.ZeroInt(), err
+			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = positionNotionalDec.TruncateInt()
+		positionNotional = positionNotionalDec
 	case types.PnLCalcOption_ORACLE:
 		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(ctx, pair)
 		if err != nil {
-			return sdk.ZeroInt(), sdk.ZeroInt(), err
+			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = oraclePrice.TruncateInt().Mul(positionSizeAbs)
+		positionNotional = oraclePrice.Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
@@ -273,7 +273,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openReversePosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
-	quoteAssetAmount sdk.Int, leverage sdk.Int, baseAssetAmountLimit sdk.Int,
+	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
 	openNotional := quoteAssetAmount.Mul(leverage)
@@ -310,7 +310,7 @@ func (k Keeper) openReversePosition(
 // TODO test: reducePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) reducePosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
-	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Int,
+	openNotional, oldPositionNotional, baseAssetAmountLimit, unrealizedPnL sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
@@ -343,7 +343,7 @@ func (k Keeper) reducePosition(
 	positionResp.UnrealizedPnlAfter = unrealizedPnL.Sub(positionResp.RealizedPnl)
 	positionResp.ExchangedQuoteAssetAmount = openNotional
 
-	var remainOpenNotional sdk.Int
+	var remainOpenNotional sdk.Dec
 	switch oldPosition.Size_.IsPositive() {
 	case true:
 		remainOpenNotional = oldPositionNotional.Sub(positionResp.ExchangedQuoteAssetAmount).Sub(positionResp.UnrealizedPnlAfter)
@@ -351,7 +351,7 @@ func (k Keeper) reducePosition(
 		remainOpenNotional = positionResp.UnrealizedPnlAfter.Add(oldPositionNotional).Sub(positionResp.ExchangedQuoteAssetAmount)
 	}
 
-	if remainOpenNotional.LTE(sdk.ZeroInt()) {
+	if remainOpenNotional.LTE(sdk.ZeroDec()) {
 		panic("value of open notional <= 0")
 	}
 
@@ -371,7 +371,7 @@ func (k Keeper) reducePosition(
 // TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
-	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
+	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
@@ -380,7 +380,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		return nil, err
 	}
 
-	if closePositionResp.BadDebt.LTE(sdk.ZeroInt()) {
+	if closePositionResp.BadDebt.LTE(sdk.ZeroDec()) {
 		return nil, fmt.Errorf("underwater position")
 	}
 
@@ -390,7 +390,7 @@ func (k Keeper) closeAndOpenReversePosition(
 	case true:
 		positionResp = closePositionResp
 	case false:
-		var updatedBaseAssetAmountLimit sdk.Int
+		var updatedBaseAssetAmountLimit sdk.Dec
 		if baseAssetAmountLimit.GT(closePositionResp.ExchangedPositionSize) {
 			updatedBaseAssetAmountLimit = baseAssetAmountLimit.Sub(closePositionResp.ExchangedPositionSize.Abs())
 		}
@@ -409,7 +409,7 @@ func (k Keeper) closeAndOpenReversePosition(
 			FundingPayment:            closePositionResp.FundingPayment.Add(increasePositionResp.FundingPayment),
 			RealizedPnl:               closePositionResp.RealizedPnl.Add(increasePositionResp.RealizedPnl),
 			MarginToVault:             closePositionResp.MarginToVault.Add(increasePositionResp.MarginToVault),
-			UnrealizedPnlAfter:        sdk.ZeroInt(),
+			UnrealizedPnlAfter:        sdk.ZeroDec(),
 		}
 	}
 
@@ -450,23 +450,25 @@ func (k Keeper) closePosition(
 	positionResp.MarginToVault = remaining.margin.Neg()
 
 	var vammDir pooltypes.Direction
-	switch oldPosition.Size_.GTE(sdk.ZeroInt()) {
+	switch oldPosition.Size_.GTE(sdk.ZeroDec()) {
 	case true:
 		vammDir = pooltypes.Direction_ADD_TO_POOL
 	case false:
 		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
 	}
-	positionResp.ExchangedQuoteAssetAmount, err =
+	exchangedQuoteAssetAmount, err :=
 		k.VpoolKeeper.SwapOutput(
 			ctx,
 			pair,
 			vammDir,
-			oldPosition.Size_.Abs().ToDec(),
+			oldPosition.Size_.Abs(),
 			quoteAssetAmountLimit.ToDec(),
 		)
 	if err != nil {
 		return nil, err
 	}
+
+	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount.ToDec() // TODO(mercilex): vpool should return sdk.Dec here
 
 	err = k.ClearPosition(ctx, pair, trader)
 	if err != nil {
@@ -518,7 +520,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	pair common.TokenPair,
 	trader string,
 	pnLPreferenceOption types.PnLPreferenceOption,
-) (sdk.Int, sdk.Int, error) {
+) (sdk.Dec, sdk.Dec, error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
@@ -527,7 +529,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 		types.PnLCalcOption_SPOT_PRICE,
 	)
 	if err != nil {
-		return sdk.Int{}, sdk.Int{}, err
+		return sdk.Dec{}, sdk.Dec{}, err
 	}
 
 	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(
@@ -537,7 +539,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 		types.PnLCalcOption_TWAP,
 	)
 	if err != nil {
-		return sdk.Int{}, sdk.Int{}, err
+		return sdk.Dec{}, sdk.Dec{}, err
 	}
 
 	// todo(mercilex): logic can be simplified here but keeping it for now as perp reference
@@ -571,7 +573,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 // TODO test: swapInput | https://github.com/NibiruChain/nibiru/issues/299
 // TODO: Check Can Over Fluctuation Limit
 func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
-	side types.Side, inputAmount sdk.Int, minOutputAmount sdk.Int, canOverFluctuationLimit bool) (sdk.Int, error) {
+	side types.Side, inputAmount sdk.Dec, minOutputAmount sdk.Dec, canOverFluctuationLimit bool) (sdk.Dec, error) {
 	var vammDir pooltypes.Direction
 	switch side {
 	case types.Side_BUY:
@@ -583,16 +585,16 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 	}
 
 	outputAmount, err := k.VpoolKeeper.SwapInput(
-		ctx, pair, vammDir, inputAmount.ToDec(), minOutputAmount.ToDec())
+		ctx, pair, vammDir, inputAmount, minOutputAmount)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdk.Dec{}, err
 	}
 
 	switch vammDir {
 	case pooltypes.Direction_ADD_TO_POOL:
-		return outputAmount.TruncateInt(), nil
+		return outputAmount, nil // TODO(mercilex): review here
 	case pooltypes.Direction_REMOVE_FROM_POOL:
-		inverseSign := outputAmount.TruncateInt().MulRaw(-1)
+		inverseSign := outputAmount.MulInt64(-1)
 		return inverseSign, nil
 	default:
 		panic("invalid side")
