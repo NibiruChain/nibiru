@@ -52,7 +52,7 @@ func (k Keeper) savePool(
 	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
 }
 
-// existsPool returns true if pool exists, false if not.
-func (k Keeper) existsPool(ctx sdk.Context, pair common.TokenPair) bool {
+// ExistsPool returns true if pool exists, false if not.
+func (k Keeper) ExistsPool(ctx sdk.Context, pair common.TokenPair) bool {
 	return ctx.KVStore(k.storeKey).Has(types.GetPoolKey(pair))
 }
