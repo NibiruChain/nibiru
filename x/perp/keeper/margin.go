@@ -84,12 +84,15 @@ function requireMoreMarginRatio(
             _largerThanOrEqualTo ? remainingMarginRatio >= 0 : remainingMarginRatio < 0,
             "Margin ratio not meet criteria"
         );
-    }
-*/
+}
 
-// TODO test: requireMoreMarginRatio
+equals to:
+if larger than or equal to:
+	then we need remainMarginRatio to be bigger or equal to 0
+else if not larger than or equal to:
+	then we need remainMarginRatio to be lower than 0
+*/
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEqualTo bool) error {
-	// TODO(mercilex): look at this and make sure it's legit compared ot the counterparty above ^
 	remainMarginRatio := marginRatio.Sub(baseMarginRatio)
 	switch largerThanOrEqualTo {
 	case true:
@@ -97,7 +100,7 @@ func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEq
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
 	default:
-		if remainMarginRatio.LT(sdk.ZeroInt()) {
+		if !remainMarginRatio.LT(sdk.ZeroInt()) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
 	}
