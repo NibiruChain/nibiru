@@ -88,7 +88,9 @@ message PositionResp {
 message VirtualPoolInfo {
   string pair = 1;
   int64 last_restriction_block = 2;
-  repeated string cumulative_premium_fractions = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  repeated string cumulative_premium_fractions = 3 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+      (gogoproto.nullable) = false];
 }
 
 enum Side {
@@ -109,8 +111,9 @@ enum PnLPreferenceOption {
 
 message PairMetadata {
   string pair = 1;
-  string open_interest_notional = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
-  repeated string cumulative_premium_fractions = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+  repeated string cumulative_premium_fractions = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false];
 }
 
 message PositionChangedEvent {

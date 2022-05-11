@@ -1,6 +1,8 @@
 package types
 
 import (
+	"errors"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -10,6 +12,10 @@ const (
 	VaultModuleAccount   = "vault"
 	PerpEFModuleAccount  = "perp_ef"
 	FeePoolModuleAccount = "fee_pool"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Position {
