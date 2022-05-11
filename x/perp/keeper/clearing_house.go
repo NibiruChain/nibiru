@@ -514,12 +514,18 @@ func (k Keeper) transferFee(
 }
 
 // TODO test: getPreferencePositionNotionalAndUnrealizedPnL
+/* getPreferencePositionNotionalAndUnrealizedPnL
+
+Returns:
+  pnl: unrealized profits and losses (PnL)
+  notional: positional notional.
+*/
 func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	trader string,
 	pnLPreferenceOption types.PnLPreferenceOption,
-) (sdk.Int, sdk.Int, error) {
+) (pnl sdk.Int, notional sdk.Int, err error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
