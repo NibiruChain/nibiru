@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
@@ -9,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/types/time"
+	tmtime "github.com/tendermint/tendermint/types/time"
 )
 
 func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
@@ -27,22 +28,22 @@ func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing
 }
 
 func TestKeeper_SaveSnapshot(t *testing.T) {
-	expectedTime := time.Now()
-	expectedBlockHeight := 123
+	expectedTime := tmtime.Now()
+	expectedBlockHeight := int64(123)
 	pool := getSamplePool()
 
 	expectedSnapshot := types.ReserveSnapshot{
 		BaseAssetReserve:  pool.BaseAssetReserve,
 		QuoteAssetReserve: pool.QuoteAssetReserve,
 		TimestampMs:       expectedTime.UnixMilli(),
-		BlockNumber:       int64(expectedBlockHeight),
+		BlockNumber:       expectedBlockHeight,
 	}
 
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockPriceKeeper(gomock.NewController(t)),
 	)
-	ctx = ctx.WithBlockHeight(int64(expectedBlockHeight)).WithBlockTime(expectedTime)
-	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve, 0)
+	ctx = ctx.WithBlockHeight(expectedBlockHeight).WithBlockTime(expectedTime)
+	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, expectedTime, expectedBlockHeight)
 	vpoolKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
 
 	snapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
@@ -56,7 +57,7 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 		mock.NewMockPriceKeeper(gomock.NewController(t)),
 	)
 	expectedHeight := int64(123)
-	expectedTime := time.Now()
+	expectedTime := tmtime.Now()
 
 	ctx = ctx.WithBlockHeight(expectedHeight).WithBlockTime(expectedTime)
 
@@ -70,7 +71,15 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 	}
 
 	t.Log("Save snapshot 0")
-	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve, 0)
+	vpoolKeeper.saveSnapshot(
+		ctx,
+		common.TokenPair(pool.Pair),
+		0,
+		pool.QuoteAssetReserve,
+		pool.BaseAssetReserve,
+		expectedTime,
+		expectedHeight,
+	)
 	vpoolKeeper.saveSnapshotCounter(ctx, common.TokenPair(pool.Pair), 0)
 
 	t.Log("Check snapshot 0")
@@ -84,7 +93,15 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 	differentSnapshot := firstSnapshot
 	differentSnapshot.BaseAssetReserve = sdk.NewDec(12_341_234)
 	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
-	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), pool.QuoteAssetReserve, pool.BaseAssetReserve, 1)
+	vpoolKeeper.saveSnapshot(
+		ctx,
+		common.TokenPair(pool.Pair),
+		1,
+		pool.QuoteAssetReserve,
+		pool.BaseAssetReserve,
+		expectedTime.Add(time.Second),
+		expectedHeight+1,
+	)
 
 	t.Log("Fetch snapshot 1")
 	newSnapshot, err := vpoolKeeper.getSnapshot(ctx, common.TokenPair(pool.Pair), 1)

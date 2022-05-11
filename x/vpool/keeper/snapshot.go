@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
@@ -61,10 +62,10 @@ func (k Keeper) addReserveSnapshot(
 	}
 
 	if ctx.BlockHeight() == lastSnapshot.BlockNumber {
-		k.saveSnapshot(ctx, pair, quoteAssetReserve, baseAssetReserve, lastCounter)
+		k.saveSnapshot(ctx, pair, lastCounter, quoteAssetReserve, baseAssetReserve, ctx.BlockTime(), ctx.BlockHeight())
 	} else {
 		newCounter := lastCounter + 1
-		k.saveSnapshot(ctx, pair, quoteAssetReserve, baseAssetReserve, newCounter)
+		k.saveSnapshot(ctx, pair, newCounter, quoteAssetReserve, baseAssetReserve, ctx.BlockTime(), ctx.BlockHeight())
 		k.saveSnapshotCounter(ctx, pair, newCounter)
 	}
 
@@ -98,15 +99,18 @@ func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint
 func (k Keeper) saveSnapshot(
 	ctx sdk.Context,
 	pair common.TokenPair,
+	counter uint64,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
-	counter uint64,
+	timestamp time.Time,
+	blockNumber int64,
+
 ) {
 	snapshot := &types.ReserveSnapshot{
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
-		TimestampMs:       ctx.BlockTime().UnixMilli(),
-		BlockNumber:       ctx.BlockHeight(),
+		TimestampMs:       timestamp.UnixMilli(),
+		BlockNumber:       blockNumber,
 	}
 
 	ctx.KVStore(k.storeKey).Set(
