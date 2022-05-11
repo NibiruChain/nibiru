@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOpenPosition_LongSetup(t *testing.T) {
+func TestOpenPosition_Setup(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()
@@ -108,18 +108,19 @@ func TestOpenPosition_LongSetup(t *testing.T) {
 					CumulativePremiumFractions: []sdk.Int{sdk.OneInt()},
 				})
 
-				// We get module account, to create it.
-				perpKeeper.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
+				t.Log("Fund trader (Alice) account with sufficient quote")
+				var err error
+				alice := sample.AccAddress()
+				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+				require.NoError(t, err)
 
 				t.Log("Open long position with 10x leverage")
-				alice := sample.AccAddress()
-				simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
-					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewInt(10)
 				baseLimit := sdk.NewInt(150)
-				err := nibiruApp.PerpKeeper.OpenPosition(
+				err = nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
 
 				require.NoError(t, err)
