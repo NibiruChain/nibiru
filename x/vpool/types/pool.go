@@ -7,8 +7,8 @@ import (
 func NewPool(
 	pair string,
 	tradeLimitRatio sdk.Dec,
-	quoteAssetReserve sdk.Int,
-	baseAssetReserve sdk.Int,
+	quoteAssetReserve sdk.Dec,
+	baseAssetReserve sdk.Dec,
 	fluctuationLimitRatio sdk.Dec,
 ) *Pool {
 	return &Pool{
@@ -22,8 +22,8 @@ func NewPool(
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
-func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Int) bool {
-	return p.QuoteAssetReserve.ToDec().Mul(p.TradeLimitRatio).GTE(quoteAmount.ToDec())
+func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
+	return p.QuoteAssetReserve.Mul(p.TradeLimitRatio).GTE(quoteAmount)
 }
 
 /*
@@ -41,35 +41,29 @@ ret:
 */
 func (p *Pool) GetBaseAmountByQuoteAmount(
 	dir Direction,
-	quoteAmount sdk.Int,
-) (baseAmountOut sdk.Int, err error) {
+	quoteAmount sdk.Dec,
+) (baseAmount sdk.Dec, err error) {
 	if quoteAmount.IsZero() {
-		return sdk.ZeroInt(), nil
+		return sdk.ZeroDec(), nil
 	}
 
-	invariant := p.QuoteAssetReserve.ToDec().Mul(p.BaseAssetReserve.ToDec()) // x * y = k
+	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve) // x * y = k
 
 	var quoteAssetsAfter sdk.Dec
 	if dir == Direction_ADD_TO_POOL {
-		quoteAssetsAfter = p.QuoteAssetReserve.Add(quoteAmount).ToDec()
+		quoteAssetsAfter = p.QuoteAssetReserve.Add(quoteAmount)
 	} else {
-		quoteAssetsAfter = p.QuoteAssetReserve.Sub(quoteAmount).ToDec()
+		quoteAssetsAfter = p.QuoteAssetReserve.Sub(quoteAmount)
 	}
 
 	if quoteAssetsAfter.LTE(sdk.ZeroDec()) {
-		return sdk.Int{}, ErrQuoteReserveAtZero
+		return sdk.Dec{}, ErrQuoteReserveAtZero
 	}
 
 	baseAssetsAfter := invariant.Quo(quoteAssetsAfter)
-	baseAssetsTransferred := baseAssetsAfter.Sub(p.BaseAssetReserve.ToDec()).Abs()
+	baseAmount = baseAssetsAfter.Sub(p.BaseAssetReserve).Abs()
 
-	// protocol always gives out less base assets to long traders
-	// and gives more base asset debt to short traders (i.e. requires more base asset repayment from short traders)
-	if dir == Direction_ADD_TO_POOL {
-		return baseAssetsTransferred.TruncateInt(), nil
-	} else {
-		return baseAssetsTransferred.Ceil().TruncateInt(), nil
-	}
+	return baseAmount, nil
 }
 
 /*
@@ -86,54 +80,49 @@ ret:
   - err: error
 */
 func (p *Pool) GetQuoteAmountByBaseAmount(
-	dir Direction, baseAmount sdk.Int,
-) (quoteAmountOut sdk.Int, err error) {
+	dir Direction, baseAmount sdk.Dec,
+) (quoteAmount sdk.Dec, err error) {
 	if baseAmount.IsZero() {
-		return sdk.ZeroInt(), nil
+		return sdk.ZeroDec(), nil
 	}
 
-	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve).ToDec() // x * y = k
+	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve) // x * y = k
 
 	var baseAssetsAfter sdk.Dec
 	if dir == Direction_ADD_TO_POOL {
-		baseAssetsAfter = p.BaseAssetReserve.Add(baseAmount).ToDec()
+		baseAssetsAfter = p.BaseAssetReserve.Add(baseAmount)
 	} else {
-		baseAssetsAfter = p.BaseAssetReserve.Sub(baseAmount).ToDec()
+		baseAssetsAfter = p.BaseAssetReserve.Sub(baseAmount)
 	}
 
 	if baseAssetsAfter.LTE(sdk.ZeroDec()) {
-		return sdk.Int{}, ErrBaseReserveAtZero.Wrapf(
-			"base assets below zero after trying to swap %d base assets",
-			baseAmount.Int64(),
+		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
+			"base assets below zero after trying to swap %s base assets",
+			baseAmount.String(),
 		)
 	}
 
 	quoteAssetsAfter := invariant.Quo(baseAssetsAfter)
-	quoteAssetsTransferred := quoteAssetsAfter.Sub(p.QuoteAssetReserve.ToDec()).Abs()
+	quoteAssetsTransferred := quoteAssetsAfter.Sub(p.QuoteAssetReserve).Abs()
 
-	// protocol always rounds to more favorable integer
-	if dir == Direction_ADD_TO_POOL {
-		return quoteAssetsTransferred.TruncateInt(), nil
-	} else {
-		return quoteAssetsTransferred.Ceil().TruncateInt(), nil
-	}
+	return quoteAssetsTransferred, nil
 }
 
 // IncreaseBaseAssetReserve increases the quote reserve by amount
-func (p *Pool) IncreaseBaseAssetReserve(amount sdk.Int) {
+func (p *Pool) IncreaseBaseAssetReserve(amount sdk.Dec) {
 	p.BaseAssetReserve = p.BaseAssetReserve.Add(amount)
 }
 
 // DecreaseBaseAssetReserve descreases the quote asset reserve by amount
-func (p *Pool) DecreaseBaseAssetReserve(amount sdk.Int) {
+func (p *Pool) DecreaseBaseAssetReserve(amount sdk.Dec) {
 	p.BaseAssetReserve = p.BaseAssetReserve.Sub(amount)
 }
 
-func (p *Pool) IncreaseQuoteAssetReserve(amount sdk.Int) {
+func (p *Pool) IncreaseQuoteAssetReserve(amount sdk.Dec) {
 	p.QuoteAssetReserve = p.QuoteAssetReserve.Add(amount)
 }
 
 // DecreaseQuoteAssetReserve decreases the base reserve by amount
-func (p *Pool) DecreaseQuoteAssetReserve(amount sdk.Int) {
+func (p *Pool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
 	p.QuoteAssetReserve = p.QuoteAssetReserve.Sub(amount)
 }

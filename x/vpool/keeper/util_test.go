@@ -42,8 +42,8 @@ func getSamplePool() *types.Pool {
 	pool := types.NewPool(
 		NUSDPair,
 		ratioLimit,
-		sdk.NewInt(10_000_000),
-		sdk.NewInt(5_000_000),
+		sdk.NewDec(10_000_000),
+		sdk.NewDec(5_000_000),
 		fluctuationLimit,
 	)
 

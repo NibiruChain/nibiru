@@ -13,8 +13,8 @@ func (k Keeper) CreatePool(
 	ctx sdk.Context,
 	pair string,
 	tradeLimitRatio sdk.Dec, // integer with 6 decimals, 1_000_000 means 1.0
-	quoteAssetReserve sdk.Int,
-	baseAssetReserve sdk.Int,
+	quoteAssetReserve sdk.Dec,
+	baseAssetReserve sdk.Dec,
 	fluctuationLimitRatio sdk.Dec,
 ) {
 	pool := types.NewPool(

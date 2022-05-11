@@ -21,7 +21,7 @@ func TestGetUnderlyingPrice(t *testing.T) {
 		{
 			name:           "correctly fetch underlying price",
 			pair:           common.TokenPair("btc:nusd"),
-			pricefeedPrice: sdk.MustNewDecFromStr("40000"),
+			pricefeedPrice: sdk.NewDec(40000),
 		},
 	}
 
@@ -56,22 +56,22 @@ func TestGetSpotPrice(t *testing.T) {
 	tests := []struct {
 		name              string
 		pair              common.TokenPair
-		quoteAssetReserve sdk.Int
-		baseAssetReserve  sdk.Int
+		quoteAssetReserve sdk.Dec
+		baseAssetReserve  sdk.Dec
 		expectedPrice     sdk.Dec
 	}{
 		{
 			name:              "correctly fetch underlying price",
 			pair:              common.TokenPair("btc:nusd"),
-			quoteAssetReserve: sdk.NewIntFromUint64(40_000),
-			baseAssetReserve:  sdk.NewIntFromUint64(1),
-			expectedPrice:     sdk.MustNewDecFromStr("40000"),
+			quoteAssetReserve: sdk.NewDec(40_000),
+			baseAssetReserve:  sdk.NewDec(1),
+			expectedPrice:     sdk.NewDec(40000),
 		},
 		{
 			name:              "complex price",
 			pair:              common.TokenPair("btc:nusd"),
-			quoteAssetReserve: sdk.NewIntFromUint64(2_489_723_947),
-			baseAssetReserve:  sdk.NewIntFromUint64(34_597_234),
+			quoteAssetReserve: sdk.NewDec(2_489_723_947),
+			baseAssetReserve:  sdk.NewDec(34_597_234),
 			expectedPrice:     sdk.MustNewDecFromStr("71.963092396345904415"),
 		},
 	}
@@ -102,9 +102,9 @@ func TestGetOutputPrice(t *testing.T) {
 	tests := []struct {
 		name                string
 		pair                common.TokenPair
-		quoteAssetReserve   sdk.Int
-		baseAssetReserve    sdk.Int
-		baseAmount          sdk.Int
+		quoteAssetReserve   sdk.Dec
+		baseAssetReserve    sdk.Dec
+		baseAmount          sdk.Dec
 		direction           types.Direction
 		expectedQuoteAmount sdk.Dec
 		expectedErr         error
@@ -112,36 +112,36 @@ func TestGetOutputPrice(t *testing.T) {
 		{
 			name:                "zero base asset means zero price",
 			pair:                common.TokenPair("btc:nusd"),
-			quoteAssetReserve:   sdk.NewIntFromUint64(40_000),
-			baseAssetReserve:    sdk.NewIntFromUint64(10_000),
-			baseAmount:          sdk.NewIntFromUint64(0),
+			quoteAssetReserve:   sdk.NewDec(40_000),
+			baseAssetReserve:    sdk.NewDec(10_000),
+			baseAmount:          sdk.ZeroDec(),
 			direction:           types.Direction_ADD_TO_POOL,
 			expectedQuoteAmount: sdk.ZeroDec(),
 		},
 		{
 			name:                "simple add base to pool",
 			pair:                common.TokenPair("btc:nusd"),
-			baseAssetReserve:    sdk.NewIntFromUint64(1000),
-			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
-			baseAmount:          sdk.NewIntFromUint64(500),
+			baseAssetReserve:    sdk.NewDec(1000),
+			quoteAssetReserve:   sdk.NewDec(1000),
+			baseAmount:          sdk.MustNewDecFromStr("500"),
 			direction:           types.Direction_ADD_TO_POOL,
-			expectedQuoteAmount: sdk.MustNewDecFromStr("333"), // rounds down
+			expectedQuoteAmount: sdk.MustNewDecFromStr("333.333333333333333333"), // rounds down
 		},
 		{
 			name:                "simple remove base from pool",
 			pair:                common.TokenPair("btc:nusd"),
-			baseAssetReserve:    sdk.NewIntFromUint64(1000),
-			quoteAssetReserve:   sdk.NewIntFromUint64(1000),
-			baseAmount:          sdk.NewIntFromUint64(500),
+			baseAssetReserve:    sdk.NewDec(1000),
+			quoteAssetReserve:   sdk.NewDec(1000),
+			baseAmount:          sdk.MustNewDecFromStr("500"),
 			direction:           types.Direction_REMOVE_FROM_POOL,
 			expectedQuoteAmount: sdk.MustNewDecFromStr("1000"),
 		},
 		{
 			name:              "too much base removed results in error",
 			pair:              common.TokenPair("btc:nusd"),
-			baseAssetReserve:  sdk.NewIntFromUint64(1000),
-			quoteAssetReserve: sdk.NewIntFromUint64(1000),
-			baseAmount:        sdk.NewIntFromUint64(1000),
+			baseAssetReserve:  sdk.NewDec(1000),
+			quoteAssetReserve: sdk.NewDec(1000),
+			baseAmount:        sdk.MustNewDecFromStr("1000"),
 			direction:         types.Direction_REMOVE_FROM_POOL,
 			expectedErr:       types.ErrBaseReserveAtZero,
 		},
@@ -180,9 +180,9 @@ func TestGetInputPrice(t *testing.T) {
 	tests := []struct {
 		name               string
 		pair               common.TokenPair
-		quoteAssetReserve  sdk.Int
-		baseAssetReserve   sdk.Int
-		quoteAmount        sdk.Int
+		quoteAssetReserve  sdk.Dec
+		baseAssetReserve   sdk.Dec
+		quoteAmount        sdk.Dec
 		direction          types.Direction
 		expectedBaseAmount sdk.Dec
 		expectedErr        error
@@ -190,36 +190,36 @@ func TestGetInputPrice(t *testing.T) {
 		{
 			name:               "zero base asset means zero price",
 			pair:               common.TokenPair("btc:nusd"),
-			quoteAssetReserve:  sdk.NewIntFromUint64(40_000),
-			baseAssetReserve:   sdk.NewIntFromUint64(10_000),
-			quoteAmount:        sdk.NewIntFromUint64(0),
+			quoteAssetReserve:  sdk.NewDec(40_000),
+			baseAssetReserve:   sdk.NewDec(10_000),
+			quoteAmount:        sdk.ZeroDec(),
 			direction:          types.Direction_ADD_TO_POOL,
 			expectedBaseAmount: sdk.ZeroDec(),
 		},
 		{
 			name:               "simple add base to pool",
 			pair:               common.TokenPair("btc:nusd"),
-			baseAssetReserve:   sdk.NewIntFromUint64(1000),
-			quoteAssetReserve:  sdk.NewIntFromUint64(1000),
-			quoteAmount:        sdk.NewIntFromUint64(500),
+			baseAssetReserve:   sdk.NewDec(1000),
+			quoteAssetReserve:  sdk.NewDec(1000),
+			quoteAmount:        sdk.NewDec(500),
 			direction:          types.Direction_ADD_TO_POOL,
-			expectedBaseAmount: sdk.MustNewDecFromStr("333"), // rounds down
+			expectedBaseAmount: sdk.MustNewDecFromStr("333.333333333333333333"), // rounds down
 		},
 		{
 			name:               "simple remove base from pool",
 			pair:               common.TokenPair("btc:nusd"),
-			baseAssetReserve:   sdk.NewIntFromUint64(1000),
-			quoteAssetReserve:  sdk.NewIntFromUint64(1000),
-			quoteAmount:        sdk.NewIntFromUint64(500),
+			baseAssetReserve:   sdk.NewDec(1000),
+			quoteAssetReserve:  sdk.NewDec(1000),
+			quoteAmount:        sdk.NewDec(500),
 			direction:          types.Direction_REMOVE_FROM_POOL,
-			expectedBaseAmount: sdk.MustNewDecFromStr("1000"),
+			expectedBaseAmount: sdk.NewDec(1000),
 		},
 		{
 			name:              "too much base removed results in error",
 			pair:              common.TokenPair("btc:nusd"),
-			baseAssetReserve:  sdk.NewIntFromUint64(1000),
-			quoteAssetReserve: sdk.NewIntFromUint64(1000),
-			quoteAmount:       sdk.NewIntFromUint64(1000),
+			baseAssetReserve:  sdk.NewDec(1000),
+			quoteAssetReserve: sdk.NewDec(1000),
+			quoteAmount:       sdk.NewDec(1000),
 			direction:         types.Direction_REMOVE_FROM_POOL,
 			expectedErr:       types.ErrQuoteReserveAtZero,
 		},
