@@ -29,7 +29,7 @@ var (
 func (k Keeper) OpenPosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
-) (err error) {
+) error {
 	traderAddr, err := sdk.AccAddressFromBech32(trader)
 	if err != nil {
 		return err
@@ -200,7 +200,9 @@ func (k Keeper) increasePosition(
 }
 
 // TODO test: GetLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) GetLatestCumulativePremiumFraction(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+func (k Keeper) GetLatestCumulativePremiumFraction(
+	ctx sdk.Context, pair common.TokenPair,
+) (sdk.Int, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
 	if err != nil {
 		return sdk.Int{}, err

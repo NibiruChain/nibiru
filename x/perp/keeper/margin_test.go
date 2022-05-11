@@ -69,7 +69,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
-				t.Log("Open long position with 10x leverage")
+				t.Log("Attempt to open long position (expected unsuccessful)")
 				alice := sample.AccAddress()
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
