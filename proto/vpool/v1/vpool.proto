@@ -27,12 +27,12 @@ enum TwapCalcOption {
 // a snapshot of the vpool's reserves at a given point in time
 message ReserveSnapshot {
   string base_asset_reserve = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 
   // quote asset is usually the margin asset, e.g. NUSD
   string quote_asset_reserve = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 
   // seconds since unix epoch
@@ -48,12 +48,12 @@ message Pool {
 
   // base asset is the crypto asset, e.g. BTC or ETH
   string base_asset_reserve = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 
   // quote asset is usually stablecoin, in our case NUSD
   string quote_asset_reserve = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
     
   // ratio applied to reserves in order not to over trade
