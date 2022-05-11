@@ -26,8 +26,23 @@ func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Int) bool {
 	return p.QuoteAssetReserve.ToDec().Mul(p.TradeLimitRatio).GTE(quoteAmount.ToDec())
 }
 
-// GetBaseAmountByQuoteAmount returns the amount that you will get by specific quote amount
-func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (sdk.Int, error) {
+/*
+GetBaseAmountByQuoteAmount returns the amount of base asset you will get out
+by giving a specified amount of quote asset
+
+args:
+  - dir: add to pool or remove from pool
+  - quoteAmount: the amount of quote asset to add to/remove from the pool
+
+ret:
+  - baseAmountOut: the amount of base assets required to make this hypothetical swap
+				   always an absolute value
+  - err: error
+*/
+func (p *Pool) GetBaseAmountByQuoteAmount(
+	dir Direction,
+	quoteAmount sdk.Int,
+) (baseAmountOut sdk.Int, err error) {
 	if quoteAmount.IsZero() {
 		return sdk.ZeroInt(), nil
 	}
@@ -46,7 +61,7 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 	}
 
 	baseAssetsAfter := invariant.Quo(quoteAssetsAfter)
-	baseAssetsTransferred := p.BaseAssetReserve.ToDec().Sub(baseAssetsAfter).Abs()
+	baseAssetsTransferred := baseAssetsAfter.Sub(p.BaseAssetReserve.ToDec()).Abs()
 
 	// protocol always gives out less base assets to long traders
 	// and gives more base asset debt to short traders (i.e. requires more base asset repayment from short traders)
@@ -54,6 +69,53 @@ func (p *Pool) GetBaseAmountByQuoteAmount(dir Direction, quoteAmount sdk.Int) (s
 		return baseAssetsTransferred.TruncateInt(), nil
 	} else {
 		return baseAssetsTransferred.Ceil().TruncateInt(), nil
+	}
+}
+
+/*
+GetQuoteAmountByBaseAmount returns the amount of quote asset you will get out
+by giving a specified amount of base asset
+
+args:
+  - dir: add to pool or remove from pool
+  - baseAmount: the amount of base asset to add to/remove from the pool
+
+ret:
+  - quoteAmountOut: the amount of quote assets required to make this hypothetical swap
+					always an absolute value
+  - err: error
+*/
+func (p *Pool) GetQuoteAmountByBaseAmount(
+	dir Direction, baseAmount sdk.Int,
+) (quoteAmountOut sdk.Int, err error) {
+	if baseAmount.IsZero() {
+		return sdk.ZeroInt(), nil
+	}
+
+	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve).ToDec() // x * y = k
+
+	var baseAssetsAfter sdk.Dec
+	if dir == Direction_ADD_TO_POOL {
+		baseAssetsAfter = p.BaseAssetReserve.Add(baseAmount).ToDec()
+	} else {
+		baseAssetsAfter = p.BaseAssetReserve.Sub(baseAmount).ToDec()
+	}
+
+	if baseAssetsAfter.LTE(sdk.ZeroDec()) {
+		return sdk.Int{}, ErrBaseReserveAtZero.Wrapf(
+			"base assets below zero after trying to swap %d base assets",
+			baseAmount.Int64(),
+		)
+	}
+
+	quoteAssetsAfter := invariant.Quo(baseAssetsAfter)
+	quoteAssetsTransferred := quoteAssetsAfter.Sub(p.QuoteAssetReserve.ToDec()).Abs()
+
+	// protocol always rounds to more favorable integer
+	if dir == Direction_ADD_TO_POOL {
+		return quoteAssetsTransferred.TruncateInt(), nil
+	} else {
+		return quoteAssetsTransferred.Ceil().TruncateInt(), nil
 	}
 }
 

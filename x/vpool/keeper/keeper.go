@@ -9,22 +9,24 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewKeeper(codec codec.BinaryCodec, storeKey sdk.StoreKey) Keeper {
+func NewKeeper(
+	codec codec.BinaryCodec,
+	storeKey sdk.StoreKey,
+	pricefeedKeeper types.PricefeedKeeper,
+) Keeper {
 	return Keeper{
-		codec:    codec,
-		storeKey: storeKey,
+		codec:           codec,
+		storeKey:        storeKey,
+		pricefeedKeeper: pricefeedKeeper,
 	}
 }
 
 type Keeper struct {
-	codec    codec.BinaryCodec
-	storeKey sdk.StoreKey
+	codec           codec.BinaryCodec
+	storeKey        sdk.StoreKey
+	pricefeedKeeper types.PricefeedKeeper
 }
 
-func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
-	//TODO implement me
-	panic("implement me")
-}
 
 //CalcFee calculates the total tx fee for exchanging 'quoteAmt' of tokens on
 //the exchange.
@@ -46,20 +48,7 @@ func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Dir
 	panic("implement me")
 }
 
-func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
-	//TODO implement me
-	panic("implement me")
-}
 
-func (k Keeper) GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
-	//TODO implement me
-	panic("implement me")
-}
 
 func (k Keeper) GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
 	//TODO implement me
@@ -71,14 +60,29 @@ func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (
 	panic("implement me")
 }
 
-// SwapInput swaps pair token
+/*
+SwapInput trades quoteAssets in exchange for baseAssets.
+The "input" asset here refers to quoteAsset, which is usually a stablecoin like NUSD.
+The base asset is a crypto asset like BTC or ETH.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: a token pair like BTC:NUSD
+  - dir: either add or remove from pool
+  - quoteAssetAmount: the amount of quote asset being traded
+  - baseAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
+
+ret:
+  - baseAssetAmount: the amount of base asset traded from the pool
+  - err: error
+*/
 func (k Keeper) SwapInput(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
 	quoteAssetAmount sdk.Int,
 	baseAmountLimit sdk.Int,
-) (sdk.Int, error) {
+) (baseAssetAmount sdk.Int, err error) {
 	if !k.existsPool(ctx, pair) {
 		return sdk.Int{}, types.ErrPairNotSupported
 	}
@@ -98,7 +102,7 @@ func (k Keeper) SwapInput(
 		}
 	}
 
-	baseAssetAmount, err := pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
+	baseAssetAmount, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -141,95 +145,6 @@ func (k Keeper) SwapInput(
 	)
 
 	return baseAssetAmount, nil
-}
-
-// getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (
-	*types.Pool, error,
-) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
-	if bz == nil {
-		return nil, fmt.Errorf("Could not find vpool for pair %s", pair.String())
-	}
-
-	var pool types.Pool
-	k.codec.MustUnmarshal(bz, &pool)
-	return &pool, nil
-}
-
-// CreatePool creates a pool for a specific pair.
-func (k Keeper) CreatePool(
-	ctx sdk.Context,
-	pair string,
-	tradeLimitRatio sdk.Dec, // integer with 6 decimals, 1_000_000 means 1.0
-	quoteAssetReserve sdk.Int,
-	baseAssetReserve sdk.Int,
-	fluctuationLimitRatio sdk.Dec,
-) {
-	pool := types.NewPool(
-		pair,
-		tradeLimitRatio,
-		quoteAssetReserve,
-		baseAssetReserve,
-		fluctuationLimitRatio,
-	)
-
-	k.savePool(ctx, pool)
-	k.saveSnapshot(ctx, pool, 0)
-	k.saveSnapshotCounter(ctx, common.TokenPair(pair), 0)
-}
-
-func (k Keeper) savePool(
-	ctx sdk.Context,
-	pool *types.Pool,
-) {
-	bz := k.codec.MustMarshal(pool)
-	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
-}
-
-func (k Keeper) updateReserve(
-	ctx sdk.Context,
-	pool *types.Pool,
-	dir types.Direction,
-	quoteAssetAmount sdk.Int,
-	baseAssetAmount sdk.Int,
-	skipFluctuationCheck bool,
-) error {
-	if dir == types.Direction_ADD_TO_POOL {
-		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
-		pool.DecreaseBaseAssetReserve(baseAssetAmount)
-		// TODO baseAssetDeltaThisFunding
-		// TODO totalPositionSize
-		// TODO cumulativeNotional
-	} else {
-		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
-		pool.IncreaseBaseAssetReserve(baseAssetAmount)
-		// TODO baseAssetDeltaThisFunding
-		// TODO totalPositionSize
-		// TODO cumulativeNotional
-	}
-
-	// Check if its over Fluctuation Limit Ratio.
-	if !skipFluctuationCheck {
-		err := k.checkFluctuationLimitRatio(ctx, pool)
-		if err != nil {
-			return err
-		}
-	}
-
-	err := k.addReserveSnapshot(ctx, pool)
-	if err != nil {
-		return fmt.Errorf("error creating snapshot: %w", err)
-	}
-
-	k.savePool(ctx, pool)
-
-	return nil
-}
-
-// existsPool returns true if pool exists, false if not.
-func (k Keeper) existsPool(ctx sdk.Context, pair common.TokenPair) bool {
-	return ctx.KVStore(k.storeKey).Has(types.GetPoolKey(pair))
 }
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
