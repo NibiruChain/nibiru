@@ -41,7 +41,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(err)
 		}
 	}
+
 	k.SetParams(ctx, genState.Params)
+
+	// See https://github.com/cosmos/cosmos-sdk/issues/5569 on why we do this.
+	k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
+	k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
 }
 
 // ExportGenesis returns the capability module's exported genesis.

@@ -47,16 +47,6 @@ func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Dir
 	panic("implement me")
 }
 
-func (k Keeper) GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (k Keeper) GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 /*
 SwapInput trades quoteAssets in exchange for baseAssets.
 The "input" asset here refers to quoteAsset, which is usually a stablecoin like NUSD.
@@ -80,7 +70,7 @@ func (k Keeper) SwapInput(
 	quoteAssetAmount sdk.Dec,
 	baseAmountLimit sdk.Dec,
 ) (baseAssetAmount sdk.Dec, err error) {
-	if !k.existsPool(ctx, pair) {
+	if !k.ExistsPool(ctx, pair) {
 		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 

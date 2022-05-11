@@ -25,8 +25,6 @@ type IVirtualPool interface {
 	SwapOutput(
 		ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int, limit sdk.Int,
 	) (sdk.Int, error)
-	GetOpenInterestNotionalCap(ctx sdk.Context) (sdk.Int, error)
-	GetMaxHoldingBaseAsset(ctx sdk.Context) (sdk.Int, error)
 	GetOutputTWAP(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
 	) (sdk.Int, error)
 	GetOutputPrice(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
