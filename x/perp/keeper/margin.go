@@ -81,17 +81,26 @@ func (k Keeper) GetMarginRatio(
 	return marginRatio, err
 }
 
-// TODO test: requireMoreMarginRatio
+/*
+requireMoreMarginRatio checks if the marginRatio corresponding to the margin
+backing a position is above or below the 'baseMarginRatio'.
+If 'largerThanOrEqualTo' is true, 'marginRatio' must be >= 'baseMarginRatio'.
+
+Args:
+  marginRatio: Ratio of the value of the margin and corresponding position(s).
+    marginRatio is defined as (margin + unrealizedPnL) / notional
+  baseMarginRatio: Specifies the threshold value that 'marginRatio' must meet.
+  largerThanOrEqualTo: Specifies whether 'marginRatio' should be larger or
+    smaller than 'baseMarginRatio'.
+*/
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEqualTo bool) error {
-	// TODO(mercilex): look at this and make sure it's legit compared ot the counterparty above ^
-	remainMarginRatio := marginRatio.Sub(baseMarginRatio)
 	switch largerThanOrEqualTo {
 	case true:
-		if !remainMarginRatio.GTE(sdk.ZeroInt()) {
+		if !marginRatio.GTE(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
 	default:
-		if remainMarginRatio.LT(sdk.ZeroInt()) {
+		if !marginRatio.LT(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
 	}
@@ -122,18 +131,18 @@ type Remaining struct {
 func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context, pair common.TokenPair,
 	oldPosition *types.Position, marginDelta sdk.Int,
-) (remaining Remaining, err error,
-) {
-
+) (remaining Remaining, err error) {
 	remaining.latestCPF, err = k.GetLatestCumulativePremiumFraction(ctx, pair)
 	if err != nil {
 		return
 	}
 
-	if !oldPosition.Size_.IsZero() { // TODO(mercilex): what if this does evaluate to false?
+	if oldPosition.Size_.IsZero() {
 		remaining.fPayment = remaining.latestCPF.
 			Sub(oldPosition.LastUpdateCumulativePremiumFraction).
 			Mul(oldPosition.Size_)
+	} else {
+		remaining.fPayment = sdk.ZeroInt()
 	}
 
 	signedRemainMargin := marginDelta.Sub(remaining.fPayment).Add(oldPosition.Margin)

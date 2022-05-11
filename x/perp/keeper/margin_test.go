@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOpenPosition_LongSetup(t *testing.T) {
+func TestOpenPosition_Setup(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()
@@ -50,37 +50,80 @@ func TestOpenPosition_LongSetup(t *testing.T) {
 			},
 		},
 		{
-			name: "open pos returns 0 margin when trader has underwater position",
+			name: "open pos - vpool not set on the perp PairMetadata ",
 			test: func() {
-				// BELOW IS WIP; please ignore
 				t.Log("Setup Nibiru app, pair, and trader")
-				// nibiruApp, ctx := testutil.NewNibiruApp(true)
-				// pair := common.TokenPair("xxx:yyy")
-				// alice := sample.AccAddress()
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				pair := common.TokenPair("xxx:yyy")
 
-				// t.Log("Setup vpool defined by pair")
-				// nibiruApp.VpoolKeeper.CreatePool(
-				// 		ctx,
-				// 		NUSDPair,
-				// 		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-				// 		sdk.NewInt(10_000_000),       //
-				// 		sdk.NewInt(5_000_000),        // 5 tokens
-				// 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-				// 	)
+				t.Log("Setup vpool defined by pair")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					pair.String(),
+					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					sdk.NewDec(10_000_000),       //
+					sdk.NewDec(5_000_000),        // 5 tokens
+					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+				)
 
-				// exists := ammKeeper.existsPool(ctx, NUSDPair)
-				// require.True(t, exists)
+				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
-				// side := types.Side_BUY
-				// quote := sdk.NewInt(60)
-				// leverage := sdk.NewInt(10)
-				// baseLimit := sdk.NewInt(150)
-				// err := nibiruApp.PerpKeeper.OpenPosition(
-				// 	ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+				t.Log("Attempt to open long position (expected unsuccessful)")
+				alice := sample.AccAddress()
+				side := types.Side_BUY
+				quote := sdk.NewInt(60)
+				leverage := sdk.NewInt(10)
+				baseLimit := sdk.NewInt(150)
+				err := nibiruApp.PerpKeeper.OpenPosition(
+					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
 
-				// require.Error(t, err)
-				// require.ErrorContains(t, err, vpooltypes.ErrPairNotSupported.Error())
-				// require.EqualValues(t, sdk.Int{}, lcpf)
+				fmt.Println(err.Error())
+				require.Error(t, err)
+				require.ErrorContains(t, err, types.ErrNotFound.Error())
+			},
+		},
+		{
+			name: "open pos - happy path 1",
+			test: func() {
+				t.Log("Setup Nibiru app, pair, and trader")
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				pair := common.TokenPair("xxx:yyy")
+
+				t.Log("Setup vpool defined by pair")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				perpKeeper := &nibiruApp.PerpKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					pair.String(),
+					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					sdk.NewDec(10_000_000),       //
+					sdk.NewDec(5_000_000),        // 5 tokens
+					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+				)
+
+				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair:                       pair.String(),
+					CumulativePremiumFractions: []sdk.Int{sdk.OneInt()},
+				})
+
+				t.Log("Fund trader (Alice) account with sufficient quote")
+				var err error
+				alice := sample.AccAddress()
+				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+				require.NoError(t, err)
+
+				t.Log("Open long position with 10x leverage")
+				side := types.Side_BUY
+				quote := sdk.NewInt(60)
+				leverage := sdk.NewInt(10)
+				baseLimit := sdk.NewInt(150)
+				err = nibiruApp.PerpKeeper.OpenPosition(
+					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+
+				require.NoError(t, err)
 			},
 		},
 	}

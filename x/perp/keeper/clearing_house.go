@@ -19,7 +19,6 @@ var (
 	_ = Keeper.closePosition
 	_ = Keeper.increasePosition
 	_ = Keeper.reducePosition
-	_ = Keeper.updateOpenInterestNotional
 	_ = Keeper.closeAndOpenReversePosition
 	_ = Keeper.openReversePosition
 	_ = Keeper.OpenPosition
@@ -30,12 +29,16 @@ var (
 func (k Keeper) OpenPosition(
 	ctx sdk.Context, pair common.TokenPair, side types.Side, trader string,
 	quoteAssetAmount, leverage, baseAssetAmountLimit sdk.Int,
-) (err error) {
-	// TODO(mercilex): missing checks
+) error {
+	traderAddr, err := sdk.AccAddressFromBech32(trader)
+	if err != nil {
+		return err
+	}
 	params := k.GetParams(ctx)
+	// TODO: missing checks
 
 	position, err := k.GetPosition(ctx, pair, trader)
-	var isNewPosition bool = errors.Is(err, errNotFound)
+	var isNewPosition bool = errors.Is(err, types.ErrNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, trader)
 		k.SetPosition(ctx, pair, trader, position)
@@ -85,15 +88,12 @@ func (k Keeper) OpenPosition(
 		}
 	}
 
-	if positionResp.BadDebt.IsZero() {
-		return fmt.Errorf("bad debt")
+	if !positionResp.BadDebt.IsZero() {
+		return fmt.Errorf(
+			"bad debt must be zero to prevent attacker from leveraging it")
 	}
 
 	// transfer trader <=> vault
-	traderAddr, err := sdk.AccAddressFromBech32(trader) // should fail at validate basic
-	if err != nil {
-		panic(err)
-	}
 	switch {
 	case positionResp.MarginToVault.IsPositive():
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
@@ -158,23 +158,6 @@ func (k Keeper) increasePosition(
 
 	newSize := oldPosition.Size_.Add(positionResp.ExchangedPositionSize)
 
-	err = k.updateOpenInterestNotional(ctx, pair, openNotional, trader)
-	if err != nil {
-		return nil, err
-	}
-
-	// check if trader is not in whitelist to check max position size
-	if !k.Whitelist().IsWhitelisted(ctx, trader) {
-		maxHoldingBaseAsset, err := k.VpoolKeeper.GetMaxHoldingBaseAsset(ctx, pair)
-		if err != nil {
-			return nil, err
-		}
-
-		if maxHoldingBaseAsset.IsPositive() && maxHoldingBaseAsset.LT(newSize.Abs()) {
-			return nil, fmt.Errorf("hit position size upper bound")
-		}
-	}
-
 	increaseMarginRequirement := openNotional.Quo(leverage)
 
 	remaining, err := k.
@@ -202,6 +185,7 @@ func (k Keeper) increasePosition(
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
 	positionResp.MarginToVault = increaseMarginRequirement
 	positionResp.FundingPayment = remaining.fPayment
+	positionResp.BadDebt = remaining.badDebt
 	positionResp.Position = &types.Position{
 		Address:                             trader,
 		Pair:                                pair.String(),
@@ -216,45 +200,15 @@ func (k Keeper) increasePosition(
 	return
 }
 
-// TODO test: updateOpenInterestNotional | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) updateOpenInterestNotional(ctx sdk.Context, pair common.TokenPair, amount sdk.Int, trader string) error {
-	maxOpenInterest, err := k.VpoolKeeper.GetOpenInterestNotionalCap(ctx, pair)
-	if err != nil {
-		return err
-	}
-	if maxOpenInterest.IsZero() {
-		return nil
-	}
-
-	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
-	if err != nil {
-		return err
-	}
-	updatedOpenInterestNotional := amount.Add(*pairMetadata.OpenInterestNotional)
-
-	if updatedOpenInterestNotional.IsNegative() {
-		updatedOpenInterestNotional = sdk.ZeroInt()
-	}
-
-	if amount.IsPositive() {
-		if updatedOpenInterestNotional.GT(maxOpenInterest) && !k.Whitelist().IsWhitelisted(ctx, trader) {
-			return fmt.Errorf("over limit")
-		}
-	}
-
-	// update pair metadata
-	pairMetadata.OpenInterestNotional = &updatedOpenInterestNotional
-	k.PairMetadata().Set(ctx, pairMetadata)
-
-	return nil
-}
-
 // TODO test: GetLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) GetLatestCumulativePremiumFraction(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error) {
+func (k Keeper) GetLatestCumulativePremiumFraction(
+	ctx sdk.Context, pair common.TokenPair,
+) (sdk.Int, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
 	if err != nil {
 		return sdk.Int{}, err
 	}
+
 	// this should never fail
 	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }
@@ -292,7 +246,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 		positionNotional = positionNotionalDec.TruncateInt()
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
+		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs.ToDec())
 		if err != nil {
 			return sdk.ZeroInt(), sdk.ZeroInt(), err
 		}
@@ -362,10 +316,6 @@ func (k Keeper) reducePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
-	err = k.updateOpenInterestNotional(ctx, pair, openNotional.MulRaw(-1), trader)
-	if err != nil {
-		return nil, err
-	}
 	var oldPosition *types.Position
 	oldPosition, err = k.Positions().Get(ctx, pair, trader)
 	if err != nil {
@@ -512,15 +462,9 @@ func (k Keeper) closePosition(
 			ctx,
 			pair,
 			vammDir,
-			oldPosition.Size_.Abs(),
-			quoteAssetAmountLimit,
+			oldPosition.Size_.Abs().ToDec(),
+			quoteAssetAmountLimit.ToDec(),
 		)
-	if err != nil {
-		return nil, err
-	}
-
-	err = k.updateOpenInterestNotional(ctx, pair, unrealizedPnL.Add(remaining.badDebt).
-		Add(oldPosition.OpenNotional).Neg(), trader)
 	if err != nil {
 		return nil, err
 	}
@@ -640,16 +584,16 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 	}
 
 	outputAmount, err := k.VpoolKeeper.SwapInput(
-		ctx, pair, vammDir, inputAmount, minOutputAmount)
+		ctx, pair, vammDir, inputAmount.ToDec(), minOutputAmount.ToDec())
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
 	switch vammDir {
 	case pooltypes.Direction_ADD_TO_POOL:
-		return outputAmount, nil
+		return outputAmount.TruncateInt(), nil
 	case pooltypes.Direction_REMOVE_FROM_POOL:
-		inverseSign := outputAmount.MulRaw(-1)
+		inverseSign := outputAmount.TruncateInt().MulRaw(-1)
 		return inverseSign, nil
 	default:
 		panic("invalid side")
