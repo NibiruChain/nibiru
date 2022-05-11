@@ -14,7 +14,6 @@ import (
 type Keeper struct {
 	cdc           codec.BinaryCodec
 	storeKey      sdk.StoreKey
-	memKey        sdk.StoreKey
 	ParamSubspace paramtypes.Subspace
 
 	BankKeeper    types.BankKeeper
