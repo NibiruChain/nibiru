@@ -1,5 +1,7 @@
 package types
 
+//go:generate  mockgen -destination=mocks/expected_keepers.go -package=mocks github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PriceKeeper,VpoolKeeper
+
 import (
 	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
