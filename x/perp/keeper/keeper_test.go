@@ -72,6 +72,8 @@ func TestComputeFee(t *testing.T) {
 		currentParams.MaintenanceMarginRatio,
 		/*TollRatio=*/ sdk.MustNewDecFromStr("0.01"),
 		/*SpreadRatio=*/ sdk.MustNewDecFromStr("0.0123"),
+		/*liquidationFee=*/ sdk.MustNewDecFromStr("0.01"),
+		/*partialLiquidationRatio=*/ sdk.MustNewDecFromStr("0.4"),
 	)
 	perpKeeper.SetParams(ctx, currentParams)
 

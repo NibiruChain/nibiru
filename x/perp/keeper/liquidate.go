@@ -8,6 +8,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+/*
+WIP, missing items:
+
+Dev:
+	- [] IsOverSpreadLimit on vpool keeper (add maxoraclespreadratio on each pool )
+	- [] Withdraw functions for bad debt and insurance fund
+
+Tests:
+	- [] createLiquidation and createPartialLiquidation
+	- [] Liquidation
+	- [] IsOverSpreadLimit
+*/
+
 type LiquidationOutput struct {
 	FeeToInsuranceFund        sdk.Int
 	LiquidationPenalty        sdk.Int
@@ -16,11 +29,10 @@ type LiquidationOutput struct {
 	BadDebt                   sdk.Int
 	FeeToLiquidator           sdk.Int
 	PositionResp              *types.PositionResp
-	IsPartialLiquidation      bool
 }
 
 /*Liquidate allows to liquidate the trader position if the margin is below the required margin maintenance ratio.*/
-func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string, sender sdk.AccAddress) error {
+func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string, liquidator sdk.AccAddress) error {
 	var (
 		feeToInsuranceFund sdk.Int
 		liquidationOuptut  LiquidationOutput
@@ -72,7 +84,7 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	if feeToInsuranceFund.GT(sdk.ZeroInt()) {
 		k.transferToInsuranceFund(ctx, trader, pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToInsuranceFund)
 	}
-	k.withdraw(ctx, pair.GetQuoteTokenDenom(), sender, liquidationOuptut.feeToLiquidator)
+	k.withdraw(ctx, trader, liquidator, pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToLiquidator)
 
 	events.EmitPositionLiquidate(
 		/* ctx */ ctx,
@@ -80,7 +92,7 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 		/* owner */ trader,
 		/* notional */ liquidationOuptut.PositionResp.ExchangedQuoteAssetAmount.ToDec(),
 		/* vsize */ liquidationOuptut.PositionResp.ExchangedPositionSize.ToDec(),
-		/* liquidator */ sender,
+		/* liquidator */ liquidator,
 		/* liquidationFee */ liquidationOuptut.FeeToLiquidator,
 		/* badDebt */ liquidationOuptut.BadDebt.ToDec(),
 	)
@@ -117,10 +129,7 @@ func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, trader
 
 	// transfer the actual token between trader and vault
 	if totalBadDebt.GT(sdk.ZeroInt()) {
-		err = k.realizeBadDebt(ctx, pair.GetQuoteTokenDenom(), totalBadDebt)
-		if err != nil {
-			return
-		}
+		k.realizeBadDebt(ctx, pair.GetQuoteTokenDenom(), totalBadDebt)
 	}
 	if remainMargin.GT(sdk.ZeroInt()) {
 		liquidationOutput.FeeToInsuranceFund = remainMargin
