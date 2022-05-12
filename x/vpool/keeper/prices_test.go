@@ -447,7 +447,7 @@ func TestCalcTwap(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
-				sdk.ZeroDec(),
+				sdk.OneDec(),
 			)
 
 			for i, snapshot := range tc.reserveSnapshots {

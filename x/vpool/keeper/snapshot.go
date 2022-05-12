@@ -210,7 +210,7 @@ func getPriceWithSnapshot(
 			snapshot.QuoteAssetReserve,
 			snapshot.BaseAssetReserve,
 			sdk.OneDec(),
-			sdk.MustNewDecFromStr(".3"),
+			sdk.MustNewDecFromStr("0.3"),
 		)
 		return pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
 
@@ -221,7 +221,7 @@ func getPriceWithSnapshot(
 			snapshot.QuoteAssetReserve,
 			snapshot.BaseAssetReserve,
 			sdk.OneDec(),
-			sdk.MustNewDecFromStr(".3"),
+			sdk.MustNewDecFromStr("0.3"),
 		)
 		return pool.GetQuoteAmountByBaseAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
 	}

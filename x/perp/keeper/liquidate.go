@@ -12,8 +12,7 @@ import (
 WIP, missing items:
 
 Dev:
-	- [] IsOverSpreadLimit on vpool keeper (add maxoraclespreadratio on each pool )
-	- [] Withdraw functions for bad debt and insurance fund
+	- [] realizeBadDebt
 
 Tests:
 	- [] createLiquidation and createPartialLiquidation
@@ -156,6 +155,10 @@ func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, trader
 	liquidationOutput.FeeToLiquidator = feeToLiquidator
 
 	return
+}
+
+func (k Keeper) realizeBadDebt(ctx sdk.Context, token string, newDebt sdk.Int) {
+	//To implement
 }
 
 //createPartialLiquidation create a partial liquidation of a position and compute the fee to insurance fund
