@@ -33,9 +33,13 @@ type LiquidationOutput struct {
 
 /*Liquidate allows to liquidate the trader position if the margin is below the required margin maintenance ratio.*/
 func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string, liquidator sdk.AccAddress) error {
+	traderAddr, err := sdk.AccAddressFromBech32(trader)
+	if err != nil {
+		return err
+	}
+
 	var (
-		feeToInsuranceFund sdk.Dec
-		liquidationOuptut  LiquidationOutput
+		liquidationOuptut LiquidationOutput
 	)
 
 	marginRatio, err := k.GetMarginRatio(ctx, pair, trader, types.MarginCalculationPriceOption_MAX_PNL)
@@ -66,25 +70,39 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	// Liquidate position
 	position, err := k.GetPosition(ctx, pair, trader)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
 		liquidationOuptut, err = k.createPartialLiquidation(ctx, pair, trader, position)
 		if err != nil {
-			return err
+			panic(err)
 		}
 	} else {
 		liquidationOuptut, err = k.createLiquidation(ctx, pair, trader, position)
 		if err != nil {
-			return err
+			panic(err)
 		}
 	}
 
-	if feeToInsuranceFund.GT(sdk.ZeroDec()) {
-		k.transferToInsuranceFund(ctx, trader, pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToInsuranceFund.TruncateInt())
+	err = k.BankKeeper.SendCoinsFromAccountToModule(
+		ctx,
+		traderAddr,
+		types.ModuleName,
+		sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToInsuranceFund.TruncateInt())),
+	)
+	if err != nil {
+		panic(err)
 	}
-	k.withdraw(ctx, trader, liquidator, pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToLiquidator.TruncateInt())
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(
+		ctx,
+		types.ModuleName,
+		liquidator,
+		sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToLiquidator.TruncateInt())),
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	events.EmitPositionLiquidate(
 		/* ctx */ ctx,
