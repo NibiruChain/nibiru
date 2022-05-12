@@ -3,9 +3,10 @@ package pricefeed
 import (
 	"errors"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // BeginBlocker updates the current pricefeed

@@ -2,13 +2,15 @@ package keeper_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
 )

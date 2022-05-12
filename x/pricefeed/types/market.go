@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func (pair Pair) PairID() string {

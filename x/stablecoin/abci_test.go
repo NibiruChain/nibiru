@@ -4,8 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/pricefeed"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/pricefeed"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -13,7 +16,6 @@ import (
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/stretchr/testify/require"
 )
 
 type test struct {

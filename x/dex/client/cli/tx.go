@@ -3,9 +3,10 @@ package cli
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

@@ -3,10 +3,10 @@ package lockup
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
 	"math/rand"
 
-	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -19,6 +19,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
 
 var (
