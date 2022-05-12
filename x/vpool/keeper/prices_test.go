@@ -460,7 +460,7 @@ func TestCalcTwap(t *testing.T) {
 			vpoolKeeper.saveSnapshotCounter(ctx, tc.pair, uint64(len(tc.reserveSnapshots)))
 			ctx = ctx.WithBlockTime(tc.currentBlocktime).WithBlockHeight(tc.currentBlockheight)
 
-			price, err := vpoolKeeper.CalcTwap(ctx,
+			price, err := vpoolKeeper.calcTwap(ctx,
 				tc.pair,
 				tc.twapCalcOption,
 				tc.direction,
