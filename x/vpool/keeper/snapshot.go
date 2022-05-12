@@ -9,43 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-/*
-Saves an updated pool to state and snapshots it.
-
-args:
-  - ctx: cosmos-sdk context
-  - updatedPool: pool object to save to state
-  - skipFluctuationCheck: override fluctuation check from last snapshot
-
-ret:
-  - err: error
-*/
-func (k Keeper) savePoolAndSnapshot(
-	ctx sdk.Context,
-	updatedPool *types.Pool,
-	skipFluctuationCheck bool,
-) (err error) {
-	// Check if its over Fluctuation Limit Ratio.
-	if !skipFluctuationCheck {
-		if err = k.checkFluctuationLimitRatio(ctx, updatedPool); err != nil {
-			return err
-		}
-	}
-
-	if err = k.addReserveSnapshot(
-		ctx,
-		common.TokenPair(updatedPool.Pair),
-		updatedPool.QuoteAssetReserve,
-		updatedPool.BaseAssetReserve,
-	); err != nil {
-		return fmt.Errorf("error creating snapshot: %w", err)
-	}
-
-	k.savePool(ctx, updatedPool)
-
-	return nil
-}
-
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
 func (k Keeper) addReserveSnapshot(
 	ctx sdk.Context,
