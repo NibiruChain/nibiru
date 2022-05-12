@@ -37,10 +37,6 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 		return err
 	}
 
-	var (
-		liquidationOuptut LiquidationOutput
-	)
-
 	marginRatio, err := k.GetMarginRatio(ctx, pair, trader, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return err
@@ -71,6 +67,10 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	if err != nil {
 		panic(err)
 	}
+
+	var (
+		liquidationOuptut LiquidationOutput
+	)
 
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
 		liquidationOuptut, err = k.createPartialLiquidation(ctx, pair, trader, position)
