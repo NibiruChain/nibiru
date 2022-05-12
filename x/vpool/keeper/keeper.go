@@ -48,7 +48,7 @@ func (k Keeper) SwapOutput(ctx sdk.Context, pair common.TokenPair, dir types.Dir
 }
 
 /*
-SwapInput trades quoteAssets in exchange for baseAssets.
+Trades quoteAssets in exchange for baseAssets.
 The "input" asset here refers to quoteAsset, which is usually a stablecoin like NUSD.
 The base asset is a crypto asset like BTC or ETH.
 
