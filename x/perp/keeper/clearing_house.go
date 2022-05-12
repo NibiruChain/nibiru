@@ -223,10 +223,10 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context, pair common.TokenPair,
 	trader string, pnlCalcOption types.PnLCalcOption,
 ) (
-	positionNotional, unrealizedPnL sdk.Dec, err error) {
+	notional, unrealizedPnL sdk.Dec, err error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // tODO(mercilex): inefficient refetch
 	if err != nil {
-		return
+		return sdk.Dec{}, sdk.Dec{}, err
 	}
 
 	positionSizeAbs := position.Size_.Abs()
@@ -245,35 +245,35 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs.TruncateInt()) // TODO(mercilex): vpool here should accept sdk.Dec
+		notionalDec, err := k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs.TruncateInt()) // TODO(mercilex): vpool here should accept sdk.Dec
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = positionNotionalDec
+		notional = notionalDec
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
+		notionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = positionNotionalDec
+		notional = notionalDec
 	case types.PnLCalcOption_ORACLE:
 		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(ctx, pair)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = oraclePrice.Mul(positionSizeAbs)
+		notional = oraclePrice.Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
 
 	switch isShortPosition {
 	case true:
-		unrealizedPnL = position.OpenNotional.Sub(positionNotional)
+		unrealizedPnL = position.OpenNotional.Sub(notional)
 	case false:
-		unrealizedPnL = positionNotional.Sub(position.OpenNotional)
+		unrealizedPnL = notional.Sub(position.OpenNotional)
 	}
 
-	return
+	return unrealizedPnL, notional, nil
 }
 
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
