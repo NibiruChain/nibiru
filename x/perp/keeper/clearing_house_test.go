@@ -24,24 +24,51 @@ import (
 )
 
 func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
-	keeper, _, ctx := getKeeper(t)
-	pair := fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom)
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "happy path",
+			test: func() {
+				keeper, _, ctx := getKeeper(t)
+				pair := fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom)
 
-	metadata := &perptypes.PairMetadata{
-		Pair: pair,
-		CumulativePremiumFractions: []sdk.Dec{
-			sdk.NewDec(1),
-			sdk.NewDec(2), // returns the latest from the list
+				metadata := &perptypes.PairMetadata{
+					Pair: pair,
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.NewDec(1),
+						sdk.NewDec(2), // returns the latest from the list
+					},
+				}
+				keeper.PairMetadata().Set(ctx, metadata)
+
+				tokenPair, err := common.NewTokenPairFromStr(pair)
+				require.NoError(t, err)
+				latestCumulativePremiumFraction, err := keeper.getLatestCumulativePremiumFraction(ctx, tokenPair)
+				require.NoError(t, err)
+
+				require.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
+			},
+		},
+		{
+			name: "uninitialized vpool has no metadata | fail",
+			test: func() {
+				perpKeeper, _, ctx := getKeeper(t)
+				vpool := common.TokenPair("xxx:yyy")
+				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
+					ctx, vpool)
+				require.Error(t, err)
+				require.EqualValues(t, sdk.Dec{}, lcpf)
+			},
 		},
 	}
-	keeper.PairMetadata().Set(ctx, metadata)
-
-	tokenPair, err := common.NewTokenPairFromStr(pair)
-	require.NoError(t, err)
-	latestCumulativePremiumFraction, err := keeper.getLatestCumulativePremiumFraction(ctx, tokenPair)
-	require.NoError(t, err)
-
-	require.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
 }
 
 type mockedDependencies struct {
