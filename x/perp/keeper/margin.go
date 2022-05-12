@@ -42,6 +42,7 @@ func (k Keeper) AddMargin(
 func (k Keeper) RemoveMargin(
 	goCtx context.Context, msg *types.MsgRemoveMargin,
 ) (res *types.MsgRemoveMarginResponse, err error) {
+
 	// ------------- Message Setup -------------
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -56,11 +57,8 @@ func (k Keeper) RemoveMargin(
 	margin := msg.Margin.Amount
 	if msg.Margin.Denom != common.StableDenom {
 		return res, fmt.Errorf("invalid margin denom")
-	}
-	if margin.IsNegative() {
-		return res, fmt.Errorf("negative margin value: %v", margin.String())
-	} else if margin.IsZero() {
-		return res, fmt.Errorf("zero margin in request")
+	} else if margin.LTE(sdk.ZeroInt()) {
+		return res, fmt.Errorf("margin must be positive, not: %v", margin.String())
 	}
 
 	// validate pair
@@ -88,6 +86,9 @@ func (k Keeper) RemoveMargin(
 	}
 	position.Margin = remaining.margin
 	position.LastUpdateCumulativePremiumFraction = remaining.latestCPF
+	if !remaining.badDebt.IsZero() {
+		return res, fmt.Errorf("failed to remove margin; position has bad debt")
+	}
 
 	freeCollateral, err := k.calcFreeCollateral(
 		ctx, position, remaining.fPayment, remaining.badDebt)

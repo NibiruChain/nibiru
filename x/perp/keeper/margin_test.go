@@ -231,7 +231,7 @@ func TestRemoveMargin(t *testing.T) {
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
-				require.ErrorContains(t, err, "negative margin")
+				require.ErrorContains(t, err, "margin must be positive")
 			},
 		},
 		{
@@ -248,7 +248,7 @@ func TestRemoveMargin(t *testing.T) {
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
-				require.ErrorContains(t, err, "zero margin")
+				require.ErrorContains(t, err, "margin must be positive")
 			},
 		},
 		{
