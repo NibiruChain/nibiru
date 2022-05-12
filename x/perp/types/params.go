@@ -53,7 +53,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // NewParams creates a new Params instance
 func NewParams(
 	stopped bool,
-	maintenanceMarginRatio sdk.Int,
+	maintenanceMarginRatio sdk.Dec,
 	tollRatio sdk.Dec,
 	spreadRatio sdk.Dec,
 	liquidationFee sdk.Dec,
@@ -85,7 +85,7 @@ func DefaultParams() Params {
 
 	return NewParams(
 		/*Stopped=*/ true,
-		/*MaintenanceMarginRatio=*/ sdk.OneInt(),
+		/*MaintenanceMarginRatio=*/ sdk.OneDec(),
 		/*TollRatio=*/ tollRatio,
 		/*SpreadRatio=*/ spreadRatio,
 		/*LiquidationFee=*/ liquidationFee,
@@ -220,7 +220,7 @@ func validateStopped(i interface{}) error {
 }
 
 func validateMaintenanceMarginRatio(i interface{}) error {
-	_, ok := i.(sdk.Int)
+	_, ok := i.(sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

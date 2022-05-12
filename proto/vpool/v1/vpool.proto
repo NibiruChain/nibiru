@@ -35,8 +35,8 @@ message ReserveSnapshot {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 
-  // seconds since unix epoch
-  int64 timestamp = 3;
+  // milliseconds since unix epoch
+  int64 timestamp_ms = 3;
   int64 block_number = 4;
 }
 
