@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"fmt"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"testing"
+
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -28,9 +29,9 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 
 	metadata := &perptypes.PairMetadata{
 		Pair: pair,
-		CumulativePremiumFractions: []sdk.Int{
-			sdk.NewInt(1),
-			sdk.NewInt(2), // returns the latest from the list
+		CumulativePremiumFractions: []sdk.Dec{
+			sdk.NewDec(1),
+			sdk.NewDec(2), // returns the latest from the list
 		},
 	}
 	keeper.PairMetadata().Set(ctx, metadata)
@@ -40,7 +41,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 	latestCumulativePremiumFraction, err := keeper.getLatestCumulativePremiumFraction(ctx, tokenPair)
 	require.NoError(t, err)
 
-	require.Equal(t, sdk.NewInt(2), latestCumulativePremiumFraction)
+	require.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
 }
 
 type mockedDependencies struct {
