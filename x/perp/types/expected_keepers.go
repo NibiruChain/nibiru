@@ -1,5 +1,7 @@
 package types
 
+//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PriceKeeper,VpoolKeeper
+
 import (
 	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,9 +70,6 @@ type VpoolKeeper interface {
 		abs sdk.Dec,
 		limit sdk.Dec,
 	) (sdk.Int, error)
-
-	GetMaxHoldingBaseAsset(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
-	GetOpenInterestNotionalCap(ctx sdk.Context, pair common.TokenPair) (sdk.Int, error)
 	GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Int,
 	) (sdk.Dec, error)
 	GetOutputPrice(ctx sdk.Context, pair common.TokenPair, dir pooltypes.Direction, abs sdk.Dec,

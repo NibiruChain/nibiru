@@ -165,6 +165,9 @@ var (
 		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
+		perptypes.VaultModuleAccount:          {},
+		perptypes.PerpEFModuleAccount:         {},
+		perptypes.FeePoolModuleAccount:        {},
 		epochstype.ModuleName:                 {},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
@@ -266,7 +269,6 @@ func NewNibiruApp(
 	memKeys := sdk.NewMemoryStoreKeys(
 		capabilitytypes.MemStoreKey, "testingkey",
 		stablecointypes.MemStoreKey, pricetypes.MemStoreKey,
-		perptypes.MemStoreKey,
 	)
 
 	app := &NibiruApp{
@@ -339,7 +341,7 @@ func NewNibiruApp(
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -372,7 +374,7 @@ func NewNibiruApp(
 	)
 
 	app.PerpKeeper = perpkeeper.NewKeeper(
-		appCodec, keys[perptypes.StoreKey], memKeys[perptypes.MemStoreKey],
+		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.VpoolKeeper,
 	)
