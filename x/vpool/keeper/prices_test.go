@@ -270,7 +270,7 @@ func TestCalcTwap(t *testing.T) {
 		expectedErr        error
 	}{
 		{
-			name: "spot price twap calc",
+			name: "spot price twap calc, t=[10,30]",
 			pair: common.TokenPair("btc:nusd"),
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
@@ -297,6 +297,135 @@ func TestCalcTwap(t *testing.T) {
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_SPOT,
 			expectedPrice:      sdk.MustNewDecFromStr("8.75"),
+		},
+		{
+			name: "spot price twap calc, t=[11,35]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(90),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(85),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(95),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       30,
+					BlockNumber:       3,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(35),
+			currentBlockheight: 4,
+			lookbackInterval:   24 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_SPOT,
+			expectedPrice:      sdk.MustNewDecFromStr("8.895833333333333333"),
+		},
+		{
+			name: "quote asset swap twap calc, add to pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(30),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(40),
+					BaseAssetReserve:  sdk.MustNewDecFromStr("7.5"),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
+			direction:          types.Direction_ADD_TO_POOL,
+			assetAmount:        sdk.NewDec(10),
+			expectedPrice:      sdk.NewDec(2),
+		},
+		{
+			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(60),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(50),
+					BaseAssetReserve:  sdk.NewDec(12),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
+			direction:          types.Direction_REMOVE_FROM_POOL,
+			assetAmount:        sdk.NewDec(10),
+			expectedPrice:      sdk.MustNewDecFromStr("2.5"),
+		},
+		{
+			name: "base asset swap twap calc, add to pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(60),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(30),
+					BaseAssetReserve:  sdk.NewDec(20),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
+			direction:          types.Direction_ADD_TO_POOL,
+			assetAmount:        sdk.NewDec(10),
+			expectedPrice:      sdk.NewDec(20),
+		},
+		{
+			name: "base asset swap twap calc, remove from pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(60),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(75),
+					BaseAssetReserve:  sdk.NewDec(8),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
+			direction:          types.Direction_REMOVE_FROM_POOL,
+			assetAmount:        sdk.NewDec(2),
+			expectedPrice:      sdk.NewDec(20),
 		},
 	}
 
