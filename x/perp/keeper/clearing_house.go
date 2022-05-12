@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -239,7 +240,13 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs.TruncateInt()) // TODO(mercilex): vpool here should accept sdk.Dec
+		positionNotionalDec, err := k.VpoolKeeper.GetOutputTWAP(
+			ctx,
+			pair,
+			dir,
+			positionSizeAbs,
+			15*time.Minute,
+		)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
@@ -468,7 +475,7 @@ func (k Keeper) closePosition(
 		return nil, err
 	}
 
-	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount.ToDec() // TODO(mercilex): vpool should return sdk.Dec here
+	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount
 
 	err = k.ClearPosition(ctx, pair, trader)
 	if err != nil {

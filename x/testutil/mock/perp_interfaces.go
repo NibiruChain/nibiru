@@ -6,6 +6,7 @@ package mock
 
 import (
 	reflect "reflect"
+	time "time"
 
 	common "github.com/NibiruChain/nibiru/x/common"
 	types "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -365,6 +366,36 @@ func (mr *MockVpoolKeeperMockRecorder) CalcFee(arg0, arg1, arg2 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcFee", reflect.TypeOf((*MockVpoolKeeper)(nil).CalcFee), arg0, arg1, arg2)
 }
 
+// GetInputPrice mocks base method.
+func (m *MockVpoolKeeper) GetInputPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInputPrice", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(types1.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInputPrice indicates an expected call of GetInputPrice.
+func (mr *MockVpoolKeeperMockRecorder) GetInputPrice(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInputPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetInputPrice), arg0, arg1, arg2, arg3)
+}
+
+// GetInputTWAP mocks base method.
+func (m *MockVpoolKeeper) GetInputTWAP(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec, arg4 time.Duration) (types1.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInputTWAP", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(types1.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInputTWAP indicates an expected call of GetInputTWAP.
+func (mr *MockVpoolKeeperMockRecorder) GetInputTWAP(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInputTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetInputTWAP), arg0, arg1, arg2, arg3, arg4)
+}
+
 // GetOutputPrice mocks base method.
 func (m *MockVpoolKeeper) GetOutputPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
@@ -381,18 +412,18 @@ func (mr *MockVpoolKeeperMockRecorder) GetOutputPrice(arg0, arg1, arg2, arg3 int
 }
 
 // GetOutputTWAP mocks base method.
-func (m *MockVpoolKeeper) GetOutputTWAP(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Int) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetOutputTWAP(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec, arg4 time.Duration) (types1.Dec, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOutputTWAP", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GetOutputTWAP", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(types1.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOutputTWAP indicates an expected call of GetOutputTWAP.
-func (mr *MockVpoolKeeperMockRecorder) GetOutputTWAP(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockVpoolKeeperMockRecorder) GetOutputTWAP(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOutputTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetOutputTWAP), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOutputTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetOutputTWAP), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetSpotPrice mocks base method.
@@ -441,10 +472,10 @@ func (mr *MockVpoolKeeperMockRecorder) SwapInput(arg0, arg1, arg2, arg3, arg4 in
 }
 
 // SwapOutput mocks base method.
-func (m *MockVpoolKeeper) SwapOutput(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Int, error) {
+func (m *MockVpoolKeeper) SwapOutput(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapOutput", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(types1.Int)
+	ret0, _ := ret[0].(types1.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

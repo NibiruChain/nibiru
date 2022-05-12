@@ -56,13 +56,29 @@ type PriceKeeper interface {
 }
 
 type VpoolKeeper interface {
+	/*
+		Trades baseAssets in exchange for quoteAssets.
+		The "output" asset here refers to baseAsset, which is a crypto asset like BTC.
+		The quote asset is a stablecoin like NUSD.
+
+		args:
+		  - ctx: cosmos-sdk context
+		  - pair: a token pair like BTC:NUSD
+		  - dir: either add or remove from pool
+		  - baseAssetAmount: the amount of quote asset being traded
+		  - quoteAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
+
+		ret:
+		  - quoteAssetAmount: the amount of quote asset swapped
+		  - err: error
+	*/
 	SwapOutput(
 		ctx sdk.Context,
 		pair common.TokenPair,
 		dir vpooltypes.Direction,
 		abs sdk.Dec,
 		limit sdk.Dec,
-	) (sdk.Int, error)
+	) (sdk.Dec, error)
 
 	/*
 		Trades quoteAssets in exchange for baseAssets.
@@ -109,6 +125,7 @@ type VpoolKeeper interface {
 		pair common.TokenPair,
 		direction vpooltypes.Direction,
 		baseAssetAmount sdk.Dec,
+		lookbackInterval time.Duration,
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	/*
