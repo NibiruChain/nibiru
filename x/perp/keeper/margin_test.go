@@ -246,7 +246,7 @@ func TestRemoveMargin(t *testing.T) {
 			},
 		},
 		{
-			name: "vpool not set by keeper - fail",
+			name: "vpool doesn't exit - fail",
 			test: func() {
 				removeAmt := sdk.NewInt(5)
 
