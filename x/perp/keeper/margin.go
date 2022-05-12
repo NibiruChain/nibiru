@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -39,34 +40,51 @@ func (k Keeper) AddMargin(
 }
 
 func (k Keeper) RemoveMargin(
-	ctx sdk.Context,
-	pair common.TokenPair,
-	trader sdk.AccAddress,
-	margin sdk.Int,
-) error {
-	// require valid token amount
-	if margin.IsNegative() {
-		return fmt.Errorf("negative margin value: %v", margin.String())
-	} else if margin.IsZero() {
-		return fmt.Errorf("zero margin in request")
+	goCtx context.Context, msg *types.MsgRemoveMargin,
+) (res *types.MsgRemoveMarginResponse, err error) {
+	// ------------- Message Setup -------------
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate trader
+	trader, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return res, err
 	}
 
-	// require vpool
-	err := k.requireVpool(ctx, pair)
-	if err != nil {
-		return err
+	// validate margin
+	margin := msg.Margin.Amount
+	if msg.Margin.Denom != common.StableDenom {
+		return res, fmt.Errorf("invalid margin denom")
 	}
+	if margin.IsNegative() {
+		return res, fmt.Errorf("negative margin value: %v", margin.String())
+	} else if margin.IsZero() {
+		return res, fmt.Errorf("zero margin in request")
+	}
+
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(msg.Vpool)
+	if err != nil {
+		return res, err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return res, err
+	}
+
+	// ------------- RemoveMargin -------------
 
 	position, err := k.Positions().Get(ctx, pair, trader.String())
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	marginDelta := margin.Neg().ToDec()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, pair, position, marginDelta)
 	if err != nil {
-		return err
+		return res, err
 	}
 	position.Margin = remaining.margin
 	position.LastUpdateCumulativePremiumFraction = remaining.latestCPF
@@ -74,9 +92,9 @@ func (k Keeper) RemoveMargin(
 	freeCollateral, err := k.calcFreeCollateral(
 		ctx, position, remaining.fPayment, remaining.badDebt)
 	if err != nil {
-		return err
+		return res, err
 	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
-		return fmt.Errorf("not enough free collateral")
+		return res, fmt.Errorf("not enough free collateral")
 	}
 
 	k.Positions().Set(ctx, pair, trader.String(), position)
@@ -85,7 +103,7 @@ func (k Keeper) RemoveMargin(
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.VaultModuleAccount, trader, sdk.NewCoins(coinToSend))
 	if err != nil {
-		return err
+		return res, err
 	}
 	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 
@@ -96,7 +114,10 @@ func (k Keeper) RemoveMargin(
 	)
 
 	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.fPayment)
-	return nil
+	return &types.MsgRemoveMarginResponse{
+		MarginOut:      coinToSend,
+		FundingPayment: remaining.fPayment,
+	}, nil
 }
 
 // TODO test: GetMarginRatio

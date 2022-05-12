@@ -225,8 +225,11 @@ func TestRemoveMargin(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 				alice := sample.AccAddress()
 				pair := common.TokenPair("osmo:nusd")
-				err := nibiruApp.PerpKeeper.RemoveMargin(
-					ctx, pair, alice, removeAmt)
+				goCtx := sdk.WrapSDKContext(ctx)
+				msg := &types.MsgRemoveMargin{
+					Sender: alice.String(), Vpool: pair.String(),
+					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
+				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, "negative margin")
 			},
@@ -239,8 +242,11 @@ func TestRemoveMargin(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 				alice := sample.AccAddress()
 				pair := common.TokenPair("osmo:nusd")
-				err := nibiruApp.PerpKeeper.RemoveMargin(
-					ctx, pair, alice, removeAmt)
+				goCtx := sdk.WrapSDKContext(ctx)
+				msg := &types.MsgRemoveMargin{
+					Sender: alice.String(), Vpool: pair.String(),
+					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
+				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, "zero margin")
 			},
@@ -253,8 +259,11 @@ func TestRemoveMargin(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 				alice := sample.AccAddress()
 				pair := common.TokenPair("osmo:nusd")
-				err := nibiruApp.PerpKeeper.RemoveMargin(
-					ctx, pair, alice, removeAmt)
+				goCtx := sdk.WrapSDKContext(ctx)
+				msg := &types.MsgRemoveMargin{
+					Sender: alice.String(), Vpool: pair.String(),
+					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
+				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -280,8 +289,12 @@ func TestRemoveMargin(t *testing.T) {
 				)
 
 				removeAmt := sdk.NewInt(5)
-				err := perpKeeper.RemoveMargin(
-					ctx, pair, alice, removeAmt)
+				goCtx := sdk.WrapSDKContext(ctx)
+				msg := &types.MsgRemoveMargin{
+					Sender: alice.String(), Vpool: pair.String(),
+					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
+				_, err := perpKeeper.RemoveMargin(
+					goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 			},
@@ -328,11 +341,15 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Attempt to remove 10% of the position")
 				removeAmt := sdk.NewInt(6)
+				goCtx := sdk.WrapSDKContext(ctx)
+				msg := &types.MsgRemoveMargin{
+					Sender: alice.String(), Vpool: pair.String(),
+					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				// TODO: Blocker - Need GetOutputTWAP from prices.go
 				// The test will panic b/c it's missing that implementation.
 				require.Panics(t,
 					func() {
-						err = perpKeeper.RemoveMargin(ctx, pair, alice, removeAmt)
+						_, err := perpKeeper.RemoveMargin(goCtx, msg)
 						require.Error(t, err)
 					})
 				// Desired behavior ↓
