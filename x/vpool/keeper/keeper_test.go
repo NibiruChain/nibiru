@@ -163,3 +163,91 @@ func TestSwapInput_HappyPath(t *testing.T) {
 		})
 	}
 }
+
+func TestSwapOutput(t *testing.T) {
+	tests := []struct {
+		name                     string
+		initialQuoteReserve      sdk.Dec
+		initialBaseReserve       sdk.Dec
+		direction                types.Direction
+		baseAssetAmount          sdk.Dec
+		quoteAssetLimit          sdk.Dec
+		expectedQuoteReserve     sdk.Dec
+		expectedBaseReserve      sdk.Dec
+		expectedQuoteAssetAmount sdk.Dec
+		expectedErr              error
+	}{
+		{
+			name:                     "zero base asset swap",
+			initialQuoteReserve:      sdk.NewDec(10_000_000),
+			initialBaseReserve:       sdk.NewDec(5_000_000),
+			direction:                types.Direction_ADD_TO_POOL,
+			baseAssetAmount:          sdk.ZeroDec(),
+			quoteAssetLimit:          sdk.ZeroDec(),
+			expectedQuoteReserve:     sdk.NewDec(10_000_000),
+			expectedBaseReserve:      sdk.NewDec(5_000_000),
+			expectedQuoteAssetAmount: sdk.ZeroDec(),
+		},
+		{
+			name:                     "add base asset swap",
+			initialQuoteReserve:      sdk.NewDec(10_000_000),
+			initialBaseReserve:       sdk.NewDec(5_000_000),
+			direction:                types.Direction_ADD_TO_POOL,
+			baseAssetAmount:          sdk.NewDec(1_000_000),
+			quoteAssetLimit:          sdk.NewDec(1_666_666),
+			expectedQuoteReserve:     sdk.MustNewDecFromStr("8333333.333333333333333333"),
+			expectedBaseReserve:      sdk.NewDec(6_000_000),
+			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("1666666.666666666666666667"),
+		},
+		{
+			name:                     "remove base asset",
+			initialQuoteReserve:      sdk.NewDec(10_000_000),
+			initialBaseReserve:       sdk.NewDec(5_000_000),
+			direction:                types.Direction_REMOVE_FROM_POOL,
+			baseAssetAmount:          sdk.NewDec(1_000_000),
+			quoteAssetLimit:          sdk.NewDec(2_500_001),
+			expectedQuoteReserve:     sdk.NewDec(12_500_000),
+			expectedBaseReserve:      sdk.NewDec(4_000_000),
+			expectedQuoteAssetAmount: sdk.NewDec(2_500_000),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPriceKeeper(gomock.NewController(t)),
+			)
+
+			vpoolKeeper.CreatePool(
+				ctx,
+				NUSDPair,
+				sdk.OneDec(),
+				tc.initialQuoteReserve,
+				tc.initialBaseReserve,
+				sdk.OneDec(),
+			)
+
+			quoteAssetAmount, err := vpoolKeeper.SwapOutput(
+				ctx,
+				NUSDPair,
+				tc.direction,
+				tc.baseAssetAmount,
+				tc.quoteAssetLimit,
+			)
+
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+			} else {
+				pool, err := vpoolKeeper.getPool(ctx, NUSDPair)
+				require.NoError(t, err)
+
+				require.EqualValuesf(t, tc.expectedQuoteAssetAmount, quoteAssetAmount,
+					"expected %s; got %s", tc.expectedQuoteAssetAmount.String(), quoteAssetAmount.String())
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
+				require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
+			}
+		})
+	}
+}

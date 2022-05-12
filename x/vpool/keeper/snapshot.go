@@ -12,12 +12,12 @@ import (
 func (k Keeper) updateReserve(
 	ctx sdk.Context,
 	pool *types.Pool,
-	dir types.Direction,
+	directionOfQuoteAsset types.Direction,
 	quoteAssetAmount sdk.Dec,
 	baseAssetAmount sdk.Dec,
 	skipFluctuationCheck bool,
 ) error {
-	if dir == types.Direction_ADD_TO_POOL {
+	if directionOfQuoteAsset == types.Direction_ADD_TO_POOL {
 		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
 		pool.DecreaseBaseAssetReserve(baseAssetAmount)
 		// TODO baseAssetDeltaThisFunding

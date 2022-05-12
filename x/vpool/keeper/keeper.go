@@ -110,8 +110,8 @@ func (k Keeper) SwapOutput(
 		ctx,
 		pool,
 		dir,
-		baseAssetAmount,
-		quoteAssetAmount,
+		quoteAssetAmount.Neg(), // multiply by neg because adding base asset means removing quote asset
+		baseAssetAmount.Neg(),
 		/*skipFluctuationCheck=*/ false,
 	); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
