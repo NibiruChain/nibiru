@@ -132,7 +132,7 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context, pair common.TokenPair,
 	oldPosition *types.Position, marginDelta sdk.Dec,
 ) (remaining Remaining, err error) {
-	remaining.latestCPF, err = k.GetLatestCumulativePremiumFraction(ctx, pair)
+	remaining.latestCPF, err = k.getLatestCumulativePremiumFraction(ctx, pair)
 	if err != nil {
 		return
 	}

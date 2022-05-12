@@ -199,15 +199,15 @@ func (k Keeper) increasePosition(
 	return
 }
 
-// TODO test: GetLatestCumulativePremiumFraction | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) GetLatestCumulativePremiumFraction(
+// getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
+// specific pair.
+func (k Keeper) getLatestCumulativePremiumFraction(
 	ctx sdk.Context, pair common.TokenPair,
 ) (sdk.Dec, error) {
-	pairMetadata, err := k.PairMetadata().Get(ctx, pair.String())
+	pairMetadata, err := k.PairMetadata().Get(ctx, pair)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
-
 	// this should never fail
 	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }
