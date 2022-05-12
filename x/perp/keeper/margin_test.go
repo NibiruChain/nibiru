@@ -20,17 +20,6 @@ func TestOpenPosition_Setup(t *testing.T) {
 		test func()
 	}{
 		{
-			name: "uninitialized vpool has no metadata | GetLatestCumulativePremiumFraction",
-			test: func() {
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				vpool := common.TokenPair("xxx:yyy")
-				lcpf, err := nibiruApp.PerpKeeper.GetLatestCumulativePremiumFraction(
-					ctx, vpool)
-				require.Error(t, err)
-				require.EqualValues(t, sdk.Int{}, lcpf)
-			},
-		},
-		{
 			name: "open pos - uninitialized pool raised pair not supported error",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
