@@ -260,7 +260,7 @@ func TestRemoveMargin(t *testing.T) {
 			},
 		},
 		{
-			name: "no position from which to remove margin - fail",
+			name: "pool exists but trader doesn't have position - fail",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
