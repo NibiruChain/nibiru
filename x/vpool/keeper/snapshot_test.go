@@ -92,6 +92,8 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 	t.Log("We save another different snapshot")
 	differentSnapshot := firstSnapshot
 	differentSnapshot.BaseAssetReserve = sdk.NewDec(12_341_234)
+	differentSnapshot.BlockNumber = expectedHeight + 1
+	differentSnapshot.TimestampMs = expectedTime.Add(time.Second).UnixMilli()
 	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
 	vpoolKeeper.saveSnapshot(
 		ctx,
@@ -99,8 +101,8 @@ func TestNewKeeper_getSnapshot(t *testing.T) {
 		1,
 		pool.QuoteAssetReserve,
 		pool.BaseAssetReserve,
-		expectedTime.Add(time.Second),
-		expectedHeight+1,
+		time.UnixMilli(differentSnapshot.TimestampMs),
+		differentSnapshot.BlockNumber,
 	)
 
 	t.Log("Fetch snapshot 1")
