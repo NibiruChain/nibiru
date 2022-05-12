@@ -3,12 +3,15 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/version"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -79,21 +82,26 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		FooCmd(),
+		RemoveMarginCmd(),
 	)
 
 	return txCmd
 }
 
 /*
-FooCmd is a CLI command that does foo.
-Example: "foo argfoo"
+RemoveMarginCmd is a CLI command that removes margin from a position,
+realizing any outstanding funding payments and decreasing the margin ratio.
 */
-func FooCmd() *cobra.Command {
+func RemoveMarginCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "foo [argfoo]",
-		Short: "foo description",
-		Args:  cobra.ExactArgs(1),
+		Use:   "remove-margin [vpool] [margin]",
+		Short: "Removes margin from a position, decreasing its margin ratio",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp remove-margin osmo-nusd 100nusd
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -103,8 +111,18 @@ func FooCmd() *cobra.Command {
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
 				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			msg := &types.MsgFoo{
+			marginToRemove, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgRemoveMargin{
 				Sender: clientCtx.GetFromAddress().String(),
+				Vpool:  args[0],
+				Margin: marginToRemove,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
 			}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
