@@ -99,7 +99,7 @@ func (p PositionsState) Get(ctx sdk.Context, pair common.TokenPair, address stri
 	key := p.keyFromRaw(pair, address)
 	valueBytes := kv.Get(key)
 	if valueBytes == nil {
-		return nil, types.ErrNotFound
+		return nil, types.ErrPositionNotFound
 	}
 
 	position := new(types.Position)
@@ -113,14 +113,16 @@ func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error 
 	key := p.keyFromType(position)
 
 	if !kv.Has(key) {
-		return types.ErrNotFound
+		return types.ErrPositionNotFound
 	}
 
 	kv.Set(key, p.cdc.MustMarshal(position))
 	return nil
 }
 
-func (p PositionsState) Set(ctx sdk.Context, pair common.TokenPair, owner string, position *types.Position) {
+func (p PositionsState) Set(
+	ctx sdk.Context, pair common.TokenPair, owner string, position *types.Position,
+) {
 	positionID := p.keyFromRaw(pair, owner)
 	kvStore := p.getKV(ctx)
 	kvStore.Set(positionID, p.cdc.MustMarshal(position))
@@ -139,7 +141,7 @@ func (p PairMetadata) Get(ctx sdk.Context, pair common.TokenPair) (*types.PairMe
 
 	v := kv.Get([]byte(pair))
 	if v == nil {
-		return nil, types.ErrNotFound
+		return nil, types.ErrPairNotFound
 	}
 
 	pairMetadata := new(types.PairMetadata)

@@ -365,6 +365,20 @@ func (mr *MockVpoolKeeperMockRecorder) CalcFee(arg0, arg1, arg2 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcFee", reflect.TypeOf((*MockVpoolKeeper)(nil).CalcFee), arg0, arg1, arg2)
 }
 
+// ExistsPool mocks base method.
+func (m *MockVpoolKeeper) ExistsPool(arg0 types1.Context, arg1 common.TokenPair) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsPool", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ExistsPool indicates an expected call of ExistsPool.
+func (mr *MockVpoolKeeperMockRecorder) ExistsPool(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsPool", reflect.TypeOf((*MockVpoolKeeper)(nil).ExistsPool), arg0, arg1)
+}
+
 // GetOutputPrice mocks base method.
 func (m *MockVpoolKeeper) GetOutputPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()

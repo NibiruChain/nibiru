@@ -6,6 +6,9 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -28,23 +31,25 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgFoo: Msg to foo.
-type MsgFoo struct {
-	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+// MsgRemoveMargin: Msg to remove margin.
+type MsgRemoveMargin struct {
+	Sender string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Vpool  string     `protobuf:"bytes,2,opt,name=vpool,proto3" json:"vpool,omitempty"`
+	Margin types.Coin `protobuf:"bytes,3,opt,name=margin,proto3" json:"margin"`
 }
 
-func (m *MsgFoo) Reset()         { *m = MsgFoo{} }
-func (m *MsgFoo) String() string { return proto.CompactTextString(m) }
-func (*MsgFoo) ProtoMessage()    {}
-func (*MsgFoo) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveMargin) Reset()         { *m = MsgRemoveMargin{} }
+func (m *MsgRemoveMargin) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveMargin) ProtoMessage()    {}
+func (*MsgRemoveMargin) Descriptor() ([]byte, []int) {
 	return fileDescriptor_28f06b306d51dcfb, []int{0}
 }
-func (m *MsgFoo) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveMargin) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgFoo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveMargin) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgFoo.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveMargin.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -54,41 +59,57 @@ func (m *MsgFoo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *MsgFoo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgFoo.Merge(m, src)
+func (m *MsgRemoveMargin) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveMargin.Merge(m, src)
 }
-func (m *MsgFoo) XXX_Size() int {
+func (m *MsgRemoveMargin) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgFoo) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgFoo.DiscardUnknown(m)
+func (m *MsgRemoveMargin) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveMargin.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgFoo proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveMargin proto.InternalMessageInfo
 
-func (m *MsgFoo) GetSender() string {
+func (m *MsgRemoveMargin) GetSender() string {
 	if m != nil {
 		return m.Sender
 	}
 	return ""
 }
 
-type MsgFooResponse struct {
-	ResponsePayload string `protobuf:"bytes,1,opt,name=response_payload,json=responsePayload,proto3" json:"response_payload,omitempty"`
+func (m *MsgRemoveMargin) GetVpool() string {
+	if m != nil {
+		return m.Vpool
+	}
+	return ""
 }
 
-func (m *MsgFooResponse) Reset()         { *m = MsgFooResponse{} }
-func (m *MsgFooResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgFooResponse) ProtoMessage()    {}
-func (*MsgFooResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveMargin) GetMargin() types.Coin {
+	if m != nil {
+		return m.Margin
+	}
+	return types.Coin{}
+}
+
+type MsgRemoveMarginResponse struct {
+	// MarginOut: tokens transferred back to the trader
+	MarginOut      types.Coin                             `protobuf:"bytes,1,opt,name=margin_out,json=marginOut,proto3" json:"margin_out"`
+	FundingPayment github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
+}
+
+func (m *MsgRemoveMarginResponse) Reset()         { *m = MsgRemoveMarginResponse{} }
+func (m *MsgRemoveMarginResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveMarginResponse) ProtoMessage()    {}
+func (*MsgRemoveMarginResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_28f06b306d51dcfb, []int{1}
 }
-func (m *MsgFooResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveMarginResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgFooResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveMarginResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgFooResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveMarginResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -98,51 +119,60 @@ func (m *MsgFooResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *MsgFooResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgFooResponse.Merge(m, src)
+func (m *MsgRemoveMarginResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveMarginResponse.Merge(m, src)
 }
-func (m *MsgFooResponse) XXX_Size() int {
+func (m *MsgRemoveMarginResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgFooResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgFooResponse.DiscardUnknown(m)
+func (m *MsgRemoveMarginResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveMarginResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgFooResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveMarginResponse proto.InternalMessageInfo
 
-func (m *MsgFooResponse) GetResponsePayload() string {
+func (m *MsgRemoveMarginResponse) GetMarginOut() types.Coin {
 	if m != nil {
-		return m.ResponsePayload
+		return m.MarginOut
 	}
-	return ""
+	return types.Coin{}
 }
 
 func init() {
-	proto.RegisterType((*MsgFoo)(nil), "nibiru.perp.v1.MsgFoo")
-	proto.RegisterType((*MsgFooResponse)(nil), "nibiru.perp.v1.MsgFooResponse")
+	proto.RegisterType((*MsgRemoveMargin)(nil), "nibiru.perp.v1.MsgRemoveMargin")
+	proto.RegisterType((*MsgRemoveMarginResponse)(nil), "nibiru.perp.v1.MsgRemoveMarginResponse")
 }
 
 func init() { proto.RegisterFile("perp/v1/tx.proto", fileDescriptor_28f06b306d51dcfb) }
 
 var fileDescriptor_28f06b306d51dcfb = []byte{
-	// 257 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x28, 0x48, 0x2d, 0x2a,
-	0xd0, 0x2f, 0x33, 0xd4, 0x2f, 0xa9, 0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xcb, 0xcb,
-	0x4c, 0xca, 0x2c, 0x2a, 0xd5, 0x03, 0x49, 0xe8, 0x95, 0x19, 0x4a, 0xc9, 0xa4, 0xe7, 0xe7, 0xa7,
-	0xe7, 0xa4, 0xea, 0x27, 0x16, 0x64, 0xea, 0x27, 0xe6, 0xe5, 0xe5, 0x97, 0x24, 0x96, 0x64, 0xe6,
-	0xe7, 0x15, 0x43, 0x54, 0x2b, 0x29, 0x70, 0xb1, 0xf9, 0x16, 0xa7, 0xbb, 0xe5, 0xe7, 0x0b, 0x89,
-	0x71, 0xb1, 0x15, 0xa7, 0xe6, 0xa5, 0xa4, 0x16, 0x49, 0x30, 0x2a, 0x30, 0x6a, 0x70, 0x06, 0x41,
-	0x79, 0x4a, 0xd6, 0x5c, 0x7c, 0x10, 0x15, 0x41, 0xa9, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42,
-	0x9a, 0x5c, 0x02, 0x45, 0x50, 0x76, 0x7c, 0x41, 0x62, 0x65, 0x4e, 0x7e, 0x62, 0x0a, 0x54, 0x0f,
-	0x3f, 0x4c, 0x3c, 0x00, 0x22, 0x6c, 0x14, 0xc7, 0xc5, 0xec, 0x5b, 0x9c, 0x2e, 0x14, 0xce, 0xc5,
-	0x0c, 0xb6, 0x42, 0x0f, 0xd5, 0x6d, 0x7a, 0x10, 0x83, 0xa5, 0xe4, 0xb0, 0x8b, 0xc3, 0x2c, 0x54,
-	0x92, 0x68, 0xba, 0xfc, 0x64, 0x32, 0x93, 0x90, 0x92, 0x80, 0x3e, 0x44, 0x9d, 0x3e, 0xd8, 0xd3,
-	0x69, 0xf9, 0xf9, 0x4e, 0x2e, 0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91,
-	0x1c, 0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x17, 0x1e, 0xcb, 0x31, 0xdc, 0x78, 0x2c, 0xc7, 0x10, 0xa5,
-	0x95, 0x9e, 0x59, 0x92, 0x51, 0x9a, 0xa4, 0x97, 0x9c, 0x9f, 0xab, 0xef, 0x07, 0xd6, 0xe5, 0x9c,
-	0x91, 0x98, 0x99, 0x07, 0x33, 0xa1, 0x02, 0x62, 0x46, 0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b,
-	0x38, 0x2c, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x71, 0xba, 0xcf, 0xe3, 0x4d, 0x01, 0x00,
-	0x00,
+	// 408 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0x41, 0x8b, 0xd3, 0x40,
+	0x14, 0xce, 0xec, 0x6a, 0x61, 0x47, 0xd9, 0x95, 0xb0, 0x68, 0x0d, 0x4b, 0xba, 0xe4, 0xa0, 0x8b,
+	0xe0, 0x0c, 0x59, 0x0f, 0xde, 0x3c, 0x74, 0xf7, 0x5a, 0x95, 0x5c, 0x04, 0x2f, 0x65, 0x92, 0x8e,
+	0xb3, 0x83, 0xcd, 0xbc, 0x21, 0x33, 0x09, 0x2d, 0x78, 0xd2, 0x3f, 0x20, 0xf8, 0x4f, 0xfc, 0x15,
+	0x3d, 0x16, 0xbc, 0x88, 0x87, 0x22, 0xad, 0x3f, 0x44, 0x32, 0x93, 0x82, 0xed, 0xc5, 0x3d, 0x65,
+	0xe6, 0xbd, 0xef, 0xfb, 0xf2, 0x7d, 0x6f, 0x1e, 0x7e, 0xa0, 0x79, 0xa5, 0x69, 0x93, 0x52, 0x3b,
+	0x23, 0xba, 0x02, 0x0b, 0xe1, 0xb1, 0x92, 0xb9, 0xac, 0x6a, 0xd2, 0x36, 0x48, 0x93, 0x46, 0x67,
+	0x02, 0x40, 0x4c, 0x39, 0x65, 0x5a, 0x52, 0xa6, 0x14, 0x58, 0x66, 0x25, 0x28, 0xe3, 0xd1, 0x51,
+	0x5c, 0x80, 0x29, 0xc1, 0xd0, 0x9c, 0x19, 0x4e, 0x9b, 0x34, 0xe7, 0x96, 0xa5, 0xb4, 0x00, 0xa9,
+	0xba, 0xfe, 0xa9, 0x00, 0x01, 0xee, 0x48, 0xdb, 0x93, 0xaf, 0x26, 0x33, 0x7c, 0x32, 0x32, 0x22,
+	0xe3, 0x25, 0x34, 0x7c, 0xc4, 0x2a, 0x21, 0x55, 0xf8, 0x10, 0xf7, 0x0c, 0x57, 0x13, 0x5e, 0xf5,
+	0xd1, 0x39, 0xba, 0x38, 0xca, 0xba, 0x5b, 0x78, 0x8a, 0xef, 0x36, 0x1a, 0x60, 0xda, 0x3f, 0x70,
+	0x65, 0x7f, 0x09, 0x5f, 0xe2, 0x5e, 0xe9, 0x78, 0xfd, 0xc3, 0x73, 0x74, 0x71, 0xef, 0xf2, 0x31,
+	0xf1, 0x3e, 0x48, 0xeb, 0x83, 0x74, 0x3e, 0xc8, 0x15, 0x48, 0x35, 0xbc, 0xb3, 0x58, 0x0d, 0x82,
+	0xac, 0x83, 0x27, 0xdf, 0x11, 0x7e, 0xb4, 0xf7, 0xeb, 0x8c, 0x1b, 0x0d, 0xca, 0xf0, 0xf0, 0x15,
+	0xc6, 0x1e, 0x35, 0x86, 0xda, 0x3a, 0x1b, 0xb7, 0x10, 0x3e, 0xf2, 0x94, 0x37, 0xb5, 0x0d, 0xdf,
+	0xe1, 0x93, 0x0f, 0xb5, 0x9a, 0x48, 0x25, 0xc6, 0x9a, 0xcd, 0x4b, 0xae, 0xac, 0x37, 0x3d, 0x24,
+	0x2d, 0xf2, 0xd7, 0x6a, 0xf0, 0x44, 0x48, 0x7b, 0x53, 0xe7, 0xa4, 0x80, 0x92, 0x76, 0x73, 0xf3,
+	0x9f, 0xe7, 0x66, 0xf2, 0x91, 0xda, 0xb9, 0xe6, 0x86, 0x5c, 0xf3, 0x22, 0x3b, 0xee, 0x64, 0xde,
+	0x7a, 0x95, 0xcb, 0x2f, 0x08, 0x1f, 0x8e, 0x8c, 0x08, 0x3f, 0xe1, 0xfb, 0x3b, 0x33, 0x1b, 0x90,
+	0xdd, 0xb7, 0x22, 0x7b, 0xc9, 0xa2, 0xa7, 0xff, 0x01, 0x6c, 0xa3, 0x27, 0xc9, 0xe7, 0x1f, 0x7f,
+	0xbe, 0x1d, 0x9c, 0x25, 0x11, 0xf5, 0x04, 0xea, 0xd6, 0xa2, 0x72, 0xd0, 0xb1, 0x4f, 0x38, 0xbc,
+	0x5e, 0xac, 0x63, 0xb4, 0x5c, 0xc7, 0xe8, 0xf7, 0x3a, 0x46, 0x5f, 0x37, 0x71, 0xb0, 0xdc, 0xc4,
+	0xc1, 0xcf, 0x4d, 0x1c, 0xbc, 0x7f, 0xf6, 0x4f, 0xae, 0xd7, 0x8e, 0x7f, 0x75, 0xc3, 0xa4, 0xda,
+	0x6a, 0xcd, 0xbc, 0x9a, 0xcb, 0x97, 0xf7, 0xdc, 0x06, 0xbc, 0xf8, 0x1b, 0x00, 0x00, 0xff, 0xff,
+	0xe6, 0x0c, 0x80, 0x42, 0x79, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -158,7 +188,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	// Parameters queries the parameters of the x/perp module.
-	Foo(ctx context.Context, in *MsgFoo, opts ...grpc.CallOption) (*MsgFooResponse, error)
+	RemoveMargin(ctx context.Context, in *MsgRemoveMargin, opts ...grpc.CallOption) (*MsgRemoveMarginResponse, error)
 }
 
 type msgClient struct {
@@ -169,9 +199,9 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) Foo(ctx context.Context, in *MsgFoo, opts ...grpc.CallOption) (*MsgFooResponse, error) {
-	out := new(MsgFooResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.perp.v1.Msg/Foo", in, out, opts...)
+func (c *msgClient) RemoveMargin(ctx context.Context, in *MsgRemoveMargin, opts ...grpc.CallOption) (*MsgRemoveMarginResponse, error) {
+	out := new(MsgRemoveMarginResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v1.Msg/RemoveMargin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -181,35 +211,35 @@ func (c *msgClient) Foo(ctx context.Context, in *MsgFoo, opts ...grpc.CallOption
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// Parameters queries the parameters of the x/perp module.
-	Foo(context.Context, *MsgFoo) (*MsgFooResponse, error)
+	RemoveMargin(context.Context, *MsgRemoveMargin) (*MsgRemoveMarginResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) Foo(ctx context.Context, req *MsgFoo) (*MsgFooResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Foo not implemented")
+func (*UnimplementedMsgServer) RemoveMargin(ctx context.Context, req *MsgRemoveMargin) (*MsgRemoveMarginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMargin not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_Foo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgFoo)
+func _Msg_RemoveMargin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveMargin)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).Foo(ctx, in)
+		return srv.(MsgServer).RemoveMargin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/nibiru.perp.v1.Msg/Foo",
+		FullMethod: "/nibiru.perp.v1.Msg/RemoveMargin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).Foo(ctx, req.(*MsgFoo))
+		return srv.(MsgServer).RemoveMargin(ctx, req.(*MsgRemoveMargin))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -219,15 +249,15 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Foo",
-			Handler:    _Msg_Foo_Handler,
+			MethodName: "RemoveMargin",
+			Handler:    _Msg_RemoveMargin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "perp/v1/tx.proto",
 }
 
-func (m *MsgFoo) Marshal() (dAtA []byte, err error) {
+func (m *MsgRemoveMargin) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -237,16 +267,33 @@ func (m *MsgFoo) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgFoo) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRemoveMargin) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgFoo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRemoveMargin) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	{
+		size, err := m.Margin.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if len(m.Vpool) > 0 {
+		i -= len(m.Vpool)
+		copy(dAtA[i:], m.Vpool)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Vpool)))
+		i--
+		dAtA[i] = 0x12
+	}
 	if len(m.Sender) > 0 {
 		i -= len(m.Sender)
 		copy(dAtA[i:], m.Sender)
@@ -257,7 +304,7 @@ func (m *MsgFoo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgFooResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgRemoveMarginResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -267,23 +314,36 @@ func (m *MsgFooResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgFooResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRemoveMarginResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgFooResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRemoveMarginResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ResponsePayload) > 0 {
-		i -= len(m.ResponsePayload)
-		copy(dAtA[i:], m.ResponsePayload)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ResponsePayload)))
-		i--
-		dAtA[i] = 0xa
+	{
+		size := m.FundingPayment.Size()
+		i -= size
+		if _, err := m.FundingPayment.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size, err := m.MarginOut.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -298,7 +358,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgFoo) Size() (n int) {
+func (m *MsgRemoveMargin) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -308,19 +368,25 @@ func (m *MsgFoo) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
+	l = len(m.Vpool)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Margin.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
-func (m *MsgFooResponse) Size() (n int) {
+func (m *MsgRemoveMarginResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ResponsePayload)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
+	l = m.MarginOut.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.FundingPayment.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -330,7 +396,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgFoo) Unmarshal(dAtA []byte) error {
+func (m *MsgRemoveMargin) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -353,10 +419,10 @@ func (m *MsgFoo) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgFoo: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRemoveMargin: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgFoo: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRemoveMargin: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -391,59 +457,9 @@ func (m *MsgFoo) Unmarshal(dAtA []byte) error {
 			}
 			m.Sender = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgFooResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgFooResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgFooResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResponsePayload", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Vpool", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -471,7 +487,157 @@ func (m *MsgFooResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ResponsePayload = string(dAtA[iNdEx:postIndex])
+			m.Vpool = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Margin", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Margin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveMarginResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveMarginResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveMarginResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MarginOut", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MarginOut.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FundingPayment", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.FundingPayment.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
