@@ -114,7 +114,7 @@ func (k Keeper) SwapOutput(
 		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
 	}
 
-	if err = k.updateReserve(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
+	if err = k.savePoolAndSnapshot(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
@@ -201,7 +201,7 @@ func (k Keeper) SwapInput(
 		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
 	}
 
-	if err = k.updateReserve(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
+	if err = k.savePoolAndSnapshot(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
