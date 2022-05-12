@@ -8,7 +8,6 @@ import (
 )
 
 // SettlePosition settles a trader position
-// TODO(mercilex): test
 func (k Keeper) SettlePosition(ctx sdk.Context, pair common.TokenPair, trader string) (transferredCoins sdk.Coins, err error) {
 	// TODO(mercilex): requireAmm?
 
