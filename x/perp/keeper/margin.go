@@ -1,18 +1,13 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
-var (
-	/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
-	They also serve as a reminder of which functions still need MVP unit or
-	integration tests */
-	_ = requireMoreMarginRatio
 )
 
 func (k Keeper) AddMargin(
@@ -42,6 +37,88 @@ func (k Keeper) AddMargin(
 	k.Positions().Set(ctx, pair, trader.String(), position)
 
 	return nil
+}
+
+func (k Keeper) RemoveMargin(
+	goCtx context.Context, msg *types.MsgRemoveMargin,
+) (res *types.MsgRemoveMarginResponse, err error) {
+
+	// ------------- Message Setup -------------
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate trader
+	trader, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return res, err
+	}
+
+	// validate margin
+	margin := msg.Margin.Amount
+	if msg.Margin.Denom != common.StableDenom {
+		return res, fmt.Errorf("invalid margin denom")
+	} else if margin.LTE(sdk.ZeroInt()) {
+		return res, fmt.Errorf("margin must be positive, not: %v", margin.String())
+	}
+
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(msg.Vpool)
+	if err != nil {
+		return res, err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return res, err
+	}
+
+	// ------------- RemoveMargin -------------
+
+	position, err := k.Positions().Get(ctx, pair, trader.String())
+	if err != nil {
+		return res, err
+	}
+
+	marginDelta := margin.Neg().ToDec()
+	remaining, err := k.CalcRemainMarginWithFundingPayment(
+		ctx, pair, position, marginDelta)
+	if err != nil {
+		return res, err
+	}
+	position.Margin = remaining.margin
+	position.LastUpdateCumulativePremiumFraction = remaining.latestCPF
+	if !remaining.badDebt.IsZero() {
+		return res, fmt.Errorf("failed to remove margin; position has bad debt")
+	}
+
+	freeCollateral, err := k.calcFreeCollateral(
+		ctx, position, remaining.fPayment, remaining.badDebt)
+	if err != nil {
+		return res, err
+	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
+		return res, fmt.Errorf("not enough free collateral")
+	}
+
+	k.Positions().Set(ctx, pair, trader.String(), position)
+
+	coinToSend := sdk.NewCoin(common.StableDenom, margin)
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.VaultModuleAccount, trader, sdk.NewCoins(coinToSend))
+	if err != nil {
+		return res, err
+	}
+	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
+
+	events.EmitTransfer(ctx,
+		/* coin */ coinToSend,
+		/* from */ vaultAddr.String(),
+		/* to */ trader.String(),
+	)
+
+	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.fPayment)
+	return &types.MsgRemoveMarginResponse{
+		MarginOut:      coinToSend,
+		FundingPayment: remaining.fPayment,
+	}, nil
 }
 
 // TODO test: GetMarginRatio
@@ -81,6 +158,13 @@ func (k Keeper) GetMarginRatio(
 	return marginRatio, err
 }
 
+func (k *Keeper) requireVpool(ctx sdk.Context, pair common.TokenPair) error {
+	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
+		return fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
+	}
+	return nil
+}
+
 /*
 requireMoreMarginRatio checks if the marginRatio corresponding to the margin
 backing a position is above or below the 'baseMarginRatio'.
@@ -106,55 +190,4 @@ func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEq
 	}
 
 	return nil
-}
-
-type Remaining struct {
-	// margin sdk.Int: amount of quote token (y) backing the position.
-	margin sdk.Dec
-
-	/* badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
-	   Bad debt is negative net margin past the liquidation point of a position. */
-	badDebt sdk.Dec
-
-	/* fundingPayment sdk.Dec: A funding payment made or received by the trader on
-	    the current position. 'fundingPayment' is positive if 'owner' is the sender
-		and negative if 'owner' is the receiver of the payment. Its magnitude is
-		abs(vSize * fundingRate). Funding payments act to converge the mark price
-		(vPrice) and index price (average price on major exchanges). */
-	fPayment sdk.Dec
-
-	/* latestCPF: latest cumulative premium fraction */
-	latestCPF sdk.Dec
-}
-
-// TODO test: CalcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) CalcRemainMarginWithFundingPayment(
-	ctx sdk.Context, pair common.TokenPair,
-	oldPosition *types.Position, marginDelta sdk.Dec,
-) (remaining Remaining, err error) {
-	remaining.latestCPF, err = k.getLatestCumulativePremiumFraction(ctx, pair)
-	if err != nil {
-		return
-	}
-
-	if oldPosition.Size_.IsZero() {
-		remaining.fPayment = remaining.latestCPF.
-			Sub(oldPosition.LastUpdateCumulativePremiumFraction).
-			Mul(oldPosition.Size_)
-	} else {
-		remaining.fPayment = sdk.ZeroDec()
-	}
-
-	signedRemainMargin := marginDelta.Sub(remaining.fPayment).Add(oldPosition.Margin)
-
-	if signedRemainMargin.IsNegative() {
-		// the remaining margin is negative, liquidators didn't do their job
-		// and we have negative margin that must come out of the ecosystem fund
-		remaining.badDebt = signedRemainMargin.Abs()
-	} else {
-		remaining.badDebt = sdk.ZeroDec()
-		remaining.margin = signedRemainMargin.Abs()
-	}
-
-	return remaining, err
 }

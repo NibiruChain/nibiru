@@ -77,4 +77,6 @@ type VpoolKeeper interface {
 	GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
 	GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
 	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
+	// ExistsPool returns true if pool exists, false if not.
+	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
 }

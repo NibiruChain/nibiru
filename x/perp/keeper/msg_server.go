@@ -23,23 +23,17 @@ Args:
 	goCtx
 
 Returns
-	MsgFooResponse:
+	MsgRemoveMarginResponse:
 	error:
 */
-func (k msgServer) MsgFoo(
-	goCtx context.Context, msg *types.MsgFoo) (
-	fooResponse *types.MsgFooResponse, err error) {
+func (k msgServer) MsgRemoveMargin(
+	goCtx context.Context, msg *types.MsgRemoveMargin,
+) (*types.MsgRemoveMarginResponse, error) {
+
+	removeMarginResponse, err := k.RemoveMargin(goCtx, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	return fooResponse, nil
-}
-
-// Messages
-
-func (k Keeper) Foo(
-	goCtx context.Context, msg *types.MsgFoo,
-) (res *types.MsgFooResponse, err error) {
-	return res, err
+	return removeMarginResponse, nil
 }
