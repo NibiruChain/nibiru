@@ -65,6 +65,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 					sdk.NewDec(10_000_000),       //
 					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+					sdk.MustNewDecFromStr("0.1"),
 				)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
@@ -100,6 +101,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 					sdk.NewDec(10_000_000),       //
 					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+					sdk.MustNewDecFromStr("0.1"),
 				)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))

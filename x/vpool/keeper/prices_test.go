@@ -89,6 +89,7 @@ func TestGetSpotPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			price, err := vpoolKeeper.GetSpotPrice(ctx, tc.pair)
@@ -160,6 +161,7 @@ func TestGetOutputPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			quoteAmount, err := vpoolKeeper.GetOutputPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
@@ -238,6 +240,7 @@ func TestGetInputPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			baseAmount, err := vpoolKeeper.GetInputPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)

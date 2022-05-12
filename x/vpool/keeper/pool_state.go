@@ -16,6 +16,7 @@ func (k Keeper) CreatePool(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 	fluctuationLimitRatio sdk.Dec,
+	maxOracleSpreadRatio sdk.Dec,
 ) {
 	pool := types.NewPool(
 		pair,
@@ -23,6 +24,7 @@ func (k Keeper) CreatePool(
 		quoteAssetReserve,
 		baseAssetReserve,
 		fluctuationLimitRatio,
+		maxOracleSpreadRatio,
 	)
 
 	k.savePool(ctx, pool)

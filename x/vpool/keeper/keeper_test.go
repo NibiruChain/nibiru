@@ -77,6 +77,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				sdk.NewDec(10_000_000),       // 10
 				sdk.NewDec(5_000_000),        // 5
 				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
+				sdk.MustNewDecFromStr("0.1"),
 			)
 
 			_, err := vpoolKeeper.SwapInput(
@@ -143,6 +144,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				sdk.MustNewDecFromStr("0.9"),  // 0.9 ratio
 				sdk.NewDec(10_000_000),        // 10 tokens
 				sdk.NewDec(5_000_000),         // 5 tokens
+				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
 
