@@ -106,14 +106,15 @@ func (k Keeper) SwapOutput(
 		}
 	}
 
-	if err = k.updateReserve(
-		ctx,
-		pool,
-		dir,
-		quoteAssetAmount.Neg(), // multiply by neg because adding base asset means removing quote asset
-		baseAssetAmount.Neg(),
-		/*skipFluctuationCheck=*/ false,
-	); err != nil {
+	if dir == types.Direction_ADD_TO_POOL {
+		pool.IncreaseBaseAssetReserve(baseAssetAmount)
+		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
+	} else if dir == types.Direction_REMOVE_FROM_POOL {
+		pool.DecreaseBaseAssetReserve(baseAssetAmount)
+		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
+	}
+
+	if err = k.updateReserve(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
@@ -192,14 +193,15 @@ func (k Keeper) SwapInput(
 		}
 	}
 
-	if err = k.updateReserve(
-		ctx,
-		pool,
-		dir,
-		quoteAssetAmount,
-		baseAssetAmount,
-		/*skipFluctuationCheck=*/ false,
-	); err != nil {
+	if dir == types.Direction_ADD_TO_POOL {
+		pool.DecreaseBaseAssetReserve(baseAssetAmount)
+		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
+	} else if dir == types.Direction_REMOVE_FROM_POOL {
+		pool.IncreaseBaseAssetReserve(baseAssetAmount)
+		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
+	}
+
+	if err = k.updateReserve(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
