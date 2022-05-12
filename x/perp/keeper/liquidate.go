@@ -88,7 +88,7 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		traderAddr,
-		types.ModuleName,
+		common.TreasuryPoolModuleAccount,
 		sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToInsuranceFund.TruncateInt())),
 	)
 	if err != nil {
@@ -96,7 +96,7 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	}
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
-		types.ModuleName,
+		common.TreasuryPoolModuleAccount,
 		liquidator,
 		sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToLiquidator.TruncateInt())),
 	)

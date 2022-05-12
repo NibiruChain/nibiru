@@ -180,6 +180,9 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) (isIt 
 		panic(err)
 	}
 
-	/*params := k.GetParams(ctx)*/
-	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(sdk.ZeroDec())
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
