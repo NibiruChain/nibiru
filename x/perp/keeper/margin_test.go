@@ -19,17 +19,6 @@ func TestOpenPosition_Setup(t *testing.T) {
 		test func()
 	}{
 		{
-			name: "uninitialized vpool has no metadata | GetLatestCumulativePremiumFraction",
-			test: func() {
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				vpool := common.TokenPair("xxx:yyy")
-				lcpf, err := nibiruApp.PerpKeeper.GetLatestCumulativePremiumFraction(
-					ctx, vpool)
-				require.Error(t, err)
-				require.EqualValues(t, sdk.Int{}, lcpf)
-			},
-		},
-		{
 			name: "open pos - uninitialized pool raised pair not supported error",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
@@ -40,7 +29,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				t.Log("open a position on invalid 'pair'")
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
-				leverage := sdk.NewInt(10)
+				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
@@ -72,7 +61,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				alice := sample.AccAddress()
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
-				leverage := sdk.NewInt(10)
+				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
@@ -104,7 +93,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
 					Pair:                       pair.String(),
-					CumulativePremiumFractions: []sdk.Int{sdk.OneInt()},
+					CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 				})
 
 				t.Log("Fund trader (Alice) account with sufficient quote")
@@ -117,7 +106,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				t.Log("Open long position with 10x leverage")
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
-				leverage := sdk.NewInt(10)
+				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
@@ -147,7 +136,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
-				marginDelta := sdk.OneInt()
+				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, vpool, &types.Position{}, marginDelta)
 				require.Error(t, err)
@@ -167,15 +156,15 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 func TestAddMargin(t *testing.T) {
 	tests := []struct {
 		name           string
-		initialMargin  sdk.Int
-		addedMargin    sdk.Int
-		expectedMargin sdk.Int
+		initialMargin  sdk.Dec
+		addedMargin    sdk.Dec
+		expectedMargin sdk.Dec
 	}{
 		{
 			name:           "add margin",
-			initialMargin:  sdk.NewIntFromUint64(100),
-			addedMargin:    sdk.NewIntFromUint64(100),
-			expectedMargin: sdk.NewIntFromUint64(200),
+			initialMargin:  sdk.NewDec(100),
+			addedMargin:    sdk.NewDec(100),
+			expectedMargin: sdk.NewDec(200),
 		},
 	}
 
@@ -194,7 +183,7 @@ func TestAddMargin(t *testing.T) {
 				ctx,
 				traderAddr,
 				sdk.NewCoins(
-					sdk.NewCoin(common.StableDenom, tc.addedMargin),
+					sdk.NewCoin(common.StableDenom, tc.addedMargin.TruncateInt()),
 				),
 			)
 			require.NoErrorf(t, err, "fund account call should work")
@@ -207,7 +196,7 @@ func TestAddMargin(t *testing.T) {
 				&types.Position{
 					Address: traderAddr.String(),
 					Pair:    tokenPair.String(),
-					Size_:   sdk.NewIntFromUint64(9999),
+					Size_:   sdk.NewDec(9999),
 					Margin:  tc.initialMargin,
 				},
 			)
@@ -319,7 +308,7 @@ func TestRemoveMargin(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
 					Pair:                       pair.String(),
-					CumulativePremiumFractions: []sdk.Int{sdk.OneInt()},
+					CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 				})
 
 				t.Log("Fund trader (Alice) account with sufficient quote")
@@ -331,7 +320,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Open long position with 5x leverage")
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
-				leverage := sdk.NewInt(10)
+				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice.String(), quote, leverage, baseLimit)

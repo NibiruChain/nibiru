@@ -13,7 +13,7 @@ func (k Keeper) AddMargin(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	trader sdk.AccAddress,
-	addedMargin sdk.Int,
+	addedMargin sdk.Dec,
 ) (err error) {
 	position, err := k.Positions().Get(ctx, pair, trader.String())
 	if err != nil {
@@ -27,7 +27,7 @@ func (k Keeper) AddMargin(
 		trader,
 		types.ModuleName,
 		sdk.NewCoins(
-			sdk.NewCoin(common.StableDenom, addedMargin),
+			sdk.NewCoin(common.StableDenom, addedMargin.TruncateInt()),
 		),
 	); err != nil {
 		return err
@@ -63,7 +63,7 @@ func (k Keeper) RemoveMargin(
 		return err
 	}
 
-	marginDelta := margin.Neg()
+	marginDelta := margin.Neg().ToDec()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, pair, position, marginDelta)
 	if err != nil {
@@ -103,10 +103,10 @@ func (k Keeper) RemoveMargin(
 // TODO test: GetMarginRatio
 func (k Keeper) GetMarginRatio(
 	ctx sdk.Context, pair common.TokenPair, trader string,
-) (sdk.Int, error) {
+) (sdk.Dec, error) {
 	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
 	if err != nil {
-		return sdk.Int{}, err
+		return sdk.Dec{}, err
 	}
 
 	if position.Size_.IsZero() {
@@ -120,7 +120,7 @@ func (k Keeper) GetMarginRatio(
 		types.PnLPreferenceOption_MAX,
 	)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdk.Dec{}, err
 	}
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
@@ -130,7 +130,7 @@ func (k Keeper) GetMarginRatio(
 		/* marginDelta */ unrealizedPnL,
 	)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdk.Dec{}, err
 	}
 
 	marginRatio := remaining.margin.Sub(remaining.badDebt).Quo(positionNotional)
@@ -156,7 +156,7 @@ Args:
   largerThanOrEqualTo: Specifies whether 'marginRatio' should be larger or
     smaller than 'baseMarginRatio'.
 */
-func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEqualTo bool) error {
+func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEqualTo bool) error {
 	switch largerThanOrEqualTo {
 	case true:
 		if !marginRatio.GTE(baseMarginRatio) {
@@ -169,23 +169,4 @@ func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Int, largerThanOrEq
 	}
 
 	return nil
-}
-
-type Remaining struct {
-	// margin sdk.Int: amount of quote token (y) backing the position.
-	margin sdk.Int
-
-	/* badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
-	   Bad debt is negative net margin past the liquidation point of a position. */
-	badDebt sdk.Int
-
-	/* fundingPayment sdk.Dec: A funding payment made or received by the trader on
-	    the current position. 'fundingPayment' is positive if 'owner' is the sender
-		and negative if 'owner' is the receiver of the payment. Its magnitude is
-		abs(vSize * fundingRate). Funding payments act to converge the mark price
-		(vPrice) and index price (average price on major exchanges). */
-	fPayment sdk.Int
-
-	/* latestCPF: latest cumulative premium fraction */
-	latestCPF sdk.Int
 }

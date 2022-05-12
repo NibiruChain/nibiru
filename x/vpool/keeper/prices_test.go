@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -250,6 +251,225 @@ func TestGetInputPrice(t *testing.T) {
 					"expected quote: %s, got: %s", tc.expectedBaseAmount.String(), baseAmount.String(),
 				)
 			}
+		})
+	}
+}
+
+func TestCalcTwap(t *testing.T) {
+	tests := []struct {
+		name               string
+		pair               common.TokenPair
+		reserveSnapshots   []types.ReserveSnapshot
+		currentBlocktime   time.Time
+		currentBlockheight int64
+		lookbackInterval   time.Duration
+		twapCalcOption     types.TwapCalcOption
+		direction          types.Direction
+		assetAmount        sdk.Dec
+		expectedPrice      sdk.Dec
+		expectedErr        error
+	}{
+		{
+			name: "spot price twap calc, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(90),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(85),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(95),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       30,
+					BlockNumber:       3,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_SPOT,
+			expectedPrice:      sdk.MustNewDecFromStr("8.75"),
+		},
+		{
+			name: "spot price twap calc, t=[11,35]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(90),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(85),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(95),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       30,
+					BlockNumber:       3,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(35),
+			currentBlockheight: 4,
+			lookbackInterval:   24 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_SPOT,
+			expectedPrice:      sdk.MustNewDecFromStr("8.895833333333333333"),
+		},
+		{
+			name: "quote asset swap twap calc, add to pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(30),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(40),
+					BaseAssetReserve:  sdk.MustNewDecFromStr("7.5"),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
+			direction:          types.Direction_ADD_TO_POOL,
+			assetAmount:        sdk.NewDec(10),
+			expectedPrice:      sdk.NewDec(2),
+		},
+		{
+			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(60),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(50),
+					BaseAssetReserve:  sdk.NewDec(12),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
+			direction:          types.Direction_REMOVE_FROM_POOL,
+			assetAmount:        sdk.NewDec(10),
+			expectedPrice:      sdk.MustNewDecFromStr("2.5"),
+		},
+		{
+			name: "base asset swap twap calc, add to pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(60),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(30),
+					BaseAssetReserve:  sdk.NewDec(20),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
+			direction:          types.Direction_ADD_TO_POOL,
+			assetAmount:        sdk.NewDec(10),
+			expectedPrice:      sdk.NewDec(20),
+		},
+		{
+			name: "base asset swap twap calc, remove from pool, t=[10,30]",
+			pair: common.TokenPair("btc:nusd"),
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(60),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+				{
+					QuoteAssetReserve: sdk.NewDec(75),
+					BaseAssetReserve:  sdk.NewDec(8),
+					TimestampMs:       20,
+					BlockNumber:       2,
+				},
+			},
+			currentBlocktime:   time.UnixMilli(30),
+			currentBlockheight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
+			direction:          types.Direction_REMOVE_FROM_POOL,
+			assetAmount:        sdk.NewDec(2),
+			expectedPrice:      sdk.NewDec(20),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPriceKeeper(gomock.NewController(t)))
+			ctx = ctx.WithBlockTime(time.UnixMilli(0)).WithBlockHeight(0)
+
+			t.Log("Create an empty pool for the first block, it's snapshot won't be used")
+			vpoolKeeper.CreatePool(
+				ctx,
+				tc.pair.String(),
+				sdk.ZeroDec(),
+				sdk.ZeroDec(),
+				sdk.ZeroDec(),
+				sdk.ZeroDec(),
+			)
+
+			for i, snapshot := range tc.reserveSnapshots {
+				vpoolKeeper.saveSnapshot(
+					ctx,
+					tc.pair,
+					uint64(i+1),
+					snapshot.QuoteAssetReserve,
+					snapshot.BaseAssetReserve,
+					time.UnixMilli(snapshot.TimestampMs),
+					snapshot.BlockNumber,
+				)
+			}
+			vpoolKeeper.saveSnapshotCounter(ctx, tc.pair, uint64(len(tc.reserveSnapshots)))
+			ctx = ctx.WithBlockTime(tc.currentBlocktime).WithBlockHeight(tc.currentBlockheight)
+
+			price, err := vpoolKeeper.CalcTwap(ctx,
+				tc.pair,
+				tc.twapCalcOption,
+				tc.direction,
+				tc.assetAmount,
+				tc.lookbackInterval,
+			)
+			require.NoError(t, err)
+			require.EqualValuesf(t, tc.expectedPrice, price,
+				"expected %s, got %s", tc.expectedPrice.String(), price.String())
 		})
 	}
 }
