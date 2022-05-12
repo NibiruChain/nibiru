@@ -159,8 +159,8 @@ func (k Keeper) CalcTwap(
 	var cumulativePrice sdk.Dec = sdk.ZeroDec()
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
-	for c := latestSnapshotCounter; c >= 0; c-- {
-		currentSnapshot, err := k.getSnapshot(ctx, pair, c)
+	for c := int64(latestSnapshotCounter); c >= 0; c-- {
+		currentSnapshot, err := k.getSnapshot(ctx, pair, uint64(c))
 		if err != nil {
 			return sdk.Dec{}, err
 		}
