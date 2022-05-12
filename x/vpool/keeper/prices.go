@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -120,4 +123,77 @@ func (k Keeper) GetInputPrice(
 func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+/*
+Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
+Note the open-ended right bracket.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair
+  - twapCalcOption: one of SPOT, QUOTE_ASSET_SWAP, or BASE_ASSET_SWAP
+  - direction: add or remove, only required for QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
+  - assetAmount: amount of asset to add or remove, only required for QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
+  - lookbackInterval: how far back to calculate TWAP
+
+ret:
+  - price: TWAP as sdk.Dec
+  - err: error
+*/
+func (k Keeper) CalcTwap(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	twapCalcOption types.TwapCalcOption,
+	direction types.Direction,
+	assetAmount sdk.Dec,
+	lookbackInterval time.Duration,
+) (price sdk.Dec, err error) {
+	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
+
+	latestSnapshotCounter, found := k.getSnapshotCounter(ctx, pair)
+	if !found {
+		return sdk.Dec{}, fmt.Errorf("Could not find snapshot counter for pair %s", pair.String())
+	}
+
+	var cumulativePrice sdk.Dec = sdk.ZeroDec()
+	var cumulativePeriodMs int64 = 0
+	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
+	for c := int64(latestSnapshotCounter); c >= 0; c-- {
+		currentSnapshot, err := k.getSnapshot(ctx, pair, uint64(c))
+		if err != nil {
+			return sdk.Dec{}, err
+		}
+
+		currentPrice, err := getPriceWithSnapshot(
+			currentSnapshot,
+			snapshotPriceOptions{
+				pair:           pair,
+				twapCalcOption: twapCalcOption,
+				direction:      direction,
+				assetAmount:    assetAmount,
+			},
+		)
+		if err != nil {
+			return sdk.Dec{}, err
+		}
+
+		var timeElapsedMs int64
+		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
+			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
+		} else {
+			timeElapsedMs = prevTimestampMs - currentSnapshot.TimestampMs
+		}
+		cumulativePrice = cumulativePrice.Add(currentPrice.MulInt64(timeElapsedMs))
+		cumulativePeriodMs += timeElapsedMs
+
+		// end early if we're already beyond the lower limit timestamp
+		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
+			break
+		}
+
+		prevTimestampMs = currentSnapshot.TimestampMs
+	}
+
+	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
 }
