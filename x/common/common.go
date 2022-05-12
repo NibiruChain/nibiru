@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	vDenom      = "unibi"
+		GovDenom    = "unibi"
 	CollDenom   = "uust"
 	StableDenom = "unusd"
 
