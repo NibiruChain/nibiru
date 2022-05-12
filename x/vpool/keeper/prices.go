@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -124,6 +125,22 @@ func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.
 	panic("implement me")
 }
 
+/*
+Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
+Note the open-ended right bracket.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair
+  - twapCalcOption: one of SPOT, QUOTE_ASSET_SWAP, or BASE_ASSET_SWAP
+  - direction: add or remove, only required for QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
+  - assetAmount: amount of asset to add or remove, only required for QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
+  - lookbackInterval: how far back to calculate TWAP
+
+ret:
+  - price: TWAP as sdk.Dec
+  - err: error
+*/
 func (k Keeper) CalcTwap(
 	ctx sdk.Context,
 	pair common.TokenPair,
@@ -132,67 +149,51 @@ func (k Keeper) CalcTwap(
 	assetAmount sdk.Dec,
 	lookbackInterval time.Duration,
 ) (price sdk.Dec, err error) {
-	currentSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
-	snapshotPriceOpts := snapshotPriceOptions{
-		pair:           pair,
-		twapCalcOption: twapCalcOption,
-		direction:      direction,
-		assetAmount:    assetAmount,
-	}
-	currentPrice, err := getPriceWithSnapshot(currentSnapshot, snapshotPriceOpts)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
-	if currentSnapshot.TimestampMs <= lowerLimitTimestampMs || counter == 0 {
-		return currentPrice, nil
+
+	latestSnapshotCounter, found := k.getSnapshotCounter(ctx, pair)
+	if !found {
+		return sdk.Dec{}, fmt.Errorf("Could not find snapshot counter for pair %s", pair.String())
 	}
 
-	cumulativePeriodMs := ctx.BlockTime().UnixMilli() - currentSnapshot.TimestampMs
-	weightedPrice := currentPrice.Mul(sdk.NewDec(cumulativePeriodMs))
-
-	for {
-		if counter == 0 {
-			// no snapshots left, use what we have
-			return weightedPrice.Quo(sdk.NewDec(cumulativePeriodMs)), nil
-		}
-
-		prevTimestampMs := currentSnapshot.TimestampMs
-
-		counter -= 1
-		currentSnapshot, err = k.getSnapshot(ctx, pair, counter)
+	var cumulativePrice sdk.Dec = sdk.ZeroDec()
+	var cumulativePeriodMs int64 = 0
+	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
+	for c := latestSnapshotCounter; c >= 0; c-- {
+		currentSnapshot, err := k.getSnapshot(ctx, pair, c)
 		if err != nil {
 			return sdk.Dec{}, err
 		}
 
-		snapshotPriceOpts := snapshotPriceOptions{
-			pair:           pair,
-			twapCalcOption: twapCalcOption,
-			direction:      direction,
-			assetAmount:    assetAmount,
-		}
-		currentPrice, err := getPriceWithSnapshot(currentSnapshot, snapshotPriceOpts)
+		currentPrice, err := getPriceWithSnapshot(
+			currentSnapshot,
+			snapshotPriceOptions{
+				pair:           pair,
+				twapCalcOption: twapCalcOption,
+				direction:      direction,
+				assetAmount:    assetAmount,
+			},
+		)
 		if err != nil {
 			return sdk.Dec{}, err
 		}
 
+		var timeElapsedMs int64
 		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
-			// if our current snapshot is below the lower limit timestamp,
-			// add a fractional weighted price
-			timeElapsedMs := prevTimestampMs - lowerLimitTimestampMs
-			weightedPrice = weightedPrice.Add(currentPrice.Mul(sdk.NewDec(timeElapsedMs)))
+			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
+		} else {
+			timeElapsedMs = prevTimestampMs - currentSnapshot.TimestampMs
+		}
+		cumulativePrice = cumulativePrice.Add(currentPrice.MulInt64(timeElapsedMs))
+		cumulativePeriodMs += timeElapsedMs
+
+		// end early if we're already beyond the lower limit timestamp
+		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
 			break
 		}
 
-		timeElapsedMs := prevTimestampMs - currentSnapshot.TimestampMs
-		weightedPrice = weightedPrice.Add(currentPrice.Mul(sdk.NewDec(timeElapsedMs)))
-		cumulativePeriodMs += timeElapsedMs
+		prevTimestampMs = currentSnapshot.TimestampMs
 	}
 
-	return weightedPrice.Quo(sdk.NewDec(lookbackInterval.Milliseconds())), nil
+	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
 }
