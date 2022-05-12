@@ -40,11 +40,11 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	}
 
 	if oldPosition.Size_.IsZero() {
+		remaining.fPayment = sdk.ZeroDec()
+	} else {
 		remaining.fPayment = remaining.latestCPF.
 			Sub(oldPosition.LastUpdateCumulativePremiumFraction).
 			Mul(oldPosition.Size_)
-	} else {
-		remaining.fPayment = sdk.ZeroDec()
 	}
 
 	signedRemainMargin := marginDelta.Sub(remaining.fPayment).Add(oldPosition.Margin)

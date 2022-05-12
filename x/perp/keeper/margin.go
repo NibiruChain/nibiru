@@ -45,10 +45,9 @@ func (k Keeper) RemoveMargin(
 	margin sdk.Int,
 ) error {
 	// require valid token amount
-	switch {
-	case margin.IsNegative():
+	if margin.IsNegative() {
 		return fmt.Errorf("negative margin value: %v", margin.String())
-	case margin.IsZero():
+	} else if margin.IsZero() {
 		return fmt.Errorf("zero margin in request")
 	}
 
