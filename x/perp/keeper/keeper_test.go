@@ -27,7 +27,7 @@ func TestGetAndSetParams(t *testing.T) {
 			func() types.Params {
 				params := types.Params{
 					Stopped:                true,
-					MaintenanceMarginRatio: sdk.OneInt(),
+					MaintenanceMarginRatio: sdk.OneDec(),
 				}
 				return params
 			},
@@ -58,4 +58,30 @@ func TestGetAndSetParams_Errors(t *testing.T) {
 			func() { perpKeeper.GetParams(ctx) },
 		)
 	})
+}
+
+func TestComputeFee(t *testing.T) {
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	perpKeeper := &nibiruApp.PerpKeeper
+
+	currentParams := perpKeeper.GetParams(ctx)
+	require.Equal(t, types.DefaultParams(), currentParams)
+
+	currentParams = types.NewParams(
+		currentParams.Stopped,
+		currentParams.MaintenanceMarginRatio,
+		/*TollRatio=*/ sdk.MustNewDecFromStr("0.01"),
+		/*SpreadRatio=*/ sdk.MustNewDecFromStr("0.0123"),
+	)
+	perpKeeper.SetParams(ctx, currentParams)
+
+	params := perpKeeper.GetParams(ctx)
+	require.Equal(t, sdk.MustNewDecFromStr("0.01"), params.GetTollRatioAsDec())
+	require.Equal(t, sdk.MustNewDecFromStr("0.0123"), params.GetSpreadRatioAsDec())
+
+	// Ensure calculation is correct
+	toll, spread, err := perpKeeper.CalcFee(ctx, sdk.NewInt(1_000_000))
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewInt(10_000), toll)
+	require.Equal(t, sdk.NewInt(12_300), spread)
 }

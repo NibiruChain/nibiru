@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -11,10 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-)
-
-var (
-	errNotFound = errors.New("not found")
 )
 
 var _ types.QueryServer = Keeper{}
@@ -103,7 +99,7 @@ func (p PositionsState) Get(ctx sdk.Context, pair common.TokenPair, address stri
 	key := p.keyFromRaw(pair, address)
 	valueBytes := kv.Get(key)
 	if valueBytes == nil {
-		return nil, errNotFound
+		return nil, types.ErrNotFound
 	}
 
 	position := new(types.Position)
@@ -117,7 +113,7 @@ func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error 
 	key := p.keyFromType(position)
 
 	if !kv.Has(key) {
-		return errNotFound
+		return types.ErrNotFound
 	}
 
 	kv.Set(key, p.cdc.MustMarshal(position))
@@ -138,12 +134,12 @@ func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(p.storeKey), pairMetadataNamespace)
 }
 
-func (p PairMetadata) Get(ctx sdk.Context, pair string) (*types.PairMetadata, error) {
+func (p PairMetadata) Get(ctx sdk.Context, pair common.TokenPair) (*types.PairMetadata, error) {
 	kv := p.getKV(ctx)
 
 	v := kv.Get([]byte(pair))
 	if v == nil {
-		return nil, errNotFound
+		return nil, types.ErrNotFound
 	}
 
 	pairMetadata := new(types.PairMetadata)
