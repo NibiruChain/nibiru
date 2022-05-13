@@ -1,12 +1,11 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -29,7 +28,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				_, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, "osmo:nusd", trader.String())
 				require.Error(t, err)
-				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
+				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 			},
 		},
 		{
@@ -44,7 +43,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				_, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, trader.String())
 				require.Error(t, err)
-				require.ErrorContains(t, err, fmt.Errorf("not found").Error())
+				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 
 				dummyPosition := &types.Position{
 					Address: trader.String(),
@@ -91,7 +90,7 @@ func TestClearPosition(t *testing.T) {
 					_, err := nibiruApp.PerpKeeper.GetPosition(
 						ctx, vpoolPair, trader.String())
 					require.Error(t, err)
-					require.ErrorContains(t, err, fmt.Errorf("not found").Error())
+					require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 				}
 
 				var dummyPositions []*types.Position

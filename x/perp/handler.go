@@ -25,8 +25,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case *types.MsgFoo:
-			res, err := msgServer.Foo(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgRemoveMargin:
+			res, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf(
