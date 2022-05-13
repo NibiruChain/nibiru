@@ -64,7 +64,7 @@ func (k Keeper) OpenPosition(
 
 		positionResp, err = k.increasePosition(
 			ctx,
-			position,
+			*position,
 			side,
 			/* openNotional */ leverage.MulInt(quoteAssetAmount),
 			/* minPositionSize */ baseAssetAmountLimit.ToDec(),
@@ -156,7 +156,7 @@ func (k Keeper) OpenPosition(
 // TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) increasePosition(
 	ctx sdk.Context,
-	oldPosition *types.Position,
+	currentPosition types.Position,
 	side types.Side,
 	openNotional sdk.Dec,
 	minPositionSize sdk.Dec,
@@ -166,7 +166,7 @@ func (k Keeper) increasePosition(
 
 	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
-		common.TokenPair(oldPosition.Pair),
+		common.TokenPair(currentPosition.Pair),
 		side,
 		openNotional,
 		minPositionSize,
@@ -176,13 +176,11 @@ func (k Keeper) increasePosition(
 		return nil, err
 	}
 
-	newSize := oldPosition.Size_.Add(positionResp.ExchangedPositionSize)
-
 	increaseMarginRequirement := openNotional.Quo(leverage)
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
-		*oldPosition,
+		currentPosition,
 		increaseMarginRequirement,
 	)
 	if err != nil {
@@ -191,7 +189,7 @@ func (k Keeper) increasePosition(
 
 	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		*oldPosition,
+		currentPosition,
 		types.PnLCalcOption_SPOT_PRICE,
 	)
 	if err != nil {
@@ -204,17 +202,17 @@ func (k Keeper) increasePosition(
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.Position = &types.Position{
-		Address:                             oldPosition.Address,
-		Pair:                                oldPosition.Pair,
-		Size_:                               newSize,
+		Address:                             currentPosition.Address,
+		Pair:                                currentPosition.Pair,
+		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remaining.Margin,
-		OpenNotional:                        oldPosition.OpenNotional.Add(positionResp.ExchangedQuoteAssetAmount),
+		OpenNotional:                        currentPosition.OpenNotional.Add(openNotional),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               oldPosition.LiquidityHistoryIndex,
+		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
-	return
+	return positionResp, nil
 }
 
 // getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
@@ -438,7 +436,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		var increasePositionResp *types.PositionResp
 		increasePositionResp, err = k.increasePosition(
 			ctx,
-			oldPosition,
+			*oldPosition,
 			side,
 			openNotional,
 			updatedBaseAssetAmountLimit,

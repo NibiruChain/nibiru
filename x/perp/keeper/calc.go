@@ -50,15 +50,15 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 			Mul(pos.Size_)
 	}
 
-	signedRemainMargin := pos.Margin.Add(marginDelta).Sub(remaining.FundingPayment)
+	remainingMargin := pos.Margin.Add(marginDelta).Sub(remaining.FundingPayment)
 
-	if signedRemainMargin.IsNegative() {
+	if remainingMargin.IsNegative() {
 		// the remaining margin is negative, liquidators didn't do their job
 		// and we have negative margin that must come out of the ecosystem fund
-		remaining.BadDebt = signedRemainMargin.Abs()
+		remaining.BadDebt = remainingMargin.Abs()
 		remaining.Margin = sdk.ZeroDec()
 	} else {
-		remaining.Margin = signedRemainMargin.Abs()
+		remaining.Margin = remainingMargin.Abs()
 		remaining.BadDebt = sdk.ZeroDec()
 	}
 
