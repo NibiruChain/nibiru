@@ -26,6 +26,12 @@ func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
 	return p.QuoteAssetReserve.Mul(p.TradeLimitRatio).GTE(quoteAmount)
 }
 
+// HasEnoughBaseReserve returns true if there is enough base reserve based on
+// baseReserve * tradeLimitRatio
+func (p *Pool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
+	return p.BaseAssetReserve.Mul(p.TradeLimitRatio).GTE(baseAmount)
+}
+
 /*
 GetBaseAmountByQuoteAmount returns the amount of base asset you will get out
 by giving a specified amount of quote asset

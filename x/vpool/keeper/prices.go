@@ -48,7 +48,7 @@ args:
 
 ret:
   - price: price as sdk.Dec
-  -
+  - err: error
 */
 func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (
 	price sdk.Dec, err error,
@@ -66,31 +66,31 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (
 }
 
 /*
-Returns the amount of quote assets required to achieve a move of baseAmount in a direction.
-e.g. if removing <baseAmount> base assets from the pool, returns the amount of quote assets do so.
+Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction.
+e.g. if removing <baseAssetAmount> base assets from the pool, returns the amount of quote assets do so.
 
 args:
   - ctx: cosmos-sdk context
   - pair: the trading token pair
   - dir: add or remove
-  - baseAmount: the amount of base asset
+  - baseAssetAmount: the amount of base asset
 
 ret:
   - quoteAmount: the amount of quote assets required to make the desired swap
   - err: error
 */
-func (k Keeper) GetOutputPrice(
+func (k Keeper) GetBaseAssetPrice(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
-	baseAmount sdk.Dec,
+	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
 
-	return pool.GetQuoteAmountByBaseAmount(dir, baseAmount)
+	return pool.GetQuoteAmountByBaseAmount(dir, baseAssetAmount)
 }
 
 /*
@@ -104,15 +104,15 @@ args:
   - quoteAmount: the amount of quote asset
 
 ret:
-  - baseAmount: the amount of base assets required to make the desired swap
+  - baseAssetAmount: the amount of base assets required to make the desired swap
   - err: error
 */
-func (k Keeper) GetInputPrice(
+func (k Keeper) GetQuoteAssetPrice(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
 	quoteAmount sdk.Dec,
-) (baseAmount sdk.Dec, err error) {
+) (baseAssetAmount sdk.Dec, err error) {
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
@@ -121,9 +121,70 @@ func (k Keeper) GetInputPrice(
 	return pool.GetBaseAmountByQuoteAmount(dir, quoteAmount)
 }
 
-func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
-	//TODO implement me
-	panic("implement me")
+/*
+Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction,
+based on historical snapshots.
+e.g. if removing <baseAssetAmount> base assets from the pool, returns the amount of quote assets do so.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair
+  - direction: add or remove
+  - baseAssetAmount: amount of base asset to add or remove
+  - lookbackInterval: how far back to calculate TWAP
+
+ret:
+  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
+  - err: error
+*/
+func (k Keeper) GetBaseAssetTWAP(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	direction types.Direction,
+	baseAssetAmount sdk.Dec,
+	lookbackInterval time.Duration,
+) (quoteAssetAmount sdk.Dec, err error) {
+	return k.calcTwap(
+		ctx,
+		pair,
+		types.TwapCalcOption_BASE_ASSET_SWAP,
+		direction,
+		baseAssetAmount,
+		lookbackInterval,
+	)
+}
+
+/*
+Returns the amount of base assets required to achieve a move of quoteAssetAmount in a direction,
+based on historical snapshots.
+e.g. if removing <quoteAssetAmount> quote assets from the pool, returns the amount of base assets do so.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair
+  - direction: add or remove
+  - quoteAssetAmount: amount of base asset to add or remove
+  - lookbackInterval: how far back to calculate TWAP
+
+ret:
+  - baseAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
+  - err: error
+*/
+func (k Keeper) GetQuoteAssetTWAP(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	direction types.Direction,
+	quoteAssetAmount sdk.Dec,
+	lookbackInterval time.Duration,
+) (baseAssetAmount sdk.Dec, err error) {
+	return k.calcTwap(
+		ctx,
+		pair,
+		types.TwapCalcOption_QUOTE_ASSET_SWAP,
+		direction,
+		quoteAssetAmount,
+		lookbackInterval,
+	)
 }
 
 /*
@@ -142,7 +203,7 @@ ret:
   - price: TWAP as sdk.Dec
   - err: error
 */
-func (k Keeper) CalcTwap(
+func (k Keeper) calcTwap(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	twapCalcOption types.TwapCalcOption,
@@ -150,8 +211,10 @@ func (k Keeper) CalcTwap(
 	assetAmount sdk.Dec,
 	lookbackInterval time.Duration,
 ) (price sdk.Dec, err error) {
+	// earliest timestamp we'll look back until
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
 
+	// start from latest snapshot
 	latestSnapshotCounter, found := k.getSnapshotCounter(ctx, pair)
 	if !found {
 		return sdk.Dec{}, fmt.Errorf("Could not find snapshot counter for pair %s", pair.String())
@@ -160,7 +223,10 @@ func (k Keeper) CalcTwap(
 	var cumulativePrice sdk.Dec = sdk.ZeroDec()
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
+
+	// essentially a reverse linked list traversal
 	for c := int64(latestSnapshotCounter); c >= 0; c-- {
+		// need to convert to int64 since uint64(0)-- = 2^64 - 1
 		currentSnapshot, err := k.getSnapshot(ctx, pair, uint64(c))
 		if err != nil {
 			return sdk.Dec{}, err
@@ -181,6 +247,7 @@ func (k Keeper) CalcTwap(
 
 		var timeElapsedMs int64
 		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
+			// current snapshot is below the lower limit
 			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
 		} else {
 			timeElapsedMs = prevTimestampMs - currentSnapshot.TimestampMs
@@ -196,5 +263,6 @@ func (k Keeper) CalcTwap(
 		prevTimestampMs = currentSnapshot.TimestampMs
 	}
 
+	// definition of TWAP
 	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
 }

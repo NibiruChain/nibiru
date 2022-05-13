@@ -100,7 +100,7 @@ func TestGetSpotPrice(t *testing.T) {
 	}
 }
 
-func TestGetOutputPrice(t *testing.T) {
+func TestGetBaseAssetPrice(t *testing.T) {
 	tests := []struct {
 		name                string
 		pair                common.TokenPair
@@ -164,7 +164,7 @@ func TestGetOutputPrice(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 			)
 
-			quoteAmount, err := vpoolKeeper.GetOutputPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
+			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -178,7 +178,7 @@ func TestGetOutputPrice(t *testing.T) {
 	}
 }
 
-func TestGetInputPrice(t *testing.T) {
+func TestGetQuoteAssetPrice(t *testing.T) {
 	tests := []struct {
 		name               string
 		pair               common.TokenPair
@@ -242,7 +242,7 @@ func TestGetInputPrice(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 			)
 
-			baseAmount, err := vpoolKeeper.GetInputPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
+			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -461,7 +461,7 @@ func TestCalcTwap(t *testing.T) {
 			vpoolKeeper.saveSnapshotCounter(ctx, tc.pair, uint64(len(tc.reserveSnapshots)))
 			ctx = ctx.WithBlockTime(tc.currentBlocktime).WithBlockHeight(tc.currentBlockheight)
 
-			price, err := vpoolKeeper.CalcTwap(ctx,
+			price, err := vpoolKeeper.calcTwap(ctx,
 				tc.pair,
 				tc.twapCalcOption,
 				tc.direction,
