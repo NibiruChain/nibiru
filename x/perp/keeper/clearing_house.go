@@ -230,19 +230,33 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }
 
-// TODO test: getPositionNotionalAndUnrealizedPnL | https://github.com/NibiruChain/nibiru/issues/299
+/*
+Calculates position notional value and unrealized PnL. Lets the caller pick
+either spot price, TWAP, or ORACLE to use for calculation.
+
+args:
+  - ctx: cosmos-sdk context
+  - position: the trader's position
+  - pnlCalcOption: SPOT or TWAP or ORACLE
+
+Returns:
+  - positionNotional: the position's notional value as sdk.Dec (signed)
+  - unrealizedPnl: the position's unrealized profits and losses (PnL) as sdk.Dec (signed)
+		For LONG positions, this is positionNotional - openNotional
+		For SHORT positions, this is openNotional - positionNotional
+*/
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	oldPosition types.Position,
+	position types.Position,
 	pnlCalcOption types.PnLCalcOption,
 ) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
-	oldPositionSizeAbs := oldPosition.Size_.Abs()
-	if oldPositionSizeAbs.IsZero() {
+	positionSizeAbs := position.Size_.Abs()
+	if positionSizeAbs.IsZero() {
 		return sdk.ZeroDec(), sdk.ZeroDec(), nil
 	}
 
 	var baseAssetDirection pooltypes.Direction
-	if oldPosition.Size_.IsPositive() {
+	if position.Size_.IsPositive() {
 		// LONG
 		baseAssetDirection = pooltypes.Direction_ADD_TO_POOL
 	} else {
@@ -254,9 +268,9 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	case types.PnLCalcOption_TWAP:
 		positionNotional, err = k.VpoolKeeper.GetBaseAssetTWAP(
 			ctx,
-			common.TokenPair(oldPosition.Pair),
+			common.TokenPair(position.Pair),
 			baseAssetDirection,
-			oldPositionSizeAbs,
+			positionSizeAbs,
 			/*lookbackInterval=*/ 15*time.Minute,
 		)
 		if err != nil {
@@ -265,29 +279,29 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	case types.PnLCalcOption_SPOT_PRICE:
 		positionNotional, err = k.VpoolKeeper.GetBaseAssetPrice(
 			ctx,
-			common.TokenPair(oldPosition.Pair),
+			common.TokenPair(position.Pair),
 			baseAssetDirection,
-			oldPositionSizeAbs,
+			positionSizeAbs,
 		)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(ctx, common.TokenPair(oldPosition.Pair))
+		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(ctx, common.TokenPair(position.Pair))
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = oraclePrice.Mul(oldPositionSizeAbs)
+		positionNotional = oraclePrice.Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
 
-	if oldPosition.Size_.IsPositive() {
+	if position.Size_.IsPositive() {
 		// LONG
-		unrealizedPnL = positionNotional.Sub(oldPosition.OpenNotional)
+		unrealizedPnL = positionNotional.Sub(position.OpenNotional)
 	} else {
 		// SHORT
-		unrealizedPnL = oldPosition.OpenNotional.Sub(positionNotional)
+		unrealizedPnL = position.OpenNotional.Sub(positionNotional)
 	}
 
 	return positionNotional, unrealizedPnL, nil
