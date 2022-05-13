@@ -1,22 +1,12 @@
-package keeper_test
+package keeper
 
 import (
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 	"testing"
 )
 
@@ -100,65 +90,4 @@ func TestKeeper_SettlePosition(t *testing.T) {
 		require.ErrorIs(t, err, types.ErrPositionSizeZero)
 		require.Len(t, coins, 0)
 	})
-}
-
-// TODO(mercilex): copied from clearing_house_test.go, to cleanup
-
-type mockedDependencies struct {
-	mockAccountKeeper *mock.MockAccountKeeper
-	mockBankKeeper    *mock.MockBankKeeper
-	mockPriceKeeper   *mock.MockPriceKeeper
-	mockVpoolKeeper   *mock.MockVpoolKeeper
-}
-
-func getKeeper(t *testing.T) (keeper.Keeper, mockedDependencies, sdk.Context) {
-	storeKey := sdk.NewKVStoreKey(types.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(types.StoreKey)
-
-	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
-	require.NoError(t, stateStore.LoadLatestVersion())
-
-	protoCodec := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-	params := initParamsKeeper(protoCodec, codec.NewLegacyAmino(), storeKey, memStoreKey)
-
-	subSpace, found := params.GetSubspace(types.ModuleName)
-	require.True(t, found)
-
-	ctrl := gomock.NewController(t)
-	mockedAccountKeeper := mock.NewMockAccountKeeper(ctrl)
-	mockedBankKeeper := mock.NewMockBankKeeper(ctrl)
-	mockedPriceKeeper := mock.NewMockPriceKeeper(ctrl)
-	mockedVpoolKeeper := mock.NewMockVpoolKeeper(ctrl)
-
-	mockedAccountKeeper.
-		EXPECT().GetModuleAddress(types.ModuleName).
-		Return(authtypes.NewModuleAddress(types.ModuleName))
-
-	k := keeper.NewKeeper(
-		protoCodec,
-		storeKey,
-		subSpace,
-		mockedAccountKeeper,
-		mockedBankKeeper,
-		mockedPriceKeeper,
-		mockedVpoolKeeper,
-	)
-
-	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, nil)
-
-	return k, mockedDependencies{
-		mockAccountKeeper: mockedAccountKeeper,
-		mockBankKeeper:    mockedBankKeeper,
-		mockPriceKeeper:   mockedPriceKeeper,
-		mockVpoolKeeper:   mockedVpoolKeeper,
-	}, ctx
-}
-
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
-	paramsKeeper.Subspace(types.ModuleName)
-
-	return paramsKeeper
 }
