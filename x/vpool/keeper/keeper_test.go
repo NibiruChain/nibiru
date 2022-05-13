@@ -199,18 +199,11 @@ func TestSwapBaseForQuote(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				NUSDPair,
-<<<<<<< HEAD
-				sdk.MustNewDecFromStr("0.9"),  // 0.9 ratio
-				sdk.NewDec(10_000_000),        // 10 tokens
-				sdk.NewDec(5_000_000),         // 5 tokens
-				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
-				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
-=======
 				sdk.OneDec(),
 				tc.initialQuoteReserve,
 				tc.initialBaseReserve,
 				sdk.OneDec(),
->>>>>>> origin
+				sdk.OneDec(),
 			)
 
 			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
