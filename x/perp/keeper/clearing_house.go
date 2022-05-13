@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -246,13 +247,19 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		notionalDec, err := k.VpoolKeeper.GetOutputTWAP(ctx, pair, dir, positionSizeAbs.TruncateInt()) // TODO(mercilex): vpool here should accept sdk.Dec
+		notionalDec, err := k.VpoolKeeper.GetBaseAssetTWAP(
+			ctx,
+			pair,
+			dir,
+			positionSizeAbs,
+			15*time.Minute,
+		)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 		notional = notionalDec
 	case types.PnLCalcOption_SPOT_PRICE:
-		notionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
+		notionalDec, err := k.VpoolKeeper.GetBaseAssetPrice(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
@@ -466,7 +473,7 @@ func (k Keeper) closePosition(
 		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
 	}
 	exchangedQuoteAssetAmount, err :=
-		k.VpoolKeeper.SwapOutput(
+		k.VpoolKeeper.SwapBaseForQuote(
 			ctx,
 			pair,
 			vammDir,
@@ -477,7 +484,7 @@ func (k Keeper) closePosition(
 		return nil, err
 	}
 
-	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount.ToDec() // TODO(mercilex): vpool should return sdk.Dec here
+	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount
 
 	err = k.ClearPosition(ctx, pair, trader)
 	if err != nil {
@@ -599,7 +606,7 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 		panic("invalid side")
 	}
 
-	outputAmount, err := k.VpoolKeeper.SwapInput(
+	outputAmount, err := k.VpoolKeeper.SwapQuoteForBase(
 		ctx, pair, vammDir, inputAmount, minOutputAmount)
 	if err != nil {
 		return sdk.Dec{}, err
