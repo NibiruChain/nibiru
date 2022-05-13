@@ -17,7 +17,7 @@ import (
 They also serve as a reminder of which functions still need MVP unit or
 integration tests */
 var (
-	_ = Keeper.swapInput
+	_ = Keeper.swapQuoteForBase
 	_ = Keeper.closePosition
 	_ = Keeper.increasePosition
 	_ = Keeper.reducePosition
@@ -164,7 +164,7 @@ func (k Keeper) increasePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{}
 
-	positionResp.ExchangedPositionSize, err = k.swapInput(
+	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
 		common.TokenPair(oldPosition.Pair),
 		side,
@@ -348,7 +348,7 @@ func (k Keeper) reducePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
-	positionResp.ExchangedPositionSize, err = k.swapInput(
+	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
 		common.TokenPair(oldPosition.Pair),
 		side,
@@ -618,33 +618,33 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	}
 }
 
-// TODO test: swapInput | https://github.com/NibiruChain/nibiru/issues/299
 // TODO: Check Can Over Fluctuation Limit
-func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
-	side types.Side, inputAmount sdk.Dec, minOutputAmount sdk.Dec, canOverFluctuationLimit bool) (sdk.Dec, error) {
-	var vammDir pooltypes.Direction
-	switch side {
-	case types.Side_BUY:
-		vammDir = pooltypes.Direction_ADD_TO_POOL
-	case types.Side_SELL:
-		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
-	default:
-		panic("invalid side")
+func (k Keeper) swapQuoteForBase(
+	ctx sdk.Context,
+	pair common.TokenPair,
+	side types.Side,
+	quoteAmount sdk.Dec,
+	baseLimit sdk.Dec,
+	canOverFluctuationLimit bool,
+) (baseAmount sdk.Dec, err error) {
+	var quoteAssetDirection pooltypes.Direction
+	if side == types.Side_BUY {
+		quoteAssetDirection = pooltypes.Direction_ADD_TO_POOL
+	} else {
+		// side == types.Side_SELL
+		quoteAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
 	}
 
-	outputAmount, err := k.VpoolKeeper.SwapQuoteForBase(
-		ctx, pair, vammDir, inputAmount, minOutputAmount)
+	baseAmount, err = k.VpoolKeeper.SwapQuoteForBase(
+		ctx, pair, quoteAssetDirection, quoteAmount, baseLimit)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	switch vammDir {
-	case pooltypes.Direction_ADD_TO_POOL:
-		return outputAmount, nil // TODO(mercilex): review here
-	case pooltypes.Direction_REMOVE_FROM_POOL:
-		inverseSign := outputAmount.MulInt64(-1)
-		return inverseSign, nil
-	default:
-		panic("invalid side")
+	if side == types.Side_BUY {
+		return baseAmount, nil
+	} else {
+		// side == types.Side_SELL
+		return baseAmount.Neg(), nil
 	}
 }
