@@ -59,7 +59,7 @@ ret:
   - quoteAssetAmount: the amount of quote asset swapped
   - err: error
 */
-func (k Keeper) SwapBaseAsset(
+func (k Keeper) SwapBaseForQuote(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
@@ -121,7 +121,7 @@ func (k Keeper) SwapBaseAsset(
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventSwapBaseAsset,
+			types.EventSwapBaseForQuote,
 			sdk.NewAttribute(types.AttributeQuoteAssetAmount, baseAssetAmount.String()),
 			sdk.NewAttribute(types.AttributeBaseAssetAmount, quoteAssetAmount.String()),
 		),
@@ -146,7 +146,7 @@ ret:
   - baseAssetAmount: the amount of base asset swapped
   - err: error
 */
-func (k Keeper) SwapQuoteAsset(
+func (k Keeper) SwapQuoteForBase(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
@@ -208,7 +208,7 @@ func (k Keeper) SwapQuoteAsset(
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventSwapQuoteAsset,
+			types.EventSwapQuoteForBase,
 			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
 			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
 		),

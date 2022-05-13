@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestSwapQuoteAsset_Errors(t *testing.T) {
+func TestSwapQuoteForBase_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
 		pair        common.TokenPair
@@ -80,7 +80,7 @@ func TestSwapQuoteAsset_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
 			)
 
-			_, err := vpoolKeeper.SwapQuoteAsset(
+			_, err := vpoolKeeper.SwapQuoteForBase(
 				ctx,
 				tc.pair,
 				tc.direction,
@@ -92,7 +92,7 @@ func TestSwapQuoteAsset_Errors(t *testing.T) {
 	}
 }
 
-func TestSwapQuoteAsset_HappyPath(t *testing.T) {
+func TestSwapQuoteForBase_HappyPath(t *testing.T) {
 	tests := []struct {
 		name                 string
 		direction            types.Direction
@@ -147,7 +147,7 @@ func TestSwapQuoteAsset_HappyPath(t *testing.T) {
 				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
 
-			res, err := vpoolKeeper.SwapQuoteAsset(
+			res, err := vpoolKeeper.SwapQuoteForBase(
 				ctx,
 				NUSDPair,
 				tc.direction,
@@ -165,7 +165,7 @@ func TestSwapQuoteAsset_HappyPath(t *testing.T) {
 	}
 }
 
-func TestSwapBaseAsset(t *testing.T) {
+func TestSwapBaseForQuote(t *testing.T) {
 	tests := []struct {
 		name                     string
 		initialQuoteReserve      sdk.Dec
@@ -229,7 +229,7 @@ func TestSwapBaseAsset(t *testing.T) {
 				sdk.OneDec(),
 			)
 
-			quoteAssetAmount, err := vpoolKeeper.SwapBaseAsset(
+			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
 				ctx,
 				NUSDPair,
 				tc.direction,
