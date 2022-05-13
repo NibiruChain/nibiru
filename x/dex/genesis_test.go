@@ -3,11 +3,12 @@ package dex_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/dex"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenesis(t *testing.T) {

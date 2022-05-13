@@ -3,9 +3,10 @@ package types
 //go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PriceKeeper,VpoolKeeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -78,4 +79,6 @@ type VpoolKeeper interface {
 	GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
 	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
 	IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) bool
+	// ExistsPool returns true if pool exists, false if not.
+	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
 }

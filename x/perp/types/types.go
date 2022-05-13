@@ -3,8 +3,9 @@ package types
 import (
 	"errors"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 const (
@@ -15,7 +16,8 @@ const (
 )
 
 var (
-	ErrNotFound = errors.New("not found")
+	ErrPositionNotFound = errors.New("no position found")
+	ErrPairNotFound     = errors.New("pair doesn't have live vpool")
 )
 
 func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Position {

@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
+	"time"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"time"
 )
 
 func DefaultGenesis() *GenesisState {
