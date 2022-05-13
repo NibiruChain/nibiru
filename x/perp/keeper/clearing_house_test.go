@@ -283,6 +283,74 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			},
 		},
 		{
+			name: "long position; positive pnl; oracle calc",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mocking price of vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetUnderlyingPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+					).
+					Return(sdk.NewDec(2), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLCalcOption_ORACLE,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(20), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
+			},
+		},
+		{
+			name: "long position; negative pnl; oracle calc",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mocking price of vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetUnderlyingPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+					).
+					Return(sdk.MustNewDecFromStr("0.5"), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLCalcOption_ORACLE,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(5), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(-5), unrealizedPnl)
+			},
+		},
+		{
 			name: "short position; positive pnl; spot price calc",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
@@ -421,6 +489,74 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						ctx,
 						oldPosition,
 						types.PnLCalcOption_TWAP,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(20), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(-10), unrealizedPnl)
+			},
+		},
+		{
+			name: "short position; positive pnl; oracle calc",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(-10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mocking price of vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetUnderlyingPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+					).
+					Return(sdk.MustNewDecFromStr("0.5"), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLCalcOption_ORACLE,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(5), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(5), unrealizedPnl)
+			},
+		},
+		{
+			name: "long position; negative pnl; oracle calc",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(-10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mocking price of vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetUnderlyingPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+					).
+					Return(sdk.NewDec(2), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLCalcOption_ORACLE,
 					)
 
 				require.NoError(t, err)
