@@ -437,3 +437,205 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		})
 	}
 }
+
+func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
+	// all tests are assumed long positions with positive pnl for ease of calculation
+	// short positions and negative pnl are implicitly correct because of
+	// TestGetPositionNotionalAndUnrealizedPnl
+	testcases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "max pnl, pick spot price",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mock vpool spot price")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+					).
+					Return(sdk.NewDec(20), nil)
+				t.Log("Mock vpool twap")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetTWAP(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+						15*time.Minute,
+					).
+					Return(sdk.NewDec(15), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPreferencePositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLPreferenceOption_MAX,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(20), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
+			},
+		},
+		{
+			name: "max pnl, pick twap",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mock vpool spot price")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+					).
+					Return(sdk.NewDec(20), nil)
+				t.Log("Mock vpool twap")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetTWAP(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+						15*time.Minute,
+					).
+					Return(sdk.NewDec(30), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPreferencePositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLPreferenceOption_MAX,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(30), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(20), unrealizedPnl)
+			},
+		},
+		{
+			name: "min pnl, pick spot price",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mock vpool spot price")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+					).
+					Return(sdk.NewDec(20), nil)
+				t.Log("Mock vpool twap")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetTWAP(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+						15*time.Minute,
+					).
+					Return(sdk.NewDec(30), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPreferencePositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLPreferenceOption_MIN,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(20), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
+			},
+		},
+		{
+			name: "min pnl, pick twap",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("Setting up initial position")
+				oldPosition := types.Position{
+					Address:      sample.AccAddress().String(),
+					Pair:         "BTC:NUSD",
+					Size_:        sdk.NewDec(10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+
+				t.Log("Mock vpool spot price")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+					).
+					Return(sdk.NewDec(20), nil)
+				t.Log("Mock vpool twap")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetTWAP(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+						15*time.Minute,
+					).
+					Return(sdk.NewDec(15), nil)
+
+				positionalNotional, unrealizedPnl, err := perpKeeper.
+					getPreferencePositionNotionalAndUnrealizedPnL(
+						ctx,
+						oldPosition,
+						types.PnLPreferenceOption_MIN,
+					)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(15), positionalNotional)
+				require.EqualValues(t, sdk.NewDec(5), unrealizedPnl)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
+}

@@ -563,22 +563,29 @@ func (k Keeper) transferFee(
 	return toll.Add(spread), nil
 }
 
-// TODO test: getPreferencePositionNotionalAndUnrealizedPnL
-/* getPreferencePositionNotionalAndUnrealizedPnL
+/*
+Calculates both position notional value and unrealized PnL based on
+both spot price and TWAP, and lets the caller pick which one based on MAX or MIN.
+
+args:
+  - ctx: cosmos-sdk context
+  - position: the trader's position
+  - pnlPreferenceOption: MAX or MIN
 
 Returns:
-  pnl: unrealized profits and losses (PnL)
-  notional: positional notional.
+  - positionNotional: the position's notional value as sdk.Dec (signed)
+  - unrealizedPnl: the position's unrealized profits and losses (PnL) as sdk.Dec (signed)
+		For LONG positions, this is positionNotional - openNotional
+		For SHORT positions, this is openNotional - positionNotional
 */
 func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	oldPosition types.Position,
+	position types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,
-) (pnl sdk.Dec, notional sdk.Dec, er error) {
-	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
+) (positionNotional sdk.Dec, unrealizedPnl sdk.Dec, err error) {
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		oldPosition,
+		position,
 		types.PnLCalcOption_SPOT_PRICE,
 	)
 	if err != nil {
@@ -587,39 +594,25 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 
 	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		oldPosition,
+		position,
 		types.PnLCalcOption_TWAP,
 	)
 	if err != nil {
 		return sdk.Dec{}, sdk.Dec{}, err
 	}
 
-	// todo(mercilex): logic can be simplified here but keeping it for now as perp reference
 	switch pnLPreferenceOption {
-	// if MAX PNL
 	case types.PnLPreferenceOption_MAX:
-		// spotPNL > twapPnL
-		switch spotPricePnl.GT(twapPricePnL) {
-		// true: spotPNL > twapPNL -> return spot pnl, spot position notional
-		case true:
-			return spotPricePnl, spotPositionNotional, nil
-		// false: spotPNL <= twapPNL -> return twapPNL twapPositionNotional
-		default:
-			return twapPricePnL, twapPositionNotional, nil
-		}
-	// if min PNL
+		positionNotional = sdk.MaxDec(spotPositionNotional, twapPositionNotional)
+		unrealizedPnl = sdk.MaxDec(spotPricePnl, twapPricePnL)
 	case types.PnLPreferenceOption_MIN:
-		switch spotPricePnl.GT(twapPricePnL) {
-		// true: spotPNL > twapPNL -> return twapPNL, twapPositionNotional
-		case true:
-			return twapPricePnL, twapPositionNotional, nil
-		// false: spotPNL <= twapPNL -> return spotPNL, spotPositionNotional
-		default:
-			return spotPricePnl, spotPositionNotional, nil
-		}
+		positionNotional = sdk.MinDec(spotPositionNotional, twapPositionNotional)
+		unrealizedPnl = sdk.MinDec(spotPricePnl, twapPricePnL)
 	default:
 		panic("invalid pnl preference option " + pnLPreferenceOption.String())
 	}
+
+	return positionNotional, unrealizedPnl, nil
 }
 
 // TODO test: swapInput | https://github.com/NibiruChain/nibiru/issues/299
