@@ -43,8 +43,8 @@ Pool creation and annhilation functions:
 - `ShutdownPool`
 
 Main functions:
-- `SwapInput() -> sdk.Dec`
-- `SwapOutput() -> sdk.Dec` 
+- `SwapQuoteAsset() -> sdk.Dec`
+- `SwapBaseAsset() -> sdk.Dec` 
 - `SettleFunding() -> sdk.Dec`
 
 "Get" functions:

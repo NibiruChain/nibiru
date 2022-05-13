@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSwapInput_Errors(t *testing.T) {
+func TestSwapQuoteAsset_Errors(t *testing.T) {
 	tests := []struct {
 		name        string
 		pair        common.TokenPair
@@ -79,7 +79,7 @@ func TestSwapInput_Errors(t *testing.T) {
 				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
 			)
 
-			_, err := vpoolKeeper.SwapInput(
+			_, err := vpoolKeeper.SwapQuoteAsset(
 				ctx,
 				tc.pair,
 				tc.direction,
@@ -91,7 +91,7 @@ func TestSwapInput_Errors(t *testing.T) {
 	}
 }
 
-func TestSwapInput_HappyPath(t *testing.T) {
+func TestSwapQuoteAsset_HappyPath(t *testing.T) {
 	tests := []struct {
 		name                 string
 		direction            types.Direction
@@ -146,7 +146,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
 			)
 
-			res, err := vpoolKeeper.SwapInput(
+			res, err := vpoolKeeper.SwapQuoteAsset(
 				ctx,
 				NUSDPair,
 				tc.direction,
@@ -164,7 +164,7 @@ func TestSwapInput_HappyPath(t *testing.T) {
 	}
 }
 
-func TestSwapOutput(t *testing.T) {
+func TestSwapBaseAsset(t *testing.T) {
 	tests := []struct {
 		name                     string
 		initialQuoteReserve      sdk.Dec
@@ -228,7 +228,7 @@ func TestSwapOutput(t *testing.T) {
 				sdk.OneDec(),
 			)
 
-			quoteAssetAmount, err := vpoolKeeper.SwapOutput(
+			quoteAssetAmount, err := vpoolKeeper.SwapBaseAsset(
 				ctx,
 				NUSDPair,
 				tc.direction,

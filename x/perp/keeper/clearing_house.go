@@ -464,7 +464,7 @@ func (k Keeper) closePosition(
 		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
 	}
 	exchangedQuoteAssetAmount, err :=
-		k.VpoolKeeper.SwapOutput(
+		k.VpoolKeeper.SwapBaseAsset(
 			ctx,
 			pair,
 			vammDir,
@@ -591,7 +591,7 @@ func (k Keeper) swapInput(ctx sdk.Context, pair common.TokenPair,
 		panic("invalid side")
 	}
 
-	outputAmount, err := k.VpoolKeeper.SwapInput(
+	outputAmount, err := k.VpoolKeeper.SwapQuoteAsset(
 		ctx, pair, vammDir, inputAmount, minOutputAmount)
 	if err != nil {
 		return sdk.Dec{}, err

@@ -6,8 +6,8 @@ const (
 	AttributeQuoteReserve = "quote_reserve"
 	AttributeBaseReserve  = "base_reserve"
 
-	EventSwapInput            = "swap_input"
-	EventSwapOutput           = "swap_output"
+	EventSwapQuoteAsset       = "swap_input"
+	EventSwapBaseAsset        = "swap_output"
 	AttributeQuoteAssetAmount = "quote_asset_amount"
 	AttributeBaseAssetAmount  = "base_asset_amount"
 )

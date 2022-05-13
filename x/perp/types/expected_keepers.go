@@ -71,7 +71,7 @@ type VpoolKeeper interface {
 	  - quoteAssetAmount: the amount of quote asset swapped
 	  - err: error
 	*/
-	SwapOutput(
+	SwapBaseAsset(
 		ctx sdk.Context,
 		pair common.TokenPair,
 		dir vpooltypes.Direction,
@@ -94,7 +94,7 @@ type VpoolKeeper interface {
 	- baseAssetAmount: the amount of base asset traded from the pool
 	- err: error
 	*/
-	SwapInput(
+	SwapQuoteAsset(
 		ctx sdk.Context,
 		pair common.TokenPair,
 		dir vpooltypes.Direction,

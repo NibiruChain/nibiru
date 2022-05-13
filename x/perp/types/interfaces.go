@@ -18,11 +18,11 @@ const (
 type IVirtualPool interface {
 	Pair() string
 	QuoteTokenDenom() string
-	SwapInput(
+	SwapQuoteAsset(
 		ctx sdk.Context, ammDir VirtualPoolDirection, inputAmount,
 		minOutputAmount sdk.Int, canOverFluctuationLimit bool,
 	) (sdk.Int, error)
-	SwapOutput(
+	SwapBaseAsset(
 		ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int, limit sdk.Int,
 	) (sdk.Int, error)
 	GetBaseAssetTWAP(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,

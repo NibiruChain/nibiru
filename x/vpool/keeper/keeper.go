@@ -44,7 +44,7 @@ func (k Keeper) CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int
 
 /*
 Trades baseAssets in exchange for quoteAssets.
-The "output" asset here refers to baseAsset, which is a crypto asset like BTC.
+The base asset is a crypto asset like BTC.
 The quote asset is a stablecoin like NUSD.
 
 args:
@@ -58,7 +58,7 @@ ret:
   - quoteAssetAmount: the amount of quote asset swapped
   - err: error
 */
-func (k Keeper) SwapOutput(
+func (k Keeper) SwapBaseAsset(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
@@ -120,7 +120,7 @@ func (k Keeper) SwapOutput(
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventSwapOutput,
+			types.EventSwapBaseAsset,
 			sdk.NewAttribute(types.AttributeQuoteAssetAmount, baseAssetAmount.String()),
 			sdk.NewAttribute(types.AttributeBaseAssetAmount, quoteAssetAmount.String()),
 		),
@@ -131,7 +131,7 @@ func (k Keeper) SwapOutput(
 
 /*
 Trades quoteAssets in exchange for baseAssets.
-The "input" asset here refers to quoteAsset, which is a stablecoin like NUSD.
+The quote asset is a stablecoin like NUSD.
 The base asset is a crypto asset like BTC or ETH.
 
 args:
@@ -145,7 +145,7 @@ ret:
   - baseAssetAmount: the amount of base asset swapped
   - err: error
 */
-func (k Keeper) SwapInput(
+func (k Keeper) SwapQuoteAsset(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
@@ -207,7 +207,7 @@ func (k Keeper) SwapInput(
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventSwapInput,
+			types.EventSwapQuoteAsset,
 			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
 			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
 		),
