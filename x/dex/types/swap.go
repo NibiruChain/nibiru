@@ -3,8 +3,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/dex/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/dex/math"
 )
 
 /*

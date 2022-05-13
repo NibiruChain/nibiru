@@ -4,10 +4,11 @@ import (
 	"os"
 	"testing"
 
-	testutil "github.com/NibiruChain/nibiru/x/testutil"
 	sdkSimapp "github.com/cosmos/cosmos-sdk/simapp"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+
+	testutil "github.com/NibiruChain/nibiru/x/testutil"
 )
 
 // Profile with:

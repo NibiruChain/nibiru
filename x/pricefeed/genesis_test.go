@@ -3,11 +3,12 @@ package pricefeed_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 	"github.com/NibiruChain/nibiru/x/testutil/testkeeper"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenesis(t *testing.T) {
