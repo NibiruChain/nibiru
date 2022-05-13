@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -19,8 +17,9 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
@@ -34,7 +33,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 				keeper, _, ctx := getKeeper(t)
 				pair := fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom)
 
-				metadata := &perptypes.PairMetadata{
+				metadata := &types.PairMetadata{
 					Pair: pair,
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.NewDec(1),
@@ -79,8 +78,8 @@ type mockedDependencies struct {
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
-	storeKey := sdk.NewKVStoreKey(types.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(types.StoreKey)
+	storeKey := sdk.NewKVStoreKey(vpooltypes.StoreKey)
+	memStoreKey := storetypes.NewMemoryStoreKey(vpooltypes.StoreKey)
 
 	db := tmdb.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db)
@@ -90,7 +89,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	protoCodec := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 	params := initParamsKeeper(protoCodec, codec.NewLegacyAmino(), storeKey, memStoreKey)
 
-	subSpace, found := params.GetSubspace(types.ModuleName)
+	subSpace, found := params.GetSubspace(vpooltypes.ModuleName)
 	require.True(t, found)
 
 	ctrl := gomock.NewController(t)
@@ -100,8 +99,8 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	mockedVpoolKeeper := mock.NewMockVpoolKeeper(ctrl)
 
 	mockedAccountKeeper.
-		EXPECT().GetModuleAddress(perptypes.ModuleName).
-		Return(authtypes.NewModuleAddress(types.ModuleName))
+		EXPECT().GetModuleAddress(types.ModuleName).
+		Return(authtypes.NewModuleAddress(vpooltypes.ModuleName))
 
 	k := NewKeeper(
 		protoCodec,
@@ -125,7 +124,78 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
-	paramsKeeper.Subspace(types.ModuleName)
+	paramsKeeper.Subspace(vpooltypes.ModuleName)
 
 	return paramsKeeper
+}
+
+func TestSwapQuoteAssetForBase(t *testing.T) {
+	tests := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "long position - buy",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("mock vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					SwapQuoteForBase(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						/*quoteAmount=*/ sdk.NewDec(10),
+						/*baseLimit=*/ sdk.NewDec(1),
+					).Return(sdk.NewDec(5), nil)
+
+				baseAmount, err := perpKeeper.swapQuoteForBase(
+					ctx,
+					common.TokenPair("BTC:NUSD"),
+					types.Side_BUY,
+					sdk.NewDec(10),
+					sdk.NewDec(1),
+					false,
+				)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(5), baseAmount)
+			},
+		},
+		{
+			name: "short position - sell",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("mock vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					SwapQuoteForBase(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_REMOVE_FROM_POOL,
+						/*quoteAmount=*/ sdk.NewDec(10),
+						/*baseLimit=*/ sdk.NewDec(1),
+					).Return(sdk.NewDec(5), nil)
+
+				baseAmount, err := perpKeeper.swapQuoteForBase(
+					ctx,
+					common.TokenPair("BTC:NUSD"),
+					types.Side_SELL,
+					sdk.NewDec(10),
+					sdk.NewDec(1),
+					false,
+				)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(-5), baseAmount)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
 }
