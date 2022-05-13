@@ -80,7 +80,7 @@ func (k Keeper) RemoveMargin(
 
 	marginDelta := margin.Neg().ToDec()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, pair, position, marginDelta)
+		ctx, *position, marginDelta)
 	if err != nil {
 		return res, err
 	}
@@ -91,7 +91,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	freeCollateral, err := k.calcFreeCollateral(
-		ctx, position, remaining.fPayment, remaining.badDebt)
+		ctx, *position, remaining.fPayment, remaining.badDebt)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
@@ -123,21 +123,15 @@ func (k Keeper) RemoveMargin(
 
 // TODO test: GetMarginRatio
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, pair common.TokenPair, trader string,
+	ctx sdk.Context, position types.Position,
 ) (sdk.Dec, error) {
-	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
 	if position.Size_.IsZero() {
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
 
 	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
 		ctx,
-		pair,
-		trader,
+		position,
 		types.PnLPreferenceOption_MAX,
 	)
 	if err != nil {
@@ -146,7 +140,6 @@ func (k Keeper) GetMarginRatio(
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
-		/* pair */ pair,
 		/* oldPosition */ position,
 		/* marginDelta */ unrealizedPnL,
 	)
