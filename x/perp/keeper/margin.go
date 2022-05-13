@@ -33,7 +33,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// validate pair
-	pair, err := common.NewTokenPairFromStr(msg.Vpool)
+	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
 	if err != nil {
 		return res, err
 	}
@@ -68,9 +68,7 @@ func (k Keeper) AddMargin(
 
 	fPayment := sdk.ZeroDec()
 	events.EmitMarginChange(ctx, trader, pair.String(), addedMargin, fPayment)
-	return &types.MsgAddMarginResponse{
-		MarginOut: coinToSend,
-	}, nil
+	return &types.MsgAddMarginResponse{}, nil
 }
 
 func (k Keeper) RemoveMargin(
@@ -95,7 +93,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// validate pair
-	pair, err := common.NewTokenPairFromStr(msg.Vpool)
+	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
 	if err != nil {
 		return res, err
 	}

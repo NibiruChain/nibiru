@@ -118,9 +118,9 @@ func RemoveMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgRemoveMargin{
-				Sender: clientCtx.GetFromAddress().String(),
-				Vpool:  args[0],
-				Margin: marginToRemove,
+				Sender:    clientCtx.GetFromAddress().String(),
+				TokenPair: args[0],
+				Margin:    marginToRemove,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
@@ -160,9 +160,9 @@ func AddMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgAddMargin{
-				Sender: clientCtx.GetFromAddress().String(),
-				Vpool:  args[0],
-				Margin: marginToAdd,
+				Sender:    clientCtx.GetFromAddress().String(),
+				TokenPair: args[0],
+				Margin:    marginToAdd,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err

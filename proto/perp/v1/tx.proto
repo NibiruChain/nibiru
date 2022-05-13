@@ -23,7 +23,7 @@ service Msg {
 /* MsgRemoveMargin: Msg to remove margin. */
 message MsgRemoveMargin {
   string sender = 1;
-  string vpool = 2;
+  string token_pair = 2;
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
 }
 
@@ -38,11 +38,10 @@ message MsgRemoveMarginResponse {
 /* MsgAddMargin: Msg to remove margin. */
 message MsgAddMargin {
   string sender = 1;
-  string vpool = 2;
+  string token_pair = 2;
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgAddMarginResponse {
   // MarginOut: tokens transferred back to the trader
-  cosmos.base.v1beta1.Coin margin_out = 1 [(gogoproto.nullable) = false];
 }

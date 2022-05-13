@@ -195,7 +195,7 @@ func TestAddMargin(t *testing.T) {
 
 			goCtx := sdk.WrapSDKContext(ctx)
 			msg := &types.MsgAddMargin{
-				Sender: traderAddr.String(), Vpool: tokenPair.String(),
+				Sender: traderAddr.String(), TokenPair: tokenPair.String(),
 				Margin: sdk.Coin{Denom: common.StableDenom, Amount: tc.addedMargin}}
 			_, err = nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
 			require.NoError(t, err)
@@ -223,7 +223,7 @@ func TestRemoveMargin(t *testing.T) {
 				pair := common.TokenPair("osmo:nusd")
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice.String(), Vpool: pair.String(),
+					Sender: alice.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
@@ -240,7 +240,7 @@ func TestRemoveMargin(t *testing.T) {
 				pair := common.TokenPair("osmo:nusd")
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice.String(), Vpool: pair.String(),
+					Sender: alice.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
@@ -257,7 +257,7 @@ func TestRemoveMargin(t *testing.T) {
 				pair := common.TokenPair("osmo:nusd")
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice.String(), Vpool: pair.String(),
+					Sender: alice.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
@@ -287,7 +287,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(5)
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice.String(), Vpool: pair.String(),
+					Sender: alice.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err := perpKeeper.RemoveMargin(
 					goCtx, msg)
@@ -339,7 +339,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(6)
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice.String(), Vpool: pair.String(),
+					Sender: alice.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				// TODO: Blocker - Need GetOutputTWAP from prices.go
 				// The test will panic b/c it's missing that implementation.
