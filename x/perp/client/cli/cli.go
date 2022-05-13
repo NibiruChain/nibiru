@@ -112,15 +112,15 @@ func RemoveMarginCmd() *cobra.Command {
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
 				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			marginToAdd, err := sdk.ParseCoinNormalized(args[1])
+			marginToRemove, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
 				return err
 			}
 
-			msg := &types.MsgAddMargin{
+			msg := &types.MsgRemoveMargin{
 				Sender: clientCtx.GetFromAddress().String(),
 				Vpool:  args[0],
-				Margin: marginToAdd,
+				Margin: marginToRemove,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
