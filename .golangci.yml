@@ -4,6 +4,7 @@ run:
 issues:
   max-issues-per-linter: 0 # infinite
   max-same-issues: 0 # infinite
+  fix: true
 linters:
   enable:
     - whitespace
