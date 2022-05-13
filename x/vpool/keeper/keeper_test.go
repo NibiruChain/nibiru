@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,54 +12,87 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestSwapQuoteForBase_Errors(t *testing.T) {
+func TestSwapQuoteForBase(t *testing.T) {
 	tests := []struct {
-		name        string
-		pair        common.TokenPair
-		direction   types.Direction
-		quoteAmount sdk.Dec
-		baseLimit   sdk.Dec
-		error       error
+		name                 string
+		pair                 common.TokenPair
+		direction            types.Direction
+		quoteAmount          sdk.Dec
+		baseLimit            sdk.Dec
+		expectedQuoteReserve sdk.Dec
+		expectedBaseReserve  sdk.Dec
+		expectedBaseAmount   sdk.Dec
+		expectedErr          error
 	}{
 		{
-			"pair not supported",
-			"BTC:UST",
-			types.Direction_ADD_TO_POOL,
-			sdk.NewDec(10),
-			sdk.NewDec(10),
-			types.ErrPairNotSupported,
+			name:                 "quote amount == 0",
+			pair:                 NUSDPair,
+			direction:            types.Direction_ADD_TO_POOL,
+			quoteAmount:          sdk.NewDec(0),
+			baseLimit:            sdk.NewDec(10),
+			expectedQuoteReserve: sdk.NewDec(10_000_000),
+			expectedBaseReserve:  sdk.NewDec(5_000_000),
+			expectedBaseAmount:   sdk.ZeroDec(),
 		},
 		{
-			"base amount less than base limit in Long",
-			NUSDPair,
-			types.Direction_ADD_TO_POOL,
-			sdk.NewDec(500_000),
-			sdk.NewDec(454_500),
-			fmt.Errorf("base amount (238095) is less than selected limit (454500)"),
+			name:                 "normal swap add",
+			pair:                 NUSDPair,
+			direction:            types.Direction_ADD_TO_POOL,
+			quoteAmount:          sdk.NewDec(100_000),
+			baseLimit:            sdk.NewDec(49504),
+			expectedQuoteReserve: sdk.NewDec(10_100_000),
+			expectedBaseReserve:  sdk.MustNewDecFromStr("4950495.049504950495049505"),
+			expectedBaseAmount:   sdk.MustNewDecFromStr("49504.950495049504950495"),
 		},
 		{
-			"base amount more than base limit in Short",
-			NUSDPair,
-			types.Direction_REMOVE_FROM_POOL,
-			sdk.NewDec(1_000_000),
-			sdk.NewDec(454_500),
-			fmt.Errorf("base amount (555556) is greater than selected limit (454500)"),
+			name:                 "normal swap remove",
+			pair:                 NUSDPair,
+			direction:            types.Direction_REMOVE_FROM_POOL,
+			quoteAmount:          sdk.NewDec(100_000),
+			baseLimit:            sdk.NewDec(50506),
+			expectedQuoteReserve: sdk.NewDec(9_900_000),
+			expectedBaseReserve:  sdk.MustNewDecFromStr("5050505.050505050505050505"),
+			expectedBaseAmount:   sdk.MustNewDecFromStr("50505.050505050505050505"),
 		},
 		{
-			"quote input bigger than reserve ratio",
-			NUSDPair,
-			types.Direction_REMOVE_FROM_POOL,
-			sdk.NewDec(10_000_000),
-			sdk.NewDec(10),
-			types.ErrOvertradingLimit,
+			name:        "pair not supported",
+			pair:        "xxx:yyy",
+			direction:   types.Direction_ADD_TO_POOL,
+			quoteAmount: sdk.NewDec(10),
+			baseLimit:   sdk.NewDec(10),
+			expectedErr: types.ErrPairNotSupported,
 		},
 		{
-			"over fluctuation limit fails",
-			NUSDPair,
-			types.Direction_ADD_TO_POOL,
-			sdk.NewDec(1_000_000),
-			sdk.NewDec(454544),
-			fmt.Errorf("error updating reserve: %w", types.ErrOverFluctuationLimit),
+			name:        "base amount less than base limit in Long",
+			pair:        NUSDPair,
+			direction:   types.Direction_ADD_TO_POOL,
+			quoteAmount: sdk.NewDec(500_000),
+			baseLimit:   sdk.NewDec(454_500),
+			expectedErr: types.ErrAssetOverUserLimit,
+		},
+		{
+			name:        "base amount more than base limit in Short",
+			pair:        NUSDPair,
+			direction:   types.Direction_REMOVE_FROM_POOL,
+			quoteAmount: sdk.NewDec(1_000_000),
+			baseLimit:   sdk.NewDec(454_500),
+			expectedErr: types.ErrAssetOverUserLimit,
+		},
+		{
+			name:        "quote input bigger than reserve ratio",
+			pair:        NUSDPair,
+			direction:   types.Direction_REMOVE_FROM_POOL,
+			quoteAmount: sdk.NewDec(10_000_000),
+			baseLimit:   sdk.NewDec(10),
+			expectedErr: types.ErrOverTradingLimit,
+		},
+		{
+			name:        "over fluctuation limit fails",
+			pair:        NUSDPair,
+			direction:   types.Direction_ADD_TO_POOL,
+			quoteAmount: sdk.NewDec(1_000_000),
+			baseLimit:   sdk.NewDec(454_544),
+			expectedErr: types.ErrOverFluctuationLimit,
 		},
 	}
 
@@ -75,92 +107,30 @@ func TestSwapQuoteForBase_Errors(t *testing.T) {
 				ctx,
 				NUSDPair,
 				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-				sdk.NewDec(10_000_000),       // 10
-				sdk.NewDec(5_000_000),        // 5
-				sdk.MustNewDecFromStr("0.1"), // 0.1 fluctuation limit ratio
+				sdk.NewDec(10_000_000),       // 10 tokens
+				sdk.NewDec(5_000_000),        // 5 tokens
+				sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
 			)
 
-			_, err := vpoolKeeper.SwapQuoteForBase(
+			res, err := vpoolKeeper.SwapQuoteForBase(
 				ctx,
 				tc.pair,
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
 			)
-			require.Error(t, err)
-		})
-	}
-}
 
-func TestSwapQuoteForBase_HappyPath(t *testing.T) {
-	tests := []struct {
-		name                 string
-		direction            types.Direction
-		quoteAmount          sdk.Dec
-		baseLimit            sdk.Dec
-		expectedQuoteReserve sdk.Dec
-		expectedBaseReserve  sdk.Dec
-		resp                 sdk.Dec
-	}{
-		{
-			"quote amount == 0",
-			types.Direction_ADD_TO_POOL,
-			sdk.NewDec(0),
-			sdk.NewDec(10),
-			sdk.NewDec(10_000_000),
-			sdk.NewDec(5_000_000),
-			sdk.ZeroDec(),
-		},
-		{
-			"normal swap add",
-			types.Direction_ADD_TO_POOL,
-			sdk.NewDec(1_000_000),
-			sdk.NewDec(454_500),
-			sdk.NewDec(11_000_000),
-			sdk.MustNewDecFromStr("4545454.545454545454545455"),
-			sdk.MustNewDecFromStr("454545.454545454545454545"),
-		},
-		{
-			"normal swap remove",
-			types.Direction_REMOVE_FROM_POOL,
-			sdk.NewDec(1_000_000),
-			sdk.NewDec(555_560),
-			sdk.NewDec(9_000_000),
-			sdk.MustNewDecFromStr("5555555.555555555555555556"),
-			sdk.MustNewDecFromStr("555555.555555555555555556"),
-		},
-	}
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedBaseAmount, res)
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)),
-			)
-
-			vpoolKeeper.CreatePool(
-				ctx,
-				NUSDPair,
-				sdk.MustNewDecFromStr("0.9"),  // 0.9 ratio
-				sdk.NewDec(10_000_000),        // 10 tokens
-				sdk.NewDec(5_000_000),         // 5 tokens
-				sdk.MustNewDecFromStr("0.25"), // 0.25 ratio
-			)
-
-			res, err := vpoolKeeper.SwapQuoteForBase(
-				ctx,
-				NUSDPair,
-				tc.direction,
-				tc.quoteAmount,
-				tc.baseLimit,
-			)
-			require.NoError(t, err)
-			require.Equal(t, tc.resp, res)
-
-			pool, err := vpoolKeeper.getPool(ctx, NUSDPair)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
-			require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
+				pool, err := vpoolKeeper.getPool(ctx, NUSDPair)
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
+				require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
+			}
 		})
 	}
 }

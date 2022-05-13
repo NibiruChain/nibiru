@@ -81,7 +81,7 @@ func (k Keeper) SwapBaseForQuote(
 
 	if dir == types.Direction_REMOVE_FROM_POOL &&
 		!pool.HasEnoughBaseReserve(baseAssetAmount) {
-		return sdk.Dec{}, types.ErrOvertradingLimit
+		return sdk.Dec{}, types.ErrOverTradingLimit
 	}
 
 	quoteAssetAmount, err = pool.GetQuoteAmountByBaseAmount(dir, baseAssetAmount)
@@ -168,7 +168,7 @@ func (k Keeper) SwapQuoteForBase(
 
 	if dir == types.Direction_REMOVE_FROM_POOL &&
 		!pool.HasEnoughQuoteReserve(quoteAssetAmount) {
-		return sdk.Dec{}, types.ErrOvertradingLimit
+		return sdk.Dec{}, types.ErrOverTradingLimit
 	}
 
 	baseAssetAmount, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
@@ -179,14 +179,14 @@ func (k Keeper) SwapQuoteForBase(
 	if !baseAmountLimit.IsZero() {
 		// if going long and the base amount retrieved from the pool is less than the limit
 		if dir == types.Direction_ADD_TO_POOL && baseAssetAmount.LT(baseAmountLimit) {
-			return sdk.Dec{}, fmt.Errorf(
+			return sdk.Dec{}, types.ErrAssetOverUserLimit.Wrapf(
 				"base amount (%s) is less than selected limit (%s)",
 				baseAssetAmount.String(),
 				baseAmountLimit.String(),
 			)
 			// if going short and the base amount retrieved from the pool is greater than the limit
 		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAssetAmount.GT(baseAmountLimit) {
-			return sdk.Dec{}, fmt.Errorf(
+			return sdk.Dec{}, types.ErrAssetOverUserLimit.Wrapf(
 				"base amount (%s) is greater than selected limit (%s)",
 				baseAssetAmount.String(),
 				baseAmountLimit.String(),
