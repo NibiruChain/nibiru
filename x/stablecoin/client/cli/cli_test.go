@@ -24,7 +24,7 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/network"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -40,8 +40,8 @@ const (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg     network.Config
-	network *network.Network
+	cfg     testutilcli.Config
+	network *testutilcli.Network
 }
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
@@ -77,6 +77,15 @@ func NewPricefeedGen() *pftypes.GenesisState {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
+	/* 	Make test skip if -short is not used:
+	All tests: `go test ./...`
+	Unit tests only: `go test ./... -short`
+	Integration tests only: `go test ./... -run Integration`
+	https://stackoverflow.com/a/41407042/13305627 */
+	if testing.Short() {
+		s.T().Skip("skipping integration test suite")
+	}
+
 	s.T().Log("setting up integration test suite")
 
 	s.cfg = utils.DefaultConfig()
@@ -98,7 +107,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg.GenesisState = genesisState
 
-	s.network = network.New(s.T(), s.cfg)
+	s.network = testutilcli.New(s.T(), s.cfg)
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
@@ -114,7 +123,7 @@ Create a new wallet and attempt to fill it with the required balance.
 Tokens are sent by the validator, 'val'.
 */
 func (s IntegrationTestSuite) fillWalletFromValidator(
-	addr sdk.AccAddress, balance sdk.Coins, val *network.Validator,
+	addr sdk.AccAddress, balance sdk.Coins, val *testutilcli.Validator,
 ) sdk.AccAddress {
 	_, err := banktestutil.MsgSendExec(
 		val.ClientCtx,

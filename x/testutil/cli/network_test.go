@@ -1,7 +1,7 @@
 //go:build norace
 // +build norace
 
-package network_test
+package cli_test
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/x/testutil/network"
+	"github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -19,6 +19,15 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
+	/* 	Make test skip if -short is not used:
+	All tests: `go test ./...`
+	Unit tests only: `go test ./... -short`
+	Integration tests only: `go test ./... -run Integration`
+	https://stackoverflow.com/a/41407042/13305627 */
+	if testing.Short() {
+		s.T().Skip("skipping integration test suite")
+	}
+
 	s.T().Log("setting up integration test suite")
 
 	s.network = network.New(s.T(), network.DefaultConfig())
