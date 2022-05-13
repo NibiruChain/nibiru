@@ -85,13 +85,13 @@ func (k Keeper) RemoveMargin(
 		return res, err
 	}
 	position.Margin = remaining.Margin
-	position.LastUpdateCumulativePremiumFraction = remaining.LatestCPF
+	position.LastUpdateCumulativePremiumFraction = remaining.LatestCumulativePremiumFraction
 	if !remaining.BadDebt.IsZero() {
 		return res, fmt.Errorf("failed to remove margin; position has bad debt")
 	}
 
 	freeCollateral, err := k.calcFreeCollateral(
-		ctx, *position, remaining.FPayment)
+		ctx, *position, remaining.FundingPayment)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
@@ -114,10 +114,10 @@ func (k Keeper) RemoveMargin(
 		/* to */ trader.String(),
 	)
 
-	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.FPayment)
+	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.FundingPayment)
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      coinToSend,
-		FundingPayment: remaining.FPayment,
+		FundingPayment: remaining.FundingPayment,
 	}, nil
 }
 

@@ -201,7 +201,7 @@ func (k Keeper) increasePosition(
 	positionResp.ExchangedQuoteAssetAmount = openNotional
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
 	positionResp.MarginToVault = increaseMarginRequirement
-	positionResp.FundingPayment = remaining.FPayment
+	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.Position = &types.Position{
 		Address:                             oldPosition.Address,
@@ -209,7 +209,7 @@ func (k Keeper) increasePosition(
 		Size_:                               newSize,
 		Margin:                              remaining.Margin,
 		OpenNotional:                        oldPosition.OpenNotional.Add(positionResp.ExchangedQuoteAssetAmount),
-		LastUpdateCumulativePremiumFraction: remaining.LatestCPF,
+		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		LiquidityHistoryIndex:               oldPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
@@ -370,7 +370,7 @@ func (k Keeper) reducePosition(
 		positionResp.RealizedPnl,
 	)
 	positionResp.BadDebt = remaining.BadDebt
-	positionResp.FundingPayment = remaining.FPayment
+	positionResp.FundingPayment = remaining.FundingPayment
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +396,7 @@ func (k Keeper) reducePosition(
 		Size_:                               oldPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remaining.Margin,
 		OpenNotional:                        remainOpenNotional.Abs(),
-		LastUpdateCumulativePremiumFraction: remaining.LatestCPF,
+		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		LiquidityHistoryIndex:               oldPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
@@ -491,7 +491,7 @@ func (k Keeper) closePosition(
 	positionResp.ExchangedPositionSize = oldPosition.Size_.Neg()
 	positionResp.RealizedPnl = unrealizedPnL
 	positionResp.BadDebt = remaining.BadDebt
-	positionResp.FundingPayment = remaining.FPayment
+	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.MarginToVault = remaining.Margin.Neg()
 
 	var vammDir pooltypes.Direction
