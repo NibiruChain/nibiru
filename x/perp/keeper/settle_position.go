@@ -1,26 +1,24 @@
 package keeper
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SettlePosition settles a trader position
 func (k Keeper) SettlePosition(ctx sdk.Context, pair common.TokenPair, trader string) (transferredCoins sdk.Coins, err error) {
-	// TODO(mercilex): requireAmm?
-
 	pos, err := k.Positions().Get(ctx, pair, trader)
 	if err != nil {
 		return
 	}
 
-	// check if pos size != 0
 	if pos.Size_.IsZero() {
 		return transferredCoins, types.ErrPositionSizeZero
 	}
-	// clear pos
+
 	err = k.ClearPosition(ctx, pair, trader)
 	if err != nil {
 		return
@@ -33,10 +31,9 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair common.TokenPair, trader st
 	}
 	settledValue := sdk.ZeroDec()
 
-	switch settlementPrice.IsZero() {
-	case true:
+	if settlementPrice.IsZero() {
 		settledValue = pos.Margin
-	default:
+	} else {
 		// openPrice = positionOpenNotional / abs(positionSize)
 		openPrice := pos.OpenNotional.Quo(pos.Size_.Abs())
 		// returnedFund := positionSize * (settlementPrice - openPrice) + positionMargin
@@ -61,5 +58,6 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair common.TokenPair, trader st
 	}
 
 	events.EmitPositionSettle(ctx, pair.String(), traderAddr, transferredCoins)
+
 	return
 }
