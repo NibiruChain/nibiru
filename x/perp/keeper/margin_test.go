@@ -33,7 +33,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -65,7 +65,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 
 				fmt.Println(err.Error())
 				require.Error(t, err)
@@ -111,7 +111,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 
 				require.NoError(t, err)
 			},
@@ -138,7 +138,9 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
-					ctx, &types.Position{Pair: "osmo:nusd"}, marginDelta)
+					ctx, types.Position{
+						Pair: "osmo:nusd",
+					}, marginDelta)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -151,9 +153,9 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				the3pool := "dai:usdc:usdt"
 				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
-					ctx, &types.Position{Pair: the3pool}, marginDelta)
+					ctx, types.Position{Pair: the3pool}, marginDelta)
 				require.Error(t, err)
-				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
+				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
 		},
 		{
@@ -192,7 +194,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				marginDelta := sdk.NewDec(-300)
 				remaining, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
-					ctx, pos, marginDelta)
+					ctx, *pos, marginDelta)
 				require.NoError(t, err)
 				// signedRemainMargin
 				//   = marginDelta - fPayment + pos.Margin
@@ -244,7 +246,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				marginDelta := sdk.NewDec(0)
 				remaining, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
-					ctx, pos, marginDelta)
+					ctx, *pos, marginDelta)
 				require.NoError(t, err)
 				require.EqualValues(t, sdk.MustNewDecFromStr("0.75"), remaining.LatestCPF)
 				// FPayment
@@ -455,7 +457,7 @@ func TestRemoveMargin(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.NoError(t, err)
 
 				t.Log("Attempt to remove 10% of the position")
