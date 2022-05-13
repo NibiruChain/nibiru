@@ -159,7 +159,7 @@ func (k Keeper) increasePosition(
 	currentPosition types.Position,
 	side types.Side,
 	openNotional sdk.Dec,
-	minPositionSize sdk.Dec,
+	baseLimit sdk.Dec,
 	leverage sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{}
@@ -169,7 +169,7 @@ func (k Keeper) increasePosition(
 		common.TokenPair(currentPosition.Pair),
 		side,
 		openNotional,
-		minPositionSize,
+		baseLimit,
 		false,
 	)
 	if err != nil {
@@ -198,6 +198,7 @@ func (k Keeper) increasePosition(
 
 	positionResp.ExchangedQuoteAssetAmount = openNotional
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
+	positionResp.RealizedPnl = sdk.ZeroDec()
 	positionResp.MarginToVault = increaseMarginRequirement
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.BadDebt = remaining.BadDebt
@@ -233,19 +234,17 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
 	oldPosition types.Position,
 	pnlCalcOption types.PnLCalcOption,
-) (notional, unrealizedPnL sdk.Dec, err error) {
+) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
 	positionSizeAbs := oldPosition.Size_.Abs()
 	if positionSizeAbs.IsZero() {
 		return sdk.ZeroDec(), sdk.ZeroDec(), nil
 	}
 
-	isShortPosition := oldPosition.Size_.IsNegative()
-	var dir pooltypes.Direction
-	switch isShortPosition {
-	case true:
-		dir = pooltypes.Direction_REMOVE_FROM_POOL
-	default:
-		dir = pooltypes.Direction_ADD_TO_POOL
+	var baseAssetDirection pooltypes.Direction
+	if oldPosition.Size_.IsPositive() {
+		baseAssetDirection = pooltypes.Direction_ADD_TO_POOL
+	} else {
+		baseAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
 	}
 
 	switch pnlCalcOption {
@@ -253,38 +252,45 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		notionalDec, err := k.VpoolKeeper.GetBaseAssetTWAP(
 			ctx,
 			common.TokenPair(oldPosition.Pair),
-			dir,
+			baseAssetDirection,
 			positionSizeAbs,
 			15*time.Minute,
 		)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		notional = notionalDec
+		positionNotional = notionalDec
 	case types.PnLCalcOption_SPOT_PRICE:
-		notionalDec, err := k.VpoolKeeper.GetBaseAssetPrice(ctx, common.TokenPair(oldPosition.Pair), dir, positionSizeAbs)
+		notionalDec, err := k.VpoolKeeper.GetBaseAssetPrice(
+			ctx,
+			common.TokenPair(oldPosition.Pair),
+			baseAssetDirection,
+			positionSizeAbs,
+		)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		notional = notionalDec
+		positionNotional = notionalDec
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(ctx, common.TokenPair(oldPosition.Pair))
+		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(
+			ctx,
+			common.TokenPair(oldPosition.Pair),
+		)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		notional = oraclePrice.Mul(positionSizeAbs)
+		positionNotional = oraclePrice.Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
 
-	switch isShortPosition {
-	case true:
-		unrealizedPnL = oldPosition.OpenNotional.Sub(notional)
-	case false:
-		unrealizedPnL = notional.Sub(oldPosition.OpenNotional)
+	if oldPosition.Size_.IsPositive() {
+		unrealizedPnL = positionNotional.Sub(oldPosition.OpenNotional)
+	} else {
+		unrealizedPnL = oldPosition.OpenNotional.Sub(positionNotional)
 	}
 
-	return unrealizedPnL, notional, nil
+	return positionNotional, unrealizedPnL, nil
 }
 
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
