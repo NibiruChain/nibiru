@@ -19,21 +19,30 @@ import (
 	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/network"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg     network.Config
-	network *network.Network
+	cfg     testutilcli.Config
+	network *testutilcli.Network
 
 	testAccount sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
+	/* 	Make test skip if -short is not used:
+	All tests: `go test ./...`
+	Unit tests only: `go test ./... -short`
+	Integration tests only: `go test ./... -run Integration`
+	https://stackoverflow.com/a/41407042/13305627 */
+	if testing.Short() {
+		s.T().Skip("skipping integration test suite")
+	}
+
 	s.T().Log("setting up integration test suite")
-	s.network = network.New(s.T(), s.cfg)
+	s.network = testutilcli.New(s.T(), s.cfg)
 
 	// create a new user address
 	s.testAccount = s.NewAccount("NewAddr")

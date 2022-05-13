@@ -62,4 +62,4 @@ A typical testing flow might look like the following:
 		suite.Run(t, new(IntegrationTestSuite))
 	}
 */
-package network
+package cli

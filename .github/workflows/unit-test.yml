@@ -1,8 +1,7 @@
-name: Go
+name: Unit Tests
 
+# Runs on any PR push, but not on merges to master
 on:
-  push:
-    branches: [master]
   pull_request:
     branches: ["**"]
 
@@ -19,7 +18,7 @@ jobs:
       - name: Build binaries for nibid using the Makefile
         run: make build
 
-  test:
+  test-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -29,5 +28,5 @@ jobs:
         with:
           go-version: 1.17
 
-      - name: Run all tests.
-        run: go test -v ./...
+      - name: Run all short tests.
+        run: go test -v ./... -short -cover
