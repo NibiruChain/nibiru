@@ -80,18 +80,18 @@ func (k Keeper) RemoveMargin(
 
 	marginDelta := margin.Neg().ToDec()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, pair, position, marginDelta)
+		ctx, *position, marginDelta)
 	if err != nil {
 		return res, err
 	}
-	position.Margin = remaining.margin
-	position.LastUpdateCumulativePremiumFraction = remaining.latestCPF
-	if !remaining.badDebt.IsZero() {
+	position.Margin = remaining.Margin
+	position.LastUpdateCumulativePremiumFraction = remaining.LatestCPF
+	if !remaining.BadDebt.IsZero() {
 		return res, fmt.Errorf("failed to remove margin; position has bad debt")
 	}
 
 	freeCollateral, err := k.calcFreeCollateral(
-		ctx, position, remaining.fPayment, remaining.badDebt)
+		ctx, *position, remaining.FPayment)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
@@ -114,22 +114,17 @@ func (k Keeper) RemoveMargin(
 		/* to */ trader.String(),
 	)
 
-	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.fPayment)
+	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.FPayment)
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      coinToSend,
-		FundingPayment: remaining.fPayment,
+		FundingPayment: remaining.FPayment,
 	}, nil
 }
 
 // TODO test: GetMarginRatio
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, pair common.TokenPair, trader string, priceOption types.MarginCalculationPriceOption,
-) (sdk.Dec, error) {
-	position, err := k.Positions().Get(ctx, pair, trader) // TODO(mercilex): inefficient position get
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
+	ctx sdk.Context, position types.Position, priceOption types.MarginCalculationPriceOption,
+) (marginRatio sdk.Dec, err error) {
 	if position.Size_.IsZero() {
 		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
 	}
@@ -143,22 +138,19 @@ func (k Keeper) GetMarginRatio(
 	case types.MarginCalculationPriceOption_MAX_PNL:
 		unrealizedPnL, positionNotional, err = k.getPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
-			pair,
-			trader,
+			position,
 			types.PnLPreferenceOption_MAX,
 		)
 	case types.MarginCalculationPriceOption_INDEX:
 		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
 			ctx,
-			pair,
-			trader,
+			position,
 			types.PnLCalcOption_ORACLE,
 		)
 	case types.MarginCalculationPriceOption_SPOT:
 		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
 			ctx,
-			pair,
-			trader,
+			position,
 			types.PnLCalcOption_SPOT_PRICE,
 		)
 	}
@@ -169,7 +161,6 @@ func (k Keeper) GetMarginRatio(
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
-		/* pair */ pair,
 		/* oldPosition */ position,
 		/* marginDelta */ unrealizedPnL,
 	)
@@ -177,8 +168,8 @@ func (k Keeper) GetMarginRatio(
 		return sdk.Dec{}, err
 	}
 
-	marginRatio := remaining.margin.Sub(remaining.badDebt).Quo(positionNotional)
-	return marginRatio, err
+	marginRatio = remaining.Margin.Sub(remaining.BadDebt).Quo(positionNotional)
+	return
 }
 
 func (k *Keeper) requireVpool(ctx sdk.Context, pair common.TokenPair) error {
@@ -201,16 +192,14 @@ Args:
     smaller than 'baseMarginRatio'.
 */
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEqualTo bool) error {
-	switch largerThanOrEqualTo {
-	case true:
+	if largerThanOrEqualTo {
 		if !marginRatio.GTE(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
-	default:
+	} else {
 		if !marginRatio.LT(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
 	}
-
 	return nil
 }

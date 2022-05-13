@@ -35,18 +35,24 @@ type LiquidationOutput struct {
 
 /*Liquidate allows to liquidate the trader position if the margin is below the required margin maintenance ratio.*/
 func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string, liquidator sdk.AccAddress) error {
+	// Liquidate position
+	position, err := k.GetPosition(ctx, pair, trader)
+	if err != nil {
+		panic(err)
+	}
+
 	traderAddr, err := sdk.AccAddressFromBech32(trader)
 	if err != nil {
 		return err
 	}
 
-	marginRatio, err := k.GetMarginRatio(ctx, pair, trader, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatio, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return err
 	}
 
 	if k.VpoolKeeper.IsOverSpreadLimit(ctx, pair) {
-		marginRatioBasedOnOracle, err := k.GetMarginRatio(ctx, pair, trader, types.MarginCalculationPriceOption_INDEX)
+		marginRatioBasedOnOracle, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
 			return err
 		}
@@ -60,18 +66,12 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 		return types.MarginHighEnough
 	}
 
-	marginRatioBasedOnSpot, err := k.GetMarginRatio(ctx, pair, trader, types.MarginCalculationPriceOption_SPOT)
+	marginRatioBasedOnSpot, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("marginRatioBasedOnSpot", marginRatioBasedOnSpot)
-
-	// Liquidate position
-	position, err := k.GetPosition(ctx, pair, trader)
-	if err != nil {
-		panic(err)
-	}
 
 	var (
 		liquidationOuptut LiquidationOutput
@@ -128,7 +128,7 @@ func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, trader
 	params := k.GetParams(ctx)
 
 	liquidationOutput.LiquidationPenalty = position.Margin
-	liquidationOutput.PositionResp, err = k.closePosition(ctx, pair, trader, sdk.ZeroInt())
+	liquidationOutput.PositionResp, err = k.closePosition(ctx, position, sdk.ZeroInt())
 
 	if err != nil {
 		return
@@ -182,7 +182,7 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 		side = types.Side_BUY
 	}
 
-	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetOutputPrice(
+	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
 		ctx,
 		pair,
 		dir,
@@ -194,9 +194,8 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 
 	positionResp, err := k.openReversePosition(
 		/* ctx */ ctx,
-		/* pair */ pair,
+		/* oldPosition */ position,
 		/* side */ side,
-		/* trader */ trader,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional.TruncateInt(),
 		/* leverage */ sdk.OneDec(),
 		/* baseAssetAmountLimit */ sdk.ZeroInt(),
