@@ -366,8 +366,22 @@ func (mr *MockVpoolKeeperMockRecorder) CalcFee(arg0, arg1, arg2 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcFee", reflect.TypeOf((*MockVpoolKeeper)(nil).CalcFee), arg0, arg1, arg2)
 }
 
-// GetOutputPrice mocks base method.
-func (m *MockVpoolKeeper) GetOutputPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
+// ExistsPool mocks base method.
+func (m *MockVpoolKeeper) ExistsPool(arg0 types1.Context, arg1 common.TokenPair) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsPool", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ExistsPool indicates an expected call of ExistsPool.
+func (mr *MockVpoolKeeperMockRecorder) ExistsPool(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsPool", reflect.TypeOf((*MockVpoolKeeper)(nil).ExistsPool), arg0, arg1)
+}
+
+// GetBaseAssetPrice mocks base method.
+func (m *MockVpoolKeeper) GetBaseAssetPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBaseAssetPrice", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(types1.Dec)
@@ -394,6 +408,36 @@ func (m *MockVpoolKeeper) GetBaseAssetTWAP(arg0 types1.Context, arg1 common.Toke
 func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetTWAP(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseAssetTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetBaseAssetTWAP), arg0, arg1, arg2, arg3, arg4)
+}
+
+// GetQuoteAssetPrice mocks base method.
+func (m *MockVpoolKeeper) GetQuoteAssetPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetQuoteAssetPrice", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(types1.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetQuoteAssetPrice indicates an expected call of GetQuoteAssetPrice.
+func (mr *MockVpoolKeeperMockRecorder) GetQuoteAssetPrice(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuoteAssetPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetQuoteAssetPrice), arg0, arg1, arg2, arg3)
+}
+
+// GetQuoteAssetTWAP mocks base method.
+func (m *MockVpoolKeeper) GetQuoteAssetTWAP(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec, arg4 time.Duration) (types1.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetQuoteAssetTWAP", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(types1.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetQuoteAssetTWAP indicates an expected call of GetQuoteAssetTWAP.
+func (mr *MockVpoolKeeperMockRecorder) GetQuoteAssetTWAP(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuoteAssetTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetQuoteAssetTWAP), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetSpotPrice mocks base method.
@@ -426,21 +470,6 @@ func (mr *MockVpoolKeeperMockRecorder) GetUnderlyingPrice(arg0, arg1 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnderlyingPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetUnderlyingPrice), arg0, arg1)
 }
 
-// SwapQuoteAsset mocks base method.
-func (m *MockVpoolKeeper) SwapQuoteAsset(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SwapQuoteAsset", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(types1.Dec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SwapQuoteAsset indicates an expected call of SwapQuoteAsset.
-func (mr *MockVpoolKeeperMockRecorder) SwapQuoteAsset(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwapQuoteAsset", reflect.TypeOf((*MockVpoolKeeper)(nil).SwapQuoteAsset), arg0, arg1, arg2, arg3, arg4)
-}
-
 // SwapBaseAsset mocks base method.
 func (m *MockVpoolKeeper) SwapBaseAsset(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
@@ -454,4 +483,19 @@ func (m *MockVpoolKeeper) SwapBaseAsset(arg0 types1.Context, arg1 common.TokenPa
 func (mr *MockVpoolKeeperMockRecorder) SwapBaseAsset(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwapBaseAsset", reflect.TypeOf((*MockVpoolKeeper)(nil).SwapBaseAsset), arg0, arg1, arg2, arg3, arg4)
+}
+
+// SwapQuoteAsset mocks base method.
+func (m *MockVpoolKeeper) SwapQuoteAsset(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SwapQuoteAsset", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(types1.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SwapQuoteAsset indicates an expected call of SwapQuoteAsset.
+func (mr *MockVpoolKeeperMockRecorder) SwapQuoteAsset(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwapQuoteAsset", reflect.TypeOf((*MockVpoolKeeper)(nil).SwapQuoteAsset), arg0, arg1, arg2, arg3, arg4)
 }
