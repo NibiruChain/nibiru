@@ -11,7 +11,7 @@ import (
 // Params of x/perp
 var initMarginRatio = sdk.MustNewDecFromStr("0.1")
 
-type Remaining struct {
+type RemainingMarginWithFundingPayment struct {
 	// Margin: amount of quote token (y) backing the position.
 	Margin sdk.Dec
 
@@ -19,44 +19,47 @@ type Remaining struct {
 	   Bad debt is negative net margin past the liquidation point of a position. */
 	BadDebt sdk.Dec
 
-	/* FPayment: A funding payment made or received by the trader on
+	/* FundingPayment: A funding payment (margin units) made or received by the trader on
 	    the current position. 'fundingPayment' is positive if 'owner' is the sender
 		and negative if 'owner' is the receiver of the payment. Its magnitude is
 		abs(vSize * fundingRate). Funding payments act to converge the mark price
-		(vPrice) and index price (average price on major exchanges). */
-	FPayment sdk.Dec
+		(vPrice) and index price (average price on major exchanges).
+	*/
+	FundingPayment sdk.Dec
 
-	/* LatestCPF: latest cumulative premium fraction */
-	LatestCPF sdk.Dec
+	/* LatestCumulativePremiumFraction: latest cumulative premium fraction. Units are (margin units)/position size. */
+	LatestCumulativePremiumFraction sdk.Dec
 }
 
 func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context,
 	pos types.Position,
 	marginDelta sdk.Dec,
-) (remaining Remaining, err error) {
-	remaining.LatestCPF, err = k.getLatestCumulativePremiumFraction(ctx, common.TokenPair(pos.Pair))
+) (remaining RemainingMarginWithFundingPayment, err error) {
+	remaining.LatestCumulativePremiumFraction, err = k.
+		getLatestCumulativePremiumFraction(ctx, common.TokenPair(pos.Pair))
 	if err != nil {
 		return remaining, err
 	}
 
 	if pos.Size_.IsZero() {
-		remaining.FPayment = sdk.ZeroDec()
+		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
-		remaining.FPayment = remaining.LatestCPF.
+		remaining.FundingPayment = remaining.LatestCumulativePremiumFraction.
 			Sub(pos.LastUpdateCumulativePremiumFraction).
 			Mul(pos.Size_)
 	}
 
-	signedRemainMargin := marginDelta.Sub(remaining.FPayment).Add(pos.Margin)
+	remainingMargin := pos.Margin.Add(marginDelta).Sub(remaining.FundingPayment)
 
-	if signedRemainMargin.IsNegative() {
+	if remainingMargin.IsNegative() {
 		// the remaining margin is negative, liquidators didn't do their job
 		// and we have negative margin that must come out of the ecosystem fund
-		remaining.BadDebt = signedRemainMargin.Abs()
+		remaining.BadDebt = remainingMargin.Abs()
+		remaining.Margin = sdk.ZeroDec()
 	} else {
+		remaining.Margin = remainingMargin.Abs()
 		remaining.BadDebt = sdk.ZeroDec()
-		remaining.Margin = signedRemainMargin.Abs()
 	}
 
 	return remaining, err
