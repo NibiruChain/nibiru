@@ -33,7 +33,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -65,7 +65,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 
 				fmt.Println(err.Error())
 				require.Error(t, err)
@@ -110,7 +110,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 
 				require.NoError(t, err)
 			},
@@ -133,13 +133,13 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 		{
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
-				vpool := common.TokenPair("osmo:nusd")
-
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
-					ctx, vpool, &types.Position{}, marginDelta)
+					ctx, types.Position{
+						Pair: "osmo:nusd",
+					}, marginDelta)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -337,7 +337,7 @@ func TestRemoveMargin(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewInt(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice.String(), quote, leverage, baseLimit)
+					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.NoError(t, err)
 
 				t.Log("Attempt to remove 10% of the position")
