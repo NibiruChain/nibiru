@@ -240,7 +240,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputTWAP(
+		positionNotionalDec, err := k.VpoolKeeper.GetBaseAssetTWAP(
 			ctx,
 			pair,
 			dir,
@@ -252,7 +252,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 		positionNotional = positionNotionalDec
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotionalDec, err := k.VpoolKeeper.GetOutputPrice(ctx, pair, dir, positionSizeAbs)
+		positionNotionalDec, err := k.VpoolKeeper.GetBaseAssetPrice(ctx, pair, dir, positionSizeAbs)
 		if err != nil {
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}

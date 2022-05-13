@@ -120,7 +120,7 @@ type VpoolKeeper interface {
 		- quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
 		- err: error
 	*/
-	GetOutputTWAP(
+	GetBaseAssetTWAP(
 		ctx sdk.Context,
 		pair common.TokenPair,
 		direction vpooltypes.Direction,
@@ -144,7 +144,7 @@ type VpoolKeeper interface {
 		  - baseAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
 		  - err: error
 	*/
-	GetInputTWAP(
+	GetQuoteAssetTWAP(
 		ctx sdk.Context,
 		pair common.TokenPair,
 		direction vpooltypes.Direction,
@@ -166,7 +166,7 @@ type VpoolKeeper interface {
 		  - quoteAmount: the amount of quote assets required to make the desired swap
 		  - err: error
 	*/
-	GetOutputPrice(
+	GetBaseAssetPrice(
 		ctx sdk.Context,
 		pair common.TokenPair,
 		direction vpooltypes.Direction,
@@ -187,7 +187,7 @@ type VpoolKeeper interface {
 		  - baseAssetAmount: the amount of base assets required to make the desired swap
 		  - err: error
 	*/
-	GetInputPrice(
+	GetQuoteAssetPrice(
 		ctx sdk.Context,
 		pair common.TokenPair,
 		dir vpooltypes.Direction,

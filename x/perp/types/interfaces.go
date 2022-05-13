@@ -25,9 +25,9 @@ type IVirtualPool interface {
 	SwapOutput(
 		ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int, limit sdk.Int,
 	) (sdk.Int, error)
-	GetOutputTWAP(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
+	GetBaseAssetTWAP(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
 	) (sdk.Int, error)
-	GetOutputPrice(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
+	GetBaseAssetPrice(ctx sdk.Context, dir VirtualPoolDirection, abs sdk.Int,
 	) (sdk.Int, error)
 	GetUnderlyingPrice(ctx sdk.Context) (sdk.Dec, error)
 	GetSpotPrice(ctx sdk.Context) (sdk.Int, error)

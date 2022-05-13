@@ -78,7 +78,7 @@ ret:
   - quoteAmount: the amount of quote assets required to make the desired swap
   - err: error
 */
-func (k Keeper) GetOutputPrice(
+func (k Keeper) GetBaseAssetPrice(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
@@ -106,7 +106,7 @@ ret:
   - baseAssetAmount: the amount of base assets required to make the desired swap
   - err: error
 */
-func (k Keeper) GetInputPrice(
+func (k Keeper) GetQuoteAssetPrice(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	dir types.Direction,
@@ -136,7 +136,7 @@ ret:
   - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
   - err: error
 */
-func (k Keeper) GetOutputTWAP(
+func (k Keeper) GetBaseAssetTWAP(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	direction types.Direction,
@@ -169,7 +169,7 @@ ret:
   - baseAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
   - err: error
 */
-func (k Keeper) GetInputTWAP(
+func (k Keeper) GetQuoteAssetTWAP(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	direction types.Direction,
