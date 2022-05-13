@@ -618,13 +618,29 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	}
 }
 
-// TODO: Check Can Over Fluctuation Limit
+/*
+Trades quoteAssets in exchange for baseAssets.
+The quote asset is a stablecoin like NUSD.
+The base asset is a crypto asset like BTC or ETH.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: a token pair like BTC:NUSD
+  - dir: either add or remove from pool
+  - quoteAssetAmount: the amount of quote asset being traded
+  - baseAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
+  - canOverFluctuationLimit: whether or not to check if the swapped amount is over the fluctuation limit. Currently unused.
+
+ret:
+  - baseAssetAmount: the amount of base asset swapped
+  - err: error
+*/
 func (k Keeper) swapQuoteForBase(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	side types.Side,
-	quoteAmount sdk.Dec,
-	baseLimit sdk.Dec,
+	quoteAssetAmount sdk.Dec,
+	baseAssetLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (baseAmount sdk.Dec, err error) {
 	var quoteAssetDirection pooltypes.Direction
@@ -636,7 +652,7 @@ func (k Keeper) swapQuoteForBase(
 	}
 
 	baseAmount, err = k.VpoolKeeper.SwapQuoteForBase(
-		ctx, pair, quoteAssetDirection, quoteAmount, baseLimit)
+		ctx, pair, quoteAssetDirection, quoteAssetAmount, baseAssetLimit)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
