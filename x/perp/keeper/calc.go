@@ -32,10 +32,11 @@ type Remaining struct {
 
 // TODO test: CalcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) CalcRemainMarginWithFundingPayment(
-	ctx sdk.Context, pair common.TokenPair,
-	oldPosition *types.Position, marginDelta sdk.Dec,
+	ctx sdk.Context,
+	oldPosition types.Position,
+	marginDelta sdk.Dec,
 ) (remaining Remaining, err error) {
-	remaining.latestCPF, err = k.getLatestCumulativePremiumFraction(ctx, pair)
+	remaining.latestCPF, err = k.getLatestCumulativePremiumFraction(ctx, common.TokenPair(oldPosition.Pair))
 	if err != nil {
 		return
 	}
@@ -62,12 +63,8 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	return remaining, err
 }
 
-func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos *types.Position, fundingPayment, badDebt sdk.Dec,
+func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingPayment, badDebt sdk.Dec,
 ) (sdk.Int, error) {
-	owner, err := sdk.AccAddressFromBech32(pos.Address)
-	if err != nil {
-		return sdk.Int{}, err
-	}
 	pair, err := common.NewTokenPairFromStr(pos.Pair)
 	if err != nil {
 		return sdk.Int{}, err
@@ -79,7 +76,10 @@ func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos *types.Position, funding
 
 	unrealizedPnL, positionNotional, err := k.
 		getPreferencePositionNotionalAndUnrealizedPnL(
-			ctx, pair, owner.String(), types.PnLPreferenceOption_MIN)
+			ctx,
+			pos,
+			types.PnLPreferenceOption_MIN,
+		)
 	if err != nil {
 		return sdk.Int{}, err
 	}
