@@ -204,17 +204,62 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCPF)
 			},
 		},
-		// TODO
 		{
-			name: "signedRemainMargin negative bc of large fPayment",
+			name: "large fPayment lowers pos value by half",
 			test: func() {
+				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				alice := sample.AccAddress()
+				pair := common.TokenPair("osmo:nusd")
 
-				marginDelta := sdk.OneDec()
-				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
-					ctx, &types.Position{Pair: "osmo:nusd"}, marginDelta)
-				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+				t.Log("Set vpool defined by pair on VpoolKeeper")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					pair.String(),
+					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					/* y */ sdk.NewDec(1_000_000), //
+					/* x */ sdk.NewDec(1_000_000), //
+					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 100%
+				)
+				premiumFractions := []sdk.Dec{
+					sdk.MustNewDecFromStr("0.25"),
+					sdk.MustNewDecFromStr("0.5"),
+					sdk.MustNewDecFromStr("0.75"),
+				}
+				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+
+				t.Log("Set vpool defined by pair on PerpKeeper")
+				perpKeeper := &nibiruApp.PerpKeeper
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair:                       pair.String(),
+					CumulativePremiumFractions: premiumFractions,
+				})
+
+				pos := &types.Position{
+					Address: alice.String(), Pair: pair.String(),
+					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
+					LastUpdateCumulativePremiumFraction: premiumFractions[1],
+				}
+
+				marginDelta := sdk.NewDec(0)
+				remaining, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
+					ctx, pos, marginDelta)
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.MustNewDecFromStr("0.75"), remaining.LatestCPF)
+				// FPayment
+				//   = (remaining.LatestCPF - pos.LastUpdateCumulativePremiumFraction)
+				//      * pos.Size_
+				//   = (0.75 - 0.5) * 200
+				//   = 50
+				require.EqualValues(t, sdk.NewDec(50), remaining.FPayment)
+				// signedRemainMargin
+				//   = marginDelta - fPayment + pos.Margin
+				//   = 0 - 50 + 100 = 50
+				// ∴ remaining.BadDebt = 0
+				// ∴ remaining.Margin = 50
+				require.EqualValues(t, sdk.NewDec(0), remaining.BadDebt)
+				require.EqualValues(t, sdk.NewDec(50), remaining.Margin)
 			},
 		},
 	}
