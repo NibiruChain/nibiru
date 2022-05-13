@@ -85,9 +85,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	if testing.Short() {
 		s.T().Skip("skipping integration test suite")
 	}
-	if testing.Short() {
-		s.T().Skip("skipping integration test suite")
-	}
 
 	s.T().Log("setting up integration test suite")
 
