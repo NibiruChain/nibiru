@@ -13,14 +13,15 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
-	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
+	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
+	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 var (

@@ -3,6 +3,11 @@ package types
 //go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PriceKeeper,VpoolKeeper
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
+
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -226,4 +231,6 @@ type VpoolKeeper interface {
 	) (price sdk.Dec, err error)
 
 	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
+	// ExistsPool returns true if pool exists, false if not.
+	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
 }

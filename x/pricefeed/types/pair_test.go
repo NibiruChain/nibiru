@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 func TestPair(t *testing.T) {

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.

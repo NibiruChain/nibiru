@@ -5,9 +5,10 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/NibiruChain/nibiru/app"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"

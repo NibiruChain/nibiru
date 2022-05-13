@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
