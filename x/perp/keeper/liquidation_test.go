@@ -119,13 +119,14 @@ func TestFullLiquidate(t *testing.T) {
 			)
 			require.NoError(t, err, "initial position should be opened")
 			err = app.PerpKeeper.OpenPosition(
-				ctx, tokenPair, types.Side_BUY, otherTraderAddr.String(), tc.otherPositionSize.TruncateInt(), sdk.OneDec(), sdk.NewInt(150),
+				ctx, tokenPair, types.Side_SELL, otherTraderAddr.String(), tc.otherPositionSize.TruncateInt(), sdk.OneDec(), sdk.NewInt(500),
 			)
 			require.NoError(t, err, "second position should be opened")
 
 			t.Log("liquidate position")
 			err = app.PerpKeeper.Liquidate(ctx, tokenPair, traderAddr.String(), liquidatorAddr)
 			require.ErrorIs(t, err, tc.expectedErr)
+			panic(nil)
 		})
 	}
 }

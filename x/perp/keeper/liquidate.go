@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -62,6 +64,8 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader string,
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("marginRatioBasedOnSpot", marginRatioBasedOnSpot)
 
 	// Liquidate position
 	position, err := k.GetPosition(ctx, pair, trader)
