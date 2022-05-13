@@ -123,7 +123,7 @@ func (k Keeper) GetInputPrice(
 
 func (k Keeper) GetOutputTWAP(ctx sdk.Context, pair common.TokenPair, dir types.Direction, abs sdk.Int) (sdk.Dec, error) {
 	//TODO implement me
-	panic("implement me")
+	return sdk.NewDec(1), nil
 }
 
 /*

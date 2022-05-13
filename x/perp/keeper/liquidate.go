@@ -1,11 +1,12 @@
 package keeper
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vtypes "github.com/NibiruChain/nibiru/x/vpool/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 /*
@@ -192,9 +193,9 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 		/* pair */ pair,
 		/* side */ side,
 		/* trader */ trader,
-		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
+		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional.TruncateInt(),
 		/* leverage */ sdk.OneDec(),
-		/* baseAssetAmountLimit */ sdk.ZeroDec(),
+		/* baseAssetAmountLimit */ sdk.ZeroInt(),
 		/* canOverFluctuationLimit */ true,
 	)
 	if err != nil {

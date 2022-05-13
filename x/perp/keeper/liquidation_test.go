@@ -2,20 +2,18 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	vtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-)
 
-func mocktwap(ctx sdk.Context, pair common.TokenPair, dir vtypes.Direction, abs sdk.Int) (sdk.Dec, error) {
-	return sdk.NewDec(1), nil
-}
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
+)
 
 func TestFullLiquidate(t *testing.T) {
 	tests := []struct {
@@ -49,6 +47,26 @@ func TestFullLiquidate(t *testing.T) {
 			traderAddr := sample.AccAddress()
 			otherTraderAddr := sample.AccAddress()
 			liquidatorAddr := sample.AccAddress()
+			oracle := sample.AccAddress()
+
+			// post oracle price
+			mp := pftypes.Params{
+				Pairs: []pftypes.Pair{
+					{Token1: "atom", Token0: "unusd", Oracles: []sdk.AccAddress{oracle}, Active: true},
+				},
+			}
+			app.PriceKeeper.SetParams(ctx, mp)
+			_, err = app.PriceKeeper.SetPrice(
+				ctx,
+				oracle,
+				"atom",
+				"unusd",
+				tc.indexPrice,
+				time.Now().UTC().Add(1*time.Hour),
+			)
+			require.NoError(t, err, "Error posting price for pair")
+			err = app.PriceKeeper.SetCurrentPrices(ctx, "atom", "unusd")
+			require.NoError(t, err, "Error setting price for pair")
 
 			// Create vPool to get the spot price
 			app.VpoolKeeper.CreatePool(
@@ -97,11 +115,11 @@ func TestFullLiquidate(t *testing.T) {
 
 			t.Log("establish initial position")
 			err = app.PerpKeeper.OpenPosition(
-				ctx, tokenPair, types.Side_BUY, traderAddr.String(), tc.positionSize, sdk.OneDec(), sdk.NewDec(150),
+				ctx, tokenPair, types.Side_BUY, traderAddr.String(), tc.positionSize.TruncateInt(), sdk.OneDec(), sdk.NewInt(150),
 			)
 			require.NoError(t, err, "initial position should be opened")
 			err = app.PerpKeeper.OpenPosition(
-				ctx, tokenPair, types.Side_BUY, otherTraderAddr.String(), tc.otherPositionSize, sdk.OneDec(), sdk.NewDec(150),
+				ctx, tokenPair, types.Side_BUY, otherTraderAddr.String(), tc.otherPositionSize.TruncateInt(), sdk.OneDec(), sdk.NewInt(150),
 			)
 			require.NoError(t, err, "second position should be opened")
 

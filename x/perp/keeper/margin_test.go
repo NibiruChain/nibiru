@@ -289,6 +289,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* y */ sdk.NewDec(10_000_000), //
 					/* x */ sdk.NewDec(5_000_000), // 5 tokens
 					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.4"), // 0.9 ratio
 				)
 
 				removeAmt := sdk.NewInt(5)
@@ -320,6 +321,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* y */ sdk.NewDec(10_000_000), //
 					/* x */ sdk.NewDec(5_000_000), // 5 tokens
 					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.4"), // 0.9 ratio
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
