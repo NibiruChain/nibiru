@@ -17,9 +17,7 @@ import (
 They also serve as a reminder of which functions still need MVP unit or
 integration tests */
 var (
-	_ = Keeper.swapQuoteForBase
 	_ = Keeper.closePosition
-	_ = Keeper.increasePosition
 	_ = Keeper.reducePosition
 	_ = Keeper.closeAndOpenReversePosition
 	_ = Keeper.openReversePosition
