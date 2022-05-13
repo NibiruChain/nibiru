@@ -45,7 +45,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 				pair := common.TokenPair("xxx:yyy")
 
-				t.Log("Setup vpool defined by pair")
+				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
 				vpoolKeeper.CreatePool(
 					ctx,
@@ -79,9 +79,8 @@ func TestOpenPosition_Setup(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 				pair := common.TokenPair("xxx:yyy")
 
-				t.Log("Setup vpool defined by pair")
+				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				perpKeeper := &nibiruApp.PerpKeeper
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair.String(),
@@ -90,8 +89,10 @@ func TestOpenPosition_Setup(t *testing.T) {
 					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 				)
-
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+
+				t.Log("Set vpool defined by pair on PerpKeeper")
+				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
 					Pair:                       pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
@@ -278,9 +279,9 @@ func TestRemoveMargin(t *testing.T) {
 					ctx,
 					pair.String(),
 					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					/* y */ sdk.NewDec(10_000_000), //
-					/* x */ sdk.NewDec(5_000_000), // 5 tokens
-					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
+					/* y */ sdk.NewDec(1_000_000), //
+					/* x */ sdk.NewDec(1_000_000), //
+					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 100%
 				)
 
 				removeAmt := sdk.NewInt(5)

@@ -117,14 +117,14 @@ func (k Keeper) RemoveMargin(
 	if err != nil {
 		return res, err
 	}
-	position.Margin = remaining.margin
-	position.LastUpdateCumulativePremiumFraction = remaining.latestCPF
-	if !remaining.badDebt.IsZero() {
+	position.Margin = remaining.Margin
+	position.LastUpdateCumulativePremiumFraction = remaining.LatestCPF
+	if !remaining.BadDebt.IsZero() {
 		return res, fmt.Errorf("failed to remove margin; position has bad debt")
 	}
 
 	freeCollateral, err := k.calcFreeCollateral(
-		ctx, *position, remaining.fPayment, remaining.badDebt)
+		ctx, *position, remaining.FPayment)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
@@ -147,10 +147,10 @@ func (k Keeper) RemoveMargin(
 		/* to */ trader.String(),
 	)
 
-	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.fPayment)
+	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.FPayment)
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      coinToSend,
-		FundingPayment: remaining.fPayment,
+		FundingPayment: remaining.FPayment,
 	}, nil
 }
 
@@ -180,7 +180,7 @@ func (k Keeper) GetMarginRatio(
 		return sdk.Dec{}, err
 	}
 
-	marginRatio := remaining.margin.Sub(remaining.badDebt).Quo(positionNotional)
+	marginRatio := remaining.Margin.Sub(remaining.BadDebt).Quo(positionNotional)
 	return marginRatio, err
 }
 
@@ -204,16 +204,14 @@ Args:
     smaller than 'baseMarginRatio'.
 */
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEqualTo bool) error {
-	switch largerThanOrEqualTo {
-	case true:
+	if largerThanOrEqualTo {
 		if !marginRatio.GTE(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
-	default:
+	} else {
 		if !marginRatio.LT(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
 	}
-
 	return nil
 }
