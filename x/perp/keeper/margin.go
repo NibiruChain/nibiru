@@ -28,7 +28,7 @@ func (k Keeper) AddMargin(
 	addedMargin := msg.Margin.Amount
 	if msg.Margin.Denom != common.StableDenom {
 		return res, fmt.Errorf("invalid margin denom")
-	} else if addedMargin.LTE(sdk.ZeroInt()) {
+	} else if !addedMargin.IsPositive() {
 		return res, fmt.Errorf("margin must be positive, not: %v", addedMargin.String())
 	}
 
