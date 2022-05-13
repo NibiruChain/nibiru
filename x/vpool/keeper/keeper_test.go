@@ -130,6 +130,11 @@ func TestSwapQuoteForBase(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 				require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
+
+				snapshot, _, err := vpoolKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
+				require.NoError(t, err)
+				require.EqualValues(t, tc.expectedQuoteReserve, snapshot.QuoteAssetReserve)
+				require.EqualValues(t, tc.expectedBaseReserve, snapshot.BaseAssetReserve)
 			}
 		})
 	}
