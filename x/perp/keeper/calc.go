@@ -12,58 +12,57 @@ import (
 var initMarginRatio = sdk.MustNewDecFromStr("0.1")
 
 type Remaining struct {
-	// margin sdk.Int: amount of quote token (y) backing the position.
-	margin sdk.Dec
+	// Margin: amount of quote token (y) backing the position.
+	Margin sdk.Dec
 
-	/* badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
+	/* BadDebt: Bad debt (margin units) cleared by the PerpEF during the tx.
 	   Bad debt is negative net margin past the liquidation point of a position. */
-	badDebt sdk.Dec
+	BadDebt sdk.Dec
 
-	/* fundingPayment sdk.Dec: A funding payment made or received by the trader on
+	/* FPayment: A funding payment made or received by the trader on
 	    the current position. 'fundingPayment' is positive if 'owner' is the sender
 		and negative if 'owner' is the receiver of the payment. Its magnitude is
 		abs(vSize * fundingRate). Funding payments act to converge the mark price
 		(vPrice) and index price (average price on major exchanges). */
-	fPayment sdk.Dec
+	FPayment sdk.Dec
 
-	/* latestCPF: latest cumulative premium fraction */
-	latestCPF sdk.Dec
+	/* LatestCPF: latest cumulative premium fraction */
+	LatestCPF sdk.Dec
 }
 
-// TODO test: CalcRemainMarginWithFundingPayment | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context,
-	oldPosition types.Position,
+	pos types.Position,
 	marginDelta sdk.Dec,
 ) (remaining Remaining, err error) {
-	remaining.latestCPF, err = k.getLatestCumulativePremiumFraction(ctx, common.TokenPair(oldPosition.Pair))
+	remaining.LatestCPF, err = k.getLatestCumulativePremiumFraction(ctx, common.TokenPair(pos.Pair))
 	if err != nil {
-		return
+		return remaining, err
 	}
 
-	if oldPosition.Size_.IsZero() {
-		remaining.fPayment = sdk.ZeroDec()
+	if pos.Size_.IsZero() {
+		remaining.FPayment = sdk.ZeroDec()
 	} else {
-		remaining.fPayment = remaining.latestCPF.
-			Sub(oldPosition.LastUpdateCumulativePremiumFraction).
-			Mul(oldPosition.Size_)
+		remaining.FPayment = remaining.LatestCPF.
+			Sub(pos.LastUpdateCumulativePremiumFraction).
+			Mul(pos.Size_)
 	}
 
-	signedRemainMargin := marginDelta.Sub(remaining.fPayment).Add(oldPosition.Margin)
+	signedRemainMargin := marginDelta.Sub(remaining.FPayment).Add(pos.Margin)
 
 	if signedRemainMargin.IsNegative() {
 		// the remaining margin is negative, liquidators didn't do their job
 		// and we have negative margin that must come out of the ecosystem fund
-		remaining.badDebt = signedRemainMargin.Abs()
+		remaining.BadDebt = signedRemainMargin.Abs()
 	} else {
-		remaining.badDebt = sdk.ZeroDec()
-		remaining.margin = signedRemainMargin.Abs()
+		remaining.BadDebt = sdk.ZeroDec()
+		remaining.Margin = signedRemainMargin.Abs()
 	}
 
 	return remaining, err
 }
 
-func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingPayment, badDebt sdk.Dec,
+func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
 ) (sdk.Int, error) {
 	pair, err := common.NewTokenPairFromStr(pos.Pair)
 	if err != nil {
@@ -83,7 +82,7 @@ func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingP
 	if err != nil {
 		return sdk.Int{}, err
 	}
-	freeMargin := pos.Margin.Add(fundingPayment).Sub(badDebt)
+	freeMargin := pos.Margin.Add(fundingPayment)
 	accountValue := unrealizedPnL.Add(freeMargin)
 	minCollateral := sdk.MinDec(accountValue, freeMargin)
 
