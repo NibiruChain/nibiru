@@ -3,15 +3,16 @@ package stablecoin
 import (
 	"math/rand"
 
-	scsim "github.com/NibiruChain/nibiru/x/stablecoin/simulation"
-	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+
+	scsim "github.com/NibiruChain/nibiru/x/stablecoin/simulation"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 // avoid unused import issue
