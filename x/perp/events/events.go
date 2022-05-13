@@ -111,7 +111,8 @@ Args:
   owner sdk.AccAddress: owner of the position.
   notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
     the virtual price on 'vpool'.
-  vsize sdk.Dec: virtual size of the position, defined as margin * leverage.
+  vsize sdk.Dec: virtual size of the position (units of quote per base).
+    Defined as the output of vpool.SwapForBase.
   liquidator sdk.AccAddress: Address of the account that executed the tx.
   liquidationFee sdk.Int: Commission (in margin units) received by 'liquidator'.
   badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.

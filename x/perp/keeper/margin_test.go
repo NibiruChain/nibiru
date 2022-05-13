@@ -158,13 +158,13 @@ func TestAddMargin(t *testing.T) {
 	tests := []struct {
 		name           string
 		initialMargin  sdk.Dec
-		addedMargin    sdk.Dec
+		addedMargin    sdk.Int
 		expectedMargin sdk.Dec
 	}{
 		{
 			name:           "add margin",
 			initialMargin:  sdk.NewDec(100),
-			addedMargin:    sdk.NewDec(100),
+			addedMargin:    sdk.NewInt(100),
 			expectedMargin: sdk.NewDec(200),
 		},
 	}
@@ -172,7 +172,7 @@ func TestAddMargin(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 			tokenPair, err := common.NewTokenPairFromStr("atom:nusd")
 			require.NoError(t, err)
@@ -180,17 +180,36 @@ func TestAddMargin(t *testing.T) {
 			t.Log("add margin funds (NUSD) to trader's account")
 			traderAddr := sample.AccAddress()
 			err = simapp.FundAccount(
-				app.BankKeeper,
+				nibiruApp.BankKeeper,
 				ctx,
 				traderAddr,
 				sdk.NewCoins(
-					sdk.NewCoin(common.StableDenom, tc.addedMargin.TruncateInt()),
+					sdk.NewCoin(common.StableDenom, tc.addedMargin),
 				),
 			)
 			require.NoErrorf(t, err, "fund account call should work")
 
+			t.Log("Set vpool defined by pair on VpoolKeeper")
+			vpoolKeeper := &nibiruApp.VpoolKeeper
+			vpoolKeeper.CreatePool(
+				ctx,
+				tokenPair.String(),
+				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+				sdk.NewDec(10_000_000),       //
+				sdk.NewDec(5_000_000),        // 5 tokens
+				sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+			)
+			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+
+			t.Log("Set vpool defined by pair on PerpKeeper")
+			perpKeeper := &nibiruApp.PerpKeeper
+			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				Pair:                       tokenPair.String(),
+				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+			})
+
 			t.Log("establish initial position")
-			app.PerpKeeper.SetPosition(
+			nibiruApp.PerpKeeper.SetPosition(
 				ctx,
 				tokenPair,
 				traderAddr.String(),
@@ -202,10 +221,14 @@ func TestAddMargin(t *testing.T) {
 				},
 			)
 
-			require.NoError(t,
-				app.PerpKeeper.AddMargin(ctx, tokenPair, traderAddr, tc.addedMargin))
+			goCtx := sdk.WrapSDKContext(ctx)
+			msg := &types.MsgAddMargin{
+				Sender: traderAddr.String(), Vpool: tokenPair.String(),
+				Margin: sdk.Coin{Denom: common.StableDenom, Amount: tc.addedMargin}}
+			_, err = nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
+			require.NoError(t, err)
 
-			position, err := app.PerpKeeper.GetPosition(
+			position, err := nibiruApp.PerpKeeper.GetPosition(
 				ctx, tokenPair, traderAddr.String())
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedMargin, position.Margin)
