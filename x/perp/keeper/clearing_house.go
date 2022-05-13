@@ -201,15 +201,15 @@ func (k Keeper) increasePosition(
 	positionResp.ExchangedQuoteAssetAmount = openNotional
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
 	positionResp.MarginToVault = increaseMarginRequirement
-	positionResp.FundingPayment = remaining.fPayment
-	positionResp.BadDebt = remaining.badDebt
+	positionResp.FundingPayment = remaining.FPayment
+	positionResp.BadDebt = remaining.BadDebt
 	positionResp.Position = &types.Position{
 		Address:                             oldPosition.Address,
 		Pair:                                oldPosition.Pair,
 		Size_:                               newSize,
-		Margin:                              remaining.margin,
+		Margin:                              remaining.Margin,
 		OpenNotional:                        oldPosition.OpenNotional.Add(positionResp.ExchangedQuoteAssetAmount),
-		LastUpdateCumulativePremiumFraction: remaining.latestCPF,
+		LastUpdateCumulativePremiumFraction: remaining.LatestCPF,
 		LiquidityHistoryIndex:               oldPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
@@ -369,8 +369,8 @@ func (k Keeper) reducePosition(
 		*oldPosition,
 		positionResp.RealizedPnl,
 	)
-	positionResp.BadDebt = remaining.badDebt
-	positionResp.FundingPayment = remaining.fPayment
+	positionResp.BadDebt = remaining.BadDebt
+	positionResp.FundingPayment = remaining.FPayment
 	if err != nil {
 		return nil, err
 	}
@@ -394,9 +394,9 @@ func (k Keeper) reducePosition(
 		Address:                             oldPosition.Address,
 		Pair:                                oldPosition.Pair,
 		Size_:                               oldPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                              remaining.margin,
+		Margin:                              remaining.Margin,
 		OpenNotional:                        remainOpenNotional.Abs(),
-		LastUpdateCumulativePremiumFraction: remaining.latestCPF,
+		LastUpdateCumulativePremiumFraction: remaining.LatestCPF,
 		LiquidityHistoryIndex:               oldPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
@@ -490,9 +490,9 @@ func (k Keeper) closePosition(
 
 	positionResp.ExchangedPositionSize = oldPosition.Size_.Neg()
 	positionResp.RealizedPnl = unrealizedPnL
-	positionResp.BadDebt = remaining.badDebt
-	positionResp.FundingPayment = remaining.fPayment
-	positionResp.MarginToVault = remaining.margin.Neg()
+	positionResp.BadDebt = remaining.BadDebt
+	positionResp.FundingPayment = remaining.FPayment
+	positionResp.MarginToVault = remaining.Margin.Neg()
 
 	var vammDir pooltypes.Direction
 	switch oldPosition.Size_.GTE(sdk.ZeroDec()) {
