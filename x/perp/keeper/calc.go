@@ -34,7 +34,6 @@ type Remaining struct {
 func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context, pos *types.Position, marginDelta sdk.Dec,
 ) (remaining Remaining, err error) {
-
 	pair, err := common.NewTokenPairFromStr(pos.Pair)
 	if err != nil {
 		return remaining, err

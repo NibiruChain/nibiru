@@ -177,7 +177,6 @@ Args:
     smaller than 'baseMarginRatio'.
 */
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEqualTo bool) error {
-
 	if largerThanOrEqualTo {
 		if !marginRatio.GTE(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
