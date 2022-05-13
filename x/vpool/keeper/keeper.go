@@ -80,7 +80,7 @@ func (k Keeper) SwapBaseAsset(
 	}
 
 	if dir == types.Direction_REMOVE_FROM_POOL &&
-		!pool.HasEnoughQuoteReserve(baseAssetAmount) {
+		!pool.HasEnoughBaseReserve(baseAssetAmount) {
 		return sdk.Dec{}, types.ErrOvertradingLimit
 	}
 
