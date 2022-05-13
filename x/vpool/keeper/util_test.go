@@ -3,7 +3,6 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -11,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
+
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 const NUSDPair = "BTC:NUSD"

@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/NibiruChain/nibiru/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 var _ types.QueryServer = Querier{}

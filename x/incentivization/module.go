@@ -3,8 +3,8 @@ package incentivization
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
+	"math/rand"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -15,7 +15,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"math/rand"
+
+	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
 )
 
 var (

@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
 )
 
 const (

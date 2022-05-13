@@ -48,4 +48,3 @@ func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (e
 	pool.PoolAssets[index] = poolAsset
 	return nil
 }
-

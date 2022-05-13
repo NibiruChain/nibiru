@@ -3,8 +3,9 @@ package keeper
 import (
 	"errors"
 
-	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
 func (k Keeper) updatePoolForSwap(

@@ -3,10 +3,11 @@ package pricefeed
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
-	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 // NewHandler ...

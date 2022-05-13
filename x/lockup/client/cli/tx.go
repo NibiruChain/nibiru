@@ -2,14 +2,16 @@ package cli
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"strconv"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
-	"strconv"
-	"time"
+
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

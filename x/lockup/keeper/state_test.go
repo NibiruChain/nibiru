@@ -1,16 +1,18 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/lockup/keeper"
-	"github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"testing"
-	"time"
+
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestLockState(t *testing.T) {

@@ -1,9 +1,10 @@
 package stablecoin
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

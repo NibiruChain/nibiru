@@ -26,10 +26,8 @@ Returns
 	MsgRemoveMarginResponse:
 	error:
 */
-func (k msgServer) MsgRemoveMargin(
-	goCtx context.Context, msg *types.MsgRemoveMargin,
+func (k msgServer) MsgRemoveMargin(goCtx context.Context, msg *types.MsgRemoveMargin,
 ) (*types.MsgRemoveMarginResponse, error) {
-
 	removeMarginResponse, err := k.RemoveMargin(goCtx, msg)
 	if err != nil {
 		return nil, err

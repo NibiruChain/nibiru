@@ -1,8 +1,9 @@
 package lockup
 
 import (
-	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

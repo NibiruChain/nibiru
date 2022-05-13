@@ -3,8 +3,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 // Parameter keys

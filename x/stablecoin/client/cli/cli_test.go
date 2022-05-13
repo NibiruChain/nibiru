@@ -7,9 +7,10 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	cli "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	utils "github.com/NibiruChain/nibiru/x/testutil"
@@ -17,12 +18,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/network"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

@@ -3,10 +3,11 @@ package types
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestValidateBasic(t *testing.T) {

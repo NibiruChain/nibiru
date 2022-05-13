@@ -3,10 +3,11 @@ package dex
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/dex/keeper"
-	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
 // NewHandler ...

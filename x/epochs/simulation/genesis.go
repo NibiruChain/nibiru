@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 // RandomizedGenState generates a random GenesisState for mint.

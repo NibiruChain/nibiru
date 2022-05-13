@@ -1,10 +1,11 @@
 package types // noalias
 
 import (
-	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
