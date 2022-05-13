@@ -51,7 +51,7 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair common.TokenPair, trader st
 	transferredCoins = sdk.NewCoins() // TODO(mercilex): maybe here it would be cleaner to create a zero coin amount of the quote asset of the virtual pool
 	if settledValue.GT(sdk.ZeroDec()) {
 		// transfer, NOTE(mercilex): transferredCoins is over-written here.
-		transferredCoins, err = k.Transfer(ctx, pair, traderAddr, settledValue.RoundInt())
+		transferredCoins, err = k.Transfer(ctx, pair.GetQuoteTokenDenom(), traderAddr, settledValue.RoundInt())
 		if err != nil {
 			return
 		}
