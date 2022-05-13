@@ -91,7 +91,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	freeCollateral, err := k.calcFreeCollateral(
-		ctx, position, remaining.fPayment, remaining.badDebt)
+		ctx, position, remaining.fPayment)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
@@ -178,16 +178,15 @@ Args:
     smaller than 'baseMarginRatio'.
 */
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEqualTo bool) error {
-	switch largerThanOrEqualTo {
-	case true:
+
+	if largerThanOrEqualTo {
 		if !marginRatio.GTE(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
-	default:
+	} else {
 		if !marginRatio.LT(baseMarginRatio) {
 			return fmt.Errorf("margin ratio did not meet criteria")
 		}
 	}
-
 	return nil
 }

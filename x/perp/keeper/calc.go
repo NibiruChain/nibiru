@@ -61,7 +61,7 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	return remaining, err
 }
 
-func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos *types.Position, fundingPayment, badDebt sdk.Dec,
+func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos *types.Position, fundingPayment sdk.Dec,
 ) (sdk.Int, error) {
 	owner, err := sdk.AccAddressFromBech32(pos.Address)
 	if err != nil {
@@ -82,7 +82,7 @@ func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos *types.Position, funding
 	if err != nil {
 		return sdk.Int{}, err
 	}
-	freeMargin := pos.Margin.Add(fundingPayment).Sub(badDebt)
+	freeMargin := pos.Margin.Add(fundingPayment)
 	accountValue := unrealizedPnL.Add(freeMargin)
 	minCollateral := sdk.MinDec(accountValue, freeMargin)
 
