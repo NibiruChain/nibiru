@@ -2,15 +2,17 @@ package keeper
 
 import (
 	"fmt"
-	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"time"
+
+	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
+	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 )
 
 const (

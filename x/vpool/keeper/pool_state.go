@@ -3,9 +3,10 @@ package keeper
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // CreatePool creates a pool for a specific pair.
@@ -50,6 +51,43 @@ func (k Keeper) savePool(
 ) {
 	bz := k.codec.MustMarshal(pool)
 	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
+}
+
+/*
+Saves an updated pool to state and snapshots it.
+
+args:
+  - ctx: cosmos-sdk context
+  - updatedPool: pool object to save to state
+  - skipFluctuationCheck: override fluctuation check from last snapshot
+
+ret:
+  - err: error
+*/
+func (k Keeper) savePoolAndSnapshot(
+	ctx sdk.Context,
+	updatedPool *types.Pool,
+	skipFluctuationCheck bool,
+) (err error) {
+	// Check if its over Fluctuation Limit Ratio.
+	if !skipFluctuationCheck {
+		if err = k.checkFluctuationLimitRatio(ctx, updatedPool); err != nil {
+			return err
+		}
+	}
+
+	if err = k.addReserveSnapshot(
+		ctx,
+		common.TokenPair(updatedPool.Pair),
+		updatedPool.QuoteAssetReserve,
+		updatedPool.BaseAssetReserve,
+	); err != nil {
+		return fmt.Errorf("error creating snapshot: %w", err)
+	}
+
+	k.savePool(ctx, updatedPool)
+
+	return nil
 }
 
 // ExistsPool returns true if pool exists, false if not.

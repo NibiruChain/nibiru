@@ -196,7 +196,7 @@ func EmitMarginChange(
 	owner sdk.AccAddress,
 	vpool string,
 	marginAmt sdk.Int,
-	fundingPayment sdk.Int,
+	fundingPayment sdk.Dec,
 ) {
 	const EventTypeMarginChange = "margin_change"
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
