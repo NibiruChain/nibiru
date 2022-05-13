@@ -202,7 +202,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				// ∴ remaining.badDebt = signedRemainMargin.Abs() = 200
 				require.EqualValues(t, sdk.NewDec(200), remaining.BadDebt)
 				require.EqualValues(t, sdk.ZeroDec(), remaining.FundingPayment)
-				require.EqualValues(t, sdk.Dec{}, remaining.Margin)
+				require.EqualValues(t, sdk.ZeroDec(), remaining.Margin)
 				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativePremiumFraction)
 			},
 		},
