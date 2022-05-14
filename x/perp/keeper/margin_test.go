@@ -351,10 +351,11 @@ func TestRemoveMargin(t *testing.T) {
 				require.NoError(t, err)
 
 				// temporary -> send funds to vault for now
-				nibiruApp.BankKeeper.SendCoinsFromAccountToModule(
+				err = nibiruApp.BankKeeper.SendCoinsFromAccountToModule(
 					ctx, alice, types.VaultModuleAccount,
 					sdk.NewCoins(sdk.NewInt64Coin(common.StableDenom, 6)),
 				)
+				require.NoError(t, err)
 
 				pos, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
 				require.NoError(t, err)

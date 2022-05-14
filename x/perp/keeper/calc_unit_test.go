@@ -3,15 +3,15 @@ package keeper
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_calcFreeCollateral(t *testing.T) {
-
 	testCases := []struct {
 		name string
 		test func()
@@ -32,7 +32,6 @@ func Test_calcFreeCollateral(t *testing.T) {
 		{
 			name: "token pair not found - fail",
 			test: func() {
-				k, _, ctx := getKeeper(t)
 				k, mocks, ctx := getKeeper(t)
 
 				fundingPayment := sdk.ZeroDec()
@@ -44,6 +43,22 @@ func Test_calcFreeCollateral(t *testing.T) {
 				_, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, types.ErrPairNotFound.Error())
+			},
+		},
+		{
+			name: "zero position returns zero free collateral - happy path",
+			test: func() {
+				k, mocks, ctx := getKeeper(t)
+
+				fundingPayment := sdk.ZeroDec()
+				validPair := common.TokenPair("xxx:yyy")
+				alice := sample.AccAddress()
+				pos := types.ZeroPosition(ctx, validPair, alice.String())
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
+					Return(true)
+				freeCollateral, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
+				assert.NoError(t, err)
+				assert.EqualValues(t, sdk.ZeroInt(), freeCollateral)
 			},
 		},
 	}
