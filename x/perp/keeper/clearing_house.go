@@ -401,9 +401,9 @@ func (k Keeper) decreasePosition(
 			Sub(openNotional).
 			Sub(positionResp.UnrealizedPnlAfter)
 	} else {
-		remainOpenNotional = positionResp.UnrealizedPnlAfter.
-			Add(currentPositionNotional).
-			Sub(openNotional)
+		remainOpenNotional = currentPositionNotional.
+			Sub(openNotional).
+			Add(positionResp.UnrealizedPnlAfter)
 	}
 
 	if remainOpenNotional.IsNegative() {
