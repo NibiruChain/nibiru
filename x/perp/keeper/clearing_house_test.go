@@ -846,6 +846,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		})
 	}
 }
+
 func TestIncreasePosition(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1006,6 +1007,87 @@ func TestIncreasePosition(t *testing.T) {
 			},
 		},
 		{
+			name: "increase long position, bad debt due to huge funding payment",
+			// user bought in at 110 BTC for 11 NUSD at 10x leverage (1 BTC = 1 NUSD)
+			// open and positional notional value is 110 NUSD
+			// BTC went down in value, now its price is 1.1 BTC = 1 NUSD
+			// position notional value is 100 NUSD, unrealized PnL is -10 NUSD
+			// user increases position by another 10 NUSD at 10x leverage
+			// funding payment causes negative margin aka bad debt
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("set up initial position")
+				currentPosition := types.Position{
+					Address:                             sample.AccAddress().String(),
+					Pair:                                "BTC:NUSD",
+					Size_:                               sdk.NewDec(110), // 110 BTC
+					Margin:                              sdk.NewDec(11),  // 11 NUSD
+					OpenNotional:                        sdk.NewDec(110), // 110 NUSD
+					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+					LiquidityHistoryIndex:               0,
+					BlockNumber:                         0,
+				}
+
+				t.Log("mock vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					SwapQuoteForBase(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
+						/*quoteAssetAmount=*/ sdk.NewDec(100),
+						/*baseAssetLimit=*/ sdk.NewDec(110),
+					).Return( /*baseAssetAmount=*/ sdk.NewDec(110), nil)
+
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_ADD_TO_POOL,
+						/*baseAssetAmount=*/ sdk.NewDec(110),
+					).
+					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
+
+				t.Log("set up pair metadata and last cumulative premium fraction")
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair: "BTC:NUSD",
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.ZeroDec(),
+						sdk.MustNewDecFromStr("0.2"), // 0.2 NUSD / BTC
+					},
+				})
+
+				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
+				resp, err := perpKeeper.increasePosition(
+					ctx,
+					currentPosition,
+					types.Side_BUY,
+					/*openNotional=*/ sdk.NewDec(100), // NUSD
+					/*baseLimit=*/ sdk.NewDec(110), // BTC
+					/*leverage=*/ sdk.NewDec(10),
+				)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(10), resp.MarginToVault) // openNotional / leverage
+				require.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)    // always zero for increasePosition
+
+				require.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount)  // equal to open notional
+				require.EqualValues(t, sdk.NewDec(110), resp.ExchangedPositionSize)      // equal to base amount bought
+				require.EqualValues(t, sdk.MustNewDecFromStr("22"), resp.FundingPayment) // 0.02 * 110
+				require.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)         // 90 - 100
+				require.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                      // 11(old) + 10(new) - 22(funding payment)
+
+				require.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				require.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				require.EqualValues(t, sdk.NewDec(220), resp.Position.Size_)        // 110 + 110
+				require.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 11(old) + 10(new) - 22(funding payment) --> zero margin left
+				require.EqualValues(t, sdk.NewDec(210), resp.Position.OpenNotional) // 100(old) + 100(new)
+				require.EqualValues(t, sdk.MustNewDecFromStr("0.2"), resp.Position.LastUpdateCumulativePremiumFraction)
+				require.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
+				require.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+			},
+		},
+		{
 			name: "increase short position, positive PnL",
 			// user sold 100 BTC for 100 NUSD at 10x leverage (1BTC=1NUSD)
 			// user's initial margin deposit was 10 NUSD
@@ -1161,7 +1243,88 @@ func TestIncreasePosition(t *testing.T) {
 				require.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
-		// TODO(https://github.com/NibiruChain/nibiru/issues/360): Add test cases that result in bad debt
+		{
+			name: "increase short position, bad debt due to huge funding payment",
+			// user sold 100 BTC for 100 NUSD at 10x leverage (1BTC=1NUSD)
+			// user's initial margin deposit was 10 NUSD
+			// position and open notional is 100 NUSD
+			// BTC went up in value, now its price is 1 BTC = 1.05 NUSD
+			// position notional is 105 NUSD and unrealizedPnL is -5 NUSD
+			// user increases position by another 105 NUSD at 10x leverage
+			// funding payment causes bad debt
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				t.Log("set up initial position")
+				currentPosition := types.Position{
+					Address:                             sample.AccAddress().String(),
+					Pair:                                "BTC:NUSD",
+					Size_:                               sdk.NewDec(-100), // 100 BTC
+					Margin:                              sdk.NewDec(10),   // 10 NUSD
+					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+					LiquidityHistoryIndex:               0,
+					BlockNumber:                         0,
+				}
+
+				t.Log("mock vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					SwapQuoteForBase(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
+						/*quoteAssetAmount=*/ sdk.NewDec(105),
+						/*baseAssetLimit=*/ sdk.NewDec(100),
+					).Return( /*baseAssetAmount=*/ sdk.NewDec(100), nil)
+
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair("BTC:NUSD"),
+						vpooltypes.Direction_REMOVE_FROM_POOL,
+						/*baseAssetAmount=*/ sdk.NewDec(100),
+					).
+					Return( /*quoteAssetAmount=*/ sdk.NewDec(105), nil)
+
+				t.Log("set up pair metadata and last cumulative premium fraction")
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair: "BTC:NUSD",
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.ZeroDec(),
+						sdk.MustNewDecFromStr("-0.3"), // - 0.3 NUSD / BTC
+					},
+				})
+
+				t.Log("Increase position with 10.5 NUSD margin and 10x leverage.")
+				resp, err := perpKeeper.increasePosition(
+					ctx,
+					currentPosition,
+					types.Side_SELL,
+					/*openNotional=*/ sdk.NewDec(105), // NUSD
+					/*baseLimit=*/ sdk.NewDec(100), // BTC
+					/*leverage=*/ sdk.NewDec(10),
+				)
+
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)                   // always zero for increasePosition
+				require.EqualValues(t, sdk.MustNewDecFromStr("10.5"), resp.MarginToVault) // openNotional / leverage
+
+				require.EqualValues(t, sdk.NewDec(105), resp.ExchangedQuoteAssetAmount) // equal to open notional
+				require.EqualValues(t, sdk.NewDec(-100), resp.ExchangedPositionSize)    // base asset IOUs
+				require.EqualValues(t, sdk.NewDec(30), resp.FundingPayment)             // -100 * (-0.2)
+				require.EqualValues(t, sdk.NewDec(-5), resp.UnrealizedPnlAfter)         // 100 - 105
+				require.EqualValues(t, sdk.MustNewDecFromStr("9.5"), resp.BadDebt)      // 10(old) + 10.5(new) - (30)(funding payment)
+
+				require.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				require.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				require.EqualValues(t, sdk.NewDec(-200), resp.Position.Size_)       // -100 + (-100)
+				require.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 10(old) + 10.5(new) - (30)(funding payment) --> zero margin left
+				require.EqualValues(t, sdk.NewDec(205), resp.Position.OpenNotional) // 100(old) + 105(new)
+				require.EqualValues(t, sdk.MustNewDecFromStr("-0.3"), resp.Position.LastUpdateCumulativePremiumFraction)
+				require.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
+				require.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+			},
+		},
 	}
 
 	for _, tc := range tests {
