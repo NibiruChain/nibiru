@@ -33,24 +33,24 @@ type RemainingMarginWithFundingPayment struct {
 
 func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context,
-	pos types.Position,
+	currentPosition types.Position,
 	marginDelta sdk.Dec,
 ) (remaining RemainingMarginWithFundingPayment, err error) {
 	remaining.LatestCumulativePremiumFraction, err = k.
-		getLatestCumulativePremiumFraction(ctx, common.TokenPair(pos.Pair))
+		getLatestCumulativePremiumFraction(ctx, common.TokenPair(currentPosition.Pair))
 	if err != nil {
 		return remaining, err
 	}
 
-	if pos.Size_.IsZero() {
+	if currentPosition.Size_.IsZero() {
 		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
 		remaining.FundingPayment = remaining.LatestCumulativePremiumFraction.
-			Sub(pos.LastUpdateCumulativePremiumFraction).
-			Mul(pos.Size_)
+			Sub(currentPosition.LastUpdateCumulativePremiumFraction).
+			Mul(currentPosition.Size_)
 	}
 
-	remainingMargin := pos.Margin.Add(marginDelta).Sub(remaining.FundingPayment)
+	remainingMargin := currentPosition.Margin.Add(marginDelta).Sub(remaining.FundingPayment)
 
 	if remainingMargin.IsNegative() {
 		// the remaining margin is negative, liquidators didn't do their job
