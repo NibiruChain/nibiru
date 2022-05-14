@@ -12,32 +12,63 @@ import (
 )
 
 func (k Keeper) AddMargin(
-	ctx sdk.Context,
-	pair common.TokenPair,
-	trader sdk.AccAddress,
-	addedMargin sdk.Dec,
-) (err error) {
+	goCtx context.Context, msg *types.MsgAddMargin,
+) (res *types.MsgAddMarginResponse, err error) {
+	// ------------- Message Setup -------------
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate trader
+	trader, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return res, err
+	}
+
+	// validate margin
+	addedMargin := msg.Margin.Amount
+	if msg.Margin.Denom != common.StableDenom {
+		return res, fmt.Errorf("invalid margin denom")
+	} else if !addedMargin.IsPositive() {
+		return res, fmt.Errorf("margin must be positive, not: %v", addedMargin.String())
+	}
+
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
+	if err != nil {
+		return res, err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return res, err
+	}
+
+	// ------------- AddMargin -------------
+
 	position, err := k.Positions().Get(ctx, pair, trader.String())
 	if err != nil {
-		return err
+		return res, err
 	}
 
-	position.Margin = position.Margin.Add(addedMargin)
+	position.Margin = position.Margin.Add(addedMargin.ToDec())
 
+	coinToSend := sdk.NewCoin(common.StableDenom, addedMargin)
+	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
-		ctx,
-		trader,
-		types.ModuleName,
-		sdk.NewCoins(
-			sdk.NewCoin(common.StableDenom, addedMargin.TruncateInt()),
-		),
+		ctx, trader, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
-		return err
+		return res, err
 	}
+	events.EmitTransfer(ctx,
+		/* coin */ coinToSend,
+		/* from */ vaultAddr.String(),
+		/* to */ trader.String(),
+	)
 
 	k.Positions().Set(ctx, pair, trader.String(), position)
 
-	return nil
+	fPayment := sdk.ZeroDec()
+	events.EmitMarginChange(ctx, trader, pair.String(), addedMargin, fPayment)
+	return &types.MsgAddMarginResponse{}, nil
 }
 
 func (k Keeper) RemoveMargin(
@@ -62,7 +93,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// validate pair
-	pair, err := common.NewTokenPairFromStr(msg.Vpool)
+	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
 	if err != nil {
 		return res, err
 	}
