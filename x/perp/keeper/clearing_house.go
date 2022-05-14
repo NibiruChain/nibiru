@@ -408,6 +408,10 @@ func (k Keeper) decreasePosition(
 	positionResp.UnrealizedPnlAfter = unrealizedPnl.Sub(positionResp.RealizedPnl)
 	positionResp.ExchangedQuoteAssetAmount = openNotional
 
+	// calculate openNotional (it's different depends on long or short side)
+	// long: unrealizedPnl = positionNotional - openNotional => openNotional = positionNotional - unrealizedPnl
+	// short: unrealizedPnl = openNotional - positionNotional => openNotional = positionNotional + unrealizedPnl
+	// positionNotional = oldPositionNotional - exchangedQuoteAssetAmount
 	var remainOpenNotional sdk.Dec
 	if currentPosition.Size_.IsPositive() {
 		remainOpenNotional = currentPositionNotional.
