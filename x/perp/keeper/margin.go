@@ -152,7 +152,7 @@ func (k Keeper) RemoveMargin(
 	}, nil
 }
 
-// TODO test: GetMarginRatio
+// GetMarginRatio calculates the MarginRatio from a Position
 func (k Keeper) GetMarginRatio(
 	ctx sdk.Context, position types.Position,
 ) (sdk.Dec, error) {
