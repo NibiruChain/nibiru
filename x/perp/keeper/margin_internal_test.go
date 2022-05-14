@@ -95,6 +95,7 @@ func TestKeeper_GetMarginRatio(t *testing.T) {
 	tests := []struct {
 		name                string
 		position            types.Position
+		newPrice            sdk.Dec
 		expectedMarginRatio sdk.Dec
 	}{
 		{
@@ -107,7 +108,21 @@ func TestKeeper_GetMarginRatio(t *testing.T) {
 				Margin:                              sdk.NewDec(1),
 				LastUpdateCumulativePremiumFraction: sdk.OneDec(),
 			},
+			sdk.MustNewDecFromStr("10"),
 			sdk.MustNewDecFromStr("0.1"),
+		},
+		{
+			"margin with price changes",
+			types.Position{
+				Address:                             sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(10),
+				OpenNotional:                        sdk.NewDec(10),
+				Margin:                              sdk.NewDec(1),
+				LastUpdateCumulativePremiumFraction: sdk.OneDec(),
+			},
+			sdk.MustNewDecFromStr("12"),
+			sdk.MustNewDecFromStr("0.25"),
 		},
 	}
 
@@ -124,7 +139,7 @@ func TestKeeper_GetMarginRatio(t *testing.T) {
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.NewDec(10),
 				).
-				Return(sdk.NewDec(10), nil)
+				Return(tc.newPrice, nil)
 			t.Log("Mock vpool twap")
 			deps.mockVpoolKeeper.EXPECT().
 				GetBaseAssetTWAP(
