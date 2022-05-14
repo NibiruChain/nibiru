@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -94,8 +95,9 @@ func TestOpenPosition_Setup(t *testing.T) {
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair:                       pair.String(),
-					CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+					Pair: pair.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.OneDec()},
 				})
 
 				t.Log("Fund trader (Alice) account with sufficient quote")
@@ -428,37 +430,60 @@ func TestRemoveMargin(t *testing.T) {
 				alice := sample.AccAddress()
 				pair := common.TokenPair("xxx:yyy")
 
-				t.Log("Setup vpool defined by pair")
+				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				perpKeeper := &nibiruApp.PerpKeeper
+				quoteReserves := sdk.NewDec(1_000_000)
+				baseReserves := sdk.NewDec(1_000_000)
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair.String(),
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					/* y */ sdk.NewDec(10_000_000), //
-					/* x */ sdk.NewDec(5_000_000), // 5 tokens
+					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					/* y */ quoteReserves,
+					/* x */ baseReserves,
 					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+
+				t.Log("Set vpool defined by pair on PerpKeeper")
+				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair:                       pair.String(),
-					CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+					Pair: pair.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.ZeroDec(),
+						sdk.MustNewDecFromStr("0.1")},
 				})
+
+				t.Log("increment block height and time for twap calculation")
+				ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
+					WithBlockTime(time.Now().Add(time.Minute))
 
 				t.Log("Fund trader (Alice) account with sufficient quote")
 				var err error
 				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
-					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+					sdk.NewCoins(
+						sdk.NewInt64Coin("yyy", 60),
+						sdk.NewInt64Coin(common.StableDenom, 6),
+					))
 				require.NoError(t, err)
 
 				t.Log("Open long position with 5x leverage")
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewInt(150)
+				baseLimit := sdk.NewInt(10)
 				err = nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.NoError(t, err)
+
+				// temporary -> send funds to vault for now
+				nibiruApp.BankKeeper.SendCoinsFromAccountToModule(
+					ctx, alice, types.VaultModuleAccount,
+					sdk.NewCoins(sdk.NewInt64Coin(common.StableDenom, 6)),
+				)
+
+				pos, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
+				require.NoError(t, err)
+				fmt.Println(pos)
 
 				t.Log("Attempt to remove 10% of the position")
 				removeAmt := sdk.NewInt(6)
@@ -466,17 +491,12 @@ func TestRemoveMargin(t *testing.T) {
 				msg := &types.MsgRemoveMargin{
 					Sender: alice.String(), Vpool: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
-				// TODO: Blocker - Need GetOutputTWAP from prices.go
-				// The test will panic b/c it's missing that implementation.
-				require.Panics(t,
-					func() {
-						_, err := perpKeeper.RemoveMargin(goCtx, msg)
-						require.Error(t, err)
-					})
+
 				// Desired behavior ↓
-				// err = perpKeeper.RemoveMargin(
-				// 	ctx, pair, alice, removeAmt)
-				// require.NoError(t, err)
+				res, err := perpKeeper.RemoveMargin(goCtx, msg)
+				require.NoError(t, err)
+				require.EqualValues(t, msg.Margin, res.MarginOut)
+				require.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
 			},
 		},
 	}

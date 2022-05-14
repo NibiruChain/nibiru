@@ -9,7 +9,7 @@ import (
 
 // NOTE hardcoded for now. Need to discuss whether this should be part of the
 // Params of x/perp
-var initMarginRatio = sdk.MustNewDecFromStr("0.1")
+var initMarginRatio = sdk.MustNewDecFromStr("0.01")
 
 type RemainingMarginWithFundingPayment struct {
 	// Margin: amount of quote token (y) backing the position.

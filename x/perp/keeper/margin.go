@@ -94,13 +94,13 @@ func (k Keeper) RemoveMargin(
 		ctx, *position, remaining.FundingPayment)
 	if err != nil {
 		return res, err
-	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
+	} else if !freeCollateral.IsPositive() {
 		return res, fmt.Errorf("not enough free collateral")
 	}
 
 	k.Positions().Set(ctx, pair, trader.String(), position)
 
-	coinToSend := sdk.NewCoin(common.StableDenom, margin)
+	coinToSend := sdk.NewCoin(msg.Margin.Denom, margin)
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.VaultModuleAccount, trader, sdk.NewCoins(coinToSend))
 	if err != nil {
