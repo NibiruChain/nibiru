@@ -17,7 +17,6 @@ import (
 They also serve as a reminder of which functions still need MVP unit or
 integration tests */
 var (
-	_ = Keeper.closePosition
 	_ = Keeper.closeAndOpenReversePosition
 	_ = Keeper.openReversePosition
 	_ = Keeper.transferFee
@@ -497,7 +496,7 @@ func (k Keeper) closeAndOpenReversePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = new(types.PositionResp)
 
-	closePositionResp, err := k.closePosition(ctx, currentPosition, sdk.ZeroInt())
+	closePositionResp, err := k.closePositionEntirely(ctx, currentPosition, sdk.ZeroDec())
 	if err != nil {
 		return nil, err
 	}
@@ -552,17 +551,22 @@ func (k Keeper) closeAndOpenReversePosition(
 	return positionResp, nil
 }
 
-// TODO test: closePosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) closePosition(
+// TODO test: closePositionEntirely | https://github.com/NibiruChain/nibiru/issues/299
+func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	currentPosition types.Position,
-	quoteAssetAmountLimit sdk.Int,
+	quoteAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	positionResp = new(types.PositionResp)
-
 	if currentPosition.Size_.IsZero() {
 		return nil, fmt.Errorf("zero position size")
 	}
+
+	positionResp = &types.PositionResp{
+		UnrealizedPnlAfter:    sdk.ZeroDec(),
+		ExchangedPositionSize: currentPosition.Size_.Neg(),
+	}
+
+	// calculate unrealized PnL
 	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
@@ -572,41 +576,54 @@ func (k Keeper) closePosition(
 		return nil, err
 	}
 
+	positionResp.RealizedPnl = unrealizedPnL
+
+	// calculate remaining margin with funding payment
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, currentPosition, unrealizedPnL)
 	if err != nil {
 		return nil, err
 	}
 
-	positionResp.ExchangedPositionSize = currentPosition.Size_.Neg()
-	positionResp.RealizedPnl = unrealizedPnL
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.MarginToVault = remaining.Margin.Neg()
 
-	var vammDir pooltypes.Direction
-	switch currentPosition.Size_.GTE(sdk.ZeroDec()) {
-	case true:
-		vammDir = pooltypes.Direction_ADD_TO_POOL
-	case false:
-		vammDir = pooltypes.Direction_REMOVE_FROM_POOL
+	var baseAssetDirection pooltypes.Direction
+	if currentPosition.Size_.IsPositive() {
+		baseAssetDirection = pooltypes.Direction_ADD_TO_POOL
+	} else {
+		baseAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
 	}
-	exchangedQuoteAssetAmount, err :=
-		k.VpoolKeeper.SwapBaseForQuote(
-			ctx,
-			common.TokenPair(currentPosition.Pair),
-			vammDir,
-			currentPosition.Size_.Abs(),
-			quoteAssetAmountLimit.ToDec(),
-		)
+
+	exchangedQuoteAssetAmount, err := k.VpoolKeeper.SwapBaseForQuote(
+		ctx,
+		common.TokenPair(currentPosition.Pair),
+		baseAssetDirection,
+		currentPosition.Size_.Abs(),
+		quoteAssetAmountLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount
+	positionResp.Position = &types.Position{
+		Address:                             currentPosition.Address,
+		Pair:                                currentPosition.Pair,
+		Size_:                               sdk.ZeroDec(),
+		Margin:                              sdk.ZeroDec(),
+		OpenNotional:                        sdk.ZeroDec(),
+		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
+		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
+		BlockNumber:                         ctx.BlockHeight(),
+	}
 
-	err = k.ClearPosition(ctx, common.TokenPair(currentPosition.Pair), currentPosition.Address)
-	if err != nil {
+	if err = k.ClearPosition(
+		ctx,
+		common.TokenPair(currentPosition.Pair),
+		currentPosition.Address,
+	); err != nil {
 		return nil, err
 	}
 
