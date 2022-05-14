@@ -160,7 +160,7 @@ func TestAddMargin(t *testing.T) {
 				ctx,
 				traderAddr,
 				sdk.NewCoins(
-					sdk.NewCoin(common.StableDenom, tc.addedMargin),
+					sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), tc.addedMargin),
 				),
 			)
 			require.NoErrorf(t, err, "fund account call should work")
@@ -200,7 +200,9 @@ func TestAddMargin(t *testing.T) {
 			goCtx := sdk.WrapSDKContext(ctx)
 			msg := &types.MsgAddMargin{
 				Sender: traderAddr.String(), TokenPair: tokenPair.String(),
-				Margin: sdk.Coin{Denom: common.StableDenom, Amount: tc.addedMargin}}
+				Margin: sdk.Coin{
+					Denom:  tokenPair.GetQuoteTokenDenom(),
+					Amount: tc.addedMargin}}
 			_, err = nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
 			require.NoError(t, err)
 
@@ -292,7 +294,7 @@ func TestRemoveMargin(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
 					Sender: alice.String(), TokenPair: pair.String(),
-					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
+					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
 				_, err := perpKeeper.RemoveMargin(
 					goCtx, msg)
 				require.Error(t, err)
@@ -338,8 +340,7 @@ func TestRemoveMargin(t *testing.T) {
 				var err error
 				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
 					sdk.NewCoins(
-						sdk.NewInt64Coin("yyy", 60),
-						sdk.NewInt64Coin(common.StableDenom, 6),
+						sdk.NewInt64Coin("yyy", 66),
 					))
 				require.NoError(t, err)
 
@@ -355,7 +356,7 @@ func TestRemoveMargin(t *testing.T) {
 				// temporary -> send funds to vault for now
 				err = nibiruApp.BankKeeper.SendCoinsFromAccountToModule(
 					ctx, alice, types.VaultModuleAccount,
-					sdk.NewCoins(sdk.NewInt64Coin(common.StableDenom, 6)),
+					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 6)),
 				)
 				require.NoError(t, err)
 
@@ -368,7 +369,7 @@ func TestRemoveMargin(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
 					Sender: alice.String(), TokenPair: pair.String(),
-					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
+					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
 
 				t.Log("RemoveMargin from the position")
 				res, err := perpKeeper.RemoveMargin(goCtx, msg)

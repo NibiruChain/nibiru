@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -159,6 +160,137 @@ func TestKeeper_GetMarginRatio(t *testing.T) {
 			marginRatio, err := k.GetMarginRatio(ctx, tc.position)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedMarginRatio, marginRatio)
+		})
+	}
+}
+
+func TestRemoveMargin_Unit(t *testing.T) {
+	tests := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "fail - invalid sender",
+			test: func() {
+				k, _, ctx := getKeeper(t)
+				goCtx := sdk.WrapSDKContext(ctx)
+
+				invalidSender := "notABech32"
+				msg := &types.MsgRemoveMargin{Sender: invalidSender}
+				_, err := k.RemoveMargin(goCtx, msg)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "decoding bech32 failed")
+			},
+		},
+		{
+			name: "fail - invalid token pair",
+			test: func() {
+				k, _, ctx := getKeeper(t)
+				goCtx := sdk.WrapSDKContext(ctx)
+
+				alice := sample.AccAddress()
+				the3pool := "dai:usdc:usdt"
+				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+					TokenPair: the3pool,
+					Margin:    sdk.NewCoin(common.StableDenom, sdk.NewInt(5))}
+				_, err := k.RemoveMargin(goCtx, msg)
+				require.Error(t, err)
+				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
+			},
+		},
+		{
+			name: "fail - request is too large",
+			test: func() {
+				k, mocks, ctx := getKeeper(t)
+				goCtx := sdk.WrapSDKContext(ctx)
+
+				alice := sample.AccAddress()
+				pair := common.TokenPair("osmo:nusd")
+				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+					TokenPair: pair.String(),
+					Margin:    sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)),
+				}
+
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+
+				t.Log("Set vpool defined by pair on PerpKeeper")
+				k.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair: pair.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.ZeroDec(),
+						sdk.MustNewDecFromStr("0.1")},
+				})
+
+				k.SetPosition(ctx, pair, alice.String(), &types.Position{
+					Address:                             alice.String(),
+					Pair:                                pair.String(),
+					Size_:                               sdk.NewDec(1_000),
+					OpenNotional:                        sdk.NewDec(1000),
+					Margin:                              sdk.NewDec(500),
+					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
+					BlockNumber:                         ctx.BlockHeight(),
+				})
+				_, err := k.RemoveMargin(goCtx, msg)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "position has bad debt")
+			},
+		},
+		{
+			name: "fail - vault doesn't have enough funds",
+			test: func() {
+				k, mocks, ctx := getKeeper(t)
+				goCtx := sdk.WrapSDKContext(ctx)
+
+				alice := sample.AccAddress()
+				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+					TokenPair: "osmo:nusd",
+					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
+				}
+
+				pair := common.TokenPair(msg.TokenPair)
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
+					AnyTimes().Return(true)
+
+				t.Log("Set vpool defined by pair on PerpKeeper")
+				k.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair: pair.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.ZeroDec(),
+						sdk.MustNewDecFromStr("0.1")},
+				})
+
+				k.SetPosition(ctx, pair, alice.String(), &types.Position{
+					Address:                             alice.String(),
+					Pair:                                pair.String(),
+					Size_:                               sdk.NewDec(1_000),
+					OpenNotional:                        sdk.NewDec(1000),
+					Margin:                              sdk.NewDec(500),
+					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
+					BlockNumber:                         ctx.BlockHeight(),
+				})
+
+				expectedError := fmt.Errorf("not enough funds in vault module account")
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
+					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
+					Return(sdk.NewDec(100), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
+					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
+					15*time.Minute,
+				).Return(sdk.NewDec(100), nil)
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
+					ctx, types.VaultModuleAccount, alice, sdk.NewCoins(msg.Margin),
+				).Return(expectedError)
+				_, err := k.RemoveMargin(goCtx, msg)
+				require.Error(t, err)
+				require.ErrorContains(t, err, expectedError.Error())
+			},
+		},
+	}
+
+	for _, testCase := range tests {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
 		})
 	}
 }
