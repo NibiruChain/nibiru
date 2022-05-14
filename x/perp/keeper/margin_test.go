@@ -7,9 +7,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -298,7 +300,7 @@ func TestRemoveMargin(t *testing.T) {
 			},
 		},
 		{
-			name: "remove margin - happy path 1",
+			name: "remove margin from healthy position - fast integration test 1",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
@@ -368,11 +370,30 @@ func TestRemoveMargin(t *testing.T) {
 					Sender: alice.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 
-				// Desired behavior ↓
+				t.Log("RemoveMargin from the position")
 				res, err := perpKeeper.RemoveMargin(goCtx, msg)
 				require.NoError(t, err)
-				require.EqualValues(t, msg.Margin, res.MarginOut)
-				require.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
+				assert.EqualValues(t, msg.Margin, res.MarginOut)
+				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
+
+				t.Log("Verify correct events emitted")
+				events := []sdk.Event{
+					events.NewMarginChangeEvent(
+						/* owner */ alice,
+						/* vpool */ msg.TokenPair,
+						/* marginAmt */ msg.Margin.Amount,
+						/* fundingPayment */ res.FundingPayment,
+					),
+					events.NewTransferEvent(
+						/* coin */ msg.Margin,
+						/* from */ nibiruApp.AccountKeeper.GetModuleAddress(
+							types.VaultModuleAccount).String(),
+						/* to */ msg.Sender,
+					),
+				}
+				for _, event := range events {
+					assert.Contains(t, ctx.EventManager().Events(), event)
+				}
 			},
 		},
 	}

@@ -74,6 +74,7 @@ func (k Keeper) AddMargin(
 func (k Keeper) RemoveMargin(
 	goCtx context.Context, msg *types.MsgRemoveMargin,
 ) (res *types.MsgRemoveMarginResponse, err error) {
+
 	// ------------- Message Setup -------------
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
