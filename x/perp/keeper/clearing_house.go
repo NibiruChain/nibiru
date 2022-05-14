@@ -149,13 +149,39 @@ func (k Keeper) OpenPosition(
 	})
 }
 
-// TODO test: increasePosition | https://github.com/NibiruChain/nibiru/issues/299
+/*
+increases a position by increasedNotional amount in margin units.
+Calculates the amount of margin required given the leverage parameter.
+Recalculates the remaining margin after applying a funding payment.
+Does not realize PnL.
+
+For example, a long position with position notional value of 150 NUSD and unrealized PnL of 50 NUSD
+could increase their position by 30 NUSD using 10x leverage.
+This would be:
+  - 3 NUSD as margin requirement
+  - new open notional value of 130 NUSD
+  - new position notional value of 150 NUSD
+  - unrealized PnL remains unchanged at 50 NUSD
+  - remaining margin is calculated by applying the funding payment
+
+args:
+  - ctx: cosmos-sdk context
+  - currentPosition: the current position
+  - side: whether the position is increasing in the BUY or SELL direction
+  - increasedNotional: the notional value to increase the position by, in margin units
+  - baseAssetAmountLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
+  - leverage: the amount of leverage to take, as sdk.Dec
+
+ret:
+  - positionResp: contains the result of the increase position and the new position
+  - err: error
+*/
 func (k Keeper) increasePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
 	side types.Side,
-	openNotional sdk.Dec,
-	baseLimit sdk.Dec,
+	increasedNotional sdk.Dec,
+	baseAssetAmountLimit sdk.Dec,
 	leverage sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{}
@@ -164,15 +190,15 @@ func (k Keeper) increasePosition(
 		ctx,
 		common.TokenPair(currentPosition.Pair),
 		side,
-		openNotional,
-		baseLimit,
+		increasedNotional,
+		baseAssetAmountLimit,
 		false,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	increaseMarginRequirement := openNotional.Quo(leverage)
+	increaseMarginRequirement := increasedNotional.Quo(leverage)
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
@@ -192,7 +218,7 @@ func (k Keeper) increasePosition(
 		return nil, err
 	}
 
-	positionResp.ExchangedQuoteAssetAmount = openNotional
+	positionResp.ExchangedQuoteAssetAmount = increasedNotional
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
 	positionResp.RealizedPnl = sdk.ZeroDec()
 	positionResp.MarginToVault = increaseMarginRequirement
@@ -203,7 +229,7 @@ func (k Keeper) increasePosition(
 		Pair:                                currentPosition.Pair,
 		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remaining.Margin,
-		OpenNotional:                        currentPosition.OpenNotional.Add(openNotional),
+		OpenNotional:                        currentPosition.OpenNotional.Add(increasedNotional),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
@@ -344,11 +370,32 @@ func (k Keeper) openReversePosition(
 	}
 }
 
-// TODO test: decreasePosition | https://github.com/NibiruChain/nibiru/issues/299
+/*
+Decreases a position by decreasedNotional amount in margin units.
+Realizes PnL and calculates remaining margin after applying a funding payment.
+
+For example, a long position with position notional value of 150 NUSD and PnL of 50 NUSD
+could decrease their position by 30 NUSD. This would realize a PnL of 10 NUSD (50NUSD * 30/150)
+and update their margin (old margin + realized PnL - funding payment).
+Their new position notional value would be 120 NUSD and their position size would
+shrink by 20%.
+
+args:
+  - ctx: cosmos-sdk context
+  - currentPosition: the current position
+  - decreasedNotional: the notional value to decrease the position by, in margin units
+  - baseAssetAmountLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
+  - canOverFluctuationLimit: whether or not the position change can go over the fluctuation limit
+
+ret:
+  - positionResp: contains the result of the decrease position and the new position
+  - err: error
+*/
+// TODO(https://github.com/NibiruChain/nibiru/issues/403): implement fluctuation limit check
 func (k Keeper) decreasePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
-	notionalValueToDecrease sdk.Dec,
+	decreasedNotional sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
@@ -379,7 +426,7 @@ func (k Keeper) decreasePosition(
 		ctx,
 		common.TokenPair(currentPosition.Pair),
 		sideToTake,
-		notionalValueToDecrease,
+		decreasedNotional,
 		baseAssetAmountLimit,
 		canOverFluctuationLimit,
 	)
@@ -406,7 +453,7 @@ func (k Keeper) decreasePosition(
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.UnrealizedPnlAfter = currentUnrealizedPnL.Sub(positionResp.RealizedPnl)
-	positionResp.ExchangedQuoteAssetAmount = notionalValueToDecrease
+	positionResp.ExchangedQuoteAssetAmount = decreasedNotional
 
 	// calculate openNotional (it's different depends on long or short side)
 	// long: unrealizedPnl = positionNotional - openNotional => openNotional = positionNotional - unrealizedPnl
@@ -415,11 +462,11 @@ func (k Keeper) decreasePosition(
 	var remainOpenNotional sdk.Dec
 	if currentPosition.Size_.IsPositive() {
 		remainOpenNotional = currentPositionNotional.
-			Sub(notionalValueToDecrease).
+			Sub(decreasedNotional).
 			Sub(positionResp.UnrealizedPnlAfter)
 	} else {
 		remainOpenNotional = currentPositionNotional.
-			Sub(notionalValueToDecrease).
+			Sub(decreasedNotional).
 			Add(positionResp.UnrealizedPnlAfter)
 	}
 
