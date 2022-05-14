@@ -92,43 +92,58 @@ func TestKeeper_GetMarginRatio_Errors(t *testing.T) {
 }
 
 func TestKeeper_GetMarginRatio(t *testing.T) {
-	k, deps, ctx := getKeeper(t)
-
-	pos := types.Position{
-		Address:                             sample.AccAddress().String(),
-		Pair:                                "BTC:NUSD",
-		Size_:                               sdk.NewDec(10),
-		OpenNotional:                        sdk.NewDec(10),
-		Margin:                              sdk.NewDec(1),
-		LastUpdateCumulativePremiumFraction: sdk.OneDec(),
+	tests := []struct {
+		name                string
+		position            types.Position
+		expectedMarginRatio sdk.Dec
+	}{
+		{
+			"margin without price changes",
+			types.Position{
+				Address:                             sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(10),
+				OpenNotional:                        sdk.NewDec(10),
+				Margin:                              sdk.NewDec(1),
+				LastUpdateCumulativePremiumFraction: sdk.OneDec(),
+			},
+			sdk.MustNewDecFromStr("0.1"),
+		},
 	}
 
-	t.Log("Mock vpool spot price")
-	deps.mockVpoolKeeper.EXPECT().
-		GetBaseAssetPrice(
-			ctx,
-			common.TokenPair("BTC:NUSD"),
-			vpooltypes.Direction_ADD_TO_POOL,
-			sdk.NewDec(10),
-		).
-		Return(sdk.NewDec(20), nil)
-	t.Log("Mock vpool twap")
-	deps.mockVpoolKeeper.EXPECT().
-		GetBaseAssetTWAP(
-			ctx,
-			common.TokenPair("BTC:NUSD"),
-			vpooltypes.Direction_ADD_TO_POOL,
-			sdk.NewDec(10),
-			15*time.Minute,
-		).
-		Return(sdk.NewDec(15), nil)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			k, deps, ctx := getKeeper(t)
 
-	k.PairMetadata().Set(ctx, &types.PairMetadata{
-		Pair:                       "BTC:NUSD",
-		CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
-	})
+			t.Log("Mock vpool spot price")
+			deps.mockVpoolKeeper.EXPECT().
+				GetBaseAssetPrice(
+					ctx,
+					common.TokenPair("BTC:NUSD"),
+					vpooltypes.Direction_ADD_TO_POOL,
+					sdk.NewDec(10),
+				).
+				Return(sdk.NewDec(10), nil)
+			t.Log("Mock vpool twap")
+			deps.mockVpoolKeeper.EXPECT().
+				GetBaseAssetTWAP(
+					ctx,
+					common.TokenPair("BTC:NUSD"),
+					vpooltypes.Direction_ADD_TO_POOL,
+					sdk.NewDec(10),
+					15*time.Minute,
+				).
+				Return(sdk.NewDec(10), nil)
 
-	marginRatio, err := k.GetMarginRatio(ctx, pos)
-	require.NoError(t, err)
-	require.Equal(t, sdk.MustNewDecFromStr("2.1"), marginRatio)
+			k.PairMetadata().Set(ctx, &types.PairMetadata{
+				Pair:                       "BTC:NUSD",
+				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+			})
+
+			marginRatio, err := k.GetMarginRatio(ctx, tc.position)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedMarginRatio, marginRatio)
+		})
+	}
 }

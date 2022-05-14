@@ -160,7 +160,7 @@ func (k Keeper) GetMarginRatio(
 		return sdk.Dec{}, types.ErrPositionZero
 	}
 
-	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
+	positionNotional, unrealizedPnL, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
 		ctx,
 		position,
 		types.PnLPreferenceOption_MAX,
