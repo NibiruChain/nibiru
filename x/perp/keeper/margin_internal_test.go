@@ -3,7 +3,10 @@ package keeper
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_requireMoreMarginRatio(t *testing.T) {
@@ -56,4 +59,45 @@ func Test_requireMoreMarginRatio(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestKeeper_GetMarginRatio_Errors(t *testing.T) {
+	tests := []struct {
+		name     string
+		position types.Position
+	}{
+		{
+			"empty size position",
+			types.Position{
+				Size_: sdk.ZeroDec(),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			k, _, ctx := getKeeper(t)
+
+			pos := tc.position
+
+			_, err := k.GetMarginRatio(ctx, pos)
+			require.EqualError(t, err, types.ErrPositionZero.Error())
+		})
+	}
+}
+
+func TestKeeper_GetMarginRatio(t *testing.T) {
+	k, _, ctx := getKeeper(t)
+
+	pos := types.Position{
+		Address:      sample.AccAddress().String(),
+		Pair:         "BTC:NUSD",
+		Size_:        sdk.NewDec(10),
+		OpenNotional: sdk.NewDec(10),
+		Margin:       sdk.NewDec(1),
+	}
+
+	_, err := k.GetMarginRatio(ctx, pos)
+	require.EqualError(t, err, types.ErrPositionZero.Error())
 }

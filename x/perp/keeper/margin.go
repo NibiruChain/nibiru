@@ -157,7 +157,7 @@ func (k Keeper) GetMarginRatio(
 	ctx sdk.Context, position types.Position,
 ) (sdk.Dec, error) {
 	if position.Size_.IsZero() {
-		panic("position with zero size") // tODO(mercilex): panic or error? this is a require
+		return sdk.Dec{}, types.ErrPositionZero
 	}
 
 	unrealizedPnL, positionNotional, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
@@ -179,7 +179,8 @@ func (k Keeper) GetMarginRatio(
 	}
 
 	marginRatio := remaining.Margin.Sub(remaining.BadDebt).Quo(positionNotional)
-	return marginRatio, err
+
+	return marginRatio, nil
 }
 
 func (k *Keeper) requireVpool(ctx sdk.Context, pair common.TokenPair) error {
