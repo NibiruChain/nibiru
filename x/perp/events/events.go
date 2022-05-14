@@ -48,8 +48,8 @@ Args:
   margin sdk.Int: amount of quote token (y) backing the position.
   notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
     the virtual price on 'vpool'.
-  vsizeChange sdk.Dec: magnitude of the change to vsize. The virtual size of a
-    position is margin * leverage.
+  vsizeChange sdk.Dec: magnitude of the change to vsize. The vsize is the amount
+  	of base assets for the position, margin * leverage * priceBasePerQuote.
   txFee sdk.Int: transaction fee paid
   vsizeAfter sdk.Dec: position virtual size after the change
   realizedPnlAfter: realize profits and losses after the change
@@ -111,7 +111,8 @@ Args:
   owner sdk.AccAddress: owner of the position.
   notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
     the virtual price on 'vpool'.
-  vsize sdk.Dec: virtual size of the position, defined as margin * leverage.
+  vsize sdk.Dec: virtual amount of base assets for the position, which would be
+    margin * leverage * priceBasePerQuote.
   liquidator sdk.AccAddress: Address of the account that executed the tx.
   liquidationFee sdk.Int: Commission (in margin units) received by 'liquidator'.
   badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.

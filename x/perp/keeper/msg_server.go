@@ -35,3 +35,13 @@ func (k msgServer) MsgRemoveMargin(goCtx context.Context, msg *types.MsgRemoveMa
 
 	return removeMarginResponse, nil
 }
+
+func (k msgServer) MsgAddMargin(goCtx context.Context, msg *types.MsgAddMargin,
+) (*types.MsgAddMarginResponse, error) {
+	removeMarginResponse, err := k.AddMargin(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return removeMarginResponse, nil
+}

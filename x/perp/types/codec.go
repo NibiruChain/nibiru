@@ -9,6 +9,7 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgRemoveMargin{}, "perp/remove_margin", nil)
+	cdc.RegisterConcrete(&MsgAddMargin{}, "perp/add_margin", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -16,7 +17,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		/* interface */ (*sdk.Msg)(nil),
 		/* implementations */
 		&MsgRemoveMargin{},
-	) // &MsgRemoveMargin{},
+		&MsgAddMargin{},
+	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
