@@ -15,14 +15,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/testutil/network"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-func DefaultFeeString(cfg network.Config) string {
+func DefaultFeeString(cfg testutilcli.Config) string {
 	feeCoins := sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(10)))
 	return fmt.Sprintf("--%s=%s", flags.FlagFees, feeCoins.String())
 }
@@ -62,10 +62,10 @@ func ParseSdkIntFromString(s string, separator string) ([]sdk.Int, error) {
 
 // DefaultConfig returns a default configuration suitable for nearly all
 // testing requirements.
-func DefaultConfig() network.Config {
+func DefaultConfig() testutilcli.Config {
 	encCfg := app.MakeTestEncodingConfig()
 
-	return network.Config{
+	return testutilcli.Config{
 		Codec:             encCfg.Marshaler,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
@@ -94,8 +94,8 @@ func DefaultConfig() network.Config {
 	}
 }
 
-func NewAppConstructor() network.AppConstructor {
-	return func(val network.Validator) servertypes.Application {
+func NewAppConstructor() testutilcli.AppConstructor {
+	return func(val testutilcli.Validator) servertypes.Application {
 		return NewTestApp(true)
 	}
 }
