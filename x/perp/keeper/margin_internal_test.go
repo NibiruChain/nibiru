@@ -2,9 +2,12 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -88,16 +91,43 @@ func TestKeeper_GetMarginRatio_Errors(t *testing.T) {
 }
 
 func TestKeeper_GetMarginRatio(t *testing.T) {
-	k, _, ctx := getKeeper(t)
+	k, deps, ctx := getKeeper(t)
 
 	pos := types.Position{
-		Address:      sample.AccAddress().String(),
-		Pair:         "BTC:NUSD",
-		Size_:        sdk.NewDec(10),
-		OpenNotional: sdk.NewDec(10),
-		Margin:       sdk.NewDec(1),
+		Address:                             sample.AccAddress().String(),
+		Pair:                                "BTC:NUSD",
+		Size_:                               sdk.NewDec(10),
+		OpenNotional:                        sdk.NewDec(10),
+		Margin:                              sdk.NewDec(1),
+		LastUpdateCumulativePremiumFraction: sdk.OneDec(),
 	}
 
-	_, err := k.GetMarginRatio(ctx, pos)
-	require.EqualError(t, err, types.ErrPositionZero.Error())
+	t.Log("Mock vpool spot price")
+	deps.mockVpoolKeeper.EXPECT().
+		GetBaseAssetPrice(
+			ctx,
+			common.TokenPair("BTC:NUSD"),
+			vpooltypes.Direction_ADD_TO_POOL,
+			sdk.NewDec(10),
+		).
+		Return(sdk.NewDec(20), nil)
+	t.Log("Mock vpool twap")
+	deps.mockVpoolKeeper.EXPECT().
+		GetBaseAssetTWAP(
+			ctx,
+			common.TokenPair("BTC:NUSD"),
+			vpooltypes.Direction_ADD_TO_POOL,
+			sdk.NewDec(10),
+			15*time.Minute,
+		).
+		Return(sdk.NewDec(15), nil)
+
+	k.PairMetadata().Set(ctx, &types.PairMetadata{
+		Pair:                       "BTC:NUSD",
+		CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+	})
+
+	marginRatio, err := k.GetMarginRatio(ctx, pos)
+	require.NoError(t, err)
+	require.Equal(t, sdk.MustNewDecFromStr("2.1"), marginRatio)
 }
