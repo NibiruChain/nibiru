@@ -348,7 +348,7 @@ func (k Keeper) openReversePosition(
 func (k Keeper) decreasePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
-	openNotional sdk.Dec,
+	notionalValueToDecrease sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
@@ -357,7 +357,7 @@ func (k Keeper) decreasePosition(
 		MarginToVault: sdk.ZeroDec(),
 	}
 
-	currentPositionNotional, unrealizedPnl, err := k.
+	currentPositionNotional, currentUnrealizedPnL, err := k.
 		getPositionNotionalAndUnrealizedPnL(
 			ctx,
 			currentPosition,
@@ -379,7 +379,7 @@ func (k Keeper) decreasePosition(
 		ctx,
 		common.TokenPair(currentPosition.Pair),
 		sideToTake,
-		openNotional,
+		notionalValueToDecrease,
 		baseAssetAmountLimit,
 		canOverFluctuationLimit,
 	)
@@ -388,7 +388,7 @@ func (k Keeper) decreasePosition(
 	}
 
 	if !currentPosition.Size_.IsZero() {
-		positionResp.RealizedPnl = unrealizedPnl.Mul(
+		positionResp.RealizedPnl = currentUnrealizedPnL.Mul(
 			positionResp.ExchangedPositionSize.Abs().
 				Quo(currentPosition.Size_.Abs()),
 		)
@@ -405,21 +405,21 @@ func (k Keeper) decreasePosition(
 
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.FundingPayment = remaining.FundingPayment
-	positionResp.UnrealizedPnlAfter = unrealizedPnl.Sub(positionResp.RealizedPnl)
-	positionResp.ExchangedQuoteAssetAmount = openNotional
+	positionResp.UnrealizedPnlAfter = currentUnrealizedPnL.Sub(positionResp.RealizedPnl)
+	positionResp.ExchangedQuoteAssetAmount = notionalValueToDecrease
 
 	// calculate openNotional (it's different depends on long or short side)
 	// long: unrealizedPnl = positionNotional - openNotional => openNotional = positionNotional - unrealizedPnl
 	// short: unrealizedPnl = openNotional - positionNotional => openNotional = positionNotional + unrealizedPnl
-	// positionNotional = oldPositionNotional - exchangedQuoteAssetAmount
+	// positionNotional = oldPositionNotional - notionalValueToDecrease
 	var remainOpenNotional sdk.Dec
 	if currentPosition.Size_.IsPositive() {
 		remainOpenNotional = currentPositionNotional.
-			Sub(openNotional).
+			Sub(notionalValueToDecrease).
 			Sub(positionResp.UnrealizedPnlAfter)
 	} else {
 		remainOpenNotional = currentPositionNotional.
-			Sub(openNotional).
+			Sub(notionalValueToDecrease).
 			Add(positionResp.UnrealizedPnlAfter)
 	}
 
