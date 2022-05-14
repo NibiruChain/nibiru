@@ -572,7 +572,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
 	oldPosition types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,
-) (pnl sdk.Dec, notional sdk.Dec, er error) {
+) (pnl sdk.Dec, notional sdk.Dec, err error) {
 	// TODO(mercilex): maybe inefficient get position notional and unrealized pnl
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
@@ -596,22 +596,17 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	switch pnLPreferenceOption {
 	// if MAX PNL
 	case types.PnLPreferenceOption_MAX:
-		// spotPNL > twapPnL
 		switch spotPricePnl.GT(twapPricePnL) {
-		// true: spotPNL > twapPNL -> return spot pnl, spot position notional
 		case true:
 			return spotPricePnl, spotPositionNotional, nil
-		// false: spotPNL <= twapPNL -> return twapPNL twapPositionNotional
 		default:
 			return twapPricePnL, twapPositionNotional, nil
 		}
 	// if min PNL
 	case types.PnLPreferenceOption_MIN:
-		switch spotPricePnl.GT(twapPricePnL) {
-		// true: spotPNL > twapPNL -> return twapPNL, twapPositionNotional
-		case true:
+		switch {
+		case spotPricePnl.GT(twapPricePnL):
 			return twapPricePnL, twapPositionNotional, nil
-		// false: spotPNL <= twapPNL -> return spotPNL, spotPositionNotional
 		default:
 			return spotPricePnl, spotPositionNotional, nil
 		}
