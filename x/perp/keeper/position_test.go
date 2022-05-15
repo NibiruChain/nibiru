@@ -27,7 +27,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 		pos := types.Position{
 			Address:      addr.String(),
 			Pair:         pair.String(),
-			Size_:        sdk.NewDec(100),
+			Size_:        sdk.NewDec(10),
 			Margin:       sdk.NewDec(100),
 			OpenNotional: sdk.NewDec(1000),
 		}
@@ -38,7 +38,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, sdk.NewCoins(
-			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Size_.RoundInt()),
+			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin.RoundInt()),
 		), coins) // TODO(mercilex): here we should have different denom, depends on Transfer impl
 	})
 
