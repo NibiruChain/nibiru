@@ -29,9 +29,9 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				t.Log("open a position on invalid 'pair'")
 				side := types.Side_BUY
-				quote := sdk.NewInt(60)
+				quote := sdk.NewDec(60)
 				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewInt(150)
+				baseLimit := sdk.NewDec(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.Error(t, err)
@@ -61,9 +61,9 @@ func TestOpenPosition_Setup(t *testing.T) {
 				t.Log("Attempt to open long position (expected unsuccessful)")
 				alice := sample.AccAddress()
 				side := types.Side_BUY
-				quote := sdk.NewInt(60)
+				quote := sdk.NewDec(60)
 				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewInt(150)
+				baseLimit := sdk.NewDec(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 
@@ -107,9 +107,9 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				t.Log("Open long position with 10x leverage")
 				side := types.Side_BUY
-				quote := sdk.NewInt(60)
+				quote := sdk.NewDec(60)
 				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewInt(150)
+				baseLimit := sdk.NewDec(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 
@@ -328,9 +328,9 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Open long position with 5x leverage")
 				side := types.Side_BUY
-				quote := sdk.NewInt(60)
+				quote := sdk.NewDec(60)
 				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewInt(150)
+				baseLimit := sdk.NewDec(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.NoError(t, err)

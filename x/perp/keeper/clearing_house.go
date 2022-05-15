@@ -28,9 +28,9 @@ func (k Keeper) OpenPosition(
 	pair common.TokenPair,
 	side types.Side,
 	traderAddr sdk.AccAddress,
-	quoteAssetAmount sdk.Int,
+	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
-	baseAssetAmountLimit sdk.Int,
+	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
 	// require vpool
 	err = k.requireVpool(ctx, pair)
@@ -62,8 +62,8 @@ func (k Keeper) OpenPosition(
 			ctx,
 			*position,
 			side,
-			/* openNotional */ leverage.MulInt(quoteAssetAmount),
-			/* minPositionSize */ baseAssetAmountLimit.ToDec(),
+			/* openNotional */ quoteAssetAmount.Mul(leverage),
+			/* minPositionSize */ baseAssetAmountLimit,
 			/* leverage */ leverage)
 		if err != nil {
 			return err
@@ -332,12 +332,12 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 func (k Keeper) openReversePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
-	quoteAssetAmount sdk.Int,
+	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
-	baseAssetAmountLimit sdk.Int,
+	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
-	openNotional := leverage.MulInt(quoteAssetAmount)
+	openNotional := quoteAssetAmount.Mul(leverage)
 	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
@@ -354,7 +354,7 @@ func (k Keeper) openReversePosition(
 			ctx,
 			currentPosition,
 			openNotional,
-			baseAssetAmountLimit.ToDec(),
+			baseAssetAmountLimit,
 			canOverFluctuationLimit,
 		)
 	// close and reverse
@@ -486,50 +486,76 @@ func (k Keeper) decreasePosition(
 	return positionResp, nil
 }
 
-// TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
+/*
+Closes a position and realizes PnL and funding payments.
+Opens a position in the opposite direction if there is notional value remaining.
+Errors out if the provided notional value is not greater than the existing position's notional value.
+Errors out if there is bad debt.
+
+args:
+  - ctx: cosmos-sdk context
+  - existingPosition: current position
+  - quoteAssetAmount: the amount of notional value to move by. Must be greater than the existingPosition's notional value.
+  - leverage: the amount of leverage to take
+  - baseAssetAmountLimit: limit on the base asset movement to ensure trader doesn't get screwed
+
+ret:
+  - positionResp: response object containing information about the position change
+  - err: error
+*/
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context,
-	currentPosition types.Position,
-	quoteAssetAmount sdk.Int,
+	existingPosition types.Position,
+	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
-	baseAssetAmountLimit sdk.Int,
+	baseAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	positionResp = new(types.PositionResp)
-
-	closePositionResp, err := k.closePositionEntirely(ctx, currentPosition, sdk.ZeroDec())
+	closePositionResp, err := k.closePositionEntirely(
+		ctx,
+		existingPosition,
+		sdk.ZeroDec(),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	if closePositionResp.BadDebt.LTE(sdk.ZeroDec()) {
+	if closePositionResp.BadDebt.IsPositive() {
 		return nil, fmt.Errorf("underwater position")
 	}
 
-	openNotional := leverage.MulInt(quoteAssetAmount).Sub(closePositionResp.ExchangedQuoteAssetAmount)
+	notionalValueMovement := quoteAssetAmount.Mul(leverage)
+	remainingOpenNotional := notionalValueMovement.Sub(closePositionResp.ExchangedQuoteAssetAmount)
 
-	switch openNotional.Quo(leverage).IsZero() {
-	case true:
-		positionResp = closePositionResp
-	case false:
+	if remainingOpenNotional.IsNegative() {
+		// should never happen as this should also be checked in the caller
+		return nil, fmt.Errorf(
+			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
+			closePositionResp.ExchangedQuoteAssetAmount.String(), notionalValueMovement.String())
+	} else if remainingOpenNotional.IsPositive() {
 		var updatedBaseAssetAmountLimit sdk.Dec
-		if baseAssetAmountLimit.ToDec().GT(closePositionResp.ExchangedPositionSize) {
-			updatedBaseAssetAmountLimit = baseAssetAmountLimit.ToDec().
+		if baseAssetAmountLimit.GT(closePositionResp.ExchangedPositionSize) {
+			updatedBaseAssetAmountLimit = baseAssetAmountLimit.
 				Sub(closePositionResp.ExchangedPositionSize.Abs())
 		}
 
 		var sideToTake types.Side
 		// flipped since we are going against the current position
-		if currentPosition.Size_.IsPositive() {
+		if existingPosition.Size_.IsPositive() {
 			sideToTake = types.Side_SELL
 		} else {
 			sideToTake = types.Side_BUY
 		}
 
+		newPosition := types.ZeroPosition(
+			ctx,
+			common.TokenPair(existingPosition.Pair),
+			existingPosition.Address,
+		)
 		increasePositionResp, err := k.increasePosition(
 			ctx,
-			currentPosition,
+			*newPosition,
 			sideToTake,
-			openNotional,
+			remainingOpenNotional,
 			updatedBaseAssetAmountLimit,
 			leverage,
 		)
@@ -546,12 +572,27 @@ func (k Keeper) closeAndOpenReversePosition(
 			MarginToVault:             closePositionResp.MarginToVault.Add(increasePositionResp.MarginToVault),
 			UnrealizedPnlAfter:        sdk.ZeroDec(),
 		}
+	} else {
+		// case where remaining open notional == 0
+		positionResp = closePositionResp
 	}
 
 	return positionResp, nil
 }
 
-// TODO test: closePositionEntirely | https://github.com/NibiruChain/nibiru/issues/299
+/*
+Closes a position and realizes PnL and funding payments.
+Does not error out if there is bad debt, that is for callers to decide.
+
+args:
+  - ctx: cosmos-sdk context
+  - currentPosition: current position
+  - quoteAssetAmountLimit: a limit on quote asset to ensure trader doesn't get screwed
+
+ret:
+  - positionResp: response object containing information about the position change
+  - err: error
+*/
 func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	currentPosition types.Position,
