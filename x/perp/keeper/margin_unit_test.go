@@ -204,6 +204,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
+				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				alice := sample.AccAddress()
 				pair := common.TokenPair("osmo:nusd")
 				msg := &types.MsgRemoveMargin{Sender: alice.String(),
@@ -221,6 +222,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 						sdk.MustNewDecFromStr("0.1")},
 				})
 
+				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
 				k.SetPosition(ctx, pair, alice.String(), &types.Position{
 					Address:                             alice.String(),
 					Pair:                                pair.String(),
@@ -259,6 +261,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 						sdk.MustNewDecFromStr("0.1")},
 				})
 
+				t.Log("Set position a healthy position that has 0 unrealized funding")
 				k.SetPosition(ctx, pair, alice.String(), &types.Position{
 					Address:                             alice.String(),
 					Pair:                                pair.String(),
@@ -269,7 +272,6 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					BlockNumber:                         ctx.BlockHeight(),
 				})
 
-				expectedError := fmt.Errorf("not enough funds in vault module account")
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
 					Return(sdk.NewDec(100), nil)
@@ -277,9 +279,13 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
 					15*time.Minute,
 				).Return(sdk.NewDec(100), nil)
+
+				t.Log("Attempt to RemoveMargin when the vault lacks funds")
+				expectedError := fmt.Errorf("not enough funds in vault module account")
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
 					ctx, types.VaultModuleAccount, alice, sdk.NewCoins(msg.Margin),
 				).Return(expectedError)
+
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, expectedError.Error())

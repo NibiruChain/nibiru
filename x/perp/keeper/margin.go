@@ -11,6 +11,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
+/* AddMargin deleverages an existing position by adding margin (collateral)
+to it. Adding margin increases the margin ratio of the corresponding position.
+*/
 func (k Keeper) AddMargin(
 	goCtx context.Context, msg *types.MsgAddMargin,
 ) (res *types.MsgAddMarginResponse, err error) {
@@ -74,6 +77,10 @@ func (k Keeper) AddMargin(
 	return &types.MsgAddMarginResponse{}, nil
 }
 
+/* RemoveMargin further leverages an existing position by directly removing
+the margin (collateral) that backs it from the vault. This also decreases the
+margin ratio of the position.
+*/
 func (k Keeper) RemoveMargin(
 	goCtx context.Context, msg *types.MsgRemoveMargin,
 ) (res *types.MsgRemoveMarginResponse, err error) {
