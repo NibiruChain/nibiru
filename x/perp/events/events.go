@@ -207,14 +207,24 @@ func EmitPositionSettle(
 	owner sdk.AccAddress,
 	settled sdk.Coin,
 ) {
+	ctx.EventManager().EmitEvent(NewPositionSettleEvent(
+		vpool, owner, settled,
+	))
+}
+
+func NewPositionSettleEvent(
+	vpool string,
+	owner sdk.AccAddress,
+	settled sdk.Coin,
+) sdk.Event {
 	const EventTypePositionSettle = "position_settle"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypePositionSettle,
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
 		sdk.NewAttribute("settle_amt", settled.Amount.String()),
 		sdk.NewAttribute("settle_denom", settled.Denom),
-	))
+	)
 }
 
 /* EmitMarginRatioChange emits an event when the protocol margin ratio changes.
@@ -227,11 +237,17 @@ func EmitMarginRatioChange(
 	ctx sdk.Context,
 	marginRatio sdk.Dec,
 ) {
+	ctx.EventManager().EmitEvent(NewMarginRatioChangeEvent(marginRatio))
+}
+
+func NewMarginRatioChangeEvent(
+	marginRatio sdk.Dec,
+) sdk.Event {
 	const EventTypeMarginRatioChange = "margin_ratio_change"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypeMarginRatioChange,
 		sdk.NewAttribute("margin_ratio", marginRatio.String()),
-	))
+	)
 }
 
 /* EmitMarginChange emits an event when the protocol margin ratio changes.
