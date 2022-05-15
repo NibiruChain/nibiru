@@ -486,7 +486,23 @@ func (k Keeper) decreasePosition(
 	return positionResp, nil
 }
 
-// TODO test: closeAndOpenReversePosition | https://github.com/NibiruChain/nibiru/issues/299
+/*
+Closes a position and realizes PnL and funding payments.
+Opens a position in the opposite direction if there is notional value remaining.
+Errors out if the provided notional value is not greater than the existing position's notional value.
+Errors out if there is bad debt.
+
+args:
+  - ctx: cosmos-sdk context
+  - existingPosition: current position
+  - quoteAssetAmount: the amount of notional value to move by. Must be greater than the existingPosition's notional value.
+  - leverage: the amount of leverage to take
+  - baseAssetAmountLimit: limit on the base asset movement to ensure trader doesn't get screwed
+
+ret:
+  - positionResp: response object containing information about the position change
+  - err: error
+*/
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context,
 	existingPosition types.Position,
@@ -566,7 +582,19 @@ func (k Keeper) closeAndOpenReversePosition(
 	return positionResp, nil
 }
 
-// TODO test: closePositionEntirely | https://github.com/NibiruChain/nibiru/issues/299
+/*
+Closes a position and realizes PnL and funding payments.
+Does not error out if there is bad debt, that is for callers to decide.
+
+args:
+  - ctx: cosmos-sdk context
+  - currentPosition: current position
+  - quoteAssetAmountLimit: a limit on quote asset to ensure trader doesn't get screwed
+
+ret:
+  - positionResp: response object containing information about the position change
+  - err: error
+*/
 func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	currentPosition types.Position,
