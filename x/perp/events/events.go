@@ -19,11 +19,11 @@ const (
 	// from: receiving address of a transfer
 	AttributeFromAddr = "from"
 	// to: sending address of a transfer
-	AttributeToAddr         = "to"
-	AttributeTokenAmount    = "amount"
-	AttributeTokenDenom     = "denom"
-	AttributePosittionOwner = "owner"
-	AttributeVpool          = "vpool"
+	AttributeToAddr        = "to"
+	AttributeTokenAmount   = "amount"
+	AttributeTokenDenom    = "denom"
+	AttributePositionOwner = "owner"
+	AttributeVpool         = "vpool"
 )
 
 func EmitTransfer(
@@ -87,7 +87,7 @@ func EmitPositionChange(
 	const EventTypePositionChange = "position_change"
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypePositionChange,
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin", margin.String()),
 		sdk.NewAttribute("notional", notional.String()),
@@ -132,7 +132,7 @@ func EmitPositionLiquidate(
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypePositionLiquidate,
 		sdk.NewAttribute(AttributeVpool, vpool),
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute("notional", notional.String()),
 		sdk.NewAttribute("vsize", vsize.String()),
 		sdk.NewAttribute("liquidator", liquidator.String()),
@@ -146,20 +146,20 @@ func EmitPositionLiquidate(
 Args:
   ctx sdk.Context: Carries information about the current state of the application.
   vpool string: Identifier for the virtual pool of the position.
-  owner sdk.AccAddress: Owner of the position.
+  trader string: Owner of the position.
   settled sdk.Coin: Settled coin as dictated by the settlement price of the vpool.
 */
 func EmitPositionSettle(
 	ctx sdk.Context,
 	vpool string,
-	owner sdk.AccAddress,
+	trader string,
 	settled sdk.Coins,
 ) {
 	const EventTypePositionSettle = "position_settle"
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypePositionSettle,
 		sdk.NewAttribute(AttributeVpool, vpool),
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, trader),
 		sdk.NewAttribute("settled_coins", settled.String()),
 	))
 }
@@ -202,7 +202,7 @@ func EmitMarginChange(
 	const EventTypeMarginChange = "margin_change"
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		EventTypeMarginChange,
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin_amt", marginAmt.String()),
 		sdk.NewAttribute("funding_payment", fundingPayment.String()),
