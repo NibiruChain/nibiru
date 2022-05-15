@@ -510,8 +510,6 @@ func (k Keeper) closeAndOpenReversePosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	positionResp = &types.PositionResp{}
-
 	closePositionResp, err := k.closePositionEntirely(
 		ctx,
 		existingPosition,
