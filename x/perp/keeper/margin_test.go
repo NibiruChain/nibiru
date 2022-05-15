@@ -130,7 +130,56 @@ func TestOpenPosition_Setup(t *testing.T) {
 	}
 }
 
-func TestAddMargin(t *testing.T) {
+func TestAddMargin_ShouldRaiseError(t *testing.T) {
+	tests := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "msg denom differs from pair quote asset",
+			test: func() {
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+
+				tokenPair, err := common.NewTokenPairFromStr("atom:nusd")
+				require.NoError(t, err)
+
+				t.Log("Set vpool defined by pair on VpoolKeeper")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					tokenPair.String(),
+					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					sdk.NewDec(10_000_000),       //
+					sdk.NewDec(5_000_000),        // 5 tokens
+					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+				)
+				require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+
+				t.Log("create msg for MsgAddMargin with invalid denom")
+				traderAddr := sample.AccAddress()
+				msg := &types.MsgAddMargin{
+					Sender:    traderAddr.String(),
+					TokenPair: tokenPair.String(),
+					Margin:    sdk.NewCoin("notADenom", sdk.NewInt(400)),
+				}
+
+				goCtx := sdk.WrapSDKContext(ctx)
+				_, err = nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "invalid margin denom")
+			},
+		},
+	}
+
+	for _, testCase := range tests {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
+}
+
+func TestAddMargin_HappyPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		initialMargin  sdk.Dec
