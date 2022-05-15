@@ -6,9 +6,12 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -289,6 +292,88 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, expectedError.Error())
+			},
+		},
+		{
+			name: "happy path - zero funding",
+			test: func() {
+				k, mocks, ctx := getKeeper(t)
+				goCtx := sdk.WrapSDKContext(ctx)
+
+				alice := sample.AccAddress()
+				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+					TokenPair: "osmo:nusd",
+					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
+				}
+
+				pair := common.TokenPair(msg.TokenPair)
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
+					AnyTimes().Return(true)
+
+				t.Log("Set vpool defined by pair on PerpKeeper")
+				k.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair: pair.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.ZeroDec(),
+						sdk.MustNewDecFromStr("0.1")},
+				})
+
+				t.Log("Set position a healthy position that has 0 unrealized funding")
+				k.SetPosition(ctx, pair, alice.String(), &types.Position{
+					Address:                             alice.String(),
+					Pair:                                pair.String(),
+					Size_:                               sdk.NewDec(1_000),
+					OpenNotional:                        sdk.NewDec(1000),
+					Margin:                              sdk.NewDec(500),
+					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
+					BlockNumber:                         ctx.BlockHeight(),
+				})
+
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
+					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
+					Return(sdk.NewDec(100), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
+					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
+					15*time.Minute,
+				).Return(sdk.NewDec(100), nil)
+
+				t.Log("'RemoveMargin' from the position")
+				vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
+				mocks.mockAccountKeeper.EXPECT().
+					GetModuleAddress(types.VaultModuleAccount).
+					Return(vaultAddr)
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
+					ctx, types.VaultModuleAccount, alice, sdk.NewCoins(msg.Margin),
+				).Return(nil)
+
+				res, err := k.RemoveMargin(goCtx, msg)
+				require.NoError(t, err)
+				assert.EqualValues(t, msg.Margin, res.MarginOut)
+				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
+
+				t.Log("Verify correct events emitted for 'RemoveMargin'")
+				expectedEvents := []sdk.Event{
+					events.NewMarginChangeEvent(
+						/* owner */ alice,
+						/* vpool */ msg.TokenPair,
+						/* marginAmt */ msg.Margin.Amount,
+						/* fundingPayment */ res.FundingPayment,
+					),
+					events.NewTransferEvent(
+						/* coin */ msg.Margin,
+						/* from */ vaultAddr.String(),
+						/* to */ msg.Sender,
+					),
+				}
+				for _, event := range expectedEvents {
+					assert.Contains(t, ctx.EventManager().Events(), event)
+				}
+
+				pos, err := k.GetPosition(ctx, pair, alice.String())
+				require.NoError(t, err)
+				require.EqualValues(t, sdk.NewDec(400), pos.Margin)
+				require.EqualValues(t, sdk.NewDec(1000), pos.Size_)
+				require.EqualValues(t, alice.String(), pos.Address)
 			},
 		},
 	}

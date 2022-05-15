@@ -394,7 +394,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Open long position with 5x leverage")
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
-				leverage := sdk.NewDec(10)
+				leverage := sdk.NewDec(5)
 				baseLimit := sdk.NewInt(10)
 				err = nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice, quote, leverage, baseLimit)
