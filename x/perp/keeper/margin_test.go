@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -70,7 +69,6 @@ func TestOpenPosition_Setup(t *testing.T) {
 				err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 
-				fmt.Println(err.Error())
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -402,16 +400,23 @@ func TestRemoveMargin(t *testing.T) {
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 				require.NoError(t, err)
 
-				// temporary -> send funds to vault for now
-				err = nibiruApp.BankKeeper.SendCoinsFromAccountToModule(
-					ctx, alice, types.VaultModuleAccount,
-					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 6)),
-				)
+				t.Log("Position should be accessible following 'OpenPosition'")
+				_, err = nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
 				require.NoError(t, err)
 
-				pos, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
-				require.NoError(t, err)
-				fmt.Println(pos)
+				t.Log("Verify correct events emitted for 'OpenPosition'")
+				expectedEvents := []sdk.Event{
+					events.NewTransferEvent(
+						/* coin */ sdk.NewCoin(pair.GetQuoteTokenDenom(), quote),
+						/* from */ alice.String(),
+						/* to */ nibiruApp.AccountKeeper.GetModuleAddress(
+							types.VaultModuleAccount).String(),
+					),
+					// events.NewPositionChangeEvent(), TODO
+				}
+				for _, event := range expectedEvents {
+					assert.Contains(t, ctx.EventManager().Events(), event)
+				}
 
 				t.Log("Attempt to remove 10% of the position")
 				removeAmt := sdk.NewInt(6)
@@ -420,14 +425,14 @@ func TestRemoveMargin(t *testing.T) {
 					Sender: alice.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
 
-				t.Log("RemoveMargin from the position")
+				t.Log("'RemoveMargin' from the position")
 				res, err := perpKeeper.RemoveMargin(goCtx, msg)
 				require.NoError(t, err)
 				assert.EqualValues(t, msg.Margin, res.MarginOut)
 				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
 
-				t.Log("Verify correct events emitted")
-				events := []sdk.Event{
+				t.Log("Verify correct events emitted for 'RemoveMargin'")
+				expectedEvents = []sdk.Event{
 					events.NewMarginChangeEvent(
 						/* owner */ alice,
 						/* vpool */ msg.TokenPair,
@@ -441,7 +446,7 @@ func TestRemoveMargin(t *testing.T) {
 						/* to */ msg.Sender,
 					),
 				}
-				for _, event := range events {
+				for _, event := range expectedEvents {
 					assert.Contains(t, ctx.EventManager().Events(), event)
 				}
 			},
