@@ -16,16 +16,16 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
-  // tollRatio is the ratio transferred to the the fee pool
-  int64 tollRatio = 3;
-  // efFeeRatio is the ratio transferred to the PerpEF.
-  int64 spreadRatio = 4;
+  // toll_ratio is the ratio transferred to the the fee pool
+  int64 toll_ratio = 3;
+  // spread_ratio is the ratio transferred to the PerpEF.
+  int64 spread_ratio = 4;
 
-  // liquidationFee is the fee split between IF and Liquidator.
-  int64 liquidationFee = 5;
+  // liquidation_fee is the fee split between IF and Liquidator.
+  int64 liquidation_fee = 5;
 
-  // partialLiquidationRatio is the share we try to liquidate if the margin is higher than liquidation fee
-  int64 partialLiquidationRatio = 6;
+  // partial_liquidation_ratio is the share we try to liquidate if the margin is higher than liquidation fee
+  int64 partial_liquidation_ratio = 6;
 }
 
 // GenesisState defines the perp  module's genesis state.
