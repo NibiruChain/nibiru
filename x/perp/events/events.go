@@ -166,8 +166,22 @@ func EmitPositionLiquidate(
 	liquidationFee sdk.Int,
 	badDebt sdk.Dec,
 ) {
+	ctx.EventManager().EmitEvent(NewPositionLiquidateEvent(
+		vpool, owner, notional, vsize, liquidator, liquidationFee, badDebt,
+	))
+}
+
+func NewPositionLiquidateEvent(
+	vpool string,
+	owner sdk.AccAddress,
+	notional sdk.Dec,
+	vsize sdk.Dec,
+	liquidator sdk.AccAddress,
+	liquidationFee sdk.Int,
+	badDebt sdk.Dec,
+) sdk.Event {
 	const EventTypePositionLiquidate = "position_liquidate"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypePositionLiquidate,
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
@@ -176,7 +190,7 @@ func EmitPositionLiquidate(
 		sdk.NewAttribute("liquidator", liquidator.String()),
 		sdk.NewAttribute("liquidationFee", liquidationFee.String()),
 		sdk.NewAttribute("badDebt", badDebt.String()),
-	))
+	)
 }
 
 /* EmitPositionSettle emits an event when a position is settled.
