@@ -20,11 +20,11 @@ func Test_calcFreeCollateral(t *testing.T) {
 			name: "invalid token pair - error",
 			test: func() {
 				k, _, ctx := getKeeper(t)
-				fundingReceived := sdk.ZeroDec()
+				fundingPayment := sdk.ZeroDec()
 				the3pool := "dai:usdc:usdt"
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, common.TokenPair(the3pool), alice.String())
-				_, err := k.calcFreeCollateral(ctx, *pos, fundingReceived)
+				_, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
 			},
@@ -34,13 +34,13 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingReceived := sdk.ZeroDec()
+				fundingPayment := sdk.ZeroDec()
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
 					Return(false)
-				_, err := k.calcFreeCollateral(ctx, *pos, fundingReceived)
+				_, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -50,13 +50,13 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingReceived := sdk.ZeroDec()
+				fundingPayment := sdk.ZeroDec()
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
 					Return(true)
-				freeCollateral, err := k.calcFreeCollateral(ctx, *pos, fundingReceived)
+				freeCollateral, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
 				assert.NoError(t, err)
 				assert.EqualValues(t, sdk.ZeroInt(), freeCollateral)
 			},
@@ -66,15 +66,15 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingReceived := sdk.NewDec(10)
+				fundingPayment := sdk.NewDec(10)
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
 					Return(true)
-				freeCollateral, err := k.calcFreeCollateral(ctx, *pos, fundingReceived)
+				freeCollateral, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
 				assert.NoError(t, err)
-				assert.EqualValues(t, sdk.NewInt(10), freeCollateral)
+				assert.EqualValues(t, sdk.NewInt(-10), freeCollateral)
 			},
 		},
 		{
@@ -82,15 +82,15 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingReceived := sdk.NewDec(-100)
+				fundingPayment := sdk.NewDec(-100)
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
 					Return(true)
-				freeCollateral, err := k.calcFreeCollateral(ctx, *pos, fundingReceived)
+				freeCollateral, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
 				assert.NoError(t, err)
-				assert.EqualValues(t, sdk.NewInt(-100), freeCollateral)
+				assert.EqualValues(t, sdk.NewInt(100), freeCollateral)
 			},
 		},
 	}
