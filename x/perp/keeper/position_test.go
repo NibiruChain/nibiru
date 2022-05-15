@@ -93,7 +93,6 @@ func TestKeeper_SettlePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		coins, err := k.SettlePosition(ctx, pos)
-		require.ErrorIs(t, err, types.ErrPositionSizeZero)
 		require.Len(t, coins, 0)
 	})
 }

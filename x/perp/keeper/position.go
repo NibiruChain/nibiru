@@ -19,7 +19,7 @@ func (k Keeper) SettlePosition(
 	}
 
 	if currentPosition.Size_.IsZero() {
-		return sdk.Coins{}, types.ErrPositionSizeZero
+		return sdk.NewCoins(), nil
 	}
 
 	err = k.ClearPosition(
