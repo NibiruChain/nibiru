@@ -14,13 +14,8 @@ import (
 /*
 WIP, missing items:
 
-Dev:
-	- [] realizeBadDebt
-
 Tests:
-	- [] CreateLiquidation and createPartialLiquidation
 	- [] Liquidation
-	- [] IsOverSpreadLimit
 */
 
 type LiquidationOutput struct {
@@ -71,7 +66,7 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 	)
 
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
-		liquidationOuptut, err = k.createPartialLiquidation(ctx, pair, trader, position)
+		liquidationOuptut, err = k.CreatePartialLiquidation(ctx, pair, trader, position)
 		if err != nil {
 			panic(err)
 		}
@@ -151,8 +146,8 @@ func (k Keeper) CreateLiquidation(ctx sdk.Context, pair common.TokenPair, owner 
 	return
 }
 
-//createPartialLiquidation create a partial liquidation of a position and compute the fee to insurance fund
-func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, position *types.Position) (liquidationOutput LiquidationOutput, err error) {
+//CreatePartialLiquidation create a partial liquidation of a position and compute the fee to insurance fund
+func (k Keeper) CreatePartialLiquidation(ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, position *types.Position) (liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 	var (
 		dir vtypes.Direction
