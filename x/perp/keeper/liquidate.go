@@ -158,45 +158,50 @@ func (k Keeper) Liquidate(
 //CreateLiquidation create a liquidation of a position and compute the fee to ecosystem fund
 func (k Keeper) CreateLiquidation(
 	ctx sdk.Context, pair common.TokenPair, owner sdk.AccAddress, position *types.Position,
-) (liquidationOutput LiquidationOutput, err error) {
+) (LiquidationOutput, error) {
+
 	params := k.GetParams(ctx)
 
-	liquidationOutput.PositionResp, err = k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
-
+	positionResp, err := k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
 	if err != nil {
 		return LiquidationOutput{}, err
 	}
 
-	remainMargin := liquidationOutput.PositionResp.MarginToVault.Abs()
+	remainMargin := positionResp.MarginToVault.Abs()
 
-	feeToLiquidator := liquidationOutput.PositionResp.ExchangedQuoteAssetAmount.
+	feeToLiquidator := positionResp.ExchangedQuoteAssetAmount.
 		Mul(params.GetLiquidationFeeAsDec()).
 		Quo(sdk.MustNewDecFromStr("2"))
-	totalBadDebt := liquidationOutput.PositionResp.BadDebt
+	totalBadDebt := positionResp.BadDebt
 
-	// if the remainMargin is not enough for liquidationFee, count it as bad debt
-	// else, then the rest will be transferred to ecosystemFund
 	if feeToLiquidator.GT(remainMargin) {
+		// if the remainMargin is not enough for liquidationFee, count it as bad debt
 		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
 		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
 	} else {
+		// Otherwise, the remaining margin rest will be transferred to ecosystemFund
 		remainMargin = remainMargin.Sub(feeToLiquidator)
 	}
 
+	var feeToPerpEcosystemFund sdk.Dec
 	if remainMargin.GT(sdk.ZeroDec()) {
-		liquidationOutput.FeeToPerpEcosystemFund = remainMargin
+		feeToPerpEcosystemFund = remainMargin
 	} else {
-		liquidationOutput.FeeToPerpEcosystemFund = sdk.ZeroDec()
+		feeToPerpEcosystemFund = sdk.ZeroDec()
 	}
 
-	liquidationOutput.BadDebt = totalBadDebt
-	liquidationOutput.FeeToLiquidator = feeToLiquidator
+	output := LiquidationOutput{
+		FeeToPerpEcosystemFund: feeToPerpEcosystemFund,
+		BadDebt:                totalBadDebt,
+		FeeToLiquidator:        feeToLiquidator,
+		PositionResp:           positionResp,
+	}
 
-	err = liquidationOutput.Validate()
+	err = output.Validate()
 	if err != nil {
 		return LiquidationOutput{}, err
 	}
-	return liquidationOutput, err
+	return output, err
 }
 
 // CreatePartialLiquidation create a partial liquidation of a position and compute the fee to ecosystem fund
