@@ -332,7 +332,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 				// liquidator fee is half the liquidation fee of ExchangedQuoteAssetAmount
 				require.Equal(t, liquidationOutput.PositionResp.ExchangedQuoteAssetAmount.Mul(tc.liquidationFee).Quo(sdk.MustNewDecFromStr("2")), liquidationOutput.FeeToLiquidator)
 				require.InDelta(t, tc.expectedFee.Quo(sdk.MustNewDecFromStr("2")).MustFloat64(), liquidationOutput.FeeToLiquidator.MustFloat64(), 0.0001)
-				require.InDelta(t, tc.expectedFee.Quo(sdk.MustNewDecFromStr("2")).MustFloat64(), liquidationOutput.FeeToInsuranceFund.MustFloat64(), 0.0001)
+				require.InDelta(t, tc.expectedFee.Quo(sdk.MustNewDecFromStr("2")).MustFloat64(), liquidationOutput.FeeToPerpEcosystemFund.MustFloat64(), 0.0001)
 			} else {
 				require.Error(t, err)
 

@@ -19,18 +19,26 @@ Tests:
 */
 
 type LiquidationOutput struct {
-	FeeToInsuranceFund sdk.Dec
-	BadDebt            sdk.Dec
-	FeeToLiquidator    sdk.Dec
-	PositionResp       *types.PositionResp
+	FeeToPerpEcosystemFund sdk.Dec
+	BadDebt                sdk.Dec
+	FeeToLiquidator        sdk.Dec
+	PositionResp           *types.PositionResp
 }
 
-/*Liquidate allows to liquidate the trader position if the margin is below the required margin maintenance ratio.*/
-func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, liquidator sdk.AccAddress) error {
-	// Liquidate position
+/* Liquidate allows to liquidate the trader position if the margin is below the
+required margin maintenance ratio.
+*/
+func (k Keeper) Liquidate(
+	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, liquidator sdk.AccAddress,
+) error {
+	// ------------- Liquidation Message Setup -------------
+
+	// TODO validate liquidator (msg.Sender)
+	// TODO validate trader (msg.PositionOwner)
+	// TODO validate pair (msg.Vpool)
 	position, err := k.GetPosition(ctx, pair, trader.String())
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	marginRatio, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
@@ -39,7 +47,8 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 	}
 
 	if k.VpoolKeeper.IsOverSpreadLimit(ctx, pair) {
-		marginRatioBasedOnOracle, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_INDEX)
+		marginRatioBasedOnOracle, err := k.GetMarginRatio(
+			ctx, *position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
 			return err
 		}
@@ -53,7 +62,8 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 		return types.MarginHighEnough
 	}
 
-	marginRatioBasedOnSpot, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_SPOT)
+	marginRatioBasedOnSpot, err := k.GetMarginRatio(
+		ctx, *position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return err
 	}
@@ -76,15 +86,19 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 		}
 	}
 
+	// Transfer fee from (which one?) module to PerpEF
 	err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		trader,
 		common.TreasuryPoolModuleAccount,
-		sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToInsuranceFund.TruncateInt())),
+		sdk.NewCoins(
+			sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOuptut.FeeToPerpEcosystemFund.TruncateInt())),
 	)
 	if err != nil {
 		panic(err)
 	}
+
+	// Transfer fee from (which one?) module to liquidator
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
 		common.TreasuryPoolModuleAccount,
@@ -109,9 +123,10 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 	return nil
 }
 
-//CreateLiquidation create a liquidation of a position and compute the fee to insurance fund
-func (k Keeper) CreateLiquidation(ctx sdk.Context, pair common.TokenPair, owner sdk.AccAddress, position *types.Position) (
-	liquidationOutput LiquidationOutput, err error) {
+//CreateLiquidation create a liquidation of a position and compute the fee to ecosystem fund
+func (k Keeper) CreateLiquidation(
+	ctx sdk.Context, pair common.TokenPair, owner sdk.AccAddress, position *types.Position,
+) (liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 
 	liquidationOutput.PositionResp, err = k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
@@ -122,11 +137,13 @@ func (k Keeper) CreateLiquidation(ctx sdk.Context, pair common.TokenPair, owner 
 
 	remainMargin := liquidationOutput.PositionResp.MarginToVault.Abs()
 
-	feeToLiquidator := liquidationOutput.PositionResp.ExchangedQuoteAssetAmount.Mul(params.GetLiquidationFeeAsDec()).Quo(sdk.MustNewDecFromStr("2"))
+	feeToLiquidator := liquidationOutput.PositionResp.ExchangedQuoteAssetAmount.
+		Mul(params.GetLiquidationFeeAsDec()).
+		Quo(sdk.MustNewDecFromStr("2"))
 	totalBadDebt := liquidationOutput.PositionResp.BadDebt
 
 	// if the remainMargin is not enough for liquidationFee, count it as bad debt
-	// else, then the rest will be transferred to insuranceFund
+	// else, then the rest will be transferred to ecosystemFund
 	if feeToLiquidator.GT(remainMargin) {
 		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
 		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
@@ -136,16 +153,16 @@ func (k Keeper) CreateLiquidation(ctx sdk.Context, pair common.TokenPair, owner 
 	}
 
 	if remainMargin.GT(sdk.ZeroDec()) {
-		liquidationOutput.FeeToInsuranceFund = remainMargin
+		liquidationOutput.FeeToPerpEcosystemFund = remainMargin
 	}
 
 	liquidationOutput.BadDebt = totalBadDebt
 	liquidationOutput.FeeToLiquidator = feeToLiquidator
 
-	return
+	return liquidationOutput, err
 }
 
-//CreatePartialLiquidation create a partial liquidation of a position and compute the fee to insurance fund
+//CreatePartialLiquidation create a partial liquidation of a position and compute the fee to ecosystem fund
 func (k Keeper) CreatePartialLiquidation(ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, position *types.Position) (liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 	var (
@@ -180,14 +197,14 @@ func (k Keeper) CreatePartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 		return
 	}
 
-	// half of the liquidationFee goes to liquidator & another half goes to insurance fund
+	// half of the liquidationFee goes to liquidator & another half goes to ecosystem fund
 	liquidationPenalty := positionResp.ExchangedQuoteAssetAmount.Mul(params.GetLiquidationFeeAsDec())
 	feeToLiquidator := liquidationPenalty.Quo(sdk.MustNewDecFromStr("2"))
 
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationPenalty)
 	k.SetPosition(ctx, pair, trader.String(), positionResp.Position)
 
-	liquidationOutput.FeeToInsuranceFund = liquidationPenalty.Sub(feeToLiquidator)
+	liquidationOutput.FeeToPerpEcosystemFund = liquidationPenalty.Sub(feeToLiquidator)
 	liquidationOutput.PositionResp = positionResp
 	liquidationOutput.FeeToLiquidator = feeToLiquidator
 

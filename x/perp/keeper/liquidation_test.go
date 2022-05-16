@@ -49,7 +49,7 @@ func TestLiquidate_Unit(t *testing.T) {
 						common.TokenPair(pair),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
-					).
+					).AnyTimes().
 					Return(sdk.NewDec(20), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -78,6 +78,26 @@ func TestLiquidate_Unit(t *testing.T) {
 					Margin:       sdk.NewDec(1),
 				}
 				perpKeeper.SetPosition(ctx, pair, traderAddr.String(), toLiquidatePosition)
+
+				t.Log("After the position is opened, the vpool price changes")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair(pair),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(5),
+					).AnyTimes().
+					Return(sdk.NewDec(20), nil)
+				mocks.mockVpoolKeeper.EXPECT().
+					SwapBaseForQuote(
+						ctx,
+						/* pair */ common.TokenPair(pair),
+						/* dir */ vpooltypes.Direction_ADD_TO_POOL,
+						/* abs */ sdk.NewDec(10),
+						/* limit */ sdk.ZeroDec(),
+					).
+					Return(sdk.NewDec(20), nil)
+				t.Log("Successful liquidation will send funds to the ")
 
 				t.Log("Liquidating the position")
 				err := perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr)
