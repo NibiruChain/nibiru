@@ -125,8 +125,8 @@ An object parameter for getPriceWithSnapshot().
 
 Specifies how to read the price from a single snapshot. There are three ways:
 SPOT: spot price
-QUOTE_ASSET_SWAP: price when swapping x amount of quote assets
-BASE_ASSET_SWAP: price when swapping y amount of base assets
+QUOTE_ASSET_SWAP: price when swapping y amount of quote assets
+BASE_ASSET_SWAP: price when swapping x amount of base assets
 */
 type snapshotPriceOptions struct {
 	// required

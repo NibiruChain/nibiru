@@ -28,7 +28,6 @@ type LiquidationOutput struct {
 /*Liquidate allows to liquidate the trader position if the margin is below the required margin maintenance ratio.*/
 func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, liquidator sdk.AccAddress) error {
 	// Liquidate position
-	owner := trader.String()
 	position, err := k.GetPosition(ctx, pair, trader.String())
 	if err != nil {
 		panic(err)
@@ -99,7 +98,7 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 	events.EmitPositionLiquidate(
 		/* ctx */ ctx,
 		/* vpool */ pair.String(),
-		/* owner */ owner,
+		/* owner */ trader,
 		/* notional */ liquidationOuptut.PositionResp.ExchangedQuoteAssetAmount,
 		/* vsize */ liquidationOuptut.PositionResp.ExchangedPositionSize,
 		/* liquidator */ liquidator,

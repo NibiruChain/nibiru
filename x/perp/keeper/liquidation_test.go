@@ -24,7 +24,7 @@ func setUp(t *testing.T) (perpKeeper Keeper, mocks mockedDependencies, ctx sdk.C
 	return
 }
 
-func TestLiquidate(t *testing.T) {
+func TestLiquidate_Unit(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func()
