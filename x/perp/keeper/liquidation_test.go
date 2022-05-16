@@ -144,7 +144,6 @@ func TestLiquidate_Unit(t *testing.T) {
 				for _, event := range expectedEvents {
 					assert.Contains(t, ctx.EventManager().Events(), event)
 				}
-
 			},
 		},
 		{

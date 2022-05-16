@@ -107,10 +107,11 @@ func (k Keeper) Liquidate(
 		}
 	}
 
-	// Transfer fee from (which one?) module to PerpEF
-	if liquidationOutput.FeeToPerpEcosystemFund.TruncateInt().IsPositive() {
+	// Transfer fee from vault to PerpEF
+	feeToPerpEF := liquidationOutput.FeeToPerpEcosystemFund.TruncateInt()
+	if feeToPerpEF.IsPositive() {
 		coinToPerpEF := sdk.NewCoin(
-			pair.GetQuoteTokenDenom(), liquidationOutput.FeeToPerpEcosystemFund.TruncateInt())
+			pair.GetQuoteTokenDenom(), feeToPerpEF)
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.VaultModuleAccount,
@@ -120,19 +121,24 @@ func (k Keeper) Liquidate(
 		if err != nil {
 			return err
 		}
+		// TODO: emit transfer event from vault to PerpEF
 	}
 
-	// Transfer fee from (which one?) module to liquidator
-	coinToLiquidator := sdk.NewCoin(
-		pair.GetQuoteTokenDenom(), liquidationOutput.FeeToLiquidator.TruncateInt())
-	err = k.BankKeeper.SendCoinsFromModuleToAccount(
-		ctx,
-		types.PerpEFModuleAccount,
-		liquidator,
-		sdk.NewCoins(coinToLiquidator),
-	)
-	if err != nil {
-		panic(err) // Money for us
+	// Transfer fee from PerpEF to liquidator
+	feeToLiquidator := liquidationOutput.FeeToLiquidator.TruncateInt()
+	if feeToLiquidator.IsPositive() {
+		coinToLiquidator := sdk.NewCoin(
+			pair.GetQuoteTokenDenom(), liquidationOutput.FeeToLiquidator.TruncateInt())
+		err = k.BankKeeper.SendCoinsFromModuleToAccount(
+			ctx,
+			types.PerpEFModuleAccount,
+			liquidator,
+			sdk.NewCoins(coinToLiquidator),
+		)
+		if err != nil {
+			return err
+		}
+		// TODO: emit transfer event from PerpEF to liquidator
 	}
 
 	events.EmitPositionLiquidate(
@@ -193,7 +199,7 @@ func (k Keeper) CreateLiquidation(
 	return liquidationOutput, err
 }
 
-//CreatePartialLiquidation create a partial liquidation of a position and compute the fee to ecosystem fund
+// CreatePartialLiquidation create a partial liquidation of a position and compute the fee to ecosystem fund
 func (k Keeper) CreatePartialLiquidation(
 	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, position *types.Position,
 ) (liquidationOutput LiquidationOutput, err error) {
