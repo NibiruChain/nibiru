@@ -82,10 +82,11 @@ func DefaultParams() Params {
 	spreadRatio := sdk.MustNewDecFromStr("0.001")
 	liquidationFee := sdk.MustNewDecFromStr("0.0125")
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.50")
+	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
 
 	return NewParams(
 		/*Stopped=*/ true,
-		/*MaintenanceMarginRatio=*/ sdk.OneDec(),
+		/*MaintenanceMarginRatio=*/ maintenanceMarginRatio,
 		/*TollRatio=*/ tollRatio,
 		/*SpreadRatio=*/ spreadRatio,
 		/*LiquidationFee=*/ liquidationFee,

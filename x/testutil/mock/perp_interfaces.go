@@ -174,6 +174,20 @@ func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToAccount(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToAccount", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToAccount), arg0, arg1, arg2, arg3)
 }
 
+// SendCoinsFromModuleToModule mocks base method.
+func (m *MockBankKeeper) SendCoinsFromModuleToModule(arg0 types1.Context, arg1, arg2 string, arg3 types1.Coins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendCoinsFromModuleToModule", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendCoinsFromModuleToModule indicates an expected call of SendCoinsFromModuleToModule.
+func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToModule(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToModule), arg0, arg1, arg2, arg3)
+}
+
 // SpendableCoins mocks base method.
 func (m *MockBankKeeper) SpendableCoins(arg0 types1.Context, arg1 types1.AccAddress) types1.Coins {
 	m.ctrl.T.Helper()

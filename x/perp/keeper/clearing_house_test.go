@@ -81,7 +81,6 @@ type mockedDependencies struct {
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
-
 	db := tmdb.NewMemDB()
 	commitMultiStore := store.NewCommitMultiStore(db)
 	// Mount the KV store with the x/perp store key

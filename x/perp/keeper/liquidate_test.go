@@ -7,8 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -18,17 +16,16 @@ import (
 
 func TestCreateLiquidation(t *testing.T) {
 	testcases := []struct {
-		name              string
-		side              types.Side
-		quote             sdk.Dec
-		leverage          sdk.Dec
-		baseLimit         sdk.Dec
-		liquidationFee    sdk.Dec
-		removeMargin      sdk.Dec
-		liquidationOutput keeper.LiquidationOutput
-		startingQuote     sdk.Dec
-		excpectedBadDebt  sdk.Dec
-		expectedPass      bool
+		name             string
+		side             types.Side
+		quote            sdk.Dec
+		leverage         sdk.Dec
+		baseLimit        sdk.Dec
+		liquidationFee   sdk.Dec
+		removeMargin     sdk.Dec
+		startingQuote    sdk.Dec
+		excpectedBadDebt sdk.Dec
+		expectedPass     bool
 	}{
 		{
 			name:             "happPathBuy",
@@ -198,7 +195,6 @@ func TestCreatePartialLiquidation(t *testing.T) {
 		liquidationFee          sdk.Dec
 		partialLiquidationRatio sdk.Dec
 		removeMargin            sdk.Dec
-		liquidationOutput       keeper.LiquidationOutput
 		startingQuote           sdk.Dec
 		expectedPass            bool
 
@@ -208,6 +204,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 		newPositionOpenNotional sdk.Dec
 		expectedFee             sdk.Dec
 	}{
+
 		{
 			name:                    "happPathBuy",
 			side:                    types.Side_BUY,
