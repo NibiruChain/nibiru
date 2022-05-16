@@ -147,72 +147,71 @@ func TestLiquidate_Unit(t *testing.T) {
 
 			},
 		},
-		// {
-		// 	name: "long position; margin ok",
-		// 	test: func() {
-		// 		perpKeeper, mocks, ctx, traderAddr, liquidatorAddr := setUp(t)
+		{
+			name: "long position; margin ok",
+			test: func() {
+				perpKeeper, mocks, ctx, traderAddr, liquidatorAddr := setUp(t)
 
-		// 		pairStr := "BTC:NUSD"
-		// 		pair := common.TokenPair(pairStr)
+				pairStr := "BTC:NUSD"
+				pair := common.TokenPair(pairStr)
 
-		// 		perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-		// 			Pair:                       pair.String(),
-		// 			CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
-		// 		})
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair:                       pair.String(),
+					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				})
 
-		// 		t.Log("Mocking price of vpool")
-		// 		mocks.mockVpoolKeeper.EXPECT().
-		// 			GetBaseAssetPrice(
-		// 				ctx,
-		// 				common.TokenPair(pair),
-		// 				vpooltypes.Direction_ADD_TO_POOL,
-		// 				sdk.NewDec(10),
-		// 			).AnyTimes().
-		// 			Return(sdk.NewDec(20), nil)
+				t.Log("Mocking price of vpool")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair(pair),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+					).AnyTimes().
+					Return(sdk.NewDec(20), nil)
 
-		// 		mocks.mockVpoolKeeper.EXPECT().
-		// 			GetBaseAssetTWAP(
-		// 				ctx,
-		// 				common.TokenPair(pair),
-		// 				vpooltypes.Direction_ADD_TO_POOL,
-		// 				sdk.NewDec(10),
-		// 				15*time.Minute,
-		// 			).
-		// 			Return(sdk.NewDec(20), nil)
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetTWAP(
+						ctx,
+						common.TokenPair(pair),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(10),
+						15*time.Minute,
+					).
+					Return(sdk.NewDec(20), nil)
 
-		// 		mocks.mockVpoolKeeper.EXPECT().
-		// 			IsOverSpreadLimit(
-		// 				ctx,
-		// 				common.TokenPair(pair),
-		// 			).
-		// 			Return(false)
+				mocks.mockVpoolKeeper.EXPECT().
+					IsOverSpreadLimit(
+						ctx,
+						common.TokenPair(pair),
+					).
+					Return(false)
 
-		// 		t.Log("Opening the position")
-		// 		toLiquidatePosition := &types.Position{
-		// 			Address:      traderAddr.String(),
-		// 			Pair:         pairStr,
-		// 			Size_:        sdk.NewDec(10),
-		// 			OpenNotional: sdk.NewDec(10),
-		// 			Margin:       sdk.NewDec(1),
-		// 		}
-		// 		perpKeeper.SetPosition(ctx, pair, traderAddr.String(), toLiquidatePosition)
+				t.Log("Opening the position")
+				toLiquidatePosition := &types.Position{
+					Address:      traderAddr.String(),
+					Pair:         pairStr,
+					Size_:        sdk.NewDec(10),
+					OpenNotional: sdk.NewDec(10),
+					Margin:       sdk.NewDec(1),
+				}
+				perpKeeper.SetPosition(ctx, pair, traderAddr.String(), toLiquidatePosition)
 
-		// 		t.Log("After the position is opened, the vpool price changes")
-		// 		mocks.mockVpoolKeeper.EXPECT().
-		// 			GetBaseAssetPrice(
-		// 				ctx,
-		// 				common.TokenPair(pair),
-		// 				vpooltypes.Direction_ADD_TO_POOL,
-		// 				sdk.NewDec(5),
-		// 			).AnyTimes().
-		// 			Return(sdk.NewDec(20), nil)
+				t.Log("After the position is opened, the vpool price changes")
+				mocks.mockVpoolKeeper.EXPECT().
+					GetBaseAssetPrice(
+						ctx,
+						common.TokenPair(pair),
+						vpooltypes.Direction_ADD_TO_POOL,
+						sdk.NewDec(5),
+					).AnyTimes().
+					Return(sdk.NewDec(20), nil)
 
-		// 		t.Log("Liquidating the position")
-		// 		err := perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr)
-		// 		require.ErrorIs(t, types.MarginHighEnough, err)
-		// 	},
-		// },
-
+				t.Log("Liquidating the position")
+				err := perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr)
+				require.ErrorIs(t, types.MarginHighEnough, err)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

@@ -135,16 +135,6 @@ func (k Keeper) Liquidate(
 		panic(err) // Money for us
 	}
 
-	fmt.Println(
-		/* ctx */ ctx,
-		/* vpool */ pair.String(),
-		/* owner */ trader,
-		/* notional */ liquidationOutput.PositionResp.ExchangedQuoteAssetAmount,
-		/* vsize */ liquidationOutput.PositionResp.ExchangedPositionSize,
-		/* liquidator */ liquidator,
-		/* liquidationFee */ liquidationOutput.FeeToLiquidator.TruncateInt(),
-		/* badDebt */ liquidationOutput.BadDebt,
-	)
 	events.EmitPositionLiquidate(
 		/* ctx */ ctx,
 		/* vpool */ pair.String(),
