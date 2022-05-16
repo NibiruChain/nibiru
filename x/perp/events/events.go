@@ -26,17 +26,23 @@ const (
 	AttributeVpool         = "vpool"
 )
 
-func EmitTransfer(
-	ctx sdk.Context, coin sdk.Coin, from string, to string,
-) {
+func NewTransferEvent(
+	coin sdk.Coin, from string, to string,
+) sdk.Event {
 	const EventTypeTransfer = "transfer"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypeTransfer,
 		sdk.NewAttribute(AttributeFromAddr, from),
 		sdk.NewAttribute(AttributeToAddr, to),
 		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
 		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
-	))
+	)
+}
+
+func EmitTransfer(
+	ctx sdk.Context, coin sdk.Coin, from string, to string,
+) {
+	ctx.EventManager().EmitEvent(NewTransferEvent(coin, from, to))
 }
 
 /* EmitPositionChange emits an event when a position (vpool-trader) is changed.
@@ -84,8 +90,40 @@ func EmitPositionChange(
 	vPrice sdk.Dec,
 	fundingPayment sdk.Dec,
 ) {
+	ctx.EventManager().EmitEvent(NewPositionChangeEvent(
+		owner,
+		vpool,
+		margin,
+		notional,
+		vsizeChange,
+		txFee,
+		vsizeAfter,
+		realizedPnlAfter,
+		badDebt,
+		unrealizedPnlAfter,
+		liquidationPenalty,
+		vPrice,
+		fundingPayment,
+	))
+}
+
+func NewPositionChangeEvent(
+	owner sdk.AccAddress,
+	vpool string,
+	margin sdk.Int,
+	notional sdk.Dec,
+	vsizeChange sdk.Dec,
+	txFee sdk.Int,
+	vsizeAfter sdk.Dec,
+	realizedPnlAfter sdk.Dec,
+	badDebt sdk.Dec,
+	unrealizedPnlAfter sdk.Dec,
+	liquidationPenalty sdk.Int,
+	vPrice sdk.Dec,
+	fundingPayment sdk.Dec,
+) sdk.Event {
 	const EventTypePositionChange = "position_change"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypePositionChange,
 		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
@@ -100,7 +138,7 @@ func EmitPositionChange(
 		sdk.NewAttribute("liquidationPenalty", liquidationPenalty.String()),
 		sdk.NewAttribute("vPrice", vPrice.String()),
 		sdk.NewAttribute("fundingPayment", fundingPayment.String()),
-	))
+	)
 }
 
 /* EmitPositionLiquidate emits an event when a liquidation occurs.
@@ -128,8 +166,22 @@ func EmitPositionLiquidate(
 	liquidationFee sdk.Int,
 	badDebt sdk.Dec,
 ) {
+	ctx.EventManager().EmitEvent(NewPositionLiquidateEvent(
+		vpool, owner, notional, vsize, liquidator, liquidationFee, badDebt,
+	))
+}
+
+func NewPositionLiquidateEvent(
+	vpool string,
+	owner sdk.AccAddress,
+	notional sdk.Dec,
+	vsize sdk.Dec,
+	liquidator sdk.AccAddress,
+	liquidationFee sdk.Int,
+	badDebt sdk.Dec,
+) sdk.Event {
 	const EventTypePositionLiquidate = "position_liquidate"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypePositionLiquidate,
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute(AttributePositionOwner, owner.String()),
@@ -138,7 +190,7 @@ func EmitPositionLiquidate(
 		sdk.NewAttribute("liquidator", liquidator.String()),
 		sdk.NewAttribute("liquidationFee", liquidationFee.String()),
 		sdk.NewAttribute("badDebt", badDebt.String()),
-	))
+	)
 }
 
 /* EmitPositionSettle emits an event when a position is settled.
@@ -155,13 +207,23 @@ func EmitPositionSettle(
 	trader string,
 	settled sdk.Coins,
 ) {
+	ctx.EventManager().EmitEvent(NewPositionSettleEvent(
+		vpool, owner, settled,
+	))
+}
+
+func NewPositionSettleEvent(
+	vpool string,
+	owner sdk.AccAddress,
+	settled sdk.Coin,
+) sdk.Event {
 	const EventTypePositionSettle = "position_settle"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypePositionSettle,
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute(AttributePositionOwner, trader),
 		sdk.NewAttribute("settled_coins", settled.String()),
-	))
+	)
 }
 
 /* EmitMarginRatioChange emits an event when the protocol margin ratio changes.
@@ -174,11 +236,17 @@ func EmitMarginRatioChange(
 	ctx sdk.Context,
 	marginRatio sdk.Dec,
 ) {
+	ctx.EventManager().EmitEvent(NewMarginRatioChangeEvent(marginRatio))
+}
+
+func NewMarginRatioChangeEvent(
+	marginRatio sdk.Dec,
+) sdk.Event {
 	const EventTypeMarginRatioChange = "margin_ratio_change"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypeMarginRatioChange,
 		sdk.NewAttribute("margin_ratio", marginRatio.String()),
-	))
+	)
 }
 
 /* EmitMarginChange emits an event when the protocol margin ratio changes.
@@ -199,12 +267,22 @@ func EmitMarginChange(
 	marginAmt sdk.Int,
 	fundingPayment sdk.Dec,
 ) {
+	ctx.EventManager().EmitEvent(NewMarginChangeEvent(
+		owner, vpool, marginAmt, fundingPayment))
+}
+
+func NewMarginChangeEvent(
+	owner sdk.AccAddress,
+	vpool string,
+	marginAmt sdk.Int,
+	fundingPayment sdk.Dec,
+) sdk.Event {
 	const EventTypeMarginChange = "margin_change"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	return sdk.NewEvent(
 		EventTypeMarginChange,
 		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin_amt", marginAmt.String()),
 		sdk.NewAttribute("funding_payment", fundingPayment.String()),
-	))
+	)
 }

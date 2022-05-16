@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -107,18 +108,28 @@ func (k Keeper) OpenPosition(
 	// transfer trader <=> vault
 	switch {
 	case positionResp.MarginToVault.IsPositive():
+		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.TruncateInt())
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, traderAddr, types.VaultModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.TruncateInt())))
+			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return err
 		}
+		events.EmitTransfer(ctx,
+			/* coin */ coinToSend,
+			/* from */ traderAddr.String(),
+			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String())
 	case positionResp.MarginToVault.IsNegative():
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.VaultModuleAccount, traderAddr,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs().TruncateInt())))
+		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs().TruncateInt())
+		err = k.BankKeeper.SendCoinsFromModuleToAccount(
+			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return err
 		}
+		events.EmitTransfer(ctx,
+			/* coin */ coinToSend,
+			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String(),
+			/* to */ traderAddr.String(),
+		)
 	}
 
 	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount.TruncateInt())
