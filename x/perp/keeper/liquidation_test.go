@@ -97,13 +97,13 @@ func TestCreateLiquidation(t *testing.T) {
 	testcases := []struct {
 		name string
 	}{
-		name: "happPath",
+		{name: "happPath"},
 	}
 
-	for _, tc in range testcases {
+	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			
+
 		})
 	}
 }

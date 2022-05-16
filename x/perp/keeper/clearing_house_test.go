@@ -80,8 +80,8 @@ type mockedDependencies struct {
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
-	storeKey := sdk.NewKVStoreKey(vpooltypes.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(vpooltypes.StoreKey)
+	storeKey := sdk.NewKVStoreKey(types.StoreKey)
+	memStoreKey := storetypes.NewMemoryStoreKey(types.StoreKey)
 
 	db := tmdb.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db)
@@ -91,7 +91,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	protoCodec := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 	params := initParamsKeeper(protoCodec, codec.NewLegacyAmino(), storeKey, memStoreKey)
 
-	subSpace, found := params.GetSubspace(vpooltypes.ModuleName)
+	subSpace, found := params.GetSubspace(types.ModuleName)
 	require.True(t, found)
 
 	ctrl := gomock.NewController(t)
@@ -102,7 +102,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 
 	mockedAccountKeeper.
 		EXPECT().GetModuleAddress(types.ModuleName).
-		Return(authtypes.NewModuleAddress(vpooltypes.ModuleName))
+		Return(authtypes.NewModuleAddress(types.ModuleName))
 
 	k := NewKeeper(
 		protoCodec,
@@ -126,7 +126,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
-	paramsKeeper.Subspace(vpooltypes.ModuleName)
+	paramsKeeper.Subspace(types.ModuleName)
 
 	return paramsKeeper
 }
