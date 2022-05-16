@@ -9,7 +9,7 @@ import (
 
 // NOTE hardcoded for now. Need to discuss whether this should be part of the
 // Params of x/perp
-var initMarginRatio = sdk.MustNewDecFromStr("0.1")
+var initMarginRatio = sdk.MustNewDecFromStr("0.01")
 
 type RemainingMarginWithFundingPayment struct {
 	// Margin: amount of quote token (y) backing the position.
@@ -65,6 +65,23 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	return remaining, err
 }
 
+/* calcFreeCollateral computes the amount of collateral backing the position that can
+be removed without giving the position bad debt
+
+Args:
+- ctx: Carries information about the current state of the SDK application.
+- pos: position for which to compute free collateral.
+- fundingPayment: A funding payment (margin units) made or received by the trader on
+the current position. 'fundingPayment' is positive if 'owner' is the sender
+and negative if 'owner' is the receiver of the payment. Its magnitude is
+abs(vSize * fundingRate). Funding payments act to converge the mark price
+(vPrice) and index price (average price on major exchanges).
+
+Returns:
+- freeCollateral: Amount of collateral (margin) that can be removed from the
+position without making it go underwater.
+- error
+*/
 func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
 ) (sdk.Int, error) {
 	pair, err := common.NewTokenPairFromStr(pos.Pair)
@@ -85,7 +102,7 @@ func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingP
 	if err != nil {
 		return sdk.Int{}, err
 	}
-	freeMargin := pos.Margin.Add(fundingPayment)
+	freeMargin := pos.Margin.Sub(fundingPayment)
 	accountValue := unrealizedPnL.Add(freeMargin)
 	minCollateral := sdk.MinDec(accountValue, freeMargin)
 
