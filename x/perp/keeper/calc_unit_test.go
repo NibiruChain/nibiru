@@ -62,7 +62,7 @@ func Test_calcFreeCollateral(t *testing.T) {
 			},
 		},
 		{
-			name: "positive free collateral, zero position - happy path",
+			name: "negative free collateral, zero position - happy path",
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
