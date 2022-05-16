@@ -5,9 +5,11 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -113,29 +115,36 @@ func TestLiquidate_Unit(t *testing.T) {
 					).
 					Return(sdk.NewDec(20_000), nil)
 
-				t.Log("Successful liquidation will send funds to the ")
+				t.Log("Successful liquidation will send funds to the liquidator")
 				mocks.mockBankKeeper.EXPECT().
-					SendCoinsFromModuleToModule(
+					SendCoinsFromModuleToAccount(
 						ctx,
-						types.VaultModuleAccount,
 						types.PerpEFModuleAccount,
-						sdk.NewCoins(sdk.NewCoin("NUSD", sdk.NewInt(126))),
+						liquidatorAddr,
+						sdk.NewCoins(sdk.NewCoin("NUSD", sdk.NewInt(125))),
 					).
 					Return(nil)
 
-				// mocks.mockBankKeeper.EXPECT().
-				// 	SendCoinsFromModuleToAccount(
-				// 		ctx,
-				// 		types.PerpEFModuleAccount,
-				// 		liquidatorAddr,
-				// 		sdk.NewCoins(sdk.NewCoin("NUSD", sdk.NewInt(126))),
-				// 	).
-				// 	Return(nil)
+				t.Log("Liquidating the position - should pass")
+				err := perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr)
+				require.NoError(t, err)
 
-				t.Log("Liquidating the position")
-				//err := perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr)
-				require.Panics(t, func() { perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr) })
-				//require.NoError(t, err)
+				t.Log("Check that correct events emitted")
+				expectedEvents := []sdk.Event{
+					events.NewPositionLiquidateEvent(
+						/* vpool */ pair.String(),
+						/* owner */ traderAddr,
+						/* notional */ sdk.NewDec(20_000),
+						/* vsize */ sdk.NewDec(-10),
+						/* liquidator */ liquidatorAddr,
+						/* liquidationFee */ sdk.NewInt(125),
+						/* badDebt */ sdk.NewDec(165_125),
+					),
+				}
+				for _, event := range expectedEvents {
+					assert.Contains(t, ctx.EventManager().Events(), event)
+				}
+
 			},
 		},
 		// {
