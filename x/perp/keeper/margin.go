@@ -11,6 +11,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
+/* AddMargin deleverages an existing position by adding margin (collateral)
+to it. Adding margin increases the margin ratio of the corresponding position.
+*/
 func (k Keeper) AddMargin(
 	goCtx context.Context, msg *types.MsgAddMargin,
 ) (res *types.MsgAddMarginResponse, err error) {
@@ -24,11 +27,9 @@ func (k Keeper) AddMargin(
 		return res, err
 	}
 
-	// validate margin
+	// validate margin amount
 	addedMargin := msg.Margin.Amount
-	if msg.Margin.Denom != common.StableDenom {
-		return res, fmt.Errorf("invalid margin denom")
-	} else if !addedMargin.IsPositive() {
+	if !addedMargin.IsPositive() {
 		return res, fmt.Errorf("margin must be positive, not: %v", addedMargin.String())
 	}
 
@@ -42,6 +43,11 @@ func (k Keeper) AddMargin(
 		return res, err
 	}
 
+	// validate margin denom
+	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
+		return res, fmt.Errorf("invalid margin denom")
+	}
+
 	// ------------- AddMargin -------------
 
 	position, err := k.Positions().Get(ctx, pair, trader.String())
@@ -51,7 +57,7 @@ func (k Keeper) AddMargin(
 
 	position.Margin = position.Margin.Add(addedMargin.ToDec())
 
-	coinToSend := sdk.NewCoin(common.StableDenom, addedMargin)
+	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
 	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, trader, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
@@ -71,6 +77,10 @@ func (k Keeper) AddMargin(
 	return &types.MsgAddMarginResponse{}, nil
 }
 
+/* RemoveMargin further leverages an existing position by directly removing
+the margin (collateral) that backs it from the vault. This also decreases the
+margin ratio of the position.
+*/
 func (k Keeper) RemoveMargin(
 	goCtx context.Context, msg *types.MsgRemoveMargin,
 ) (res *types.MsgRemoveMarginResponse, err error) {
@@ -84,11 +94,9 @@ func (k Keeper) RemoveMargin(
 		return res, err
 	}
 
-	// validate margin
+	// validate margin amount
 	margin := msg.Margin.Amount
-	if msg.Margin.Denom != common.StableDenom {
-		return res, fmt.Errorf("invalid margin denom")
-	} else if margin.LTE(sdk.ZeroInt()) {
+	if margin.LTE(sdk.ZeroInt()) {
 		return res, fmt.Errorf("margin must be positive, not: %v", margin.String())
 	}
 
@@ -100,6 +108,11 @@ func (k Keeper) RemoveMargin(
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return res, err
+	}
+
+	// validate margin denom
+	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
+		return res, fmt.Errorf("invalid margin denom")
 	}
 
 	// ------------- RemoveMargin -------------
@@ -125,13 +138,13 @@ func (k Keeper) RemoveMargin(
 		ctx, *position, remaining.FundingPayment)
 	if err != nil {
 		return res, err
-	} else if !freeCollateral.GTE(sdk.ZeroInt()) {
+	} else if !freeCollateral.IsPositive() {
 		return res, fmt.Errorf("not enough free collateral")
 	}
 
 	k.Positions().Set(ctx, pair, trader.String(), position)
 
-	coinToSend := sdk.NewCoin(common.StableDenom, margin)
+	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), margin)
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.VaultModuleAccount, trader, sdk.NewCoins(coinToSend))
 	if err != nil {
