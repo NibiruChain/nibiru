@@ -124,7 +124,7 @@ func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, owner 
 	params := k.GetParams(ctx)
 
 	liquidationOutput.LiquidationPenalty = position.Margin
-	liquidationOutput.PositionResp, err = k.closePosition(ctx, position, sdk.ZeroInt())
+	liquidationOutput.PositionResp, err = k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
 
 	if err != nil {
 		return
@@ -166,16 +166,13 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, token string, newDebt sdk.Int) {
 func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair, owner string, position *types.Position) (liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 	var (
-		dir  vtypes.Direction
-		side types.Side
+		dir vtypes.Direction
 	)
 
 	if position.Size_.GTE(sdk.ZeroDec()) {
 		dir = vtypes.Direction_ADD_TO_POOL
-		side = types.Side_SELL
 	} else {
 		dir = vtypes.Direction_REMOVE_FROM_POOL
-		side = types.Side_BUY
 	}
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
@@ -190,11 +187,10 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 
 	positionResp, err := k.openReversePosition(
 		/* ctx */ ctx,
-		/* oldPosition */ position,
-		/* side */ side,
-		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional.TruncateInt(),
+		/* currentPosition */ *position,
+		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
 		/* leverage */ sdk.OneDec(),
-		/* baseAssetAmountLimit */ sdk.ZeroInt(),
+		/* baseAssetAmountLimit */ sdk.ZeroDec(),
 		/* canOverFluctuationLimit */ true,
 	)
 	if err != nil {
