@@ -180,7 +180,7 @@ func (k Keeper) GetMarginRatio(
 
 	switch priceOption {
 	case types.MarginCalculationPriceOption_MAX_PNL:
-		unrealizedPnL, positionNotional, err = k.getPreferencePositionNotionalAndUnrealizedPnL(
+		positionNotional, unrealizedPnL, err = k.getPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
 			position,
 			types.PnLPreferenceOption_MAX,
@@ -203,6 +203,7 @@ func (k Keeper) GetMarginRatio(
 		return sdk.Dec{}, err
 	}
 	if positionNotional.IsZero() {
+		// NOTE causes division by zero in margin ratio calculation
 		return sdk.Dec{},
 			fmt.Errorf("margin ratio doesn't make sense with zero position notional")
 	}

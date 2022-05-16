@@ -69,15 +69,23 @@ func Test_requireMoreMarginRatio(t *testing.T) {
 	}
 }
 
-func TestKeeper_GetMarginRatio_Errors(t *testing.T) {
+func TestGetMarginRatio_Errors(t *testing.T) {
 	tests := []struct {
-		name     string
-		position types.Position
+		name string
+		test func()
 	}{
 		{
-			"empty size position",
-			types.Position{
-				Size_: sdk.ZeroDec(),
+			name: "empty size position",
+			test: func() {
+				k, _, ctx := getKeeper(t)
+
+				pos := types.Position{
+					Size_: sdk.ZeroDec(),
+				}
+
+				_, err := k.GetMarginRatio(
+					ctx, pos, types.MarginCalculationPriceOption_MAX_PNL)
+				assert.EqualError(t, err, types.ErrPositionZero.Error())
 			},
 		},
 	}
@@ -85,18 +93,12 @@ func TestKeeper_GetMarginRatio_Errors(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			k, _, ctx := getKeeper(t)
-
-			pos := tc.position
-
-			_, err := k.GetMarginRatio(
-				ctx, pos, types.MarginCalculationPriceOption_MAX_PNL)
-			require.EqualError(t, err, types.ErrPositionZero.Error())
+			tc.test()
 		})
 	}
 }
 
-func TestKeeper_GetMarginRatio(t *testing.T) {
+func TestGetMarginRatio_Unit(t *testing.T) {
 	tests := []struct {
 		name                string
 		position            types.Position
