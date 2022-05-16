@@ -11,18 +11,25 @@ import (
 	vtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-/*
-WIP, missing items:
-
-Tests:
-	- [] Liquidation
-*/
-
 type liquidationOutput struct {
 	FeeToPerpEcosystemFund sdk.Dec
 	BadDebt                sdk.Dec
 	FeeToLiquidator        sdk.Dec
 	PositionResp           *types.PositionResp
+}
+
+func (l *liquidationOutput) String() string {
+	return fmt.Sprintf(`
+		FeeToPerpEcosystemFund: %v,
+		BadDebt: %v,
+		FeeToLiquidator: %v,
+		PositionResp: %v,
+	`,
+		l.FeeToPerpEcosystemFund,
+		l.BadDebt,
+		l.FeeToLiquidator,
+		l.PositionResp,
+	)
 }
 
 /* Liquidate allows to liquidate the trader position if the margin is below the
@@ -90,23 +97,22 @@ func (k Keeper) Liquidate(
 	err = k.BankKeeper.SendCoinsFromModuleToModule(
 		ctx,
 		types.VaultModuleAccount,
-		common.TreasuryPoolModuleAccount,
+		types.PerpEFModuleAccount,
 		sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOutput.FeeToPerpEcosystemFund.TruncateInt())),
 	)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("liquidationOutput", liquidationOutput)
 
 	// Transfer fee from (which one?) module to liquidator
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
-		common.TreasuryPoolModuleAccount,
+		types.PerpEFModuleAccount,
 		liquidator,
 		sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationOutput.FeeToLiquidator.TruncateInt())),
 	)
 	if err != nil {
-		panic(err)
+		panic(err) // Money for us
 	}
 
 	events.EmitPositionLiquidate(
