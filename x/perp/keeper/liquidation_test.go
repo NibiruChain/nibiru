@@ -9,6 +9,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -89,21 +90,6 @@ func TestLiquidate(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			tc.test()
-		})
-	}
-}
-
-func TestCreateLiquidation(t *testing.T) {
-	testcases := []struct {
-		name string
-	}{
-		{name: "happPath"},
-	}
-
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-
 		})
 	}
 }

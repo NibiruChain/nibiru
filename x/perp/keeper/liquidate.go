@@ -18,19 +18,16 @@ Dev:
 	- [] realizeBadDebt
 
 Tests:
-	- [] createLiquidation and createPartialLiquidation
+	- [] CreateLiquidation and createPartialLiquidation
 	- [] Liquidation
 	- [] IsOverSpreadLimit
 */
 
 type LiquidationOutput struct {
-	FeeToInsuranceFund        sdk.Dec
-	LiquidationPenalty        sdk.Dec
-	ExchangedQuoteAssetAmount sdk.Dec
-	ExchangedPositionSize     sdk.Dec
-	BadDebt                   sdk.Dec
-	FeeToLiquidator           sdk.Dec
-	PositionResp              *types.PositionResp
+	FeeToInsuranceFund sdk.Dec
+	BadDebt            sdk.Dec
+	FeeToLiquidator    sdk.Dec
+	PositionResp       *types.PositionResp
 }
 
 /*Liquidate allows to liquidate the trader position if the margin is below the required margin maintenance ratio.*/
@@ -74,12 +71,12 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 	)
 
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
-		liquidationOuptut, err = k.createPartialLiquidation(ctx, pair, owner, position)
+		liquidationOuptut, err = k.createPartialLiquidation(ctx, pair, trader, position)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		liquidationOuptut, err = k.createLiquidation(ctx, pair, owner, position)
+		liquidationOuptut, err = k.CreateLiquidation(ctx, pair, trader, position)
 		if err != nil {
 			panic(err)
 		}
@@ -118,12 +115,11 @@ func (k Keeper) Liquidate(ctx sdk.Context, pair common.TokenPair, trader sdk.Acc
 	return nil
 }
 
-//createLiquidation create a liquidation of a position and compute the fee to insurance fund
-func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, owner string, position *types.Position) (
+//CreateLiquidation create a liquidation of a position and compute the fee to insurance fund
+func (k Keeper) CreateLiquidation(ctx sdk.Context, pair common.TokenPair, owner sdk.AccAddress, position *types.Position) (
 	liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 
-	liquidationOutput.LiquidationPenalty = position.Margin
 	liquidationOutput.PositionResp, err = k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
 
 	if err != nil {
@@ -140,14 +136,11 @@ func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, owner 
 	if feeToLiquidator.GT(remainMargin) {
 		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
 		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
+		fmt.Println("liquidationBadDebt", liquidationBadDebt)
 	} else {
 		remainMargin = remainMargin.Sub(feeToLiquidator)
 	}
 
-	// transfer the actual token between owner and vault
-	if totalBadDebt.GT(sdk.ZeroDec()) {
-		k.realizeBadDebt(ctx, pair.GetQuoteTokenDenom(), totalBadDebt.TruncateInt())
-	}
 	if remainMargin.GT(sdk.ZeroDec()) {
 		liquidationOutput.FeeToInsuranceFund = remainMargin
 	}
@@ -158,12 +151,8 @@ func (k Keeper) createLiquidation(ctx sdk.Context, pair common.TokenPair, owner 
 	return
 }
 
-func (k Keeper) realizeBadDebt(ctx sdk.Context, token string, newDebt sdk.Int) {
-	//To implement
-}
-
 //createPartialLiquidation create a partial liquidation of a position and compute the fee to insurance fund
-func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair, owner string, position *types.Position) (liquidationOutput LiquidationOutput, err error) {
+func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, position *types.Position) (liquidationOutput LiquidationOutput, err error) {
 	params := k.GetParams(ctx)
 	var (
 		dir vtypes.Direction
@@ -202,12 +191,11 @@ func (k Keeper) createPartialLiquidation(ctx sdk.Context, pair common.TokenPair,
 	feeToLiquidator := liquidationPenalty.Quo(sdk.MustNewDecFromStr("2"))
 
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationPenalty)
-	k.SetPosition(ctx, pair, owner, positionResp.Position)
+	k.SetPosition(ctx, pair, trader.String(), positionResp.Position)
 
 	liquidationOutput.FeeToInsuranceFund = liquidationPenalty.Sub(feeToLiquidator)
 	liquidationOutput.PositionResp = positionResp
 	liquidationOutput.FeeToLiquidator = feeToLiquidator
-	liquidationOutput.LiquidationPenalty = liquidationPenalty
 
 	return
 }
