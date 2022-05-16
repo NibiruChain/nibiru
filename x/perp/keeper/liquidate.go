@@ -159,7 +159,6 @@ func (k Keeper) Liquidate(
 func (k Keeper) CreateLiquidation(
 	ctx sdk.Context, pair common.TokenPair, owner sdk.AccAddress, position *types.Position,
 ) (LiquidationOutput, error) {
-
 	params := k.GetParams(ctx)
 
 	positionResp, err := k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
