@@ -29,7 +29,7 @@ func (k Keeper) OpenPosition(
 	pair common.TokenPair,
 	side types.Side,
 	traderAddr sdk.AccAddress,
-	quoteAssetAmount sdk.Dec,
+	quoteAssetAmount sdk.Int,
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
@@ -63,7 +63,7 @@ func (k Keeper) OpenPosition(
 			ctx,
 			*position,
 			side,
-			/* openNotional */ quoteAssetAmount.Mul(leverage),
+			/* openNotional */ leverage.MulInt(quoteAssetAmount),
 			/* minPositionSize */ baseAssetAmountLimit,
 			/* leverage */ leverage)
 		if err != nil {
@@ -89,7 +89,8 @@ func (k Keeper) OpenPosition(
 	k.SetPosition(ctx, pair, traderAddr.String(), positionResp.Position)
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
-		marginRatio, err := k.GetMarginRatio(ctx, *positionResp.Position, types.MarginCalculationPriceOption_MAX_PNL)
+		marginRatio, err := k.GetMarginRatio(
+			ctx, *positionResp.Position, types.MarginCalculationPriceOption_MAX_PNL)
 		if err != nil {
 			return err
 		}
@@ -108,7 +109,7 @@ func (k Keeper) OpenPosition(
 	// transfer trader <=> vault
 	switch {
 	case positionResp.MarginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.TruncateInt())
+		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault)
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend))
 		if err != nil {
@@ -119,7 +120,7 @@ func (k Keeper) OpenPosition(
 			/* from */ traderAddr.String(),
 			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String())
 	case positionResp.MarginToVault.IsNegative():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs().TruncateInt())
+		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs())
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
 		if err != nil {
@@ -132,7 +133,8 @@ func (k Keeper) OpenPosition(
 		)
 	}
 
-	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount.TruncateInt())
+	transferredFee, err := k.transferFee(
+		ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount)
 	if err != nil {
 		return err
 	}
@@ -208,7 +210,7 @@ func (k Keeper) increasePosition(
 		return nil, err
 	}
 
-	increaseMarginRequirement := increasedNotional.Quo(leverage)
+	increaseMarginRequirement := increasedNotional.Quo(leverage).RoundInt()
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
@@ -228,7 +230,7 @@ func (k Keeper) increasePosition(
 		return nil, err
 	}
 
-	positionResp.ExchangedQuoteAssetAmount = increasedNotional
+	positionResp.ExchangedQuoteAssetAmount = increasedNotional.TruncateInt()
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
 	positionResp.RealizedPnl = sdk.ZeroDec()
 	positionResp.MarginToVault = increaseMarginRequirement
@@ -245,6 +247,7 @@ func (k Keeper) increasePosition(
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
+	events.EmitInternalPositionResponseEvent(ctx, positionResp, "increase_position")
 	return positionResp, nil
 }
 
@@ -343,12 +346,12 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 func (k Keeper) openReversePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
-	quoteAssetAmount sdk.Dec,
+	quoteAssetAmount sdk.Int,
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
-	openNotional := quoteAssetAmount.Mul(leverage)
+	openNotional := leverage.MulInt(quoteAssetAmount)
 	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
@@ -411,7 +414,7 @@ func (k Keeper) decreasePosition(
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{
 		RealizedPnl:   sdk.ZeroDec(),
-		MarginToVault: sdk.ZeroDec(),
+		MarginToVault: sdk.ZeroInt(),
 	}
 
 	currentPositionNotional, currentUnrealizedPnL, err := k.
@@ -454,7 +457,7 @@ func (k Keeper) decreasePosition(
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
 		currentPosition,
-		positionResp.RealizedPnl,
+		positionResp.RealizedPnl.TruncateInt(),
 	)
 	if err != nil {
 		return nil, err
@@ -463,7 +466,7 @@ func (k Keeper) decreasePosition(
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.UnrealizedPnlAfter = currentUnrealizedPnL.Sub(positionResp.RealizedPnl)
-	positionResp.ExchangedQuoteAssetAmount = decreasedNotional
+	positionResp.ExchangedQuoteAssetAmount = decreasedNotional.TruncateInt()
 
 	// calculate openNotional (it's different depends on long or short side)
 	// long: unrealizedPnl = positionNotional - openNotional => openNotional = positionNotional - unrealizedPnl
@@ -494,6 +497,7 @@ func (k Keeper) decreasePosition(
 		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
+	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
 	return positionResp, nil
 }
 
@@ -517,7 +521,7 @@ ret:
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context,
 	existingPosition types.Position,
-	quoteAssetAmount sdk.Dec,
+	quoteAssetAmount sdk.Int,
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
@@ -534,8 +538,9 @@ func (k Keeper) closeAndOpenReversePosition(
 		return nil, fmt.Errorf("underwater position")
 	}
 
-	notionalValueMovement := quoteAssetAmount.Mul(leverage)
-	remainingOpenNotional := notionalValueMovement.Sub(closePositionResp.ExchangedQuoteAssetAmount)
+	notionalValueMovement := leverage.MulInt(quoteAssetAmount)
+	remainingOpenNotional := notionalValueMovement.Sub(
+		closePositionResp.ExchangedQuoteAssetAmount.ToDec())
 
 	if remainingOpenNotional.IsNegative() {
 		// should never happen as this should also be checked in the caller
@@ -588,6 +593,8 @@ func (k Keeper) closeAndOpenReversePosition(
 		positionResp = closePositionResp
 	}
 
+	events.EmitInternalPositionResponseEvent(
+		ctx, positionResp, "close_and_open_reverse_position")
 	return positionResp, nil
 }
 
@@ -632,7 +639,7 @@ func (k Keeper) closePositionEntirely(
 
 	// calculate remaining margin with funding payment
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, currentPosition, unrealizedPnL)
+		ctx, currentPosition, unrealizedPnL.TruncateInt())
 	if err != nil {
 		return nil, err
 	}
@@ -659,12 +666,12 @@ func (k Keeper) closePositionEntirely(
 		return nil, err
 	}
 
-	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount
+	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount.TruncateInt()
 	positionResp.Position = &types.Position{
 		Address:                             currentPosition.Address,
 		Pair:                                currentPosition.Pair,
 		Size_:                               sdk.ZeroDec(),
-		Margin:                              sdk.ZeroDec(),
+		Margin:                              sdk.ZeroInt(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
@@ -679,6 +686,8 @@ func (k Keeper) closePositionEntirely(
 		return nil, err
 	}
 
+	events.EmitInternalPositionResponseEvent(
+		ctx, positionResp, "close_position_entirely")
 	return positionResp, nil
 }
 

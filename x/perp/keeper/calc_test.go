@@ -22,7 +22,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
-				marginDelta := sdk.OneDec()
+				marginDelta := sdk.OneInt()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, types.Position{
 						Pair: "osmo:nusd",
@@ -37,7 +37,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 				the3pool := "dai:usdc:usdt"
-				marginDelta := sdk.OneDec()
+				marginDelta := sdk.OneInt()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, types.Position{Pair: the3pool}, marginDelta)
 				require.Error(t, err)
@@ -75,11 +75,11 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				pos := &types.Position{
 					Address: alice.String(), Pair: pair.String(),
-					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
+					Margin: sdk.NewInt(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[0],
 				}
 
-				marginDelta := sdk.NewDec(-300)
+				marginDelta := sdk.NewInt(-300)
 				remaining, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, *pos, marginDelta)
 				require.NoError(t, err)
@@ -87,9 +87,9 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				//   = marginDelta - fPayment + pos.Margin
 				//   = -300 - 0 + 100 = -200
 				// ∴ remaining.badDebt = signedRemainMargin.Abs() = 200
-				require.EqualValues(t, sdk.NewDec(200), remaining.BadDebt)
-				require.EqualValues(t, sdk.ZeroDec(), remaining.FundingPayment)
-				require.EqualValues(t, sdk.ZeroDec(), remaining.Margin)
+				require.True(t, sdk.NewInt(200).Equal(remaining.BadDebt))
+				require.True(t, sdk.NewInt(0).Equal(remaining.FundingPayment))
+				require.True(t, sdk.NewInt(0).Equal(remaining.Margin))
 				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativePremiumFraction)
 			},
 		},
@@ -128,11 +128,11 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				pos := &types.Position{
 					Address: alice.String(), Pair: pair.String(),
-					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
+					Margin: sdk.NewInt(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[1],
 				}
 
-				marginDelta := sdk.NewDec(0)
+				marginDelta := sdk.NewInt(0)
 				remaining, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, *pos, marginDelta)
 				require.NoError(t, err)
@@ -142,14 +142,14 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				//      * pos.Size_
 				//   = (0.75 - 0.5) * 200
 				//   = 50
-				require.EqualValues(t, sdk.NewDec(50), remaining.FundingPayment)
+				require.True(t, sdk.NewInt(50).Equal(remaining.FundingPayment))
 				// signedRemainMargin
 				//   = marginDelta - fPayment + pos.Margin
 				//   = 0 - 50 + 100 = 50
 				// ∴ remaining.BadDebt = 0
 				// ∴ remaining.Margin = 50
-				require.EqualValues(t, sdk.NewDec(0), remaining.BadDebt)
-				require.EqualValues(t, sdk.NewDec(50), remaining.Margin)
+				require.True(t, sdk.NewInt(0).Equal(remaining.BadDebt))
+				require.True(t, sdk.NewInt(50).Equal(remaining.Margin))
 			},
 		},
 	}

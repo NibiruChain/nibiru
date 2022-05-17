@@ -20,7 +20,7 @@ func Test_calcFreeCollateral(t *testing.T) {
 			name: "invalid token pair - error",
 			test: func() {
 				k, _, ctx := getKeeper(t)
-				fundingPayment := sdk.ZeroDec()
+				fundingPayment := sdk.ZeroInt()
 				the3pool := "dai:usdc:usdt"
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, common.TokenPair(the3pool), alice.String())
@@ -34,7 +34,7 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingPayment := sdk.ZeroDec()
+				fundingPayment := sdk.ZeroInt()
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
@@ -50,7 +50,7 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingPayment := sdk.ZeroDec()
+				fundingPayment := sdk.ZeroInt()
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
@@ -66,7 +66,7 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingPayment := sdk.NewDec(10)
+				fundingPayment := sdk.NewInt(10)
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
@@ -82,7 +82,7 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				fundingPayment := sdk.NewDec(-100)
+				fundingPayment := sdk.NewInt(-100)
 				validPair := common.TokenPair("xxx:yyy")
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice.String())
