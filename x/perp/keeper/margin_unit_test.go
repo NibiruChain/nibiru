@@ -112,7 +112,7 @@ func TestGetMarginRatio_Unit(t *testing.T) {
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
-				Margin:                              sdk.NewDec(1),
+				Margin:                              sdk.NewInt(1),
 				LastUpdateCumulativePremiumFraction: sdk.OneDec(),
 			},
 			newPrice:            sdk.MustNewDecFromStr("10"),
@@ -125,7 +125,7 @@ func TestGetMarginRatio_Unit(t *testing.T) {
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
-				Margin:                              sdk.NewDec(1),
+				Margin:                              sdk.NewInt(1),
 				LastUpdateCumulativePremiumFraction: sdk.OneDec(),
 			},
 			newPrice:            sdk.MustNewDecFromStr("12"),
@@ -235,7 +235,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
-					Margin:                              sdk.NewDec(500),
+					Margin:                              sdk.NewInt(500),
 					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 					BlockNumber:                         ctx.BlockHeight(),
 				})
@@ -274,7 +274,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
-					Margin:                              sdk.NewDec(500),
+					Margin:                              sdk.NewInt(500),
 					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 					BlockNumber:                         ctx.BlockHeight(),
 				})
@@ -328,7 +328,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
-					Margin:                              sdk.NewDec(500),
+					Margin:                              sdk.NewInt(500),
 					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 					BlockNumber:                         ctx.BlockHeight(),
 				})
@@ -375,7 +375,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 
 				pos, err := k.GetPosition(ctx, pair, alice.String())
 				require.NoError(t, err)
-				require.EqualValues(t, sdk.NewDec(400), pos.Margin)
+				require.EqualValues(t, sdk.NewInt(400), pos.Margin)
 				require.EqualValues(t, sdk.NewDec(1000), pos.Size_)
 				require.EqualValues(t, alice.String(), pos.Address)
 			},

@@ -183,15 +183,15 @@ func TestAddMargin_ShouldRaiseError(t *testing.T) {
 func TestAddMargin_HappyPath(t *testing.T) {
 	tests := []struct {
 		name           string
-		initialMargin  sdk.Dec
+		initialMargin  sdk.Int
 		addedMargin    sdk.Int
-		expectedMargin sdk.Dec
+		expectedMargin sdk.Int
 	}{
 		{
 			name:           "add margin",
-			initialMargin:  sdk.NewDec(100),
+			initialMargin:  sdk.NewInt(100),
 			addedMargin:    sdk.NewInt(100),
-			expectedMargin: sdk.NewDec(200),
+			expectedMargin: sdk.NewInt(200),
 		},
 	}
 

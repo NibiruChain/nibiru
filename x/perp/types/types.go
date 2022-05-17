@@ -30,7 +30,7 @@ func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Posit
 		Address:                             trader,
 		Pair:                                vpair.String(),
 		Size_:                               sdk.ZeroDec(),
-		Margin:                              sdk.ZeroDec(),
+		Margin:                              sdk.ZeroInt(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 		LiquidityHistoryIndex:               0,
