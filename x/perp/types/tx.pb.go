@@ -235,47 +235,151 @@ func (m *MsgAddMarginResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAddMarginResponse proto.InternalMessageInfo
 
+type MsgLiquidate struct {
+	// Sender is the liquidator address
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// TokenPair is the identifier for the position's virtual pool
+	TokenPair string `protobuf:"bytes,2,opt,name=token_pair,json=tokenPair,proto3" json:"token_pair,omitempty"`
+	// Trader is the address of the owner of the position
+	Trader string `protobuf:"bytes,3,opt,name=trader,proto3" json:"trader,omitempty"`
+}
+
+func (m *MsgLiquidate) Reset()         { *m = MsgLiquidate{} }
+func (m *MsgLiquidate) String() string { return proto.CompactTextString(m) }
+func (*MsgLiquidate) ProtoMessage()    {}
+func (*MsgLiquidate) Descriptor() ([]byte, []int) {
+	return fileDescriptor_28f06b306d51dcfb, []int{4}
+}
+func (m *MsgLiquidate) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLiquidate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLiquidate.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLiquidate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLiquidate.Merge(m, src)
+}
+func (m *MsgLiquidate) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLiquidate) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLiquidate.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLiquidate proto.InternalMessageInfo
+
+func (m *MsgLiquidate) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgLiquidate) GetTokenPair() string {
+	if m != nil {
+		return m.TokenPair
+	}
+	return ""
+}
+
+func (m *MsgLiquidate) GetTrader() string {
+	if m != nil {
+		return m.Trader
+	}
+	return ""
+}
+
+type MsgLiquidateResponse struct {
+}
+
+func (m *MsgLiquidateResponse) Reset()         { *m = MsgLiquidateResponse{} }
+func (m *MsgLiquidateResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLiquidateResponse) ProtoMessage()    {}
+func (*MsgLiquidateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_28f06b306d51dcfb, []int{5}
+}
+func (m *MsgLiquidateResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLiquidateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLiquidateResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLiquidateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLiquidateResponse.Merge(m, src)
+}
+func (m *MsgLiquidateResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLiquidateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLiquidateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLiquidateResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgRemoveMargin)(nil), "nibiru.perp.v1.MsgRemoveMargin")
 	proto.RegisterType((*MsgRemoveMarginResponse)(nil), "nibiru.perp.v1.MsgRemoveMarginResponse")
 	proto.RegisterType((*MsgAddMargin)(nil), "nibiru.perp.v1.MsgAddMargin")
 	proto.RegisterType((*MsgAddMarginResponse)(nil), "nibiru.perp.v1.MsgAddMarginResponse")
+	proto.RegisterType((*MsgLiquidate)(nil), "nibiru.perp.v1.MsgLiquidate")
+	proto.RegisterType((*MsgLiquidateResponse)(nil), "nibiru.perp.v1.MsgLiquidateResponse")
 }
 
 func init() { proto.RegisterFile("perp/v1/tx.proto", fileDescriptor_28f06b306d51dcfb) }
 
 var fileDescriptor_28f06b306d51dcfb = []byte{
-	// 467 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x53, 0x41, 0x6b, 0x13, 0x41,
-	0x18, 0xcd, 0xb4, 0x12, 0xc8, 0x58, 0x5a, 0x59, 0x4a, 0x9b, 0x2e, 0x71, 0x53, 0x16, 0xd1, 0x22,
-	0x38, 0x43, 0xea, 0xc1, 0x9b, 0x60, 0xda, 0x6b, 0xb4, 0xec, 0x45, 0xf0, 0x12, 0x66, 0xb3, 0xe3,
-	0x74, 0xa8, 0x3b, 0xdf, 0x30, 0x33, 0x1b, 0x5a, 0x10, 0x41, 0x7f, 0x81, 0xe0, 0x3f, 0xf1, 0x57,
-	0xf4, 0x58, 0xf0, 0x22, 0x1e, 0x8a, 0x24, 0xfe, 0x05, 0xef, 0x92, 0x99, 0x4d, 0x6d, 0x82, 0xa8,
-	0xb7, 0x9e, 0x32, 0x99, 0xf7, 0xbe, 0xf7, 0x1e, 0xef, 0x9b, 0xc5, 0x77, 0x34, 0x37, 0x9a, 0x8e,
-	0x7b, 0xd4, 0x9d, 0x12, 0x6d, 0xc0, 0x41, 0xb4, 0xae, 0x64, 0x2e, 0x4d, 0x45, 0x66, 0x00, 0x19,
-	0xf7, 0xe2, 0x8e, 0x00, 0x10, 0x6f, 0x38, 0x65, 0x5a, 0x52, 0xa6, 0x14, 0x38, 0xe6, 0x24, 0x28,
-	0x1b, 0xd8, 0x71, 0x32, 0x02, 0x5b, 0x82, 0xa5, 0x39, 0xb3, 0x9c, 0x8e, 0x7b, 0x39, 0x77, 0xac,
-	0x47, 0x47, 0x20, 0x55, 0x8d, 0x6f, 0x0a, 0x10, 0xe0, 0x8f, 0x74, 0x76, 0x0a, 0xb7, 0xe9, 0x7b,
-	0x84, 0x37, 0x06, 0x56, 0x64, 0xbc, 0x84, 0x31, 0x1f, 0x30, 0x23, 0xa4, 0x8a, 0xb6, 0x70, 0xd3,
-	0x72, 0x55, 0x70, 0xd3, 0x46, 0xbb, 0x68, 0xaf, 0x95, 0xd5, 0xff, 0xa2, 0xbb, 0x18, 0x3b, 0x38,
-	0xe1, 0x6a, 0xa8, 0x99, 0x34, 0xed, 0x15, 0x8f, 0xb5, 0xfc, 0xcd, 0x11, 0x93, 0x26, 0x7a, 0x82,
-	0x9b, 0xa5, 0x17, 0x68, 0xaf, 0xee, 0xa2, 0xbd, 0xdb, 0xfb, 0x3b, 0x24, 0x24, 0x22, 0xb3, 0x44,
-	0xa4, 0x4e, 0x44, 0x0e, 0x40, 0xaa, 0xfe, 0xad, 0xf3, 0xcb, 0x6e, 0x23, 0xab, 0xe9, 0xe9, 0x67,
-	0x84, 0xb7, 0x97, 0x32, 0x64, 0xdc, 0x6a, 0x50, 0x96, 0x47, 0x4f, 0x31, 0x0e, 0xac, 0x21, 0x54,
-	0xce, 0xe7, 0xf9, 0x0f, 0xe1, 0x56, 0x18, 0x79, 0x51, 0xb9, 0xe8, 0x25, 0xde, 0x78, 0x5d, 0xa9,
-	0x42, 0x2a, 0x31, 0xd4, 0xec, 0xac, 0xe4, 0xca, 0x85, 0xe0, 0x7d, 0x32, 0x63, 0x7e, 0xbb, 0xec,
-	0xde, 0x17, 0xd2, 0x1d, 0x57, 0x39, 0x19, 0x41, 0x49, 0xeb, 0x06, 0xc3, 0xcf, 0x23, 0x5b, 0x9c,
-	0x50, 0x77, 0xa6, 0xb9, 0x25, 0x87, 0x7c, 0x94, 0xad, 0xd7, 0x32, 0x47, 0x41, 0x25, 0x7d, 0x87,
-	0xd7, 0x06, 0x56, 0x3c, 0x2b, 0x8a, 0x1b, 0x2a, 0x6d, 0x0b, 0x6f, 0x5e, 0xf7, 0x9f, 0x17, 0xb6,
-	0xff, 0x13, 0xe1, 0xd5, 0x81, 0x15, 0xd1, 0x5b, 0xbc, 0xb6, 0xb0, 0xd4, 0x2e, 0x59, 0x7c, 0x4d,
-	0x64, 0xa9, 0xf1, 0xf8, 0xc1, 0x3f, 0x08, 0x73, 0x87, 0x34, 0xfd, 0xf0, 0xe5, 0xc7, 0xa7, 0x95,
-	0x4e, 0x1a, 0xd3, 0x30, 0x40, 0xfd, 0xc3, 0x35, 0x9e, 0x3a, 0x0c, 0xe9, 0x22, 0x8d, 0x5b, 0xbf,
-	0xab, 0xe9, 0xfc, 0x41, 0xf9, 0x0a, 0x8d, 0xef, 0xfd, 0x0d, 0xbd, 0x32, 0xed, 0x7a, 0xd3, 0x9d,
-	0x74, 0x7b, 0xc1, 0x94, 0x15, 0x45, 0xed, 0xd8, 0x3f, 0x3c, 0x9f, 0x24, 0xe8, 0x62, 0x92, 0xa0,
-	0xef, 0x93, 0x04, 0x7d, 0x9c, 0x26, 0x8d, 0x8b, 0x69, 0xd2, 0xf8, 0x3a, 0x4d, 0x1a, 0xaf, 0x1e,
-	0x5e, 0xdb, 0xf0, 0x73, 0x3f, 0x7c, 0x70, 0xcc, 0xa4, 0x9a, 0x0b, 0x9d, 0x06, 0x29, 0xbf, 0xe9,
-	0xbc, 0xe9, 0xbf, 0x8a, 0xc7, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x5e, 0xb4, 0x54, 0x9f, 0x8d,
-	0x03, 0x00, 0x00,
+	// 522 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x53, 0x41, 0x6b, 0x14, 0x31,
+	0x18, 0xdd, 0xd9, 0x95, 0x85, 0x89, 0xa5, 0x95, 0xa1, 0x6c, 0xb7, 0xc3, 0x3a, 0x5b, 0x06, 0xd1,
+	0x22, 0x98, 0xb0, 0xf5, 0xe0, 0x4d, 0x70, 0xdb, 0xa3, 0xab, 0x65, 0x2e, 0x82, 0x20, 0x4b, 0x66,
+	0x27, 0xa6, 0xa1, 0x9d, 0x64, 0x4c, 0x32, 0x4b, 0x0b, 0x22, 0xe8, 0x2f, 0x10, 0xfc, 0x27, 0xfe,
+	0x8a, 0x1e, 0x0b, 0x5e, 0xc4, 0x43, 0x91, 0x5d, 0xf1, 0x77, 0xc8, 0x24, 0x33, 0xd3, 0x6e, 0x5d,
+	0x54, 0xbc, 0xf4, 0x34, 0x49, 0xbe, 0xf7, 0xbd, 0xf7, 0xe6, 0xe5, 0x0b, 0xb8, 0x95, 0x11, 0x99,
+	0xa1, 0xe9, 0x00, 0xe9, 0x63, 0x98, 0x49, 0xa1, 0x85, 0xb7, 0xca, 0x59, 0xcc, 0x64, 0x0e, 0x8b,
+	0x02, 0x9c, 0x0e, 0xfc, 0x1e, 0x15, 0x82, 0x1e, 0x11, 0x84, 0x33, 0x86, 0x30, 0xe7, 0x42, 0x63,
+	0xcd, 0x04, 0x57, 0x16, 0xed, 0x07, 0x13, 0xa1, 0x52, 0xa1, 0x50, 0x8c, 0x15, 0x41, 0xd3, 0x41,
+	0x4c, 0x34, 0x1e, 0xa0, 0x89, 0x60, 0xbc, 0xac, 0xaf, 0x53, 0x41, 0x85, 0x59, 0xa2, 0x62, 0x65,
+	0x4f, 0xc3, 0xf7, 0x0e, 0x58, 0x1b, 0x29, 0x1a, 0x91, 0x54, 0x4c, 0xc9, 0x08, 0x4b, 0xca, 0xb8,
+	0xd7, 0x01, 0x6d, 0x45, 0x78, 0x42, 0x64, 0xd7, 0xd9, 0x72, 0xb6, 0xdd, 0xa8, 0xdc, 0x79, 0xb7,
+	0x01, 0xd0, 0xe2, 0x90, 0xf0, 0x71, 0x86, 0x99, 0xec, 0x36, 0x4d, 0xcd, 0x35, 0x27, 0xfb, 0x98,
+	0x49, 0xef, 0x11, 0x68, 0xa7, 0x86, 0xa0, 0xdb, 0xda, 0x72, 0xb6, 0x6f, 0xee, 0x6c, 0x42, 0xeb,
+	0x08, 0x16, 0x8e, 0x60, 0xe9, 0x08, 0xee, 0x0a, 0xc6, 0x87, 0x37, 0x4e, 0xcf, 0xfb, 0x8d, 0xa8,
+	0x84, 0x87, 0x9f, 0x1d, 0xb0, 0x71, 0xc5, 0x43, 0x44, 0x54, 0x26, 0xb8, 0x22, 0xde, 0x63, 0x00,
+	0x2c, 0x6a, 0x2c, 0x72, 0x6d, 0xfc, 0xfc, 0x03, 0xb1, 0x6b, 0x5b, 0x9e, 0xe7, 0xda, 0x7b, 0x01,
+	0xd6, 0x5e, 0xe7, 0x3c, 0x61, 0x9c, 0x8e, 0x33, 0x7c, 0x92, 0x12, 0xae, 0xad, 0xf1, 0x21, 0x2c,
+	0x90, 0xdf, 0xce, 0xfb, 0x77, 0x29, 0xd3, 0x07, 0x79, 0x0c, 0x27, 0x22, 0x45, 0x65, 0x82, 0xf6,
+	0xf3, 0x40, 0x25, 0x87, 0x48, 0x9f, 0x64, 0x44, 0xc1, 0x3d, 0x32, 0x89, 0x56, 0x4b, 0x9a, 0x7d,
+	0xcb, 0x12, 0xbe, 0x03, 0x2b, 0x23, 0x45, 0x9f, 0x24, 0xc9, 0x35, 0x85, 0xd6, 0x01, 0xeb, 0x97,
+	0xf5, 0xab, 0xc0, 0xc2, 0x57, 0xc6, 0xd7, 0x53, 0xf6, 0x26, 0x67, 0x09, 0xd6, 0xe4, 0x7f, 0x7d,
+	0x75, 0x40, 0x5b, 0x4b, 0x5c, 0xb4, 0xb5, 0x6c, 0x9b, 0xdd, 0x95, 0xb2, 0x35, 0x7d, 0x25, 0xbb,
+	0xf3, 0xb3, 0x09, 0x5a, 0x23, 0x45, 0xbd, 0xb7, 0x60, 0x65, 0x61, 0x96, 0xfa, 0x70, 0x71, 0x88,
+	0xe1, 0x95, 0x8b, 0xf6, 0xef, 0xfd, 0x05, 0x50, 0xff, 0x58, 0xf8, 0xe1, 0xcb, 0x8f, 0x4f, 0xcd,
+	0x5e, 0xe8, 0x23, 0xdb, 0x80, 0xcc, 0x7b, 0x91, 0x06, 0x3a, 0xb6, 0xa1, 0x78, 0x19, 0x70, 0x2f,
+	0x6e, 0xa4, 0xb7, 0x84, 0xb9, 0xae, 0xfa, 0x77, 0xfe, 0x54, 0xad, 0x45, 0xfb, 0x46, 0x74, 0x33,
+	0xdc, 0x58, 0x10, 0xc5, 0x49, 0x52, 0x29, 0x0a, 0xe0, 0x5e, 0x64, 0xbd, 0x4c, 0xb1, 0xae, 0x2e,
+	0x55, 0xfc, 0x2d, 0xc8, 0x30, 0x30, 0x8a, 0xdd, 0xb0, 0xb3, 0xa0, 0x78, 0x54, 0xe1, 0x86, 0x7b,
+	0xa7, 0xb3, 0xc0, 0x39, 0x9b, 0x05, 0xce, 0xf7, 0x59, 0xe0, 0x7c, 0x9c, 0x07, 0x8d, 0xb3, 0x79,
+	0xd0, 0xf8, 0x3a, 0x0f, 0x1a, 0x2f, 0xef, 0x5f, 0x9a, 0xe4, 0x67, 0xa6, 0x77, 0xf7, 0x00, 0x33,
+	0x5e, 0xf1, 0x1c, 0x5b, 0x26, 0x33, 0xd1, 0x71, 0xdb, 0xbc, 0xfe, 0x87, 0xbf, 0x02, 0x00, 0x00,
+	0xff, 0xff, 0x9e, 0x65, 0xb2, 0xd2, 0x75, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -292,6 +396,9 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	RemoveMargin(ctx context.Context, in *MsgRemoveMargin, opts ...grpc.CallOption) (*MsgRemoveMarginResponse, error)
 	AddMargin(ctx context.Context, in *MsgAddMargin, opts ...grpc.CallOption) (*MsgAddMarginResponse, error)
+	// Liquidate is a transaction that allows the caller to fully or partially
+	// liquidate an existing position.
+	Liquidate(ctx context.Context, in *MsgLiquidate, opts ...grpc.CallOption) (*MsgLiquidateResponse, error)
 }
 
 type msgClient struct {
@@ -320,10 +427,22 @@ func (c *msgClient) AddMargin(ctx context.Context, in *MsgAddMargin, opts ...grp
 	return out, nil
 }
 
+func (c *msgClient) Liquidate(ctx context.Context, in *MsgLiquidate, opts ...grpc.CallOption) (*MsgLiquidateResponse, error) {
+	out := new(MsgLiquidateResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v1.Msg/Liquidate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	RemoveMargin(context.Context, *MsgRemoveMargin) (*MsgRemoveMarginResponse, error)
 	AddMargin(context.Context, *MsgAddMargin) (*MsgAddMarginResponse, error)
+	// Liquidate is a transaction that allows the caller to fully or partially
+	// liquidate an existing position.
+	Liquidate(context.Context, *MsgLiquidate) (*MsgLiquidateResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -335,6 +454,9 @@ func (*UnimplementedMsgServer) RemoveMargin(ctx context.Context, req *MsgRemoveM
 }
 func (*UnimplementedMsgServer) AddMargin(ctx context.Context, req *MsgAddMargin) (*MsgAddMarginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMargin not implemented")
+}
+func (*UnimplementedMsgServer) Liquidate(ctx context.Context, req *MsgLiquidate) (*MsgLiquidateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Liquidate not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -377,6 +499,24 @@ func _Msg_AddMargin_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_Liquidate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLiquidate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Liquidate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.perp.v1.Msg/Liquidate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Liquidate(ctx, req.(*MsgLiquidate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "nibiru.perp.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -388,6 +528,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMargin",
 			Handler:    _Msg_AddMargin_Handler,
+		},
+		{
+			MethodName: "Liquidate",
+			Handler:    _Msg_Liquidate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -554,6 +698,73 @@ func (m *MsgAddMarginResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgLiquidate) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLiquidate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLiquidate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Trader) > 0 {
+		i -= len(m.Trader)
+		copy(dAtA[i:], m.Trader)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Trader)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.TokenPair) > 0 {
+		i -= len(m.TokenPair)
+		copy(dAtA[i:], m.TokenPair)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.TokenPair)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLiquidateResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLiquidateResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLiquidateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -617,6 +828,36 @@ func (m *MsgAddMargin) Size() (n int) {
 }
 
 func (m *MsgAddMarginResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgLiquidate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.TokenPair)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Trader)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgLiquidateResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1069,6 +1310,202 @@ func (m *MsgAddMarginResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgAddMarginResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLiquidate) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLiquidate: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLiquidate: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TokenPair", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TokenPair = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Trader", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Trader = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLiquidateResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLiquidateResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLiquidateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

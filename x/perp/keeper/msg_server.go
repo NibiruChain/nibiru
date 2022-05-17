@@ -45,3 +45,13 @@ func (k msgServer) MsgAddMargin(goCtx context.Context, msg *types.MsgAddMargin,
 
 	return removeMarginResponse, nil
 }
+
+func (k msgServer) MsgLiquidate(goCtx context.Context, msg *types.MsgLiquidate,
+) (*types.MsgLiquidateResponse, error) {
+	removeMarginResponse, err := k.Liquidate(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return removeMarginResponse, nil
+}

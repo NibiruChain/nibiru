@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,28 +51,49 @@ func (l *LiquidationOutput) Validate() error {
 required margin maintenance ratio.
 */
 func (k Keeper) Liquidate(
-	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, liquidator sdk.AccAddress,
-) error {
+	goCtx context.Context, msg *types.MsgLiquidate,
+) (res *types.MsgLiquidateResponse, err error) {
 	// ------------- Liquidation Message Setup -------------
 
-	// TODO validate liquidator (msg.Sender)
-	// TODO validate trader (msg.PositionOwner)
-	// TODO validate pair (msg.Vpool)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate liquidator (msg.Sender)
+	liquidator, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return res, err
+	}
+
+	// validate trader (msg.PositionOwner)
+	trader, err := sdk.AccAddressFromBech32(msg.Trader)
+	if err != nil {
+		return res, err
+	}
+
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
+	if err != nil {
+		return res, err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return res, err
+	}
+
 	position, err := k.GetPosition(ctx, pair, trader.String())
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	marginRatio, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	if k.VpoolKeeper.IsOverSpreadLimit(ctx, pair) {
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
 			ctx, *position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
-			return err
+			return res, err
 		}
 
 		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
@@ -80,13 +102,13 @@ func (k Keeper) Liquidate(
 	params := k.GetParams(ctx)
 	err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, false)
 	if err != nil {
-		return types.MarginHighEnough
+		return res, types.MarginHighEnough
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
 		ctx, *position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	fmt.Println("marginRatioBasedOnSpot", marginRatioBasedOnSpot)
@@ -98,12 +120,12 @@ func (k Keeper) Liquidate(
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
 		liquidationOutput, err = k.CreatePartialLiquidation(ctx, pair, trader, position)
 		if err != nil {
-			return err
+			return res, err
 		}
 	} else {
 		liquidationOutput, err = k.CreateLiquidation(ctx, pair, trader, position)
 		if err != nil {
-			return err
+			return res, err
 		}
 	}
 
@@ -119,7 +141,7 @@ func (k Keeper) Liquidate(
 			sdk.NewCoins(coinToPerpEF),
 		)
 		if err != nil {
-			return err
+			return res, err
 		}
 		// TODO: emit transfer event from vault to PerpEF
 	}
@@ -136,7 +158,7 @@ func (k Keeper) Liquidate(
 			sdk.NewCoins(coinToLiquidator),
 		)
 		if err != nil {
-			return err
+			return res, err
 		}
 		// TODO: emit transfer event from PerpEF to liquidator
 	}
@@ -152,7 +174,7 @@ func (k Keeper) Liquidate(
 		/* badDebt */ liquidationOutput.BadDebt,
 	)
 
-	return nil
+	return res, nil
 }
 
 //CreateLiquidation create a liquidation of a position and compute the fee to ecosystem fund

@@ -125,8 +125,16 @@ func TestLiquidate_Unit(t *testing.T) {
 					).
 					Return(nil)
 
-				t.Log("Liquidating the position - should pass")
-				err := perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr)
+				t.Log("Liquidate the position - should pass")
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+
+				goCtx := sdk.WrapSDKContext(ctx)
+				msg := &types.MsgLiquidate{
+					Sender:    liquidatorAddr.String(),
+					TokenPair: pair.String(),
+					Trader:    traderAddr.String(),
+				}
+				_, err := perpKeeper.Liquidate(goCtx, msg)
 				require.NoError(t, err)
 
 				t.Log("Check that correct events emitted")
@@ -206,8 +214,15 @@ func TestLiquidate_Unit(t *testing.T) {
 					).AnyTimes().
 					Return(sdk.NewDec(20), nil)
 
-				t.Log("Liquidating the position")
-				err := perpKeeper.Liquidate(ctx, pair, traderAddr, liquidatorAddr)
+				t.Log("Liquidate the position")
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+				goCtx := sdk.WrapSDKContext(ctx)
+				msg := &types.MsgLiquidate{
+					Sender:    liquidatorAddr.String(),
+					TokenPair: pair.String(),
+					Trader:    traderAddr.String(),
+				}
+				_, err := perpKeeper.Liquidate(goCtx, msg)
 				require.ErrorIs(t, types.MarginHighEnough, err)
 			},
 		},

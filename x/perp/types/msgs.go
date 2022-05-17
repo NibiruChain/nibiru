@@ -6,6 +6,7 @@ import (
 
 var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
+var _ sdk.Msg = &MsgLiquidate{}
 
 // MsgRemoveMargin
 
@@ -39,6 +40,24 @@ func (m MsgAddMargin) GetSignBytes() []byte {
 }
 
 func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+// MsgLiquidate
+
+func (m MsgLiquidate) Route() string { return RouterKey }
+func (m MsgLiquidate) Type() string  { return "add_margin_msg" }
+
+func (m MsgLiquidate) ValidateBasic() error {
+	return nil
+}
+
+func (m MsgLiquidate) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgLiquidate) GetSigners() []sdk.AccAddress {
 	sender, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{sender}
 }
