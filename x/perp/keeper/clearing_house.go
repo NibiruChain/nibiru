@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -157,6 +158,53 @@ func (k Keeper) OpenPosition(
 		SpotPrice:             spotPrice,
 		FundingPayment:        positionResp.FundingPayment,
 	})
+}
+
+/* ClosePositions is a transaction that closes all open positions for a trader
+   on the specified virtual pool. */
+func (k Keeper) ClosePositions(goCtx context.Context, msg *types.MsgClosePositions,
+) (res *types.MsgClosePositionsResponse, err error) {
+	// ------------- Message Setup -------------
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate trader
+	trader, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return res, err
+	}
+
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
+	if err != nil {
+		return res, err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return res, err
+	}
+
+	// ------------- ClosePositions -------------
+
+	existingPosition, err := k.GetPosition(ctx, pair, trader.String())
+	if err != nil {
+		return res, err
+	}
+	closePositionResp, err := k.closePositionEntirely(
+		ctx,
+		*existingPosition,
+		sdk.ZeroDec(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO compute how much margin can be safely removed as in RemoveMargin
+	// TODO realize any funding payments
+	// TODO cover the bad debt if the position has any
+	// TODO transfer to vault if MarginToVault is positive
+
+	return res, err
 }
 
 /*

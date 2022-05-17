@@ -18,7 +18,15 @@ service Msg {
   rpc AddMargin(MsgAddMargin) returns (MsgAddMarginResponse) {
     option (google.api.http).post = "/nibiru/perp/add_margin";
   }
+
+  /* ClosePositions is a transaction that closes all open positions for a trader
+     on the specified virtual pool. */
+  rpc ClosePositions(MsgClosePositions) returns (MsgClosePositionsResponse) {
+    option (google.api.http).post = "/nibiru/perp/add_margin";
+  }
 }
+
+// -------------------------- RemoveMargin --------------------------
 
 /* MsgRemoveMargin: Msg to remove margin. */
 message MsgRemoveMargin {
@@ -35,6 +43,8 @@ message MsgRemoveMarginResponse {
     (gogoproto.nullable) = false];
 }
 
+// -------------------------- AddMargin --------------------------
+
 /* MsgAddMargin: Msg to remove margin. */
 message MsgAddMargin {
   string sender = 1;
@@ -44,4 +54,24 @@ message MsgAddMargin {
 
 message MsgAddMarginResponse {
   // MarginOut: tokens transferred back to the trader
+}
+
+// -------------------------- Liquidate --------------------------
+  
+// TODO
+
+// -------------------------- OpenPosition --------------------------
+
+// TODO
+
+// -------------------------- ClosePositions --------------------------
+
+message MsgClosePositions {
+  string sender = 1;
+  string token_pair = 2;
+}
+
+message MsgClosePositionsResponse {
+  // outCoin: tokens transferred back to the trader
+  cosmos.base.v1beta1.Coin outCoin = 1 [(gogoproto.nullable) = false];
 }

@@ -42,3 +42,21 @@ func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
 	sender, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{sender}
 }
+
+// MsgClosePositions
+
+func (m MsgClosePositions) Route() string { return RouterKey }
+func (m MsgClosePositions) Type() string  { return "add_margin_msg" }
+
+func (m MsgClosePositions) ValidateBasic() error {
+	return nil
+}
+
+func (m MsgClosePositions) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgClosePositions) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
