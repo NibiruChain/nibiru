@@ -18,10 +18,13 @@ message Params {
 
   // toll_ratio is the ratio transferred to the the fee pool
   int64 toll_ratio = 3;
+
   // spread_ratio is the ratio transferred to the PerpEF.
   int64 spread_ratio = 4;
 
-  // liquidation_fee is the fee split between EF and Liquidator.
+  // LiquidationFee is the percentage of liquidated position that will be given
+  // to out as a reward. Half of the liquidation fee is given to the liquidator,
+  // and the other half is given to the ecosystem fund.
   int64 liquidation_fee = 5;
 
   // partial_liquidation_ratio is the share we try to liquidate if the margin is higher than liquidation fee
