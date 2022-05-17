@@ -20,7 +20,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 	testCases := []struct {
 		name           string
 		side           types.Side
-		quote          sdk.Dec
+		quote          sdk.Int
 		leverage       sdk.Dec
 		baseLimit      sdk.Dec
 		liquidationFee sdk.Dec
@@ -29,7 +29,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 		{
 			name:           "liquidateEmptyPositionBUY",
 			side:           types.Side_BUY,
-			quote:          sdk.MustNewDecFromStr("0"),
+			quote:          sdk.NewInt(0),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
@@ -38,7 +38,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 		{
 			name:           "liquidateEmptyPositionSELL",
 			side:           types.Side_SELL,
-			quote:          sdk.MustNewDecFromStr("0"),
+			quote:          sdk.NewInt(0),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
@@ -131,7 +131,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	testCases := []struct {
 		name                             string
 		side                             types.Side
-		quote                            sdk.Dec
+		quote                            sdk.Int
 		leverage                         sdk.Dec
 		baseLimit                        sdk.Dec
 		liquidationFee                   sdk.Dec
@@ -144,7 +144,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		{
 			name:                    "happy path - Buy",
 			side:                    types.Side_BUY,
-			quote:                   sdk.NewDec(50_000),
+			quote:                   sdk.NewInt(50_000),
 			leverage:                sdk.OneDec(),
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
@@ -156,16 +156,15 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(50),
-					BadDebt:                   sdk.ZeroDec(),
-					// ExchangedPositionSize:     sdk.MustNewDecFromStr("-24.999875000624996875"),
-					ExchangedPositionSize: sdk.MustNewDecFromStr("-24.999875000624996875"),
-					FundingPayment:        sdk.ZeroDec(),
-					RealizedPnl:           sdk.ZeroDec(),
-					MarginToVault:         sdk.NewDec(-50),
-					UnrealizedPnlAfter:    sdk.ZeroDec(),
+					ExchangedQuoteAssetAmount: sdk.NewInt(50_000),
+					BadDebt:                   sdk.ZeroInt(),
+					ExchangedPositionSize:     sdk.MustNewDecFromStr("-24875.621890547263681592"),
+					FundingPayment:            sdk.ZeroInt(),
+					RealizedPnl:               sdk.ZeroDec(),
+					MarginToVault:             sdk.NewInt(-50_000),
+					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
 			),
@@ -173,26 +172,26 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		{
 			name:                    "happy path - Sell",
 			side:                    types.Side_SELL,
-			quote:                   sdk.NewDec(50_000),
+			quote:                   sdk.NewInt(50_000),
 			traderFunds:             sdk.NewInt64Coin("yyy", 50_100),
 			leverage:                sdk.OneDec(),
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.123123"),
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 3078),
-			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_043_893),
+			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_043_894),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(50),
-					BadDebt:                   sdk.ZeroDec(),
-					ExchangedPositionSize:     sdk.MustNewDecFromStr("25125628140703517587940"),
-					FundingPayment:            sdk.ZeroDec(),
+					ExchangedQuoteAssetAmount: sdk.NewInt(50_000),
+					BadDebt:                   sdk.ZeroInt(),
+					ExchangedPositionSize:     sdk.MustNewDecFromStr("25125.628140703517587940"),
+					FundingPayment:            sdk.ZeroInt(),
 					RealizedPnl:               sdk.NewDec(-1),
-					MarginToVault:             sdk.NewDec(-50),
+					MarginToVault:             sdk.NewInt(-50),
 					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
@@ -206,7 +205,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			*/
 			name:           "happy path - BadDebt, long",
 			side:           types.Side_BUY,
-			quote:          sdk.MustNewDecFromStr("50"),
+			quote:          sdk.NewInt(50),
 			leverage:       sdk.MustNewDecFromStr("10000"),
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
@@ -224,16 +223,15 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(50),
-					BadDebt:                   sdk.ZeroDec(),
-					// ExchangedPositionSize:     sdk.MustNewDecFromStr("-23.8095238095238095238095"),
-					ExchangedPositionSize: sdk.MustNewDecFromStr("-23.809523809523809523"),
-					FundingPayment:        sdk.ZeroDec(),
-					RealizedPnl:           sdk.ZeroDec(),
-					MarginToVault:         sdk.NewDec(-50),
-					UnrealizedPnlAfter:    sdk.ZeroDec(),
+					ExchangedQuoteAssetAmount: sdk.NewInt(500_000),
+					BadDebt:                   sdk.ZeroInt(),
+					ExchangedPositionSize:     sdk.MustNewDecFromStr("-238095.238095238095238095"),
+					FundingPayment:            sdk.ZeroInt(),
+					RealizedPnl:               sdk.ZeroDec(),
+					MarginToVault:             sdk.NewInt(-50),
+					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
 			),
@@ -242,7 +240,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// Same as above case but for shorts
 			name:                    "happy path - BadDebt, short",
 			side:                    types.Side_SELL,
-			quote:                   sdk.MustNewDecFromStr("50"),
+			quote:                   sdk.NewInt(50),
 			leverage:                sdk.MustNewDecFromStr("10000"),
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
@@ -254,16 +252,15 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(50),
-					BadDebt:                   sdk.ZeroDec(),
-					// ExchangedPositionSize:     sdk.MustNewDecFromStr("26.3157894736842105263158"),
-					ExchangedPositionSize: sdk.MustNewDecFromStr("26.315789473684210526"),
-					FundingPayment:        sdk.ZeroDec(),
-					RealizedPnl:           sdk.ZeroDec(),
-					MarginToVault:         sdk.NewDec(-50),
-					UnrealizedPnlAfter:    sdk.ZeroDec(),
+					ExchangedQuoteAssetAmount: sdk.NewInt(500_000),
+					BadDebt:                   sdk.ZeroInt(),
+					ExchangedPositionSize:     sdk.MustNewDecFromStr("263157.894736842105263158"),
+					FundingPayment:            sdk.ZeroInt(),
+					RealizedPnl:               sdk.ZeroDec(),
+					MarginToVault:             sdk.NewInt(-50),
+					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
 			),
@@ -334,14 +331,14 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
 
-			t.Log("Verify expected values using internal event due to usage of private fns")
+			// t.Log("Verify expected values using internal event due to usage of private fns")
 			// assert.Contains(t, ctx.EventManager().Events(), tc.internal_position_response_event)
 
 			// We effectively closed the position
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
 			require.Equal(t, sdk.ZeroDec(), newPosition.Size_)
-			require.Equal(t, sdk.ZeroDec(), newPosition.Margin)
-			require.Equal(t, sdk.ZeroDec(), newPosition.OpenNotional)
+			require.True(t, newPosition.Margin.Equal(sdk.NewInt(0)))
+			require.True(t, newPosition.OpenNotional.Equal(sdk.NewDec(0)))
 
 			// liquidator fee is half the liquidation fee of ExchangedQuoteAssetAmount
 			// feeToLiquidator = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
