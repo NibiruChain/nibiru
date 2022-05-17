@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
-func TestCreateLiquidation(t *testing.T) {
+func TestExecuteFullLiquidation(t *testing.T) {
 	testcases := []struct {
 		name                    string
 		side                    types.Side
@@ -39,20 +39,20 @@ func TestCreateLiquidation(t *testing.T) {
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
 			startingQuote:           sdk.MustNewDecFromStr("60"),
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 2),
-			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_000_045),
+			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 999_998),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			expectedPass:            true,
 		},
 		{
 			name:                    "happy path - Sell",
-			side:                    types.Side_BUY,
+			side:                    types.Side_SELL,
 			quote:                   sdk.MustNewDecFromStr("50"),
 			leverage:                sdk.OneDec(),
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.123123"),
 			startingQuote:           sdk.MustNewDecFromStr("60"),
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 3),
-			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_000_043),
+			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 999_997),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			expectedPass:            true,
 		},
@@ -92,9 +92,9 @@ func TestCreateLiquidation(t *testing.T) {
 			// liquidationAmount = quote * leverage = 50 * 10_000 = 50_000
 			// feeToLiquidator = liquidationAmount / 2 = 25_000
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
-			// perpEFBalance = startBalance - feeToLiquidator + quote
-			//   = 1_000_000 - 25_000 + 50 = 975_550
-			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 975_550),
+			// perpEFBalance = startBalance - ... + ...
+			//   = 1_000_000 - ... + ... = 975_500
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 975_500),
 			excpectedBadDebt:      sdk.MustNewDecFromStr("24950"),
 			expectedPass:          true,
 		},
@@ -108,7 +108,7 @@ func TestCreateLiquidation(t *testing.T) {
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
 			startingQuote:           sdk.MustNewDecFromStr("1150"),
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
-			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 975_550),
+			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 975_500),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("24950"),
 			expectedPass:            true,
 		},
