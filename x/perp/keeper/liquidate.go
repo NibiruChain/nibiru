@@ -196,7 +196,6 @@ func (k Keeper) CreatePartialLiquidation(
 	trader sdk.AccAddress,
 	position *types.Position,
 ) (*LiquidateResp, error) {
-
 	// Get position direction: long or short
 	var (
 		dir vpooltypes.Direction
@@ -246,5 +245,4 @@ func (k Keeper) CreatePartialLiquidation(
 		PositionResp:           positionResp,
 		BadDebt:                positionResp.BadDebt,
 	}, nil
-
 }
