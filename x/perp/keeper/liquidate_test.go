@@ -26,6 +26,7 @@ func TestCreateLiquidation(t *testing.T) {
 		removeMargin            sdk.Dec
 		startingQuote           sdk.Dec
 		expectedFeeToLiquidator sdk.Coin
+		expectedPerpEFBalance   sdk.Coin
 		excpectedBadDebt        sdk.Dec
 		expectedPass            bool
 	}{
@@ -38,6 +39,7 @@ func TestCreateLiquidation(t *testing.T) {
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
 			startingQuote:           sdk.MustNewDecFromStr("60"),
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 2),
+			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_000_045),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			expectedPass:            true,
 		},
@@ -50,6 +52,7 @@ func TestCreateLiquidation(t *testing.T) {
 			liquidationFee:          sdk.MustNewDecFromStr("0.123123"),
 			startingQuote:           sdk.MustNewDecFromStr("60"),
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 3),
+			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_000_043),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			expectedPass:            true,
 		},
@@ -79,16 +82,21 @@ func TestCreateLiquidation(t *testing.T) {
 			Because the user only have margin for 50, we create 24950 of bad
 			debt (2500 due to liquidator minus 50).
 			*/
-			name:                    "happy path - BadDebt, long",
-			side:                    types.Side_SELL,
-			quote:                   sdk.MustNewDecFromStr("50"),
-			leverage:                sdk.MustNewDecFromStr("10000"),
-			baseLimit:               sdk.ZeroDec(),
-			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
-			startingQuote:           sdk.MustNewDecFromStr("1150"),
+			name:           "happy path - BadDebt, long",
+			side:           types.Side_SELL,
+			quote:          sdk.MustNewDecFromStr("50"),
+			leverage:       sdk.MustNewDecFromStr("10000"),
+			baseLimit:      sdk.ZeroDec(),
+			liquidationFee: sdk.MustNewDecFromStr("0.1"),
+			startingQuote:  sdk.MustNewDecFromStr("1150"),
+			// liquidationAmount = quote * leverage = 50 * 10_000 = 50_000
+			// feeToLiquidator = liquidationAmount / 2 = 25_000
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
-			excpectedBadDebt:        sdk.MustNewDecFromStr("24950"),
-			expectedPass:            true,
+			// perpEFBalance = startBalance - feeToLiquidator + quote
+			//   = 1_000_000 - 25_000 + 50 = 975_550
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 975_550),
+			excpectedBadDebt:      sdk.MustNewDecFromStr("24950"),
+			expectedPass:          true,
 		},
 		{
 			// Same as above case but for shorts
@@ -100,6 +108,7 @@ func TestCreateLiquidation(t *testing.T) {
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
 			startingQuote:           sdk.MustNewDecFromStr("1150"),
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
+			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 975_550),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("24950"),
 			expectedPass:            true,
 		},
@@ -186,8 +195,13 @@ func TestCreateLiquidation(t *testing.T) {
 				// feeToLiquidator = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 				liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
 					ctx, liquidator, pair.GetQuoteTokenDenom())
-				require.Equal(t, tc.expectedFeeToLiquidator.String(), liquidatorBalance.String())
-				// require.Equal(t, tc.excpectedBadDebt, liquidationOutput.BadDebt)
+				assert.Equal(t, tc.expectedFeeToLiquidator.String(), liquidatorBalance.String())
+
+				perpEFAddr := nibiruApp.AccountKeeper.GetModuleAddress(
+					types.PerpEFModuleAccount)
+				perpEFBalance := nibiruApp.BankKeeper.GetBalance(
+					ctx, perpEFAddr, pair.GetQuoteTokenDenom())
+				require.Equal(t, tc.expectedPerpEFBalance.String(), perpEFBalance.String())
 			} else {
 				require.Error(t, err)
 
