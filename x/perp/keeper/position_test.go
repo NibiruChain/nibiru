@@ -24,6 +24,10 @@ func TestKeeper_SettlePosition(t *testing.T) {
 			GetSettlementPrice(gomock.Eq(ctx), gomock.Eq(pair)).
 			Return(sdk.ZeroDec(), error(nil))
 
+		dep.mockBankKeeper.EXPECT().
+			SendCoinsFromModuleToAccount(gomock.Eq(ctx), gomock.Eq(types.VaultModuleAccount), gomock.Eq(addr), gomock.Eq(sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(100))))).
+			Return(error(nil))
+
 		pos := types.Position{
 			Address:      addr.String(),
 			Pair:         pair.String(),
@@ -52,6 +56,10 @@ func TestKeeper_SettlePosition(t *testing.T) {
 			EXPECT().
 			GetSettlementPrice(gomock.Eq(ctx), gomock.Eq(pair)).
 			Return(sdk.NewDec(1000), error(nil))
+
+		dep.mockBankKeeper.EXPECT().
+			SendCoinsFromModuleToAccount(gomock.Eq(ctx), gomock.Eq(types.VaultModuleAccount), gomock.Eq(addr), gomock.Eq(sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100))))).
+			Return(error(nil))
 
 		// this means that the user
 		// has bought 100 contracts
