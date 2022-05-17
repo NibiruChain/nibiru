@@ -83,12 +83,6 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
 		},
-		{
-			name: "",
-			test: func() {
-
-			},
-		},
 	}
 
 	for _, tc := range testcases {
