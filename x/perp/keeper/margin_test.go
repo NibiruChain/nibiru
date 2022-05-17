@@ -56,6 +56,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 					sdk.NewDec(10_000_000),       //
 					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+					sdk.MustNewDecFromStr("0.1"),
 				)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
@@ -89,6 +90,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 					sdk.NewDec(10_000_000),       //
 					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+					sdk.MustNewDecFromStr("0.1"),
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
@@ -145,11 +147,12 @@ func TestAddMargin_ShouldRaiseError(t *testing.T) {
 				vpoolKeeper := &nibiruApp.VpoolKeeper
 				vpoolKeeper.CreatePool(
 					ctx,
-					tokenPair.String(),
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					sdk.NewDec(10_000_000),       //
-					sdk.NewDec(5_000_000),        // 5 tokens
-					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+					/* pair */ tokenPair.String(),
+					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
+					/* quoteReserves */ sdk.NewDec(10_000_000), //
+					/* baseReserves */ sdk.NewDec(5_000_000), // 5 tokens
+					/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
+					/* maxOracleSpreadRatio */ sdk.OneDec(),
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
@@ -221,6 +224,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 				sdk.NewDec(10_000_000),       //
 				sdk.NewDec(5_000_000),        // 5 tokens
 				sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
@@ -335,6 +339,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
 					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 				)
 
 				removeAmt := sdk.NewInt(5)
@@ -367,6 +372,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* y */ quoteReserves,
 					/* x */ baseReserves,
 					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.4"), // 0.9 ratio
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

@@ -61,6 +61,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
 					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 				)
 				premiumFractions := []sdk.Dec{sdk.ZeroDec()} // fPayment -> 0
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
@@ -109,6 +110,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
 					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 				)
 				premiumFractions := []sdk.Dec{
 					sdk.MustNewDecFromStr("0.25"),
