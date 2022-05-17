@@ -35,8 +35,8 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
-						FeeToPerpEcosystemFund: sdk.OneDec(),
+					LiquidateResp{BadDebt: sdk.OneInt(), FeeToLiquidator: sdk.OneInt(),
+						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             sdk.AccAddress{},
 					},
 				)
@@ -49,8 +49,8 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				perpKeeper, _, ctx := getKeeper(t)
 				liquidator := sample.AccAddress()
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
-						FeeToPerpEcosystemFund: sdk.OneDec(),
+					LiquidateResp{BadDebt: sdk.OneInt(), FeeToLiquidator: sdk.OneInt(),
+						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator,
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
@@ -70,8 +70,8 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				pair := common.TokenPair("xxx:yyy")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(false)
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
-						FeeToPerpEcosystemFund: sdk.OneDec(),
+					LiquidateResp{BadDebt: sdk.OneInt(), FeeToLiquidator: sdk.OneInt(),
+						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator,
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
@@ -126,8 +126,8 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 				).Return(nil)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
-						FeeToPerpEcosystemFund: sdk.OneDec(),
+					LiquidateResp{BadDebt: sdk.OneInt(), FeeToLiquidator: sdk.OneInt(),
+						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator,
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
