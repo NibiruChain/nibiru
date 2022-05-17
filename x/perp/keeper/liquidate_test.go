@@ -166,9 +166,7 @@ func TestCreateLiquidation(t *testing.T) {
 
 			t.Log("Get the position")
 			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
-			if err != nil {
-				panic(err)
-			}
+			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
