@@ -153,8 +153,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 50_000 * 0.1 / 2 = 2500
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 2_500),
-			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_045_050),
-			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
+			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_045_050),
+			excpectedBadDebt:      sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
@@ -184,8 +185,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 50_000 * 0.123123 / 2 = 3078.025 → 3078
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 3078),
-			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 1_043_894),
-			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
+			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_043_894),
+			excpectedBadDebt:      sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
@@ -220,8 +222,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
-			// perpEFBalance = startBalance - ... + ...
-			//   = 1_000_000 - ... + ... = 975_500
+			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 975_550),
 			excpectedBadDebt:      sdk.MustNewDecFromStr("24950"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
@@ -254,8 +255,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
-			expectedPerpEFBalance:   sdk.NewInt64Coin("yyy", 975_550),
-			excpectedBadDebt:        sdk.MustNewDecFromStr("24950"),
+			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 975_550),
+			excpectedBadDebt:      sdk.MustNewDecFromStr("24950"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
