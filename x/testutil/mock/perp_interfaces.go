@@ -174,6 +174,20 @@ func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToAccount(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToAccount", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToAccount), arg0, arg1, arg2, arg3)
 }
 
+// SendCoinsFromModuleToModule mocks base method.
+func (m *MockBankKeeper) SendCoinsFromModuleToModule(arg0 types1.Context, arg1, arg2 string, arg3 types1.Coins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendCoinsFromModuleToModule", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendCoinsFromModuleToModule indicates an expected call of SendCoinsFromModuleToModule.
+func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToModule(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToModule), arg0, arg1, arg2, arg3)
+}
+
 // SpendableCoins mocks base method.
 func (m *MockBankKeeper) SpendableCoins(arg0 types1.Context, arg1 types1.AccAddress) types1.Coins {
 	m.ctrl.T.Helper()
@@ -468,6 +482,20 @@ func (m *MockVpoolKeeper) GetUnderlyingPrice(arg0 types1.Context, arg1 common.To
 func (mr *MockVpoolKeeperMockRecorder) GetUnderlyingPrice(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnderlyingPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetUnderlyingPrice), arg0, arg1)
+}
+
+// IsOverSpreadLimit mocks base method.
+func (m *MockVpoolKeeper) IsOverSpreadLimit(arg0 types1.Context, arg1 common.TokenPair) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsOverSpreadLimit", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsOverSpreadLimit indicates an expected call of IsOverSpreadLimit.
+func (mr *MockVpoolKeeperMockRecorder) IsOverSpreadLimit(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsOverSpreadLimit", reflect.TypeOf((*MockVpoolKeeper)(nil).IsOverSpreadLimit), arg0, arg1)
 }
 
 // SwapBaseForQuote mocks base method.

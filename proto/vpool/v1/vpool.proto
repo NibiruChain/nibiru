@@ -65,4 +65,9 @@ message Pool {
   string fluctuation_limit_ratio = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
+
+  // max_oracle_spread_ratio
+  string max_oracle_spread_ratio = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false];    
 }

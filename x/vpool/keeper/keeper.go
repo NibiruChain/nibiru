@@ -252,3 +252,21 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 
 	return false
 }
+
+func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) (isIt bool) {
+	spotPrice, err := k.GetSpotPrice(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+
+	oraclePrice, err := k.GetUnderlyingPrice(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
+}
