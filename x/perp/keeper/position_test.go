@@ -16,7 +16,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		addr := sample.AccAddress()
-		pair, err := common.NewTokenPairFromStr("LUNA:UST") // memeing
+		pair, err := common.NewTokenPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
 		dep.mockVpoolKeeper.
@@ -32,7 +32,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 			Address:      addr.String(),
 			Pair:         pair.String(),
 			Size_:        sdk.NewDec(10),
-			Margin:       sdk.NewDec(100),
+			Margin:       sdk.NewInt(100),
 			OpenNotional: sdk.NewDec(1000),
 		}
 		err = k.Positions().Create(ctx, &pos)
@@ -42,7 +42,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, sdk.NewCoins(
-			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin.RoundInt()),
+			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin),
 		), coins) // TODO(mercilex): here we should have different denom, depends on Transfer impl
 	})
 
@@ -75,7 +75,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 			Address:      addr.String(),
 			Pair:         pair.String(),
 			Size_:        sdk.NewDec(100),
-			Margin:       sdk.NewDec(100),
+			Margin:       sdk.NewInt(100),
 			OpenNotional: sdk.NewDec(1000),
 		}
 		err = k.Positions().Create(ctx, &pos)
@@ -89,7 +89,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 	t.Run("position size is zero", func(t *testing.T) {
 		k, _, ctx := getKeeper(t)
 		addr := sample.AccAddress()
-		pair, err := common.NewTokenPairFromStr("LUNA:UST") // memeing
+		pair, err := common.NewTokenPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
 		pos := types.Position{
