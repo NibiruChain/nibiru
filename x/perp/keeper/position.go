@@ -51,16 +51,17 @@ func (k Keeper) SettlePosition(
 		}
 	}
 
-	transferredCoins = sdk.NewCoins() // TODO(mercilex): maybe here it would be cleaner to create a zero coin amount of the quote asset of the virtual pool
+	transferredCoins = sdk.NewCoins(sdk.NewInt64Coin(tokenPair.GetQuoteTokenDenom(), 0))
 	if settledValue.IsPositive() {
-		transferredCoins, err = k.Transfer(
-			ctx,
-			tokenPair.GetQuoteTokenDenom(),
-			sdk.AccAddress(currentPosition.Address),
-			settledValue.RoundInt(),
-		)
+		toTransfer := sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), settledValue.RoundInt())
+		transferredCoins = sdk.NewCoins(toTransfer)
+		addr, err := sdk.AccAddressFromBech32(currentPosition.Address)
 		if err != nil {
-			return sdk.Coins{}, err
+			panic(err) // NOTE(mercilex): must never happen
+		}
+		err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.VaultModuleAccount, addr, transferredCoins)
+		if err != nil {
+			panic(err) // NOTE(mercilex): must never happen
 		}
 	}
 
