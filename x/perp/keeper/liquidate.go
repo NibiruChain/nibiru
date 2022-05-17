@@ -65,10 +65,10 @@ func (k Keeper) ExecuteFullLiquidation(
 	remainMargin := positionResp.MarginToVault.Abs()
 
 	// NOTE  following prints should be removed
-	fmt.Println(positionResp.String())
-	fmt.Println("exchanged pos size:", positionResp.ExchangedPositionSize.String())
-	fmt.Println("exchange quote amt:", positionResp.ExchangedQuoteAssetAmount.String())
-	fmt.Println("margin to vault:", positionResp.MarginToVault.String())
+	// fmt.Println(positionResp.String())
+	// fmt.Println("exchanged pos size:", positionResp.ExchangedPositionSize.String())
+	// fmt.Println("exchange quote amt:", positionResp.ExchangedQuoteAssetAmount.String())
+	// fmt.Println("margin to vault:", positionResp.MarginToVault.String())
 
 	feeToLiquidator := params.GetLiquidationFeeAsDec().
 		MulInt(positionResp.ExchangedQuoteAssetAmount).
