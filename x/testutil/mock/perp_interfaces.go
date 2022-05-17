@@ -440,6 +440,21 @@ func (mr *MockVpoolKeeperMockRecorder) GetQuoteAssetTWAP(arg0, arg1, arg2, arg3,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuoteAssetTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetQuoteAssetTWAP), arg0, arg1, arg2, arg3, arg4)
 }
 
+// GetSettlementPrice mocks base method.
+func (m *MockVpoolKeeper) GetSettlementPrice(arg0 types1.Context, arg1 common.TokenPair) (types1.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSettlementPrice", arg0, arg1)
+	ret0, _ := ret[0].(types1.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSettlementPrice indicates an expected call of GetSettlementPrice.
+func (mr *MockVpoolKeeperMockRecorder) GetSettlementPrice(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSettlementPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetSettlementPrice), arg0, arg1)
+}
+
 // GetSpotPrice mocks base method.
 func (m *MockVpoolKeeper) GetSpotPrice(arg0 types1.Context, arg1 common.TokenPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
