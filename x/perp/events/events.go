@@ -208,14 +208,14 @@ func EmitPositionSettle(
 	settled sdk.Coins,
 ) {
 	ctx.EventManager().EmitEvent(NewPositionSettleEvent(
-		vpool, owner, settled,
+		vpool, trader, settled,
 	))
 }
 
 func NewPositionSettleEvent(
 	vpool string,
-	owner sdk.AccAddress,
-	settled sdk.Coin,
+	trader string,
+	settled sdk.Coins,
 ) sdk.Event {
 	const EventTypePositionSettle = "position_settle"
 	return sdk.NewEvent(
