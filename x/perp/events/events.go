@@ -11,8 +11,9 @@ power subscriptions and queries of Tendermint state.
 package events
 
 import (
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 // x/perp attributes used in multiple events

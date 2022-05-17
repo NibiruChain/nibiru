@@ -17,7 +17,6 @@ import (
 )
 
 func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
-
 	testCases := []struct {
 		name           string
 		side           types.Side
@@ -125,7 +124,6 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 }
 
 func TestExecuteFullLiquidation(t *testing.T) {
-
 	// constants for this suite
 	pair := common.TokenPair("xxx:yyy")
 	alice := sample.AccAddress()
@@ -273,7 +271,6 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
