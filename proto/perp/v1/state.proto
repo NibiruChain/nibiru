@@ -21,7 +21,7 @@ message Params {
   // spread_ratio is the ratio transferred to the PerpEF.
   int64 spread_ratio = 4;
 
-  // liquidation_fee is the fee split between IF and Liquidator.
+  // liquidation_fee is the fee split between EF and Liquidator.
   int64 liquidation_fee = 5;
 
   // partial_liquidation_ratio is the share we try to liquidate if the margin is higher than liquidation fee
