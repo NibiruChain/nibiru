@@ -132,7 +132,8 @@ func (k Keeper) OpenPosition(
 		)
 	}
 
-	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount.TruncateInt())
+	transferredFee, err := k.transferFee(
+		ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount.TruncateInt())
 	if err != nil {
 		return err
 	}
@@ -245,6 +246,7 @@ func (k Keeper) increasePosition(
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
+	events.EmitInternalPositionResponseEvent(ctx, positionResp, "increase_position")
 	return positionResp, nil
 }
 
@@ -494,6 +496,7 @@ func (k Keeper) decreasePosition(
 		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
+	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
 	return positionResp, nil
 }
 
@@ -588,6 +591,8 @@ func (k Keeper) closeAndOpenReversePosition(
 		positionResp = closePositionResp
 	}
 
+	events.EmitInternalPositionResponseEvent(
+		ctx, positionResp, "close_and_open_reverse_position")
 	return positionResp, nil
 }
 
@@ -679,6 +684,8 @@ func (k Keeper) closePositionEntirely(
 		return nil, err
 	}
 
+	events.EmitInternalPositionResponseEvent(
+		ctx, positionResp, "close_position_entirely")
 	return positionResp, nil
 }
 

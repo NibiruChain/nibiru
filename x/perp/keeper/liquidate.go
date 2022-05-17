@@ -62,8 +62,9 @@ func (k Keeper) ExecuteFullLiquidation(
 		return err
 	}
 
-	remainMargin := positionResp.MarginToVault
+	remainMargin := positionResp.MarginToVault.Abs()
 
+	fmt.Println(positionResp.String())
 	feeToLiquidator := positionResp.ExchangedQuoteAssetAmount.
 		Mul(params.GetLiquidationFeeAsDec()).
 		Quo(sdk.MustNewDecFromStr("2"))
