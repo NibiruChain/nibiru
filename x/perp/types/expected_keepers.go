@@ -234,4 +234,5 @@ type VpoolKeeper interface {
 	IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) bool
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
+	GetSettlementPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
 }
