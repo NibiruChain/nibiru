@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
-	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 /* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
