@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -84,9 +85,73 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		RemoveMarginCmd(),
 		AddMarginCmd(),
+		OpenPositionCmd(),
 	)
 
 	return txCmd
+}
+
+func OpenPositionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "open-position [buy/sell] [pair] [leverage] [amount/sdk.Dec] [base asset amount limit/sdk.Dec]",
+		Short: "Opens a position",
+		Args:  cobra.ExactArgs(5),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			side := types.Side_BUY
+			switch args[0] {
+			case "buy":
+			case "sell":
+				side = types.Side_BUY
+			default:
+				return fmt.Errorf("invalid side: %s", args[0])
+			}
+
+			_, err = common.NewTokenPairFromStr(args[1])
+			if err != nil {
+				return err
+			}
+
+			leverage, err := sdk.NewDecFromStr(args[2])
+			if err != nil {
+				return err
+			}
+
+			amount, err := sdk.NewDecFromStr(args[3])
+			if err != nil {
+				return err
+			}
+
+			baseAssetAmountLimit, err := sdk.NewDecFromStr(args[4])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgOpenPosition{
+				Sender:               clientCtx.GetFromAddress().String(),
+				TokenPair:            args[1],
+				Side:                 side,
+				QuoteAssetAmount:     amount,
+				Leverage:             leverage,
+				BaseAssetAmountLimit: baseAssetAmountLimit,
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }
 
 /*
