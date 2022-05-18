@@ -257,7 +257,6 @@ func (s LockState) IterateLocksByAddress(addr sdk.AccAddress, do func(id uint64)
 			break
 		}
 	}
-
 }
 
 func (s LockState) nextPrimaryKey() uint64 {

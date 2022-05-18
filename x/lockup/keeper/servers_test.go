@@ -2,9 +2,10 @@ package keeper
 
 import (
 	"context"
-	"github.com/NibiruChain/nibiru/x/lockup/types"
 	"reflect"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
 
 // TODO(mercilex): test
