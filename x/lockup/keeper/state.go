@@ -29,7 +29,7 @@ const (
 	LockStartID uint64 = 0
 )
 
-func (k LockupKeeper) LocksState(ctx sdk.Context) LockState {
+func (k Keeper) LocksState(ctx sdk.Context) LockState {
 	return newLockState(ctx, k.storeKey, k.cdc)
 }
 
@@ -245,6 +245,19 @@ func (s LockState) IterateCoinsByDenomUnlockingBefore(denom string, unlockingBef
 			break
 		}
 	}
+}
+
+func (s LockState) IterateLocksByAddress(addr sdk.AccAddress, do func(id uint64) (stop bool)) {
+	key := s.keyAddr(addr.String(), nil)
+	iter := prefix.NewStore(s.addrIndex, key).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		if !do(sdk.BigEndianToUint64(iter.Key())) {
+			break
+		}
+	}
+
 }
 
 func (s LockState) nextPrimaryKey() uint64 {
