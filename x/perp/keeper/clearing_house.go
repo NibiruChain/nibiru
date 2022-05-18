@@ -697,7 +697,7 @@ func (k Keeper) transferFee(
 	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress,
 	positionNotional sdk.Dec,
 ) (sdk.Int, error) {
-	toll, spread, err := k.CalcFee(ctx, positionNotional)
+	toll, spread, err := k.CalcPerpTxFee(ctx, positionNotional)
 	if err != nil {
 		return sdk.Int{}, err
 	}
