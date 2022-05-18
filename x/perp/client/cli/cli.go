@@ -3,8 +3,9 @@ package cli
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"strings"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/spf13/cobra"
 
