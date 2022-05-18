@@ -14,15 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
-They also serve as a reminder of which functions still need MVP unit or
-integration tests */
-var (
-	_ = Keeper.closeAndOpenReversePosition
-	_ = Keeper.openReversePosition
-	_ = Keeper.transferFee
-)
-
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,

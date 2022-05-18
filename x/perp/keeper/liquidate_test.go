@@ -498,7 +498,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the position")
 			liquidationOutput, err := nibiruApp.PerpKeeper.CreatePartialLiquidation(
-				ctx, pair, alice, position)
+				ctx, position)
 
 			if tc.expectedPass {
 				require.NoError(t, err)

@@ -182,28 +182,36 @@ func (k Keeper) distributeLiquidateRewards(
 
 Args:
 - ctx (sdk.Context): Carries information about the current state of the application.
-- pair (common.TokenPair): identifier for the virtual pool
-- trader (sdk.AccAddress): address of the owner of the position
-- position: the position that is will be partially liquidated
+- position: the position that will be partially liquidated
 
 Returns:
 - (*LiquidateResp): fees, bad debt, and position response for the partial liquidation
 - (error): An error if one is raised.
 */
 func (k Keeper) CreatePartialLiquidation(
-	ctx sdk.Context,
-	pair common.TokenPair,
-	trader sdk.AccAddress,
-	position *types.Position,
+	ctx sdk.Context, position *types.Position,
 ) (*LiquidateResp, error) {
 	// Get position direction: long or short
-	var (
-		dir vpooltypes.Direction
-	)
+	var dir vpooltypes.Direction
 	if position.Size_.GTE(sdk.ZeroDec()) {
 		dir = vpooltypes.Direction_ADD_TO_POOL
 	} else {
 		dir = vpooltypes.Direction_REMOVE_FROM_POOL
+	}
+
+	trader, err := sdk.AccAddressFromBech32(position.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(position.Pair)
+	if err != nil {
+		return nil, err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return nil, err
 	}
 
 	// Compute the notional of the portion of position that's being liquidated
