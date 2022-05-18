@@ -105,11 +105,12 @@ func OpenPositionCmd() *cobra.Command {
 
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-			side := types.Side_BUY
+			var side types.Side
 			switch args[0] {
 			case "buy":
-			case "sell":
 				side = types.Side_BUY
+			case "sell":
+				side = types.Side_SELL
 			default:
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
