@@ -37,7 +37,7 @@ func (k Keeper) SettlePosition(
 		return
 	}
 
-	settledValue := sdk.ZeroInt()
+	settledValue := sdk.ZeroDec()
 	if settlementPrice.IsZero() {
 		settledValue = currentPosition.Margin
 	} else {
@@ -45,15 +45,16 @@ func (k Keeper) SettlePosition(
 		openPrice := currentPosition.OpenNotional.Quo(currentPosition.Size_.Abs())
 		// returnedFund := positionSize * (settlementPrice - openPrice) + positionMargin
 		returnedFund := currentPosition.Size_.Mul(
-			settlementPrice.Sub(openPrice)).Add(currentPosition.Margin.ToDec())
+			settlementPrice.Sub(openPrice)).Add(currentPosition.Margin)
 		if returnedFund.IsPositive() {
-			settledValue = returnedFund.TruncateInt()
+			settledValue = returnedFund
 		}
 	}
 
 	transferredCoins = sdk.NewCoins(sdk.NewInt64Coin(tokenPair.GetQuoteTokenDenom(), 0))
-	if settledValue.IsPositive() {
-		toTransfer := sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), settledValue)
+	settledValueInt := settledValue.RoundInt()
+	if settledValueInt.IsPositive() {
+		toTransfer := sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), settledValueInt)
 		transferredCoins = sdk.NewCoins(toTransfer)
 		addr, err := sdk.AccAddressFromBech32(currentPosition.Address)
 		if err != nil {

@@ -49,7 +49,7 @@ func TestGetAndSetPosition(t *testing.T) {
 					Address: trader.String(),
 					Pair:    vpoolPair.String(),
 					Size_:   sdk.OneDec(),
-					Margin:  sdk.OneInt(),
+					Margin:  sdk.OneDec(),
 				}
 				nibiruApp.PerpKeeper.SetPosition(
 					ctx, vpoolPair, trader.String(), dummyPosition)
@@ -99,7 +99,7 @@ func TestClearPosition(t *testing.T) {
 						Address: trader.String(),
 						Pair:    vpoolPair.String(),
 						Size_:   sdk.OneDec(),
-						Margin:  sdk.OneInt(),
+						Margin:  sdk.OneDec(),
 					}
 					nibiruApp.PerpKeeper.SetPosition(
 						ctx, vpoolPair, trader.String(), dummyPosition)

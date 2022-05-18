@@ -83,7 +83,7 @@ func TestComputeFee(t *testing.T) {
 	require.Equal(t, sdk.MustNewDecFromStr("0.0123"), params.GetSpreadRatioAsDec())
 
 	// Ensure calculation is correct
-	toll, spread, err := perpKeeper.CalcFee(ctx, sdk.NewInt(1_000_000))
+	toll, spread, err := perpKeeper.CalcFee(ctx, sdk.NewDec(1_000_000))
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewInt(10_000), toll)
 	require.Equal(t, sdk.NewInt(12_300), spread)
