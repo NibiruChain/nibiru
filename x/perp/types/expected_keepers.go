@@ -36,6 +36,8 @@ type BankKeeper interface {
 		ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string,
 		amt sdk.Coins,
 	) error
+	SendCoinsFromModuleToModule(
+		ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToAccount(
 		ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress,
 		amt sdk.Coins,
@@ -228,7 +230,9 @@ type VpoolKeeper interface {
 		pair common.TokenPair,
 	) (price sdk.Dec, err error)
 
-	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
+	CalcPerpTxFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int,
+	) (toll sdk.Int, spread sdk.Int, err error)
+	IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) bool
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
