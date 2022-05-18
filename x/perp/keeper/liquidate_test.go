@@ -199,7 +199,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					ExchangedPositionSize:     sdk.MustNewDecFromStr("25125.628140703517587940"),
 					FundingPayment:            sdk.ZeroDec(),
 					RealizedPnl:               sdk.MustNewDecFromStr("-0.000000000000000001"),
-					MarginToVault:             sdk.NewDec(-50_000),
+					MarginToVault:             sdk.MustNewDecFromStr("-49999.999999999999999999"),
 					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
@@ -341,8 +341,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
 
-			// t.Log("Verify expected values using internal event due to usage of private fns")
-			// assert.Contains(t, ctx.EventManager().Events(), tc.internal_position_response_event)
+			t.Log("Verify expected values using internal event due to usage of private fns")
+			assert.Contains(t, ctx.EventManager().Events(), tc.internal_position_response_event)
 
 			t.Log("Check correctness of new position")
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
