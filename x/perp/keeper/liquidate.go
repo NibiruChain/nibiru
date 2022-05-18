@@ -8,6 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 type LiquidateResp struct {
@@ -95,6 +96,66 @@ func (k Keeper) ExecuteFullLiquidation(
 	}
 
 	return nil
+}
+
+// ExecutePartialLiquidation partially liquidates a position
+func (k Keeper) ExecutePartialLiquidation(ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position) (err error) {
+	params := k.GetParams(ctx)
+
+	var dir vtypes.Direction
+
+	if position.Size_.GTE(sdk.ZeroDec()) {
+		dir = vtypes.Direction_ADD_TO_POOL
+	} else {
+		dir = vtypes.Direction_REMOVE_FROM_POOL
+	}
+
+	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
+		ctx,
+		common.TokenPair(position.Pair),
+		dir,
+		/* abs= */ position.Size_.Mul(params.GetPartialLiquidationRatioAsDec().Abs()),
+	)
+	if err != nil {
+		return
+	}
+
+	positionResp, err := k.openReversePosition(
+		/* ctx */ ctx,
+		/* currentPosition */ *position,
+		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
+		/* leverage */ sdk.OneDec(),
+		/* baseAssetAmountLimit */ sdk.ZeroDec(),
+		/* canOverFluctuationLimit */ true,
+	)
+	if err != nil {
+		return
+	}
+
+	// half of the liquidationFee goes to liquidator & another half goes to ecosystem fund
+	liquidationPenalty := positionResp.ExchangedQuoteAssetAmount.Mul(params.GetLiquidationFeeAsDec())
+	feeToLiquidator := liquidationPenalty.Quo(sdk.MustNewDecFromStr("2"))
+
+	// Remove the liquidation penalty from the margin of the position
+	removeMarginMsg := types.MsgRemoveMargin{
+		Sender:    position.Address,
+		TokenPair: position.Pair,
+		Margin:    sdk.NewCoin(common.TokenPair(position.Pair).GetQuoteTokenDenom(), liquidationPenalty.TruncateInt()),
+	}
+	_, err = k.RemoveMargin(ctx.Context(), &removeMarginMsg)
+	if err != nil {
+		return
+	}
+
+	err = k.distributeLiquidateRewards(ctx, LiquidateResp{
+		BadDebt:                sdk.ZeroDec(),
+		FeeToLiquidator:        feeToLiquidator,
+		FeeToPerpEcosystemFund: liquidationPenalty.Sub(feeToLiquidator),
+		Liquidator:             liquidator,
+		PositionResp:           positionResp,
+	})
+
+	return
 }
 
 func (k Keeper) distributeLiquidateRewards(
