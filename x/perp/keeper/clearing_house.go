@@ -54,7 +54,7 @@ func (k Keeper) OpenPosition(
 	var positionResp *types.PositionResp
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
-	var openSideMatchesPosition bool = (sameSideLong || sameSideShort)
+	var openSideMatchesPosition = sameSideLong || sameSideShort
 	switch {
 	case isNewPosition || openSideMatchesPosition:
 		// increase position case
