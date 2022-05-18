@@ -116,9 +116,9 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 
 			// No change in the position
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
-			require.Equal(t, position.Size_, newPosition.Size_)
-			require.Equal(t, position.Margin, newPosition.Margin)
-			require.Equal(t, position.OpenNotional, newPosition.OpenNotional)
+			assert.Equal(t, position.Size_, newPosition.Size_)
+			assert.Equal(t, position.Margin, newPosition.Margin)
+			assert.Equal(t, position.OpenNotional, newPosition.OpenNotional)
 		})
 	}
 }
@@ -160,14 +160,14 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewInt(50_000),
-					BadDebt:                   sdk.ZeroInt(),
+					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
+					BadDebt:                   sdk.ZeroDec(),
 					ExchangedPositionSize:     sdk.MustNewDecFromStr("-24875.621890547263681592"),
-					FundingPayment:            sdk.ZeroInt(),
+					FundingPayment:            sdk.ZeroDec(),
 					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.NewInt(-50_000),
+					MarginToVault:             sdk.NewDec(-50_000),
 					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
@@ -192,14 +192,14 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewInt(50_000),
-					BadDebt:                   sdk.ZeroInt(),
+					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
+					BadDebt:                   sdk.ZeroDec(),
 					ExchangedPositionSize:     sdk.MustNewDecFromStr("25125.628140703517587940"),
-					FundingPayment:            sdk.ZeroInt(),
+					FundingPayment:            sdk.ZeroDec(),
 					RealizedPnl:               sdk.MustNewDecFromStr("-0.000000000000000001"),
-					MarginToVault:             sdk.NewInt(-50_000),
+					MarginToVault:             sdk.MustNewDecFromStr("-49999.999999999999999999"),
 					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
@@ -229,14 +229,14 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewInt(500_000),
-					BadDebt:                   sdk.ZeroInt(),
+					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
+					BadDebt:                   sdk.ZeroDec(),
 					ExchangedPositionSize:     sdk.MustNewDecFromStr("-238095.238095238095238095"),
-					FundingPayment:            sdk.ZeroInt(),
+					FundingPayment:            sdk.ZeroDec(),
 					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.NewInt(-50),
+					MarginToVault:             sdk.NewDec(-50),
 					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
@@ -262,14 +262,14 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroInt(), OpenNotional: sdk.ZeroDec(),
+						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
-					ExchangedQuoteAssetAmount: sdk.NewInt(500_000),
-					BadDebt:                   sdk.ZeroInt(),
+					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
+					BadDebt:                   sdk.ZeroDec(),
 					ExchangedPositionSize:     sdk.MustNewDecFromStr("263157.894736842105263158"),
-					FundingPayment:            sdk.ZeroInt(),
+					FundingPayment:            sdk.ZeroDec(),
 					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.NewInt(-50),
+					MarginToVault:             sdk.NewDec(-50),
 					UnrealizedPnlAfter:        sdk.ZeroDec(),
 				},
 				/* function */ "close_position_entirely",
@@ -346,9 +346,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Check correctness of new position")
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
-			require.Equal(t, sdk.ZeroDec(), newPosition.Size_)
-			require.True(t, newPosition.Margin.Equal(sdk.NewInt(0)))
-			require.True(t, newPosition.OpenNotional.Equal(sdk.NewDec(0)))
+			assert.Equal(t, sdk.ZeroDec(), newPosition.Size_)
+			assert.True(t, newPosition.Margin.Equal(sdk.NewDec(0)))
+			assert.True(t, newPosition.OpenNotional.Equal(sdk.NewDec(0)))
 
 			t.Log("Check correctness of liquidation fee distributions")
 			liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
@@ -359,7 +359,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				types.PerpEFModuleAccount)
 			perpEFBalance := nibiruApp.BankKeeper.GetBalance(
 				ctx, perpEFAddr, pair.GetQuoteTokenDenom())
-			require.Equal(t, tc.expectedPerpEFBalance.String(), perpEFBalance.String())
+			assert.Equal(t, tc.expectedPerpEFBalance.String(), perpEFBalance.String())
 		})
 	}
 }
@@ -373,15 +373,15 @@ func TestCreatePartialLiquidation(t *testing.T) {
 		baseLimit               sdk.Dec
 		liquidationFee          sdk.Dec
 		partialLiquidationRatio sdk.Dec
-		removeMargin            sdk.Int
-		startingQuote           sdk.Int
+		removeMargin            sdk.Dec
+		traderFunds             sdk.Int
 		expectedPass            bool
 
 		excpectedBadDebt        sdk.Dec
 		newPositionSize         sdk.Dec
-		newPositionMargin       sdk.Int
+		newPositionMargin       sdk.Dec
 		newPositionOpenNotional sdk.Dec
-		expectedFee             sdk.Int
+		expectedFee             sdk.Dec
 	}{
 
 		{
@@ -392,15 +392,15 @@ func TestCreatePartialLiquidation(t *testing.T) {
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
 			partialLiquidationRatio: sdk.MustNewDecFromStr("0.5"),
-			startingQuote:           sdk.NewInt(6000),
+			traderFunds:             sdk.NewInt(6000),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			expectedPass:            true,
 
 			newPositionSize: sdk.MustNewDecFromStr("1250"),
 			// newPositionMargin = quote - expectedFee = 5000 - 250
-			newPositionMargin:       sdk.NewInt(4750),
+			newPositionMargin:       sdk.NewDec(4750),
 			newPositionOpenNotional: sdk.MustNewDecFromStr("2500"),
-			expectedFee:             sdk.NewInt(250),
+			expectedFee:             sdk.NewDec(250),
 		},
 		{
 			name:                    "happy path - Sell",
@@ -410,15 +410,15 @@ func TestCreatePartialLiquidation(t *testing.T) {
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
 			partialLiquidationRatio: sdk.MustNewDecFromStr("0.5"),
-			startingQuote:           sdk.NewInt(6000),
+			traderFunds:             sdk.NewInt(6000),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			expectedPass:            true,
 
-			newPositionSize: sdk.MustNewDecFromStr("-1250.5"),
+			newPositionSize: sdk.MustNewDecFromStr("-1250"),
 			// newPositionMargin = quote - expectedFee = 5000 - 250
-			newPositionMargin:       sdk.NewInt(4750),
-			newPositionOpenNotional: sdk.MustNewDecFromStr("2501"),
-			expectedFee:             sdk.NewInt(250),
+			newPositionMargin:       sdk.NewDec(4750),
+			newPositionOpenNotional: sdk.MustNewDecFromStr("2500"),
+			expectedFee:             sdk.NewDec(250),
 		},
 		{
 			name:                    "happy path - SellDifferentPercentage",
@@ -428,15 +428,15 @@ func TestCreatePartialLiquidation(t *testing.T) {
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
 			partialLiquidationRatio: sdk.MustNewDecFromStr("0.4"),
-			startingQuote:           sdk.NewInt(6000),
+			traderFunds:             sdk.NewInt(6000),
 			excpectedBadDebt:        sdk.MustNewDecFromStr("0"),
 			expectedPass:            true,
 
-			newPositionSize: sdk.MustNewDecFromStr("-1500.5"),
+			newPositionSize: sdk.MustNewDecFromStr("-1500"),
 			// newPositionMargin = quote - expectedFee = 5000 - 200
-			newPositionMargin:       sdk.NewInt(4800),
-			newPositionOpenNotional: sdk.MustNewDecFromStr("3001"),
-			expectedFee:             sdk.NewInt(200),
+			newPositionMargin:       sdk.NewDec(4800),
+			newPositionOpenNotional: sdk.MustNewDecFromStr("3000"),
+			expectedFee:             sdk.NewDec(200),
 		},
 	}
 
@@ -481,7 +481,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 			var err error
 			alice := sample.AccAddress()
 			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
-				sdk.NewCoins(sdk.NewCoin("yyy", tc.startingQuote)))
+				sdk.NewCoins(sdk.NewCoin("yyy", tc.traderFunds)))
 			require.NoError(t, err)
 
 			t.Log("Open position")
@@ -505,41 +505,41 @@ func TestCreatePartialLiquidation(t *testing.T) {
 
 				t.Log("Verify successful setup of new position")
 				newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
-				require.InDelta(t,
+				assert.InDelta(t,
 					/* expected */ tc.newPositionSize.MustFloat64(),
 					/* actual */ newPosition.Size_.MustFloat64(),
 					/* delta */ 0.0001)
 				assert.EqualValues(t,
-					/* expected */ tc.newPositionMargin,
-					/* actual */ newPosition.Margin,
+					/* expected */ tc.newPositionMargin.RoundInt().String(),
+					/* actual */ newPosition.Margin.RoundInt().String(),
 					/* delta */ 0.0001)
-				require.InDelta(t,
+				assert.InDelta(t,
 					/* expected */ tc.newPositionOpenNotional.MustFloat64(),
 					/* actual */ newPosition.OpenNotional.MustFloat64(),
 					/* delta */ 0.0001)
 
 				t.Log("Verify correct values for liquidator fees and ExchangedQuoteAssetAmount")
-				require.Equal(t,
+				assert.EqualValues(t,
 					tc.liquidationFee.
-						MulInt(liquidationOutput.PositionResp.ExchangedQuoteAssetAmount).
-						Quo(sdk.NewDec(2)).RoundInt().String(),
-					liquidationOutput.FeeToLiquidator.String())
-				require.Equal(t,
-					/* expected */ tc.expectedFee.Quo(sdk.NewInt(2)).String(),
-					/* actual */ liquidationOutput.FeeToLiquidator.String(),
+						Mul(liquidationOutput.PositionResp.ExchangedQuoteAssetAmount).
+						QuoInt64(2).RoundInt().String(),
+					liquidationOutput.FeeToLiquidator.RoundInt().String())
+				assert.EqualValues(t,
+					/* expected */ tc.expectedFee.QuoInt64(2).RoundInt().String(),
+					/* actual */ liquidationOutput.FeeToLiquidator.RoundInt().String(),
 				)
-				require.Equal(t,
-					/* expected */ tc.expectedFee.Quo(sdk.NewInt(2)).String(),
-					/* actual */ liquidationOutput.FeeToPerpEcosystemFund.String(),
+				assert.EqualValues(t,
+					/* expected */ tc.expectedFee.QuoInt64(2).RoundInt().String(),
+					/* actual */ liquidationOutput.FeeToPerpEcosystemFund.RoundInt().String(),
 				)
 			} else {
 				t.Log("Verify error raised and position didn't change")
 				require.Error(t, err)
 
 				newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
-				require.Equal(t, position.Size_, newPosition.Size_)
-				require.Equal(t, position.Margin, newPosition.Margin)
-				require.Equal(t, position.OpenNotional, newPosition.OpenNotional)
+				assert.EqualValues(t, position.Size_, newPosition.Size_)
+				assert.EqualValues(t, position.Margin, newPosition.Margin)
+				assert.EqualValues(t, position.OpenNotional, newPosition.OpenNotional)
 			}
 		})
 	}

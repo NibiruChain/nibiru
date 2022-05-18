@@ -12,9 +12,9 @@ import (
 )
 
 type LiquidateResp struct {
-	BadDebt                sdk.Int
-	FeeToLiquidator        sdk.Int
-	FeeToPerpEcosystemFund sdk.Int
+	BadDebt                sdk.Dec
+	FeeToLiquidator        sdk.Dec
+	FeeToPerpEcosystemFund sdk.Dec
 	Liquidator             sdk.AccAddress
 	PositionResp           *types.PositionResp
 }
@@ -32,13 +32,13 @@ func (l *LiquidateResp) String() string {
 		l.BadDebt.String(),
 		l.FeeToLiquidator.String(),
 		l.FeeToPerpEcosystemFund.String(),
-		l.PositionResp,
+		l.PositionResp.String(),
 		l.Liquidator.String(),
 	)
 }
 
 func (l *LiquidateResp) Validate() error {
-	for _, field := range []sdk.Int{
+	for _, field := range []sdk.Dec{
 		l.BadDebt, l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
 		if field.IsNil() {
 			return fmt.Errorf(
@@ -66,8 +66,8 @@ func (k Keeper) ExecuteFullLiquidation(
 	remainMargin := positionResp.MarginToVault.Abs()
 
 	feeToLiquidator := params.GetLiquidationFeeAsDec().
-		MulInt(positionResp.ExchangedQuoteAssetAmount).
-		QuoInt64(2).TruncateInt()
+		Mul(positionResp.ExchangedQuoteAssetAmount).
+		QuoInt64(2)
 	totalBadDebt := positionResp.BadDebt
 
 	if feeToLiquidator.GT(remainMargin) {
@@ -79,7 +79,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		remainMargin = remainMargin.Sub(feeToLiquidator)
 	}
 
-	feeToPerpEcosystemFund := sdk.ZeroInt()
+	feeToPerpEcosystemFund := sdk.ZeroDec()
 	if remainMargin.IsPositive() {
 		feeToPerpEcosystemFund = remainMargin
 	}
@@ -134,7 +134,7 @@ func (k Keeper) distributeLiquidateRewards(
 	perpEFAddr := k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount)
 
 	// Transfer fee from vault to PerpEF
-	feeToPerpEF := liquidateResp.FeeToPerpEcosystemFund
+	feeToPerpEF := liquidateResp.FeeToPerpEcosystemFund.RoundInt()
 	if feeToPerpEF.IsPositive() {
 		coinToPerpEF := sdk.NewCoin(
 			pair.GetQuoteTokenDenom(), feeToPerpEF)
@@ -155,10 +155,10 @@ func (k Keeper) distributeLiquidateRewards(
 	}
 
 	// Transfer fee from PerpEF to liquidator
-	feeToLiquidator := liquidateResp.FeeToLiquidator
+	feeToLiquidator := liquidateResp.FeeToLiquidator.RoundInt()
 	if feeToLiquidator.IsPositive() {
 		coinToLiquidator := sdk.NewCoin(
-			pair.GetQuoteTokenDenom(), liquidateResp.FeeToLiquidator)
+			pair.GetQuoteTokenDenom(), feeToLiquidator)
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx,
 			/* from */ types.PerpEFModuleAccount,
@@ -228,7 +228,7 @@ func (k Keeper) CreatePartialLiquidation(
 	positionResp, err := k.openReversePosition(
 		/* ctx */ ctx,
 		/* currentPosition */ *position,
-		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional.TruncateInt(),
+		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
 		/* leverage */ sdk.OneDec(),
 		/* baseAssetAmountLimit */ sdk.ZeroDec(),
 		/* canOverFluctuationLimit */ true,
@@ -240,8 +240,8 @@ func (k Keeper) CreatePartialLiquidation(
 	// Compute the liquidation penality, of which half goes to the liquidator
 	// and half goes to the ecosystem fund.
 	fullLiquidationFee := params.GetLiquidationFeeAsDec().
-		MulInt(positionResp.ExchangedQuoteAssetAmount).RoundInt()
-	feeToLiquidator := fullLiquidationFee.Quo(sdk.NewInt(2))
+		Mul(positionResp.ExchangedQuoteAssetAmount)
+	feeToLiquidator := fullLiquidationFee.QuoInt64(2)
 	feeToPerpEF := fullLiquidationFee.Sub(feeToLiquidator)
 
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(fullLiquidationFee)

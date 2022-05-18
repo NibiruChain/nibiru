@@ -13,11 +13,11 @@ var initMarginRatio = sdk.MustNewDecFromStr("0.01")
 
 type RemainingMarginWithFundingPayment struct {
 	// Margin: amount of quote token (y) backing the position.
-	Margin sdk.Int
+	Margin sdk.Dec
 
 	/* BadDebt: Bad debt (margin units) cleared by the PerpEF during the tx.
 	   Bad debt is negative net margin past the liquidation point of a position. */
-	BadDebt sdk.Int
+	BadDebt sdk.Dec
 
 	/* FundingPayment: A funding payment (margin units) made or received by the trader on
 	    the current position. 'fundingPayment' is positive if 'owner' is the sender
@@ -25,7 +25,7 @@ type RemainingMarginWithFundingPayment struct {
 		abs(vSize * fundingRate). Funding payments act to converge the mark price
 		(vPrice) and index price (average price on major exchanges).
 	*/
-	FundingPayment sdk.Int
+	FundingPayment sdk.Dec
 
 	/* LatestCumulativePremiumFraction: latest cumulative premium fraction. Units are (margin units)/position size. */
 	LatestCumulativePremiumFraction sdk.Dec
@@ -34,7 +34,7 @@ type RemainingMarginWithFundingPayment struct {
 func (k Keeper) CalcRemainMarginWithFundingPayment(
 	ctx sdk.Context,
 	currentPosition types.Position,
-	marginDelta sdk.Int,
+	marginDelta sdk.Dec,
 ) (remaining RemainingMarginWithFundingPayment, err error) {
 	remaining.LatestCumulativePremiumFraction, err = k.
 		getLatestCumulativePremiumFraction(ctx, common.TokenPair(currentPosition.Pair))
@@ -43,11 +43,11 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	}
 
 	if currentPosition.Size_.IsZero() {
-		remaining.FundingPayment = sdk.ZeroInt()
+		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
 		remaining.FundingPayment = remaining.LatestCumulativePremiumFraction.
 			Sub(currentPosition.LastUpdateCumulativePremiumFraction).
-			Mul(currentPosition.Size_).TruncateInt()
+			Mul(currentPosition.Size_)
 	}
 
 	remainingMargin := currentPosition.Margin.Add(marginDelta).Sub(remaining.FundingPayment)
@@ -56,10 +56,10 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 		// the remaining margin is negative, liquidators didn't do their job
 		// and we have negative margin that must come out of the ecosystem fund
 		remaining.BadDebt = remainingMargin.Abs()
-		remaining.Margin = sdk.ZeroInt()
+		remaining.Margin = sdk.ZeroDec()
 	} else {
 		remaining.Margin = remainingMargin.Abs()
-		remaining.BadDebt = sdk.ZeroInt()
+		remaining.BadDebt = sdk.ZeroDec()
 	}
 
 	return remaining, err
@@ -82,7 +82,7 @@ Returns:
 position without making it go underwater.
 - error
 */
-func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingPayment sdk.Int,
+func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
 ) (sdk.Int, error) {
 	pair, err := common.NewTokenPairFromStr(pos.Pair)
 	if err != nil {
@@ -103,8 +103,8 @@ func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingP
 		return sdk.Int{}, err
 	}
 	freeMargin := pos.Margin.Sub(fundingPayment)
-	accountValue := unrealizedPnL.Add(freeMargin.ToDec())
-	minCollateral := sdk.MinDec(accountValue, freeMargin.ToDec())
+	accountValue := unrealizedPnL.Add(freeMargin)
+	minCollateral := sdk.MinDec(accountValue, freeMargin)
 
 	// Get margin requirement. This rounds up, so 16.5 margin required -> 17
 	var marginRequirement sdk.Int
@@ -129,8 +129,8 @@ Returns:
 	toll (sdk.Int): Amount of tokens transferred to the the fee pool.
 	spread (sdk.Int): Amount of tokens transferred to the PerpEF.
 */
-func (k Keeper) CalcFee(ctx sdk.Context, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error) {
-	if quoteAmt.Equal(sdk.ZeroInt()) {
+func (k Keeper) CalcFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, spread sdk.Int, err error) {
+	if quoteAmt.Equal(sdk.ZeroDec()) {
 		return sdk.ZeroInt(), sdk.ZeroInt(), nil
 	}
 
@@ -139,5 +139,5 @@ func (k Keeper) CalcFee(ctx sdk.Context, quoteAmt sdk.Int) (toll sdk.Int, spread
 	tollRatio := params.GetTollRatioAsDec()
 	spreadRatio := params.GetSpreadRatioAsDec()
 
-	return sdk.NewDecFromInt(quoteAmt).Mul(tollRatio).TruncateInt(), sdk.NewDecFromInt(quoteAmt).Mul(spreadRatio).TruncateInt(), nil
+	return quoteAmt.Mul(tollRatio).TruncateInt(), quoteAmt.Mul(spreadRatio).TruncateInt(), nil
 }

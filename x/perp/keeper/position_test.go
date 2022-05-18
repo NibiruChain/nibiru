@@ -25,14 +25,17 @@ func TestKeeper_SettlePosition(t *testing.T) {
 			Return(sdk.ZeroDec(), error(nil))
 
 		dep.mockBankKeeper.EXPECT().
-			SendCoinsFromModuleToAccount(gomock.Eq(ctx), gomock.Eq(types.VaultModuleAccount), gomock.Eq(addr), gomock.Eq(sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(100))))).
+			SendCoinsFromModuleToAccount(
+				ctx, types.VaultModuleAccount, addr,
+				sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(100))),
+			).
 			Return(error(nil))
 
 		pos := types.Position{
 			Address:      addr.String(),
 			Pair:         pair.String(),
 			Size_:        sdk.NewDec(10),
-			Margin:       sdk.NewInt(100),
+			Margin:       sdk.NewDec(100),
 			OpenNotional: sdk.NewDec(1000),
 		}
 		err = k.Positions().Create(ctx, &pos)
@@ -42,7 +45,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, sdk.NewCoins(
-			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin),
+			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin.TruncateInt()),
 		), coins) // TODO(mercilex): here we should have different denom, depends on Transfer impl
 	})
 
@@ -54,11 +57,12 @@ func TestKeeper_SettlePosition(t *testing.T) {
 
 		dep.mockVpoolKeeper.
 			EXPECT().
-			GetSettlementPrice(gomock.Eq(ctx), gomock.Eq(pair)).
+			GetSettlementPrice(ctx, pair).
 			Return(sdk.NewDec(1000), error(nil))
 
 		dep.mockBankKeeper.EXPECT().
-			SendCoinsFromModuleToAccount(gomock.Eq(ctx), gomock.Eq(types.VaultModuleAccount), gomock.Eq(addr), gomock.Eq(sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100))))).
+			SendCoinsFromModuleToAccount(
+				ctx, types.VaultModuleAccount, addr, sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100)))).
 			Return(error(nil))
 
 		// this means that the user
@@ -75,7 +79,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 			Address:      addr.String(),
 			Pair:         pair.String(),
 			Size_:        sdk.NewDec(100),
-			Margin:       sdk.NewInt(100),
+			Margin:       sdk.NewDec(100),
 			OpenNotional: sdk.NewDec(1000),
 		}
 		err = k.Positions().Create(ctx, &pos)
@@ -83,7 +87,8 @@ func TestKeeper_SettlePosition(t *testing.T) {
 
 		coins, err := k.SettlePosition(ctx, pos)
 		require.NoError(t, err)
-		require.Equal(t, coins, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 99100))) // todo(mercilex): modify denom once transfer is impl
+		require.Equal(t, coins, sdk.NewCoins(
+			sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 99100))) // todo(mercilex): modify denom once transfer is impl
 	})
 
 	t.Run("position size is zero", func(t *testing.T) {

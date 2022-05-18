@@ -13,7 +13,7 @@ func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, trader str
 		Address:                             trader,
 		Pair:                                pair.String(),
 		Size_:                               sdk.ZeroDec(),
-		Margin:                              sdk.ZeroInt(),
+		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 		LiquidityHistoryIndex:               0,

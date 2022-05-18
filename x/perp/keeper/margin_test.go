@@ -244,7 +244,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 					Address: traderAddr.String(),
 					Pair:    tokenPair.String(),
 					Size_:   sdk.NewDec(9999),
-					Margin:  tc.initialMargin,
+					Margin:  tc.initialMargin.ToDec(),
 				},
 			)
 
@@ -260,7 +260,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 			position, err := nibiruApp.PerpKeeper.GetPosition(
 				ctx, tokenPair, traderAddr.String())
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedMargin, position.Margin)
+			require.Equal(t, tc.expectedMargin.String(), position.Margin.TruncateInt().String())
 		})
 	}
 }

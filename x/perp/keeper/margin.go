@@ -55,7 +55,7 @@ func (k Keeper) AddMargin(
 		return res, err
 	}
 
-	position.Margin = position.Margin.Add(addedMargin)
+	position.Margin = position.Margin.Add(addedMargin.ToDec())
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
 	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
@@ -72,7 +72,7 @@ func (k Keeper) AddMargin(
 
 	k.Positions().Set(ctx, pair, trader.String(), position)
 
-	fPayment := sdk.ZeroInt()
+	fPayment := sdk.ZeroDec()
 	events.EmitMarginChange(ctx, trader, pair.String(), addedMargin, fPayment)
 	return &types.MsgAddMarginResponse{}, nil
 }
@@ -124,7 +124,7 @@ func (k Keeper) RemoveMargin(
 
 	marginDelta := margin.Neg()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, *position, marginDelta)
+		ctx, *position, marginDelta.ToDec())
 	if err != nil {
 		return res, err
 	}
@@ -211,13 +211,13 @@ func (k Keeper) GetMarginRatio(
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
 		/* oldPosition */ position,
-		/* marginDelta */ unrealizedPnL.TruncateInt(),
+		/* marginDelta */ unrealizedPnL,
 	)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	marginRatio = remaining.Margin.Sub(remaining.BadDebt).ToDec().
+	marginRatio = remaining.Margin.Sub(remaining.BadDebt).
 		Quo(positionNotional)
 	return marginRatio, nil
 }
