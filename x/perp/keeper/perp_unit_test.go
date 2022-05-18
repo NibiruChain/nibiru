@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
-func TestKeeper_SettlePosition(t *testing.T) {
+func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		addr := sample.AccAddress()
