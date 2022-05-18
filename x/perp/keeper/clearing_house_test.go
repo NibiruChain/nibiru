@@ -41,7 +41,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 					getLatestCumulativePremiumFraction(ctx, tokenPair)
 				require.NoError(t, err)
 
-				require.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
+				assert.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
 			},
 		},
 		{
@@ -844,18 +844,18 @@ func TestIncreasePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				require.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount))
-				require.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
+				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount))
+				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
 				assert.EqualValues(t, sdk.NewDec(50), resp.ExchangedPositionSize)
-				require.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))
+				assert.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)
-				require.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))
+				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))
 				assert.EqualValues(t, sdk.NewDec(100), resp.UnrealizedPnlAfter)
 
 				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(150), resp.Position.Size_)        // 100 + 50
-				require.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))        // 10(old) + 10(new) - 2(funding payment)
+				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
@@ -921,18 +921,18 @@ func TestIncreasePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				require.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount)) // equal to open notional
-				require.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
+				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount)) // equal to open notional
+				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
 				assert.EqualValues(t, sdk.NewDec(101), resp.ExchangedPositionSize) // equal to base amount bought
-				require.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))          // 0.02 * 100
+				assert.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))           // 0.02 * 100
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)             // always zero for increasePosition
-				require.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))          // openNotional / leverage
+				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))           // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 99 - 100
 
 				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(201), resp.Position.Size_)        // 100 + 101
-				require.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))        // 10(old) + 10(new) - 2(funding payment)
+				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
@@ -1746,7 +1746,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(150), resp.ExchangedQuoteAssetAmount) // amount of quote used to purchase
 				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedPositionSize)     // bought back from vpool
-				require.True(t, sdk.NewDec(-2).Equal(resp.FundingPayment))             // -100 * 0.02
+				assert.True(t, sdk.NewDec(-2).Equal(resp.FundingPayment))              // -100 * 0.02
 				assert.EqualValues(t, sdk.NewDec(-50), resp.RealizedPnl)               // 100 - 105
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)          // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.MarginToVault)               // ( 10(oldMargin) + (-50)(PnL) - (-2)(fundingPayment) ) * -1 --> clipped to zero
