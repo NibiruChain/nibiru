@@ -133,7 +133,7 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			msg := types.MsgOpenPosition{
+			msg := &types.MsgOpenPosition{
 				Sender:               clientCtx.GetFromAddress().String(),
 				TokenPair:            args[1],
 				Side:                 side,
