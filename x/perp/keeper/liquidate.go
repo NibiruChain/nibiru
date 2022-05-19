@@ -137,15 +137,8 @@ func (k Keeper) ExecutePartialLiquidation(ctx sdk.Context, liquidator sdk.AccAdd
 	feeToLiquidator := liquidationPenalty.Quo(sdk.MustNewDecFromStr("2"))
 
 	// Remove the liquidation penalty from the margin of the position
-	removeMarginMsg := types.MsgRemoveMargin{
-		Sender:    position.Address,
-		TokenPair: position.Pair,
-		Margin:    sdk.NewCoin(common.TokenPair(position.Pair).GetQuoteTokenDenom(), liquidationPenalty.TruncateInt()),
-	}
-	_, err = k.RemoveMargin(ctx.Context(), &removeMarginMsg)
-	if err != nil {
-		return
-	}
+	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationPenalty)
+	k.SetPosition(ctx, common.TokenPair(position.Pair), position.Address, positionResp.Position)
 
 	err = k.distributeLiquidateRewards(ctx, LiquidateResp{
 		BadDebt:                sdk.ZeroDec(),
