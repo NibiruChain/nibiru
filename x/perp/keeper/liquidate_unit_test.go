@@ -25,7 +25,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{})
+					types.LiquidateResp{})
 				require.Error(t, err)
 				require.ErrorContains(t, err, "must not have nil fields")
 			},
@@ -35,7 +35,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
+					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
 						FeeToPerpEcosystemFund: sdk.OneDec(),
 						Liquidator:             sdk.AccAddress{},
 					},
@@ -49,7 +49,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				perpKeeper, _, ctx := getKeeper(t)
 				liquidator := sample.AccAddress()
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
+					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
 						FeeToPerpEcosystemFund: sdk.OneDec(),
 						Liquidator:             liquidator,
 						PositionResp: &types.PositionResp{
@@ -70,7 +70,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				pair := common.TokenPair("xxx:yyy")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(false)
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
+					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
 						FeeToPerpEcosystemFund: sdk.OneDec(),
 						Liquidator:             liquidator,
 						PositionResp: &types.PositionResp{
@@ -126,7 +126,7 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 				).Return(nil)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
+					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
 						FeeToPerpEcosystemFund: sdk.OneDec(),
 						Liquidator:             liquidator,
 						PositionResp: &types.PositionResp{

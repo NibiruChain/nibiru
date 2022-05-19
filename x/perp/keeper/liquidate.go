@@ -1,52 +1,12 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
-
-type LiquidateResp struct {
-	BadDebt                sdk.Dec
-	FeeToLiquidator        sdk.Dec
-	FeeToPerpEcosystemFund sdk.Dec
-	Liquidator             sdk.AccAddress
-	PositionResp           *types.PositionResp
-}
-
-func (l *LiquidateResp) String() string {
-	return fmt.Sprintf(`
-	LiquidateResp {
-		BadDebt: %v,
-		FeeToLiquidator: %v,
-		FeeToPerpEcosystemFund: %v,
-		PositionResp: %v,
-		Liquidator: %v,
-	}
-	`,
-		l.BadDebt.String(),
-		l.FeeToLiquidator.String(),
-		l.FeeToPerpEcosystemFund.String(),
-		l.PositionResp.String(),
-		l.Liquidator.String(),
-	)
-}
-
-func (l *LiquidateResp) Validate() error {
-	for _, field := range []sdk.Dec{
-		l.BadDebt, l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
-		if field.IsNil() {
-			return fmt.Errorf(
-				`invalid liquidationOutput: %v,
-				must not have nil fields`, l.String())
-		}
-	}
-	return nil
-}
 
 // ExecuteFullLiquidation fully liquidates a position.
 func (k Keeper) ExecuteFullLiquidation(
@@ -83,7 +43,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		feeToPerpEcosystemFund = remainMargin
 	}
 
-	err = k.distributeLiquidateRewards(ctx, LiquidateResp{
+	err = k.distributeLiquidateRewards(ctx, types.LiquidateResp{
 		BadDebt:                totalBadDebt,
 		FeeToLiquidator:        feeToLiquidator,
 		FeeToPerpEcosystemFund: feeToPerpEcosystemFund,
@@ -98,7 +58,7 @@ func (k Keeper) ExecuteFullLiquidation(
 }
 
 func (k Keeper) distributeLiquidateRewards(
-	ctx sdk.Context, liquidateResp LiquidateResp) (err error) {
+	ctx sdk.Context, liquidateResp types.LiquidateResp) (err error) {
 	// --------------------------------------------------------------
 	//  Preliminary validations
 	// --------------------------------------------------------------
