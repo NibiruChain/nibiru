@@ -209,7 +209,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			/* We open a position for 500k, with a liquidation fee of 50k.
 			This means 25k for the liquidator, and 25k for the perp fund.
 			Because the user only have margin for 50, we create 24950 of bad
-			debt (2500 due to liquidator minus 50).
+			debt (25000 due to liquidator minus 50).
 			*/
 			name:           "happy path - BadDebt, long",
 			side:           types.Side_BUY,
