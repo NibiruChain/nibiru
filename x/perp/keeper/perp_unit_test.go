@@ -16,7 +16,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		addr := sample.AccAddress()
-		pair, err := common.NewTokenPairFromStr("LUNA:UST") // memeing
+		pair, err := common.NewTokenPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
 		dep.mockVpoolKeeper.
@@ -25,7 +25,10 @@ func TestSettlePosition(t *testing.T) {
 			Return(sdk.ZeroDec(), error(nil))
 
 		dep.mockBankKeeper.EXPECT().
-			SendCoinsFromModuleToAccount(gomock.Eq(ctx), gomock.Eq(types.VaultModuleAccount), gomock.Eq(addr), gomock.Eq(sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(100))))).
+			SendCoinsFromModuleToAccount(
+				ctx, types.VaultModuleAccount, addr,
+				sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(100))),
+			).
 			Return(error(nil))
 
 		pos := types.Position{
@@ -42,7 +45,7 @@ func TestSettlePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, sdk.NewCoins(
-			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin.RoundInt()),
+			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin.TruncateInt()),
 		), coins) // TODO(mercilex): here we should have different denom, depends on Transfer impl
 	})
 
@@ -54,11 +57,12 @@ func TestSettlePosition(t *testing.T) {
 
 		dep.mockVpoolKeeper.
 			EXPECT().
-			GetSettlementPrice(gomock.Eq(ctx), gomock.Eq(pair)).
+			GetSettlementPrice(ctx, pair).
 			Return(sdk.NewDec(1000), error(nil))
 
 		dep.mockBankKeeper.EXPECT().
-			SendCoinsFromModuleToAccount(gomock.Eq(ctx), gomock.Eq(types.VaultModuleAccount), gomock.Eq(addr), gomock.Eq(sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100))))).
+			SendCoinsFromModuleToAccount(
+				ctx, types.VaultModuleAccount, addr, sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100)))).
 			Return(error(nil))
 
 		// this means that the user
@@ -83,13 +87,14 @@ func TestSettlePosition(t *testing.T) {
 
 		coins, err := k.SettlePosition(ctx, pos)
 		require.NoError(t, err)
-		require.Equal(t, coins, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 99100))) // todo(mercilex): modify denom once transfer is impl
+		require.Equal(t, coins, sdk.NewCoins(
+			sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 99100))) // todo(mercilex): modify denom once transfer is impl
 	})
 
 	t.Run("position size is zero", func(t *testing.T) {
 		k, _, ctx := getKeeper(t)
 		addr := sample.AccAddress()
-		pair, err := common.NewTokenPairFromStr("LUNA:UST") // memeing
+		pair, err := common.NewTokenPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
 		pos := types.Position{
