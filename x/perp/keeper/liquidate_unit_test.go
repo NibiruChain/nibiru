@@ -36,12 +36,13 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				perpKeeper, _, ctx := getKeeper(t)
 
 				require.Panics(t, func() {
-					perpKeeper.distributeLiquidateRewards(ctx,
+					err := perpKeeper.distributeLiquidateRewards(ctx,
 						types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
 							FeeToPerpEcosystemFund: sdk.OneDec(),
 							Liquidator:             sdk.AccAddress{},
 						},
 					)
+					require.Error(t, err)
 				})
 			},
 		},
