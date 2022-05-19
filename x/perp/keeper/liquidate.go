@@ -69,12 +69,6 @@ func (k Keeper) distributeLiquidateRewards(
 		return err
 	}
 
-	// validate liquidator
-	liquidator, err := sdk.AccAddressFromBech32(liquidateResp.Liquidator.String())
-	if err != nil {
-		return err
-	}
-
 	// validate pair
 	pair, err := common.NewTokenPairFromStr(liquidateResp.PositionResp.Position.Pair)
 	if err != nil {
@@ -121,7 +115,7 @@ func (k Keeper) distributeLiquidateRewards(
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx,
 			/* from */ types.PerpEFModuleAccount,
-			/* to */ liquidator,
+			/* to */ liquidateResp.Liquidator,
 			sdk.NewCoins(coinToLiquidator),
 		)
 		if err != nil {
@@ -130,7 +124,7 @@ func (k Keeper) distributeLiquidateRewards(
 		events.EmitTransfer(ctx,
 			/* coin */ coinToLiquidator,
 			/* from */ perpEFAddr.String(),
-			/* to */ liquidator.String(),
+			/* to */ liquidateResp.Liquidator.String(),
 		)
 	}
 

@@ -31,16 +31,18 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid liquidator - error",
+			name: "invalid liquidator - panic",
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
-				err := perpKeeper.distributeLiquidateRewards(ctx,
-					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
-						FeeToPerpEcosystemFund: sdk.OneDec(),
-						Liquidator:             sdk.AccAddress{},
-					},
-				)
-				require.Error(t, err)
+
+				require.Panics(t, func() {
+					perpKeeper.distributeLiquidateRewards(ctx,
+						types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneDec(),
+							FeeToPerpEcosystemFund: sdk.OneDec(),
+							Liquidator:             sdk.AccAddress{},
+						},
+					)
+				})
 			},
 		},
 		{
