@@ -14,22 +14,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
-They also serve as a reminder of which functions still need MVP unit or
-integration tests */
-var (
-	_ = Keeper.closeAndOpenReversePosition
-	_ = Keeper.openReversePosition
-	_ = Keeper.transferFee
-)
-
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
 	pair common.TokenPair,
 	side types.Side,
 	traderAddr sdk.AccAddress,
-	quoteAssetAmount sdk.Dec,
+	quoteAssetAmount sdk.Int,
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
@@ -63,7 +54,7 @@ func (k Keeper) OpenPosition(
 			ctx,
 			*position,
 			side,
-			/* openNotional */ quoteAssetAmount.Mul(leverage),
+			/* openNotional */ leverage.MulInt(quoteAssetAmount),
 			/* minPositionSize */ baseAssetAmountLimit,
 			/* leverage */ leverage)
 		if err != nil {
@@ -75,10 +66,10 @@ func (k Keeper) OpenPosition(
 		positionResp, err = k.openReversePosition(
 			ctx,
 			*position,
-			quoteAssetAmount,
-			leverage,
-			baseAssetAmountLimit,
-			false,
+			/* quoteAssetAmount */ quoteAssetAmount.ToDec(),
+			/* leverage */ leverage,
+			/* baseAssetAmountLimit */ baseAssetAmountLimit,
+			/* canOverFluctuationLimit */ false,
 		)
 		if err != nil {
 			return err
@@ -89,13 +80,13 @@ func (k Keeper) OpenPosition(
 	k.SetPosition(ctx, pair, traderAddr.String(), positionResp.Position)
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
-		marginRatio, err := k.GetMarginRatio(ctx, *positionResp.Position)
+		marginRatio, err := k.GetMarginRatio(
+			ctx, *positionResp.Position, types.MarginCalculationPriceOption_MAX_PNL)
 		if err != nil {
 			return err
 		}
 		if err = requireMoreMarginRatio(
 			marginRatio, params.MaintenanceMarginRatio, true); err != nil {
-			// TODO(mercilex): should panic? it's a require
 			return err
 		}
 	}
@@ -106,9 +97,10 @@ func (k Keeper) OpenPosition(
 	}
 
 	// transfer trader <=> vault
+	marginToVaultInt := positionResp.MarginToVault.RoundInt()
 	switch {
-	case positionResp.MarginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.TruncateInt())
+	case marginToVaultInt.IsPositive():
+		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend))
 		if err != nil {
@@ -118,8 +110,8 @@ func (k Keeper) OpenPosition(
 			/* coin */ coinToSend,
 			/* from */ traderAddr.String(),
 			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String())
-	case positionResp.MarginToVault.IsNegative():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.MarginToVault.Abs().TruncateInt())
+	case marginToVaultInt.IsNegative():
+		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
 		if err != nil {
@@ -132,7 +124,8 @@ func (k Keeper) OpenPosition(
 		)
 	}
 
-	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount.TruncateInt())
+	transferredFee, err := k.transferFee(
+		ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount)
 	if err != nil {
 		return err
 	}
@@ -148,7 +141,7 @@ func (k Keeper) OpenPosition(
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		Fee:                   transferredFee.ToDec(), // TODO(mercilex): this feels like should be a coin?
+		Fee:                   transferredFee,
 		PositionSizeAfter:     positionResp.Position.Size_,
 		RealizedPnl:           positionResp.RealizedPnl,
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
@@ -245,6 +238,7 @@ func (k Keeper) increasePosition(
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
+	events.EmitInternalPositionResponseEvent(ctx, positionResp, "increase_position")
 	return positionResp, nil
 }
 
@@ -348,7 +342,7 @@ func (k Keeper) openReversePosition(
 	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
-	openNotional := quoteAssetAmount.Mul(leverage)
+	openNotional := leverage.Mul(quoteAssetAmount)
 	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
@@ -494,6 +488,7 @@ func (k Keeper) decreasePosition(
 		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
+	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
 	return positionResp, nil
 }
 
@@ -534,8 +529,9 @@ func (k Keeper) closeAndOpenReversePosition(
 		return nil, fmt.Errorf("underwater position")
 	}
 
-	notionalValueMovement := quoteAssetAmount.Mul(leverage)
-	remainingOpenNotional := notionalValueMovement.Sub(closePositionResp.ExchangedQuoteAssetAmount)
+	notionalValueMovement := leverage.Mul(quoteAssetAmount)
+	remainingOpenNotional := notionalValueMovement.Sub(
+		closePositionResp.ExchangedQuoteAssetAmount)
 
 	if remainingOpenNotional.IsNegative() {
 		// should never happen as this should also be checked in the caller
@@ -588,6 +584,8 @@ func (k Keeper) closeAndOpenReversePosition(
 		positionResp = closePositionResp
 	}
 
+	events.EmitInternalPositionResponseEvent(
+		ctx, positionResp, "close_and_open_reverse_position")
 	return positionResp, nil
 }
 
@@ -679,15 +677,17 @@ func (k Keeper) closePositionEntirely(
 		return nil, err
 	}
 
+	events.EmitInternalPositionResponseEvent(
+		ctx, positionResp, "close_position_entirely")
 	return positionResp, nil
 }
 
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
 	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress,
-	positionNotional sdk.Int,
+	positionNotional sdk.Dec,
 ) (sdk.Int, error) {
-	toll, spread, err := k.CalcFee(ctx, positionNotional)
+	toll, spread, err := k.CalcPerpTxFee(ctx, positionNotional)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -695,21 +695,22 @@ func (k Keeper) transferFee(
 	hasToll := toll.IsPositive()
 	hasSpread := spread.IsPositive()
 
-	if !hasToll && hasSpread {
-		// TODO(mercilex): what's the meaning of returning sdk.Int if both evaluate to false, should this happen?
-		return sdk.Int{}, nil
+	if !hasToll && !hasSpread {
+		return sdk.ZeroInt(), nil
 	}
 
 	if hasSpread {
-		err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.PerpEFModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread)))
+		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread))
+		err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, trader, types.PerpEFModuleAccount, spreadCoins)
 		if err != nil {
 			return sdk.Int{}, err
 		}
 	}
 	if hasToll {
-		err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.FeePoolModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), toll)))
+		tollCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), toll))
+		err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, trader, types.FeePoolModuleAccount, tollCoins)
 		if err != nil {
 			return sdk.Int{}, err
 		}

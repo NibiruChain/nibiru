@@ -110,6 +110,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				sdk.NewDec(10_000_000),       // 10 tokens
 				sdk.NewDec(5_000_000),        // 5 tokens
 				sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
+				sdk.MustNewDecFromStr("0.1"),
 			)
 
 			res, err := vpoolKeeper.SwapQuoteForBase(
@@ -201,6 +202,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 				sdk.OneDec(),
 				tc.initialQuoteReserve,
 				tc.initialBaseReserve,
+				sdk.OneDec(),
 				sdk.OneDec(),
 			)
 

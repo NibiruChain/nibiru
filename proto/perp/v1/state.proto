@@ -16,10 +16,19 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
-  // tollRatio is the ratio transferred to the the fee pool
-  int64 tollRatio = 3;
-  // efFeeRatio is the ratio transferred to the PerpEF.
-  int64 spreadRatio = 4;    
+  // toll_ratio is the ratio transferred to the the fee pool
+  int64 toll_ratio = 3;
+
+  // spread_ratio is the ratio transferred to the PerpEF.
+  int64 spread_ratio = 4;
+
+  // LiquidationFee is the percentage of liquidated position that will be given
+  // to out as a reward. Half of the liquidation fee is given to the liquidator,
+  // and the other half is given to the ecosystem fund.
+  int64 liquidation_fee = 5;
+
+  // partial_liquidation_ratio is the share we try to liquidate if the margin is higher than liquidation fee
+  int64 partial_liquidation_ratio = 6;
 }
 
 // GenesisState defines the perp  module's genesis state.
@@ -31,7 +40,7 @@ message GenesisState {
   ];
 }
 
-// Position identifies and records information on a user's position on one of 
+// Position identifies and records information on a user's position on one of
 // the virtual liquidity pools.
 message Position {
   // address identifies the address owner of this position
@@ -44,9 +53,9 @@ message Position {
     (gogoproto.nullable) = false]; // signed int
   string margin = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false]; // int
+    (gogoproto.nullable) = false]; 
 
-  // OpenNotional is the quote denom value of the position when opening. 
+  // OpenNotional is the quote denom value of the position when opening.
   string open_notional = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; 
@@ -109,6 +118,12 @@ enum PnLPreferenceOption {
   MIN = 1;
 }
 
+enum MarginCalculationPriceOption {
+  SPOT = 0;
+  INDEX = 1;
+  MAX_PNL = 2;
+}
+
 message PairMetadata {
   string pair = 1;
   repeated string cumulative_premium_fractions = 2 [
@@ -129,7 +144,7 @@ message PositionChangedEvent {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
   string fee = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
   string position_size_after = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

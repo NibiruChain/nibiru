@@ -39,6 +39,7 @@ func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 func getSamplePool() *types.Pool {
 	ratioLimit, _ := sdk.NewDecFromStr("0.9")
 	fluctuationLimit, _ := sdk.NewDecFromStr("0.1")
+	maxOracleSpreadRatio := sdk.MustNewDecFromStr("0.1")
 
 	pool := types.NewPool(
 		NUSDPair,
@@ -46,6 +47,7 @@ func getSamplePool() *types.Pool {
 		sdk.NewDec(10_000_000),
 		sdk.NewDec(5_000_000),
 		fluctuationLimit,
+		maxOracleSpreadRatio,
 	)
 
 	return pool

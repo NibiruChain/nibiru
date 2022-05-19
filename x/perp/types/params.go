@@ -37,6 +37,16 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&p.SpreadRatio,
 			validateSpreadRatio,
 		),
+		paramtypes.NewParamSetPair(
+			[]byte("LiquidationFee"),
+			&p.LiquidationFee,
+			validateLiquidationFee,
+		),
+		paramtypes.NewParamSetPair(
+			[]byte("PartialLiquidationRatio"),
+			&p.PartialLiquidationRatio,
+			validatePartialLiquidationRatio,
+		),
 	}
 }
 
@@ -46,17 +56,23 @@ func NewParams(
 	maintenanceMarginRatio sdk.Dec,
 	tollRatio sdk.Dec,
 	spreadRatio sdk.Dec,
+	liquidationFee sdk.Dec,
+	partialLiquidationRatio sdk.Dec,
 ) Params {
 	million := sdk.NewDec(1_000_000)
 
 	tollRatioInt := tollRatio.Mul(million).RoundInt().Int64()
 	spreadRationInt := spreadRatio.Mul(million).RoundInt().Int64()
+	liquidationFeeInt := liquidationFee.Mul(million).RoundInt().Int64()
+	partialLiquidationRatioInt := partialLiquidationRatio.Mul(million).RoundInt().Int64()
 
 	return Params{
-		Stopped:                stopped,
-		MaintenanceMarginRatio: maintenanceMarginRatio,
-		TollRatio:              tollRatioInt,
-		SpreadRatio:            spreadRationInt,
+		Stopped:                 stopped,
+		MaintenanceMarginRatio:  maintenanceMarginRatio,
+		TollRatio:               tollRatioInt,
+		SpreadRatio:             spreadRationInt,
+		LiquidationFee:          liquidationFeeInt,
+		PartialLiquidationRatio: partialLiquidationRatioInt,
 	}
 }
 
@@ -64,12 +80,17 @@ func NewParams(
 func DefaultParams() Params {
 	tollRatio := sdk.MustNewDecFromStr("0.001")
 	spreadRatio := sdk.MustNewDecFromStr("0.001")
+	liquidationFee := sdk.MustNewDecFromStr("0.0125")
+	partialLiquidationRatio := sdk.MustNewDecFromStr("0.50")
+	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
 
 	return NewParams(
 		/*Stopped=*/ true,
-		/*MaintenanceMarginRatio=*/ sdk.OneDec(),
+		/*MaintenanceMarginRatio=*/ maintenanceMarginRatio,
 		/*TollRatio=*/ tollRatio,
 		/*SpreadRatio=*/ spreadRatio,
+		/*LiquidationFee=*/ liquidationFee,
+		/*PartialLiquidationRatio=*/ partialLiquidationRatio,
 	)
 }
 
@@ -80,6 +101,16 @@ func (p *Params) GetSpreadRatioAsDec() sdk.Dec {
 
 func (p *Params) GetTollRatioAsDec() sdk.Dec {
 	return sdk.NewIntFromUint64(uint64(p.TollRatio)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
+
+func (p *Params) GetLiquidationFeeAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.LiquidationFee)).
+		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+}
+
+func (p *Params) GetPartialLiquidationRatioAsDec() sdk.Dec {
+	return sdk.NewIntFromUint64(uint64(p.PartialLiquidationRatio)).
 		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
@@ -95,7 +126,17 @@ func (p *Params) Validate() error {
 		return err
 	}
 
+	err = validateLiquidationFee(p.LiquidationFee)
+	if err != nil {
+		return err
+	}
+
 	err = validateTollRatio(p.TollRatio)
+	if err != nil {
+		return err
+	}
+
+	err = validatePartialLiquidationRatio(p.PartialLiquidationRatio)
 	if err != nil {
 		return err
 	}
@@ -128,6 +169,36 @@ func validateSpreadRatio(i interface{}) error {
 		return fmt.Errorf("spread ratio is above max value(1e6): %d", spreadRatio)
 	} else if spreadRatio < 0 {
 		return fmt.Errorf("spread ratio is negative: %d", spreadRatio)
+	} else {
+		return nil
+	}
+}
+
+func validateLiquidationFee(i interface{}) error {
+	liquidationFee, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if liquidationFee > 1_000_000 {
+		return fmt.Errorf("spread ratio is above max value(1e6): %d", liquidationFee)
+	} else if liquidationFee < 0 {
+		return fmt.Errorf("spread ratio is negative: %d", liquidationFee)
+	} else {
+		return nil
+	}
+}
+
+func validatePartialLiquidationRatio(i interface{}) error {
+	partialLiquidationRatio, err := getAsInt64(i)
+	if err != nil {
+		return err
+	}
+
+	if partialLiquidationRatio > 1_000_000 {
+		return fmt.Errorf("spread ratio is above max value(1e6): %d", partialLiquidationRatio)
+	} else if partialLiquidationRatio < 0 {
+		return fmt.Errorf("spread ratio is negative: %d", partialLiquidationRatio)
 	} else {
 		return nil
 	}

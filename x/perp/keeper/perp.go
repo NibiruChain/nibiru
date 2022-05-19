@@ -78,8 +78,9 @@ func (k Keeper) SettlePosition(
 	}
 
 	transferredCoins = sdk.NewCoins(sdk.NewInt64Coin(tokenPair.GetQuoteTokenDenom(), 0))
-	if settledValue.IsPositive() {
-		toTransfer := sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), settledValue.RoundInt())
+	settledValueInt := settledValue.RoundInt()
+	if settledValueInt.IsPositive() {
+		toTransfer := sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), settledValueInt)
 		transferredCoins = sdk.NewCoins(toTransfer)
 		addr, err := sdk.AccAddressFromBech32(currentPosition.Address)
 		if err != nil {
