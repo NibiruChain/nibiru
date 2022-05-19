@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -160,4 +161,32 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			tc.test()
 		})
 	}
+}
+
+func TestCalcPerpTxFee(t *testing.T) {
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	perpKeeper := &nibiruApp.PerpKeeper
+
+	currentParams := perpKeeper.GetParams(ctx)
+	require.Equal(t, types.DefaultParams(), currentParams)
+
+	currentParams = types.NewParams(
+		currentParams.Stopped,
+		currentParams.MaintenanceMarginRatio,
+		/*TollRatio=*/ sdk.MustNewDecFromStr("0.01"),
+		/*SpreadRatio=*/ sdk.MustNewDecFromStr("0.0123"),
+		/*liquidationFee=*/ sdk.MustNewDecFromStr("0.01"),
+		/*partialLiquidationRatio=*/ sdk.MustNewDecFromStr("0.4"),
+	)
+	perpKeeper.SetParams(ctx, currentParams)
+
+	params := perpKeeper.GetParams(ctx)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.01"), params.GetTollRatioAsDec())
+	assert.Equal(t, sdk.MustNewDecFromStr("0.0123"), params.GetSpreadRatioAsDec())
+
+	// Ensure calculation is correct
+	toll, spread, err := perpKeeper.CalcPerpTxFee(ctx, sdk.NewDec(1_000_000))
+	require.NoError(t, err)
+	assert.Equal(t, sdk.NewInt(10_000), toll)
+	assert.Equal(t, sdk.NewInt(12_300), spread)
 }

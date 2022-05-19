@@ -14,15 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-/* TODO tests | These _ vars are here to pass the golangci-lint for unused methods.
-They also serve as a reminder of which functions still need MVP unit or
-integration tests */
-var (
-	_ = Keeper.closeAndOpenReversePosition
-	_ = Keeper.openReversePosition
-	_ = Keeper.transferFee
-)
-
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
@@ -63,7 +54,7 @@ func (k Keeper) OpenPosition(
 			ctx,
 			*position,
 			side,
-			/* openNotional */ leverage.Mul(quoteAssetAmount.ToDec()),
+			/* openNotional */ leverage.MulInt(quoteAssetAmount),
 			/* minPositionSize */ baseAssetAmountLimit,
 			/* leverage */ leverage)
 		if err != nil {
@@ -75,10 +66,10 @@ func (k Keeper) OpenPosition(
 		positionResp, err = k.openReversePosition(
 			ctx,
 			*position,
-			quoteAssetAmount.ToDec(),
-			leverage,
-			baseAssetAmountLimit,
-			false,
+			/* quoteAssetAmount */ quoteAssetAmount.ToDec(),
+			/* leverage */ leverage,
+			/* baseAssetAmountLimit */ baseAssetAmountLimit,
+			/* canOverFluctuationLimit */ false,
 		)
 		if err != nil {
 			return err
@@ -96,7 +87,6 @@ func (k Keeper) OpenPosition(
 		}
 		if err = requireMoreMarginRatio(
 			marginRatio, params.MaintenanceMarginRatio, true); err != nil {
-			// TODO(mercilex): should panic? it's a require
 			return err
 		}
 	}
@@ -151,7 +141,7 @@ func (k Keeper) OpenPosition(
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		Fee:                   transferredFee.ToDec(), // TODO(mercilex): this feels like should be a coin?
+		Fee:                   transferredFee,
 		PositionSizeAfter:     positionResp.Position.Size_,
 		RealizedPnl:           positionResp.RealizedPnl,
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
@@ -697,7 +687,7 @@ func (k Keeper) transferFee(
 	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress,
 	positionNotional sdk.Dec,
 ) (sdk.Int, error) {
-	toll, spread, err := k.CalcFee(ctx, positionNotional)
+	toll, spread, err := k.CalcPerpTxFee(ctx, positionNotional)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -705,21 +695,22 @@ func (k Keeper) transferFee(
 	hasToll := toll.IsPositive()
 	hasSpread := spread.IsPositive()
 
-	if !hasToll && hasSpread {
-		// TODO(mercilex): what's the meaning of returning sdk.Int if both evaluate to false, should this happen?
-		return sdk.Int{}, nil
+	if !hasToll && !hasSpread {
+		return sdk.ZeroInt(), nil
 	}
 
 	if hasSpread {
-		err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.PerpEFModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread)))
+		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread))
+		err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, trader, types.PerpEFModuleAccount, spreadCoins)
 		if err != nil {
 			return sdk.Int{}, err
 		}
 	}
 	if hasToll {
-		err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, trader, types.FeePoolModuleAccount,
-			sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), toll)))
+		tollCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), toll))
+		err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, trader, types.FeePoolModuleAccount, tollCoins)
 		if err != nil {
 			return sdk.Int{}, err
 		}

@@ -364,20 +364,20 @@ func (m *MockVpoolKeeper) EXPECT() *MockVpoolKeeperMockRecorder {
 	return m.recorder
 }
 
-// CalcFee mocks base method.
-func (m *MockVpoolKeeper) CalcFee(arg0 types1.Context, arg1 common.TokenPair, arg2 types1.Int) (types1.Int, types1.Int, error) {
+// CalcPerpTxFee mocks base method.
+func (m *MockVpoolKeeper) CalcPerpTxFee(arg0 types1.Context, arg1 common.TokenPair, arg2 types1.Int) (types1.Int, types1.Int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CalcFee", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CalcPerpTxFee", arg0, arg1, arg2)
 	ret0, _ := ret[0].(types1.Int)
 	ret1, _ := ret[1].(types1.Int)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// CalcFee indicates an expected call of CalcFee.
-func (mr *MockVpoolKeeperMockRecorder) CalcFee(arg0, arg1, arg2 interface{}) *gomock.Call {
+// CalcPerpTxFee indicates an expected call of CalcPerpTxFee.
+func (mr *MockVpoolKeeperMockRecorder) CalcPerpTxFee(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcFee", reflect.TypeOf((*MockVpoolKeeper)(nil).CalcFee), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalcPerpTxFee", reflect.TypeOf((*MockVpoolKeeper)(nil).CalcPerpTxFee), arg0, arg1, arg2)
 }
 
 // ExistsPool mocks base method.
