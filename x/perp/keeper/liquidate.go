@@ -49,6 +49,45 @@ func (l *LiquidateResp) Validate() error {
 	return nil
 }
 
+// Liquidate liquidates check the margin and either liquidate or partially liquidate a position
+// TODO: Change inputs of the function to take a MsgLiquidate input and return a MsgLiquidateOutput
+func (k Keeper) Liquidate(ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position) (err error) {
+	marginRatio, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
+	if err != nil {
+		return err
+	}
+
+	if k.VpoolKeeper.IsOverSpreadLimit(ctx, common.TokenPair(position.GetPair())) {
+		marginRatioBasedOnOracle, err := k.GetMarginRatio(
+			ctx, *position, types.MarginCalculationPriceOption_INDEX)
+		if err != nil {
+			return err
+		}
+
+		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
+	}
+
+	params := k.GetParams(ctx)
+	err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, false)
+
+	if err != nil {
+		return types.ErrMarginHighEnough
+	}
+
+	marginRatioBasedOnSpot, err := k.GetMarginRatio(
+		ctx, *position, types.MarginCalculationPriceOption_SPOT)
+	if err != nil {
+		return err
+	}
+
+	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
+		err = k.ExecutePartialLiquidation(ctx, liquidator, position)
+	} else {
+		err = k.ExecuteFullLiquidation(ctx, liquidator, position)
+	}
+	return
+}
+
 // ExecuteFullLiquidation fully liquidates a position.
 func (k Keeper) ExecuteFullLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
