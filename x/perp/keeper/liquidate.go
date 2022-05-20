@@ -80,7 +80,10 @@ func (k Keeper) Liquidate(ctx sdk.Context, liquidator sdk.AccAddress, position *
 		return err
 	}
 
-	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
+	// check margin(based on spot price) is enough to pay the liquidation fee
+	// after partially close, otherwise we fully close the position.
+	// that also means we can ensure no bad debt happen when partially liquidate
+	if marginRatioBasedOnSpot.GTE(params.GetLiquidationFeeAsDec()) {
 		err = k.ExecutePartialLiquidation(ctx, liquidator, position)
 	} else {
 		err = k.ExecuteFullLiquidation(ctx, liquidator, position)
