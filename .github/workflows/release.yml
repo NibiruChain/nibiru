@@ -1,25 +1,39 @@
-# https://github.com/marketplace/actions/github-tag
+# This workflow is useful if you want to automate the process of creating a prerelease
+# when you push to your default branch (i.e. master). The workflow takes care of 
+# automatically upgrading the tag version number.
 
-name: Bump Version
 on:
 # Runs on PR merges or direct push to master
   push:
-    branches:
-      - master
+    branches: [feat/ci-release]
 
 jobs:
   might_release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
       - name: Bump version and push tag
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create a GitHub release
-        uses: ncipollo/release-action@v1
+
+      - name: Build Binary
+        uses: ignite-hq/cli/actions/cli@develop
         with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
+          args: chain build --release --release.prefix nibiru -t linux:amd64 -t darwin:amd64
+
+      - name: Create the Prerelease
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          files: release/*
+          prerelease: true 
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
