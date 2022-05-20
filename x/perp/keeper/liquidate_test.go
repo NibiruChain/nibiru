@@ -139,7 +139,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		traderFunds                      sdk.Coin
 		expectedFeeToLiquidator          sdk.Coin
 		expectedPerpEFBalance            sdk.Coin
-		excpectedBadDebt                 sdk.Dec
+		expectedBadDebt                  sdk.Dec
 		internal_position_response_event sdk.Event
 	}{
 		{
@@ -156,7 +156,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 2_500),
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_045_050),
-			excpectedBadDebt:      sdk.MustNewDecFromStr("0"),
+			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
@@ -188,7 +188,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 3078),
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_043_894),
-			excpectedBadDebt:      sdk.MustNewDecFromStr("0"),
+			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
@@ -225,7 +225,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 975_550),
-			excpectedBadDebt:      sdk.MustNewDecFromStr("24950"),
+			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
@@ -258,7 +258,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 25_000),
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 975_550),
-			excpectedBadDebt:      sdk.MustNewDecFromStr("24950"),
+			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
@@ -488,7 +488,7 @@ func TestExecuteFPartialLiquidation(t *testing.T) {
 		traderFunds             sdk.Coin
 		expectedFeeToLiquidator sdk.Coin
 		expectedPerpEFBalance   sdk.Coin
-		excpectedBadDebt        sdk.Dec
+		expectedBadDebt         sdk.Dec
 
 		expectedPositionSize    sdk.Dec
 		expectedMarginRemaining sdk.Dec
@@ -514,7 +514,7 @@ func TestExecuteFPartialLiquidation(t *testing.T) {
 
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_000_050),
-			excpectedBadDebt:      sdk.MustNewDecFromStr("0"),
+			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
@@ -556,7 +556,7 @@ func TestExecuteFPartialLiquidation(t *testing.T) {
 
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_000_050),
-			excpectedBadDebt:      sdk.MustNewDecFromStr("0"),
+			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{

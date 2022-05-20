@@ -102,18 +102,18 @@ func (k Keeper) ExecuteFullLiquidation(
 func (k Keeper) ExecutePartialLiquidation(ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position) (err error) {
 	params := k.GetParams(ctx)
 
-	var dir vtypes.Direction
+	var baseAssetDir vtypes.Direction
 
 	if position.Size_.GTE(sdk.ZeroDec()) {
-		dir = vtypes.Direction_ADD_TO_POOL
+		baseAssetDir = vtypes.Direction_ADD_TO_POOL
 	} else {
-		dir = vtypes.Direction_REMOVE_FROM_POOL
+		baseAssetDir = vtypes.Direction_REMOVE_FROM_POOL
 	}
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
 		ctx,
 		common.TokenPair(position.Pair),
-		dir,
+		baseAssetDir,
 		/* abs= */ position.Size_.Mul(params.GetPartialLiquidationRatioAsDec().Abs()),
 	)
 	if err != nil {
@@ -134,7 +134,7 @@ func (k Keeper) ExecutePartialLiquidation(ctx sdk.Context, liquidator sdk.AccAdd
 
 	// half of the liquidationFee goes to liquidator & another half goes to ecosystem fund
 	liquidationPenalty := positionResp.ExchangedQuoteAssetAmount.Mul(params.GetLiquidationFeeAsDec())
-	feeToLiquidator := liquidationPenalty.Quo(sdk.MustNewDecFromStr("2"))
+	feeToLiquidator := liquidationPenalty.QuoInt64(2)
 
 	// Remove the liquidation penalty from the margin of the position
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationPenalty)
