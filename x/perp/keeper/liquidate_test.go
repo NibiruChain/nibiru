@@ -504,7 +504,7 @@ func TestExecuteFPartialLiquidation(t *testing.T) {
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("yyy", 50_100),
 
-			expectedPositionSize:    sdk.MustNewDecFromStr("14999.999999925000000001"), // 24_499.9999999875000000001 * 0.6
+			expectedPositionSize:    sdk.MustNewDecFromStr("14999.999999925000000001"), // 24_999.9999999875000000001 * 0.6
 			expectedMarginRemaining: sdk.MustNewDecFromStr("47999.999999994000000000"), // approx 2k less but slippage
 
 			// feeToLiquidator
