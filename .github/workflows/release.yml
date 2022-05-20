@@ -5,7 +5,7 @@ on:
 # Runs on PR merges or direct push to master
   push:
     branches:
-      - master
+      - feat/ci-release
 
 jobs:
   might_release:
