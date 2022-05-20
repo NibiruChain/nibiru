@@ -143,7 +143,7 @@ func (k Keeper) ExecutePartialLiquidation(ctx sdk.Context, liquidator sdk.AccAdd
 	err = k.distributeLiquidateRewards(ctx, LiquidateResp{
 		BadDebt:                sdk.ZeroDec(),
 		FeeToLiquidator:        feeToLiquidator,
-		FeeToPerpEcosystemFund: liquidationPenalty.Sub(feeToLiquidator),
+		FeeToPerpEcosystemFund: liquidationPenalty,
 		Liquidator:             liquidator,
 		PositionResp:           positionResp,
 	})

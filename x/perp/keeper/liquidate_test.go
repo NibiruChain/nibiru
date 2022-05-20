@@ -513,7 +513,7 @@ func TestExecuteFPartialLiquidation(t *testing.T) {
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 1_000),
 
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_000_050),
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
@@ -555,7 +555,7 @@ func TestExecuteFPartialLiquidation(t *testing.T) {
 			expectedFeeToLiquidator: sdk.NewInt64Coin("yyy", 1_000),
 
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_000_050),
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
