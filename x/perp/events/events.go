@@ -12,6 +12,8 @@ package events
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 // x/perp attributes used in multiple events
@@ -268,7 +270,8 @@ func EmitMarginChange(
 	fundingPayment sdk.Dec,
 ) {
 	ctx.EventManager().EmitEvent(NewMarginChangeEvent(
-		owner, vpool, marginAmt, fundingPayment))
+		owner, vpool, marginAmt, fundingPayment),
+	)
 }
 
 func NewMarginChangeEvent(
@@ -284,5 +287,42 @@ func NewMarginChangeEvent(
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin_amt", marginAmt.String()),
 		sdk.NewAttribute("funding_payment", fundingPayment.String()),
+	)
+}
+
+// --------------------------------------------------------------------
+
+/* EmitInternalPositionResponseEvent emits an sdk.Event to track the position
+response ('PositionResp') outputs returned by: 'closePositionEntirely',
+'closeAndOpenReversePosition', 'increasePosition', and 'decreasePosition'.
+*/
+func EmitInternalPositionResponseEvent(
+	ctx sdk.Context, positionResp *types.PositionResp, function string) {
+	ctx.EventManager().EmitEvent(NewInternalPositionResponseEvent(
+		positionResp, function),
+	)
+}
+
+/* NewInternalPositionResponseEvent returns an sdk.Event to track the position
+response ('PositionResp') outputs returned by: 'closePositionEntirely',
+'closeAndOpenReversePosition', 'increasePosition', and 'decreasePosition'.
+*/
+func NewInternalPositionResponseEvent(
+	positionResp *types.PositionResp, function string,
+) sdk.Event {
+	pos := positionResp.Position
+	return sdk.NewEvent(
+		"internal_position_response",
+		sdk.NewAttribute(AttributePositionOwner, pos.Address),
+		sdk.NewAttribute(AttributeVpool, pos.Pair),
+		sdk.NewAttribute("pos_margin", pos.Margin.String()),
+		sdk.NewAttribute("pos_open_notional", pos.OpenNotional.String()),
+		sdk.NewAttribute("bad_debt", positionResp.BadDebt.String()),
+		sdk.NewAttribute("exchanged_position_size", positionResp.ExchangedPositionSize.String()),
+		sdk.NewAttribute("funding_payment", positionResp.FundingPayment.String()),
+		sdk.NewAttribute("realized_pnl", positionResp.RealizedPnl.String()),
+		sdk.NewAttribute("margin_to_vault", positionResp.MarginToVault.String()),
+		sdk.NewAttribute("unrealized_pnl_after", positionResp.UnrealizedPnlAfter.String()),
+		sdk.NewAttribute("function", function),
 	)
 }
