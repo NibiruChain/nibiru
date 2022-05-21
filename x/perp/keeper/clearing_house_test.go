@@ -2013,7 +2013,6 @@ func TestDecreasePosition(t *testing.T) {
 		},
 
 		/*==========================SHORT POSITIONS===========================*/
-
 		{
 			name: "decrease short position, positive PnL",
 			// user bought in at 105 BTC for 10.5 NUSD at 10x leverage (1 BTC = 1 NUSD)
@@ -2094,7 +2093,6 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
-
 		{
 			name: "decrease short position, negative PnL",
 			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
