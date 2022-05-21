@@ -91,6 +91,7 @@ func TestGetSpotPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			price, err := vpoolKeeper.GetSpotPrice(ctx, tc.pair)
@@ -162,6 +163,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
@@ -240,6 +242,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
@@ -445,6 +448,7 @@ func TestCalcTwap(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			)
 
 			for i, snapshot := range tc.reserveSnapshots {

@@ -122,9 +122,9 @@ func (k Keeper) RemoveMargin(
 		return res, err
 	}
 
-	marginDelta := margin.Neg().ToDec()
+	marginDelta := margin.Neg()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, *position, marginDelta)
+		ctx, *position, marginDelta.ToDec())
 	if err != nil {
 		return res, err
 	}
@@ -167,19 +167,45 @@ func (k Keeper) RemoveMargin(
 
 // GetMarginRatio calculates the MarginRatio from a Position
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, position types.Position,
-) (sdk.Dec, error) {
+	ctx sdk.Context, position types.Position, priceOption types.MarginCalculationPriceOption,
+) (marginRatio sdk.Dec, err error) {
 	if position.Size_.IsZero() {
 		return sdk.Dec{}, types.ErrPositionZero
 	}
 
-	positionNotional, unrealizedPnL, err := k.getPreferencePositionNotionalAndUnrealizedPnL(
-		ctx,
-		position,
-		types.PnLPreferenceOption_MAX,
+	var (
+		unrealizedPnL    sdk.Dec
+		positionNotional sdk.Dec
 	)
+
+	switch priceOption {
+	case types.MarginCalculationPriceOption_MAX_PNL:
+		positionNotional, unrealizedPnL, err = k.getPreferencePositionNotionalAndUnrealizedPnL(
+			ctx,
+			position,
+			types.PnLPreferenceOption_MAX,
+		)
+	case types.MarginCalculationPriceOption_INDEX:
+		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
+			ctx,
+			position,
+			types.PnLCalcOption_ORACLE,
+		)
+	case types.MarginCalculationPriceOption_SPOT:
+		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
+			ctx,
+			position,
+			types.PnLCalcOption_SPOT_PRICE,
+		)
+	}
+
 	if err != nil {
 		return sdk.Dec{}, err
+	}
+	if positionNotional.IsZero() {
+		// NOTE causes division by zero in margin ratio calculation
+		return sdk.Dec{},
+			fmt.Errorf("margin ratio doesn't make sense with zero position notional")
 	}
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
@@ -191,8 +217,8 @@ func (k Keeper) GetMarginRatio(
 		return sdk.Dec{}, err
 	}
 
-	marginRatio := remaining.Margin.Sub(remaining.BadDebt).Quo(positionNotional)
-
+	marginRatio = remaining.Margin.Sub(remaining.BadDebt).
+		Quo(positionNotional)
 	return marginRatio, nil
 }
 

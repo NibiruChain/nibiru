@@ -12,6 +12,8 @@ package events
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 // x/perp attributes used in multiple events
@@ -19,11 +21,11 @@ const (
 	// from: receiving address of a transfer
 	AttributeFromAddr = "from"
 	// to: sending address of a transfer
-	AttributeToAddr         = "to"
-	AttributeTokenAmount    = "amount"
-	AttributeTokenDenom     = "denom"
-	AttributePosittionOwner = "owner"
-	AttributeVpool          = "vpool"
+	AttributeToAddr        = "to"
+	AttributeTokenAmount   = "amount"
+	AttributeTokenDenom    = "denom"
+	AttributePositionOwner = "owner"
+	AttributeVpool         = "vpool"
 )
 
 func NewTransferEvent(
@@ -125,7 +127,7 @@ func NewPositionChangeEvent(
 	const EventTypePositionChange = "position_change"
 	return sdk.NewEvent(
 		EventTypePositionChange,
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin", margin.String()),
 		sdk.NewAttribute("notional", notional.String()),
@@ -184,7 +186,7 @@ func NewPositionLiquidateEvent(
 	return sdk.NewEvent(
 		EventTypePositionLiquidate,
 		sdk.NewAttribute(AttributeVpool, vpool),
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute("notional", notional.String()),
 		sdk.NewAttribute("vsize", vsize.String()),
 		sdk.NewAttribute("liquidator", liquidator.String()),
@@ -198,32 +200,31 @@ func NewPositionLiquidateEvent(
 Args:
   ctx sdk.Context: Carries information about the current state of the application.
   vpool string: Identifier for the virtual pool of the position.
-  owner sdk.AccAddress: Owner of the position.
+  trader string: Owner of the position.
   settled sdk.Coin: Settled coin as dictated by the settlement price of the vpool.
 */
 func EmitPositionSettle(
 	ctx sdk.Context,
 	vpool string,
-	owner sdk.AccAddress,
-	settled sdk.Coin,
+	trader string,
+	settled sdk.Coins,
 ) {
 	ctx.EventManager().EmitEvent(NewPositionSettleEvent(
-		vpool, owner, settled,
+		vpool, trader, settled,
 	))
 }
 
 func NewPositionSettleEvent(
 	vpool string,
-	owner sdk.AccAddress,
-	settled sdk.Coin,
+	trader string,
+	settled sdk.Coins,
 ) sdk.Event {
 	const EventTypePositionSettle = "position_settle"
 	return sdk.NewEvent(
 		EventTypePositionSettle,
 		sdk.NewAttribute(AttributeVpool, vpool),
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
-		sdk.NewAttribute("settle_amt", settled.Amount.String()),
-		sdk.NewAttribute("settle_denom", settled.Denom),
+		sdk.NewAttribute(AttributePositionOwner, trader),
+		sdk.NewAttribute("settled_coins", settled.String()),
 	)
 }
 
@@ -269,7 +270,8 @@ func EmitMarginChange(
 	fundingPayment sdk.Dec,
 ) {
 	ctx.EventManager().EmitEvent(NewMarginChangeEvent(
-		owner, vpool, marginAmt, fundingPayment))
+		owner, vpool, marginAmt, fundingPayment),
+	)
 }
 
 func NewMarginChangeEvent(
@@ -281,9 +283,46 @@ func NewMarginChangeEvent(
 	const EventTypeMarginChange = "margin_change"
 	return sdk.NewEvent(
 		EventTypeMarginChange,
-		sdk.NewAttribute(AttributePosittionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, owner.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin_amt", marginAmt.String()),
 		sdk.NewAttribute("funding_payment", fundingPayment.String()),
+	)
+}
+
+// --------------------------------------------------------------------
+
+/* EmitInternalPositionResponseEvent emits an sdk.Event to track the position
+response ('PositionResp') outputs returned by: 'closePositionEntirely',
+'closeAndOpenReversePosition', 'increasePosition', and 'decreasePosition'.
+*/
+func EmitInternalPositionResponseEvent(
+	ctx sdk.Context, positionResp *types.PositionResp, function string) {
+	ctx.EventManager().EmitEvent(NewInternalPositionResponseEvent(
+		positionResp, function),
+	)
+}
+
+/* NewInternalPositionResponseEvent returns an sdk.Event to track the position
+response ('PositionResp') outputs returned by: 'closePositionEntirely',
+'closeAndOpenReversePosition', 'increasePosition', and 'decreasePosition'.
+*/
+func NewInternalPositionResponseEvent(
+	positionResp *types.PositionResp, function string,
+) sdk.Event {
+	pos := positionResp.Position
+	return sdk.NewEvent(
+		"internal_position_response",
+		sdk.NewAttribute(AttributePositionOwner, pos.Address),
+		sdk.NewAttribute(AttributeVpool, pos.Pair),
+		sdk.NewAttribute("pos_margin", pos.Margin.String()),
+		sdk.NewAttribute("pos_open_notional", pos.OpenNotional.String()),
+		sdk.NewAttribute("bad_debt", positionResp.BadDebt.String()),
+		sdk.NewAttribute("exchanged_position_size", positionResp.ExchangedPositionSize.String()),
+		sdk.NewAttribute("funding_payment", positionResp.FundingPayment.String()),
+		sdk.NewAttribute("realized_pnl", positionResp.RealizedPnl.String()),
+		sdk.NewAttribute("margin_to_vault", positionResp.MarginToVault.String()),
+		sdk.NewAttribute("unrealized_pnl_after", positionResp.UnrealizedPnlAfter.String()),
+		sdk.NewAttribute("function", function),
 	)
 }
