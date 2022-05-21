@@ -31,7 +31,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				t.Log("open a position on invalid 'pair'")
 				side := types.Side_BUY
-				quote := sdk.NewDec(60)
+				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
@@ -64,7 +64,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				t.Log("Attempt to open long position (expected unsuccessful)")
 				alice := sample.AccAddress()
 				side := types.Side_BUY
-				quote := sdk.NewDec(60)
+				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)
 				err := nibiruApp.PerpKeeper.OpenPosition(
@@ -111,7 +111,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				t.Log("Open long position with 10x leverage")
 				side := types.Side_BUY
-				quote := sdk.NewDec(60)
+				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
@@ -183,15 +183,15 @@ func TestAddMargin_ShouldRaiseError(t *testing.T) {
 func TestAddMargin_HappyPath(t *testing.T) {
 	tests := []struct {
 		name           string
-		initialMargin  sdk.Dec
+		initialMargin  sdk.Int
 		addedMargin    sdk.Int
-		expectedMargin sdk.Dec
+		expectedMargin sdk.Int
 	}{
 		{
 			name:           "add margin",
-			initialMargin:  sdk.NewDec(100),
+			initialMargin:  sdk.NewInt(100),
 			addedMargin:    sdk.NewInt(100),
-			expectedMargin: sdk.NewDec(200),
+			expectedMargin: sdk.NewInt(200),
 		},
 	}
 
@@ -244,7 +244,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 					Address: traderAddr.String(),
 					Pair:    tokenPair.String(),
 					Size_:   sdk.NewDec(9999),
-					Margin:  tc.initialMargin,
+					Margin:  tc.initialMargin.ToDec(),
 				},
 			)
 
@@ -260,7 +260,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 			position, err := nibiruApp.PerpKeeper.GetPosition(
 				ctx, tokenPair, traderAddr.String())
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedMargin, position.Margin)
+			require.Equal(t, tc.expectedMargin.String(), position.Margin.TruncateInt().String())
 		})
 	}
 }
@@ -403,7 +403,7 @@ func TestRemoveMargin(t *testing.T) {
 				leverage := sdk.NewDec(5)
 				baseLimit := sdk.NewInt(10)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice, quote.ToDec(), leverage, baseLimit.ToDec())
+					ctx, pair, side, alice, quote, leverage, baseLimit.ToDec())
 				require.NoError(t, err)
 
 				t.Log("Position should be accessible following 'OpenPosition'")

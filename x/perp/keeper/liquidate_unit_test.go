@@ -223,7 +223,7 @@ func TestLiquidate_Unit(t *testing.T) {
 					Trader:    traderAddr.String(),
 				}
 				_, err := perpKeeper.Liquidate(goCtx, msg)
-				require.ErrorIs(t, types.MarginHighEnough, err)
+				require.ErrorIs(t, types.ErrMarginHighEnough, err)
 			},
 		},
 	}

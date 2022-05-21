@@ -18,7 +18,7 @@ func TestCreateLiquidation(t *testing.T) {
 	testcases := []struct {
 		name             string
 		side             types.Side
-		quote            sdk.Dec
+		quote            sdk.Int
 		leverage         sdk.Dec
 		baseLimit        sdk.Dec
 		liquidationFee   sdk.Dec
@@ -30,7 +30,7 @@ func TestCreateLiquidation(t *testing.T) {
 		{
 			name:             "happPathBuy",
 			side:             types.Side_BUY,
-			quote:            sdk.MustNewDecFromStr("50"),
+			quote:            sdk.NewInt(50),
 			leverage:         sdk.OneDec(),
 			baseLimit:        sdk.ZeroDec(),
 			liquidationFee:   sdk.MustNewDecFromStr("0.1"),
@@ -41,7 +41,7 @@ func TestCreateLiquidation(t *testing.T) {
 		{
 			name:             "happPathSell",
 			side:             types.Side_BUY,
-			quote:            sdk.MustNewDecFromStr("50"),
+			quote:            sdk.NewInt(50),
 			leverage:         sdk.OneDec(),
 			baseLimit:        sdk.ZeroDec(),
 			liquidationFee:   sdk.MustNewDecFromStr("0.123123"),
@@ -52,7 +52,7 @@ func TestCreateLiquidation(t *testing.T) {
 		{
 			name:           "liquidateEmptyPositionBUY",
 			side:           types.Side_BUY,
-			quote:          sdk.MustNewDecFromStr("0"),
+			quote:          sdk.NewInt(0),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
@@ -62,7 +62,7 @@ func TestCreateLiquidation(t *testing.T) {
 		{
 			name:           "liquidateEmptyPositionSELL",
 			side:           types.Side_SELL,
-			quote:          sdk.MustNewDecFromStr("0"),
+			quote:          sdk.NewInt(0),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
@@ -77,7 +77,7 @@ func TestCreateLiquidation(t *testing.T) {
 			*/
 			name:             "happPathBadDebt",
 			side:             types.Side_SELL,
-			quote:            sdk.MustNewDecFromStr("50"),
+			quote:            sdk.NewInt(50),
 			leverage:         sdk.MustNewDecFromStr("10000"),
 			baseLimit:        sdk.ZeroDec(),
 			liquidationFee:   sdk.MustNewDecFromStr("0.1"),
@@ -91,7 +91,7 @@ func TestCreateLiquidation(t *testing.T) {
 			*/
 			name:             "happPathBadDebt",
 			side:             types.Side_BUY,
-			quote:            sdk.MustNewDecFromStr("50"),
+			quote:            sdk.NewInt(50),
 			leverage:         sdk.MustNewDecFromStr("10000"),
 			baseLimit:        sdk.ZeroDec(),
 			liquidationFee:   sdk.MustNewDecFromStr("0.1"),
@@ -189,7 +189,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 	testcases := []struct {
 		name                    string
 		side                    types.Side
-		quote                   sdk.Dec
+		quote                   sdk.Int
 		leverage                sdk.Dec
 		baseLimit               sdk.Dec
 		liquidationFee          sdk.Dec
@@ -208,7 +208,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 		{
 			name:                    "happPathBuy",
 			side:                    types.Side_BUY,
-			quote:                   sdk.MustNewDecFromStr("5000"),
+			quote:                   sdk.NewInt(5000),
 			leverage:                sdk.OneDec(),
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
@@ -225,7 +225,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 		{
 			name:                    "happPathSell",
 			side:                    types.Side_SELL,
-			quote:                   sdk.MustNewDecFromStr("5000"),
+			quote:                   sdk.NewInt(5000),
 			leverage:                sdk.OneDec(),
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
@@ -242,7 +242,7 @@ func TestCreatePartialLiquidation(t *testing.T) {
 		{
 			name:                    "happPathSellDifferentPercentage",
 			side:                    types.Side_SELL,
-			quote:                   sdk.MustNewDecFromStr("5000"),
+			quote:                   sdk.NewInt(5000),
 			leverage:                sdk.OneDec(),
 			baseLimit:               sdk.ZeroDec(),
 			liquidationFee:          sdk.MustNewDecFromStr("0.1"),

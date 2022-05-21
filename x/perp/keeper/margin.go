@@ -122,9 +122,9 @@ func (k Keeper) RemoveMargin(
 		return res, err
 	}
 
-	marginDelta := margin.Neg().ToDec()
+	marginDelta := margin.Neg()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, *position, marginDelta)
+		ctx, *position, marginDelta.ToDec())
 	if err != nil {
 		return res, err
 	}
@@ -217,7 +217,8 @@ func (k Keeper) GetMarginRatio(
 		return sdk.Dec{}, err
 	}
 
-	marginRatio = remaining.Margin.Sub(remaining.BadDebt).Quo(positionNotional)
+	marginRatio = remaining.Margin.Sub(remaining.BadDebt).
+		Quo(positionNotional)
 	return marginRatio, nil
 }
 

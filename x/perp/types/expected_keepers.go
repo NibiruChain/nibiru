@@ -230,8 +230,10 @@ type VpoolKeeper interface {
 		pair common.TokenPair,
 	) (price sdk.Dec, err error)
 
-	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
+	CalcPerpTxFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int,
+	) (toll sdk.Int, spread sdk.Int, err error)
 	IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) bool
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
+	GetSettlementPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
 }

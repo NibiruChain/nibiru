@@ -102,7 +102,7 @@ func (k Keeper) Liquidate(
 	params := k.GetParams(ctx)
 	err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, false)
 	if err != nil {
-		return res, types.MarginHighEnough
+		return res, types.ErrMarginHighEnough
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(

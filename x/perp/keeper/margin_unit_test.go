@@ -375,9 +375,9 @@ func TestRemoveMargin_Unit(t *testing.T) {
 
 				pos, err := k.GetPosition(ctx, pair, alice.String())
 				require.NoError(t, err)
-				require.EqualValues(t, sdk.NewDec(400), pos.Margin)
-				require.EqualValues(t, sdk.NewDec(1000), pos.Size_)
-				require.EqualValues(t, alice.String(), pos.Address)
+				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
+				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
+				assert.EqualValues(t, alice.String(), pos.Address)
 			},
 		},
 	}
