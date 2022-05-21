@@ -33,20 +33,12 @@ func (k Keeper) ExecuteFullLiquidation(
 		// if the remainMargin is not enough for liquidationFee, count it as bad debt
 		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
 		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
-	} else {
-		// Otherwise, the remaining margin rest will be transferred to ecosystemFund
-		remainMargin = remainMargin.Sub(feeToLiquidator)
-	}
-
-	feeToPerpEcosystemFund := sdk.ZeroDec()
-	if remainMargin.IsPositive() {
-		feeToPerpEcosystemFund = remainMargin
 	}
 
 	err = k.distributeLiquidateRewards(ctx, types.LiquidateResp{
 		BadDebt:                totalBadDebt,
 		FeeToLiquidator:        feeToLiquidator,
-		FeeToPerpEcosystemFund: feeToPerpEcosystemFund,
+		FeeToPerpEcosystemFund: positionResp.MarginToVault.Abs(),
 		Liquidator:             liquidator,
 		PositionResp:           positionResp,
 	})
