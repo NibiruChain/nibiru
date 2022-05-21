@@ -95,23 +95,19 @@ func DefaultParams() Params {
 }
 
 func (p *Params) GetSpreadRatioAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.SpreadRatio)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDec(p.SpreadRatio).QuoInt64(1_000_000)
 }
 
 func (p *Params) GetTollRatioAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.TollRatio)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDec(p.TollRatio).QuoInt64(1_000_000)
 }
 
 func (p *Params) GetLiquidationFeeAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.LiquidationFee)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDec(p.LiquidationFee).QuoInt64(1_000_000)
 }
 
 func (p *Params) GetPartialLiquidationRatioAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.PartialLiquidationRatio)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDec(p.PartialLiquidationRatio).QuoInt64(1_000_000)
 }
 
 // Validate validates the set of params
