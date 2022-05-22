@@ -166,3 +166,61 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 		})
 	}
 }
+
+func TestExecuteFullLiquidation_Unit(t *testing.T) {
+	testCases := []struct {
+		name           string
+		position       *types.Position
+		liquidationFee sdk.Dec
+	}{
+		{
+			name: "liquidateEmptyPositionBUY",
+			position: &types.Position{
+				Margin:       sdk.NewDec(100),
+				Size_:        sdk.NewDec(1_000),
+				OpenNotional: sdk.NewDec(1_000)},
+			liquidationFee: sdk.MustNewDecFromStr("0.1"),
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			// k, mocks, ctx := getKeeper(t)
+			k, _, ctx := getKeeper(t)
+
+			trader := sample.AccAddress()
+			pair := common.TokenPair("xxx:yyy")
+			tc.position.Address = trader.String()
+			tc.position.Pair = pair.String()
+
+			t.Log("Set vpool defined by pair on VpoolKeeper")
+			// mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+
+			t.Log("Setup params and pair metadata")
+			params := types.DefaultParams()
+			k.SetParams(ctx, types.NewParams(
+				params.Stopped,
+				params.MaintenanceMarginRatio,
+				params.GetTollRatioAsDec(),
+				params.GetSpreadRatioAsDec(),
+				tc.liquidationFee,
+				params.GetPartialLiquidationRatioAsDec(),
+			))
+			k.PairMetadata().Set(ctx, &types.PairMetadata{
+				Pair:                       pair.String(),
+				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+			})
+
+			t.Log("Initialize the test case position")
+			k.SetPosition(ctx, pair, trader.String(), tc.position)
+			_, err := k.GetPosition(ctx, pair, trader.String())
+			require.NoError(t, err)
+
+			t.Log("Run 'executeFullLiquidation'")
+			// liquidator := sample.AccAddress()
+			// err = k.ExecuteFullLiquidation(ctx, liquidator, tc.position)
+			// require.Error(t, err)
+		})
+	}
+}

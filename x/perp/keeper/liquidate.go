@@ -1,12 +1,111 @@
 package keeper
 
 import (
+	"context"
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
+
+/* Liquidate allows to liquidate the trader position if the margin is below the
+required margin maintenance ratio.
+*/
+func (k Keeper) Liquidate(
+	goCtx context.Context, msg *types.MsgLiquidate,
+) (res *types.MsgLiquidateResponse, err error) {
+	// ------------- Liquidation Message Setup -------------
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate liquidator (msg.Sender)
+	liquidator, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return res, err
+	}
+
+	// validate trader (msg.PositionOwner)
+	trader, err := sdk.AccAddressFromBech32(msg.Trader)
+	if err != nil {
+		return res, err
+	}
+
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
+	if err != nil {
+		return res, err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return res, err
+	}
+
+	position, err := k.GetPosition(ctx, pair, trader.String())
+	if err != nil {
+		return res, err
+	}
+
+	marginRatio, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
+	if err != nil {
+		return res, err
+	}
+
+	if k.VpoolKeeper.IsOverSpreadLimit(ctx, pair) {
+		marginRatioBasedOnOracle, err := k.GetMarginRatio(
+			ctx, *position, types.MarginCalculationPriceOption_INDEX)
+		if err != nil {
+			return res, err
+		}
+
+		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
+	}
+
+	params := k.GetParams(ctx)
+	err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, false)
+	if err != nil {
+		return res, types.ErrMarginHighEnough
+	}
+
+	marginRatioBasedOnSpot, err := k.GetMarginRatio(
+		ctx, *position, types.MarginCalculationPriceOption_SPOT)
+	if err != nil {
+		return res, err
+	}
+
+	fmt.Println("marginRatioBasedOnSpot", marginRatioBasedOnSpot)
+
+	var (
+		liquidateResp types.LiquidateResp
+	)
+
+	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
+		err = k.ExecuteFullLiquidation(ctx, liquidator, position)
+		if err != nil {
+			return res, err
+		}
+	} else {
+		err = k.ExecutePartialLiquidation(ctx, liquidator, position)
+		if err != nil {
+			return res, err
+		}
+	}
+
+	events.EmitPositionLiquidate(
+		/* ctx */ ctx,
+		/* vpool */ pair.String(),
+		/* owner */ trader,
+		/* notional */ liquidateResp.PositionResp.ExchangedQuoteAssetAmount,
+		/* vsize */ liquidateResp.PositionResp.ExchangedPositionSize,
+		/* liquidator */ liquidator,
+		/* liquidationFee */ liquidateResp.FeeToLiquidator.TruncateInt(),
+		/* badDebt */ liquidateResp.BadDebt,
+	)
+
+	return res, nil
+}
 
 // ExecuteFullLiquidation fully liquidates a position.
 func (k Keeper) ExecuteFullLiquidation(
@@ -36,6 +135,23 @@ func (k Keeper) ExecuteFullLiquidation(
 	} else {
 		// Otherwise, the remaining margin rest will be transferred to ecosystemFund
 		remainMargin = remainMargin.Sub(feeToLiquidator)
+	}
+
+	// Realize bad debt
+	totalBadDebtInt := totalBadDebt.RoundInt()
+	if totalBadDebtInt.IsPositive() {
+		totalBadDebtCoin := sdk.NewCoin(
+			common.TokenPair(position.Pair).GetQuoteTokenDenom(),
+			totalBadDebtInt,
+		)
+		err = k.BankKeeper.SendCoinsFromModuleToModule(ctx,
+			/*from=*/ types.PerpEFModuleAccount,
+			/*to=*/ types.VaultModuleAccount,
+			sdk.NewCoins(totalBadDebtCoin),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	feeToPerpEcosystemFund := sdk.ZeroDec()
@@ -128,5 +244,13 @@ func (k Keeper) distributeLiquidateRewards(
 		)
 	}
 
+	return nil
+}
+
+// ExecutePartialLiquidation fully liquidates a position.
+func (k Keeper) ExecutePartialLiquidation(
+	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
+) (err error) {
+	// TODO
 	return nil
 }
