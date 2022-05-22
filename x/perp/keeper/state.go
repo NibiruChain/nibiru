@@ -182,37 +182,39 @@ func (pbd PrepaidBadDebtState) getKVStore(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(pbd.storeKey), prepaidBadDebtNamespace)
 }
 
-func (pbd PrepaidBadDebtState) Get(ctx sdk.Context, denom string) (
-	amount sdk.Int, err error,
-) {
+/*
+Fetches the amount of bad debt prepaid by denom. Returns zero if the denom is not found.
+*/
+func (pbd PrepaidBadDebtState) Get(ctx sdk.Context, denom string) (amount sdk.Int) {
 	kv := pbd.getKVStore(ctx)
 
 	v := kv.Get([]byte(denom))
 	if v == nil {
-		return sdk.ZeroInt(), nil
+		return sdk.ZeroInt()
 	}
 
-	return sdk.NewIntFromUint64(sdk.BigEndianToUint64(v)), nil
+	return sdk.NewIntFromUint64(sdk.BigEndianToUint64(v))
 }
 
+/*
+Sets the amount of bad debt prepaid by denom.
+*/
 func (pbd PrepaidBadDebtState) Set(ctx sdk.Context, denom string, amount sdk.Int) {
 	kv := pbd.getKVStore(ctx)
 	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
 }
 
+/*
+Increments the amount of bad debt prepaid by denom.
+Calling this method on a denom that doesn't exist is effectively the same as setting the amount (0 + increment).
+*/
 func (pbd PrepaidBadDebtState) Increment(ctx sdk.Context, denom string, increment sdk.Int) (
-	amount sdk.Int, err error,
+	amount sdk.Int,
 ) {
 	kv := pbd.getKVStore(ctx)
-
-	amount, err = pbd.Get(ctx, denom)
-	if err != nil {
-		return sdk.ZeroInt(), err
-	}
-
-	amount = amount.Add(increment)
+	amount = pbd.Get(ctx, denom).Add(increment)
 
 	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
 
-	return amount, nil
+	return amount
 }
