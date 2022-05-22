@@ -218,3 +218,21 @@ func (pbd PrepaidBadDebtState) Increment(ctx sdk.Context, denom string, incremen
 
 	return amount
 }
+
+/*
+Decrements the amount of bad debt prepaid by denom.
+
+The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
+debt balance to below zero will clip it at zero.
+
+*/
+func (pbd PrepaidBadDebtState) Decrement(ctx sdk.Context, denom string, decrement sdk.Int) (
+	amount sdk.Int,
+) {
+	kv := pbd.getKVStore(ctx)
+	amount = sdk.MaxInt(pbd.Get(ctx, denom).Sub(decrement), sdk.ZeroInt())
+
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+
+	return amount
+}
