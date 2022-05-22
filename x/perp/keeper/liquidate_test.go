@@ -110,7 +110,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 
 			t.Log("Liquidate the position")
 			liquidator := sample.AccAddress()
-			err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
+			_, err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
 
 			require.Error(t, err)
 
@@ -338,7 +338,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (entire) position")
 			liquidator := sample.AccAddress()
-			err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
+			_, err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
 
 			t.Log("Verify expected values using internal event due to usage of private fns")
