@@ -320,7 +320,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
 			require.NoError(t, err)
 
-			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
+			t.Log("Fund vault and PerpEF")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
 				pair.GetQuoteTokenDenom(), 1_000_000))
 			require.NoError(t, simapp.FundModuleAccount(
@@ -335,23 +335,31 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			t.Log("Check events")
 			assert.Contains(t, ctx.EventManager().Events(), tc.internal_position_response_event)
 
-			t.Log("Check correctness of new position")
+			t.Log("Check new position")
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
 			require.True(t, newPosition.Size_.IsZero())
 			require.True(t, newPosition.Margin.IsZero())
 			require.True(t, newPosition.OpenNotional.IsZero())
 
-			t.Log("Check correctness of liquidation fee distributions")
-			liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
-				ctx, liquidator, pair.GetQuoteTokenDenom())
-			assert.EqualValues(t, tc.expectedLiquidatorBalance, liquidatorBalance)
-
-			perpEFBalance := nibiruApp.BankKeeper.GetBalance(
-				ctx,
-				nibiruApp.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
-				pair.GetQuoteTokenDenom(),
+			t.Log("Check liquidator balance")
+			assert.EqualValues(t,
+				tc.expectedLiquidatorBalance,
+				nibiruApp.BankKeeper.GetBalance(
+					ctx,
+					liquidator,
+					pair.GetQuoteTokenDenom(),
+				),
 			)
-			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
+
+			t.Log("Check PerpEF balance")
+			require.EqualValues(t,
+				tc.expectedPerpEFBalance,
+				nibiruApp.BankKeeper.GetBalance(
+					ctx,
+					nibiruApp.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
+					pair.GetQuoteTokenDenom(),
+				),
+			)
 		})
 	}
 }
