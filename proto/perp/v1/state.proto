@@ -94,6 +94,30 @@ message PositionResp {
     (gogoproto.nullable) = false];
 }
 
+message LiquidateResp{
+  // Amount of bad debt created by the liquidation event
+  string bad_debt = 1[
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // Fee paid to the liquidator
+  string fee_to_liquidator = 2[
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // Fee paid to the Perp EF fund
+  string fee_to_perp_ecosystem_fund = 3[
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // Address of the liquidator
+  bytes liquidator = 4[
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
+  // Position response from the close or open reverse position
+  PositionResp position_resp = 5;
+}
+
 message VirtualPoolInfo {
   string pair = 1;
   int64 last_restriction_block = 2;

@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
-	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
@@ -45,7 +44,7 @@ func (k Keeper) OpenPosition(
 	var positionResp *types.PositionResp
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
-	var openSideMatchesPosition bool = (sameSideLong || sameSideShort)
+	var openSideMatchesPosition = sameSideLong || sameSideShort
 	switch {
 	case isNewPosition || openSideMatchesPosition:
 		// increase position case
@@ -280,13 +279,13 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		return sdk.ZeroDec(), sdk.ZeroDec(), nil
 	}
 
-	var baseAssetDirection pooltypes.Direction
+	var baseAssetDirection vpooltypes.Direction
 	if position.Size_.IsPositive() {
 		// LONG
-		baseAssetDirection = pooltypes.Direction_ADD_TO_POOL
+		baseAssetDirection = vpooltypes.Direction_ADD_TO_POOL
 	} else {
 		// SHORT
-		baseAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
+		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
 	switch pnlCalcOption {
@@ -320,6 +319,11 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		positionNotional = oraclePrice.Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
+	}
+
+	if positionNotional.Equal(position.OpenNotional) {
+		// if position notional and open notional are the same, then early return
+		return positionNotional, sdk.ZeroDec(), nil
 	}
 
 	if position.Size_.IsPositive() {
@@ -639,11 +643,11 @@ func (k Keeper) closePositionEntirely(
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.MarginToVault = remaining.Margin.Neg()
 
-	var baseAssetDirection pooltypes.Direction
+	var baseAssetDirection vpooltypes.Direction
 	if currentPosition.Size_.IsPositive() {
-		baseAssetDirection = pooltypes.Direction_ADD_TO_POOL
+		baseAssetDirection = vpooltypes.Direction_ADD_TO_POOL
 	} else {
-		baseAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
+		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
 	exchangedQuoteAssetAmount, err := k.VpoolKeeper.SwapBaseForQuote(
@@ -796,12 +800,12 @@ func (k Keeper) swapQuoteForBase(
 	baseAssetLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (baseAmount sdk.Dec, err error) {
-	var quoteAssetDirection pooltypes.Direction
+	var quoteAssetDirection vpooltypes.Direction
 	if side == types.Side_BUY {
-		quoteAssetDirection = pooltypes.Direction_ADD_TO_POOL
+		quoteAssetDirection = vpooltypes.Direction_ADD_TO_POOL
 	} else {
 		// side == types.Side_SELL
-		quoteAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
+		quoteAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
 	baseAmount, err = k.VpoolKeeper.SwapQuoteForBase(

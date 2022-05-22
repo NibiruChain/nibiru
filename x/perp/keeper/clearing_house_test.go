@@ -82,13 +82,19 @@ type mockedDependencies struct {
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
-	storeKey := sdk.NewKVStoreKey(types.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(types.StoreKey)
-
 	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
-	require.NoError(t, stateStore.LoadLatestVersion())
+	commitMultiStore := store.NewCommitMultiStore(db)
+	// Mount the KV store with the x/perp store key
+	storeKey := sdk.NewKVStoreKey(types.StoreKey)
+	commitMultiStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
+	// Mount Transient store
+	transientStoreKey := sdk.NewTransientStoreKey("transient" + types.StoreKey)
+	commitMultiStore.MountStoreWithDB(transientStoreKey, sdk.StoreTypeTransient, nil)
+	// Mount Memory store
+	memStoreKey := storetypes.NewMemoryStoreKey("mem" + types.StoreKey)
+	commitMultiStore.MountStoreWithDB(memStoreKey, sdk.StoreTypeMemory, nil)
+
+	require.NoError(t, commitMultiStore.LoadLatestVersion())
 
 	protoCodec := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 	params := initParamsKeeper(
@@ -117,7 +123,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		mockedVpoolKeeper,
 	)
 
-	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, nil)
+	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, nil)
 
 	return k, mockedDependencies{
 		mockAccountKeeper: mockedAccountKeeper,
@@ -127,7 +133,10 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	}, ctx
 }
 
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
+func initParamsKeeper(
+	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino,
+	key sdk.StoreKey, tkey sdk.StoreKey,
+) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 	paramsKeeper.Subspace(types.ModuleName)
 
@@ -2013,7 +2022,6 @@ func TestDecreasePosition(t *testing.T) {
 		},
 
 		/*==========================SHORT POSITIONS===========================*/
-
 		{
 			name: "decrease short position, positive PnL",
 			// user bought in at 105 BTC for 10.5 NUSD at 10x leverage (1 BTC = 1 NUSD)
@@ -2094,7 +2102,6 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
-
 		{
 			name: "decrease short position, negative PnL",
 			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
