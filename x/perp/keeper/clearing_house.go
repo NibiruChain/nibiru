@@ -321,6 +321,11 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
 
+	if positionNotional.Equal(position.OpenNotional) {
+		// if position notional and open notional are the same, then early return
+		return positionNotional, sdk.ZeroDec(), nil
+	}
+
 	if position.Size_.IsPositive() {
 		// LONG
 		unrealizedPnL = positionNotional.Sub(position.OpenNotional)
