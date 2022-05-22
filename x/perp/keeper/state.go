@@ -39,6 +39,10 @@ func (k Keeper) Whitelist() Whitelist {
 	return (Whitelist)(k)
 }
 
+func (k Keeper) PrepaidBadDebtState() PrepaidBadDebtState {
+	return (PrepaidBadDebtState)(k)
+}
+
 var paramsNamespace = []byte{0x0}
 var paramsKey = []byte{0x0}
 
@@ -168,4 +172,49 @@ func (w Whitelist) IsWhitelisted(ctx sdk.Context, address string) bool {
 	kv := w.getKV(ctx)
 
 	return kv.Has([]byte(address))
+}
+
+var prepaidBadDebtNamespace = []byte{0x4}
+
+type PrepaidBadDebtState Keeper
+
+func (pbd PrepaidBadDebtState) getKVStore(ctx sdk.Context) sdk.KVStore {
+	return prefix.NewStore(ctx.KVStore(pbd.storeKey), prepaidBadDebtNamespace)
+}
+
+/*
+Fetches the amount of bad debt prepaid by denom. Returns zero if the denom is not found.
+*/
+func (pbd PrepaidBadDebtState) Get(ctx sdk.Context, denom string) (amount sdk.Int) {
+	kv := pbd.getKVStore(ctx)
+
+	v := kv.Get([]byte(denom))
+	if v == nil {
+		return sdk.ZeroInt()
+	}
+
+	return sdk.NewIntFromUint64(sdk.BigEndianToUint64(v))
+}
+
+/*
+Sets the amount of bad debt prepaid by denom.
+*/
+func (pbd PrepaidBadDebtState) Set(ctx sdk.Context, denom string, amount sdk.Int) {
+	kv := pbd.getKVStore(ctx)
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+}
+
+/*
+Increments the amount of bad debt prepaid by denom.
+Calling this method on a denom that doesn't exist is effectively the same as setting the amount (0 + increment).
+*/
+func (pbd PrepaidBadDebtState) Increment(ctx sdk.Context, denom string, increment sdk.Int) (
+	amount sdk.Int,
+) {
+	kv := pbd.getKVStore(ctx)
+	amount = pbd.Get(ctx, denom).Add(increment)
+
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+
+	return amount
 }
