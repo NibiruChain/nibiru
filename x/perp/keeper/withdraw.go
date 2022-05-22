@@ -44,14 +44,16 @@ func (k Keeper) Withdraw(
 		// need money from PerpEF to pay first, and record this prepaidBadDebt
 		shortage := amountToWithdraw.Sub(vaultQuoteBalance.Amount)
 		k.PrepaidBadDebtState().Increment(ctx, denom, shortage)
-		k.BankKeeper.SendCoinsFromModuleToModule(
+		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,
 			types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(denom, shortage),
 			),
-		)
+		); err != nil {
+			return err
+		}
 	}
 
 	// Transfer from Vault to receiver
