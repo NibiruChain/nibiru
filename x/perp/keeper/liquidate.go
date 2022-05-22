@@ -82,7 +82,7 @@ func (k Keeper) Liquidate(
 	)
 
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
-		err = k.ExecuteFullLiquidation(ctx, liquidator, position)
+		_, err = k.ExecuteFullLiquidation(ctx, liquidator, position)
 		if err != nil {
 			return res, err
 		}
@@ -110,7 +110,7 @@ func (k Keeper) Liquidate(
 // ExecuteFullLiquidation fully liquidates a position.
 func (k Keeper) ExecuteFullLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
-) (err error) {
+) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
 
 	positionResp, err := k.closePositionEntirely(
@@ -118,7 +118,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		/* currentPosition */ *position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec())
 	if err != nil {
-		return err
+		return types.LiquidateResp{}, err
 	}
 
 	remainMargin := positionResp.MarginToVault.Abs()
@@ -132,6 +132,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		// if the remainMargin is not enough for liquidationFee, count it as bad debt
 		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
 		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
+		remainMargin = sdk.ZeroDec()
 	} else {
 		// Otherwise, the remaining margin rest will be transferred to ecosystemFund
 		remainMargin = remainMargin.Sub(feeToLiquidator)
@@ -150,7 +151,7 @@ func (k Keeper) ExecuteFullLiquidation(
 			sdk.NewCoins(totalBadDebtCoin),
 		)
 		if err != nil {
-			return err
+			return liquidationResp, err
 		}
 	}
 
@@ -159,18 +160,19 @@ func (k Keeper) ExecuteFullLiquidation(
 		feeToPerpEcosystemFund = remainMargin
 	}
 
-	err = k.distributeLiquidateRewards(ctx, types.LiquidateResp{
+	liquidationResp = types.LiquidateResp{
 		BadDebt:                totalBadDebt,
 		FeeToLiquidator:        feeToLiquidator,
 		FeeToPerpEcosystemFund: feeToPerpEcosystemFund,
 		Liquidator:             liquidator,
 		PositionResp:           positionResp,
-	})
+	}
+	err = k.distributeLiquidateRewards(ctx, liquidationResp)
 	if err != nil {
-		return err
+		return types.LiquidateResp{}, err
 	}
 
-	return nil
+	return liquidationResp, nil
 }
 
 func (k Keeper) distributeLiquidateRewards(
@@ -230,7 +232,7 @@ func (k Keeper) distributeLiquidateRewards(
 			pair.GetQuoteTokenDenom(), feeToLiquidator)
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx,
-			/* from */ types.PerpEFModuleAccount,
+			/* from */ types.VaultModuleAccount,
 			/* to */ liquidateResp.Liquidator,
 			sdk.NewCoins(coinToLiquidator),
 		)
