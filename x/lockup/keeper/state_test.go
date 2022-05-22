@@ -17,9 +17,10 @@ import (
 
 func TestLockState(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
+	addr := sample.AccAddress()
 	lock := &types.Lock{
 		LockId:   0,
-		Owner:    sample.AccAddress().String(),
+		Owner:    addr.String(),
 		Duration: 1000 * time.Second,
 		EndTime:  ctx.BlockTime(),
 		Coins:    sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000))),
@@ -31,6 +32,16 @@ func TestLockState(t *testing.T) {
 	getLock, err := app.LockupKeeper.LocksState(ctx).Get(keeper.LockStartID) // we're getting the first starting
 	require.NoError(t, err)
 	require.Equal(t, lock, getLock)
+	// test get by addr
+	var found = 0
+	app.LockupKeeper.LocksState(ctx).IterateLocksByAddress(addr, func(id uint64) (stop bool) {
+		iterLock, err := app.LockupKeeper.LocksState(ctx).Get(id)
+		require.NoError(t, err)
+		require.Equal(t, lock, iterLock)
+		found++
+		return false
+	})
+	require.Equal(t, found, 1)
 	// test delete
 	err = app.LockupKeeper.LocksState(ctx).Delete(getLock)
 	require.NoError(t, err)

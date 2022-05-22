@@ -31,7 +31,7 @@ const (
 	FundsModuleAccountAddressPrefix = "incentivization_escrow_"
 )
 
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.LockupKeeper) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
@@ -49,7 +49,7 @@ type Keeper struct {
 	ak authkeeper.AccountKeeper
 	bk bankkeeper.Keeper
 	dk dexkeeper.Keeper
-	lk lockupkeeper.LockupKeeper
+	lk lockupkeeper.Keeper
 }
 
 func (k Keeper) CreateIncentivizationProgram(

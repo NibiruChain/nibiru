@@ -22,8 +22,8 @@ var (
 	MaxTime = time.Unix(253402297199, 0).UTC()
 )
 
-// LockupKeeper provides a way to manage module storage.
-type LockupKeeper struct {
+// Keeper provides a way to manage module storage.
+type Keeper struct {
 	cdc      codec.Codec
 	storeKey sdk.StoreKey
 
@@ -34,8 +34,8 @@ type LockupKeeper struct {
 
 // NewLockupKeeper returns an instance of Keeper.
 func NewLockupKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak types.AccountKeeper,
-	bk types.BankKeeper, dk types.DistrKeeper) LockupKeeper {
-	return LockupKeeper{
+	bk types.BankKeeper, dk types.DistrKeeper) Keeper {
+	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
 		ak:       ak,
@@ -45,12 +45,12 @@ func NewLockupKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak types.AccountKee
 }
 
 // Logger returns a logger instance.
-func (k LockupKeeper) Logger(ctx sdk.Context) log.Logger {
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 // LockTokens lock tokens from an account for specified duration.
-func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
+func (k Keeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 	coins sdk.Coins, duration time.Duration) (*types.Lock, error) {
 	// create new lock object
 	lock := &types.Lock{
@@ -71,7 +71,7 @@ func (k LockupKeeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 
 // UnlockTokens returns tokens back from the module account address to the lock owner.
 // The ID associated with the lock must exist, and the current block time must be after lock end time.
-func (k LockupKeeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedTokens sdk.Coins, err error) {
+func (k Keeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedTokens sdk.Coins, err error) {
 	lock, err := k.LocksState(ctx).Get(lockID)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (k LockupKeeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedToke
 }
 
 // InitiateUnlocking starts the unlocking process of a lockup.
-func (k LockupKeeper) InitiateUnlocking(ctx sdk.Context, lockID uint64) (updatedLock *types.Lock, err error) {
+func (k Keeper) InitiateUnlocking(ctx sdk.Context, lockID uint64) (updatedLock *types.Lock, err error) {
 	// we get the lockup
 	lock, err := k.LocksState(ctx).Get(lockID)
 	if err != nil {
@@ -125,7 +125,7 @@ func (k LockupKeeper) InitiateUnlocking(ctx sdk.Context, lockID uint64) (updated
 }
 
 // UnlockAvailableCoins unlocks all the available coins for the provided account sdk.AccAddress.
-func (k LockupKeeper) UnlockAvailableCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
+func (k Keeper) UnlockAvailableCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
 	ids := k.LocksState(ctx).UnlockedIDsByAddress(account)
 
 	coins = sdk.NewCoins()
@@ -142,30 +142,30 @@ func (k LockupKeeper) UnlockAvailableCoins(ctx sdk.Context, account sdk.AccAddre
 }
 
 // AccountLockedCoins returns the locked coins of the given sdk.AccAddress
-func (k LockupKeeper) AccountLockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
+func (k Keeper) AccountLockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
 	return k.LocksState(ctx).IterateLockedCoins(account), nil
 }
 
 // AccountUnlockedCoins returns the unlocked coins of the given sdk.AccAddress
-func (k LockupKeeper) AccountUnlockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
+func (k Keeper) AccountUnlockedCoins(ctx sdk.Context, account sdk.AccAddress) (coins sdk.Coins, err error) {
 	return k.LocksState(ctx).IterateUnlockedCoins(account), nil
 }
 
 // TotalLockedCoins returns the module account locked coins.
-func (k LockupKeeper) TotalLockedCoins(ctx sdk.Context) (coins sdk.Coins, err error) {
+func (k Keeper) TotalLockedCoins(ctx sdk.Context) (coins sdk.Coins, err error) {
 	return k.LocksState(ctx).IterateTotalLockedCoins(), nil
 }
 
 // LocksByDenom allows to iterate over types.Lock associated with a denom.
 // CONTRACT: no writes on store can happen until the function exits.
-func (k LockupKeeper) LocksByDenom(ctx sdk.Context, do func(lock *types.Lock) (stop bool)) (coins sdk.Coins, err error) {
+func (k Keeper) LocksByDenom(ctx sdk.Context, do func(lock *types.Lock) (stop bool)) (coins sdk.Coins, err error) {
 	panic("impl")
 }
 
 // LocksByDenomUnlockingAfter allows to iterate over types.Lock associated with a denom that unlock
 // after the provided duration.
 // CONTRACT: no writes on store can happen until the function exits.
-func (k LockupKeeper) LocksByDenomUnlockingAfter(ctx sdk.Context, denom string, duration time.Duration, do func(lock *types.Lock) (stop bool)) {
+func (k Keeper) LocksByDenomUnlockingAfter(ctx sdk.Context, denom string, duration time.Duration, do func(lock *types.Lock) (stop bool)) {
 	endTime := ctx.BlockTime().Add(duration)
 	state := k.LocksState(ctx)
 	state.IterateCoinsByDenomUnlockingAfter(denom, endTime, func(id uint64) (stop bool) {

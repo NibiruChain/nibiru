@@ -216,7 +216,7 @@ type NibiruApp struct {
 	PerpKeeper            perpkeeper.Keeper
 	PriceKeeper           pricekeeper.Keeper
 	EpochsKeeper          epochskeeper.Keeper
-	LockupKeeper          lockupkeeper.LockupKeeper
+	LockupKeeper          lockupkeeper.Keeper
 	IncentivizationKeeper incentivizationkeeper.Keeper
 	VpoolKeeper           vpoolkeeper.Keeper
 
@@ -410,7 +410,7 @@ func NewNibiruApp(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
 		app.PriceKeeper,
 	)
-	lockupModule := lockup.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper)
+	lockupModule := lockup.NewAppModule(appCodec, app.LockupKeeper, app.AccountKeeper, app.BankKeeper)
 	perpModule := perp.NewAppModule(
 		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
 		app.PriceKeeper,
