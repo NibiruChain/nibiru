@@ -253,6 +253,6 @@ func (k Keeper) distributeLiquidateRewards(
 func (k Keeper) ExecutePartialLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
 ) (err error) {
-	// TODO
+	// TODO: https://github.com/NibiruChain/nibiru/pull/437
 	return nil
 }

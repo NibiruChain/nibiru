@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
-	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
@@ -45,7 +44,7 @@ func (k Keeper) OpenPosition(
 	var positionResp *types.PositionResp
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
-	var openSideMatchesPosition bool = (sameSideLong || sameSideShort)
+	var openSideMatchesPosition = sameSideLong || sameSideShort
 	switch {
 	case isNewPosition || openSideMatchesPosition:
 		// increase position case
