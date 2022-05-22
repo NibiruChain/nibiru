@@ -104,6 +104,22 @@ func CmdQueryMargin() *cobra.Command {
 	return cmd
 }
 
+func CmdQueryReserveAssets() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reserve-assets",
+		Short: "query a vpool's reserve assets",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// TODO: implement
+			return nil
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
 // ---------------------------------------------------------------------------
 // TxCmd
 // ---------------------------------------------------------------------------
