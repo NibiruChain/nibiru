@@ -26,4 +26,18 @@ func TestPrepaidBadDebtState(t *testing.T) {
 
 	amount = perpKeeper.PrepaidBadDebtState().Get(ctx, "NUSD")
 	assert.EqualValues(t, sdk.NewInt(150), amount)
+
+	t.Log("decrement and check")
+	amount = perpKeeper.PrepaidBadDebtState().Decrement(ctx, "NUSD", sdk.NewInt(75))
+	assert.EqualValues(t, sdk.NewInt(75), amount)
+
+	amount = perpKeeper.PrepaidBadDebtState().Get(ctx, "NUSD")
+	assert.EqualValues(t, sdk.NewInt(75), amount)
+
+	t.Log("decrement to below zero and check")
+	amount = perpKeeper.PrepaidBadDebtState().Decrement(ctx, "NUSD", sdk.NewInt(1000))
+	assert.EqualValues(t, sdk.ZeroInt(), amount)
+
+	amount = perpKeeper.PrepaidBadDebtState().Get(ctx, "NUSD")
+	assert.EqualValues(t, sdk.ZeroInt(), amount)
 }
