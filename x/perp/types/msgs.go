@@ -61,10 +61,10 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	if !m.Leverage.GT(sdk.ZeroDec()) {
 		return fmt.Errorf("leverage must always be greater than zero")
 	}
-	if !m.BaseAssetAmountLimit.GT(sdk.ZeroDec()) {
+	if !m.BaseAssetAmountLimit.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("base asset amount limit must always be greater than zero")
 	}
-	if m.QuoteAssetAmount.GT(sdk.ZeroDec()) {
+	if m.QuoteAssetAmount.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("quote asset amount must be always greater than zero")
 	}
 

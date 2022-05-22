@@ -125,14 +125,14 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			amount, err := sdk.NewDecFromStr(args[3])
-			if err != nil {
-				return err
+			amount, ok := sdk.NewIntFromString(args[3])
+			if !ok {
+				return fmt.Errorf("invalid quote amount: %s", args[3])
 			}
 
-			baseAssetAmountLimit, err := sdk.NewDecFromStr(args[4])
+			baseAssetAmountLimit, ok := sdk.NewIntFromString(args[4])
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid base amount limit: %s", args[3])
 			}
 
 			msg := &types.MsgOpenPosition{

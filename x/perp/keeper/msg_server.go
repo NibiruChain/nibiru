@@ -41,7 +41,7 @@ func (k msgServer) OpenPosition(ctx context.Context, position *types.MsgOpenPosi
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	err = k.k.OpenPosition(sdkCtx, pair, position.Side, addr, position.QuoteAssetAmount, position.Leverage, position.BaseAssetAmountLimit)
+	err = k.k.OpenPosition(sdkCtx, pair, position.Side, addr, position.QuoteAssetAmount, position.Leverage, position.BaseAssetAmountLimit.ToDec())
 	if err != nil {
 		return nil, err
 	}
