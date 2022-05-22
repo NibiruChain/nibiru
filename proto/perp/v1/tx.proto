@@ -55,13 +55,13 @@ message MsgOpenPosition {
   string token_pair = 2;
   nibiru.perp.v1.Side side = 3;
   string quote_asset_amount = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
   string leverage = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
   string base_asset_amount_limit = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
 }
 
