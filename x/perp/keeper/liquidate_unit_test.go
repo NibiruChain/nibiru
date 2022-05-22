@@ -171,241 +171,232 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 	tests := []struct {
 		name string
-		test func()
+
+		liquidationFee      int64
+		initialPositionSize sdk.Dec
+		initialMargin       sdk.Dec
+		initialOpenNotional sdk.Dec
+
+		baseAssetPriceInQuote sdk.Dec // amount of quote obtained by trading <initialPositionSize> base
+
+		expectedLiquidationBadDebt        sdk.Dec
+		expectedFundsToPerpEF             sdk.Dec
+		expectedFundsToLiquidator         sdk.Dec
+		expectedExchangedQuoteAssetAmount sdk.Dec
+		expectedMarginToVault             sdk.Dec
+		expectedPositionRealizedPnl       sdk.Dec
+		expectedPositionBadDebt           sdk.Dec
 	}{
 		{
 			/*
 				- long position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+
 				- remaining margin more than liquidation fee
-				- no bad debt
+				- position has zero bad debt
 				- no funding payment
 
-				- liquidation fee is 0.1
+				- liquidation fee ratio is 0.1
 				- notional exchanged is 100 NUSD
 				- liquidator gets 100 NUSD * 0.1 / 2 = 5 NUSD
 				- ecosystem fund gets remaining = 5 NUSD
 			*/
 			name: "remaining margin more than liquidation fee",
-			test: func() {
-				t.Log("setup variables")
-				perpKeeper, mocks, ctx := getKeeper(t)
-				liquidatorAddr := sample.AccAddress()
-				traderAddr := sample.AccAddress()
-				pair := common.TokenPair("BTC:NUSD")
 
-				t.Log("mock account keeper")
-				vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				perpEFAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.VaultModuleAccount).
-					Return(vaultAddr)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.PerpEFModuleAccount).
-					Return(perpEFAddr)
+			liquidationFee:      100_000, // 0.1 liquidation fee
+			initialPositionSize: sdk.NewDec(100),
+			initialMargin:       sdk.NewDec(10),
+			initialOpenNotional: sdk.NewDec(100),
 
-				t.Log("mock bank keeper")
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
-					ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
-					sdk.NewCoins(sdk.NewInt64Coin("NUSD", 5)),
-				).Return(nil)
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.PerpEFModuleAccount, liquidatorAddr,
-					sdk.NewCoins(sdk.NewInt64Coin("NUSD", 5)),
-				).Return(nil)
+			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
 
-				t.Log("setup perp keeper params")
-				newParams := types.DefaultParams()
-				newParams.LiquidationFee = 100_000 // liquidation fee ratio is 0.1
-				perpKeeper.SetParams(ctx, newParams)
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: pair.String(),
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(), // zero funding payment for this test case
-					},
-				})
-
-				t.Log("mock vpool")
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().
-					GetBaseAssetPrice(
-						ctx,
-						pair,
-						vpooltypes.Direction_ADD_TO_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(100),
-					).
-					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
-				mocks.mockVpoolKeeper.EXPECT().
-					SwapBaseForQuote(
-						ctx,
-						pair,
-						/*baseAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(100),
-						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
-					).Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
-
-				t.Log("create and set the initial position")
-				position := types.Position{
-					Address:                             traderAddr.String(),
-					Pair:                                pair.String(),
-					Size_:                               sdk.NewDec(100),
-					Margin:                              sdk.NewDec(10),
-					OpenNotional:                        sdk.NewDec(100),
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
-					BlockNumber:                         ctx.BlockHeight(),
-				}
-				perpKeeper.SetPosition(ctx, pair, traderAddr.String(), &position)
-
-				t.Log("execute full liquidation")
-				liquidationResp, err := perpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
-				require.NoError(t, err)
-
-				t.Log("assert liquidation response fields")
-				assert.EqualValues(t, sdk.ZeroDec(), liquidationResp.BadDebt)
-				assert.EqualValues(t, sdk.NewDec(5), liquidationResp.FeeToLiquidator)
-				assert.EqualValues(t, sdk.NewDec(5), liquidationResp.FeeToPerpEcosystemFund)
-				assert.EqualValues(t, liquidatorAddr, liquidationResp.Liquidator)
-
-				t.Log("assert position response fields")
-				positionResp := liquidationResp.PositionResp
-				assert.EqualValues(t, sdk.NewDec(100), positionResp.ExchangedQuoteAssetAmount) // amount of quote obtained
-				assert.EqualValues(t, sdk.NewDec(-100), positionResp.ExchangedPositionSize)    // sold back to vpool
-				assert.EqualValues(t, sdk.NewDec(-10), positionResp.MarginToVault)             // ( 10(oldMargin) + 0(unrealzedPnL) - 0(fundingPayment) ) * -1
-				assert.True(t, positionResp.BadDebt.IsZero())
-				assert.True(t, positionResp.FundingPayment.IsZero())
-				assert.True(t, positionResp.RealizedPnl.IsZero())
-				assert.True(t, positionResp.UnrealizedPnlAfter.IsZero())
-
-				t.Log("assert current position fields")
-				currentPosition := positionResp.Position
-				assert.EqualValues(t, traderAddr.String(), currentPosition.Address)
-				assert.EqualValues(t, pair.String(), currentPosition.Pair)
-				assert.True(t, currentPosition.Size_.IsZero())        // always zero
-				assert.True(t, currentPosition.Margin.IsZero())       // always zero
-				assert.True(t, currentPosition.OpenNotional.IsZero()) // always zero
-				assert.True(t, currentPosition.LastUpdateCumulativePremiumFraction.IsZero())
-				assert.EqualValues(t, 0, currentPosition.LiquidityHistoryIndex)
-				assert.EqualValues(t, ctx.BlockHeight(), currentPosition.BlockNumber)
-			},
+			expectedLiquidationBadDebt:        sdk.ZeroDec(),
+			expectedFundsToPerpEF:             sdk.NewDec(5),
+			expectedFundsToLiquidator:         sdk.NewDec(5),
+			expectedExchangedQuoteAssetAmount: sdk.NewDec(100),
+			expectedMarginToVault:             sdk.NewDec(-10),
+			expectedPositionRealizedPnl:       sdk.ZeroDec(),
+			expectedPositionBadDebt:           sdk.ZeroDec(),
 		},
 		{
 			/*
 				- long position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+
 				- remaining margin less than liquidation fee but greater than zero
-				- no bad debt
+				- position has zero bad debt
 				- no funding payment
 
-				- liquidation fee is 0.3
+				- liquidation fee ratio is 0.3
 				- notional exchanged is 100 NUSD
 				- liquidator gets 100 NUSD * 0.3 / 2 = 15 NUSD
 				- position only has 10 NUSD margin, so bad debt accrues
 				- ecosystem fund gets nothing (0 NUSD)
 			*/
 			name: "remaining margin less than liquidation fee but greater than zero",
-			test: func() {
-				t.Log("setup variables")
-				perpKeeper, mocks, ctx := getKeeper(t)
-				liquidatorAddr := sample.AccAddress()
-				traderAddr := sample.AccAddress()
-				pair := common.TokenPair("BTC:NUSD")
 
-				t.Log("mock account keeper")
-				vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				perpEFAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.VaultModuleAccount).
-					Return(vaultAddr)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.PerpEFModuleAccount).
-					Return(perpEFAddr)
+			liquidationFee:      300_000, // 0.3 liquidation fee
+			initialPositionSize: sdk.NewDec(100),
+			initialMargin:       sdk.NewDec(10),
+			initialOpenNotional: sdk.NewDec(100),
 
-				t.Log("mock bank keeper")
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.PerpEFModuleAccount, liquidatorAddr,
-					sdk.NewCoins(sdk.NewInt64Coin("NUSD", 15)),
-				).Return(nil)
+			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
 
-				t.Log("setup perp keeper params")
-				newParams := types.DefaultParams()
-				newParams.LiquidationFee = 300_000 // liquidation fee ratio is 0.3
-				perpKeeper.SetParams(ctx, newParams)
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: pair.String(),
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(), // zero funding payment for this test case
-					},
-				})
+			expectedLiquidationBadDebt:        sdk.NewDec(5),
+			expectedFundsToPerpEF:             sdk.ZeroDec(),
+			expectedFundsToLiquidator:         sdk.NewDec(15),
+			expectedExchangedQuoteAssetAmount: sdk.NewDec(100),
+			expectedMarginToVault:             sdk.NewDec(-10),
+			expectedPositionRealizedPnl:       sdk.ZeroDec(),
+			expectedPositionBadDebt:           sdk.ZeroDec(),
+		},
+		{
+			/*
+				- long position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+				- BTC drops in price (1 BTC = 0.8 NUSD)
+				- position notional of 80 NUSD
+				- unrealized PnL of -20 NUSD, wipes out margin
 
-				t.Log("mock vpool")
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().
-					GetBaseAssetPrice(
-						ctx,
-						pair,
-						vpooltypes.Direction_ADD_TO_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(100),
-					).
-					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
-				mocks.mockVpoolKeeper.EXPECT().
-					SwapBaseForQuote(
-						ctx,
-						pair,
-						/*baseAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(100),
-						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
-					).Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
+				- position has zero margin remaining
+				- position has bad debt
+				- no funding payment
 
-				t.Log("create and set the initial position")
-				position := types.Position{
-					Address:                             traderAddr.String(),
-					Pair:                                pair.String(),
-					Size_:                               sdk.NewDec(100),
-					Margin:                              sdk.NewDec(10),
-					OpenNotional:                        sdk.NewDec(100),
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
-					BlockNumber:                         ctx.BlockHeight(),
-				}
-				perpKeeper.SetPosition(ctx, pair, traderAddr.String(), &position)
+				- liquidation fee ratio is 0.3
+				- notional exchanged is 80 NUSD
+				- liquidator gets 80 NUSD * 0.3 / 2 = 25 NUSD
+				- position has zero margin, so all of liquidation fee is bad debt
+				- ecosystem fund gets nothing (0 NUSD)
+			*/
+			name: "position has zero margin and bad debt",
 
-				t.Log("execute full liquidation")
-				liquidationResp, err := perpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
-				require.NoError(t, err)
+			liquidationFee:      300_000, // 0.3 liquidation fee
+			initialPositionSize: sdk.NewDec(100),
+			initialMargin:       sdk.NewDec(10),
+			initialOpenNotional: sdk.NewDec(100),
 
-				t.Log("assert liquidation response fields")
-				assert.EqualValues(t, sdk.NewDec(5), liquidationResp.BadDebt)
-				assert.EqualValues(t, sdk.NewDec(15), liquidationResp.FeeToLiquidator)
-				assert.EqualValues(t, sdk.ZeroDec(), liquidationResp.FeeToPerpEcosystemFund)
-				assert.EqualValues(t, liquidatorAddr, liquidationResp.Liquidator)
+			baseAssetPriceInQuote: sdk.NewDec(80), // price dropped
 
-				t.Log("assert position response fields")
-				positionResp := liquidationResp.PositionResp
-				assert.EqualValues(t, sdk.NewDec(100), positionResp.ExchangedQuoteAssetAmount) // amount of quote obtained
-				assert.EqualValues(t, sdk.NewDec(-100), positionResp.ExchangedPositionSize)    // sold back to vpool
-				assert.EqualValues(t, sdk.NewDec(-10), positionResp.MarginToVault)             // ( 10(oldMargin) + 0(unrealzedPnL) - 0(fundingPayment) ) * -1
-				assert.True(t, positionResp.BadDebt.IsZero())
-				assert.True(t, positionResp.FundingPayment.IsZero())
-				assert.True(t, positionResp.RealizedPnl.IsZero())
-				assert.True(t, positionResp.UnrealizedPnlAfter.IsZero())
-
-				t.Log("assert current position fields")
-				currentPosition := positionResp.Position
-				assert.EqualValues(t, traderAddr.String(), currentPosition.Address)
-				assert.EqualValues(t, pair.String(), currentPosition.Pair)
-				assert.True(t, currentPosition.Size_.IsZero())        // always zero
-				assert.True(t, currentPosition.Margin.IsZero())       // always zero
-				assert.True(t, currentPosition.OpenNotional.IsZero()) // always zero
-				assert.EqualValues(t, sdk.ZeroDec(), currentPosition.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, currentPosition.LiquidityHistoryIndex)
-				assert.EqualValues(t, ctx.BlockHeight(), currentPosition.BlockNumber)
-			},
+			expectedLiquidationBadDebt:        sdk.NewDec(22),
+			expectedFundsToPerpEF:             sdk.ZeroDec(),
+			expectedFundsToLiquidator:         sdk.NewDec(12),
+			expectedExchangedQuoteAssetAmount: sdk.NewDec(80),
+			expectedMarginToVault:             sdk.ZeroDec(),
+			expectedPositionRealizedPnl:       sdk.NewDec(-20),
+			expectedPositionBadDebt:           sdk.NewDec(10),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			t.Log("setup variables")
+			perpKeeper, mocks, ctx := getKeeper(t)
+			liquidatorAddr := sample.AccAddress()
+			traderAddr := sample.AccAddress()
+			pair := common.TokenPair("BTC:NUSD")
+
+			t.Log("mock account keeper")
+			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
+			perpEFAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
+			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
+				types.VaultModuleAccount).Return(vaultAddr)
+			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
+				types.PerpEFModuleAccount).Return(perpEFAddr)
+
+			t.Log("mock bank keeper")
+			if tc.expectedFundsToPerpEF.IsPositive() {
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
+					ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
+					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedFundsToPerpEF.RoundInt())),
+				).Return(nil)
+			}
+			if tc.expectedFundsToLiquidator.IsPositive() {
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
+					ctx, types.PerpEFModuleAccount, liquidatorAddr,
+					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedFundsToLiquidator.RoundInt())),
+				).Return(nil)
+			}
+
+			t.Log("setup perp keeper params")
+			newParams := types.DefaultParams()
+			newParams.LiquidationFee = tc.liquidationFee
+			perpKeeper.SetParams(ctx, newParams)
+			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				Pair: pair.String(),
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(), // zero funding payment for this test case
+				},
+			})
+
+			t.Log("mock vpool")
+			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+			mocks.mockVpoolKeeper.EXPECT().
+				GetBaseAssetPrice(
+					ctx,
+					pair,
+					vpooltypes.Direction_ADD_TO_POOL,
+					/*baseAssetAmount=*/ tc.initialPositionSize,
+				).
+				Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
+			mocks.mockVpoolKeeper.EXPECT().
+				SwapBaseForQuote(
+					ctx,
+					pair,
+					/*baseAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
+					/*baseAssetAmount=*/ tc.initialPositionSize,
+					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
+				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
+
+			t.Log("create and set the initial position")
+			position := types.Position{
+				Address:                             traderAddr.String(),
+				Pair:                                pair.String(),
+				Size_:                               tc.initialPositionSize,
+				Margin:                              tc.initialMargin,
+				OpenNotional:                        tc.initialOpenNotional,
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				LiquidityHistoryIndex:               0,
+				BlockNumber:                         ctx.BlockHeight(),
+			}
+			perpKeeper.SetPosition(ctx, pair, traderAddr.String(), &position)
+
+			t.Log("execute full liquidation")
+			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
+			require.NoError(t, err)
+
+			t.Log("assert liquidation response fields")
+			assert.EqualValues(t, tc.expectedLiquidationBadDebt, liquidationResp.BadDebt)
+			assert.EqualValues(t, tc.expectedFundsToLiquidator, liquidationResp.FeeToLiquidator)
+			assert.EqualValues(t, tc.expectedFundsToPerpEF, liquidationResp.FeeToPerpEcosystemFund)
+			assert.EqualValues(t, liquidatorAddr, liquidationResp.Liquidator)
+
+			t.Log("assert position response fields")
+			positionResp := liquidationResp.PositionResp
+			assert.EqualValues(t, tc.expectedExchangedQuoteAssetAmount, positionResp.ExchangedQuoteAssetAmount) // amount of quote exchanged
+			assert.EqualValues(t, tc.initialPositionSize.Neg(), positionResp.ExchangedPositionSize)             // sold back to vpool
+			assert.EqualValues(t, tc.expectedMarginToVault, positionResp.MarginToVault)                         // ( oldMargin + unrealzedPnL - fundingPayment ) * -1
+			assert.EqualValues(t, tc.expectedPositionBadDebt, positionResp.BadDebt)
+			assert.EqualValues(t, tc.expectedPositionRealizedPnl, positionResp.RealizedPnl)
+			assert.True(t, positionResp.FundingPayment.IsZero())
+			assert.True(t, positionResp.UnrealizedPnlAfter.IsZero()) // always zero
+
+			t.Log("assert new position fields")
+			newPosition := positionResp.Position
+			assert.EqualValues(t, traderAddr.String(), newPosition.Address)
+			assert.EqualValues(t, pair.String(), newPosition.Pair)
+			assert.True(t, newPosition.Size_.IsZero())        // always zero
+			assert.True(t, newPosition.Margin.IsZero())       // always zero
+			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero
+			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
+			assert.EqualValues(t, 0, newPosition.LiquidityHistoryIndex)
+			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 		})
 	}
 }
