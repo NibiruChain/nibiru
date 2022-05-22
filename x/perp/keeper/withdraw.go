@@ -66,3 +66,31 @@ func (k Keeper) Withdraw(
 		),
 	)
 }
+
+func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
+	err error,
+) {
+	prepaidBadDebtBalance := k.PrepaidBadDebtState().Get(ctx, denom)
+
+	if prepaidBadDebtBalance.GTE(badDebtToRealize) {
+		// prepaidBadDebtBalance > totalBadDebt
+		k.PrepaidBadDebtState().Decrement(ctx, denom, badDebtToRealize)
+	} else {
+		// totalBadDebt > prepaidBadDebtBalance
+
+		k.PrepaidBadDebtState().Set(ctx, denom, sdk.ZeroInt())
+
+		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
+			/*from=*/ types.PerpEFModuleAccount,
+			/*to=*/ types.VaultModuleAccount,
+			sdk.NewCoins(
+				sdk.NewCoin(
+					denom,
+					badDebtToRealize.Sub(prepaidBadDebtBalance),
+				),
+			),
+		)
+	}
+
+	return nil
+}
