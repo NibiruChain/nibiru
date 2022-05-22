@@ -3,45 +3,48 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 type msgServer struct {
-	Keeper
+	k Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
+	return &msgServer{k: keeper}
 }
 
 var _ types.MsgServer = msgServer{}
 
-/*
-Args:
-	goCtx
-
-Returns
-	MsgRemoveMarginResponse:
-	error:
-*/
-func (k msgServer) MsgRemoveMargin(goCtx context.Context, msg *types.MsgRemoveMargin,
-) (*types.MsgRemoveMarginResponse, error) {
-	removeMarginResponse, err := k.RemoveMargin(goCtx, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return removeMarginResponse, nil
+func (k msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin) (*types.MsgRemoveMarginResponse, error) {
+	return k.k.RemoveMargin(ctx, margin)
 }
 
-func (k msgServer) MsgAddMargin(goCtx context.Context, msg *types.MsgAddMargin,
-) (*types.MsgAddMarginResponse, error) {
-	removeMarginResponse, err := k.AddMargin(goCtx, msg)
+func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin) (*types.MsgAddMarginResponse, error) {
+	return k.k.AddMargin(ctx, margin)
+}
+
+func (k msgServer) OpenPosition(ctx context.Context, req *types.MsgOpenPosition) (*types.MsgOpenPositionResponse, error) {
+	pair, err := common.NewTokenPairFromStr(req.TokenPair)
+	if err != nil {
+		panic(err) // must not happen
+	}
+
+	addr, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		panic(err) // must not happen
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	err = k.k.OpenPosition(sdkCtx, pair, req.Side, addr, req.QuoteAssetAmount, req.Leverage, req.BaseAssetAmountLimit.ToDec())
 	if err != nil {
 		return nil, err
 	}
 
-	return removeMarginResponse, nil
+	return &types.MsgOpenPositionResponse{}, nil
 }
