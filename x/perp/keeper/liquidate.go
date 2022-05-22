@@ -116,7 +116,7 @@ func (k Keeper) distributeLiquidateRewards(
 			pair.GetQuoteTokenDenom(), feeToLiquidator)
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx,
-			/* from */ types.PerpEFModuleAccount,
+			/* from */ types.VaultModuleAccount,
 			/* to */ liquidateResp.Liquidator,
 			sdk.NewCoins(coinToLiquidator),
 		)

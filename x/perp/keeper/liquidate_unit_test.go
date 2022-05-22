@@ -412,7 +412,7 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 
 			t.Log("mock account keeper")
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-			perpEFAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
+			perpEFAddr := authtypes.NewModuleAddress(types.PerpEFModuleAccount)
 			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
 				types.VaultModuleAccount).Return(vaultAddr)
 			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
@@ -427,7 +427,7 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 			}
 			if tc.expectedFundsToLiquidator.IsPositive() {
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.PerpEFModuleAccount, liquidatorAddr,
+					ctx, types.VaultModuleAccount, liquidatorAddr,
 					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedFundsToLiquidator.RoundInt())),
 				).Return(nil)
 			}
