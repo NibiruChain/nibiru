@@ -177,7 +177,8 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 		initialMargin       sdk.Dec
 		initialOpenNotional sdk.Dec
 
-		baseAssetPriceInQuote sdk.Dec // amount of quote obtained by trading <initialPositionSize> base
+		// amount of quote obtained by trading <initialPositionSize> base
+		baseAssetPriceInQuote sdk.Dec
 
 		expectedLiquidationBadDebt        sdk.Dec
 		expectedFundsToPerpEF             sdk.Dec
@@ -483,7 +484,8 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			perpKeeper.SetPosition(ctx, pair, traderAddr.String(), &position)
 
 			t.Log("execute full liquidation")
-			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
+			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(
+				ctx, liquidatorAddr, &position)
 			require.NoError(t, err)
 
 			t.Log("assert liquidation response fields")
@@ -494,13 +496,18 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("assert position response fields")
 			positionResp := liquidationResp.PositionResp
-			assert.EqualValues(t, tc.expectedExchangedQuoteAssetAmount, positionResp.ExchangedQuoteAssetAmount) // amount of quote exchanged
-			assert.EqualValues(t, tc.initialPositionSize.Neg(), positionResp.ExchangedPositionSize)             // sold back to vpool
-			assert.EqualValues(t, tc.expectedMarginToVault, positionResp.MarginToVault)                         // ( oldMargin + unrealzedPnL - fundingPayment ) * -1
+			assert.EqualValues(t,
+				tc.expectedExchangedQuoteAssetAmount,
+				positionResp.ExchangedQuoteAssetAmount) // amount of quote exchanged
+			// Initial position size is sold back to to vpool
+			assert.EqualValues(t, tc.initialPositionSize.Neg(), positionResp.ExchangedPositionSize)
+			// ( oldMargin + unrealzedPnL - fundingPayment ) * -1
+			assert.EqualValues(t, tc.expectedMarginToVault, positionResp.MarginToVault)
 			assert.EqualValues(t, tc.expectedPositionBadDebt, positionResp.BadDebt)
 			assert.EqualValues(t, tc.expectedPositionRealizedPnl, positionResp.RealizedPnl)
 			assert.True(t, positionResp.FundingPayment.IsZero())
-			assert.True(t, positionResp.UnrealizedPnlAfter.IsZero()) // always zero
+			// Unrealized PnL should always be zero after a full close
+			assert.True(t, positionResp.UnrealizedPnlAfter.IsZero())
 
 			t.Log("assert new position fields")
 			newPosition := positionResp.Position
