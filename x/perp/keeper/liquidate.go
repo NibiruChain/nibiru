@@ -11,7 +11,7 @@ import (
 // ExecuteFullLiquidation fully liquidates a position.
 func (k Keeper) ExecuteFullLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
-) (err error) {
+) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
 
 	positionResp, err := k.closePositionEntirely(
@@ -19,7 +19,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		/* currentPosition */ *position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec())
 	if err != nil {
-		return err
+		return types.LiquidateResp{}, err
 	}
 
 	remainMargin := positionResp.MarginToVault.Abs()
@@ -33,20 +33,30 @@ func (k Keeper) ExecuteFullLiquidation(
 		// if the remainMargin is not enough for liquidationFee, count it as bad debt
 		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
 		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
+		remainMargin = sdk.ZeroDec()
+	} else {
+		// Otherwise, the remaining margin rest will be transferred to ecosystemFund
+		remainMargin = remainMargin.Sub(feeToLiquidator)
 	}
 
-	err = k.distributeLiquidateRewards(ctx, types.LiquidateResp{
+	feeToPerpEcosystemFund := sdk.ZeroDec()
+	if remainMargin.IsPositive() {
+		feeToPerpEcosystemFund = remainMargin
+	}
+
+	liquidationResp = types.LiquidateResp{
 		BadDebt:                totalBadDebt,
 		FeeToLiquidator:        feeToLiquidator,
-		FeeToPerpEcosystemFund: positionResp.MarginToVault.Abs(),
+		FeeToPerpEcosystemFund: feeToPerpEcosystemFund,
 		Liquidator:             liquidator,
 		PositionResp:           positionResp,
-	})
+	}
+	err = k.distributeLiquidateRewards(ctx, liquidationResp)
 	if err != nil {
-		return err
+		return types.LiquidateResp{}, err
 	}
 
-	return nil
+	return liquidationResp, nil
 }
 
 func (k Keeper) distributeLiquidateRewards(
