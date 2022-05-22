@@ -76,3 +76,6 @@ One the Nibiru binary has been installed, for further information on joining mai
 
 A. If after steps 1-4 you don't have the `nibid` command, your go/bin directory may not be in your PATH yet. To do so, add the below to your `.zshrc` or `.bash_profile`
 
+```bash
+export PATH=$PATH:$(go env GOPATH)/bin
+```
