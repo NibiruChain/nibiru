@@ -8,12 +8,13 @@ import (
 	reflect "reflect"
 	time "time"
 
-	common "github.com/NibiruChain/nibiru/x/common"
-	types "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	types0 "github.com/NibiruChain/nibiru/x/vpool/types"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gomock "github.com/golang/mock/gomock"
+
+	common "github.com/NibiruChain/nibiru/x/common"
+	types "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	types0 "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // MockAccountKeeper is a mock of AccountKeeper interface.
