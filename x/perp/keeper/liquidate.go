@@ -107,11 +107,27 @@ func (k Keeper) Liquidate(
 	return res, nil
 }
 
-// ExecuteFullLiquidation fully liquidates a position.
+/*
+Fully liquidates a position. It is assumed that the margin ratio has already been
+checked prior to calling this method.
+
+args:
+  - ctx: cosmos-sdk context
+  - liquidator: the liquidator's address
+  - position: the position to liquidate
+
+ret:
+  - liquidationResp: a response object containing the results of the liquidation
+  - err: error
+*/
 func (k Keeper) ExecuteFullLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
+	tokenPair, err := common.NewTokenPairFromStr(position.Pair)
+	if err != nil {
+		return types.LiquidateResp{}, err
+	}
 
 	positionResp, err := k.closePositionEntirely(
 		ctx,
@@ -130,8 +146,7 @@ func (k Keeper) ExecuteFullLiquidation(
 
 	if feeToLiquidator.GT(remainMargin) {
 		// if the remainMargin is not enough for liquidationFee, count it as bad debt
-		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
-		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
+		totalBadDebt = totalBadDebt.Add(feeToLiquidator.Sub(remainMargin))
 		remainMargin = sdk.ZeroDec()
 	} else {
 		// Otherwise, the remaining margin rest will be transferred to ecosystemFund
@@ -139,19 +154,13 @@ func (k Keeper) ExecuteFullLiquidation(
 	}
 
 	// Realize bad debt
-	totalBadDebtInt := totalBadDebt.RoundInt()
-	if totalBadDebtInt.IsPositive() {
-		totalBadDebtCoin := sdk.NewCoin(
-			common.TokenPair(position.Pair).GetQuoteTokenDenom(),
-			totalBadDebtInt,
-		)
-		err = k.BankKeeper.SendCoinsFromModuleToModule(ctx,
-			/*from=*/ types.PerpEFModuleAccount,
-			/*to=*/ types.VaultModuleAccount,
-			sdk.NewCoins(totalBadDebtCoin),
-		)
-		if err != nil {
-			return liquidationResp, err
+	if totalBadDebt.IsPositive() {
+		if err = k.realizeBadDebt(
+			ctx,
+			tokenPair.GetQuoteTokenDenom(),
+			totalBadDebt.RoundInt(),
+		); err != nil {
+			return types.LiquidateResp{}, err
 		}
 	}
 
