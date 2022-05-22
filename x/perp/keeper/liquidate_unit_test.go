@@ -333,7 +333,7 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 				- position has zero margin, so all of liquidation fee is bad debt
 				- ecosystem fund gets nothing (0 NUSD)
 			*/
-			name: "position has zero margin and bad debt",
+			name: "position has + margin and bad debt - 1",
 
 			liquidationFee:      300_000, // 0.3 liquidation fee
 			initialPositionSize: sdk.NewDec(100),
@@ -437,7 +437,7 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 				- position has zero margin, so all of liquidation fee is bad debt
 				- ecosystem fund gets nothing (0 NUSD)
 			*/
-			name: "position has zero margin and bad debt",
+			name: "position has + margin and bad debt - 2",
 
 			liquidationFee:      300_000, // 0.3 liquidation fee
 			initialPositionSize: sdk.NewDec(-100),
@@ -490,6 +490,13 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedFundsToLiquidator.RoundInt())),
 				).Return(nil)
 			}
+			expectedTotalBadDebtInt := tc.expectedLiquidationBadDebt.RoundInt()
+			if expectedTotalBadDebtInt.IsPositive() {
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
+					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount,
+					sdk.NewCoins(sdk.NewCoin("NUSD", expectedTotalBadDebtInt)),
+				)
+			}
 
 			t.Log("setup perp keeper params")
 			newParams := types.DefaultParams()
@@ -503,7 +510,7 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 			})
 
 			t.Log("mock vpool")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
