@@ -10,14 +10,15 @@ import (
 func TestPrepaidBadDebtState(t *testing.T) {
 	perpKeeper, _, ctx := getKeeper(t)
 
-	t.Log("not found error")
-	_, err := perpKeeper.PrepaidBadDebtState().Get(ctx, "foo")
-	assert.Error(t, err)
+	t.Log("not found results in zero")
+	amount, err := perpKeeper.PrepaidBadDebtState().Get(ctx, "foo")
+	assert.NoError(t, err)
+	assert.EqualValues(t, sdk.ZeroInt(), amount)
 
 	t.Log("set and get")
 	perpKeeper.PrepaidBadDebtState().Set(ctx, "NUSD", sdk.NewInt(100))
 
-	amount, err := perpKeeper.PrepaidBadDebtState().Get(ctx, "NUSD")
+	amount, err = perpKeeper.PrepaidBadDebtState().Get(ctx, "NUSD")
 	assert.NoError(t, err)
 	assert.EqualValues(t, sdk.NewInt(100), amount)
 

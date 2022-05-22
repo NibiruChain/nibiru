@@ -24,7 +24,6 @@ var (
 	ErrPositionNotFound = errors.New("no position found")
 	ErrPairNotFound     = errors.New("pair doesn't have live vpool")
 	ErrPositionZero     = errors.New("position is zero")
-	ErrDenomNotFound    = errors.New("denom not found")
 )
 
 func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Position {

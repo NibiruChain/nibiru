@@ -189,7 +189,7 @@ func (pbd PrepaidBadDebtState) Get(ctx sdk.Context, denom string) (
 
 	v := kv.Get([]byte(denom))
 	if v == nil {
-		return sdk.ZeroInt(), types.ErrDenomNotFound
+		return sdk.ZeroInt(), nil
 	}
 
 	return sdk.NewIntFromUint64(sdk.BigEndianToUint64(v)), nil
