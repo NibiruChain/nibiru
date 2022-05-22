@@ -131,7 +131,7 @@ func OpenPositionCmd() *cobra.Command {
 			}
 
 			baseAssetAmountLimit, ok := sdk.NewIntFromString(args[4])
-			if err != nil {
+			if !ok {
 				return fmt.Errorf("invalid base amount limit: %s", args[3])
 			}
 
