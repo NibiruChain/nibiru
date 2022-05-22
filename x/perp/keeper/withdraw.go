@@ -67,6 +67,14 @@ func (k Keeper) Withdraw(
 	)
 }
 
+/*
+Realizes the bad debt by first decrementing it from the prepaid bad debt.
+Prepaid bad debt accrues when more coins are withdrawn from the vault than the
+vault contains, so we "credit" ourselves with prepaid bad debt.
+
+Then, when bad debt is actually realized (by closing underwater positions), we
+can consume the credit we have built before withdrawing more from the ecosystem fund.
+*/
 func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
 	err error,
 ) {
