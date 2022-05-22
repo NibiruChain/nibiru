@@ -270,7 +270,7 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 
 				- liquidation fee ratio is 0.3
 				- notional exchanged is 80 NUSD
-				- liquidator gets 80 NUSD * 0.3 / 2 = 25 NUSD
+				- liquidator gets 80 NUSD * 0.3 / 2 = 12 NUSD
 				- position has zero margin, so all of liquidation fee is bad debt
 				- ecosystem fund gets nothing (0 NUSD)
 			*/
@@ -291,6 +291,110 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 			expectedPositionRealizedPnl:       sdk.NewDec(-20),
 			expectedPositionBadDebt:           sdk.NewDec(10),
 		},
+		{
+			/*
+				- short position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+
+				- remaining margin more than liquidation fee
+				- position has zero bad debt
+				- no funding payment
+
+				- liquidation fee ratio is 0.1
+				- notional exchanged is 100 NUSD
+				- liquidator gets 100 NUSD * 0.1 / 2 = 5 NUSD
+				- ecosystem fund gets remaining = 5 NUSD
+			*/
+			name: "remaining margin more than liquidation fee",
+
+			liquidationFee:      100_000, // 0.1 liquidation fee
+			initialPositionSize: sdk.NewDec(-100),
+			initialMargin:       sdk.NewDec(10),
+			initialOpenNotional: sdk.NewDec(100),
+
+			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
+
+			expectedLiquidationBadDebt:        sdk.ZeroDec(),
+			expectedFundsToPerpEF:             sdk.NewDec(5),
+			expectedFundsToLiquidator:         sdk.NewDec(5),
+			expectedExchangedQuoteAssetAmount: sdk.NewDec(100),
+			expectedMarginToVault:             sdk.NewDec(-10),
+			expectedPositionRealizedPnl:       sdk.ZeroDec(),
+			expectedPositionBadDebt:           sdk.ZeroDec(),
+		},
+		{
+			/*
+				- short position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+
+				- remaining margin less than liquidation fee but greater than zero
+				- position has zero bad debt
+				- no funding payment
+
+				- liquidation fee ratio is 0.3
+				- notional exchanged is 100 NUSD
+				- liquidator gets 100 NUSD * 0.3 / 2 = 15 NUSD
+				- position only has 10 NUSD margin, so bad debt accrues
+				- ecosystem fund gets nothing (0 NUSD)
+			*/
+			name: "remaining margin less than liquidation fee but greater than zero",
+
+			liquidationFee:      300_000, // 0.3 liquidation fee
+			initialPositionSize: sdk.NewDec(-100),
+			initialMargin:       sdk.NewDec(10),
+			initialOpenNotional: sdk.NewDec(100),
+
+			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
+
+			expectedLiquidationBadDebt:        sdk.NewDec(5),
+			expectedFundsToPerpEF:             sdk.ZeroDec(),
+			expectedFundsToLiquidator:         sdk.NewDec(15),
+			expectedExchangedQuoteAssetAmount: sdk.NewDec(100),
+			expectedMarginToVault:             sdk.NewDec(-10),
+			expectedPositionRealizedPnl:       sdk.ZeroDec(),
+			expectedPositionBadDebt:           sdk.ZeroDec(),
+		},
+		{
+			/*
+				- short position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+				- BTC increases in price (1 BTC = 1.2 NUSD)
+				- position notional of 120 NUSD
+				- unrealized PnL of -20 NUSD, wipes out margin
+
+				- position has zero margin remaining
+				- position has bad debt
+				- no funding payment
+
+				- liquidation fee ratio is 0.3
+				- notional exchanged is 120 NUSD
+				- liquidator gets 120 NUSD * 0.3 / 2 = 18 NUSD
+				- position has zero margin, so all of liquidation fee is bad debt
+				- ecosystem fund gets nothing (0 NUSD)
+			*/
+			name: "position has zero margin and bad debt",
+
+			liquidationFee:      300_000, // 0.3 liquidation fee
+			initialPositionSize: sdk.NewDec(-100),
+			initialMargin:       sdk.NewDec(10),
+			initialOpenNotional: sdk.NewDec(100),
+
+			baseAssetPriceInQuote: sdk.NewDec(120), // price increased
+
+			expectedLiquidationBadDebt:        sdk.NewDec(28),
+			expectedFundsToPerpEF:             sdk.ZeroDec(),
+			expectedFundsToLiquidator:         sdk.NewDec(18),
+			expectedExchangedQuoteAssetAmount: sdk.NewDec(120),
+			expectedMarginToVault:             sdk.ZeroDec(),
+			expectedPositionRealizedPnl:       sdk.NewDec(-20),
+			expectedPositionBadDebt:           sdk.NewDec(10),
+		},
 	}
 
 	for _, tc := range tests {
@@ -301,6 +405,10 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 			liquidatorAddr := sample.AccAddress()
 			traderAddr := sample.AccAddress()
 			pair := common.TokenPair("BTC:NUSD")
+			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
+			if tc.initialPositionSize.IsNegative() {
+				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+			}
 
 			t.Log("mock account keeper")
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
@@ -341,16 +449,16 @@ func TestExecuteFullLiquidationWithMocks(t *testing.T) {
 				GetBaseAssetPrice(
 					ctx,
 					pair,
-					vpooltypes.Direction_ADD_TO_POOL,
-					/*baseAssetAmount=*/ tc.initialPositionSize,
+					baseAssetDirection,
+					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 				).
 				Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
 					pair,
-					/*baseAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
-					/*baseAssetAmount=*/ tc.initialPositionSize,
+					baseAssetDirection,
+					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
 
