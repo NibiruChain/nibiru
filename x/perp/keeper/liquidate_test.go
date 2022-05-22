@@ -129,17 +129,17 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	alice := sample.AccAddress()
 
 	testCases := []struct {
-		name                             string
-		positionSide                     types.Side
-		quoteAmount                      sdk.Int
-		leverage                         sdk.Dec
-		baseAssetLimit                   sdk.Dec
-		liquidationFee                   sdk.Dec
-		traderFunds                      sdk.Coin
-		expectedLiquidatorBalance        sdk.Coin
-		expectedPerpEFBalance            sdk.Coin
-		expectedBadDebt                  sdk.Dec
-		internal_position_response_event sdk.Event
+		name                      string
+		positionSide              types.Side
+		quoteAmount               sdk.Int
+		leverage                  sdk.Dec
+		baseAssetLimit            sdk.Dec
+		liquidationFee            sdk.Dec
+		traderFunds               sdk.Coin
+		expectedLiquidatorBalance sdk.Coin
+		expectedPerpEFBalance     sdk.Coin
+		expectedBadDebt           sdk.Dec
+		expectedEvent             sdk.Event
 	}{
 		{
 			name:           "happy path - Buy",
@@ -156,7 +156,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_045_050),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
-			internal_position_response_event: events.NewInternalPositionResponseEvent(
+			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
@@ -188,7 +188,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_043_894),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
-			internal_position_response_event: events.NewInternalPositionResponseEvent(
+			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
@@ -225,11 +225,13 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
-			internal_position_response_event: events.NewInternalPositionResponseEvent(
+			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						Address: alice.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						Address:      alice.String(),
+						Pair:         pair.String(),
+						Margin:       sdk.ZeroDec(),
+						OpenNotional: sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
 					BadDebt:                   sdk.ZeroDec(),
@@ -258,7 +260,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
-			internal_position_response_event: events.NewInternalPositionResponseEvent(
+			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
 						Address: alice.String(), Pair: pair.String(),
@@ -321,8 +323,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Fund vault and PerpEF")
-			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				pair.GetQuoteTokenDenom(), 1_000_000))
+			startingModuleFunds := sdk.NewCoins(
+				sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1_000_000),
+			)
 			require.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			require.NoError(t, simapp.FundModuleAccount(
@@ -333,13 +336,13 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check events")
-			assert.Contains(t, ctx.EventManager().Events(), tc.internal_position_response_event)
+			assert.Contains(t, ctx.EventManager().Events(), tc.expectedEvent)
 
 			t.Log("Check new position")
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
-			require.True(t, newPosition.Size_.IsZero())
-			require.True(t, newPosition.Margin.IsZero())
-			require.True(t, newPosition.OpenNotional.IsZero())
+			assert.True(t, newPosition.Size_.IsZero())
+			assert.True(t, newPosition.Margin.IsZero())
+			assert.True(t, newPosition.OpenNotional.IsZero())
 
 			t.Log("Check liquidator balance")
 			assert.EqualValues(t,
