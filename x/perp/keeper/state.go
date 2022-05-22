@@ -39,8 +39,8 @@ func (k Keeper) Whitelist() Whitelist {
 	return (Whitelist)(k)
 }
 
-func (k Keeper) PrepaidBadDebt() PrepaidBadDebt {
-	return (PrepaidBadDebt)(k)
+func (k Keeper) PrepaidBadDebtState() PrepaidBadDebtState {
+	return (PrepaidBadDebtState)(k)
 }
 
 var paramsNamespace = []byte{0x0}
@@ -176,14 +176,14 @@ func (w Whitelist) IsWhitelisted(ctx sdk.Context, address string) bool {
 
 var prepaidBadDebtNamespace = []byte{0x4}
 
-type PrepaidBadDebt Keeper
+type PrepaidBadDebtState Keeper
 
-func (pbd PrepaidBadDebt) getKVStore(ctx sdk.Context) sdk.KVStore {
+func (pbd PrepaidBadDebtState) getKVStore(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(pbd.storeKey), prepaidBadDebtNamespace)
 }
 
-func (pbd PrepaidBadDebt) Get(ctx sdk.Context, denom string) (
-	amountPrepaid sdk.Int, err error,
+func (pbd PrepaidBadDebtState) Get(ctx sdk.Context, denom string) (
+	amount sdk.Int, err error,
 ) {
 	kv := pbd.getKVStore(ctx)
 
@@ -195,7 +195,24 @@ func (pbd PrepaidBadDebt) Get(ctx sdk.Context, denom string) (
 	return sdk.NewIntFromUint64(sdk.BigEndianToUint64(v)), nil
 }
 
-func (pbd PrepaidBadDebt) Set(ctx sdk.Context, denom string, amountPrepaid sdk.Int) {
+func (pbd PrepaidBadDebtState) Set(ctx sdk.Context, denom string, amount sdk.Int) {
 	kv := pbd.getKVStore(ctx)
-	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amountPrepaid.Uint64()))
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+}
+
+func (pbd PrepaidBadDebtState) Increment(ctx sdk.Context, denom string, increment sdk.Int) (
+	amount sdk.Int, err error,
+) {
+	kv := pbd.getKVStore(ctx)
+
+	amount, err = pbd.Get(ctx, denom)
+	if err != nil {
+		return sdk.ZeroInt(), err
+	}
+
+	amount = amount.Add(increment)
+
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+
+	return amount, nil
 }
