@@ -22,7 +22,7 @@ func TestGenesis(t *testing.T) {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.20"),
 		},
 		{
-			Pair:                  "BTC:NUSD",
+			Pair:                  "ETH:NUSD",
 			BaseAssetReserve:      sdk.NewDec(2_000_000),      // 1
 			QuoteAssetReserve:     sdk.NewDec(60_000_000_000), // 30,000
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.77"),
@@ -42,6 +42,9 @@ func TestGenesis(t *testing.T) {
 	}
 
 	exportedGenesis := ExportGenesis(ctx, k)
+	require.Len(t, exportedGenesis.Vpools, 2)
 
-	require.Equal(t, vpools, exportedGenesis)
+	for _, exportedVpool := range exportedGenesis.Vpools {
+		require.Contains(t, genesisState.Vpools, exportedVpool)
+	}
 }
