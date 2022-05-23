@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package nibiru.vpool.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Queries the reserve assets in a given pool, identified by a token pair.
+  rpc ReserveAssets(QueryReserveAssetsRequests) returns (QueryReserveAssetsResponse) {
+    option (google.api.http).get = "/nibiru/vpool/reserve_assets";
+  }
+
+}
+
+// ---------------------------------------- QueryReserveAssets
+
+message QueryReserveAssetsRequests {
+    // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+    string pair = 1;
+}
+
+message QueryReserveAssetsResponse {
+  // base asset is the crypto asset, e.g. BTC or ETH
+  string base_asset_reserve = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false];
+
+  // quote asset is usually stablecoin, in our case NUSD
+  string quote_asset_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false];
+}
