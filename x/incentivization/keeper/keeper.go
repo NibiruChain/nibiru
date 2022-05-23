@@ -65,7 +65,7 @@ func (k Keeper) CreateIncentivizationProgram(
 		return nil, types.ErrMinLockupDurationTooLow.Wrapf("%s is lower than minimum allowed %s", minLockupDuration, MinLockupDuration)
 	}
 
-	if ctx.BlockTime().Before(starTime) {
+	if ctx.BlockTime().After(starTime) {
 		return nil, types.ErrStartTimeInPast.Wrapf("current time %s, got: %s", ctx.BlockTime(), starTime)
 	}
 
