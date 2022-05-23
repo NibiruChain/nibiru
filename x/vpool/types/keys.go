@@ -19,9 +19,9 @@ PoolReserveSnapshotCounter | 0x01 + PairString 			 | Integer
 PoolReserveSnapshots       | 0x02 + PairString + Counter | Snapshot
 */
 var (
-	PoolKey                    = []byte{0x01}
-	PoolReserveSnapshotCounter = []byte{0x02}
-	PoolReserveSnapshots       = []byte{0x03}
+	PoolKey                    = []byte{0x00}
+	PoolReserveSnapshotCounter = []byte{0x01}
+	PoolReserveSnapshots       = []byte{0x02}
 )
 
 // GetPoolKey returns pool key for KVStore
