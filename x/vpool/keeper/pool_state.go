@@ -96,3 +96,21 @@ func (k Keeper) savePoolAndSnapshot(
 func (k Keeper) ExistsPool(ctx sdk.Context, pair common.TokenPair) bool {
 	return ctx.KVStore(k.storeKey).Has(types.GetPoolKey(pair))
 }
+
+// GetAllPools returns all pools that exist.
+func (k Keeper) GetAllPools(ctx sdk.Context) []*types.Pool {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.PoolKey)
+
+	var pools []*types.Pool
+	for ; iterator.Valid(); iterator.Next() {
+		bz := iterator.Value()
+
+		var pool types.Pool
+		k.codec.MustUnmarshal(bz, &pool)
+
+		pools = append(pools, &pool)
+	}
+
+	return pools
+}
