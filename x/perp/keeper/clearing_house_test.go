@@ -75,10 +75,10 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 }
 
 type mockedDependencies struct {
-	mockAccountKeeper *mock.MockAccountKeeper
-	mockBankKeeper    *mock.MockBankKeeper
-	mockPriceKeeper   *mock.MockPriceKeeper
-	mockVpoolKeeper   *mock.MockVpoolKeeper
+	mockAccountKeeper   *mock.MockAccountKeeper
+	mockBankKeeper      *mock.MockBankKeeper
+	mockPricefeedKeeper *mock.MockPricefeedKeeper
+	mockVpoolKeeper     *mock.MockVpoolKeeper
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
@@ -106,7 +106,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	ctrl := gomock.NewController(t)
 	mockedAccountKeeper := mock.NewMockAccountKeeper(ctrl)
 	mockedBankKeeper := mock.NewMockBankKeeper(ctrl)
-	mockedPriceKeeper := mock.NewMockPriceKeeper(ctrl)
+	mockedPricefeedKeeper := mock.NewMockPricefeedKeeper(ctrl)
 	mockedVpoolKeeper := mock.NewMockVpoolKeeper(ctrl)
 
 	mockedAccountKeeper.
@@ -119,17 +119,17 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		subSpace,
 		mockedAccountKeeper,
 		mockedBankKeeper,
-		mockedPriceKeeper,
+		mockedPricefeedKeeper,
 		mockedVpoolKeeper,
 	)
 
 	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, nil)
 
 	return k, mockedDependencies{
-		mockAccountKeeper: mockedAccountKeeper,
-		mockBankKeeper:    mockedBankKeeper,
-		mockPriceKeeper:   mockedPriceKeeper,
-		mockVpoolKeeper:   mockedVpoolKeeper,
+		mockAccountKeeper:   mockedAccountKeeper,
+		mockBankKeeper:      mockedBankKeeper,
+		mockPricefeedKeeper: mockedPricefeedKeeper,
+		mockVpoolKeeper:     mockedVpoolKeeper,
 	}, ctx
 }
 

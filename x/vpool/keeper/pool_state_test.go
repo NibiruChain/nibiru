@@ -12,7 +12,7 @@ import (
 
 func TestCreatePool(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPriceKeeper(gomock.NewController(t)),
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 
 	vpoolKeeper.CreatePool(
