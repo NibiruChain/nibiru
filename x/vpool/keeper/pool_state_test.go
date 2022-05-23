@@ -3,10 +3,11 @@ package keeper
 import (
 	"testing"
 
-	types2 "github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	types2 "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 )

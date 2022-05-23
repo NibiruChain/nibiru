@@ -3,12 +3,13 @@ package vpool_test
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 // TODO: https://github.com/NibiruChain/nibiru/issues/475
