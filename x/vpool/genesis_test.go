@@ -25,8 +25,8 @@ func TestGenesis(t *testing.T) {
 		},
 		{
 			Pair:                  "ETH:NUSD",
-			BaseAssetReserve:      sdk.NewDec(2_000_000),      // 1
-			QuoteAssetReserve:     sdk.NewDec(60_000_000_000), // 30,000
+			BaseAssetReserve:      sdk.NewDec(2_000_000),      // 2
+			QuoteAssetReserve:     sdk.NewDec(60_000_000_000), // 60,000
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.77"),
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.30"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.30"),
