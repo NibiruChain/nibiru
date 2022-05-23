@@ -79,6 +79,14 @@ func CmdQueryPosition() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: implement
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			fmt.Println("STEVENDEBUG query client: ", queryClient)
+
+			// res, err := queryClient.TraderPosition()
+
 			return nil
 		},
 	}

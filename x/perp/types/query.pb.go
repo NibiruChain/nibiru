@@ -112,33 +112,288 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
+// QueryTraderPositionRequest is the request type for the position of the
+// x/perp module account.
+type QueryTraderPositionRequest struct {
+	TokenPair string `protobuf:"bytes,1,opt,name=token_pair,json=tokenPair,proto3" json:"token_pair,omitempty"`
+	Trader    string `protobuf:"bytes,2,opt,name=trader,proto3" json:"trader,omitempty"`
+}
+
+func (m *QueryTraderPositionRequest) Reset()         { *m = QueryTraderPositionRequest{} }
+func (m *QueryTraderPositionRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryTraderPositionRequest) ProtoMessage()    {}
+func (*QueryTraderPositionRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{2}
+}
+func (m *QueryTraderPositionRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryTraderPositionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryTraderPositionRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryTraderPositionRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryTraderPositionRequest.Merge(m, src)
+}
+func (m *QueryTraderPositionRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryTraderPositionRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryTraderPositionRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryTraderPositionRequest proto.InternalMessageInfo
+
+func (m *QueryTraderPositionRequest) GetTokenPair() string {
+	if m != nil {
+		return m.TokenPair
+	}
+	return ""
+}
+
+func (m *QueryTraderPositionRequest) GetTrader() string {
+	if m != nil {
+		return m.Trader
+	}
+	return ""
+}
+
+type QueryTraderPositionResponse struct {
+}
+
+func (m *QueryTraderPositionResponse) Reset()         { *m = QueryTraderPositionResponse{} }
+func (m *QueryTraderPositionResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryTraderPositionResponse) ProtoMessage()    {}
+func (*QueryTraderPositionResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{3}
+}
+func (m *QueryTraderPositionResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryTraderPositionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryTraderPositionResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryTraderPositionResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryTraderPositionResponse.Merge(m, src)
+}
+func (m *QueryTraderPositionResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryTraderPositionResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryTraderPositionResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryTraderPositionResponse proto.InternalMessageInfo
+
+// QueryTraderMarginRequest is the request type for the margin of the
+// x/perp module account.
+type QueryTraderMarginRequest struct {
+}
+
+func (m *QueryTraderMarginRequest) Reset()         { *m = QueryTraderMarginRequest{} }
+func (m *QueryTraderMarginRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryTraderMarginRequest) ProtoMessage()    {}
+func (*QueryTraderMarginRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{4}
+}
+func (m *QueryTraderMarginRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryTraderMarginRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryTraderMarginRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryTraderMarginRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryTraderMarginRequest.Merge(m, src)
+}
+func (m *QueryTraderMarginRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryTraderMarginRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryTraderMarginRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryTraderMarginRequest proto.InternalMessageInfo
+
+type QueryTraderMarginResponse struct {
+}
+
+func (m *QueryTraderMarginResponse) Reset()         { *m = QueryTraderMarginResponse{} }
+func (m *QueryTraderMarginResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryTraderMarginResponse) ProtoMessage()    {}
+func (*QueryTraderMarginResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{5}
+}
+func (m *QueryTraderMarginResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryTraderMarginResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryTraderMarginResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryTraderMarginResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryTraderMarginResponse.Merge(m, src)
+}
+func (m *QueryTraderMarginResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryTraderMarginResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryTraderMarginResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryTraderMarginResponse proto.InternalMessageInfo
+
+// QueryReserveAssetRequest is the request type for the reserve asset of the
+// x/perp module account.
+type QueryReserveAssetRequest struct {
+}
+
+func (m *QueryReserveAssetRequest) Reset()         { *m = QueryReserveAssetRequest{} }
+func (m *QueryReserveAssetRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryReserveAssetRequest) ProtoMessage()    {}
+func (*QueryReserveAssetRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{6}
+}
+func (m *QueryReserveAssetRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryReserveAssetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryReserveAssetRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryReserveAssetRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryReserveAssetRequest.Merge(m, src)
+}
+func (m *QueryReserveAssetRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryReserveAssetRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryReserveAssetRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryReserveAssetRequest proto.InternalMessageInfo
+
+type QueryReserveAssetResponse struct {
+}
+
+func (m *QueryReserveAssetResponse) Reset()         { *m = QueryReserveAssetResponse{} }
+func (m *QueryReserveAssetResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryReserveAssetResponse) ProtoMessage()    {}
+func (*QueryReserveAssetResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{7}
+}
+func (m *QueryReserveAssetResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryReserveAssetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryReserveAssetResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryReserveAssetResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryReserveAssetResponse.Merge(m, src)
+}
+func (m *QueryReserveAssetResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryReserveAssetResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryReserveAssetResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryReserveAssetResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "nibiru.perp.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "nibiru.perp.v1.QueryParamsResponse")
+	proto.RegisterType((*QueryTraderPositionRequest)(nil), "nibiru.perp.v1.QueryTraderPositionRequest")
+	proto.RegisterType((*QueryTraderPositionResponse)(nil), "nibiru.perp.v1.QueryTraderPositionResponse")
+	proto.RegisterType((*QueryTraderMarginRequest)(nil), "nibiru.perp.v1.QueryTraderMarginRequest")
+	proto.RegisterType((*QueryTraderMarginResponse)(nil), "nibiru.perp.v1.QueryTraderMarginResponse")
+	proto.RegisterType((*QueryReserveAssetRequest)(nil), "nibiru.perp.v1.QueryReserveAssetRequest")
+	proto.RegisterType((*QueryReserveAssetResponse)(nil), "nibiru.perp.v1.QueryReserveAssetResponse")
 }
 
 func init() { proto.RegisterFile("perp/v1/query.proto", fileDescriptor_8212d8958be09421) }
 
 var fileDescriptor_8212d8958be09421 = []byte{
-	// 277 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2e, 0x48, 0x2d, 0x2a,
-	0xd0, 0x2f, 0x33, 0xd4, 0x2f, 0x2c, 0x4d, 0x2d, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17,
-	0xe2, 0xcb, 0xcb, 0x4c, 0xca, 0x2c, 0x2a, 0xd5, 0x03, 0xc9, 0xe9, 0x95, 0x19, 0x4a, 0x89, 0xa4,
-	0xe7, 0xa7, 0xe7, 0x83, 0xa5, 0xf4, 0x41, 0x2c, 0x88, 0x2a, 0x29, 0x99, 0xf4, 0xfc, 0xfc, 0xf4,
-	0x9c, 0x54, 0xfd, 0xc4, 0x82, 0x4c, 0xfd, 0xc4, 0xbc, 0xbc, 0xfc, 0x92, 0xc4, 0x92, 0xcc, 0xfc,
-	0xbc, 0x62, 0xa8, 0x2c, 0xdc, 0xe0, 0xe2, 0x92, 0xc4, 0x92, 0x54, 0x88, 0xa0, 0x92, 0x08, 0x97,
-	0x50, 0x20, 0xc8, 0x9e, 0x80, 0xc4, 0xa2, 0xc4, 0xdc, 0xe2, 0xa0, 0xd4, 0xc2, 0xd2, 0xd4, 0xe2,
-	0x12, 0x25, 0x6f, 0x2e, 0x61, 0x14, 0xd1, 0xe2, 0x82, 0xfc, 0xbc, 0xe2, 0x54, 0x21, 0x13, 0x2e,
-	0xb6, 0x02, 0xb0, 0x88, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0xb7, 0x91, 0x98, 0x1e, 0xaa, 0xb3, 0xf4,
-	0x20, 0xea, 0x9d, 0x58, 0x4e, 0xdc, 0x93, 0x67, 0x08, 0x82, 0xaa, 0x35, 0x2a, 0xe7, 0x62, 0x05,
-	0x1b, 0x26, 0x94, 0xc7, 0xc5, 0x06, 0x51, 0x20, 0xa4, 0x84, 0xae, 0x11, 0xd3, 0x0d, 0x52, 0xca,
-	0x78, 0xd5, 0x40, 0x5c, 0xa4, 0x24, 0xdd, 0x74, 0xf9, 0xc9, 0x64, 0x26, 0x51, 0x21, 0x61, 0x7d,
-	0x88, 0x62, 0x7d, 0xb0, 0x1f, 0x21, 0x16, 0x3b, 0xb9, 0x9c, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91,
-	0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x13, 0x1e, 0xcb, 0x31, 0x5c, 0x78, 0x2c, 0xc7, 0x70, 0xe3,
-	0xb1, 0x1c, 0x43, 0x94, 0x56, 0x7a, 0x66, 0x49, 0x46, 0x69, 0x92, 0x5e, 0x72, 0x7e, 0xae, 0xbe,
-	0x1f, 0x58, 0xa3, 0x73, 0x46, 0x62, 0x66, 0x1e, 0xcc, 0x90, 0x0a, 0x88, 0x31, 0x25, 0x95, 0x05,
-	0xa9, 0xc5, 0x49, 0x6c, 0xe0, 0x80, 0x32, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0xfc, 0x13, 0x54,
-	0x8d, 0x98, 0x01, 0x00, 0x00,
+	// 459 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0x31, 0x8f, 0xd3, 0x30,
+	0x14, 0xc7, 0x93, 0xd3, 0x11, 0xe9, 0x0c, 0xba, 0xc1, 0x3d, 0x4e, 0xc5, 0xed, 0x05, 0x64, 0x18,
+	0x8e, 0x43, 0x8a, 0x75, 0x07, 0x5f, 0x80, 0x83, 0x0d, 0x81, 0x4a, 0x60, 0x62, 0xa9, 0x5c, 0xb0,
+	0x72, 0x16, 0xd4, 0x76, 0x6d, 0xa7, 0xa2, 0x2b, 0x0b, 0x23, 0x48, 0xcc, 0x7c, 0x9f, 0x8e, 0x95,
+	0x58, 0x98, 0x10, 0x6a, 0xf9, 0x20, 0x28, 0xb6, 0x8b, 0x9a, 0x92, 0x56, 0xdd, 0x92, 0xf7, 0xff,
+	0xbf, 0xf7, 0x7e, 0x79, 0x7f, 0x05, 0xb4, 0x14, 0xd3, 0x8a, 0x8c, 0xcf, 0xc9, 0xa8, 0x64, 0x7a,
+	0x92, 0x29, 0x2d, 0xad, 0x84, 0x87, 0x82, 0x0f, 0xb8, 0x2e, 0xb3, 0x4a, 0xcb, 0xc6, 0xe7, 0xe8,
+	0xa8, 0x90, 0x85, 0x74, 0x12, 0xa9, 0x9e, 0xbc, 0x0b, 0x75, 0x0b, 0x29, 0x8b, 0x0f, 0x8c, 0x50,
+	0xc5, 0x09, 0x15, 0x42, 0x5a, 0x6a, 0xb9, 0x14, 0x26, 0xa8, 0xff, 0x06, 0x1b, 0x4b, 0x2d, 0xf3,
+	0x45, 0x7c, 0x04, 0xe0, 0xcb, 0x6a, 0x4f, 0x8f, 0x6a, 0x3a, 0x34, 0x39, 0x1b, 0x95, 0xcc, 0x58,
+	0xfc, 0x0c, 0xb4, 0x6a, 0x55, 0xa3, 0xa4, 0x30, 0x0c, 0x3e, 0x02, 0x89, 0x72, 0x95, 0x76, 0x7c,
+	0x27, 0x3e, 0xbd, 0x7e, 0x71, 0x9c, 0xd5, 0xb1, 0x32, 0xef, 0xbf, 0xdc, 0x9f, 0xfe, 0xba, 0x1d,
+	0xe5, 0xc1, 0x8b, 0x5f, 0x01, 0xe4, 0x86, 0xbd, 0xd6, 0xf4, 0x1d, 0xd3, 0x3d, 0x69, 0x78, 0x45,
+	0x15, 0x56, 0xc1, 0x13, 0x00, 0xac, 0x7c, 0xcf, 0x44, 0x5f, 0x51, 0xae, 0xdd, 0xdc, 0x83, 0xfc,
+	0xc0, 0x55, 0x7a, 0x94, 0x6b, 0x78, 0x0c, 0x12, 0xeb, 0xfa, 0xda, 0x7b, 0x4e, 0x0a, 0x6f, 0xf8,
+	0x04, 0x74, 0x1a, 0x87, 0x7a, 0x52, 0x8c, 0x40, 0x7b, 0x45, 0x7e, 0x4e, 0x75, 0xc1, 0x97, 0x1b,
+	0x71, 0x07, 0xdc, 0x6a, 0xd0, 0xd6, 0x1a, 0x73, 0x66, 0x98, 0x1e, 0xb3, 0xc7, 0xc6, 0x30, 0xbb,
+	0xde, 0x58, 0xd7, 0x7c, 0xe3, 0xc5, 0xf7, 0x7d, 0x70, 0xcd, 0xa9, 0x50, 0x80, 0xc4, 0xdf, 0x01,
+	0xe2, 0xf5, 0xfb, 0xfc, 0x7f, 0x6a, 0x74, 0x77, 0xab, 0x27, 0x50, 0x75, 0x3e, 0xfd, 0xf8, 0xf3,
+	0x6d, 0xef, 0x26, 0x6c, 0x11, 0x6f, 0x26, 0x2e, 0x4a, 0x7f, 0x5f, 0xf8, 0x25, 0x06, 0x87, 0xf5,
+	0x33, 0xc0, 0xb3, 0xc6, 0xa1, 0x8d, 0x01, 0xa0, 0x07, 0x3b, 0x79, 0x03, 0xc8, 0x3d, 0x07, 0x92,
+	0xc2, 0x6e, 0x0d, 0xc4, 0x67, 0xd2, 0x57, 0xcb, 0xf5, 0x9f, 0x63, 0x70, 0x63, 0xf5, 0xba, 0xf0,
+	0x74, 0xcb, 0x8e, 0x5a, 0x38, 0xe8, 0xfe, 0x0e, 0xce, 0xc0, 0x82, 0x1d, 0x4b, 0x17, 0xa2, 0x26,
+	0x96, 0xa1, 0x5f, 0x5c, 0x91, 0xac, 0xc6, 0xb5, 0x81, 0xa4, 0x21, 0xed, 0x0d, 0x24, 0x4d, 0xd9,
+	0x6f, 0x20, 0xd1, 0xde, 0xda, 0xa7, 0x95, 0xf7, 0xf2, 0xe9, 0x74, 0x9e, 0xc6, 0xb3, 0x79, 0x1a,
+	0xff, 0x9e, 0xa7, 0xf1, 0xd7, 0x45, 0x1a, 0xcd, 0x16, 0x69, 0xf4, 0x73, 0x91, 0x46, 0x6f, 0xce,
+	0x0a, 0x6e, 0xaf, 0xca, 0x41, 0xf6, 0x56, 0x0e, 0xc9, 0x0b, 0xd7, 0xff, 0xe4, 0x8a, 0x72, 0xb1,
+	0x9c, 0xf5, 0x31, 0x7c, 0xd7, 0x44, 0x31, 0x33, 0x48, 0xdc, 0x5f, 0xfb, 0xf0, 0x6f, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0x7c, 0xd8, 0x6c, 0xd2, 0x25, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -155,6 +410,9 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the x/perp module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	TraderPosition(ctx context.Context, in *QueryTraderPositionRequest, opts ...grpc.CallOption) (*QueryTraderPositionResponse, error)
+	TraderMargin(ctx context.Context, in *QueryTraderMarginRequest, opts ...grpc.CallOption) (*QueryTraderMarginResponse, error)
+	ReserveAsset(ctx context.Context, in *QueryReserveAssetRequest, opts ...grpc.CallOption) (*QueryReserveAssetResponse, error)
 }
 
 type queryClient struct {
@@ -174,10 +432,40 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
+func (c *queryClient) TraderPosition(ctx context.Context, in *QueryTraderPositionRequest, opts ...grpc.CallOption) (*QueryTraderPositionResponse, error) {
+	out := new(QueryTraderPositionResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v1.Query/TraderPosition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) TraderMargin(ctx context.Context, in *QueryTraderMarginRequest, opts ...grpc.CallOption) (*QueryTraderMarginResponse, error) {
+	out := new(QueryTraderMarginResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v1.Query/TraderMargin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ReserveAsset(ctx context.Context, in *QueryReserveAssetRequest, opts ...grpc.CallOption) (*QueryReserveAssetResponse, error) {
+	out := new(QueryReserveAssetResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v1.Query/ReserveAsset", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Parameters queries the parameters of the x/perp module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	TraderPosition(context.Context, *QueryTraderPositionRequest) (*QueryTraderPositionResponse, error)
+	TraderMargin(context.Context, *QueryTraderMarginRequest) (*QueryTraderMarginResponse, error)
+	ReserveAsset(context.Context, *QueryReserveAssetRequest) (*QueryReserveAssetResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -186,6 +474,15 @@ type UnimplementedQueryServer struct {
 
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
+}
+func (*UnimplementedQueryServer) TraderPosition(ctx context.Context, req *QueryTraderPositionRequest) (*QueryTraderPositionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TraderPosition not implemented")
+}
+func (*UnimplementedQueryServer) TraderMargin(ctx context.Context, req *QueryTraderMarginRequest) (*QueryTraderMarginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TraderMargin not implemented")
+}
+func (*UnimplementedQueryServer) ReserveAsset(ctx context.Context, req *QueryReserveAssetRequest) (*QueryReserveAssetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReserveAsset not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -210,6 +507,60 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_TraderPosition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryTraderPositionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).TraderPosition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.perp.v1.Query/TraderPosition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).TraderPosition(ctx, req.(*QueryTraderPositionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_TraderMargin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryTraderMarginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).TraderMargin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.perp.v1.Query/TraderMargin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).TraderMargin(ctx, req.(*QueryTraderMarginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_ReserveAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryReserveAssetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ReserveAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.perp.v1.Query/ReserveAsset",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ReserveAsset(ctx, req.(*QueryReserveAssetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "nibiru.perp.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -217,6 +568,18 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Params",
 			Handler:    _Query_Params_Handler,
+		},
+		{
+			MethodName: "TraderPosition",
+			Handler:    _Query_TraderPosition_Handler,
+		},
+		{
+			MethodName: "TraderMargin",
+			Handler:    _Query_TraderMargin_Handler,
+		},
+		{
+			MethodName: "ReserveAsset",
+			Handler:    _Query_ReserveAsset_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -279,6 +642,158 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryTraderPositionRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryTraderPositionRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryTraderPositionRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Trader) > 0 {
+		i -= len(m.Trader)
+		copy(dAtA[i:], m.Trader)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Trader)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.TokenPair) > 0 {
+		i -= len(m.TokenPair)
+		copy(dAtA[i:], m.TokenPair)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.TokenPair)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryTraderPositionResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryTraderPositionResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryTraderPositionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryTraderMarginRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryTraderMarginRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryTraderMarginRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryTraderMarginResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryTraderMarginResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryTraderMarginResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryReserveAssetRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryReserveAssetRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryReserveAssetRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryReserveAssetResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryReserveAssetResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryReserveAssetResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -307,6 +822,68 @@ func (m *QueryParamsResponse) Size() (n int) {
 	_ = l
 	l = m.Params.Size()
 	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryTraderPositionRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.TokenPair)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Trader)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryTraderPositionResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryTraderMarginRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryTraderMarginResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryReserveAssetRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryReserveAssetResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	return n
 }
 
@@ -428,6 +1005,370 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryTraderPositionRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryTraderPositionRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryTraderPositionRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TokenPair", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TokenPair = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Trader", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Trader = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryTraderPositionResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryTraderPositionResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryTraderPositionResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryTraderMarginRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryTraderMarginRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryTraderMarginRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryTraderMarginResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryTraderMarginResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryTraderMarginResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryReserveAssetRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryReserveAssetRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryReserveAssetRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryReserveAssetResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryReserveAssetResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryReserveAssetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
