@@ -341,3 +341,16 @@ func (s LockState) keyDenomTime(denom string, t time.Time, pk []byte) []byte {
 	// TODO(mercilex): maybe more efficient
 	return append(append([]byte(denom), 0xFF), s.keyTime(t, pk)...)
 }
+
+func (s LockState) IterateLocks(do func(lock *types.Lock) (stop bool)) {
+	iter := s.locks.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		lock := new(types.Lock)
+		s.cdc.MustUnmarshal(iter.Value(), lock)
+		if do(lock) {
+			break
+		}
+	}
+}
