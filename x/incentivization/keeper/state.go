@@ -123,3 +123,17 @@ func (s IncentivizationProgramState) denomKey(denom string, pk []byte) []byte {
 	key = append(key, pk...)
 	return key
 }
+
+// IteratePrograms iterates over every program
+func (s IncentivizationProgramState) IteratePrograms(do func(program *types.IncentivizationProgram) (stop bool)) {
+	iter := s.incentivizationPrograms.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		program := new(types.IncentivizationProgram)
+		s.cdc.MustUnmarshal(iter.Value(), program)
+		if do(program) {
+			break
+		}
+	}
+}
