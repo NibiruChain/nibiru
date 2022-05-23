@@ -20,9 +20,8 @@ func TestQueryServer_IncentivizationProgram(t *testing.T) {
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	// init
-	program, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second), 100)
+	program, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second).UTC(), 100)
 	require.NoError(t, err)
-	program.StartTime = program.StartTime.UTC()
 
 	resp, err := q.IncentivizationProgram(sdk.WrapSDKContext(ctx), &types.QueryIncentivizationProgramRequest{})
 	require.NoError(t, err)
@@ -35,17 +34,14 @@ func TestQueryServer_IncentivizationPrograms(t *testing.T) {
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	// init
-	program1, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second), 100)
+	_, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second).UTC(), 100)
 	require.NoError(t, err)
-	program1.StartTime = program1.StartTime.UTC()
 
-	program2, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second), 100)
+	program2, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second).UTC(), 100)
 	require.NoError(t, err)
-	program2.StartTime = program2.StartTime.UTC()
 
-	program3, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second), 100)
+	program3, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "lp", 24*time.Hour, time.Now().Add(1*time.Second).UTC(), 100)
 	require.NoError(t, err)
-	program3.StartTime = program3.StartTime.UTC()
 
 	// query
 	resp, err := q.IncentivizationPrograms(sdk.WrapSDKContext(ctx), &types.QueryIncentivizationProgramsRequest{Pagination: &query.PageRequest{
