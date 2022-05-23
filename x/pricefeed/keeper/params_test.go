@@ -20,7 +20,7 @@ func TestGetParams(t *testing.T) {
 			name: "calling GetParams without setting returns default",
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				k := nibiruApp.PriceKeeper
+				k := nibiruApp.PricefeedKeeper
 				require.EqualValues(t, types.DefaultParams(), k.GetParams(ctx))
 			},
 		},
@@ -28,7 +28,7 @@ func TestGetParams(t *testing.T) {
 			name: "params match after manual set and include default",
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				k := nibiruApp.PriceKeeper
+				k := nibiruApp.PricefeedKeeper
 				params := types.Params{
 					Pairs: []types.Pair{
 						{Token1: "btc", Token0: "usd", Oracles: nil, Active: true},
@@ -64,7 +64,7 @@ func TestWhitelistOracles(t *testing.T) {
 			name: "genesis - no oracle provided",
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				pk := &nibiruApp.PriceKeeper
+				pk := &nibiruApp.PricefeedKeeper
 
 				oracle := sample.AccAddress()
 				for _, pair := range pk.GetPairs(ctx) {
@@ -79,7 +79,7 @@ func TestWhitelistOracles(t *testing.T) {
 			name: "multiple oracles whitelisted at different times ",
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				pk := &nibiruApp.PriceKeeper
+				pk := &nibiruApp.PricefeedKeeper
 
 				for _, pair := range pk.GetPairs(ctx) {
 					require.EqualValues(t, pair.Oracles, noOracles)

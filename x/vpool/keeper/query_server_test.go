@@ -15,7 +15,7 @@ import (
 func TestQueryReserveAssets(t *testing.T) {
 	t.Log("initialize vpoolkeeper")
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPriceKeeper(gomock.NewController(t)),
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 	queryServer := NewQuerier(vpoolKeeper)
 
