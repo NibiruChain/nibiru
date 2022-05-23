@@ -103,7 +103,8 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			var side types.Side
 			switch args[0] {
@@ -153,6 +154,7 @@ func OpenPositionCmd() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
 
