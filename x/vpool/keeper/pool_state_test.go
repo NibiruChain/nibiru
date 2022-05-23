@@ -35,7 +35,7 @@ func TestCreatePool(t *testing.T) {
 
 func TestKeeper_GetAllPools(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPriceKeeper(gomock.NewController(t)),
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 
 	vpools := []*types2.Pool{

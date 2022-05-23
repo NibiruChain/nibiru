@@ -1,10 +1,11 @@
-package vpool
+package vpool_test
 
 import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -35,13 +36,13 @@ func TestGenesis(t *testing.T) {
 
 	nibiruApp, ctx := testutil.NewNibiruApp(true)
 	k := nibiruApp.VpoolKeeper
-	InitGenesis(ctx, k, genesisState)
+	vpool.InitGenesis(ctx, k, genesisState)
 
 	for _, vp := range vpools {
 		require.True(t, k.ExistsPool(ctx, common.TokenPair(vp.Pair)))
 	}
 
-	exportedGenesis := ExportGenesis(ctx, k)
+	exportedGenesis := vpool.ExportGenesis(ctx, k)
 	require.Len(t, exportedGenesis.Vpools, 2)
 
 	for _, exportedVpool := range exportedGenesis.Vpools {
