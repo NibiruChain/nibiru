@@ -104,13 +104,12 @@ func (k Keeper) GetAllPools(ctx sdk.Context) []*types.Pool {
 
 	var pools []*types.Pool
 	for ; iterator.Valid(); iterator.Next() {
-		pair := string(iterator.Key())
-		pool, err := k.getPool(ctx, common.TokenPair(pair))
-		if err != nil {
-			panic(err)
-		}
+		bz := iterator.Value()
 
-		pools = append(pools, pool)
+		var pool types.Pool
+		k.codec.MustUnmarshal(bz, &pool)
+
+		pools = append(pools, &pool)
 	}
 
 	return pools
