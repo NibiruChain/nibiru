@@ -40,4 +40,8 @@ func TestGenesis(t *testing.T) {
 	for _, vp := range vpools {
 		require.True(t, k.ExistsPool(ctx, common.TokenPair(vp.Pair)))
 	}
+
+	exportedGenesis := ExportGenesis(ctx, k)
+
+	require.Equal(t, vpools, exportedGenesis)
 }

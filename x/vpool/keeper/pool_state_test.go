@@ -31,3 +31,22 @@ func TestCreatePool(t *testing.T) {
 	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }
+
+func TestKeeper_GetAllPools(t *testing.T) {
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPriceKeeper(gomock.NewController(t)),
+	)
+
+	vpoolKeeper.CreatePool(
+		ctx,
+		NUSDPair,
+		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+		sdk.NewDec(10_000_000),       // 10 tokens
+		sdk.NewDec(5_000_000),        // 5 tokens
+		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+	)
+
+	pools := vpoolKeeper.GetAllPools(ctx)
+	require.Equal(t, "", pools)
+}
