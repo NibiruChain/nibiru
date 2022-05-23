@@ -1,0 +1,11 @@
+[
+    {
+        "name": "Query perp ef balance",
+        "table_name": "perp_balance",
+        "args": [
+            "q",
+            "perp",
+            "balance"
+        ]
+    },
+]
