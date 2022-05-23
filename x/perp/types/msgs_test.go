@@ -1,9 +1,11 @@
 package types
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
