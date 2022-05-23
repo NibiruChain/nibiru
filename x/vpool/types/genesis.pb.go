@@ -23,7 +23,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// GenesisState defines the lockup module's genesis state.
+// GenesisState defines the vpool module's genesis state.
 type GenesisState struct {
 	Vpools []*Pool `protobuf:"bytes,1,rep,name=vpools,proto3" json:"vpools,omitempty"`
 	Params Params  `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
