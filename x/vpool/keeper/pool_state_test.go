@@ -7,6 +7,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	types2 "github.com/NibiruChain/nibiru/x/vpool/types"
+
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 )
 
@@ -30,4 +32,39 @@ func TestCreatePool(t *testing.T) {
 
 	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
+}
+
+func TestKeeper_GetAllPools(t *testing.T) {
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+	)
+
+	vpools := []*types2.Pool{
+		{
+			Pair:                  "BTC:NUSD",
+			BaseAssetReserve:      sdk.NewDec(1_000_000),      // 1
+			QuoteAssetReserve:     sdk.NewDec(30_000_000_000), // 30,000
+			TradeLimitRatio:       sdk.MustNewDecFromStr("0.88"),
+			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.20"),
+			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.20"),
+		},
+		{
+			Pair:                  "ETH:NUSD",
+			BaseAssetReserve:      sdk.NewDec(2_000_000),      // 1
+			QuoteAssetReserve:     sdk.NewDec(60_000_000_000), // 30,000
+			TradeLimitRatio:       sdk.MustNewDecFromStr("0.77"),
+			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.30"),
+			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.30"),
+		},
+	}
+
+	for _, vp := range vpools {
+		vpoolKeeper.savePool(ctx, vp)
+	}
+
+	pools := vpoolKeeper.GetAllPools(ctx)
+	require.Len(t, pools, 2)
+	for _, pool := range pools {
+		require.Contains(t, vpools, pool)
+	}
 }
