@@ -1,15 +1,17 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"testing"
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"testing"
-	"time"
+
+	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestQueryServer_IncentivizationProgram(t *testing.T) {
