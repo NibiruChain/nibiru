@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	ModuleName = "vpool"
-	StoreKey   = "vpoolkey"
+	ModuleName   = "vpool"
+	StoreKey     = "vpoolkey"
+	RouterKey    = ModuleName
+	QuerierRoute = ModuleName
 )
 
 /*
