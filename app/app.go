@@ -90,7 +90,7 @@ import (
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
-	epochstype "github.com/NibiruChain/nibiru/x/epochs/types"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/incentivization"
 	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
@@ -101,11 +101,12 @@ import (
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
-	pricekeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
-	pricetypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/vpool"
 	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
@@ -169,7 +170,7 @@ var (
 		perptypes.VaultModuleAccount:          {},
 		perptypes.PerpEFModuleAccount:         {},
 		perptypes.FeePoolModuleAccount:        {},
-		epochstype.ModuleName:                 {},
+		epochstypes.ModuleName:                {},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		common.TreasuryPoolModuleAccount:      {},
@@ -214,7 +215,7 @@ type NibiruApp struct {
 	DexKeeper             dexkeeper.Keeper
 	StablecoinKeeper      stablecoinkeeper.Keeper
 	PerpKeeper            perpkeeper.Keeper
-	PriceKeeper           pricekeeper.Keeper
+	PricefeedKeeper       pricefeedkeeper.Keeper
 	EpochsKeeper          epochskeeper.Keeper
 	LockupKeeper          lockupkeeper.Keeper
 	IncentivizationKeeper incentivizationkeeper.Keeper
@@ -260,8 +261,8 @@ func NewNibiruApp(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
-		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey,
-		epochstype.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
+		dextypes.StoreKey, pricefeedtypes.StoreKey, stablecointypes.StoreKey,
+		epochstypes.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
 		incentivizationtypes.StoreKey, vpooltypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -269,7 +270,7 @@ func NewNibiruApp(
 	// not include this key.
 	memKeys := sdk.NewMemoryStoreKeys(
 		capabilitytypes.MemStoreKey, "testingkey",
-		stablecointypes.MemStoreKey, pricetypes.MemStoreKey,
+		stablecointypes.MemStoreKey, pricefeedtypes.MemStoreKey,
 	)
 
 	app := &NibiruApp{
@@ -357,34 +358,34 @@ func NewNibiruApp(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
 
-	app.PriceKeeper = pricekeeper.NewKeeper(
-		appCodec, keys[pricetypes.StoreKey], memKeys[pricetypes.MemStoreKey],
-		app.GetSubspace(pricetypes.ModuleName),
+	app.PricefeedKeeper = pricefeedkeeper.NewKeeper(
+		appCodec, keys[pricefeedtypes.StoreKey], memKeys[pricefeedtypes.MemStoreKey],
+		app.GetSubspace(pricefeedtypes.ModuleName),
 	)
 
 	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
 		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
 		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.DexKeeper,
+		app.AccountKeeper, app.BankKeeper, app.PricefeedKeeper, app.DexKeeper,
 	)
 
 	app.VpoolKeeper = vpoolkeeper.NewKeeper(
 		appCodec,
 		keys[vpooltypes.StoreKey],
-		app.PriceKeeper,
+		app.PricefeedKeeper,
 	)
 
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.VpoolKeeper,
+		app.AccountKeeper, app.BankKeeper, app.PricefeedKeeper, app.VpoolKeeper,
 	)
 
 	app.EpochsKeeper = epochskeeper.NewKeeper(
-		appCodec, keys[epochstype.StoreKey],
+		appCodec, keys[epochstypes.StoreKey],
 	)
 	app.EpochsKeeper.SetHooks(
-		epochstype.NewMultiEpochHooks(app.StablecoinKeeper.Hooks()),
+		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks()),
 	)
 
 	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
@@ -404,16 +405,19 @@ func NewNibiruApp(
 	dexModule := dex.NewAppModule(
 		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
 	pricefeedModule := pricefeed.NewAppModule(
-		appCodec, app.PriceKeeper, app.AccountKeeper, app.BankKeeper)
+		appCodec, app.PricefeedKeeper, app.AccountKeeper, app.BankKeeper)
 	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
 	stablecoinModule := stablecoin.NewAppModule(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
-		app.PriceKeeper,
+		app.PricefeedKeeper,
 	)
 	lockupModule := lockup.NewAppModule(appCodec, app.LockupKeeper, app.AccountKeeper, app.BankKeeper)
 	perpModule := perp.NewAppModule(
 		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
-		app.PriceKeeper,
+		app.PricefeedKeeper,
+	)
+	vpoolModule := vpool.NewAppModule(
+		appCodec, app.VpoolKeeper, app.PricefeedKeeper,
 	)
 
 	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper)
@@ -445,6 +449,7 @@ func NewNibiruApp(
 		stablecoinModule,
 		lockupModule,
 		epochsModule,
+		vpoolModule,
 		perpModule,
 		incentivizationModule,
 	)
@@ -461,9 +466,10 @@ func NewNibiruApp(
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
-		pricetypes.ModuleName,
-		epochstype.ModuleName,
+		pricefeedtypes.ModuleName,
+		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
+		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		incentivizationtypes.ModuleName,
@@ -476,9 +482,10 @@ func NewNibiruApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
-		epochstype.ModuleName,
-		pricetypes.ModuleName,
+		epochstypes.ModuleName,
+		pricefeedtypes.ModuleName,
 		stablecointypes.ModuleName,
+		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		incentivizationtypes.ModuleName,
@@ -496,9 +503,10 @@ func NewNibiruApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		dextypes.ModuleName,
-		pricetypes.ModuleName,
-		epochstype.ModuleName,
+		pricefeedtypes.ModuleName,
+		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
+		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		incentivizationtypes.ModuleName,
@@ -737,8 +745,8 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(dextypes.ModuleName)
-	paramsKeeper.Subspace(pricetypes.ModuleName)
-	paramsKeeper.Subspace(epochstype.ModuleName)
+	paramsKeeper.Subspace(pricefeedtypes.ModuleName)
+	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
 

@@ -79,7 +79,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
-			priceKeeper := &nibiruApp.PriceKeeper
+			priceKeeper := &nibiruApp.PricefeedKeeper
 
 			oracle := sample.AccAddress()
 			pairs := ptypes.NewParams([]ptypes.Pair{
@@ -256,19 +256,19 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 						Token1:  common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 
 			// Post prices to each specified market with the oracle.
 			prices := map[common.AssetPair]sdk.Dec{
 				common.CollStablePool: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -348,16 +348,16 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 						Token0:  common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 
 			// Post prices to each market with the oracle.
-			_, err := nibiruApp.PriceKeeper.SetPrice(
+			_, err := nibiruApp.PricefeedKeeper.SetPrice(
 				ctx, oracle, pair.Token0, pair.Token1, tc.priceCollStable, priceExpiry)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pfPair := range pricefeedParams.Pairs {
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pfPair.Token0, pfPair.Token1)
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pfPair.Token0, pfPair.Token1)
 				require.NoError(t, err, "Error posting price for market: %d", pfPair.AsString())
 			}
 
@@ -404,7 +404,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 						Token0:  common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 
 			neededCollAmount, err := stablecoinKeeper.RecollateralizeCollAmtForTargetCollRatio(ctx)
 			if tc.expectedPass {
@@ -536,19 +536,19 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 						Token0:  common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 
 			prices := map[common.AssetPair]sdk.Dec{
 				common.GovStablePool:  tc.priceGovStable,
 				common.CollStablePool: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -558,13 +558,13 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				common.GovStablePool:  tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, assetPair.Token0, assetPair.Token1,
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())
@@ -717,19 +717,19 @@ func TestRecollateralize(t *testing.T) {
 					{Token0: common.GovDenom, Token1: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 
 			prices := map[common.AssetPair]sdk.Dec{
 				common.GovStablePool:  tc.priceGovStable,
 				common.CollStablePool: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -739,13 +739,13 @@ func TestRecollateralize(t *testing.T) {
 				common.GovStablePool:  tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, assetPair.Token0, assetPair.Token1,
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())
@@ -1073,31 +1073,31 @@ func TestBuyback(t *testing.T) {
 					{Token0: common.GovDenom, Token1: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 
 			prices := map[common.AssetPair]sdk.Dec{
 				common.GovStablePool:  tc.priceGovStable,
 				common.CollStablePool: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Post prices to each specified market with the oracle.
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, assetPair.Token0, assetPair.Token1,
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())
@@ -1202,31 +1202,31 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 					{Token0: common.GovDenom, Token1: common.StableDenom,
 						Oracles: []sdk.AccAddress{oracle}, Active: true},
 				}}
-			nibiruApp.PriceKeeper.SetParams(ctx, pricefeedParams)
+			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 
 			prices := map[common.AssetPair]sdk.Dec{
 				common.GovStablePool:  tc.priceGovStable,
 				common.CollStablePool: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, pair.Token0, pair.Token1, prices[pair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Post prices to each specified market with the oracle.
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PriceKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.SetPrice(
 					ctx, oracle, assetPair.Token0, assetPair.Token1,
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PriceKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())

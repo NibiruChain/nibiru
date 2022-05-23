@@ -87,7 +87,7 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	upperBound := params.GetPriceUpperBoundAsDec()
 
 	// Should take TWAP price
-	stablePrice, err := k.PriceKeeper.GetCurrentTWAPPrice(
+	stablePrice, err := k.PricefeedKeeper.GetCurrentTWAPPrice(
 		ctx, common.StableDenom, common.CollDenom)
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func (k *Keeper) StableRequiredForTargetCollRatio(
 
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
-		priceColl, err := k.PriceKeeper.GetCurrentPrice(
+		priceColl, err := k.PricefeedKeeper.GetCurrentPrice(
 			ctx, collDenom, common.StableDenom)
 		if err != nil {
 			return sdk.ZeroDec(), err
@@ -139,7 +139,7 @@ func (k *Keeper) RecollateralizeCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+	priceCollStable, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
@@ -219,7 +219,7 @@ func (k Keeper) Recollateralize(
 	)
 
 	// Compute GOV rewarded to user
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+	priceCollStable, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return response, err
@@ -278,7 +278,7 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	params := k.GetParams(ctx)
 	bonusRate := params.GetBonusRateRecollAsDec()
 
-	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+	priceGovStable, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.GovDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
@@ -318,7 +318,7 @@ func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 ) (neededGovAmt sdk.Int, err error) {
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	neededUSDForBuyback := neededUSDForRecoll.Neg()
-	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+	priceGovStable, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.GovDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err
@@ -388,7 +388,7 @@ func (k Keeper) Buyback(
 	events.EmitBurnNIBI(ctx, inGov)
 
 	// Compute USD (stable) value of the GOV sent by the caller: 'inUSD'
-	priceGovStable, err := k.PriceKeeper.GetCurrentPrice(
+	priceGovStable, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.GovDenom, common.StableDenom)
 	if err != nil {
 		return response, err
@@ -440,7 +440,7 @@ Returns:
 func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,
 ) (collAmt sdk.Int, err error) {
-	priceCollStable, err := k.PriceKeeper.GetCurrentPrice(
+	priceCollStable, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Int{}, err

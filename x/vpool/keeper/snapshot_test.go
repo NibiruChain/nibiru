@@ -16,7 +16,7 @@ import (
 
 func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPriceKeeper(gomock.NewController(t)),
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 
 	pool := getSamplePool()
@@ -41,7 +41,7 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 	}
 
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPriceKeeper(gomock.NewController(t)),
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 	ctx = ctx.WithBlockHeight(expectedBlockHeight).WithBlockTime(expectedTime)
 	vpoolKeeper.saveSnapshot(ctx, common.TokenPair(pool.Pair), 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, expectedTime, expectedBlockHeight)
@@ -55,7 +55,7 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 
 func TestNewKeeper_getSnapshot(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPriceKeeper(gomock.NewController(t)),
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 	expectedHeight := int64(123)
 	expectedTime := tmtime.Now()

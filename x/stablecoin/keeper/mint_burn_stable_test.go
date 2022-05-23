@@ -121,7 +121,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up pairs for the pricefeed keeper.
-			priceKeeper := &nibiruApp.PriceKeeper
+			priceKeeper := &nibiruApp.PricefeedKeeper
 			pfParams := pricefeedTypes.Params{
 				Pairs: []pricefeedTypes.Pair{
 					{Token0: common.GovDenom,
@@ -308,7 +308,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up pairs for the pricefeed keeper.
-			priceKeeper := &nibiruApp.PriceKeeper
+			priceKeeper := &nibiruApp.PricefeedKeeper
 			pfParams := pricefeedTypes.Params{
 				Pairs: []pricefeedTypes.Pair{
 					{
@@ -504,7 +504,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			)
 
 			// Set up pairs for the pricefeed keeper.
-			priceKeeper := nibiruApp.PriceKeeper
+			priceKeeper := nibiruApp.PricefeedKeeper
 			pfParams := pricefeedTypes.Params{
 				Pairs: []pricefeedTypes.Pair{
 					{Token1: common.StableDenom, Token0: common.GovDenom,
@@ -661,7 +661,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			)
 
 			// Set up pairs for the pricefeed keeper.
-			priceKeeper := nibiruApp.PriceKeeper
+			priceKeeper := nibiruApp.PricefeedKeeper
 			pfParams := pricefeedTypes.Params{
 				Pairs: []pricefeedTypes.Pair{
 					{Token1: common.StableDenom, Token0: common.GovDenom,

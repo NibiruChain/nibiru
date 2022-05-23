@@ -1,7 +1,6 @@
-package perp
+package vpool
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
@@ -9,95 +8,63 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/keeper"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+
+	// "github.com/NibiruChain/nibiru/x/vpool/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/vpool/keeper"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-// type check to ensure the interface is properly implemented
 var (
 	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
-// Genesis
-// ----------------------------------------------------------------------------
-
-// InitGenesis initializes the capability module's state from a provided genesis
-// state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	if genState.ModuleAccountBalance.Amount.GT(sdk.ZeroInt()) {
-		if err := k.BankKeeper.MintCoins(
-			ctx, types.ModuleName, sdk.NewCoins(genState.ModuleAccountBalance),
-		); err != nil {
-			panic(err)
-		}
-	}
-
-	k.SetParams(ctx, genState.Params)
-
-	// See https://github.com/cosmos/cosmos-sdk/issues/5569 on why we do this.
-	k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
-	k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
-}
-
-// ExportGenesis returns the capability module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesis()
-	genesis.Params = k.GetParams(ctx)
-	genesis.ModuleAccountBalance = k.GetModuleAccountBalance(ctx, common.GovDenom)
-
-	return genesis
-}
-
-// ----------------------------------------------------------------------------
 // AppModuleBasic
 // ----------------------------------------------------------------------------
 
+// AppModuleBasic implements the AppModuleBasic interface for the capability module.
 type AppModuleBasic struct {
-	binaryCodec codec.BinaryCodec
+	cdc codec.BinaryCodec
 }
 
-func NewAppModuleBasic(binaryCodec codec.BinaryCodec) AppModuleBasic {
-	return AppModuleBasic{binaryCodec: binaryCodec}
+func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
+	return AppModuleBasic{cdc: cdc}
 }
 
+// Name returns the capability module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-// RegisterInterfaces registers interfaces and implementations of the perp module.
-func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
-	types.RegisterInterfaces(interfaceRegistry)
+func (AppModuleBasic) RegisterCodec(cdc *codec.LegacyAmino) {
+	types.RegisterCodec(cdc)
 }
 
-func (AppModuleBasic) RegisterCodec(aminoCodec *codec.LegacyAmino) {
-	types.RegisterCodec(aminoCodec)
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterCodec(cdc)
 }
 
-func (AppModuleBasic) RegisterLegacyAminoCodec(aminoCodec *codec.LegacyAmino) {
-	types.RegisterCodec(aminoCodec)
+// RegisterInterfaces registers the module's interface types
+func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
+	types.RegisterInterfaces(reg)
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the erc20
-// module.
+// DefaultGenesis returns the capability module's default genesis state.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
 
 // ValidateGenesis performs genesis state validation for the capability module.
-func (AppModuleBasic) ValidateGenesis(
-	cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage,
-) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
 	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
@@ -110,12 +77,10 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(
-	clientCtx client.Context, mux *runtime.ServeMux,
-) {
-	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
-		panic(err)
-	}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	// if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+	// 	panic(err)
+	// }
 }
 
 // GetTxCmd returns the capability module's root tx command.
@@ -136,25 +101,19 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
-	ak     types.AccountKeeper
-	bk     types.BankKeeper
-	pk     types.PricefeedKeeper
+	keeper          keeper.Keeper
+	pricefeedKeeper types.PricefeedKeeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	ak types.AccountKeeper,
-	bk types.BankKeeper,
-	pk types.PricefeedKeeper,
+	pricefeedKeeper types.PricefeedKeeper,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic: NewAppModuleBasic(cdc),
-		keeper:         keeper,
-		ak:             ak,
-		bk:             bk,
-		pk:             pk,
+		AppModuleBasic:  NewAppModuleBasic(cdc),
+		keeper:          keeper,
+		pricefeedKeeper: pricefeedKeeper,
 	}
 }
 
@@ -179,8 +138,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	// types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -188,18 +146,12 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage,
-) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
-	// Initialize global index to index in genesis state
+	// Initialize global invpool to invpool in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
 	InitGenesis(ctx, am.keeper, genState)
-
-	// See https://github.com/cosmos/cosmos-sdk/issues/5569 on why we do this.
-	am.ak.GetModuleAccount(ctx, types.PerpEFModuleAccount)
-	am.ak.GetModuleAccount(ctx, types.VaultModuleAccount)
-	am.ak.GetModuleAccount(ctx, types.FeePoolModuleAccount)
 
 	return []abci.ValidatorUpdate{}
 }
@@ -218,7 +170,6 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	// EndBlocker(ctx, am.keeper)
+func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }

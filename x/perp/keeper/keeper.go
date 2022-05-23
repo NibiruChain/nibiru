@@ -17,10 +17,10 @@ type Keeper struct {
 	storeKey      sdk.StoreKey
 	ParamSubspace paramtypes.Subspace
 
-	BankKeeper    types.BankKeeper
-	AccountKeeper types.AccountKeeper
-	PriceKeeper   types.PriceKeeper
-	VpoolKeeper   types.VpoolKeeper
+	BankKeeper      types.BankKeeper
+	AccountKeeper   types.AccountKeeper
+	PricefeedKeeper types.PricefeedKeeper
+	VpoolKeeper     types.VpoolKeeper
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -31,7 +31,7 @@ func NewKeeper(
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	priceKeeper types.PriceKeeper,
+	priceKeeper types.PricefeedKeeper,
 	vpoolKeeper types.VpoolKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
@@ -49,10 +49,10 @@ func NewKeeper(
 		storeKey:      storeKey,
 		ParamSubspace: paramSubspace,
 
-		AccountKeeper: accountKeeper,
-		BankKeeper:    bankKeeper,
-		PriceKeeper:   priceKeeper,
-		VpoolKeeper:   vpoolKeeper,
+		AccountKeeper:   accountKeeper,
+		BankKeeper:      bankKeeper,
+		PricefeedKeeper: priceKeeper,
+		VpoolKeeper:     vpoolKeeper,
 	}
 }
 
