@@ -64,7 +64,7 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	if !m.BaseAssetAmountLimit.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("base asset amount limit must always be greater than zero")
 	}
-	if m.QuoteAssetAmount.GT(sdk.ZeroInt()) {
+	if !m.QuoteAssetAmount.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("quote asset amount must be always greater than zero")
 	}
 
