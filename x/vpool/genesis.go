@@ -10,6 +10,17 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+	for _, vp := range genState.Vpools {
+		k.CreatePool(
+			ctx,
+			vp.Pair,
+			vp.TradeLimitRatio,
+			vp.QuoteAssetReserve,
+			vp.BaseAssetReserve,
+			vp.FluctuationLimitRatio,
+			vp.MaxOracleSpreadRatio,
+		)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
