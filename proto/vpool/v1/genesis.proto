@@ -1,0 +1,12 @@
+syntax = "proto3";
+package nibiru.vpool.v1;
+
+import "gogoproto/gogo.proto";
+import "vpool/v1/vpool.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
+
+// GenesisState defines the lockup module's genesis state.
+message GenesisState {
+  repeated Pool vpools = 1;
+}
