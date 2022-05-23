@@ -9,6 +9,7 @@ import "google/protobuf/duration.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 
@@ -95,5 +96,28 @@ message GenesisState {
 }
 
 service Query {
+  rpc IncentivizationProgram(QueryIncentivizationProgramRequest) returns (QueryIncentivizationProgramResponse){
+    option (google.api.http).get = "/nibiru/incentivization/v1/incentivization_program";
+  };
 
+  rpc IncentivizationPrograms(QueryIncentivizationProgramsRequest) returns (QueryIncentivizationProgramsResponse) {
+    option (google.api.http).get = "/nibiru/incentivization/v1/incentivization_programs";
+  }
+}
+
+message QueryIncentivizationProgramRequest {
+  uint64 id = 1;
+}
+
+message QueryIncentivizationProgramResponse {
+  IncentivizationProgram incentivization_program = 1;
+}
+
+message QueryIncentivizationProgramsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryIncentivizationProgramsResponse {
+  repeated IncentivizationProgram incentivization_programs = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

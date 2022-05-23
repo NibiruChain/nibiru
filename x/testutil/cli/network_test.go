@@ -7,9 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/testutil/network"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {

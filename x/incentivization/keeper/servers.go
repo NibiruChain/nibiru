@@ -3,6 +3,9 @@ package keeper
 import (
 	"context"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/types/query"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
@@ -69,5 +72,36 @@ func NewQueryServer(k Keeper) types.QueryServer {
 }
 
 type queryServer struct {
-	Keeper
+	k Keeper
+}
+
+func (q queryServer) IncentivizationProgram(ctx context.Context, request *types.QueryIncentivizationProgramRequest) (*types.QueryIncentivizationProgramResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	program, err := q.k.IncentivizationProgramsState(sdkCtx).Get(request.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryIncentivizationProgramResponse{IncentivizationProgram: program}, nil
+}
+
+func (q queryServer) IncentivizationPrograms(ctx context.Context, request *types.QueryIncentivizationProgramsRequest) (*types.QueryIncentivizationProgramsResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := prefix.NewStore(sdkCtx.KVStore(q.k.storeKey), incentivizationProgramObjectsNamespace)
+
+	var programs []*types.IncentivizationProgram
+	pageResp, err := query.Paginate(store, request.Pagination, func(key []byte, value []byte) error {
+		bytes := store.Get(key)
+		program := new(types.IncentivizationProgram)
+		q.k.cdc.MustUnmarshal(bytes, program)
+		programs = append(programs, program)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryIncentivizationProgramsResponse{
+		IncentivizationPrograms: programs,
+		Pagination:              pageResp,
+	}, nil
 }
