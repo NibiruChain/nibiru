@@ -13,12 +13,12 @@ const (
 )
 
 var (
-	incentivizationProgramNamespace      = []byte{0x0}
-	incentivizationProgramIDNamespace    = append(incentivizationProgramNamespace, 0x0)
-	incentivizationProgramIDKey          = []byte{0x1}
-	incentiviationProgramObjectNamespace = append(incentivizationProgramNamespace, 0x1)
-	incentivizationProgramDenomIndex     = append(incentivizationProgramNamespace, 0x2)
-	incentivizationProgramDenomMap       = append(incentivizationProgramNamespace, 0x3)
+	incentivizationProgramNamespace        = []byte{0x0}
+	incentivizationProgramIDNamespace      = append(incentivizationProgramNamespace, 0x0)
+	incentivizationProgramIDKey            = []byte{0x1}
+	incentivizationProgramObjectsNamespace = append(incentivizationProgramNamespace, 0x1)
+	incentivizationProgramDenomIndex       = append(incentivizationProgramNamespace, 0x2)
+	incentivizationProgramDenomMap         = append(incentivizationProgramNamespace, 0x3)
 )
 
 func (k Keeper) IncentivizationProgramsState(ctx sdk.Context) IncentivizationProgramState {
@@ -31,7 +31,7 @@ func newIncentivizationProgramState(ctx sdk.Context, key sdk.StoreKey, cdc codec
 		cdc:                                cdc,
 		ctx:                                ctx,
 		programID:                          prefix.NewStore(store, incentivizationProgramIDNamespace),
-		incentivizationPrograms:            prefix.NewStore(store, incentiviationProgramObjectNamespace),
+		incentivizationPrograms:            prefix.NewStore(store, incentivizationProgramObjectsNamespace),
 		denomToIncentivizationProgramIndex: prefix.NewStore(store, incentivizationProgramDenomIndex),
 		denomMap:                           prefix.NewStore(store, incentivizationProgramDenomMap),
 	}
