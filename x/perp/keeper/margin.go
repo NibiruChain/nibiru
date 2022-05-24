@@ -128,7 +128,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// validate margin amount
-	if msg.Margin.Amount.IsNegative() {
+	if !msg.Margin.Amount.IsPositive() {
 		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
 		k.Logger(ctx).Debug(
 			err.Error(),
