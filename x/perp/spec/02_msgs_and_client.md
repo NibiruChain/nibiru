@@ -22,7 +22,7 @@ This command has several required flags:
 - `vpool`: Identifier for the position's virtual pool.
 - `side`: Either "long" or "short"
 - `margin`: The amount of collateral input to back the position. This collateral is the quote asset of the 'vpool'.
-- `leverage`:  
+- `leverage`:  A decimal number between 1 and 10 (inclusive) that specifies how much leverage the trader wishes to take on.
 - `base-limit`: Limiter to ensure the trader doesn't get screwed by slippage.
 
 
