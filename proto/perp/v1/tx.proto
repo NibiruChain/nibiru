@@ -80,9 +80,10 @@ message MsgLiquidate {
     string trader = 3;
   }
   
-  message MsgLiquidateResponse {
-    // TODO: blank for now
-  }
+message MsgLiquidateResponse {
+  cosmos.base.v1beta1.Coin fee_to_liquidator = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin fee_to_perp_ecosystem_fund = 2 [(gogoproto.nullable) = false];
+}
 
 // -------------------------- OpenPosition --------------------------
 

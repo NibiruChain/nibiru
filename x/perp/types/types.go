@@ -39,13 +39,29 @@ func ZeroPosition(ctx sdk.Context, tokenPair common.TokenPair, traderAddr sdk.Ac
 }
 
 func (l *LiquidateResp) Validate() error {
-	for _, field := range []sdk.Dec{
-		l.BadDebt, l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
-		if field.IsNil() {
-			return fmt.Errorf(
-				`invalid liquidationOutput: %v,
+	nilFieldError := fmt.Errorf(
+		`invalid liquidationOutput: %v,
 				must not have nil fields`, l.String())
+
+	// nil sdk.Int check
+	for _, field := range []sdk.Int{
+		l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
+		if field.IsNil() {
+			return nilFieldError
 		}
 	}
+
+	// nil sdk.Dec check
+	for _, field := range []sdk.Dec{l.BadDebt} {
+		if field.IsNil() {
+			return nilFieldError
+		}
+	}
+
+	_, err := sdk.AccAddressFromBech32(l.Liquidator.String())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
