@@ -15,7 +15,7 @@ import (
 func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
-		addr := sample.AccAddress()
+		traderAddr := sample.AccAddress()
 		pair, err := common.NewTokenPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
@@ -26,17 +26,17 @@ func TestSettlePosition(t *testing.T) {
 
 		dep.mockBankKeeper.EXPECT().
 			SendCoinsFromModuleToAccount(
-				ctx, types.VaultModuleAccount, addr,
+				ctx, types.VaultModuleAccount, traderAddr,
 				sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(100))),
 			).
 			Return(error(nil))
 
 		pos := types.Position{
-			Address:      addr.String(),
-			Pair:         pair.String(),
-			Size_:        sdk.NewDec(10),
-			Margin:       sdk.NewDec(100),
-			OpenNotional: sdk.NewDec(1000),
+			TraderAddress: traderAddr,
+			Pair:          pair.String(),
+			Size_:         sdk.NewDec(10),
+			Margin:        sdk.NewDec(100),
+			OpenNotional:  sdk.NewDec(1000),
 		}
 		err = k.Positions().Create(ctx, &pos)
 		require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestSettlePosition(t *testing.T) {
 
 	t.Run("success - settlement price not zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
-		addr := sample.AccAddress()
+		traderAddr := sample.AccAddress()
 		pair, err := common.NewTokenPairFromStr("LUNA:UST") // memeing
 		require.NoError(t, err)
 
@@ -62,7 +62,7 @@ func TestSettlePosition(t *testing.T) {
 
 		dep.mockBankKeeper.EXPECT().
 			SendCoinsFromModuleToAccount(
-				ctx, types.VaultModuleAccount, addr, sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100)))).
+				ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100)))).
 			Return(error(nil))
 
 		// this means that the user
@@ -76,11 +76,11 @@ func TestSettlePosition(t *testing.T) {
 		// we also need to return margin which is 100coin
 		// so total is 99_100 coin
 		pos := types.Position{
-			Address:      addr.String(),
-			Pair:         pair.String(),
-			Size_:        sdk.NewDec(100),
-			Margin:       sdk.NewDec(100),
-			OpenNotional: sdk.NewDec(1000),
+			TraderAddress: traderAddr,
+			Pair:          pair.String(),
+			Size_:         sdk.NewDec(100),
+			Margin:        sdk.NewDec(100),
+			OpenNotional:  sdk.NewDec(1000),
 		}
 		err = k.Positions().Create(ctx, &pos)
 		require.NoError(t, err)
@@ -93,14 +93,14 @@ func TestSettlePosition(t *testing.T) {
 
 	t.Run("position size is zero", func(t *testing.T) {
 		k, _, ctx := getKeeper(t)
-		addr := sample.AccAddress()
+		traderAddr := sample.AccAddress()
 		pair, err := common.NewTokenPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
 		pos := types.Position{
-			Address: addr.String(),
-			Pair:    pair.String(),
-			Size_:   sdk.ZeroDec(),
+			TraderAddress: traderAddr,
+			Pair:          pair.String(),
+			Size_:         sdk.ZeroDec(),
 		}
 		err = k.Positions().Create(ctx, &pos)
 		require.NoError(t, err)
