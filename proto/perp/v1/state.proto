@@ -126,14 +126,6 @@ message LiquidateResp {
   PositionResp position_resp = 5;
 }
 
-message VirtualPoolInfo {
-  string pair = 1;
-  int64 last_restriction_block = 2;
-  repeated string cumulative_premium_fractions = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
-}
-
 enum Side {
   BUY = 0;
   SELL = 1;
