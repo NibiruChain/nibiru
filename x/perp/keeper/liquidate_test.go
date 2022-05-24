@@ -97,7 +97,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
+			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -115,7 +115,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			require.Error(t, err)
 
 			// No change in the position
-			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
+			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice)
 			require.Equal(t, position.Size_, newPosition.Size_)
 			require.Equal(t, position.Margin, newPosition.Margin)
 			require.Equal(t, position.OpenNotional, newPosition.OpenNotional)
@@ -159,7 +159,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						Address: alice.String(), Pair: pair.String(),
+						TraderAddress: alice, Pair: pair.String(),
 						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
@@ -191,7 +191,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						Address: alice.String(), Pair: pair.String(),
+						TraderAddress: alice, Pair: pair.String(),
 						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
@@ -228,10 +228,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						Address:      alice.String(),
-						Pair:         pair.String(),
-						Margin:       sdk.ZeroDec(),
-						OpenNotional: sdk.ZeroDec(),
+						TraderAddress: alice,
+						Pair:          pair.String(),
+						Margin:        sdk.ZeroDec(),
+						OpenNotional:  sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
 					BadDebt:                   sdk.ZeroDec(),
@@ -263,7 +263,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						Address: alice.String(), Pair: pair.String(),
+						TraderAddress: alice, Pair: pair.String(),
 						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
@@ -319,7 +319,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				ctx, pair, tc.positionSide, alice, tc.quoteAmount, tc.leverage, tc.baseAssetLimit))
 
 			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
+			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice)
 			require.NoError(t, err)
 
 			t.Log("Fund vault and PerpEF")
@@ -339,7 +339,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			assert.Contains(t, ctx.EventManager().Events(), tc.expectedEvent)
 
 			t.Log("Check new position")
-			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
+			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice)
 			assert.True(t, newPosition.Size_.IsZero())
 			assert.True(t, newPosition.Margin.IsZero())
 			assert.True(t, newPosition.OpenNotional.IsZero())
