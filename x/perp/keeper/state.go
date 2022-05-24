@@ -160,6 +160,21 @@ func (p PairMetadata) Set(ctx sdk.Context, metadata *types.PairMetadata) {
 	kv.Set([]byte(metadata.Pair), p.cdc.MustMarshal(metadata))
 }
 
+func (p PairMetadata) GetAll(ctx sdk.Context) []*types.PairMetadata {
+	store := ctx.KVStore(p.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, pairMetadataNamespace)
+
+	var pairMetadatas []*types.PairMetadata
+	for ; iterator.Valid(); iterator.Next() {
+		var pairMetadata = new(types.PairMetadata)
+		p.cdc.MustUnmarshal(iterator.Value(), pairMetadata)
+		pairMetadatas = append(pairMetadatas, pairMetadata)
+	}
+
+	return pairMetadatas
+}
+
 var whitelistNamespace = []byte{0x3}
 
 type Whitelist Keeper
