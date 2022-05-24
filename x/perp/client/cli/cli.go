@@ -38,7 +38,6 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryParams(),
 		CmdQueryPosition(),
 		CmdQueryMargin(),
-		CmdQueryReserveAssets(),
 	}
 	for _, cmd := range cmds {
 		perpQueryCmd.AddCommand(cmd)
@@ -81,11 +80,18 @@ func CmdQueryPosition() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: implement
-			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 
 			trader := args[0]
-			tokenPair := args[1]
+			tokenPair, err := common.NewTokenPairFromStr(args[1])
+			if err != nil {
+				return err
+			}
 
 			fmt.Println("STEVENDEBUG query trader: ", trader)
 			fmt.Println("STEVENDEBUG query tokenPair: ", tokenPair)
@@ -94,7 +100,7 @@ func CmdQueryPosition() *cobra.Command {
 			res, err := queryClient.TraderPosition(
 				context.Background(), &types.QueryTraderPositionRequest{
 					Trader:    trader,
-					TokenPair: tokenPair,
+					TokenPair: tokenPair.String(),
 				},
 			)
 			fmt.Println("STEVENDEBUG TraderPosition err: ", err)
@@ -123,32 +129,6 @@ func CmdQueryMargin() *cobra.Command {
 
 			res, err := queryClient.TraderMargin(
 				context.Background(), &types.QueryTraderMarginRequest{},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdQueryReserveAssets() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "reserve-assets",
-		Short: "query a vpool's reserve assets",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: implement
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.ReserveAsset(
-				context.Background(), &types.QueryReserveAssetRequest{},
 			)
 			if err != nil {
 				return err

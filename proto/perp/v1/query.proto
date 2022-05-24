@@ -22,10 +22,6 @@ service Query {
   rpc TraderMargin(QueryTraderMarginRequest) returns (QueryTraderMarginResponse) {
     option (google.api.http).get = "/nibiru/perp/trader_margin";
   }
-
-  rpc ReserveAsset(QueryReserveAssetRequest) returns (QueryReserveAssetResponse) {
-    option (google.api.http).get = "/nibiru/perp/reserve_asset";
-  }
 }
 
 // ---------------------------------------- Params
@@ -61,16 +57,5 @@ message QueryTraderMarginRequest {}
 message QueryTraderMarginResponse {
   // TODO:
 }
-
-// ---------------------------------------- ReserveAsset
-
-/* QueryReserveAssetRequest is the request type for the reserve asset of the 
-   x/perp module account. */
-message QueryReserveAssetRequest {}
-
-message QueryReserveAssetResponse {
-  // TODO:
-}
-
 
 // ---------------------------------------- OtherQuery
