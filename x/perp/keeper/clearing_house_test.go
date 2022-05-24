@@ -880,7 +880,6 @@ func TestIncreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -937,7 +936,6 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -957,7 +955,6 @@ func TestIncreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -1014,7 +1011,6 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1037,7 +1033,6 @@ func TestIncreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(11),  // 11 NUSD
 					OpenNotional:                        sdk.NewDec(110), // 110 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -1095,7 +1090,6 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 11(old) + 10(new) - 22(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(210), resp.Position.OpenNotional) // 100(old) + 100(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.2"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1116,7 +1110,6 @@ func TestIncreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -1173,7 +1166,6 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new)  - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1194,7 +1186,6 @@ func TestIncreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -1251,7 +1242,6 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new) - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1275,7 +1265,6 @@ func TestIncreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -1333,7 +1322,6 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 10(old) + 10.5(new) - (30)(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(205), resp.Position.OpenNotional) // 100(old) + 105(new)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.3"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1370,7 +1358,6 @@ func TestClosePositionEntirely(t *testing.T) {
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -1430,7 +1417,6 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1451,7 +1437,6 @@ func TestClosePositionEntirely(t *testing.T) {
 					Margin:                              sdk.NewDec(12),  // 10.5 NUSD
 					OpenNotional:                        sdk.NewDec(120), // 105 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -1511,7 +1496,6 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1532,7 +1516,6 @@ func TestClosePositionEntirely(t *testing.T) {
 					Margin:                              sdk.NewDec(15),  // 15 NUSD
 					OpenNotional:                        sdk.NewDec(150), // 150 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -1592,7 +1575,6 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1615,7 +1597,6 @@ func TestClosePositionEntirely(t *testing.T) {
 					Margin:                              sdk.NewDec(15),   // 15 NUSD
 					OpenNotional:                        sdk.NewDec(150),  // 150 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -1675,7 +1656,6 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1696,7 +1676,6 @@ func TestClosePositionEntirely(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -1756,7 +1735,6 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1777,7 +1755,6 @@ func TestClosePositionEntirely(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -1837,7 +1814,6 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1876,7 +1852,6 @@ func TestDecreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -1932,7 +1907,6 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(58), resp.Position.Margin)       // 10(old) + 50(realized PnL) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(50), resp.Position.OpenNotional) // 200(position notional) - 100(notional sold) - 50(unrealized PnL)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -1956,7 +1930,6 @@ func TestDecreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(11),  // 10.5 NUSD
 					OpenNotional:                        sdk.NewDec(110), // 105 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -2016,7 +1989,6 @@ func TestDecreasePosition(t *testing.T) {
 					sdk.MustNewDecFromStr("104.5").String(),
 					resp.Position.OpenNotional.String()) // 100(position notional) - 5(notional sold) - (-4.75)(unrealized PnL)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -2042,7 +2014,6 @@ func TestDecreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(11),   // 10.5 NUSD
 					OpenNotional:                        sdk.NewDec(110),  // 105 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -2098,7 +2069,6 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.MustNewDecFromStr("13.6").String(), resp.Position.Margin.String())        // 10.5(old) + 0.25(realized PnL) - (-2.1)(funding payment)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("104.5").String(), resp.Position.OpenNotional.String()) // 100(position notional) - 5(notional sold) + 4.75(unrealized PnL)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -2122,7 +2092,6 @@ func TestDecreasePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 
@@ -2178,7 +2147,6 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.MustNewDecFromStr("11.75").String(), resp.Position.Margin.String()) // 10(old) + (-0.25)(realized PnL) - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(95), resp.Position.OpenNotional)                             // 105(position notional) - 5.25(notional sold) + (-4.75)(unrealized PnL)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -2217,7 +2185,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -2288,7 +2255,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(100), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -2310,7 +2276,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(11),  // 10.5 NUSD
 					OpenNotional:                        sdk.NewDec(105), // 105 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -2385,7 +2350,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(100), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -2407,7 +2371,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(15),  // 15 NUSD
 					OpenNotional:                        sdk.NewDec(150), // 150 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -2478,7 +2441,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(15),   // 15 NUSD
 					OpenNotional:                        sdk.NewDec(150),  // 150 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -2549,7 +2511,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(100), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -2571,7 +2532,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(
@@ -2642,7 +2602,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.MustNewDecFromStr("10.5").String(), resp.Position.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(105), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, 0, resp.Position.LiquidityHistoryIndex)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -2664,7 +2623,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
 					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					LiquidityHistoryIndex:               0,
 					BlockNumber:                         0,
 				}
 				perpKeeper.SetPosition(

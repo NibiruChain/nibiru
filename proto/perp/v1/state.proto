@@ -45,27 +45,34 @@ message GenesisState {
 message Position {
   // address identifies the address owner of this position
   string address = 1;
+  
   // pair identifies the pair associated with this position
   string pair = 2;
 
+  // Position size.
   string size = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; // signed int
+  
+  // Amount of margin remaining in the position.
   string margin = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; 
 
   // OpenNotional is the quote denom value of the position when opening.
+  // Used to calculate PnL.
   string open_notional = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; 
+
+  // The last cumulative funding payment this position has applied.
+  // Used to calculate the next funding payment. 
   string last_update_cumulative_premium_fraction = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; // int
-  int64 liquidity_history_index = 7;
 
   // BlockNumber is the block number of the change to the position.
-  int64 block_number = 8;
+  int64 block_number = 7;
 }
 
 message PositionResp {

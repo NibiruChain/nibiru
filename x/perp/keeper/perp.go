@@ -17,7 +17,6 @@ func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, trader str
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		LiquidityHistoryIndex:               0,
 		BlockNumber:                         ctx.BlockHeight(),
 	})
 }

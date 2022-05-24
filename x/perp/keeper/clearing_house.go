@@ -233,7 +233,6 @@ func (k Keeper) increasePosition(
 		Margin:                              remaining.Margin,
 		OpenNotional:                        currentPosition.OpenNotional.Add(increasedNotional),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
@@ -489,7 +488,6 @@ func (k Keeper) decreasePosition(
 		Margin:                              remaining.Margin,
 		OpenNotional:                        remainOpenNotional,
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
@@ -669,7 +667,6 @@ func (k Keeper) closePositionEntirely(
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 

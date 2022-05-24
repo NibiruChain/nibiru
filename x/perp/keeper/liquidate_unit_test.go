@@ -478,7 +478,6 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 				Margin:                              tc.initialMargin,
 				OpenNotional:                        tc.initialOpenNotional,
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				LiquidityHistoryIndex:               0,
 				BlockNumber:                         ctx.BlockHeight(),
 			}
 			perpKeeper.SetPosition(ctx, pair, traderAddr.String(), &position)
@@ -517,7 +516,6 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			assert.True(t, newPosition.Margin.IsZero())       // always zero
 			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero
 			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
-			assert.EqualValues(t, 0, newPosition.LiquidityHistoryIndex)
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 		})
 	}

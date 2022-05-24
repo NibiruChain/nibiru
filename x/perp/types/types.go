@@ -34,7 +34,6 @@ func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Posit
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		LiquidityHistoryIndex:               0,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 }
