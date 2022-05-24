@@ -49,11 +49,6 @@ func (k Keeper) AddMargin(
 	}
 	// validate vpool exists
 	if err = k.requireVpool(ctx, pair); err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"token_pair",
-			pair.String(),
-		)
 		return nil, err
 	}
 
@@ -151,11 +146,6 @@ func (k Keeper) RemoveMargin(
 
 	// validate vpool exists
 	if err = k.requireVpool(ctx, pair); err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"token_pair",
-			pair.String(),
-		)
 		return nil, err
 	}
 
@@ -304,9 +294,15 @@ func (k Keeper) GetMarginRatio(
 	return marginRatio, nil
 }
 
-func (k *Keeper) requireVpool(ctx sdk.Context, pair common.TokenPair) error {
+func (k Keeper) requireVpool(ctx sdk.Context, pair common.TokenPair) (err error) {
 	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
-		return fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
+		err = fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
+		k.Logger(ctx).Error(
+			err.Error(),
+			"pair",
+			pair.String(),
+		)
+		return err
 	}
 	return nil
 }
