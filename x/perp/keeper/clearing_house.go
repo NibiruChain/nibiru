@@ -107,8 +107,8 @@ func (k Keeper) OpenPosition(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToSend,
-			/* from */ traderAddr.String(),
-			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String())
+			/* from */ traderAddr,
+			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount))
 	case marginToVaultInt.IsNegative():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
@@ -118,8 +118,8 @@ func (k Keeper) OpenPosition(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToSend,
-			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String(),
-			/* to */ traderAddr.String(),
+			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
+			/* to */ traderAddr,
 		)
 	}
 
@@ -135,7 +135,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		Trader:                traderAddr.String(),
+		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,

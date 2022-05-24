@@ -144,13 +144,13 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 				expectedEvents := []sdk.Event{
 					events.NewTransferEvent(
 						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr.String(),
-						/* to */ perpEFAddr.String(),
+						/* from */ vaultAddr,
+						/* to */ perpEFAddr,
 					),
 					events.NewTransferEvent(
 						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr.String(),
-						/* to */ liquidator.String(),
+						/* from */ vaultAddr,
+						/* to */ liquidator,
 					),
 				}
 				for _, event := range expectedEvents {
@@ -500,7 +500,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 				positionResp.ExchangedQuoteAssetAmount) // amount of quote exchanged
 			// Initial position size is sold back to to vpool
 			assert.EqualValues(t, tc.initialPositionSize.Neg(), positionResp.ExchangedPositionSize)
-			// ( oldMargin + unrealzedPnL - fundingPayment ) * -1
+			// ( oldMargin + unrealizedPnL - fundingPayment ) * -1
 			assert.EqualValues(t, tc.expectedMarginToVault, positionResp.MarginToVault)
 			assert.EqualValues(t, tc.expectedPositionBadDebt, positionResp.BadDebt)
 			assert.EqualValues(t, tc.expectedPositionRealizedPnl, positionResp.RealizedPnl)

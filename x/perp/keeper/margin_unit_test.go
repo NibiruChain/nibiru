@@ -182,11 +182,9 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, _, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				invalidSender := "notABech32"
-				msg := &types.MsgRemoveMargin{Sender: invalidSender}
+				msg := &types.MsgRemoveMargin{Sender: []byte("")}
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
-				require.ErrorContains(t, err, "decoding bech32 failed")
 			},
 		},
 		{
@@ -198,7 +196,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				alice := sample.AccAddress()
 				the3pool := "dai:usdc:usdt"
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice.String(),
+					Sender:    alice,
 					TokenPair: the3pool,
 					Margin:    sdk.NewCoin(common.StableDenom, sdk.NewInt(5))}
 				_, err := k.RemoveMargin(goCtx, msg)
@@ -216,7 +214,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				alice := sample.AccAddress()
 				pair := common.TokenPair("osmo:nusd")
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice.String(),
+					Sender:    alice,
 					TokenPair: pair.String(),
 					Margin:    sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)),
 				}
@@ -254,7 +252,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 
 				alice := sample.AccAddress()
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice.String(),
+					Sender:    alice,
 					TokenPair: "osmo:nusd",
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
@@ -309,7 +307,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 
 				alice := sample.AccAddress()
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice.String(),
+					Sender:    alice,
 					TokenPair: "osmo:nusd",
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
@@ -369,7 +367,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					),
 					events.NewTransferEvent(
 						/* coin */ msg.Margin,
-						/* from */ vaultAddr.String(),
+						/* from */ vaultAddr,
 						/* to */ msg.Sender,
 					),
 				}
