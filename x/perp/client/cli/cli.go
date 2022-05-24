@@ -78,7 +78,6 @@ func CmdQueryPosition() *cobra.Command {
 		Short: "trader's position for a given token pair/vpool",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: implement
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
