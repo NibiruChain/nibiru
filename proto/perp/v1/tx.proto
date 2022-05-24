@@ -77,7 +77,8 @@ message MsgLiquidate {
     // TokenPair is the identifier for the position's virtual pool
     string token_pair = 2;
     // Trader is the address of the owner of the position 
-    string trader = 3;
+    bytes trader = 3 [
+      (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
   }
   
   message MsgLiquidateResponse {

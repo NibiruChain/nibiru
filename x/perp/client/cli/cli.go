@@ -264,10 +264,15 @@ func LiquidateCmd() *cobra.Command {
 			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
 				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
+			traderAddr, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgLiquidate{
 				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
-				Trader:    args[1],
+				Trader:    traderAddr,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
