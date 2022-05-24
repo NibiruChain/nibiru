@@ -149,11 +149,15 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			leverage:       sdk.OneDec(),
 			baseAssetLimit: sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
-			traderFunds:    sdk.NewInt64Coin("NUSD", 50_100),
+			// There's a 20 bps tx fee on open position.
+			// This tx fee is split 50/50 bw the PerpEF and Treasury.
+			// txFee = exchangedQuote * 20 bps = 100
+			traderFunds: sdk.NewInt64Coin("NUSD", 50_100),
 			// feeToLiquidator
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 50_000 * 0.1 / 2 = 2500
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 2_500),
+			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
@@ -175,9 +179,12 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			),
 		},
 		{
-			name:           "happy path - Sell",
-			positionSide:   types.Side_SELL,
-			quoteAmount:    sdk.NewInt(50_000),
+			name:         "happy path - Sell",
+			positionSide: types.Side_SELL,
+			quoteAmount:  sdk.NewInt(50_000),
+			// There's a 20 bps tx fee on open position.
+			// This tx fee is split 50/50 bw the PerpEF and Treasury.
+			// txFee = exchangedQuote * 20 bps = 100
 			traderFunds:    sdk.NewInt64Coin("NUSD", 50_100),
 			leverage:       sdk.OneDec(),
 			baseAssetLimit: sdk.ZeroDec(),
@@ -186,6 +193,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 50_000 * 0.123123 / 2 = 3078.025 → 3078
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 3078),
+			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_046_972),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
@@ -223,6 +231,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
+			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
@@ -258,6 +267,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
+			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
@@ -451,7 +461,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 
 			t.Log("Liquidate the position")
 			liquidator := sample.AccAddress()
-			err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
+			_, err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
 
 			require.Error(t, err)
 
@@ -495,8 +505,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("yyy", 50_100),
-
-			expectedPositionSize:    sdk.MustNewDecFromStr("14999.999999925000000001"), // 24_999.9999999875000000001 * 0.6
+			/* expectedPositionSize =  */
+			// 24_999.9999999875000000001 * 0.6
+			expectedPositionSize:    sdk.MustNewDecFromStr("14999.999999925000000001"),
 			expectedMarginRemaining: sdk.MustNewDecFromStr("47999.999999994000000000"), // approx 2k less but slippage
 
 			// feeToLiquidator
@@ -504,8 +515,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
+			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_002_050),
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
@@ -537,6 +549,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("yyy", 50_100),
+			// There's a 20 bps tx fee on open position.
+			// This tx fee is split 50/50 bw the PerpEF and Treasury.
+			// exchangedQuote * 20 bps = 100
 
 			expectedPositionSize:    sdk.MustNewDecFromStr("-15000.000000115000000001"), // ~-25k * 0.6
 			expectedMarginRemaining: sdk.MustNewDecFromStr("48000.000000014000000000"),  // approx 2k less but slippage
@@ -546,8 +561,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
+			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_002_050),
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
@@ -638,7 +654,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (partial) position")
 			liquidator := sample.AccAddress()
-			err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
+			_, err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
 
 			t.Log("Verify expected values using internal event due to usage of private fns")
