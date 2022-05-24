@@ -37,7 +37,7 @@ func (q queryServer) TraderPosition(
 	fmt.Println("STEVENDEBUG TraderPosition new: ")
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	position, err := k.Positions().Get(ctx, common.TokenPair(req.TokenPair), req.Trader)
+	position, err := q.Keeper.Positions().Get(ctx, common.TokenPair(req.TokenPair), req.Trader)
 
 	fmt.Println("STEVENDEBUG position: ", position)
 	fmt.Println("STEVENDEBUG err: ", err)
