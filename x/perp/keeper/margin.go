@@ -85,7 +85,6 @@ func (k Keeper) AddMargin(
 
 	position.Margin = position.Margin.Add(addedMargin.ToDec())
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
-	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msg.Sender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
@@ -98,9 +97,10 @@ func (k Keeper) AddMargin(
 		)
 		return nil, err
 	}
+
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
-		/* from */ vaultAddr,
+		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
 		/* to */ msg.Sender,
 	)
 
@@ -217,17 +217,30 @@ func (k Keeper) RemoveMargin(
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.VaultModuleAccount, msg.Sender, sdk.NewCoins(coinToSend))
 	if err != nil {
-		return res, err
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"to",
+			msg.Sender.String(),
+			"coin",
+			coinToSend.String(),
+		)
+		return nil, err
 	}
-	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
-		/* from */ vaultAddr,
+		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
 		/* to */ msg.Sender,
 	)
 
-	events.EmitMarginChange(ctx, msg.Sender, pair.String(), msg.Margin.Amount, remaining.FundingPayment)
+	events.EmitMarginChange(
+		ctx,
+		msg.Sender,
+		pair.String(),
+		msg.Margin.Amount,
+		remaining.FundingPayment,
+	)
+
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      coinToSend,
 		FundingPayment: remaining.FundingPayment,
