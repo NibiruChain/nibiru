@@ -146,7 +146,7 @@ func (p PairMetadata) Get(ctx sdk.Context, pair common.TokenPair) (*types.PairMe
 
 	v := kv.Get([]byte(pair))
 	if v == nil {
-		return nil, types.ErrPairNotFound
+		return nil, types.ErrPairMetadataNotFound
 	}
 
 	pairMetadata := new(types.PairMetadata)

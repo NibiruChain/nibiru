@@ -4,9 +4,11 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 type msgServer struct {
@@ -43,7 +45,7 @@ func (k msgServer) OpenPosition(ctx context.Context, req *types.MsgOpenPosition)
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	err = k.k.OpenPosition(sdkCtx, pair, req.Side, addr, req.QuoteAssetAmount, req.Leverage, req.BaseAssetAmountLimit.ToDec())
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(vpooltypes.ErrOpeningPosition, err.Error())
 	}
 
 	return &types.MsgOpenPositionResponse{}, nil
