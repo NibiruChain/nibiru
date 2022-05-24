@@ -41,7 +41,6 @@ message QueryTraderPositionRequest {
 }
 
 message QueryTraderPositionResponse {
-  // TODO:
   Position position = 1;
 }
 
