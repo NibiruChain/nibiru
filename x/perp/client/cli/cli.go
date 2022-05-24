@@ -93,7 +93,7 @@ func CmdQueryPosition() *cobra.Command {
 
 			res, err := queryClient.TraderPosition(
 				context.Background(), &types.QueryTraderPositionRequest{
-					Trader:    trader,
+					Trader:    sdk.AccAddress(trader),
 					TokenPair: tokenPair.String(),
 				},
 			)

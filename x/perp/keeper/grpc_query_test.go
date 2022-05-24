@@ -22,16 +22,16 @@ func TestQueryPosition_Ok(t *testing.T) {
 
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
-	trader := sample.AccAddress().String()
+	trader := sample.AccAddress()
 	vpoolPair, err := common.NewTokenPairFromStr("btc:nusd")
 	require.NoError(t, err)
 
 	oldPosition := &types.Position{
-		Address:      trader,
-		Pair:         vpoolPair.String(),
-		Size_:        sdk.NewDec(10),
-		OpenNotional: sdk.NewDec(10),
-		Margin:       sdk.NewDec(1),
+		TraderAddress: trader,
+		Pair:          vpoolPair.String(),
+		Size_:         sdk.NewDec(10),
+		OpenNotional:  sdk.NewDec(10),
+		Margin:        sdk.NewDec(1),
 	}
 
 	nibiruApp.PerpKeeper.SetPosition(
@@ -47,7 +47,7 @@ func TestQueryPosition_Ok(t *testing.T) {
 	fmt.Println("res:", res)
 	require.NoError(t, err)
 
-	assert.Equal(t, oldPosition.Address, res.Position.Address)
+	assert.Equal(t, oldPosition.TraderAddress, res.Position.TraderAddress)
 	assert.Equal(t, oldPosition.Pair, res.Position.Pair)
 	assert.Equal(t, oldPosition.Size_, res.Position.Size_)
 }
