@@ -259,12 +259,12 @@ func (k Keeper) distributeLiquidateRewards(
 
 // ExecutePartialLiquidation partially liquidates a position
 func (k Keeper) ExecutePartialLiquidation(
-	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
+	ctx sdk.Context, liquidator sdk.AccAddress, currentPosition *types.Position,
 ) (types.LiquidateResp, error) {
 	params := k.GetParams(ctx)
 
 	var baseAssetDir vpooltypes.Direction
-	if position.Size_.GTE(sdk.ZeroDec()) {
+	if currentPosition.Size_.IsPositive() {
 		baseAssetDir = vpooltypes.Direction_ADD_TO_POOL
 	} else {
 		baseAssetDir = vpooltypes.Direction_REMOVE_FROM_POOL
@@ -272,9 +272,9 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
 		ctx,
-		common.TokenPair(position.Pair),
+		common.TokenPair(currentPosition.Pair),
 		baseAssetDir,
-		/* abs= */ position.Size_.Mul(params.GetPartialLiquidationRatioAsDec().Abs()),
+		/* abs= */ currentPosition.Size_.Mul(params.GetPartialLiquidationRatioAsDec()),
 	)
 	if err != nil {
 		return types.LiquidateResp{}, err
@@ -282,7 +282,7 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	positionResp, err := k.openReversePosition(
 		/* ctx */ ctx,
-		/* currentPosition */ *position,
+		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
 		/* leverage */ sdk.OneDec(),
 		/* baseAssetAmountLimit */ sdk.ZeroDec(),
@@ -297,7 +297,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.GetLiquidationFeeAsDec())
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.SetPosition(ctx, common.TokenPair(position.Pair), position.TraderAddress,
+	k.SetPosition(ctx, common.TokenPair(currentPosition.Pair), currentPosition.TraderAddress,
 		positionResp.Position)
 
 	// Compute splits for the liquidation fee
