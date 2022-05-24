@@ -155,11 +155,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -191,11 +191,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -227,11 +227,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -264,11 +264,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -301,11 +301,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -335,11 +335,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -369,11 +369,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(-10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(-10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -405,11 +405,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(-10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(-10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -441,11 +441,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(-10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(-10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -478,11 +478,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(-10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(-10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -515,11 +515,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(-10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(-10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -549,11 +549,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(-10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(-10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mocking price of vpool")
@@ -672,11 +672,11 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mock vpool spot price")
@@ -718,11 +718,11 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mock vpool spot price")
@@ -764,11 +764,11 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mock vpool spot price")
@@ -810,11 +810,11 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 				t.Log("Setting up initial position")
 				oldPosition := types.Position{
-					Address:      sample.AccAddress().String(),
-					Pair:         "BTC:NUSD",
-					Size_:        sdk.NewDec(10),
-					OpenNotional: sdk.NewDec(10),
-					Margin:       sdk.NewDec(1),
+					TraderAddress: sample.AccAddress(),
+					Pair:          "BTC:NUSD",
+					Size_:         sdk.NewDec(10),
+					OpenNotional:  sdk.NewDec(10),
+					Margin:        sdk.NewDec(1),
 				}
 
 				t.Log("Mock vpool spot price")
@@ -874,7 +874,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -930,7 +930,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))
 				assert.EqualValues(t, sdk.NewDec(100), resp.UnrealizedPnlAfter)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(150), resp.Position.Size_)        // 100 + 50
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
@@ -949,7 +949,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -1005,7 +1005,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))           // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 99 - 100
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(201), resp.Position.Size_)        // 100 + 101
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
@@ -1027,7 +1027,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(110), // 110 BTC
 					Margin:                              sdk.NewDec(11),  // 11 NUSD
@@ -1084,7 +1084,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)        // 90 - 100
 				assert.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                     // 11(old) + 10(new) - 22(funding payment)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(220), resp.Position.Size_)        // 110 + 110
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 11(old) + 10(new) - 22(funding payment) --> zero margin left
@@ -1104,7 +1104,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1160,7 +1160,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)           // open notional / leverage
 				assert.EqualValues(t, sdk.NewDec(50), resp.UnrealizedPnlAfter)      // 100 - 50
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-300), resp.Position.Size_)       // -100 - 200
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new)  - (-2)(funding payment)
@@ -1180,7 +1180,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // 100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1236,7 +1236,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)          // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 100 - 101
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-199), resp.Position.Size_)       // -100 - 99
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new) - (-2)(funding payment)
@@ -1259,7 +1259,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // 100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1316,7 +1316,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-5), resp.UnrealizedPnlAfter)                      // 100 - 105
 				assert.EqualValues(t, sdk.MustNewDecFromStr("9.5").String(), resp.BadDebt.String()) // 10(old) + 10.5(new) - (30)(funding payment)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-200), resp.Position.Size_)       // -100 + (-100)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 10(old) + 10.5(new) - (30)(funding payment) --> zero margin left
@@ -1352,7 +1352,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -1363,7 +1363,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1411,7 +1411,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(100), resp.RealizedPnl)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero when closing a position entirely
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
@@ -1431,7 +1431,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(12),  // 10.5 NUSD
@@ -1442,7 +1442,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1490,7 +1490,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-20), resp.RealizedPnl)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero when closing a position entirely
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
@@ -1510,7 +1510,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(15),  // 15 NUSD
@@ -1521,7 +1521,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1569,7 +1569,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero when closing a position entirely
 				assert.EqualValues(t, sdk.NewDec(37), resp.BadDebt)           // 15(oldMargin) + (-50)(unrealzedPnL) - 2(fundingPayment)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
@@ -1591,7 +1591,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-150), // -150 BTC
 					Margin:                              sdk.NewDec(15),   // 15 NUSD
@@ -1602,7 +1602,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1650,7 +1650,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
 				assert.EqualValues(t, sdk.NewDec(-68), resp.MarginToVault) // ( 15(oldMargin) + 50(PnL) - (-3)(fundingPayment) ) * -1
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
@@ -1670,7 +1670,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1681,7 +1681,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1729,7 +1729,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-7), resp.MarginToVault)              // ( 10(oldMargin) + (-5)(PnL) - (-2)(fundingPayment) ) * -1
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
@@ -1749,7 +1749,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1760,7 +1760,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1808,7 +1808,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.MarginToVault)               // ( 10(oldMargin) + (-50)(PnL) - (-2)(fundingPayment) ) * -1 --> clipped to zero
 				assert.EqualValues(t, sdk.NewDec(38), resp.BadDebt)                    // 10(oldMargin) + (-50)(PnL) - (-2)(fundingPayment)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
@@ -1846,7 +1846,7 @@ func TestDecreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -1901,7 +1901,7 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(50), resp.RealizedPnl)
 				assert.EqualValues(t, sdk.NewDec(50), resp.UnrealizedPnlAfter)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(50), resp.Position.Size_)        // 100 - 50
 				assert.EqualValues(t, sdk.NewDec(58), resp.Position.Margin)       // 10(old) + 50(realized PnL) - 2(funding payment)
@@ -1924,7 +1924,7 @@ func TestDecreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(105), // 105 BTC
 					Margin:                              sdk.NewDec(11),  // 10.5 NUSD
@@ -1981,7 +1981,7 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.MustNewDecFromStr("-9.5").String(), resp.UnrealizedPnlAfter.String()) // (-5)(unrealizedPnL) - (-0.25)(realizedPnL)
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.MarginToVault.String())                      // always zero for decreasePosition
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("99.75"), resp.Position.Size_)                  // 105 - 5.25
 				assert.EqualValues(t, sdk.MustNewDecFromStr("8.4").String(), resp.Position.Margin.String()) // 10(old) + (-0.25)(realized PnL) - 2.1(funding payment)
@@ -2008,7 +2008,7 @@ func TestDecreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-105), // -105 BTC
 					Margin:                              sdk.NewDec(11),   // 10.5 NUSD
@@ -2063,7 +2063,7 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.MustNewDecFromStr("9.5"), resp.UnrealizedPnlAfter)                // (-5)(unrealizedPnL) - (-0.25)(realizedPnL)
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.MarginToVault.String())                  // always zero for decreasePosition
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("-99.75"), resp.Position.Size_)                         // -105 + 5.25
 				assert.EqualValues(t, sdk.MustNewDecFromStr("13.6").String(), resp.Position.Margin.String())        // 10.5(old) + 0.25(realized PnL) - (-2.1)(funding payment)
@@ -2086,7 +2086,7 @@ func TestDecreasePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -2141,7 +2141,7 @@ func TestDecreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.25"), resp.RealizedPnl)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("-4.75"), resp.UnrealizedPnlAfter)
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-95), resp.Position.Size_)                                   // -100 + 5
 				assert.EqualValues(t, sdk.MustNewDecFromStr("11.75").String(), resp.Position.Margin.String()) // 10(old) + (-0.25)(realized PnL) - (-2)(funding payment)
@@ -2179,7 +2179,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -2190,7 +2190,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2249,7 +2249,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(100), resp.RealizedPnl)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-50), resp.Position.Size_)
 				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
@@ -2270,7 +2270,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(11),  // 10.5 NUSD
@@ -2281,7 +2281,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2344,7 +2344,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-5), resp.RealizedPnl)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-100), resp.Position.Size_)
 				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
@@ -2365,7 +2365,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(15),  // 15 NUSD
@@ -2376,7 +2376,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2435,7 +2435,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-150), // -150 BTC
 					Margin:                              sdk.NewDec(15),   // 15 NUSD
@@ -2446,7 +2446,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2505,7 +2505,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
 				assert.EqualValues(t, sdk.NewDec(-58).String(), resp.MarginToVault.String()) // -1 * ( 15(oldMargin) + 50(PnL) - (-3)(fundingPayment) ) + 10
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(150), resp.Position.Size_)
 				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
@@ -2526,7 +2526,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -2537,7 +2537,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2596,7 +2596,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("3.5").String(), resp.MarginToVault.String()) // -1 * ( 10(oldMargin) + (-5))(PnL) - (-2)(fundingPayment) ) + 10.5
 
-				assert.EqualValues(t, currentPosition.Address, resp.Position.Address)
+				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(100), resp.Position.Size_)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("10.5").String(), resp.Position.Margin.String())
@@ -2617,7 +2617,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					Address:                             sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -2628,7 +2628,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				perpKeeper.SetPosition(
 					ctx,
 					common.TokenPair(currentPosition.Pair),
-					currentPosition.Address,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 

@@ -50,7 +50,7 @@ func (k Keeper) AddMargin(
 
 	// ------------- AddMargin -------------
 
-	position, err := k.Positions().Get(ctx, pair, trader.String())
+	position, err := k.Positions().Get(ctx, pair, trader)
 	if err != nil {
 		return res, err
 	}
@@ -70,7 +70,7 @@ func (k Keeper) AddMargin(
 		/* to */ trader.String(),
 	)
 
-	k.Positions().Set(ctx, pair, trader.String(), position)
+	k.Positions().Set(ctx, pair, trader, position)
 
 	fPayment := sdk.ZeroDec()
 	events.EmitMarginChange(ctx, trader, pair.String(), addedMargin, fPayment)
@@ -117,7 +117,7 @@ func (k Keeper) RemoveMargin(
 
 	// ------------- RemoveMargin -------------
 
-	position, err := k.Positions().Get(ctx, pair, trader.String())
+	position, err := k.Positions().Get(ctx, pair, trader)
 	if err != nil {
 		return res, err
 	}
@@ -142,7 +142,7 @@ func (k Keeper) RemoveMargin(
 		return res, fmt.Errorf("not enough free collateral")
 	}
 
-	k.Positions().Set(ctx, pair, trader.String(), position)
+	k.Positions().Set(ctx, pair, trader, position)
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), margin)
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(

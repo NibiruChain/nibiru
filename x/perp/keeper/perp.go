@@ -9,9 +9,9 @@ import (
 )
 
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, trader string) error {
+func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress) error {
 	return k.Positions().Update(ctx, &types.Position{
-		Address:                             trader,
+		TraderAddress:                       traderAddr,
 		Pair:                                pair.String(),
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
@@ -22,15 +22,15 @@ func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, trader str
 }
 
 func (k Keeper) GetPosition(
-	ctx sdk.Context, pair common.TokenPair, owner string,
+	ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress,
 ) (*types.Position, error) {
-	return k.Positions().Get(ctx, pair, owner)
+	return k.Positions().Get(ctx, pair, traderAddr)
 }
 
 func (k Keeper) SetPosition(
-	ctx sdk.Context, pair common.TokenPair, owner string,
+	ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress,
 	position *types.Position) {
-	k.Positions().Set(ctx, pair, owner, position)
+	k.Positions().Set(ctx, pair, traderAddr, position)
 }
 
 // SettlePosition settles a trader position
@@ -50,7 +50,7 @@ func (k Keeper) SettlePosition(
 	err = k.ClearPosition(
 		ctx,
 		tokenPair,
-		currentPosition.Address,
+		currentPosition.TraderAddress,
 	)
 	if err != nil {
 		return
@@ -81,11 +81,15 @@ func (k Keeper) SettlePosition(
 	if settledValueInt.IsPositive() {
 		toTransfer := sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), settledValueInt)
 		transferredCoins = sdk.NewCoins(toTransfer)
-		addr, err := sdk.AccAddressFromBech32(currentPosition.Address)
 		if err != nil {
 			panic(err) // NOTE(mercilex): must never happen
 		}
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.VaultModuleAccount, addr, transferredCoins)
+		err = k.BankKeeper.SendCoinsFromModuleToAccount(
+			ctx,
+			types.VaultModuleAccount,
+			currentPosition.TraderAddress,
+			transferredCoins,
+		)
 		if err != nil {
 			panic(err) // NOTE(mercilex): must never happen
 		}
@@ -94,7 +98,7 @@ func (k Keeper) SettlePosition(
 	events.EmitPositionSettle(
 		ctx,
 		tokenPair.String(),
-		currentPosition.Address,
+		currentPosition.TraderAddress.String(),
 		transferredCoins,
 	)
 

@@ -43,7 +43,7 @@ func (k Keeper) Liquidate(
 		return res, err
 	}
 
-	position, err := k.GetPosition(ctx, pair, trader.String())
+	position, err := k.GetPosition(ctx, pair, trader)
 	if err != nil {
 		return res, err
 	}

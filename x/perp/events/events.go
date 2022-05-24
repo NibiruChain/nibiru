@@ -313,7 +313,7 @@ func NewInternalPositionResponseEvent(
 	pos := positionResp.Position
 	return sdk.NewEvent(
 		"internal_position_response",
-		sdk.NewAttribute(AttributePositionOwner, pos.Address),
+		sdk.NewAttribute(AttributePositionOwner, pos.TraderAddress.String()),
 		sdk.NewAttribute(AttributeVpool, pos.Pair),
 		sdk.NewAttribute("pos_margin", pos.Margin.String()),
 		sdk.NewAttribute("pos_open_notional", pos.OpenNotional.String()),

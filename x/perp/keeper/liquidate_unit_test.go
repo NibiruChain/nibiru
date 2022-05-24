@@ -472,7 +472,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("create and set the initial position")
 			position := types.Position{
-				Address:                             traderAddr.String(),
+				TraderAddress:                       traderAddr,
 				Pair:                                pair.String(),
 				Size_:                               tc.initialPositionSize,
 				Margin:                              tc.initialMargin,
@@ -480,7 +480,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         ctx.BlockHeight(),
 			}
-			perpKeeper.SetPosition(ctx, pair, traderAddr.String(), &position)
+			perpKeeper.SetPosition(ctx, pair, traderAddr, &position)
 
 			t.Log("execute full liquidation")
 			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(
@@ -510,7 +510,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("assert new position fields")
 			newPosition := positionResp.Position
-			assert.EqualValues(t, traderAddr.String(), newPosition.Address)
+			assert.EqualValues(t, traderAddr, newPosition.TraderAddress)
 			assert.EqualValues(t, pair.String(), newPosition.Pair)
 			assert.True(t, newPosition.Size_.IsZero())        // always zero
 			assert.True(t, newPosition.Margin.IsZero())       // always zero

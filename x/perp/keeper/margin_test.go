@@ -239,12 +239,12 @@ func TestAddMargin_HappyPath(t *testing.T) {
 			nibiruApp.PerpKeeper.SetPosition(
 				ctx,
 				tokenPair,
-				traderAddr.String(),
+				traderAddr,
 				&types.Position{
-					Address: traderAddr.String(),
-					Pair:    tokenPair.String(),
-					Size_:   sdk.NewDec(9999),
-					Margin:  tc.initialMargin.ToDec(),
+					TraderAddress: traderAddr,
+					Pair:          tokenPair.String(),
+					Size_:         sdk.NewDec(9999),
+					Margin:        tc.initialMargin.ToDec(),
 				},
 			)
 
@@ -258,7 +258,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 			require.NoError(t, err)
 
 			position, err := nibiruApp.PerpKeeper.GetPosition(
-				ctx, tokenPair, traderAddr.String())
+				ctx, tokenPair, traderAddr)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedMargin.String(), position.Margin.TruncateInt().String())
 		})
@@ -407,7 +407,7 @@ func TestRemoveMargin(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Log("Position should be accessible following 'OpenPosition'")
-				_, err = nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice.String())
+				_, err = nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice)
 				require.NoError(t, err)
 
 				t.Log("Verify correct events emitted for 'OpenPosition'")

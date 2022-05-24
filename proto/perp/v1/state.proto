@@ -44,8 +44,9 @@ message GenesisState {
 // the virtual liquidity pools.
 message Position {
   // address identifies the address owner of this position
-  string address = 1;
-  
+  bytes trader_address = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
   // pair identifies the pair associated with this position
   string pair = 2;
 
@@ -101,24 +102,24 @@ message PositionResp {
     (gogoproto.nullable) = false];
 }
 
-message LiquidateResp{
+message LiquidateResp {
   // Amount of bad debt created by the liquidation event
-  string bad_debt = 1[
+  string bad_debt = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
   // Fee paid to the liquidator
-  string fee_to_liquidator = 2[
+  string fee_to_liquidator = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
   // Fee paid to the Perp EF fund
-  string fee_to_perp_ecosystem_fund = 3[
+  string fee_to_perp_ecosystem_fund = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
   // Address of the liquidator
-  bytes liquidator = 4[
+  bytes liquidator = 4 [
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 
   // Position response from the close or open reverse position
