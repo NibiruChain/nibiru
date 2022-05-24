@@ -18,10 +18,6 @@ service Query {
   rpc TraderPosition(QueryTraderPositionRequest) returns (QueryTraderPositionResponse) {
     option (google.api.http).get = "/nibiru/perp/trader_position";
   }
-
-  rpc TraderMargin(QueryTraderMarginRequest) returns (QueryTraderMarginResponse) {
-    option (google.api.http).get = "/nibiru/perp/trader_margin";
-  }
 }
 
 // ---------------------------------------- Params
@@ -47,16 +43,6 @@ message QueryTraderPositionRequest {
 message QueryTraderPositionResponse {
   // TODO:
   Position position = 1;
-}
-
-// ---------------------------------------- TraderMargin
-
-/* QueryTraderMarginRequest is the request type for the margin of the 
-   x/perp module account. */
-message QueryTraderMarginRequest {}
-
-message QueryTraderMarginResponse {
-  // TODO:
 }
 
 // ---------------------------------------- OtherQuery

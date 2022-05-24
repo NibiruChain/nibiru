@@ -38,19 +38,3 @@ func (q queryServer) TraderPosition(
 		Position: position,
 	}, nil
 }
-
-func (q queryServer) TraderMargin(
-	goCtx context.Context, req *types.QueryTraderMarginRequest,
-) (*types.QueryTraderMarginResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	// TODO:
-	// ctx := sdk.UnwrapSDKContext(goCtx)
-	// var balances sdk.Coins = k.BankKeeper.GetAllBalances(
-	// 	ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName),
-	// )
-
-	return &types.QueryTraderMarginResponse{}, nil
-}

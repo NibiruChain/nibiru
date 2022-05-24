@@ -37,7 +37,6 @@ func GetQueryCmd() *cobra.Command {
 	cmds := []*cobra.Command{
 		CmdQueryParams(),
 		CmdQueryPosition(),
-		CmdQueryMargin(),
 	}
 	for _, cmd := range cmds {
 		perpQueryCmd.AddCommand(cmd)
@@ -98,32 +97,6 @@ func CmdQueryPosition() *cobra.Command {
 					Trader:    trader,
 					TokenPair: tokenPair.String(),
 				},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdQueryMargin() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "trader-margin",
-		Short: "trader's margin for a given token pair/vpool",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: implement
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.TraderMargin(
-				context.Background(), &types.QueryTraderMarginRequest{},
 			)
 			if err != nil {
 				return err
