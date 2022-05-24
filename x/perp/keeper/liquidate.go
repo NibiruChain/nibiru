@@ -77,14 +77,11 @@ func (k Keeper) Liquidate(
 	var liquidationResponse types.LiquidateResp
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
 		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, msg.Sender, position)
-		if err != nil {
-			return res, err
-		}
 	} else {
 		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, msg.Sender, position)
-		if err != nil {
-			return res, err
-		}
+	}
+	if err != nil {
+		return res, err
 	}
 
 	events.EmitPositionLiquidate(
@@ -315,6 +312,9 @@ func (k Keeper) ExecutePartialLiquidation(
 		PositionResp:           positionResp,
 	}
 	err = k.distributeLiquidateRewards(ctx, response)
+	if err != nil {
+		return types.LiquidateResp{}, err
+	}
 
 	return response, err
 }
