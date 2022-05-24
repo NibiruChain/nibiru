@@ -34,7 +34,7 @@ func TestQueryPosition_Ok(t *testing.T) {
 		Margin:       sdk.NewDec(1),
 	}
 
-	nibiruApp.PerpKeeper.SetPosition(
+	perpKeeper.SetPosition(
 		ctx, vpoolPair, trader, oldPosition)
 
 	res, err := queryServer.TraderPosition(
