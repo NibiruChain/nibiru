@@ -59,6 +59,12 @@ Recommended minimum specs:
 
 On a fresh clone of the repo, simply run `make localnet` and open another terminal.  
 
+### Generate the protobufs
+
+```bash
+make proto-gen
+```
+
 # Linter
 
 We use the [golangci-lint](https://golangci-lint.run/) linter. Install it and run

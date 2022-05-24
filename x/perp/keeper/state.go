@@ -14,8 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-var _ types.QueryServer = Keeper{}
-
 func (k Keeper) Params(
 	goCtx context.Context, req *types.QueryParamsRequest,
 ) (*types.QueryParamsResponse, error) {
