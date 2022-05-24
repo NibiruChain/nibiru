@@ -13,12 +13,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
@@ -143,8 +144,8 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(&am.keeper))
-	// types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -159,15 +160,29 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	// InitGenesis(ctx, am.keeper, genState)
+	for _, lockup := range genState.Locks {
+		addr, err := sdk.AccAddressFromBech32(lockup.Owner)
+		if err != nil {
+			panic(err)
+		}
+		_, err = am.keeper.LockTokens(ctx, addr, lockup.Coins, lockup.Duration)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	// genState := ExportGenesis(ctx, am.keeper)
-	return cdc.MustMarshalJSON(types.DefaultGenesis())
+	state := new(types.GenesisState)
+	am.keeper.LocksState(ctx).IterateLocks(func(lock *types.Lock) (stop bool) {
+		state.Locks = append(state.Locks, lock)
+		return false
+	})
+
+	return am.cdc.MustMarshalJSON(state)
 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.

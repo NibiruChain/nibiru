@@ -139,7 +139,7 @@ type AppModule struct {
 	keeper keeper.Keeper
 	ak     types.AccountKeeper
 	bk     types.BankKeeper
-	pk     types.PriceKeeper
+	pk     types.PricefeedKeeper
 }
 
 func NewAppModule(
@@ -147,7 +147,7 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	pk types.PriceKeeper,
+	pk types.PricefeedKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
@@ -180,7 +180,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
-	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 }
 
 // RegisterInvariants registers the capability module's invariants.

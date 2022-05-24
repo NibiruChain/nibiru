@@ -31,6 +31,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgAddMargin:
 			res, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgOpenPosition:
+			res, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgLiquidate:
 			res, err := msgServer.Liquidate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	fmt "fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -25,15 +26,26 @@ var (
 	ErrPositionZero     = errors.New("position is zero")
 )
 
-func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Position {
+func ZeroPosition(ctx sdk.Context, tokenPair common.TokenPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
-		Address:                             trader,
-		Pair:                                vpair.String(),
+		TraderAddress:                       traderAddr,
+		Pair:                                tokenPair.String(),
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		LiquidityHistoryIndex:               0,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
+}
+
+func (l *LiquidateResp) Validate() error {
+	for _, field := range []sdk.Dec{
+		l.BadDebt, l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
+		if field.IsNil() {
+			return fmt.Errorf(
+				`invalid liquidationOutput: %v,
+				must not have nil fields`, l.String())
+		}
+	}
+	return nil
 }

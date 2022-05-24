@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
-	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
@@ -33,11 +32,11 @@ func (k Keeper) OpenPosition(
 	params := k.GetParams(ctx)
 	// TODO: missing checks
 
-	position, err := k.GetPosition(ctx, pair, traderAddr.String())
+	position, err := k.GetPosition(ctx, pair, traderAddr)
 	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
-		position = types.ZeroPosition(ctx, pair, traderAddr.String())
-		k.SetPosition(ctx, pair, traderAddr.String(), position)
+		position = types.ZeroPosition(ctx, pair, traderAddr)
+		k.SetPosition(ctx, pair, traderAddr, position)
 	} else if err != nil && !isNewPosition {
 		return err
 	}
@@ -45,7 +44,7 @@ func (k Keeper) OpenPosition(
 	var positionResp *types.PositionResp
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
-	var openSideMatchesPosition bool = (sameSideLong || sameSideShort)
+	var openSideMatchesPosition = sameSideLong || sameSideShort
 	switch {
 	case isNewPosition || openSideMatchesPosition:
 		// increase position case
@@ -77,7 +76,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	// update position in state
-	k.SetPosition(ctx, pair, traderAddr.String(), positionResp.Position)
+	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(
@@ -108,8 +107,8 @@ func (k Keeper) OpenPosition(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToSend,
-			/* from */ traderAddr.String(),
-			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String())
+			/* from */ traderAddr,
+			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount))
 	case marginToVaultInt.IsNegative():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
@@ -119,8 +118,8 @@ func (k Keeper) OpenPosition(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToSend,
-			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String(),
-			/* to */ traderAddr.String(),
+			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
+			/* to */ traderAddr,
 		)
 	}
 
@@ -136,7 +135,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		Trader:                traderAddr.String(),
+		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
@@ -228,13 +227,12 @@ func (k Keeper) increasePosition(
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.Position = &types.Position{
-		Address:                             currentPosition.Address,
+		TraderAddress:                       currentPosition.TraderAddress,
 		Pair:                                currentPosition.Pair,
 		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remaining.Margin,
 		OpenNotional:                        currentPosition.OpenNotional.Add(increasedNotional),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
@@ -280,13 +278,13 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		return sdk.ZeroDec(), sdk.ZeroDec(), nil
 	}
 
-	var baseAssetDirection pooltypes.Direction
+	var baseAssetDirection vpooltypes.Direction
 	if position.Size_.IsPositive() {
 		// LONG
-		baseAssetDirection = pooltypes.Direction_ADD_TO_POOL
+		baseAssetDirection = vpooltypes.Direction_ADD_TO_POOL
 	} else {
 		// SHORT
-		baseAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
+		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
 	switch pnlCalcOption {
@@ -320,6 +318,11 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		positionNotional = oraclePrice.Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
+	}
+
+	if positionNotional.Equal(position.OpenNotional) {
+		// if position notional and open notional are the same, then early return
+		return positionNotional, sdk.ZeroDec(), nil
 	}
 
 	if position.Size_.IsPositive() {
@@ -479,13 +482,12 @@ func (k Keeper) decreasePosition(
 	}
 
 	positionResp.Position = &types.Position{
-		Address:                             currentPosition.Address,
+		TraderAddress:                       currentPosition.TraderAddress,
 		Pair:                                currentPosition.Pair,
 		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remaining.Margin,
 		OpenNotional:                        remainOpenNotional,
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
@@ -556,7 +558,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		newPosition := types.ZeroPosition(
 			ctx,
 			common.TokenPair(existingPosition.Pair),
-			existingPosition.Address,
+			existingPosition.TraderAddress,
 		)
 		increasePositionResp, err := k.increasePosition(
 			ctx,
@@ -639,11 +641,11 @@ func (k Keeper) closePositionEntirely(
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.MarginToVault = remaining.Margin.Neg()
 
-	var baseAssetDirection pooltypes.Direction
+	var baseAssetDirection vpooltypes.Direction
 	if currentPosition.Size_.IsPositive() {
-		baseAssetDirection = pooltypes.Direction_ADD_TO_POOL
+		baseAssetDirection = vpooltypes.Direction_ADD_TO_POOL
 	} else {
-		baseAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
+		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
 	exchangedQuoteAssetAmount, err := k.VpoolKeeper.SwapBaseForQuote(
@@ -659,20 +661,19 @@ func (k Keeper) closePositionEntirely(
 
 	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount
 	positionResp.Position = &types.Position{
-		Address:                             currentPosition.Address,
+		TraderAddress:                       currentPosition.TraderAddress,
 		Pair:                                currentPosition.Pair,
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
 	if err = k.ClearPosition(
 		ctx,
 		common.TokenPair(currentPosition.Pair),
-		currentPosition.Address,
+		currentPosition.TraderAddress,
 	); err != nil {
 		return nil, err
 	}
@@ -796,12 +797,12 @@ func (k Keeper) swapQuoteForBase(
 	baseAssetLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (baseAmount sdk.Dec, err error) {
-	var quoteAssetDirection pooltypes.Direction
+	var quoteAssetDirection vpooltypes.Direction
 	if side == types.Side_BUY {
-		quoteAssetDirection = pooltypes.Direction_ADD_TO_POOL
+		quoteAssetDirection = vpooltypes.Direction_ADD_TO_POOL
 	} else {
 		// side == types.Side_SELL
-		quoteAssetDirection = pooltypes.Direction_REMOVE_FROM_POOL
+		quoteAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
 	baseAmount, err = k.VpoolKeeper.SwapQuoteForBase(

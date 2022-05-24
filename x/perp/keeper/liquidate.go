@@ -9,43 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vtypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
-
-type LiquidationOutput struct {
-	FeeToPerpEcosystemFund sdk.Dec
-	BadDebt                sdk.Dec
-	FeeToLiquidator        sdk.Dec
-	PositionResp           *types.PositionResp
-}
-
-func (l *LiquidationOutput) String() string {
-	return fmt.Sprintf(`
-	liquidationOutput {
-		FeeToPerpEcosystemFund: %v,
-		BadDebt: %v,
-		FeeToLiquidator: %v,
-		PositionResp: %v,
-	}
-	`,
-		l.FeeToPerpEcosystemFund,
-		l.BadDebt,
-		l.FeeToLiquidator,
-		l.PositionResp,
-	)
-}
-
-func (l *LiquidationOutput) Validate() error {
-	for _, field := range []sdk.Dec{
-		l.FeeToPerpEcosystemFund, l.BadDebt, l.FeeToLiquidator} {
-		if field.IsNil() {
-			return fmt.Errorf(
-				`invalid liquidationOutput: %v,
-				must not have nil fields`, l.String())
-		}
-	}
-	return nil
-}
 
 /* Liquidate allows to liquidate the trader position if the margin is below the
 required margin maintenance ratio.
@@ -58,8 +22,7 @@ func (k Keeper) Liquidate(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate liquidator (msg.Sender)
-	liquidator, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
+	if err = sdk.VerifyAddressFormat(msg.Sender); err != nil {
 		return res, err
 	}
 
@@ -79,7 +42,7 @@ func (k Keeper) Liquidate(
 		return res, err
 	}
 
-	position, err := k.GetPosition(ctx, pair, trader.String())
+	position, err := k.GetPosition(ctx, pair, trader)
 	if err != nil {
 		return res, err
 	}
@@ -114,165 +77,190 @@ func (k Keeper) Liquidate(
 	fmt.Println("marginRatioBasedOnSpot", marginRatioBasedOnSpot)
 
 	var (
-		liquidationOutput LiquidationOutput
+		liquidateResp types.LiquidateResp
 	)
 
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
-		liquidationOutput, err = k.CreatePartialLiquidation(ctx, pair, trader, position)
+		_, err = k.ExecuteFullLiquidation(ctx, msg.Sender, position)
 		if err != nil {
 			return res, err
 		}
 	} else {
-		liquidationOutput, err = k.CreateLiquidation(ctx, pair, trader, position)
+		err = k.ExecutePartialLiquidation(ctx, msg.Sender, position)
 		if err != nil {
 			return res, err
 		}
-	}
-
-	// Transfer fee from vault to PerpEF
-	feeToPerpEF := liquidationOutput.FeeToPerpEcosystemFund.TruncateInt()
-	if feeToPerpEF.IsPositive() {
-		coinToPerpEF := sdk.NewCoin(
-			pair.GetQuoteTokenDenom(), feeToPerpEF)
-		err = k.BankKeeper.SendCoinsFromModuleToModule(
-			ctx,
-			types.VaultModuleAccount,
-			types.PerpEFModuleAccount,
-			sdk.NewCoins(coinToPerpEF),
-		)
-		if err != nil {
-			return res, err
-		}
-		// TODO: emit transfer event from vault to PerpEF
-	}
-
-	// Transfer fee from PerpEF to liquidator
-	feeToLiquidator := liquidationOutput.FeeToLiquidator.TruncateInt()
-	if feeToLiquidator.IsPositive() {
-		coinToLiquidator := sdk.NewCoin(
-			pair.GetQuoteTokenDenom(), liquidationOutput.FeeToLiquidator.TruncateInt())
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(
-			ctx,
-			types.PerpEFModuleAccount,
-			liquidator,
-			sdk.NewCoins(coinToLiquidator),
-		)
-		if err != nil {
-			return res, err
-		}
-		// TODO: emit transfer event from PerpEF to liquidator
 	}
 
 	events.EmitPositionLiquidate(
 		/* ctx */ ctx,
 		/* vpool */ pair.String(),
 		/* owner */ trader,
-		/* notional */ liquidationOutput.PositionResp.ExchangedQuoteAssetAmount,
-		/* vsize */ liquidationOutput.PositionResp.ExchangedPositionSize,
-		/* liquidator */ liquidator,
-		/* liquidationFee */ liquidationOutput.FeeToLiquidator.TruncateInt(),
-		/* badDebt */ liquidationOutput.BadDebt,
+		/* notional */ liquidateResp.PositionResp.ExchangedQuoteAssetAmount,
+		/* vsize */ liquidateResp.PositionResp.ExchangedPositionSize,
+		/* liquidator */ msg.Sender,
+		/* liquidationFee */ liquidateResp.FeeToLiquidator.TruncateInt(),
+		/* badDebt */ liquidateResp.BadDebt,
 	)
 
 	return res, nil
 }
 
-//CreateLiquidation create a liquidation of a position and compute the fee to ecosystem fund
-func (k Keeper) CreateLiquidation(
-	ctx sdk.Context, pair common.TokenPair, owner sdk.AccAddress, position *types.Position,
-) (LiquidationOutput, error) {
-	params := k.GetParams(ctx)
+/*
+Fully liquidates a position. It is assumed that the margin ratio has already been
+checked prior to calling this method.
 
-	positionResp, err := k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
+args:
+  - ctx: cosmos-sdk context
+  - liquidator: the liquidator's address
+  - position: the position to liquidate
+
+ret:
+  - liquidationResp: a response object containing the results of the liquidation
+  - err: error
+*/
+func (k Keeper) ExecuteFullLiquidation(
+	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
+) (liquidationResp types.LiquidateResp, err error) {
+	params := k.GetParams(ctx)
+	tokenPair, err := common.NewTokenPairFromStr(position.Pair)
 	if err != nil {
-		return LiquidationOutput{}, err
+		return types.LiquidateResp{}, err
+	}
+
+	positionResp, err := k.closePositionEntirely(
+		ctx,
+		/* currentPosition */ *position,
+		/* quoteAssetAmountLimit */ sdk.ZeroDec())
+	if err != nil {
+		return types.LiquidateResp{}, err
 	}
 
 	remainMargin := positionResp.MarginToVault.Abs()
 
-	feeToLiquidator := positionResp.ExchangedQuoteAssetAmount.
-		Mul(params.GetLiquidationFeeAsDec()).
-		Quo(sdk.MustNewDecFromStr("2"))
+	feeToLiquidator := params.GetLiquidationFeeAsDec().
+		Mul(positionResp.ExchangedQuoteAssetAmount).
+		QuoInt64(2)
 	totalBadDebt := positionResp.BadDebt
 
 	if feeToLiquidator.GT(remainMargin) {
 		// if the remainMargin is not enough for liquidationFee, count it as bad debt
-		liquidationBadDebt := feeToLiquidator.Sub(remainMargin)
-		totalBadDebt = totalBadDebt.Add(liquidationBadDebt)
+		totalBadDebt = totalBadDebt.Add(feeToLiquidator.Sub(remainMargin))
+		remainMargin = sdk.ZeroDec()
 	} else {
 		// Otherwise, the remaining margin rest will be transferred to ecosystemFund
 		remainMargin = remainMargin.Sub(feeToLiquidator)
 	}
 
-	var feeToPerpEcosystemFund sdk.Dec
-	if remainMargin.GT(sdk.ZeroDec()) {
-		feeToPerpEcosystemFund = remainMargin
-	} else {
-		feeToPerpEcosystemFund = sdk.ZeroDec()
+	// Realize bad debt
+	if totalBadDebt.IsPositive() {
+		if err = k.realizeBadDebt(
+			ctx,
+			tokenPair.GetQuoteTokenDenom(),
+			totalBadDebt.RoundInt(),
+		); err != nil {
+			return types.LiquidateResp{}, err
+		}
 	}
 
-	output := LiquidationOutput{
-		FeeToPerpEcosystemFund: feeToPerpEcosystemFund,
+	feeToPerpEcosystemFund := sdk.ZeroDec()
+	if remainMargin.IsPositive() {
+		feeToPerpEcosystemFund = remainMargin
+	}
+
+	liquidationResp = types.LiquidateResp{
 		BadDebt:                totalBadDebt,
 		FeeToLiquidator:        feeToLiquidator,
+		FeeToPerpEcosystemFund: feeToPerpEcosystemFund,
+		Liquidator:             liquidator,
 		PositionResp:           positionResp,
 	}
-
-	err = output.Validate()
+	err = k.distributeLiquidateRewards(ctx, liquidationResp)
 	if err != nil {
-		return LiquidationOutput{}, err
+		return types.LiquidateResp{}, err
 	}
-	return output, err
+
+	return liquidationResp, nil
 }
 
-// CreatePartialLiquidation create a partial liquidation of a position and compute the fee to ecosystem fund
-func (k Keeper) CreatePartialLiquidation(
-	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress, position *types.Position,
-) (liquidationOutput LiquidationOutput, err error) {
-	params := k.GetParams(ctx)
-	var (
-		dir vtypes.Direction
-	)
+func (k Keeper) distributeLiquidateRewards(
+	ctx sdk.Context, liquidateResp types.LiquidateResp) (err error) {
+	// --------------------------------------------------------------
+	//  Preliminary validations
+	// --------------------------------------------------------------
 
-	if position.Size_.GTE(sdk.ZeroDec()) {
-		dir = vtypes.Direction_ADD_TO_POOL
-	} else {
-		dir = vtypes.Direction_REMOVE_FROM_POOL
-	}
-
-	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
-		ctx,
-		pair,
-		dir,
-		/*abs= */ position.Size_.Mul(params.GetPartialLiquidationRatioAsDec()).Abs(),
-	)
+	// validate response
+	err = liquidateResp.Validate()
 	if err != nil {
-		return
+		return err
 	}
 
-	positionResp, err := k.openReversePosition(
-		/* ctx */ ctx,
-		/* currentPosition */ *position,
-		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
-		/* leverage */ sdk.OneDec(),
-		/* baseAssetAmountLimit */ sdk.ZeroDec(),
-		/* canOverFluctuationLimit */ true,
-	)
+	// validate pair
+	pair, err := common.NewTokenPairFromStr(liquidateResp.PositionResp.Position.Pair)
 	if err != nil {
-		return
+		return err
+	}
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return err
 	}
 
-	// half of the liquidationFee goes to liquidator & another half goes to ecosystem fund
-	liquidationPenalty := positionResp.ExchangedQuoteAssetAmount.Mul(params.GetLiquidationFeeAsDec())
-	feeToLiquidator := liquidationPenalty.Quo(sdk.MustNewDecFromStr("2"))
+	// --------------------------------------------------------------
+	// Distribution of rewards
+	// --------------------------------------------------------------
 
-	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationPenalty)
-	k.SetPosition(ctx, pair, trader.String(), positionResp.Position)
+	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
+	perpEFAddr := k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount)
 
-	liquidationOutput.PositionResp = positionResp
+	// Transfer fee from vault to PerpEF
+	feeToPerpEF := liquidateResp.FeeToPerpEcosystemFund.RoundInt()
+	if feeToPerpEF.IsPositive() {
+		coinToPerpEF := sdk.NewCoin(
+			pair.GetQuoteTokenDenom(), feeToPerpEF)
+		err = k.BankKeeper.SendCoinsFromModuleToModule(
+			ctx,
+			/* from */ types.VaultModuleAccount,
+			/* to */ types.PerpEFModuleAccount,
+			sdk.NewCoins(coinToPerpEF),
+		)
+		if err != nil {
+			return err
+		}
+		events.EmitTransfer(ctx,
+			/* coin */ coinToPerpEF,
+			/* from */ vaultAddr,
+			/* to */ perpEFAddr,
+		)
+	}
 
-	liquidationOutput.FeeToPerpEcosystemFund = liquidationPenalty.Sub(feeToLiquidator)
-	liquidationOutput.FeeToLiquidator = feeToLiquidator
+	// Transfer fee from PerpEF to liquidator
+	feeToLiquidator := liquidateResp.FeeToLiquidator.RoundInt()
+	if feeToLiquidator.IsPositive() {
+		coinToLiquidator := sdk.NewCoin(
+			pair.GetQuoteTokenDenom(), feeToLiquidator)
+		err = k.BankKeeper.SendCoinsFromModuleToAccount(
+			ctx,
+			/* from */ types.VaultModuleAccount,
+			/* to */ liquidateResp.Liquidator,
+			sdk.NewCoins(coinToLiquidator),
+		)
+		if err != nil {
+			return err
+		}
+		events.EmitTransfer(ctx,
+			/* coin */ coinToLiquidator,
+			/* from */ perpEFAddr,
+			/* to */ liquidateResp.Liquidator,
+		)
+	}
 
-	return
+	return nil
+}
+
+// ExecutePartialLiquidation fully liquidates a position.
+func (k Keeper) ExecutePartialLiquidation(
+	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
+) (err error) {
+	// TODO: https://github.com/NibiruChain/nibiru/pull/437
+	return nil
 }
