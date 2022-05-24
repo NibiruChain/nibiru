@@ -29,19 +29,22 @@ func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin) (*
 	return k.k.AddMargin(ctx, margin)
 }
 
-func (k msgServer) OpenPosition(ctx context.Context, req *types.MsgOpenPosition) (*types.MsgOpenPositionResponse, error) {
+func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition) (*types.MsgOpenPositionResponse, error) {
 	pair, err := common.NewTokenPairFromStr(req.TokenPair)
 	if err != nil {
 		panic(err) // must not happen
 	}
 
-	addr, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		panic(err) // must not happen
-	}
-
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	err = k.k.OpenPosition(sdkCtx, pair, req.Side, addr, req.QuoteAssetAmount, req.Leverage, req.BaseAssetAmountLimit.ToDec())
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = k.k.OpenPosition(
+		ctx,
+		pair,
+		req.Side,
+		req.Sender,
+		req.QuoteAssetAmount,
+		req.Leverage,
+		req.BaseAssetAmountLimit.ToDec(),
+	)
 	if err != nil {
 		return nil, err
 	}
