@@ -29,13 +29,11 @@ func (q queryServer) TraderPosition(
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	fmt.Println("STEVENDEBUG TraderPosition new: ")
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	position, err := q.Keeper.Positions().Get(ctx, common.TokenPair(req.TokenPair), req.Trader)
-
-	fmt.Println("STEVENDEBUG position: ", position)
-	fmt.Println("STEVENDEBUG err: ", err)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryTraderPositionResponse{
 		Position: position,
