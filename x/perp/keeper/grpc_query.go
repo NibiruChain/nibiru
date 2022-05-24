@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -46,8 +45,6 @@ func (q queryServer) TraderMargin(
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-
-	fmt.Println("STEVENDEBUG TraderMargin new: ")
 
 	// TODO:
 	// ctx := sdk.UnwrapSDKContext(goCtx)

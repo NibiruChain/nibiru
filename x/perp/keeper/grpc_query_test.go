@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -20,7 +21,6 @@ func TestQueryPosition_Ok(t *testing.T) {
 
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
-	//
 	trader := sample.AccAddress().String()
 	vpoolPair, err := common.NewTokenPairFromStr("btc:nusd")
 	require.NoError(t, err)
@@ -43,6 +43,7 @@ func TestQueryPosition_Ok(t *testing.T) {
 			TokenPair: vpoolPair.String(),
 		},
 	)
+	fmt.Println("res:", res)
 	require.NoError(t, err)
 
 	assert.Equal(t, oldPosition.Address, res.Position.Address)

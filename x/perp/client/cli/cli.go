@@ -56,7 +56,6 @@ func CmdQueryParams() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			// STEVENDEBUG
 			res, err := queryClient.Params(
 				context.Background(), &types.QueryParamsRequest{},
 			)
