@@ -29,12 +29,6 @@ func (q queryServer) TraderPosition(
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	// TODO:
-	// ctx := sdk.UnwrapSDKContext(goCtx)
-	// var balances sdk.Coins = k.BankKeeper.GetAllBalances(
-	// 	ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName),
-	// )
-
 	fmt.Println("STEVENDEBUG TraderPosition new: ")
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -43,7 +37,9 @@ func (q queryServer) TraderPosition(
 	fmt.Println("STEVENDEBUG position: ", position)
 	fmt.Println("STEVENDEBUG err: ", err)
 
-	return &types.QueryTraderPositionResponse{}, nil
+	return &types.QueryTraderPositionResponse{
+		Position: position,
+	}, nil
 }
 
 func (q queryServer) TraderMargin(

@@ -88,6 +88,13 @@ The code for `nibid` is located in the `/cmd/nibid` folder.
 
 In addition to the commands available within that folder, `nibid` pulls in cli subcommands from the modules e.g. `/x/perps/cli`
 
+After updating the code run
+
+```bash
+make build
+make install
+```
+
 To see all the commands available just add `--help` to the end.
 
 Example:
