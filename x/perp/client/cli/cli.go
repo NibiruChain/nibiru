@@ -38,6 +38,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryParams(),
 		CmdQueryPosition(),
 		CmdQueryMargin(),
+		CmdQueryReserveAssets(),
 	}
 	for _, cmd := range cmds {
 		perpQueryCmd.AddCommand(cmd)
@@ -56,6 +57,7 @@ func CmdQueryParams() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
+			// STEVENDEBUG
 			res, err := queryClient.Params(
 				context.Background(), &types.QueryParamsRequest{},
 			)
@@ -76,18 +78,31 @@ func CmdQueryPosition() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "trader-position",
 		Short: "trader's position for a given token pair/vpool",
-		Args:  cobra.NoArgs,
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: implement
 			clientCtx := client.GetClientContextFromCmd(cmd)
-
 			queryClient := types.NewQueryClient(clientCtx)
 
+			trader := args[0]
+			tokenPair := args[1]
+
+			fmt.Println("STEVENDEBUG query trader: ", trader)
+			fmt.Println("STEVENDEBUG query tokenPair: ", tokenPair)
 			fmt.Println("STEVENDEBUG query client: ", queryClient)
 
-			// res, err := queryClient.TraderPosition()
+			res, err := queryClient.TraderPosition(
+				context.Background(), &types.QueryTraderPositionRequest{
+					Trader:    trader,
+					TokenPair: tokenPair,
+				},
+			)
+			fmt.Println("STEVENDEBUG TraderPosition err: ", err)
+			if err != nil {
+				return err
+			}
 
-			return nil
+			return clientCtx.PrintProto(res)
 		},
 	}
 
@@ -103,7 +118,17 @@ func CmdQueryMargin() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: implement
-			return nil
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.TraderMargin(
+				context.Background(), &types.QueryTraderMarginRequest{},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 
@@ -119,7 +144,17 @@ func CmdQueryReserveAssets() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: implement
-			return nil
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.ReserveAsset(
+				context.Background(), &types.QueryReserveAssetRequest{},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 
