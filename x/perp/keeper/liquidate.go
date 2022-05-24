@@ -23,8 +23,7 @@ func (k Keeper) Liquidate(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate liquidator (msg.Sender)
-	liquidator, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
+	if err = sdk.VerifyAddressFormat(msg.Sender); err != nil {
 		return res, err
 	}
 
@@ -44,7 +43,7 @@ func (k Keeper) Liquidate(
 		return res, err
 	}
 
-	position, err := k.GetPosition(ctx, pair, trader.String())
+	position, err := k.GetPosition(ctx, pair, trader)
 	if err != nil {
 		return res, err
 	}
@@ -83,12 +82,12 @@ func (k Keeper) Liquidate(
 	)
 
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
-		_, err = k.ExecuteFullLiquidation(ctx, liquidator, position)
+		_, err = k.ExecuteFullLiquidation(ctx, msg.Sender, position)
 		if err != nil {
 			return res, err
 		}
 	} else {
-		err = k.ExecutePartialLiquidation(ctx, liquidator, position)
+		err = k.ExecutePartialLiquidation(ctx, msg.Sender, position)
 		if err != nil {
 			return res, err
 		}
@@ -100,7 +99,7 @@ func (k Keeper) Liquidate(
 		/* owner */ trader,
 		/* notional */ liquidateResp.PositionResp.ExchangedQuoteAssetAmount,
 		/* vsize */ liquidateResp.PositionResp.ExchangedPositionSize,
-		/* liquidator */ liquidator,
+		/* liquidator */ msg.Sender,
 		/* liquidationFee */ liquidateResp.FeeToLiquidator.TruncateInt(),
 		/* badDebt */ liquidateResp.BadDebt,
 	)
@@ -230,8 +229,8 @@ func (k Keeper) distributeLiquidateRewards(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToPerpEF,
-			/* from */ vaultAddr.String(),
-			/* to */ perpEFAddr.String(),
+			/* from */ vaultAddr,
+			/* to */ perpEFAddr,
 		)
 	}
 
@@ -251,8 +250,8 @@ func (k Keeper) distributeLiquidateRewards(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToLiquidator,
-			/* from */ perpEFAddr.String(),
-			/* to */ liquidateResp.Liquidator.String(),
+			/* from */ perpEFAddr,
+			/* to */ liquidateResp.Liquidator,
 		)
 	}
 
@@ -301,7 +300,7 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	// Remove the liquidation penalty from the margin of the position
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationPenalty)
-	k.SetPosition(ctx, common.TokenPair(position.Pair), position.Address, positionResp.Position)
+	k.SetPosition(ctx, common.TokenPair(position.Pair), position.TraderAddress, positionResp.Position)
 
 	err = k.distributeLiquidateRewards(ctx, types.LiquidateResp{
 		BadDebt:                sdk.ZeroDec(),

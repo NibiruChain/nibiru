@@ -26,7 +26,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, "osmo:nusd", trader.String())
+					ctx, "osmo:nusd", trader)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 			},
@@ -37,24 +37,24 @@ func TestGetAndSetPosition(t *testing.T) {
 				vpoolPair, err := common.NewTokenPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
-				trader := sample.AccAddress()
+				traderAddr := sample.AccAddress()
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 
 				_, err = nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, trader.String())
+					ctx, vpoolPair, traderAddr)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 
 				dummyPosition := &types.Position{
-					Address: trader.String(),
-					Pair:    vpoolPair.String(),
-					Size_:   sdk.OneDec(),
-					Margin:  sdk.OneDec(),
+					TraderAddress: traderAddr,
+					Pair:          vpoolPair.String(),
+					Size_:         sdk.OneDec(),
+					Margin:        sdk.OneDec(),
 				}
 				nibiruApp.PerpKeeper.SetPosition(
-					ctx, vpoolPair, trader.String(), dummyPosition)
+					ctx, vpoolPair, traderAddr, dummyPosition)
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, trader.String())
+					ctx, vpoolPair, traderAddr)
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPosition, outPosition)
 			},
@@ -88,27 +88,27 @@ func TestClearPosition(t *testing.T) {
 				t.Log("vpool contains no positions to start")
 				for _, trader := range traders {
 					_, err := nibiruApp.PerpKeeper.GetPosition(
-						ctx, vpoolPair, trader.String())
+						ctx, vpoolPair, trader)
 					require.Error(t, err)
 					require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 				}
 
 				var dummyPositions []*types.Position
-				for _, trader := range traders {
+				for _, traderAddr := range traders {
 					dummyPosition := &types.Position{
-						Address: trader.String(),
-						Pair:    vpoolPair.String(),
-						Size_:   sdk.OneDec(),
-						Margin:  sdk.OneDec(),
+						TraderAddress: traderAddr,
+						Pair:          vpoolPair.String(),
+						Size_:         sdk.OneDec(),
+						Margin:        sdk.OneDec(),
 					}
 					nibiruApp.PerpKeeper.SetPosition(
-						ctx, vpoolPair, trader.String(), dummyPosition)
+						ctx, vpoolPair, traderAddr, dummyPosition)
 					outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-						ctx, vpoolPair, trader.String())
+						ctx, vpoolPair, traderAddr)
 					require.NoError(t, err)
 					require.EqualValues(t, dummyPosition, outPosition)
 					t.Logf("position created successfully on vpool, %v, for trader %v",
-						vpoolPair, trader.String())
+						vpoolPair, traderAddr.String())
 					dummyPositions = append(dummyPositions, dummyPosition)
 				}
 
@@ -116,19 +116,19 @@ func TestClearPosition(t *testing.T) {
 
 				require.NoError(t,
 					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolPair, traders[0].String()),
+						ctx, vpoolPair, traders[0]),
 				)
 
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traders[0].String())
+					ctx, vpoolPair, traders[0])
 				require.NoError(t, err)
 				require.EqualValues(t,
-					types.ZeroPosition(ctx, vpoolPair, traders[0].String()),
+					types.ZeroPosition(ctx, vpoolPair, traders[0]),
 					outPosition,
 				)
 
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traders[1].String())
+					ctx, vpoolPair, traders[1])
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPositions[1], outPosition)
 				t.Log("trader 1 has a position and trader 0 does not.")
@@ -136,13 +136,13 @@ func TestClearPosition(t *testing.T) {
 				t.Log("clearing position of trader 1...")
 				require.NoError(t,
 					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolPair, traders[1].String()),
+						ctx, vpoolPair, traders[1]),
 				)
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traders[1].String())
+					ctx, vpoolPair, traders[1])
 				require.NoError(t, err)
 				require.EqualValues(t,
-					types.ZeroPosition(ctx, vpoolPair, traders[1].String()),
+					types.ZeroPosition(ctx, vpoolPair, traders[1]),
 					outPosition,
 				)
 				t.Log("Success, all trader positions have been cleared.")

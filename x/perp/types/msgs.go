@@ -26,8 +26,7 @@ func (m MsgRemoveMargin) GetSignBytes() []byte {
 }
 
 func (m MsgRemoveMargin) GetSigners() []sdk.AccAddress {
-	sender, _ := sdk.AccAddressFromBech32(m.Sender)
-	return []sdk.AccAddress{sender}
+	return []sdk.AccAddress{m.Sender}
 }
 
 // MsgAddMargin
@@ -44,8 +43,7 @@ func (m MsgAddMargin) GetSignBytes() []byte {
 }
 
 func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
-	sender, _ := sdk.AccAddressFromBech32(m.Sender)
-	return []sdk.AccAddress{sender}
+	return []sdk.AccAddress{m.Sender}
 }
 
 func (m *MsgOpenPosition) ValidateBasic() error {
@@ -55,7 +53,7 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	if _, err := common.NewTokenPairFromStr(m.TokenPair); err != nil {
 		return err
 	}
-	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
 		return err
 	}
 	if !m.Leverage.GT(sdk.ZeroDec()) {
@@ -64,7 +62,7 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	if !m.BaseAssetAmountLimit.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("base asset amount limit must always be greater than zero")
 	}
-	if m.QuoteAssetAmount.GT(sdk.ZeroInt()) {
+	if !m.QuoteAssetAmount.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("quote asset amount must be always greater than zero")
 	}
 
@@ -72,10 +70,5 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 }
 
 func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
-	addr, err := sdk.AccAddressFromBech32(m.Sender)
-	if err != nil {
-		panic(err)
-	}
-
-	return []sdk.AccAddress{addr}
+	return []sdk.AccAddress{m.Sender}
 }
