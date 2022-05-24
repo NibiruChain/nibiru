@@ -32,11 +32,11 @@ func (k Keeper) OpenPosition(
 	params := k.GetParams(ctx)
 	// TODO: missing checks
 
-	position, err := k.GetPosition(ctx, pair, traderAddr.String())
+	position, err := k.GetPosition(ctx, pair, traderAddr)
 	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
-		position = types.ZeroPosition(ctx, pair, traderAddr.String())
-		k.SetPosition(ctx, pair, traderAddr.String(), position)
+		position = types.ZeroPosition(ctx, pair, traderAddr)
+		k.SetPosition(ctx, pair, traderAddr, position)
 	} else if err != nil && !isNewPosition {
 		return err
 	}
@@ -76,7 +76,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	// update position in state
-	k.SetPosition(ctx, pair, traderAddr.String(), positionResp.Position)
+	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(
@@ -107,8 +107,8 @@ func (k Keeper) OpenPosition(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToSend,
-			/* from */ traderAddr.String(),
-			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String())
+			/* from */ traderAddr,
+			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount))
 	case marginToVaultInt.IsNegative():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
@@ -118,8 +118,8 @@ func (k Keeper) OpenPosition(
 		}
 		events.EmitTransfer(ctx,
 			/* coin */ coinToSend,
-			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount).String(),
-			/* to */ traderAddr.String(),
+			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
+			/* to */ traderAddr,
 		)
 	}
 
@@ -135,7 +135,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		Trader:                traderAddr.String(),
+		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
@@ -227,13 +227,12 @@ func (k Keeper) increasePosition(
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.Position = &types.Position{
-		Address:                             currentPosition.Address,
+		TraderAddress:                       currentPosition.TraderAddress,
 		Pair:                                currentPosition.Pair,
 		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remaining.Margin,
 		OpenNotional:                        currentPosition.OpenNotional.Add(increasedNotional),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
@@ -483,13 +482,12 @@ func (k Keeper) decreasePosition(
 	}
 
 	positionResp.Position = &types.Position{
-		Address:                             currentPosition.Address,
+		TraderAddress:                       currentPosition.TraderAddress,
 		Pair:                                currentPosition.Pair,
 		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                              remaining.Margin,
 		OpenNotional:                        remainOpenNotional,
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
@@ -560,7 +558,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		newPosition := types.ZeroPosition(
 			ctx,
 			common.TokenPair(existingPosition.Pair),
-			existingPosition.Address,
+			existingPosition.TraderAddress,
 		)
 		increasePositionResp, err := k.increasePosition(
 			ctx,
@@ -663,20 +661,19 @@ func (k Keeper) closePositionEntirely(
 
 	positionResp.ExchangedQuoteAssetAmount = exchangedQuoteAssetAmount
 	positionResp.Position = &types.Position{
-		Address:                             currentPosition.Address,
+		TraderAddress:                       currentPosition.TraderAddress,
 		Pair:                                currentPosition.Pair,
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		LiquidityHistoryIndex:               currentPosition.LiquidityHistoryIndex,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
 	if err = k.ClearPosition(
 		ctx,
 		common.TokenPair(currentPosition.Pair),
-		currentPosition.Address,
+		currentPosition.TraderAddress,
 	); err != nil {
 		return nil, err
 	}
