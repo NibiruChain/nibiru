@@ -110,12 +110,12 @@ message LiquidateResp {
 
   // Fee paid to the liquidator
   string fee_to_liquidator = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
 
   // Fee paid to the Perp EF fund
   string fee_to_perp_ecosystem_fund = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
 
   // Address of the liquidator
