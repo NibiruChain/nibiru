@@ -144,13 +144,13 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 				expectedEvents := []sdk.Event{
 					events.NewTransferEvent(
 						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr.String(),
-						/* to */ perpEFAddr.String(),
+						/* from */ vaultAddr,
+						/* to */ perpEFAddr,
 					),
 					events.NewTransferEvent(
 						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr.String(),
-						/* to */ liquidator.String(),
+						/* from */ vaultAddr,
+						/* to */ liquidator,
 					),
 				}
 				for _, event := range expectedEvents {
@@ -472,16 +472,15 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("create and set the initial position")
 			position := types.Position{
-				Address:                             traderAddr.String(),
+				TraderAddress:                       traderAddr,
 				Pair:                                pair.String(),
 				Size_:                               tc.initialPositionSize,
 				Margin:                              tc.initialMargin,
 				OpenNotional:                        tc.initialOpenNotional,
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				LiquidityHistoryIndex:               0,
 				BlockNumber:                         ctx.BlockHeight(),
 			}
-			perpKeeper.SetPosition(ctx, pair, traderAddr.String(), &position)
+			perpKeeper.SetPosition(ctx, pair, traderAddr, &position)
 
 			t.Log("execute full liquidation")
 			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(
@@ -501,7 +500,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 				positionResp.ExchangedQuoteAssetAmount) // amount of quote exchanged
 			// Initial position size is sold back to to vpool
 			assert.EqualValues(t, tc.initialPositionSize.Neg(), positionResp.ExchangedPositionSize)
-			// ( oldMargin + unrealzedPnL - fundingPayment ) * -1
+			// ( oldMargin + unrealizedPnL - fundingPayment ) * -1
 			assert.EqualValues(t, tc.expectedMarginToVault, positionResp.MarginToVault)
 			assert.EqualValues(t, tc.expectedPositionBadDebt, positionResp.BadDebt)
 			assert.EqualValues(t, tc.expectedPositionRealizedPnl, positionResp.RealizedPnl)
@@ -511,13 +510,12 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("assert new position fields")
 			newPosition := positionResp.Position
-			assert.EqualValues(t, traderAddr.String(), newPosition.Address)
+			assert.EqualValues(t, traderAddr, newPosition.TraderAddress)
 			assert.EqualValues(t, pair.String(), newPosition.Pair)
 			assert.True(t, newPosition.Size_.IsZero())        // always zero
 			assert.True(t, newPosition.Margin.IsZero())       // always zero
 			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero
 			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
-			assert.EqualValues(t, 0, newPosition.LiquidityHistoryIndex)
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 		})
 	}

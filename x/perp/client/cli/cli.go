@@ -136,7 +136,7 @@ func OpenPositionCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgOpenPosition{
-				Sender:               clientCtx.GetFromAddress().String(),
+				Sender:               clientCtx.GetFromAddress(),
 				TokenPair:            args[1],
 				Side:                 side,
 				QuoteAssetAmount:     amount,
@@ -185,7 +185,7 @@ func RemoveMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgRemoveMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
+				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
 				Margin:    marginToRemove,
 			}
@@ -227,7 +227,7 @@ func AddMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgAddMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
+				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
 				Margin:    marginToAdd,
 			}

@@ -21,12 +21,6 @@ func (k Keeper) AddMargin(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// validate trader
-	trader, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return res, err
-	}
-
 	// validate margin amount
 	addedMargin := msg.Margin.Amount
 	if !addedMargin.IsPositive() {
@@ -50,7 +44,7 @@ func (k Keeper) AddMargin(
 
 	// ------------- AddMargin -------------
 
-	position, err := k.Positions().Get(ctx, pair, trader.String())
+	position, err := k.Positions().Get(ctx, pair, msg.Sender)
 	if err != nil {
 		return res, err
 	}
@@ -60,20 +54,20 @@ func (k Keeper) AddMargin(
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
 	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
-		ctx, trader, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
+		ctx, msg.Sender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
 		return res, err
 	}
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
-		/* from */ vaultAddr.String(),
-		/* to */ trader.String(),
+		/* from */ vaultAddr,
+		/* to */ msg.Sender,
 	)
 
-	k.Positions().Set(ctx, pair, trader.String(), position)
+	k.Positions().Set(ctx, pair, msg.Sender, position)
 
 	fPayment := sdk.ZeroDec()
-	events.EmitMarginChange(ctx, trader, pair.String(), addedMargin, fPayment)
+	events.EmitMarginChange(ctx, msg.Sender, pair.String(), addedMargin, fPayment)
 	return &types.MsgAddMarginResponse{}, nil
 }
 
@@ -89,9 +83,9 @@ func (k Keeper) RemoveMargin(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate trader
-	trader, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return res, err
+
+	if err = sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return nil, err
 	}
 
 	// validate margin amount
@@ -117,7 +111,7 @@ func (k Keeper) RemoveMargin(
 
 	// ------------- RemoveMargin -------------
 
-	position, err := k.Positions().Get(ctx, pair, trader.String())
+	position, err := k.Positions().Get(ctx, pair, msg.Sender)
 	if err != nil {
 		return res, err
 	}
@@ -142,11 +136,11 @@ func (k Keeper) RemoveMargin(
 		return res, fmt.Errorf("not enough free collateral")
 	}
 
-	k.Positions().Set(ctx, pair, trader.String(), position)
+	k.Positions().Set(ctx, pair, msg.Sender, position)
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), margin)
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.VaultModuleAccount, trader, sdk.NewCoins(coinToSend))
+		ctx, types.VaultModuleAccount, msg.Sender, sdk.NewCoins(coinToSend))
 	if err != nil {
 		return res, err
 	}
@@ -154,11 +148,11 @@ func (k Keeper) RemoveMargin(
 
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
-		/* from */ vaultAddr.String(),
-		/* to */ trader.String(),
+		/* from */ vaultAddr,
+		/* to */ msg.Sender,
 	)
 
-	events.EmitMarginChange(ctx, trader, pair.String(), margin, remaining.FundingPayment)
+	events.EmitMarginChange(ctx, msg.Sender, pair.String(), margin, remaining.FundingPayment)
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      coinToSend,
 		FundingPayment: remaining.FundingPayment,

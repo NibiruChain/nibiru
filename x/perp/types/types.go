@@ -26,15 +26,14 @@ var (
 	ErrPositionZero     = errors.New("position is zero")
 )
 
-func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Position {
+func ZeroPosition(ctx sdk.Context, tokenPair common.TokenPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
-		Address:                             trader,
-		Pair:                                vpair.String(),
+		TraderAddress:                       traderAddr,
+		Pair:                                tokenPair.String(),
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		LiquidityHistoryIndex:               0,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 }

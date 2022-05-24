@@ -29,20 +29,20 @@ const (
 )
 
 func NewTransferEvent(
-	coin sdk.Coin, from string, to string,
+	coin sdk.Coin, from sdk.AccAddress, to sdk.AccAddress,
 ) sdk.Event {
 	const EventTypeTransfer = "transfer"
 	return sdk.NewEvent(
 		EventTypeTransfer,
-		sdk.NewAttribute(AttributeFromAddr, from),
-		sdk.NewAttribute(AttributeToAddr, to),
+		sdk.NewAttribute(AttributeFromAddr, from.String()),
+		sdk.NewAttribute(AttributeToAddr, to.String()),
 		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
 		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
 	)
 }
 
 func EmitTransfer(
-	ctx sdk.Context, coin sdk.Coin, from string, to string,
+	ctx sdk.Context, coin sdk.Coin, from sdk.AccAddress, to sdk.AccAddress,
 ) {
 	ctx.EventManager().EmitEvent(NewTransferEvent(coin, from, to))
 }
@@ -264,18 +264,18 @@ Args:
 */
 func EmitMarginChange(
 	ctx sdk.Context,
-	owner sdk.AccAddress,
+	traderAddr sdk.AccAddress,
 	vpool string,
 	marginAmt sdk.Int,
 	fundingPayment sdk.Dec,
 ) {
 	ctx.EventManager().EmitEvent(NewMarginChangeEvent(
-		owner, vpool, marginAmt, fundingPayment),
+		traderAddr, vpool, marginAmt, fundingPayment),
 	)
 }
 
 func NewMarginChangeEvent(
-	owner sdk.AccAddress,
+	traderAddr sdk.AccAddress,
 	vpool string,
 	marginAmt sdk.Int,
 	fundingPayment sdk.Dec,
@@ -283,7 +283,7 @@ func NewMarginChangeEvent(
 	const EventTypeMarginChange = "margin_change"
 	return sdk.NewEvent(
 		EventTypeMarginChange,
-		sdk.NewAttribute(AttributePositionOwner, owner.String()),
+		sdk.NewAttribute(AttributePositionOwner, traderAddr.String()),
 		sdk.NewAttribute(AttributeVpool, vpool),
 		sdk.NewAttribute("margin_amt", marginAmt.String()),
 		sdk.NewAttribute("funding_payment", fundingPayment.String()),
@@ -313,7 +313,7 @@ func NewInternalPositionResponseEvent(
 	pos := positionResp.Position
 	return sdk.NewEvent(
 		"internal_position_response",
-		sdk.NewAttribute(AttributePositionOwner, pos.Address),
+		sdk.NewAttribute(AttributePositionOwner, pos.TraderAddress.String()),
 		sdk.NewAttribute(AttributeVpool, pos.Pair),
 		sdk.NewAttribute("pos_margin", pos.Margin.String()),
 		sdk.NewAttribute("pos_open_notional", pos.OpenNotional.String()),
