@@ -16,7 +16,7 @@ import (
 )
 
 func TestQueryPosition_Ok(t *testing.T) {
-	t.Log("initialize kepper")
+	t.Log("initialize keeper")
 	nibiruApp, ctx := testutil.NewNibiruApp(true)
 	perpKeeper := &nibiruApp.PerpKeeper
 
