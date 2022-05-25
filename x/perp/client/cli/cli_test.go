@@ -141,6 +141,9 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, common.TokenPair(pair), user)
 	s.Require().NoError(err)
 	s.Require().Equal(user, queryResp.Position.TraderAddress)
+	s.Require().Equal(pair, queryResp.Position.Pair)
+	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
+	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.OpenNotional)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
