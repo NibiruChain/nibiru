@@ -71,7 +71,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 					ctx, pair, side, alice, quote, leverage, baseLimit)
 
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
 			},
 		},
 		{
