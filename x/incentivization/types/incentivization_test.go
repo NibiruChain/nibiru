@@ -132,5 +132,52 @@ func TestMsgCreateIncentivizationProgram_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgFundIncentivizationProgram_ValidateBasic(t *testing.T) {
+	type test struct {
+		msg     *MsgFundIncentivizationProgram
+		wantErr string
+	}
 
+	cases := map[string]test{
+		"success": {
+			msg: &MsgFundIncentivizationProgram{
+				Sender: sample.AccAddress().String(),
+				Id:     0,
+				Funds:  sdk.NewCoins(sdk.NewInt64Coin("test", 1000)),
+			},
+		},
+		"invalid funds": {
+			msg: &MsgFundIncentivizationProgram{
+				Sender: sample.AccAddress().String(),
+				Id:     0,
+				Funds: sdk.Coins{sdk.Coin{
+					Denom:  "dKSAODKOASKDOASKD_CDSADC_SA",
+					Amount: sdk.Int{},
+				}},
+			},
+			wantErr: "invalid funds",
+		},
+		"zero funds": {
+			msg: &MsgFundIncentivizationProgram{
+				Sender: sample.AccAddress().String(),
+				Id:     0,
+			},
+			wantErr: "no funding provided",
+		},
+	}
+
+	for name, tc := range cases {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.wantErr == "" && err != nil {
+				t.Fatalf("unexpected error: %s", err.Error())
+			}
+			if tc.wantErr != "" && err == nil {
+				t.Fatalf("expected error: %s", tc.wantErr)
+			}
+			if tc.wantErr != "" && err != nil {
+				require.Contains(t, err.Error(), tc.wantErr)
+			}
+		})
+	}
 }
