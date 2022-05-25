@@ -3,9 +3,10 @@ package perp_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/stretchr/testify/assert"
 )
 
 // TestModuleAccounts verifies that all x/perp module accounts are connected

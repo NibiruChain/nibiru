@@ -21,6 +21,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	k.SetParams(ctx, genState.Params)
 
+	for _, pm := range genState.PairMetadata {
+		k.PairMetadata().Set(ctx, pm)
+	}
+
 	// See https://github.com/cosmos/cosmos-sdk/issues/5569 on why we do this.
 	k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
 	k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
@@ -32,6 +36,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	genesis.Params = k.GetParams(ctx)
 	genesis.ModuleAccountBalance = k.GetModuleAccountBalance(ctx, common.GovDenom)
+	genesis.PairMetadata = k.PairMetadata().GetAll(ctx)
 
 	return genesis
 }

@@ -3,10 +3,11 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func TestPrepaidBadDebtState(t *testing.T) {
