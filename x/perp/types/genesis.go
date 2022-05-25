@@ -11,14 +11,7 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:               DefaultParams(),
 		ModuleAccountBalance: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
-		PairMetadata: []*PairMetadata{
-			{
-				Pair: "ubtc:unibi",
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
-			},
-		},
+		PairMetadata:         []*PairMetadata{},
 	}
 }
 
