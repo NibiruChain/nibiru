@@ -50,7 +50,7 @@ func (m *MsgCreateIncentivizationProgram) ValidateBasic() error {
 		return fmt.Errorf("invalid denom")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return err
+		return fmt.Errorf("invalid address")
 	}
 
 	if m.Epochs == 0 {
