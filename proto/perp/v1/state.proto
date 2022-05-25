@@ -38,6 +38,7 @@ message GenesisState {
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+  repeated PairMetadata pair_metadata = 3;
 }
 
 // Position identifies and records information on a user's position on one of

@@ -29,7 +29,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						Pair: "osmo:nusd",
 					}, marginDelta)
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
 			},
 		},
 		{
@@ -42,7 +42,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, types.Position{Pair: the3pool}, marginDelta)
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
 			},
 		},
 		{

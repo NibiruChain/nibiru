@@ -85,7 +85,11 @@ func CmdQueryPosition() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			trader := args[0]
+			trader, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return fmt.Errorf("invalid trader address: %w", err)
+			}
+
 			tokenPair, err := common.NewTokenPairFromStr(args[1])
 			if err != nil {
 				return err
@@ -93,7 +97,7 @@ func CmdQueryPosition() *cobra.Command {
 
 			res, err := queryClient.TraderPosition(
 				context.Background(), &types.QueryTraderPositionRequest{
-					Trader:    sdk.AccAddress(trader),
+					Trader:    trader,
 					TokenPair: tokenPair.String(),
 				},
 			)
@@ -143,7 +147,8 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			var side types.Side
 			switch args[0] {
@@ -193,6 +198,7 @@ func OpenPositionCmd() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
 

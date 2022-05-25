@@ -28,7 +28,7 @@ type AssetPair struct {
 	Token1 string
 }
 
-// name is the name of the pool that corresponds to the two assets on this pair.
+// Name is the name of the pool that corresponds to the two assets on this pair.
 func (pair AssetPair) Name() string {
 	return PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
 }

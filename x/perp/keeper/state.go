@@ -144,7 +144,7 @@ func (p PairMetadata) Get(ctx sdk.Context, pair common.TokenPair) (*types.PairMe
 
 	v := kv.Get([]byte(pair))
 	if v == nil {
-		return nil, types.ErrPairNotFound
+		return nil, types.ErrPairMetadataNotFound
 	}
 
 	pairMetadata := new(types.PairMetadata)
@@ -156,6 +156,21 @@ func (p PairMetadata) Get(ctx sdk.Context, pair common.TokenPair) (*types.PairMe
 func (p PairMetadata) Set(ctx sdk.Context, metadata *types.PairMetadata) {
 	kv := p.getKV(ctx)
 	kv.Set([]byte(metadata.Pair), p.cdc.MustMarshal(metadata))
+}
+
+func (p PairMetadata) GetAll(ctx sdk.Context) []*types.PairMetadata {
+	store := ctx.KVStore(p.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, pairMetadataNamespace)
+
+	var pairMetadatas []*types.PairMetadata
+	for ; iterator.Valid(); iterator.Next() {
+		var pairMetadata = new(types.PairMetadata)
+		p.cdc.MustUnmarshal(iterator.Value(), pairMetadata)
+		pairMetadatas = append(pairMetadatas, pairMetadata)
+	}
+
+	return pairMetadatas
 }
 
 var whitelistNamespace = []byte{0x3}

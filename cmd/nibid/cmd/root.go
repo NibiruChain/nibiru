@@ -12,6 +12,7 @@ import (
 	perpcmd "github.com/NibiruChain/nibiru/x/perp/client/cli"
 	pricefeedcmd "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	sccmd "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	vpoolcmd "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 
 	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -221,6 +222,7 @@ func queryCommand() *cobra.Command {
 		pricefeedcmd.GetQueryCmd(),
 		sccmd.GetQueryCmd(),
 		perpcmd.GetQueryCmd(),
+		vpoolcmd.GetQueryCmd(),
 	)
 
 	// Adds all query commands to the 'rootQueryCmd'

@@ -5,6 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func TestPrepaidBadDebtState(t *testing.T) {
@@ -40,4 +43,32 @@ func TestPrepaidBadDebtState(t *testing.T) {
 
 	amount = perpKeeper.PrepaidBadDebtState().Get(ctx, "NUSD")
 	assert.EqualValues(t, sdk.ZeroInt(), amount)
+}
+
+func TestPairMetadata_GetAll(t *testing.T) {
+	pairMetadatas := []*types.PairMetadata{
+		{
+			Pair: "ubtc:unibi",
+			CumulativePremiumFractions: []sdk.Dec{
+				sdk.MustNewDecFromStr("1"),
+			},
+		},
+		{
+			Pair:                       "ueth:unibi",
+			CumulativePremiumFractions: nil,
+		},
+	}
+
+	perpKeeper, _, ctx := getKeeper(t)
+
+	for _, m := range pairMetadatas {
+		perpKeeper.PairMetadata().Set(ctx, m)
+	}
+
+	savedMetadata := perpKeeper.PairMetadata().GetAll(ctx)
+	require.Len(t, savedMetadata, 2)
+
+	for _, sm := range savedMetadata {
+		require.Contains(t, pairMetadatas, sm)
+	}
 }

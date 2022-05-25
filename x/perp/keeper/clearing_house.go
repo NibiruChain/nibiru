@@ -23,7 +23,6 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
-	// require vpool
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return err

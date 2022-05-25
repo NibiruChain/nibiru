@@ -12,7 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 
-	cli "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	utils "github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -132,7 +132,7 @@ func (s IntegrationTestSuite) fillWalletFromValidator(
 		balance,
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		utils.DefaultFeeString(s.cfg),
+		utils.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 
