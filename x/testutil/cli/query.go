@@ -3,12 +3,13 @@ package cli
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
+
+	"github.com/NibiruChain/nibiru/x/perp/client/cli"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	cli2 "github.com/NibiruChain/nibiru/x/vpool/client/cli"
