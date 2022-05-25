@@ -15,6 +15,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
@@ -123,7 +124,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		mockedVpoolKeeper,
 	)
 
-	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, nil)
+	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, log.NewNopLogger())
 
 	return k, mockedDependencies{
 		mockAccountKeeper:   mockedAccountKeeper,

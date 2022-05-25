@@ -18,54 +18,90 @@ func (k Keeper) AddMargin(
 	goCtx context.Context, msg *types.MsgAddMargin,
 ) (res *types.MsgAddMarginResponse, err error) {
 	// ------------- Message Setup -------------
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate trader
+	if err = sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return nil, err
+	}
 
 	// validate margin amount
 	addedMargin := msg.Margin.Amount
 	if !addedMargin.IsPositive() {
-		return res, fmt.Errorf("margin must be positive, not: %v", addedMargin.String())
+		err = fmt.Errorf("margin must be positive, not: %v", addedMargin.String())
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"margin_amount",
+			msg.Margin.Amount.String(),
+		)
+		return nil, err
 	}
 
-	// validate pair
+	// validate token pair
 	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
 	if err != nil {
-		return res, err
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"token_pair",
+			msg.TokenPair,
+		)
+		return nil, err
 	}
-	err = k.requireVpool(ctx, pair)
-	if err != nil {
-		return res, err
+	// validate vpool exists
+	if err = k.requireVpool(ctx, pair); err != nil {
+		return nil, err
 	}
 
 	// validate margin denom
 	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
-		return res, fmt.Errorf("invalid margin denom")
+		err = fmt.Errorf("invalid margin denom")
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"margin_denom",
+			msg.Margin.Denom,
+			"quote_token_denom",
+			pair.GetQuoteTokenDenom(),
+		)
+		return nil, err
 	}
 
 	// ------------- AddMargin -------------
-
 	position, err := k.Positions().Get(ctx, pair, msg.Sender)
 	if err != nil {
-		return res, err
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"pair",
+			pair.String(),
+			"trader",
+			msg.Sender.String(),
+		)
+		return nil, err
 	}
 
 	position.Margin = position.Margin.Add(addedMargin.ToDec())
-
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
-	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msg.Sender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
-		return res, err
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"trader",
+			msg.Sender.String(),
+			"coin",
+			coinToSend.String(),
+		)
+		return nil, err
 	}
+
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
-		/* from */ vaultAddr,
+		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
 		/* to */ msg.Sender,
 	)
 
 	k.Positions().Set(ctx, pair, msg.Sender, position)
 
+	// TODO(https://github.com/NibiruChain/nibiru/issues/323): calculate the funding payment
 	fPayment := sdk.ZeroDec()
 	events.EmitMarginChange(ctx, msg.Sender, pair.String(), addedMargin, fPayment)
 	return &types.MsgAddMarginResponse{}, nil
@@ -79,55 +115,84 @@ func (k Keeper) RemoveMargin(
 	goCtx context.Context, msg *types.MsgRemoveMargin,
 ) (res *types.MsgRemoveMarginResponse, err error) {
 	// ------------- Message Setup -------------
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate trader
-
 	if err = sdk.VerifyAddressFormat(msg.Sender); err != nil {
 		return nil, err
 	}
 
 	// validate margin amount
-	margin := msg.Margin.Amount
-	if margin.LTE(sdk.ZeroInt()) {
-		return res, fmt.Errorf("margin must be positive, not: %v", margin.String())
+	if !msg.Margin.Amount.IsPositive() {
+		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"margin_amount",
+			msg.Margin.Amount.String(),
+		)
+		return nil, err
 	}
 
-	// validate pair
+	// validate token pair
 	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
 	if err != nil {
-		return res, err
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"token_pair",
+			msg.TokenPair,
+		)
+		return nil, err
 	}
-	err = k.requireVpool(ctx, pair)
-	if err != nil {
-		return res, err
+
+	// validate vpool exists
+	if err = k.requireVpool(ctx, pair); err != nil {
+		return nil, err
 	}
 
 	// validate margin denom
 	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
-		return res, fmt.Errorf("invalid margin denom")
+		err = fmt.Errorf("invalid margin denom")
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"margin_denom",
+			msg.Margin.Denom,
+			"quote_token_denom",
+			pair.GetQuoteTokenDenom(),
+		)
+		return nil, err
 	}
 
 	// ------------- RemoveMargin -------------
-
 	position, err := k.Positions().Get(ctx, pair, msg.Sender)
 	if err != nil {
-		return res, err
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"pair",
+			pair.String(),
+			"trader",
+			msg.Sender.String(),
+		)
+		return nil, err
 	}
 
-	marginDelta := margin.Neg()
+	marginDelta := msg.Margin.Amount.Neg()
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, *position, marginDelta.ToDec())
 	if err != nil {
-		return res, err
+		return nil, err
 	}
-	position.Margin = remaining.Margin
-	position.LastUpdateCumulativePremiumFraction = remaining.LatestCumulativePremiumFraction
 	if !remaining.BadDebt.IsZero() {
-		return res, fmt.Errorf("failed to remove margin; position has bad debt")
+		err = fmt.Errorf("failed to remove margin; position has bad debt")
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"remaining_bad_debt",
+			remaining.BadDebt.String(),
+		)
+		return nil, err
 	}
 
+	position.Margin = remaining.Margin
+	position.LastUpdateCumulativePremiumFraction = remaining.LatestCumulativePremiumFraction
 	freeCollateral, err := k.calcFreeCollateral(
 		ctx, *position, remaining.FundingPayment)
 	if err != nil {
@@ -138,21 +203,34 @@ func (k Keeper) RemoveMargin(
 
 	k.Positions().Set(ctx, pair, msg.Sender, position)
 
-	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), margin)
+	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.VaultModuleAccount, msg.Sender, sdk.NewCoins(coinToSend))
 	if err != nil {
-		return res, err
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"to",
+			msg.Sender.String(),
+			"coin",
+			coinToSend.String(),
+		)
+		return nil, err
 	}
-	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
 
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
-		/* from */ vaultAddr,
+		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
 		/* to */ msg.Sender,
 	)
 
-	events.EmitMarginChange(ctx, msg.Sender, pair.String(), margin, remaining.FundingPayment)
+	events.EmitMarginChange(
+		ctx,
+		msg.Sender,
+		pair.String(),
+		msg.Margin.Amount,
+		remaining.FundingPayment,
+	)
+
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      coinToSend,
 		FundingPayment: remaining.FundingPayment,
@@ -216,9 +294,15 @@ func (k Keeper) GetMarginRatio(
 	return marginRatio, nil
 }
 
-func (k *Keeper) requireVpool(ctx sdk.Context, pair common.TokenPair) error {
+func (k Keeper) requireVpool(ctx sdk.Context, pair common.TokenPair) (err error) {
 	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
-		return fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
+		err = fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
+		k.Logger(ctx).Error(
+			err.Error(),
+			"pair",
+			pair.String(),
+		)
+		return err
 	}
 	return nil
 }
