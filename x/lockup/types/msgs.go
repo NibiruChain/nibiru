@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -19,20 +18,21 @@ var (
 	_ sdk.Msg = (*MsgInitiateUnlock)(nil)
 )
 
-// NewMsgLockTokens creates a message to lock tokens.
-func NewMsgLockTokens(owner sdk.AccAddress, duration time.Duration, coins sdk.Coins) *MsgLockTokens {
-	return &MsgLockTokens{
-		Owner:    owner.String(),
-		Duration: duration,
-		Coins:    coins,
-	}
-}
-
 func (m MsgLockTokens) Route() string { return RouterKey }
 func (m MsgLockTokens) Type() string  { return TypeMsgLockTokens }
 func (m MsgLockTokens) ValidateBasic() error {
+	if err := m.Coins.Validate(); err != nil {
+		return fmt.Errorf("invalid coins")
+	}
+	if m.Coins.IsZero() {
+		return fmt.Errorf("zero coins")
+	}
 	if m.Duration <= 0 {
-		return fmt.Errorf("duration should be positive: %d < 0", m.Duration)
+		return fmt.Errorf("duration should be positive: %d <= 0", m.Duration)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Owner); err != nil {
+		return fmt.Errorf("invalid address")
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func (m MsgLockTokens) GetSigners() []sdk.AccAddress {
 func (m *MsgInitiateUnlock) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(m.Owner)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid address")
 	}
 	return nil
 }
