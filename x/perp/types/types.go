@@ -2,7 +2,7 @@ package types
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -21,9 +21,10 @@ const (
 var (
 	ErrMarginHighEnough = sdkerrors.Register(ModuleName, 1,
 		"Margin is higher than required maintenant margin ratio")
-	ErrPositionNotFound = errors.New("no position found")
-	ErrPairNotFound     = errors.New("pair doesn't have live vpool")
-	ErrPositionZero     = errors.New("position is zero")
+	ErrPositionNotFound     = errors.New("no position found")
+	ErrPairNotFound         = errors.New("pair doesn't have live vpool")
+	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
+	ErrPositionZero         = errors.New("position is zero")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.TokenPair, traderAddr sdk.AccAddress) *Position {
