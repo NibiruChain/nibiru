@@ -407,9 +407,9 @@ type LiquidateResp struct {
 	// Amount of bad debt created by the liquidation event
 	BadDebt github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=bad_debt,json=badDebt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"bad_debt"`
 	// Fee paid to the liquidator
-	FeeToLiquidator github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=fee_to_liquidator,json=feeToLiquidator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"fee_to_liquidator"`
+	FeeToLiquidator github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=fee_to_liquidator,json=feeToLiquidator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee_to_liquidator"`
 	// Fee paid to the Perp EF fund
-	FeeToPerpEcosystemFund github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=fee_to_perp_ecosystem_fund,json=feeToPerpEcosystemFund,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"fee_to_perp_ecosystem_fund"`
+	FeeToPerpEcosystemFund github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=fee_to_perp_ecosystem_fund,json=feeToPerpEcosystemFund,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee_to_perp_ecosystem_fund"`
 	// Address of the liquidator
 	Liquidator github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=liquidator,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"liquidator,omitempty"`
 	// Position response from the close or open reverse position

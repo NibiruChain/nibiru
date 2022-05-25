@@ -154,7 +154,7 @@ Args:
   vsize sdk.Dec: virtual amount of base assets for the position, which would be
     margin * leverage * priceBasePerQuote.
   liquidator sdk.AccAddress: Address of the account that executed the tx.
-  liquidationFee sdk.Int: Commission (in margin units) received by 'liquidator'.
+  feeToLiquidator sdk.Int: Commission (in margin units) received by 'liquidator'.
   badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
     Bad debt is negative net margin past the liquidation point of a position.
 */
@@ -165,11 +165,13 @@ func EmitPositionLiquidate(
 	notional sdk.Dec,
 	vsize sdk.Dec,
 	liquidator sdk.AccAddress,
-	liquidationFee sdk.Int,
+	feeToLiquidator sdk.Int,
+	feeToPerpEF sdk.Int,
 	badDebt sdk.Dec,
 ) {
 	ctx.EventManager().EmitEvent(NewPositionLiquidateEvent(
-		vpool, owner, notional, vsize, liquidator, liquidationFee, badDebt,
+		vpool, owner, notional, vsize, liquidator, feeToLiquidator, feeToPerpEF,
+		badDebt,
 	))
 }
 
@@ -179,7 +181,8 @@ func NewPositionLiquidateEvent(
 	notional sdk.Dec,
 	vsize sdk.Dec,
 	liquidator sdk.AccAddress,
-	liquidationFee sdk.Int,
+	feeToLiquidator sdk.Int,
+	feeToPerpEF sdk.Int,
 	badDebt sdk.Dec,
 ) sdk.Event {
 	const EventTypePositionLiquidate = "position_liquidate"
@@ -190,7 +193,8 @@ func NewPositionLiquidateEvent(
 		sdk.NewAttribute("notional", notional.String()),
 		sdk.NewAttribute("vsize", vsize.String()),
 		sdk.NewAttribute("liquidator", liquidator.String()),
-		sdk.NewAttribute("liquidationFee", liquidationFee.String()),
+		sdk.NewAttribute("feeToLiquidator", feeToLiquidator.String()),
+		sdk.NewAttribute("feeToPerpEF", feeToPerpEF.String()),
 		sdk.NewAttribute("badDebt", badDebt.String()),
 	)
 }
