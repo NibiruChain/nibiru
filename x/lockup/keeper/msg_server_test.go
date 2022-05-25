@@ -119,7 +119,6 @@ func TestQueryServer_LockedCoins(t *testing.T) {
 }
 
 func TestQueryServer_LocksByAddress(t *testing.T) {
-
 	app := testutil.NewTestApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	s := keeper.NewMsgServerImpl(app.LockupKeeper)
@@ -166,5 +165,4 @@ func TestQueryServer_LocksByAddress(t *testing.T) {
 
 		require.Equal(t, totalFromQuery, totalFromResponse)
 	})
-
 }
