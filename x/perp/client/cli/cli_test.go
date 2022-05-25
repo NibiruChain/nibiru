@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/client/cli"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	utils "github.com/NibiruChain/nibiru/x/testutil"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	utils "github.com/NibiruChain/nibiru/x/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -38,6 +39,34 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	s.cfg = utils.DefaultConfig()
+
+	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+
+	vpoolGenesis := vpooltypes.DefaultGenesis()
+	vpoolGenesis.Vpools = []*vpooltypes.Pool{
+		{
+			Pair:                  "ubtc:unibi",
+			BaseAssetReserve:      sdk.MustNewDecFromStr("10000000"),
+			QuoteAssetReserve:     sdk.MustNewDecFromStr("60000000000"),
+			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+		},
+	}
+	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
+
+	perpGenesis := perptypes.DefaultGenesis()
+	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
+		{
+			Pair: "ubtc:unibi",
+			CumulativePremiumFractions: []sdk.Dec{
+				sdk.ZeroDec(),
+			},
+		},
+	}
+
+	genesisState[perptypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(perpGenesis)
+	s.cfg.GenesisState = genesisState
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
@@ -72,14 +101,20 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	)
 	s.Require().NoError(err)
 
+	// Check vpool balances
+	reserveAssets, err := testutilcli.CliQueryVpoolReserveAssets(val.ClientCtx, "ubtc:unibi")
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
+	s.Require().Equal(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
+
 	args := []string{
 		"--from",
 		user.String(),
 		"buy",
-		fmt.Sprintf("%s%s%s", "btc", common.PairSeparator, "usdc"),
-		"1000000", // 1 BTC
+		fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi"),
 		"1",       // Leverage
-		"30000",
+		"1000000", // 1 BTC
+		"1",
 	}
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -87,10 +122,14 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
 
-	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	s.T().Log(out.String())
-
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
+
+	// Check vpool after opening position
+	reserveAssets, err = testutilcli.CliQueryVpoolReserveAssets(val.ClientCtx, "ubtc:unibi")
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
+	s.Require().Equal(sdk.MustNewDecFromStr("60001000000"), reserveAssets.QuoteAssetReserve)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

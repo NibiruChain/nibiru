@@ -2,7 +2,6 @@ package types
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
-	// TODO remove after demo
 	return &GenesisState{
 		Params: DefaultParams(),
 		Vpools: []*Pool{},
