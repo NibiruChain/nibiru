@@ -16,7 +16,7 @@ service Query {
     option (google.api.http).get = "/nibiru/vpool/reserve_assets";
   }
 
-  // Queries the reserve assets in a given pool, identified by a token pair.
+  // Queries all virtual pools.
   rpc AllPools(QueryAllPoolsRequests) returns (QueryAllPoolsResponse) {
     option (google.api.http).get = "/nibiru/vpool/all_pools";
   }  
