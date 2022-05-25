@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	utils "github.com/NibiruChain/nibiru/x/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/perp/client/cli"
+	utils "github.com/NibiruChain/nibiru/x/testutil"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {

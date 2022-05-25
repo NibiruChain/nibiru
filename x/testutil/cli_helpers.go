@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
