@@ -1,10 +1,12 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"testing"
 	"time"
+
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -1,9 +1,10 @@
 package incentivization_test
 
 import (
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"testing"
 	"time"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"

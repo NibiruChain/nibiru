@@ -1,10 +1,12 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/simapp"
+
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
