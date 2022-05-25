@@ -57,7 +57,7 @@ func (q queryServer) AllPools(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pools := q.FetchAllPools(ctx)
+	pools := q.GetAllPools(ctx)
 	if err != nil {
 		return nil, err
 	}

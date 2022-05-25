@@ -260,7 +260,7 @@ func TestGetVpools(t *testing.T) {
 			sdk.OneDec(),
 		)
 
-		pools := vpoolKeeper.FetchAllPools(ctx)
+		pools := vpoolKeeper.GetAllPools(ctx)
 
 		require.EqualValues(t, 2, len(pools))
 

@@ -47,21 +47,6 @@ func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (
 	return &pool, nil
 }
 
-/*
-FetchAllPools fetch all pools from the store and returns them.
-*/
-func (k Keeper) FetchAllPools(ctx sdk.Context) (pools []*types.Pool) {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.PoolKey)
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var pool types.Pool
-		k.codec.MustUnmarshal(iterator.Value(), &pool)
-		pools = append(pools, &pool)
-	}
-
-	return pools
-}
-
 func (k Keeper) savePool(
 	ctx sdk.Context,
 	pool *types.Pool,
