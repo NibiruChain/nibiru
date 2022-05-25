@@ -110,4 +110,4 @@ fi
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --home $CHAIN_DIR
+$BINARY start --home $CHAIN_DIR --log_level debug

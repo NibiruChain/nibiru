@@ -290,15 +290,18 @@ func TestRemoveMargin(t *testing.T) {
 		{
 			name: "zero margin remove - fail",
 			test: func() {
-				removeAmt := sdk.ZeroInt()
-
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
 				alice := sample.AccAddress()
 				pair := common.TokenPair("osmo:nusd")
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice, TokenPair: pair.String(),
-					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
+					Sender:    alice,
+					TokenPair: pair.String(),
+					Margin: sdk.Coin{
+						Denom:  common.StableDenom,
+						Amount: sdk.ZeroInt(),
+					},
+				}
 				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, "margin must be positive")
