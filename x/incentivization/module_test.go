@@ -1,6 +1,7 @@
 package incentivization_test
 
 import (
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 func TestAppModule_InitGenesis_ExportGenesis(t *testing.T) {
 	app := testutil.NewTestApp(false)
 
-	am := incentivization.NewAppModule(app.AppCodec(), app.IncentivizationKeeper)
+	am := incentivization.NewAppModule(app.AppCodec(), app.IncentivizationKeeper, app.AccountKeeper)
 	ctxUncached := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	ctx, _ := ctxUncached.CacheContext()
 	// create some programs
@@ -37,6 +38,18 @@ func TestAppModule_InitGenesis_ExportGenesis(t *testing.T) {
 	require.Equal(t, programs, genesis.IncentivizationPrograms) // must be equal to creation
 	// init genesis
 	ctx, _ = ctxUncached.CacheContext()
+	require.Panics(t, func() {
+		// tests the lack of existence of escrow accounts in auth
+		am.InitGenesis(ctx, app.AppCodec(), genesisRaw)
+	})
+	ctx, _ = ctxUncached.CacheContext()
+	ctx = ctx.WithBlockTime(ctxUncached.BlockTime().Add(10 * time.Second)) // set in the future
+	// init escrow accounts
+	for _, p := range programs {
+		escrowAccount := app.AccountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(keeper.NewEscrowAccountName(p.Id))) // module account that holds the escrowed funds.
+		app.AccountKeeper.SetAccount(ctx, escrowAccount)
+	}
+	// init working genesis
 	am.InitGenesis(ctx, app.AppCodec(), genesisRaw)
 	// export again
 	genesisRaw = am.ExportGenesis(ctx, app.AppCodec())
