@@ -281,17 +281,21 @@ func (m *GenesisState) GetPairMetadata() []*PairMetadata {
 // the virtual liquidity pools.
 type Position struct {
 	// address identifies the address owner of this position
-	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	TraderAddress github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=trader_address,json=traderAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"trader_address,omitempty"`
 	// pair identifies the pair associated with this position
-	Pair   string                                 `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	Size_  github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=size,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"size"`
+	Pair string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
+	// Position size.
+	Size_ github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=size,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"size"`
+	// Amount of margin remaining in the position.
 	Margin github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=margin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin"`
 	// OpenNotional is the quote denom value of the position when opening.
-	OpenNotional                        github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=open_notional,json=openNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"open_notional"`
+	// Used to calculate PnL.
+	OpenNotional github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=open_notional,json=openNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"open_notional"`
+	// The last cumulative funding payment this position has applied.
+	// Used to calculate the next funding payment.
 	LastUpdateCumulativePremiumFraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=last_update_cumulative_premium_fraction,json=lastUpdateCumulativePremiumFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_update_cumulative_premium_fraction"`
-	LiquidityHistoryIndex               int64                                  `protobuf:"varint,7,opt,name=liquidity_history_index,json=liquidityHistoryIndex,proto3" json:"liquidity_history_index,omitempty"`
 	// BlockNumber is the block number of the change to the position.
-	BlockNumber int64 `protobuf:"varint,8,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
+	BlockNumber int64 `protobuf:"varint,7,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
 }
 
 func (m *Position) Reset()         { *m = Position{} }
@@ -327,11 +331,11 @@ func (m *Position) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Position proto.InternalMessageInfo
 
-func (m *Position) GetAddress() string {
+func (m *Position) GetTraderAddress() github_com_cosmos_cosmos_sdk_types.AccAddress {
 	if m != nil {
-		return m.Address
+		return m.TraderAddress
 	}
-	return ""
+	return nil
 }
 
 func (m *Position) GetPair() string {
@@ -339,13 +343,6 @@ func (m *Position) GetPair() string {
 		return m.Pair
 	}
 	return ""
-}
-
-func (m *Position) GetLiquidityHistoryIndex() int64 {
-	if m != nil {
-		return m.LiquidityHistoryIndex
-	}
-	return 0
 }
 
 func (m *Position) GetBlockNumber() int64 {
@@ -466,59 +463,6 @@ func (m *LiquidateResp) GetPositionResp() *PositionResp {
 	return nil
 }
 
-type VirtualPoolInfo struct {
-	Pair                       string                                   `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
-	LastRestrictionBlock       int64                                    `protobuf:"varint,2,opt,name=last_restriction_block,json=lastRestrictionBlock,proto3" json:"last_restriction_block,omitempty"`
-	CumulativePremiumFractions []github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,rep,name=cumulative_premium_fractions,json=cumulativePremiumFractions,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"cumulative_premium_fractions"`
-}
-
-func (m *VirtualPoolInfo) Reset()         { *m = VirtualPoolInfo{} }
-func (m *VirtualPoolInfo) String() string { return proto.CompactTextString(m) }
-func (*VirtualPoolInfo) ProtoMessage()    {}
-func (*VirtualPoolInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0416b6ef16ef80be, []int{5}
-}
-func (m *VirtualPoolInfo) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *VirtualPoolInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_VirtualPoolInfo.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *VirtualPoolInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VirtualPoolInfo.Merge(m, src)
-}
-func (m *VirtualPoolInfo) XXX_Size() int {
-	return m.Size()
-}
-func (m *VirtualPoolInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_VirtualPoolInfo.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_VirtualPoolInfo proto.InternalMessageInfo
-
-func (m *VirtualPoolInfo) GetPair() string {
-	if m != nil {
-		return m.Pair
-	}
-	return ""
-}
-
-func (m *VirtualPoolInfo) GetLastRestrictionBlock() int64 {
-	if m != nil {
-		return m.LastRestrictionBlock
-	}
-	return 0
-}
-
 type PairMetadata struct {
 	Pair                       string                                   `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
 	CumulativePremiumFractions []github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,rep,name=cumulative_premium_fractions,json=cumulativePremiumFractions,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"cumulative_premium_fractions"`
@@ -528,7 +472,7 @@ func (m *PairMetadata) Reset()         { *m = PairMetadata{} }
 func (m *PairMetadata) String() string { return proto.CompactTextString(m) }
 func (*PairMetadata) ProtoMessage()    {}
 func (*PairMetadata) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0416b6ef16ef80be, []int{6}
+	return fileDescriptor_0416b6ef16ef80be, []int{5}
 }
 func (m *PairMetadata) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -565,26 +509,26 @@ func (m *PairMetadata) GetPair() string {
 }
 
 type PositionChangedEvent struct {
-	Trader                string                                 `protobuf:"bytes,1,opt,name=trader,proto3" json:"trader,omitempty"`
-	Pair                  string                                 `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	Margin                github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=margin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin"`
-	PositionNotional      github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
-	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
-	Fee                   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=fee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee"`
-	PositionSizeAfter     github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=position_size_after,json=positionSizeAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_size_after"`
-	RealizedPnl           github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
-	UnrealizedPnlAfter    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=unrealized_pnl_after,json=unrealizedPnlAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"unrealized_pnl_after"`
-	BadDebt               github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=bad_debt,json=badDebt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"bad_debt"`
-	LiquidationPenalty    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=liquidation_penalty,json=liquidationPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"liquidation_penalty"`
-	SpotPrice             github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,12,opt,name=spot_price,json=spotPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"spot_price"`
-	FundingPayment        github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
+	TraderAddress         github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=trader_address,json=traderAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"trader_address,omitempty"`
+	Pair                  string                                        `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
+	Margin                github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,3,opt,name=margin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin"`
+	PositionNotional      github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,4,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
+	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,5,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
+	Fee                   github_com_cosmos_cosmos_sdk_types.Int        `protobuf:"bytes,6,opt,name=fee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee"`
+	PositionSizeAfter     github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,7,opt,name=position_size_after,json=positionSizeAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_size_after"`
+	RealizedPnl           github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,8,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
+	UnrealizedPnlAfter    github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,9,opt,name=unrealized_pnl_after,json=unrealizedPnlAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"unrealized_pnl_after"`
+	BadDebt               github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,10,opt,name=bad_debt,json=badDebt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"bad_debt"`
+	LiquidationPenalty    github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,11,opt,name=liquidation_penalty,json=liquidationPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"liquidation_penalty"`
+	SpotPrice             github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,12,opt,name=spot_price,json=spotPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"spot_price"`
+	FundingPayment        github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,13,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
 }
 
 func (m *PositionChangedEvent) Reset()         { *m = PositionChangedEvent{} }
 func (m *PositionChangedEvent) String() string { return proto.CompactTextString(m) }
 func (*PositionChangedEvent) ProtoMessage()    {}
 func (*PositionChangedEvent) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0416b6ef16ef80be, []int{7}
+	return fileDescriptor_0416b6ef16ef80be, []int{6}
 }
 func (m *PositionChangedEvent) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -613,11 +557,11 @@ func (m *PositionChangedEvent) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_PositionChangedEvent proto.InternalMessageInfo
 
-func (m *PositionChangedEvent) GetTrader() string {
+func (m *PositionChangedEvent) GetTraderAddress() github_com_cosmos_cosmos_sdk_types.AccAddress {
 	if m != nil {
-		return m.Trader
+		return m.TraderAddress
 	}
-	return ""
+	return nil
 }
 
 func (m *PositionChangedEvent) GetPair() string {
@@ -637,7 +581,6 @@ func init() {
 	proto.RegisterType((*Position)(nil), "nibiru.perp.v1.Position")
 	proto.RegisterType((*PositionResp)(nil), "nibiru.perp.v1.PositionResp")
 	proto.RegisterType((*LiquidateResp)(nil), "nibiru.perp.v1.LiquidateResp")
-	proto.RegisterType((*VirtualPoolInfo)(nil), "nibiru.perp.v1.VirtualPoolInfo")
 	proto.RegisterType((*PairMetadata)(nil), "nibiru.perp.v1.PairMetadata")
 	proto.RegisterType((*PositionChangedEvent)(nil), "nibiru.perp.v1.PositionChangedEvent")
 }
@@ -876,11 +819,6 @@ func (m *Position) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.BlockNumber != 0 {
 		i = encodeVarintState(dAtA, i, uint64(m.BlockNumber))
 		i--
-		dAtA[i] = 0x40
-	}
-	if m.LiquidityHistoryIndex != 0 {
-		i = encodeVarintState(dAtA, i, uint64(m.LiquidityHistoryIndex))
-		i--
 		dAtA[i] = 0x38
 	}
 	{
@@ -930,10 +868,10 @@ func (m *Position) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Address) > 0 {
-		i -= len(m.Address)
-		copy(dAtA[i:], m.Address)
-		i = encodeVarintState(dAtA, i, uint64(len(m.Address)))
+	if len(m.TraderAddress) > 0 {
+		i -= len(m.TraderAddress)
+		copy(dAtA[i:], m.TraderAddress)
+		i = encodeVarintState(dAtA, i, uint64(len(m.TraderAddress)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1114,55 +1052,6 @@ func (m *LiquidateResp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
-func (m *VirtualPoolInfo) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *VirtualPoolInfo) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *VirtualPoolInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.CumulativePremiumFractions) > 0 {
-		for iNdEx := len(m.CumulativePremiumFractions) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size := m.CumulativePremiumFractions[iNdEx].Size()
-				i -= size
-				if _, err := m.CumulativePremiumFractions[iNdEx].MarshalTo(dAtA[i:]); err != nil {
-					return 0, err
-				}
-				i = encodeVarintState(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
-	if m.LastRestrictionBlock != 0 {
-		i = encodeVarintState(dAtA, i, uint64(m.LastRestrictionBlock))
-		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.Pair) > 0 {
-		i -= len(m.Pair)
-		copy(dAtA[i:], m.Pair)
-		i = encodeVarintState(dAtA, i, uint64(len(m.Pair)))
-		i--
-		dAtA[i] = 0xa
-	}
 	return len(dAtA) - i, nil
 }
 
@@ -1347,10 +1236,10 @@ func (m *PositionChangedEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Trader) > 0 {
-		i -= len(m.Trader)
-		copy(dAtA[i:], m.Trader)
-		i = encodeVarintState(dAtA, i, uint64(len(m.Trader)))
+	if len(m.TraderAddress) > 0 {
+		i -= len(m.TraderAddress)
+		copy(dAtA[i:], m.TraderAddress)
+		i = encodeVarintState(dAtA, i, uint64(len(m.TraderAddress)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1419,7 +1308,7 @@ func (m *Position) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Address)
+	l = len(m.TraderAddress)
 	if l > 0 {
 		n += 1 + l + sovState(uint64(l))
 	}
@@ -1435,9 +1324,6 @@ func (m *Position) Size() (n int) {
 	n += 1 + l + sovState(uint64(l))
 	l = m.LastUpdateCumulativePremiumFraction.Size()
 	n += 1 + l + sovState(uint64(l))
-	if m.LiquidityHistoryIndex != 0 {
-		n += 1 + sovState(uint64(m.LiquidityHistoryIndex))
-	}
 	if m.BlockNumber != 0 {
 		n += 1 + sovState(uint64(m.BlockNumber))
 	}
@@ -1494,28 +1380,6 @@ func (m *LiquidateResp) Size() (n int) {
 	return n
 }
 
-func (m *VirtualPoolInfo) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Pair)
-	if l > 0 {
-		n += 1 + l + sovState(uint64(l))
-	}
-	if m.LastRestrictionBlock != 0 {
-		n += 1 + sovState(uint64(m.LastRestrictionBlock))
-	}
-	if len(m.CumulativePremiumFractions) > 0 {
-		for _, e := range m.CumulativePremiumFractions {
-			l = e.Size()
-			n += 1 + l + sovState(uint64(l))
-		}
-	}
-	return n
-}
-
 func (m *PairMetadata) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1541,7 +1405,7 @@ func (m *PositionChangedEvent) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Trader)
+	l = len(m.TraderAddress)
 	if l > 0 {
 		n += 1 + l + sovState(uint64(l))
 	}
@@ -1941,9 +1805,9 @@ func (m *Position) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TraderAddress", wireType)
 			}
-			var stringLen uint64
+			var byteLen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowState
@@ -1953,23 +1817,25 @@ func (m *Position) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if byteLen < 0 {
 				return ErrInvalidLengthState
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + byteLen
 			if postIndex < 0 {
 				return ErrInvalidLengthState
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Address = string(dAtA[iNdEx:postIndex])
+			m.TraderAddress = append(m.TraderAddress[:0], dAtA[iNdEx:postIndex]...)
+			if m.TraderAddress == nil {
+				m.TraderAddress = []byte{}
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -2140,25 +2006,6 @@ func (m *Position) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 7:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LiquidityHistoryIndex", wireType)
-			}
-			m.LiquidityHistoryIndex = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowState
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.LiquidityHistoryIndex |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 8:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field BlockNumber", wireType)
 			}
@@ -2744,143 +2591,6 @@ func (m *LiquidateResp) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *VirtualPoolInfo) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowState
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: VirtualPoolInfo: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: VirtualPoolInfo: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pair", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowState
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthState
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthState
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Pair = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastRestrictionBlock", wireType)
-			}
-			m.LastRestrictionBlock = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowState
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.LastRestrictionBlock |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CumulativePremiumFractions", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowState
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthState
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthState
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Dec
-			m.CumulativePremiumFractions = append(m.CumulativePremiumFractions, v)
-			if err := m.CumulativePremiumFractions[len(m.CumulativePremiumFractions)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipState(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthState
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *PairMetadata) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3030,9 +2740,9 @@ func (m *PositionChangedEvent) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Trader", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TraderAddress", wireType)
 			}
-			var stringLen uint64
+			var byteLen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowState
@@ -3042,23 +2752,25 @@ func (m *PositionChangedEvent) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if byteLen < 0 {
 				return ErrInvalidLengthState
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + byteLen
 			if postIndex < 0 {
 				return ErrInvalidLengthState
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Trader = string(dAtA[iNdEx:postIndex])
+			m.TraderAddress = append(m.TraderAddress[:0], dAtA[iNdEx:postIndex]...)
+			if m.TraderAddress == nil {
+				m.TraderAddress = []byte{}
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

@@ -103,7 +103,8 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			var side types.Side
 			switch args[0] {
@@ -136,7 +137,7 @@ func OpenPositionCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgOpenPosition{
-				Sender:               clientCtx.GetFromAddress().String(),
+				Sender:               clientCtx.GetFromAddress(),
 				TokenPair:            args[1],
 				Side:                 side,
 				QuoteAssetAmount:     amount,
@@ -153,6 +154,7 @@ func OpenPositionCmd() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
 
@@ -185,7 +187,7 @@ func RemoveMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgRemoveMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
+				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
 				Margin:    marginToRemove,
 			}
@@ -227,7 +229,7 @@ func AddMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgAddMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
+				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
 				Margin:    marginToAdd,
 			}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -22,8 +23,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-func DefaultFeeString(cfg testutilcli.Config) string {
-	feeCoins := sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(10)))
+func DefaultFeeString(denom string) string {
+	feeCoins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
 	return fmt.Sprintf("--%s=%s", flags.FlagFees, feeCoins.String())
 }
 
@@ -98,4 +99,25 @@ func NewAppConstructor() testutilcli.AppConstructor {
 	return func(val testutilcli.Validator) servertypes.Application {
 		return NewTestApp(true)
 	}
+}
+
+// FillWalletFromValidator fills the wallet with some coins that come from the validator.
+// Used for cli tests.
+func FillWalletFromValidator(
+	addr sdk.AccAddress, balance sdk.Coins, val *testutilcli.Validator, feesDenom string,
+) (sdk.AccAddress, error) {
+	_, err := banktestutil.MsgSendExec(
+		val.ClientCtx,
+		val.Address,
+		addr,
+		balance,
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		DefaultFeeString(feesDenom),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return addr, nil
 }
