@@ -234,3 +234,37 @@ func TestSwapBaseForQuote(t *testing.T) {
 		})
 	}
 }
+
+func TestGetVpools(t *testing.T) {
+	t.Run("Get all pools", func(t *testing.T) {
+		vpoolKeeper, ctx := VpoolKeeper(t,
+			mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+		)
+
+		vpoolKeeper.CreatePool(
+			ctx,
+			"BTC:NUSD",
+			sdk.OneDec(),
+			sdk.NewDec(10_000_000),
+			sdk.NewDec(5_000_000),
+			sdk.OneDec(),
+			sdk.OneDec(),
+		)
+		vpoolKeeper.CreatePool(
+			ctx,
+			"ETH:NUSD",
+			sdk.OneDec(),
+			sdk.NewDec(5_000_000),
+			sdk.NewDec(10_000_000),
+			sdk.OneDec(),
+			sdk.OneDec(),
+		)
+
+		pools := vpoolKeeper.GetAllPools(ctx)
+
+		require.EqualValues(t, 2, len(pools))
+
+		require.Contains(t, pools[0].String(), `pair:"BTC:NUSD" base_asset_reserve:"5000000000000000000000000" quote_asset_reserve:"10000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
+		require.Contains(t, pools[1].String(), `pair:"ETH:NUSD" base_asset_reserve:"10000000000000000000000000" quote_asset_reserve:"5000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
+	})
+}
