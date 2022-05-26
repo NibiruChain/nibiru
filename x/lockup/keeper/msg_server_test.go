@@ -1,221 +1,168 @@
-package keeper
+package keeper_test
 
 import (
-	"context"
-	"reflect"
 	"testing"
+	"time"
 
+	"github.com/cosmos/cosmos-sdk/types/query"
+
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
-// TODO(mercilex): test
+func TestMsgServer_LockTokens(t *testing.T) {
+	app := testutil.NewTestApp(false)
+	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+	s := keeper.NewMsgServerImpl(app.LockupKeeper)
 
-func TestNewMsgServerImpl(t *testing.T) {
-	type args struct {
-		keeper Keeper
-	}
-	tests := []struct {
-		name string
-		args args
-		want types.MsgServer
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewMsgServerImpl(tt.args.keeper); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewMsgServerImpl() = %v, want %v", got, tt.want)
-			}
+	t.Run("success", func(t *testing.T) {
+		ctx, _ := uncachedCtx.CacheContext()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		_, err := s.LockTokens(sdk.WrapSDKContext(ctx), &types.MsgLockTokens{
+			Owner:    addr.String(),
+			Duration: 0,
+			Coins:    nil,
 		})
-	}
+		require.NoError(t, err)
+	})
 }
 
-func TestNewQueryServerImpl(t *testing.T) {
-	type args struct {
-		k Keeper
-	}
-	tests := []struct {
-		name string
-		args args
-		want types.QueryServer
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewQueryServerImpl(tt.args.k); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewQueryServerImpl() = %v, want %v", got, tt.want)
-			}
+func TestMsgServer_InitiateUnlock(t *testing.T) {
+	app := testutil.NewTestApp(false)
+	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+	s := keeper.NewMsgServerImpl(app.LockupKeeper)
+
+	t.Run("success", func(t *testing.T) {
+		ctx, _ := uncachedCtx.CacheContext()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		lock, err := s.LockTokens(sdk.WrapSDKContext(ctx), &types.MsgLockTokens{
+			Owner:    addr.String(),
+			Duration: 0,
+			Coins:    coins,
 		})
-	}
+		require.NoError(t, err)
+
+		_, err = s.InitiateUnlock(sdk.WrapSDKContext(ctx), &types.MsgInitiateUnlock{
+			Owner:  addr.String(),
+			LockId: lock.LockId,
+		})
+		require.NoError(t, err)
+	})
 }
 
-func Test_msgServer_InitiateUnlock(t *testing.T) {
-	type fields struct {
-		keeper Keeper
-	}
-	type args struct {
-		ctx    context.Context
-		unlock *types.MsgInitiateUnlock
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *types.MsgInitiateUnlockResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			server := msgServer{
-				keeper: tt.fields.keeper,
-			}
-			got, err := server.InitiateUnlock(tt.args.ctx, tt.args.unlock)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("InitiateUnlock() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("InitiateUnlock() got = %v, want %v", got, tt.want)
-			}
+func TestQueryServer_Lock(t *testing.T) {
+	app := testutil.NewTestApp(false)
+	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+	s := keeper.NewMsgServerImpl(app.LockupKeeper)
+	q := keeper.NewQueryServerImpl(app.LockupKeeper)
+
+	t.Run("success", func(t *testing.T) {
+		ctx, _ := uncachedCtx.CacheContext()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		lockID, err := s.LockTokens(sdk.WrapSDKContext(ctx), &types.MsgLockTokens{
+			Owner:    addr.String(),
+			Duration: 0,
+			Coins:    coins,
 		})
-	}
+		require.NoError(t, err)
+
+		// query lock
+		resp, err := q.Lock(sdk.WrapSDKContext(ctx), &types.QueryLockRequest{Id: lockID.LockId})
+		require.NoError(t, err)
+
+		require.Equal(t, lockID.LockId, resp.Lock.LockId)
+		require.Equal(t, coins, resp.Lock.Coins)
+		require.Equal(t, addr.String(), resp.Lock.Owner)
+	})
 }
 
-func Test_msgServer_LockTokens(t *testing.T) {
-	type fields struct {
-		keeper Keeper
-	}
-	type args struct {
-		goCtx context.Context
-		msg   *types.MsgLockTokens
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *types.MsgLockTokensResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			server := msgServer{
-				keeper: tt.fields.keeper,
-			}
-			got, err := server.LockTokens(tt.args.goCtx, tt.args.msg)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LockTokens() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("LockTokens() got = %v, want %v", got, tt.want)
-			}
+func TestQueryServer_LockedCoins(t *testing.T) {
+	app := testutil.NewTestApp(false)
+	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+	s := keeper.NewMsgServerImpl(app.LockupKeeper)
+	q := keeper.NewQueryServerImpl(app.LockupKeeper)
+
+	t.Run("success", func(t *testing.T) {
+		ctx, _ := uncachedCtx.CacheContext()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		_, err := s.LockTokens(sdk.WrapSDKContext(ctx), &types.MsgLockTokens{
+			Owner:    addr.String(),
+			Duration: 0,
+			Coins:    coins,
 		})
-	}
+		require.NoError(t, err)
+
+		res, err := q.LockedCoins(sdk.WrapSDKContext(ctx), &types.QueryLockedCoinsRequest{Address: addr.String()})
+		require.NoError(t, err)
+
+		require.Equal(t, coins, res.LockedCoins)
+	})
 }
 
-func Test_queryServer_Lock(t *testing.T) {
-	type fields struct {
-		k Keeper
-	}
-	type args struct {
-		ctx     context.Context
-		request *types.QueryLockRequest
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *types.QueryLockResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			q := queryServer{
-				k: tt.fields.k,
-			}
-			got, err := q.Lock(tt.args.ctx, tt.args.request)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Lock() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Lock() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+func TestQueryServer_LocksByAddress(t *testing.T) {
+	app := testutil.NewTestApp(false)
+	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+	s := keeper.NewMsgServerImpl(app.LockupKeeper)
+	q := keeper.NewQueryServerImpl(app.LockupKeeper)
+	t.Run("success", func(t *testing.T) {
+		ctx, _ := uncachedCtx.CacheContext()
+		addr := sample.AccAddress()
+		totalQuery := 50
+		totalFromQuery := sdk.NewCoins()
+		// create locks
+		for i := 0; i < 100; i++ {
+			coins := sdk.NewCoins(sdk.NewInt64Coin("test", 100+int64(i)))
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
 
-func Test_queryServer_LockedCoins(t *testing.T) {
-	type fields struct {
-		k Keeper
-	}
-	type args struct {
-		ctx     context.Context
-		request *types.QueryLockedCoinsRequest
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *types.QueryLockedCoinsResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			q := queryServer{
-				k: tt.fields.k,
-			}
-			got, err := q.LockedCoins(tt.args.ctx, tt.args.request)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LockedCoins() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("LockedCoins() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+			_, err := s.LockTokens(sdk.WrapSDKContext(ctx), &types.MsgLockTokens{
+				Owner:    addr.String(),
+				Duration: 1 + time.Duration(i)*time.Hour,
+				Coins:    coins,
+			})
+			require.NoError(t, err)
 
-func Test_queryServer_LocksByAddress(t *testing.T) {
-	type fields struct {
-		k Keeper
-	}
-	type args struct {
-		ctx     context.Context
-		address *types.QueryLocksByAddress
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *types.QueryLocksByAddressResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			q := queryServer{
-				k: tt.fields.k,
+			// lets compute total coins
+			if i < totalQuery {
+				totalFromQuery = totalFromQuery.Add(coins...)
 			}
-			got, err := q.LocksByAddress(tt.args.ctx, tt.args.address)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LocksByAddress() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("LocksByAddress() got = %v, want %v", got, tt.want)
-			}
+		}
+
+		// query
+		res, err := q.LocksByAddress(sdk.WrapSDKContext(ctx), &types.QueryLocksByAddress{
+			Address: addr.String(),
+			Pagination: &query.PageRequest{
+				Offset: 0,
+				Limit:  uint64(totalQuery),
+			},
 		})
-	}
+		require.NoError(t, err)
+
+		require.Len(t, res.Locks, totalQuery)
+
+		totalFromResponse := sdk.NewCoins()
+		for _, l := range res.Locks {
+			totalFromResponse = totalFromResponse.Add(l.Coins...)
+		}
+
+		require.Equal(t, totalFromQuery, totalFromResponse)
+	})
 }
