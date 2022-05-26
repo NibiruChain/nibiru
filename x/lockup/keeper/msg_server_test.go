@@ -156,7 +156,7 @@ func TestQueryServer_LocksByAddress(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		require.Len(t, res.Locks, 50)
+		require.Len(t, res.Locks, totalQuery)
 
 		totalFromResponse := sdk.NewCoins()
 		for _, l := range res.Locks {
