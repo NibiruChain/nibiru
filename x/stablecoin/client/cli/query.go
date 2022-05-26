@@ -43,7 +43,10 @@ func CmdQueryParams() *cobra.Command {
 		Short: "shows the parameters of the module",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
 
 			queryClient := types.NewQueryClient(clientCtx)
 
@@ -67,7 +70,10 @@ func CmdQueryModuleAccountBalances() *cobra.Command {
 		Short: "account balances of the x/stablecoin module",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
 
 			queryClient := types.NewQueryClient(clientCtx)
 
@@ -92,7 +98,10 @@ func CmdQueryCirculatingSupplies() *cobra.Command {
 		Short: "circulating supply of both NIBI and NUSD",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
 
 			queryClient := types.NewQueryClient(clientCtx)
 
@@ -117,7 +126,11 @@ func CmdQueryLiquidityRatioInfo() *cobra.Command {
 		Short: "liqRatio and the liqRatio bands",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.LiquidityRatioInfo(
