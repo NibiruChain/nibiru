@@ -46,3 +46,23 @@ func (q queryServer) ReserveAssets(
 		QuoteAssetReserve: pool.QuoteAssetReserve,
 	}, nil
 }
+
+func (q queryServer) AllPools(
+	goCtx context.Context,
+	req *types.QueryAllPoolsRequests,
+) (resp *types.QueryAllPoolsResponse, err error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pools := q.GetAllPools(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryAllPoolsResponse{
+		Pools: pools,
+	}, nil
+}
