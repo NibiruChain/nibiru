@@ -1,12 +1,14 @@
 package cli
 
 import (
-	"github.com/NibiruChain/nibiru/x/lockup/types"
+	"strconv"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/spf13/cobra"
-	"strconv"
+
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
 
 func GetQueryCmd() *cobra.Command {
