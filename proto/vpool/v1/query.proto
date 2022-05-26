@@ -4,6 +4,7 @@ package nibiru.vpool.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "vpool/v1/vpool.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
@@ -15,6 +16,11 @@ service Query {
     option (google.api.http).get = "/nibiru/vpool/reserve_assets";
   }
 
+  // Queries all virtual pools.
+  rpc AllPools(QueryAllPoolsRequests) returns (QueryAllPoolsResponse) {
+    option (google.api.http).get = "/nibiru/vpool/all_pools";
+  }  
+  
 }
 
 // ---------------------------------------- QueryReserveAssets
@@ -34,4 +40,14 @@ message QueryReserveAssetsResponse {
   string quote_asset_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
+}
+
+// ---------------------------------------- QueryAllPools
+
+message QueryAllPoolsRequests {
+
+}
+
+message QueryAllPoolsResponse {
+  repeated Pool pools = 1;
 }

@@ -28,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 
 	for _, cmd := range []*cobra.Command{
 		CmdGetVpoolReserveAssets(),
+		CmdGetVpools(),
 	} {
 		queryCommand.AddCommand(cmd)
 	}
@@ -58,6 +59,36 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 				&types.QueryReserveAssetsRequests{
 					Pair: tokenPair.String(),
 				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdGetVpools() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "all-pools",
+		Short: "query all pools information",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.AllPools(
+				cmd.Context(),
+				&types.QueryAllPoolsRequests{},
 			)
 			if err != nil {
 				return err
