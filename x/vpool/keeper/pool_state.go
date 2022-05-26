@@ -17,6 +17,7 @@ func (k Keeper) CreatePool(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 	fluctuationLimitRatio sdk.Dec,
+	maxOracleSpreadRatio sdk.Dec,
 ) {
 	pool := types.NewPool(
 		pair,
@@ -24,6 +25,7 @@ func (k Keeper) CreatePool(
 		quoteAssetReserve,
 		baseAssetReserve,
 		fluctuationLimitRatio,
+		maxOracleSpreadRatio,
 	)
 
 	k.savePool(ctx, pool)
@@ -93,4 +95,22 @@ func (k Keeper) savePoolAndSnapshot(
 // ExistsPool returns true if pool exists, false if not.
 func (k Keeper) ExistsPool(ctx sdk.Context, pair common.TokenPair) bool {
 	return ctx.KVStore(k.storeKey).Has(types.GetPoolKey(pair))
+}
+
+// GetAllPools returns all pools that exist.
+func (k Keeper) GetAllPools(ctx sdk.Context) []*types.Pool {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.PoolKey)
+
+	var pools []*types.Pool
+	for ; iterator.Valid(); iterator.Next() {
+		bz := iterator.Value()
+
+		var pool types.Pool
+		k.codec.MustUnmarshal(bz, &pool)
+
+		pools = append(pools, &pool)
+	}
+
+	return pools
 }

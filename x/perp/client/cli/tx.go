@@ -1,76 +1,19 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"strings"
-
-	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
-
-// ---------------------------------------------------------------------------
-// QueryCmd
-// ---------------------------------------------------------------------------
-
-// GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd() *cobra.Command {
-	// Group stablecoin queries under a subcommand
-	perpQueryCmd := &cobra.Command{
-		Use: types.ModuleName,
-		Short: fmt.Sprintf(
-			"Querying commands for the %s module", types.ModuleName),
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	cmds := []*cobra.Command{
-		CmdQueryParams(),
-	}
-	for _, cmd := range cmds {
-		perpQueryCmd.AddCommand(cmd)
-	}
-
-	return perpQueryCmd
-}
-
-func CmdQueryParams() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "params",
-		Short: "shows the parameters of the x/perp module",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.Params(
-				context.Background(), &types.QueryParamsRequest{},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// ---------------------------------------------------------------------------
-// TxCmd
-// ---------------------------------------------------------------------------
 
 func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
@@ -84,9 +27,76 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		RemoveMarginCmd(),
 		AddMarginCmd(),
+		OpenPositionCmd(),
 	)
 
 	return txCmd
+}
+
+func OpenPositionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "open-position [buy/sell] [pair] [leverage] [amount/sdk.Dec] [base asset amount limit/sdk.Dec]",
+		Short: "Opens a position",
+		Args:  cobra.ExactArgs(5),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			var side types.Side
+			switch args[0] {
+			case "buy":
+				side = types.Side_BUY
+			case "sell":
+				side = types.Side_SELL
+			default:
+				return fmt.Errorf("invalid side: %s", args[0])
+			}
+
+			_, err = common.NewTokenPairFromStr(args[1])
+			if err != nil {
+				return err
+			}
+
+			leverage, err := sdk.NewDecFromStr(args[2])
+			if err != nil {
+				return err
+			}
+
+			amount, ok := sdk.NewIntFromString(args[3])
+			if !ok {
+				return fmt.Errorf("invalid quote amount: %s", args[3])
+			}
+
+			baseAssetAmountLimit, ok := sdk.NewIntFromString(args[4])
+			if !ok {
+				return fmt.Errorf("invalid base amount limit: %s", args[3])
+			}
+
+			msg := &types.MsgOpenPosition{
+				Sender:               clientCtx.GetFromAddress(),
+				TokenPair:            args[1],
+				Side:                 side,
+				QuoteAssetAmount:     amount,
+				Leverage:             leverage,
+				BaseAssetAmountLimit: baseAssetAmountLimit,
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
 }
 
 /*
@@ -118,7 +128,7 @@ func RemoveMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgRemoveMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
+				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
 				Margin:    marginToRemove,
 			}
@@ -160,7 +170,7 @@ func AddMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgAddMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
+				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
 				Margin:    marginToAdd,
 			}

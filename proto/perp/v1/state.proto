@@ -16,10 +16,19 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
-  // tollRatio is the ratio transferred to the the fee pool
-  int64 tollRatio = 3;
-  // efFeeRatio is the ratio transferred to the PerpEF.
-  int64 spreadRatio = 4;    
+  // toll_ratio is the ratio transferred to the the fee pool
+  int64 toll_ratio = 3;
+
+  // spread_ratio is the ratio transferred to the PerpEF.
+  int64 spread_ratio = 4;
+
+  // LiquidationFee is the percentage of liquidated position that will be given
+  // to out as a reward. Half of the liquidation fee is given to the liquidator,
+  // and the other half is given to the ecosystem fund.
+  int64 liquidation_fee = 5;
+
+  // partial_liquidation_ratio is the share we try to liquidate if the margin is higher than liquidation fee
+  int64 partial_liquidation_ratio = 6;
 }
 
 // GenesisState defines the perp  module's genesis state.
@@ -29,34 +38,43 @@ message GenesisState {
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+  repeated PairMetadata pair_metadata = 3;
 }
 
-// Position identifies and records information on a user's position on one of 
+// Position identifies and records information on a user's position on one of
 // the virtual liquidity pools.
 message Position {
   // address identifies the address owner of this position
-  string address = 1;
+  bytes trader_address = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
   // pair identifies the pair associated with this position
   string pair = 2;
 
+  // Position size.
   string size = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; // signed int
+  
+  // Amount of margin remaining in the position.
   string margin = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false]; // int
+    (gogoproto.nullable) = false]; 
 
-  // OpenNotional is the quote denom value of the position when opening. 
+  // OpenNotional is the quote denom value of the position when opening.
+  // Used to calculate PnL.
   string open_notional = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; 
+
+  // The last cumulative funding payment this position has applied.
+  // Used to calculate the next funding payment. 
   string last_update_cumulative_premium_fraction = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; // int
-  int64 liquidity_history_index = 7;
 
   // BlockNumber is the block number of the change to the position.
-  int64 block_number = 8;
+  int64 block_number = 7;
 }
 
 message PositionResp {
@@ -85,12 +103,28 @@ message PositionResp {
     (gogoproto.nullable) = false];
 }
 
-message VirtualPoolInfo {
-  string pair = 1;
-  int64 last_restriction_block = 2;
-  repeated string cumulative_premium_fractions = 3 [
+message LiquidateResp {
+  // Amount of bad debt created by the liquidation event
+  string bad_debt = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
+  // Fee paid to the liquidator
+  string fee_to_liquidator = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false];
+
+  // Fee paid to the Perp EF fund
+  string fee_to_perp_ecosystem_fund = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false];
+
+  // Address of the liquidator
+  bytes liquidator = 4 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
+  // Position response from the close or open reverse position
+  PositionResp position_resp = 5;
 }
 
 enum Side {
@@ -109,6 +143,12 @@ enum PnLPreferenceOption {
   MIN = 1;
 }
 
+enum MarginCalculationPriceOption {
+  SPOT = 0;
+  INDEX = 1;
+  MAX_PNL = 2;
+}
+
 message PairMetadata {
   string pair = 1;
   repeated string cumulative_premium_fractions = 2 [
@@ -117,38 +157,51 @@ message PairMetadata {
 }
 
 message PositionChangedEvent {
-  string trader = 1;
+  bytes trader_address = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
   string pair  = 2;
+
   string margin = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string position_notional = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string exchanged_position_size = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string fee = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
+
   string position_size_after = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string realized_pnl = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string unrealized_pnl_after = 9 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string bad_debt = 10 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string liquidation_penalty = 11 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string spot_price = 12 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+    
   string funding_payment = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];

@@ -27,10 +27,10 @@ func TestTWAPriceUpdates(t *testing.T) {
 		ctx = ctx.
 			WithBlockHeight(ctx.BlockHeight() + 1).
 			WithBlockTime(ctx.BlockTime().Add(duration))
-		pricefeed.BeginBlocker(ctx, nibiruApp.PriceKeeper)
+		pricefeed.BeginBlocker(ctx, nibiruApp.PricefeedKeeper)
 	}
 	setPrice := func(price string) {
-		_, err := nibiruApp.PriceKeeper.SetPrice(
+		_, err := nibiruApp.PricefeedKeeper.SetPrice(
 			ctx, oracle, token0, token1,
 			sdk.MustNewDecFromStr(price), ctx.BlockTime().Add(time.Hour*5000*4))
 		require.NoError(t, err)
@@ -49,7 +49,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		},
 	})
 
-	nibiruApp.PriceKeeper.SetParams(ctx, markets)
+	nibiruApp.PricefeedKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
 	setPrice("0.9")
@@ -70,7 +70,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600) / (1463385600 + 1481385600) = 0.8749844622444971
 	*/
-	price, err := nibiruApp.PriceKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
+	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
 	require.NoError(t, err)
 	priceFloat, err := price.Price.Float64()
 	require.NoError(t, err)
@@ -89,7 +89,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600 + 0.82 * 1499385600) / (1463385600 + 1481385600 + 1499385600) = 0.8563426456960295
 	*/
-	price, err = nibiruApp.PriceKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
+	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
 	require.NoError(t, err)
 	priceFloat, err = price.Price.Float64()
 	require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	*/
 	setPrice("0.83")
 	runBlock(time.Hour * 5000)
-	price, err = nibiruApp.PriceKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
+	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
 
 	require.NoError(t, err)
 	priceFloat, err = price.Price.Float64()

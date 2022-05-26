@@ -30,7 +30,7 @@ func TestGetUnderlyingPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			mockPricefeedKeeper := mock.NewMockPriceKeeper(gomock.NewController(t))
+			mockPricefeedKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
 			vpoolKeeper, ctx := VpoolKeeper(t, mockPricefeedKeeper)
 
 			mockPricefeedKeeper.
@@ -82,7 +82,7 @@ func TestGetSpotPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)))
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -91,6 +91,7 @@ func TestGetSpotPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			price, err := vpoolKeeper.GetSpotPrice(ctx, tc.pair)
@@ -153,7 +154,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)))
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -162,6 +163,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
@@ -231,7 +233,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)))
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -240,6 +242,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
@@ -434,7 +437,7 @@ func TestCalcTwap(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)))
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 			ctx = ctx.WithBlockTime(time.UnixMilli(0)).WithBlockHeight(0)
 
 			t.Log("Create an empty pool for the first block, it's snapshot won't be used")
@@ -445,6 +448,7 @@ func TestCalcTwap(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			)
 
 			for i, snapshot := range tc.reserveSnapshots {

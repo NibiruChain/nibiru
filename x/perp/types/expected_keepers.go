@@ -1,6 +1,6 @@
 package types
 
-//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PriceKeeper,VpoolKeeper
+//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PricefeedKeeper,VpoolKeeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,6 +36,8 @@ type BankKeeper interface {
 		ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string,
 		amt sdk.Coins,
 	) error
+	SendCoinsFromModuleToModule(
+		ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToAccount(
 		ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress,
 		amt sdk.Coins,
@@ -44,7 +46,7 @@ type BankKeeper interface {
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
-type PriceKeeper interface {
+type PricefeedKeeper interface {
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
@@ -228,7 +230,10 @@ type VpoolKeeper interface {
 		pair common.TokenPair,
 	) (price sdk.Dec, err error)
 
-	CalcFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error)
+	CalcPerpTxFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int,
+	) (toll sdk.Int, spread sdk.Int, err error)
+	IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) bool
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
+	GetSettlementPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
 }

@@ -69,15 +69,23 @@ func Test_requireMoreMarginRatio(t *testing.T) {
 	}
 }
 
-func TestKeeper_GetMarginRatio_Errors(t *testing.T) {
+func TestGetMarginRatio_Errors(t *testing.T) {
 	tests := []struct {
-		name     string
-		position types.Position
+		name string
+		test func()
 	}{
 		{
-			"empty size position",
-			types.Position{
-				Size_: sdk.ZeroDec(),
+			name: "empty size position",
+			test: func() {
+				k, _, ctx := getKeeper(t)
+
+				pos := types.Position{
+					Size_: sdk.ZeroDec(),
+				}
+
+				_, err := k.GetMarginRatio(
+					ctx, pos, types.MarginCalculationPriceOption_MAX_PNL)
+				assert.EqualError(t, err, types.ErrPositionZero.Error())
 			},
 		},
 	}
@@ -85,17 +93,12 @@ func TestKeeper_GetMarginRatio_Errors(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			k, _, ctx := getKeeper(t)
-
-			pos := tc.position
-
-			_, err := k.GetMarginRatio(ctx, pos)
-			require.EqualError(t, err, types.ErrPositionZero.Error())
+			tc.test()
 		})
 	}
 }
 
-func TestKeeper_GetMarginRatio(t *testing.T) {
+func TestGetMarginRatio_Unit(t *testing.T) {
 	tests := []struct {
 		name                string
 		position            types.Position
@@ -103,30 +106,30 @@ func TestKeeper_GetMarginRatio(t *testing.T) {
 		expectedMarginRatio sdk.Dec
 	}{
 		{
-			"margin without price changes",
-			types.Position{
-				Address:                             sample.AccAddress().String(),
+			name: "margin without price changes",
+			position: types.Position{
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
 				Margin:                              sdk.NewDec(1),
 				LastUpdateCumulativePremiumFraction: sdk.OneDec(),
 			},
-			sdk.MustNewDecFromStr("10"),
-			sdk.MustNewDecFromStr("0.1"),
+			newPrice:            sdk.MustNewDecFromStr("10"),
+			expectedMarginRatio: sdk.MustNewDecFromStr("0.1"),
 		},
 		{
-			"margin with price changes",
-			types.Position{
-				Address:                             sample.AccAddress().String(),
+			name: "margin with price changes",
+			position: types.Position{
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
 				Margin:                              sdk.NewDec(1),
 				LastUpdateCumulativePremiumFraction: sdk.OneDec(),
 			},
-			sdk.MustNewDecFromStr("12"),
-			sdk.MustNewDecFromStr("0.25"),
+			newPrice:            sdk.MustNewDecFromStr("12"),
+			expectedMarginRatio: sdk.MustNewDecFromStr("0.25"),
 		},
 	}
 
@@ -160,7 +163,8 @@ func TestKeeper_GetMarginRatio(t *testing.T) {
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
-			marginRatio, err := k.GetMarginRatio(ctx, tc.position)
+			marginRatio, err := k.GetMarginRatio(
+				ctx, tc.position, types.MarginCalculationPriceOption_MAX_PNL)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedMarginRatio, marginRatio)
 		})
@@ -178,11 +182,9 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, _, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				invalidSender := "notABech32"
-				msg := &types.MsgRemoveMargin{Sender: invalidSender}
+				msg := &types.MsgRemoveMargin{Sender: []byte("")}
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
-				require.ErrorContains(t, err, "decoding bech32 failed")
 			},
 		},
 		{
@@ -193,7 +195,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 
 				alice := sample.AccAddress()
 				the3pool := "dai:usdc:usdt"
-				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+				msg := &types.MsgRemoveMargin{
+					Sender:    alice,
 					TokenPair: the3pool,
 					Margin:    sdk.NewCoin(common.StableDenom, sdk.NewInt(5))}
 				_, err := k.RemoveMargin(goCtx, msg)
@@ -210,7 +213,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				alice := sample.AccAddress()
 				pair := common.TokenPair("osmo:nusd")
-				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+				msg := &types.MsgRemoveMargin{
+					Sender:    alice,
 					TokenPair: pair.String(),
 					Margin:    sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)),
 				}
@@ -226,8 +230,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
-				k.SetPosition(ctx, pair, alice.String(), &types.Position{
-					Address:                             alice.String(),
+				k.SetPosition(ctx, pair, alice, &types.Position{
+					TraderAddress:                       alice,
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -247,7 +251,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 
 				alice := sample.AccAddress()
-				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+				msg := &types.MsgRemoveMargin{
+					Sender:    alice,
 					TokenPair: "osmo:nusd",
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
@@ -265,8 +270,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				k.SetPosition(ctx, pair, alice.String(), &types.Position{
-					Address:                             alice.String(),
+				k.SetPosition(ctx, pair, alice, &types.Position{
+					TraderAddress:                       alice,
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -301,7 +306,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 
 				alice := sample.AccAddress()
-				msg := &types.MsgRemoveMargin{Sender: alice.String(),
+				msg := &types.MsgRemoveMargin{
+					Sender:    alice,
 					TokenPair: "osmo:nusd",
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
@@ -319,8 +325,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				k.SetPosition(ctx, pair, alice.String(), &types.Position{
-					Address:                             alice.String(),
+				k.SetPosition(ctx, pair, alice, &types.Position{
+					TraderAddress:                       alice,
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -361,7 +367,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					),
 					events.NewTransferEvent(
 						/* coin */ msg.Margin,
-						/* from */ vaultAddr.String(),
+						/* from */ vaultAddr,
 						/* to */ msg.Sender,
 					),
 				}
@@ -369,11 +375,11 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					assert.Contains(t, ctx.EventManager().Events(), event)
 				}
 
-				pos, err := k.GetPosition(ctx, pair, alice.String())
+				pos, err := k.GetPosition(ctx, pair, alice)
 				require.NoError(t, err)
-				require.EqualValues(t, sdk.NewDec(400), pos.Margin)
-				require.EqualValues(t, sdk.NewDec(1000), pos.Size_)
-				require.EqualValues(t, alice.String(), pos.Address)
+				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
+				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
+				assert.EqualValues(t, alice, pos.TraderAddress)
 			},
 		},
 	}

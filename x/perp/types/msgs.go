@@ -1,11 +1,16 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
+var _ sdk.Msg = &MsgOpenPosition{}
 
 // MsgRemoveMargin
 
@@ -21,8 +26,7 @@ func (m MsgRemoveMargin) GetSignBytes() []byte {
 }
 
 func (m MsgRemoveMargin) GetSigners() []sdk.AccAddress {
-	sender, _ := sdk.AccAddressFromBech32(m.Sender)
-	return []sdk.AccAddress{sender}
+	return []sdk.AccAddress{m.Sender}
 }
 
 // MsgAddMargin
@@ -39,6 +43,32 @@ func (m MsgAddMargin) GetSignBytes() []byte {
 }
 
 func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
-	sender, _ := sdk.AccAddressFromBech32(m.Sender)
-	return []sdk.AccAddress{sender}
+	return []sdk.AccAddress{m.Sender}
+}
+
+func (m *MsgOpenPosition) ValidateBasic() error {
+	if m.Side != Side_SELL && m.Side != Side_BUY {
+		return fmt.Errorf("invalid side")
+	}
+	if _, err := common.NewTokenPairFromStr(m.TokenPair); err != nil {
+		return err
+	}
+	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
+		return err
+	}
+	if !m.Leverage.GT(sdk.ZeroDec()) {
+		return fmt.Errorf("leverage must always be greater than zero")
+	}
+	if !m.BaseAssetAmountLimit.GT(sdk.ZeroInt()) {
+		return fmt.Errorf("base asset amount limit must always be greater than zero")
+	}
+	if !m.QuoteAssetAmount.GT(sdk.ZeroInt()) {
+		return fmt.Errorf("quote asset amount must be always greater than zero")
+	}
+
+	return nil
+}
+
+func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{m.Sender}
 }

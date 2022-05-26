@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -28,7 +29,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						Pair: "osmo:nusd",
 					}, marginDelta)
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
 			},
 		},
 		{
@@ -41,7 +42,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, types.Position{Pair: the3pool}, marginDelta)
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
 			},
 		},
 		{
@@ -60,7 +61,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
-					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 				)
 				premiumFractions := []sdk.Dec{sdk.ZeroDec()} // fPayment -> 0
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
@@ -73,7 +75,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					Address: alice.String(), Pair: pair.String(),
+					TraderAddress: alice, Pair: pair.String(),
 					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[0],
 				}
@@ -86,9 +88,9 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				//   = marginDelta - fPayment + pos.Margin
 				//   = -300 - 0 + 100 = -200
 				// ∴ remaining.badDebt = signedRemainMargin.Abs() = 200
-				require.EqualValues(t, sdk.NewDec(200), remaining.BadDebt)
-				require.EqualValues(t, sdk.ZeroDec(), remaining.FundingPayment)
-				require.EqualValues(t, sdk.ZeroDec(), remaining.Margin)
+				require.True(t, sdk.NewDec(200).Equal(remaining.BadDebt))
+				require.True(t, sdk.NewDec(0).Equal(remaining.FundingPayment))
+				require.True(t, sdk.NewDec(0).Equal(remaining.Margin))
 				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativePremiumFraction)
 			},
 		},
@@ -108,7 +110,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
-					/* fluctLim */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 				)
 				premiumFractions := []sdk.Dec{
 					sdk.MustNewDecFromStr("0.25"),
@@ -125,7 +128,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					Address: alice.String(), Pair: pair.String(),
+					TraderAddress: alice, Pair: pair.String(),
 					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[1],
 				}
@@ -140,14 +143,14 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				//      * pos.Size_
 				//   = (0.75 - 0.5) * 200
 				//   = 50
-				require.EqualValues(t, sdk.NewDec(50), remaining.FundingPayment)
+				require.True(t, sdk.NewDec(50).Equal(remaining.FundingPayment))
 				// signedRemainMargin
 				//   = marginDelta - fPayment + pos.Margin
 				//   = 0 - 50 + 100 = 50
 				// ∴ remaining.BadDebt = 0
 				// ∴ remaining.Margin = 50
-				require.EqualValues(t, sdk.NewDec(0), remaining.BadDebt)
-				require.EqualValues(t, sdk.NewDec(50), remaining.Margin)
+				require.True(t, sdk.NewDec(0).Equal(remaining.BadDebt))
+				require.True(t, sdk.NewDec(50).Equal(remaining.Margin))
 			},
 		},
 	}
@@ -158,4 +161,32 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			tc.test()
 		})
 	}
+}
+
+func TestCalcPerpTxFee(t *testing.T) {
+	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	perpKeeper := &nibiruApp.PerpKeeper
+
+	currentParams := perpKeeper.GetParams(ctx)
+	require.Equal(t, types.DefaultParams(), currentParams)
+
+	currentParams = types.NewParams(
+		currentParams.Stopped,
+		currentParams.MaintenanceMarginRatio,
+		/*TollRatio=*/ sdk.MustNewDecFromStr("0.01"),
+		/*SpreadRatio=*/ sdk.MustNewDecFromStr("0.0123"),
+		/*liquidationFee=*/ sdk.MustNewDecFromStr("0.01"),
+		/*partialLiquidationRatio=*/ sdk.MustNewDecFromStr("0.4"),
+	)
+	perpKeeper.SetParams(ctx, currentParams)
+
+	params := perpKeeper.GetParams(ctx)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.01"), params.GetTollRatioAsDec())
+	assert.Equal(t, sdk.MustNewDecFromStr("0.0123"), params.GetSpreadRatioAsDec())
+
+	// Ensure calculation is correct
+	toll, spread, err := perpKeeper.CalcPerpTxFee(ctx, sdk.NewDec(1_000_000))
+	require.NoError(t, err)
+	assert.Equal(t, sdk.NewInt(10_000), toll)
+	assert.Equal(t, sdk.NewInt(12_300), spread)
 }

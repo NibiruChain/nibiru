@@ -100,7 +100,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)),
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 			)
 
 			vpoolKeeper.CreatePool(
@@ -110,6 +110,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				sdk.NewDec(10_000_000),       // 10 tokens
 				sdk.NewDec(5_000_000),        // 5 tokens
 				sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
+				sdk.MustNewDecFromStr("0.1"),
 			)
 
 			res, err := vpoolKeeper.SwapQuoteForBase(
@@ -192,7 +193,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)),
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 			)
 
 			vpoolKeeper.CreatePool(
@@ -201,6 +202,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 				sdk.OneDec(),
 				tc.initialQuoteReserve,
 				tc.initialBaseReserve,
+				sdk.OneDec(),
 				sdk.OneDec(),
 			)
 
@@ -231,4 +233,38 @@ func TestSwapBaseForQuote(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetVpools(t *testing.T) {
+	t.Run("Get all pools", func(t *testing.T) {
+		vpoolKeeper, ctx := VpoolKeeper(t,
+			mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+		)
+
+		vpoolKeeper.CreatePool(
+			ctx,
+			"BTC:NUSD",
+			sdk.OneDec(),
+			sdk.NewDec(10_000_000),
+			sdk.NewDec(5_000_000),
+			sdk.OneDec(),
+			sdk.OneDec(),
+		)
+		vpoolKeeper.CreatePool(
+			ctx,
+			"ETH:NUSD",
+			sdk.OneDec(),
+			sdk.NewDec(5_000_000),
+			sdk.NewDec(10_000_000),
+			sdk.OneDec(),
+			sdk.OneDec(),
+		)
+
+		pools := vpoolKeeper.GetAllPools(ctx)
+
+		require.EqualValues(t, 2, len(pools))
+
+		require.Contains(t, pools[0].String(), `pair:"BTC:NUSD" base_asset_reserve:"5000000000000000000000000" quote_asset_reserve:"10000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
+		require.Contains(t, pools[1].String(), `pair:"ETH:NUSD" base_asset_reserve:"10000000000000000000000000" quote_asset_reserve:"5000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
+	})
 }

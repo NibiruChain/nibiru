@@ -78,12 +78,13 @@ abs(vSize * fundingRate). Funding payments act to converge the mark price
 (vPrice) and index price (average price on major exchanges).
 
 Returns:
-- freeCollateral: Amount of collateral (margin) that can be removed from the
+- accountExcessEquity: Amount of collateral (margin) that can be removed from the
 position without making it go underwater.
-- error
+- err: error
 */
-func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
-) (sdk.Int, error) {
+func (k Keeper) calcFreeCollateral(
+	ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
+) (accountExcessEquity sdk.Int, err error) {
 	pair, err := common.NewTokenPairFromStr(pos.Pair)
 	if err != nil {
 		return sdk.Int{}, err
@@ -102,9 +103,8 @@ func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingP
 	if err != nil {
 		return sdk.Int{}, err
 	}
-	freeMargin := pos.Margin.Sub(fundingPayment)
-	accountValue := unrealizedPnL.Add(freeMargin)
-	minCollateral := sdk.MinDec(accountValue, freeMargin)
+	remainingMargin := pos.Margin.Sub(fundingPayment)
+	minAccountValue := sdk.MinDec(remainingMargin, remainingMargin.Add(unrealizedPnL))
 
 	// Get margin requirement. This rounds up, so 16.5 margin required -> 17
 	var marginRequirement sdk.Int
@@ -115,6 +115,34 @@ func (k Keeper) calcFreeCollateral(ctx sdk.Context, pos types.Position, fundingP
 		// if short, use current notional
 		marginRequirement = initMarginRatio.Mul(positionNotional).RoundInt()
 	}
-	freeCollateral := minCollateral.Sub(marginRequirement.ToDec()).TruncateInt()
-	return freeCollateral, nil
+	accountExcessEquity = minAccountValue.Sub(marginRequirement.ToDec()).TruncateInt()
+	k.Logger(ctx).Debug(
+		"calc_free_collateral",
+		"amount",
+		accountExcessEquity.String(),
+	)
+	return accountExcessEquity, nil
+}
+
+/* CalcPerpTxFee calculates the total tx fee for exchanging `quoteAmt` of tokens on
+the exchange.
+
+Args:
+	quoteAmt (sdk.Int):
+
+Returns:
+	toll (sdk.Int): Amount of tokens transferred to the the fee pool.
+	spread (sdk.Int): Amount of tokens transferred to the PerpEF.
+*/
+func (k Keeper) CalcPerpTxFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, spread sdk.Int, err error) {
+	if quoteAmt.Equal(sdk.ZeroDec()) {
+		return sdk.ZeroInt(), sdk.ZeroInt(), nil
+	}
+
+	params := k.GetParams(ctx)
+
+	tollRatio := params.GetTollRatioAsDec()
+	spreadRatio := params.GetSpreadRatioAsDec()
+
+	return quoteAmt.Mul(tollRatio).TruncateInt(), quoteAmt.Mul(spreadRatio).TruncateInt(), nil
 }

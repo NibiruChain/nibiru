@@ -3,33 +3,11 @@ package perp_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 )
-
-func TestGenesis(t *testing.T) {
-	genesisState := types.GenesisState{
-		Params:               types.DefaultParams(),
-		ModuleAccountBalance: sdk.NewCoin(common.GovDenom, sdk.ZeroInt()),
-	}
-
-	nibiruApp, ctx := testutil.NewNibiruApp(true)
-	perp.InitGenesis(ctx, nibiruApp.PerpKeeper, genesisState)
-	exportedGenesisState := perp.ExportGenesis(ctx, nibiruApp.PerpKeeper)
-	require.NotNil(t, exportedGenesisState)
-
-	nullify.Fill(&genesisState)
-	nullify.Fill(exportedGenesisState)
-
-	require.Equal(t, genesisState, *exportedGenesisState)
-}
 
 // TestModuleAccounts verifies that all x/perp module accounts are connected
 // to the base application
