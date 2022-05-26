@@ -1,32 +1,34 @@
-name: Unit Tests
+# name: Unit Tests
 
-# Runs on any PR push, but not on merges to master
-on:
-  pull_request:
-    branches: ["**"]
+# # This file is commented out temporarily while we switch over to a release branch scheme.
+# # Related: https://github.com/NibiruChain/nibiru/issues/501
+# # Runs on any PR push, but not on merges to master
+# on:
+#   pull_request:
+#     branches: ["**"]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.17
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#       - name: Set up Go
+#         uses: actions/setup-go@v3
+#         with:
+#           go-version: 1.17
 
-      - name: Build binaries for nibid using the Makefile
-        run: make build
+#       - name: Build binaries for nibid using the Makefile
+#         run: make build
 
-  test-unit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+#   test-unit:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
+#       - name: Set up Go
+#         uses: actions/setup-go@v2
+#         with:
+#           go-version: 1.17
 
-      - name: Run all short tests.
-        run: go test -v ./... -short -cover
+#       - name: Run all short tests.
+#         run: go test -v ./... -short -cover
