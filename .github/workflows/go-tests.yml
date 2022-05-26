@@ -2,8 +2,8 @@ name: All Tests
 
 # Runs on PR merges or direct push to master
 on:
-  push:
-    branches: [master]
+  pull_request:
+    branches: ["**"]
 
 jobs:
   build:
