@@ -2,12 +2,12 @@ package cli
 
 import (
 	"fmt"
-	// "strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -16,7 +16,7 @@ import (
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	// Group pricefeed queries under a subcommand
-	cmd := &cobra.Command{
+	queryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
 		DisableFlagParsing:         true,
@@ -24,18 +24,48 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryParams())
-	cmd.AddCommand(CmdPrice())
+	commands := []*cobra.Command{
+		CmdQueryParams(),
+		CmdPrice(),
+		CmdPrices(),
+		CmdRawPrices(),
+		CmdOracles(),
+		CmdPairs(),
+	}
 
-	cmd.AddCommand(CmdPrices())
+	for _, command := range commands {
+		queryCmd.AddCommand(command)
+	}
 
-	cmd.AddCommand(CmdRawPrices())
+	return queryCmd
+}
 
-	cmd.AddCommand(CmdOracles())
+func CmdPrice() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "price [pair-id]",
+		Short: "Display current price for the given pair",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
-	cmd.AddCommand(CmdPairs())
+			queryClient := types.NewQueryClient(clientCtx)
 
-	// this line is used by starport scaffolding # 1
+			pair := args[0]
+			params := &types.QueryPriceRequest{PairId: pair}
+
+			res, err := queryClient.Price(cmd.Context(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
