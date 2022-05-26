@@ -1,6 +1,6 @@
 name: All Tests
 
-# Runs on PR merges or direct push to master
+# Runs on PR changes and merges. 
 on:
   pull_request:
     branches: ["**"]
