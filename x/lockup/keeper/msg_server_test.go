@@ -151,7 +151,7 @@ func TestQueryServer_LocksByAddress(t *testing.T) {
 			Address: addr.String(),
 			Pagination: &query.PageRequest{
 				Offset: 0,
-				Limit:  50,
+				Limit:  totalQuery,
 			},
 		})
 		require.NoError(t, err)
