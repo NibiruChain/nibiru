@@ -50,4 +50,5 @@ message QueryLocksByAddress {
 
 message QueryLocksByAddressResponse {
   repeated  nibiru.lockup.v1.Lock locks = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
