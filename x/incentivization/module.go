@@ -3,8 +3,9 @@ package incentivization
 import (
 	"encoding/json"
 	"fmt"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"math/rand"
+
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
 	"github.com/NibiruChain/nibiru/x/incentivization/client/cli"
 
