@@ -48,7 +48,7 @@ func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 		require.ErrorIs(t, err, types.ErrEpochsTooLow)
 	})
 
-	t.Run("start time after before block time", func(t *testing.T) {
+	t.Run("start time before block time", func(t *testing.T) {
 		app := testutil.NewTestApp(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 		_, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "denom", 48*time.Hour, ctx.BlockTime().Add(-1*time.Second), keeper.MinEpochs+1)
