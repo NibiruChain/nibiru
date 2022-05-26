@@ -154,6 +154,7 @@ var (
 		perp.AppModuleBasic{},
 		lockup.AppModuleBasic{},
 		incentivization.AppModuleBasic{},
+		vpool.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -420,7 +421,7 @@ func NewNibiruApp(
 		appCodec, app.VpoolKeeper, app.PricefeedKeeper,
 	)
 
-	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper)
+	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper, app.AccountKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

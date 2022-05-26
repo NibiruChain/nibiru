@@ -2,8 +2,11 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 )
@@ -40,7 +43,7 @@ func (server msgServer) LockTokens(goCtx context.Context, msg *types.MsgLockToke
 func (server msgServer) InitiateUnlock(ctx context.Context, unlock *types.MsgInitiateUnlock) (*types.MsgInitiateUnlockResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	_, err := server.keeper.UnlockTokens(sdkCtx, unlock.LockId)
+	_, err := server.keeper.InitiateUnlocking(sdkCtx, unlock.LockId)
 	return &types.MsgInitiateUnlockResponse{}, err
 }
 
@@ -60,18 +63,28 @@ func (q queryServer) LocksByAddress(ctx context.Context, address *types.QueryLoc
 		return nil, err
 	}
 
-	var locks []*types.Lock
 	state := q.k.LocksState(sdkCtx)
-	state.IterateLocksByAddress(addr, func(id uint64) (stop bool) {
-		lock, err := state.Get(id)
-		if err != nil {
-			panic(err)
+
+	key := state.keyAddr(addr.String(), nil)
+	store := prefix.NewStore(state.addrIndex, key)
+
+	var locks []*types.Lock
+	res, err := query.Paginate(store, address.Pagination, func(key []byte, _ []byte) error {
+		value := state.locks.Get(key)
+		if value == nil {
+			panic(fmt.Errorf("state corruption cannot find key: %x", key))
 		}
+		lock := new(types.Lock)
+		q.k.cdc.MustUnmarshal(value, lock)
 		locks = append(locks, lock)
-		return false
+		return nil
 	})
 
-	return &types.QueryLocksByAddressResponse{Locks: locks}, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryLocksByAddressResponse{Locks: locks, Pagination: res}, nil
 }
 
 func (q queryServer) LockedCoins(ctx context.Context, request *types.QueryLockedCoinsRequest) (*types.QueryLockedCoinsResponse, error) {

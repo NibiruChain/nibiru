@@ -54,7 +54,7 @@ type Keeper struct {
 
 func (k Keeper) CreateIncentivizationProgram(
 	ctx sdk.Context,
-	lpDenom string, minLockupDuration time.Duration, starTime time.Time, epochs int64) (*types.IncentivizationProgram, error) {
+	lpDenom string, minLockupDuration time.Duration, startTime time.Time, epochs int64) (*types.IncentivizationProgram, error) {
 	// TODO(mercilex): assert lp denom from dex keeper
 
 	if epochs < MinEpochs {
@@ -65,8 +65,8 @@ func (k Keeper) CreateIncentivizationProgram(
 		return nil, types.ErrMinLockupDurationTooLow.Wrapf("%s is lower than minimum allowed %s", minLockupDuration, MinLockupDuration)
 	}
 
-	if ctx.BlockTime().After(starTime) {
-		return nil, types.ErrStartTimeInPast.Wrapf("current time %s, got: %s", ctx.BlockTime(), starTime)
+	if ctx.BlockTime().After(startTime) {
+		return nil, types.ErrStartTimeInPast.Wrapf("current time %s, got: %s", ctx.BlockTime(), startTime)
 	}
 
 	// we create a new instance of an incentivization program
@@ -80,7 +80,7 @@ func (k Keeper) CreateIncentivizationProgram(
 		RemainingEpochs:   epochs,
 		LpDenom:           lpDenom,
 		MinLockupDuration: minLockupDuration,
-		StartTime:         starTime,
+		StartTime:         startTime,
 	}
 
 	k.IncentivizationProgramsState(ctx).Create(program)

@@ -50,7 +50,7 @@ func (m *MsgCreateIncentivizationProgram) ValidateBasic() error {
 		return fmt.Errorf("invalid denom")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return err
+		return fmt.Errorf("invalid address")
 	}
 
 	if m.Epochs == 0 {
@@ -78,7 +78,7 @@ func (m *MsgCreateIncentivizationProgram) GetSigners() []sdk.AccAddress {
 
 func (m *MsgFundIncentivizationProgram) ValidateBasic() error {
 	if err := m.Funds.Validate(); err != nil {
-		return err
+		return fmt.Errorf("invalid funds")
 	}
 	if m.Funds.IsZero() {
 		return fmt.Errorf("no funding provided")
