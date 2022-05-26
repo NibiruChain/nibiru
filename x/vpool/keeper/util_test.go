@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
@@ -31,7 +32,7 @@ func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 		storeKey,
 		pricefeedKeeper,
 	)
-	ctx = sdk.NewContext(stateStore, tmproto.Header{}, false, nil)
+	ctx = sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
 	return vpoolKeeper, ctx
 }

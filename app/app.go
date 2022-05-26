@@ -154,6 +154,7 @@ var (
 		perp.AppModuleBasic{},
 		lockup.AppModuleBasic{},
 		incentivization.AppModuleBasic{},
+		vpool.AppModuleBasic{},
 	)
 
 	// module account permissions

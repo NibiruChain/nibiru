@@ -480,7 +480,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutil.DefaultFeeString(s.cfg),
+		testutil.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 }
