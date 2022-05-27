@@ -34,9 +34,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdPairs(),
 	}
 
-	for _, command := range commands {
-		queryCmd.AddCommand(command)
-	}
+	queryCmd.AddCommand(commands...)
 
 	return queryCmd
 }
