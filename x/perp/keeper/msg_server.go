@@ -15,23 +15,26 @@ type msgServer struct {
 	k Keeper
 }
 
+var _ types.MsgServer = msgServer{}
+
 // NewMsgServerImpl returns an implementation of the MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{k: keeper}
 }
 
-var _ types.MsgServer = msgServer{}
-
-func (k msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin) (*types.MsgRemoveMarginResponse, error) {
+func (k msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin,
+) (*types.MsgRemoveMarginResponse, error) {
 	return k.k.RemoveMargin(ctx, margin)
 }
 
-func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin) (*types.MsgAddMarginResponse, error) {
+func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
+) (*types.MsgAddMarginResponse, error) {
 	return k.k.AddMargin(ctx, margin)
 }
 
-func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition) (*types.MsgOpenPositionResponse, error) {
+func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
+) (*types.MsgOpenPositionResponse, error) {
 	pair, err := common.NewTokenPairFromStr(req.TokenPair)
 	if err != nil {
 		panic(err) // must not happen
@@ -52,4 +55,14 @@ func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	}
 
 	return &types.MsgOpenPositionResponse{}, nil
+}
+
+func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
+) (*types.MsgLiquidateResponse, error) {
+	response, err := k.k.Liquidate(goCtx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
