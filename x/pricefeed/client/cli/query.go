@@ -3,8 +3,9 @@ package cli
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
