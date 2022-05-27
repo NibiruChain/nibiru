@@ -22,9 +22,9 @@ service Msg {
 
   /* Liquidate is a transaction that allows the caller to fully or partially 
   liquidate an existing position. */  
-  //   rpc Liquidate(MsgLiquidate) returns (MsgLiquidateResponse) {
-  //     option (google.api.http).post = "/nibiru/perp/liquidate";
-  //   }
+  rpc Liquidate(MsgLiquidate) returns (MsgLiquidateResponse) {
+    option (google.api.http).post = "/nibiru/perp/liquidate";
+  }
 
   rpc OpenPosition(MsgOpenPosition) returns (MsgOpenPositionResponse) {
     option (google.api.http).post = "/nibiru/perp/open_position";
@@ -77,7 +77,8 @@ message MsgLiquidate {
     // TokenPair is the identifier for the position's virtual pool
     string token_pair = 2;
     // Trader is the address of the owner of the position 
-    string trader = 3;
+    bytes trader = 3 [
+      (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
   }
   
 message MsgLiquidateResponse {

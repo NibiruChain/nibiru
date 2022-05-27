@@ -27,6 +27,7 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		RemoveMarginCmd(),
 		AddMarginCmd(),
+		LiquidateCmd(),
 		OpenPositionCmd(),
 	)
 
@@ -109,7 +110,7 @@ func RemoveMarginCmd() *cobra.Command {
 		Short: "Removes margin from a position, decreasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
-			$ %s tx perp remove-margin osmo-nusd 100nusd
+			$ %s tx perp remove-margin osmo:nusd 100nusd
 			`, version.AppName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -151,7 +152,7 @@ func AddMarginCmd() *cobra.Command {
 		Short: "Adds margin to a position, increasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
-			$ %s tx perp add-margin osmo-nusd 100nusd
+			$ %s tx perp add-margin osmo:nusd 100nusd
 			`, version.AppName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -173,6 +174,48 @@ func AddMarginCmd() *cobra.Command {
 				Sender:    clientCtx.GetFromAddress(),
 				TokenPair: args[0],
 				Margin:    marginToAdd,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func LiquidateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "liquidate [vpool] [trader]",
+		Short: "liquidates the position of 'trader' on 'vpool' if possible",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp liquidate osmo:nusd nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			traderAddr, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgLiquidate{
+				Sender:    clientCtx.GetFromAddress(),
+				TokenPair: args[0],
+				Trader:    traderAddr,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err

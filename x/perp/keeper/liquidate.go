@@ -27,8 +27,7 @@ func (k Keeper) Liquidate(
 	}
 
 	// validate trader (msg.PositionOwner)
-	trader, err := sdk.AccAddressFromBech32(msg.Trader)
-	if err != nil {
+	if err = sdk.VerifyAddressFormat(msg.Trader); err != nil {
 		return res, err
 	}
 
@@ -42,7 +41,7 @@ func (k Keeper) Liquidate(
 		return res, err
 	}
 
-	position, err := k.GetPosition(ctx, pair, trader)
+	position, err := k.GetPosition(ctx, pair, msg.Trader)
 	if err != nil {
 		return res, err
 	}
@@ -87,7 +86,7 @@ func (k Keeper) Liquidate(
 	events.EmitPositionLiquidate(
 		/* ctx */ ctx,
 		/* vpool */ pair.String(),
-		/* owner */ trader,
+		/* owner */ msg.Trader,
 		/* notional */ liquidationResponse.PositionResp.ExchangedQuoteAssetAmount,
 		/* vsize */ liquidationResponse.PositionResp.ExchangedPositionSize,
 		/* liquidator */ msg.Sender,

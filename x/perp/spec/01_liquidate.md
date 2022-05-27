@@ -29,8 +29,8 @@ From there, we compute a margin ratio using only the spot price. This margin rat
 
 - When this margin ratio is higher than the liqudiation fee, we close the position and transfer the fees.
     - Half the fees are sent to the liquidator
-    - The other half is sent to the insurance fund.
+    - The other half is sent to the ecosystem fund.
 
 - Otherwise, we compute the margin ratio including the funding payments in the unrealizedPnL to see if we can still pay the liquidation fee
-    - If we can pay the liquidation fee to the liquidator, we send the remaining margin to the insurance fund
-    - Otherwise, we count is as bad debt added onto the position potentially withdraw from the insuranceFund to the pre-paid vault to pay the trader.
+    - If we can pay the liquidation fee to the liquidator, we send the remaining margin to the ecosystem fund
+    - Otherwise, we count is as bad debt added onto the position potentially withdraw from the ecosystemFund to the pre-paid vault to pay the trader.

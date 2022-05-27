@@ -10,6 +10,7 @@ import (
 
 var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
+var _ sdk.Msg = &MsgLiquidate{}
 var _ sdk.Msg = &MsgOpenPosition{}
 
 // MsgRemoveMargin
@@ -46,6 +47,8 @@ func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{m.Sender}
 }
 
+// MsgOpenPosition
+
 func (m *MsgOpenPosition) ValidateBasic() error {
 	if m.Side != Side_SELL && m.Side != Side_BUY {
 		return fmt.Errorf("invalid side")
@@ -70,5 +73,31 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 }
 
 func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{m.Sender}
+}
+
+// MsgLiquidate
+
+func (m MsgLiquidate) Route() string { return RouterKey }
+func (m MsgLiquidate) Type() string  { return "liquidate_msg" }
+
+func (m MsgLiquidate) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
+		return err
+	}
+	if err := sdk.VerifyAddressFormat(m.Trader); err != nil {
+		return err
+	}
+	if _, err := common.NewTokenPairFromStr(m.TokenPair); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m MsgLiquidate) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgLiquidate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{m.Sender}
 }
