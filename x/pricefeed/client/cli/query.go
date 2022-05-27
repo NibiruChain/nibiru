@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -52,8 +53,12 @@ func CmdPrice() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pair := args[0]
-			params := &types.QueryPriceRequest{PairId: pair}
+			pair, err := common.NewTokenPairFromStr(args[0])
+			if err != nil {
+				return fmt.Errorf("invalid pair: %w", err)
+			}
+
+			params := &types.QueryPriceRequest{PairId: pair.String()}
 
 			res, err := queryClient.Price(cmd.Context(), params)
 			if err != nil {
