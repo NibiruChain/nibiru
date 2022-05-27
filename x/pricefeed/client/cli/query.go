@@ -23,16 +23,14 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	commands := []*cobra.Command{
+	queryCmd.AddCommand(
 		CmdQueryParams(),
 		CmdPrice(),
 		CmdPrices(),
 		CmdRawPrices(),
 		CmdOracles(),
 		CmdPairs(),
-	}
-
-	queryCmd.AddCommand(commands...)
+	)
 
 	return queryCmd
 }
