@@ -23,6 +23,19 @@ var (
 	ErrInvalidTokenPair = fmt.Errorf("invalid token pair")
 )
 
+func NewAssetPairFromStr(pair string) (AssetPair, error) {
+	split := strings.Split(pair, PairSeparator)
+	if len(split) != 2 {
+		return AssetPair{}, ErrInvalidTokenPair
+	}
+
+	if split[0] == "" || split[1] == "" {
+		return AssetPair{}, ErrInvalidTokenPair
+	}
+
+	return AssetPair{Token0: split[0], Token1: split[1]}, nil
+}
+
 type AssetPair struct {
 	Token0 string
 	Token1 string
@@ -38,7 +51,7 @@ func (pair AssetPair) PairID() string {
 }
 
 func (pair AssetPair) String() string {
-	return fmt.Sprintf("%s:%s", pair.Token0, pair.Token1)
+	return fmt.Sprintf("%s%s%s", pair.Token0, PairSeparator, pair.Token1)
 }
 
 func (pair AssetPair) IsProperOrder() bool {
@@ -57,6 +70,14 @@ func (pair AssetPair) Proper() AssetPair {
 	}
 }
 
+func (pair AssetPair) GetBaseTokenDenom() string {
+	return pair.Token0
+}
+
+func (pair AssetPair) GetQuoteTokenDenom() string {
+	return pair.Token1
+}
+
 func DenomsFromPoolName(pool string) (denoms []string) {
 	return strings.Split(pool, ":")
 }
@@ -73,31 +94,8 @@ func RawPoolNameFromDenoms(denoms []string) string {
 	poolName := denoms[0]
 	for idx, denom := range denoms {
 		if idx != 0 {
-			poolName += fmt.Sprintf(":%s", denom)
+			poolName += fmt.Sprintf("%s%s", PairSeparator, denom)
 		}
 	}
 	return poolName
-}
-
-type TokenPair string
-
-func NewTokenPairFromStr(pair string) (TokenPair, error) {
-	split := strings.Split(pair, PairSeparator)
-	if len(split) != 2 {
-		return "", ErrInvalidTokenPair
-	}
-
-	return TokenPair(pair), nil
-}
-
-func (p TokenPair) GetBaseTokenDenom() string {
-	return strings.Split(string(p), ":")[0]
-}
-
-func (p TokenPair) GetQuoteTokenDenom() string {
-	return strings.Split(string(p), ":")[1]
-}
-
-func (p TokenPair) String() string {
-	return string(p)
 }

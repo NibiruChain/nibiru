@@ -21,9 +21,11 @@ func Test_calcFreeCollateral(t *testing.T) {
 			test: func() {
 				k, _, ctx := getKeeper(t)
 				fundingPayment := sdk.ZeroDec()
-				the3pool := "dai:usdc:usdt"
 				alice := sample.AccAddress()
-				pos := types.ZeroPosition(ctx, common.TokenPair(the3pool), alice)
+				pos := types.ZeroPosition(ctx, common.AssetPair{
+					Token0: "",
+					Token1: "",
+				}, alice)
 				_, err := k.calcFreeCollateral(ctx, *pos, fundingPayment)
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
@@ -35,7 +37,10 @@ func Test_calcFreeCollateral(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 
 				fundingPayment := sdk.ZeroDec()
-				validPair := common.TokenPair("xxx:yyy")
+				validPair := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
@@ -51,7 +56,10 @@ func Test_calcFreeCollateral(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 
 				fundingPayment := sdk.ZeroDec()
-				validPair := common.TokenPair("xxx:yyy")
+				validPair := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
@@ -67,7 +75,10 @@ func Test_calcFreeCollateral(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 
 				fundingPayment := sdk.NewDec(10)
-				validPair := common.TokenPair("xxx:yyy")
+				validPair := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).
@@ -83,7 +94,10 @@ func Test_calcFreeCollateral(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 
 				fundingPayment := sdk.NewDec(-100)
-				validPair := common.TokenPair("xxx:yyy")
+				validPair := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
 				alice := sample.AccAddress()
 				pos := types.ZeroPosition(ctx, validPair, alice)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, validPair).

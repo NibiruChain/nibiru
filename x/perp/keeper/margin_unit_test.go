@@ -142,7 +142,7 @@ func TestGetMarginRatio_Unit(t *testing.T) {
 			deps.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
-					common.TokenPair("BTC:NUSD"),
+					BtcNusdPair,
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.NewDec(10),
 				).
@@ -151,7 +151,7 @@ func TestGetMarginRatio_Unit(t *testing.T) {
 			deps.mockVpoolKeeper.EXPECT().
 				GetBaseAssetTWAP(
 					ctx,
-					common.TokenPair("BTC:NUSD"),
+					BtcNusdPair,
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.NewDec(10),
 					15*time.Minute,
@@ -212,7 +212,10 @@ func TestRemoveMargin_Unit(t *testing.T) {
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				alice := sample.AccAddress()
-				pair := common.TokenPair("osmo:nusd")
+				pair := common.AssetPair{
+					Token0: "osmo",
+					Token1: "nusd",
+				}
 				msg := &types.MsgRemoveMargin{
 					Sender:    alice,
 					TokenPair: pair.String(),
@@ -257,7 +260,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
 
-				pair := common.TokenPair(msg.TokenPair)
+				pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+				require.NoError(t, err)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
 					AnyTimes().Return(true)
 
@@ -294,7 +298,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					ctx, types.VaultModuleAccount, alice, sdk.NewCoins(msg.Margin),
 				).Return(expectedError)
 
-				_, err := k.RemoveMargin(goCtx, msg)
+				_, err = k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, expectedError.Error())
 			},
@@ -312,7 +316,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
 
-				pair := common.TokenPair(msg.TokenPair)
+				pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+				require.NoError(t, err)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
 					AnyTimes().Return(true)
 

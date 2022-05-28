@@ -54,12 +54,12 @@ func TestAssetPair(t *testing.T) {
 	}{
 		{
 			name:   "proper and improper order pairs are inverses-1",
-			pair:   common.AssetPair{"atom", "osmo"},
+			pair:   common.AssetPair{Token0: "atom", Token1: "osmo"},
 			proper: true,
 		},
 		{
 			name:   "proper and improper order pairs are inverses-2",
-			pair:   common.AssetPair{"osmo", "atom"},
+			pair:   common.AssetPair{Token0: "osmo", Token1: "atom"},
 			proper: false,
 		},
 	}
@@ -80,7 +80,7 @@ func TestAssetPair(t *testing.T) {
 	}
 }
 
-func TestPair_Constructor(t *testing.T) {
+func TestAsset_Constructor(t *testing.T) {
 	tests := []struct {
 		name      string
 		tokenPair string
@@ -112,7 +112,7 @@ func TestPair_Constructor(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := common.NewTokenPairFromStr(tc.tokenPair)
+			_, err := common.NewAssetPairFromStr(tc.tokenPair)
 			if tc.err != nil {
 				require.Equal(t, tc.err, err)
 			} else {
@@ -122,8 +122,8 @@ func TestPair_Constructor(t *testing.T) {
 	}
 }
 
-func TestPair_GetBaseToken(t *testing.T) {
-	pair, err := common.NewTokenPairFromStr("uatom:unibi")
+func TestAsset_GetQuoteBaseToken(t *testing.T) {
+	pair, err := common.NewAssetPairFromStr("uatom:unibi")
 	require.NoError(t, err)
 
 	require.Equal(t, "uatom", pair.GetBaseTokenDenom())

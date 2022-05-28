@@ -27,7 +27,7 @@ ret:
   - price: the price of the token pair as sdk.Dec
   - err: error
 */
-func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.TokenPair) (
+func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (
 	price sdk.Dec, err error,
 ) {
 	pool, err := k.getPool(ctx, pair)
@@ -50,7 +50,7 @@ ret:
   - price: price as sdk.Dec
   - err: error
 */
-func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.TokenPair) (
+func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (
 	price sdk.Dec, err error,
 ) {
 	currentPrice, err := k.pricefeedKeeper.GetCurrentPrice(
@@ -81,7 +81,7 @@ ret:
 */
 func (k Keeper) GetBaseAssetPrice(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
@@ -109,7 +109,7 @@ ret:
 */
 func (k Keeper) GetQuoteAssetPrice(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	dir types.Direction,
 	quoteAmount sdk.Dec,
 ) (baseAssetAmount sdk.Dec, err error) {
@@ -139,7 +139,7 @@ ret:
 */
 func (k Keeper) GetBaseAssetTWAP(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	direction types.Direction,
 	baseAssetAmount sdk.Dec,
 	lookbackInterval time.Duration,
@@ -172,7 +172,7 @@ ret:
 */
 func (k Keeper) GetQuoteAssetTWAP(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	direction types.Direction,
 	quoteAssetAmount sdk.Dec,
 	lookbackInterval time.Duration,
@@ -205,7 +205,7 @@ ret:
 */
 func (k Keeper) calcTwap(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	twapCalcOption types.TwapCalcOption,
 	direction types.Direction,
 	assetAmount sdk.Dec,

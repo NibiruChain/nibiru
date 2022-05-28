@@ -83,7 +83,7 @@ func CmdQueryPosition() *cobra.Command {
 				return fmt.Errorf("invalid trader address: %w", err)
 			}
 
-			tokenPair, err := common.NewTokenPairFromStr(args[1])
+			tokenPair, err := common.NewAssetPairFromStr(args[1])
 			if err != nil {
 				return err
 			}

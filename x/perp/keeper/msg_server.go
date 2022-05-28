@@ -35,7 +35,7 @@ func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
 
 func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
 ) (*types.MsgOpenPositionResponse, error) {
-	pair, err := common.NewTokenPairFromStr(req.TokenPair)
+	pair, err := common.NewAssetPairFromStr(req.TokenPair)
 	if err != nil {
 		panic(err) // must not happen
 	}

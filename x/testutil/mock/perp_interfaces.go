@@ -8,13 +8,12 @@ import (
 	reflect "reflect"
 	time "time"
 
-	types1 "github.com/cosmos/cosmos-sdk/types"
-	types2 "github.com/cosmos/cosmos-sdk/x/auth/types"
-	gomock "github.com/golang/mock/gomock"
-
 	common "github.com/NibiruChain/nibiru/x/common"
 	types "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	types0 "github.com/NibiruChain/nibiru/x/vpool/types"
+	types1 "github.com/cosmos/cosmos-sdk/types"
+	types2 "github.com/cosmos/cosmos-sdk/x/auth/types"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockAccountKeeper is a mock of AccountKeeper interface.
@@ -366,7 +365,7 @@ func (m *MockVpoolKeeper) EXPECT() *MockVpoolKeeperMockRecorder {
 }
 
 // CalcPerpTxFee mocks base method.
-func (m *MockVpoolKeeper) CalcPerpTxFee(arg0 types1.Context, arg1 common.TokenPair, arg2 types1.Int) (types1.Int, types1.Int, error) {
+func (m *MockVpoolKeeper) CalcPerpTxFee(arg0 types1.Context, arg1 common.AssetPair, arg2 types1.Int) (types1.Int, types1.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CalcPerpTxFee", arg0, arg1, arg2)
 	ret0, _ := ret[0].(types1.Int)
@@ -382,7 +381,7 @@ func (mr *MockVpoolKeeperMockRecorder) CalcPerpTxFee(arg0, arg1, arg2 interface{
 }
 
 // ExistsPool mocks base method.
-func (m *MockVpoolKeeper) ExistsPool(arg0 types1.Context, arg1 common.TokenPair) bool {
+func (m *MockVpoolKeeper) ExistsPool(arg0 types1.Context, arg1 common.AssetPair) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExistsPool", arg0, arg1)
 	ret0, _ := ret[0].(bool)
@@ -396,7 +395,7 @@ func (mr *MockVpoolKeeperMockRecorder) ExistsPool(arg0, arg1 interface{}) *gomoc
 }
 
 // GetBaseAssetPrice mocks base method.
-func (m *MockVpoolKeeper) GetBaseAssetPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetBaseAssetPrice(arg0 types1.Context, arg1 common.AssetPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBaseAssetPrice", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(types1.Dec)
@@ -411,7 +410,7 @@ func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetPrice(arg0, arg1, arg2, arg3 
 }
 
 // GetBaseAssetTWAP mocks base method.
-func (m *MockVpoolKeeper) GetBaseAssetTWAP(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec, arg4 time.Duration) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetBaseAssetTWAP(arg0 types1.Context, arg1 common.AssetPair, arg2 types0.Direction, arg3 types1.Dec, arg4 time.Duration) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBaseAssetTWAP", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(types1.Dec)
@@ -426,7 +425,7 @@ func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetTWAP(arg0, arg1, arg2, arg3, 
 }
 
 // GetQuoteAssetPrice mocks base method.
-func (m *MockVpoolKeeper) GetQuoteAssetPrice(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetQuoteAssetPrice(arg0 types1.Context, arg1 common.AssetPair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetQuoteAssetPrice", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(types1.Dec)
@@ -441,7 +440,7 @@ func (mr *MockVpoolKeeperMockRecorder) GetQuoteAssetPrice(arg0, arg1, arg2, arg3
 }
 
 // GetQuoteAssetTWAP mocks base method.
-func (m *MockVpoolKeeper) GetQuoteAssetTWAP(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3 types1.Dec, arg4 time.Duration) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetQuoteAssetTWAP(arg0 types1.Context, arg1 common.AssetPair, arg2 types0.Direction, arg3 types1.Dec, arg4 time.Duration) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetQuoteAssetTWAP", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(types1.Dec)
@@ -456,7 +455,7 @@ func (mr *MockVpoolKeeperMockRecorder) GetQuoteAssetTWAP(arg0, arg1, arg2, arg3,
 }
 
 // GetSettlementPrice mocks base method.
-func (m *MockVpoolKeeper) GetSettlementPrice(arg0 types1.Context, arg1 common.TokenPair) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetSettlementPrice(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSettlementPrice", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
@@ -471,7 +470,7 @@ func (mr *MockVpoolKeeperMockRecorder) GetSettlementPrice(arg0, arg1 interface{}
 }
 
 // GetSpotPrice mocks base method.
-func (m *MockVpoolKeeper) GetSpotPrice(arg0 types1.Context, arg1 common.TokenPair) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetSpotPrice(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSpotPrice", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
@@ -486,7 +485,7 @@ func (mr *MockVpoolKeeperMockRecorder) GetSpotPrice(arg0, arg1 interface{}) *gom
 }
 
 // GetUnderlyingPrice mocks base method.
-func (m *MockVpoolKeeper) GetUnderlyingPrice(arg0 types1.Context, arg1 common.TokenPair) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetUnderlyingPrice(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUnderlyingPrice", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
@@ -501,7 +500,7 @@ func (mr *MockVpoolKeeperMockRecorder) GetUnderlyingPrice(arg0, arg1 interface{}
 }
 
 // IsOverSpreadLimit mocks base method.
-func (m *MockVpoolKeeper) IsOverSpreadLimit(arg0 types1.Context, arg1 common.TokenPair) bool {
+func (m *MockVpoolKeeper) IsOverSpreadLimit(arg0 types1.Context, arg1 common.AssetPair) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsOverSpreadLimit", arg0, arg1)
 	ret0, _ := ret[0].(bool)
@@ -515,7 +514,7 @@ func (mr *MockVpoolKeeperMockRecorder) IsOverSpreadLimit(arg0, arg1 interface{})
 }
 
 // SwapBaseForQuote mocks base method.
-func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
+func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types1.Context, arg1 common.AssetPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapBaseForQuote", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(types1.Dec)
@@ -530,7 +529,7 @@ func (mr *MockVpoolKeeperMockRecorder) SwapBaseForQuote(arg0, arg1, arg2, arg3, 
 }
 
 // SwapQuoteForBase mocks base method.
-func (m *MockVpoolKeeper) SwapQuoteForBase(arg0 types1.Context, arg1 common.TokenPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
+func (m *MockVpoolKeeper) SwapQuoteForBase(arg0 types1.Context, arg1 common.AssetPair, arg2 types0.Direction, arg3, arg4 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapQuoteForBase", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(types1.Dec)

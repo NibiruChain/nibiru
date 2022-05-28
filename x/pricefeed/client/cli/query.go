@@ -48,7 +48,7 @@ func CmdPrice() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pair, err := common.NewTokenPairFromStr(args[0])
+			pair, err := common.NewAssetPairFromStr(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid pair: %w", err)
 			}

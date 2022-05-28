@@ -16,8 +16,8 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func QueryVpoolReserveAssets(ctx client.Context, pair common.TokenPair) (vpooltypes.QueryReserveAssetsResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(ctx, cli2.CmdGetVpoolReserveAssets(), []string{string(pair), fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
+func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair) (vpooltypes.QueryReserveAssetsResponse, error) {
+	out, err := clitestutil.ExecTestCLICmd(ctx, cli2.CmdGetVpoolReserveAssets(), []string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
 	if err != nil {
 		return vpooltypes.QueryReserveAssetsResponse{}, err
 	}
@@ -31,11 +31,11 @@ func QueryVpoolReserveAssets(ctx client.Context, pair common.TokenPair) (vpoolty
 	return queryResp, nil
 }
 
-func QueryTraderPosition(ctx client.Context, pair common.TokenPair, trader sdk.AccAddress) (types.QueryTraderPositionResponse, error) {
+func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (types.QueryTraderPositionResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
 		cli.CmdQueryPosition(),
-		[]string{trader.String(), string(pair), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+		[]string{trader.String(), pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
 		return types.QueryTraderPositionResponse{}, err

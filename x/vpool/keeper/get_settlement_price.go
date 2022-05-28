@@ -7,6 +7,6 @@ import (
 )
 
 // TODO(mercilex): implement
-func (k Keeper) GetSettlementPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error) {
+func (k Keeper) GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	panic("impl")
 }

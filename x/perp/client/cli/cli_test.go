@@ -85,7 +85,10 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	val := s.network.Validators[0]
-	pair := fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi")
+	pair := common.AssetPair{
+		Token0: "ubtc",
+		Token1: "unibi",
+	}
 
 	info, _, err := val.ClientCtx.Keyring.
 		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
@@ -105,7 +108,7 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	s.Require().NoError(err)
 
 	// Check vpool balances
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.TokenPair(pair))
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.Require().NoError(err)
 	s.Require().Equal(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
 	s.Require().Equal(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
@@ -125,23 +128,23 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
 
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.TokenPair(pair), user)
+	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
 	s.Require().True(strings.Contains(err.Error(), "no position found"))
 
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 
 	// Check vpool after opening position
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, "ubtc:unibi")
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.Require().NoError(err)
 	s.Require().Equal(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
 	s.Require().Equal(sdk.MustNewDecFromStr("60001000000"), reserveAssets.QuoteAssetReserve)
 
 	// Check position
-	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, common.TokenPair(pair), user)
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
 	s.Require().NoError(err)
 	s.Require().Equal(user, queryResp.Position.TraderAddress)
-	s.Require().Equal(pair, queryResp.Position.Pair)
+	s.Require().Equal(pair.String(), queryResp.Position.Pair)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.OpenNotional)
 }

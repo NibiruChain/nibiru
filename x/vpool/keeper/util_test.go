@@ -12,10 +12,20 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
+	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-const NUSDPair = "BTC:NUSD"
+var BTCNusdPair = common.AssetPair{
+	Token0: "BTC",
+	Token1: "NUSD",
+}
+
+var ETHNusdPair = common.AssetPair{
+	Token0: "ETH",
+	Token1: "NUSD",
+}
 
 func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 	vpoolKeeper Keeper, ctx sdk.Context,
@@ -43,7 +53,7 @@ func getSamplePool() *types.Pool {
 	maxOracleSpreadRatio := sdk.MustNewDecFromStr("0.1")
 
 	pool := types.NewPool(
-		NUSDPair,
+		BTCNusdPair,
 		ratioLimit,
 		sdk.NewDec(10_000_000),
 		sdk.NewDec(5_000_000),

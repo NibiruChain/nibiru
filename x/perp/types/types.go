@@ -27,7 +27,7 @@ var (
 	ErrPositionZero         = errors.New("position is zero")
 )
 
-func ZeroPosition(ctx sdk.Context, tokenPair common.TokenPair, traderAddr sdk.AccAddress) *Position {
+func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
 		TraderAddress:                       traderAddr,
 		Pair:                                tokenPair.String(),

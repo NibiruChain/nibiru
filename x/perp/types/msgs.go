@@ -53,7 +53,7 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	if m.Side != Side_SELL && m.Side != Side_BUY {
 		return fmt.Errorf("invalid side")
 	}
-	if _, err := common.NewTokenPairFromStr(m.TokenPair); err != nil {
+	if _, err := common.NewAssetPairFromStr(m.TokenPair); err != nil {
 		return err
 	}
 	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
@@ -88,7 +88,7 @@ func (m MsgLiquidate) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(m.Trader); err != nil {
 		return err
 	}
-	if _, err := common.NewTokenPairFromStr(m.TokenPair); err != nil {
+	if _, err := common.NewAssetPairFromStr(m.TokenPair); err != nil {
 		return err
 	}
 	return nil

@@ -23,7 +23,7 @@ func TestQueryPosition_Ok(t *testing.T) {
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	trader := sample.AccAddress()
-	vpoolPair, err := common.NewTokenPairFromStr("btc:nusd")
+	vpoolPair, err := common.NewAssetPairFromStr("btc:nusd")
 	require.NoError(t, err)
 
 	oldPosition := &types.Position{

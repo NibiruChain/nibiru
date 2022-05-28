@@ -31,7 +31,7 @@ func (q queryServer) ReserveAssets(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	tokenPair, err := common.NewTokenPairFromStr(req.Pair)
+	tokenPair, err := common.NewAssetPairFromStr(req.Pair)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
