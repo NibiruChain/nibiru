@@ -32,7 +32,7 @@ func (k Keeper) Liquidate(
 	}
 
 	// validate pair
-	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
+	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
 	if err != nil {
 		return res, err
 	}
@@ -122,7 +122,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
-	tokenPair, err := common.NewTokenPairFromStr(position.Pair)
+	tokenPair, err := common.NewAssetPairFromStr(position.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -195,7 +195,7 @@ func (k Keeper) distributeLiquidateRewards(
 	}
 
 	// validate pair
-	pair, err := common.NewTokenPairFromStr(liquidateResp.PositionResp.Position.Pair)
+	pair, err := common.NewAssetPairFromStr(liquidateResp.PositionResp.Position.Pair)
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
 		ctx,
-		common.TokenPair(currentPosition.Pair),
+		currentPosition.GetAssetPair(),
 		baseAssetDir,
 		/* abs= */ currentPosition.Size_.Mul(params.GetPartialLiquidationRatioAsDec()),
 	)
@@ -296,7 +296,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.GetLiquidationFeeAsDec())
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.SetPosition(ctx, common.TokenPair(currentPosition.Pair), currentPosition.TraderAddress,
+	k.SetPosition(ctx, currentPosition.GetAssetPair(), currentPosition.TraderAddress,
 		positionResp.Position)
 
 	// Compute splits for the liquidation fee

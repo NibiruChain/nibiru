@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
@@ -40,7 +39,7 @@ func TestGenesis(t *testing.T) {
 	vpool.InitGenesis(ctx, k, genesisState)
 
 	for _, vp := range vpools {
-		require.True(t, k.ExistsPool(ctx, common.TokenPair(vp.Pair)))
+		require.True(t, k.ExistsPool(ctx, vp.GetAssetPair()))
 	}
 
 	exportedGenesis := vpool.ExportGenesis(ctx, k)

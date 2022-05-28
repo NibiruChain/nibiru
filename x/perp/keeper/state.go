@@ -77,10 +77,10 @@ func (p PositionsState) getKV(ctx sdk.Context) sdk.KVStore {
 }
 
 func (p PositionsState) keyFromType(position *types.Position) []byte {
-	return p.keyFromRaw(common.TokenPair(position.Pair), position.TraderAddress)
+	return p.keyFromRaw(position.GetAssetPair(), position.TraderAddress)
 }
 
-func (p PositionsState) keyFromRaw(pair common.TokenPair, address sdk.AccAddress) []byte {
+func (p PositionsState) keyFromRaw(pair common.AssetPair, address sdk.AccAddress) []byte {
 	// TODO(mercilex): not sure if namespace overlap safe | update(mercilex) it is not overlap safe
 	return []byte(pair.String() + address.String())
 }
@@ -96,7 +96,7 @@ func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error 
 	return nil
 }
 
-func (p PositionsState) Get(ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress) (*types.Position, error) {
+func (p PositionsState) Get(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
 	kv := p.getKV(ctx)
 
 	key := p.keyFromRaw(pair, traderAddr)
@@ -124,7 +124,7 @@ func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error 
 }
 
 func (p PositionsState) Set(
-	ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress, position *types.Position,
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position,
 ) {
 	positionID := p.keyFromRaw(pair, traderAddr)
 	kvStore := p.getKV(ctx)
@@ -139,10 +139,10 @@ func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(p.storeKey), pairMetadataNamespace)
 }
 
-func (p PairMetadata) Get(ctx sdk.Context, pair common.TokenPair) (*types.PairMetadata, error) {
+func (p PairMetadata) Get(ctx sdk.Context, pair common.AssetPair) (*types.PairMetadata, error) {
 	kv := p.getKV(ctx)
 
-	v := kv.Get([]byte(pair))
+	v := kv.Get([]byte(pair.String()))
 	if v == nil {
 		return nil, types.ErrPairMetadataNotFound
 	}

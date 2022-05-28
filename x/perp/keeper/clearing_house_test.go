@@ -27,6 +27,11 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
+var BtcNusdPair = common.AssetPair{
+	Token0: "BTC",
+	Token1: "NUSD",
+}
+
 func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -47,7 +52,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 				}
 				keeper.PairMetadata().Set(ctx, metadata)
 
-				tokenPair, err := common.NewTokenPairFromStr(pair)
+				tokenPair, err := common.NewAssetPairFromStr(pair)
 				require.NoError(t, err)
 				latestCumulativePremiumFraction, err := keeper.
 					getLatestCumulativePremiumFraction(ctx, tokenPair)
@@ -60,7 +65,10 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 			name: "uninitialized vpool has no metadata | fail",
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
-				vpool := common.TokenPair("xxx:yyy")
+				vpool := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
 				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
 					ctx, vpool)
 				require.Error(t, err)
@@ -168,7 +176,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -204,7 +212,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -240,7 +248,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -277,7 +285,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -314,7 +322,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 					).
 					Return(sdk.NewDec(2), nil)
 
@@ -348,7 +356,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 
@@ -382,7 +390,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 					).
@@ -418,7 +426,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 					).
@@ -454,7 +462,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -491,7 +499,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -528,7 +536,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 
@@ -562,7 +570,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 					).
 					Return(sdk.NewDec(2), nil)
 
@@ -602,7 +610,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
@@ -610,7 +618,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 
 				baseAmount, err := perpKeeper.swapQuoteForBase(
 					ctx,
-					common.TokenPair("BTC:NUSD"),
+					BtcNusdPair,
 					types.Side_BUY,
 					sdk.NewDec(10),
 					sdk.NewDec(1),
@@ -630,7 +638,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
@@ -638,7 +646,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 
 				baseAmount, err := perpKeeper.swapQuoteForBase(
 					ctx,
-					common.TokenPair("BTC:NUSD"),
+					BtcNusdPair,
 					types.Side_SELL,
 					sdk.NewDec(10),
 					sdk.NewDec(1),
@@ -685,7 +693,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -694,7 +702,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -731,7 +739,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -740,7 +748,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -777,7 +785,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -786,7 +794,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -823,7 +831,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -832,7 +840,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -889,7 +897,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(50),
@@ -898,7 +906,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -964,7 +972,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(101),
@@ -973,7 +981,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1042,7 +1050,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(110),
@@ -1051,7 +1059,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(110),
 					).
@@ -1119,7 +1127,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(200),
@@ -1128,7 +1136,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1195,7 +1203,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(99),
@@ -1204,7 +1212,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1274,7 +1282,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(105),
 						/*baseAssetLimit=*/ sdk.NewDec(100),
@@ -1283,7 +1291,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1364,7 +1372,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -1373,7 +1381,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1382,7 +1390,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.NewDec(200),
@@ -1443,7 +1451,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -1452,7 +1460,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1461,7 +1469,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.NewDec(100),
@@ -1522,7 +1530,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -1531,7 +1539,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1540,7 +1548,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.NewDec(100),
@@ -1603,7 +1611,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -1612,7 +1620,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(150),
 					).
@@ -1621,7 +1629,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*baseAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(150),
 						/*quoteAssetLimit=*/ sdk.NewDec(100),
@@ -1682,7 +1690,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -1691,7 +1699,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1700,7 +1708,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*baseAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.NewDec(105),
@@ -1761,7 +1769,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -1770,7 +1778,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1779,7 +1787,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*baseAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.NewDec(150),
@@ -1861,7 +1869,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -1870,7 +1878,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(50),
@@ -1939,7 +1947,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(105),
 					).
@@ -1948,7 +1956,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(5),
 						/*baseAssetLimit=*/ sdk.MustNewDecFromStr("5.25"),
@@ -2023,7 +2031,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(105),
 					).
@@ -2032,7 +2040,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(5),
 						/*baseAssetLimit=*/ sdk.MustNewDecFromStr("5.25"),
@@ -2101,7 +2109,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -2110,7 +2118,7 @@ func TestDecreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.MustNewDecFromStr("5.25"),
 						/*baseAssetLimit=*/ sdk.NewDec(5),
@@ -2191,7 +2199,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -2200,7 +2208,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -2209,7 +2217,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -2218,7 +2226,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(50),
@@ -2282,7 +2290,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -2291,7 +2299,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -2300,7 +2308,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -2309,7 +2317,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(100),
@@ -2377,7 +2385,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -2386,7 +2394,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -2395,7 +2403,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -2447,7 +2455,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -2456,7 +2464,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(150),
 					).
@@ -2465,7 +2473,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*baseAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(150),
 						/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -2474,7 +2482,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(150),
@@ -2538,7 +2546,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -2547,7 +2555,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -2556,7 +2564,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*baseAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -2565,7 +2573,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(105),
 						/*baseAssetLimit=*/ sdk.NewDec(100),
@@ -2629,7 +2637,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				}
 				perpKeeper.SetPosition(
 					ctx,
-					common.TokenPair(currentPosition.Pair),
+					currentPosition.GetAssetPair(),
 					currentPosition.TraderAddress,
 					&currentPosition,
 				)
@@ -2638,7 +2646,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -2647,7 +2655,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
-						common.TokenPair("BTC:NUSD"),
+						BtcNusdPair,
 						/*baseAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.ZeroDec(),

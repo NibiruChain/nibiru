@@ -13,7 +13,7 @@ import (
 // addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
 func (k Keeper) addReserveSnapshot(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 ) error {
@@ -43,7 +43,7 @@ func (k Keeper) addReserveSnapshot(
 }
 
 // getSnapshot returns the snapshot saved by counter num
-func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint64) (
+func (k Keeper) getSnapshot(ctx sdk.Context, pair common.AssetPair, counter uint64) (
 	snapshot types.ReserveSnapshot, err error,
 ) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, counter))
@@ -59,7 +59,7 @@ func (k Keeper) getSnapshot(ctx sdk.Context, pair common.TokenPair, counter uint
 
 func (k Keeper) saveSnapshot(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	counter uint64,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
@@ -81,7 +81,7 @@ func (k Keeper) saveSnapshot(
 }
 
 // getSnapshotCounter returns the counter and if it has been found or not.
-func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair common.TokenPair) (
+func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair common.AssetPair) (
 	snapshotCounter uint64, found bool,
 ) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotCounterKey(pair))
@@ -94,7 +94,7 @@ func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair common.TokenPair) (
 
 func (k Keeper) saveSnapshotCounter(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	counter uint64,
 ) {
 	ctx.KVStore(k.storeKey).Set(
@@ -104,7 +104,7 @@ func (k Keeper) saveSnapshotCounter(
 }
 
 // getLatestReserveSnapshot returns the last snapshot that was saved
-func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.TokenPair) (
+func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair) (
 	snapshot types.ReserveSnapshot, counter uint64, err error,
 ) {
 	counter, found := k.getSnapshotCounter(ctx, pair)
@@ -130,7 +130,7 @@ BASE_ASSET_SWAP: price when swapping x amount of base assets
 */
 type snapshotPriceOptions struct {
 	// required
-	pair           common.TokenPair
+	pair           common.AssetPair
 	twapCalcOption types.TwapCalcOption
 
 	// required only if twapCalcOption == QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
@@ -166,7 +166,7 @@ func getPriceWithSnapshot(
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
 		pool := types.NewPool(
-			snapshotPriceOpts.pair.String(),
+			snapshotPriceOpts.pair,
 			sdk.OneDec(),
 			snapshot.QuoteAssetReserve,
 			snapshot.BaseAssetReserve,
@@ -177,7 +177,7 @@ func getPriceWithSnapshot(
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
 		pool := types.NewPool(
-			snapshotPriceOpts.pair.String(),
+			snapshotPriceOpts.pair,
 			sdk.OneDec(),
 			snapshot.QuoteAssetReserve,
 			snapshot.BaseAssetReserve,
