@@ -9,7 +9,7 @@ import (
 )
 
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress) error {
+func (k Keeper) ClearPosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) error {
 	return k.Positions().Update(ctx, &types.Position{
 		TraderAddress:                       traderAddr,
 		Pair:                                pair.String(),
@@ -22,13 +22,13 @@ func (k Keeper) ClearPosition(ctx sdk.Context, pair common.TokenPair, traderAddr
 }
 
 func (k Keeper) GetPosition(
-	ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress,
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
 ) (*types.Position, error) {
 	return k.Positions().Get(ctx, pair, traderAddr)
 }
 
 func (k Keeper) SetPosition(
-	ctx sdk.Context, pair common.TokenPair, traderAddr sdk.AccAddress,
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
 	position *types.Position) {
 	k.Positions().Set(ctx, pair, traderAddr, position)
 }
@@ -38,7 +38,7 @@ func (k Keeper) SettlePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
 ) (transferredCoins sdk.Coins, err error) {
-	tokenPair, err := common.NewTokenPairFromStr(currentPosition.Pair)
+	tokenPair, err := common.NewAssetPairFromStr(currentPosition.Pair)
 	if err != nil {
 		return sdk.Coins{}, err
 	}

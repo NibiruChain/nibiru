@@ -16,7 +16,7 @@ import (
 // TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	side types.Side,
 	traderAddr sdk.AccAddress,
 	quoteAssetAmount sdk.Int,
@@ -189,7 +189,7 @@ func (k Keeper) increasePosition(
 
 	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
-		common.TokenPair(currentPosition.Pair),
+		currentPosition.GetAssetPair(),
 		side,
 		increasedNotional,
 		baseAssetAmountLimit,
@@ -248,7 +248,7 @@ func (k Keeper) increasePosition(
 // getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
 // specific pair.
 func (k Keeper) getLatestCumulativePremiumFraction(
-	ctx sdk.Context, pair common.TokenPair,
+	ctx sdk.Context, pair common.AssetPair,
 ) (sdk.Dec, error) {
 	pairMetadata, err := k.PairMetadata().Get(ctx, pair)
 	if err != nil {
@@ -301,7 +301,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	case types.PnLCalcOption_TWAP:
 		positionNotional, err = k.VpoolKeeper.GetBaseAssetTWAP(
 			ctx,
-			common.TokenPair(currentPosition.Pair),
+			currentPosition.GetAssetPair(),
 			baseAssetDirection,
 			positionSizeAbs,
 			/*lookbackInterval=*/ 15*time.Minute,
@@ -313,7 +313,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	case types.PnLCalcOption_SPOT_PRICE:
 		positionNotional, err = k.VpoolKeeper.GetBaseAssetPrice(
 			ctx,
-			common.TokenPair(currentPosition.Pair),
+			currentPosition.GetAssetPair(),
 			baseAssetDirection,
 			positionSizeAbs,
 		)
@@ -323,7 +323,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 	case types.PnLCalcOption_ORACLE:
 		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(
-			ctx, common.TokenPair(currentPosition.Pair))
+			ctx, currentPosition.GetAssetPair())
 		if err != nil {
 			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
@@ -453,7 +453,7 @@ func (k Keeper) decreasePosition(
 
 	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
-		common.TokenPair(currentPosition.Pair),
+		currentPosition.GetAssetPair(),
 		sideToTake,
 		decreasedNotional,
 		baseAssetAmountLimit,
@@ -585,7 +585,7 @@ func (k Keeper) closeAndOpenReversePosition(
 
 		newPosition := types.ZeroPosition(
 			ctx,
-			common.TokenPair(existingPosition.Pair),
+			existingPosition.GetAssetPair(),
 			existingPosition.TraderAddress,
 		)
 		increasePositionResp, err := k.increasePosition(
@@ -684,7 +684,7 @@ func (k Keeper) closePositionEntirely(
 
 	exchangedQuoteAssetAmount, err := k.VpoolKeeper.SwapBaseForQuote(
 		ctx,
-		common.TokenPair(currentPosition.Pair),
+		currentPosition.GetAssetPair(),
 		baseAssetDirection,
 		currentPosition.Size_.Abs(),
 		quoteAssetAmountLimit,
@@ -706,7 +706,7 @@ func (k Keeper) closePositionEntirely(
 
 	if err = k.ClearPosition(
 		ctx,
-		common.TokenPair(currentPosition.Pair),
+		currentPosition.GetAssetPair(),
 		currentPosition.TraderAddress,
 	); err != nil {
 		return nil, err
@@ -725,7 +725,7 @@ func (k Keeper) closePositionEntirely(
 
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
-	ctx sdk.Context, pair common.TokenPair, trader sdk.AccAddress,
+	ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress,
 	positionNotional sdk.Dec,
 ) (sdk.Int, error) {
 	toll, spread, err := k.CalcPerpTxFee(ctx, positionNotional)
@@ -845,7 +845,7 @@ ret:
 */
 func (k Keeper) swapQuoteForBase(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	side types.Side,
 	quoteAssetAmount sdk.Dec,
 	baseAssetLimit sdk.Dec,

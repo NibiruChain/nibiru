@@ -5,11 +5,16 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
+	pair, err := common.NewAssetPairFromStr("BTC:NUSD")
+	require.NoError(t, err)
+
 	pool := NewPool(
-		"BTC:NUSD",
+		pair,
 		sdk.MustNewDecFromStr("0.9"), // 0.9
 		sdk.NewDec(10_000_000),       // 10
 		sdk.NewDec(10_000_000),       // 10
@@ -28,6 +33,9 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
+	pair, err := common.NewAssetPairFromStr("BTC:NUSD")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name               string
 		baseAssetReserve   sdk.Dec
@@ -75,7 +83,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pool := NewPool(
-				/*pair=*/ "BTC:NUSD",
+				/*pair=*/ pair,
 				/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
 				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
 				/*baseAssetReserve=*/ tc.baseAssetReserve,
@@ -98,6 +106,9 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 }
 
 func TestGetQuoteAmountByBaseAmount(t *testing.T) {
+	pair, err := common.NewAssetPairFromStr("BTC:NUSD")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name                string
 		baseAssetReserve    sdk.Dec
@@ -145,7 +156,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pool := NewPool(
-				/*pair=*/ "BTC:NUSD",
+				/*pair=*/ pair,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
 				/*baseAssetReserve=*/ tc.baseAssetReserve,
@@ -168,8 +179,11 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 }
 
 func TestIncreaseDecreaseReserves(t *testing.T) {
+	pair, err := common.NewAssetPairFromStr("ATOM:NUSD")
+	require.NoError(t, err)
+
 	pool := NewPool(
-		"ATOM:NUSD",
+		pair,
 		/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
 		/*quoteAssetReserve=*/ sdk.NewDec(1_000_000),
 		/*baseAssetReserve*/ sdk.NewDec(1_000_000),

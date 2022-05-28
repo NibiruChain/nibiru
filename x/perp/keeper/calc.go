@@ -37,7 +37,7 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	marginDelta sdk.Dec,
 ) (remaining RemainingMarginWithFundingPayment, err error) {
 	remaining.LatestCumulativePremiumFraction, err = k.
-		getLatestCumulativePremiumFraction(ctx, common.TokenPair(currentPosition.Pair))
+		getLatestCumulativePremiumFraction(ctx, currentPosition.GetAssetPair())
 	if err != nil {
 		return remaining, err
 	}
@@ -85,9 +85,9 @@ position without making it go underwater.
 func (k Keeper) calcFreeCollateral(
 	ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
 ) (accountExcessEquity sdk.Int, err error) {
-	pair, err := common.NewTokenPairFromStr(pos.Pair)
+	pair, err := common.NewAssetPairFromStr(pos.Pair)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdk.Int{}, common.ErrInvalidTokenPair
 	}
 	err = k.requireVpool(ctx, pair)
 	if err != nil {

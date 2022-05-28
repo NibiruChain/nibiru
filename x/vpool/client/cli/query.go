@@ -49,7 +49,7 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			tokenPair, err := common.NewTokenPairFromStr(args[0])
+			tokenPair, err := common.NewAssetPairFromStr(args[0])
 			if err != nil {
 				return err
 			}
