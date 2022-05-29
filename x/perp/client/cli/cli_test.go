@@ -163,10 +163,18 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		"1",
 	}
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	s.T().Logf("open reverse position response: %s", res.String())
+	if strings.Contains(res.String(), "fail") {
+		s.T().Logf("open reverse position response: %s", res.String())
+	}
 	s.Require().NoError(err)
 	s.Require().Equal(false, strings.Contains(res.String(), "fail")) // should not include failure in logs
 
+	// Check vpool after opening reverse position
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
+	// s.Require().NoError(err)
+	// s.Require().Equal(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
+	// s.Require().Equal(sdk.MustNewDecFromStr("60001000000"), reserveAssets.QuoteAssetReserve)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
