@@ -96,7 +96,6 @@ func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error 
 	return nil
 }
 
-// STEVENDEBUG
 func (p PositionsState) Get(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
 	kv := p.getKV(ctx)
 

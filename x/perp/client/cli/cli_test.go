@@ -159,7 +159,7 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		"sell",
 		fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi"),
 		"1",   // Leverage
-		"100", // 2 BTC
+		"100", // BTC
 		"1",
 	}
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))

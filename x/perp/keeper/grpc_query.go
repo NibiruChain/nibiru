@@ -35,7 +35,6 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
-	// STEVENDEBUG
 	position, err := q.Keeper.Positions().Get(ctx, pair, req.Trader)
 	if err != nil {
 		return nil, err
