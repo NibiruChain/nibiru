@@ -166,7 +166,7 @@ func (k Keeper) ClosePositions(goCtx context.Context, msg *types.MsgClosePositio
 	}
 
 	// validate pair
-	pair, err := common.NewTokenPairFromStr(msg.TokenPair)
+	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
 	if err != nil {
 		return res, err
 	}
@@ -177,11 +177,11 @@ func (k Keeper) ClosePositions(goCtx context.Context, msg *types.MsgClosePositio
 
 	// ------------- ClosePositions -------------
 
-	existingPosition, err := k.GetPosition(ctx, pair, trader.String())
+	existingPosition, err := k.GetPosition(ctx, pair, trader)
 	if err != nil {
 		return res, err
 	}
-	closePositionResp, err := k.closePositionEntirely(
+	_, err = k.closePositionEntirely(
 		ctx,
 		*existingPosition,
 		sdk.ZeroDec(),

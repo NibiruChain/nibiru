@@ -23,6 +23,11 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{k: keeper}
 }
 
+func (k msgServer) ClosePositions(ctx context.Context, positions *types.MsgClosePositions) (*types.MsgClosePositionsResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (k msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin,
 ) (*types.MsgRemoveMarginResponse, error) {
 	return k.k.RemoveMargin(ctx, margin)
