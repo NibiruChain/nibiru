@@ -5,6 +5,7 @@ package nibiru.perp.v1;
 import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
+import "perp/v1/state.proto";
 
 option go_package="github.com/NibiruChain/nibiru/x/perp/types";
 
@@ -24,14 +25,28 @@ service Msg {
   rpc ClosePositions(MsgClosePositions) returns (MsgClosePositionsResponse) {
     option (google.api.http).post = "/nibiru/perp/add_margin";
   }
+
+  /* Liquidate is a transaction that allows the caller to fully or partially
+  liquidate an existing position. */
+  rpc Liquidate(MsgLiquidate) returns (MsgLiquidateResponse) {
+    option (google.api.http).post = "/nibiru/perp/liquidate";
+  }
+
+  rpc OpenPosition(MsgOpenPosition) returns (MsgOpenPositionResponse) {
+    option (google.api.http).post = "/nibiru/perp/open_position";
+  }
+
 }
 
 // -------------------------- RemoveMargin --------------------------
 
 /* MsgRemoveMargin: Msg to remove margin. */
 message MsgRemoveMargin {
-  string sender = 1;
+  bytes sender = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
   string token_pair = 2;
+
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
 }
 
@@ -47,7 +62,9 @@ message MsgRemoveMarginResponse {
 
 /* MsgAddMargin: Msg to remove margin. */
 message MsgAddMargin {
-  string sender = 1;
+  bytes sender = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
   string token_pair = 2;
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
 }
@@ -57,7 +74,52 @@ message MsgAddMarginResponse {
 }
 
 // -------------------------- Liquidate --------------------------
-  
+
+message MsgLiquidate {
+    // Sender is the liquidator address
+    bytes sender = 1 [
+      (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
+    // TokenPair is the identifier for the position's virtual pool
+    string token_pair = 2;
+    // Trader is the address of the owner of the position
+    bytes trader = 3 [
+      (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  }
+
+message MsgLiquidateResponse {
+  cosmos.base.v1beta1.Coin fee_to_liquidator = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin fee_to_perp_ecosystem_fund = 2 [(gogoproto.nullable) = false];
+}
+
+// -------------------------- OpenPosition --------------------------
+
+message MsgOpenPosition {
+  bytes sender = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
+  string token_pair = 2;
+  nibiru.perp.v1.Side side = 3;
+  string quote_asset_amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false];
+  string leverage = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+  string base_asset_amount_limit = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false];
+}
+
+message MsgOpenPositionResponse {
+
+}
+
+// -------------------------- ClosePosition --------------------------
+// TODO
+
+// -------------------------- Liquidate --------------------------
+
 // TODO
 
 // -------------------------- OpenPosition --------------------------

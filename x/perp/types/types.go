@@ -2,7 +2,7 @@ package types
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -21,32 +21,48 @@ const (
 var (
 	ErrMarginHighEnough = sdkerrors.Register(ModuleName, 1,
 		"Margin is higher than required maintenant margin ratio")
-	ErrPositionNotFound = errors.New("no position found")
-	ErrPairNotFound     = errors.New("pair doesn't have live vpool")
-	ErrPositionZero     = errors.New("position is zero")
+	ErrPositionNotFound     = errors.New("no position found")
+	ErrPairNotFound         = errors.New("pair doesn't have live vpool")
+	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
+	ErrPositionZero         = errors.New("position is zero")
 )
 
-func ZeroPosition(ctx sdk.Context, vpair common.TokenPair, trader string) *Position {
+func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
-		Address:                             trader,
-		Pair:                                vpair.String(),
+		TraderAddress:                       traderAddr,
+		Pair:                                tokenPair.String(),
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		LiquidityHistoryIndex:               0,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 }
 
 func (l *LiquidateResp) Validate() error {
-	for _, field := range []sdk.Dec{
-		l.BadDebt, l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
-		if field.IsNil() {
-			return fmt.Errorf(
-				`invalid liquidationOutput: %v,
+	nilFieldError := fmt.Errorf(
+		`invalid liquidationOutput: %v,
 				must not have nil fields`, l.String())
+
+	// nil sdk.Int check
+	for _, field := range []sdk.Int{
+		l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
+		if field.IsNil() {
+			return nilFieldError
 		}
 	}
+
+	// nil sdk.Dec check
+	for _, field := range []sdk.Dec{l.BadDebt} {
+		if field.IsNil() {
+			return nilFieldError
+		}
+	}
+
+	_, err := sdk.AccAddressFromBech32(l.Liquidator.String())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

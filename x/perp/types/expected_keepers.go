@@ -1,6 +1,6 @@
 package types
 
-//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PriceKeeper,VpoolKeeper
+//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PricefeedKeeper,VpoolKeeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,7 +46,7 @@ type BankKeeper interface {
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
-type PriceKeeper interface {
+type PricefeedKeeper interface {
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
@@ -78,7 +78,7 @@ type VpoolKeeper interface {
 	*/
 	SwapBaseForQuote(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 		dir vpooltypes.Direction,
 		abs sdk.Dec,
 		limit sdk.Dec,
@@ -101,7 +101,7 @@ type VpoolKeeper interface {
 	*/
 	SwapQuoteForBase(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 		dir vpooltypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		baseAmountLimit sdk.Dec,
@@ -124,7 +124,7 @@ type VpoolKeeper interface {
 	*/
 	GetBaseAssetTWAP(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 		direction vpooltypes.Direction,
 		baseAssetAmount sdk.Dec,
 		lookbackInterval time.Duration,
@@ -147,7 +147,7 @@ type VpoolKeeper interface {
 	*/
 	GetQuoteAssetTWAP(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 		direction vpooltypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		lookbackInterval time.Duration,
@@ -168,7 +168,7 @@ type VpoolKeeper interface {
 	*/
 	GetBaseAssetPrice(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 		direction vpooltypes.Direction,
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)
@@ -188,7 +188,7 @@ type VpoolKeeper interface {
 	*/
 	GetQuoteAssetPrice(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 		dir vpooltypes.Direction,
 		quoteAmount sdk.Dec,
 	) (baseAssetAmount sdk.Dec, err error)
@@ -211,7 +211,7 @@ type VpoolKeeper interface {
 	*/
 	GetSpotPrice(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 	) (price sdk.Dec, err error)
 
 	/* Retrieves the base asset's price from PricefeedKeeper (oracle).
@@ -227,13 +227,13 @@ type VpoolKeeper interface {
 	*/
 	GetUnderlyingPrice(
 		ctx sdk.Context,
-		pair common.TokenPair,
+		pair common.AssetPair,
 	) (price sdk.Dec, err error)
 
-	CalcPerpTxFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int,
+	CalcPerpTxFee(ctx sdk.Context, pair common.AssetPair, quoteAmt sdk.Int,
 	) (toll sdk.Int, spread sdk.Int, err error)
-	IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) bool
+	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool
 	// ExistsPool returns true if pool exists, false if not.
-	ExistsPool(ctx sdk.Context, pair common.TokenPair) bool
-	GetSettlementPrice(ctx sdk.Context, pair common.TokenPair) (sdk.Dec, error)
+	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
+	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 }

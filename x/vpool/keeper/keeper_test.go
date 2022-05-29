@@ -15,7 +15,7 @@ import (
 func TestSwapQuoteForBase(t *testing.T) {
 	tests := []struct {
 		name                 string
-		pair                 common.TokenPair
+		pair                 common.AssetPair
 		direction            types.Direction
 		quoteAmount          sdk.Dec
 		baseLimit            sdk.Dec
@@ -26,7 +26,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 	}{
 		{
 			name:                 "quote amount == 0",
-			pair:                 NUSDPair,
+			pair:                 BTCNusdPair,
 			direction:            types.Direction_ADD_TO_POOL,
 			quoteAmount:          sdk.NewDec(0),
 			baseLimit:            sdk.NewDec(10),
@@ -36,7 +36,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                 "normal swap add",
-			pair:                 NUSDPair,
+			pair:                 BTCNusdPair,
 			direction:            types.Direction_ADD_TO_POOL,
 			quoteAmount:          sdk.NewDec(100_000),
 			baseLimit:            sdk.NewDec(49504),
@@ -46,7 +46,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                 "normal swap remove",
-			pair:                 NUSDPair,
+			pair:                 BTCNusdPair,
 			direction:            types.Direction_REMOVE_FROM_POOL,
 			quoteAmount:          sdk.NewDec(100_000),
 			baseLimit:            sdk.NewDec(50506),
@@ -56,7 +56,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:        "pair not supported",
-			pair:        "xxx:yyy",
+			pair:        common.AssetPair{Token0: "abc", Token1: "xyz"},
 			direction:   types.Direction_ADD_TO_POOL,
 			quoteAmount: sdk.NewDec(10),
 			baseLimit:   sdk.NewDec(10),
@@ -64,7 +64,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:        "base amount less than base limit in Long",
-			pair:        NUSDPair,
+			pair:        BTCNusdPair,
 			direction:   types.Direction_ADD_TO_POOL,
 			quoteAmount: sdk.NewDec(500_000),
 			baseLimit:   sdk.NewDec(454_500),
@@ -72,7 +72,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:        "base amount more than base limit in Short",
-			pair:        NUSDPair,
+			pair:        BTCNusdPair,
 			direction:   types.Direction_REMOVE_FROM_POOL,
 			quoteAmount: sdk.NewDec(1_000_000),
 			baseLimit:   sdk.NewDec(454_500),
@@ -80,7 +80,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:        "quote input bigger than reserve ratio",
-			pair:        NUSDPair,
+			pair:        BTCNusdPair,
 			direction:   types.Direction_REMOVE_FROM_POOL,
 			quoteAmount: sdk.NewDec(10_000_000),
 			baseLimit:   sdk.NewDec(10),
@@ -88,7 +88,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:        "over fluctuation limit fails",
-			pair:        NUSDPair,
+			pair:        BTCNusdPair,
 			direction:   types.Direction_ADD_TO_POOL,
 			quoteAmount: sdk.NewDec(1_000_000),
 			baseLimit:   sdk.NewDec(454_544),
@@ -100,12 +100,12 @@ func TestSwapQuoteForBase(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)),
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 			)
 
 			vpoolKeeper.CreatePool(
 				ctx,
-				NUSDPair,
+				BTCNusdPair,
 				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 				sdk.NewDec(10_000_000),       // 10 tokens
 				sdk.NewDec(5_000_000),        // 5 tokens
@@ -127,12 +127,12 @@ func TestSwapQuoteForBase(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedBaseAmount, res)
 
-				pool, err := vpoolKeeper.getPool(ctx, NUSDPair)
+				pool, err := vpoolKeeper.getPool(ctx, BTCNusdPair)
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 				require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
 
-				snapshot, _, err := vpoolKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
+				snapshot, _, err := vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)
 				require.NoError(t, err)
 				require.EqualValues(t, tc.expectedQuoteReserve, snapshot.QuoteAssetReserve)
 				require.EqualValues(t, tc.expectedBaseReserve, snapshot.BaseAssetReserve)
@@ -193,12 +193,12 @@ func TestSwapBaseForQuote(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPriceKeeper(gomock.NewController(t)),
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 			)
 
 			vpoolKeeper.CreatePool(
 				ctx,
-				NUSDPair,
+				BTCNusdPair,
 				sdk.OneDec(),
 				tc.initialQuoteReserve,
 				tc.initialBaseReserve,
@@ -208,7 +208,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 
 			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
 				ctx,
-				NUSDPair,
+				BTCNusdPair,
 				tc.direction,
 				tc.baseAssetAmount,
 				tc.quoteAssetLimit,
@@ -217,7 +217,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 			if tc.expectedErr != nil {
 				require.Error(t, err)
 			} else {
-				pool, err := vpoolKeeper.getPool(ctx, NUSDPair)
+				pool, err := vpoolKeeper.getPool(ctx, BTCNusdPair)
 				require.NoError(t, err)
 
 				require.EqualValuesf(t, tc.expectedQuoteAssetAmount, quoteAssetAmount,
@@ -226,11 +226,45 @@ func TestSwapBaseForQuote(t *testing.T) {
 				require.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 				require.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
 
-				snapshot, _, err := vpoolKeeper.getLatestReserveSnapshot(ctx, NUSDPair)
+				snapshot, _, err := vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)
 				require.NoError(t, err)
 				require.EqualValues(t, tc.expectedQuoteReserve, snapshot.QuoteAssetReserve)
 				require.EqualValues(t, tc.expectedBaseReserve, snapshot.BaseAssetReserve)
 			}
 		})
 	}
+}
+
+func TestGetVpools(t *testing.T) {
+	t.Run("Get all pools", func(t *testing.T) {
+		vpoolKeeper, ctx := VpoolKeeper(t,
+			mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+		)
+
+		vpoolKeeper.CreatePool(
+			ctx,
+			BTCNusdPair,
+			sdk.OneDec(),
+			sdk.NewDec(10_000_000),
+			sdk.NewDec(5_000_000),
+			sdk.OneDec(),
+			sdk.OneDec(),
+		)
+		vpoolKeeper.CreatePool(
+			ctx,
+			ETHNusdPair,
+			sdk.OneDec(),
+			sdk.NewDec(5_000_000),
+			sdk.NewDec(10_000_000),
+			sdk.OneDec(),
+			sdk.OneDec(),
+		)
+
+		pools := vpoolKeeper.GetAllPools(ctx)
+
+		require.EqualValues(t, 2, len(pools))
+
+		require.Contains(t, pools[0].String(), `pair:"BTC:NUSD" base_asset_reserve:"5000000000000000000000000" quote_asset_reserve:"10000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
+		require.Contains(t, pools[1].String(), `pair:"ETH:NUSD" base_asset_reserve:"10000000000000000000000000" quote_asset_reserve:"5000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
+	})
 }

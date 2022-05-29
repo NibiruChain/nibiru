@@ -38,7 +38,7 @@ type Keeper struct {
 //  toll (sdk.Int): Amount of tokens transferred to the the fee pool.
 //  spread (sdk.Int): Amount of tokens transferred to the PerpEF.
 //
-func (k Keeper) CalcPerpTxFee(ctx sdk.Context, pair common.TokenPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error) {
+func (k Keeper) CalcPerpTxFee(ctx sdk.Context, pair common.AssetPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -61,7 +61,7 @@ ret:
 */
 func (k Keeper) SwapBaseForQuote(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 	quoteAmountLimit sdk.Dec,
@@ -148,7 +148,7 @@ ret:
 */
 func (k Keeper) SwapQuoteForBase(
 	ctx sdk.Context,
-	pair common.TokenPair,
+	pair common.AssetPair,
 	dir types.Direction,
 	quoteAssetAmount sdk.Dec,
 	baseAmountLimit sdk.Dec,
@@ -219,13 +219,18 @@ func (k Keeper) SwapQuoteForBase(
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
 	if pool.FluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, common.TokenPair(pool.Pair))
+		pair, err := common.NewAssetPairFromStr(pool.Pair)
+		if err != nil {
+			return err
+		}
+
+		latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pair)
 		if err != nil {
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}
 
 		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 0 {
-			latestSnapshot, err = k.getSnapshot(ctx, common.TokenPair(pool.Pair), counter-1)
+			latestSnapshot, err = k.getSnapshot(ctx, pair, counter-1)
 			if err != nil {
 				return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
 			}
@@ -253,7 +258,7 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 	return false
 }
 
-func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.TokenPair) (isIt bool) {
+func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (isIt bool) {
 	spotPrice, err := k.GetSpotPrice(ctx, pair)
 	if err != nil {
 		panic(err)
