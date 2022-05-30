@@ -164,7 +164,6 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 }
 
 func (s *IntegrationTestSuite) TestCloseEmptyPosition() {
-
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

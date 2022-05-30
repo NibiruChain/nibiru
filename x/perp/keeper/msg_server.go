@@ -66,3 +66,19 @@ func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 
 	return response, nil
 }
+
+func (k msgServer) ClosePosition(goCtx context.Context, req *types.MsgClosePosition,
+) (*types.MsgClosePositionResponse, error) {
+	pair, err := common.NewAssetPairFromStr(req.TokenPair)
+	if err != nil {
+		panic(err) // must not happen
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = k.k.ClosePosition(ctx, pair, req.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgClosePositionResponse{}, nil
+}

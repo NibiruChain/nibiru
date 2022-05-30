@@ -103,12 +103,27 @@ func OpenPositionCmd() *cobra.Command {
 // TODO: how is a position idenitfiied? by pair? by id?
 func ClosePositionCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "close-position [buy/sell] [pair] [leverage] [amount/sdk.Dec] [base asset amount limit/sdk.Dec]",
+		Use:   "close-position [pair]",
 		Short: "Closes a position",
-		Args:  cobra.ExactArgs(5),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO:
-			return nil
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			msg := &types.MsgClosePosition{
+				Sender:    clientCtx.GetFromAddress(),
+				TokenPair: args[0],
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
 	}
 

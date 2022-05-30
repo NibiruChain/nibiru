@@ -150,6 +150,36 @@ func (k Keeper) OpenPosition(
 	})
 }
 
+func (k Keeper) ClosePosition(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	traderAddr sdk.AccAddress,
+) (err error) {
+	// checks
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	position, err := k.GetPosition(ctx, pair, traderAddr)
+	if err != nil {
+		return err
+	}
+
+	closePositionResp, err := k.closePositionEntirely(
+		ctx,
+		*position,
+		sdk.ZeroDec(), // TODO: double check this
+	)
+
+	fmt.Printf("STEVENDEBUG ClosePosition closePositionResp: %+v\n", closePositionResp)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /*
 increases a position by increasedNotional amount in margin units.
 Calculates the amount of margin required given the leverage parameter.
@@ -638,7 +668,7 @@ ret:
   - positionResp: response object containing information about the position change
   - err: error
 */
-// STEVENDEBUG
+// STEVENDEBUG: whats the difference between this and func (k Keeper) SettlePosition(
 func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	currentPosition types.Position,
