@@ -30,6 +30,8 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/open_position";
   }
 
+  rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse);
+
 }
 
 // -------------------------- RemoveMargin --------------------------
@@ -110,4 +112,12 @@ message MsgOpenPositionResponse {
 }
 
 // -------------------------- ClosePosition --------------------------
-// TODO
+message MsgClosePosition {
+  string sender = 1;
+  string token_pair = 2;
+  string quote_asset_amount_limit = 3;
+}
+
+message MsgClosePositionResponse {
+
+}

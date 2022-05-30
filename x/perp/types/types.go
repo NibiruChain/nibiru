@@ -25,6 +25,7 @@ var (
 	ErrPairNotFound         = errors.New("pair doesn't have live vpool")
 	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
 	ErrPositionZero         = errors.New("position is zero")
+	ErrExchangeStopped      = errors.New("exchange is stopped")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {

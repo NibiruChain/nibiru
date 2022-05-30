@@ -12,6 +12,15 @@ var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
 var _ sdk.Msg = &MsgLiquidate{}
 var _ sdk.Msg = &MsgOpenPosition{}
+var _ sdk.Msg = &MsgClosePosition{}
+
+func (m MsgClosePosition) ValidateBasic() error {
+	panic("impl")
+}
+
+func (m MsgClosePosition) GetSigners() []sdk.AccAddress {
+	panic("impl")
+}
 
 // MsgRemoveMargin
 

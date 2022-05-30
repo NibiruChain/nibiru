@@ -57,6 +57,23 @@ func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	return &types.MsgOpenPositionResponse{}, nil
 }
 
+func (k msgServer) ClosePosition(ctx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	addr, err := sdk.AccAddressFromBech32(position.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	tokenPair, err := common.NewAssetPairFromStr(position.TokenPair)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = k.k.ClosePosition(sdkCtx, tokenPair, addr)
+
+	return &types.MsgClosePositionResponse{}, err
+}
+
 func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 ) (*types.MsgLiquidateResponse, error) {
 	response, err := k.k.Liquidate(goCtx, msg)
