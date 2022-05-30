@@ -100,6 +100,23 @@ func OpenPositionCmd() *cobra.Command {
 	return cmd
 }
 
+// TODO: how is a position idenitfiied? by pair? by id?
+func ClosePositionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "close-position [buy/sell] [pair] [leverage] [amount/sdk.Dec] [base asset amount limit/sdk.Dec]",
+		Short: "Closes a position",
+		Args:  cobra.ExactArgs(5),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// TODO:
+			return nil
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
 /*
 RemoveMarginCmd is a CLI command that removes margin from a position,
 realizing any outstanding funding payments and decreasing the margin ratio.
