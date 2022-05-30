@@ -163,11 +163,8 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		"1",
 	}
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	if strings.Contains(res.String(), "fail") {
-		s.T().Logf("open reverse position response may contain a failure: %s", res.String())
-	}
 	s.Require().NoError(err)
-	s.Require().Equal(false, strings.Contains(res.String(), "fail")) // should not include failure in logs
+	s.Require().NotContains(res.String(), "fail")
 
 	// Check vpool after opening reverse position
 	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
