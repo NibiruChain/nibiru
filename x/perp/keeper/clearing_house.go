@@ -638,6 +638,7 @@ ret:
   - positionResp: response object containing information about the position change
   - err: error
 */
+// STEVENDEBUG
 func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	currentPosition types.Position,

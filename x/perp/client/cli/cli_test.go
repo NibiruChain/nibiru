@@ -54,6 +54,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
+		{
+			Pair:                  "eth:unibi",
+			BaseAssetReserve:      sdk.MustNewDecFromStr("10000000"),
+			QuoteAssetReserve:     sdk.MustNewDecFromStr("60000000000"),
+			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+		},
 	}
 	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
 
@@ -61,6 +69,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
 		{
 			Pair: "ubtc:unibi",
+			CumulativePremiumFractions: []sdk.Dec{
+				sdk.ZeroDec(),
+			},
+		},
+		{
+			Pair: "eth:unibi",
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -147,6 +161,10 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	s.Require().Equal(pair.String(), queryResp.Position.Pair)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.OpenNotional)
+}
+
+func (s *IntegrationTestSuite) TestCloseEmptyPosition() {
+
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
