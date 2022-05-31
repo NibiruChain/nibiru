@@ -222,10 +222,18 @@ func (s *IntegrationTestSuite) TestZCloseEmptyPosition() {
 	s.Require().NoError(err)
 
 	// verify trader has no position (empty)
-	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
-	s.T().Logf("STEVENDEBUG query response: %+v", queryResp)
-	s.T().Logf("STEVENDEBUG query err: %+v", err)
+	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	s.Require().True(strings.Contains(err.Error(), "no position found"))
 
+	// close position should produce error
+	args := []string{
+		"--from",
+		user.String(),
+		fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi"),
+	}
+	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), args)
+	s.T().Logf("STEVENDEBUG res: %+v", res)
+	s.T().Logf("STEVENDEBUG err: %+v", err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
