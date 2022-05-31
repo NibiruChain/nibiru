@@ -201,7 +201,34 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	s.Require().Equal(sdk.MustNewDecFromStr("999900"), queryResp.Position.OpenNotional)
 }
 
-func (s *IntegrationTestSuite) TestCloseEmptyPosition() {
+func (s *IntegrationTestSuite) TestZCloseEmptyPosition() {
+	val := s.network.Validators[0]
+	pair := common.AssetPair{
+		Token0: "ubtc",
+		Token1: "unibi",
+	}
+
+	info2, _, err := val.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user := sdk.AccAddress(info2.GetPubKey().Address())
+
+	_, err = utils.FillWalletFromValidator(user,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	// verify trader has no position (empty)
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	s.T().Logf("STEVENDEBUG query response: %+v", queryResp)
+	s.T().Logf("STEVENDEBUG query err: %+v", err)
+
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
