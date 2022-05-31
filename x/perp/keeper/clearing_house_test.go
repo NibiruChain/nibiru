@@ -441,7 +441,6 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
-			t.Log("Mocking price of vpool")
 			tc.setMocks(ctx, mocks)
 
 			positionalNotional, unrealizedPnl, err := perpKeeper.
@@ -460,15 +459,14 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 func TestSwapQuoteAssetForBase(t *testing.T) {
 	tests := []struct {
-		name string
-		test func()
+		name               string
+		setMocks           func(ctx sdk.Context, mocks mockedDependencies)
+		side               types.Side
+		expectedBaseAmount sdk.Dec
 	}{
 		{
 			name: "long position - buy",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("mock vpool")
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
@@ -477,26 +475,13 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 					).Return(sdk.NewDec(5), nil)
-
-				baseAmount, err := perpKeeper.swapQuoteForBase(
-					ctx,
-					BtcNusdPair,
-					types.Side_BUY,
-					sdk.NewDec(10),
-					sdk.NewDec(1),
-					false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), baseAmount)
 			},
+			side:               types.Side_BUY,
+			expectedBaseAmount: sdk.NewDec(5),
 		},
 		{
 			name: "short position - sell",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("mock vpool")
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
@@ -505,26 +490,30 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 					).Return(sdk.NewDec(5), nil)
-
-				baseAmount, err := perpKeeper.swapQuoteForBase(
-					ctx,
-					BtcNusdPair,
-					types.Side_SELL,
-					sdk.NewDec(10),
-					sdk.NewDec(1),
-					false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(-5), baseAmount)
 			},
+			side:               types.Side_SELL,
+			expectedBaseAmount: sdk.NewDec(-5),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			perpKeeper, mocks, ctx := getKeeper(t)
+
+			tc.setMocks(ctx, mocks)
+
+			baseAmount, err := perpKeeper.swapQuoteForBase(
+				ctx,
+				BtcNusdPair,
+				tc.side,
+				sdk.NewDec(10),
+				sdk.NewDec(1),
+				false,
+			)
+
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedBaseAmount, baseAmount)
 		})
 	}
 }
