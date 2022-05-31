@@ -1,10 +1,12 @@
 package common_test
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestPairNameFromDenoms(t *testing.T) {
@@ -52,12 +54,12 @@ func TestAssetPair(t *testing.T) {
 	}{
 		{
 			name:   "proper and improper order pairs are inverses-1",
-			pair:   common.AssetPair{"atom", "osmo"},
+			pair:   common.AssetPair{Token0: "atom", Token1: "osmo"},
 			proper: true,
 		},
 		{
 			name:   "proper and improper order pairs are inverses-2",
-			pair:   common.AssetPair{"osmo", "atom"},
+			pair:   common.AssetPair{Token0: "osmo", Token1: "atom"},
 			proper: false,
 		},
 	}
@@ -76,4 +78,54 @@ func TestAssetPair(t *testing.T) {
 			require.True(t, true)
 		})
 	}
+}
+
+func TestAsset_Constructor(t *testing.T) {
+	tests := []struct {
+		name      string
+		tokenPair string
+		err       error
+	}{
+		{
+			"only one token",
+			common.GovDenom,
+			common.ErrInvalidTokenPair,
+		},
+		{
+			"more than 2 tokens",
+			fmt.Sprintf("%s%s%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom,
+				common.PairSeparator, common.CollDenom),
+			common.ErrInvalidTokenPair,
+		},
+		{
+			"different separator",
+			fmt.Sprintf("%s%s%s", common.GovDenom, "%", common.StableDenom),
+			common.ErrInvalidTokenPair,
+		},
+		{
+			"correct pair",
+			fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom),
+			nil,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := common.NewAssetPairFromStr(tc.tokenPair)
+			if tc.err != nil {
+				require.Equal(t, tc.err, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAsset_GetQuoteBaseToken(t *testing.T) {
+	pair, err := common.NewAssetPairFromStr("uatom:unibi")
+	require.NoError(t, err)
+
+	require.Equal(t, "uatom", pair.GetBaseTokenDenom())
+	require.Equal(t, "unibi", pair.GetQuoteTokenDenom())
 }

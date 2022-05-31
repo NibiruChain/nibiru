@@ -8,11 +8,12 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/stablecoin/events"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // MintStable mints stable coins given collateral (COLL) and governance (GOV)
@@ -92,7 +93,7 @@ func (k Keeper) MintStable(
 func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceGov, err := k.PriceKeeper.GetCurrentPrice(
+	priceGov, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.GovDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -114,7 +115,7 @@ func (k Keeper) calcNeededCollateralAndFees(
 	collRatio sdk.Dec,
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceColl, err := k.PriceKeeper.GetCurrentPrice(
+	priceColl, err := k.PricefeedKeeper.GetCurrentPrice(
 		ctx, common.CollDenom, common.StableDenom)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err

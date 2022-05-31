@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"testing"
 
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +28,7 @@ func TestGetAndSetParams(t *testing.T) {
 			func() types.Params {
 				params := types.Params{
 					Stopped:                true,
-					MaintenanceMarginRatio: sdk.OneInt(),
+					MaintenanceMarginRatio: sdk.OneDec(),
 				}
 				return params
 			},

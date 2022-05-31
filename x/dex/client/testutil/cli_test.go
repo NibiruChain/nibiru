@@ -4,11 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
-	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/network"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -19,20 +14,35 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg     network.Config
-	network *network.Network
+	cfg     testutilcli.Config
+	network *testutilcli.Network
 
 	testAccount sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
+	/* 	Make test skip if -short is not used:
+	All tests: `go test ./...`
+	Unit tests only: `go test ./... -short`
+	Integration tests only: `go test ./... -run Integration`
+	https://stackoverflow.com/a/41407042/13305627 */
+	if testing.Short() {
+		s.T().Skip("skipping integration test suite")
+	}
+
 	s.T().Log("setting up integration test suite")
-	s.network = network.New(s.T(), s.cfg)
+	s.network = testutilcli.New(s.T(), s.cfg)
 
 	// create a new user address
 	s.testAccount = s.NewAccount("NewAddr")
@@ -470,7 +480,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutil.DefaultFeeString(s.cfg),
+		testutil.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 }

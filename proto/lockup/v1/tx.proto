@@ -13,7 +13,11 @@ option go_package = "github.com/NibiruChain/nibiru/x/lockup/types";
 service Msg {
   // LockTokens lock tokens
   rpc LockTokens(MsgLockTokens) returns (MsgLockTokensResponse) {
-    option (google.api.http).post = "/nibiru/lockup/lock";
+    option (google.api.http).post = "/nibiru/lockup/lock_tokens";
+  }
+
+  rpc InitiateUnlock(MsgInitiateUnlock) returns (MsgInitiateUnlockResponse) {
+    option (google.api.http).post = "/nibiru/lockup/init_unlock";
   }
 }
 
@@ -31,5 +35,14 @@ message MsgLockTokens {
   ];
 }
 message MsgLockTokensResponse {
-  uint64 lockId = 1;
+  uint64 lock_id = 1;
+}
+
+message MsgInitiateUnlock {
+  string owner = 1;
+  uint64 lock_id = 2;
+}
+
+message MsgInitiateUnlockResponse {
+  // TODO(mercilex): maybe report unlock time
 }

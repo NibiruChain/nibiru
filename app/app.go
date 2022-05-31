@@ -8,29 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NibiruChain/nibiru/x/incentivization"
-	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
-
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex"
-	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
-	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/epochs"
-	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
-	epochstype "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/lockup"
-	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
-	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/perp"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
-	"github.com/NibiruChain/nibiru/x/pricefeed"
-	pricekeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
-	pricetypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/stablecoin"
-	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -124,6 +101,32 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/dex"
+	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
+	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/epochs"
+	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/incentivization"
+	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
+	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
+	"github.com/NibiruChain/nibiru/x/lockup"
+	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
+	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/perp"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed"
+	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin"
+	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/vpool"
+	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 )
@@ -178,6 +181,7 @@ var (
 		perp.AppModuleBasic{},
 		lockup.AppModuleBasic{},
 		incentivization.AppModuleBasic{},
+		vpool.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -192,7 +196,10 @@ var (
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
-		epochstype.ModuleName:                 {},
+		perptypes.VaultModuleAccount:          {},
+		perptypes.PerpEFModuleAccount:         {},
+		perptypes.FeePoolModuleAccount:        {},
+		epochstypes.ModuleName:                {},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		common.TreasuryPoolModuleAccount:      {},
@@ -221,8 +228,9 @@ type NibiruApp struct {
 	tkeys   map[string]*sdk.TransientStoreKey
 	memKeys map[string]*sdk.MemoryStoreKey
 
+	// --------------------------------------------------------------------
 	// NibiruApp Keepers
-	// -----------------
+	// --------------------------------------------------------------------
 
 	// AccountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
 	AccountKeeper authkeeper.AccountKeeper
@@ -241,8 +249,9 @@ type NibiruApp struct {
 	AuthzKeeper    authzkeeper.Keeper
 	FeeGrantKeeper feegrantkeeper.Keeper
 
+	// --------------------------------------------------------------------
 	// IBC keepers
-	// -----------
+	// --------------------------------------------------------------------
 	/* EvidenceKeeper is responsible for managing persistence, state transitions
 	   and query handling for the evidence module. It is required to set up
 	   the IBC light client misbehavior evidence route. */
@@ -257,11 +266,12 @@ type NibiruApp struct {
 	// -----------
 	DexKeeper             dexkeeper.Keeper
 	StablecoinKeeper      stablecoinkeeper.Keeper
-	PriceKeeper           pricekeeper.Keeper
-	EpochsKeeper          epochskeeper.Keeper
-	LockupKeeper          lockupkeeper.LockupKeeper
 	PerpKeeper            perpkeeper.Keeper
+	PricefeedKeeper       pricefeedkeeper.Keeper
+	EpochsKeeper          epochskeeper.Keeper
+	LockupKeeper          lockupkeeper.Keeper
 	IncentivizationKeeper incentivizationkeeper.Keeper
+	VpoolKeeper           vpoolkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -311,18 +321,17 @@ func NewNibiruApp(
 		authzkeeper.StoreKey,
 		// ibc keys
 		ibchost.StoreKey, ibctransfertypes.StoreKey,
-		// nibiru keys
-		dextypes.StoreKey, pricetypes.StoreKey, stablecointypes.StoreKey,
-		epochstype.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
-		incentivizationtypes.StoreKey,
+		// nibiru x/ keys
+		dextypes.StoreKey, pricefeedtypes.StoreKey, stablecointypes.StoreKey,
+		epochstypes.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
+		incentivizationtypes.StoreKey, vpooltypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
 	// not include this key.
 	memKeys := sdk.NewMemoryStoreKeys(
 		capabilitytypes.MemStoreKey, "testingkey",
-		stablecointypes.MemStoreKey, pricetypes.MemStoreKey,
-		perptypes.MemStoreKey,
+		stablecointypes.MemStoreKey, pricefeedtypes.MemStoreKey,
 	)
 
 	app := &NibiruApp{
@@ -401,28 +410,34 @@ func NewNibiruApp(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
 
-	app.PriceKeeper = pricekeeper.NewKeeper(
-		appCodec, keys[pricetypes.StoreKey], memKeys[pricetypes.MemStoreKey],
-		app.GetSubspace(pricetypes.ModuleName),
+	app.PricefeedKeeper = pricefeedkeeper.NewKeeper(
+		appCodec, keys[pricefeedtypes.StoreKey], memKeys[pricefeedtypes.MemStoreKey],
+		app.GetSubspace(pricefeedtypes.ModuleName),
 	)
 
 	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
 		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
 		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.PriceKeeper, app.DexKeeper,
+		app.AccountKeeper, app.BankKeeper, app.PricefeedKeeper, app.DexKeeper,
+	)
+
+	app.VpoolKeeper = vpoolkeeper.NewKeeper(
+		appCodec,
+		keys[vpooltypes.StoreKey],
+		app.PricefeedKeeper,
 	)
 
 	app.PerpKeeper = perpkeeper.NewKeeper(
-		appCodec, keys[perptypes.StoreKey], memKeys[perptypes.MemStoreKey],
+		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.PriceKeeper,
+		app.AccountKeeper, app.BankKeeper, app.PricefeedKeeper, app.VpoolKeeper,
 	)
 
 	app.EpochsKeeper = epochskeeper.NewKeeper(
-		appCodec, keys[epochstype.StoreKey],
+		appCodec, keys[epochstypes.StoreKey],
 	)
 	app.EpochsKeeper.SetHooks(
-		epochstype.NewMultiEpochHooks(app.StablecoinKeeper.Hooks()),
+		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks()),
 	)
 
 	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
@@ -505,19 +520,22 @@ func NewNibiruApp(
 	dexModule := dex.NewAppModule(
 		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
 	pricefeedModule := pricefeed.NewAppModule(
-		appCodec, app.PriceKeeper, app.AccountKeeper, app.BankKeeper)
+		appCodec, app.PricefeedKeeper, app.AccountKeeper, app.BankKeeper)
 	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
 	stablecoinModule := stablecoin.NewAppModule(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
-		app.PriceKeeper,
+		app.PricefeedKeeper,
 	)
-	lockupModule := lockup.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper)
+	lockupModule := lockup.NewAppModule(appCodec, app.LockupKeeper, app.AccountKeeper, app.BankKeeper)
 	perpModule := perp.NewAppModule(
 		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
-		app.PriceKeeper,
+		app.PricefeedKeeper,
+	)
+	vpoolModule := vpool.NewAppModule(
+		appCodec, app.VpoolKeeper, app.PricefeedKeeper,
 	)
 
-	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper)
+	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper, app.AccountKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -550,6 +568,7 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
+		vpoolModule,
 		perpModule,
 		incentivizationModule,
 	)
@@ -568,9 +587,10 @@ func NewNibiruApp(
 		feegrant.ModuleName, paramstypes.ModuleName, vestingtypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
-		pricetypes.ModuleName,
-		epochstype.ModuleName,
+		pricefeedtypes.ModuleName,
+		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
+		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		stakingtypes.ModuleName,
@@ -591,9 +611,10 @@ func NewNibiruApp(
 		ibctransfertypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
-		epochstype.ModuleName,
-		pricetypes.ModuleName,
+		epochstypes.ModuleName,
+		pricefeedtypes.ModuleName,
 		stablecointypes.ModuleName,
+		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		incentivizationtypes.ModuleName,
@@ -613,9 +634,10 @@ func NewNibiruApp(
 		vestingtypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
-		pricetypes.ModuleName,
-		epochstype.ModuleName,
+		pricefeedtypes.ModuleName,
+		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
+		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		// ibc
@@ -887,7 +909,7 @@ func GetMaccPerms() map[string][]string {
 	return dupMaccPerms
 }
 
-// initParamsKeeper init params keeper and its subspaces
+// initParamsKeeper init params vpoolkeeper and its subspaces
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
 	tkey storetypes.StoreKey) paramskeeper.Keeper {
@@ -903,8 +925,8 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Native module params keepers
 	paramsKeeper.Subspace(dextypes.ModuleName)
-	paramsKeeper.Subspace(pricetypes.ModuleName)
-	paramsKeeper.Subspace(epochstype.ModuleName)
+	paramsKeeper.Subspace(pricefeedtypes.ModuleName)
+	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)

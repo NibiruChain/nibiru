@@ -1,10 +1,11 @@
 package types // noalias
 
 import (
-	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -33,7 +34,7 @@ type BankKeeper interface {
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 }
 
-type PriceKeeper interface {
+type PricefeedKeeper interface {
 	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentTWAP, error)
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,

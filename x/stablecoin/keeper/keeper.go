@@ -5,11 +5,12 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 type Keeper struct {
@@ -18,10 +19,10 @@ type Keeper struct {
 	memKey        sdk.StoreKey
 	ParamSubspace paramtypes.Subspace
 
-	AccountKeeper types.AccountKeeper
-	BankKeeper    types.BankKeeper
-	PriceKeeper   types.PriceKeeper
-	DexKeeper     types.DexKeeper
+	AccountKeeper   types.AccountKeeper
+	BankKeeper      types.BankKeeper
+	PricefeedKeeper types.PricefeedKeeper
+	DexKeeper       types.DexKeeper
 }
 
 // NewKeeper Creates a new x/stablecoin Keeper instance.
@@ -33,7 +34,7 @@ func NewKeeper(
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	priceKeeper types.PriceKeeper,
+	priceKeeper types.PricefeedKeeper,
 	dexKeeper types.DexKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
@@ -52,10 +53,10 @@ func NewKeeper(
 		memKey:        memKey,
 		ParamSubspace: paramSubspace,
 
-		AccountKeeper: accountKeeper,
-		BankKeeper:    bankKeeper,
-		PriceKeeper:   priceKeeper,
-		DexKeeper:     dexKeeper,
+		AccountKeeper:   accountKeeper,
+		BankKeeper:      bankKeeper,
+		PricefeedKeeper: priceKeeper,
+		DexKeeper:       dexKeeper,
 	}
 }
 

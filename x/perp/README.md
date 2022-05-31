@@ -1,5 +1,16 @@
 # Perp Design 
 
+## cli commands
+
+To see the list of query and transaction commands:
+
+```bash
+nibid tx perp --help
+nibid query perp --help
+```
+
+cli code is within `/perp/client/cli`
+
 ## Perp Data Structures
 
 #### type Position (on a virtual pool)
@@ -43,8 +54,8 @@ Pool creation and annhilation functions:
 - `ShutdownPool`
 
 Main functions:
-- `SwapInput() -> sdk.Dec`
-- `SwapOutput() -> sdk.Dec` 
+- `SwapQuoteForBase() -> sdk.Dec`
+- `SwapBaseForQuote() -> sdk.Dec` 
 - `SettleFunding() -> sdk.Dec`
 
 "Get" functions:

@@ -2,15 +2,17 @@ package keeper
 
 import (
 	"fmt"
-	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"time"
+
+	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
+	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 )
 
 const (
@@ -29,7 +31,7 @@ const (
 	FundsModuleAccountAddressPrefix = "incentivization_escrow_"
 )
 
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.LockupKeeper) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
@@ -47,12 +49,12 @@ type Keeper struct {
 	ak authkeeper.AccountKeeper
 	bk bankkeeper.Keeper
 	dk dexkeeper.Keeper
-	lk lockupkeeper.LockupKeeper
+	lk lockupkeeper.Keeper
 }
 
 func (k Keeper) CreateIncentivizationProgram(
 	ctx sdk.Context,
-	lpDenom string, minLockupDuration time.Duration, starTime time.Time, epochs int64) (*types.IncentivizationProgram, error) {
+	lpDenom string, minLockupDuration time.Duration, startTime time.Time, epochs int64) (*types.IncentivizationProgram, error) {
 	// TODO(mercilex): assert lp denom from dex keeper
 
 	if epochs < MinEpochs {
@@ -63,8 +65,8 @@ func (k Keeper) CreateIncentivizationProgram(
 		return nil, types.ErrMinLockupDurationTooLow.Wrapf("%s is lower than minimum allowed %s", minLockupDuration, MinLockupDuration)
 	}
 
-	if ctx.BlockTime().Before(starTime) {
-		return nil, types.ErrStartTimeInPast.Wrapf("current time %s, got: %s", ctx.BlockTime(), starTime)
+	if ctx.BlockTime().After(startTime) {
+		return nil, types.ErrStartTimeInPast.Wrapf("current time %s, got: %s", ctx.BlockTime(), startTime)
 	}
 
 	// we create a new instance of an incentivization program
@@ -78,7 +80,7 @@ func (k Keeper) CreateIncentivizationProgram(
 		RemainingEpochs:   epochs,
 		LpDenom:           lpDenom,
 		MinLockupDuration: minLockupDuration,
-		StartTime:         starTime,
+		StartTime:         startTime,
 	}
 
 	k.IncentivizationProgramsState(ctx).Create(program)

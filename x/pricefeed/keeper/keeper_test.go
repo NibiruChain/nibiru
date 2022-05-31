@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_SetGetPair(t *testing.T) {
@@ -24,7 +25,7 @@ func TestKeeper_SetGetPair(t *testing.T) {
 	mp := types.Params{
 		Pairs: types.Pairs{tstusdPair},
 	}
-	keeper := app.PriceKeeper
+	keeper := app.PricefeedKeeper
 	keeper.SetParams(ctx, mp)
 
 	markets := keeper.GetPairs(ctx)
@@ -57,7 +58,7 @@ func TestKeeper_SetGetPair(t *testing.T) {
 
 func TestKeeper_GetSetPrice(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
-	keeper := app.PriceKeeper
+	keeper := app.PricefeedKeeper
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
 	mp := types.Params{
@@ -116,7 +117,7 @@ oracles is valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
-	keeper := app.PriceKeeper
+	keeper := app.PricefeedKeeper
 	token0, token1 := "tst", "usd"
 	price := sdk.MustNewDecFromStr("0.1")
 
@@ -148,7 +149,7 @@ and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 	app, ctx := testutil.NewNibiruApp(true)
-	keeper := app.PriceKeeper
+	keeper := app.PricefeedKeeper
 
 	token0, token1 := "tst", "usd"
 	price := sdk.MustNewDecFromStr("0.1")
@@ -183,7 +184,7 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
 	app, ctx := testutil.NewNibiruApp(true)
-	keeper := app.PriceKeeper
+	keeper := app.PricefeedKeeper
 
 	token0, token1 := "tst", "usd"
 	mp := types.Params{
@@ -273,7 +274,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
 	app, ctx := testutil.NewNibiruApp(true)
-	keeper := app.PriceKeeper
+	keeper := app.PricefeedKeeper
 
 	token0, token1 := "usd", "tst"
 	mp := types.Params{

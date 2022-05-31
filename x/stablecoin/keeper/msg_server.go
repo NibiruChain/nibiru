@@ -27,8 +27,8 @@ Returns
 	error:
 */
 func (k msgServer) MsgMintStable(
-	goCtx context.Context, msg *types.MsgMintStable) (
-	*types.MsgMintStableResponse, error) {
+	goCtx context.Context, msg *types.MsgMintStable,
+) (*types.MsgMintStableResponse, error) {
 	mintStableResponse, err := k.MintStable(goCtx, msg)
 	if err != nil {
 		return nil, err
@@ -38,8 +38,8 @@ func (k msgServer) MsgMintStable(
 }
 
 func (k msgServer) MsgBurnStable(
-	goCtx context.Context, msg *types.MsgBurnStable) (
-	*types.MsgBurnStableResponse, error) {
+	goCtx context.Context, msg *types.MsgBurnStable,
+) (*types.MsgBurnStableResponse, error) {
 	burnStableResponse, err := k.BurnStable(goCtx, msg)
 	if err != nil {
 		return nil, err

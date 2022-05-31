@@ -3,8 +3,12 @@ package incentivization
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
+	"math/rand"
+
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+
+	"github.com/NibiruChain/nibiru/x/incentivization/client/cli"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -15,7 +19,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"math/rand"
+
+	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
 )
 
 var (
@@ -81,14 +87,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the capability module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return nil
-	// return cli.GetTxCmd()
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns the capability module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return nil
-	// return cli.GetQueryCmd(types.StoreKey)
+	return cli.GetQueryCmd()
 }
 
 // ----------------------------------------------------------------------------
@@ -100,12 +104,14 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper keeper.Keeper
+	ak     authkeeper.AccountKeeperI
 }
 
-func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Codec, keeper keeper.Keeper, ak authkeeper.AccountKeeperI) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		ak:             ak,
 	}
 }
 
@@ -155,16 +161,20 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	// NOTE(mercilex): since incentivization programs are exported
 	// in an ordered way, if the order of re-creation is the same
 	// then we will generate the same IDs and same escrow addresses.
+	// We also use the raw state create function because we don't want to go
+	// through block time and epoch checks.
+	state := am.keeper.IncentivizationProgramsState(ctx)
 	for _, program := range genState.IncentivizationPrograms {
-		_, err := am.keeper.CreateIncentivizationProgram(ctx,
-			program.LpDenom,
-			program.MinLockupDuration,
-			program.StartTime,
-			program.RemainingEpochs,
-		)
+		// we check if escrow account exists
+		escrowAddr, err := sdk.AccAddressFromBech32(program.EscrowAddress)
 		if err != nil {
 			panic(err)
 		}
+		if !am.ak.HasAccount(ctx, escrowAddr) {
+			panic(fmt.Errorf("incentivization program %d has escrow account: %s which holds funds but it does not exist in the accounts list", program.Id, program.EscrowAddress))
+		}
+		program.Id = 0 // reset program ID to avoid panics
+		state.Create(program)
 	}
 
 	return []abci.ValidatorUpdate{}
@@ -172,8 +182,14 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	// genState := ExportGenesis(ctx, am.keeper)
-	return cdc.MustMarshalJSON(types.DefaultGenesis())
+	state := new(types.GenesisState)
+
+	am.keeper.IncentivizationProgramsState(ctx).IteratePrograms(func(program *types.IncentivizationProgram) (stop bool) {
+		state.IncentivizationPrograms = append(state.IncentivizationPrograms, program)
+		return false
+	})
+
+	return am.cdc.MustMarshalJSON(state)
 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.

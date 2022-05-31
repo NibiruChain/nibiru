@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/incentivization/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/incentivization/types"
 )
 
 const (
@@ -12,12 +13,12 @@ const (
 )
 
 var (
-	incentivizationProgramNamespace      = []byte{0x0}
-	incentivizationProgramIDNamespace    = append(incentivizationProgramNamespace, 0x0)
-	incentivizationProgramIDKey          = []byte{0x1}
-	incentiviationProgramObjectNamespace = append(incentivizationProgramNamespace, 0x1)
-	incentivizationProgramDenomIndex     = append(incentivizationProgramNamespace, 0x2)
-	incentivizationProgramDenomMap       = append(incentivizationProgramNamespace, 0x3)
+	incentivizationProgramNamespace        = []byte{0x0}
+	incentivizationProgramIDNamespace      = append(incentivizationProgramNamespace, 0x0)
+	incentivizationProgramIDKey            = []byte{0x1}
+	incentivizationProgramObjectsNamespace = append(incentivizationProgramNamespace, 0x1)
+	incentivizationProgramDenomIndex       = append(incentivizationProgramNamespace, 0x2)
+	incentivizationProgramDenomMap         = append(incentivizationProgramNamespace, 0x3)
 )
 
 func (k Keeper) IncentivizationProgramsState(ctx sdk.Context) IncentivizationProgramState {
@@ -30,7 +31,7 @@ func newIncentivizationProgramState(ctx sdk.Context, key sdk.StoreKey, cdc codec
 		cdc:                                cdc,
 		ctx:                                ctx,
 		programID:                          prefix.NewStore(store, incentivizationProgramIDNamespace),
-		incentivizationPrograms:            prefix.NewStore(store, incentiviationProgramObjectNamespace),
+		incentivizationPrograms:            prefix.NewStore(store, incentivizationProgramObjectsNamespace),
 		denomToIncentivizationProgramIndex: prefix.NewStore(store, incentivizationProgramDenomIndex),
 		denomMap:                           prefix.NewStore(store, incentivizationProgramDenomMap),
 	}
@@ -121,4 +122,18 @@ func (s IncentivizationProgramState) denomKey(denom string, pk []byte) []byte {
 	key = append(key, 0xFF)
 	key = append(key, pk...)
 	return key
+}
+
+// IteratePrograms iterates over every program
+func (s IncentivizationProgramState) IteratePrograms(do func(program *types.IncentivizationProgram) (stop bool)) {
+	iter := s.incentivizationPrograms.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		program := new(types.IncentivizationProgram)
+		s.cdc.MustUnmarshal(iter.Value(), program)
+		if do(program) {
+			break
+		}
+	}
 }

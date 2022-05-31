@@ -2,21 +2,17 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-)
 
-var (
-	errNotFound = errors.New("not found")
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
-
-var _ types.QueryServer = Keeper{}
 
 func (k Keeper) Params(
 	goCtx context.Context, req *types.QueryParamsRequest,
@@ -39,6 +35,10 @@ func (k Keeper) PairMetadata() PairMetadata {
 
 func (k Keeper) Whitelist() Whitelist {
 	return (Whitelist)(k)
+}
+
+func (k Keeper) PrepaidBadDebtState() PrepaidBadDebtState {
+	return (PrepaidBadDebtState)(k)
 }
 
 var paramsNamespace = []byte{0x0}
@@ -77,12 +77,12 @@ func (p PositionsState) getKV(ctx sdk.Context) sdk.KVStore {
 }
 
 func (p PositionsState) keyFromType(position *types.Position) []byte {
-	return p.keyFromRaw(position.Pair, position.Address)
+	return p.keyFromRaw(position.GetAssetPair(), position.TraderAddress)
 }
 
-func (p PositionsState) keyFromRaw(pair, address string) []byte {
+func (p PositionsState) keyFromRaw(pair common.AssetPair, address sdk.AccAddress) []byte {
 	// TODO(mercilex): not sure if namespace overlap safe | update(mercilex) it is not overlap safe
-	return []byte(pair + address)
+	return []byte(pair.String() + address.String())
 }
 
 func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error {
@@ -96,13 +96,13 @@ func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error 
 	return nil
 }
 
-func (p PositionsState) Get(ctx sdk.Context, pair, address string) (*types.Position, error) {
+func (p PositionsState) Get(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
 	kv := p.getKV(ctx)
 
-	key := p.keyFromRaw(pair, address)
+	key := p.keyFromRaw(pair, traderAddr)
 	valueBytes := kv.Get(key)
 	if valueBytes == nil {
-		return nil, errNotFound
+		return nil, types.ErrPositionNotFound
 	}
 
 	position := new(types.Position)
@@ -116,15 +116,19 @@ func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error 
 	key := p.keyFromType(position)
 
 	if !kv.Has(key) {
-		return errNotFound
+		return types.ErrPositionNotFound
 	}
 
 	kv.Set(key, p.cdc.MustMarshal(position))
 	return nil
 }
 
-func (p PositionsState) Set(ctx sdk.Context, position *types.Position) {
-	p.getKV(ctx).Set(p.keyFromType(position), p.cdc.MustMarshal(position))
+func (p PositionsState) Set(
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position,
+) {
+	positionID := p.keyFromRaw(pair, traderAddr)
+	kvStore := p.getKV(ctx)
+	kvStore.Set(positionID, p.cdc.MustMarshal(position))
 }
 
 var pairMetadataNamespace = []byte{0x2}
@@ -135,12 +139,12 @@ func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(p.storeKey), pairMetadataNamespace)
 }
 
-func (p PairMetadata) Get(ctx sdk.Context, pair string) (*types.PairMetadata, error) {
+func (p PairMetadata) Get(ctx sdk.Context, pair common.AssetPair) (*types.PairMetadata, error) {
 	kv := p.getKV(ctx)
 
-	v := kv.Get([]byte(pair))
+	v := kv.Get([]byte(pair.String()))
 	if v == nil {
-		return nil, errNotFound
+		return nil, types.ErrPairMetadataNotFound
 	}
 
 	pairMetadata := new(types.PairMetadata)
@@ -152,6 +156,21 @@ func (p PairMetadata) Get(ctx sdk.Context, pair string) (*types.PairMetadata, er
 func (p PairMetadata) Set(ctx sdk.Context, metadata *types.PairMetadata) {
 	kv := p.getKV(ctx)
 	kv.Set([]byte(metadata.Pair), p.cdc.MustMarshal(metadata))
+}
+
+func (p PairMetadata) GetAll(ctx sdk.Context) []*types.PairMetadata {
+	store := ctx.KVStore(p.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, pairMetadataNamespace)
+
+	var pairMetadatas []*types.PairMetadata
+	for ; iterator.Valid(); iterator.Next() {
+		var pairMetadata = new(types.PairMetadata)
+		p.cdc.MustUnmarshal(iterator.Value(), pairMetadata)
+		pairMetadatas = append(pairMetadatas, pairMetadata)
+	}
+
+	return pairMetadatas
 }
 
 var whitelistNamespace = []byte{0x3}
@@ -166,4 +185,67 @@ func (w Whitelist) IsWhitelisted(ctx sdk.Context, address string) bool {
 	kv := w.getKV(ctx)
 
 	return kv.Has([]byte(address))
+}
+
+var prepaidBadDebtNamespace = []byte{0x4}
+
+type PrepaidBadDebtState Keeper
+
+func (pbd PrepaidBadDebtState) getKVStore(ctx sdk.Context) sdk.KVStore {
+	return prefix.NewStore(ctx.KVStore(pbd.storeKey), prepaidBadDebtNamespace)
+}
+
+/*
+Fetches the amount of bad debt prepaid by denom. Returns zero if the denom is not found.
+*/
+func (pbd PrepaidBadDebtState) Get(ctx sdk.Context, denom string) (amount sdk.Int) {
+	kv := pbd.getKVStore(ctx)
+
+	v := kv.Get([]byte(denom))
+	if v == nil {
+		return sdk.ZeroInt()
+	}
+
+	return sdk.NewIntFromUint64(sdk.BigEndianToUint64(v))
+}
+
+/*
+Sets the amount of bad debt prepaid by denom.
+*/
+func (pbd PrepaidBadDebtState) Set(ctx sdk.Context, denom string, amount sdk.Int) {
+	kv := pbd.getKVStore(ctx)
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+}
+
+/*
+Increments the amount of bad debt prepaid by denom.
+Calling this method on a denom that doesn't exist is effectively the same as setting the amount (0 + increment).
+*/
+func (pbd PrepaidBadDebtState) Increment(ctx sdk.Context, denom string, increment sdk.Int) (
+	amount sdk.Int,
+) {
+	kv := pbd.getKVStore(ctx)
+	amount = pbd.Get(ctx, denom).Add(increment)
+
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+
+	return amount
+}
+
+/*
+Decrements the amount of bad debt prepaid by denom.
+
+The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
+debt balance to below zero will clip it at zero.
+
+*/
+func (pbd PrepaidBadDebtState) Decrement(ctx sdk.Context, denom string, decrement sdk.Int) (
+	amount sdk.Int,
+) {
+	kv := pbd.getKVStore(ctx)
+	amount = sdk.MaxInt(pbd.Get(ctx, denom).Sub(decrement), sdk.ZeroInt())
+
+	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+
+	return amount
 }

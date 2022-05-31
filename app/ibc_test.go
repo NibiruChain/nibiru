@@ -36,20 +36,20 @@ func SetupNibiruTestingApp() (
 	nibiruApp, ctx := testutil.NewNibiruApp(true)
 	token0, token1 := "uatom", "unibi"
 	oracle := sample.AccAddress()
-	nibiruApp.PriceKeeper.SetParams(ctx, pricefeedtypes.Params{
+	nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedtypes.Params{
 		Pairs: []pricefeedtypes.Pair{
 			{Token0: token0, Token1: token1,
 				Oracles: []sdk.AccAddress{oracle}, Active: true},
 		},
 	})
-	_, err := nibiruApp.PriceKeeper.SetPrice(
+	_, err := nibiruApp.PricefeedKeeper.SetPrice(
 		ctx, oracle, token0, token1, sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
 	)
 	if err != nil {
 		return nil, defaultGenesis
 	}
-	err = nibiruApp.PriceKeeper.SetCurrentPrices(ctx, token0, token1)
+	err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, token0, token1)
 	if err != nil {
 		return nil, defaultGenesis
 	}

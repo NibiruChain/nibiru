@@ -3,15 +3,16 @@ package dex
 import (
 	"math/rand"
 
-	dexsimulation "github.com/NibiruChain/nibiru/x/dex/simulation"
-	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+
+	dexsimulation "github.com/NibiruChain/nibiru/x/dex/simulation"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 // avoid unused import issue
@@ -24,19 +25,18 @@ var (
 )
 
 const (
-	opWeightMsgCreatePool = "op_weight_msg_create_chain"
 	// TODO: Determine the simulation weight value
-	defaultWeightMsgCreatePool int = 100
+	defaultWeight int = 100
 )
 
-// GenerateGenesisState creates a randomized GenState of the module
+// GenerateGenesisState creates a default GenState of the module
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	accs := make([]string, len(simState.Accounts))
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	dexGenesis := types.GenesisState{}
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&dexGenesis)
+	dexGenesis := types.DefaultGenesis()
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(dexGenesis)
 }
 
 // ProposalContents doesn't return any content functions for governance proposals
@@ -56,16 +56,20 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
 
-	var weightMsgCreatePool int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgCreatePool, &weightMsgCreatePool, nil,
-		func(_ *rand.Rand) {
-			weightMsgCreatePool = defaultWeightMsgCreatePool
-		},
-	)
 	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgCreatePool,
+		defaultWeight,
 		dexsimulation.SimulateMsgCreatePool(am.accountKeeper, am.bankKeeper, am.keeper),
-	))
+	), simulation.NewWeightedOperation(
+		defaultWeight,
+		dexsimulation.SimulateMsgSwap(am.accountKeeper, am.bankKeeper, am.keeper),
+	), simulation.NewWeightedOperation(
+		defaultWeight,
+		dexsimulation.SimulateJoinPool(am.accountKeeper, am.bankKeeper, am.keeper),
+	), simulation.NewWeightedOperation(
+		defaultWeight,
+		dexsimulation.SimulateExitPool(am.accountKeeper, am.bankKeeper, am.keeper),
+	),
+	)
 
 	return operations
 }

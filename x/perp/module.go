@@ -9,16 +9,16 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/keeper"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/x/perp/client/cli"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 // type check to ensure the interface is properly implemented
@@ -26,32 +26,6 @@ var (
 	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
-
-// ----------------------------------------------------------------------------
-// Genesis
-// ----------------------------------------------------------------------------
-
-// InitGenesis initializes the capability module's state from a provided genesis
-// state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	if genState.ModuleAccountBalance.Amount.GT(sdk.ZeroInt()) {
-		if err := k.BankKeeper.MintCoins(
-			ctx, types.ModuleName, sdk.NewCoins(genState.ModuleAccountBalance),
-		); err != nil {
-			panic(err)
-		}
-	}
-	k.SetParams(ctx, genState.Params)
-}
-
-// ExportGenesis returns the capability module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesis()
-	genesis.Params = k.GetParams(ctx)
-	genesis.ModuleAccountBalance = k.GetModuleAccountBalance(ctx, common.GovDenom)
-
-	return genesis
-}
 
 // ----------------------------------------------------------------------------
 // AppModuleBasic
@@ -133,7 +107,7 @@ type AppModule struct {
 	keeper keeper.Keeper
 	ak     types.AccountKeeper
 	bk     types.BankKeeper
-	pk     types.PriceKeeper
+	pk     types.PricefeedKeeper
 }
 
 func NewAppModule(
@@ -141,7 +115,7 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	pk types.PriceKeeper,
+	pk types.PricefeedKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
@@ -173,8 +147,8 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
-	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 }
 
 // RegisterInvariants registers the capability module's invariants.

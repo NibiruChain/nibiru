@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,22 +13,26 @@ const (
 	TypeMsgBeginUnlocking    = "begin_unlocking"
 )
 
-var _ sdk.Msg = &MsgLockTokens{}
-
-// NewMsgLockTokens creates a message to lock tokens.
-func NewMsgLockTokens(owner sdk.AccAddress, duration time.Duration, coins sdk.Coins) *MsgLockTokens {
-	return &MsgLockTokens{
-		Owner:    owner.String(),
-		Duration: duration,
-		Coins:    coins,
-	}
-}
+var (
+	_ sdk.Msg = (*MsgLockTokens)(nil)
+	_ sdk.Msg = (*MsgInitiateUnlock)(nil)
+)
 
 func (m MsgLockTokens) Route() string { return RouterKey }
 func (m MsgLockTokens) Type() string  { return TypeMsgLockTokens }
 func (m MsgLockTokens) ValidateBasic() error {
+	if err := m.Coins.Validate(); err != nil {
+		return fmt.Errorf("invalid coins")
+	}
+	if m.Coins.IsZero() {
+		return fmt.Errorf("zero coins")
+	}
 	if m.Duration <= 0 {
-		return fmt.Errorf("duration should be positive: %d < 0", m.Duration)
+		return fmt.Errorf("duration should be positive: %d <= 0", m.Duration)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Owner); err != nil {
+		return fmt.Errorf("invalid address")
 	}
 	return nil
 }
@@ -41,4 +44,21 @@ func (m MsgLockTokens) GetSignBytes() []byte {
 func (m MsgLockTokens) GetSigners() []sdk.AccAddress {
 	owner, _ := sdk.AccAddressFromBech32(m.Owner)
 	return []sdk.AccAddress{owner}
+}
+
+func (m *MsgInitiateUnlock) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Owner)
+	if err != nil {
+		return fmt.Errorf("invalid address")
+	}
+	return nil
+}
+
+func (m *MsgInitiateUnlock) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(m.Owner)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{addr}
 }
