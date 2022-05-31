@@ -559,20 +559,26 @@ func (k Keeper) closeAndOpenReversePosition(
 		return nil, fmt.Errorf("underwater position")
 	}
 
-	notionalValueMovement := leverage.Mul(quoteAssetAmount)
-	remainingOpenNotional := notionalValueMovement.Sub(
+	reverseNotionalValue := leverage.Mul(quoteAssetAmount)
+	remainingReverseNotionalValue := reverseNotionalValue.Sub(
 		closePositionResp.ExchangedQuoteAssetAmount)
 
-	if remainingOpenNotional.IsNegative() {
+	if remainingReverseNotionalValue.IsNegative() {
 		// should never happen as this should also be checked in the caller
 		return nil, fmt.Errorf(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
-			closePositionResp.ExchangedQuoteAssetAmount.String(), notionalValueMovement.String())
-	} else if remainingOpenNotional.IsPositive() {
-		var updatedBaseAssetAmountLimit sdk.Dec
-		if baseAssetAmountLimit.GT(closePositionResp.ExchangedPositionSize) {
+			closePositionResp.ExchangedQuoteAssetAmount.String(), reverseNotionalValue.String())
+	} else if remainingReverseNotionalValue.IsPositive() {
+		updatedBaseAssetAmountLimit := baseAssetAmountLimit
+		if baseAssetAmountLimit.IsPositive() {
 			updatedBaseAssetAmountLimit = baseAssetAmountLimit.
 				Sub(closePositionResp.ExchangedPositionSize.Abs())
+		}
+		if updatedBaseAssetAmountLimit.IsNegative() {
+			return nil, fmt.Errorf(
+				"position size changed by greater than the specified base limit: %s",
+				baseAssetAmountLimit.String(),
+			)
 		}
 
 		var sideToTake types.Side
@@ -592,7 +598,7 @@ func (k Keeper) closeAndOpenReversePosition(
 			ctx,
 			*newPosition,
 			sideToTake,
-			remainingOpenNotional,
+			remainingReverseNotionalValue,
 			updatedBaseAssetAmountLimit,
 			leverage,
 		)
