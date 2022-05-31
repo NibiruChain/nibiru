@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -70,20 +69,18 @@ func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 
 func (k msgServer) ClosePosition(goCtx context.Context, req *types.MsgClosePosition,
 ) (*types.MsgClosePositionResponse, error) {
-	fmt.Println("STEVENDEBUG ClosePosition in msg server")
 	pair, err := common.NewAssetPairFromStr(req.TokenPair)
 	if err != nil {
 		panic(err) // must not happen
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	// TODO: fix that this err doesn't get returned if using tx broadcast in cli_test
 	err = k.k.ClosePosition(ctx, pair, req.Sender)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error())
 	}
-
-	fmt.Println("STEVENDEBUG ClosePosition in msg server end")
 
 	return &types.MsgClosePositionResponse{}, nil
 }

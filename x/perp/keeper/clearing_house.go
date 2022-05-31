@@ -155,32 +155,23 @@ func (k Keeper) ClosePosition(
 	pair common.AssetPair,
 	traderAddr sdk.AccAddress,
 ) (err error) {
-	fmt.Println("STEVENDEBUG keeper ClosePosition")
-
 	// checks
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("STEVENDEBUG keeper ClosePosition pass requre vpool")
-
 	position, err := k.GetPosition(ctx, pair, traderAddr)
 	if err != nil {
-		fmt.Printf("STEVENDEBUG get position err: %s\n", err)
+		// TODO: propagate this back to the cli
 		return err
 	}
 
-	fmt.Printf("STEVENDEBUG close position yoyo")
-	fmt.Printf("STEVENDEBUG close position: %+v\n", position)
-
-	closePositionResp, err := k.closePositionEntirely(
+	_, err = k.closePositionEntirely(
 		ctx,
 		*position,
 		sdk.ZeroDec(), // TODO: double check this
 	)
-
-	fmt.Printf("STEVENDEBUG ClosePosition closePositionResp: %+v\n", closePositionResp)
 
 	if err != nil {
 		return err
@@ -682,7 +673,6 @@ ret:
   - positionResp: response object containing information about the position change
   - err: error
 */
-// STEVENDEBUG: whats the difference between this and func (k Keeper) SettlePosition(
 func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	currentPosition types.Position,

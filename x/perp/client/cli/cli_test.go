@@ -244,9 +244,10 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
+	// TODO: fix that this err doesn't get propagated back up to show up here
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.T().Logf("STEVENDEBUG res: %+v", res)
-	s.T().Logf("STEVENDEBUG err: %+v", err)
+	s.T().Logf("res: %+v", res)
+	s.T().Logf("err: %+v", err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

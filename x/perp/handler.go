@@ -32,16 +32,13 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgOpenPosition:
-			// STEVENDEBUG
 			res, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgLiquidate:
 			res, err := msgServer.Liquidate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClosePosition:
-			// TODO: fix
 			res, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msg)
-			fmt.Printf("STEVENDEBUG new handler close err: %v\n", err)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf(

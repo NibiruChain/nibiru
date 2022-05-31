@@ -43,7 +43,6 @@ func (m MsgAddMargin) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
 
-// STEVENDEBUG
 func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{m.Sender}
 }
