@@ -1048,7 +1048,6 @@ func TestIncreasePosition(t *testing.T) {
 					/*baseLimit=*/ sdk.NewDec(99), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
