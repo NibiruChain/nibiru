@@ -155,6 +155,8 @@ func (k Keeper) ClosePosition(
 	pair common.AssetPair,
 	traderAddr sdk.AccAddress,
 ) (err error) {
+	fmt.Println("STEVENDEBUG keeper ClosePosition")
+
 	// checks
 	err = k.requireVpool(ctx, pair)
 	if err != nil {

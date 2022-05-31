@@ -122,6 +122,7 @@ func ClosePositionCmd() *cobra.Command {
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
+			fmt.Println("STEVENDEBUG: msg validated ", msg)
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},

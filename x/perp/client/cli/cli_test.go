@@ -26,6 +26,7 @@ type IntegrationTestSuite struct {
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
+	users   []sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -90,6 +91,20 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
+
+	val := s.network.Validators[0]
+	info, _, err := val.ClientCtx.Keyring.
+		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user1 := sdk.AccAddress(info.GetPubKey().Address())
+
+	info2, _, err := val.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user2 := sdk.AccAddress(info2.GetPubKey().Address())
+
+	// TODO: figure out why using user2 gives a "key <addr> not found" error
+	s.users = []sdk.AccAddress{user1, user2}
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -104,13 +119,9 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		Token1: "unibi",
 	}
 
-	info, _, err := val.ClientCtx.Keyring.
-		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
+	user := s.users[0]
 
-	user := sdk.AccAddress(info.GetPubKey().Address())
-
-	_, err = utils.FillWalletFromValidator(user,
+	_, err := utils.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -198,19 +209,16 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	s.Require().Equal(sdk.MustNewDecFromStr("999900"), queryResp.Position.OpenNotional)
 }
 
-func (s *IntegrationTestSuite) TestZCloseEmptyPosition() {
+func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	val := s.network.Validators[0]
 	pair := common.AssetPair{
-		Token0: "ubtc",
+		Token0: "eth",
 		Token1: "unibi",
 	}
 
-	info2, _, err := val.ClientCtx.Keyring.
-		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
-	user := sdk.AccAddress(info2.GetPubKey().Address())
+	user := s.users[0]
 
-	_, err = utils.FillWalletFromValidator(user,
+	_, err := utils.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -229,11 +237,13 @@ func (s *IntegrationTestSuite) TestZCloseEmptyPosition() {
 	args := []string{
 		"--from",
 		user.String(),
-		fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi"),
+		fmt.Sprintf("%s%s%s", "eth", common.PairSeparator, "unibi"),
 	}
+	// TODO: gives back EOF error which needs to be resolved or clarified
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), args)
 	s.T().Logf("STEVENDEBUG res: %+v", res)
 	s.T().Logf("STEVENDEBUG err: %+v", err)
+	s.Require().Error(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
