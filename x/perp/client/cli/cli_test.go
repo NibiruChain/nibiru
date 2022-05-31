@@ -26,6 +26,7 @@ type IntegrationTestSuite struct {
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
+	user    sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -90,6 +91,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
+
+	val := s.network.Validators[0]
+	info, _, err := val.ClientCtx.Keyring.
+		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.user = sdk.AccAddress(info.GetPubKey().Address())
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -104,13 +111,9 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		Token1: "unibi",
 	}
 
-	info, _, err := val.ClientCtx.Keyring.
-		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
+	user := s.user // sdk.AccAddress(info.GetPubKey().Address())
 
-	user := sdk.AccAddress(info.GetPubKey().Address())
-
-	_, err = utils.FillWalletFromValidator(user,
+	_, err := utils.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
