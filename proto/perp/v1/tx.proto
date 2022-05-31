@@ -30,7 +30,7 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/open_position";
   }
 
-  rpc ClosePosition(MsgClosePosition) returns (MsgClosePosition) {
+  rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse) {
     option (google.api.http).post = "/nibiru/perp/close_position";
   }
 
