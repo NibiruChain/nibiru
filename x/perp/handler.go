@@ -40,9 +40,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClosePosition:
 			// TODO: fix
-			// res, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msg)
-			// return sdk.WrapServiceResult(ctx, res, err)
-			return nil, nil
+			res, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf(
 				"unrecognized %s message type: %T", types.ModuleName, msg)

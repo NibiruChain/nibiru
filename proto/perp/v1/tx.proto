@@ -30,6 +30,10 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/open_position";
   }
 
+  rpc ClosePosition(MsgClosePosition) returns (MsgClosePosition) {
+    option (google.api.http).post = "/nibiru/perp/close_position";
+  }
+
 }
 
 // -------------------------- RemoveMargin --------------------------
