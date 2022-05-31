@@ -691,28 +691,27 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 func TestIncreasePosition(t *testing.T) {
 	tests := []struct {
-		name string
-		test func()
+		name         string
+		initPosition types.Position
+		given        func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper)
+		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error)
+		then         func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error)
 	}{
 		{
 			name: "increase long position, positive PnL",
 			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1BTC=1NUSD)
 			// BTC went up in value, now its price is 1BTC=2NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(100), // 100 BTC
-					Margin:                              sdk.NewDec(10),  // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(100), // 100 BTC
+				Margin:                              sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100), // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -740,17 +739,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(50), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount))
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
@@ -760,8 +761,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))
 				assert.EqualValues(t, sdk.NewDec(100), resp.UnrealizedPnlAfter)
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(150), resp.Position.Size_)        // 100 + 50
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -774,20 +775,16 @@ func TestIncreasePosition(t *testing.T) {
 			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1BTC=1NUSD)
 			// BTC went down in value, now its price is 1.01BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(100), // 100 BTC
-					Margin:                              sdk.NewDec(10),  // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(100), // 100 BTC
+				Margin:                              sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100), // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -815,17 +812,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(101), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount)) // equal to open notional
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
@@ -835,8 +834,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))           // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 99 - 100
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(201), resp.Position.Size_)        // 100 + 101
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -852,20 +851,16 @@ func TestIncreasePosition(t *testing.T) {
 			// position notional value is 100 NUSD, unrealized PnL is -10 NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			// funding payment causes negative margin aka bad debt
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(110), // 110 BTC
-					Margin:                              sdk.NewDec(11),  // 11 NUSD
-					OpenNotional:                        sdk.NewDec(110), // 110 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(110), // 110 BTC
+				Margin:                              sdk.NewDec(11),  // 11 NUSD
+				OpenNotional:                        sdk.NewDec(110), // 110 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -893,17 +888,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.2"), // 0.2 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(110), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault) // openNotional / leverage
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)    // always zero for increasePosition
@@ -914,8 +911,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)        // 90 - 100
 				assert.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                     // 11(old) + 10(new) - 22(funding payment)
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(220), resp.Position.Size_)        // 110 + 110
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 11(old) + 10(new) - 22(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(210), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -929,20 +926,16 @@ func TestIncreasePosition(t *testing.T) {
 			// user's initial margin deposit was 10 NUSD
 			// BTC went down in value, now its price is 2BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-100), // -100 BTC
-					Margin:                              sdk.NewDec(10),   // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // -100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -970,17 +963,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(200), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
@@ -990,8 +985,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)           // open notional / leverage
 				assert.EqualValues(t, sdk.NewDec(50), resp.UnrealizedPnlAfter)      // 100 - 50
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-300), resp.Position.Size_)       // -100 - 200
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new)  - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -1005,20 +1000,16 @@ func TestIncreasePosition(t *testing.T) {
 			// user's initial margin deposit was 10 NUSD
 			// BTC went up in value, now its price is 0.99BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-100), // 100 BTC
-					Margin:                              sdk.NewDec(10),   // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // 100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -1046,17 +1037,20 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(99), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
 
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
@@ -1066,8 +1060,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)          // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 100 - 101
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-199), resp.Position.Size_)       // -100 - 99
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new) - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -1084,20 +1078,16 @@ func TestIncreasePosition(t *testing.T) {
 			// position notional is 105 NUSD and unrealizedPnL is -5 NUSD
 			// user increases position by another 105 NUSD at 10x leverage
 			// funding payment causes bad debt
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-100), // 100 BTC
-					Margin:                              sdk.NewDec(10),   // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // 100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -1125,17 +1115,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("-0.3"), // - 0.3 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10.5 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(105), // NUSD
 					/*baseLimit=*/ sdk.NewDec(100), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)                                     // always zero for increasePosition
 				assert.EqualValues(t, sdk.MustNewDecFromStr("10.5").String(), resp.MarginToVault.String()) // openNotional / leverage
@@ -1146,8 +1138,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-5), resp.UnrealizedPnlAfter)                      // 100 - 105
 				assert.EqualValues(t, sdk.MustNewDecFromStr("9.5").String(), resp.BadDebt.String()) // 10(old) + 10.5(new) - (30)(funding payment)
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-200), resp.Position.Size_)       // -100 + (-100)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 10(old) + 10.5(new) - (30)(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(205), resp.Position.OpenNotional) // 100(old) + 105(new)
@@ -1160,7 +1152,13 @@ func TestIncreasePosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			perpKeeper, mocks, ctx := getKeeper(t)
+
+			tc.given(ctx, mocks, perpKeeper)
+
+			resp, err := tc.when(ctx, perpKeeper, tc.initPosition)
+
+			tc.then(t, ctx, tc.initPosition, resp, err)
 		})
 	}
 }
