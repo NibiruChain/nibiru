@@ -91,6 +91,10 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
+			fmt.Printf("STEVENDEBUG open cmd msg %v\n", msg)
+			fmt.Printf("STEVENDEBUG open cmd txf %v\n", txf)
+			fmt.Printf("STEVENDEBUG open cmd clientCtx %v\n", clientCtx)
+
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
 	}
@@ -124,7 +128,16 @@ func ClosePositionCmd() *cobra.Command {
 			}
 			fmt.Println("STEVENDEBUG: msg validated ", msg)
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			fmt.Printf("STEVENDEBUG close cmd msg %v\n", msg)
+			fmt.Printf("STEVENDEBUG close cmd txf %v\n", txf)
+			fmt.Printf("STEVENDEBUG close cmd clientCtx %v\n", clientCtx)
+
+			err = tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			if err != nil {
+				fmt.Printf("STEVENDEBUG error generating tx: %s", err)
+				return err
+			}
+			return nil
 		},
 	}
 

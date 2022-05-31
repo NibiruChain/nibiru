@@ -77,10 +77,13 @@ func (k msgServer) ClosePosition(goCtx context.Context, req *types.MsgClosePosit
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	// TODO: fix that this err doesn't get returned if using tx broadcast in cli_test
 	err = k.k.ClosePosition(ctx, pair, req.Sender)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("STEVENDEBUG ClosePosition in msg server end")
 
 	return &types.MsgClosePositionResponse{}, nil
 }

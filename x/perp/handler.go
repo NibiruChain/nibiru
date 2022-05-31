@@ -41,6 +41,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgClosePosition:
 			// TODO: fix
 			res, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msg)
+			fmt.Printf("STEVENDEBUG new handler close err: %v\n", err)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf(

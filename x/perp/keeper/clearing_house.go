@@ -163,10 +163,16 @@ func (k Keeper) ClosePosition(
 		return err
 	}
 
+	fmt.Println("STEVENDEBUG keeper ClosePosition pass requre vpool")
+
 	position, err := k.GetPosition(ctx, pair, traderAddr)
 	if err != nil {
+		fmt.Printf("STEVENDEBUG get position err: %s\n", err)
 		return err
 	}
+
+	fmt.Printf("STEVENDEBUG close position yoyo")
+	fmt.Printf("STEVENDEBUG close position: %+v\n", position)
 
 	closePositionResp, err := k.closePositionEntirely(
 		ctx,

@@ -239,11 +239,14 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		user.String(),
 		fmt.Sprintf("%s%s%s", "eth", common.PairSeparator, "unibi"),
 	}
-	// TODO: gives back EOF error which needs to be resolved or clarified
-	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), args)
+	commonArgs := []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	}
+	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.T().Logf("STEVENDEBUG res: %+v", res)
 	s.T().Logf("STEVENDEBUG err: %+v", err)
-	s.Require().Error(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
