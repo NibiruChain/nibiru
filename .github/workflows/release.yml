@@ -1,11 +1,12 @@
 # This workflow is useful if you want to automate the process of creating a prerelease
-# when you push to your default branch (i.e. master). The workflow takes care of 
+# when you push to a release branch (i.e. releases/v0.0.1). The workflow takes care of 
 # automatically upgrading the tag version number.
+name: Release Tag Workflow
 
 on:
-# Runs on PR merges or direct push to master
   push:
-    branches: [master]
+    branches:    
+      - 'releases/**'
 
 jobs:
   might_release:
