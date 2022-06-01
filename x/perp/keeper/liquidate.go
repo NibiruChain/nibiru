@@ -267,7 +267,6 @@ func (k Keeper) distributeLiquidateRewards(
 func (k Keeper) ExecutePartialLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, currentPosition *types.Position,
 ) (types.LiquidateResp, error) {
-
 	params := k.GetParams(ctx)
 
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)

@@ -575,7 +575,6 @@ func (k Keeper) closeAndOpenReversePosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-
 	trader, err := sdk.AccAddressFromBech32(existingPosition.TraderAddress)
 	if err != nil {
 		return nil, err
