@@ -1,4 +1,4 @@
-name: All Tests
+name: Unit Tests
 
 # Runs on PRs only, not on master.
 on:

@@ -1,4 +1,4 @@
-name: golangci-lint
+name: Linter
 
 # Run on every master merge and on PRs. 
 on:

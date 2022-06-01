@@ -1,6 +1,7 @@
 # This workflow is useful if you want to automate the process of creating a prerelease
 # when you push to a release branch (i.e. releases/v0.0.1). The workflow takes care of 
 # automatically upgrading the tag version number.
+name: Release Tag Workflow
 
 on:
   push:
