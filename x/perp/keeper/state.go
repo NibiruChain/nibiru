@@ -77,7 +77,8 @@ func (p PositionsState) getKV(ctx sdk.Context) sdk.KVStore {
 }
 
 func (p PositionsState) keyFromType(position *types.Position) []byte {
-	return p.keyFromRaw(position.GetAssetPair(), position.TraderAddress)
+	traderAddress, _ := sdk.AccAddressFromBech32(position.TraderAddress)
+	return p.keyFromRaw(position.GetAssetPair(), traderAddress)
 }
 
 func (p PositionsState) keyFromRaw(pair common.AssetPair, address sdk.AccAddress) []byte {
