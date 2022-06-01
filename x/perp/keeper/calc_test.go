@@ -50,7 +50,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
@@ -76,7 +76,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					TraderAddress: alice, Pair: pair.String(),
+					TraderAddress: trader.String(), Pair: pair.String(),
 					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[0],
 				}
@@ -100,7 +100,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
@@ -130,7 +130,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					TraderAddress: alice, Pair: pair.String(),
+					TraderAddress: trader.String(), Pair: pair.String(),
 					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[1],
 				}

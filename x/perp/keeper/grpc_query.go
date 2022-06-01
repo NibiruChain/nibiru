@@ -27,6 +27,10 @@ func (q queryServer) TraderPosition(
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
+	trader, err := sdk.AccAddressFromBech32(req.Trader)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -35,7 +39,7 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
-	position, err := q.Keeper.Positions().Get(ctx, pair, req.Trader)
+	position, err := q.Keeper.Positions().Get(ctx, pair, trader)
 	if err != nil {
 		return nil, err
 	}

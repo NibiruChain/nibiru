@@ -134,7 +134,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:         traderAddr,
+		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
@@ -575,6 +575,11 @@ func (k Keeper) closeAndOpenReversePosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
+	trader, err := sdk.AccAddressFromBech32(existingPosition.TraderAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	closePositionResp, err := k.closePositionEntirely(
 		ctx,
 		existingPosition,
@@ -621,7 +626,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		newPosition := types.ZeroPosition(
 			ctx,
 			existingPosition.GetAssetPair(),
-			existingPosition.TraderAddress,
+			trader,
 		)
 		increasePositionResp, err := k.increasePosition(
 			ctx,
@@ -680,6 +685,11 @@ func (k Keeper) closePositionEntirely(
 ) (positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, fmt.Errorf("zero position size")
+	}
+
+	trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
+	if err != nil {
+		return nil, err
 	}
 
 	positionResp = &types.PositionResp{
@@ -742,7 +752,7 @@ func (k Keeper) closePositionEntirely(
 	if err = k.ClearPosition(
 		ctx,
 		currentPosition.GetAssetPair(),
-		currentPosition.TraderAddress,
+		trader,
 	); err != nil {
 		return nil, err
 	}
