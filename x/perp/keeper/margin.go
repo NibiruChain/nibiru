@@ -21,7 +21,8 @@ func (k Keeper) AddMargin(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate trader
-	if err = sdk.VerifyAddressFormat(msg.Sender); err != nil {
+	msgSender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
 		return nil, err
 	}
 
@@ -66,14 +67,14 @@ func (k Keeper) AddMargin(
 	}
 
 	// ------------- AddMargin -------------
-	position, err := k.Positions().Get(ctx, pair, msg.Sender)
+	position, err := k.Positions().Get(ctx, pair, msgSender)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"pair",
 			pair.String(),
 			"trader",
-			msg.Sender.String(),
+			msg.Sender,
 		)
 		return nil, err
 	}
@@ -81,12 +82,12 @@ func (k Keeper) AddMargin(
 	position.Margin = position.Margin.Add(addedMargin.ToDec())
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
-		ctx, msg.Sender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
+		ctx, msgSender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"trader",
-			msg.Sender.String(),
+			msg.Sender,
 			"coin",
 			coinToSend.String(),
 		)
@@ -96,14 +97,14 @@ func (k Keeper) AddMargin(
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
 		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		/* to */ msg.Sender,
+		/* to */ msgSender,
 	)
 
-	k.Positions().Set(ctx, pair, msg.Sender, position)
+	k.Positions().Set(ctx, pair, msgSender, position)
 
 	// TODO(https://github.com/NibiruChain/nibiru/issues/323): calculate the funding payment
 	fPayment := sdk.ZeroDec()
-	events.EmitMarginChange(ctx, msg.Sender, pair.String(), addedMargin, fPayment)
+	events.EmitMarginChange(ctx, msgSender, pair.String(), addedMargin, fPayment)
 	return &types.MsgAddMarginResponse{}, nil
 }
 
@@ -118,7 +119,8 @@ func (k Keeper) RemoveMargin(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate trader
-	if err = sdk.VerifyAddressFormat(msg.Sender); err != nil {
+	msgSender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
 		return nil, err
 	}
 
@@ -163,14 +165,14 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// ------------- RemoveMargin -------------
-	position, err := k.Positions().Get(ctx, pair, msg.Sender)
+	position, err := k.Positions().Get(ctx, pair, msgSender)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"pair",
 			pair.String(),
 			"trader",
-			msg.Sender.String(),
+			msg.Sender,
 		)
 		return nil, err
 	}
@@ -201,16 +203,16 @@ func (k Keeper) RemoveMargin(
 		return res, fmt.Errorf("not enough free collateral")
 	}
 
-	k.Positions().Set(ctx, pair, msg.Sender, position)
+	k.Positions().Set(ctx, pair, msgSender, position)
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.VaultModuleAccount, msg.Sender, sdk.NewCoins(coinToSend))
+		ctx, types.VaultModuleAccount, msgSender, sdk.NewCoins(coinToSend))
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"to",
-			msg.Sender.String(),
+			msg.Sender,
 			"coin",
 			coinToSend.String(),
 		)
@@ -220,12 +222,12 @@ func (k Keeper) RemoveMargin(
 	events.EmitTransfer(ctx,
 		/* coin */ coinToSend,
 		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		/* to */ msg.Sender,
+		/* to */ msgSender,
 	)
 
 	events.EmitMarginChange(
 		ctx,
-		msg.Sender,
+		msgSender,
 		pair.String(),
 		msg.Margin.Amount,
 		remaining.FundingPayment,
