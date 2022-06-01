@@ -155,24 +155,23 @@ func initParamsKeeper(
 
 func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 	tests := []struct {
-		name string
-		test func()
+		name                       string
+		initialPosition            types.Position
+		setMocks                   func(ctx sdk.Context, mocks mockedDependencies)
+		pnlCalcOption              types.PnLCalcOption
+		expectedPositionalNotional sdk.Dec
+		expectedUnrealizedPnL      sdk.Dec
 	}{
 		{
 			name: "long position; positive pnl; spot price calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
@@ -181,34 +180,21 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						sdk.NewDec(10),
 					).
 					Return(sdk.NewDec(20), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_SPOT_PRICE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_SPOT_PRICE,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnL:      sdk.NewDec(10),
 		},
 		{
 			name: "long position; negative pnl; spot price calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
@@ -217,34 +203,21 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						sdk.NewDec(10),
 					).
 					Return(sdk.NewDec(5), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_SPOT_PRICE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(-5), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_SPOT_PRICE,
+			expectedPositionalNotional: sdk.NewDec(5),
+			expectedUnrealizedPnL:      sdk.NewDec(-5),
 		},
 		{
 			name: "long position; positive pnl; twap calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
@@ -254,34 +227,21 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(20), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_TWAP,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_TWAP,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnL:      sdk.NewDec(10),
 		},
 		{
 			name: "long position; negative pnl; twap calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
@@ -291,102 +251,63 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(5), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_TWAP,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(-5), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_TWAP,
+			expectedPositionalNotional: sdk.NewDec(5),
+			expectedUnrealizedPnL:      sdk.NewDec(-5),
 		},
 		{
 			name: "long position; positive pnl; oracle calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
 						BtcNusdPair,
 					).
 					Return(sdk.NewDec(2), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_ORACLE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_ORACLE,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnL:      sdk.NewDec(10),
 		},
 		{
 			name: "long position; negative pnl; oracle calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
 						BtcNusdPair,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_ORACLE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(-5), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_ORACLE,
+			expectedPositionalNotional: sdk.NewDec(5),
+			expectedUnrealizedPnL:      sdk.NewDec(-5),
 		},
 		{
 			name: "short position; positive pnl; spot price calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(-10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(-10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
@@ -395,34 +316,21 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						sdk.NewDec(10),
 					).
 					Return(sdk.NewDec(5), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_SPOT_PRICE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(5), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_SPOT_PRICE,
+			expectedPositionalNotional: sdk.NewDec(5),
+			expectedUnrealizedPnL:      sdk.NewDec(5),
 		},
 		{
 			name: "short position; negative pnl; spot price calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(-10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(-10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
@@ -431,34 +339,21 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						sdk.NewDec(10),
 					).
 					Return(sdk.NewDec(20), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_SPOT_PRICE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(-10), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_SPOT_PRICE,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnL:      sdk.NewDec(-10),
 		},
 		{
 			name: "short position; positive pnl; twap calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(-10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(-10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
@@ -468,34 +363,21 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(5), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_TWAP,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(5), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_TWAP,
+			expectedPositionalNotional: sdk.NewDec(5),
+			expectedUnrealizedPnL:      sdk.NewDec(5),
 		},
 		{
 			name: "short position; negative pnl; twap calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(-10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(-10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
@@ -505,108 +387,86 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(20), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_TWAP,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(-10), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_TWAP,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnL:      sdk.NewDec(-10),
 		},
 		{
 			name: "short position; positive pnl; oracle calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(-10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(-10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
 						BtcNusdPair,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_ORACLE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(5), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_ORACLE,
+			expectedPositionalNotional: sdk.NewDec(5),
+			expectedUnrealizedPnL:      sdk.NewDec(5),
 		},
 		{
 			name: "long position; negative pnl; oracle calc",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(-10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
-				t.Log("Mocking price of vpool")
+			initialPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(-10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetUnderlyingPrice(
 						ctx,
 						BtcNusdPair,
 					).
 					Return(sdk.NewDec(2), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLCalcOption_ORACLE,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(-10), unrealizedPnl)
 			},
+			pnlCalcOption:              types.PnLCalcOption_ORACLE,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnL:      sdk.NewDec(-10),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			perpKeeper, mocks, ctx := getKeeper(t)
+
+			tc.setMocks(ctx, mocks)
+
+			positionalNotional, unrealizedPnl, err := perpKeeper.
+				getPositionNotionalAndUnrealizedPnL(
+					ctx,
+					tc.initialPosition,
+					tc.pnlCalcOption,
+				)
+			require.NoError(t, err)
+
+			assert.EqualValues(t, tc.expectedPositionalNotional, positionalNotional)
+			assert.EqualValues(t, tc.expectedUnrealizedPnL, unrealizedPnl)
 		})
 	}
 }
 
 func TestSwapQuoteAssetForBase(t *testing.T) {
 	tests := []struct {
-		name string
-		test func()
+		name               string
+		setMocks           func(ctx sdk.Context, mocks mockedDependencies)
+		side               types.Side
+		expectedBaseAmount sdk.Dec
 	}{
 		{
 			name: "long position - buy",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("mock vpool")
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
@@ -615,26 +475,13 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 					).Return(sdk.NewDec(5), nil)
-
-				baseAmount, err := perpKeeper.swapQuoteForBase(
-					ctx,
-					BtcNusdPair,
-					types.Side_BUY,
-					sdk.NewDec(10),
-					sdk.NewDec(1),
-					false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), baseAmount)
 			},
+			side:               types.Side_BUY,
+			expectedBaseAmount: sdk.NewDec(5),
 		},
 		{
 			name: "short position - sell",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("mock vpool")
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
@@ -643,26 +490,30 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 					).Return(sdk.NewDec(5), nil)
-
-				baseAmount, err := perpKeeper.swapQuoteForBase(
-					ctx,
-					BtcNusdPair,
-					types.Side_SELL,
-					sdk.NewDec(10),
-					sdk.NewDec(1),
-					false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(-5), baseAmount)
 			},
+			side:               types.Side_SELL,
+			expectedBaseAmount: sdk.NewDec(-5),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			perpKeeper, mocks, ctx := getKeeper(t)
+
+			tc.setMocks(ctx, mocks)
+
+			baseAmount, err := perpKeeper.swapQuoteForBase(
+				ctx,
+				BtcNusdPair,
+				tc.side,
+				sdk.NewDec(10),
+				sdk.NewDec(1),
+				false,
+			)
+
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedBaseAmount, baseAmount)
 		})
 	}
 }
@@ -672,23 +523,23 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 	// short positions and negative pnl are implicitly correct because of
 	// TestGetPositionNotionalAndUnrealizedPnl
 	testcases := []struct {
-		name string
-		test func()
+		name                       string
+		initPosition               types.Position
+		setMocks                   func(ctx sdk.Context, mocks mockedDependencies)
+		pnlPreferenceOption        types.PnLPreferenceOption
+		expectedPositionalNotional sdk.Dec
+		expectedUnrealizedPnl      sdk.Dec
 	}{
 		{
 			name: "max pnl, pick spot price",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
+			initPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
@@ -708,33 +559,21 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(15), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPreferencePositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLPreferenceOption_MAX,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
 			},
+			pnlPreferenceOption:        types.PnLPreferenceOption_MAX,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnl:      sdk.NewDec(10),
 		},
 		{
 			name: "max pnl, pick twap",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
+			initPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
@@ -754,33 +593,21 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(30), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPreferencePositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLPreferenceOption_MAX,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(30), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(20), unrealizedPnl)
 			},
+			pnlPreferenceOption:        types.PnLPreferenceOption_MAX,
+			expectedPositionalNotional: sdk.NewDec(30),
+			expectedUnrealizedPnl:      sdk.NewDec(20),
 		},
 		{
 			name: "min pnl, pick spot price",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
+			initPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
@@ -800,33 +627,21 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(30), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPreferencePositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLPreferenceOption_MIN,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(20), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(10), unrealizedPnl)
 			},
+			pnlPreferenceOption:        types.PnLPreferenceOption_MIN,
+			expectedPositionalNotional: sdk.NewDec(20),
+			expectedUnrealizedPnl:      sdk.NewDec(10),
 		},
 		{
 			name: "min pnl, pick twap",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("Setting up initial position")
-				oldPosition := types.Position{
-					TraderAddress: sample.AccAddress(),
-					Pair:          "BTC:NUSD",
-					Size_:         sdk.NewDec(10),
-					OpenNotional:  sdk.NewDec(10),
-					Margin:        sdk.NewDec(1),
-				}
-
+			initPosition: types.Position{
+				TraderAddress: sample.AccAddress(),
+				Pair:          "BTC:NUSD",
+				Size_:         sdk.NewDec(10),
+				OpenNotional:  sdk.NewDec(10),
+				Margin:        sdk.NewDec(1),
+			},
+			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
@@ -846,53 +661,57 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 						15*time.Minute,
 					).
 					Return(sdk.NewDec(15), nil)
-
-				positionalNotional, unrealizedPnl, err := perpKeeper.
-					getPreferencePositionNotionalAndUnrealizedPnL(
-						ctx,
-						oldPosition,
-						types.PnLPreferenceOption_MIN,
-					)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(15), positionalNotional)
-				assert.EqualValues(t, sdk.NewDec(5), unrealizedPnl)
 			},
+			pnlPreferenceOption:        types.PnLPreferenceOption_MIN,
+			expectedPositionalNotional: sdk.NewDec(15),
+			expectedUnrealizedPnl:      sdk.NewDec(5),
 		},
 	}
 
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			perpKeeper, mocks, ctx := getKeeper(t)
+
+			tc.setMocks(ctx, mocks)
+
+			positionalNotional, unrealizedPnl, err := perpKeeper.
+				getPreferencePositionNotionalAndUnrealizedPnL(
+					ctx,
+					tc.initPosition,
+					tc.pnlPreferenceOption,
+				)
+
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedPositionalNotional, positionalNotional)
+			assert.EqualValues(t, tc.expectedUnrealizedPnl, unrealizedPnl)
 		})
 	}
 }
 
 func TestIncreasePosition(t *testing.T) {
 	tests := []struct {
-		name string
-		test func()
+		name         string
+		initPosition types.Position
+		given        func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper)
+		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error)
+		then         func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error)
 	}{
 		{
 			name: "increase long position, positive PnL",
 			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1BTC=1NUSD)
 			// BTC went up in value, now its price is 1BTC=2NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(100), // 100 BTC
-					Margin:                              sdk.NewDec(10),  // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(100), // 100 BTC
+				Margin:                              sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100), // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -920,17 +739,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(50), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount))
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
@@ -940,8 +761,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))
 				assert.EqualValues(t, sdk.NewDec(100), resp.UnrealizedPnlAfter)
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(150), resp.Position.Size_)        // 100 + 50
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -954,20 +775,16 @@ func TestIncreasePosition(t *testing.T) {
 			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1BTC=1NUSD)
 			// BTC went down in value, now its price is 1.01BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(100), // 100 BTC
-					Margin:                              sdk.NewDec(10),  // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(100), // 100 BTC
+				Margin:                              sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100), // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -995,17 +812,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(101), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount)) // equal to open notional
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
@@ -1015,8 +834,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))           // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 99 - 100
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(201), resp.Position.Size_)        // 100 + 101
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -1032,20 +851,16 @@ func TestIncreasePosition(t *testing.T) {
 			// position notional value is 100 NUSD, unrealized PnL is -10 NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			// funding payment causes negative margin aka bad debt
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(110), // 110 BTC
-					Margin:                              sdk.NewDec(11),  // 11 NUSD
-					OpenNotional:                        sdk.NewDec(110), // 110 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(110), // 110 BTC
+				Margin:                              sdk.NewDec(11),  // 11 NUSD
+				OpenNotional:                        sdk.NewDec(110), // 110 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -1073,17 +888,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.2"), // 0.2 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(110), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault) // openNotional / leverage
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)    // always zero for increasePosition
@@ -1094,8 +911,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)        // 90 - 100
 				assert.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                     // 11(old) + 10(new) - 22(funding payment)
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(220), resp.Position.Size_)        // 110 + 110
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 11(old) + 10(new) - 22(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(210), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -1109,20 +926,16 @@ func TestIncreasePosition(t *testing.T) {
 			// user's initial margin deposit was 10 NUSD
 			// BTC went down in value, now its price is 2BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-100), // -100 BTC
-					Margin:                              sdk.NewDec(10),   // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // -100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -1150,17 +963,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(200), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
@@ -1170,8 +985,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)           // open notional / leverage
 				assert.EqualValues(t, sdk.NewDec(50), resp.UnrealizedPnlAfter)      // 100 - 50
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-300), resp.Position.Size_)       // -100 - 200
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new)  - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -1185,20 +1000,16 @@ func TestIncreasePosition(t *testing.T) {
 			// user's initial margin deposit was 10 NUSD
 			// BTC went up in value, now its price is 0.99BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-100), // 100 BTC
-					Margin:                              sdk.NewDec(10),   // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // 100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -1226,17 +1037,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
 					/*baseLimit=*/ sdk.NewDec(99), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
@@ -1246,8 +1059,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)          // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 100 - 101
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-199), resp.Position.Size_)       // -100 - 99
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new) - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
@@ -1264,20 +1077,16 @@ func TestIncreasePosition(t *testing.T) {
 			// position notional is 105 NUSD and unrealizedPnL is -5 NUSD
 			// user increases position by another 105 NUSD at 10x leverage
 			// funding payment causes bad debt
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-100), // 100 BTC
-					Margin:                              sdk.NewDec(10),   // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
+			initPosition: types.Position{
+				TraderAddress:                       sample.AccAddress(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // 100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
@@ -1305,17 +1114,19 @@ func TestIncreasePosition(t *testing.T) {
 						sdk.MustNewDecFromStr("-0.3"), // - 0.3 NUSD / BTC
 					},
 				})
-
+			},
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
 				t.Log("Increase position with 10.5 NUSD margin and 10x leverage.")
-				resp, err := perpKeeper.increasePosition(
+				return perpKeeper.increasePosition(
 					ctx,
-					currentPosition,
+					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(105), // NUSD
 					/*baseLimit=*/ sdk.NewDec(100), // BTC
 					/*leverage=*/ sdk.NewDec(10),
 				)
-
+			},
+			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)                                     // always zero for increasePosition
 				assert.EqualValues(t, sdk.MustNewDecFromStr("10.5").String(), resp.MarginToVault.String()) // openNotional / leverage
@@ -1326,8 +1137,8 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-5), resp.UnrealizedPnlAfter)                      // 100 - 105
 				assert.EqualValues(t, sdk.MustNewDecFromStr("9.5").String(), resp.BadDebt.String()) // 10(old) + 10.5(new) - (30)(funding payment)
 
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-200), resp.Position.Size_)       // -100 + (-100)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 10(old) + 10.5(new) - (30)(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(205), resp.Position.OpenNotional) // 100(old) + 105(new)
@@ -1340,7 +1151,13 @@ func TestIncreasePosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			perpKeeper, mocks, ctx := getKeeper(t)
+
+			tc.given(ctx, mocks, perpKeeper)
+
+			resp, err := tc.when(ctx, perpKeeper, tc.initPosition)
+
+			tc.then(t, ctx, tc.initPosition, resp, err)
 		})
 	}
 }
