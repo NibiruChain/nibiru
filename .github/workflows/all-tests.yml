@@ -1,9 +1,9 @@
 name: All Tests
 
-# Runs on PR changes and merges. 
+# Runs on master merge only.
 on:
-  pull_request:
-    branches: ["**"]
+  push:
+    branches: ["master"]
 
 jobs:
   build:
@@ -18,7 +18,7 @@ jobs:
       - name: Build binaries for nibid using the Makefile
         run: make build
 
-  test-unit-and-integration:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
