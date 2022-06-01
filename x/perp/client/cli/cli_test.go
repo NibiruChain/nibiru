@@ -133,7 +133,7 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	)
 	s.Require().NoError(err)
 
-	// Check vpool balances
+	// A. Check vpool balances
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.Require().NoError(err)
@@ -158,18 +158,18 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
 	s.Require().True(strings.Contains(err.Error(), "no position found"))
 
-	// Open position
+	// A. Open position
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 
-	// Check vpool after opening position
+	// A. Check vpool after opening position
 	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.Require().NoError(err)
 	s.Require().Equal(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
 	s.Require().Equal(sdk.MustNewDecFromStr("60001000000"), reserveAssets.QuoteAssetReserve)
 
-	// Check position
+	// A. Check position
 	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
@@ -178,7 +178,7 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.OpenNotional)
 
-	// Open a reverse position smaller than the existing position
+	// B. Open a reverse position smaller than the existing position
 	args = []string{
 		"--from",
 		user.String(),
@@ -192,14 +192,14 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	s.Require().NoError(err)
 	s.Require().NotContains(res.String(), "fail")
 
-	// Check vpool after opening reverse position
+	// B. Check vpool after opening reverse position
 	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.Require().NoError(err)
 	s.Require().Equal(sdk.MustNewDecFromStr("9999833.352777175968362487"), reserveAssets.BaseAssetReserve)
 	s.Require().Equal(sdk.MustNewDecFromStr("60000999900.000000000000000000"), reserveAssets.QuoteAssetReserve)
 
-	// Check position
+	// B. Check position
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
@@ -209,7 +209,30 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
 	s.Require().Equal(sdk.MustNewDecFromStr("999900"), queryResp.Position.OpenNotional)
 
-	// Close positions
+	// C. Open a reverse position larger than the existing position
+	args = []string{
+		"--from",
+		user.String(),
+		"buy",
+		pairStr,
+		"1",       // Leverage
+		"1000000", // 1 BTC
+		"2",
+	}
+	res, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+	s.Require().NotContains(res.String(), "fail")
+
+	// C. Check position
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	s.T().Logf("STEVENDEBUG query response: %+v", queryResp)
+	s.Require().NoError(err)
+	s.Require().Equal(user, queryResp.Position.TraderAddress)
+	s.Require().Equal(pair.String(), queryResp.Position.Pair)
+	s.Require().Equal(sdk.MustNewDecFromStr("2000000"), queryResp.Position.Margin)
+	s.Require().Equal(sdk.MustNewDecFromStr("1999900"), queryResp.Position.OpenNotional)
+
+	// D. Close positions
 	args = []string{
 		"--from",
 		user.String(),
@@ -218,7 +241,7 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 
-	// After closing position should be zero
+	// D. After closing position should be zero
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
