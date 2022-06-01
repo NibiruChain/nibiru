@@ -112,12 +112,13 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestOpenPositionCmd() {
+func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	val := s.network.Validators[0]
 	pair := common.AssetPair{
 		Token0: "ubtc",
 		Token1: "unibi",
 	}
+	pairStr := fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi")
 
 	user := s.users[0]
 
@@ -143,7 +144,7 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		"--from",
 		user.String(),
 		"buy",
-		fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi"),
+		pairStr,
 		"1",       // Leverage
 		"1000000", // 1 BTC
 		"1",
@@ -182,7 +183,7 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		"--from",
 		user.String(),
 		"sell",
-		fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi"),
+		pairStr,
 		"1",   // Leverage
 		"100", // BTC
 		"1",
@@ -207,6 +208,23 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	s.Require().Equal(pair.String(), queryResp.Position.Pair)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
 	s.Require().Equal(sdk.MustNewDecFromStr("999900"), queryResp.Position.OpenNotional)
+
+	// Close positions
+	args = []string{
+		"--from",
+		user.String(),
+		pairStr,
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+
+	// After closing position should be zero
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	s.T().Logf("query response: %+v", queryResp)
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.MustNewDecFromStr("0"), queryResp.Position.Margin)
+	s.Require().Equal(sdk.MustNewDecFromStr("0"), queryResp.Position.OpenNotional)
+	s.Require().Equal(sdk.MustNewDecFromStr("0"), queryResp.Position.Size_)
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
