@@ -287,7 +287,11 @@ func (pbd PrepaidBadDebtState) Increment(ctx sdk.Context, denom string, incremen
 	kv := pbd.getKVStore(ctx)
 	amount = pbd.Get(ctx, denom).Add(increment)
 
-	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+	b, err := amount.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	kv.Set([]byte(denom), b)
 
 	return amount
 }
@@ -305,7 +309,11 @@ func (pbd PrepaidBadDebtState) Decrement(ctx sdk.Context, denom string, decremen
 	kv := pbd.getKVStore(ctx)
 	amount = sdk.MaxInt(pbd.Get(ctx, denom).Sub(decrement), sdk.ZeroInt())
 
-	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+	b, err := amount.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	kv.Set([]byte(denom), b)
 
 	return amount
 }
