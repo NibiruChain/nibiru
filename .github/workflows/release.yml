@@ -9,7 +9,7 @@ on:
       - 'releases/**'
 
 jobs:
-  might_release:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,6 +22,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          append_to_pre_release_tag: ""
 
       - name: Build Binary
         uses: ignite-hq/cli/actions/cli@develop
