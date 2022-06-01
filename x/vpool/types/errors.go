@@ -11,4 +11,5 @@ var (
 	ErrOverFluctuationLimit = sdkerrors.Register(ModuleName, 6, "price is over fluctuation limit")
 	ErrAssetOverUserLimit   = sdkerrors.Register(ModuleName, 7, "amout of assets traded is over user-defined limit")
 	ErrOpeningPosition      = sdkerrors.Register(ModuleName, 8, "error opening position")
+	ErrClosingPosition      = sdkerrors.Register(ModuleName, 9, "error closing position")
 )

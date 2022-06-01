@@ -26,6 +26,7 @@ type IntegrationTestSuite struct {
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
+	users   []sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -54,6 +55,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
+		{
+			Pair:                  "eth:unibi",
+			BaseAssetReserve:      sdk.MustNewDecFromStr("10000000"),
+			QuoteAssetReserve:     sdk.MustNewDecFromStr("60000000000"),
+			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+		},
 	}
 	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
 
@@ -61,6 +70,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
 		{
 			Pair: "ubtc:unibi",
+			CumulativePremiumFractions: []sdk.Dec{
+				sdk.ZeroDec(),
+			},
+		},
+		{
+			Pair: "eth:unibi",
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -76,6 +91,20 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
+
+	val := s.network.Validators[0]
+	info, _, err := val.ClientCtx.Keyring.
+		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user1 := sdk.AccAddress(info.GetPubKey().Address())
+
+	info2, _, err := val.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user2 := sdk.AccAddress(info2.GetPubKey().Address())
+
+	// TODO: figure out why using user2 gives a "key <addr> not found" error
+	s.users = []sdk.AccAddress{user1, user2}
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -90,13 +119,9 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 		Token1: "unibi",
 	}
 
-	info, _, err := val.ClientCtx.Keyring.
-		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
+	user := s.users[0]
 
-	user := sdk.AccAddress(info.GetPubKey().Address())
-
-	_, err = utils.FillWalletFromValidator(user,
+	_, err := utils.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -182,6 +207,47 @@ func (s *IntegrationTestSuite) TestOpenPositionCmd() {
 	s.Require().Equal(pair.String(), queryResp.Position.Pair)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
 	s.Require().Equal(sdk.MustNewDecFromStr("999900"), queryResp.Position.OpenNotional)
+}
+
+func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
+	val := s.network.Validators[0]
+	pair := common.AssetPair{
+		Token0: "eth",
+		Token1: "unibi",
+	}
+
+	user := s.users[0]
+
+	_, err := utils.FillWalletFromValidator(user,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	// verify trader has no position (empty)
+	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	s.Require().True(strings.Contains(err.Error(), "no position found"))
+
+	// close position should produce error
+	args := []string{
+		"--from",
+		user.String(),
+		fmt.Sprintf("%s%s%s", "eth", common.PairSeparator, "unibi"),
+	}
+	commonArgs := []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	}
+	// TODO: fix that this err doesn't get propagated back up to show up here
+	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.T().Logf("res: %+v", res)
+	s.T().Logf("err: %+v", err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

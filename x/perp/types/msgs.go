@@ -101,3 +101,29 @@ func (m MsgLiquidate) GetSignBytes() []byte {
 func (m MsgLiquidate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{m.Sender}
 }
+
+// MsgClosePosition
+
+func (m MsgClosePosition) Route() string { return RouterKey }
+func (m MsgClosePosition) Type() string  { return "liquidate_msg" }
+
+func (m MsgClosePosition) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
+		return err
+	}
+	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
+		return err
+	}
+	if _, err := common.NewAssetPairFromStr(m.TokenPair); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m MsgClosePosition) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgClosePosition) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{m.Sender}
+}
