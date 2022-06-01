@@ -40,8 +40,7 @@ service Msg {
 
 /* MsgRemoveMargin: Msg to remove margin. */
 message MsgRemoveMargin {
-  bytes sender = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string sender = 1;
 
   string token_pair = 2;
 
@@ -60,8 +59,7 @@ message MsgRemoveMarginResponse {
 
 /* MsgAddMargin: Msg to remove margin. */
 message MsgAddMargin {
-  bytes sender = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string sender = 1;
 
   string token_pair = 2;
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
@@ -75,14 +73,12 @@ message MsgAddMarginResponse {
 
 message MsgLiquidate {
     // Sender is the liquidator address
-    bytes sender = 1 [
-      (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
 
     // TokenPair is the identifier for the position's virtual pool
     string token_pair = 2;
     // Trader is the address of the owner of the position 
-    bytes trader = 3 [
-      (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string trader = 3;
   }
   
 message MsgLiquidateResponse {
@@ -93,9 +89,7 @@ message MsgLiquidateResponse {
 // -------------------------- OpenPosition --------------------------
 
 message MsgOpenPosition {
-  bytes sender = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-
+  string sender = 1;
   string token_pair = 2;
   nibiru.perp.v1.Side side = 3;
   string quote_asset_amount = 4 [
@@ -116,9 +110,7 @@ message MsgOpenPositionResponse {
 // -------------------------- ClosePosition --------------------------
 
 message MsgClosePosition {
-  bytes sender = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-
+  string sender = 1;
   string token_pair = 2;
 }
 

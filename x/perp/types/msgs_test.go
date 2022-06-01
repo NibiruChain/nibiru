@@ -17,7 +17,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"ok": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress(),
+				Sender:               sample.AccAddress().String(),
 				TokenPair:            "NIBI:USDN",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -29,7 +29,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 
 		"invalid side": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress(),
+				Sender:               sample.AccAddress().String(),
 				TokenPair:            "NIBI:USDN",
 				Side:                 2,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -40,7 +40,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid address": {
 			msg: &MsgOpenPosition{
-				Sender:               []byte(""),
+				Sender:               "",
 				TokenPair:            "NIBI:USDN",
 				Side:                 Side_SELL,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -51,7 +51,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid leverage": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress(),
+				Sender:               sample.AccAddress().String(),
 				TokenPair:            "NIBI:USDN",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -62,7 +62,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid quote asset amount": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress(),
+				Sender:               sample.AccAddress().String(),
 				TokenPair:            "NIBI:USDN",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(0),
@@ -73,7 +73,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid token pair": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress(),
+				Sender:               sample.AccAddress().String(),
 				TokenPair:            "NIBI-USDN",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(0),
@@ -84,7 +84,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid base asset amount limit": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress(),
+				Sender:               sample.AccAddress().String(),
 				TokenPair:            "NIBI:USDN",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(0),
@@ -119,33 +119,33 @@ func TestMsgLiquidate_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"ok": {
 			msg: &MsgLiquidate{
-				Sender:    sample.AccAddress(),
+				Sender:    sample.AccAddress().String(),
 				TokenPair: "NIBI:USDN",
-				Trader:    sample.AccAddress(),
+				Trader:    sample.AccAddress().String(),
 			},
 			wantErr: false,
 		},
 		"invalid pair": {
 			msg: &MsgLiquidate{
-				Sender:    sample.AccAddress(),
+				Sender:    sample.AccAddress().String(),
 				TokenPair: "xxx:yyy:zzz",
-				Trader:    sample.AccAddress(),
+				Trader:    sample.AccAddress().String(),
 			},
 			wantErr: true,
 		},
 		"invalid trader": {
 			msg: &MsgLiquidate{
-				Sender:    sample.AccAddress(),
+				Sender:    sample.AccAddress().String(),
 				TokenPair: "NIBI:USDN",
-				Trader:    sdk.AccAddress{},
+				Trader:    "",
 			},
 			wantErr: true,
 		},
 		"invalid liquidator": {
 			msg: &MsgLiquidate{
-				Sender:    sdk.AccAddress{},
+				Sender:    "",
 				TokenPair: "NIBI:USDN",
-				Trader:    sample.AccAddress(),
+				Trader:    sample.AccAddress().String(),
 			},
 			wantErr: true,
 		},

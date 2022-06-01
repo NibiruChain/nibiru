@@ -29,7 +29,7 @@ var (
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
-		TraderAddress:                       traderAddr,
+		TraderAddress:                       traderAddr.String(),
 		Pair:                                tokenPair.String(),
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
@@ -59,8 +59,7 @@ func (l *LiquidateResp) Validate() error {
 		}
 	}
 
-	_, err := sdk.AccAddressFromBech32(l.Liquidator.String())
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(l.Liquidator); err != nil {
 		return err
 	}
 

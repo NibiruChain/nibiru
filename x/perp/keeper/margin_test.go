@@ -29,7 +29,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				pair, err := common.NewAssetPairFromStr("xxx:yyy")
 				require.NoError(t, err)
 
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 
 				t.Log("open a position on invalid 'pair'")
 				side := types.Side_BUY
@@ -37,7 +37,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice, quote, leverage, baseLimit)
+					ctx, pair, side, trader, quote, leverage, baseLimit)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -65,13 +65,13 @@ func TestOpenPosition_Setup(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Attempt to open long position (expected unsuccessful)")
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice, quote, leverage, baseLimit)
+					ctx, pair, side, trader, quote, leverage, baseLimit)
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
@@ -106,10 +106,10 @@ func TestOpenPosition_Setup(t *testing.T) {
 						sdk.OneDec()},
 				})
 
-				t.Log("Fund trader (Alice) account with sufficient quote")
+				t.Log("Fund trader account with sufficient quote")
 
-				alice := sample.AccAddress()
-				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+				trader := sample.AccAddress()
+				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, trader,
 					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
 				require.NoError(t, err)
 
@@ -119,7 +119,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice, quote, leverage, baseLimit)
+					ctx, pair, side, trader, quote, leverage, baseLimit)
 
 				require.NoError(t, err)
 			},
@@ -163,7 +163,7 @@ func TestAddMargin_ShouldRaiseError(t *testing.T) {
 				t.Log("create msg for MsgAddMargin with invalid denom")
 				traderAddr := sample.AccAddress()
 				msg := &types.MsgAddMargin{
-					Sender:    traderAddr,
+					Sender:    traderAddr.String(),
 					TokenPair: tokenPair.String(),
 					Margin:    sdk.NewCoin("notADenom", sdk.NewInt(400)),
 				}
@@ -245,7 +245,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 				tokenPair,
 				traderAddr,
 				&types.Position{
-					TraderAddress: traderAddr,
+					TraderAddress: traderAddr.String(),
 					Pair:          tokenPair.String(),
 					Size_:         sdk.NewDec(9999),
 					Margin:        tc.initialMargin.ToDec(),
@@ -254,7 +254,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 
 			goCtx := sdk.WrapSDKContext(ctx)
 			msg := &types.MsgAddMargin{
-				Sender: traderAddr, TokenPair: tokenPair.String(),
+				Sender: traderAddr.String(), TokenPair: tokenPair.String(),
 				Margin: sdk.Coin{
 					Denom:  tokenPair.GetQuoteTokenDenom(),
 					Amount: tc.addedMargin}}
@@ -280,13 +280,13 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(-5)
 
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice, TokenPair: pair.String(),
+					Sender: trader.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err = nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
@@ -297,13 +297,13 @@ func TestRemoveMargin(t *testing.T) {
 			name: "zero margin remove - fail",
 			test: func() {
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice,
+					Sender:    trader.String(),
 					TokenPair: pair.String(),
 					Margin: sdk.Coin{
 						Denom:  common.StableDenom,
@@ -321,13 +321,13 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(5)
 
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice, TokenPair: pair.String(),
+					Sender: trader.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err = nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
@@ -339,7 +339,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
@@ -359,7 +359,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(5)
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice, TokenPair: pair.String(),
+					Sender: trader.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
 				_, err = perpKeeper.RemoveMargin(
 					goCtx, msg)
@@ -372,7 +372,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("xxx:yyy")
 				require.NoError(t, err)
 
@@ -404,9 +404,9 @@ func TestRemoveMargin(t *testing.T) {
 				ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
 					WithBlockTime(time.Now().Add(time.Minute))
 
-				t.Log("Fund trader (Alice) account with sufficient quote")
+				t.Log("Fund trader account with sufficient quote")
 
-				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, trader,
 					sdk.NewCoins(
 						sdk.NewInt64Coin("yyy", 66),
 					))
@@ -418,18 +418,18 @@ func TestRemoveMargin(t *testing.T) {
 				leverage := sdk.NewDec(5)
 				baseLimit := sdk.NewInt(10)
 				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, alice, quote, leverage, baseLimit.ToDec())
+					ctx, pair, side, trader, quote, leverage, baseLimit.ToDec())
 				require.NoError(t, err)
 
 				t.Log("Position should be accessible following 'OpenPosition'")
-				_, err = nibiruApp.PerpKeeper.GetPosition(ctx, pair, alice)
+				_, err = nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
 				require.NoError(t, err)
 
 				t.Log("Verify correct events emitted for 'OpenPosition'")
 				expectedEvents := []sdk.Event{
 					events.NewTransferEvent(
 						/* coin */ sdk.NewCoin(pair.GetQuoteTokenDenom(), quote),
-						/* from */ alice,
+						/* from */ trader,
 						/* to */ nibiruApp.AccountKeeper.GetModuleAddress(
 							types.VaultModuleAccount),
 					),
@@ -443,7 +443,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(6)
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: alice, TokenPair: pair.String(),
+					Sender: trader.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
 
 				t.Log("'RemoveMargin' from the position")
@@ -453,9 +453,10 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
+				msgSender, _ := sdk.AccAddressFromBech32(msg.Sender)
 				expectedEvents = []sdk.Event{
 					events.NewMarginChangeEvent(
-						/* owner */ alice,
+						/* owner */ trader,
 						/* vpool */ msg.TokenPair,
 						/* marginAmt */ msg.Margin.Amount,
 						/* fundingPayment */ res.FundingPayment,
@@ -464,7 +465,7 @@ func TestRemoveMargin(t *testing.T) {
 						/* coin */ msg.Margin,
 						/* from */ nibiruApp.AccountKeeper.GetModuleAddress(
 							types.VaultModuleAccount),
-						/* to */ msg.Sender,
+						/* to */ msgSender,
 					),
 				}
 				for _, event := range expectedEvents {

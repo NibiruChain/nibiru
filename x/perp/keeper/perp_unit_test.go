@@ -32,7 +32,7 @@ func TestSettlePosition(t *testing.T) {
 			Return(error(nil))
 
 		pos := types.Position{
-			TraderAddress: traderAddr,
+			TraderAddress: traderAddr.String(),
 			Pair:          pair.String(),
 			Size_:         sdk.NewDec(10),
 			Margin:        sdk.NewDec(100),
@@ -76,7 +76,7 @@ func TestSettlePosition(t *testing.T) {
 		// we also need to return margin which is 100coin
 		// so total is 99_100 coin
 		pos := types.Position{
-			TraderAddress: traderAddr,
+			TraderAddress: traderAddr.String(),
 			Pair:          pair.String(),
 			Size_:         sdk.NewDec(100),
 			Margin:        sdk.NewDec(100),
@@ -98,7 +98,7 @@ func TestSettlePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		pos := types.Position{
-			TraderAddress: traderAddr,
+			TraderAddress: traderAddr.String(),
 			Pair:          pair.String(),
 			Size_:         sdk.ZeroDec(),
 		}

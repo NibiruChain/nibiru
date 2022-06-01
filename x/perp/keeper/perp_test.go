@@ -48,7 +48,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 
 				dummyPosition := &types.Position{
-					TraderAddress: traderAddr,
+					TraderAddress: traderAddr.String(),
 					Pair:          vpoolPair.String(),
 					Size_:         sdk.OneDec(),
 					Margin:        sdk.OneDec(),
@@ -98,7 +98,7 @@ func TestClearPosition(t *testing.T) {
 				var dummyPositions []*types.Position
 				for _, traderAddr := range traders {
 					dummyPosition := &types.Position{
-						TraderAddress: traderAddr,
+						TraderAddress: traderAddr.String(),
 						Pair:          vpoolPair.String(),
 						Size_:         sdk.OneDec(),
 						Margin:        sdk.OneDec(),

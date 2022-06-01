@@ -39,7 +39,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
-						Liquidator:             sdk.AccAddress{},
+						Liquidator:             "",
 					},
 				)
 				require.Error(t, err)
@@ -53,7 +53,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
-						Liquidator:             liquidator,
+						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
 								Pair: "dai:usdc:usdt",
@@ -73,7 +73,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
-						Liquidator:             liquidator,
+						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
 								Pair: BtcNusdPair.String(),
@@ -128,7 +128,7 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
-						Liquidator:             liquidator,
+						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
 								Pair: BtcNusdPair.String(),
@@ -467,7 +467,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("create and set the initial position")
 			position := types.Position{
-				TraderAddress:                       traderAddr,
+				TraderAddress:                       traderAddr.String(),
 				Pair:                                BtcNusdPair.String(),
 				Size_:                               tc.initialPositionSize,
 				Margin:                              tc.initialMargin,
@@ -486,7 +486,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			assert.EqualValues(t, tc.expectedLiquidationBadDebt, liquidationResp.BadDebt)
 			assert.EqualValues(t, tc.expectedFundsToLiquidator, liquidationResp.FeeToLiquidator)
 			assert.EqualValues(t, tc.expectedFundsToPerpEF, liquidationResp.FeeToPerpEcosystemFund)
-			assert.EqualValues(t, liquidatorAddr, liquidationResp.Liquidator)
+			assert.EqualValues(t, liquidatorAddr.String(), liquidationResp.Liquidator)
 
 			t.Log("assert position response fields")
 			positionResp := liquidationResp.PositionResp
@@ -505,7 +505,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("assert new position fields")
 			newPosition := positionResp.Position
-			assert.EqualValues(t, traderAddr, newPosition.TraderAddress)
+			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
 			assert.EqualValues(t, BtcNusdPair.String(), newPosition.Pair)
 			assert.True(t, newPosition.Size_.IsZero())        // always zero
 			assert.True(t, newPosition.Margin.IsZero())       // always zero

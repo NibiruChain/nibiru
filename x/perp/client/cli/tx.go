@@ -79,7 +79,7 @@ func OpenPositionCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgOpenPosition{
-				Sender:               clientCtx.GetFromAddress(),
+				Sender:               clientCtx.GetFromAddress().String(),
 				TokenPair:            args[1],
 				Side:                 side,
 				QuoteAssetAmount:     amount,
@@ -116,7 +116,7 @@ func ClosePositionCmd() *cobra.Command {
 				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			msg := &types.MsgClosePosition{
-				Sender:    clientCtx.GetFromAddress(),
+				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
 			}
 			if err = msg.ValidateBasic(); err != nil {
@@ -165,7 +165,7 @@ func RemoveMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgRemoveMargin{
-				Sender:    clientCtx.GetFromAddress(),
+				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
 				Margin:    marginToRemove,
 			}
@@ -207,7 +207,7 @@ func AddMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgAddMargin{
-				Sender:    clientCtx.GetFromAddress(),
+				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
 				Margin:    marginToAdd,
 			}
@@ -249,9 +249,9 @@ func LiquidateCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgLiquidate{
-				Sender:    clientCtx.GetFromAddress(),
+				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
-				Trader:    traderAddr,
+				Trader:    traderAddr.String(),
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
