@@ -135,6 +135,20 @@ func (p PositionsState) Set(
 	kvStore.Set(positionID, p.cdc.MustMarshal(position))
 }
 
+func (p PositionsState) Iterate(ctx sdk.Context, do func(position *types.Position) (stop bool)) {
+	store := p.getKV(ctx)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		position := new(types.Position)
+		p.cdc.MustUnmarshal(iter.Value(), position)
+		if !do(position) {
+			break
+		}
+	}
+}
+
 var pairMetadataNamespace = []byte{0x2}
 
 type PairMetadata Keeper
@@ -185,10 +199,27 @@ func (w Whitelist) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(w.storeKey), whitelistNamespace)
 }
 
-func (w Whitelist) IsWhitelisted(ctx sdk.Context, address string) bool {
+func (w Whitelist) IsWhitelisted(ctx sdk.Context, address sdk.AccAddress) bool {
 	kv := w.getKV(ctx)
 
-	return kv.Has([]byte(address))
+	return kv.Has(address)
+}
+
+func (w Whitelist) Whitelist(ctx sdk.Context, address sdk.AccAddress) {
+	kv := w.getKV(ctx)
+	kv.Set(address, []byte{})
+}
+
+func (w Whitelist) Iterate(ctx sdk.Context, do func(addr sdk.AccAddress) (stop bool)) {
+	kv := w.getKV(ctx)
+	iter := kv.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		if !do(iter.Key()) {
+			break
+		}
+	}
 }
 
 var prepaidBadDebtNamespace = []byte{0x4}
@@ -210,7 +241,28 @@ func (pbd PrepaidBadDebtState) Get(ctx sdk.Context, denom string) (amount sdk.In
 		return sdk.ZeroInt()
 	}
 
-	return sdk.NewIntFromUint64(sdk.BigEndianToUint64(v))
+	err := amount.Unmarshal(v)
+	if err != nil {
+		panic(err)
+	}
+
+	return amount
+}
+
+func (pbd PrepaidBadDebtState) Iterate(ctx sdk.Context, do func(denom string, amount sdk.Int) (stop bool)) {
+	kv := pbd.getKVStore(ctx)
+	iter := kv.Iterator(nil, nil)
+
+	for ; iter.Valid(); iter.Next() {
+		amount := sdk.Int{}
+		err := amount.Unmarshal(iter.Value())
+		if err != nil {
+			panic(err)
+		}
+		if !do(string(iter.Key()), amount) {
+			break
+		}
+	}
 }
 
 /*
@@ -218,7 +270,11 @@ Sets the amount of bad debt prepaid by denom.
 */
 func (pbd PrepaidBadDebtState) Set(ctx sdk.Context, denom string, amount sdk.Int) {
 	kv := pbd.getKVStore(ctx)
-	kv.Set([]byte(denom), sdk.Uint64ToBigEndian(amount.Uint64()))
+	b, err := amount.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	kv.Set([]byte(denom), b)
 }
 
 /*
