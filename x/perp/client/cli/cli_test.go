@@ -112,7 +112,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
+func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	pair := common.AssetPair{
 		Token0: "ubtc",
