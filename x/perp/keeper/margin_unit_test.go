@@ -108,7 +108,7 @@ func TestGetMarginRatio_Unit(t *testing.T) {
 		{
 			name: "margin without price changes",
 			position: types.Position{
-				TraderAddress:                       sample.AccAddress(),
+				TraderAddress:                       sample.AccAddress().String(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
@@ -121,7 +121,7 @@ func TestGetMarginRatio_Unit(t *testing.T) {
 		{
 			name: "margin with price changes",
 			position: types.Position{
-				TraderAddress:                       sample.AccAddress(),
+				TraderAddress:                       sample.AccAddress().String(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
@@ -182,7 +182,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, _, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				msg := &types.MsgRemoveMargin{Sender: []byte("")}
+				msg := &types.MsgRemoveMargin{Sender: ""}
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 			},
@@ -193,10 +193,10 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, _, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				the3pool := "dai:usdc:usdt"
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice,
+					Sender:    trader.String(),
 					TokenPair: the3pool,
 					Margin:    sdk.NewCoin(common.StableDenom, sdk.NewInt(5))}
 				_, err := k.RemoveMargin(goCtx, msg)
@@ -211,13 +211,13 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				pair := common.AssetPair{
 					Token0: "osmo",
 					Token1: "nusd",
 				}
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice,
+					Sender:    trader.String(),
 					TokenPair: pair.String(),
 					Margin:    sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)),
 				}
@@ -233,8 +233,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
-				k.SetPosition(ctx, pair, alice, &types.Position{
-					TraderAddress:                       alice,
+				k.SetPosition(ctx, pair, trader, &types.Position{
+					TraderAddress:                       trader.String(),
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -253,9 +253,9 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice,
+					Sender:    trader.String(),
 					TokenPair: "osmo:nusd",
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
@@ -274,8 +274,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				k.SetPosition(ctx, pair, alice, &types.Position{
-					TraderAddress:                       alice,
+				k.SetPosition(ctx, pair, trader, &types.Position{
+					TraderAddress:                       trader.String(),
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -295,7 +295,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				t.Log("Attempt to RemoveMargin when the vault lacks funds")
 				expectedError := fmt.Errorf("not enough funds in vault module account")
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.VaultModuleAccount, alice, sdk.NewCoins(msg.Margin),
+					ctx, types.VaultModuleAccount, trader, sdk.NewCoins(msg.Margin),
 				).Return(expectedError)
 
 				_, err = k.RemoveMargin(goCtx, msg)
@@ -309,9 +309,9 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				alice := sample.AccAddress()
+				trader := sample.AccAddress()
 				msg := &types.MsgRemoveMargin{
-					Sender:    alice,
+					Sender:    trader.String(),
 					TokenPair: "osmo:nusd",
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
@@ -330,8 +330,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				k.SetPosition(ctx, pair, alice, &types.Position{
-					TraderAddress:                       alice,
+				k.SetPosition(ctx, pair, trader, &types.Position{
+					TraderAddress:                       trader.String(),
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -354,7 +354,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					GetModuleAddress(types.VaultModuleAccount).
 					Return(vaultAddr)
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.VaultModuleAccount, alice, sdk.NewCoins(msg.Margin),
+					ctx, types.VaultModuleAccount, trader, sdk.NewCoins(msg.Margin),
 				).Return(nil)
 
 				res, err := k.RemoveMargin(goCtx, msg)
@@ -365,7 +365,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				expectedEvents := []sdk.Event{
 					events.NewMarginChangeEvent(
-						/* owner */ alice,
+						/* owner */ trader,
 						/* vpool */ msg.TokenPair,
 						/* marginAmt */ msg.Margin.Amount,
 						/* fundingPayment */ res.FundingPayment,
@@ -373,18 +373,18 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					events.NewTransferEvent(
 						/* coin */ msg.Margin,
 						/* from */ vaultAddr,
-						/* to */ msg.Sender,
+						/* to */ trader,
 					),
 				}
 				for _, event := range expectedEvents {
 					assert.Contains(t, ctx.EventManager().Events(), event)
 				}
 
-				pos, err := k.GetPosition(ctx, pair, alice)
+				pos, err := k.GetPosition(ctx, pair, trader)
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
-				assert.EqualValues(t, alice, pos.TraderAddress)
+				assert.EqualValues(t, trader.String(), pos.TraderAddress)
 			},
 		},
 	}

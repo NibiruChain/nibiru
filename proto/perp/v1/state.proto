@@ -45,8 +45,7 @@ message GenesisState {
 // the virtual liquidity pools.
 message Position {
   // address identifies the address owner of this position
-  bytes trader_address = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string trader_address = 1;
 
   // pair identifies the pair associated with this position
   string pair = 2;
@@ -120,8 +119,7 @@ message LiquidateResp {
     (gogoproto.nullable) = false];
 
   // Address of the liquidator
-  bytes liquidator = 4 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string liquidator = 4;
 
   // Position response from the close or open reverse position
   PositionResp position_resp = 5;
@@ -157,8 +155,7 @@ message PairMetadata {
 }
 
 message PositionChangedEvent {
-  bytes trader_address = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string trader_address = 1;
 
   string pair  = 2;
 
