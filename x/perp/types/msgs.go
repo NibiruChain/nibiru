@@ -28,7 +28,10 @@ func (m MsgRemoveMargin) GetSignBytes() []byte {
 }
 
 func (m MsgRemoveMargin) GetSigners() []sdk.AccAddress {
-	signer, _ := sdk.AccAddressFromBech32(m.Sender)
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
 	return []sdk.AccAddress{signer}
 }
 
@@ -46,7 +49,10 @@ func (m MsgAddMargin) GetSignBytes() []byte {
 }
 
 func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
-	signer, _ := sdk.AccAddressFromBech32(m.Sender)
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
 	return []sdk.AccAddress{signer}
 }
 
@@ -76,7 +82,10 @@ func (msg *MsgOpenPosition) ValidateBasic() error {
 }
 
 func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
-	signer, _ := sdk.AccAddressFromBech32(m.Sender)
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
 	return []sdk.AccAddress{signer}
 }
 
@@ -103,7 +112,10 @@ func (m MsgLiquidate) GetSignBytes() []byte {
 }
 
 func (m MsgLiquidate) GetSigners() []sdk.AccAddress {
-	signer, _ := sdk.AccAddressFromBech32(m.Sender)
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
 	return []sdk.AccAddress{signer}
 }
 
@@ -128,6 +140,9 @@ func (m MsgClosePosition) GetSignBytes() []byte {
 }
 
 func (m MsgClosePosition) GetSigners() []sdk.AccAddress {
-	signer, _ := sdk.AccAddressFromBech32(m.Sender)
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
 	return []sdk.AccAddress{signer}
 }
