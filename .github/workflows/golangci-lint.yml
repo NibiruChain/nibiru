@@ -1,13 +1,15 @@
-name: golangci-lint
+name: Linter
+
+# Run on every master merge and on PRs. 
 on:
   push:
-    tags:
-      - v*
-    branches:
-      - master
+    branches: ["master"]
   pull_request:
+    branches: ["**"]
+
 permissions:
   contents: read
+
 jobs:
   golangci:
     name: lint
