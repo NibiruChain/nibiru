@@ -100,6 +100,42 @@ func OpenPositionCmd() *cobra.Command {
 	return cmd
 }
 
+// TODO: how is a position idenitfiied? by pair? by id?
+func ClosePositionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "close-position [pair]",
+		Short: "Closes a position",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			msg := &types.MsgClosePosition{
+				Sender:    clientCtx.GetFromAddress(),
+				TokenPair: args[0],
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			err = tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
 /*
 RemoveMarginCmd is a CLI command that removes margin from a position,
 realizing any outstanding funding payments and decreasing the margin ratio.

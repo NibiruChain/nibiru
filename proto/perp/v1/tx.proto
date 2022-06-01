@@ -30,6 +30,10 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/open_position";
   }
 
+  rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse) {
+    option (google.api.http).post = "/nibiru/perp/close_position";
+  }
+
 }
 
 // -------------------------- RemoveMargin --------------------------
@@ -110,4 +114,14 @@ message MsgOpenPositionResponse {
 }
 
 // -------------------------- ClosePosition --------------------------
-// TODO
+
+message MsgClosePosition {
+  bytes sender = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
+  string token_pair = 2;
+}
+
+message MsgClosePositionResponse {
+
+}
