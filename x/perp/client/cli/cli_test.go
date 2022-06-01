@@ -225,14 +225,13 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 
 	// C. Check position
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
-	s.T().Logf("STEVENDEBUG query response: %+v", queryResp)
+	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Require().Equal(user, queryResp.Position.TraderAddress)
 	s.Require().Equal(pair.String(), queryResp.Position.Pair)
-	// s.Require().Equal(sdk.MustNewDecFromStr("99.999999999999998565"), queryResp.Position.Margin)
 	s.Require().Equal(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.OpenNotional)
 	s.Require().Equal(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
-	s.Require().Equal(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.OpenNotional)
+	s.Require().Equal(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.Margin)
 
 	// D. Close positions
 	args = []string{
