@@ -2,15 +2,17 @@ package perp_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/perp"
-	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/x/perp"
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGenesis(t *testing.T) {
