@@ -213,11 +213,11 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	args = []string{
 		"--from",
 		user.String(),
-		"buy",
+		"sell",
 		pairStr,
-		"1",       // Leverage
-		"1000000", // 1 BTC
-		"2",
+		"1",          // Leverage
+		"2000000",    // 2 BTC (?)
+		"2000000000", // TODO: just threw a large number here, figure out a more appropriate amount
 	}
 	res, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
@@ -229,8 +229,10 @@ func (s *IntegrationTestSuite) TestOpenAndClosePositionCmd() {
 	s.Require().NoError(err)
 	s.Require().Equal(user, queryResp.Position.TraderAddress)
 	s.Require().Equal(pair.String(), queryResp.Position.Pair)
-	s.Require().Equal(sdk.MustNewDecFromStr("2000000"), queryResp.Position.Margin)
-	s.Require().Equal(sdk.MustNewDecFromStr("1999900"), queryResp.Position.OpenNotional)
+	// s.Require().Equal(sdk.MustNewDecFromStr("99.999999999999998565"), queryResp.Position.Margin)
+	s.Require().Equal(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.OpenNotional)
+	s.Require().Equal(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
+	s.Require().Equal(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.OpenNotional)
 
 	// D. Close positions
 	args = []string{
