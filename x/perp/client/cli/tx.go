@@ -100,7 +100,6 @@ func OpenPositionCmd() *cobra.Command {
 	return cmd
 }
 
-// TODO: how is a position idenitfiied? by pair? by id?
 func ClosePositionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "close-position [pair]",

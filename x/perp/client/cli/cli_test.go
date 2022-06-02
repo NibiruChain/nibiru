@@ -268,6 +268,76 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.T().Logf("err: %+v", err)
 }
 
+func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwater() {
+	val := s.network.Validators[0]
+	pair := common.AssetPair{
+		Token0: "ubtc",
+		Token1: "unibi",
+	}
+	pairStr := fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi")
+
+	user := s.users[0]
+
+	_, err := utils.FillWalletFromValidator(user,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	// Check vpool balances
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets: %+v", reserveAssets)
+	s.Require().NoError(err)
+	// s.Require().Equal(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
+	// s.Require().Equal(sdk.MustNewDecFromStr("59999999999.999999999999998565"), reserveAssets.QuoteAssetReserve)
+
+	args := []string{
+		"--from",
+		user.String(),
+		"buy",
+		pairStr,
+		"1",       // Leverage
+		"1000000", // 1 BTC
+		"1",
+	}
+	commonArgs := []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	}
+
+	res, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	// s.Require().True(strings.Contains(err.Error(), "no position found"))
+	s.T().Logf("query response: %+v", res)
+
+	// Open position
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+
+	// Check vpool after opening position
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets: %+v", reserveAssets)
+	s.Require().NoError(err)
+	// s.Require().Equal(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
+	// s.Require().Equal(sdk.MustNewDecFromStr("60001000000"), reserveAssets.QuoteAssetReserve)
+
+	// Check position
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	s.T().Logf("query response: %+v", queryResp)
+	s.Require().NoError(err)
+	// s.Require().Equal(user.String(), queryResp.Position.TraderAddress)
+	// s.Require().Equal(pair.String(), queryResp.Position.Pair)
+	// s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
+	// s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.OpenNotional)
+
+	// Check liqudiation
+}
+
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
