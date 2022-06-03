@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -45,6 +47,7 @@ func (msg *MsgCreatePool) ValidateBasic() error {
 	}
 
 	if len(msg.PoolAssets) < MinPoolAssets {
+		fmt.Printf("STEVENDEBUG msg.PoolAssets = %v\n", msg.PoolAssets)
 		return ErrTooFewPoolAssets.Wrapf("invalid number of assets (%d)", len(msg.PoolAssets))
 	}
 	if len(msg.PoolAssets) > MaxPoolAssets {

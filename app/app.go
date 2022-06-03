@@ -662,6 +662,8 @@ func NewNibiruApp(
 	//
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
+	// TODO-STEVENDEBUG: figure out why having both dexModule & capability breaks test
+	// but commenting out either of them will pass the test
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
@@ -679,7 +681,7 @@ func NewNibiruApp(
 		epochsModule,
 		stablecoinModule,
 		// ibc
-		// capability.NewAppModule(appCodec, *app.CapabilityKeeper), // TODO-STEVENDEBUG: figure out why this addition breaks tests (TestFullAppSimulation)
+		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
