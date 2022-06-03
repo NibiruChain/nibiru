@@ -34,11 +34,22 @@ message Params {
 // GenesisState defines the perp  module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin module_account_balance = 2 [
+  repeated cosmos.base.v1beta1.Coin vault_balance = 2 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
-  repeated PairMetadata pair_metadata = 3;
+  repeated cosmos.base.v1beta1.Coin perp_ef_balance = 3 [
+    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
+    (gogoproto.nullable) = false
+  ];
+  repeated cosmos.base.v1beta1.Coin fee_pool_balance = 4 [
+    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
+    (gogoproto.nullable) = false
+  ];
+  repeated PairMetadata pair_metadata = 5;
+  repeated Position positions = 6;
+  repeated PrepaidBadDebt prepaid_bad_debts = 7;
+  repeated string whitelisted_addresses = 8;
 }
 
 // Position identifies and records information on a user's position on one of
@@ -201,5 +212,12 @@ message PositionChangedEvent {
     
   string funding_payment = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+}
+
+message PrepaidBadDebt {
+  string denom = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
 }

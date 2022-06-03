@@ -1,9 +1,10 @@
 package perp
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -11,32 +12,118 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	if genState.ModuleAccountBalance.Amount.GT(sdk.ZeroInt()) {
-		if err := k.BankKeeper.MintCoins(
-			ctx, types.ModuleName, sdk.NewCoins(genState.ModuleAccountBalance),
-		); err != nil {
-			panic(err)
+	// check fee pool balance
+	feePoolAcc := k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
+	if feePoolAcc == nil {
+		panic(fmt.Errorf("%s account was not created", types.FeePoolModuleAccount))
+	}
+	if balance := k.BankKeeper.GetAllBalances(ctx, feePoolAcc.GetAddress()); !balance.IsEqual(genState.FeePoolBalance) {
+		panic(
+			fmt.Errorf(
+				"%s registered balance does not match bank balance: %s <-> %s",
+				types.FeePoolModuleAccount, genState.FeePoolBalance, balance))
+	}
+
+	// check vault balance
+	vaultAcc := k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
+	if vaultAcc == nil {
+		panic(fmt.Errorf("%s account was not created", types.VaultModuleAccount))
+	}
+	if balance := k.BankKeeper.GetAllBalances(ctx, vaultAcc.GetAddress()); !balance.IsEqual(genState.VaultBalance) {
+		panic(
+			fmt.Errorf(
+				"%s registered balance does not match bank balance: %s <-> %s",
+				types.VaultModuleAccount, genState.VaultBalance, balance))
+	}
+	// check perp ef balance
+	perpEFAccount := k.AccountKeeper.GetModuleAccount(ctx, types.PerpEFModuleAccount)
+	if perpEFAccount == nil {
+		panic(fmt.Errorf("%s account was not created", types.PerpEFModuleAccount))
+	}
+	if balance := k.BankKeeper.GetAllBalances(ctx, perpEFAccount.GetAddress()); !balance.IsEqual(genState.PerpEfBalance) {
+		panic(
+			fmt.Errorf(
+				"%s registered balance does not match bank balance: %s <-> %s",
+				types.PerpEFModuleAccount, genState.PerpEfBalance, balance))
+	}
+
+	// set pair metadata
+	for _, p := range genState.PairMetadata {
+		k.PairMetadata().Set(ctx, p)
+	}
+
+	// create positions
+	for _, p := range genState.Positions {
+		err := k.Positions().Create(ctx, p)
+		if err != nil {
+			panic(fmt.Errorf("unable to re-create position %s: %w", p, err))
 		}
 	}
 
+	// set params
 	k.SetParams(ctx, genState.Params)
 
-	for _, pm := range genState.PairMetadata {
-		k.PairMetadata().Set(ctx, pm)
+	// set prepaid debt position
+	for _, pbd := range genState.PrepaidBadDebts {
+		k.PrepaidBadDebtState().Set(ctx, pbd.Denom, pbd.Amount)
 	}
 
-	// See https://github.com/cosmos/cosmos-sdk/issues/5569 on why we do this.
-	k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
-	k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
+	// set whitelist
+	for _, whitelist := range genState.WhitelistedAddresses {
+		addr, err := sdk.AccAddressFromBech32(whitelist)
+		if err != nil {
+			panic(err)
+		}
+		k.Whitelist().Whitelist(ctx, addr)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesis()
+	genesis := new(types.GenesisState)
 
 	genesis.Params = k.GetParams(ctx)
-	genesis.ModuleAccountBalance = k.GetModuleAccountBalance(ctx, common.GovDenom)
-	genesis.PairMetadata = k.PairMetadata().GetAll(ctx)
+	// perp ef balance
+	perpEFAccount := k.AccountKeeper.GetModuleAccount(ctx, types.PerpEFModuleAccount)
+	if perpEFAccount == nil {
+		panic(fmt.Errorf("%s module account does not exist", types.PerpEFModuleAccount))
+	}
+	perpEFBalance := k.BankKeeper.GetAllBalances(ctx, perpEFAccount.GetAddress())
+	genesis.PerpEfBalance = perpEFBalance
+	// fee pool balance
+	feePoolAccount := k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
+	if feePoolAccount == nil {
+		panic(fmt.Errorf("%s module account does not exist", types.FeePoolModuleAccount))
+	}
+	feePoolBalance := k.BankKeeper.GetAllBalances(ctx, feePoolAccount.GetAddress())
+	genesis.FeePoolBalance = feePoolBalance
+	// vault balance
+	vaultAccount := k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
+	if vaultAccount == nil {
+		panic(fmt.Errorf("%s module account does not exist", types.VaultModuleAccount))
+	}
+	vaultAccountBalance := k.BankKeeper.GetAllBalances(ctx, vaultAccount.GetAddress())
+	genesis.VaultBalance = vaultAccountBalance
 
+	// export positions
+	k.Positions().Iterate(ctx, func(position *types.Position) (stop bool) {
+		genesis.Positions = append(genesis.Positions, position)
+		return false
+	})
+
+	// export prepaid bad debt
+	k.PrepaidBadDebtState().Iterate(ctx, func(denom string, amount sdk.Int) (stop bool) {
+		genesis.PrepaidBadDebts = append(genesis.PrepaidBadDebts, &types.PrepaidBadDebt{
+			Denom:  denom,
+			Amount: amount,
+		})
+		return false
+	})
+
+	// export whitelist
+	k.Whitelist().Iterate(ctx, func(addr sdk.AccAddress) (stop bool) {
+		genesis.WhitelistedAddresses = append(genesis.WhitelistedAddresses, addr.String())
+		return false
+	})
 	return genesis
 }
