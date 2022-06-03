@@ -1,10 +1,23 @@
 package types
 
-// DefaultGenesis returns the default Capability genesis state
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+// DefaultGenesis returns the default vpool genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params: DefaultParams(),
-		Vpools: []*Pool{},
+		Vpools: []*Pool{
+			{
+				Pair:                  "ubtc:unusd",
+				BaseAssetReserve:      sdk.NewDec(10_000),
+				QuoteAssetReserve:     sdk.NewDec(50_000 * 10_000),
+				TradeLimitRatio:       sdk.OneDec(),
+				FluctuationLimitRatio: sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+		},
 	}
 }
 
