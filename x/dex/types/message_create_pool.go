@@ -47,7 +47,8 @@ func (msg *MsgCreatePool) ValidateBasic() error {
 	}
 
 	if len(msg.PoolAssets) < MinPoolAssets {
-		fmt.Printf("STEVENDEBUG msg.PoolAssets = %v\n", msg.PoolAssets)
+		fmt.Printf("\n STEVENDEBUG full = %v\n", msg)
+		fmt.Printf("\n STEVENDEBUG msg.PoolAssets = %v\n", msg.PoolAssets)
 		return ErrTooFewPoolAssets.Wrapf("invalid number of assets (%d)", len(msg.PoolAssets))
 	}
 	if len(msg.PoolAssets) > MaxPoolAssets {

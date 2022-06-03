@@ -49,7 +49,9 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 	fmt.Printf("\n \n")
 
 	poolId, err := k.NewPool(ctx, sender, *msg.PoolParams, msg.PoolAssets)
+	fmt.Printf("\n STEVENDEBUG CreatePool poolId:  %+v \n ", poolId)
 	if err != nil {
+		fmt.Printf("\n STEVENDEBUG CreatePool msg.err:  %+v \n ", err)
 		return nil, err
 	}
 

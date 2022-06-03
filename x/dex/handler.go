@@ -20,6 +20,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case *types.MsgCreatePool:
 			res, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), msg)
+			fmt.Printf("\n STEVENDEBUG handler-CreatePool res: %+v", res)
+			fmt.Printf("\n STEVENDEBUG handler-CreatePool err: %+v", err)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgJoinPool:
 			res, err := msgServer.JoinPool(sdk.WrapSDKContext(ctx), msg)

@@ -366,6 +366,7 @@ func NewNibiruApp(
 	// Applications that wish to enforce statically created ScopedKeepers should
 	// call `Seal` after creating their scoped modules in `NewApp` with
 	// `CapabilityKeeper.ScopeToModule`.
+	// STEVENDEBUG
 	app.CapabilityKeeper.Seal()
 
 	// add keepers
