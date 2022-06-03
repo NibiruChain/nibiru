@@ -679,7 +679,7 @@ func NewNibiruApp(
 		epochsModule,
 		stablecoinModule,
 		// ibc
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
+		// capability.NewAppModule(appCodec, *app.CapabilityKeeper), // TODO-STEVENDEBUG: figure out why this addition breaks tests (TestFullAppSimulation)
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
