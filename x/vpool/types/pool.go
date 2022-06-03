@@ -2,10 +2,12 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func NewPool(
-	pair string,
+	pair common.AssetPair,
 	tradeLimitRatio sdk.Dec,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
@@ -13,13 +15,22 @@ func NewPool(
 	maxOracleSpreadRatio sdk.Dec,
 ) *Pool {
 	return &Pool{
-		Pair:                  pair,
+		Pair:                  pair.String(),
 		BaseAssetReserve:      baseAssetReserve,
 		QuoteAssetReserve:     quoteAssetReserve,
 		TradeLimitRatio:       tradeLimitRatio,
 		FluctuationLimitRatio: fluctuationLimitRatio,
 		MaxOracleSpreadRatio:  maxOracleSpreadRatio,
 	}
+}
+
+func (p *Pool) GetAssetPair() common.AssetPair {
+	pair, err := common.NewAssetPairFromStr(p.Pair)
+	if err != nil {
+		panic(err)
+	}
+
+	return pair
 }
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on

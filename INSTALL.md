@@ -79,3 +79,28 @@ A. If after steps 1-4 you don't have the `nibid` command, your go/bin directory 
 ```bash
 export PATH=$PATH:$(go env GOPATH)/bin
 ```
+
+B. New commands you've made on the `nibid` doesn't show up. Your `nibid` probably just isn't updated again after the code changes, to recompile nibid run `make install` in the root
+
+## Contributing
+
+The code for `nibid` is located in the `/cmd/nibid` folder. 
+
+In addition to the commands available within that folder, `nibid` pulls in cli subcommands from the modules e.g. `/x/perps/cli`
+
+After updating the code run
+
+```bash
+make build
+make install
+```
+
+To see all the commands available just add `--help` to the end.
+
+Example:
+```bash
+nibid --help
+nibid query --help
+nibid tx --help
+nibid query perp --help
+```

@@ -17,12 +17,12 @@ import (
 func TestGetUnderlyingPrice(t *testing.T) {
 	tests := []struct {
 		name           string
-		pair           common.TokenPair
+		pair           common.AssetPair
 		pricefeedPrice sdk.Dec
 	}{
 		{
 			name:           "correctly fetch underlying price",
-			pair:           common.TokenPair("btc:nusd"),
+			pair:           BTCNusdPair,
 			pricefeedPrice: sdk.NewDec(40000),
 		},
 	}
@@ -57,21 +57,21 @@ func TestGetUnderlyingPrice(t *testing.T) {
 func TestGetSpotPrice(t *testing.T) {
 	tests := []struct {
 		name              string
-		pair              common.TokenPair
+		pair              common.AssetPair
 		quoteAssetReserve sdk.Dec
 		baseAssetReserve  sdk.Dec
 		expectedPrice     sdk.Dec
 	}{
 		{
 			name:              "correctly fetch underlying price",
-			pair:              common.TokenPair("btc:nusd"),
+			pair:              BTCNusdPair,
 			quoteAssetReserve: sdk.NewDec(40_000),
 			baseAssetReserve:  sdk.NewDec(1),
 			expectedPrice:     sdk.NewDec(40000),
 		},
 		{
 			name:              "complex price",
-			pair:              common.TokenPair("btc:nusd"),
+			pair:              BTCNusdPair,
 			quoteAssetReserve: sdk.NewDec(2_489_723_947),
 			baseAssetReserve:  sdk.NewDec(34_597_234),
 			expectedPrice:     sdk.MustNewDecFromStr("71.963092396345904415"),
@@ -86,7 +86,7 @@ func TestGetSpotPrice(t *testing.T) {
 
 			vpoolKeeper.CreatePool(
 				ctx,
-				tc.pair.String(),
+				tc.pair,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
@@ -104,7 +104,7 @@ func TestGetSpotPrice(t *testing.T) {
 func TestGetBaseAssetPrice(t *testing.T) {
 	tests := []struct {
 		name                string
-		pair                common.TokenPair
+		pair                common.AssetPair
 		quoteAssetReserve   sdk.Dec
 		baseAssetReserve    sdk.Dec
 		baseAmount          sdk.Dec
@@ -114,7 +114,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 	}{
 		{
 			name:                "zero base asset means zero price",
-			pair:                common.TokenPair("btc:nusd"),
+			pair:                BTCNusdPair,
 			quoteAssetReserve:   sdk.NewDec(40_000),
 			baseAssetReserve:    sdk.NewDec(10_000),
 			baseAmount:          sdk.ZeroDec(),
@@ -123,7 +123,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple add base to pool",
-			pair:                common.TokenPair("btc:nusd"),
+			pair:                BTCNusdPair,
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -132,7 +132,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple remove base from pool",
-			pair:                common.TokenPair("btc:nusd"),
+			pair:                BTCNusdPair,
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -141,7 +141,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              common.TokenPair("btc:nusd"),
+			pair:              BTCNusdPair,
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			baseAmount:        sdk.MustNewDecFromStr("1000"),
@@ -158,7 +158,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 
 			vpoolKeeper.CreatePool(
 				ctx,
-				tc.pair.String(),
+				tc.pair,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
@@ -183,7 +183,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 func TestGetQuoteAssetPrice(t *testing.T) {
 	tests := []struct {
 		name               string
-		pair               common.TokenPair
+		pair               common.AssetPair
 		quoteAssetReserve  sdk.Dec
 		baseAssetReserve   sdk.Dec
 		quoteAmount        sdk.Dec
@@ -193,7 +193,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 	}{
 		{
 			name:               "zero base asset means zero price",
-			pair:               common.TokenPair("btc:nusd"),
+			pair:               BTCNusdPair,
 			quoteAssetReserve:  sdk.NewDec(40_000),
 			baseAssetReserve:   sdk.NewDec(10_000),
 			quoteAmount:        sdk.ZeroDec(),
@@ -202,7 +202,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple add base to pool",
-			pair:               common.TokenPair("btc:nusd"),
+			pair:               BTCNusdPair,
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -211,7 +211,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple remove base from pool",
-			pair:               common.TokenPair("btc:nusd"),
+			pair:               BTCNusdPair,
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -220,7 +220,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              common.TokenPair("btc:nusd"),
+			pair:              BTCNusdPair,
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			quoteAmount:       sdk.NewDec(1000),
@@ -237,7 +237,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 
 			vpoolKeeper.CreatePool(
 				ctx,
-				tc.pair.String(),
+				tc.pair,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
@@ -262,7 +262,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 func TestCalcTwap(t *testing.T) {
 	tests := []struct {
 		name               string
-		pair               common.TokenPair
+		pair               common.AssetPair
 		reserveSnapshots   []types.ReserveSnapshot
 		currentBlocktime   time.Time
 		currentBlockheight int64
@@ -275,7 +275,7 @@ func TestCalcTwap(t *testing.T) {
 	}{
 		{
 			name: "spot price twap calc, t=[10,30]",
-			pair: common.TokenPair("btc:nusd"),
+			pair: BTCNusdPair,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(90),
@@ -304,7 +304,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "spot price twap calc, t=[11,35]",
-			pair: common.TokenPair("btc:nusd"),
+			pair: BTCNusdPair,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(90),
@@ -333,7 +333,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
-			pair: common.TokenPair("btc:nusd"),
+			pair: BTCNusdPair,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(30),
@@ -358,7 +358,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
-			pair: common.TokenPair("btc:nusd"),
+			pair: BTCNusdPair,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -383,7 +383,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "base asset swap twap calc, add to pool, t=[10,30]",
-			pair: common.TokenPair("btc:nusd"),
+			pair: BTCNusdPair,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -408,7 +408,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "base asset swap twap calc, remove from pool, t=[10,30]",
-			pair: common.TokenPair("btc:nusd"),
+			pair: BTCNusdPair,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -443,7 +443,7 @@ func TestCalcTwap(t *testing.T) {
 			t.Log("Create an empty pool for the first block, it's snapshot won't be used")
 			vpoolKeeper.CreatePool(
 				ctx,
-				tc.pair.String(),
+				tc.pair,
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),

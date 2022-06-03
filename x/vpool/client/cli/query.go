@@ -5,12 +5,11 @@ import (
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
 var _ = strconv.Itoa(0)
@@ -29,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 
 	for _, cmd := range []*cobra.Command{
 		CmdGetVpoolReserveAssets(),
+		CmdGetVpools(),
 	} {
 		queryCommand.AddCommand(cmd)
 	}
@@ -42,14 +42,14 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 		Short: "query the reserve assets of a pool",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			clientCtx, err := client.GetClientTxContext(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			tokenPair, err := common.NewTokenPairFromStr(args[0])
+			tokenPair, err := common.NewAssetPairFromStr(args[0])
 			if err != nil {
 				return err
 			}
@@ -59,6 +59,36 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 				&types.QueryReserveAssetsRequests{
 					Pair: tokenPair.String(),
 				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdGetVpools() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "all-pools",
+		Short: "query all pools information",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.AllPools(
+				cmd.Context(),
+				&types.QueryAllPoolsRequests{},
 			)
 			if err != nil {
 				return err

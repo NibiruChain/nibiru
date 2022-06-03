@@ -12,7 +12,7 @@ import (
 // CreatePool creates a pool for a specific pair.
 func (k Keeper) CreatePool(
 	ctx sdk.Context,
-	pair string,
+	pair common.AssetPair,
 	tradeLimitRatio sdk.Dec, // integer with 6 decimals, 1_000_000 means 1.0
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
@@ -29,12 +29,12 @@ func (k Keeper) CreatePool(
 	)
 
 	k.savePool(ctx, pool)
-	k.saveSnapshot(ctx, common.TokenPair(pool.Pair), 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, ctx.BlockTime(), ctx.BlockHeight())
-	k.saveSnapshotCounter(ctx, common.TokenPair(pair), 0)
+	k.saveSnapshot(ctx, pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, ctx.BlockTime(), ctx.BlockHeight())
+	k.saveSnapshotCounter(ctx, pair, 0)
 }
 
 // getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair common.TokenPair) (
+func (k Keeper) getPool(ctx sdk.Context, pair common.AssetPair) (
 	*types.Pool, error,
 ) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
@@ -52,7 +52,7 @@ func (k Keeper) savePool(
 	pool *types.Pool,
 ) {
 	bz := k.codec.MustMarshal(pool)
-	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(common.TokenPair(pool.Pair)), bz)
+	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(pool.GetAssetPair()), bz)
 }
 
 /*
@@ -80,7 +80,7 @@ func (k Keeper) savePoolAndSnapshot(
 
 	if err = k.addReserveSnapshot(
 		ctx,
-		common.TokenPair(updatedPool.Pair),
+		updatedPool.GetAssetPair(),
 		updatedPool.QuoteAssetReserve,
 		updatedPool.BaseAssetReserve,
 	); err != nil {
@@ -93,7 +93,7 @@ func (k Keeper) savePoolAndSnapshot(
 }
 
 // ExistsPool returns true if pool exists, false if not.
-func (k Keeper) ExistsPool(ctx sdk.Context, pair common.TokenPair) bool {
+func (k Keeper) ExistsPool(ctx sdk.Context, pair common.AssetPair) bool {
 	return ctx.KVStore(k.storeKey).Has(types.GetPoolKey(pair))
 }
 

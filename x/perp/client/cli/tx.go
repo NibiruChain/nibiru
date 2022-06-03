@@ -1,78 +1,19 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"strings"
-
-	"github.com/NibiruChain/nibiru/x/common"
-
-	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
-
-// ---------------------------------------------------------------------------
-// QueryCmd
-// ---------------------------------------------------------------------------
-
-// GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd() *cobra.Command {
-	// Group stablecoin queries under a subcommand
-	perpQueryCmd := &cobra.Command{
-		Use: types.ModuleName,
-		Short: fmt.Sprintf(
-			"Querying commands for the %s module", types.ModuleName),
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	cmds := []*cobra.Command{
-		CmdQueryParams(),
-	}
-	for _, cmd := range cmds {
-		perpQueryCmd.AddCommand(cmd)
-	}
-
-	return perpQueryCmd
-}
-
-func CmdQueryParams() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "params",
-		Short: "shows the parameters of the x/perp module",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.Params(
-				context.Background(), &types.QueryParamsRequest{},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// ---------------------------------------------------------------------------
-// TxCmd
-// ---------------------------------------------------------------------------
 
 func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
@@ -86,6 +27,7 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		RemoveMarginCmd(),
 		AddMarginCmd(),
+		LiquidateCmd(),
 		OpenPositionCmd(),
 	)
 
@@ -103,7 +45,8 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			var side types.Side
 			switch args[0] {
@@ -115,7 +58,7 @@ func OpenPositionCmd() *cobra.Command {
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
 
-			_, err = common.NewTokenPairFromStr(args[1])
+			_, err = common.NewAssetPairFromStr(args[1])
 			if err != nil {
 				return err
 			}
@@ -153,6 +96,43 @@ func OpenPositionCmd() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// TODO: how is a position idenitfiied? by pair? by id?
+func ClosePositionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "close-position [pair]",
+		Short: "Closes a position",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			msg := &types.MsgClosePosition{
+				Sender:    clientCtx.GetFromAddress().String(),
+				TokenPair: args[0],
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			err = tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
 
@@ -166,7 +146,7 @@ func RemoveMarginCmd() *cobra.Command {
 		Short: "Removes margin from a position, decreasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
-			$ %s tx perp remove-margin osmo-nusd 100nusd
+			$ %s tx perp remove-margin osmo:nusd 100nusd
 			`, version.AppName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -208,7 +188,7 @@ func AddMarginCmd() *cobra.Command {
 		Short: "Adds margin to a position, increasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
-			$ %s tx perp add-margin osmo-nusd 100nusd
+			$ %s tx perp add-margin osmo:nusd 100nusd
 			`, version.AppName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -230,6 +210,48 @@ func AddMarginCmd() *cobra.Command {
 				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
 				Margin:    marginToAdd,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func LiquidateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "liquidate [vpool] [trader]",
+		Short: "liquidates the position of 'trader' on 'vpool' if possible",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp liquidate osmo:nusd nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			traderAddr, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgLiquidate{
+				Sender:    clientCtx.GetFromAddress().String(),
+				TokenPair: args[0],
+				Trader:    traderAddr.String(),
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
