@@ -55,6 +55,6 @@ func (q queryServer) TraderPosition(
 
 	return &types.QueryTraderPositionResponse{
 		Position:    position,
-		MarginRatio: marginRatio,
+		MarginRatio: &marginRatio,
 	}, nil
 }
