@@ -27,6 +27,31 @@ func (k Keeper) GetPosition(
 	return k.Positions().Get(ctx, pair, traderAddr)
 }
 
+func (k *Keeper) GetBadDebt(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (sdk.Dec, error) {
+	// return k.Positions().GetAll(ctx)
+	currentPosition, err := k.GetPosition(ctx, pair, traderAddr)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
+		ctx,
+		*currentPosition,
+		types.PnLCalcOption_SPOT_PRICE,
+	)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	remaining, err := k.CalcRemainMarginWithFundingPayment(
+		ctx, *currentPosition, unrealizedPnL)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	return remaining.BadDebt, nil
+}
+
 func (k Keeper) SetPosition(
 	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
 	position *types.Position) {

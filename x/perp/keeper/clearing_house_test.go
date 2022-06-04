@@ -2654,6 +2654,12 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					currentPosition.GetAssetPair(),
 					trader,
 				)
+				// bd1, err := perpKeeper.GetBadDebt(
+				// 	ctx,
+				// 	currentPosition.GetAssetPair(),
+				// 	trader,
+				// )
+				// fmt.Printf("STEVENDEBUG bd1: %+v\n", bd1)
 				fmt.Printf("STEVENDEBUG pos1: %+v\n", pos1)
 
 				t.Log("mock vpool")
@@ -2671,6 +2677,12 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					currentPosition.GetAssetPair(),
 					trader,
 				)
+				// bd2, err := perpKeeper.GetBadDebt(
+				// 	ctx,
+				// 	currentPosition.GetAssetPair(),
+				// 	trader,
+				// )
+				// fmt.Printf("STEVENDEBUG bd2: %+v\n", bd2)
 				fmt.Printf("STEVENDEBUG pos2: %+v\n", pos2)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -2687,6 +2699,12 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					currentPosition.GetAssetPair(),
 					trader,
 				)
+				// bd3, err := perpKeeper.GetBadDebt(
+				// 	ctx,
+				// 	currentPosition.GetAssetPair(),
+				// 	trader,
+				// )
+				// fmt.Printf("STEVENDEBUG bd3: %+v\n", bd3)
 				fmt.Printf("STEVENDEBUG pos3: %+v\n", pos3)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
@@ -2703,6 +2721,12 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					currentPosition.GetAssetPair(),
 					trader,
 				)
+				bd4, err := perpKeeper.GetBadDebt(
+					ctx,
+					currentPosition.GetAssetPair(),
+					trader,
+				)
+				fmt.Printf("STEVENDEBUG bd4: %+v\n", bd4)
 				fmt.Printf("STEVENDEBUG pos4: %+v\n", pos4)
 
 				t.Log("close position")
