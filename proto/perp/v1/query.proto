@@ -37,8 +37,7 @@ message QueryParamsResponse {
    x/perp module account. */
 message QueryTraderPositionRequest {
   string token_pair = 1;
-  bytes trader = 4[
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string trader = 2;
 }
 
 message QueryTraderPositionResponse {
