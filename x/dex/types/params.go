@@ -35,12 +35,16 @@ func DefaultParams() Params {
 			common.GovDenom,
 			common.CollDenom,
 			common.StableDenom,
+			common.StakeDenom,
 		},
 	}
 }
 
 // ParamSetPairs get the params.ParamSet
+// STEVENDEBUG
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
+	fmt.Printf("STEVENDEBUG p.WhitelistedAsset: %+v\n", p.WhitelistedAsset)
+
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair([]byte("StartingPoolNumber"), &p.StartingPoolNumber, validatePoolNumber),
 		paramtypes.NewParamSetPair([]byte("PoolCreationFee"), &p.PoolCreationFee, validatePoolCreationFee),

@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -24,6 +25,9 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
+		fmt.Printf("\n STEVENDEBUG ctx: %+v\n", ctx)
+		fmt.Printf("\n STEVENDEBUG ctx simCoins: %+v\n", simCoins)
+
 		msg := &types.MsgCreatePool{
 			Creator: simAccount.Address.String(),
 		}
@@ -35,7 +39,11 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 
 		whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
 
+		fmt.Printf("\n STEVENDEBUG simCoins: %+v\n", simCoins)
+		fmt.Printf("\n STEVENDEBUG whitelistedAssets: %+v\n", whitelistedAssets)
+
 		poolAssets := genPoolAssets(r, simAccount, simCoins, whitelistedAssets)
+		fmt.Printf("\n STEVENDEBUG poolAssets: %+v\n", poolAssets)
 		poolParams := genBalancerPoolParams(r, ctx.BlockTime(), poolAssets)
 
 		balances := bk.GetAllBalances(ctx, simAccount.Address)
@@ -311,6 +319,7 @@ func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.Ban
 		sdk.NewCoin(common.GovDenom, sdk.NewInt(int64(10*million))),
 		sdk.NewCoin(common.CollDenom, sdk.NewInt(int64(10*million))),
 		sdk.NewCoin(common.StableDenom, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin("stake", sdk.NewInt(int64(10*million))),
 	)
 
 	err := bk.MintCoins(ctx, types.ModuleName, newTokens)

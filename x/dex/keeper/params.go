@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
@@ -14,5 +16,6 @@ func (k Keeper) GetParams(ctx sdk.Context) (p types.Params) {
 
 // SetParams set the params
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	fmt.Printf("STEVENDEBUG SetParams: %+v\n", params)
 	k.paramstore.SetParamSet(ctx, &params)
 }

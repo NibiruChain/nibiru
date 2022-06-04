@@ -1,6 +1,8 @@
 package dex
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
@@ -9,6 +11,7 @@ import (
 
 // InitGenesis initializes the dex module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+	fmt.Printf("STEVENDEBUG InitGenesis: %+v\n", genState)
 	k.SetParams(ctx, genState.Params)
 	k.SetNextPoolNumber(ctx, uint64(genState.Params.StartingPoolNumber))
 }
