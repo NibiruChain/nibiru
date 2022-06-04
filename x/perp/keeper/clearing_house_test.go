@@ -2861,3 +2861,77 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 		})
 	}
 }
+
+func TestTransferFee(t *testing.T) {
+	tests := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "not enough fund for spread - error",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+				pair, err := common.NewAssetPairFromStr("btc:usdc")
+				perpKeeper.SetParams(ctx, types.DefaultParams())
+				metadata := &types.PairMetadata{
+					Pair: pair.String(),
+				}
+				perpKeeper.PairMetadata().Set(ctx, metadata)
+				assert.NoError(t, err)
+				trader := sample.AccAddress()
+
+				positionNotional := sdk.NewDec(5_000)
+				expectedError := fmt.Errorf("trader missing funds for spread")
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+					ctx, trader, types.PerpEFModuleAccount,
+					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5))).
+					Return(expectedError)
+				// toll = quote * tollRatio
+				// spread = quote * spreadRatio
+				_, err = perpKeeper.transferFee(ctx, pair, trader, positionNotional)
+				require.ErrorContains(t, err, expectedError.Error())
+			},
+		},
+		{
+			name: "not enough fund for toll - error",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+				pair, err := common.NewAssetPairFromStr("btc:usdc")
+				perpKeeper.SetParams(ctx, types.DefaultParams())
+				metadata := &types.PairMetadata{
+					Pair: pair.String(),
+				}
+				perpKeeper.PairMetadata().Set(ctx, metadata)
+				assert.NoError(t, err)
+				trader := sample.AccAddress()
+
+				positionNotional := sdk.NewDec(5_000)
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+					ctx, trader, types.PerpEFModuleAccount,
+					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
+				).Return(nil)
+				// toll = quote * tollRatio
+				// spread = quote * spreadRatio
+				expectedError := fmt.Errorf("trader missing funds for toll")
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+					ctx,
+					/* from */ trader,
+					/* to */ types.FeePoolModuleAccount,
+					// Q: Why do we need FeePoolModuleAccount?
+					// Q: Why not just use ModuleName for fees?
+					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
+				).Return(expectedError)
+
+				_, err = perpKeeper.transferFee(ctx, pair, trader, positionNotional)
+				require.ErrorContains(t, err, expectedError.Error())
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
+}
