@@ -589,6 +589,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		return nil, err
 	}
 
+	// STEVENDEBUG - get the bad debt
 	if closePositionResp.BadDebt.IsPositive() {
 		return nil, fmt.Errorf("underwater position")
 	}
@@ -698,6 +699,7 @@ func (k Keeper) closePositionEntirely(
 	}
 
 	// calculate unrealized PnL
+	// STEVENDEBUG - p1
 	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
@@ -710,6 +712,7 @@ func (k Keeper) closePositionEntirely(
 	positionResp.RealizedPnl = unrealizedPnL
 
 	// calculate remaining margin with funding payment
+	// STEVENDEBUG - p2
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, currentPosition, unrealizedPnL)
 	if err != nil {

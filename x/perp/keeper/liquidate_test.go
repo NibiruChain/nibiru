@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -126,6 +127,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 	}
 }
 
+// STEVENDEBUG
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
 	pair, err := common.NewAssetPairFromStr("BTC:NUSD")
@@ -343,6 +345,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Get the position")
 			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
+			fmt.Printf("STEVENDEBUG position: %+v\n", position)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -352,6 +355,11 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			assert.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
+
+			t.Log("Get the position")
+			position2, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
+			fmt.Printf("STEVENDEBUG position: %+v\n", position2)
+			require.NoError(t, err)
 
 			t.Log("Liquidate the (entire) position")
 			liquidator := sample.AccAddress()

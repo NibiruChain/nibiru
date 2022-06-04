@@ -108,6 +108,7 @@ func (k Keeper) Liquidate(
 }
 
 /*
+STEVENDEBUG
 Fully liquidates a position. It is assumed that the margin ratio has already been
 checked prior to calling this method.
 

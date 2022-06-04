@@ -153,6 +153,7 @@ func initParamsKeeper(
 	return paramsKeeper
 }
 
+// STEVENDEBUG
 func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 	tests := []struct {
 		name                       string
@@ -2628,6 +2629,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
+				// STEVENDEBUG use this
 				t.Log("set up initial position")
 				currentPosition := types.Position{
 					TraderAddress:                       sample.AccAddress().String(),
@@ -2647,6 +2649,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					&currentPosition,
 				)
 
+				pos1, err := perpKeeper.GetPosition(
+					ctx,
+					currentPosition.GetAssetPair(),
+					trader,
+				)
+				fmt.Printf("STEVENDEBUG pos1: %+v\n", pos1)
+
 				t.Log("mock vpool")
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
@@ -2657,6 +2666,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(150), nil)
 
+				pos2, err := perpKeeper.GetPosition(
+					ctx,
+					currentPosition.GetAssetPair(),
+					trader,
+				)
+				fmt.Printf("STEVENDEBUG pos2: %+v\n", pos2)
+
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapBaseForQuote(
 						ctx,
@@ -2665,6 +2681,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 						/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					).Return( /*quoteAssetAmount=*/ sdk.NewDec(150), nil)
+
+				pos3, err := perpKeeper.GetPosition(
+					ctx,
+					currentPosition.GetAssetPair(),
+					trader,
+				)
+				fmt.Printf("STEVENDEBUG pos3: %+v\n", pos3)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
@@ -2675,6 +2698,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					},
 				})
 
+				pos4, err := perpKeeper.GetPosition(
+					ctx,
+					currentPosition.GetAssetPair(),
+					trader,
+				)
+				fmt.Printf("STEVENDEBUG pos4: %+v\n", pos4)
+
 				t.Log("close position")
 				resp, err := perpKeeper.closeAndOpenReversePosition(
 					ctx,
@@ -2683,6 +2713,9 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					/*leverage=*/ sdk.NewDec(10),
 					/*baseAssetAmountLimit=*/ sdk.NewDec(200),
 				)
+
+				fmt.Printf("STEVENDEBUG resp: %+v\n", resp)
+				fmt.Printf("STEVENDEBUG err: %+v\n", err)
 
 				require.Error(t, err)
 				require.Nil(t, resp)
