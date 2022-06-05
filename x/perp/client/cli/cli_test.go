@@ -281,7 +281,7 @@ func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users [
 	for i := 0; i < len(users); i++ {
 		balance, err := banktestutil.QueryBalancesExec(
 			val.ClientCtx,
-			users[0],
+			users[i],
 		)
 		s.T().Logf("STEVENDEBUG user %+v (acc: %+v) balance: %+v", i, users[i], balance)
 
