@@ -1432,7 +1432,23 @@ func TestClosePositionEntirely(t *testing.T) {
 func TestDecreasePosition(t *testing.T) {
 	tests := []struct {
 		name string
-		test func()
+
+		initialPosition       types.Position
+		baseAssetDir          vpooltypes.Direction
+		quoteAssetDir         vpooltypes.Direction
+		newPositionNotional   sdk.Dec
+		quoteAmountToDecrease sdk.Dec
+		exchangedBaseAmount   sdk.Dec
+		baseAssetLimit        sdk.Dec
+
+		expectedFundingPayment     sdk.Dec
+		expectedBadDebt            sdk.Dec
+		expectedRealizedPnl        sdk.Dec
+		expectedUnrealizedPnlAfter sdk.Dec
+
+		expectedFinalPositionMargin       sdk.Dec
+		expectedFinalPositionSize         sdk.Dec
+		expectedFinalPositionOpenNotional sdk.Dec
 	}{
 		{
 			name: "decrease long position, positive PnL",
@@ -1443,74 +1459,30 @@ func TestDecreasePosition(t *testing.T) {
 			// user decreases position by notional value of 100 NUSD
 			// user ends up with realized PnL of 50 NUSD, unrealized PnL of +50 NUSD
 			//   position notional value of 100 NUSD
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(100), // 100 BTC
-					Margin:                              sdk.NewDec(10),  // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100), // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
-				t.Log("mock vpool")
-				mocks.mockVpoolKeeper.EXPECT().
-					GetBaseAssetPrice(
-						ctx,
-						BtcNusdPair,
-						vpooltypes.Direction_ADD_TO_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(100),
-					).
-					Return( /*quoteAssetAmount=*/ sdk.NewDec(200), nil)
-
-				mocks.mockVpoolKeeper.EXPECT().
-					SwapQuoteForBase(
-						ctx,
-						BtcNusdPair,
-						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
-						/*quoteAssetAmount=*/ sdk.NewDec(100),
-						/*baseAssetLimit=*/ sdk.NewDec(50),
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(50), nil)
-
-				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: "BTC:NUSD",
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-					},
-				})
-
-				t.Log("decrease position by 100 NUSD in notional value")
-				resp, err := perpKeeper.decreasePosition(
-					ctx,
-					currentPosition,
-					/*openNotional=*/ sdk.NewDec(100), // NUSD
-					/*baseLimit=*/ sdk.NewDec(50), // BTC
-					/*canOverFluctuationLimit=*/ false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // open notional
-				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
-				assert.EqualValues(t, sdk.NewDec(-50), resp.ExchangedPositionSize) // sold back to vpool
-				assert.EqualValues(t, sdk.NewDec(2), resp.FundingPayment)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.MarginToVault)
-				assert.EqualValues(t, sdk.NewDec(50), resp.RealizedPnl)
-				assert.EqualValues(t, sdk.NewDec(50), resp.UnrealizedPnlAfter)
-
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
-				assert.EqualValues(t, sdk.NewDec(50), resp.Position.Size_)        // 100 - 50
-				assert.EqualValues(t, sdk.NewDec(58), resp.Position.Margin)       // 10(old) + 50(realized PnL) - 2(funding payment)
-				assert.EqualValues(t, sdk.NewDec(50), resp.Position.OpenNotional) // 200(position notional) - 100(notional sold) - 50(unrealized PnL)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+			initialPosition: types.Position{
+				TraderAddress:                       sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(100), // 100 BTC
+				Margin:                              sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100), // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
 			},
+			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
+			newPositionNotional:   sdk.NewDec(200),
+			quoteAssetDir:         vpooltypes.Direction_REMOVE_FROM_POOL,
+			quoteAmountToDecrease: sdk.NewDec(100),
+			exchangedBaseAmount:   sdk.NewDec(-50),
+			baseAssetLimit:        sdk.NewDec(50),
+
+			expectedBadDebt:            sdk.ZeroDec(),
+			expectedFundingPayment:     sdk.NewDec(2),
+			expectedUnrealizedPnlAfter: sdk.NewDec(50),
+			expectedRealizedPnl:        sdk.NewDec(50),
+
+			expectedFinalPositionMargin:       sdk.NewDec(58),
+			expectedFinalPositionSize:         sdk.NewDec(50),
+			expectedFinalPositionOpenNotional: sdk.NewDec(50),
 		},
 		{
 			name: "decrease long position, negative PnL",
@@ -1521,78 +1493,30 @@ func TestDecreasePosition(t *testing.T) {
 			// user decreases position by notional value of 5 NUSD
 			// user ends up with realized PnL of -0.25 NUSD, unrealized PnL of -4.75 NUSD,
 			//   position notional value of 95 NUSD
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(105), // 105 BTC
-					Margin:                              sdk.NewDec(11),  // 10.5 NUSD
-					OpenNotional:                        sdk.NewDec(110), // 105 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
-				t.Log("mock vpool")
-				mocks.mockVpoolKeeper.EXPECT().
-					GetBaseAssetPrice(
-						ctx,
-						BtcNusdPair,
-						vpooltypes.Direction_ADD_TO_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(105),
-					).
-					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
-
-				mocks.mockVpoolKeeper.EXPECT().
-					SwapQuoteForBase(
-						ctx,
-						BtcNusdPair,
-						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
-						/*quoteAssetAmount=*/ sdk.NewDec(5),
-						/*baseAssetLimit=*/ sdk.MustNewDecFromStr("5.25"),
-					).Return( /*baseAssetAmount=*/ sdk.MustNewDecFromStr("5.25"), nil)
-
-				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: "BTC:NUSD",
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-					},
-				})
-
-				t.Log("decrease position by 5 NUSD in notional value")
-				resp, err := perpKeeper.decreasePosition(
-					ctx,
-					currentPosition,
-					/*openNotional=*/ sdk.NewDec(5), // NUSD
-					/*baseLimit=*/ sdk.MustNewDecFromStr("5.25"), // BTC
-					/*canOverFluctuationLimit=*/ false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), resp.ExchangedQuoteAssetAmount) // open notional
-				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-5.25"), resp.ExchangedPositionSize) // sold back to vpool
-				// resp.FundingPayment = pos.Size_ * fundingDifference
-				//   = 105 * 0.02 - 2.1 → 2
-				assert.EqualValues(t, sdk.MustNewDecFromStr("2.1").String(), resp.FundingPayment.String())
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.5").String(), resp.RealizedPnl.String())        // (-5)(unrealizedPnL) * 5.25/105 (fraction of position size reduced)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-9.5").String(), resp.UnrealizedPnlAfter.String()) // (-5)(unrealizedPnL) - (-0.25)(realizedPnL)
-				assert.EqualValues(t, sdk.ZeroDec().String(), resp.MarginToVault.String())                      // always zero for decreasePosition
-
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("99.75"), resp.Position.Size_)                  // 105 - 5.25
-				assert.EqualValues(t, sdk.MustNewDecFromStr("8.4").String(), resp.Position.Margin.String()) // 10(old) + (-0.25)(realized PnL) - 2.1(funding payment)
-				assert.EqualValues(t,
-					sdk.MustNewDecFromStr("104.5").String(),
-					resp.Position.OpenNotional.String()) // 100(position notional) - 5(notional sold) - (-4.75)(unrealized PnL)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+			initialPosition: types.Position{
+				TraderAddress:                       sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(105),               // 105 BTC
+				Margin:                              sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
+				OpenNotional:                        sdk.NewDec(105),               // 105 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
 			},
+			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
+			newPositionNotional:   sdk.NewDec(100),
+			quoteAssetDir:         vpooltypes.Direction_REMOVE_FROM_POOL,
+			quoteAmountToDecrease: sdk.NewDec(5),
+			exchangedBaseAmount:   sdk.MustNewDecFromStr("-5.25"),
+			baseAssetLimit:        sdk.MustNewDecFromStr("5.25"),
+
+			expectedBadDebt:            sdk.ZeroDec(),
+			expectedFundingPayment:     sdk.MustNewDecFromStr("2.1"),
+			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("-4.75"),
+			expectedRealizedPnl:        sdk.MustNewDecFromStr("-0.25"),
+
+			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("8.15"), // 10.5(old) + (-0.25)(realized PnL) - (2.1)(funding payment)
+			expectedFinalPositionSize:         sdk.MustNewDecFromStr("99.75"),
+			expectedFinalPositionOpenNotional: sdk.MustNewDecFromStr("99.75"), // 100(position notional) - 5(notional sold) - (-4.75)(unrealized PnL)
 		},
 
 		/*==========================SHORT POSITIONS===========================*/
@@ -1605,74 +1529,30 @@ func TestDecreasePosition(t *testing.T) {
 			// user decreases position by notional value of 5 NUSD
 			// user ends up with realized PnL of 0.25 NUSD, unrealized PnL of 4.75 NUSD,
 			//   position notional value of 95 NUSD
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-105), // -105 BTC
-					Margin:                              sdk.NewDec(11),   // 10.5 NUSD
-					OpenNotional:                        sdk.NewDec(110),  // 105 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
-				t.Log("mock vpool")
-				mocks.mockVpoolKeeper.EXPECT().
-					GetBaseAssetPrice(
-						ctx,
-						BtcNusdPair,
-						vpooltypes.Direction_REMOVE_FROM_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(105),
-					).
-					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
-
-				mocks.mockVpoolKeeper.EXPECT().
-					SwapQuoteForBase(
-						ctx,
-						BtcNusdPair,
-						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
-						/*quoteAssetAmount=*/ sdk.NewDec(5),
-						/*baseAssetLimit=*/ sdk.MustNewDecFromStr("5.25"),
-					).Return( /*baseAssetAmount=*/ sdk.MustNewDecFromStr("5.25"), nil)
-
-				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: "BTC:NUSD",
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-					},
-				})
-
-				t.Log("decrease position by 5 NUSD in notional value")
-				resp, err := perpKeeper.decreasePosition(
-					ctx,
-					currentPosition,
-					/*openNotional=*/ sdk.NewDec(5), // NUSD
-					/*baseLimit=*/ sdk.MustNewDecFromStr("5.25"), // BTC
-					/*canOverFluctuationLimit=*/ false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(5), resp.ExchangedQuoteAssetAmount) // open notional
-				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("5.25"), resp.ExchangedPositionSize)            // bought back from vpool
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-2.1").String(), resp.FundingPayment.String()) // -105 * 0.02
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.5"), resp.RealizedPnl)                       // (-5)(unrealizedPnL) * 5.25/105 (fraction of position size reduced)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("9.5"), resp.UnrealizedPnlAfter)                // (-5)(unrealizedPnL) - (-0.25)(realizedPnL)
-				assert.EqualValues(t, sdk.ZeroDec().String(), resp.MarginToVault.String())                  // always zero for decreasePosition
-
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-99.75"), resp.Position.Size_)                         // -105 + 5.25
-				assert.EqualValues(t, sdk.MustNewDecFromStr("13.6").String(), resp.Position.Margin.String())        // 10.5(old) + 0.25(realized PnL) - (-2.1)(funding payment)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("104.5").String(), resp.Position.OpenNotional.String()) // 100(position notional) - 5(notional sold) + 4.75(unrealized PnL)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+			initialPosition: types.Position{
+				TraderAddress:                       sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-105),              // -105 BTC
+				Margin:                              sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
+				OpenNotional:                        sdk.NewDec(105),               // 105 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
 			},
+			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
+			newPositionNotional:   sdk.NewDec(100),
+			quoteAssetDir:         vpooltypes.Direction_ADD_TO_POOL,
+			quoteAmountToDecrease: sdk.NewDec(5),
+			exchangedBaseAmount:   sdk.MustNewDecFromStr("5.25"),
+			baseAssetLimit:        sdk.MustNewDecFromStr("5.25"),
+
+			expectedBadDebt:            sdk.ZeroDec(),
+			expectedFundingPayment:     sdk.MustNewDecFromStr("-2.1"),
+			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("4.75"),
+			expectedRealizedPnl:        sdk.MustNewDecFromStr("0.25"),
+
+			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("12.85"),
+			expectedFinalPositionSize:         sdk.MustNewDecFromStr("-99.75"),
+			expectedFinalPositionOpenNotional: sdk.MustNewDecFromStr("99.75"),
 		},
 		{
 			name: "decrease short position, negative PnL",
@@ -1683,74 +1563,30 @@ func TestDecreasePosition(t *testing.T) {
 			// user decreases position by notional value of 5.25 NUSD
 			// user ends up with realized PnL of -0.25 NUSD, unrealized PnL of -4.75 NUSD
 			//   position notional value of 99.75 NUSD
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-
-				t.Log("set up initial position")
-				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
-					Pair:                                "BTC:NUSD",
-					Size_:                               sdk.NewDec(-100), // -100 BTC
-					Margin:                              sdk.NewDec(10),   // 10 NUSD
-					OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         0,
-				}
-
-				t.Log("mock vpool")
-				mocks.mockVpoolKeeper.EXPECT().
-					GetBaseAssetPrice(
-						ctx,
-						BtcNusdPair,
-						vpooltypes.Direction_REMOVE_FROM_POOL,
-						/*baseAssetAmount=*/ sdk.NewDec(100),
-					).
-					Return( /*quoteAssetAmount=*/ sdk.NewDec(105), nil)
-
-				mocks.mockVpoolKeeper.EXPECT().
-					SwapQuoteForBase(
-						ctx,
-						BtcNusdPair,
-						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
-						/*quoteAssetAmount=*/ sdk.MustNewDecFromStr("5.25"),
-						/*baseAssetLimit=*/ sdk.NewDec(5),
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(5), nil)
-
-				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: "BTC:NUSD",
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-					},
-				})
-
-				t.Log("decrease position by 5.25 NUSD in notional value")
-				resp, err := perpKeeper.decreasePosition(
-					ctx,
-					currentPosition,
-					/*openNotional=*/ sdk.MustNewDecFromStr("5.25"), // NUSD
-					/*baseLimit=*/ sdk.NewDec(5), // BTC
-					/*canOverFluctuationLimit=*/ false,
-				)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("5.25").String(), resp.ExchangedQuoteAssetAmount.String()) // open notional
-				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
-				assert.EqualValues(t, sdk.NewDec(5), resp.ExchangedPositionSize) // sold back to vpool
-				assert.EqualValues(t, sdk.NewDec(-2).String(), resp.FundingPayment.String())
-				assert.EqualValues(t, sdk.ZeroDec().String(), resp.MarginToVault.String())
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.25"), resp.RealizedPnl)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-4.75"), resp.UnrealizedPnlAfter)
-
-				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
-				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
-				assert.EqualValues(t, sdk.NewDec(-95), resp.Position.Size_)                                   // -100 + 5
-				assert.EqualValues(t, sdk.MustNewDecFromStr("11.75").String(), resp.Position.Margin.String()) // 10(old) + (-0.25)(realized PnL) - (-2)(funding payment)
-				assert.EqualValues(t, sdk.NewDec(95), resp.Position.OpenNotional)                             // 105(position notional) - 5.25(notional sold) + (-4.75)(unrealized PnL)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+			initialPosition: types.Position{
+				TraderAddress:                       sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // -100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
 			},
+			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
+			newPositionNotional:   sdk.NewDec(105),
+			quoteAssetDir:         vpooltypes.Direction_ADD_TO_POOL,
+			quoteAmountToDecrease: sdk.MustNewDecFromStr("5.25"),
+			exchangedBaseAmount:   sdk.NewDec(5),
+			baseAssetLimit:        sdk.NewDec(5),
+
+			expectedBadDebt:            sdk.ZeroDec(),
+			expectedFundingPayment:     sdk.NewDec(-2),
+			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("-4.75"),
+			expectedRealizedPnl:        sdk.MustNewDecFromStr("-0.25"),
+
+			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("11.75"),
+			expectedFinalPositionSize:         sdk.NewDec(-95),
+			expectedFinalPositionOpenNotional: sdk.NewDec(95),
 		},
 		// TODO(https://github.com/NibiruChain/nibiru/issues/361): Add test cases that result in bad debt
 	}
@@ -1758,7 +1594,61 @@ func TestDecreasePosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			perpKeeper, mocks, ctx := getKeeper(t)
+
+			t.Log("mock vpool")
+			mocks.mockVpoolKeeper.EXPECT().
+				GetBaseAssetPrice(
+					ctx,
+					BtcNusdPair,
+					tc.baseAssetDir,
+					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
+				).
+				Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+
+			mocks.mockVpoolKeeper.EXPECT().
+				SwapQuoteForBase(
+					ctx,
+					BtcNusdPair,
+					/*quoteAssetDirection=*/ tc.quoteAssetDir,
+					/*quoteAssetAmount=*/ tc.quoteAmountToDecrease,
+					/*baseAssetLimit=*/ tc.exchangedBaseAmount.Abs(),
+				).Return( /*baseAssetAmount=*/ tc.baseAssetLimit, nil)
+
+			t.Log("set up pair metadata and last cumulative premium fraction")
+			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				Pair: "BTC:NUSD",
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
+				},
+			})
+
+			t.Log("decrease position by 5.25 NUSD in notional value")
+			resp, err := perpKeeper.decreasePosition(
+				ctx,
+				tc.initialPosition,
+				/*openNotional=*/ tc.quoteAmountToDecrease, // NUSD
+				/*baseLimit=*/ tc.baseAssetLimit, // BTC
+				/*canOverFluctuationLimit=*/ false,
+			)
+
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.quoteAmountToDecrease, resp.ExchangedQuoteAssetAmount)
+			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
+			assert.EqualValues(t, tc.exchangedBaseAmount, resp.ExchangedPositionSize)
+			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
+			assert.EqualValues(t, tc.expectedRealizedPnl, resp.RealizedPnl)
+			assert.EqualValues(t, tc.expectedUnrealizedPnlAfter, resp.UnrealizedPnlAfter)
+			assert.EqualValues(t, sdk.ZeroDec(), resp.MarginToVault) // always zero for DecreasePosition
+
+			assert.EqualValues(t, tc.initialPosition.TraderAddress, resp.Position.TraderAddress)
+			assert.EqualValues(t, tc.initialPosition.Pair, resp.Position.Pair)
+			assert.EqualValues(t, tc.expectedFinalPositionSize, resp.Position.Size_)
+			assert.EqualValues(t, tc.expectedFinalPositionMargin, resp.Position.Margin)
+			assert.EqualValues(t, tc.expectedFinalPositionOpenNotional, resp.Position.OpenNotional)
+			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
+			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
 	}
 }
