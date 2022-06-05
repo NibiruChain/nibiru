@@ -1,3 +1,4 @@
+// documentation: https://pkg.go.dev/github.com/cosmos/cosmos-sdk@v0.46.0-beta1/testutil/network
 package cli_test
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -42,6 +44,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	s.cfg = utils.DefaultConfig()
+	s.cfg.NumValidators = 2
 
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 
@@ -93,15 +96,33 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	val := s.network.Validators[0]
+	val2 := s.network.Validators[0]
+
+	bip39Passphrase := "password"
+
+	uid1 := "user1"
 	info, _, err := val.ClientCtx.Keyring.
-		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+		NewMnemonic(uid1, keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
+	s.T().Logf("user1 info: %+v", info.GetPubKey().Address())
 
-	info2, _, err := val.ClientCtx.Keyring.
-		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	info2, _, err := val2.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
+	s.T().Logf("user2 info: %+v", user2)
+
+	// rec1, err := val.ClientCtx.Keyring.NewAccount(
+	// 	"user2",
+	// 	mnemonic2,
+	// 	bip39Passphrase,
+	// 	sdk.FullFundraiserPath,
+	// 	hd.Secp256k1,
+	// )
+	// s.T().Logf("user2 rec: %+v", rec1)
+	// s.T().Logf("user2 err: %+v", err)
+	// s.Require().NoError(err)
 
 	// TODO: figure out why using user2 gives a "key <addr> not found" error
 	s.users = []sdk.AccAddress{user1, user2}
@@ -266,6 +287,104 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.T().Logf("res: %+v", res)
 	s.T().Logf("err: %+v", err)
+}
+
+// remove margin, pull collateral out
+func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+	pair := common.AssetPair{
+		Token0: "ubtc",
+		Token1: "unibi",
+	}
+	pairStr := fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi")
+
+	user1 := s.users[0]
+	user2 := s.users[1]
+
+	_, err := utils.FillWalletFromValidator(user1,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	_, err = utils.FillWalletFromValidator(user2,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	// Check vpool balances
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets: %+v", reserveAssets)
+	s.T().Logf("reserve assets err: %+v", err)
+
+	// Check wallets of users
+	balance, err := banktestutil.QueryBalancesExec(
+		val.ClientCtx,
+		user1,
+	)
+	s.T().Logf("STEVENDEBUG balance: %+v", balance)
+	s.T().Logf("STEVENDEBUG balance err: %+v", err)
+
+	balance2, err := banktestutil.QueryBalancesExec(
+		val.ClientCtx,
+		user2,
+	)
+	s.T().Logf("STEVENDEBUG balance2: %+v", balance2)
+	s.T().Logf("STEVENDEBUG balance2 err: %+v", err)
+
+	// Open a position with user 1
+	args := []string{
+		"--from",
+		user1.String(),
+		"buy",
+		pairStr,
+		"1",       // Leverage
+		"1000000", // 1 BTC
+		"1",
+	}
+	commonArgs := []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	}
+
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	s.T().Logf("STEVENDEBUG user1 open position err: %+v", err)
+
+	// Open a huge position with user 2 to cause vpool to go underwater via price change
+	args2 := []string{
+		"--from",
+		user2.String(),
+		"buy",
+		pairStr,
+		"1",       // Leverage
+		"1000000", // 1 BTC
+		"1",
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args2, commonArgs...))
+	s.T().Logf("STEVENDEBUG user2 op en position err: %+v", err)
+
+	// Verify user 1 now has bad debt
+	queryResp1, _ := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user1)
+	s.T().Logf("queryResp1 response: %+v", queryResp1)
+
+	queryResp2, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user2)
+	s.T().Logf("queryResp2 response: %+v", queryResp2)
+	s.T().Logf("queryResp2 response: %+v", err)
+
+	// Remove margin from user 1
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
