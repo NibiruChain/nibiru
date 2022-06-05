@@ -105,26 +105,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		NewMnemonic(uid1, keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
-	s.T().Logf("user1 info: %+v", info.GetPubKey().Address())
+	s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey().Address())
 
 	info2, _, err := val2.ClientCtx.Keyring.
 		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
-	s.T().Logf("user2 info: %+v", user2)
+	s.T().Logf("user2 info: acc %+v | address %+v", user2, info2.GetPubKey().Address())
 
-	// rec1, err := val.ClientCtx.Keyring.NewAccount(
-	// 	"user2",
-	// 	mnemonic2,
-	// 	bip39Passphrase,
-	// 	sdk.FullFundraiserPath,
-	// 	hd.Secp256k1,
-	// )
-	// s.T().Logf("user2 rec: %+v", rec1)
-	// s.T().Logf("user2 err: %+v", err)
-	// s.Require().NoError(err)
-
-	// TODO: figure out why using user2 gives a "key <addr> not found" error
 	s.users = []sdk.AccAddress{user1, user2}
 }
 
