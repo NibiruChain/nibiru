@@ -289,6 +289,39 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.T().Logf("err: %+v", err)
 }
 
+func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users []sdk.AccAddress) error {
+	for i := 0; i < len(users); i++ {
+		balance, err := banktestutil.QueryBalancesExec(
+			val.ClientCtx,
+			users[0],
+		)
+		s.T().Logf("STEVENDEBUG user %+v (acc: %+v) balance: %+v", i, users[i], balance)
+
+		if err != nil {
+			s.T().Logf("STEVENDEBUG balance err: %+v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
+	for i := 0; i < len(users); i++ {
+		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
+		s.T().Logf("STEVENDBEUG user %+v (acc: %+v) query response: %+v", i, users[i], queryResp)
+
+		if err != nil {
+			s.T().Logf("STEVENDBEUG query error: %+v", err)
+			return err
+		}
+	}
+
+	s.T().Log("\n\n\n")
+
+	return nil
+}
+
 // remove margin, pull collateral out
 func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	// Set up the user accounts
@@ -327,22 +360,12 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	// Check vpool balances
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
-	s.T().Logf("reserve assets err: %+v", err)
+	if err != nil {
+		s.T().Logf("reserve assets err: %+v", err)
+	}
 
 	// Check wallets of users
-	balance, err := banktestutil.QueryBalancesExec(
-		val.ClientCtx,
-		user1,
-	)
-	s.T().Logf("STEVENDEBUG balance: %+v", balance)
-	s.T().Logf("STEVENDEBUG balance err: %+v", err)
-
-	balance2, err := banktestutil.QueryBalancesExec(
-		val.ClientCtx,
-		user2,
-	)
-	s.T().Logf("STEVENDEBUG balance2: %+v", balance2)
-	s.T().Logf("STEVENDEBUG balance2 err: %+v", err)
+	s.checkBalances(val, s.users)
 
 	// Open a position with user 1
 	args := []string{
@@ -361,7 +384,10 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	}
 
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	s.T().Logf("STEVENDEBUG user1 open position err: %+v", err)
+	if err != nil {
+		s.T().Logf("STEVENDEBUG user1 open position err: %+v", err)
+	}
+	s.checkBalances(val, s.users)
 
 	// Open a huge position with user 2 to cause vpool to go underwater via price change
 	args2 := []string{
@@ -374,15 +400,13 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"1",
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args2, commonArgs...))
-	s.T().Logf("STEVENDEBUG user2 op en position err: %+v", err)
+	if err != nil {
+		s.T().Logf("STEVENDEBUG user2 op en position err: %+v", err)
+	}
+	s.checkBalances(val, s.users)
 
 	// Verify user 1 now has bad debt
-	queryResp1, _ := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user1)
-	s.T().Logf("queryResp1 response: %+v", queryResp1)
-
-	queryResp2, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user2)
-	s.T().Logf("queryResp2 response: %+v", queryResp2)
-	s.T().Logf("queryResp2 response: %+v", err)
+	s.checkPositions(val, pair, s.users)
 
 	// Remove margin from user 1
 }
