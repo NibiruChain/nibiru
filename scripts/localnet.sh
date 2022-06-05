@@ -117,6 +117,13 @@ else
   echo_error "Failed to enable Swagger Docs"
 fi
 
+# Enable CORS for localnet
+echo_info "Enabling CORS"
+if sed -i '' 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled CORS"
+else
+  echo_error "Failed to enable CORS"
+fi
 
 echo_info "Adding genesis accounts..."
 echo "$MNEMONIC" | $BINARY keys add validator --recover --home $CHAIN_DIR
