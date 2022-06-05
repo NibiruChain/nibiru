@@ -1518,6 +1518,40 @@ func TestDecreasePosition(t *testing.T) {
 			expectedFinalPositionSize:         sdk.MustNewDecFromStr("99.75"),
 			expectedFinalPositionOpenNotional: sdk.MustNewDecFromStr("99.75"), // 100(position notional) - 5(notional sold) - (-4.75)(unrealized PnL)
 		},
+		{
+			name: "decrease long position, negative PnL, bad debt",
+			// user bought in at 100 BTC for 15 NUSD at 10x leverage (1 BTC = 1.5 NUSD)
+			// notional value is 150 NUSD
+			// BTC drops in value, now its price is 1 BTC = 1 NUSD
+			// user has position notional value of 100 NUSD and unrealized PnL of -50 NUSD
+			// user decreases position by notional value of 50 NUSD
+			// user ends up with realized PnL of -25 NUSD, unrealized PnL of -25 NUSD,
+			//   position notional value of 50 NUSD
+			initialPosition: types.Position{
+				TraderAddress:                       sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(100), // 100 BTC
+				Margin:                              sdk.NewDec(15),  // 15 NUSD
+				OpenNotional:                        sdk.NewDec(150), // 150 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
+			newPositionNotional:   sdk.NewDec(100),
+			quoteAssetDir:         vpooltypes.Direction_REMOVE_FROM_POOL,
+			quoteAmountToDecrease: sdk.NewDec(50),
+			exchangedBaseAmount:   sdk.NewDec(-50),
+			baseAssetLimit:        sdk.NewDec(50),
+
+			expectedBadDebt:            sdk.NewDec(12),
+			expectedFundingPayment:     sdk.NewDec(2),
+			expectedUnrealizedPnlAfter: sdk.NewDec(-25),
+			expectedRealizedPnl:        sdk.NewDec(-25),
+
+			expectedFinalPositionMargin:       sdk.ZeroDec(), // 15(old) + (-25)(realized PnL) - (2)(funding payment)
+			expectedFinalPositionSize:         sdk.NewDec(50),
+			expectedFinalPositionOpenNotional: sdk.NewDec(75), // 100(position notional) - 50(notional sold) - (-25)(unrealized PnL)
+		},
 
 		/*==========================SHORT POSITIONS===========================*/
 		{
@@ -1550,7 +1584,7 @@ func TestDecreasePosition(t *testing.T) {
 			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("4.75"),
 			expectedRealizedPnl:        sdk.MustNewDecFromStr("0.25"),
 
-			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("12.85"),
+			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("12.85"), // old(10.5) + (0.25)(realizedPnL) - (-2.1)(fundingPayment)
 			expectedFinalPositionSize:         sdk.MustNewDecFromStr("-99.75"),
 			expectedFinalPositionOpenNotional: sdk.MustNewDecFromStr("99.75"),
 		},
@@ -1584,11 +1618,44 @@ func TestDecreasePosition(t *testing.T) {
 			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("-4.75"),
 			expectedRealizedPnl:        sdk.MustNewDecFromStr("-0.25"),
 
-			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("11.75"),
+			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("11.75"), // old(10) + (-0.25)(realizedPnL) - (-2)(fundingPayment)
 			expectedFinalPositionSize:         sdk.NewDec(-95),
 			expectedFinalPositionOpenNotional: sdk.NewDec(95),
 		},
-		// TODO(https://github.com/NibiruChain/nibiru/issues/361): Add test cases that result in bad debt
+		{
+			name: "decrease short position, negative PnL, bad debt",
+			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
+			// position and open notional value is 100 NUSD
+			// BTC increases in value, now its price is 1 BTC = 1.5 NUSD
+			// user has position notional value of 150 NUSD and unrealized PnL of -50 NUSD
+			// user decreases position by notional value of 75 NUSD
+			// user ends up with realized PnL of -25 NUSD, unrealized PnL of -25 NUSD
+			//   position notional value of 75 NUSD
+			initialPosition: types.Position{
+				TraderAddress:                       sample.AccAddress().String(),
+				Pair:                                "BTC:NUSD",
+				Size_:                               sdk.NewDec(-100), // -100 BTC
+				Margin:                              sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                        sdk.NewDec(100),  // 100 NUSD
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         0,
+			},
+			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
+			newPositionNotional:   sdk.NewDec(150),
+			quoteAssetDir:         vpooltypes.Direction_ADD_TO_POOL,
+			quoteAmountToDecrease: sdk.NewDec(75),
+			exchangedBaseAmount:   sdk.NewDec(50),
+			baseAssetLimit:        sdk.NewDec(50),
+
+			expectedBadDebt:            sdk.NewDec(13), // old(10) + (-25)(realizedPnL) - (-2)(fundingPayment)
+			expectedFundingPayment:     sdk.NewDec(-2),
+			expectedUnrealizedPnlAfter: sdk.NewDec(-25),
+			expectedRealizedPnl:        sdk.NewDec(-25),
+
+			expectedFinalPositionMargin:       sdk.ZeroDec(),
+			expectedFinalPositionSize:         sdk.NewDec(-50),
+			expectedFinalPositionOpenNotional: sdk.NewDec(50),
+		},
 	}
 
 	for _, tc := range tests {
