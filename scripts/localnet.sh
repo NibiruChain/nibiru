@@ -36,7 +36,7 @@ fi
 
 # Set localnet settings
 BINARY=./build/nibid
-CHAIN_ID=nibiru-test-chain-0
+CHAIN_ID=nibiru-localnet-0
 CHAIN_DIR=./data
 RPC_PORT=26657
 GRPC_PORT=9090
@@ -149,4 +149,4 @@ fi
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --home $CHAIN_DIR --log_level debug
+$BINARY start --home $CHAIN_DIR --log_level info
