@@ -61,7 +61,7 @@ fi
 
 # Initialize nibid with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY init nibiru-test-chain-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
+if $BINARY init nibiru-localnet-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
@@ -83,6 +83,38 @@ if $BINARY config chain-id $CHAIN_ID --home $CHAIN_DIR; then
   echo_success "Successfully configured chain-id"
 else
   echo_error "Failed to configure chain-id"
+fi
+
+# Configure broadcast mode
+echo_info "Configuring broadcast mode..."
+if $BINARY config broadcast-mode block --home $CHAIN_DIR; then
+  echo_success "Successfully configured broadcast-mode"
+else
+  echo_error "Failed to configure broadcast mode"
+fi
+
+# Configure output mode
+echo_info "Configuring output mode..."
+if $BINARY config output json --home $CHAIN_DIR; then
+  echo_success "Successfully configured output mode"
+else
+  echo_error "Failed to configure output mode"
+fi
+
+# Enable API Server
+echo_info "Enabling API server"
+if sed -i '' '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled API server"
+else
+  echo_error "Failed to enable API server"
+fi
+
+# Enable Swagger Docs
+echo_info "Enabling Swagger Docs"
+if sed -i '' 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled Swagger Docs"
+else
+  echo_error "Failed to enable Swagger Docs"
 fi
 
 
