@@ -2,7 +2,6 @@ package cli_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -114,11 +113,10 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
-	pair := common.AssetPair{
+	assetPair := common.AssetPair{
 		Token0: "ubtc",
 		Token1: "unibi",
 	}
-	pairStr := fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi")
 
 	user := s.users[0]
 
@@ -134,17 +132,17 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.Require().NoError(err)
 
 	// A. Check vpool balances
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
-	s.Require().Equal(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
+	s.Assert().EqualValues(sdk.NewDec(10_000_000), reserveAssets.BaseAssetReserve)
+	s.Assert().EqualValues(sdk.NewDec(60_000_000_000), reserveAssets.QuoteAssetReserve)
 
 	args := []string{
 		"--from",
 		user.String(),
 		"buy",
-		pairStr,
+		assetPair.String(),
 		"1",       // Leverage
 		"1000000", // 1 BTC
 		"1",
@@ -155,105 +153,104 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
 
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
-	s.Require().True(strings.Contains(err.Error(), "no position found"))
+	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	s.Assert().Error(err, "no position found")
 
 	// A. Open position
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 
 	// A. Check vpool after opening position
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
-	s.Require().Equal(sdk.MustNewDecFromStr("60001000000"), reserveAssets.QuoteAssetReserve)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
+	s.Assert().EqualValues(sdk.NewDec(60_001_000_000), reserveAssets.QuoteAssetReserve)
 
 	// A. Check position
-	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
-	s.Require().Equal(user.String(), queryResp.Position.TraderAddress)
-	s.Require().Equal(pair.String(), queryResp.Position.Pair)
-	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
-	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.OpenNotional)
+	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
+	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
 
 	// B. Open a reverse position smaller than the existing position
 	args = []string{
 		"--from",
 		user.String(),
 		"sell",
-		pairStr,
+		assetPair.String(),
 		"1",   // Leverage
 		"100", // BTC
 		"1",
 	}
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
-	s.Require().NotContains(res.String(), "fail")
+	s.Assert().NotContains(res.String(), "fail")
 
 	// B. Check vpool after opening reverse position
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.MustNewDecFromStr("9999833.352777175968362487"), reserveAssets.BaseAssetReserve)
-	s.Require().Equal(sdk.MustNewDecFromStr("60000999900.000000000000000000"), reserveAssets.QuoteAssetReserve)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("9999833.352777175968362487"), reserveAssets.BaseAssetReserve)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("60000999900.000000000000000000"), reserveAssets.QuoteAssetReserve)
 
 	// B. Check position
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
-	s.Require().NoError(err)
-	s.Require().Equal(user.String(), queryResp.Position.TraderAddress)
-	s.Require().Equal(pair.String(), queryResp.Position.Pair)
-	s.Require().Equal(sdk.MustNewDecFromStr("1000000"), queryResp.Position.Margin)
-	s.Require().Equal(sdk.MustNewDecFromStr("999900"), queryResp.Position.OpenNotional)
+	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
+	s.Assert().EqualValues(sdk.NewDec(999_900), queryResp.Position.OpenNotional)
 
 	// C. Open a reverse position larger than the existing position
 	args = []string{
 		"--from",
 		user.String(),
 		"sell",
-		pairStr,
+		assetPair.String(),
 		"1",          // Leverage
-		"2000000",    // 2 BTC (?)
+		"2000000",    // 2*10^6 unusd
 		"2000000000", // TODO: just threw a large number here, figure out a more appropriate amount
 	}
 	res, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
-	s.Require().NotContains(res.String(), "fail")
+	s.Assert().NotContains(res.String(), "fail")
 
 	// C. Check position
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
-	s.Require().Equal(user, queryResp.Position.TraderAddress)
-	s.Require().Equal(pair.String(), queryResp.Position.Pair)
-	s.Require().Equal(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.OpenNotional)
-	s.Require().Equal(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
-	s.Require().Equal(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.Margin)
+	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.OpenNotional)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.Margin)
 
 	// D. Close positions
 	args = []string{
 		"--from",
 		user.String(),
-		pairStr,
+		assetPair.String(),
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 
 	// D. After closing position should be zero
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.MustNewDecFromStr("0"), queryResp.Position.Margin)
-	s.Require().Equal(sdk.MustNewDecFromStr("0"), queryResp.Position.OpenNotional)
-	s.Require().Equal(sdk.MustNewDecFromStr("0"), queryResp.Position.Size_)
+	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Margin)
+	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.OpenNotional)
+	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Size_)
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	val := s.network.Validators[0]
-	pair := common.AssetPair{
+	assetPair := common.AssetPair{
 		Token0: "eth",
 		Token1: "unibi",
 	}
@@ -272,14 +269,14 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.Require().NoError(err)
 
 	// verify trader has no position (empty)
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, pair, user)
-	s.Require().True(strings.Contains(err.Error(), "no position found"))
+	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	s.Assert().Error(err, "no position found")
 
 	// close position should produce error
 	args := []string{
 		"--from",
 		user.String(),
-		fmt.Sprintf("%s%s%s", "eth", common.PairSeparator, "unibi"),
+		assetPair.String(),
 	}
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
