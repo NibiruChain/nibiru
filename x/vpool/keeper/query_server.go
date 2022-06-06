@@ -92,7 +92,19 @@ func (q queryServer) BaseAssetPrice(
 		return nil, err
 	}
 
+	// TODO: add underylying price
+	// currently it gives error in cli_test
+	// rpc error: code = InvalidArgument desc = All input prices are expired: invalid request
+	// underlyingPrice, err := q.GetUnderlyingPrice(
+	// 	ctx,
+	// 	pair,
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
+
 	return &types.QueryBaseAssetResponse{
 		Price: price,
+		// UnderlyingPrice: underlyingPrice,
 	}, nil
 }
