@@ -10,6 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -38,9 +39,9 @@ func GetQueryCmd() *cobra.Command {
 
 func CmdGetVpoolReserveAssets() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reserve-assets [pair]",
+		Use:   "reserve-assets [pair] [direction] [base-asset-amount]",
 		Short: "query the reserve assets of a pool",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -89,6 +90,55 @@ func CmdGetVpools() *cobra.Command {
 			res, err := queryClient.AllPools(
 				cmd.Context(),
 				&types.QueryAllPoolsRequests{},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdGetBaseAssetPrice() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "prices [pair] [direction] [base-asset-amount]",
+		Short: "calls the GetBaseAssetPrice function, direction is 0 or 1",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			tokenPair, err := common.NewAssetPairFromStr(args[0])
+			if err != nil {
+				return err
+			}
+
+			direction, err := strconv.ParseInt(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			baseAssetAmount, err := sdk.NewDecFromStr(args[2])
+			if err != nil {
+				return fmt.Errorf("invalid base asset amount %s", args[2])
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.BaseAssetPrice(
+				cmd.Context(),
+				&types.QueryBaseAssetRequest{
+					Pair:            tokenPair.String(),
+					Direction:       direction,
+					BaseAssetAmount: baseAssetAmount,
+				},
 			)
 			if err != nil {
 				return err

@@ -66,6 +66,10 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (
 }
 
 /*
+Price for 1 (or baseAssetAmount amount of) perpetual contract.
+
+So how much stablecoin you would get if you sold baseAssetAmount amount of perpetual contracts.
+
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction.
 e.g. if removing <baseAssetAmount> base assets from the pool, returns the amount of quote assets do so.
 
@@ -79,6 +83,7 @@ ret:
   - quoteAmount: the amount of quote assets required to make the desired swap
   - err: error
 */
+// STEVENDEBUG
 func (k Keeper) GetBaseAssetPrice(
 	ctx sdk.Context,
 	pair common.AssetPair,

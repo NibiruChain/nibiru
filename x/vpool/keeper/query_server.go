@@ -66,3 +66,37 @@ func (q queryServer) AllPools(
 		Pools: pools,
 	}, nil
 }
+
+func (q queryServer) BaseAssetPrice(
+	goCtx context.Context,
+	req *types.QueryBaseAssetRequest,
+) (resp *types.QueryBaseAssetResponse, err error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pair, err := common.NewAssetPairFromStr(req.Pair)
+	if err != nil {
+		return nil, err
+	}
+
+	// ctx sdk.Context,
+	// pair common.AssetPair,
+	// dir types.Direction,
+	// baseAssetAmount sdk.Dec,
+	price, err := q.GetBaseAssetPrice(
+		ctx,
+		pair,
+		types.Direction(req.Direction),
+		req.BaseAssetAmount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryBaseAssetResponse{
+		Price: price,
+	}, nil
+}
