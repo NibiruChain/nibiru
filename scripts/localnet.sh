@@ -36,7 +36,7 @@ fi
 
 # Set localnet settings
 BINARY=./build/nibid
-CHAIN_ID=nibiru-test-chain-0
+CHAIN_ID=nibiru-localnet-0
 CHAIN_DIR=./data
 RPC_PORT=26657
 GRPC_PORT=9090
@@ -61,7 +61,7 @@ fi
 
 # Initialize nibid with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY init nibiru-test-chain-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
+if $BINARY init nibiru-localnet-0 --home $CHAIN_DIR --chain-id $CHAIN_ID; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
@@ -85,6 +85,45 @@ else
   echo_error "Failed to configure chain-id"
 fi
 
+# Configure broadcast mode
+echo_info "Configuring broadcast mode..."
+if $BINARY config broadcast-mode block --home $CHAIN_DIR; then
+  echo_success "Successfully configured broadcast-mode"
+else
+  echo_error "Failed to configure broadcast mode"
+fi
+
+# Configure output mode
+echo_info "Configuring output mode..."
+if $BINARY config output json --home $CHAIN_DIR; then
+  echo_success "Successfully configured output mode"
+else
+  echo_error "Failed to configure output mode"
+fi
+
+# Enable API Server
+echo_info "Enabling API server"
+if sed -i '' '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled API server"
+else
+  echo_error "Failed to enable API server"
+fi
+
+# Enable Swagger Docs
+echo_info "Enabling Swagger Docs"
+if sed -i '' 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled Swagger Docs"
+else
+  echo_error "Failed to enable Swagger Docs"
+fi
+
+# Enable CORS for localnet
+echo_info "Enabling CORS"
+if sed -i '' 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled CORS"
+else
+  echo_error "Failed to enable CORS"
+fi
 
 echo_info "Adding genesis accounts..."
 echo "$MNEMONIC" | $BINARY keys add validator --recover --home $CHAIN_DIR
@@ -110,4 +149,4 @@ fi
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --home $CHAIN_DIR --log_level debug
+$BINARY start --home $CHAIN_DIR --log_level info
