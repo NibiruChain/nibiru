@@ -314,6 +314,12 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 		Token1: "unibi",
 	}
 
+	s.T().Log("check vpool balances")
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
+	s.T().Logf("reserve assets: %+v", reserveAssets)
+	s.Require().NoError(err)
+
+	s.T().Log("check prices")
 	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, assetPair, "1", "100")
 	s.T().Logf("priceInfo: %+v", priceInfo)
 	s.T().Logf("priceInfo err: %+v", err)

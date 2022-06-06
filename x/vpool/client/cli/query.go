@@ -30,6 +30,7 @@ func GetQueryCmd() *cobra.Command {
 	for _, cmd := range []*cobra.Command{
 		CmdGetVpoolReserveAssets(),
 		CmdGetVpools(),
+		CmdGetBaseAssetPrice(),
 	} {
 		queryCommand.AddCommand(cmd)
 	}
