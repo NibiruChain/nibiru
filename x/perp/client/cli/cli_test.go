@@ -379,9 +379,9 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		user1.String(),
 		"buy",
 		pairStr,
-		"1", // Leverage
-		"1", // 1 BTC
-		"10",
+		"1",       // Leverage
+		"1000000", // 1 BTC
+		"1",
 	}
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
