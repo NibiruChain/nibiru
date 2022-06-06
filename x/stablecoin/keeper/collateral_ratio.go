@@ -450,7 +450,7 @@ func (k *Keeper) CollAmtFromBuyback(
 	return collAmt, err
 }
 
-// TODO hygiene: cover with test cases
+// TODO hygiene: cover with test cases | https://github.com/NibiruChain/nibiru/issues/537
 func (k *Keeper) CollAmtFromFullBuyback(
 	ctx sdk.Context,
 ) (collAmt sdk.Int, err error) {
