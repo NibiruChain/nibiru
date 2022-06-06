@@ -316,13 +316,14 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 
 	s.T().Log("check vpool balances")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
-	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.Require().NoError(err)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("check prices")
 	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, assetPair, "1", "100")
-	s.T().Logf("priceInfo: %+v", priceInfo)
-	s.T().Logf("priceInfo err: %+v", err)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("600006.000060000600006000"), priceInfo.Price)
+	s.Require().NoError(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
