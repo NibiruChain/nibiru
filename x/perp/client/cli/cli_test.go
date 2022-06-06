@@ -77,7 +77,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
 
 			// below sets any trade is allowed
-			TradeLimitRatio:       sdk.MustNewDecFromStr("10000000"),
+			TradeLimitRatio:       sdk.MustNewDecFromStr("10000000"), // 10000000 * 100%
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("10000000"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("10000000"),
 		},
@@ -333,6 +333,8 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 }
 
 func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users []sdk.AccAddress) error {
+	s.T().Log("Checking trader balances....")
+
 	for i := 0; i < len(users); i++ {
 		balance, err := banktestutil.QueryBalancesExec(
 			val.ClientCtx,
@@ -350,6 +352,7 @@ func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users [
 }
 
 func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
+	s.T().Log("Checking trader positions....")
 
 	for i := 0; i < len(users); i++ {
 		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
@@ -418,8 +421,8 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		user1.String(),
 		"buy",
 		pairStr,
-		"1", // Leverage
-		"1", // 1 BTC
+		"10", // Leverage
+		"1",  // Amount
 		"0.0000001",
 	}
 	commonArgs := []string{
@@ -436,26 +439,41 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	s.checkPositions(val, pair, []sdk.AccAddress{user1})
 	s.checkBalances(val, s.users)
 
-	// Open a huge position with user 2 to cause vpool to go underwater via price change
+	// Open a huge position with user 2
 	args2 := []string{
 		"--from",
 		user2.String(),
 		"buy",
 		pairStr,
-		"1",       // Leverage
-		"1000000", // 1 BTC
-		"0.0000001",
+		"1",    // Leverage
+		"6000", // Amount
+		"0.0000000001",
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args2, commonArgs...))
 	if err != nil {
-		s.T().Logf("user2 op en position err: %+v", err)
+		s.T().Logf("user2 open position err: %+v", err)
 	}
 	s.checkBalances(val, s.users)
 
-	// Verify user 1 now has bad debt
+	// Check vpool balances
+	s.T().Log("checking vpool balances...")
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets: %+v", reserveAssets)
+	if err != nil {
+		s.T().Logf("reserve assets err: %+v", err)
+	}
+
+	// See if user 1 now has bad debt
+	// TODO/problem: user 1 and user 2 both don't have any bad debt yet...
 	s.checkPositions(val, pair, s.users)
 
-	// Remove margin from user 1
+	// Check vpool balances
+	s.T().Log("checking vpool balances...")
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets: %+v", reserveAssets)
+	if err != nil {
+		s.T().Logf("reserve assets err: %+v", err)
+	}
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

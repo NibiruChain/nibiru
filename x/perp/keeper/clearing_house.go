@@ -88,6 +88,7 @@ func (k Keeper) OpenPosition(
 		)
 
 		fmt.Printf("STEVENDEBUG positionResp %+v\n", positionResp)
+		fmt.Printf("STEVENDEBUG positionResp err %+v\n", err)
 
 		if err != nil {
 			return err
@@ -344,6 +345,8 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	currentPosition types.Position,
 	pnlCalcOption types.PnLCalcOption,
 ) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
+	fmt.Println("STEVENDEBUG getPositionNotionalAndUnrealizedPnL ")
+
 	positionSizeAbs := currentPosition.Size_.Abs()
 	if positionSizeAbs.IsZero() {
 		return sdk.ZeroDec(), sdk.ZeroDec(), nil
@@ -428,12 +431,17 @@ func (k Keeper) openReversePosition(
 	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
+	fmt.Println("STEVENDEBUG inside openReversePosition")
+
 	openNotional := leverage.Mul(quoteAssetAmount)
 	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
 		types.PnLCalcOption_SPOT_PRICE,
 	)
+
+	fmt.Println("STEVENDEBUG currentPositionNotional ", currentPositionNotional)
+
 	if err != nil {
 		return nil, err
 	}
@@ -441,15 +449,23 @@ func (k Keeper) openReversePosition(
 	switch currentPositionNotional.GT(openNotional) {
 	// position reduction
 	case true:
-		return k.decreasePosition(
+		fmt.Println("STEVENDEBUG position reduction ")
+
+		position, err := k.decreasePosition(
 			ctx,
 			currentPosition,
 			openNotional,
 			baseAssetAmountLimit,
 			canOverFluctuationLimit,
 		)
+
+		fmt.Printf("STEVENDEBUG position reduction position: %+v err: %+v \n", position, err)
+
+		return position, err
 	// close and reverse
 	default:
+		fmt.Println("STEVENDEBUG close and reverse ")
+
 		return k.closeAndOpenReversePosition(
 			ctx,
 			currentPosition,
