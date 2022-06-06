@@ -763,7 +763,7 @@ func TestRecollateralize(t *testing.T) {
 			err:          fmt.Errorf("collateral input, -200uust, must be positive"),
 		},
 		{
-			name: "negative msg.Coll.Amount - error",
+			name: "pricefeed prices are expired - error",
 			postedAssetPairs: []common.AssetPair{
 				common.CollStablePool,
 			},
