@@ -39,9 +39,9 @@ func GetQueryCmd() *cobra.Command {
 
 func CmdGetVpoolReserveAssets() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reserve-assets [pair] [direction] [base-asset-amount]",
+		Use:   "reserve-assets [pair]",
 		Short: "query the reserve assets of a pool",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
