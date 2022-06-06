@@ -68,11 +68,11 @@ func (msg *MsgOpenPosition) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
-	if !msg.Leverage.GT(sdk.ZeroDec()) {
+	if msg.Leverage.LTE(sdk.ZeroDec()) {
 		return fmt.Errorf("leverage must always be greater than zero")
 	}
-	if !msg.BaseAssetAmountLimit.GT(sdk.ZeroInt()) {
-		return fmt.Errorf("base asset amount limit must always be greater than zero")
+	if msg.BaseAssetAmountLimit.LT(sdk.ZeroInt()) {
+		return fmt.Errorf("base asset amount limit must not be negative")
 	}
 	if !msg.QuoteAssetAmount.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("quote asset amount must be always greater than zero")

@@ -36,7 +36,7 @@ func GetTxCmd() *cobra.Command {
 
 func OpenPositionCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "open-position [buy/sell] [pair] [leverage] [amount/sdk.Dec] [base asset amount limit/sdk.Dec]",
+		Use:   "open-position [buy/sell] [pair] [leverage] [quoteAmt / sdk.Dec] [baseAmtLimit / sdk.Dec]",
 		Short: "Opens a position",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -58,33 +58,27 @@ func OpenPositionCmd() *cobra.Command {
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
 
-			_, err = common.NewAssetPairFromStr(args[1])
+			assetPair, err := common.NewAssetPairFromStr(args[1])
 			if err != nil {
 				return err
 			}
 
-			leverage, err := sdk.NewDecFromStr(args[2])
-			if err != nil {
-				return err
-			}
+			leverage := sdk.MustNewDecFromStr(args[2])
 
 			amount, ok := sdk.NewIntFromString(args[3])
 			if !ok {
 				return fmt.Errorf("invalid quote amount: %s", args[3])
 			}
 
-			baseAssetAmountLimit, ok := sdk.NewIntFromString(args[4])
-			if !ok {
-				return fmt.Errorf("invalid base amount limit: %s", args[3])
-			}
+			baseAssetAmountLimit := sdk.MustNewDecFromStr(args[4])
 
 			msg := &types.MsgOpenPosition{
 				Sender:               clientCtx.GetFromAddress().String(),
-				TokenPair:            args[1],
+				TokenPair:            assetPair.String(),
 				Side:                 side,
 				QuoteAssetAmount:     amount,
 				Leverage:             leverage,
-				BaseAssetAmountLimit: baseAssetAmountLimit,
+				BaseAssetAmountLimit: baseAssetAmountLimit.RoundInt(),
 			}
 
 			if err := msg.ValidateBasic(); err != nil {
