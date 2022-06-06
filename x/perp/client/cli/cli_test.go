@@ -66,6 +66,16 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
+		{
+			Pair:              "test:unibi",
+			BaseAssetReserve:  sdk.MustNewDecFromStr("100"),
+			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
+
+			// below sets any trade is allowed
+			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+		},
 	}
 	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
 
@@ -79,6 +89,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 		{
 			Pair: "eth:unibi",
+			CumulativePremiumFractions: []sdk.Dec{
+				sdk.ZeroDec(),
+			},
+		},
+		{
+			Pair: "test:unibi",
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -283,10 +299,10 @@ func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users [
 			val.ClientCtx,
 			users[i],
 		)
-		s.T().Logf("STEVENDEBUG user %+v (acc: %+v) balance: %+v", i, users[i], balance)
+		s.T().Logf("user %+v (acc: %+v) balance: %+v", i, users[i], balance)
 
 		if err != nil {
-			s.T().Logf("STEVENDEBUG balance err: %+v", err)
+			s.T().Logf("balance err: %+v", err)
 			return err
 		}
 	}
@@ -295,17 +311,16 @@ func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users [
 }
 
 func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
+
 	for i := 0; i < len(users); i++ {
 		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
-		s.T().Logf("STEVENDBEUG user %+v (acc: %+v) query response: %+v", i, users[i], queryResp)
+		s.T().Logf("user %+v (acc: %+v) query response: %+v", i, users[i], queryResp)
 
 		if err != nil {
-			s.T().Logf("STEVENDBEUG query error: %+v", err)
+			s.T().Logf("query error: %+v", err)
 			return err
 		}
 	}
-
-	s.T().Log("\n\n\n")
 
 	return nil
 }
@@ -315,10 +330,10 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
 	pair := common.AssetPair{
-		Token0: "ubtc",
+		Token0: "test",
 		Token1: "unibi",
 	}
-	pairStr := fmt.Sprintf("%s%s%s", "ubtc", common.PairSeparator, "unibi")
+	pairStr := fmt.Sprintf("%s%s%s", "test", common.PairSeparator, "unibi")
 
 	user1 := s.users[0]
 	user2 := s.users[1]
@@ -346,6 +361,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	s.Require().NoError(err)
 
 	// Check vpool balances
+	s.T().Log("checking vpool balances...")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	if err != nil {
@@ -353,17 +369,19 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	}
 
 	// Check wallets of users
+	s.T().Log("checking user balances....")
 	s.checkBalances(val, s.users)
 
 	// Open a position with user 1
+	s.T().Log("opening a position with user 1....")
 	args := []string{
 		"--from",
 		user1.String(),
 		"buy",
 		pairStr,
-		"1",       // Leverage
-		"1000000", // 1 BTC
-		"1",
+		"1", // Leverage
+		"1", // 1 BTC
+		"10",
 	}
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -373,8 +391,12 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	if err != nil {
-		s.T().Logf("STEVENDEBUG user1 open position err: %+v", err)
+		s.T().Logf("user1 open position err: %+v", err)
 	}
+
+	return
+
+	s.checkPositions(val, pair, []sdk.AccAddress{user1})
 	s.checkBalances(val, s.users)
 
 	// Open a huge position with user 2 to cause vpool to go underwater via price change
@@ -383,13 +405,13 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		user2.String(),
 		"buy",
 		pairStr,
-		"1",       // Leverage
-		"1000000", // 1 BTC
+		"1", // Leverage
+		"1", // 1 BTC
 		"1",
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args2, commonArgs...))
 	if err != nil {
-		s.T().Logf("STEVENDEBUG user2 op en position err: %+v", err)
+		s.T().Logf("user2 op en position err: %+v", err)
 	}
 	s.checkBalances(val, s.users)
 

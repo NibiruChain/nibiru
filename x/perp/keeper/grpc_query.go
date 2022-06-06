@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -25,8 +24,6 @@ var _ types.QueryServer = queryServer{}
 func (q queryServer) TraderPosition(
 	goCtx context.Context, req *types.QueryTraderPositionRequest,
 ) (*types.QueryTraderPositionResponse, error) {
-	fmt.Printf("STEVENDEBUG TraderPosition: %v\n", 0)
-
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -48,8 +45,6 @@ func (q queryServer) TraderPosition(
 	}
 
 	badDebt, err := q.Keeper.GetBadDebt(ctx, pair, trader)
-	fmt.Printf("STEVENDEBUG badDebt: %v\n", badDebt)
-	fmt.Printf("STEVENDEBUG err: %v\n", err)
 
 	return &types.QueryTraderPositionResponse{
 		Position: position,

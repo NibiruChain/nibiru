@@ -40,6 +40,8 @@ func OpenPositionCmd() *cobra.Command {
 		Short: "Opens a position",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("calling OpenPositionCmd...")
+
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
