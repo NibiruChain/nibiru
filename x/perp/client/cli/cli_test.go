@@ -72,9 +72,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
 
 			// below sets any trade is allowed
-			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+			TradeLimitRatio:       sdk.MustNewDecFromStr("10000000"),
+			FluctuationLimitRatio: sdk.MustNewDecFromStr("10000000"),
+			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("10000000"),
 		},
 	}
 	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
@@ -379,9 +379,9 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		user1.String(),
 		"buy",
 		pairStr,
-		"1",       // Leverage
-		"1000000", // 1 BTC
-		"1",
+		"1", // Leverage
+		"1", // 1 BTC
+		"0.0000001",
 	}
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -394,8 +394,6 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
 
-	return
-
 	s.checkPositions(val, pair, []sdk.AccAddress{user1})
 	s.checkBalances(val, s.users)
 
@@ -405,9 +403,9 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		user2.String(),
 		"buy",
 		pairStr,
-		"1", // Leverage
-		"1", // 1 BTC
-		"1",
+		"1",       // Leverage
+		"1000000", // 1 BTC
+		"0.0000001",
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args2, commonArgs...))
 	if err != nil {
