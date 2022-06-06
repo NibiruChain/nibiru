@@ -307,6 +307,18 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.T().Logf("err: %+v", err)
 }
 
+func (s *IntegrationTestSuite) TestGetPrices() {
+	val := s.network.Validators[0]
+	assetPair := common.AssetPair{
+		Token0: "eth",
+		Token1: "unibi",
+	}
+
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, assetPair, "1", "100")
+	s.T().Logf("priceInfo: %+v", priceInfo)
+	s.T().Logf("priceInfo err: %+v", err)
+}
+
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }

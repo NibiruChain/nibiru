@@ -49,3 +49,22 @@ func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.A
 
 	return queryResp, nil
 }
+
+func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction string, amount string) (vpooltypes.QueryBaseAssetResponse, error) {
+	out, err := clitestutil.ExecTestCLICmd(
+		client.Context{},
+		cli2.CmdGetBaseAssetPrice(),
+		[]string{pair.String(), direction, amount, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+	)
+	if err != nil {
+		return vpooltypes.QueryBaseAssetResponse{}, err
+	}
+
+	var queryResp vpooltypes.QueryBaseAssetResponse
+	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
+	if err != nil {
+		return vpooltypes.QueryBaseAssetResponse{}, err
+	}
+
+	return queryResp, nil
+}

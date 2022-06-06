@@ -82,10 +82,6 @@ func (q queryServer) BaseAssetPrice(
 		return nil, err
 	}
 
-	// ctx sdk.Context,
-	// pair common.AssetPair,
-	// dir types.Direction,
-	// baseAssetAmount sdk.Dec,
 	price, err := q.GetBaseAssetPrice(
 		ctx,
 		pair,
