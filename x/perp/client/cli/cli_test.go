@@ -20,6 +20,12 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
+var commonArgs = []string{
+	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
+}
+
 type IntegrationTestSuite struct {
 	suite.Suite
 
@@ -131,13 +137,18 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	)
 	s.Require().NoError(err)
 
-	// A. Check vpool balances
+	s.T().Log("A. check vpool balances")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(sdk.NewDec(10_000_000), reserveAssets.BaseAssetReserve)
 	s.Assert().EqualValues(sdk.NewDec(60_000_000_000), reserveAssets.QuoteAssetReserve)
 
+	s.T().Log("A. check trader has no existing positions")
+	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	s.Assert().Error(err, "no position found")
+
+	s.T().Log("B. open position")
 	args := []string{
 		"--from",
 		user.String(),
@@ -147,27 +158,17 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"1000000", // 1 BTC
 		"1",
 	}
-	commonArgs := []string{
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
-	}
-
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
-	s.Assert().Error(err, "no position found")
-
-	// A. Open position
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 
-	// A. Check vpool after opening position
+	s.T().Log("B. check vpool balance after open position")
 	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
 	s.Assert().EqualValues(sdk.NewDec(60_001_000_000), reserveAssets.QuoteAssetReserve)
 
-	// A. Check position
+	s.T().Log("B. check vpool balances")
 	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
@@ -176,61 +177,83 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
 
-	// B. Open a reverse position smaller than the existing position
+	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
+	args = []string{
+		"--from",
+		user.String(),
+		"buy",
+		assetPair.String(),
+		/* leverage */ "2",
+		/* quoteAmt */ "1000000", // 10^6 unusd
+		/* baseAmtLimit */ "0",
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+
+	s.T().Log("C. check trader position")
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	s.T().Logf("query response: %+v", queryResp)
+	s.Require().NoError(err)
+	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
+	s.Assert().EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
+
+	s.T().Log("D. Open a reverse position smaller than the existing position")
 	args = []string{
 		"--from",
 		user.String(),
 		"sell",
 		assetPair.String(),
 		"1",   // Leverage
-		"100", // BTC
+		"100", // unusd
 		"1",
 	}
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 	s.Assert().NotContains(res.String(), "fail")
 
-	// B. Check vpool after opening reverse position
+	s.T().Log("D. Check vpool after opening reverse position")
 	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.Require().NoError(err)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("9999833.352777175968362487"), reserveAssets.BaseAssetReserve)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("60000999900.000000000000000000"), reserveAssets.QuoteAssetReserve)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)
+	s.Assert().EqualValues(sdk.NewDec(60_002_999_900), reserveAssets.QuoteAssetReserve)
 
-	// B. Check position
+	s.T().Log("D. Check trader position")
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
-	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
-	s.Assert().EqualValues(sdk.NewDec(999_900), queryResp.Position.OpenNotional)
+	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
+	s.Assert().EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
 
-	// C. Open a reverse position larger than the existing position
+	s.T().Log("E. Open a reverse position larger than the existing position")
 	args = []string{
 		"--from",
 		user.String(),
 		"sell",
 		assetPair.String(),
 		"1",          // Leverage
-		"2000000",    // 2*10^6 unusd
+		"4000000",    // 4*10^6 unusd
 		"2000000000", // TODO: just threw a large number here, figure out a more appropriate amount
 	}
 	res, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 	s.Assert().NotContains(res.String(), "fail")
 
-	// C. Check position
+	s.T().Log("E. Check trader position")
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.OpenNotional)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000099.999999999999998565"), queryResp.Position.Margin)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
 
-	// D. Close positions
+	s.T().Log("F. Close position")
 	args = []string{
 		"--from",
 		user.String(),
@@ -239,7 +262,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
 
-	// D. After closing position should be zero
+	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
@@ -277,11 +300,6 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		"--from",
 		user.String(),
 		assetPair.String(),
-	}
-	commonArgs := []string{
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
 	// TODO: fix that this err doesn't get propagated back up to show up here
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
