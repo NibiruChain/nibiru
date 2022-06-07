@@ -137,25 +137,29 @@ message LiquidateResp {
 }
 
 enum Side {
-  BUY = 0;
-  SELL = 1;
+  SIDE_UNSPECIFIED = 0;
+  BUY = 1;
+  SELL = 2;
 }
 
 enum PnLCalcOption {
-  SPOT_PRICE = 0;
-  TWAP = 1;
-  ORACLE = 2;
+  PNL_CALC_OPTION_UNSPECIFIED = 0;
+  SPOT_PRICE = 1;
+  TWAP = 2;
+  ORACLE = 3;
 }
 
 enum PnLPreferenceOption {
-  MAX = 0;
-  MIN = 1;
+  PNL_PREFERENCE_UNSPECIFIED = 0;
+  MAX = 1;
+  MIN = 2;
 }
 
 enum MarginCalculationPriceOption {
-  SPOT = 0;
-  INDEX = 1;
-  MAX_PNL = 2;
+  MARGIN_CALCULATION_PRICE_OPTION_UNSPECIFIED = 0;
+  SPOT = 1;
+  INDEX = 2;
+  MAX_PNL = 3;
 }
 
 message PairMetadata {

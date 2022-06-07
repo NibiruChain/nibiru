@@ -410,7 +410,7 @@ func (m *MsgOpenPosition) GetSide() Side {
 	if m != nil {
 		return m.Side
 	}
-	return Side_BUY
+	return Side_SIDE_UNSPECIFIED
 }
 
 type MsgOpenPositionResponse struct {

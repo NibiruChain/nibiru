@@ -8,20 +8,23 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
 enum Direction {
-  ADD_TO_POOL = 0;
-  REMOVE_FROM_POOL = 1;
+  DIRECTION_UNSPECIFIED = 0;
+  ADD_TO_POOL = 1;
+  REMOVE_FROM_POOL = 2;
 }
 
 // Enumerates different options of calculating twap.
 enum TwapCalcOption {
+  TWAP_CALC_OPTION_UNSPECIFIED = 0;
+
   // Spot price from quote asset reserve / base asset reserve
-  SPOT = 0;
+  SPOT = 1;
 
   // Swapping with quote assets, output denominated in base assets
-  QUOTE_ASSET_SWAP = 1;
+  QUOTE_ASSET_SWAP = 2;
 
   // Swapping with base assets, output denominated in quote assets
-  BASE_ASSET_SWAP = 2;
+  BASE_ASSET_SWAP = 3;
 }
 
 // a snapshot of the vpool's reserves at a given point in time

@@ -31,7 +31,18 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               sample.AccAddress().String(),
 				TokenPair:            "NIBI:USDN",
-				Side:                 2,
+				Side:                 3,
+				QuoteAssetAmount:     sdk.NewInt(100),
+				Leverage:             sdk.NewDec(10),
+				BaseAssetAmountLimit: sdk.NewInt(100),
+			},
+			wantErr: true,
+		},
+		"invalid side 2": {
+			msg: &MsgOpenPosition{
+				Sender:               sample.AccAddress().String(),
+				TokenPair:            "NIBI:USDN",
+				Side:                 Side_SIDE_UNSPECIFIED,
 				QuoteAssetAmount:     sdk.NewInt(100),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.NewInt(100),
