@@ -21,7 +21,7 @@ func CmdPostPrice() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "post-price [token0] [token1] [price] [expiry]",
 		Short: "Broadcast message PostPrice",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			token0, token1 := args[0], args[1]
 
