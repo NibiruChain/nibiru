@@ -96,12 +96,16 @@ func OpenPositionCmd() *cobra.Command {
 	return cmd
 }
 
-// TODO: how is a position idenitfiied? by pair? by id?
 func ClosePositionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "close-position [pair]",
 		Short: "Closes a position",
-		Args:  cobra.ExactArgs(1),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp close-position osmo:nusd
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

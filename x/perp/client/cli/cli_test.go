@@ -126,13 +126,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		NewMnemonic(uid1, keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
-	s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey().Address())
+	s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey())
 
 	info2, _, err := val2.ClientCtx.Keyring.
 		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
-	s.T().Logf("user2 info: acc %+v | address %+v", user2, info2.GetPubKey().Address())
+	s.T().Logf("user2 info: acc %+v | address %+v", user2, info2.GetPubKey())
 
 	s.users = []sdk.AccAddress{user1, user2}
 }
@@ -435,12 +435,13 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	if err != nil {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
+	s.Require().NoError(err)
 
 	s.checkPositions(val, pair, []sdk.AccAddress{user1})
 	s.checkBalances(val, s.users)
 
 	// Open a huge position with user 2
-	args2 := []string{
+	args = []string{
 		"--from",
 		user2.String(),
 		"buy",
@@ -449,10 +450,12 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"6000", // Amount
 		"0.0000000001",
 	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args2, commonArgs...))
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	if err != nil {
 		s.T().Logf("user2 open position err: %+v", err)
 	}
+	s.Require().NoError(err)
+
 	s.checkBalances(val, s.users)
 
 	// Check vpool balances
@@ -462,6 +465,36 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	if err != nil {
 		s.T().Logf("reserve assets err: %+v", err)
 	}
+	s.Require().NoError(err)
+
+	// Add margin or liquidate on user 1 to trigger bad debt
+	// TODO: not working on triggering bad debt
+	s.T().Log("adding margin on user 1....")
+	args = []string{
+		"--from",
+		user1.String(),
+		pairStr,
+		"1unibi", // amount / margin
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user 1 add margin err: %+v", err)
+	}
+	s.Require().NoError(err)
+
+	// Liquidate on user 1 to trigger bad debt
+	s.T().Log("liquidating on user 1....")
+	args = []string{
+		"--from",
+		user1.String(),
+		pairStr,
+		user1.String(), // amount / margin
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("liquidating on user 1 err: %+v", err)
+	}
+	s.Require().NoError(err)
 
 	// See if user 1 now has bad debt
 	// TODO/problem: user 1 and user 2 both don't have any bad debt yet...

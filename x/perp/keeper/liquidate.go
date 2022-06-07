@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -17,6 +18,8 @@ required margin maintenance ratio.
 func (k Keeper) Liquidate(
 	goCtx context.Context, msg *types.MsgLiquidate,
 ) (res *types.MsgLiquidateResponse, err error) {
+	fmt.Println("STEVENDEBUG starting keeper liquidate: ")
+
 	// ------------- Liquidation Message Setup -------------
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -27,11 +30,15 @@ func (k Keeper) Liquidate(
 		return res, err
 	}
 
+	fmt.Println("STEVENDEBUG starting keeper liquidate - a ")
+
 	// validate trader (msg.PositionOwner)
 	msgTrader, err := sdk.AccAddressFromBech32(msg.Trader)
 	if err != nil {
 		return res, err
 	}
+
+	fmt.Println("STEVENDEBUG starting keeper liquidate - b ")
 
 	// validate pair
 	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
@@ -43,19 +50,30 @@ func (k Keeper) Liquidate(
 		return res, err
 	}
 
+	fmt.Println("STEVENDEBUG starting keeper liquidate - c ")
+
 	position, err := k.GetPosition(ctx, pair, msgTrader)
 	if err != nil {
 		return res, err
 	}
+
+	fmt.Println("STEVENDEBUG starting keeper liquidate - d ")
 
 	marginRatio, err := k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return res, err
 	}
 
+	fmt.Println("STEVENDEBUG starting keeper liquidate - e ")
+
 	if k.VpoolKeeper.IsOverSpreadLimit(ctx, pair) {
+		fmt.Println("STEVENDEBUG starting keeper liquidate - e inside conditional")
+
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
 			ctx, *position, types.MarginCalculationPriceOption_INDEX)
+
+		fmt.Println("STEVENDEBUG starting keeper liquidate - e error: ", err)
+
 		if err != nil {
 			return res, err
 		}
@@ -63,17 +81,23 @@ func (k Keeper) Liquidate(
 		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
 	}
 
+	fmt.Println("STEVENDEBUG starting keeper liquidate - f ")
+
 	params := k.GetParams(ctx)
 	err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, false)
 	if err != nil {
 		return res, types.ErrMarginHighEnough
 	}
 
+	fmt.Println("STEVENDEBUG starting keeper liquidate - g ")
+
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
 		ctx, *position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return res, err
 	}
+
+	fmt.Println("STEVENDEBUG starting keeper liquidate - h ")
 
 	var liquidationResponse types.LiquidateResp
 	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
@@ -84,6 +108,8 @@ func (k Keeper) Liquidate(
 	if err != nil {
 		return res, err
 	}
+
+	fmt.Println("STEVENDEBUG liquidationResponse: ", liquidationResponse)
 
 	events.EmitPositionLiquidate(
 		/* ctx */ ctx,

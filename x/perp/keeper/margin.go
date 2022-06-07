@@ -105,6 +105,8 @@ func (k Keeper) AddMargin(
 	// TODO(https://github.com/NibiruChain/nibiru/issues/323): calculate the funding payment
 	fPayment := sdk.ZeroDec()
 	events.EmitMarginChange(ctx, msgSender, pair.String(), addedMargin, fPayment)
+
+	fmt.Println("STEVENDEBUG add margin done")
 	return &types.MsgAddMarginResponse{}, nil
 }
 
@@ -243,6 +245,8 @@ func (k Keeper) RemoveMargin(
 func (k Keeper) GetMarginRatio(
 	ctx sdk.Context, position types.Position, priceOption types.MarginCalculationPriceOption,
 ) (marginRatio sdk.Dec, err error) {
+	fmt.Println("STEVENDEBUG GetMarginRatio start")
+
 	if position.Size_.IsZero() {
 		return sdk.Dec{}, types.ErrPositionZero
 	}
