@@ -47,6 +47,7 @@ type IntegrationTestSuite struct {
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+	fmt.Printf("STEVENDEBUG oracle address: %s\n", oracle.String())
 
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{

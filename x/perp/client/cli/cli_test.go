@@ -4,6 +4,7 @@ package cli_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -17,9 +18,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	utils "github.com/NibiruChain/nibiru/x/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+)
+
+const (
+	oracleAddress = "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 )
 
 var commonArgs = []string{
@@ -34,6 +40,56 @@ type IntegrationTestSuite struct {
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 	users   []sdk.AccAddress
+}
+
+// NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
+func NewPricefeedGen() *pftypes.GenesisState {
+	// TODO: STEVENDEBUG oracle err: invalid Bech32 prefix; expected cosmos, got nibi
+	oracle, err := sdk.AccAddressFromBech32(oracleAddress)
+	if err != nil {
+		panic(err)
+	}
+
+	// s.T().Logf("STEVENDEBUG oracle: %+v", oracle)
+	fmt.Printf("STEVENDEBUG oracle err: %+v\n", err)
+	fmt.Printf("STEVENDEBUG oracle: %+v\n", oracle.String())
+	fmt.Printf("STEVENDEBUG oracleAddress: %+v\n", oracleAddress)
+
+	return &pftypes.GenesisState{
+		Params: pftypes.Params{
+			Pairs: []pftypes.Pair{
+				{Token0: common.GovStablePool.Token0,
+					Token1:  common.GovStablePool.Token1,
+					Oracles: []sdk.AccAddress{oracle}, Active: true},
+				{Token0: common.CollStablePool.Token0,
+					Token1:  common.CollStablePool.Token1,
+					Oracles: []sdk.AccAddress{oracle}, Active: true},
+				// {Token0: "test",
+				// 	Token1:  "unibi",
+				// 	Oracles: []sdk.AccAddress{oracle}, Active: true},
+			},
+		},
+		PostedPrices: []pftypes.PostedPrice{
+			{
+				PairID:        common.GovStablePool.PairID(),
+				OracleAddress: oracle,
+				Price:         sdk.NewDec(10),
+				Expiry:        time.Now().Add(1 * time.Hour),
+			},
+			{
+				PairID:        common.CollStablePool.PairID(),
+				OracleAddress: oracle,
+				Price:         sdk.OneDec(),
+				Expiry:        time.Now().Add(1 * time.Hour),
+			},
+			// {
+			// 	PairID:        "test:unibi",
+			// 	OracleAddress: oracle,
+			// 	Price:         sdk.OneDec(),
+			// 	Expiry:        time.Now().Add(1 * time.Hour),
+			// },
+		},
+	}
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -53,6 +109,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 
+	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []*vpooltypes.Pool{
 		{
@@ -84,6 +141,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
 
+	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
 	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
 		{
@@ -107,6 +165,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 
 	genesisState[perptypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(perpGenesis)
+
+	// set up pricefeed
+	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
+	fmt.Printf("STEVENDEBUG pricefeedGenJson: %s\n", pricefeedGenJson)
+	// genesisState[pftypes.ModuleName] = pricefeedGenJson
+
 	s.cfg.GenesisState = genesisState
 
 	app.SetPrefixes(app.AccountAddressPrefix)
