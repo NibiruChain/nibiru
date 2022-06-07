@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	oracleAddress = "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+	oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 )
 
 var commonArgs = []string{
@@ -45,6 +45,8 @@ type IntegrationTestSuite struct {
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
 	// TODO: STEVENDEBUG oracle err: invalid Bech32 prefix; expected cosmos, got nibi
+	fmt.Printf("STEVENDEBUG oracleAddress: %+v\n", oracleAddress)
+
 	oracle, err := sdk.AccAddressFromBech32(oracleAddress)
 	if err != nil {
 		panic(err)
@@ -53,7 +55,6 @@ func NewPricefeedGen() *pftypes.GenesisState {
 	// s.T().Logf("STEVENDEBUG oracle: %+v", oracle)
 	fmt.Printf("STEVENDEBUG oracle err: %+v\n", err)
 	fmt.Printf("STEVENDEBUG oracle: %+v\n", oracle.String())
-	fmt.Printf("STEVENDEBUG oracleAddress: %+v\n", oracleAddress)
 
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{
@@ -107,6 +108,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.cfg = utils.DefaultConfig()
 	s.cfg.NumValidators = 2
 
+	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 
 	// setup vpool
@@ -173,7 +175,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg.GenesisState = genesisState
 
-	app.SetPrefixes(app.AccountAddressPrefix)
 
 	s.network = testutilcli.New(s.T(), s.cfg)
 
