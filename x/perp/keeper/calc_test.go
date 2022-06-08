@@ -187,8 +187,7 @@ func TestCalcPerpTxFee(t *testing.T) {
 	assert.Equal(t, sdk.MustNewDecFromStr("0.0123"), params.GetSpreadRatioAsDec())
 
 	// Ensure calculation is correct
-	toll, spread, err := perpKeeper.CalcPerpTxFee(ctx, sdk.NewDec(1_000_000))
-	require.NoError(t, err)
+	toll, spread := perpKeeper.CalcPerpTxFee(ctx, sdk.NewDec(1_000_000))
 	assert.Equal(t, sdk.NewInt(10_000), toll)
 	assert.Equal(t, sdk.NewInt(12_300), spread)
 }
