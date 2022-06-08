@@ -52,30 +52,32 @@ func NewPricefeedGen() *pftypes.GenesisState {
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{
 			Pairs: []pftypes.Pair{
-				{Token0: common.GovStablePool.Token0,
-					Token1:  common.GovStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-				{Token0: common.CollStablePool.Token0,
-					Token1:  common.CollStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
+				// TODO: not used - delete after wrapping up remove margin test
+				// {Token0: common.GovStablePool.Token0,
+				// 	Token1:  common.GovStablePool.Token1,
+				// 	Oracles: []sdk.AccAddress{oracle}, Active: true},
+				// {Token0: common.CollStablePool.Token0,
+				// 	Token1:  common.CollStablePool.Token1,
+				// 	Oracles: []sdk.AccAddress{oracle}, Active: true},
 				{Token0: common.TestStablePool.Token0,
 					Token1:  common.TestStablePool.Token1,
 					Oracles: []sdk.AccAddress{oracle}, Active: true},
 			},
 		},
 		PostedPrices: []pftypes.PostedPrice{
-			{
-				PairID:        common.GovStablePool.PairID(),
-				OracleAddress: oracle,
-				Price:         sdk.NewDec(10),
-				Expiry:        time.Now().Add(1 * time.Hour),
-			},
-			{
-				PairID:        common.CollStablePool.PairID(),
-				OracleAddress: oracle,
-				Price:         sdk.OneDec(),
-				Expiry:        time.Now().Add(1 * time.Hour),
-			},
+			// TODO: not used - delete after wrapping up remove margin test
+			// {
+			// 	PairID:        common.GovStablePool.PairID(),
+			// 	OracleAddress: oracle,
+			// 	Price:         sdk.NewDec(10),
+			// 	Expiry:        time.Now().Add(1 * time.Hour),
+			// },
+			// {
+			// 	PairID:        common.CollStablePool.PairID(),
+			// 	OracleAddress: oracle,
+			// 	Price:         sdk.OneDec(),
+			// 	Expiry:        time.Now().Add(1 * time.Hour),
+			// },
 			{
 				PairID:        common.TestStablePool.PairID(),
 				OracleAddress: oracle,
@@ -152,7 +154,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 		{
-			Pair: "test:unibi",
+			Pair: common.TestStablePool.String(),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -182,13 +184,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		NewMnemonic(uid1, keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
-	s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey())
+	// s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey())
 
 	info2, _, err := val2.ClientCtx.Keyring.
 		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
-	s.T().Logf("user2 info: acc %+v | address %+v", user2, info2.GetPubKey())
+	// s.T().Logf("user2 info: acc %+v | address %+v", user2, info2.GetPubKey())
 
 	s.users = []sdk.AccAddress{user1, user2}
 }
@@ -396,7 +398,7 @@ func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users [
 			val.ClientCtx,
 			users[i],
 		)
-		s.T().Logf("user %+v (acc: %+v) balance: %+v", i, users[i], balance)
+		s.T().Logf("user %+v (acc: %+v) balance: \n \n %+v \n \n", i, users[i], balance)
 
 		if err != nil {
 			s.T().Logf("balance err: %+v", err)
@@ -412,7 +414,7 @@ func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair c
 
 	for i := 0; i < len(users); i++ {
 		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
-		s.T().Logf("user %+v (acc: %+v) query response: %+v", i, users[i], queryResp)
+		s.T().Logf("user %+v (acc: %+v) position: \n \n %+v \n \n", i, users[i], queryResp)
 
 		if err != nil {
 			s.T().Logf("query error: %+v", err)
@@ -464,6 +466,8 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
 			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
 			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
 		),
 		val,
 		s.cfg.BondDenom,
@@ -475,6 +479,8 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
 			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
 			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
 		),
 		val,
 		s.cfg.BondDenom,
@@ -529,9 +535,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	// Check status: vpool reserve assets, balances, positions
 	s.checkStatus(val, pair, s.users)
 
-	return
-
-	// Add margin or liquidate on second user to trigger bad debt
+	// Add margin to trigger bad debt
 	// TODO: not working on triggering bad debt
 	s.T().Log("adding margin on user 1....")
 	args = []string{

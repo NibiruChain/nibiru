@@ -87,6 +87,7 @@ func DefaultConfig() testutilcli.Config {
 			sdk.NewCoin(common.StableDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.GovDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.CollDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.TestTokenDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
 			sdk.NewCoin("stake", sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: storetypes.PruningOptionNothing,
