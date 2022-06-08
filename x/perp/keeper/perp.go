@@ -104,38 +104,3 @@ func (k Keeper) SettlePosition(
 
 	return
 }
-
-func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) (*types.PositionResp, error) {
-	// check that we're not paused
-	params := k.GetParams(ctx)
-	if params.Stopped {
-		return nil, types.ErrExchangeStopped
-	}
-
-	if err := k.requireVpool(ctx, pair); err != nil {
-		return nil, err
-	}
-
-	// TODO(mercilex): require not restriction mode??
-	position, err := k.GetPosition(ctx, pair, addr)
-	if err != nil {
-		return nil, err
-	}
-	if position.Size_.IsZero() {
-		return nil, types.ErrPositionZero
-	}
-
-	resp, err := k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
-	if err != nil {
-		return nil, err
-	}
-
-	// check if there's bad debt
-	if !resp.BadDebt.IsZero() {
-		panic("bad debt")
-	}
-
-	k.Withdraw()
-
-	return resp, nil
-}

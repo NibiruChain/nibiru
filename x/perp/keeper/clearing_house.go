@@ -723,6 +723,33 @@ func (k Keeper) closePositionEntirely(
 	return positionResp, nil
 }
 
+// ClosePosition gets the current position, and calls OpenPosition to open a reverse position with amount equal to the current open notional.
+func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) error {
+	position, err := k.Positions().Get(ctx, pair, addr)
+	if err != nil {
+		return err
+	}
+
+	var side types.Side
+	// size determines the position direction
+	// if negative side is short, if positive
+	// side is long, and side needs to be the
+	// opposite of the current position side.
+	switch position.Size_.IsNegative() {
+	case true:
+		side = types.Side_BUY
+	case false:
+		side = types.Side_SELL
+	}
+
+	err = k.OpenPosition(ctx, pair, side, addr, position.Size_.Abs().RoundInt(), sdk.OneDec(), sdk.ZeroDec())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
 	ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress,

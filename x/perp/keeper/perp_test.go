@@ -228,9 +228,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 
 		t.Log("testing close position")
 
-		resp, err := nibiruApp.PerpKeeper.ClosePosition(ctx, pair, alice)
+		err = nibiruApp.PerpKeeper.ClosePosition(ctx, pair, alice)
 		require.NoError(t, err)
-
-		t.Logf("%s", resp)
 	})
 }
