@@ -391,14 +391,14 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 }
 
 func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users []sdk.AccAddress) error {
-	s.T().Log("Checking trader balances....")
+	s.T().Log("Checking trader balances.... \n \n")
 
 	for i := 0; i < len(users); i++ {
 		balance, err := banktestutil.QueryBalancesExec(
 			val.ClientCtx,
 			users[i],
 		)
-		s.T().Logf("user %+v (acc: %+v) balance: \n \n %+v \n \n", i, users[i], balance)
+		s.T().Logf("user %+v (acc: %+v) balance: \n %+v \n", i, users[i], balance)
 
 		if err != nil {
 			s.T().Logf("balance err: %+v", err)
@@ -410,11 +410,11 @@ func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users [
 }
 
 func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
-	s.T().Log("Checking trader positions....")
+	s.T().Log("Checking trader positions.... \n \n")
 
 	for i := 0; i < len(users); i++ {
 		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
-		s.T().Logf("user %+v (acc: %+v) position: \n \n %+v \n \n", i, users[i], queryResp)
+		s.T().Logf("user %+v (acc: %+v) position: \n %+v \n", i, users[i], queryResp)
 
 		if err != nil {
 			s.T().Logf("query error: %+v", err)
@@ -452,6 +452,9 @@ func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair comm
 	if err != nil {
 		return err
 	}
+
+	// add a break to the logs for easier readability
+	s.T().Log("\n \n")
 
 	return nil
 }
@@ -550,6 +553,9 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	}
 	s.Require().NoError(err)
 
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+
 	// Liquidate on user 1 to trigger bad debt
 	s.T().Log("liquidating on user 1....")
 	args = []string{
@@ -563,6 +569,9 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		s.T().Logf("liquidating on user 1 err: %+v", err)
 	}
 	s.Require().NoError(err)
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

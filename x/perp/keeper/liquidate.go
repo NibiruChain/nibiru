@@ -86,6 +86,7 @@ func (k Keeper) Liquidate(
 	params := k.GetParams(ctx)
 	err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, false)
 	if err != nil {
+		fmt.Println("STEVENDEBUG margin high enough ")
 		return res, types.ErrMarginHighEnough
 	}
 
