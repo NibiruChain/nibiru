@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	GovDenom    = "unibi"
-	CollDenom   = "uust"
-	StableDenom = "unusd"
+	GovDenom       = "unibi"
+	CollDenom      = "uust"
+	StableDenom    = "unusd"
+	TestTokenDenom = "test"
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 
@@ -19,6 +20,7 @@ var (
 
 	GovStablePool  = AssetPair{Token0: GovDenom, Token1: StableDenom}
 	CollStablePool = AssetPair{Token0: CollDenom, Token1: StableDenom}
+	TestStablePool = AssetPair{Token0: TestTokenDenom, Token1: StableDenom}
 
 	ErrInvalidTokenPair = fmt.Errorf("invalid token pair")
 )

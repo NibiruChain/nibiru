@@ -263,7 +263,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (isIt 
 
 	spotPrice, err := k.GetSpotPrice(ctx, pair)
 
-	fmt.Println("STEVENDEBUG IsOverSpreadLimit( spotPrice ", spotPrice, " err ", err)
+	fmt.Println("STEVENDEBUG IsOverSpreadLimit( spotPrice ", spotPrice, " pair ", pair, " err ", err)
 
 	if err != nil {
 		panic(err)
@@ -271,7 +271,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (isIt 
 
 	oraclePrice, err := k.GetUnderlyingPrice(ctx, pair)
 
-	fmt.Println("STEVENDEBUG IsOverSpreadLimit( oraclePrice ", oraclePrice, " err ", err)
+	fmt.Println("STEVENDEBUG IsOverSpreadLimit( GetUnderlyingPrice oraclePrice ", oraclePrice, " pair ", pair, " err ", err)
 
 	if err != nil {
 		panic(err)
@@ -279,7 +279,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (isIt 
 
 	pool, err := k.getPool(ctx, pair)
 
-	fmt.Println("STEVENDEBUG IsOverSpreadLimit( oraclePrice ", pool, " err ", err)
+	fmt.Println("STEVENDEBUG IsOverSpreadLimit( getPool ", pool, " pair ", pair, " err ", err)
 
 	if err != nil {
 		panic(err)

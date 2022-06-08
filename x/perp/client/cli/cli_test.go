@@ -44,17 +44,10 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	// TODO: STEVENDEBUG oracle err: invalid Bech32 prefix; expected cosmos, got nibi
-	fmt.Printf("STEVENDEBUG oracleAddress: %+v\n", oracleAddress)
-
 	oracle, err := sdk.AccAddressFromBech32(oracleAddress)
 	if err != nil {
 		panic(err)
 	}
-
-	// s.T().Logf("STEVENDEBUG oracle: %+v", oracle)
-	fmt.Printf("STEVENDEBUG oracle err: %+v\n", err)
-	fmt.Printf("STEVENDEBUG oracle: %+v\n", oracle.String())
 
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{
@@ -65,9 +58,9 @@ func NewPricefeedGen() *pftypes.GenesisState {
 				{Token0: common.CollStablePool.Token0,
 					Token1:  common.CollStablePool.Token1,
 					Oracles: []sdk.AccAddress{oracle}, Active: true},
-				// {Token0: "test",
-				// 	Token1:  "unibi",
-				// 	Oracles: []sdk.AccAddress{oracle}, Active: true},
+				{Token0: common.TestStablePool.Token0,
+					Token1:  common.TestStablePool.Token1,
+					Oracles: []sdk.AccAddress{oracle}, Active: true},
 			},
 		},
 		PostedPrices: []pftypes.PostedPrice{
@@ -83,12 +76,12 @@ func NewPricefeedGen() *pftypes.GenesisState {
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
-			// {
-			// 	PairID:        "test:unibi",
-			// 	OracleAddress: oracle,
-			// 	Price:         sdk.OneDec(),
-			// 	Expiry:        time.Now().Add(1 * time.Hour),
-			// },
+			{
+				PairID:        common.TestStablePool.PairID(),
+				OracleAddress: oracle,
+				Price:         sdk.OneDec(),
+				Expiry:        time.Now().Add(1 * time.Hour),
+			},
 		},
 	}
 }
@@ -131,7 +124,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 		{
-			Pair:              "test:unibi",
+			Pair:              common.TestStablePool.String(),
 			BaseAssetReserve:  sdk.MustNewDecFromStr("100"),
 			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
 
@@ -170,11 +163,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// set up pricefeed
 	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
-	fmt.Printf("STEVENDEBUG pricefeedGenJson: %s\n", pricefeedGenJson)
-	// genesisState[pftypes.ModuleName] = pricefeedGenJson
+	genesisState[pftypes.ModuleName] = pricefeedGenJson
 
 	s.cfg.GenesisState = genesisState
-
 
 	s.network = testutilcli.New(s.T(), s.cfg)
 
@@ -432,15 +423,10 @@ func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair c
 	return nil
 }
 
-// remove margin, pull collateral out
 func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
-	pair := common.AssetPair{
-		Token0: "test",
-		Token1: "unibi",
-	}
-	pairStr := fmt.Sprintf("%s%s%s", "test", common.PairSeparator, "unibi")
+	pair := common.TestStablePool
 
 	user1 := s.users[0]
 	user2 := s.users[1]
@@ -485,7 +471,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"--from",
 		user1.String(),
 		"buy",
-		pairStr,
+		pair.String(),
 		"10", // Leverage
 		"1",  // Amount
 		"0.0000001",
@@ -510,7 +496,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"--from",
 		user2.String(),
 		"buy",
-		pairStr,
+		pair.String(),
 		"1",    // Leverage
 		"6000", // Amount
 		"0.0000000001",
@@ -538,7 +524,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	args = []string{
 		"--from",
 		user1.String(),
-		pairStr,
+		pair.String(),
 		"1unibi", // amount / margin
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(args, commonArgs...))
@@ -552,7 +538,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	args = []string{
 		"--from",
 		user1.String(),
-		pairStr,
+		pair.String(),
 		user1.String(), // amount / margin
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
