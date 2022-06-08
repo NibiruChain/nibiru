@@ -740,8 +740,11 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.A
 		return err
 	}
 
-	log.Printf("open notional before close: %s", position.OpenNotional.String())
-	posResp, err := k.openReversePosition(ctx, *position, position.OpenNotional, sdk.NewDec(1), sdk.ZeroDec(), false)
+	currentOpenNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	if err != nil {
+		return err
+	}
+	posResp, err := k.openReversePosition(ctx, *position, currentOpenNotional, sdk.NewDec(1), sdk.ZeroDec(), false)
 	if err != nil {
 		return err
 	}
