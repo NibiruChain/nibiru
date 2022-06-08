@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
 )
@@ -36,7 +37,11 @@ func (m MsgRemoveMargin) GetSignBytes() []byte {
 }
 
 func (m MsgRemoveMargin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{m.Sender}
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
 }
 
 // MsgAddMargin
@@ -53,28 +58,32 @@ func (m MsgAddMargin) GetSignBytes() []byte {
 }
 
 func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{m.Sender}
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
 }
 
 // MsgOpenPosition
 
-func (m *MsgOpenPosition) ValidateBasic() error {
-	if m.Side != Side_SELL && m.Side != Side_BUY {
+func (msg *MsgOpenPosition) ValidateBasic() error {
+	if msg.Side != Side_SELL && msg.Side != Side_BUY {
 		return fmt.Errorf("invalid side")
 	}
-	if _, err := common.NewAssetPairFromStr(m.TokenPair); err != nil {
+	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
 		return err
 	}
-	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
-	if !m.Leverage.GT(sdk.ZeroDec()) {
+	if msg.Leverage.LTE(sdk.ZeroDec()) {
 		return fmt.Errorf("leverage must always be greater than zero")
 	}
-	if !m.BaseAssetAmountLimit.GT(sdk.ZeroInt()) {
-		return fmt.Errorf("base asset amount limit must always be greater than zero")
+	if msg.BaseAssetAmountLimit.LT(sdk.ZeroInt()) {
+		return fmt.Errorf("base asset amount limit must not be negative")
 	}
-	if !m.QuoteAssetAmount.GT(sdk.ZeroInt()) {
+	if !msg.QuoteAssetAmount.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("quote asset amount must be always greater than zero")
 	}
 
@@ -82,7 +91,11 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 }
 
 func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{m.Sender}
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
 }
 
 // MsgLiquidate
@@ -90,14 +103,14 @@ func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
 func (m MsgLiquidate) Route() string { return RouterKey }
 func (m MsgLiquidate) Type() string  { return "liquidate_msg" }
 
-func (m MsgLiquidate) ValidateBasic() error {
-	if err := sdk.VerifyAddressFormat(m.Sender); err != nil {
-		return err
+func (msg MsgLiquidate) ValidateBasic() (err error) {
+	if _, err = sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
-	if err := sdk.VerifyAddressFormat(m.Trader); err != nil {
-		return err
+	if _, err = sdk.AccAddressFromBech32(msg.Trader); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid trader address (%s)", err)
 	}
-	if _, err := common.NewAssetPairFromStr(m.TokenPair); err != nil {
+	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
 		return err
 	}
 	return nil
@@ -108,5 +121,37 @@ func (m MsgLiquidate) GetSignBytes() []byte {
 }
 
 func (m MsgLiquidate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{m.Sender}
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+// MsgClosePosition
+
+func (m MsgClosePosition) Route() string { return RouterKey }
+func (m MsgClosePosition) Type() string  { return "liquidate_msg" }
+
+func (msg MsgClosePosition) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m MsgClosePosition) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgClosePosition) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
 }

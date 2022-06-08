@@ -141,7 +141,7 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:         traderAddr,
+		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
@@ -155,6 +155,35 @@ func (k Keeper) afterPositionUpdate(
 		SpotPrice:             spotPrice,
 		FundingPayment:        positionResp.FundingPayment,
 	})
+}
+
+func (k Keeper) ClosePosition(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	traderAddr sdk.AccAddress,
+) (err error) {
+	// checks
+	err = k.requireVpool(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	position, err := k.GetPosition(ctx, pair, traderAddr)
+	if err != nil {
+		// TODO: propagate this back to the cli
+		return err
+	}
+
+	_, err = k.closePositionEntirely(
+		ctx,
+		*position,
+		sdk.ZeroDec(), // TODO: double check this
+	)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /*
@@ -553,6 +582,11 @@ func (k Keeper) closeAndOpenReversePosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
+	trader, err := sdk.AccAddressFromBech32(existingPosition.TraderAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	closePositionResp, err := k.closePositionEntirely(
 		ctx,
 		existingPosition,
@@ -566,20 +600,26 @@ func (k Keeper) closeAndOpenReversePosition(
 		return nil, fmt.Errorf("underwater position")
 	}
 
-	notionalValueMovement := leverage.Mul(quoteAssetAmount)
-	remainingOpenNotional := notionalValueMovement.Sub(
+	reverseNotionalValue := leverage.Mul(quoteAssetAmount)
+	remainingReverseNotionalValue := reverseNotionalValue.Sub(
 		closePositionResp.ExchangedQuoteAssetAmount)
 
-	if remainingOpenNotional.IsNegative() {
+	if remainingReverseNotionalValue.IsNegative() {
 		// should never happen as this should also be checked in the caller
 		return nil, fmt.Errorf(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
-			closePositionResp.ExchangedQuoteAssetAmount.String(), notionalValueMovement.String())
-	} else if remainingOpenNotional.IsPositive() {
-		var updatedBaseAssetAmountLimit sdk.Dec
-		if baseAssetAmountLimit.GT(closePositionResp.ExchangedPositionSize) {
+			closePositionResp.ExchangedQuoteAssetAmount.String(), reverseNotionalValue.String())
+	} else if remainingReverseNotionalValue.IsPositive() {
+		updatedBaseAssetAmountLimit := baseAssetAmountLimit
+		if baseAssetAmountLimit.IsPositive() {
 			updatedBaseAssetAmountLimit = baseAssetAmountLimit.
 				Sub(closePositionResp.ExchangedPositionSize.Abs())
+		}
+		if updatedBaseAssetAmountLimit.IsNegative() {
+			return nil, fmt.Errorf(
+				"position size changed by greater than the specified base limit: %s",
+				baseAssetAmountLimit.String(),
+			)
 		}
 
 		var sideToTake types.Side
@@ -593,13 +633,13 @@ func (k Keeper) closeAndOpenReversePosition(
 		newPosition := types.ZeroPosition(
 			ctx,
 			existingPosition.GetAssetPair(),
-			existingPosition.TraderAddress,
+			trader,
 		)
 		increasePositionResp, err := k.increasePosition(
 			ctx,
 			*newPosition,
 			sideToTake,
-			remainingOpenNotional,
+			remainingReverseNotionalValue,
 			updatedBaseAssetAmountLimit,
 			leverage,
 		)
@@ -652,6 +692,11 @@ func (k Keeper) closePositionEntirely(
 ) (positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, fmt.Errorf("zero position size")
+	}
+
+	trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
+	if err != nil {
+		return nil, err
 	}
 
 	positionResp = &types.PositionResp{
@@ -714,7 +759,7 @@ func (k Keeper) closePositionEntirely(
 	if err = k.ClearPosition(
 		ctx,
 		currentPosition.GetAssetPair(),
-		currentPosition.TraderAddress,
+		trader,
 	); err != nil {
 		return nil, err
 	}

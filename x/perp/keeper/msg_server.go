@@ -34,10 +34,14 @@ func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
 }
 
 func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
-) (*types.MsgOpenPositionResponse, error) {
+) (response *types.MsgOpenPositionResponse, err error) {
 	pair, err := common.NewAssetPairFromStr(req.TokenPair)
 	if err != nil {
 		panic(err) // must not happen
+	}
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -45,7 +49,7 @@ func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 		ctx,
 		pair,
 		req.Side,
-		req.Sender,
+		sender,
 		req.QuoteAssetAmount,
 		req.Leverage,
 		req.BaseAssetAmountLimit.ToDec(),
@@ -82,4 +86,27 @@ func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 	}
 
 	return response, nil
+}
+
+func (k msgServer) ClosePosition(goCtx context.Context, req *types.MsgClosePosition,
+) (*types.MsgClosePositionResponse, error) {
+	pair, err := common.NewAssetPairFromStr(req.TokenPair)
+	if err != nil {
+		panic(err) // must not happen
+	}
+
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// TODO: fix that this err doesn't get returned if using tx broadcast in cli_test
+	err = k.k.ClosePosition(ctx, pair, sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error())
+	}
+
+	return &types.MsgClosePositionResponse{}, nil
 }
