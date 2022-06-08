@@ -109,7 +109,7 @@ func CmdGetVpools() *cobra.Command {
 func CmdGetBaseAssetPrice() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prices [pair] [direction] [base-asset-amount]",
-		Short: "calls the GetBaseAssetPrice function, direction is 0 or 1",
+		Short: "calls the GetBaseAssetPrice function, direction is 1 (ADD_TO_POOL) or 2 (REMOVE_FROM_POOL)",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -122,7 +122,8 @@ func CmdGetBaseAssetPrice() *cobra.Command {
 				return err
 			}
 
-			direction, err := strconv.ParseInt(args[1], 10, 64)
+			arg1, err := strconv.ParseInt(args[1], 10, 32)
+			direction := types.Direction(arg1)
 			if err != nil {
 				return err
 			}
