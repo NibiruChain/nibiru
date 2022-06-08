@@ -83,7 +83,6 @@ ret:
   - quoteAmount: the amount of quote assets required to make the desired swap
   - err: error
 */
-// STEVENDEBUG
 func (k Keeper) GetBaseAssetPrice(
 	ctx sdk.Context,
 	pair common.AssetPair,
