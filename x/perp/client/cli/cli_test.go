@@ -52,32 +52,12 @@ func NewPricefeedGen() *pftypes.GenesisState {
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{
 			Pairs: []pftypes.Pair{
-				// TODO: not used - delete after wrapping up remove margin test
-				// {Token0: common.GovStablePool.Token0,
-				// 	Token1:  common.GovStablePool.Token1,
-				// 	Oracles: []sdk.AccAddress{oracle}, Active: true},
-				// {Token0: common.CollStablePool.Token0,
-				// 	Token1:  common.CollStablePool.Token1,
-				// 	Oracles: []sdk.AccAddress{oracle}, Active: true},
 				{Token0: common.TestStablePool.Token0,
 					Token1:  common.TestStablePool.Token1,
 					Oracles: []sdk.AccAddress{oracle}, Active: true},
 			},
 		},
 		PostedPrices: []pftypes.PostedPrice{
-			// TODO: not used - delete after wrapping up remove margin test
-			// {
-			// 	PairID:        common.GovStablePool.PairID(),
-			// 	OracleAddress: oracle,
-			// 	Price:         sdk.NewDec(10),
-			// 	Expiry:        time.Now().Add(1 * time.Hour),
-			// },
-			// {
-			// 	PairID:        common.CollStablePool.PairID(),
-			// 	OracleAddress: oracle,
-			// 	Price:         sdk.OneDec(),
-			// 	Expiry:        time.Now().Add(1 * time.Hour),
-			// },
 			{
 				PairID:        common.TestStablePool.PairID(),
 				OracleAddress: oracle,
@@ -101,7 +81,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	s.cfg = utils.DefaultConfig()
-	s.cfg.NumValidators = 1
+	s.cfg.NumValidators = 2
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
@@ -175,6 +155,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	val := s.network.Validators[0]
+	val2 := s.network.Validators[1]
 
 	bip39Passphrase := "password"
 
@@ -185,7 +166,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 	// s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey())
 
-	info2, _, err := val.ClientCtx.Keyring.
+	info2, _, err := val2.ClientCtx.Keyring.
 		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
@@ -437,7 +418,10 @@ func (s *IntegrationTestSuite) checkReserveAssets(val *testutilcli.Validator, pa
 }
 
 func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
-	err := s.checkReserveAssets(val, pair)
+	err := s.network.WaitForNextBlock()
+	s.Require().NoError(err)
+
+	err = s.checkReserveAssets(val, pair)
 	if err != nil {
 		s.T().Logf("query reserve assets err: %+v", err)
 	}
@@ -454,6 +438,83 @@ func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair comm
 
 	// add a break to the logs for easier readability
 	s.T().Log("\n \n")
+}
+
+func (s *IntegrationTestSuite) TestLiquidate() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+	pair := common.TestStablePool
+
+	_, err := utils.FillWalletFromValidator(s.users[0],
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	_, err = utils.FillWalletFromValidator(s.users[1],
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+
+	// Open a position with first user
+	s.T().Log("opening a position with user 1....")
+	args := []string{
+		"--from",
+		s.users[0].String(),
+		"buy",
+		pair.String(),
+		"10", // Leverage
+		"1",  // Quote asset amount
+		"0.0000001",
+	}
+	commonArgs := []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+	}
+
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user1 open position err: %+v", err)
+	}
+	s.Require().NoError(err)
+
+	// Liquidate on user 1 to trigger bad debt
+	// TODO: not working on triggering bad debt
+	// TODO: error doesn't bubble up here so if a liquidation fails there is no "err" or way to know
+	s.T().Log("liquidating on user 1....")
+	args = []string{
+		"--from",
+		s.users[0].String(),
+		pair.String(),
+		s.users[0].String(), // user to liquidate
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("liquidating on user 1 err: %+v", err)
+	}
+	s.Require().Error(err)
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
 }
 
 func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
@@ -529,6 +590,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	if err != nil {
 		s.T().Logf("user1 remove margin err: %+v", err)
 	}
+	s.Require().Error(err)
 
 	// Check status: vpool reserve assets, balances, positions
 	s.checkStatus(val, pair, s.users)

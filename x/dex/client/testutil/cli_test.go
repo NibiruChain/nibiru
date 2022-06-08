@@ -435,6 +435,7 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 		s.Run(tc.name, func() {
 			out, err := ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
+				s.T().Log("STEVENDEBUG expectErr err: ", err)
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
