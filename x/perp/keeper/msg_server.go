@@ -87,26 +87,3 @@ func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 
 	return response, nil
 }
-
-func (k msgServer) ClosePosition(goCtx context.Context, req *types.MsgClosePosition,
-) (*types.MsgClosePositionResponse, error) {
-	pair, err := common.NewAssetPairFromStr(req.TokenPair)
-	if err != nil {
-		panic(err) // must not happen
-	}
-
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// TODO: fix that this err doesn't get returned if using tx broadcast in cli_test
-	err = k.k.ClosePosition(ctx, pair, sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error())
-	}
-
-	return &types.MsgClosePositionResponse{}, nil
-}
