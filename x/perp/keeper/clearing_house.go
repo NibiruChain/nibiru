@@ -81,7 +81,6 @@ func (k Keeper) OpenPosition(
 func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, params types.Params,
 	isNewPosition bool, positionResp *types.PositionResp) (err error) {
-
 	// update position in state
 	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
 
