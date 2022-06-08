@@ -27,9 +27,19 @@ func (q queryServer) TraderPosition(
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
+	trader, err := sdk.AccAddressFromBech32(req.Trader)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	position, err := q.Keeper.Positions().Get(ctx, common.TokenPair(req.TokenPair), req.Trader)
+
+	pair, err := common.NewAssetPairFromStr(req.TokenPair)
+	if err != nil {
+		return nil, err
+	}
+
+	position, err := q.Keeper.Positions().Get(ctx, pair, trader)
 	if err != nil {
 		return nil, err
 	}

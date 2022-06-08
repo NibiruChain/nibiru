@@ -22,12 +22,16 @@ service Msg {
 
   /* Liquidate is a transaction that allows the caller to fully or partially 
   liquidate an existing position. */  
-  //   rpc Liquidate(MsgLiquidate) returns (MsgLiquidateResponse) {
-  //     option (google.api.http).post = "/nibiru/perp/liquidate";
-  //   }
+  rpc Liquidate(MsgLiquidate) returns (MsgLiquidateResponse) {
+    option (google.api.http).post = "/nibiru/perp/liquidate";
+  }
 
   rpc OpenPosition(MsgOpenPosition) returns (MsgOpenPositionResponse) {
     option (google.api.http).post = "/nibiru/perp/open_position";
+  }
+
+  rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse) {
+    option (google.api.http).post = "/nibiru/perp/close_position";
   }
 
 }
@@ -36,8 +40,7 @@ service Msg {
 
 /* MsgRemoveMargin: Msg to remove margin. */
 message MsgRemoveMargin {
-  bytes sender = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string sender = 1;
 
   string token_pair = 2;
 
@@ -56,8 +59,7 @@ message MsgRemoveMarginResponse {
 
 /* MsgAddMargin: Msg to remove margin. */
 message MsgAddMargin {
-  bytes sender = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+  string sender = 1;
 
   string token_pair = 2;
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
@@ -71,8 +73,7 @@ message MsgAddMarginResponse {
 
 message MsgLiquidate {
     // Sender is the liquidator address
-    bytes sender = 1 [
-      (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
 
     // TokenPair is the identifier for the position's virtual pool
     string token_pair = 2;
@@ -88,9 +89,7 @@ message MsgLiquidateResponse {
 // -------------------------- OpenPosition --------------------------
 
 message MsgOpenPosition {
-  bytes sender = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-
+  string sender = 1;
   string token_pair = 2;
   nibiru.perp.v1.Side side = 3;
   string quote_asset_amount = 4 [
@@ -109,4 +108,12 @@ message MsgOpenPositionResponse {
 }
 
 // -------------------------- ClosePosition --------------------------
-// TODO
+
+message MsgClosePosition {
+  string sender = 1;
+  string token_pair = 2;
+}
+
+message MsgClosePositionResponse {
+
+}

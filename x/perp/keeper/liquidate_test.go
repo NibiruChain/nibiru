@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -51,13 +52,14 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
-			pair := common.TokenPair("BTC:NUSD")
+			pair, err2 := common.NewAssetPairFromStr("BTC:NUSD")
+			require.NoError(t, err2)
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			vpoolKeeper.CreatePool(
 				ctx,
-				pair.String(),
+				pair,
 				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserves */ sdk.NewDec(10_000_000),
 				/* baseAssetReserves */ sdk.NewDec(5_000_000),
@@ -126,7 +128,9 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
-	pair := common.TokenPair("BTC:NUSD")
+	pair, err := common.NewAssetPairFromStr("BTC:NUSD")
+	require.NoError(t, err)
+
 	trader := sample.AccAddress()
 
 	testCases := []struct {
@@ -164,7 +168,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader, Pair: pair.String(),
+						TraderAddress: trader.String(), Pair: pair.String(),
 						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
@@ -200,7 +204,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader, Pair: pair.String(),
+						TraderAddress: trader.String(), Pair: pair.String(),
 						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
@@ -238,7 +242,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader,
+						TraderAddress: trader.String(),
 						Pair:          pair.String(),
 						Margin:        sdk.ZeroDec(),
 						OpenNotional:  sdk.ZeroDec(),
@@ -274,7 +278,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader, Pair: pair.String(),
+						TraderAddress: trader.String(), Pair: pair.String(),
 						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
@@ -299,7 +303,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			vpoolKeeper.CreatePool(
 				ctx,
-				pair.String(),
+				pair,
 				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserves */ sdk.NewDec(10_000_000),
 				/* baseAssetReserves */ sdk.NewDec(5_000_000),
@@ -412,15 +416,15 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Initialize keepers, pair, and liquidator")
 			nibiruApp, ctx := testutil.NewNibiruApp(true)
-			pair := common.TokenPair("xxx:yyy")
+			pair, err := common.NewAssetPairFromStr("xxx:yyy")
+			require.NoError(t, err)
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			perpKeeper := &nibiruApp.PerpKeeper
-			var err error
 
 			t.Log("Create vpool")
 			vpoolKeeper.CreatePool(
 				ctx,
-				pair.String(),
+				pair,
 				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserves */ sdk.NewDec(10_000_000),
 				/* baseAssetReserves */ sdk.NewDec(5_000_000),
@@ -476,7 +480,9 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 
 func TestExecutePartialLiquidation(t *testing.T) {
 	// constants for this suite
-	pair := common.TokenPair("xxx:yyy")
+	pair, err := common.NewAssetPairFromStr("xxx:yyy")
+	require.NoError(t, err)
+
 	trader := sample.AccAddress()
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.4")
 
@@ -522,7 +528,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress:                       trader,
+						TraderAddress:                       trader.String(),
 						Pair:                                pair.String(),
 						Size_:                               sdk.MustNewDecFromStr("14999.999999925000000001"),
 						Margin:                              sdk.MustNewDecFromStr("50000"),
@@ -568,7 +574,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress:                       trader,
+						TraderAddress:                       trader.String(),
 						Pair:                                pair.String(),
 						Size_:                               sdk.MustNewDecFromStr("-15000.000000115000000001"),
 						Margin:                              sdk.MustNewDecFromStr("50000"),
@@ -598,7 +604,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			vpoolKeeper.CreatePool(
 				ctx,
-				pair.String(),
+				pair,
 				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserves */ sdk.NewDec(10_000_000_000_000_000),
 				/* baseAssetReserves */ sdk.NewDec(5_000_000_000_000_000),

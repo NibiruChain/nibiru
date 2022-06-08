@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -602,6 +603,7 @@ func TestRecollateralize(t *testing.T) {
 	testCases := []struct {
 		name         string
 		expectedPass bool
+		err          error
 
 		postedAssetPairs  []common.AssetPair
 		scenario          NeededCollScenario
@@ -663,7 +665,6 @@ func TestRecollateralize(t *testing.T) {
 				sdk.NewInt64Coin(common.CollDenom, 1_000_000_000),
 			),
 
-			// Since 'neededUSD' is
 			expectedNeededUSD: sdk.MustNewDecFromStr("150000.5"),
 			msg: types.MsgRecollateralize{
 				Creator: sample.AccAddress().String(),
@@ -680,6 +681,111 @@ func TestRecollateralize(t *testing.T) {
 				Gov: sdk.NewCoin(common.GovDenom, sdk.NewInt(11_021)),
 			},
 			expectedPass: true,
+		},
+		{
+			name: "protocol has sufficient collateral - error",
+			postedAssetPairs: []common.AssetPair{
+				common.GovStablePool,
+				common.CollStablePool,
+			},
+			priceGovStable: sdk.NewDec(1),
+			scenario: NeededCollScenario{
+				protocolColl:    sdk.NewInt(500),
+				priceCollStable: sdk.MustNewDecFromStr("1.099999"),
+				stableSupply:    sdk.NewInt(1_000),
+				collRatio:       sdk.MustNewDecFromStr("0.5"),
+				// neededUSD =  (0.5 * 1000) - (500 *1.09999) = -49.9995
+			},
+			expectedNeededUSD: sdk.MustNewDecFromStr("-49.9995"),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 1_000_000),
+			),
+
+			// Since 'neededUSD' is
+			msg: types.MsgRecollateralize{
+				Creator: sample.AccAddress().String(),
+				Coll:    sdk.NewCoin(common.CollDenom, sdk.NewInt(100)),
+			},
+			expectedPass: false,
+			err:          fmt.Errorf("protocol has sufficient COLL"),
+		},
+		{
+			name: "caller is broke - error",
+			postedAssetPairs: []common.AssetPair{
+				common.GovStablePool,
+				common.CollStablePool,
+			},
+			priceGovStable: sdk.NewDec(1),
+			scenario: NeededCollScenario{
+				protocolColl:    sdk.NewInt(500),
+				priceCollStable: sdk.MustNewDecFromStr("1.5"),
+				stableSupply:    sdk.NewInt(1_000),
+				collRatio:       sdk.MustNewDecFromStr("0.9"),
+				// neededUSD =  (0.9 * 1000) - (500 * 1.5) = 150
+			},
+			expectedNeededUSD: sdk.MustNewDecFromStr("150"),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 99),
+			),
+
+			// Since 'neededUSD' is
+			msg: types.MsgRecollateralize{
+				Creator: sample.AccAddress().String(),
+				Coll:    sdk.NewCoin(common.CollDenom, sdk.NewInt(200)),
+			},
+			expectedPass: false,
+			err:          fmt.Errorf("Not enough balance"),
+		},
+		{
+			name: "negative msg.Coll.Amount - error",
+			postedAssetPairs: []common.AssetPair{
+				common.GovStablePool,
+				common.CollStablePool,
+			},
+			priceGovStable: sdk.NewDec(1),
+			scenario: NeededCollScenario{
+				protocolColl:    sdk.NewInt(500),
+				priceCollStable: sdk.MustNewDecFromStr("1"),
+				stableSupply:    sdk.NewInt(1_000),
+				collRatio:       sdk.MustNewDecFromStr("0.9"),
+				// neededUSD =  (0.9 * 1000) - (500 * 1) = 400
+			},
+			expectedNeededUSD: sdk.MustNewDecFromStr("400"),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 400),
+			),
+
+			msg: types.MsgRecollateralize{
+				Creator: sample.AccAddress().String(),
+				Coll:    sdk.Coin{Denom: common.CollDenom, Amount: sdk.NewInt(-200)},
+			},
+			expectedPass: false,
+			err:          fmt.Errorf("collateral input, -200uust, must be positive"),
+		},
+		{
+			name: "pricefeed prices are expired - error",
+			postedAssetPairs: []common.AssetPair{
+				common.CollStablePool,
+			},
+			priceGovStable: sdk.NewDec(1),
+			scenario: NeededCollScenario{
+				protocolColl:    sdk.NewInt(500),
+				priceCollStable: sdk.MustNewDecFromStr("1"),
+				stableSupply:    sdk.NewInt(1_000),
+				collRatio:       sdk.MustNewDecFromStr("0.9"),
+				// neededUSD =  (0.9 * 1000) - (500 * 1) = 400
+			},
+			expectedNeededUSD: sdk.MustNewDecFromStr("400"),
+			accFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.CollDenom, 400),
+			),
+			msg: types.MsgRecollateralize{
+				Creator: sample.AccAddress().String(),
+				Coll:    sdk.NewInt64Coin(common.CollDenom, 400),
+			},
+
+			expectedPass: false,
+			err:          fmt.Errorf("prices are expired"),
 		},
 	}
 
@@ -757,10 +863,53 @@ func TestRecollateralize(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.response, response)
 			} else {
-				require.Error(t, err)
+				assert.Error(t, err)
+				require.ErrorContains(t, err, tc.err.Error())
 			}
 		},
 		)
+	}
+}
+
+func TestRecollateralize_Short(t *testing.T) {
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "invalid address - error",
+			test: func() {
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				goCtx := sdk.WrapSDKContext(ctx)
+
+				msg := &types.MsgRecollateralize{
+					Creator: "invalid-address",
+				}
+				_, err := nibiruApp.StablecoinKeeper.Recollateralize(goCtx, msg)
+				require.Error(t, err)
+			},
+		},
+		{
+			name: "prices expired - error",
+			test: func() {
+				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				goCtx := sdk.WrapSDKContext(ctx)
+				sender := sample.AccAddress()
+				msg := &types.MsgRecollateralize{
+					Creator: sender.String(),
+					Coll:    sdk.NewInt64Coin(common.CollDenom, 100),
+				}
+				_, err := nibiruApp.StablecoinKeeper.Recollateralize(goCtx, msg)
+				require.ErrorContains(t, err, "input prices are expired")
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
 	}
 }
 

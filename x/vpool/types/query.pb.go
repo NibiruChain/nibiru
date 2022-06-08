@@ -249,7 +249,7 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Queries the reserve assets in a given pool, identified by a token pair.
 	ReserveAssets(ctx context.Context, in *QueryReserveAssetsRequests, opts ...grpc.CallOption) (*QueryReserveAssetsResponse, error)
-	// Queries the reserve assets in a given pool, identified by a token pair.
+	// Queries all virtual pools.
 	AllPools(ctx context.Context, in *QueryAllPoolsRequests, opts ...grpc.CallOption) (*QueryAllPoolsResponse, error)
 }
 
@@ -283,7 +283,7 @@ func (c *queryClient) AllPools(ctx context.Context, in *QueryAllPoolsRequests, o
 type QueryServer interface {
 	// Queries the reserve assets in a given pool, identified by a token pair.
 	ReserveAssets(context.Context, *QueryReserveAssetsRequests) (*QueryReserveAssetsResponse, error)
-	// Queries the reserve assets in a given pool, identified by a token pair.
+	// Queries all virtual pools.
 	AllPools(context.Context, *QueryAllPoolsRequests) (*QueryAllPoolsResponse, error)
 }
 

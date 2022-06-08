@@ -39,10 +39,10 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				the3pool := "dai:usdc:usdt"
 				marginDelta := sdk.OneDec()
-				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
-					ctx, types.Position{Pair: the3pool}, marginDelta)
-				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
+				require.Panics(t, func() {
+					_, _ = nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
+						ctx, types.Position{Pair: the3pool}, marginDelta)
+				})
 			},
 		},
 		{
@@ -50,14 +50,15 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
-				pair := common.TokenPair("osmo:nusd")
+				trader := sample.AccAddress()
+				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				require.NoError(t, err)
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
 				vpoolKeeper.CreatePool(
 					ctx,
-					pair.String(),
+					pair,
 					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
@@ -75,7 +76,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					TraderAddress: alice, Pair: pair.String(),
+					TraderAddress: trader.String(), Pair: pair.String(),
 					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[0],
 				}
@@ -99,14 +100,15 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
-				alice := sample.AccAddress()
-				pair := common.TokenPair("osmo:nusd")
+				trader := sample.AccAddress()
+				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				require.NoError(t, err)
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
 				vpoolKeeper.CreatePool(
 					ctx,
-					pair.String(),
+					pair,
 					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
@@ -128,7 +130,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					TraderAddress: alice, Pair: pair.String(),
+					TraderAddress: trader.String(), Pair: pair.String(),
 					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[1],
 				}

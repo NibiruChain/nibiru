@@ -8,18 +8,27 @@ This page describes the message (`Msg`) structures and expected state transition
 - [RemoveMargin](#removemargin)
 - [Liquidate](#liquidate)
 
+<<<<<<< HEAD
 ---
 
 # OpenPosition
+=======
+## OpenPosition
+>>>>>>> master
 
 `OpenPosition` defines a method for opening or altering a new position, which sends funds the vault to the trader, realizing any outstanding profits and losses (PnL), funding payments, and bad debt.
 
 #### `OpenPosition` CLI command:
+<<<<<<< HEAD
 
+=======
+// TODO: 
+>>>>>>> master
 ```sh
 nibid tx perp open-perp --vpool --side --margin --leverage --base-limit 
 ```
 
+<<<<<<< HEAD
 | Flag | Description | 
 | ---  | -------     |
 | `vpool` | Identifier for the position's virtual pool.
@@ -29,6 +38,17 @@ nibid tx perp open-perp --vpool --side --margin --leverage --base-limit
 | `base-limit` | Limiter to ensure the trader doesn't get screwed by slippage. |
 
 # ClosePosition
+=======
+This command has several required flags:
+- `vpool`: Identifier for the position's virtual pool.
+- `side`: Either "long" or "short"
+- `margin`: The amount of collateral input to back the position. This collateral is the quote asset of the 'vpool'.
+- `leverage`:  A decimal number between 1 and 10 (inclusive) that specifies how much leverage the trader wishes to take on.
+- `base-limit`: Limiter to ensure the trader doesn't get screwed by slippage.
+
+
+## ClosePosition
+>>>>>>> master
 
 `ClosePosition` defines a method for closing a trader's position, which sends funds the vault to the trader, realizing any outstanding profits and losses (PnL), funding payments, and bad debt.
 
@@ -38,11 +58,15 @@ nibid tx perp open-perp --vpool --side --margin --leverage --base-limit
 nibid tx perp close-perp [vpool] 
 ```
 
+<<<<<<< HEAD
 | Flag | Description | 
 | ---  | -------     |
 | `vpool` | Identifier for the position's virtual pool.
 
 # AddMargin
+=======
+## AddMargin
+>>>>>>> master
 
 `AddMargin` deleverages a trader's position by adding margin to it without altering its notional value. Adding margin increases the margin ratio of the position. 
 
@@ -63,7 +87,11 @@ type MsgAddMargin struct {
 nibid tx perp add-margin [vpool] [margin]
 ```
 
+<<<<<<< HEAD
 # RemoveMargin
+=======
+## RemoveMargin
+>>>>>>> master
 
 `RemoveMargin` further leverages a trader's position by removing some of the margin that backs it without altering its notional value. Removing margin decreases the margin ratio of the position and increases the risk of liquidation. 
 
@@ -75,6 +103,7 @@ nibid tx perp remove-margin [vpool] [margin]
 nibid tx perp remove-margin atom:nusd 100nusd
 ```
 
+<<<<<<< HEAD
 | Flag | Description | 
 | ---  | -------     |
 | `vpool` | Identifier for the position's virtual pool.
@@ -96,3 +125,10 @@ nibid tx perp liquidate [vpool] [trader]
 | ---  | -------     |
 | `vpool` | Identifier for the position's virtual pool.
 | `trader` | sdk.AccAddress of the owner of the position that will be liquidated. |
+=======
+## Liquidate
+
+```sh
+nibid tx perp liquidate [vpool] [trader]
+```
+>>>>>>> master

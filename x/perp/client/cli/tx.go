@@ -27,6 +27,7 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		RemoveMarginCmd(),
 		AddMarginCmd(),
+		LiquidateCmd(),
 		OpenPositionCmd(),
 	)
 
@@ -35,7 +36,7 @@ func GetTxCmd() *cobra.Command {
 
 func OpenPositionCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "open-position [buy/sell] [pair] [leverage] [amount/sdk.Dec] [base asset amount limit/sdk.Dec]",
+		Use:   "open-position [buy/sell] [pair] [leverage] [quoteAmt / sdk.Dec] [baseAmtLimit / sdk.Dec]",
 		Short: "Opens a position",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -57,33 +58,27 @@ func OpenPositionCmd() *cobra.Command {
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
 
-			_, err = common.NewTokenPairFromStr(args[1])
+			assetPair, err := common.NewAssetPairFromStr(args[1])
 			if err != nil {
 				return err
 			}
 
-			leverage, err := sdk.NewDecFromStr(args[2])
-			if err != nil {
-				return err
-			}
+			leverage := sdk.MustNewDecFromStr(args[2])
 
 			amount, ok := sdk.NewIntFromString(args[3])
 			if !ok {
 				return fmt.Errorf("invalid quote amount: %s", args[3])
 			}
 
-			baseAssetAmountLimit, ok := sdk.NewIntFromString(args[4])
-			if !ok {
-				return fmt.Errorf("invalid base amount limit: %s", args[3])
-			}
+			baseAssetAmountLimit := sdk.MustNewDecFromStr(args[4])
 
 			msg := &types.MsgOpenPosition{
-				Sender:               clientCtx.GetFromAddress(),
-				TokenPair:            args[1],
+				Sender:               clientCtx.GetFromAddress().String(),
+				TokenPair:            assetPair.String(),
 				Side:                 side,
 				QuoteAssetAmount:     amount,
 				Leverage:             leverage,
-				BaseAssetAmountLimit: baseAssetAmountLimit,
+				BaseAssetAmountLimit: baseAssetAmountLimit.RoundInt(),
 			}
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -91,6 +86,42 @@ func OpenPositionCmd() *cobra.Command {
 			}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// TODO: how is a position idenitfiied? by pair? by id?
+func ClosePositionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "close-position [pair]",
+		Short: "Closes a position",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			msg := &types.MsgClosePosition{
+				Sender:    clientCtx.GetFromAddress().String(),
+				TokenPair: args[0],
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			err = tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			if err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 
@@ -109,7 +140,7 @@ func RemoveMarginCmd() *cobra.Command {
 		Short: "Removes margin from a position, decreasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
-			$ %s tx perp remove-margin osmo-nusd 100nusd
+			$ %s tx perp remove-margin osmo:nusd 100nusd
 			`, version.AppName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -128,7 +159,7 @@ func RemoveMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgRemoveMargin{
-				Sender:    clientCtx.GetFromAddress(),
+				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
 				Margin:    marginToRemove,
 			}
@@ -151,7 +182,7 @@ func AddMarginCmd() *cobra.Command {
 		Short: "Adds margin to a position, increasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
-			$ %s tx perp add-margin osmo-nusd 100nusd
+			$ %s tx perp add-margin osmo:nusd 100nusd
 			`, version.AppName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -170,9 +201,51 @@ func AddMarginCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgAddMargin{
-				Sender:    clientCtx.GetFromAddress(),
+				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
 				Margin:    marginToAdd,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func LiquidateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "liquidate [vpool] [trader]",
+		Short: "liquidates the position of 'trader' on 'vpool' if possible",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp liquidate osmo:nusd nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			traderAddr, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgLiquidate{
+				Sender:    clientCtx.GetFromAddress().String(),
+				TokenPair: args[0],
+				Trader:    traderAddr.String(),
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err

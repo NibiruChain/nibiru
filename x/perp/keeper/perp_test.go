@@ -24,9 +24,11 @@ func TestGetAndSetPosition(t *testing.T) {
 			test: func() {
 				trader := sample.AccAddress()
 				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				require.NoError(t, err)
 
-				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, "osmo:nusd", trader)
+				_, err = nibiruApp.PerpKeeper.GetPosition(
+					ctx, pair, trader)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 			},
@@ -34,7 +36,7 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewTokenPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()
@@ -46,7 +48,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 
 				dummyPosition := &types.Position{
-					TraderAddress: traderAddr,
+					TraderAddress: traderAddr.String(),
 					Pair:          vpoolPair.String(),
 					Size_:         sdk.OneDec(),
 					Margin:        sdk.OneDec(),
@@ -77,7 +79,7 @@ func TestClearPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewTokenPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
 
 				traders := []sdk.AccAddress{
@@ -96,7 +98,7 @@ func TestClearPosition(t *testing.T) {
 				var dummyPositions []*types.Position
 				for _, traderAddr := range traders {
 					dummyPosition := &types.Position{
-						TraderAddress: traderAddr,
+						TraderAddress: traderAddr.String(),
 						Pair:          vpoolPair.String(),
 						Size_:         sdk.OneDec(),
 						Margin:        sdk.OneDec(),

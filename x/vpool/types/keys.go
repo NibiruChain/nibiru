@@ -25,21 +25,21 @@ var (
 )
 
 // GetPoolKey returns pool key for KVStore
-func GetPoolKey(pair common.TokenPair) []byte {
-	return append(PoolKey, []byte(pair)...)
+func GetPoolKey(pair common.AssetPair) []byte {
+	return append(PoolKey, []byte(pair.String())...)
 }
 
 // GetSnapshotCounterKey returns the KVStore for the Snapshot Pool counters.
-func GetSnapshotCounterKey(pair common.TokenPair) []byte {
-	return append(PoolReserveSnapshotCounter, []byte(pair)...)
+func GetSnapshotCounterKey(pair common.AssetPair) []byte {
+	return append(PoolReserveSnapshotCounter, []byte(pair.String())...)
 }
 
 // GetSnapshotKey returns the KVStore for the pool reserve snapshots.
-func GetSnapshotKey(pair common.TokenPair, counter uint64) []byte {
+func GetSnapshotKey(pair common.AssetPair, counter uint64) []byte {
 	return append(
 		PoolReserveSnapshots,
 		append(
-			[]byte(pair),
+			[]byte(pair.String()),
 			sdk.Uint64ToBigEndian(counter)...,
 		)...,
 	)

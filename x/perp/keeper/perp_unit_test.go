@@ -16,7 +16,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		traderAddr := sample.AccAddress()
-		pair, err := common.NewTokenPairFromStr("LUNA:UST")
+		pair, err := common.NewAssetPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
 		dep.mockVpoolKeeper.
@@ -32,7 +32,7 @@ func TestSettlePosition(t *testing.T) {
 			Return(error(nil))
 
 		pos := types.Position{
-			TraderAddress: traderAddr,
+			TraderAddress: traderAddr.String(),
 			Pair:          pair.String(),
 			Size_:         sdk.NewDec(10),
 			Margin:        sdk.NewDec(100),
@@ -52,7 +52,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price not zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		traderAddr := sample.AccAddress()
-		pair, err := common.NewTokenPairFromStr("LUNA:UST") // memeing
+		pair, err := common.NewAssetPairFromStr("LUNA:UST") // memeing
 		require.NoError(t, err)
 
 		dep.mockVpoolKeeper.
@@ -76,7 +76,7 @@ func TestSettlePosition(t *testing.T) {
 		// we also need to return margin which is 100coin
 		// so total is 99_100 coin
 		pos := types.Position{
-			TraderAddress: traderAddr,
+			TraderAddress: traderAddr.String(),
 			Pair:          pair.String(),
 			Size_:         sdk.NewDec(100),
 			Margin:        sdk.NewDec(100),
@@ -94,11 +94,11 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("position size is zero", func(t *testing.T) {
 		k, _, ctx := getKeeper(t)
 		traderAddr := sample.AccAddress()
-		pair, err := common.NewTokenPairFromStr("LUNA:UST")
+		pair, err := common.NewAssetPairFromStr("LUNA:UST")
 		require.NoError(t, err)
 
 		pos := types.Position{
-			TraderAddress: traderAddr,
+			TraderAddress: traderAddr.String(),
 			Pair:          pair.String(),
 			Size_:         sdk.ZeroDec(),
 		}
