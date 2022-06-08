@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -227,8 +228,15 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Log("testing close position")
+		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
+			WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
 
 		err = nibiruApp.PerpKeeper.ClosePosition(ctx, pair, alice)
 		require.NoError(t, err)
+
+		position, err := nibiruApp.PerpKeeper.Positions().Get(ctx, pair, alice)
+		require.NoError(t, err)
+
+		t.Logf("open notional after close: %s", position.OpenNotional.String())
 	})
 }

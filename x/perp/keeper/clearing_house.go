@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,6 +24,7 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
+	log.Printf("args: side %s quote %s, lev %s, bal %s", side, quoteAssetAmount, leverage, baseAssetAmountLimit)
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return err
@@ -73,6 +75,14 @@ func (k Keeper) OpenPosition(
 			return err
 		}
 	}
+
+	return k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, positionResp)
+}
+
+// afterPositionUpdate is called when a position has been updated.
+func (k Keeper) afterPositionUpdate(
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, params types.Params,
+	isNewPosition bool, positionResp *types.PositionResp) (err error) {
 
 	// update position in state
 	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
@@ -730,24 +740,13 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.A
 		return err
 	}
 
-	var side types.Side
-	// size determines the position direction
-	// if negative side is short, if positive
-	// side is long, and side needs to be the
-	// opposite of the current position side.
-	switch position.Size_.IsNegative() {
-	case true:
-		side = types.Side_BUY
-	case false:
-		side = types.Side_SELL
-	}
-
-	err = k.OpenPosition(ctx, pair, side, addr, position.Size_.Abs().RoundInt(), sdk.OneDec(), sdk.ZeroDec())
+	log.Printf("open notional before close: %s", position.OpenNotional.String())
+	posResp, err := k.openReversePosition(ctx, *position, position.OpenNotional, sdk.NewDec(1), sdk.ZeroDec(), false)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return k.afterPositionUpdate(ctx, pair, addr, k.GetParams(ctx), false, posResp)
 }
 
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
