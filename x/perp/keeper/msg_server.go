@@ -28,9 +28,11 @@ func (k msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMarg
 ) (*types.MsgRemoveMarginResponse, error) {
 	res, err := k.k.RemoveMargin(ctx, margin)
 
-	fmt.Printf("STEVENDEBUG msgServer.RemoveMargin: %+v err: %v \n", res, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error()))
+	// fmt.Printf("STEVENDEBUG msgServer.RemoveMargin: %+v err: %v \n", res, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error()))
 
-	return res, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error())
+	fmt.Printf("STEVENDEBUG msgServer.RemoveMargin: %+v err: %v \n", res, sdkerrors.Wrap(types.ErrFailedToRemoveDueToBadDebt, err.Error()))
+
+	return res, sdkerrors.Wrap(types.ErrFailedToRemoveDueToBadDebt, err.Error())
 }
 
 func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
