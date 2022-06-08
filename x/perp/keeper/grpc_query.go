@@ -45,6 +45,9 @@ func (q queryServer) TraderPosition(
 	}
 
 	badDebt, err := q.Keeper.GetBadDebt(ctx, pair, trader)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryTraderPositionResponse{
 		Position: position,

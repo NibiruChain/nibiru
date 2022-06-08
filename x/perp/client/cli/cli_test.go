@@ -101,7 +101,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	s.cfg = utils.DefaultConfig()
-	s.cfg.NumValidators = 2
+	s.cfg.NumValidators = 1
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
@@ -175,7 +175,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	val := s.network.Validators[0]
-	val2 := s.network.Validators[0]
 
 	bip39Passphrase := "password"
 
@@ -186,7 +185,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 	// s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey())
 
-	info2, _, err := val2.ClientCtx.Keyring.
+	info2, _, err := val.ClientCtx.Keyring.
 		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
@@ -437,26 +436,24 @@ func (s *IntegrationTestSuite) checkReserveAssets(val *testutilcli.Validator, pa
 	return nil
 }
 
-func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
+func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
 	err := s.checkReserveAssets(val, pair)
 	if err != nil {
-		return err
+		s.T().Logf("query reserve assets err: %+v", err)
 	}
 
 	err = s.checkBalances(val, s.users)
 	if err != nil {
-		return err
+		s.T().Logf("query balances err: %+v", err)
 	}
 
 	err = s.checkPositions(val, pair, users)
 	if err != nil {
-		return err
+		s.T().Logf("query positions err: %+v", err)
 	}
 
 	// add a break to the logs for easier readability
 	s.T().Log("\n \n")
-
-	return nil
 }
 
 func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
@@ -501,7 +498,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"buy",
 		pair.String(),
 		"10", // Leverage
-		"1",  // Amount
+		"1",  // Quote asset amount
 		"0.0000001",
 	}
 	commonArgs := []string{
@@ -515,6 +512,23 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
 	s.Require().NoError(err)
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+
+	// Remove margin to trigger bad debt on user 1
+	s.T().Log("removing margin on user 1....")
+	args = []string{
+		"--from",
+		s.users[0].String(),
+		pair.String(),
+		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
+	}
+	// TODO: errors don't bubble up to the "err" variable here
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user1 remove margin err: %+v", err)
+	}
 
 	// Check status: vpool reserve assets, balances, positions
 	s.checkStatus(val, pair, s.users)
@@ -545,7 +559,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"--from",
 		s.users[1].String(),
 		pair.String(),
-		"1unibi", // amount / margin
+		fmt.Sprintf("%s%s", "1", common.TestStablePool.Token1), // amount / margin
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(args, commonArgs...))
 	if err != nil {
@@ -557,6 +571,8 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	s.checkStatus(val, pair, s.users)
 
 	// Liquidate on user 1 to trigger bad debt
+	// TODO: not working on triggering bad debt
+	// TODO: error doesn't bubble up here so if a liquidation fails there is no "err" or way to know
 	s.T().Log("liquidating on user 1....")
 	args = []string{
 		"--from",
