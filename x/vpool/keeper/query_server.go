@@ -85,7 +85,7 @@ func (q queryServer) BaseAssetPrice(
 	price, err := q.GetBaseAssetPrice(
 		ctx,
 		pair,
-		types.Direction(req.Direction),
+		req.Direction,
 		req.BaseAssetAmount,
 	)
 	if err != nil {
