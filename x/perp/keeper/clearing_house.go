@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,7 +23,6 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
-	log.Printf("args: side %s quote %s, lev %s, bal %s", side, quoteAssetAmount, leverage, baseAssetAmountLimit)
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return err

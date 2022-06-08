@@ -237,6 +237,8 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		position, err := nibiruApp.PerpKeeper.Positions().Get(ctx, pair, alice)
 		require.NoError(t, err)
 
-		t.Logf("open notional after close: %s", position.OpenNotional.String())
+		require.True(t, position.Size_.IsZero())
+		require.True(t, position.Margin.IsZero())
+		require.True(t, position.OpenNotional.IsZero())
 	})
 }
