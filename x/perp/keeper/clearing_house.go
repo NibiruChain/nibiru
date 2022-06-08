@@ -157,35 +157,6 @@ func (k Keeper) afterPositionUpdate(
 	})
 }
 
-func (k Keeper) ClosePosition(
-	ctx sdk.Context,
-	pair common.AssetPair,
-	traderAddr sdk.AccAddress,
-) (err error) {
-	// checks
-	err = k.requireVpool(ctx, pair)
-	if err != nil {
-		return err
-	}
-
-	position, err := k.GetPosition(ctx, pair, traderAddr)
-	if err != nil {
-		// TODO: propagate this back to the cli
-		return err
-	}
-
-	_, err = k.closePositionEntirely(
-		ctx,
-		*position,
-		sdk.ZeroDec(), // TODO: double check this
-	)
-
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 /*
 increases a position by increasedNotional amount in margin units.
 Calculates the amount of margin required given the leverage parameter.
