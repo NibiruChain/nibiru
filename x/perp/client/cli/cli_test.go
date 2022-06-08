@@ -423,53 +423,72 @@ func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair c
 	return nil
 }
 
-func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
-	// Set up the user accounts
-	val := s.network.Validators[0]
-	pair := common.TestStablePool
+func (s *IntegrationTestSuite) checkReserveAssets(val *testutilcli.Validator, pair common.AssetPair) error {
+	s.T().Log("Checking vpool reserve assets....")
 
-	user1 := s.users[0]
-	user2 := s.users[1]
-
-	_, err := utils.FillWalletFromValidator(user1,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
-			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
-		),
-		val,
-		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
-
-	_, err = utils.FillWalletFromValidator(user2,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
-			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
-		),
-		val,
-		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
-
-	// Check vpool balances
-	s.T().Log("checking vpool balances...")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	if err != nil {
 		s.T().Logf("reserve assets err: %+v", err)
 	}
 
-	// Check wallets of users
-	s.T().Log("checking user balances....")
-	s.checkBalances(val, s.users)
+	return nil
+}
 
-	// Open a position with user 1
+func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
+	err := s.checkReserveAssets(val, pair)
+	if err != nil {
+		return err
+	}
+
+	err = s.checkBalances(val, s.users)
+	if err != nil {
+		return err
+	}
+
+	err = s.checkPositions(val, pair, users)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+	pair := common.TestStablePool
+
+	_, err := utils.FillWalletFromValidator(s.users[0],
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	_, err = utils.FillWalletFromValidator(s.users[1],
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+
+	// Open a position with first user
 	s.T().Log("opening a position with user 1....")
 	args := []string{
 		"--from",
-		user1.String(),
+		s.users[0].String(),
 		"buy",
 		pair.String(),
 		"10", // Leverage
@@ -488,13 +507,13 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	}
 	s.Require().NoError(err)
 
-	s.checkPositions(val, pair, []sdk.AccAddress{user1})
-	s.checkBalances(val, s.users)
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
 
-	// Open a huge position with user 2
+	// Open a huge position with second user
 	args = []string{
 		"--from",
-		user2.String(),
+		s.users[1].String(),
 		"buy",
 		pair.String(),
 		"1",    // Leverage
@@ -507,23 +526,17 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	}
 	s.Require().NoError(err)
 
-	s.checkBalances(val, s.users)
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
 
-	// Check vpool balances
-	s.T().Log("checking vpool balances...")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
-	s.T().Logf("reserve assets: %+v", reserveAssets)
-	if err != nil {
-		s.T().Logf("reserve assets err: %+v", err)
-	}
-	s.Require().NoError(err)
+	return
 
-	// Add margin or liquidate on user 1 to trigger bad debt
+	// Add margin or liquidate on second user to trigger bad debt
 	// TODO: not working on triggering bad debt
 	s.T().Log("adding margin on user 1....")
 	args = []string{
 		"--from",
-		user1.String(),
+		s.users[1].String(),
 		pair.String(),
 		"1unibi", // amount / margin
 	}
@@ -537,27 +550,15 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	s.T().Log("liquidating on user 1....")
 	args = []string{
 		"--from",
-		user1.String(),
+		s.users[1].String(),
 		pair.String(),
-		user1.String(), // amount / margin
+		s.users[0].String(), // user to liquidate
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
 	if err != nil {
 		s.T().Logf("liquidating on user 1 err: %+v", err)
 	}
 	s.Require().NoError(err)
-
-	// See if user 1 now has bad debt
-	// TODO/problem: user 1 and user 2 both don't have any bad debt yet...
-	s.checkPositions(val, pair, s.users)
-
-	// Check vpool balances
-	s.T().Log("checking vpool balances...")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
-	s.T().Logf("reserve assets: %+v", reserveAssets)
-	if err != nil {
-		s.T().Logf("reserve assets err: %+v", err)
-	}
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
