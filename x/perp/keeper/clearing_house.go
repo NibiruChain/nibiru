@@ -23,8 +23,6 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
-	fmt.Printf("STEVENDEBUG OpenPosition keeper: %v\n", 1)
-
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return err
@@ -35,31 +33,22 @@ func (k Keeper) OpenPosition(
 
 	position, err := k.GetPosition(ctx, pair, traderAddr)
 	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper part 0")
 
 	if isNewPosition {
-		fmt.Println("STEVENDEBUG OpenPosition keeper setting new position")
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-		fmt.Printf("STEVENDEBUG OpenPosition keeper setting new position %+v \n", position)
 		k.SetPosition(ctx, pair, traderAddr, position)
 	} else if err != nil && !isNewPosition {
 		return err
 	}
-
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper part 1")
 
 	var positionResp *types.PositionResp
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
 	var openSideMatchesPosition = sameSideLong || sameSideShort
 
-	fmt.Printf("STEVENDEBUG openSideMatchesPosition %+v\n", openSideMatchesPosition)
-
 	switch {
 	case isNewPosition || openSideMatchesPosition:
 		// increase position case
-		fmt.Printf("STEVENDEBUG starting increasePosition... %+v\n", 1)
-
 		positionResp, err = k.increasePosition(
 			ctx,
 			*position,
@@ -68,16 +57,11 @@ func (k Keeper) OpenPosition(
 			/* minPositionSize */ baseAssetAmountLimit,
 			/* leverage */ leverage)
 
-		fmt.Printf("STEVENDEBUG starting increasePosition... positionResp %+v err %+v\n", positionResp, err)
-
 		if err != nil {
-			fmt.Println("STEVENDEBUG hit return error")
 			return err
 		}
 	// everything else decreases the position
 	default:
-		fmt.Printf("STEVENDEBUG starting openReversePosition... %+v\n", 1)
-
 		positionResp, err = k.openReversePosition(
 			ctx,
 			*position,
@@ -87,15 +71,10 @@ func (k Keeper) OpenPosition(
 			/* canOverFluctuationLimit */ false,
 		)
 
-		fmt.Printf("STEVENDEBUG positionResp %+v\n", positionResp)
-		fmt.Printf("STEVENDEBUG positionResp err %+v\n", err)
-
 		if err != nil {
 			return err
 		}
 	}
-
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper part 2")
 
 	// update position in state
 	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
@@ -112,14 +91,10 @@ func (k Keeper) OpenPosition(
 		}
 	}
 
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper part a")
-
 	if !positionResp.BadDebt.IsZero() {
 		return fmt.Errorf(
 			"bad debt must be zero to prevent attacker from leveraging it")
 	}
-
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper part b")
 
 	// transfer trader <=> vault
 	marginToVaultInt := positionResp.MarginToVault.RoundInt()
@@ -149,22 +124,16 @@ func (k Keeper) OpenPosition(
 		)
 	}
 
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper part c")
-
 	transferredFee, err := k.transferFee(
 		ctx, pair, traderAddr, positionResp.ExchangedQuoteAssetAmount)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper part d")
-
 	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("STEVENDEBUG successful OpenPosition in keeper e - end")
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:         traderAddr.String(),
@@ -345,8 +314,6 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	currentPosition types.Position,
 	pnlCalcOption types.PnLCalcOption,
 ) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
-	// fmt.Println("STEVENDEBUG getPositionNotionalAndUnrealizedPnL ")
-
 	positionSizeAbs := currentPosition.Size_.Abs()
 	if positionSizeAbs.IsZero() {
 		return sdk.ZeroDec(), sdk.ZeroDec(), nil
@@ -431,16 +398,12 @@ func (k Keeper) openReversePosition(
 	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
-	// fmt.Println("STEVENDEBUG inside openReversePosition")
-
 	openNotional := leverage.Mul(quoteAssetAmount)
 	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
 		types.PnLCalcOption_SPOT_PRICE,
 	)
-
-	// fmt.Println("STEVENDEBUG currentPositionNotional ", currentPositionNotional)
 
 	if err != nil {
 		return nil, err
@@ -449,8 +412,6 @@ func (k Keeper) openReversePosition(
 	switch currentPositionNotional.GT(openNotional) {
 	// position reduction
 	case true:
-		// fmt.Println("STEVENDEBUG position reduction ")
-
 		position, err := k.decreasePosition(
 			ctx,
 			currentPosition,
@@ -459,13 +420,9 @@ func (k Keeper) openReversePosition(
 			canOverFluctuationLimit,
 		)
 
-		// fmt.Printf("STEVENDEBUG position reduction position: %+v err: %+v \n", position, err)
-
 		return position, err
 	// close and reverse
 	default:
-		// fmt.Println("STEVENDEBUG close and reverse ")
-
 		return k.closeAndOpenReversePosition(
 			ctx,
 			currentPosition,

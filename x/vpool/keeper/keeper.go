@@ -259,28 +259,17 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 }
 
 func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (isIt bool) {
-	// fmt.Println("STEVENDEBUG IsOverSpreadLimit( ")
-
 	spotPrice, err := k.GetSpotPrice(ctx, pair)
-
-	// fmt.Println("STEVENDEBUG IsOverSpreadLimit( spotPrice ", spotPrice, " pair ", pair, " err ", err)
-
 	if err != nil {
 		panic(err)
 	}
 
 	oraclePrice, err := k.GetUnderlyingPrice(ctx, pair)
-
-	// fmt.Println("STEVENDEBUG IsOverSpreadLimit( GetUnderlyingPrice oraclePrice ", oraclePrice, " pair ", pair, " err ", err)
-
 	if err != nil {
 		panic(err)
 	}
 
 	pool, err := k.getPool(ctx, pair)
-
-	// fmt.Println("STEVENDEBUG IsOverSpreadLimit( getPool ", pool, " pair ", pair, " err ", err)
-
 	if err != nil {
 		panic(err)
 	}

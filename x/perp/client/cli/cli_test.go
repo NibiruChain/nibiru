@@ -637,68 +637,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	}
 
 	s.Require().Contains(out.String(), types.ErrFailedToRemoveDueToBadDebt.Error())
-
-	// Check status: vpool reserve assets, balances, positions
-	// s.checkStatus(val, pair, s.users)
 }
-
-/*
-	// Open a huge position with second user
-	args = []string{
-		"--from",
-		s.users[1].String(),
-		"buy",
-		pair.String(),
-		"1",    // Leverage
-		"6000", // Amount
-		"0.0000000001",
-	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user2 open position err: %+v", err)
-	}
-	s.Require().NoError(err)
-
-	// Check status: vpool reserve assets, balances, positions
-	s.checkStatus(val, pair, s.users)
-
-	// Add margin to trigger bad debt
-	// TODO: not working on triggering bad debt
-	s.T().Log("adding margin on user 1....")
-	args = []string{
-		"--from",
-		s.users[1].String(),
-		pair.String(),
-		fmt.Sprintf("%s%s", "1", common.TestStablePool.Token1), // amount / margin
-	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user 1 add margin err: %+v", err)
-	}
-	s.Require().NoError(err)
-
-	// Check status: vpool reserve assets, balances, positions
-	s.checkStatus(val, pair, s.users)
-
-	// Liquidate on user 1 to trigger bad debt
-	// TODO: not working on triggering bad debt
-	// TODO: error doesn't bubble up here so if a liquidation fails there is no "err" or way to know
-	s.T().Log("liquidating on user 1....")
-	args = []string{
-		"--from",
-		s.users[1].String(),
-		pair.String(),
-		s.users[0].String(), // user to liquidate
-	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("liquidating on user 1 err: %+v", err)
-	}
-	s.Require().NoError(err)
-
-	// Check status: vpool reserve assets, balances, positions
-	s.checkStatus(val, pair, s.users)
-*/
 
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))

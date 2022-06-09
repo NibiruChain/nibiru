@@ -242,20 +242,12 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 }
 
 // GetCurrentPrice fetches the current median price of all oracles for a specific market
-// STEVENDEBUG
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	pairID := assetPair.Name()
-
-	// fmt.Printf("STEVENDEBUG GetCurrentPrice pairID: %s\n", pairID)
-
-	// fmt.Printf("STEVENDEBUG GetCurrentPrice CurrentPriceKey: %v\n", types.CurrentPriceKey(pairID))
-
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.CurrentPriceKey(pairID))
-
-	// fmt.Printf("STEVENDEBUG GetCurrentPrice bz: %s\n", string(bz))
 
 	if bz == nil {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
@@ -263,8 +255,6 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 
 	var price types.CurrentPrice
 	k.cdc.MustUnmarshal(bz, &price)
-
-	// fmt.Printf("STEVENDEBUG GetCurrentPrice price: %+v\n", price)
 
 	if price.Price.Equal(sdk.ZeroDec()) {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
