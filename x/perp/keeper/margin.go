@@ -202,11 +202,13 @@ func (k Keeper) RemoveMargin(
 
 	fmt.Println("STEVENDEBUG keeper remove margin - f err - 1 ", err)
 
+	fmt.Println("STEVENDEBUG keeper remove margin - f err - bad debt ", remaining.BadDebt)
+
 	if err != nil {
 		return nil, err
 	}
 	if !remaining.BadDebt.IsZero() {
-		err = fmt.Errorf("failed to remove margin; position has bad debt")
+		err = types.ErrFailedToRemoveDueToBadDebt
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"remaining_bad_debt",
@@ -219,7 +221,7 @@ func (k Keeper) RemoveMargin(
 
 		fmt.Println("STEVENDEBUG keeper remove margin - f newsdkerr - 2 ", newsdkerr)
 
-		return nil, types.ErrFailedToRemoveDueToBadDebt
+		return nil, err
 	}
 
 	fmt.Println("STEVENDEBUG keeper remove margin - g")

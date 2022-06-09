@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -26,13 +25,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 func (k msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin,
 ) (*types.MsgRemoveMarginResponse, error) {
-	res, err := k.k.RemoveMargin(ctx, margin)
-
-	// fmt.Printf("STEVENDEBUG msgServer.RemoveMargin: %+v err: %v \n", res, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error()))
-
-	fmt.Printf("STEVENDEBUG msgServer.RemoveMargin: %+v err: %v \n", res, sdkerrors.Wrap(types.ErrFailedToRemoveDueToBadDebt, err.Error()))
-
-	return res, sdkerrors.Wrap(types.ErrFailedToRemoveDueToBadDebt, err.Error())
+	return k.k.RemoveMargin(ctx, margin)
 }
 
 func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,

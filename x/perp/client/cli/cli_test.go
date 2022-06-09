@@ -3,6 +3,7 @@ package cli_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	utils "github.com/NibiruChain/nibiru/x/testutil"
@@ -154,23 +156,47 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 
+	// set up users and give them some coins
 	val := s.network.Validators[0]
 	val2 := s.network.Validators[1]
 
 	bip39Passphrase := "password"
 
-	uid1 := "user1"
 	info, _, err := val.ClientCtx.Keyring.
-		NewMnemonic(uid1, keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
+		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
-	// s.T().Logf("user1 info: acc %+v | address %+v", user1, info.GetPubKey())
 
 	info2, _, err := val2.ClientCtx.Keyring.
 		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, bip39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
-	// s.T().Logf("user2 info: acc %+v | address %+v", user2, info2.GetPubKey())
+
+	_, err = utils.FillWalletFromValidator(user1,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	_, err = utils.FillWalletFromValidator(user2,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 10_000),
+			sdk.NewInt64Coin(common.GovDenom, 50_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 50_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
 
 	s.users = []sdk.AccAddress{user1, user2}
 }
@@ -180,25 +206,83 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
+func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users []sdk.AccAddress) error {
+	s.T().Log("Checking trader balances.... \n \n")
+
+	for i := 0; i < len(users); i++ {
+		balance, err := banktestutil.QueryBalancesExec(
+			val.ClientCtx,
+			users[i],
+		)
+		s.T().Logf("user %+v (acc: %+v) balance: \n %+v \n", i, users[i], balance)
+
+		if err != nil {
+			s.T().Logf("balance err: %+v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
+	s.T().Log("Checking trader positions.... \n \n")
+
+	for i := 0; i < len(users); i++ {
+		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
+		s.T().Logf("user %+v (acc: %+v) position: \n %+v \n", i, users[i], queryResp)
+
+		if err != nil {
+			s.T().Logf("query error: %+v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *IntegrationTestSuite) checkReserveAssets(val *testutilcli.Validator, pair common.AssetPair) error {
+	s.T().Log("Checking vpool reserve assets....")
+
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets: %+v", reserveAssets)
+	if err != nil {
+		s.T().Logf("reserve assets err: %+v", err)
+	}
+
+	return nil
+}
+
+func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
+	err := s.network.WaitForNextBlock()
+	s.Require().NoError(err)
+
+	err = s.checkReserveAssets(val, pair)
+	if err != nil {
+		s.T().Logf("query reserve assets err: %+v", err)
+	}
+
+	err = s.checkBalances(val, s.users)
+	if err != nil {
+		s.T().Logf("query balances err: %+v", err)
+	}
+
+	err = s.checkPositions(val, pair, users)
+	if err != nil && !strings.Contains(err.Error(), "no position found") {
+		s.T().Logf("query positions err: %+v", err)
+	}
+
+	// add a break to the logs for easier readability
+	s.T().Log("\n \n")
+}
+
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	assetPair := common.AssetPair{
 		Token0: "ubtc",
 		Token1: "unibi",
 	}
-
 	user := s.users[0]
-
-	_, err := utils.FillWalletFromValidator(user,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
-		),
-		val,
-		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
 
 	s.T().Log("A. check vpool balances")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
@@ -340,22 +424,10 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		Token0: "eth",
 		Token1: "unibi",
 	}
-
 	user := s.users[0]
 
-	_, err := utils.FillWalletFromValidator(user,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
-		),
-		val,
-		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
-
 	// verify trader has no position (empty)
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	_, err := testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.Assert().Error(err, "no position found")
 
 	// close position should produce error
@@ -370,76 +442,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.T().Logf("err: %+v", err)
 }
 
-func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users []sdk.AccAddress) error {
-	s.T().Log("Checking trader balances.... \n \n")
-
-	for i := 0; i < len(users); i++ {
-		balance, err := banktestutil.QueryBalancesExec(
-			val.ClientCtx,
-			users[i],
-		)
-		s.T().Logf("user %+v (acc: %+v) balance: \n %+v \n", i, users[i], balance)
-
-		if err != nil {
-			s.T().Logf("balance err: %+v", err)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) error {
-	s.T().Log("Checking trader positions.... \n \n")
-
-	for i := 0; i < len(users); i++ {
-		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
-		s.T().Logf("user %+v (acc: %+v) position: \n %+v \n", i, users[i], queryResp)
-
-		if err != nil {
-			s.T().Logf("query error: %+v", err)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *IntegrationTestSuite) checkReserveAssets(val *testutilcli.Validator, pair common.AssetPair) error {
-	s.T().Log("Checking vpool reserve assets....")
-
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
-	s.T().Logf("reserve assets: %+v", reserveAssets)
-	if err != nil {
-		s.T().Logf("reserve assets err: %+v", err)
-	}
-
-	return nil
-}
-
-func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
-	err := s.network.WaitForNextBlock()
-	s.Require().NoError(err)
-
-	err = s.checkReserveAssets(val, pair)
-	if err != nil {
-		s.T().Logf("query reserve assets err: %+v", err)
-	}
-
-	err = s.checkBalances(val, s.users)
-	if err != nil {
-		s.T().Logf("query balances err: %+v", err)
-	}
-
-	err = s.checkPositions(val, pair, users)
-	if err != nil {
-		s.T().Logf("query positions err: %+v", err)
-	}
-
-	// add a break to the logs for easier readability
-	s.T().Log("\n \n")
-}
-
+/*
 func (s *IntegrationTestSuite) TestLiquidate() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
@@ -507,17 +510,16 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 		pair.String(),
 		s.users[0].String(), // user to liquidate
 	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("liquidating on user 1 err: %+v", err)
-	}
-	s.Require().Error(err)
+	// error shows up in out
+	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	s.T().Logf("STEVENDEBUG liquidate out: %s \n", out.String())
+	s.Require().Contains(out.String(), "")
 
 	// Check status: vpool reserve assets, balances, positions
 	s.checkStatus(val, pair, s.users)
 }
 
-func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+func (s *IntegrationTestSuite) TestAddMargin() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
 	pair := common.TestStablePool
@@ -574,6 +576,50 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	}
 	s.Require().NoError(err)
 
+	// Add margin on user 1
+	s.T().Log("adding margin on user 1....")
+	args = []string{
+		"--from",
+		s.users[1].String(),
+		pair.String(),
+		fmt.Sprintf("%s%s", "1", common.TestStablePool.Token1), // amount / margin
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user 1 add margin err: %+v", err)
+	}
+	s.Require().NoError(err)
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+}
+*/
+
+func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+	pair := common.TestStablePool
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+
+	// Open a position with first user
+	s.T().Log("opening a position with user 1....")
+	args := []string{
+		"--from",
+		s.users[0].String(),
+		"buy",
+		pair.String(),
+		"10", // Leverage
+		"1",  // Quote asset amount
+		"0.0000001",
+	}
+	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user1 open position err: %+v", err)
+	}
+	s.Require().NoError(err)
+
 	// Check status: vpool reserve assets, balances, positions
 	s.checkStatus(val, pair, s.users)
 
@@ -585,16 +631,18 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		pair.String(),
 		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
 	}
-	// TODO: errors don't bubble up to the "err" variable here
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
+	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
 	if err != nil {
 		s.T().Logf("user1 remove margin err: %+v", err)
 	}
-	s.Require().Error(err)
+
+	s.Require().Contains(out.String(), types.ErrFailedToRemoveDueToBadDebt.Error())
 
 	// Check status: vpool reserve assets, balances, positions
-	s.checkStatus(val, pair, s.users)
+	// s.checkStatus(val, pair, s.users)
+}
 
+/*
 	// Open a huge position with second user
 	args = []string{
 		"--from",
@@ -650,7 +698,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 
 	// Check status: vpool reserve assets, balances, positions
 	s.checkStatus(val, pair, s.users)
-}
+*/
 
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
