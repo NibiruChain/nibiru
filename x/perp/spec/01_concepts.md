@@ -4,7 +4,6 @@
   - [Mark Price and Index Price](#mark-price-and-index-price)
   - [Leverage and Perp Position Value](#leverage-and-perp-position-value)
   - [Margin and Margin Ratio](#margin-and-margin-ratio)
-  - [Profits and Losses (PnL)](#profits-and-losses-pnl)
   - [Funding Payments](#funding-payments)
 - [Virtual Pools](#virtual-pools)
 - [Liquidations](#liquidations)
@@ -15,8 +14,10 @@
 
 # Perp Positions
 
+<!--  
 - TODO explanation of perpetual futurues contract as a derivative
 - TODO what is a perp
+-->
 
 ## Mark Price and Index Price
 
@@ -42,7 +43,7 @@ The notional value of the position, or **position notional**, is the total value
 leverage = positionNotional / margin.
 ```
 
-Let's say that the index price of ether is $3000 in our previous example. This implies that the trader with a long position of size 5 has a position notional of $15,000. And if the trader has 10x **leverage**, for example, she must have put down $1000 as margin (collateral backing the position).  
+Let's say that the mark price of ether is $3000 in our previous example. This implies that the trader with a long position of size 5 has a position notional of $15,000. And if the trader has 10x **leverage**, for example, she must have put down $1000 as margin (collateral backing the position).  
 
 ## Margin and Margin Ratio
 
@@ -69,18 +70,34 @@ Another good way to think about margin ratio is as the inverse of a position's e
 
 In future upgrade, we'd like to implement a cross margin model and allow traders to select whether to use cross or isolated margin in the trading app. This way, traders could elect to have profits from one position can support losses in another. 
 
+<!--  
+
 ## Profits and Losses (PnL)
 
 - TODO Define profits and losses
 - TODO Explain PnL calculation
+-->
 
 ## Funding Payments
 
 Perpetual contracts rely on a scheduled payment between longs and shorts known as **funding payments**. Funding payments are meant to converge the price between the derivate contract, or perp, and its underlying. As a result, they are scaled based on the difference between the mark price and index price.
 
-- TODO Explain purpose of funding payments
-- TODO define funding rate
-- TODO define funding payment
+Longs and shorts are paid with the exact funding rate formula [used by FTX](https://help.ftx.com/hc/en-us/articles/360027946571-Funding). Realized and unrealized funding payments are updated every block directly on each position. Global funding calculations are recorded in a time-weighted fashion, where the **funding rate** is the difference between the mark TWAP and index TWAP divided by the number of funding payments per day:
+
+```python
+funding_rate 
+=  (mark_TWAP - index_TWAP) / funding_payments_per_day
+```
+
+In the initial version of Nibi-Perps, these payments will occur every half-hour, implying a `funding_payments_per_day` value of 48. This setup is analogous to a traditional future that expires once a day. If a perp trades consistently at 2% above its underlying index price, the funding payments would amount to 2% of the position size after a full day.   
+
+If the funding rate is positive, mark price > index price and longs pay shorts. Nibi-Perps automatically deducts the funding payment amount from the margin of the long positions. 
+
+```python
+funding_payment = position_size * funding_rate
+```
+
+Here, position size refers to amount of base asset represented by the derivative. I.e., a BTC:USD perp with 7 BTC of exposure would have a position size of 7.
 
 ---
 
@@ -101,6 +118,8 @@ A liquidation happens when a trader can no longer meet the margin requirement of
 
 ### Liquidation event
 
+TODO realu: Review section
+
 The liquidation consists of opening a reverse position. If the position was a Sell with a size of 20, we just execute a Buy order for the same amount.
 
 From there, we compute a margin ratio using only the spot price. This margin ratio will be used to define wether bad debt will be created if the margin is below the liquidation fee.
@@ -119,3 +138,4 @@ When this margin ratio is higher than the liqudiation fee, we close the position
 - Notional Value vs. Market Value: An Overview. Investopedia. [[investopedia.com]](https://www.investopedia.com/ask/answers/050615/what-difference-between-notional-value-and-market-value.asp)
 - Differences Between Isolated Margin and Cross Margin - Binance. [[binance.com]](https://www.binance.com/en/support/faq/b4e9e6ad70934bd082e8e09e33e69513)
 - Isolated and Cross Margin - BitMex. [[bitmex.com]](https://www.bitmex.com/app/isolatedMargin)
+- Funding. FTX Crypto Derivatives Exchange. [[help.ftx.com]](https://help.ftx.com/hc/en-us/articles/360027946571-Funding)
