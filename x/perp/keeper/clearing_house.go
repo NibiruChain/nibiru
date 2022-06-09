@@ -33,7 +33,6 @@ func (k Keeper) OpenPosition(
 
 	position, err := k.GetPosition(ctx, pair, traderAddr)
 	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
-
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
 		k.SetPosition(ctx, pair, traderAddr, position)
@@ -45,10 +44,10 @@ func (k Keeper) OpenPosition(
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
 	var openSideMatchesPosition = sameSideLong || sameSideShort
-
 	switch {
 	case isNewPosition || openSideMatchesPosition:
 		// increase position case
+
 		positionResp, err = k.increasePosition(
 			ctx,
 			*position,
@@ -56,10 +55,10 @@ func (k Keeper) OpenPosition(
 			/* openNotional */ leverage.MulInt(quoteAssetAmount),
 			/* minPositionSize */ baseAssetAmountLimit,
 			/* leverage */ leverage)
-
 		if err != nil {
 			return err
 		}
+
 	// everything else decreases the position
 	default:
 		positionResp, err = k.openReversePosition(
@@ -70,7 +69,6 @@ func (k Keeper) OpenPosition(
 			/* baseAssetAmountLimit */ baseAssetAmountLimit,
 			/* canOverFluctuationLimit */ false,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -404,7 +402,6 @@ func (k Keeper) openReversePosition(
 		currentPosition,
 		types.PnLCalcOption_SPOT_PRICE,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -412,15 +409,13 @@ func (k Keeper) openReversePosition(
 	switch currentPositionNotional.GT(openNotional) {
 	// position reduction
 	case true:
-		position, err := k.decreasePosition(
+		return k.decreasePosition(
 			ctx,
 			currentPosition,
 			openNotional,
 			baseAssetAmountLimit,
 			canOverFluctuationLimit,
 		)
-
-		return position, err
 	// close and reverse
 	default:
 		return k.closeAndOpenReversePosition(
