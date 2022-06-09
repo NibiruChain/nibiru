@@ -105,9 +105,6 @@ func (p *Pool) GetQuoteAmountByBaseAmount(
 		return sdk.ZeroDec(), nil
 	}
 
-	// x = token x quantity
-	// y = token y quantity
-	// k = contant aka invariant
 	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve) // x * y = k
 
 	var baseAssetsAfter sdk.Dec

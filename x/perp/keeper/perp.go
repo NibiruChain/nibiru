@@ -36,7 +36,6 @@ func (k Keeper) SetPosition(
 func (k Keeper) GetBadDebt(
 	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
 ) (sdk.Dec, error) {
-	// return k.Positions().GetAll(ctx)
 	currentPosition, err := k.GetPosition(ctx, pair, traderAddr)
 	if err != nil {
 		return sdk.ZeroDec(), err
