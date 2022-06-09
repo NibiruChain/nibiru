@@ -1,16 +1,11 @@
 package types
 
-import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/x/common"
-)
+import sdk "github.com/cosmos/cosmos-sdk/types"
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:               DefaultParams(),
-		ModuleAccountBalance: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
+		Params: DefaultParams(),
 		PairMetadata: []*PairMetadata{
 			{
 				Pair: "ubtc:unusd",
@@ -19,6 +14,12 @@ func DefaultGenesis() *GenesisState {
 				},
 			},
 		},
+		VaultBalance:         nil,
+		PerpEfBalance:        nil,
+		FeePoolBalance:       nil,
+		Positions:            nil,
+		PrepaidBadDebts:      nil,
+		WhitelistedAddresses: nil,
 	}
 }
 

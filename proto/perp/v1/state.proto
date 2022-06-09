@@ -34,11 +34,22 @@ message Params {
 // GenesisState defines the perp  module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin module_account_balance = 2 [
+  repeated cosmos.base.v1beta1.Coin vault_balance = 2 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
-  repeated PairMetadata pair_metadata = 3;
+  repeated cosmos.base.v1beta1.Coin perp_ef_balance = 3 [
+    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
+    (gogoproto.nullable) = false
+  ];
+  repeated cosmos.base.v1beta1.Coin fee_pool_balance = 4 [
+    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
+    (gogoproto.nullable) = false
+  ];
+  repeated PairMetadata pair_metadata = 5;
+  repeated Position positions = 6;
+  repeated PrepaidBadDebt prepaid_bad_debts = 7;
+  repeated string whitelisted_addresses = 8;
 }
 
 // Position identifies and records information on a user's position on one of
@@ -126,25 +137,29 @@ message LiquidateResp {
 }
 
 enum Side {
-  BUY = 0;
-  SELL = 1;
+  SIDE_UNSPECIFIED = 0;
+  BUY = 1;
+  SELL = 2;
 }
 
 enum PnLCalcOption {
-  SPOT_PRICE = 0;
-  TWAP = 1;
-  ORACLE = 2;
+  PNL_CALC_OPTION_UNSPECIFIED = 0;
+  SPOT_PRICE = 1;
+  TWAP = 2;
+  ORACLE = 3;
 }
 
 enum PnLPreferenceOption {
-  MAX = 0;
-  MIN = 1;
+  PNL_PREFERENCE_UNSPECIFIED = 0;
+  MAX = 1;
+  MIN = 2;
 }
 
 enum MarginCalculationPriceOption {
-  SPOT = 0;
-  INDEX = 1;
-  MAX_PNL = 2;
+  MARGIN_CALCULATION_PRICE_OPTION_UNSPECIFIED = 0;
+  SPOT = 1;
+  INDEX = 2;
+  MAX_PNL = 3;
 }
 
 message PairMetadata {
@@ -201,5 +216,12 @@ message PositionChangedEvent {
     
   string funding_payment = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+}
+
+message PrepaidBadDebt {
+  string denom = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
 }
