@@ -93,7 +93,7 @@ func GetLockCoinsCmd() *cobra.Command {
 
 func GetInitiateUnlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "initiate-unlock [lockID]",
+		Use:  "initiate-unlock [lock-id]",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
