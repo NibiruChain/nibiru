@@ -171,13 +171,13 @@ func TestCreatePool(t *testing.T) {
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())
-				require.NotContains(t, ctx.EventManager().Events(), &types.EventPoolCreated{
+				testutil.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
 				})
 			} else {
 				require.NoError(t, err)
-				require.Contains(t, ctx.EventManager().Events(), &types.EventPoolCreated{
+				testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
 				})
@@ -327,7 +327,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				PoolSharesOut: resp.NumPoolSharesOut,
 				RemCoins:      resp.RemainingCoins,
 			}
-			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
+			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -459,7 +459,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				TokensOut:    resp.TokensOut,
 			}
 
-			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
+			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -665,16 +665,12 @@ func TestMsgServerSwapAssets(t *testing.T) {
 				)
 
 				// check events
-				require.Contains(
-					t,
-					ctx.EventManager().Events(),
-					&types.EventAssetsSwapped{
-						Address:  sender.String(),
-						PoolId:   1,
-						TokenIn:  tc.tokenIn,
-						TokenOut: tc.expectedTokenOut,
-					},
-				)
+				testutil.RequireHasTypedEvent(t, ctx, &types.EventAssetsSwapped{
+					Address:  sender.String(),
+					PoolId:   1,
+					TokenIn:  tc.tokenIn,
+					TokenOut: tc.expectedTokenOut,
+				})
 			}
 
 			// check user's final funds
