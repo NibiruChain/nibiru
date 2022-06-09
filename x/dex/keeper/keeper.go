@@ -461,18 +461,20 @@ func (k Keeper) JoinPool(
 	k.SetPool(ctx, pool)
 	k.RecordTotalLiquidityIncrease(ctx, tokensConsumed)
 
+	poolSharesOut := sdk.NewCoin(pool.TotalShares.Denom, numShares)
+
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolJoined{
 		Address:       joinerAddr.String(),
 		PoolId:        poolId,
 		TokensIn:      tokensIn,
-		PoolSharesOut: numSharesOut,
+		PoolSharesOut: poolSharesOut,
 		RemCoins:      remCoins,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	return pool, sdk.NewCoin(pool.TotalShares.Denom, numShares), remCoins, nil
+	return pool, poolSharesOut, remCoins, nil
 }
 
 /*
