@@ -131,10 +131,3 @@ replace github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210
 // Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 // TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
-
-// x/stablecoin dependencies
-replace github.com/NibiruChain/nibiru/x/stablecoin => ./x/stablecoin
-
-replace github.com/NibiruChain/nibiru/x/testutil => ./x/testutil
-
-replace github.com/NibiruChain/nibiru/app => ./app
