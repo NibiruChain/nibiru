@@ -138,3 +138,25 @@ message PositionLiquidatedEvent {
         (gogoproto.nullable) = false
     ];
 }
+
+/* EmitPositionSettle emits an event when a position is settled.
+
+Args:
+  ctx sdk.Context: Carries information about the current state of the application.
+  vpool string: Identifier for the virtual pool of the position.
+  trader string: Owner of the position.
+  settled sdk.Coin: Settled coin as dictated by the settlement price of the vpool.
+*/
+message PositionSettledEvent {
+    string pair = 1;
+
+    bytes trader_address = 2 [
+        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
+    ];
+
+    repeated cosmos.base.v1beta1.Coin settled_coins = 3 [
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+        (gogoproto.moretags) = "yaml:\"settled_coins\"",
+        (gogoproto.nullable) = false
+    ];
+}

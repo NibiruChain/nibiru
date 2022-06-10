@@ -60,39 +60,6 @@ func EmitTransfer(
 	ctx.EventManager().EmitEvent(NewTransferEvent(coin, from, to))
 }
 
-/* EmitPositionSettle emits an event when a position is settled.
-
-Args:
-  ctx sdk.Context: Carries information about the current state of the application.
-  vpool string: Identifier for the virtual pool of the position.
-  trader string: Owner of the position.
-  settled sdk.Coin: Settled coin as dictated by the settlement price of the vpool.
-*/
-func EmitPositionSettle(
-	ctx sdk.Context,
-	vpool string,
-	trader string,
-	settled sdk.Coins,
-) {
-	ctx.EventManager().EmitEvent(NewPositionSettleEvent(
-		vpool, trader, settled,
-	))
-}
-
-func NewPositionSettleEvent(
-	vpool string,
-	trader string,
-	settled sdk.Coins,
-) sdk.Event {
-	const EventTypePositionSettle = "position_settle"
-	return sdk.NewEvent(
-		EventTypePositionSettle,
-		sdk.NewAttribute(AttributeVpool, vpool),
-		sdk.NewAttribute(AttributePositionOwner, trader),
-		sdk.NewAttribute("settled_coins", settled.String()),
-	)
-}
-
 /* EmitMarginRatioChange emits an event when the protocol margin ratio changes.
 
 Args:
