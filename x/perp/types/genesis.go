@@ -1,11 +1,16 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params: DefaultParams(),
+		Params:         DefaultParams(),
+		VaultBalance:   nil,
+		PerpEfBalance:  nil,
+		FeePoolBalance: nil,
 		PairMetadata: []*PairMetadata{
 			{
 				Pair: "ubtc:unusd",
@@ -14,9 +19,6 @@ func DefaultGenesis() *GenesisState {
 				},
 			},
 		},
-		VaultBalance:         nil,
-		PerpEfBalance:        nil,
-		FeePoolBalance:       nil,
 		Positions:            nil,
 		PrepaidBadDebts:      nil,
 		WhitelistedAddresses: nil,
