@@ -8,11 +8,6 @@ import (
 
 	// Nibiru
 	"github.com/NibiruChain/nibiru/app"
-	dexcmd "github.com/NibiruChain/nibiru/x/dex/client/cli"
-	perpcmd "github.com/NibiruChain/nibiru/x/perp/client/cli"
-	pricefeedcmd "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	sccmd "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
-	vpoolcmd "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 
 	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -219,11 +214,6 @@ func queryCommand() *cobra.Command {
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
-		dexcmd.GetQueryCmd(),
-		pricefeedcmd.GetQueryCmd(),
-		sccmd.GetQueryCmd(),
-		perpcmd.GetQueryCmd(),
-		vpoolcmd.GetQueryCmd(),
 	)
 
 	// Adds all query commands to the 'rootQueryCmd'
@@ -251,10 +241,6 @@ func txCommand() *cobra.Command {
 		authcmd.GetBroadcastCommand(),
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
-		dexcmd.GetTxCmd(),
-		pricefeedcmd.GetTxCmd(),
-		sccmd.GetTxCmd(),
-		perpcmd.GetTxCmd(),
 	)
 
 	app.ModuleBasics.AddTxCommands(cmd)
