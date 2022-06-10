@@ -442,7 +442,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.T().Logf("err: %+v", err)
 }
 
-func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
 	pair := common.TestStablePool
