@@ -23,7 +23,7 @@ var _ types.QueryServer = queryServer{}
 
 func (q queryServer) ReserveAssets(
 	goCtx context.Context,
-	req *types.QueryReserveAssetsRequests,
+	req *types.QueryReserveAssetsRequest,
 ) (resp *types.QueryReserveAssetsResponse, err error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -49,7 +49,7 @@ func (q queryServer) ReserveAssets(
 
 func (q queryServer) AllPools(
 	goCtx context.Context,
-	req *types.QueryAllPoolsRequests,
+	req *types.QueryAllPoolsRequest,
 ) (resp *types.QueryAllPoolsResponse, err error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -69,8 +69,8 @@ func (q queryServer) AllPools(
 
 func (q queryServer) BaseAssetPrice(
 	goCtx context.Context,
-	req *types.QueryBaseAssetRequest,
-) (resp *types.QueryBaseAssetResponse, err error) {
+	req *types.QueryBaseAssetPriceRequest,
+) (resp *types.QueryBaseAssetPriceResponse, err error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -82,7 +82,7 @@ func (q queryServer) BaseAssetPrice(
 		return nil, err
 	}
 
-	price, err := q.GetBaseAssetPrice(
+	priceInQuoteDenom, err := q.GetBaseAssetPrice(
 		ctx,
 		pair,
 		req.Direction,
@@ -92,7 +92,7 @@ func (q queryServer) BaseAssetPrice(
 		return nil, err
 	}
 
-	return &types.QueryBaseAssetResponse{
-		Price: price,
+	return &types.QueryBaseAssetPriceResponse{
+		PriceInQuoteDenom: priceInQuoteDenom,
 	}, nil
 }
