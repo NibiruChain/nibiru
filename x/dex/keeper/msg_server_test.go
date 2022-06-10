@@ -11,8 +11,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex/events"
-	dexevents "github.com/NibiruChain/nibiru/x/dex/events"
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -173,10 +171,16 @@ func TestCreatePool(t *testing.T) {
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())
-				require.NotContains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
+				testutil.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
+					Creator: tc.creatorAddr.String(),
+					PoolId:  1,
+				})
 			} else {
 				require.NoError(t, err)
-				require.Contains(t, ctx.EventManager().Events(), events.NewPoolCreatedEvent(tc.creatorAddr, 1))
+				testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
+					Creator: tc.creatorAddr.String(),
+					PoolId:  1,
+				})
 			}
 		})
 	}
@@ -316,15 +320,14 @@ func TestMsgServerJoinPool(t *testing.T) {
 				RemainingCoins:   tc.expectedRemCoins,
 			}, *resp)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
-
-			expectedEvent := dexevents.NewPoolJoinedEvent(
-				joinerAddr,
-				1,
-				tc.tokensIn,
-				resp.NumPoolSharesOut,
-				resp.RemainingCoins,
-			)
-			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
+			expectedEvent := &types.EventPoolJoined{
+				Address:       joinerAddr.String(),
+				PoolId:        1,
+				TokensIn:      tc.tokensIn,
+				PoolSharesOut: resp.NumPoolSharesOut,
+				RemCoins:      resp.RemainingCoins,
+			}
+			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -449,14 +452,14 @@ func TestMsgServerExitPool(t *testing.T) {
 				app.BankKeeper.GetAllBalances(ctx, sender),
 			)
 
-			expectedEvent := dexevents.NewPoolExitedEvent(
-				sender,
-				1,
-				tc.poolSharesIn,
-				resp.TokensOut,
-			)
+			expectedEvent := &types.EventPoolExited{
+				Address:      sender.String(),
+				PoolId:       1,
+				PoolSharesIn: tc.poolSharesIn,
+				TokensOut:    resp.TokensOut,
+			}
 
-			require.Contains(t, ctx.EventManager().Events(), expectedEvent)
+			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -662,16 +665,12 @@ func TestMsgServerSwapAssets(t *testing.T) {
 				)
 
 				// check events
-				require.Contains(
-					t,
-					ctx.EventManager().Events(),
-					dexevents.NewAssetsSwappedEvent(
-						sender,
-						1,
-						tc.tokenIn,
-						tc.expectedTokenOut,
-					),
-				)
+				testutil.RequireHasTypedEvent(t, ctx, &types.EventAssetsSwapped{
+					Address:  sender.String(),
+					PoolId:   1,
+					TokenIn:  tc.tokenIn,
+					TokenOut: tc.expectedTokenOut,
+				})
 			}
 
 			// check user's final funds
