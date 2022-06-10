@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/dex/events"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
@@ -45,12 +44,6 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 		return nil, err
 	}
 
-	events.EmitPoolCreatedEvent(
-		ctx,
-		sender,
-		poolId,
-	)
-
 	return &types.MsgCreatePoolResponse{
 		PoolId: poolId,
 	}, nil
@@ -84,15 +77,6 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 	if err != nil {
 		return nil, err
 	}
-
-	events.EmitPoolJoinedEvent(
-		sdkContext,
-		sender,
-		msg.PoolId,
-		msg.TokensIn,
-		numSharesOut,
-		remCoins,
-	)
 
 	return &types.MsgJoinPoolResponse{
 		Pool:             &pool,
@@ -130,8 +114,6 @@ func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types
 		return nil, err
 	}
 
-	events.EmitPoolExitedEvent(sdkContext, sender, msg.PoolId, msg.PoolShares, tokensOut)
-
 	return &types.MsgExitPoolResponse{
 		TokensOut: tokensOut,
 	}, nil
@@ -168,8 +150,6 @@ func (k msgServer) SwapAssets(ctx context.Context, msg *types.MsgSwapAssets) (
 	if err != nil {
 		return nil, err
 	}
-
-	events.EmitAssetsSwappedEvent(sdkContext, sender, msg.PoolId, msg.TokenIn, tokenOut)
 
 	return &types.MsgSwapAssetsResponse{
 		TokenOut: tokenOut,
