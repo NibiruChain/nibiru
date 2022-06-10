@@ -31,17 +31,17 @@ func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair) (vpoolty
 	return queryResp, nil
 }
 
-func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction string, amount string) (vpooltypes.QueryBaseAssetResponse, error) {
+func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction string, amount string) (vpooltypes.QueryBaseAssetPriceResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
 		vpoolcli.CmdGetBaseAssetPrice(),
 		[]string{pair.String(), direction, amount, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
-		return vpooltypes.QueryBaseAssetResponse{}, err
+		return vpooltypes.QueryBaseAssetPriceResponse{}, err
 	}
 
-	var queryResp vpooltypes.QueryBaseAssetResponse
+	var queryResp vpooltypes.QueryBaseAssetPriceResponse
 	ctx.Codec.MustUnmarshalJSON(out.Bytes(), &queryResp)
 
 	return queryResp, nil

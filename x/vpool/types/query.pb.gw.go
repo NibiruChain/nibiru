@@ -36,7 +36,7 @@ var (
 )
 
 func request_Query_ReserveAssets_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryReserveAssetsRequests
+	var protoReq QueryReserveAssetsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -52,7 +52,7 @@ func request_Query_ReserveAssets_0(ctx context.Context, marshaler runtime.Marsha
 }
 
 func local_request_Query_ReserveAssets_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryReserveAssetsRequests
+	var protoReq QueryReserveAssetsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -68,7 +68,7 @@ func local_request_Query_ReserveAssets_0(ctx context.Context, marshaler runtime.
 }
 
 func request_Query_AllPools_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryAllPoolsRequests
+	var protoReq QueryAllPoolsRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.AllPools(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -77,7 +77,7 @@ func request_Query_AllPools_0(ctx context.Context, marshaler runtime.Marshaler, 
 }
 
 func local_request_Query_AllPools_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryAllPoolsRequests
+	var protoReq QueryAllPoolsRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.AllPools(ctx, &protoReq)
@@ -90,7 +90,7 @@ var (
 )
 
 func request_Query_BaseAssetPrice_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBaseAssetRequest
+	var protoReq QueryBaseAssetPriceRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -106,7 +106,7 @@ func request_Query_BaseAssetPrice_0(ctx context.Context, marshaler runtime.Marsh
 }
 
 func local_request_Query_BaseAssetPrice_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBaseAssetRequest
+	var protoReq QueryBaseAssetPriceRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
