@@ -30,13 +30,11 @@ func (k Keeper) addReserveSnapshot(
 		k.saveSnapshotCounter(ctx, pair, newCounter)
 	}
 
-	ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
+	return ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
 		Pair:         pair.String(),
 		QuoteReserve: quoteAssetReserve,
 		BaseReserve:  baseAssetReserve,
 	})
-
-	return nil
 }
 
 // getSnapshot returns the snapshot saved by counter num

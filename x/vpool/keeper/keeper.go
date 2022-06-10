@@ -119,12 +119,11 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	ctx.EventManager().EmitTypedEvent(&types.SwapBaseForQuoteEvent{
+	return quoteAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapBaseForQuoteEvent{
 		Pair:        pair.String(),
 		QuoteAmount: quoteAssetAmount,
 		BaseAmount:  baseAssetAmount,
 	})
-	return quoteAssetAmount, nil
 }
 
 /*
@@ -203,13 +202,11 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
+	return baseAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
 		Pair:        pair.String(),
 		QuoteAmount: quoteAssetAmount,
 		BaseAmount:  baseAssetAmount,
 	})
-
-	return baseAssetAmount, nil
 }
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
