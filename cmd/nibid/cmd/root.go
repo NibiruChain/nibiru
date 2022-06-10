@@ -6,10 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	// Nibiru
-	"github.com/NibiruChain/nibiru/app"
-
-	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -29,14 +25,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-
-	// Tendermint
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/NibiruChain/nibiru/app"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -57,7 +52,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 
 	rootCmd := &cobra.Command{
 		Use:   "nibid",
-		Short: "Nibiru Daemon",
+		Short: "Nibiru app",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
 			cmd.SetOut(cmd.OutOrStdout())
@@ -125,9 +120,7 @@ func initAppConfig() (string, interface{}) {
 	//   own app.toml config,
 	// - if you set srvCfg.MinGasPrices non-empty, validators CAN tweak their
 	//   own app.toml to override, or use this default value.
-	//
-	// In simapp, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = "0stake"
+	srvCfg.MinGasPrices = "0unibi"
 
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
