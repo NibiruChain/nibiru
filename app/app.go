@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -49,6 +50,9 @@ import (
 	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
@@ -75,12 +79,6 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	// IBC imports
-	"github.com/cosmos/cosmos-sdk/x/evidence"
-	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-
 	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
@@ -92,7 +90,6 @@ import (
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
@@ -126,17 +123,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool"
 	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
-	// unnamed import of statik for swagger UI support
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 )
 
 const (
 	AccountAddressPrefix = "nibi"
 	Name                 = "nibiru"
+	AppName              = "Nibiru"
 )
-
-const appName = "Nibiru"
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -262,8 +255,13 @@ type NibiruApp struct {
 	/* TransferKeeper is for cross-chain fungible token transfers. */
 	TransferKeeper ibctransferkeeper.Keeper
 
+	// make scoped keepers public for test purposes
+	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+
+	// ---------------
 	// Nibiru keepers
-	// -----------
+	// ---------------
 	DexKeeper             dexkeeper.Keeper
 	StablecoinKeeper      stablecoinkeeper.Keeper
 	PerpKeeper            perpkeeper.Keeper
@@ -272,10 +270,6 @@ type NibiruApp struct {
 	LockupKeeper          lockupkeeper.Keeper
 	IncentivizationKeeper incentivizationkeeper.Keeper
 	VpoolKeeper           vpoolkeeper.Keeper
-
-	// make scoped keepers public for test purposes
-	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	mm *module.Manager
@@ -308,23 +302,37 @@ func NewNibiruApp(
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
 	bApp := baseapp.NewBaseApp(
-		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+		AppName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
-		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
-		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
-		evidencetypes.StoreKey, capabilitytypes.StoreKey,
+		authtypes.StoreKey,
+		banktypes.StoreKey,
+		stakingtypes.StoreKey,
+		minttypes.StoreKey,
+		distrtypes.StoreKey,
+		slashingtypes.StoreKey,
+		govtypes.StoreKey,
+		paramstypes.StoreKey,
+		upgradetypes.StoreKey,
+		feegrant.StoreKey,
+		evidencetypes.StoreKey,
+		capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
 		// ibc keys
-		ibchost.StoreKey, ibctransfertypes.StoreKey,
+		ibchost.StoreKey,
+		ibctransfertypes.StoreKey,
 		// nibiru x/ keys
-		dextypes.StoreKey, pricefeedtypes.StoreKey, stablecointypes.StoreKey,
-		epochstypes.StoreKey, lockuptypes.StoreKey, perptypes.StoreKey,
-		incentivizationtypes.StoreKey, vpooltypes.StoreKey,
+		dextypes.StoreKey,
+		pricefeedtypes.StoreKey,
+		stablecointypes.StoreKey,
+		epochstypes.StoreKey,
+		lockuptypes.StoreKey,
+		perptypes.StoreKey,
+		incentivizationtypes.StoreKey,
+		vpooltypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -446,6 +454,10 @@ func NewNibiruApp(
 		keys[lockuptypes.StoreKey], app.AccountKeeper, app.BankKeeper,
 		app.DistrKeeper)
 
+	app.IncentivizationKeeper = incentivizationkeeper.NewKeeper(appCodec,
+		keys[incentivizationtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.DexKeeper, app.LockupKeeper,
+	)
+
 	// ---------------------------------- IBC keepers
 
 	app.IBCKeeper = ibckeeper.NewKeeper(
@@ -486,10 +498,6 @@ func NewNibiruApp(
 	app.EvidenceKeeper = *evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper,
 		app.SlashingKeeper,
-	)
-
-	app.IncentivizationKeeper = incentivizationkeeper.NewKeeper(appCodec,
-		keys[incentivizationtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.DexKeeper, app.LockupKeeper,
 	)
 
 	/* Create IBC module and a static IBC router */
@@ -563,13 +571,13 @@ func NewNibiruApp(
 		stablecoinModule,
 		lockupModule,
 		epochsModule,
+		vpoolModule,
+		perpModule,
+		incentivizationModule,
 		// ibc
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
-		vpoolModule,
-		perpModule,
-		incentivizationModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -578,12 +586,22 @@ func NewNibiruApp(
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
 	app.mm.SetOrderBeginBlockers(
-		upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName,
-		distrtypes.ModuleName, slashingtypes.ModuleName,
+		upgradetypes.ModuleName,
+		capabilitytypes.ModuleName,
+		minttypes.ModuleName,
+		distrtypes.ModuleName,
+		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
-		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName,
-		crisistypes.ModuleName, genutiltypes.ModuleName, authz.ModuleName,
-		feegrant.ModuleName, paramstypes.ModuleName, vestingtypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		govtypes.ModuleName,
+		crisistypes.ModuleName,
+		genutiltypes.ModuleName,
+		authz.ModuleName,
+		feegrant.ModuleName,
+		paramstypes.ModuleName,
+		vestingtypes.ModuleName,
+		stakingtypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
 		pricefeedtypes.ModuleName,
@@ -592,22 +610,28 @@ func NewNibiruApp(
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
-		stakingtypes.ModuleName,
+		incentivizationtypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		incentivizationtypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
-		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
-		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName,
-		distrtypes.ModuleName, slashingtypes.ModuleName, minttypes.ModuleName,
-		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
-		feegrant.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
+		crisistypes.ModuleName,
+		govtypes.ModuleName,
+		stakingtypes.ModuleName,
+		capabilitytypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		distrtypes.ModuleName,
+		slashingtypes.ModuleName,
+		minttypes.ModuleName,
+		genutiltypes.ModuleName,
+		evidencetypes.ModuleName,
+		authz.ModuleName,
+		feegrant.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
-		// ibc
-		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
 		epochstypes.ModuleName,
@@ -617,6 +641,9 @@ func NewNibiruApp(
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		incentivizationtypes.ModuleName,
+		// ibc
+		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -625,11 +652,21 @@ func NewNibiruApp(
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	app.mm.SetOrderInitGenesis(
-		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName,
-		distrtypes.ModuleName, stakingtypes.ModuleName, slashingtypes.ModuleName,
-		govtypes.ModuleName, minttypes.ModuleName, crisistypes.ModuleName,
-		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
-		feegrant.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
+		capabilitytypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		distrtypes.ModuleName,
+		stakingtypes.ModuleName,
+		slashingtypes.ModuleName,
+		govtypes.ModuleName,
+		minttypes.ModuleName,
+		crisistypes.ModuleName,
+		genutiltypes.ModuleName,
+		evidencetypes.ModuleName,
+		authz.ModuleName,
+		feegrant.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
@@ -639,10 +676,10 @@ func NewNibiruApp(
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
+		incentivizationtypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		incentivizationtypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -677,13 +714,13 @@ func NewNibiruApp(
 		pricefeedModule,
 		epochsModule,
 		stablecoinModule,
+		lockupModule,
+		incentivizationModule,
 		// ibc
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
-		lockupModule,
-		incentivizationModule,
 	)
 
 	app.sm.RegisterStoreDecoders()
