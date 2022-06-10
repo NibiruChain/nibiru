@@ -30,23 +30,23 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type QueryReserveAssetsRequests struct {
+type QueryReserveAssetsRequest struct {
 	// always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
 	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
 }
 
-func (m *QueryReserveAssetsRequests) Reset()         { *m = QueryReserveAssetsRequests{} }
-func (m *QueryReserveAssetsRequests) String() string { return proto.CompactTextString(m) }
-func (*QueryReserveAssetsRequests) ProtoMessage()    {}
-func (*QueryReserveAssetsRequests) Descriptor() ([]byte, []int) {
+func (m *QueryReserveAssetsRequest) Reset()         { *m = QueryReserveAssetsRequest{} }
+func (m *QueryReserveAssetsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryReserveAssetsRequest) ProtoMessage()    {}
+func (*QueryReserveAssetsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e2294d8bbf3b156d, []int{0}
 }
-func (m *QueryReserveAssetsRequests) XXX_Unmarshal(b []byte) error {
+func (m *QueryReserveAssetsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryReserveAssetsRequests) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryReserveAssetsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryReserveAssetsRequests.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryReserveAssetsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -56,19 +56,19 @@ func (m *QueryReserveAssetsRequests) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *QueryReserveAssetsRequests) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryReserveAssetsRequests.Merge(m, src)
+func (m *QueryReserveAssetsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryReserveAssetsRequest.Merge(m, src)
 }
-func (m *QueryReserveAssetsRequests) XXX_Size() int {
+func (m *QueryReserveAssetsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryReserveAssetsRequests) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryReserveAssetsRequests.DiscardUnknown(m)
+func (m *QueryReserveAssetsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryReserveAssetsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryReserveAssetsRequests proto.InternalMessageInfo
+var xxx_messageInfo_QueryReserveAssetsRequest proto.InternalMessageInfo
 
-func (m *QueryReserveAssetsRequests) GetPair() string {
+func (m *QueryReserveAssetsRequest) GetPair() string {
 	if m != nil {
 		return m.Pair
 	}
@@ -115,21 +115,21 @@ func (m *QueryReserveAssetsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryReserveAssetsResponse proto.InternalMessageInfo
 
-type QueryAllPoolsRequests struct {
+type QueryAllPoolsRequest struct {
 }
 
-func (m *QueryAllPoolsRequests) Reset()         { *m = QueryAllPoolsRequests{} }
-func (m *QueryAllPoolsRequests) String() string { return proto.CompactTextString(m) }
-func (*QueryAllPoolsRequests) ProtoMessage()    {}
-func (*QueryAllPoolsRequests) Descriptor() ([]byte, []int) {
+func (m *QueryAllPoolsRequest) Reset()         { *m = QueryAllPoolsRequest{} }
+func (m *QueryAllPoolsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllPoolsRequest) ProtoMessage()    {}
+func (*QueryAllPoolsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e2294d8bbf3b156d, []int{2}
 }
-func (m *QueryAllPoolsRequests) XXX_Unmarshal(b []byte) error {
+func (m *QueryAllPoolsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryAllPoolsRequests) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryAllPoolsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryAllPoolsRequests.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryAllPoolsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -139,17 +139,17 @@ func (m *QueryAllPoolsRequests) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *QueryAllPoolsRequests) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAllPoolsRequests.Merge(m, src)
+func (m *QueryAllPoolsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllPoolsRequest.Merge(m, src)
 }
-func (m *QueryAllPoolsRequests) XXX_Size() int {
+func (m *QueryAllPoolsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryAllPoolsRequests) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAllPoolsRequests.DiscardUnknown(m)
+func (m *QueryAllPoolsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllPoolsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryAllPoolsRequests proto.InternalMessageInfo
+var xxx_messageInfo_QueryAllPoolsRequest proto.InternalMessageInfo
 
 type QueryAllPoolsResponse struct {
 	Pools []*Pool `protobuf:"bytes,1,rep,name=pools,proto3" json:"pools,omitempty"`
@@ -195,26 +195,25 @@ func (m *QueryAllPoolsResponse) GetPools() []*Pool {
 	return nil
 }
 
-type QueryBaseAssetRequest struct {
-	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
-	// 0 and 1
+type QueryBaseAssetPriceRequest struct {
+	Pair      string    `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
 	Direction Direction `protobuf:"varint,2,opt,name=direction,proto3,enum=nibiru.vpool.v1.Direction" json:"direction,omitempty"`
 	// base asset is the crypto asset, e.g. BTC or ETH
 	BaseAssetAmount github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=base_asset_amount,json=baseAssetAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_amount"`
 }
 
-func (m *QueryBaseAssetRequest) Reset()         { *m = QueryBaseAssetRequest{} }
-func (m *QueryBaseAssetRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBaseAssetRequest) ProtoMessage()    {}
-func (*QueryBaseAssetRequest) Descriptor() ([]byte, []int) {
+func (m *QueryBaseAssetPriceRequest) Reset()         { *m = QueryBaseAssetPriceRequest{} }
+func (m *QueryBaseAssetPriceRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryBaseAssetPriceRequest) ProtoMessage()    {}
+func (*QueryBaseAssetPriceRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e2294d8bbf3b156d, []int{4}
 }
-func (m *QueryBaseAssetRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryBaseAssetPriceRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBaseAssetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryBaseAssetPriceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBaseAssetRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryBaseAssetPriceRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -224,48 +223,48 @@ func (m *QueryBaseAssetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *QueryBaseAssetRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBaseAssetRequest.Merge(m, src)
+func (m *QueryBaseAssetPriceRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBaseAssetPriceRequest.Merge(m, src)
 }
-func (m *QueryBaseAssetRequest) XXX_Size() int {
+func (m *QueryBaseAssetPriceRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBaseAssetRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBaseAssetRequest.DiscardUnknown(m)
+func (m *QueryBaseAssetPriceRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBaseAssetPriceRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBaseAssetRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryBaseAssetPriceRequest proto.InternalMessageInfo
 
-func (m *QueryBaseAssetRequest) GetPair() string {
+func (m *QueryBaseAssetPriceRequest) GetPair() string {
 	if m != nil {
 		return m.Pair
 	}
 	return ""
 }
 
-func (m *QueryBaseAssetRequest) GetDirection() Direction {
+func (m *QueryBaseAssetPriceRequest) GetDirection() Direction {
 	if m != nil {
 		return m.Direction
 	}
 	return Direction_DIRECTION_UNSPECIFIED
 }
 
-type QueryBaseAssetResponse struct {
+type QueryBaseAssetPriceResponse struct {
 	Price github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
 }
 
-func (m *QueryBaseAssetResponse) Reset()         { *m = QueryBaseAssetResponse{} }
-func (m *QueryBaseAssetResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBaseAssetResponse) ProtoMessage()    {}
-func (*QueryBaseAssetResponse) Descriptor() ([]byte, []int) {
+func (m *QueryBaseAssetPriceResponse) Reset()         { *m = QueryBaseAssetPriceResponse{} }
+func (m *QueryBaseAssetPriceResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryBaseAssetPriceResponse) ProtoMessage()    {}
+func (*QueryBaseAssetPriceResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e2294d8bbf3b156d, []int{5}
 }
-func (m *QueryBaseAssetResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryBaseAssetPriceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBaseAssetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryBaseAssetPriceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBaseAssetResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryBaseAssetPriceResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -275,65 +274,65 @@ func (m *QueryBaseAssetResponse) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *QueryBaseAssetResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBaseAssetResponse.Merge(m, src)
+func (m *QueryBaseAssetPriceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBaseAssetPriceResponse.Merge(m, src)
 }
-func (m *QueryBaseAssetResponse) XXX_Size() int {
+func (m *QueryBaseAssetPriceResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBaseAssetResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBaseAssetResponse.DiscardUnknown(m)
+func (m *QueryBaseAssetPriceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBaseAssetPriceResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBaseAssetResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryBaseAssetPriceResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*QueryReserveAssetsRequests)(nil), "nibiru.vpool.v1.QueryReserveAssetsRequests")
+	proto.RegisterType((*QueryReserveAssetsRequest)(nil), "nibiru.vpool.v1.QueryReserveAssetsRequest")
 	proto.RegisterType((*QueryReserveAssetsResponse)(nil), "nibiru.vpool.v1.QueryReserveAssetsResponse")
-	proto.RegisterType((*QueryAllPoolsRequests)(nil), "nibiru.vpool.v1.QueryAllPoolsRequests")
+	proto.RegisterType((*QueryAllPoolsRequest)(nil), "nibiru.vpool.v1.QueryAllPoolsRequest")
 	proto.RegisterType((*QueryAllPoolsResponse)(nil), "nibiru.vpool.v1.QueryAllPoolsResponse")
-	proto.RegisterType((*QueryBaseAssetRequest)(nil), "nibiru.vpool.v1.QueryBaseAssetRequest")
-	proto.RegisterType((*QueryBaseAssetResponse)(nil), "nibiru.vpool.v1.QueryBaseAssetResponse")
+	proto.RegisterType((*QueryBaseAssetPriceRequest)(nil), "nibiru.vpool.v1.QueryBaseAssetPriceRequest")
+	proto.RegisterType((*QueryBaseAssetPriceResponse)(nil), "nibiru.vpool.v1.QueryBaseAssetPriceResponse")
 }
 
 func init() { proto.RegisterFile("vpool/v1/query.proto", fileDescriptor_e2294d8bbf3b156d) }
 
 var fileDescriptor_e2294d8bbf3b156d = []byte{
-	// 533 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x3f, 0x6f, 0xd3, 0x40,
-	0x18, 0xc6, 0x73, 0x0d, 0x41, 0xf4, 0x10, 0x2d, 0x3d, 0x5a, 0x1a, 0xac, 0xca, 0x89, 0x2c, 0x14,
-	0x2a, 0x45, 0xd8, 0x34, 0x2c, 0xac, 0x09, 0x61, 0x45, 0xc5, 0x63, 0x85, 0x1a, 0x39, 0xee, 0xc9,
-	0xb5, 0x70, 0xfc, 0x3a, 0x3e, 0x3b, 0xa2, 0x62, 0x63, 0x63, 0x02, 0x89, 0x6f, 0xc0, 0x37, 0x61,
-	0xeb, 0x58, 0x89, 0x05, 0x75, 0xa8, 0x50, 0xc2, 0x07, 0x41, 0x7e, 0xef, 0xf2, 0xcf, 0x49, 0x15,
-	0x94, 0x29, 0x96, 0xef, 0xb9, 0xdf, 0xfb, 0xe7, 0x79, 0x62, 0xba, 0x3b, 0x88, 0x00, 0x02, 0x6b,
-	0x70, 0x64, 0xf5, 0x53, 0x1e, 0x5f, 0x98, 0x51, 0x0c, 0x09, 0xb0, 0xed, 0xd0, 0xef, 0xfa, 0x71,
-	0x6a, 0xe2, 0xa1, 0x39, 0x38, 0xd2, 0x76, 0x3d, 0xf0, 0x00, 0xcf, 0xac, 0xec, 0x49, 0xca, 0xb4,
-	0x03, 0x0f, 0xc0, 0x0b, 0xb8, 0xe5, 0x44, 0xbe, 0xe5, 0x84, 0x21, 0x24, 0x4e, 0xe2, 0x43, 0x28,
-	0xd4, 0xe9, 0x14, 0x2d, 0x31, 0xf8, 0xd6, 0x78, 0x41, 0xb5, 0x77, 0x59, 0x25, 0x9b, 0x0b, 0x1e,
-	0x0f, 0x78, 0x53, 0x08, 0x9e, 0x08, 0x9b, 0xf7, 0x53, 0x2e, 0x12, 0xc1, 0x18, 0xbd, 0x13, 0x39,
-	0x7e, 0x5c, 0x26, 0x55, 0x72, 0xb8, 0x69, 0xe3, 0xb3, 0x71, 0x4d, 0x96, 0x5f, 0x11, 0x11, 0x84,
-	0x82, 0xb3, 0xf7, 0x94, 0x75, 0x1d, 0xc1, 0x3b, 0x4e, 0xf6, 0xba, 0x13, 0x4b, 0x8d, 0x04, 0xb4,
-	0xcc, 0xcb, 0x9b, 0x4a, 0xe1, 0xfa, 0xa6, 0x52, 0xf3, 0xfc, 0xe4, 0x3c, 0xed, 0x9a, 0x2e, 0xf4,
-	0x2c, 0x17, 0x44, 0x0f, 0x84, 0xfa, 0x79, 0x2e, 0xce, 0x3e, 0x58, 0xc9, 0x45, 0xc4, 0x85, 0xd9,
-	0xe6, 0xae, 0xfd, 0x30, 0x23, 0x21, 0x5f, 0xd5, 0x62, 0xa7, 0xf4, 0x51, 0x3f, 0x85, 0x24, 0x8f,
-	0xdf, 0x58, 0x0b, 0xbf, 0x83, 0xa8, 0x59, 0xbe, 0xb1, 0x4f, 0xf7, 0x70, 0xb6, 0x66, 0x10, 0x1c,
-	0x03, 0x04, 0x93, 0x4d, 0x18, 0xed, 0x85, 0x03, 0x35, 0x6f, 0x9d, 0x96, 0xb2, 0x75, 0x8a, 0x32,
-	0xa9, 0x16, 0x0f, 0xef, 0x37, 0xf6, 0xcc, 0x9c, 0x57, 0x66, 0x26, 0xb7, 0xa5, 0xc6, 0xf8, 0x49,
-	0x14, 0xa6, 0x35, 0x1d, 0x0c, 0x0b, 0x2c, 0xdb, 0x34, 0x7b, 0x45, 0x37, 0xcf, 0xfc, 0x98, 0xbb,
-	0x99, 0x8b, 0x38, 0xe2, 0x56, 0x43, 0x5b, 0xc0, 0xb7, 0xc7, 0x0a, 0x7b, 0x2a, 0x66, 0x27, 0x74,
-	0x67, 0xc6, 0x04, 0xa7, 0x07, 0x69, 0x98, 0x94, 0x8b, 0x6b, 0x2d, 0x69, 0x7b, 0xe2, 0x41, 0x13,
-	0x31, 0xc6, 0x29, 0x7d, 0x9c, 0x1f, 0x41, 0xad, 0xa2, 0x4d, 0x4b, 0x51, 0xec, 0xbb, 0xeb, 0xba,
-	0x2d, 0x2f, 0x37, 0x7e, 0x14, 0x69, 0x09, 0x0b, 0xb0, 0xaf, 0x84, 0x3e, 0x98, 0x0b, 0x19, 0xab,
-	0x2f, 0x8c, 0x7f, 0x7b, 0x78, 0xb5, 0xff, 0x13, 0xcb, 0xde, 0x8d, 0xa7, 0x9f, 0x7f, 0xfd, 0xfd,
-	0xbe, 0xa1, 0xb3, 0x03, 0x4b, 0x5e, 0x92, 0x7f, 0x12, 0x4b, 0x05, 0x4c, 0x2e, 0x52, 0xb0, 0x4f,
-	0xf4, 0xde, 0x38, 0x00, 0xac, 0xb6, 0x1c, 0x9f, 0x4f, 0x8e, 0xb6, 0x52, 0xa7, 0x3a, 0xa8, 0x60,
-	0x07, 0x4f, 0xd8, 0xfe, 0x7c, 0x07, 0x4e, 0x10, 0x74, 0x30, 0x3c, 0xec, 0x0b, 0xa1, 0x5b, 0x93,
-	0xa5, 0x1f, 0x67, 0xbb, 0xba, 0xad, 0x87, 0x7c, 0xba, 0xb4, 0x67, 0x2b, 0x75, 0xaa, 0x89, 0x1a,
-	0x36, 0x51, 0x65, 0xfa, 0x7c, 0x13, 0x33, 0x61, 0x42, 0x93, 0x5a, 0x6f, 0x2e, 0x87, 0x3a, 0xb9,
-	0x1a, 0xea, 0xe4, 0xcf, 0x50, 0x27, 0xdf, 0x46, 0x7a, 0xe1, 0x6a, 0xa4, 0x17, 0x7e, 0x8f, 0xf4,
-	0xc2, 0x49, 0x7d, 0xc6, 0xed, 0xb7, 0xc8, 0x78, 0x7d, 0xee, 0xf8, 0xe1, 0x98, 0xf7, 0x51, 0x11,
-	0xd1, 0xf6, 0xee, 0x5d, 0xfc, 0x08, 0xbd, 0xfc, 0x17, 0x00, 0x00, 0xff, 0xff, 0xc1, 0xf8, 0x75,
-	0xa9, 0xf7, 0x04, 0x00, 0x00,
+	// 536 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0x41, 0x6f, 0xd3, 0x30,
+	0x14, 0x6e, 0x56, 0x8a, 0x98, 0x11, 0x1b, 0x33, 0x1d, 0x74, 0x61, 0x4a, 0xab, 0x08, 0xaa, 0x89,
+	0x42, 0xac, 0x95, 0x0b, 0xd7, 0x96, 0x72, 0x45, 0x23, 0xc7, 0x09, 0x51, 0xb9, 0x99, 0xd5, 0x59,
+	0xa4, 0x79, 0x69, 0xec, 0x54, 0x8c, 0x23, 0x3f, 0x00, 0x21, 0xed, 0x5f, 0xf0, 0x43, 0xd0, 0x8e,
+	0x93, 0xb8, 0xa0, 0x1d, 0x26, 0xd4, 0xf2, 0x43, 0x50, 0x6c, 0x87, 0xb5, 0x5d, 0xc7, 0xa6, 0x9e,
+	0x6a, 0x3d, 0x7f, 0xfe, 0xde, 0x7b, 0xdf, 0xf7, 0x35, 0xa8, 0x3c, 0x8a, 0x01, 0x42, 0x32, 0xda,
+	0x25, 0xc3, 0x94, 0x25, 0x47, 0x5e, 0x9c, 0x80, 0x04, 0xbc, 0x1e, 0xf1, 0x1e, 0x4f, 0x52, 0x4f,
+	0x5d, 0x7a, 0xa3, 0x5d, 0xbb, 0xdc, 0x87, 0x3e, 0xa8, 0x3b, 0x92, 0x9d, 0x34, 0xcc, 0xde, 0xee,
+	0x03, 0xf4, 0x43, 0x46, 0x68, 0xcc, 0x09, 0x8d, 0x22, 0x90, 0x54, 0x72, 0x88, 0x84, 0xb9, 0xbd,
+	0xa0, 0xd6, 0x34, 0xaa, 0xea, 0x12, 0xb4, 0xf5, 0x2e, 0xeb, 0xe4, 0x33, 0xc1, 0x92, 0x11, 0x6b,
+	0x09, 0xc1, 0xa4, 0xf0, 0xd9, 0x30, 0x65, 0x42, 0x62, 0x8c, 0x6e, 0xc5, 0x94, 0x27, 0x15, 0xab,
+	0x66, 0xed, 0xac, 0xfa, 0xea, 0xec, 0x9e, 0x59, 0xc8, 0x5e, 0xf4, 0x42, 0xc4, 0x10, 0x09, 0x86,
+	0xdf, 0x23, 0xdc, 0xa3, 0x82, 0x75, 0x69, 0x56, 0xee, 0x26, 0x1a, 0xa3, 0x09, 0xda, 0xde, 0xc9,
+	0x79, 0xb5, 0x70, 0x76, 0x5e, 0xad, 0xf7, 0xb9, 0x3c, 0x4c, 0x7b, 0x5e, 0x00, 0x03, 0x12, 0x80,
+	0x18, 0x80, 0x30, 0x3f, 0x2f, 0xc4, 0xc1, 0x47, 0x22, 0x8f, 0x62, 0x26, 0xbc, 0x0e, 0x0b, 0xfc,
+	0xfb, 0x19, 0x93, 0xe2, 0x37, 0xbd, 0xf0, 0x07, 0xf4, 0x60, 0x98, 0x82, 0x9c, 0xa7, 0x5f, 0x59,
+	0x8a, 0x7e, 0x43, 0x51, 0x4d, 0xf3, 0xbb, 0x0f, 0x51, 0x59, 0xed, 0xd6, 0x0a, 0xc3, 0x3d, 0x80,
+	0x30, 0x17, 0xc2, 0xed, 0xa0, 0xcd, 0xb9, 0xba, 0x59, 0xb7, 0x81, 0x4a, 0x99, 0x98, 0xa2, 0x62,
+	0xd5, 0x8a, 0x3b, 0x77, 0x9b, 0x9b, 0xde, 0x9c, 0x53, 0x5e, 0x06, 0xf7, 0x35, 0xc6, 0xfd, 0x91,
+	0x4b, 0xd7, 0xce, 0xf7, 0xda, 0x4b, 0x78, 0xc0, 0xfe, 0xa3, 0x36, 0x7e, 0x85, 0x56, 0x0f, 0x78,
+	0xc2, 0x82, 0xcc, 0x48, 0xb5, 0xe6, 0x5a, 0xd3, 0xbe, 0xd4, 0xa3, 0x93, 0x23, 0xfc, 0x0b, 0x30,
+	0xde, 0x47, 0x1b, 0x53, 0x46, 0xd0, 0x01, 0xa4, 0x91, 0xac, 0x14, 0x97, 0x12, 0x6a, 0xfd, 0x9f,
+	0x0f, 0x2d, 0x45, 0xe3, 0x06, 0xe8, 0xf1, 0xc2, 0x3d, 0x8c, 0x28, 0x1d, 0x54, 0x8a, 0xb3, 0xc2,
+	0x92, 0xb6, 0xeb, 0xc7, 0xcd, 0xef, 0x45, 0x54, 0x52, 0x5d, 0xf0, 0x57, 0x0b, 0xdd, 0x9b, 0x49,
+	0x1b, 0x7e, 0x76, 0x49, 0x83, 0x2b, 0x43, 0x6c, 0x37, 0x6e, 0x84, 0xd5, 0xa3, 0xbb, 0x4f, 0xbe,
+	0xfc, 0xfc, 0x73, 0xbc, 0xe2, 0xe0, 0x6d, 0xa2, 0x1f, 0xe9, 0xff, 0x0a, 0x31, 0x41, 0xd3, 0x62,
+	0x0a, 0xfc, 0x19, 0xdd, 0xc9, 0x93, 0x80, 0x9f, 0x2e, 0xa6, 0x9f, 0x4b, 0x90, 0x5d, 0xbf, 0x0e,
+	0x66, 0x06, 0xa8, 0xaa, 0x01, 0xb6, 0xf0, 0xa3, 0xd9, 0x01, 0x68, 0x18, 0x76, 0x55, 0x88, 0xf0,
+	0xb1, 0x85, 0xd6, 0x66, 0x75, 0xc7, 0x57, 0x6c, 0xb8, 0x30, 0x65, 0xf6, 0xf3, 0x9b, 0x81, 0xcd,
+	0x38, 0x75, 0x35, 0x4e, 0x0d, 0x3b, 0xb3, 0xe3, 0x4c, 0x25, 0x4b, 0x99, 0xd5, 0x7e, 0x73, 0x32,
+	0x76, 0xac, 0xd3, 0xb1, 0x63, 0xfd, 0x1e, 0x3b, 0xd6, 0xb7, 0x89, 0x53, 0x38, 0x9d, 0x38, 0x85,
+	0x5f, 0x13, 0xa7, 0xb0, 0xdf, 0x98, 0x72, 0xfd, 0xad, 0xe2, 0x78, 0x7d, 0x48, 0x79, 0x94, 0xf3,
+	0x7d, 0x32, 0x8c, 0xca, 0xfe, 0xde, 0x6d, 0xf5, 0x51, 0x7a, 0xf9, 0x37, 0x00, 0x00, 0xff, 0xff,
+	0xb6, 0x78, 0x30, 0xa0, 0x07, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -349,11 +348,11 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
 	// Queries the reserve assets in a given pool, identified by a token pair.
-	ReserveAssets(ctx context.Context, in *QueryReserveAssetsRequests, opts ...grpc.CallOption) (*QueryReserveAssetsResponse, error)
+	ReserveAssets(ctx context.Context, in *QueryReserveAssetsRequest, opts ...grpc.CallOption) (*QueryReserveAssetsResponse, error)
 	// Queries all virtual pools.
-	AllPools(ctx context.Context, in *QueryAllPoolsRequests, opts ...grpc.CallOption) (*QueryAllPoolsResponse, error)
+	AllPools(ctx context.Context, in *QueryAllPoolsRequest, opts ...grpc.CallOption) (*QueryAllPoolsResponse, error)
 	// Queries prices
-	BaseAssetPrice(ctx context.Context, in *QueryBaseAssetRequest, opts ...grpc.CallOption) (*QueryBaseAssetResponse, error)
+	BaseAssetPrice(ctx context.Context, in *QueryBaseAssetPriceRequest, opts ...grpc.CallOption) (*QueryBaseAssetPriceResponse, error)
 }
 
 type queryClient struct {
@@ -364,7 +363,7 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) ReserveAssets(ctx context.Context, in *QueryReserveAssetsRequests, opts ...grpc.CallOption) (*QueryReserveAssetsResponse, error) {
+func (c *queryClient) ReserveAssets(ctx context.Context, in *QueryReserveAssetsRequest, opts ...grpc.CallOption) (*QueryReserveAssetsResponse, error) {
 	out := new(QueryReserveAssetsResponse)
 	err := c.cc.Invoke(ctx, "/nibiru.vpool.v1.Query/ReserveAssets", in, out, opts...)
 	if err != nil {
@@ -373,7 +372,7 @@ func (c *queryClient) ReserveAssets(ctx context.Context, in *QueryReserveAssetsR
 	return out, nil
 }
 
-func (c *queryClient) AllPools(ctx context.Context, in *QueryAllPoolsRequests, opts ...grpc.CallOption) (*QueryAllPoolsResponse, error) {
+func (c *queryClient) AllPools(ctx context.Context, in *QueryAllPoolsRequest, opts ...grpc.CallOption) (*QueryAllPoolsResponse, error) {
 	out := new(QueryAllPoolsResponse)
 	err := c.cc.Invoke(ctx, "/nibiru.vpool.v1.Query/AllPools", in, out, opts...)
 	if err != nil {
@@ -382,8 +381,8 @@ func (c *queryClient) AllPools(ctx context.Context, in *QueryAllPoolsRequests, o
 	return out, nil
 }
 
-func (c *queryClient) BaseAssetPrice(ctx context.Context, in *QueryBaseAssetRequest, opts ...grpc.CallOption) (*QueryBaseAssetResponse, error) {
-	out := new(QueryBaseAssetResponse)
+func (c *queryClient) BaseAssetPrice(ctx context.Context, in *QueryBaseAssetPriceRequest, opts ...grpc.CallOption) (*QueryBaseAssetPriceResponse, error) {
+	out := new(QueryBaseAssetPriceResponse)
 	err := c.cc.Invoke(ctx, "/nibiru.vpool.v1.Query/BaseAssetPrice", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -394,24 +393,24 @@ func (c *queryClient) BaseAssetPrice(ctx context.Context, in *QueryBaseAssetRequ
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Queries the reserve assets in a given pool, identified by a token pair.
-	ReserveAssets(context.Context, *QueryReserveAssetsRequests) (*QueryReserveAssetsResponse, error)
+	ReserveAssets(context.Context, *QueryReserveAssetsRequest) (*QueryReserveAssetsResponse, error)
 	// Queries all virtual pools.
-	AllPools(context.Context, *QueryAllPoolsRequests) (*QueryAllPoolsResponse, error)
+	AllPools(context.Context, *QueryAllPoolsRequest) (*QueryAllPoolsResponse, error)
 	// Queries prices
-	BaseAssetPrice(context.Context, *QueryBaseAssetRequest) (*QueryBaseAssetResponse, error)
+	BaseAssetPrice(context.Context, *QueryBaseAssetPriceRequest) (*QueryBaseAssetPriceResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) ReserveAssets(ctx context.Context, req *QueryReserveAssetsRequests) (*QueryReserveAssetsResponse, error) {
+func (*UnimplementedQueryServer) ReserveAssets(ctx context.Context, req *QueryReserveAssetsRequest) (*QueryReserveAssetsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReserveAssets not implemented")
 }
-func (*UnimplementedQueryServer) AllPools(ctx context.Context, req *QueryAllPoolsRequests) (*QueryAllPoolsResponse, error) {
+func (*UnimplementedQueryServer) AllPools(ctx context.Context, req *QueryAllPoolsRequest) (*QueryAllPoolsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AllPools not implemented")
 }
-func (*UnimplementedQueryServer) BaseAssetPrice(ctx context.Context, req *QueryBaseAssetRequest) (*QueryBaseAssetResponse, error) {
+func (*UnimplementedQueryServer) BaseAssetPrice(ctx context.Context, req *QueryBaseAssetPriceRequest) (*QueryBaseAssetPriceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BaseAssetPrice not implemented")
 }
 
@@ -420,7 +419,7 @@ func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 }
 
 func _Query_ReserveAssets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryReserveAssetsRequests)
+	in := new(QueryReserveAssetsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -432,13 +431,13 @@ func _Query_ReserveAssets_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/nibiru.vpool.v1.Query/ReserveAssets",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ReserveAssets(ctx, req.(*QueryReserveAssetsRequests))
+		return srv.(QueryServer).ReserveAssets(ctx, req.(*QueryReserveAssetsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Query_AllPools_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryAllPoolsRequests)
+	in := new(QueryAllPoolsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -450,13 +449,13 @@ func _Query_AllPools_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/nibiru.vpool.v1.Query/AllPools",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).AllPools(ctx, req.(*QueryAllPoolsRequests))
+		return srv.(QueryServer).AllPools(ctx, req.(*QueryAllPoolsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Query_BaseAssetPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBaseAssetRequest)
+	in := new(QueryBaseAssetPriceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -468,7 +467,7 @@ func _Query_BaseAssetPrice_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: "/nibiru.vpool.v1.Query/BaseAssetPrice",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BaseAssetPrice(ctx, req.(*QueryBaseAssetRequest))
+		return srv.(QueryServer).BaseAssetPrice(ctx, req.(*QueryBaseAssetPriceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -494,7 +493,7 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	Metadata: "vpool/v1/query.proto",
 }
 
-func (m *QueryReserveAssetsRequests) Marshal() (dAtA []byte, err error) {
+func (m *QueryReserveAssetsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -504,12 +503,12 @@ func (m *QueryReserveAssetsRequests) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryReserveAssetsRequests) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryReserveAssetsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryReserveAssetsRequests) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryReserveAssetsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -567,7 +566,7 @@ func (m *QueryReserveAssetsResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryAllPoolsRequests) Marshal() (dAtA []byte, err error) {
+func (m *QueryAllPoolsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -577,12 +576,12 @@ func (m *QueryAllPoolsRequests) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryAllPoolsRequests) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryAllPoolsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryAllPoolsRequests) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryAllPoolsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -627,7 +626,7 @@ func (m *QueryAllPoolsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBaseAssetRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryBaseAssetPriceRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -637,12 +636,12 @@ func (m *QueryBaseAssetRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryBaseAssetRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryBaseAssetPriceRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBaseAssetRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryBaseAssetPriceRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -672,7 +671,7 @@ func (m *QueryBaseAssetRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBaseAssetResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryBaseAssetPriceResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -682,12 +681,12 @@ func (m *QueryBaseAssetResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryBaseAssetResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryBaseAssetPriceResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBaseAssetResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryBaseAssetPriceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -716,7 +715,7 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryReserveAssetsRequests) Size() (n int) {
+func (m *QueryReserveAssetsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -742,7 +741,7 @@ func (m *QueryReserveAssetsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryAllPoolsRequests) Size() (n int) {
+func (m *QueryAllPoolsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -766,7 +765,7 @@ func (m *QueryAllPoolsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryBaseAssetRequest) Size() (n int) {
+func (m *QueryBaseAssetPriceRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -784,7 +783,7 @@ func (m *QueryBaseAssetRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryBaseAssetResponse) Size() (n int) {
+func (m *QueryBaseAssetPriceResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -801,7 +800,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryReserveAssetsRequests) Unmarshal(dAtA []byte) error {
+func (m *QueryReserveAssetsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -824,10 +823,10 @@ func (m *QueryReserveAssetsRequests) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryReserveAssetsRequests: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryReserveAssetsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryReserveAssetsRequests: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryReserveAssetsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1001,7 +1000,7 @@ func (m *QueryReserveAssetsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryAllPoolsRequests) Unmarshal(dAtA []byte) error {
+func (m *QueryAllPoolsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1024,10 +1023,10 @@ func (m *QueryAllPoolsRequests) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAllPoolsRequests: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryAllPoolsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAllPoolsRequests: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryAllPoolsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1135,7 +1134,7 @@ func (m *QueryAllPoolsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBaseAssetRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryBaseAssetPriceRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1158,10 +1157,10 @@ func (m *QueryBaseAssetRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBaseAssetRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryBaseAssetPriceRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBaseAssetRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryBaseAssetPriceRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1270,7 +1269,7 @@ func (m *QueryBaseAssetRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBaseAssetResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryBaseAssetPriceResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1293,10 +1292,10 @@ func (m *QueryBaseAssetResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBaseAssetResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryBaseAssetPriceResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBaseAssetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryBaseAssetPriceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
