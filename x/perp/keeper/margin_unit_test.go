@@ -244,7 +244,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
-				require.ErrorContains(t, err, "position has bad debt")
+				require.ErrorContains(t, err, types.ErrFailedToRemoveDueToBadDebt.Error())
 			},
 		},
 		{
