@@ -12,12 +12,12 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	cli2 "github.com/NibiruChain/nibiru/x/vpool/client/cli"
+	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair) (vpooltypes.QueryReserveAssetsResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(ctx, cli2.CmdGetVpoolReserveAssets(), []string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
+	out, err := clitestutil.ExecTestCLICmd(ctx, vpoolcli.CmdGetVpoolReserveAssets(), []string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
 	if err != nil {
 		return vpooltypes.QueryReserveAssetsResponse{}, err
 	}
@@ -34,7 +34,7 @@ func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair) (vpoolty
 func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction string, amount string) (vpooltypes.QueryBaseAssetResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
-		cli2.CmdGetBaseAssetPrice(),
+		vpoolcli.CmdGetBaseAssetPrice(),
 		[]string{pair.String(), direction, amount, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
@@ -42,10 +42,7 @@ func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction st
 	}
 
 	var queryResp vpooltypes.QueryBaseAssetResponse
-	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
-	if err != nil {
-		return vpooltypes.QueryBaseAssetResponse{}, err
-	}
+	ctx.Codec.MustUnmarshalJSON(out.Bytes(), &queryResp)
 
 	return queryResp, nil
 }
