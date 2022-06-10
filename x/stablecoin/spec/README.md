@@ -1,5 +1,6 @@
 # `x/stablecoin`        <!-- omit in toc -->
 
+*******
 
 The stablecoin module is responsible for minting and burning NUSD, maintenance of NUSD's price stability, and orchestration of Nibiru Protocol's collateral ratio.
 
