@@ -30,14 +30,11 @@ func (k Keeper) addReserveSnapshot(
 		k.saveSnapshotCounter(ctx, pair, newCounter)
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventSnapshotSaved,
-			sdk.NewAttribute(types.AttributeBlockHeight, fmt.Sprintf("%d", ctx.BlockHeight())),
-			sdk.NewAttribute(types.AttributeQuoteReserve, quoteAssetReserve.String()),
-			sdk.NewAttribute(types.AttributeBaseReserve, baseAssetReserve.String()),
-		),
-	)
+	ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
+		Pair:         pair.String(),
+		QuoteReserve: quoteAssetReserve,
+		BaseReserve:  baseAssetReserve,
+	})
 
 	return nil
 }

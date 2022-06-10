@@ -119,14 +119,11 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventSwapBaseForQuote,
-			sdk.NewAttribute(types.AttributeQuoteAssetAmount, baseAssetAmount.String()),
-			sdk.NewAttribute(types.AttributeBaseAssetAmount, quoteAssetAmount.String()),
-		),
-	)
-
+	ctx.EventManager().EmitTypedEvent(&types.SwapBaseForQuoteEvent{
+		Pair:        pair.String(),
+		QuoteAmount: quoteAssetAmount,
+		BaseAmount:  baseAssetAmount,
+	})
 	return quoteAssetAmount, nil
 }
 
@@ -206,13 +203,11 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventSwapQuoteForBase,
-			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
-			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
-		),
-	)
+	ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
+		Pair:        pair.String(),
+		QuoteAmount: quoteAssetAmount,
+		BaseAmount:  baseAssetAmount,
+	})
 
 	return baseAssetAmount, nil
 }
