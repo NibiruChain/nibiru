@@ -184,7 +184,7 @@ func (k Keeper) RemoveMargin(
 		return nil, err
 	}
 	if !remaining.BadDebt.IsZero() {
-		err = fmt.Errorf("failed to remove margin; position has bad debt")
+		err = types.ErrFailedToRemoveDueToBadDebt
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"remaining_bad_debt",
