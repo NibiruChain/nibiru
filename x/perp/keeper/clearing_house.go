@@ -773,10 +773,7 @@ func (k Keeper) transferFee(
 	ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress,
 	positionNotional sdk.Dec,
 ) (sdk.Int, error) {
-	toll, spread, err := k.CalcPerpTxFee(ctx, positionNotional)
-	if err != nil {
-		return sdk.Int{}, err
-	}
+	toll, spread := k.CalcPerpTxFee(ctx, positionNotional)
 
 	hasToll := toll.IsPositive()
 	hasSpread := spread.IsPositive()
@@ -785,6 +782,7 @@ func (k Keeper) transferFee(
 		return sdk.ZeroInt(), nil
 	}
 
+	var err error
 	if hasSpread {
 		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread))
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
