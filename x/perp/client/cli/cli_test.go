@@ -107,7 +107,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
 
-	// TODO: figure out why using user2 gives a "key <addr> not found" error
 	s.users = []sdk.AccAddress{user1, user2}
 }
 
@@ -300,10 +299,28 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		user.String(),
 		assetPair.String(),
 	}
-	// TODO: fix that this err doesn't get propagated back up to show up here
-	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.T().Logf("res: %+v", res)
-	s.T().Logf("err: %+v", err)
+	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.Assert().Contains(out.String(), "no position found")
+}
+
+func (s *IntegrationTestSuite) TestGetPrices() {
+	val := s.network.Validators[0]
+	assetPair := common.AssetPair{
+		Token0: "eth",
+		Token1: "unibi",
+	}
+
+	s.T().Log("check vpool balances")
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
+	s.Require().NoError(err)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
+
+	s.T().Log("check prices")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, assetPair, "1", "100")
+	s.T().Logf("priceInfo: %+v", priceInfo)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
+	s.Require().NoError(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
