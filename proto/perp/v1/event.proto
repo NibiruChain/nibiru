@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package nibiru.perp.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "perp/v1/state.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
+
+/* Emits an event when a position (vpool-trader) is changed.
+
+Args:
+  ctx sdk.Context: Carries information about the current state of the application.
+  owner sdk.AccAddress: owner of the position.
+  vpool string: identifier of the corresponding virtual pool for the position
+  margin sdk.Int: amount of quote token (y) backing the position.
+  notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
+    the virtual price on 'vpool'.
+  vsizeChange sdk.Dec: magnitude of the change to vsize. The vsize is the amount
+  	of base assets for the position, margin * leverage * priceBasePerQuote.
+  txFee sdk.Int: transaction fee paid
+  vsizeAfter sdk.Dec: position virtual size after the change
+  realizedPnlAfter: realize profits and losses after the change
+  badDebt sdk.Int: Amount of bad debt cleared by the PerpEF during the change.
+    Bad debt is negative net margin past the liquidation point of a position.
+  unrealizedPnlAfter: unrealized profits and losses after the change
+  liquidationPenalty: amt of margin (y) lost due to liquidation
+  vPrice sdk.Dec: vPrice defined as yRes / xRes for a vpool, where yRes is the
+    quote reserves and xRes is the base reserves.
+  fundingPayment sdk.Dec: A funding payment made or received by the trader on
+    the current position. 'fundingPayment' is positive if 'owner' is the sender
+	and negative if 'owner' is the receiver of the payment. Its magnitude is
+	abs(vSize * fundingRate). Funding payments act to converge the mark price
+	(vPrice) and index price (average price on major exchanges).
+
+TODO Q: Is there a way to split this into different events without creating too much complexity?
+*/
+message PositionChangedEvent {
+    string trader_address = 1;
+  
+    string pair  = 2;
+  
+    string margin = 3 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string position_notional = 4 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string exchanged_position_size = 5 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string fee = 6 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable) = false];
+  
+    string position_size_after = 7 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string realized_pnl = 8 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string unrealized_pnl_after = 9 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string bad_debt = 10 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string liquidation_penalty = 11 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    string spot_price = 12 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+      
+    string funding_payment = 13 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+}
+
+/* EmitPositionLiquidate emits an event when a liquidation occurs.
+
+Args:
+  ctx sdk.Context: Carries information about the current state of the application.
+  vpool string: identifier of the corresponding virtual pool for the position
+  owner sdk.AccAddress: owner of the position.
+  notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
+    the virtual price on 'vpool'.
+  vsize sdk.Dec: virtual amount of base assets for the position, which would be
+    margin * leverage * priceBasePerQuote.
+  liquidator sdk.AccAddress: Address of the account that executed the tx.
+  feeToLiquidator sdk.Int: Commission (in margin units) received by 'liquidator'.
+  badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
+    Bad debt is negative net margin past the liquidation point of a position.
+*/
+message PositionLiquidatedEvent {
+    bytes trader_address = 1 [
+        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
+    ];
+
+    string pair = 2;
+
+    string exchanged_quote_amount = 3 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+    string exchanged_position_size = 4 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+    bytes liquidator_address = 5 [
+        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
+    ];
+
+    cosmos.base.v1beta1.Coin fee_to_liquidator = 6 [
+        (gogoproto.moretags) = "yaml:\"fee_to_liquidator\"",
+        (gogoproto.nullable) = false
+    ];
+
+    cosmos.base.v1beta1.Coin fee_to_ecosystem_fund = 7 [
+        (gogoproto.moretags) = "yaml:\"fee_to_ecosystem_fund\"",
+        (gogoproto.nullable) = false
+    ];
+
+    string bad_debt = 8 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+}
