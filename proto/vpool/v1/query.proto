@@ -61,7 +61,6 @@ message QueryAllPoolsResponse {
 
 message QueryBaseAssetPriceRequest {
   string pair = 1;
-  // 0 and 1
   Direction direction = 2;
   // base asset is the crypto asset, e.g. BTC or ETH
   string base_asset_amount = 3 [
