@@ -69,7 +69,7 @@ message QueryBaseAssetPriceRequest {
 }
 
 message QueryBaseAssetPriceResponse {
-  string price = 1 [
+  string price_in_quote_denom = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 }

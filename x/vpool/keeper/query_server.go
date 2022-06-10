@@ -82,7 +82,7 @@ func (q queryServer) BaseAssetPrice(
 		return nil, err
 	}
 
-	price, err := q.GetBaseAssetPrice(
+	priceInQuoteDenom, err := q.GetBaseAssetPrice(
 		ctx,
 		pair,
 		req.Direction,
@@ -93,6 +93,6 @@ func (q queryServer) BaseAssetPrice(
 	}
 
 	return &types.QueryBaseAssetPriceResponse{
-		Price: price,
+		PriceInQuoteDenom: priceInQuoteDenom,
 	}, nil
 }
