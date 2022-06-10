@@ -108,7 +108,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
 
-	// TODO: figure out why using user2 gives a "key <addr> not found" error
 	s.users = []sdk.AccAddress{user1, user2}
 }
 
@@ -301,10 +300,8 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		user.String(),
 		assetPair.String(),
 	}
-	// TODO: fix that this err doesn't get propagated back up to show up here
-	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.T().Logf("res: %+v", res)
-	s.T().Logf("err: %+v", err)
+	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.Assert().Contains(out.String(), "no position found")
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
