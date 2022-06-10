@@ -160,3 +160,20 @@ message PositionSettledEvent {
         (gogoproto.nullable) = false
     ];
 }
+
+
+message MarginChangedEvent {
+  string pair = 1;
+
+  bytes trader_address = 2;
+
+  string margin_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  string funding_payment = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
