@@ -486,6 +486,47 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.Require().Contains(out.String(), types.ErrFailedToRemoveDueToBadDebt.Error())
 }
 
+func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+	// this test follows this example:
+	// https://drive.google.com/file/d/1PbaRDH09Poja4I_oJvR3KpyGrRl7g_Pb/view?usp=sharing
+
+	// Set up the user accounts
+	val := s.network.Validators[0]
+	pair := common.TestStablePool
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+
+	// Open a position with first user
+	s.T().Log("opening a position with user 1....")
+	leverage := "10"        // 10x leverage
+	quoteAssetAmount := "1" // 1 unusd
+	limit := "0.0000001"    // 0.0000001 test (token)
+	args := []string{
+		"--from",
+		s.users[0].String(),
+		"buy",
+		pair.String(),
+		leverage,         // 10x Leverage
+		quoteAssetAmount, // Quote asset amount
+		limit,
+	}
+	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user1 open position err: %+v", err)
+	}
+	s.Require().NoError(err)
+
+	// Check status: vpool reserve assets, balances, positions
+	s.checkStatus(val, pair, s.users)
+
+	// Second user opens a similar position
+
+	// First user closes position
+
+	// Second user should now have bad debt (unrealized loss)
+}
+
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
