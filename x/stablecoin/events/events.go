@@ -2,6 +2,8 @@ package events
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 // x/stablecoin attributes for events
@@ -14,86 +16,71 @@ const (
 
 func EmitTransfer(
 	ctx sdk.Context, coin sdk.Coin, from string, to string,
-) {
-	const EventTypeTransfer = "transfer"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		EventTypeTransfer,
-		sdk.NewAttribute(AttributeFromAddr, from),
-		sdk.NewAttribute(AttributeToAddr, to),
-		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
-		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
-	))
-}
-
-func _mintOrBurnEvent(eventType string, coin sdk.Coin) sdk.Event {
-	event := sdk.NewEvent(
-		eventType,
-		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
-		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
-	)
-	return event
+) error {
+	protoEvent := &types.EventTransfer{
+		Coin: coin,
+		From: from,
+		To:   to,
+	}
+	return ctx.EventManager().EmitTypedEvent(protoEvent)
 }
 
 // EmitMintStable emits an event when a Nibiru Stablecoin is minted.
-func EmitMintStable(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeMintStable = "mint_stable"
-	event := _mintOrBurnEvent(EventTypeMintStable, coin)
-	ctx.EventManager().EmitEvents(sdk.Events{event})
+func EmitMintStable(ctx sdk.Context, coin sdk.Coin) error {
+	protoEvent := &types.EventMintStable{
+		Amount: coin.Amount,
+	}
+	return ctx.EventManager().EmitTypedEvent(protoEvent)
 }
 
 // EmitBurnStable emits an event when a Nibiru Stablecoin is burned.
-func EmitBurnStable(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeBurnStable = "burn_stable"
-	event := _mintOrBurnEvent(EventTypeBurnStable, coin)
-	ctx.EventManager().EmitEvents(sdk.Events{event})
+func EmitBurnStable(ctx sdk.Context, coin sdk.Coin) error {
+	protoEvent := &types.EventBurnStable{
+		Amount: coin.Amount,
+	}
+	return ctx.EventManager().EmitTypedEvent(protoEvent)
 }
 
 // EmitMintNIBI emits an event when NIBI is minted.
-func EmitMintNIBI(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeMintNIBI = "mint_nibi"
-	ctx.EventManager().EmitEvent(
-		_mintOrBurnEvent(EventTypeMintNIBI, coin),
-	)
+func EmitMintNIBI(ctx sdk.Context, coin sdk.Coin) error {
+	protoEvent := &types.EventMintNIBI{
+		Amount: coin.Amount,
+	}
+	return ctx.EventManager().EmitTypedEvent(protoEvent)
 }
 
 // EmitBurnNIBI emits an event when NIBI is burned.
-func EmitBurnNIBI(ctx sdk.Context, coin sdk.Coin) {
-	const EventTypeBurnNIBI = "burn_nibi"
-	ctx.EventManager().EmitEvent(
-		_mintOrBurnEvent(EventTypeBurnNIBI, coin),
-	)
+func EmitBurnNIBI(ctx sdk.Context, coin sdk.Coin) error {
+	protoEvent := &types.EventBurnNIBI{
+		Amount: coin.Amount,
+	}
+	return ctx.EventManager().EmitTypedEvent(protoEvent)
 }
 
 // EmitRecollateralize emits an event when a 'Recollateralize' occurs.
 func EmitRecollateralize(
 	ctx sdk.Context, inCoin sdk.Coin, outCoin sdk.Coin, caller string,
 	collRatio sdk.Dec,
-) {
-	const EventTypeRecollateralize = "recollateralize"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		EventTypeRecollateralize,
-		sdk.NewAttribute("caller", caller),
-		sdk.NewAttribute("inDenom", inCoin.Denom),
-		sdk.NewAttribute("inAmount", inCoin.Amount.String()),
-		sdk.NewAttribute("outDenom", outCoin.Denom),
-		sdk.NewAttribute("outAmount", outCoin.Amount.String()),
-		sdk.NewAttribute("collRatio", collRatio.String()),
-	))
+) error {
+	protoEvent := &types.EventRecollateralize{
+		Caller:    caller,
+		InCoin:    inCoin,
+		OutCoin:   outCoin,
+		CollRatio: collRatio,
+	}
+	return ctx.EventManager().EmitTypedEvent(protoEvent)
 }
 
 // EmitBuyback emits an event when a 'Buyback' occurs.
 func EmitBuyback(
 	ctx sdk.Context, inCoin sdk.Coin, outCoin sdk.Coin, caller string,
 	collRatio sdk.Dec,
-) {
-	const EventTypeBuyback = "buyback"
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		EventTypeBuyback,
-		sdk.NewAttribute("caller", caller),
-		sdk.NewAttribute("inDenom", inCoin.Denom),
-		sdk.NewAttribute("inAmount", inCoin.Amount.String()),
-		sdk.NewAttribute("outDenom", outCoin.Denom),
-		sdk.NewAttribute("outAmount", outCoin.Amount.String()),
-		sdk.NewAttribute("collRatio", collRatio.String()),
-	))
+) error {
+	protoEvent := &types.EventBuyback{
+		Caller:    caller,
+		InCoin:    inCoin,
+		OutCoin:   outCoin,
+		CollRatio: collRatio,
+	}
+	return ctx.EventManager().EmitTypedEvent(protoEvent)
 }

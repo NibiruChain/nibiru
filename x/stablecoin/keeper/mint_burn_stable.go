@@ -141,9 +141,12 @@ func (k Keeper) sendCoinsToModuleAccount(
 	}
 
 	for _, coin := range coins {
-		events.EmitTransfer(ctx, coin, from.String(), types.ModuleName)
+		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+		err = events.EmitTransfer(ctx, coin, from.String(), moduleAddress.String())
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -158,7 +161,11 @@ func (k Keeper) sendCoinsFromModuleAccountToUser(
 	}
 
 	for _, coin := range coins {
-		events.EmitTransfer(ctx, coin, types.ModuleName, to.String())
+		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+		err = events.EmitTransfer(ctx, coin, moduleAddress.String(), to.String())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -180,7 +187,10 @@ func (k Keeper) burnGovTokens(ctx sdk.Context, govTokens sdk.Coin) error {
 		return err
 	}
 
-	events.EmitBurnNIBI(ctx, govTokens)
+	err = events.EmitBurnNIBI(ctx, govTokens)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -191,7 +201,10 @@ func (k Keeper) burnStableTokens(ctx sdk.Context, stable sdk.Coin) error {
 		return err
 	}
 
-	events.EmitBurnStable(ctx, stable)
+	err = events.EmitBurnStable(ctx, stable)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -203,7 +216,10 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 		return err
 	}
 
-	events.EmitMintStable(ctx, stable)
+	err = events.EmitMintStable(ctx, stable)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -215,7 +231,10 @@ func (k Keeper) mintGov(ctx sdk.Context, gov sdk.Coin) error {
 		return err
 	}
 
-	events.EmitMintNIBI(ctx, gov)
+	err = events.EmitMintNIBI(ctx, gov)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
