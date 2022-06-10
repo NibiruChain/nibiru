@@ -28,7 +28,7 @@ func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 }
 
-func TestKeeper_SaveSnapshot(t *testing.T) {
+func TestSaveSnapshot(t *testing.T) {
 	expectedTime := tmtime.Now()
 	expectedBlockHeight := int64(123)
 	pool := getSamplePool()
@@ -53,7 +53,7 @@ func TestKeeper_SaveSnapshot(t *testing.T) {
 	require.Equal(t, uint64(0), counter)
 }
 
-func TestNewKeeper_getSnapshot(t *testing.T) {
+func TestGetSnapshot(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
