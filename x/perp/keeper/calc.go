@@ -134,9 +134,9 @@ Returns:
 	toll (sdk.Int): Amount of tokens transferred to the the fee pool.
 	spread (sdk.Int): Amount of tokens transferred to the PerpEF.
 */
-func (k Keeper) CalcPerpTxFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, spread sdk.Int, err error) {
+func (k Keeper) CalcPerpTxFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, spread sdk.Int) {
 	if quoteAmt.Equal(sdk.ZeroDec()) {
-		return sdk.ZeroInt(), sdk.ZeroInt(), nil
+		return sdk.ZeroInt(), sdk.ZeroInt()
 	}
 
 	params := k.GetParams(ctx)
@@ -144,5 +144,5 @@ func (k Keeper) CalcPerpTxFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, 
 	tollRatio := params.GetTollRatioAsDec()
 	spreadRatio := params.GetSpreadRatioAsDec()
 
-	return quoteAmt.Mul(tollRatio).TruncateInt(), quoteAmt.Mul(spreadRatio).TruncateInt(), nil
+	return quoteAmt.Mul(tollRatio).TruncateInt(), quoteAmt.Mul(spreadRatio).TruncateInt()
 }
