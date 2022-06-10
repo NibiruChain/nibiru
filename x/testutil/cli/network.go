@@ -16,16 +16,19 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/testutil"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -35,9 +38,14 @@ import (
 	tmcfg "github.com/tendermint/tendermint/config"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
 	"github.com/tendermint/tendermint/libs/log"
+	tmrand "github.com/tendermint/tendermint/libs/rand"
 	"github.com/tendermint/tendermint/node"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -118,6 +126,46 @@ type (
 		grpcWeb *http.Server
 	}
 )
+
+func DefaultFeeString(denom string) string {
+	feeCoins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
+	return fmt.Sprintf("--%s=%s", flags.FlagFees, feeCoins.String())
+}
+
+// DefaultConfig returns a default configuration suitable for nearly all
+// testing requirements.
+func DefaultConfig() Config {
+	encCfg := app.MakeTestEncodingConfig()
+
+	return Config{
+		Codec:             encCfg.Marshaler,
+		TxConfig:          encCfg.TxConfig,
+		LegacyAmino:       encCfg.Amino,
+		InterfaceRegistry: encCfg.InterfaceRegistry,
+		AccountRetriever:  authtypes.AccountRetriever{},
+		AppConstructor: func(val Validator) servertypes.Application {
+			return testutil.NewTestApp(true)
+		},
+		GenesisState:  app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
+		TimeoutCommit: time.Second / 2,
+		ChainID:       "chain-" + tmrand.NewRand().Str(6),
+		NumValidators: 1,
+		BondDenom:     common.GovDenom,
+		MinGasPrices:  fmt.Sprintf("0.000006%s", common.GovDenom),
+		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
+		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		StartingTokens: sdk.NewCoins(
+			sdk.NewCoin(common.StableDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.GovDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.CollDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+		),
+		PruningStrategy: storetypes.PruningOptionNothing,
+		CleanupDir:      true,
+		SigningAlgo:     string(hd.Secp256k1Type),
+		KeyringOptions:  []keyring.Option{},
+	}
+}
 
 // New creates a new Network for integration tests.
 func New(t *testing.T, cfg Config) *Network {
@@ -241,7 +289,7 @@ func New(t *testing.T, cfg Config) *Network {
 			mnemonic = cfg.Mnemonics[i]
 		}
 
-		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
+		addr, secret, err := sdktestutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
 		require.NoError(t, err)
 
 		info := map[string]string{"secret": secret}

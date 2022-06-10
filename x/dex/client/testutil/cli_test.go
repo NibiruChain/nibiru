@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/cli"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
@@ -448,7 +448,7 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	cfg := testutil.DefaultConfig()
+	cfg := cli.DefaultConfig()
 	cfg.UpdateStartingToken(
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.StableDenom, 20000),
@@ -480,7 +480,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutil.DefaultFeeString(s.cfg.BondDenom),
+		cli.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 }
