@@ -12,17 +12,17 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 service Query {
 
   // Queries the reserve assets in a given pool, identified by a token pair.
-  rpc ReserveAssets(QueryReserveAssetsRequests) returns (QueryReserveAssetsResponse) {
+  rpc ReserveAssets(QueryReserveAssetsRequest) returns (QueryReserveAssetsResponse) {
     option (google.api.http).get = "/nibiru/vpool/reserve_assets";
   }
 
   // Queries all virtual pools.
-  rpc AllPools(QueryAllPoolsRequests) returns (QueryAllPoolsResponse) {
+  rpc AllPools(QueryAllPoolsRequest) returns (QueryAllPoolsResponse) {
     option (google.api.http).get = "/nibiru/vpool/all_pools";
   }
 
   // Queries prices
-  rpc BaseAssetPrice(QueryBaseAssetRequest) returns (QueryBaseAssetResponse) {
+  rpc BaseAssetPrice(QueryBaseAssetPriceRequest) returns (QueryBaseAssetPriceResponse) {
     option (google.api.http).get = "/nibiru/vpool/base_asset_price";
   }  
   
@@ -30,7 +30,7 @@ service Query {
 
 // ---------------------------------------- QueryReserveAssets
 
-message QueryReserveAssetsRequests {
+message QueryReserveAssetsRequest {
     // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
     string pair = 1;
 }
@@ -49,7 +49,7 @@ message QueryReserveAssetsResponse {
 
 // ---------------------------------------- QueryAllPools
 
-message QueryAllPoolsRequests {
+message QueryAllPoolsRequest {
 
 }
 
@@ -69,7 +69,7 @@ message QueryBaseAssetPriceRequest {
 }
 
 message QueryBaseAssetPriceResponse {
-  string price = 1 [
+  string price_in_quote_denom = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 }
