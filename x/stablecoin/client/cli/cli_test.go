@@ -5,31 +5,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	"github.com/gogo/protobuf/proto"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/NibiruChain/nibiru/app"
-
-	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
-	utils "github.com/NibiruChain/nibiru/x/testutil"
-
-	"github.com/NibiruChain/nibiru/x/common"
-	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 const (
@@ -88,7 +80,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = utils.DefaultConfig()
+	s.cfg = testutilcli.DefaultConfig()
 
 	// modification to pay fee with test bond denom "stake"
 	app.SetPrefixes(app.AccountAddressPrefix)
@@ -132,7 +124,7 @@ func (s IntegrationTestSuite) fillWalletFromValidator(
 		balance,
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		utils.DefaultFeeString(s.cfg.BondDenom),
+		testutilcli.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 

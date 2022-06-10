@@ -117,9 +117,8 @@ import (
 const (
 	AccountAddressPrefix = "nibi"
 	Name                 = "nibiru"
+	AppName              = "Nibiru"
 )
-
-const appName = "Nibiru"
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -251,7 +250,7 @@ func NewNibiruApp(
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
-	bApp := baseapp.NewBaseApp(appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	bApp := baseapp.NewBaseApp(AppName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)

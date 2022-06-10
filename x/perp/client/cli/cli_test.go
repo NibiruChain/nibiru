@@ -15,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	utils "github.com/NibiruChain/nibiru/x/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -46,7 +45,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = utils.DefaultConfig()
+	s.cfg = testutilcli.DefaultConfig()
 
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 
@@ -125,7 +124,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 
 	user := s.users[0]
 
-	_, err := utils.FillWalletFromValidator(user,
+	_, err := testutilcli.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -279,7 +278,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 
 	user := s.users[0]
 
-	_, err := utils.FillWalletFromValidator(user,
+	_, err := testutilcli.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),

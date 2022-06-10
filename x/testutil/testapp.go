@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -53,7 +51,7 @@ func NewTestApp(shouldUseDefaultGenesis bool) *app.NibiruApp {
 
 	// InitChain updates deliverState which is required when app.NewContext is called
 	testApp.InitChain(abci.RequestInitChain{
-		ConsensusParams: DefaultConsensusParams,
+		ConsensusParams: simapp.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 
@@ -67,21 +65,4 @@ func NewNibiruApp(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
 	return newNibiruApp, ctx
-}
-
-var DefaultConsensusParams = &abci.ConsensusParams{
-	Block: &abci.BlockParams{
-		MaxBytes: 200000,
-		MaxGas:   2000000,
-	},
-	Evidence: &tmproto.EvidenceParams{
-		MaxAgeNumBlocks: 302400,
-		MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
-		MaxBytes:        10000,
-	},
-	Validator: &tmproto.ValidatorParams{
-		PubKeyTypes: []string{
-			tmtypes.ABCIPubKeyTypeEd25519,
-		},
-	},
 }
