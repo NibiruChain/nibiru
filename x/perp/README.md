@@ -1,72 +1,29 @@
-# Perp Design 
+# `x/perp`                        <!-- omit in toc -->
 
-## cli commands
+---
 
-To see the list of query and transaction commands:
+The perp module powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic.
+
+#### Table of Contents
+
+- **Concepts of `x/perp`** - [[01_concepts.md]](spec/01_concepts.md): Specialized concepts and definitions in the module.
+- **Messages and Client** - [[02_msgs_and_client.md]](spec/02_msgs_and_client.md): Documentation for all CLI commands and their corresponding message (`Msg`) structures. This section also details the expected state transitions that these messages bring about when wrapped in transactions. 
+- **State** - [[03_state.md]](spec/03_state.md): Describes the structures expected to be marshalled into the store and their keys.
+- **Events** - [[04_events.md]](spec/04_events.md): Lists and describes the event types used.
+
+## CLI commands
+
+To see the list of query and transaction commands, use:
 
 ```bash
 nibid tx perp --help
 nibid query perp --help
 ```
 
-cli code is within `/perp/client/cli`
+CLI code is contained in the `/perp/client/cli` directory.
 
-## Perp Data Structures
-
-#### type Position (on a virtual pool)
-
-- `size` (sdk.Dec): Denominated in vpool.base (y)
-- `margin` (sdk.Dec): Isolated margin
-- `openNotional` (sdk.Dec): Quote asset (x) value of position when opening. The cost of the position.
-- `lastUpdatedCumulativePremiumFraction` (sdk.Dec): For calculating funding payment. Recorded every time a trader opens, reduces, or closes a position
-- `liquidityHistoryIndex` (sdk.Int): 
-- `blockNumber` (sdk.Int): Blocker number of the last position.
-
-#### type LiquidityChangedSnapshot (of a virtual pool)
-
-- `cumulativeNotional` (sdk.Dec):
-- `X` (sdk.Dec): Quote assets of the virtual pool just before liquidity changed.
-- `Y` (sdk.Dec): Base assets of the virtual pool just before liquidity changed.
-- `totalPositionSize` (sdk.Dec): Total position sized owned by the virtual pool after the last snapshot was taken. Equal to `currentBaseReserve - lastLiquidityChangedHistoryItem.baseReserve + prevTotalPositionSize`
-
-## Clearing House
-
-The `ClearingHouse` can take several actions that affect the reserves of a virtual pool. Here's a brief description 
-- [ ] `AddMargin(vpool string, trader sdk.AccAddress, margin sdk.Int) -> nil`: Increase the margin ratio of position by adding margin.
-- [ ] `RemoveMargin(vpool string, trader sdk.AccAddress, margin sdk.Int) -> nil`: Decrease the margin ratio of position by removing margin.
-- [ ] `SettlePosition`
-- [ ] `OpenPosition(vpool string, isLong bool, yIn sdk.Int, lev sdk.Dec):`
-- [ ] `ClosePosition`
-- [ ] `Liquidate(vpool string, trader sdk.AccAddress)`
-- [ ] `PayFunding`
-- [ ] `UnrealizedPnL(vpool string, trader sdk.AccAddress) -> (pnl sdk.Dec)`
-
-## Virtual Pools (Vpools)
-
-Fields:
-- `x sdk.DecCoin`: Quote reserves. `x.Denom` is the identifier for the token.
-- `y sdk.DecCoin`: Base reserves. `y.Denom` is the identifier for the token.
-- `xAmtLimit`:
-- `yAmtLimit`:
-
-Pool creation and annhilation functions:
-- `CreatePool`
-- `ShutdownPool`
-
-Main functions:
-- `SwapQuoteForBase() -> sdk.Dec`
-- `SwapBaseForQuote() -> sdk.Dec` 
-- `SettleFunding() -> sdk.Dec`
-
-"Get" functions:
-- `InputTruePrice() -> (sdk.Dec)`:
-- `OutputTruePrice() -> (sdk.Dec)`:
-- `InputPrice() -> (sdk.Dec)`:
-- `OutputPrice() -> (sdk.Dec)`:
-- `InputPriceAtReserves(x, y, inY) -> (sdk.Dec)`: 
-- `OutputPriceAtReserves(x, y, outX) -> ( sdk.Dec)`: 
-
-## Perp Ecosystem Fund (PerpEF)
+## Perp Ecosystem Fund (PerpEF) 
+<!-- TODO Complete section and move a "Module Accounts" section inside concepts. -->
 
 The PerpEF is a module account on Nibiru Protocol. All of its interactions can be encapsulated in two keeper methods.
 - `WithdrawFromPerpEF()`
@@ -74,6 +31,8 @@ The PerpEF is a module account on Nibiru Protocol. All of its interactions can b
 
 
 ## Queries
+<!-- TODO document queries and add to client file. -->
+
 
 #### QueryPositionInfo
 

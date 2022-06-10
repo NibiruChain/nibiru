@@ -16,9 +16,8 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
@@ -146,7 +145,7 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				// Query balance
-				cmd := dexcli.CmdTotalPoolLiquidity()
+				cmd := cli.CmdTotalPoolLiquidity()
 				out, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, tc.queryArgs)
 
 				if !tc.queryexpectedPass {
@@ -342,7 +341,7 @@ func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := dexcli.CmdTotalLiquidity()
+			cmd := cli.CmdTotalLiquidity()
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
@@ -448,7 +447,7 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	cfg := testutil.DefaultConfig()
+	cfg := testutilcli.DefaultConfig()
 	cfg.UpdateStartingToken(
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.StableDenom, 20000),
@@ -480,7 +479,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutil.DefaultFeeString(s.cfg.BondDenom),
+		testutilcli.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 }
