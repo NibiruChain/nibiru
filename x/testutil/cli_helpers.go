@@ -2,64 +2,25 @@ package testutil
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
-
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/app"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 )
 
 func DefaultFeeString(denom string) string {
 	feeCoins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
 	return fmt.Sprintf("--%s=%s", flags.FlagFees, feeCoins.String())
-}
-
-const (
-	base   = 10
-	bitlen = 64
-)
-
-func ParseUint64SliceFromString(s string, separator string) ([]uint64, error) {
-	var parsedInts []uint64
-	for _, s := range strings.Split(s, separator) {
-		s = strings.TrimSpace(s)
-
-		parsed, err := strconv.ParseUint(s, base, bitlen)
-		if err != nil {
-			return []uint64{}, err
-		}
-		parsedInts = append(parsedInts, parsed)
-	}
-	return parsedInts, nil
-}
-
-func ParseSdkIntFromString(s string, separator string) ([]sdk.Int, error) {
-	var parsedInts []sdk.Int
-	for _, weightStr := range strings.Split(s, separator) {
-		weightStr = strings.TrimSpace(weightStr)
-
-		parsed, err := strconv.ParseUint(weightStr, base, bitlen)
-		if err != nil {
-			return parsedInts, err
-		}
-		parsedInts = append(parsedInts, sdk.NewIntFromUint64(parsed))
-	}
-	return parsedInts, nil
 }
 
 // DefaultConfig returns a default configuration suitable for nearly all
