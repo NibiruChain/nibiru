@@ -2,7 +2,6 @@ package app_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -105,73 +104,58 @@ func NewIBCTestingTransferPath(
 
 // SetupTest creates a coordinator with 2 test chains.
 func (suite *IBCTestSuite) SetupTest() {
-	// initializes 2 test chains
+	suite.T().Log("initializes 2 test chains")
 	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 2)
 	suite.chainA = suite.coordinator.GetChain(ibctesting.GetChainID(1))
 	suite.chainB = suite.coordinator.GetChain(ibctesting.GetChainID(2))
 
-	// clientID, connectionID, channelID empty
+	suite.T().Log("clientID, connectionID, channelID empty")
+	suite.path = NewIBCTestingTransferPath(suite.chainA, suite.chainB)
+	suite.coordinator.CommitNBlocks(suite.chainA, 2)
+	suite.coordinator.CommitNBlocks(suite.chainB, 2)
+
+	suite.coordinator.Setup(suite.path)
+	suite.T().Log("clientID, connectionID, channelID filled")
+}
+
+func (suite IBCTestSuite) TestClientAndConnectionSetup() {
+	suite.T().Log("initializes 2 test chains")
+	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 2)
+	suite.chainA = suite.coordinator.GetChain(ibctesting.GetChainID(1))
+	suite.chainB = suite.coordinator.GetChain(ibctesting.GetChainID(2))
+
+	suite.T().Log("clientID, connectionID, channelID empty")
 	suite.path = NewIBCTestingTransferPath(suite.chainA, suite.chainB)
 	suite.coordinator.CommitNBlocks(suite.chainA, 2)
 	suite.coordinator.CommitNBlocks(suite.chainB, 2)
 
 	suite.coordinator.SetupClients(suite.path)
-	suite.Require().Equal("07-tendermint-0", suite.path.EndpointA.ClientID)
-	suite.Require().Equal("07-tendermint-0", suite.path.EndpointB.ClientID)
+	suite.Assert().Equal("07-tendermint-0", suite.path.EndpointA.ClientID)
+	suite.Assert().Equal("07-tendermint-0", suite.path.EndpointB.ClientID)
 
 	suite.coordinator.SetupConnections(suite.path)
-	suite.Require().Equal("connection-0", suite.path.EndpointA.ConnectionID)
-	suite.Require().Equal("connection-0", suite.path.EndpointB.ConnectionID)
+	suite.Assert().Equal("connection-0", suite.path.EndpointA.ConnectionID)
+	suite.Assert().Equal("connection-0", suite.path.EndpointB.ConnectionID)
+
+	suite.T().Log("After connections are set up, client IDs should increment.")
+	suite.Assert().Equal("07-tendermint-1", suite.path.EndpointA.ClientID)
+	suite.Assert().Equal("07-tendermint-1", suite.path.EndpointB.ClientID)
 
 	err := suite.coordinator.ChanOpenInitOnBothChains(suite.path)
+	suite.Assert().Equal("channel-0", suite.path.EndpointA.ChannelID)
+	suite.Assert().Equal("channel-0", suite.path.EndpointB.ChannelID)
 	suite.Require().NoError(err)
-	suite.Require().Equal("channel-0", suite.path.EndpointA.ChannelID)
-	suite.Require().Equal("channel-0", suite.path.EndpointB.ChannelID)
-	// clientID, connectionID, channelID filled
-
-	/* NOTE: Investigate the difference between individual Setup calls and
-	   suite.coordinator.Setup(suite.path)
-	*/
+	suite.T().Log("clientID, connectionID, channelID filled")
 }
 
 func (suite IBCTestSuite) TestInitialization() {
 	suite.SetupTest()
 
 	var err error = suite.coordinator.ConnOpenInitOnBothChains(suite.path)
+	suite.Assert().Equal("channel-0", suite.path.EndpointA.ChannelID)
+	suite.Assert().Equal("07-tendermint-0", suite.path.EndpointA.ClientID)
+	suite.Assert().Equal("07-tendermint-0", suite.path.EndpointB.ClientID)
 	suite.Require().NoError(err)
-	suite.Require().Equal("channel-0", suite.path.EndpointA.ChannelID)
-}
-
-func (suite IBCTestSuite) TestCoordinatorSetup() {
-	suite.SetupTest()
-	var err error
-
-	// Construct and execute a MsgChannelOpenTry on both endpoints.
-	err = suite.path.EndpointB.ChanOpenTry()
-	suite.Require().NoError(err)
-	err = suite.path.EndpointA.ChanOpenTry()
-	suite.Require().NoError(err)
-
-	// Update the IBC client associated with the 'EndpointA'
-	err = suite.path.EndpointA.UpdateClient()
-	suite.Require().NoError(err)
-
-	// --------------------------------------------------------
-	// Below is work in progress
-	// TODO: https://github.com/NibiruChain/nibiru/issues/245
-	// suite.path.EndpointA.ChanOpenAck() raises an error due to failed proof
-	// --------------------------------------------------------
-
-	// err = suite.path.EndpointA.ChanOpenAck()
-	// suite.Require().NoError(err)
-
-	// err = suite.path.EndpointB.ChanOpenConfirm()
-	// suite.Require().NoError(err)
-
-	// // ensure counterparty is up to date
-	// err = suite.path.EndpointA.UpdateClient()
-	// suite.Require().NoError(err)
-	// suite.coordinator.Setup(suite.path)
 }
 
 func (suite IBCTestSuite) TestClient_BeginBlocker() {
@@ -228,61 +212,38 @@ func NewPacket(
 	return packet
 }
 
-func (suite IBCTestSuite) TestSentPacket() {
+func (suite IBCTestSuite) TestSendPacketRecvPacket() {
+	t := suite.T()
 	suite.SetupTest()
 
-	timeoutHeight := ibcclienttypes.NewHeight(1000, 1000)
-	ack := ibcmock.MockAcknowledgement
-
-	// create packet 1
+	t.Log("create packet")
 	sender := sample.AccAddress().String()
 	receiver := sample.AccAddress().String()
 	coin := sdk.NewInt64Coin("unibi", 1000)
+	timeoutHeight := ibcclienttypes.NewHeight(1000, 1000)
 	path := suite.path
 	packet1 := NewPacket(path, sender, receiver, coin, timeoutHeight)
 
-	fmt.Println(ack, packet1)
+	var err error
 
-	// --------------------------------------------------------
-	// Below is work in progress
-	// TODO: https://github.com/NibiruChain/nibiru/issues/245
-	// --------------------------------------------------------
+	t.Log("Send packet from A to B")
+	err = path.EndpointA.SendPacket(packet1)
+	suite.Assert().NoError(err)
 
-	// // send on endpointA
-	// suite.coordinator.CreateConnections(path) // TODO fix: raises error
+	t.Log("receive on endpointB")
+	err = path.EndpointB.RecvPacket(packet1)
+	suite.Assert().NoError(err)
 
-	// var err error
-	// fmt.Println("client: ", path.EndpointB.ClientID)
-	// fmt.Println("connection: ", path.EndpointB.ConnectionID)
-	// fmt.Println("channel: ", path.EndpointB.ChannelID)
-	// fmt.Println("packet destination channel: ", packet1.DestinationChannel)
+	t.Log("acknowledge the receipt of the packet")
+	ack := ibcmock.MockAcknowledgement
+	err = path.EndpointB.AcknowledgePacket(packet1, ack.Acknowledgement())
+	suite.Assert().NoError(err)
 
-	// err = path.EndpointA.SendPacket(packet1)
-	// suite.Require().NoError(err)
+	t.Log("updating the client should cause any problems.")
+	err = path.EndpointB.UpdateClient()
+	suite.Assert().NoError(err)
+}
 
-	// // receive on endpointB
-	// err = path.EndpointB.RecvPacket(packet1)
-	// suite.Require().NoError(err)
-
-	// // acknowledge the receipt of the packet
-	// err = path.EndpointA.AcknowledgePacket(packet1, ack.Acknowledgement())
-	// suite.Require().NoError(err)
-
-	// err = simapp.FundModuleAccount(
-	// 	/* bankKeeper */ suite.chainA.App.(*app.NibiruApp).BankKeeper,
-	// 	/* ctx */ suite.chainB.GetContext(),
-	// 	/* recipientModule */ stabletypes.ModuleName,
-	// 	/* coins */ sdk.NewCoins(sdk.NewInt64Coin("uatom", 100)),
-	// )
-	// suite.Require().NoError(err)
-
-	// // we can also relay
-	// packet2 := channeltypes.NewPacket()
-
-	// path.EndpointA.SendPacket(packet2)
-
-	// path.Relay(packet2, expectedAck)
-
-	// // if needed we can update our clients
-	// path.EndpointB.UpdateClient()
+func (suite IBCTestSuite) TestConsensusAfterClientUpgrade() {
+	// TODO test: https://github.com/NibiruChain/nibiru/issues/581
 }
