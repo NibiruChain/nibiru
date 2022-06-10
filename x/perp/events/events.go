@@ -60,45 +60,6 @@ func EmitTransfer(
 	ctx.EventManager().EmitEvent(NewTransferEvent(coin, from, to))
 }
 
-/* EmitMarginChange emits an event when the protocol margin ratio changes.
-
-Args:
-  ctx sdk.Context: Carries information about the current state of the application.
-  owner sdk.AccAddress: Owner of the position.
-  vpool string: Identifier for the virtual pool of the position.
-  marginAmt sdk.Int: Delta of the position margin. If positive, margin was added.
-  fundingPayment sdk.Int: The position 'owner' may realize a funding payment if
-    there is no bad debt upon margin removal based on the delta of the position
-	margin and latest cumulative premium fraction.
-*/
-func EmitMarginChange(
-	ctx sdk.Context,
-	traderAddr sdk.AccAddress,
-	vpool string,
-	marginAmt sdk.Int,
-	fundingPayment sdk.Dec,
-) {
-	ctx.EventManager().EmitEvent(NewMarginChangeEvent(
-		traderAddr, vpool, marginAmt, fundingPayment),
-	)
-}
-
-func NewMarginChangeEvent(
-	traderAddr sdk.AccAddress,
-	vpool string,
-	marginAmt sdk.Int,
-	fundingPayment sdk.Dec,
-) sdk.Event {
-	const EventTypeMarginChange = "margin_change"
-	return sdk.NewEvent(
-		EventTypeMarginChange,
-		sdk.NewAttribute(AttributePositionOwner, traderAddr.String()),
-		sdk.NewAttribute(AttributeVpool, vpool),
-		sdk.NewAttribute("margin_amt", marginAmt.String()),
-		sdk.NewAttribute("funding_payment", fundingPayment.String()),
-	)
-}
-
 // --------------------------------------------------------------------
 
 /* EmitInternalPositionResponseEvent emits an sdk.Event to track the position
