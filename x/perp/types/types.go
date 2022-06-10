@@ -1,11 +1,9 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
 )
@@ -15,16 +13,6 @@ const (
 	VaultModuleAccount   = "vault"
 	PerpEFModuleAccount  = "perp_ef"
 	FeePoolModuleAccount = "fee_pool"
-)
-
-// x/perp module sentinel errors
-var (
-	ErrMarginHighEnough = sdkerrors.Register(ModuleName, 1,
-		"Margin is higher than required maintenant margin ratio")
-	ErrPositionNotFound     = errors.New("no position found")
-	ErrPairNotFound         = errors.New("pair doesn't have live vpool")
-	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
-	ErrPositionZero         = errors.New("position is zero")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
