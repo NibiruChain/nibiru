@@ -15,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	utils "github.com/NibiruChain/nibiru/x/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -46,7 +45,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = utils.DefaultConfig()
+	s.cfg = testutilcli.DefaultConfig()
 
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 
@@ -108,7 +107,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
 
-	// TODO: figure out why using user2 gives a "key <addr> not found" error
 	s.users = []sdk.AccAddress{user1, user2}
 }
 
@@ -126,7 +124,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 
 	user := s.users[0]
 
-	_, err := utils.FillWalletFromValidator(user,
+	_, err := testutilcli.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -280,7 +278,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 
 	user := s.users[0]
 
-	_, err := utils.FillWalletFromValidator(user,
+	_, err := testutilcli.FillWalletFromValidator(user,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -301,10 +299,8 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		user.String(),
 		assetPair.String(),
 	}
-	// TODO: fix that this err doesn't get propagated back up to show up here
-	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.T().Logf("res: %+v", res)
-	s.T().Logf("err: %+v", err)
+	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.Assert().Contains(out.String(), "no position found")
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
