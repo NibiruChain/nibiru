@@ -36,3 +36,19 @@ message MsgPostPrice {
 
 // MsgPostPriceResponse defines the Msg/PostPrice response type.
 message MsgPostPriceResponse {}
+
+message EventOracleUpdatePrice {
+  string pair_id = 1;
+  string oracle = 2;
+  string pair_price = 3  [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];;
+  google.protobuf.Timestamp expiry = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+message EventPairPriceUpdated {
+  string pair_id = 1;
+  string pair_price = 2  [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];;
+}

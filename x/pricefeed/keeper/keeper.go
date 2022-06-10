@@ -80,15 +80,16 @@ func (k Keeper) SetPrice(
 	newRawPrice := types.NewPostedPrice(pairID, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeOracleUpdatedPrice,
-			sdk.NewAttribute(types.AttributePairID, pairID),
-			sdk.NewAttribute(types.AttributeOracle, oracle.String()),
-			sdk.NewAttribute(types.AttributePairPrice, price.String()),
-			sdk.NewAttribute(types.AttributeExpiry, expiry.UTC().String()),
-		),
-	)
+
+	err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
+		PairId:    pairID,
+		Oracle:    oracle.String(),
+		PairPrice: price,
+		Expiry:    expiry,
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	store := ctx.KVStore(k.storeKey)
@@ -140,13 +141,13 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	// check case that market price was not set in genesis
 	if validPrevPrice && !medianPrice.Equal(prevPrice.Price) {
 		// only emit event if price has changed
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypePairPriceUpdated,
-				sdk.NewAttribute(types.AttributePairID, pairID),
-				sdk.NewAttribute(types.AttributePairPrice, medianPrice.String()),
-			),
-		)
+		err = ctx.EventManager().EmitTypedEvent(&types.EventPairPriceUpdated{
+			PairId:    pairID,
+			PairPrice: medianPrice,
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	currentPrice := types.NewCurrentPrice(token0, token1, medianPrice)
