@@ -60,29 +60,6 @@ func EmitTransfer(
 	ctx.EventManager().EmitEvent(NewTransferEvent(coin, from, to))
 }
 
-/* EmitMarginRatioChange emits an event when the protocol margin ratio changes.
-
-Args:
-  ctx sdk.Context: Carries information about the current state of the application.
-  vpool string: Identifier for the virtual pool of the position.
-*/
-func EmitMarginRatioChange(
-	ctx sdk.Context,
-	marginRatio sdk.Dec,
-) {
-	ctx.EventManager().EmitEvent(NewMarginRatioChangeEvent(marginRatio))
-}
-
-func NewMarginRatioChangeEvent(
-	marginRatio sdk.Dec,
-) sdk.Event {
-	const EventTypeMarginRatioChange = "margin_ratio_change"
-	return sdk.NewEvent(
-		EventTypeMarginRatioChange,
-		sdk.NewAttribute("margin_ratio", marginRatio.String()),
-	)
-}
-
 /* EmitMarginChange emits an event when the protocol margin ratio changes.
 
 Args:
