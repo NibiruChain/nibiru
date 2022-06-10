@@ -7,7 +7,20 @@ Events allow applications to associate metadata about ABCI method execution with
 the transactions and blocks this metadata relates to. Events returned via these
 ABCI methods do not impact Tendermint consensus in any way and instead exist to
 power subscriptions and queries of Tendermint state.
+
+For more information, see the Tendermint Core ABCI methods and types specification:
+https://docs.tendermint.com/master/spec/abci/abci.html
+
+Event Types:
+- "transfer"
+- "position_change"
+- "position_liquidate"
+- "position_settle"
+- "margin_ratio_change"
+- "margin_change"
+- "internal_position_response"
 */
+// TODO refactor: Tendermint ABCI events use snake case.
 package events
 
 import (

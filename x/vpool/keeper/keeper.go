@@ -28,21 +28,6 @@ type Keeper struct {
 	pricefeedKeeper types.PricefeedKeeper
 }
 
-//CalcPerpTxFee calculates the total tx fee for exchanging 'quoteAmt' of tokens on
-//the exchange.
-//
-//Args:
-//  quoteAmt (sdk.Int):
-//
-//Returns:
-//  toll (sdk.Int): Amount of tokens transferred to the the fee pool.
-//  spread (sdk.Int): Amount of tokens transferred to the PerpEF.
-//
-func (k Keeper) CalcPerpTxFee(ctx sdk.Context, pair common.AssetPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 /*
 Trades baseAssets in exchange for quoteAssets.
 The base asset is a crypto asset like BTC.
