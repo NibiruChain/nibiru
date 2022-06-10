@@ -32,7 +32,7 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice) (*t
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.From),
 		),
 	)
