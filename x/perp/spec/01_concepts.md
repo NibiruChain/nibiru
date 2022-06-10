@@ -1,3 +1,6 @@
+<!--
+order: 1
+-->
 # Concepts | x/perp                    <!-- omit in toc -->
 
 - [Perp Positions](#perp-positions)

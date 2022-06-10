@@ -1,6 +1,6 @@
 # Events                        <!-- omit in toc -->
 
-Here, we list and described the event types used in x/perp.
+Here, we list and describe the event types used in x/perp.
 
 Events in the Cosmos-SDK are Tendermint application blockchain interface (ABCI) events.
 These are returned by ABCI methods such as CheckTx, DeliverTx, and Query.
