@@ -19,6 +19,11 @@ service Query {
   // Queries all virtual pools.
   rpc AllPools(QueryAllPoolsRequests) returns (QueryAllPoolsResponse) {
     option (google.api.http).get = "/nibiru/vpool/all_pools";
+  }
+
+  // Queries prices
+  rpc BaseAssetPrice(QueryBaseAssetRequest) returns (QueryBaseAssetResponse) {
+    option (google.api.http).get = "/nibiru/vpool/base_asset_price";
   }  
   
 }
@@ -50,4 +55,21 @@ message QueryAllPoolsRequests {
 
 message QueryAllPoolsResponse {
   repeated Pool pools = 1;
+}
+
+// ---------------------------------------- BaseAssetPrice
+
+message QueryBaseAssetPriceRequest {
+  string pair = 1;
+  Direction direction = 2;
+  // base asset is the crypto asset, e.g. BTC or ETH
+  string base_asset_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false];
+}
+
+message QueryBaseAssetPriceResponse {
+  string price = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false];
 }

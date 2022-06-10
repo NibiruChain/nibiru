@@ -486,6 +486,26 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.Require().Contains(out.String(), types.ErrFailedToRemoveDueToBadDebt.Error())
 }
 
+func (s *IntegrationTestSuite) TestGetPrices() {
+	val := s.network.Validators[0]
+	assetPair := common.AssetPair{
+		Token0: "eth",
+		Token1: "unibi",
+	}
+
+	s.T().Log("check vpool balances")
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
+	s.Require().NoError(err)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
+
+	s.T().Log("check prices")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, assetPair, "1", "100")
+	s.T().Logf("priceInfo: %+v", priceInfo)
+	s.Assert().EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.Price)
+	s.Require().NoError(err)
+}
+
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
