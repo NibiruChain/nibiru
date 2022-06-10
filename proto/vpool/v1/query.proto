@@ -59,7 +59,7 @@ message QueryAllPoolsResponse {
 
 // ---------------------------------------- BaseAssetPrice
 
-message QueryBaseAssetRequest {
+message QueryBaseAssetPriceRequest {
   string pair = 1;
   // 0 and 1
   Direction direction = 2;
