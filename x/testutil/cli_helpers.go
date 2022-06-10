@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -16,6 +12,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+	tmrand "github.com/tendermint/tendermint/libs/rand"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 func DefaultFeeString(denom string) string {
@@ -34,32 +35,27 @@ func DefaultConfig() testutilcli.Config {
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor:    NewAppConstructor(),
-		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
-		TimeoutCommit:     1 * time.Second / 2,
-		ChainID:           "nibiru-code-test",
-		NumValidators:     1,
-		BondDenom:         sdk.DefaultBondDenom,
-		MinGasPrices:      fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
-		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		AppConstructor: func(val testutilcli.Validator) servertypes.Application {
+			return NewTestApp(true)
+		},
+		GenesisState:  app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
+		TimeoutCommit: time.Second / 2,
+		ChainID:       "chain-" + tmrand.NewRand().Str(6),
+		NumValidators: 1,
+		BondDenom:     common.GovDenom,
+		MinGasPrices:  fmt.Sprintf("0.000006%s", common.GovDenom),
+		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
+		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
 			sdk.NewCoin(common.StableDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.GovDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.CollDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin("stake", sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: storetypes.PruningOptionNothing,
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
 		KeyringOptions:  []keyring.Option{},
-	}
-}
-
-func NewAppConstructor() testutilcli.AppConstructor {
-	return func(val testutilcli.Validator) servertypes.Application {
-		return NewTestApp(true)
 	}
 }
 
