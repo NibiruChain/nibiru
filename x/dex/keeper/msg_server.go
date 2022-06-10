@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -33,7 +32,6 @@ ret
   MsgCreatePoolResponse: the MsgCreatePoolResponse proto object response, containing the pool id number
   error: an error if any occurred
 */
-// STEVENDEBUG
 func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -41,12 +39,6 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("\n \n")
-	fmt.Printf("\n STEVENDEBUG CreatePool msg.Creator: %+v", msg.Creator)
-	fmt.Printf("\n STEVENDEBUG CreatePool msg.PoolAssets:  %+v", msg.PoolAssets)
-	fmt.Printf("\n STEVENDEBUG CreatePool msg.PoolParams:  %+v", msg.PoolParams)
-	fmt.Printf("\n \n")
 
 	poolId, err := k.NewPool(ctx, sender, *msg.PoolParams, msg.PoolAssets)
 	if err != nil {
