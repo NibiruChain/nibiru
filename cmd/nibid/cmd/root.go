@@ -6,15 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	// Nibiru
-	"github.com/NibiruChain/nibiru/app"
-	dexcmd "github.com/NibiruChain/nibiru/x/dex/client/cli"
-	perpcmd "github.com/NibiruChain/nibiru/x/perp/client/cli"
-	pricefeedcmd "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	sccmd "github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
-	vpoolcmd "github.com/NibiruChain/nibiru/x/vpool/client/cli"
-
-	// Cosmos-SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -25,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -35,14 +25,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-
-	// Tendermint
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/NibiruChain/nibiru/app"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -169,9 +158,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
-		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, simapp.DefaultNodeHome),
+		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.MigrateGenesisCmd(),
-		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, simapp.DefaultNodeHome),
+		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
@@ -181,14 +170,14 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	)
 
 	a := appCreator{encodingConfig}
-	server.AddCommands(rootCmd, simapp.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
+	server.AddCommands(rootCmd, app.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(simapp.DefaultNodeHome),
+		keys.Commands(app.DefaultNodeHome),
 	)
 
 	// add rosetta
@@ -216,15 +205,10 @@ func queryCommand() *cobra.Command {
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
-		dexcmd.GetQueryCmd(),
-		pricefeedcmd.GetQueryCmd(),
-		sccmd.GetQueryCmd(),
-		perpcmd.GetQueryCmd(),
-		vpoolcmd.GetQueryCmd(),
 	)
 
 	// Adds all query commands to the 'rootQueryCmd'
-	simapp.ModuleBasics.AddQueryCommands(rootQueryCmd)
+	app.ModuleBasics.AddQueryCommands(rootQueryCmd)
 	rootQueryCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
 	return rootQueryCmd
@@ -248,13 +232,9 @@ func txCommand() *cobra.Command {
 		authcmd.GetBroadcastCommand(),
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
-		dexcmd.GetTxCmd(),
-		pricefeedcmd.GetTxCmd(),
-		sccmd.GetTxCmd(),
-		perpcmd.GetTxCmd(),
 	)
 
-	simapp.ModuleBasics.AddTxCommands(cmd)
+	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
 	return cmd
