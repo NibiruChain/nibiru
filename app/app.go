@@ -363,11 +363,6 @@ func NewNibiruApp(
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
-	// Applications that wish to enforce statically created ScopedKeepers should
-	// call `Seal` after creating their scoped modules in `NewApp` with
-	// `CapabilityKeeper.ScopeToModule`.
-	app.CapabilityKeeper.Seal()
-
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
@@ -394,7 +389,14 @@ func NewNibiruApp(
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
-	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
+
+	/*UpgradeKeeper must be created before IBCKeeper. */
+	app.UpgradeKeeper = upgradekeeper.NewKeeper(
+		skipUpgradeHeights,
+		keys[upgradetypes.StoreKey],
+		appCodec,
+		homePath,
+		app.BaseApp)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
@@ -456,23 +458,14 @@ func NewNibiruApp(
 	)
 
 	// register the proposal types
+
 	govRouter := govtypes.NewRouter()
 	govRouter.
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
-		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper))
-	govKeeper := govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, &stakingKeeper, govRouter,
-	)
-
-	app.GovKeeper = *govKeeper.SetHooks(
-		govtypes.NewMultiGovHooks(
-		// register the governance hooks
-		),
-	)
+		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
@@ -488,6 +481,17 @@ func NewNibiruApp(
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
+	// Create evidence keeper.
+	// This keeper automatically includes an evidence router.
+	app.EvidenceKeeper = *evidencekeeper.NewKeeper(
+		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper,
+		app.SlashingKeeper,
+	)
+
+	app.IncentivizationKeeper = incentivizationkeeper.NewKeeper(appCodec,
+		keys[incentivizationtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.DexKeeper, app.LockupKeeper,
+	)
+
 	/* Create IBC module and a static IBC router */
 	ibcRouter := porttypes.NewRouter()
 	/* Add an ibc-transfer module route, then set it and seal it. */
@@ -498,17 +502,12 @@ func NewNibiruApp(
 	   No more routes can be added. */
 	app.IBCKeeper.SetRouter(ibcRouter)
 
-	// Create evidence keeper.
-	// This keeper automatically includes an evidence router.
-	app.EvidenceKeeper = *evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper,
-		app.SlashingKeeper,
+	app.GovKeeper = govkeeper.NewKeeper(
+		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, &app.StakingKeeper, govRouter,
 	)
 
 	// -------------------------- Module Options --------------------------
-	app.IncentivizationKeeper = incentivizationkeeper.NewKeeper(appCodec,
-		keys[incentivizationtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.DexKeeper, app.LockupKeeper,
-	)
 
 	/****  Module Options ****/
 
@@ -662,8 +661,6 @@ func NewNibiruApp(
 	//
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
-	// TODO-STEVENDEBUG: figure out why having both dexModule & capability breaks test
-	// but commenting out either of them will pass the test
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
@@ -703,8 +700,8 @@ func NewNibiruApp(
 		HandlerOptions: ante.HandlerOptions{
 			AccountKeeper:   app.AccountKeeper,
 			BankKeeper:      app.BankKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
+			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
 		IBCKeeper: app.IBCKeeper,
@@ -721,6 +718,22 @@ func NewNibiruApp(
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
 		}
+
+		/* Applications that wish to enforce statically created ScopedKeepers should
+		call `Seal` after creating their scoped modules in `NewApp` with
+		`CapabilityKeeper.ScopeToModule`.
+
+
+		Calling 'app.CapabilityKeeper.Seal()' initializes and seals the capability
+		keeper such that all persistent capabilities are loaded in-memory and prevent
+		any further modules from creating scoped sub-keepers.
+
+		NOTE: This must be done during creation of baseapp rather than in InitChain so
+		that in-memory capabilities get regenerated on app restart.
+		Note that since this reads from the store, we can only perform the seal
+		when `loadLatest` is set to true.
+		*/
+		app.CapabilityKeeper.Seal()
 	}
 
 	app.ScopedIBCKeeper = scopedIBCKeeper

@@ -13,6 +13,9 @@ type AnteHandlerOptions struct {
 	IBCKeeper *ibckeeper.Keeper
 }
 
+/* NewAnteHandler returns and AnteHandler that checks and increments sequence
+numbers, checks signatures and account numbers, and deducts fees from the first signer.
+*/
 func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	if options.AccountKeeper == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "account keeper is required for AnteHandler")
