@@ -164,7 +164,6 @@ var (
 		vesting.AppModuleBasic{},
 		// ibc 'AppModuleBasic's
 		ibc.AppModuleBasic{},
-		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{}, // ibc-transfer module
 		// native x/
 		dex.AppModuleBasic{},
