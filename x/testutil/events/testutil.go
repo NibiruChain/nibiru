@@ -27,7 +27,7 @@ func RequireHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Messa
 		})
 		require.NoError(t, err)
 
-		require.Equal(t, event, typedEvent, "events do not match")
+		require.EqualValues(t, event, typedEvent, "events do not match")
 		return
 	}
 
