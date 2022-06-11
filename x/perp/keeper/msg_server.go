@@ -61,8 +61,8 @@ func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	return &types.MsgOpenPositionResponse{}, nil
 }
 
-func (k msgServer) ClosePosition(ctx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
+func (k msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	addr, err := sdk.AccAddressFromBech32(position.Sender)
 	if err != nil {
 		panic(err)
@@ -73,7 +73,7 @@ func (k msgServer) ClosePosition(ctx context.Context, position *types.MsgClosePo
 		panic(err)
 	}
 
-	err = k.k.ClosePosition(sdkCtx, tokenPair, addr)
+	err = k.k.ClosePosition(ctx, tokenPair, addr)
 
 	return &types.MsgClosePositionResponse{}, err
 }
