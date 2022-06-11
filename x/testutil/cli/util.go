@@ -3,6 +3,9 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/stretchr/testify/require"
+	tmtypes "github.com/tendermint/tendermint/abci/types"
 	"path/filepath"
 	"time"
 
@@ -217,7 +220,7 @@ func writeFile(name string, dir string, contents []byte) error {
 func FillWalletFromValidator(
 	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
 ) (sdk.AccAddress, error) {
-	_, err := banktestutil.MsgSendExec(
+	rawResp, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
 		addr,
@@ -229,6 +232,19 @@ func FillWalletFromValidator(
 	if err != nil {
 		return nil, err
 	}
+	return addr, txOK(val.ClientCtx.Codec, rawResp.Bytes())
+}
 
-	return addr, nil
+func txOK(cdc codec.Codec, txBytes []byte) error {
+	resp := new(sdk.TxResponse)
+	cdc.MustUnmarshalJSON(txBytes, resp)
+	if resp.Code != tmtypes.CodeTypeOK {
+		return fmt.Errorf("%s", resp.RawLog)
+	}
+
+	return nil
+}
+
+func RequireTxOk(t require.TestingT, cdc codec.Codec, txBytes []byte) {
+	require.NoError(t, txOK(cdc, txBytes))
 }
