@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -220,28 +219,19 @@ func (k Keeper) distributeLiquidateRewards(
 	// Distribution of rewards
 	// --------------------------------------------------------------
 
-	vaultAddr := k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount)
-	perpEFAddr := k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount)
-
 	// Transfer fee from vault to PerpEF
 	feeToPerpEF := liquidateResp.FeeToPerpEcosystemFund
 	if feeToPerpEF.IsPositive() {
 		coinToPerpEF := sdk.NewCoin(
 			pair.GetQuoteTokenDenom(), feeToPerpEF)
-		err = k.BankKeeper.SendCoinsFromModuleToModule(
+		if err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			/* from */ types.VaultModuleAccount,
 			/* to */ types.PerpEFModuleAccount,
 			sdk.NewCoins(coinToPerpEF),
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToPerpEF,
-			/* from */ vaultAddr,
-			/* to */ perpEFAddr,
-		)
 	}
 
 	// Transfer fee from PerpEF to liquidator
@@ -249,20 +239,14 @@ func (k Keeper) distributeLiquidateRewards(
 	if feeToLiquidator.IsPositive() {
 		coinToLiquidator := sdk.NewCoin(
 			pair.GetQuoteTokenDenom(), feeToLiquidator)
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(
+		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx,
 			/* from */ types.VaultModuleAccount,
 			/* to */ liquidator,
 			sdk.NewCoins(coinToLiquidator),
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToLiquidator,
-			/* from */ perpEFAddr,
-			/* to */ liquidator,
-		)
 	}
 
 	return nil

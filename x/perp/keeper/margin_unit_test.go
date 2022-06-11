@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -310,9 +309,9 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				trader := sample.AccAddress()
+				traderAddr := sample.AccAddress()
 				msg := &types.MsgRemoveMargin{
-					Sender:    trader.String(),
+					Sender:    traderAddr.String(),
 					TokenPair: "osmo:nusd",
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
@@ -331,8 +330,8 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				k.SetPosition(ctx, pair, trader, &types.Position{
-					TraderAddress:                       trader.String(),
+				k.SetPosition(ctx, pair, traderAddr, &types.Position{
+					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -355,7 +354,7 @@ func TestRemoveMargin_Unit(t *testing.T) {
 					GetModuleAddress(types.VaultModuleAccount).
 					Return(vaultAddr)
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.VaultModuleAccount, trader, sdk.NewCoins(msg.Margin),
+					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(msg.Margin),
 				).Return(nil)
 
 				res, err := k.RemoveMargin(goCtx, msg)
@@ -364,28 +363,18 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
-				expectedEvents := []sdk.Event{
-					events.NewTransferEvent(
-						/* coin */ msg.Margin,
-						/* from */ vaultAddr,
-						/* to */ trader,
-					),
-				}
-				for _, event := range expectedEvents {
-					assert.Contains(t, ctx.EventManager().Events(), event)
-				}
 				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
 					Pair:           msg.TokenPair,
-					TraderAddress:  trader,
+					TraderAddress:  traderAddr,
 					MarginAmount:   msg.Margin.Amount,
 					FundingPayment: res.FundingPayment,
 				})
 
-				pos, err := k.GetPosition(ctx, pair, trader)
+				pos, err := k.GetPosition(ctx, pair, traderAddr)
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
-				assert.EqualValues(t, trader.String(), pos.TraderAddress)
+				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
 			},
 		},
 	}

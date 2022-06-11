@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
@@ -136,22 +135,6 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-
-				expectedEvents := []sdk.Event{
-					events.NewTransferEvent(
-						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr,
-						/* to */ perpEFAddr,
-					),
-					events.NewTransferEvent(
-						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr,
-						/* to */ liquidator,
-					),
-				}
-				for _, event := range expectedEvents {
-					assert.Contains(t, ctx.EventManager().Events(), event)
-				}
 			},
 		},
 	}

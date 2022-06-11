@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -93,12 +92,6 @@ func (k Keeper) AddMargin(
 		)
 		return nil, err
 	}
-
-	events.EmitTransfer(ctx,
-		/* coin */ coinToSend,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		/* to */ msgSender,
-	)
 
 	k.Positions().Set(ctx, pair, msgSender, position)
 
@@ -223,12 +216,6 @@ func (k Keeper) RemoveMargin(
 		)
 		return nil, err
 	}
-
-	events.EmitTransfer(ctx,
-		/* coin */ coinToSend,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		/* to */ traderAddr,
-	)
 
 	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
 		Pair:           pair.String(),

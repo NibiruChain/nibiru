@@ -31,34 +31,9 @@ import (
 
 // x/perp attributes used in multiple events
 const (
-	// from: receiving address of a transfer
-	AttributeFromAddr = "from"
-	// to: sending address of a transfer
-	AttributeToAddr        = "to"
-	AttributeTokenAmount   = "amount"
-	AttributeTokenDenom    = "denom"
 	AttributePositionOwner = "owner"
 	AttributeVpool         = "vpool"
 )
-
-func NewTransferEvent(
-	coin sdk.Coin, from sdk.AccAddress, to sdk.AccAddress,
-) sdk.Event {
-	const EventTypeTransfer = "transfer"
-	return sdk.NewEvent(
-		EventTypeTransfer,
-		sdk.NewAttribute(AttributeFromAddr, from.String()),
-		sdk.NewAttribute(AttributeToAddr, to.String()),
-		sdk.NewAttribute(AttributeTokenDenom, coin.Denom),
-		sdk.NewAttribute(AttributeTokenAmount, coin.Amount.String()),
-	)
-}
-
-func EmitTransfer(
-	ctx sdk.Context, coin sdk.Coin, from sdk.AccAddress, to sdk.AccAddress,
-) {
-	ctx.EventManager().EmitEvent(NewTransferEvent(coin, from, to))
-}
 
 // --------------------------------------------------------------------
 
