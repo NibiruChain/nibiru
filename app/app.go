@@ -367,8 +367,8 @@ func NewNibiruApp(
 	*/
 	app.CapabilityKeeper = capabilitykeeper.NewKeeper(
 		appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
-	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
-	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	app.ScopedIBCKeeper = app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	app.ScopedTransferKeeper = app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -465,7 +465,7 @@ func NewNibiruApp(
 		app.GetSubspace(ibchost.ModuleName),
 		app.StakingKeeper,
 		app.UpgradeKeeper,
-		scopedIBCKeeper,
+		app.ScopedIBCKeeper,
 	)
 
 	// register the proposal types
@@ -487,7 +487,7 @@ func NewNibiruApp(
 		/* ibctransfertypes.PortKeeper */ &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
-		scopedTransferKeeper,
+		app.ScopedTransferKeeper,
 	)
 	transferModule := ibctransfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := ibctransfer.NewIBCModule(app.TransferKeeper)
@@ -540,7 +540,6 @@ func NewNibiruApp(
 	vpoolModule := vpool.NewAppModule(
 		appCodec, app.VpoolKeeper, app.PricefeedKeeper,
 	)
-
 	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper, app.AccountKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
@@ -771,9 +770,6 @@ func NewNibiruApp(
 		*/
 		app.CapabilityKeeper.Seal()
 	}
-
-	app.ScopedIBCKeeper = scopedIBCKeeper
-	app.ScopedTransferKeeper = scopedTransferKeeper
 
 	return app
 }
