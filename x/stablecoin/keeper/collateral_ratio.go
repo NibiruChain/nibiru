@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/stablecoin/events"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -239,7 +238,8 @@ func (k Keeper) Recollateralize(
 		return response, err
 	}
 
-	if err := events.EmitMintNIBI(ctx, outGov); err != nil {
+	err = ctx.EventManager().EmitTypedEvent(&types.EventMintNIBI{Amount: outGov.Amount})
+	if err != nil {
 		return response, err
 	}
 
@@ -258,13 +258,12 @@ func (k Keeper) Recollateralize(
 		return response, err
 	}
 
-	if err := events.EmitRecollateralize(
-		ctx,
-		/* inCoin    */ inColl,
-		/* outCoin   */ outGov,
-		/* caller    */ caller.String(),
-		/* collRatio */ targetCollRatio,
-	); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventRecollateralize{
+		InCoin:    inColl,
+		OutCoin:   outGov,
+		Caller:    caller.String(),
+		CollRatio: targetCollRatio,
+	}); err != nil {
 		return response, err
 	}
 
@@ -399,7 +398,9 @@ func (k Keeper) Buyback(
 		return response, err
 	}
 
-	if err := events.EmitBurnNIBI(ctx, inGov); err != nil {
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventBurnNIBI{Amount: inGov.Amount})
+	if err != nil {
 		return response, err
 	}
 
@@ -434,13 +435,12 @@ func (k Keeper) Buyback(
 		return response, err
 	}
 
-	if err := events.EmitBuyback(
-		ctx,
-		/* inCoin    */ inGov,
-		/* outCoin   */ outColl,
-		/* caller    */ caller.String(),
-		/* collRatio */ targetCollRatio,
-	); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventBuyback{
+		InCoin:    inGov,
+		OutCoin:   outColl,
+		Caller:    caller.String(),
+		CollRatio: targetCollRatio,
+	}); err != nil {
 		return response, err
 	}
 
