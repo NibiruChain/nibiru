@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
-func Test_distributeLiquidateRewards_Error(t *testing.T) {
+func TestDistributeLiquidateRewards_Error(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func()
@@ -93,7 +93,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 	}
 }
 
-func Test_distributeLiquidateRewards_Happy(t *testing.T) {
+func TestDistributeLiquidateRewards_Happy(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func()
@@ -106,15 +106,6 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, BtcNusdPair).Return(true)
 
-				vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				perpEFAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.VaultModuleAccount).
-					Return(vaultAddr)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.PerpEFModuleAccount).
-					Return(perpEFAddr)
-
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
 					ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
 					sdk.NewCoins(sdk.NewCoin("NUSD", sdk.OneInt())),
@@ -125,7 +116,9 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 				).Return(nil)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
+					types.LiquidateResp{
+						BadDebt:                sdk.OneDec(),
+						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
