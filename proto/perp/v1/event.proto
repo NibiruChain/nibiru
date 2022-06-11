@@ -12,11 +12,13 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 // Emitted when a position changes.
 // TODO: Is there a way to split this into different events without creating too much complexity?
 message PositionChangedEvent {
-    // owner of the position.
-    string trader_address = 1;
-  
     // identifier of the corresponding virtual pool for the position
-    string pair  = 2;
+    string pair = 1;
+
+    // owner of the position.
+    bytes trader_address = 2 [
+        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
+    ];
   
     // amount of quote token (y) backing the position.
     string margin = 3 [
@@ -81,13 +83,13 @@ message PositionChangedEvent {
 
 // Emitted when a position is liquidated.
 message PositionLiquidatedEvent {
+    // identifier of the corresponding virtual pool for the position
+    string pair = 1;
+
     // owner of the position.
-    bytes trader_address = 1 [
+    bytes trader_address = 2 [
         (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
     ];
-
-    // identifier of the corresponding virtual pool for the position
-    string pair = 2;
 
     // margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'vpool'.
     string exchanged_quote_amount = 3 [
@@ -149,7 +151,9 @@ message MarginChangedEvent {
   string pair = 1;
 
   // Owner of the position.
-  bytes trader_address = 2;
+  bytes trader_address = 2 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
+];
 
   // Amount of margin exchanged.
   string margin_amount = 3 [
