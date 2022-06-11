@@ -181,7 +181,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	)
 
 	// add rosetta
-	rootCmd.AddCommand(server.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
+	rootCmd.AddCommand(
+		server.RosettaCommand(
+			encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
 }
 
 // Implements the servertypes.ModuleInitFlags interface
@@ -295,8 +297,9 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 // appExport creates a new simapp (optionally at a given height)
 // and exports state.
 func (a appCreator) appExport(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
-	appOpts servertypes.AppOptions) (servertypes.ExportedApp, error) {
+	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64,
+	forZeroHeight bool, jailAllowedAddrs []string, appOpts servertypes.AppOptions,
+) (servertypes.ExportedApp, error) {
 	var nibiruApp *app.NibiruApp
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {

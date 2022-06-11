@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	GovDenom    = "unibi"
-	CollDenom   = "uust"
-	StableDenom = "unusd"
+	GovDenom        = "unibi"
+	CollDenom       = "uust"
+	StableDenom     = "unusd"
+	StakeTokenDenom = "stake"
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 

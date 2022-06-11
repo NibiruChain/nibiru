@@ -57,7 +57,7 @@ func TestSetAndFetchPool(t *testing.T) {
 				Weight: sdk.NewInt(1),
 			},
 			{
-				Token:  sdk.NewCoin("stake", sdk.NewInt(1000)),
+				Token:  sdk.NewCoin(common.StakeTokenDenom, sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
 		},
