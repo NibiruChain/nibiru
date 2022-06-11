@@ -2,11 +2,9 @@ package cli_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
-	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -15,8 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"testing"
-	"time"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
+	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -104,7 +106,7 @@ func (s *IntegrationTestSuite) TestLockupCLI() {
 	// test query lock
 	s.T().Log("testing query lock")
 	queryLockArgs := []string{"0"}
-	result, err = clitestutil.ExecTestCLICmd(s.network.Validators[0].ClientCtx, cli.GetQueryLockCmd(), append(queryLockArgs, s.queryArgs...))
+	_, err = clitestutil.ExecTestCLICmd(s.network.Validators[0].ClientCtx, cli.GetQueryLockCmd(), append(queryLockArgs, s.queryArgs...))
 	require.NoError(s.T(), err)
 	// lock coins again
 	lockup2Args := []string{

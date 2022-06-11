@@ -3,11 +3,12 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
-	"path/filepath"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server/api"
