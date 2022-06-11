@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -160,7 +159,7 @@ func TestGetMarginRatio(t *testing.T) {
 
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
 				Pair:                       "BTC:NUSD",
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
 			marginRatio, err := perpKeeper.GetMarginRatio(
@@ -358,15 +357,11 @@ func TestRemoveMargin(t *testing.T) {
 					15*time.Minute,
 				).Return(sdk.NewDec(100), nil)
 
-				t.Log("'RemoveMargin' from the position")
-				vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				mocks.mockAccountKeeper.EXPECT().
-					GetModuleAddress(types.VaultModuleAccount).
-					Return(vaultAddr)
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
 					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(msg.Margin),
 				).Return(nil)
 
+				t.Log("'RemoveMargin' from the position")
 				res, err := perpKeeper.RemoveMargin(goCtx, msg)
 
 				require.NoError(t, err)
