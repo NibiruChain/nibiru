@@ -14,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
@@ -171,13 +172,13 @@ func TestCreatePool(t *testing.T) {
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())
-				testutil.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
+				events.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
 				})
 			} else {
 				require.NoError(t, err)
-				testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
+				events.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
 				})
@@ -327,7 +328,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				PoolSharesOut: resp.NumPoolSharesOut,
 				RemCoins:      resp.RemainingCoins,
 			}
-			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
+			events.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -459,7 +460,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				TokensOut:    resp.TokensOut,
 			}
 
-			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
+			events.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -665,7 +666,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 				)
 
 				// check events
-				testutil.RequireHasTypedEvent(t, ctx, &types.EventAssetsSwapped{
+				events.RequireHasTypedEvent(t, ctx, &types.EventAssetsSwapped{
 					Address:  sender.String(),
 					PoolId:   1,
 					TokenIn:  tc.tokenIn,
