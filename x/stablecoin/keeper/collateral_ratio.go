@@ -212,12 +212,11 @@ func (k Keeper) Recollateralize(
 		return response, err
 	}
 
-	if err := events.EmitTransfer(
-		ctx,
-		/* coin */ inColl,
-		/* from */ caller.String(),
-		/* to   */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-	); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: inColl,
+		From: caller.String(),
+		To:   k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+	}); err != nil {
 		return response, err
 	}
 
@@ -251,11 +250,11 @@ func (k Keeper) Recollateralize(
 		return response, err
 	}
 
-	if err := events.EmitTransfer(
-		ctx, outGov,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-		/* to   */ caller.String(),
-	); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: outGov,
+		From: k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+		To:   caller.String(),
+	}); err != nil {
 		return response, err
 	}
 
@@ -386,12 +385,11 @@ func (k Keeper) Buyback(
 		return response, err
 	}
 
-	if err := events.EmitTransfer(
-		ctx,
-		/* coin */ inGov,
-		/* from */ caller.String(),
-		/* to   */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-	); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: inGov,
+		From: caller.String(),
+		To:   k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+	}); err != nil {
 		return response, err
 	}
 
@@ -428,11 +426,11 @@ func (k Keeper) Buyback(
 		return response, err
 	}
 
-	if err := events.EmitTransfer(
-		ctx, outColl,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-		/* to   */ caller.String(),
-	); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: outColl,
+		From: k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+		To:   caller.String(),
+	}); err != nil {
 		return response, err
 	}
 

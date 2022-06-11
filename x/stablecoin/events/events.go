@@ -6,25 +6,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
-// x/stablecoin attributes for events
-const (
-	AttributeFromAddr    = "from"
-	AttributeToAddr      = "to"
-	AttributeTokenAmount = "amount"
-	AttributeTokenDenom  = "denom"
-)
-
-func EmitTransfer(
-	ctx sdk.Context, coin sdk.Coin, from string, to string,
-) error {
-	protoEvent := &types.EventTransfer{
-		Coin: coin,
-		From: from,
-		To:   to,
-	}
-	return ctx.EventManager().EmitTypedEvent(protoEvent)
-}
-
 // EmitMintStable emits an event when a Nibiru Stablecoin is minted.
 func EmitMintStable(ctx sdk.Context, coin sdk.Coin) error {
 	protoEvent := &types.EventMintStable{

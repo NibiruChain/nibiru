@@ -142,7 +142,8 @@ func (k Keeper) sendCoinsToModuleAccount(
 
 	for _, coin := range coins {
 		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-		err = events.EmitTransfer(ctx, coin, from.String(), moduleAddress.String())
+		err = ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+			Coin: coin, From: from.String(), To: moduleAddress.String()})
 		if err != nil {
 			return err
 		}
@@ -162,7 +163,8 @@ func (k Keeper) sendCoinsFromModuleAccountToUser(
 
 	for _, coin := range coins {
 		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-		err = events.EmitTransfer(ctx, coin, moduleAddress.String(), to.String())
+		err = ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+			Coin: coin, From: moduleAddress.String(), To: to.String()})
 		if err != nil {
 			return err
 		}
