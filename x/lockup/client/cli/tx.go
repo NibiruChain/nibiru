@@ -26,6 +26,34 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(GetLockCoinsCmd())
 	cmd.AddCommand(GetInitiateUnlockCmd())
+	cmd.AddCommand(GetUnlockCmd())
+	return cmd
+}
+
+func GetUnlockCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:  "unlock [lock-id]",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			id, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgUnlock{
+				Owner:  clientCtx.FromAddress.String(),
+				LockId: id,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -65,7 +93,7 @@ func GetLockCoinsCmd() *cobra.Command {
 
 func GetInitiateUnlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "initiate-unlock [lockID]",
+		Use:  "initiate-unlock [lock-id]",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
