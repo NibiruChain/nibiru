@@ -164,6 +164,7 @@ func TestClearPosition(t *testing.T) {
 }
 
 func TestKeeper_ClosePosition(t *testing.T) {
+	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
 		nibiruApp, ctx := testutil.NewNibiruApp(true)
