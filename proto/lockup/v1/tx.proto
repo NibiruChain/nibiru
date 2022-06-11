@@ -3,6 +3,7 @@ package nibiru.lockup.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "lockup/v1/lock.proto";
 import "google/api/annotations.proto";
@@ -19,6 +20,8 @@ service Msg {
   rpc InitiateUnlock(MsgInitiateUnlock) returns (MsgInitiateUnlockResponse) {
     option (google.api.http).post = "/nibiru/lockup/init_unlock";
   }
+
+  rpc Unlock(MsgUnlock) returns (MsgUnlockResponse) {}
 }
 
 message MsgLockTokens {
@@ -45,4 +48,50 @@ message MsgInitiateUnlock {
 
 message MsgInitiateUnlockResponse {
   // TODO(mercilex): maybe report unlock time
+}
+
+message MsgUnlock {
+  string owner = 1;
+  uint64 lock_id = 2;
+}
+
+message MsgUnlockResponse {
+}
+
+message EventLock {
+  uint64 lock_id = 1;
+  string owner = 2;
+  google.protobuf.Duration duration = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.jsontag) = "duration,omitempty",
+    (gogoproto.moretags) = "yaml:\"duration\""
+  ];
+  repeated cosmos.base.v1beta1.Coin coins = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message EventUnlockInitiated {
+  uint64 lock_id = 1;
+  string owner = 2;
+  repeated cosmos.base.v1beta1.Coin coins = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  google.protobuf.Timestamp unlocking_at = 4[
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "yaml:\"end_time\""
+  ];
+}
+
+message EventUnlock {
+  uint64 lock_id = 1;
+  string owner = 2;
+  repeated cosmos.base.v1beta1.Coin coins = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }

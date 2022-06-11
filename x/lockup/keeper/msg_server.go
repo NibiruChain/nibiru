@@ -22,9 +22,20 @@ type msgServer struct {
 	keeper Keeper
 }
 
+func (s msgServer) Unlock(ctx context.Context, unlock *types.MsgUnlock) (*types.MsgUnlockResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	_, err := s.keeper.UnlockTokens(sdkCtx, unlock.LockId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUnlockResponse{}, nil
+}
+
 var _ types.MsgServer = msgServer{}
 
-func (server msgServer) LockTokens(goCtx context.Context, msg *types.MsgLockTokens) (*types.MsgLockTokensResponse, error) {
+func (s msgServer) LockTokens(goCtx context.Context, msg *types.MsgLockTokens) (*types.MsgLockTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	addr, err := sdk.AccAddressFromBech32(msg.Owner)
@@ -32,7 +43,7 @@ func (server msgServer) LockTokens(goCtx context.Context, msg *types.MsgLockToke
 		return nil, err
 	}
 
-	lockID, err := server.keeper.LockTokens(ctx, addr, msg.Coins, msg.Duration)
+	lockID, err := s.keeper.LockTokens(ctx, addr, msg.Coins, msg.Duration)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +51,10 @@ func (server msgServer) LockTokens(goCtx context.Context, msg *types.MsgLockToke
 	return &types.MsgLockTokensResponse{LockId: lockID.LockId}, nil
 }
 
-func (server msgServer) InitiateUnlock(ctx context.Context, unlock *types.MsgInitiateUnlock) (*types.MsgInitiateUnlockResponse, error) {
+func (s msgServer) InitiateUnlock(ctx context.Context, unlock *types.MsgInitiateUnlock) (*types.MsgInitiateUnlockResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	_, err := server.keeper.InitiateUnlocking(sdkCtx, unlock.LockId)
+	_, err := s.keeper.InitiateUnlocking(sdkCtx, unlock.LockId)
 	return &types.MsgInitiateUnlockResponse{}, err
 }
 

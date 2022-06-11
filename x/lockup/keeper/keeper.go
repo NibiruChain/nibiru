@@ -66,6 +66,16 @@ func (k Keeper) LockTokens(ctx sdk.Context, owner sdk.AccAddress,
 		return nil, err
 	}
 
+	err := ctx.EventManager().EmitTypedEvent(&types.EventLock{
+		LockId:   lock.LockId,
+		Owner:    lock.Owner,
+		Coins:    lock.Coins,
+		Duration: duration,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	return lock, nil
 }
 
@@ -97,6 +107,16 @@ func (k Keeper) UnlockTokens(ctx sdk.Context, lockID uint64) (unlockedTokens sdk
 		panic(err) // invariant broken, delete must never fail after get
 	}
 
+	// emit unlock event
+	err = ctx.EventManager().EmitTypedEvent(&types.EventUnlock{
+		LockId: lock.LockId,
+		Owner:  lock.Owner,
+		Coins:  lock.Coins,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	return lock.Coins, nil
 }
 
@@ -117,6 +137,16 @@ func (k Keeper) InitiateUnlocking(ctx sdk.Context, lockID uint64) (updatedLock *
 	// which initiates the unlocking of the assets.
 	lock.EndTime = ctx.BlockTime().Add(lock.Duration)
 	err = k.LocksState(ctx).Update(lock)
+	if err != nil {
+		panic(err)
+	}
+
+	err = ctx.EventManager().EmitTypedEvent(&types.EventUnlockInitiated{
+		LockId:      lock.LockId,
+		Owner:       lock.Owner,
+		Coins:       lock.Coins,
+		UnlockingAt: lock.EndTime,
+	})
 	if err != nil {
 		panic(err)
 	}

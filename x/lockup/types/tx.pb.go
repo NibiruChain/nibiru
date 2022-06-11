@@ -17,6 +17,7 @@ import (
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	_ "google.golang.org/protobuf/types/known/durationpb"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -227,49 +228,347 @@ func (m *MsgInitiateUnlockResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgInitiateUnlockResponse proto.InternalMessageInfo
 
+type MsgUnlock struct {
+	Owner  string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	LockId uint64 `protobuf:"varint,2,opt,name=lock_id,json=lockId,proto3" json:"lock_id,omitempty"`
+}
+
+func (m *MsgUnlock) Reset()         { *m = MsgUnlock{} }
+func (m *MsgUnlock) String() string { return proto.CompactTextString(m) }
+func (*MsgUnlock) ProtoMessage()    {}
+func (*MsgUnlock) Descriptor() ([]byte, []int) {
+	return fileDescriptor_be7ce9842eef2b47, []int{4}
+}
+func (m *MsgUnlock) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUnlock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUnlock.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUnlock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUnlock.Merge(m, src)
+}
+func (m *MsgUnlock) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUnlock) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUnlock.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUnlock proto.InternalMessageInfo
+
+func (m *MsgUnlock) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *MsgUnlock) GetLockId() uint64 {
+	if m != nil {
+		return m.LockId
+	}
+	return 0
+}
+
+type MsgUnlockResponse struct {
+}
+
+func (m *MsgUnlockResponse) Reset()         { *m = MsgUnlockResponse{} }
+func (m *MsgUnlockResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUnlockResponse) ProtoMessage()    {}
+func (*MsgUnlockResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_be7ce9842eef2b47, []int{5}
+}
+func (m *MsgUnlockResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUnlockResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUnlockResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUnlockResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUnlockResponse.Merge(m, src)
+}
+func (m *MsgUnlockResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUnlockResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUnlockResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUnlockResponse proto.InternalMessageInfo
+
+type EventLock struct {
+	LockId   uint64                                   `protobuf:"varint,1,opt,name=lock_id,json=lockId,proto3" json:"lock_id,omitempty"`
+	Owner    string                                   `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
+	Duration time.Duration                            `protobuf:"bytes,3,opt,name=duration,proto3,stdduration" json:"duration,omitempty" yaml:"duration"`
+	Coins    github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,4,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+}
+
+func (m *EventLock) Reset()         { *m = EventLock{} }
+func (m *EventLock) String() string { return proto.CompactTextString(m) }
+func (*EventLock) ProtoMessage()    {}
+func (*EventLock) Descriptor() ([]byte, []int) {
+	return fileDescriptor_be7ce9842eef2b47, []int{6}
+}
+func (m *EventLock) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventLock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventLock.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventLock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventLock.Merge(m, src)
+}
+func (m *EventLock) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventLock) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventLock.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventLock proto.InternalMessageInfo
+
+func (m *EventLock) GetLockId() uint64 {
+	if m != nil {
+		return m.LockId
+	}
+	return 0
+}
+
+func (m *EventLock) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *EventLock) GetDuration() time.Duration {
+	if m != nil {
+		return m.Duration
+	}
+	return 0
+}
+
+func (m *EventLock) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
+type EventUnlockInitiated struct {
+	LockId      uint64                                   `protobuf:"varint,1,opt,name=lock_id,json=lockId,proto3" json:"lock_id,omitempty"`
+	Owner       string                                   `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
+	Coins       github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+	UnlockingAt time.Time                                `protobuf:"bytes,4,opt,name=unlocking_at,json=unlockingAt,proto3,stdtime" json:"unlocking_at" yaml:"end_time"`
+}
+
+func (m *EventUnlockInitiated) Reset()         { *m = EventUnlockInitiated{} }
+func (m *EventUnlockInitiated) String() string { return proto.CompactTextString(m) }
+func (*EventUnlockInitiated) ProtoMessage()    {}
+func (*EventUnlockInitiated) Descriptor() ([]byte, []int) {
+	return fileDescriptor_be7ce9842eef2b47, []int{7}
+}
+func (m *EventUnlockInitiated) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventUnlockInitiated) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventUnlockInitiated.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventUnlockInitiated) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventUnlockInitiated.Merge(m, src)
+}
+func (m *EventUnlockInitiated) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventUnlockInitiated) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventUnlockInitiated.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventUnlockInitiated proto.InternalMessageInfo
+
+func (m *EventUnlockInitiated) GetLockId() uint64 {
+	if m != nil {
+		return m.LockId
+	}
+	return 0
+}
+
+func (m *EventUnlockInitiated) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *EventUnlockInitiated) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
+func (m *EventUnlockInitiated) GetUnlockingAt() time.Time {
+	if m != nil {
+		return m.UnlockingAt
+	}
+	return time.Time{}
+}
+
+type EventUnlock struct {
+	LockId uint64                                   `protobuf:"varint,1,opt,name=lock_id,json=lockId,proto3" json:"lock_id,omitempty"`
+	Owner  string                                   `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
+	Coins  github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+}
+
+func (m *EventUnlock) Reset()         { *m = EventUnlock{} }
+func (m *EventUnlock) String() string { return proto.CompactTextString(m) }
+func (*EventUnlock) ProtoMessage()    {}
+func (*EventUnlock) Descriptor() ([]byte, []int) {
+	return fileDescriptor_be7ce9842eef2b47, []int{8}
+}
+func (m *EventUnlock) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventUnlock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventUnlock.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventUnlock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventUnlock.Merge(m, src)
+}
+func (m *EventUnlock) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventUnlock) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventUnlock.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventUnlock proto.InternalMessageInfo
+
+func (m *EventUnlock) GetLockId() uint64 {
+	if m != nil {
+		return m.LockId
+	}
+	return 0
+}
+
+func (m *EventUnlock) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *EventUnlock) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*MsgLockTokens)(nil), "nibiru.lockup.v1.MsgLockTokens")
 	proto.RegisterType((*MsgLockTokensResponse)(nil), "nibiru.lockup.v1.MsgLockTokensResponse")
 	proto.RegisterType((*MsgInitiateUnlock)(nil), "nibiru.lockup.v1.MsgInitiateUnlock")
 	proto.RegisterType((*MsgInitiateUnlockResponse)(nil), "nibiru.lockup.v1.MsgInitiateUnlockResponse")
+	proto.RegisterType((*MsgUnlock)(nil), "nibiru.lockup.v1.MsgUnlock")
+	proto.RegisterType((*MsgUnlockResponse)(nil), "nibiru.lockup.v1.MsgUnlockResponse")
+	proto.RegisterType((*EventLock)(nil), "nibiru.lockup.v1.EventLock")
+	proto.RegisterType((*EventUnlockInitiated)(nil), "nibiru.lockup.v1.EventUnlockInitiated")
+	proto.RegisterType((*EventUnlock)(nil), "nibiru.lockup.v1.EventUnlock")
 }
 
 func init() { proto.RegisterFile("lockup/v1/tx.proto", fileDescriptor_be7ce9842eef2b47) }
 
 var fileDescriptor_be7ce9842eef2b47 = []byte{
-	// 512 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0x4f, 0x6f, 0xd3, 0x30,
-	0x18, 0xc6, 0x9b, 0x94, 0x0d, 0x30, 0xff, 0x46, 0x54, 0x44, 0x17, 0xa6, 0xa4, 0x0a, 0x12, 0x54,
-	0x62, 0xd8, 0xcb, 0xb8, 0x71, 0xcc, 0x10, 0xd2, 0x24, 0xca, 0x21, 0x82, 0x0b, 0x97, 0x29, 0x49,
-	0x4d, 0x6a, 0xb5, 0xb1, 0xa3, 0xda, 0x29, 0x2b, 0x47, 0x84, 0x38, 0x70, 0x42, 0xe2, 0xc2, 0x67,
-	0xe0, 0x93, 0xec, 0x38, 0x89, 0x0b, 0xa7, 0x0e, 0xb5, 0x9c, 0x38, 0xee, 0x13, 0xa0, 0xd8, 0x31,
-	0x34, 0x03, 0xa9, 0x3b, 0x25, 0xf6, 0xf3, 0xbe, 0xbf, 0xe7, 0xf5, 0x63, 0x03, 0x6b, 0xc4, 0x92,
-	0x61, 0x91, 0xa3, 0x89, 0x8f, 0xc4, 0x21, 0xcc, 0xc7, 0x4c, 0x30, 0x6b, 0x83, 0x92, 0x98, 0x8c,
-	0x0b, 0xa8, 0x24, 0x38, 0xf1, 0xed, 0x56, 0xca, 0x52, 0x26, 0x45, 0x54, 0xfe, 0xa9, 0x3a, 0xdb,
-	0x49, 0x19, 0x4b, 0x47, 0x18, 0xc9, 0x55, 0x5c, 0xbc, 0x46, 0xfd, 0x62, 0x1c, 0x09, 0xc2, 0xa8,
-	0xd6, 0x13, 0xc6, 0x33, 0xc6, 0x51, 0x1c, 0x71, 0x8c, 0x26, 0x7e, 0x8c, 0x45, 0xe4, 0xa3, 0x84,
-	0x11, 0xad, 0xb7, 0xfe, 0x7a, 0x97, 0x7f, 0xd5, 0xee, 0x56, 0x45, 0x8d, 0x72, 0x82, 0x22, 0x4a,
-	0x99, 0x90, 0x48, 0xae, 0x54, 0xef, 0xbd, 0x09, 0xae, 0xf5, 0x78, 0xfa, 0x8c, 0x25, 0xc3, 0x17,
-	0x6c, 0x88, 0x29, 0xb7, 0xee, 0x81, 0x35, 0xf6, 0x86, 0xe2, 0x71, 0xdb, 0xe8, 0x18, 0xdd, 0xcb,
-	0xc1, 0xc6, 0xe9, 0xcc, 0xbd, 0x3a, 0x8d, 0xb2, 0xd1, 0x63, 0x4f, 0x6e, 0x7b, 0xa1, 0x92, 0xad,
-	0x01, 0xb8, 0xa4, 0xe7, 0x6b, 0x9b, 0x1d, 0xa3, 0x7b, 0x65, 0x77, 0x13, 0x2a, 0x2b, 0xa8, 0x0f,
-	0x00, 0x9f, 0x54, 0x05, 0x81, 0x7f, 0x34, 0x73, 0x1b, 0xbf, 0x66, 0xae, 0xa5, 0x5b, 0xb6, 0x59,
-	0x46, 0x04, 0xce, 0x72, 0x31, 0x3d, 0x9d, 0xb9, 0x37, 0x14, 0x5f, 0x6b, 0xde, 0x97, 0x13, 0xd7,
-	0x08, 0xff, 0xd0, 0xad, 0x08, 0xac, 0x95, 0xa7, 0xe4, 0xed, 0x66, 0xa7, 0x29, 0x6d, 0x54, 0x0e,
-	0xb0, 0xcc, 0x01, 0x56, 0x39, 0xc0, 0x3d, 0x46, 0x68, 0xb0, 0x53, 0xda, 0x7c, 0x3d, 0x71, 0xbb,
-	0x29, 0x11, 0x83, 0x22, 0x86, 0x09, 0xcb, 0x50, 0x15, 0x9a, 0xfa, 0x3c, 0xe4, 0xfd, 0x21, 0x12,
-	0xd3, 0x1c, 0x73, 0xd9, 0xc0, 0x43, 0x45, 0xf6, 0x76, 0xc0, 0xad, 0x5a, 0x0a, 0x21, 0xe6, 0x39,
-	0xa3, 0x1c, 0x5b, 0xb7, 0xc1, 0xc5, 0x32, 0xcb, 0x03, 0xd2, 0x97, 0x79, 0x5c, 0x08, 0xd7, 0xcb,
-	0xe5, 0x7e, 0xdf, 0x0b, 0xc0, 0xcd, 0x1e, 0x4f, 0xf7, 0x29, 0x11, 0x24, 0x12, 0xf8, 0x25, 0x2d,
-	0xb7, 0xad, 0x56, 0x2d, 0x3b, 0x9d, 0xd4, 0x12, 0xc3, 0xac, 0x31, 0xee, 0x80, 0xcd, 0x7f, 0x18,
-	0xda, 0x79, 0xf7, 0xa3, 0x09, 0x9a, 0x3d, 0x9e, 0x5a, 0x6f, 0x01, 0x58, 0xba, 0x1d, 0x17, 0x9e,
-	0x7d, 0x4c, 0xb0, 0x36, 0xb8, 0x7d, 0x7f, 0x45, 0x81, 0xe6, 0x7b, 0xde, 0xbb, 0x6f, 0x3f, 0x3f,
-	0x9b, 0x5b, 0x9e, 0x8d, 0x54, 0x03, 0xaa, 0x5e, 0x8f, 0x1c, 0x55, 0x28, 0xb7, 0x0f, 0x06, 0xb8,
-	0x7e, 0xe6, 0x88, 0x77, 0xff, 0xcb, 0xaf, 0x17, 0xd9, 0x0f, 0xce, 0x51, 0xb4, 0x72, 0x10, 0x42,
-	0x89, 0x38, 0x28, 0x64, 0x6d, 0xf0, 0xf4, 0x68, 0xee, 0x18, 0xc7, 0x73, 0xc7, 0xf8, 0x31, 0x77,
-	0x8c, 0x4f, 0x0b, 0xa7, 0x71, 0xbc, 0x70, 0x1a, 0xdf, 0x17, 0x4e, 0xe3, 0xd5, 0xf6, 0xd2, 0x55,
-	0x3f, 0x97, 0xfd, 0x7b, 0x83, 0x88, 0x50, 0xcd, 0x3a, 0xd4, 0x34, 0x79, 0xe9, 0xf1, 0xba, 0x7c,
-	0x9a, 0x8f, 0x7e, 0x07, 0x00, 0x00, 0xff, 0xff, 0xc2, 0xd5, 0xbd, 0xd8, 0xa7, 0x03, 0x00, 0x00,
+	// 653 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x94, 0x41, 0x4f, 0x13, 0x41,
+	0x14, 0xc7, 0xbb, 0x5b, 0x40, 0x19, 0x50, 0x71, 0xad, 0xb1, 0x14, 0xb2, 0x4b, 0x96, 0x44, 0x49,
+	0xc4, 0x19, 0x8a, 0x37, 0x6e, 0x16, 0x35, 0x21, 0xa1, 0x1e, 0x1a, 0xbc, 0x70, 0x69, 0xb6, 0xed,
+	0xb8, 0x4c, 0xca, 0xce, 0x6c, 0x3a, 0xd3, 0x0a, 0x1e, 0x0d, 0xd1, 0x2b, 0x89, 0x17, 0x6f, 0xde,
+	0xfd, 0x24, 0x1c, 0x49, 0xbc, 0x70, 0x2a, 0x06, 0x3c, 0x79, 0xe4, 0x13, 0x98, 0x99, 0xd9, 0x69,
+	0xb7, 0x05, 0x45, 0x4d, 0x30, 0x9e, 0x76, 0x77, 0xde, 0xcc, 0xff, 0xff, 0xde, 0xef, 0xed, 0x3c,
+	0xe0, 0x6c, 0xb3, 0x7a, 0xb3, 0x1d, 0xa3, 0x4e, 0x11, 0x89, 0x1d, 0x18, 0xb7, 0x98, 0x60, 0xce,
+	0x14, 0x25, 0x35, 0xd2, 0x6a, 0x43, 0x1d, 0x82, 0x9d, 0x62, 0x21, 0x17, 0xb2, 0x90, 0xa9, 0x20,
+	0x92, 0x6f, 0x7a, 0x5f, 0xc1, 0x0d, 0x19, 0x0b, 0xb7, 0x31, 0x52, 0x5f, 0xb5, 0xf6, 0x2b, 0xd4,
+	0x68, 0xb7, 0x02, 0x41, 0x18, 0x4d, 0xe2, 0xde, 0x70, 0x5c, 0x90, 0x08, 0x73, 0x11, 0x44, 0xb1,
+	0x11, 0xa8, 0x33, 0x1e, 0x31, 0x8e, 0x6a, 0x01, 0xc7, 0xa8, 0x53, 0xac, 0x61, 0x11, 0x14, 0x51,
+	0x9d, 0x11, 0x23, 0x90, 0xeb, 0x27, 0x27, 0xdf, 0x92, 0xd5, 0xd9, 0x44, 0x36, 0x88, 0x09, 0x0a,
+	0x28, 0x65, 0x42, 0x79, 0x72, 0x1d, 0xf5, 0xf7, 0x6c, 0x70, 0xa3, 0xcc, 0xc3, 0x75, 0x56, 0x6f,
+	0x6e, 0xb0, 0x26, 0xa6, 0xdc, 0xb9, 0x0f, 0x46, 0xd9, 0x6b, 0x8a, 0x5b, 0x79, 0x6b, 0xce, 0x5a,
+	0x18, 0x2f, 0x4d, 0x9d, 0x75, 0xbd, 0xc9, 0xdd, 0x20, 0xda, 0x5e, 0xf1, 0xd5, 0xb2, 0x5f, 0xd1,
+	0x61, 0x67, 0x0b, 0x5c, 0x37, 0x05, 0xe4, 0xed, 0x39, 0x6b, 0x61, 0x62, 0x79, 0x1a, 0x6a, 0x2b,
+	0x68, 0x2a, 0x80, 0x4f, 0x93, 0x0d, 0xa5, 0xe2, 0x41, 0xd7, 0xcb, 0x7c, 0xef, 0x7a, 0x8e, 0x39,
+	0xb2, 0xc8, 0x22, 0x22, 0x70, 0x14, 0x8b, 0xdd, 0xb3, 0xae, 0x77, 0x4b, 0xeb, 0x9b, 0x98, 0xff,
+	0xf1, 0xd8, 0xb3, 0x2a, 0x3d, 0x75, 0x27, 0x00, 0xa3, 0xb2, 0x4a, 0x9e, 0xcf, 0xce, 0x65, 0x95,
+	0x8d, 0xe6, 0x00, 0x25, 0x07, 0x98, 0x70, 0x80, 0xab, 0x8c, 0xd0, 0xd2, 0x92, 0xb4, 0xf9, 0x7c,
+	0xec, 0x2d, 0x84, 0x44, 0x6c, 0xb5, 0x6b, 0xb0, 0xce, 0x22, 0x94, 0x40, 0xd3, 0x8f, 0x47, 0xbc,
+	0xd1, 0x44, 0x62, 0x37, 0xc6, 0x5c, 0x1d, 0xe0, 0x15, 0xad, 0xec, 0x2f, 0x81, 0xbb, 0x03, 0x14,
+	0x2a, 0x98, 0xc7, 0x8c, 0x72, 0xec, 0xdc, 0x03, 0xd7, 0x24, 0xcb, 0x2a, 0x69, 0x28, 0x1e, 0x23,
+	0x95, 0x31, 0xf9, 0xb9, 0xd6, 0xf0, 0x4b, 0xe0, 0x76, 0x99, 0x87, 0x6b, 0x94, 0x08, 0x12, 0x08,
+	0xfc, 0x92, 0xca, 0x65, 0x27, 0x37, 0xc0, 0xce, 0x90, 0x4a, 0x69, 0xd8, 0x03, 0x1a, 0x33, 0x60,
+	0xfa, 0x9c, 0x86, 0x71, 0xf6, 0x57, 0xc0, 0x78, 0x99, 0x87, 0x7f, 0x27, 0x7c, 0x47, 0x25, 0x37,
+	0x24, 0xf8, 0xde, 0x06, 0xe3, 0xcf, 0x3a, 0x98, 0x0a, 0x59, 0xe6, 0x4f, 0x0b, 0xeb, 0x5b, 0xd9,
+	0x69, 0xab, 0x74, 0xb7, 0xb3, 0xff, 0xa6, 0xdb, 0x23, 0x57, 0xd6, 0xed, 0x3d, 0x1b, 0xe4, 0x14,
+	0x09, 0x4d, 0xc8, 0x34, 0xa0, 0xf1, 0xa7, 0x50, 0xae, 0xfe, 0xc7, 0x74, 0x36, 0xc1, 0x64, 0x5b,
+	0x25, 0x49, 0x68, 0x58, 0x0d, 0x44, 0x7e, 0x44, 0xb1, 0x2f, 0x9c, 0x63, 0xbf, 0x61, 0x66, 0x45,
+	0x69, 0x46, 0x5a, 0xf5, 0x31, 0x63, 0xda, 0xa8, 0xca, 0x41, 0xe2, 0xef, 0x4b, 0xcc, 0x13, 0x3d,
+	0xb1, 0x27, 0xc2, 0xff, 0x64, 0x81, 0x89, 0x14, 0x86, 0xff, 0xaf, 0xfa, 0xe5, 0x23, 0x1b, 0x64,
+	0xcb, 0x3c, 0x74, 0xde, 0x00, 0x90, 0x9a, 0x50, 0x1e, 0x1c, 0x9e, 0xb8, 0x70, 0xe0, 0xf2, 0x16,
+	0x1e, 0x5c, 0xb2, 0xa1, 0x77, 0x25, 0xfc, 0xb7, 0x5f, 0xbe, 0x7d, 0xb0, 0x67, 0xfd, 0x02, 0xd2,
+	0x07, 0x50, 0x32, 0x41, 0x15, 0x06, 0xa1, 0xdd, 0xde, 0x59, 0xe0, 0xe6, 0xd0, 0x35, 0x9f, 0xbf,
+	0x50, 0x7f, 0x70, 0x53, 0xe1, 0xe1, 0x6f, 0x6c, 0xba, 0x34, 0x11, 0x42, 0x89, 0xa8, 0xea, 0x9e,
+	0x39, 0xeb, 0x60, 0x2c, 0xf1, 0x9f, 0xb9, 0x50, 0x3a, 0xf1, 0x9d, 0xff, 0x45, 0xb0, 0xe7, 0x97,
+	0x29, 0x3d, 0x3f, 0x38, 0x71, 0xad, 0xc3, 0x13, 0xd7, 0xfa, 0x7a, 0xe2, 0x5a, 0xfb, 0xa7, 0x6e,
+	0xe6, 0xf0, 0xd4, 0xcd, 0x1c, 0x9d, 0xba, 0x99, 0xcd, 0xc5, 0x54, 0x97, 0x5e, 0x28, 0xa9, 0xd5,
+	0xad, 0x80, 0x50, 0x93, 0xd9, 0x8e, 0xc9, 0x4d, 0xf5, 0xab, 0x36, 0xa6, 0x7e, 0xc1, 0xc7, 0x3f,
+	0x02, 0x00, 0x00, 0xff, 0xff, 0xdb, 0x86, 0x93, 0xdd, 0x1a, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -287,6 +586,7 @@ type MsgClient interface {
 	// LockTokens lock tokens
 	LockTokens(ctx context.Context, in *MsgLockTokens, opts ...grpc.CallOption) (*MsgLockTokensResponse, error)
 	InitiateUnlock(ctx context.Context, in *MsgInitiateUnlock, opts ...grpc.CallOption) (*MsgInitiateUnlockResponse, error)
+	Unlock(ctx context.Context, in *MsgUnlock, opts ...grpc.CallOption) (*MsgUnlockResponse, error)
 }
 
 type msgClient struct {
@@ -315,11 +615,21 @@ func (c *msgClient) InitiateUnlock(ctx context.Context, in *MsgInitiateUnlock, o
 	return out, nil
 }
 
+func (c *msgClient) Unlock(ctx context.Context, in *MsgUnlock, opts ...grpc.CallOption) (*MsgUnlockResponse, error) {
+	out := new(MsgUnlockResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.lockup.v1.Msg/Unlock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// LockTokens lock tokens
 	LockTokens(context.Context, *MsgLockTokens) (*MsgLockTokensResponse, error)
 	InitiateUnlock(context.Context, *MsgInitiateUnlock) (*MsgInitiateUnlockResponse, error)
+	Unlock(context.Context, *MsgUnlock) (*MsgUnlockResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -331,6 +641,9 @@ func (*UnimplementedMsgServer) LockTokens(ctx context.Context, req *MsgLockToken
 }
 func (*UnimplementedMsgServer) InitiateUnlock(ctx context.Context, req *MsgInitiateUnlock) (*MsgInitiateUnlockResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InitiateUnlock not implemented")
+}
+func (*UnimplementedMsgServer) Unlock(ctx context.Context, req *MsgUnlock) (*MsgUnlockResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unlock not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -373,6 +686,24 @@ func _Msg_InitiateUnlock_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_Unlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUnlock)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Unlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.lockup.v1.Msg/Unlock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Unlock(ctx, req.(*MsgUnlock))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "nibiru.lockup.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -384,6 +715,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "InitiateUnlock",
 			Handler:    _Msg_InitiateUnlock_Handler,
+		},
+		{
+			MethodName: "Unlock",
+			Handler:    _Msg_Unlock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -528,6 +863,227 @@ func (m *MsgInitiateUnlockResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgUnlock) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUnlock) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUnlock) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.LockId != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.LockId))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Owner) > 0 {
+		i -= len(m.Owner)
+		copy(dAtA[i:], m.Owner)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Owner)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUnlockResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUnlockResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUnlockResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *EventLock) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventLock) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventLock) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	n2, err2 := github_com_gogo_protobuf_types.StdDurationMarshalTo(m.Duration, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdDuration(m.Duration):])
+	if err2 != nil {
+		return 0, err2
+	}
+	i -= n2
+	i = encodeVarintTx(dAtA, i, uint64(n2))
+	i--
+	dAtA[i] = 0x1a
+	if len(m.Owner) > 0 {
+		i -= len(m.Owner)
+		copy(dAtA[i:], m.Owner)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Owner)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.LockId != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.LockId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventUnlockInitiated) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventUnlockInitiated) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventUnlockInitiated) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	n3, err3 := github_com_gogo_protobuf_types.StdTimeMarshalTo(m.UnlockingAt, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(m.UnlockingAt):])
+	if err3 != nil {
+		return 0, err3
+	}
+	i -= n3
+	i = encodeVarintTx(dAtA, i, uint64(n3))
+	i--
+	dAtA[i] = 0x22
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Owner) > 0 {
+		i -= len(m.Owner)
+		copy(dAtA[i:], m.Owner)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Owner)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.LockId != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.LockId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventUnlock) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventUnlock) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventUnlock) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Owner) > 0 {
+		i -= len(m.Owner)
+		copy(dAtA[i:], m.Owner)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Owner)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.LockId != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.LockId))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -594,6 +1150,101 @@ func (m *MsgInitiateUnlockResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *MsgUnlock) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Owner)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.LockId != 0 {
+		n += 1 + sovTx(uint64(m.LockId))
+	}
+	return n
+}
+
+func (m *MsgUnlockResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *EventLock) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.LockId != 0 {
+		n += 1 + sovTx(uint64(m.LockId))
+	}
+	l = len(m.Owner)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = github_com_gogo_protobuf_types.SizeOfStdDuration(m.Duration)
+	n += 1 + l + sovTx(uint64(l))
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *EventUnlockInitiated) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.LockId != 0 {
+		n += 1 + sovTx(uint64(m.LockId))
+	}
+	l = len(m.Owner)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	l = github_com_gogo_protobuf_types.SizeOfStdTime(m.UnlockingAt)
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *EventUnlock) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.LockId != 0 {
+		n += 1 + sovTx(uint64(m.LockId))
+	}
+	l = len(m.Owner)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -951,6 +1602,628 @@ func (m *MsgInitiateUnlockResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgInitiateUnlockResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUnlock) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUnlock: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUnlock: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Owner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LockId", wireType)
+			}
+			m.LockId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LockId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUnlockResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUnlockResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUnlockResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventLock) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventLock: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventLock: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LockId", wireType)
+			}
+			m.LockId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LockId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Owner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Duration", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_gogo_protobuf_types.StdDurationUnmarshal(&m.Duration, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventUnlockInitiated) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventUnlockInitiated: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventUnlockInitiated: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LockId", wireType)
+			}
+			m.LockId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LockId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Owner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnlockingAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(&m.UnlockingAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventUnlock) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventUnlock: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventUnlock: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LockId", wireType)
+			}
+			m.LockId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LockId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Owner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
