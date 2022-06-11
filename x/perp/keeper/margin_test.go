@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
@@ -455,12 +456,6 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				msgSender, _ := sdk.AccAddressFromBech32(msg.Sender)
 				expectedEvents = []sdk.Event{
-					events.NewMarginChangeEvent(
-						/* owner */ trader,
-						/* vpool */ msg.TokenPair,
-						/* marginAmt */ msg.Margin.Amount,
-						/* fundingPayment */ res.FundingPayment,
-					),
 					events.NewTransferEvent(
 						/* coin */ msg.Margin,
 						/* from */ nibiruApp.AccountKeeper.GetModuleAddress(
@@ -471,6 +466,13 @@ func TestRemoveMargin(t *testing.T) {
 				for _, event := range expectedEvents {
 					assert.Contains(t, ctx.EventManager().Events(), event)
 				}
+
+				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
+					Pair:           pair.String(),
+					TraderAddress:  msgSender,
+					MarginAmount:   msg.Margin.Amount,
+					FundingPayment: res.FundingPayment,
+				})
 			},
 		},
 	}

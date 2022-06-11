@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -364,12 +365,6 @@ func TestRemoveMargin_Unit(t *testing.T) {
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				expectedEvents := []sdk.Event{
-					events.NewMarginChangeEvent(
-						/* owner */ trader,
-						/* vpool */ msg.TokenPair,
-						/* marginAmt */ msg.Margin.Amount,
-						/* fundingPayment */ res.FundingPayment,
-					),
 					events.NewTransferEvent(
 						/* coin */ msg.Margin,
 						/* from */ vaultAddr,
@@ -379,6 +374,12 @@ func TestRemoveMargin_Unit(t *testing.T) {
 				for _, event := range expectedEvents {
 					assert.Contains(t, ctx.EventManager().Events(), event)
 				}
+				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
+					Pair:           msg.TokenPair,
+					TraderAddress:  trader,
+					MarginAmount:   msg.Margin.Amount,
+					FundingPayment: res.FundingPayment,
+				})
 
 				pos, err := k.GetPosition(ctx, pair, trader)
 				require.NoError(t, err)

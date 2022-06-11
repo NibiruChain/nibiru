@@ -104,8 +104,13 @@ func (k Keeper) AddMargin(
 
 	// TODO(https://github.com/NibiruChain/nibiru/issues/323): calculate the funding payment
 	fPayment := sdk.ZeroDec()
-	events.EmitMarginChange(ctx, msgSender, pair.String(), addedMargin, fPayment)
-	return &types.MsgAddMarginResponse{}, nil
+	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
+		Pair:           pair.String(),
+		TraderAddress:  msgSender,
+		MarginAmount:   addedMargin,
+		FundingPayment: fPayment,
+	})
+	return &types.MsgAddMarginResponse{}, err
 }
 
 /* RemoveMargin further leverages an existing position by directly removing
