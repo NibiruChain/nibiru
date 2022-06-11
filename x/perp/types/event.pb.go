@@ -26,47 +26,39 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Emits an event when a position (vpool-trader) is changed.
-//
-//Args:
-// ctx sdk.Context: Carries information about the current state of the application.
-// owner sdk.AccAddress: owner of the position.
-// vpool string: identifier of the corresponding virtual pool for the position
-// margin sdk.Int: amount of quote token (y) backing the position.
-// notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
-// the virtual price on 'vpool'.
-// vsizeChange sdk.Dec: magnitude of the change to vsize. The vsize is the amount
-// of base assets for the position, margin * leverage * priceBasePerQuote.
-// txFee sdk.Int: transaction fee paid
-// vsizeAfter sdk.Dec: position virtual size after the change
-// realizedPnlAfter: realize profits and losses after the change
-// badDebt sdk.Int: Amount of bad debt cleared by the PerpEF during the change.
-// Bad debt is negative net margin past the liquidation point of a position.
-// unrealizedPnlAfter: unrealized profits and losses after the change
-// liquidationPenalty: amt of margin (y) lost due to liquidation
-// vPrice sdk.Dec: vPrice defined as yRes / xRes for a vpool, where yRes is the
-// quote reserves and xRes is the base reserves.
-// fundingPayment sdk.Dec: A funding payment made or received by the trader on
-// the current position. 'fundingPayment' is positive if 'owner' is the sender
-// and negative if 'owner' is the receiver of the payment. Its magnitude is
-// abs(vSize * fundingRate). Funding payments act to converge the mark price
-// (vPrice) and index price (average price on major exchanges).
-//
-//TODO Q: Is there a way to split this into different events without creating too much complexity?
+// Emitted when a position changes.
+// TODO: Is there a way to split this into different events without creating too much complexity?
 type PositionChangedEvent struct {
-	TraderAddress         string                                 `protobuf:"bytes,1,opt,name=trader_address,json=traderAddress,proto3" json:"trader_address,omitempty"`
-	Pair                  string                                 `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	Margin                github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=margin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin"`
-	PositionNotional      github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
+	// owner of the position.
+	TraderAddress string `protobuf:"bytes,1,opt,name=trader_address,json=traderAddress,proto3" json:"trader_address,omitempty"`
+	// identifier of the corresponding virtual pool for the position
+	Pair string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
+	// amount of quote token (y) backing the position.
+	Margin github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=margin,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin"`
+	// margin * leverage * vPrice. 'notional' is the virtual size times the virtual price on 'vpool'.
+	PositionNotional github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
+	// magnitude of the change to vsize. The vsize is the amount of base assets for the position, margin * leverage * priceBasePerQuote.
 	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
-	Fee                   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=fee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee"`
-	PositionSizeAfter     github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=position_size_after,json=positionSizeAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_size_after"`
-	RealizedPnl           github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
-	UnrealizedPnlAfter    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=unrealized_pnl_after,json=unrealizedPnlAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"unrealized_pnl_after"`
-	BadDebt               github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=bad_debt,json=badDebt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"bad_debt"`
-	LiquidationPenalty    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=liquidation_penalty,json=liquidationPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"liquidation_penalty"`
-	SpotPrice             github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,12,opt,name=spot_price,json=spotPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"spot_price"`
-	FundingPayment        github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
+	// transaction fee paid
+	Fee github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=fee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee"`
+	// position virtual size after the change
+	PositionSizeAfter github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=position_size_after,json=positionSizeAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_size_after"`
+	// realize profits and losses after the change
+	RealizedPnl github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
+	// unrealized profits and losses after the change
+	UnrealizedPnlAfter github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=unrealized_pnl_after,json=unrealizedPnlAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"unrealized_pnl_after"`
+	// Amount of bad debt cleared by the PerpEF during the change. Bad debt is negative net margin past the liquidation point of a position.
+	BadDebt github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=bad_debt,json=badDebt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"bad_debt"`
+	// amt of margin (y) lost due to liquidation
+	LiquidationPenalty github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=liquidation_penalty,json=liquidationPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"liquidation_penalty"`
+	// vPrice defined as yRes / xRes for a vpool, where yRes is the quote reserves and xRes is the base reserves.
+	SpotPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,12,opt,name=spot_price,json=spotPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"spot_price"`
+	// A funding payment made or received by the trader on the current position.
+	// 'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
+	// is the receiver of the payment. Its magnitude is abs(vSize * fundingRate).
+	// Funding payments act to converge the mark price (vPrice) and index price
+	// (average price on major exchanges).
+	FundingPayment github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
 }
 
 func (m *PositionChangedEvent) Reset()         { *m = PositionChangedEvent{} }
@@ -116,29 +108,24 @@ func (m *PositionChangedEvent) GetPair() string {
 	return ""
 }
 
-// EmitPositionLiquidate emits an event when a liquidation occurs.
-//
-//Args:
-// ctx sdk.Context: Carries information about the current state of the application.
-// vpool string: identifier of the corresponding virtual pool for the position
-// owner sdk.AccAddress: owner of the position.
-// notional sdk.Dec: margin * leverage * vPrice. 'notional' is the virtual size times
-// the virtual price on 'vpool'.
-// vsize sdk.Dec: virtual amount of base assets for the position, which would be
-// margin * leverage * priceBasePerQuote.
-// liquidator sdk.AccAddress: Address of the account that executed the tx.
-// feeToLiquidator sdk.Int: Commission (in margin units) received by 'liquidator'.
-// badDebt sdk.Int: Bad debt (margin units) cleared by the PerpEF during the tx.
-// Bad debt is negative net margin past the liquidation point of a position.
+// Emitted when a position is liquidated.
 type PositionLiquidatedEvent struct {
-	TraderAddress         github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=trader_address,json=traderAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"trader_address,omitempty"`
-	Pair                  string                                        `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
-	ExchangedQuoteAmount  github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,3,opt,name=exchanged_quote_amount,json=exchangedQuoteAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_quote_amount"`
-	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,4,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
-	LiquidatorAddress     github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,5,opt,name=liquidator_address,json=liquidatorAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"liquidator_address,omitempty"`
-	FeeToLiquidator       types.Coin                                    `protobuf:"bytes,6,opt,name=fee_to_liquidator,json=feeToLiquidator,proto3" json:"fee_to_liquidator" yaml:"fee_to_liquidator"`
-	FeeToEcosystemFund    types.Coin                                    `protobuf:"bytes,7,opt,name=fee_to_ecosystem_fund,json=feeToEcosystemFund,proto3" json:"fee_to_ecosystem_fund" yaml:"fee_to_ecosystem_fund"`
-	BadDebt               github_com_cosmos_cosmos_sdk_types.Dec        `protobuf:"bytes,8,opt,name=bad_debt,json=badDebt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"bad_debt"`
+	// owner of the position.
+	TraderAddress github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=trader_address,json=traderAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"trader_address,omitempty"`
+	// identifier of the corresponding virtual pool for the position
+	Pair string `protobuf:"bytes,2,opt,name=pair,proto3" json:"pair,omitempty"`
+	// margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'vpool'.
+	ExchangedQuoteAmount github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=exchanged_quote_amount,json=exchangedQuoteAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_quote_amount"`
+	// virtual amount of base assets for the position, which would be margin * leverage * priceBasePerQuote.
+	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
+	// Address of the account that executed the tx.
+	LiquidatorAddress github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,5,opt,name=liquidator_address,json=liquidatorAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"liquidator_address,omitempty"`
+	// Commission (in margin units) received by 'liquidator'.
+	FeeToLiquidator types.Coin `protobuf:"bytes,6,opt,name=fee_to_liquidator,json=feeToLiquidator,proto3" json:"fee_to_liquidator" yaml:"fee_to_liquidator"`
+	// Commission (in margin units) given to the ecosystem fund.
+	FeeToEcosystemFund types.Coin `protobuf:"bytes,7,opt,name=fee_to_ecosystem_fund,json=feeToEcosystemFund,proto3" json:"fee_to_ecosystem_fund" yaml:"fee_to_ecosystem_fund"`
+	//  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is negative net margin past the liquidation point of a position.
+	BadDebt github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=bad_debt,json=badDebt,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"bad_debt"`
 }
 
 func (m *PositionLiquidatedEvent) Reset()         { *m = PositionLiquidatedEvent{} }
@@ -209,17 +196,14 @@ func (m *PositionLiquidatedEvent) GetFeeToEcosystemFund() types.Coin {
 	return types.Coin{}
 }
 
-// EmitPositionSettle emits an event when a position is settled.
-//
-//Args:
-// ctx sdk.Context: Carries information about the current state of the application.
-// vpool string: Identifier for the virtual pool of the position.
-// trader string: Owner of the position.
-// settled sdk.Coin: Settled coin as dictated by the settlement price of the vpool.
+// Emitted when a position is settled.
 type PositionSettledEvent struct {
-	Pair          string                                        `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
+	// Identifier for the virtual pool of the position.
+	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
+	// Owner of the position.
 	TraderAddress github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=trader_address,json=traderAddress,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"trader_address,omitempty"`
-	SettledCoins  github_com_cosmos_cosmos_sdk_types.Coins      `protobuf:"bytes,3,rep,name=settled_coins,json=settledCoins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"settled_coins" yaml:"settled_coins"`
+	// Settled coin as dictated by the settlement price of the vpool.
+	SettledCoins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=settled_coins,json=settledCoins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"settled_coins" yaml:"settled_coins"`
 }
 
 func (m *PositionSettledEvent) Reset()         { *m = PositionSettledEvent{} }
@@ -276,10 +260,15 @@ func (m *PositionSettledEvent) GetSettledCoins() github_com_cosmos_cosmos_sdk_ty
 	return nil
 }
 
+// Emitted when a position's margin is changed (AddMargin or RemoveMargin).
 type MarginChangedEvent struct {
-	Pair           string                                 `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
-	TraderAddress  []byte                                 `protobuf:"bytes,2,opt,name=trader_address,json=traderAddress,proto3" json:"trader_address,omitempty"`
-	MarginAmount   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=margin_amount,json=marginAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"margin_amount"`
+	// Identifier for the virtual pool of the position.
+	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
+	// Owner of the position.
+	TraderAddress []byte `protobuf:"bytes,2,opt,name=trader_address,json=traderAddress,proto3" json:"trader_address,omitempty"`
+	// Amount of margin exchanged.
+	MarginAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=margin_amount,json=marginAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"margin_amount"`
+	// Amount of funding payment applied.
 	FundingPayment github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
 }
 
