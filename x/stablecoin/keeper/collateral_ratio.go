@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/stablecoin/events"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -211,12 +210,14 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	events.EmitTransfer(
-		ctx,
-		/* coin */ inColl,
-		/* from */ caller.String(),
-		/* to   */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-	)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: inColl,
+		From: caller.String(),
+		To:   k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+	}); err != nil {
+		return response, err
+	}
 
 	// Compute GOV rewarded to user
 	priceCollStable, err := k.PricefeedKeeper.GetCurrentPrice(
@@ -236,7 +237,11 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	events.EmitMintNIBI(ctx, outGov)
+
+	err = ctx.EventManager().EmitTypedEvent(&types.EventMintNIBI{Amount: outGov.Amount})
+	if err != nil {
+		return response, err
+	}
 
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, caller, sdk.NewCoins(outGov),
@@ -244,19 +249,24 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	events.EmitTransfer(
-		ctx, outGov,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-		/* to   */ caller.String(),
-	)
 
-	events.EmitRecollateralize(
-		ctx,
-		/* inCoin    */ inColl,
-		/* outCoin   */ outGov,
-		/* caller    */ caller.String(),
-		/* collRatio */ targetCollRatio,
-	)
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: outGov,
+		From: k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+		To:   caller.String(),
+	}); err != nil {
+		return response, err
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventRecollateralize{
+		InCoin:    inColl,
+		OutCoin:   outGov,
+		Caller:    caller.String(),
+		CollRatio: targetCollRatio,
+	}); err != nil {
+		return response, err
+	}
+
 	return &types.MsgRecollateralizeResponse{
 		Gov: outGov,
 	}, err
@@ -373,19 +383,26 @@ func (k Keeper) Buyback(
 	if err != nil {
 		return response, err
 	}
-	events.EmitTransfer(
-		ctx,
-		/* coin */ inGov,
-		/* from */ caller.String(),
-		/* to   */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-	)
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: inGov,
+		From: caller.String(),
+		To:   k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+	}); err != nil {
+		return response, err
+	}
 
 	// Burn the NIBI that was sent by the caller.
 	err = k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(inGov))
 	if err != nil {
 		return response, err
 	}
-	events.EmitBurnNIBI(ctx, inGov)
+
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventBurnNIBI{Amount: inGov.Amount})
+	if err != nil {
+		return response, err
+	}
 
 	// Compute USD (stable) value of the GOV sent by the caller: 'inUSD'
 	priceGovStable, err := k.PricefeedKeeper.GetCurrentPrice(
@@ -409,19 +426,24 @@ func (k Keeper) Buyback(
 	if err != nil {
 		return response, err
 	}
-	events.EmitTransfer(
-		ctx, outColl,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
-		/* to   */ caller.String(),
-	)
 
-	events.EmitBuyback(
-		ctx,
-		/* inCoin    */ inGov,
-		/* outCoin   */ outColl,
-		/* caller    */ caller.String(),
-		/* collRatio */ targetCollRatio,
-	)
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+		Coin: outColl,
+		From: k.AccountKeeper.GetModuleAddress(types.ModuleName).String(),
+		To:   caller.String(),
+	}); err != nil {
+		return response, err
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventBuyback{
+		InCoin:    inGov,
+		OutCoin:   outColl,
+		Caller:    caller.String(),
+		CollRatio: targetCollRatio,
+	}); err != nil {
+		return response, err
+	}
+
 	return &types.MsgBuybackResponse{
 		Coll: outColl,
 	}, err
