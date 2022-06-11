@@ -5,24 +5,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-
 	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 	localhosttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/09-localhost/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
-
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/app"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 /* SetupTestingApp returns the TestingApp and default genesis state used to
@@ -239,7 +236,7 @@ func (suite IBCTestSuite) TestSendPacketRecvPacket() {
 	err = path.EndpointB.AcknowledgePacket(packet1, ack.Acknowledgement())
 	suite.Assert().NoError(err)
 
-	t.Log("updating the client should cause any problems.")
+	t.Log("updating the client should not cause any problems.")
 	err = path.EndpointB.UpdateClient()
 	suite.Assert().NoError(err)
 }
