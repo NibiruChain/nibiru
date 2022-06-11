@@ -1,4 +1,4 @@
-package testkeeper
+package keeper
 
 import (
 	"testing"

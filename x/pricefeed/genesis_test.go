@@ -7,8 +7,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
-	"github.com/NibiruChain/nibiru/x/testutil/testkeeper"
 )
 
 func TestGenesis(t *testing.T) {
@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx := testkeeper.PricefeedKeeper(t)
+	k, ctx := testutilkeeper.PricefeedKeeper(t)
 	pricefeed.InitGenesis(ctx, k, genesisState)
 	got := pricefeed.ExportGenesis(ctx, k)
 	require.NotNil(t, got)
