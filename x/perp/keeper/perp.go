@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -102,12 +101,11 @@ func (k Keeper) SettlePosition(
 		}
 	}
 
-	events.EmitPositionSettle(
-		ctx,
-		tokenPair.String(),
-		currentPosition.TraderAddress,
-		transferredCoins,
-	)
+	err = ctx.EventManager().EmitTypedEvent(&types.PositionSettledEvent{
+		Pair:          tokenPair.String(),
+		TraderAddress: traderAddr,
+		SettledCoins:  transferredCoins,
+	})
 
-	return
+	return transferredCoins, err
 }

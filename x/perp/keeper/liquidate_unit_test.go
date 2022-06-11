@@ -4,19 +4,17 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
-func Test_distributeLiquidateRewards_Error(t *testing.T) {
+func TestDistributeLiquidateRewards_Error(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func()
@@ -94,7 +92,7 @@ func Test_distributeLiquidateRewards_Error(t *testing.T) {
 	}
 }
 
-func Test_distributeLiquidateRewards_Happy(t *testing.T) {
+func TestDistributeLiquidateRewards_Happy(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func()
@@ -107,15 +105,6 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, BtcNusdPair).Return(true)
 
-				vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				perpEFAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.VaultModuleAccount).
-					Return(vaultAddr)
-				mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-					types.PerpEFModuleAccount).
-					Return(perpEFAddr)
-
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
 					ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
 					sdk.NewCoins(sdk.NewCoin("NUSD", sdk.OneInt())),
@@ -126,7 +115,9 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 				).Return(nil)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
+					types.LiquidateResp{
+						BadDebt:                sdk.OneDec(),
+						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
@@ -136,22 +127,6 @@ func Test_distributeLiquidateRewards_Happy(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-
-				expectedEvents := []sdk.Event{
-					events.NewTransferEvent(
-						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr,
-						/* to */ perpEFAddr,
-					),
-					events.NewTransferEvent(
-						/* coin */ sdk.NewCoin("NUSD", sdk.OneInt()),
-						/* from */ vaultAddr,
-						/* to */ liquidator,
-					),
-				}
-				for _, event := range expectedEvents {
-					assert.Contains(t, ctx.EventManager().Events(), event)
-				}
 			},
 		},
 	}
@@ -405,14 +380,6 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			if tc.initialPositionSize.IsNegative() {
 				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 			}
-
-			t.Log("mock account keeper")
-			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-			perpEFAddr := authtypes.NewModuleAddress(types.PerpEFModuleAccount)
-			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-				types.VaultModuleAccount).Return(vaultAddr)
-			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-				types.PerpEFModuleAccount).Return(perpEFAddr)
 
 			t.Log("mock bank keeper")
 			if tc.expectedFundsToPerpEF.IsPositive() {
