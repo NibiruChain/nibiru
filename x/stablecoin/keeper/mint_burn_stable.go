@@ -12,7 +12,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/stablecoin/events"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -141,9 +140,13 @@ func (k Keeper) sendCoinsToModuleAccount(
 	}
 
 	for _, coin := range coins {
-		events.EmitTransfer(ctx, coin, from.String(), types.ModuleName)
+		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+		err = ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+			Coin: coin, From: from.String(), To: moduleAddress.String()})
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -158,7 +161,12 @@ func (k Keeper) sendCoinsFromModuleAccountToUser(
 	}
 
 	for _, coin := range coins {
-		events.EmitTransfer(ctx, coin, types.ModuleName, to.String())
+		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+		err = ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+			Coin: coin, From: moduleAddress.String(), To: to.String()})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -180,7 +188,11 @@ func (k Keeper) burnGovTokens(ctx sdk.Context, govTokens sdk.Coin) error {
 		return err
 	}
 
-	events.EmitBurnNIBI(ctx, govTokens)
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventBurnNIBI{Amount: govTokens.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -191,7 +203,11 @@ func (k Keeper) burnStableTokens(ctx sdk.Context, stable sdk.Coin) error {
 		return err
 	}
 
-	events.EmitBurnStable(ctx, stable)
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventBurnStable{Amount: stable.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -203,7 +219,10 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 		return err
 	}
 
-	events.EmitMintStable(ctx, stable)
+	err = ctx.EventManager().EmitTypedEvent(&types.EventMintStable{Amount: stable.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -215,12 +234,15 @@ func (k Keeper) mintGov(ctx sdk.Context, gov sdk.Coin) error {
 		return err
 	}
 
-	events.EmitMintNIBI(ctx, gov)
+	err = ctx.EventManager().EmitTypedEvent(&types.EventMintNIBI{Amount: gov.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-// splitAndSendFeesToEfAndTreasury sends the coins to the Stable Ecosystem Fund and treasury pool
+// splitAndSendFeesToEfAndTreasury sends fees to the Stable Ecosystem Fund and treasury pool
 func (k Keeper) splitAndSendFeesToEfAndTreasury(
 	ctx sdk.Context, account sdk.AccAddress, efFeeRatio sdk.Dec, coins sdk.Coins,
 ) error {
@@ -232,7 +254,8 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 
 		if c.Denom == common.GovDenom {
 			stableCoins := sdk.NewCoins(sdk.NewCoin(c.Denom, amountEf))
-			err := k.BankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, stableCoins)
+			err := k.BankKeeper.SendCoinsFromAccountToModule(
+				ctx, account, types.StableEFModuleAccount, stableCoins)
 			if err != nil {
 				return err
 			}
