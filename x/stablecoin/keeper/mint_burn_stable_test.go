@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -187,25 +188,23 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			testutil.RequireEqualWithMessage(
-				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
-
-			require.Equal(t, nibiruApp.StablecoinKeeper.GetSupplyNIBI(ctx), tc.supplyNIBI)
-			require.Equal(t, nibiruApp.StablecoinKeeper.GetSupplyNUSD(ctx), tc.supplyNUSD)
+			assert.EqualValues(t, tc.msgResponse, *mintStableResponse)
+			assert.Equal(t, nibiruApp.StablecoinKeeper.GetSupplyNIBI(ctx), tc.supplyNIBI)
+			assert.Equal(t, nibiruApp.StablecoinKeeper.GetSupplyNUSD(ctx), tc.supplyNUSD)
 
 			// Check balances in EF
 			efModuleBalance := nibiruApp.BankKeeper.GetAllBalances(
 				ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount),
 			)
 			collFeesInEf := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
-			require.Equal(t, sdk.NewCoins(sdk.NewCoin(common.CollDenom, collFeesInEf)), efModuleBalance)
+			assert.Equal(t, sdk.NewCoins(sdk.NewCoin(common.CollDenom, collFeesInEf)), efModuleBalance)
 
 			// Check balances in Treasury
 			treasuryModuleBalance := nibiruApp.BankKeeper.
 				GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount))
 			collFeesInTreasury := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
 			govFeesInTreasury := neededGovFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
-			require.Equal(
+			assert.Equal(
 				t,
 				sdk.NewCoins(
 					sdk.NewCoin(common.CollDenom, collFeesInTreasury),
@@ -376,11 +375,10 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			testutil.RequireEqualWithMessage(
-				t, *mintStableResponse, tc.msgResponse, "mintStableResponse")
+			assert.EqualValues(t, tc.msgResponse, *mintStableResponse)
 
 			balances := nibiruApp.BankKeeper.GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount))
-			require.Equal(t, mintStableResponse.FeesPayed, balances)
+			assert.Equal(t, mintStableResponse.FeesPayed, balances)
 		})
 	}
 }
@@ -556,8 +554,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			testutil.RequireEqualWithMessage(
-				t, burnStableResponse, tc.msgResponse, "burnStableResponse")
+			assert.EqualValues(t, tc.msgResponse, burnStableResponse)
 		})
 	}
 }
@@ -708,8 +705,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			testutil.RequireEqualWithMessage(
-				t, burnStableResponse, &tc.msgResponse, "burnStableResponse")
+			assert.EqualValues(t, tc.msgResponse, *burnStableResponse)
 
 			require.Equal(t, tc.supplyNIBI, nibiruApp.StablecoinKeeper.GetSupplyNIBI(ctx))
 			require.Equal(t, tc.supplyNUSD, nibiruApp.StablecoinKeeper.GetSupplyNUSD(ctx))
