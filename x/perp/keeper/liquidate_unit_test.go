@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -381,14 +380,6 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			if tc.initialPositionSize.IsNegative() {
 				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 			}
-
-			t.Log("mock account keeper")
-			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-			perpEFAddr := authtypes.NewModuleAddress(types.PerpEFModuleAccount)
-			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-				types.VaultModuleAccount).Return(vaultAddr)
-			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-				types.PerpEFModuleAccount).Return(perpEFAddr)
 
 			t.Log("mock bank keeper")
 			if tc.expectedFundsToPerpEF.IsPositive() {
