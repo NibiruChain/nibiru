@@ -73,7 +73,7 @@ func (k msgServer) ClosePosition(goCtx context.Context, position *types.MsgClose
 		panic(err)
 	}
 
-	err = k.k.ClosePosition(ctx, tokenPair, addr)
+	_, err = k.k.ClosePosition(ctx, tokenPair, addr)
 
 	return &types.MsgClosePositionResponse{}, err
 }
