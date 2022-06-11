@@ -6,13 +6,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 // TestModuleAccounts verifies that all x/perp module accounts are connected
 // to the base application
 func TestModuleAccounts(t *testing.T) {
-	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 
 	perpAcc := nibiruApp.PerpKeeper.AccountKeeper.GetModuleAccount(
 		ctx, types.ModuleName)

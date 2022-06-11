@@ -15,12 +15,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 func TestMsgServer_CreateIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testutil.NewTestApp(false)
+		app := testutilapp.NewTestApp(false)
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -55,7 +55,7 @@ func TestMsgServer_CreateIncentivizationProgram(t *testing.T) {
 
 func TestMsgServer_FundIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testutil.NewTestApp(false)
+		app := testutilapp.NewTestApp(false)
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -94,7 +94,7 @@ func TestMsgServer_FundIncentivizationProgram(t *testing.T) {
 }
 
 func TestQueryServer_IncentivizationProgram(t *testing.T) {
-	app := testutil.NewTestApp(false)
+	app := testutilapp.NewTestApp(false)
 	q := keeper.NewQueryServer(app.IncentivizationKeeper)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -108,7 +108,7 @@ func TestQueryServer_IncentivizationProgram(t *testing.T) {
 }
 
 func TestQueryServer_IncentivizationPrograms(t *testing.T) {
-	app := testutil.NewTestApp(false)
+	app := testutilapp.NewTestApp(false)
 	q := keeper.NewQueryServer(app.IncentivizationKeeper)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 

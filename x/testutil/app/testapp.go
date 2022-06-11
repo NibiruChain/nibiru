@@ -1,4 +1,4 @@
-package testutil
+package app
 
 import (
 	"encoding/json"
