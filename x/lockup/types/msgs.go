@@ -62,3 +62,17 @@ func (m *MsgInitiateUnlock) GetSigners() []sdk.AccAddress {
 
 	return []sdk.AccAddress{addr}
 }
+
+func (m *MsgUnlock) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Owner)
+	return err
+}
+
+func (m *MsgUnlock) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(m.Owner)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{addr}
+}
