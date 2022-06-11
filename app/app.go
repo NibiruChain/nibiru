@@ -79,7 +79,7 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
+	ibctransfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v3/modules/core"
@@ -164,7 +164,7 @@ var (
 		vesting.AppModuleBasic{},
 		// ibc 'AppModuleBasic's
 		ibc.AppModuleBasic{},
-		transfer.AppModuleBasic{}, // ibc-transfer module
+		ibctransfer.AppModuleBasic{},
 		// native x/
 		dex.AppModuleBasic{},
 		pricefeed.AppModuleBasic{},
@@ -489,8 +489,8 @@ func NewNibiruApp(
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
+	transferModule := ibctransfer.NewAppModule(app.TransferKeeper)
+	transferIBCModule := ibctransfer.NewIBCModule(app.TransferKeeper)
 
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
