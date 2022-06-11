@@ -232,7 +232,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
 			WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
 
-		err = nibiruApp.PerpKeeper.ClosePosition(ctx, pair, alice)
+		_, err = nibiruApp.PerpKeeper.ClosePosition(ctx, pair, alice)
 		require.NoError(t, err)
 
 		position, err := nibiruApp.PerpKeeper.Positions().Get(ctx, pair, alice)

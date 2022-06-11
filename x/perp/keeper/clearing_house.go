@@ -747,22 +747,27 @@ func (k Keeper) closePositionEntirely(
 }
 
 // ClosePosition gets the current position, and calls OpenPosition to open a reverse position with amount equal to the current open notional.
-func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) error {
+func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) (*types.PositionResp, error) {
 	position, err := k.Positions().Get(ctx, pair, addr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	currentOpenNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	posResp, err := k.openReversePosition(ctx, *position, currentOpenNotional, sdk.NewDec(1), sdk.ZeroDec(), false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return k.afterPositionUpdate(ctx, pair, addr, k.GetParams(ctx), false, posResp)
+	err = k.afterPositionUpdate(ctx, pair, addr, k.GetParams(ctx), false, posResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return posResp, nil
 }
 
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
