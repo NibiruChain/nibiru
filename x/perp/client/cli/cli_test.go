@@ -18,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	utils "github.com/NibiruChain/nibiru/x/testutil"
@@ -483,7 +482,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		s.T().Logf("user1 remove margin err: %+v", err)
 	}
 
-	s.Require().Contains(out.String(), types.ErrFailedToRemoveDueToBadDebt.Error())
+	s.Require().Contains(out.String(), perptypes.ErrFailedToRemoveDueToBadDebt.Error())
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
