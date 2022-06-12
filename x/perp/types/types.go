@@ -21,12 +21,12 @@ const (
 var (
 	ErrMarginHighEnough = sdkerrors.Register(ModuleName, 1,
 		"Margin is higher than required maintenant margin ratio")
-	ErrPositionNotFound     = errors.New("no position found")
-	ErrPairNotFound         = errors.New("pair doesn't have live vpool")
-	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
-	ErrPositionZero         = errors.New("position is zero")
-	// failed to remove margin; position has bad debt
+	ErrPositionNotFound                  = errors.New("no position found")
+	ErrPairNotFound                      = errors.New("pair doesn't have live vpool")
+	ErrPairMetadataNotFound              = errors.New("pair doesn't have metadata")
+	ErrPositionZero                      = errors.New("position is zero")
 	ErrFailedRemoveMarginCanCauseBadDebt = errors.New("failed to remove margin; position would have bad debt if removed")
+	ErrNotEnoughFreeCollateral           = errors.New("not enough free collateral")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {

@@ -174,10 +174,16 @@ func (k Keeper) RemoveMargin(
 		)
 		return nil, err
 	}
+	fmt.Printf("STEVENDEBUG position: %v\n", position)
 
 	marginDelta := msg.Margin.Amount.Neg()
+	fmt.Printf("STEVENDEBUG marginDelta: %v\n", marginDelta)
+
 	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, *position, marginDelta.ToDec())
+
+	fmt.Printf("STEVENDEBUG remainingMargin: %v\n", remainingMargin)
+
 	if err != nil {
 		return nil, err
 	}
@@ -192,13 +198,16 @@ func (k Keeper) RemoveMargin(
 	}
 
 	position.Margin = remainingMargin.Margin
+	fmt.Printf("STEVENDEBUG position.Margin: %v\n", position.Margin)
+
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	freeCollateral, err := k.calcFreeCollateral(
 		ctx, *position, remainingMargin.FundingPayment)
+	fmt.Printf("STEVENDEBUG freeCollateral: %v\n", freeCollateral)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.IsPositive() {
-		return res, fmt.Errorf("not enough free collateral")
+		return res, types.ErrNotEnoughFreeCollateral
 	}
 
 	k.Positions().Set(ctx, pair, traderAddr, position)

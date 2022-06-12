@@ -1,0 +1,106 @@
+{
+    "height": "31",
+    "txhash": "760318EF59782195B1BC1246E2A773EB3A039166713E6601A47E06C7FDFA6A80",
+    "codespace": "undefined",
+    "code": 1,
+    "data": "",
+    "raw_log": "failed to execute message; message index: 0: not enough free collateral",
+    "logs": [],
+    "info": "",
+    "gas_wanted": "200000",
+    "gas_used": "63749",
+    "tx": null,
+    "timestamp": "",
+    "events": [
+        {
+            "type": "coin_spent",
+            "attributes": [
+                {
+                    "key": "c3BlbmRlcg==",
+                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eA==",
+                    "index": true
+                },
+                {
+                    "key": "YW1vdW50",
+                    "value": "MTB1bmliaQ==",
+                    "index": true
+                }
+            ]
+        },
+        {
+            "type": "coin_received",
+            "attributes": [
+                {
+                    "key": "cmVjZWl2ZXI=",
+                    "value": "bmliaTE3eHBmdmFrbTJhbWc5NjJ5bHM2Zjg0ejNrZWxsOGM1bDh1OGV6dw==",
+                    "index": true
+                },
+                {
+                    "key": "YW1vdW50",
+                    "value": "MTB1bmliaQ==",
+                    "index": true
+                }
+            ]
+        },
+        {
+            "type": "transfer",
+            "attributes": [
+                {
+                    "key": "cmVjaXBpZW50",
+                    "value": "bmliaTE3eHBmdmFrbTJhbWc5NjJ5bHM2Zjg0ejNrZWxsOGM1bDh1OGV6dw==",
+                    "index": true
+                },
+                {
+                    "key": "c2VuZGVy",
+                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eA==",
+                    "index": true
+                },
+                {
+                    "key": "YW1vdW50",
+                    "value": "MTB1bmliaQ==",
+                    "index": true
+                }
+            ]
+        },
+        {
+            "type": "message",
+            "attributes": [
+                {
+                    "key": "c2VuZGVy",
+                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eA==",
+                    "index": true
+                }
+            ]
+        },
+        {
+            "type": "tx",
+            "attributes": [
+                {
+                    "key": "ZmVl",
+                    "value": "MTB1bmliaQ==",
+                    "index": true
+                }
+            ]
+        },
+        {
+            "type": "tx",
+            "attributes": [
+                {
+                    "key": "YWNjX3NlcQ==",
+                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eC8x",
+                    "index": true
+                }
+            ]
+        },
+        {
+            "type": "tx",
+            "attributes": [
+                {
+                    "key": "c2lnbmF0dXJl",
+                    "value": "TEFaZWZ4WTdvY2syVWlJaEdKVFhHdmdyWXRVY3VHcHRuZXdwUWlRY2RQWlk2eHRyVWlvRlMrdkFDQ1lZRVZLOEtGVEdnb0srRitiNlZMeC9QSktzd0E9PQ==",
+                    "index": true
+                }
+            ]
+        }
+    ]
+}

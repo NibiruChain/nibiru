@@ -19,6 +19,7 @@ import (
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 )
 
 var commonArgs = []string{
@@ -156,14 +157,27 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
-	// info2, _, err := val.ClientCtx.Keyring.
-	// 	NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	// s.Require().NoError(err)
-	// user2 := sdk.AccAddress(info2.GetPubKey().Address())
+	info2, _, err := val.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user2 := sdk.AccAddress(info2.GetPubKey().Address())
 
-	s.users = []sdk.AccAddress{user1}
+	s.users = []sdk.AccAddress{user1, user2}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(user2,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -180,6 +194,53 @@ func (s *IntegrationTestSuite) SetupSuite() {
 func (s *IntegrationTestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
+}
+
+func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users []sdk.AccAddress) {
+	s.T().Log("Checking trader balances.... \n \n")
+
+	for i := 0; i < len(users); i++ {
+		balance, err := banktestutil.QueryBalancesExec(
+			val.ClientCtx,
+			users[i],
+		)
+		s.T().Logf("user (acc: %+v) balance: \n %+v \n", users[i], balance)
+
+		s.Assert().NoErrorf(err, "checkBalances err: %+v", err)
+	}
+}
+
+func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
+	s.T().Log("Checking trader positions.... \n \n")
+
+	for i := 0; i < len(users); i++ {
+		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
+		s.T().Logf("user (acc: %+v) position: \n %+v \n", users[i], queryResp)
+
+		s.Assert().NoErrorf(err, "checkPositions err: %+v", err)
+	}
+}
+
+func (s *IntegrationTestSuite) checkReserveAssets(val *testutilcli.Validator, pair common.AssetPair) {
+	s.T().Log("Checking vpool reserve assets....")
+
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets (pair: %+v): %+v %+v", pair, reserveAssets, err)
+	s.Assert().NoErrorf(err, "query reserve assets err: %+v", err)
+}
+
+func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
+	err := s.network.WaitForNextBlock()
+	s.Require().NoError(err)
+
+	s.checkReserveAssets(val, pair)
+
+	s.checkBalances(val, users)
+
+	s.checkPositions(val, pair, users)
+
+	// add a break to the logs for easier readability
+	s.T().Log("\n \n")
 }
 
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
@@ -369,7 +430,6 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 }
 
 func (s *IntegrationTestSuite) TestRemoveMargin() {
-	// Set up the user accounts
 	val := s.network.Validators[0]
 	pair := common.TestStablePool
 
@@ -390,7 +450,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	}
 	s.Require().NoError(err)
 
-	// Remove margin to trigger bad debt on user 1
+	// Remove enough margin that if successfully removed it would create bad debt for user 1
 	s.T().Log("removing margin on user 1....")
 	args = []string{
 		"--from",
@@ -398,12 +458,66 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		pair.String(),
 		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
 	}
-	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user1 remove margin err: %+v", err)
-	}
-
+	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
 	s.Require().Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+
+	// Clean up and close the position
+}
+
+func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+	val := s.network.Validators[0]
+	pair := common.TestStablePool
+
+	// Open a position with first user
+	s.T().Log("opening a position with first user....")
+	args := []string{
+		"--from",
+		s.users[0].String(),
+		"buy",
+		pair.String(),
+		"10",        // 10x Leverage
+		"1",         // Quote asset amount
+		"0.0000001", // No limit basically
+	}
+	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user1 open position err: %+v", err)
+	}
+	s.Require().NoError(err)
+	s.checkStatus(val, pair, []sdk.AccAddress{s.users[0]})
+
+	// Open a position with second user
+	s.T().Log("opening a position with second user....")
+	user2 := s.users[1]
+	args = []string{
+		"--from",
+		user2.String(),
+		"buy",
+		pair.String(),
+		"10",        // 10x Leverage
+		"1",         // Quote asset amount
+		"0.0000001", // No limit basically
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user2 open position err: %+v", err)
+	}
+	s.Require().NoError(err)
+	s.checkStatus(val, pair, []sdk.AccAddress{s.users[1]})
+
+	// First user pulls out
+	s.T().Log("removing margin on user 1....")
+	args = []string{
+		"--from",
+		s.users[0].String(),
+		pair.String(),
+		fmt.Sprintf("%s%s", ".001", common.TestStablePool.Token1), // Amount
+	}
+	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
+	fmt.Println(out.String())
+	s.T().Log("STEVENDEBUG out: ", out.String())
+
+	// Second user should have bad debt now
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
