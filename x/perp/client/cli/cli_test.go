@@ -111,9 +111,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 40_000),
-			sdk.NewInt64Coin(common.GovDenom, 200_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 200_000_000),
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
 		),
 		val,
 		s.cfg.BondDenom,
