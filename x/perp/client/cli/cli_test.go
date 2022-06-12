@@ -108,6 +108,17 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	user2 := sdk.AccAddress(info2.GetPubKey().Address())
 
 	s.users = []sdk.AccAddress{user1, user2}
+
+	_, err = testutilcli.FillWalletFromValidator(user1,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 40_000),
+			sdk.NewInt64Coin(common.GovDenom, 200_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 200_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -123,17 +134,6 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	}
 
 	user := s.users[0]
-
-	_, err := testutilcli.FillWalletFromValidator(user,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
-		),
-		val,
-		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
 
 	s.T().Log("A. check vpool balances")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
@@ -278,19 +278,8 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 
 	user := s.users[0]
 
-	_, err := testutilcli.FillWalletFromValidator(user,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
-		),
-		val,
-		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
-
 	// verify trader has no position (empty)
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	_, err := testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.Assert().Error(err, "no position found")
 
 	// close position should produce error
