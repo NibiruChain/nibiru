@@ -156,11 +156,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
-	// info2, _, err := val.ClientCtx.Keyring.
-	// 	NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	// s.Require().NoError(err)
-	// user2 := sdk.AccAddress(info2.GetPubKey().Address())
-
 	s.users = []sdk.AccAddress{user1}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
