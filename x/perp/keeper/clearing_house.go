@@ -99,27 +99,16 @@ func (k Keeper) OpenPosition(
 	switch {
 	case marginToVaultInt.IsPositive():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
-		err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend))
-		if err != nil {
+		if err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToSend,
-			/* from */ traderAddr,
-			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount))
 	case marginToVaultInt.IsNegative():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(
-			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
-		if err != nil {
+		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
+			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToSend,
-			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-			/* to */ traderAddr,
-		)
 	}
 
 	transferredFee, err := k.transferFee(
@@ -134,7 +123,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:         traderAddr.String(),
+		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
@@ -773,10 +762,7 @@ func (k Keeper) transferFee(
 	ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress,
 	positionNotional sdk.Dec,
 ) (sdk.Int, error) {
-	toll, spread, err := k.CalcPerpTxFee(ctx, positionNotional)
-	if err != nil {
-		return sdk.Int{}, err
-	}
+	toll, spread := k.CalcPerpTxFee(ctx, positionNotional)
 
 	hasToll := toll.IsPositive()
 	hasSpread := spread.IsPositive()
@@ -785,6 +771,7 @@ func (k Keeper) transferFee(
 		return sdk.ZeroInt(), nil
 	}
 
+	var err error
 	if hasSpread {
 		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread))
 		err = k.BankKeeper.SendCoinsFromAccountToModule(

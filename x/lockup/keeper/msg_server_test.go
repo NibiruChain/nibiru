@@ -63,6 +63,40 @@ func TestMsgServer_InitiateUnlock(t *testing.T) {
 	})
 }
 
+func TestMsgServer_Unlock(t *testing.T) {
+	app := testutil.NewTestApp(false)
+	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
+	s := keeper.NewMsgServerImpl(app.LockupKeeper)
+
+	t.Run("success", func(t *testing.T) {
+		ctx, _ := uncachedCtx.CacheContext()
+		addr := sample.AccAddress()
+		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
+		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
+
+		lock, err := s.LockTokens(sdk.WrapSDKContext(ctx), &types.MsgLockTokens{
+			Owner:    addr.String(),
+			Duration: 10 * time.Second,
+			Coins:    coins,
+		})
+		require.NoError(t, err)
+
+		_, err = s.InitiateUnlock(sdk.WrapSDKContext(ctx), &types.MsgInitiateUnlock{
+			Owner:  addr.String(),
+			LockId: lock.LockId,
+		})
+		require.NoError(t, err)
+
+		ctx = ctx.WithBlockTime(ctx.BlockTime().Add(11 * time.Second))
+		_, err = s.Unlock(sdk.WrapSDKContext(ctx), &types.MsgUnlock{
+			Owner:  addr.String(),
+			LockId: lock.LockId,
+		})
+
+		require.NoError(t, err)
+	})
+}
+
 func TestQueryServer_Lock(t *testing.T) {
 	app := testutil.NewTestApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
