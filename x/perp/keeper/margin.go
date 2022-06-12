@@ -177,12 +177,12 @@ func (k Keeper) RemoveMargin(
 	fmt.Printf("STEVENDEBUG position: %v\n", position)
 
 	marginDelta := msg.Margin.Amount.Neg()
-	fmt.Printf("STEVENDEBUG marginDelta: %v\n", marginDelta)
+	fmt.Printf("STEVENDEBUG marginDelta: %+v\n", marginDelta)
 
 	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, *position, marginDelta.ToDec())
 
-	fmt.Printf("STEVENDEBUG remainingMargin: %v\n", remainingMargin)
+	fmt.Printf("STEVENDEBUG remainingMargin: %+v\n", remainingMargin)
 
 	if err != nil {
 		return nil, err

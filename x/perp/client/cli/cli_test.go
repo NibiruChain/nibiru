@@ -462,6 +462,13 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.Require().Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 
 	// Clean up and close the position
+	args = []string{
+		"--from",
+		s.users[0].String(),
+		pair.String(),
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
@@ -511,7 +518,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"--from",
 		s.users[0].String(),
 		pair.String(),
-		fmt.Sprintf("%s%s", ".001", common.TestStablePool.Token1), // Amount
+		fmt.Sprintf("%s%s", "1", common.TestStablePool.Token1), // Amount
 	}
 	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
 	fmt.Println(out.String())
