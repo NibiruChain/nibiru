@@ -10,8 +10,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	cli2 "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -45,6 +47,25 @@ func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.A
 	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
 	if err != nil {
 		return types.QueryTraderPositionResponse{}, err
+	}
+
+	return queryResp, nil
+}
+
+func QueryPrice(ctx client.Context, token0 string, token1 string) (pricefeedtypes.QueryPriceResponse, error) {
+	out, err := clitestutil.ExecTestCLICmd(
+		ctx,
+		pricefeedcli.CmdRawPrices(),
+		[]string{token0 + ":" + token1, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+	)
+	if err != nil {
+		return pricefeedtypes.QueryPriceResponse{}, err
+	}
+
+	var queryResp pricefeedtypes.QueryPriceResponse
+	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
+	if err != nil {
+		return pricefeedtypes.QueryPriceResponse{}, err
 	}
 
 	return queryResp, nil
