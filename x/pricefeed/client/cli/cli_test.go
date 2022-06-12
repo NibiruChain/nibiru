@@ -11,7 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	utils "github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -82,7 +81,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = utils.DefaultConfig()
+	s.cfg = testutilcli.DefaultConfig()
 
 	// modification to pay fee with test bond denom "stake"
 	app.SetPrefixes(app.AccountAddressPrefix)
@@ -118,7 +117,7 @@ func (s IntegrationTestSuite) fillWalletFromValidator(
 		balance,
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		utils.DefaultFeeString(s.cfg.BondDenom),
+		testutilcli.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 
@@ -148,22 +147,21 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	}
 
 	testCases := []struct {
-		name string
-		args []string
+		name   string
+		token0 string
+		token1 string
+		price  string
 
 		expectErr    bool
 		respType     proto.Message
 		expectedCode uint32
 	}{
 		{
-			name: "Post a price",
-			args: append([]string{
-				common.GovStablePool.Token0,
-				common.GovStablePool.Token1,
-				"30000",
-				strconv.Itoa(farAwayTimestamp),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, "oracle"),
-			}, commonArgs...),
+			name:   "Post a price",
+			token0: common.GovStablePool.Token0,
+			token1: common.GovStablePool.Token1,
+			price:  "30000",
+
 			expectErr:    false,
 			respType:     &sdk.TxResponse{},
 			expectedCode: 0,
@@ -177,7 +175,15 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 			cmd := cli.CmdPostPrice()
 			clientCtx := val.ClientCtx
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			args := append([]string{
+				tc.token0,
+				tc.token1,
+				tc.price,
+				strconv.Itoa(farAwayTimestamp),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, "oracle"),
+			}, commonArgs...)
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -189,13 +195,9 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
-				reserveAssets, err := testutilcli.QueryPrice(val.ClientCtx, common.GovStablePool.Token0,
-					common.GovStablePool.Token1)
-				if err != nil {
-					fmt.Println(err)
-				}
-				fmt.Println(reserveAssets)
-				s.Require().Equal(0, 1)
+				reserveAssets, err := testutilcli.QueryPrice(val.ClientCtx, tc.token0, tc.token1)
+				s.Require().NoError(err)
+				s.Require().Equal(reserveAssets.RawPrices[0].Price, sdk.MustNewDecFromStr(tc.price))
 			}
 		})
 	}
