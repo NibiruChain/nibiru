@@ -124,7 +124,7 @@ func (s IntegrationTestSuite) fillWalletFromValidator(
 	return addr
 }
 
-func (s IntegrationTestSuite) TestMintStableCmd() {
+func (s IntegrationTestSuite) TestOracle() {
 	val := s.network.Validators[0]
 
 	_, err := val.ClientCtx.Keyring.NewAccount(
@@ -157,7 +157,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		expectedCode uint32
 	}{
 		{
-			name:   "Post a price",
+			name:   "Post a price - Happy path",
 			token0: common.GovStablePool.Token0,
 			token1: common.GovStablePool.Token1,
 			price:  "30000",
