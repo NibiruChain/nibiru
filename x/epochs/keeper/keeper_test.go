@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type KeeperTestSuite struct {
