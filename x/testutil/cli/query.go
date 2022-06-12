@@ -68,7 +68,7 @@ func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.A
 	return queryResp, nil
 }
 
-func QueryPrice(ctx client.Context, token0 string, token1 string) (pricefeedtypes.QueryRawPricesResponse, error) {
+func QueryRawPrices(ctx client.Context, token0 string, token1 string) (pricefeedtypes.QueryRawPricesResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
 		pricefeedcli.CmdRawPrices(),

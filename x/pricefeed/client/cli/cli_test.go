@@ -195,7 +195,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
-				reserveAssets, err := testutilcli.QueryPrice(val.ClientCtx, tc.token0, tc.token1)
+				reserveAssets, err := testutilcli.QueryRawPrices(val.ClientCtx, tc.token0, tc.token1)
 				s.Require().NoError(err)
 				s.Require().Equal(reserveAssets.RawPrices[0].Price, sdk.MustNewDecFromStr(tc.price))
 			}
