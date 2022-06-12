@@ -373,9 +373,6 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	val := s.network.Validators[0]
 	pair := common.TestStablePool
 
-	// Check status: vpool reserve assets, balances, positions
-	// s.checkStatus(val, pair, s.users)
-
 	// Open a position with first user
 	s.T().Log("opening a position with user 1....")
 	args := []string{
@@ -392,9 +389,6 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
 	s.Require().NoError(err)
-
-	// Check status: vpool reserve assets, balances, positions
-	// s.checkStatus(val, pair, s.users)
 
 	// Remove margin to trigger bad debt on user 1
 	s.T().Log("removing margin on user 1....")
