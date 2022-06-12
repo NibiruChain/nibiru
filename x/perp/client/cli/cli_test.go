@@ -88,16 +88,16 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis.Vpools = []*vpooltypes.Pool{
 		{
 			Pair:                  "ubtc:unibi",
-			BaseAssetReserve:      sdk.MustNewDecFromStr("10000000"),
-			QuoteAssetReserve:     sdk.MustNewDecFromStr("60000000000"),
+			BaseAssetReserve:      sdk.NewDec(10_000_000),
+			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 		{
 			Pair:                  "eth:unibi",
-			BaseAssetReserve:      sdk.MustNewDecFromStr("10000000"),
-			QuoteAssetReserve:     sdk.MustNewDecFromStr("60000000000"),
+			BaseAssetReserve:      sdk.NewDec(10_000_000),
+			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -108,9 +108,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
 
 			// below sets any trade is allowed
-			TradeLimitRatio:       sdk.MustNewDecFromStr("10000000"), // 10000000 * 100%
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("10000000"), // 1_000_000 is 1
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("10000000"),
+			TradeLimitRatio:       sdk.NewDec(10_000_000), // 10000000 * 100%
+			FluctuationLimitRatio: sdk.NewDec(10_000_000), // 1_000_000 is 1
+			MaxOracleSpreadRatio:  sdk.NewDec(10_000_000),
 		},
 	}
 	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
