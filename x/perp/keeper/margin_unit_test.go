@@ -432,19 +432,27 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				t.Log("build msg")
 				traderAddr := sample.AccAddress()
 				assetPair := common.AssetPair{
-					Token0: "osmo",
-					Token1: "nusd",
+					Token0: "uosmo",
+					Token1: "unusd",
 				}
+
+				t.Log("set pair metadata")
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair: assetPair.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.ZeroDec(),
+					},
+				})
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, assetPair).Return(true)
+
+				t.Log("build msg")
 				msg := &types.MsgAddMargin{
 					Sender:    traderAddr.String(),
 					TokenPair: assetPair.String(),
 					Margin:    sdk.NewInt64Coin(assetPair.GetQuoteTokenDenom(), 600),
 				}
-
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, assetPair).Return(true)
 
 				t.Log("set a position")
 				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
@@ -479,10 +487,11 @@ func TestAddMargin(t *testing.T) {
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()
+
 				msg := &types.MsgAddMargin{
 					Sender:    traderAddr.String(),
 					TokenPair: assetPair.String(),
-					Margin:    sdk.NewCoin("unusd", sdk.NewInt(100)),
+					Margin:    sdk.NewInt64Coin("unusd", 100),
 				}
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, assetPair).
@@ -507,29 +516,126 @@ func TestAddMargin(t *testing.T) {
 					BlockNumber:                         ctx.BlockHeight(),
 				})
 
+				t.Log("mock bankKeeper")
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
 					ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(msg.Margin),
 				).Return(nil)
 
 				t.Log("execute AddMargin")
-				_, err = perpKeeper.AddMargin(goCtx, msg)
-
+				resp, err := perpKeeper.AddMargin(goCtx, msg)
 				require.NoError(t, err)
 
+				t.Log("assert correct response")
+				assert.EqualValues(t, msg.Margin, resp.MarginAdded)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
+				assert.EqualValues(t, sdk.NewDec(600), resp.Position.Margin)
+				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.OpenNotional)
+				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.Size_)
+				assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
+				assert.EqualValues(t, assetPair.String(), resp.Position.Pair)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+
 				t.Log("Verify correct events emitted")
-				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
-					Pair:           msg.TokenPair,
-					TraderAddress:  traderAddr,
-					MarginAmount:   msg.Margin.Amount,
-					FundingPayment: sdk.ZeroDec(),
-				})
+				testutilevents.RequireHasTypedEvent(t, ctx,
+					&types.MarginChangedEvent{
+						Pair:           msg.TokenPair,
+						TraderAddress:  traderAddr,
+						MarginAmount:   msg.Margin.Amount,
+						FundingPayment: sdk.ZeroDec(),
+					},
+				)
 
 				pos, err := perpKeeper.GetPosition(ctx, assetPair, traderAddr)
 				require.NoError(t, err)
-
-				assert.EqualValues(t, sdk.NewDec(600).String(), pos.Margin.String())
-				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
 				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+				assert.EqualValues(t, sdk.NewDec(600), pos.Margin)
+				assert.EqualValues(t, sdk.NewDec(1_000), pos.OpenNotional)
+				assert.EqualValues(t, sdk.NewDec(1_000), pos.Size_)
+				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+				assert.EqualValues(t, assetPair.String(), pos.Pair)
+				assert.EqualValues(t, sdk.ZeroDec(), pos.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, ctx.BlockHeight(), pos.BlockNumber)
+			},
+		},
+		{
+			name: "happy path - with funding payment",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+
+				assetPair, err := common.NewAssetPairFromStr("uosmo:unusd")
+				require.NoError(t, err)
+
+				traderAddr := sample.AccAddress()
+
+				msg := &types.MsgAddMargin{
+					Sender:    traderAddr.String(),
+					TokenPair: assetPair.String(),
+					Margin:    sdk.NewInt64Coin("unusd", 100),
+				}
+
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, assetPair).
+					AnyTimes().Return(true)
+
+				t.Log("set pair metadata")
+				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+					Pair: assetPair.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.MustNewDecFromStr("0.001"),
+					},
+				})
+
+				t.Log("set position")
+				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
+					TraderAddress:                       traderAddr.String(),
+					Pair:                                assetPair.String(),
+					Size_:                               sdk.NewDec(1_000),
+					OpenNotional:                        sdk.NewDec(1_000),
+					Margin:                              sdk.NewDec(500),
+					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                         ctx.BlockHeight(),
+				})
+
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+					ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(msg.Margin),
+				).Return(nil)
+
+				t.Log("execute AddMargin")
+				resp, err := perpKeeper.AddMargin(sdk.WrapSDKContext(ctx), msg)
+				require.NoError(t, err)
+
+				t.Log("assert correct response")
+				assert.EqualValues(t, sdk.NewInt64Coin("unusd", 100), resp.MarginAdded)
+				assert.EqualValues(t, sdk.NewDec(1), resp.FundingPayment)
+				assert.EqualValues(t, sdk.NewDec(599), resp.Position.Margin)
+				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.OpenNotional)
+				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.Size_)
+				assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
+				assert.EqualValues(t, assetPair.String(), resp.Position.Pair)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.001"), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+
+				t.Log("Verify correct events emitted")
+				testutilevents.RequireHasTypedEvent(t, ctx,
+					&types.MarginChangedEvent{
+						Pair:           msg.TokenPair,
+						TraderAddress:  traderAddr,
+						MarginAmount:   msg.Margin.Amount,
+						FundingPayment: sdk.NewDec(1),
+					},
+				)
+
+				t.Log("assert correct final position")
+				pos, err := perpKeeper.GetPosition(ctx, assetPair, traderAddr)
+				require.NoError(t, err)
+				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+				assert.EqualValues(t, sdk.NewDec(599), pos.Margin)
+				assert.EqualValues(t, sdk.NewDec(1_000), pos.OpenNotional)
+				assert.EqualValues(t, sdk.NewDec(1_000), pos.Size_)
+				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+				assert.EqualValues(t, assetPair.String(), pos.Pair)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.001"), pos.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, ctx.BlockHeight(), pos.BlockNumber)
 			},
 		},
 	}
