@@ -165,7 +165,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -188,7 +188,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -211,7 +211,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -235,7 +235,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -259,7 +259,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -280,7 +280,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -301,7 +301,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -324,7 +324,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; negative pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -347,7 +347,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -371,7 +371,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; negative pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -395,7 +395,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -416,7 +416,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -533,7 +533,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "max pnl, pick spot price",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -567,7 +567,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "max pnl, pick twap",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -601,7 +601,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "min pnl, pick spot price",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -635,7 +635,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "min pnl, pick twap",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: sample.AccAddress(),
 				Pair:          "BTC:NUSD",
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -703,7 +703,7 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went up in value, now its price is 1BTC=2NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(100), // 100 BTC
 				Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -776,7 +776,7 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went down in value, now its price is 1.01BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(100), // 100 BTC
 				Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -852,7 +852,7 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 10 NUSD at 10x leverage
 			// funding payment causes negative margin aka bad debt
 			initPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(110), // 110 BTC
 				Margin:                              sdk.NewDec(11),  // 11 NUSD
@@ -927,7 +927,7 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went down in value, now its price is 2BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-100), // -100 BTC
 				Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1001,7 +1001,7 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went up in value, now its price is 0.99BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-100), // 100 BTC
 				Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1078,7 +1078,7 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 105 NUSD at 10x leverage
 			// funding payment causes bad debt
 			initPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-100), // 100 BTC
 				Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1184,7 +1184,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC doubles in value, now its price is 1 BTC = 2 NUSD
 			// user has position notional value of 200 NUSD and unrealized PnL of +100 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(100), // 100 BTC
 				Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -1214,7 +1214,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC drops in value, now its price is 1 BTC = 1 NUSD
 			// user has position notional value of 100 NUSD and unrealized PnL of -5 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(100),               // 100 BTC
 				Margin:                              sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
@@ -1244,7 +1244,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC drops in value, now its price is 1 BTC = 1 NUSD
 			// user has position notional value of 100 NUSD and unrealized PnL of -50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(100), // 100 BTC
 				Margin:                              sdk.NewDec(15),  // 15 NUSD
@@ -1276,7 +1276,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC drops in value, now its price is 1.5 BTC = 1 NUSD
 			// user has position notional value of 100 NUSD and unrealized PnL of +50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-150), // -150 BTC
 				Margin:                              sdk.NewDec(15),   // 15 NUSD
@@ -1306,7 +1306,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC increases in value, now its price is 1.05 BTC = 1 NUSD
 			// user has position notional value of 105 NUSD and unrealized PnL of -5 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-100), // -100 BTC
 				Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1336,7 +1336,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC increases in value, now its price is 1.5 BTC = 1 NUSD
 			// user has position notional value of 150 NUSD and unrealized PnL of -50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-100), // -100 BTC
 				Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1367,13 +1367,10 @@ func TestClosePositionEntirely(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("set up initial position")
-			trader, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
-			require.NoError(t, err)
-
 			perpKeeper.SetPosition(
 				ctx,
 				tc.initialPosition.GetAssetPair(),
-				trader,
+				tc.initialPosition.TraderAddress,
 				&tc.initialPosition,
 			)
 
@@ -1460,7 +1457,7 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of 50 NUSD, unrealized PnL of +50 NUSD
 			//   position notional value of 100 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(100), // 100 BTC
 				Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -1494,7 +1491,7 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -0.25 NUSD, unrealized PnL of -4.75 NUSD,
 			//   position notional value of 95 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(105),               // 105 BTC
 				Margin:                              sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
@@ -1528,7 +1525,7 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -25 NUSD, unrealized PnL of -25 NUSD,
 			//   position notional value of 50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(100), // 100 BTC
 				Margin:                              sdk.NewDec(15),  // 15 NUSD
@@ -1564,7 +1561,7 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of 0.25 NUSD, unrealized PnL of 4.75 NUSD,
 			//   position notional value of 95 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-105),              // -105 BTC
 				Margin:                              sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
@@ -1598,7 +1595,7 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -0.25 NUSD, unrealized PnL of -4.75 NUSD
 			//   position notional value of 99.75 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-100), // -100 BTC
 				Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1632,7 +1629,7 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -25 NUSD, unrealized PnL of -25 NUSD
 			//   position notional value of 75 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(-100), // -100 BTC
 				Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -1738,7 +1735,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -1746,12 +1743,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1831,7 +1826,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(11),  // 10.5 NUSD
@@ -1839,12 +1834,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1928,7 +1921,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(15),  // 15 NUSD
@@ -1936,12 +1929,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -1998,7 +1989,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -2006,12 +1997,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2092,7 +2081,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(100), // 100 BTC
 					Margin:                              sdk.NewDec(10),  // 10 NUSD
@@ -2100,12 +2089,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2164,7 +2151,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-150), // -150 BTC
 					Margin:                              sdk.NewDec(15),   // 15 NUSD
@@ -2172,12 +2159,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2257,7 +2242,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -2265,12 +2250,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2350,7 +2333,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-100), // -100 BTC
 					Margin:                              sdk.NewDec(10),   // 10 NUSD
@@ -2358,12 +2341,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2420,7 +2401,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-150), // -150 BTC
 					Margin:                              sdk.NewDec(15),   // 15 NUSD
@@ -2428,12 +2409,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 
@@ -2514,7 +2493,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 				t.Log("set up initial position")
 				currentPosition := types.Position{
-					TraderAddress:                       sample.AccAddress().String(),
+					TraderAddress:                       sample.AccAddress(),
 					Pair:                                "BTC:NUSD",
 					Size_:                               sdk.NewDec(-150), // -150 BTC
 					Margin:                              sdk.NewDec(15),   // 15 NUSD
@@ -2522,12 +2501,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         0,
 				}
-				trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-				require.NoError(t, err)
 				perpKeeper.SetPosition(
 					ctx,
 					currentPosition.GetAssetPair(),
-					trader,
+					currentPosition.TraderAddress,
 					&currentPosition,
 				)
 

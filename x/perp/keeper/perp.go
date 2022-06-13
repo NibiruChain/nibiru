@@ -10,7 +10,7 @@ import (
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) ClearPosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) error {
 	return k.Positions().Update(ctx, &types.Position{
-		TraderAddress:                       traderAddr.String(),
+		TraderAddress:                       traderAddr,
 		Pair:                                pair.String(),
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
@@ -43,12 +43,6 @@ func (k Keeper) SettlePosition(
 		return sdk.Coins{}, err
 	}
 
-	// Validate trader address
-	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-	if err != nil {
-		return sdk.NewCoins(), nil
-	}
-
 	if currentPosition.Size_.IsZero() {
 		return sdk.NewCoins(), nil
 	}
@@ -56,7 +50,7 @@ func (k Keeper) SettlePosition(
 	err = k.ClearPosition(
 		ctx,
 		tokenPair,
-		traderAddr,
+		currentPosition.TraderAddress,
 	)
 	if err != nil {
 		return
@@ -93,7 +87,7 @@ func (k Keeper) SettlePosition(
 		err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx,
 			types.VaultModuleAccount,
-			traderAddr,
+			currentPosition.TraderAddress,
 			transferredCoins,
 		)
 		if err != nil {
@@ -101,11 +95,13 @@ func (k Keeper) SettlePosition(
 		}
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(&types.PositionSettledEvent{
-		Pair:          tokenPair.String(),
-		TraderAddress: traderAddr,
-		SettledCoins:  transferredCoins,
-	})
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.PositionSettledEvent{
+			Pair:          tokenPair.String(),
+			TraderAddress: currentPosition.TraderAddress,
+			SettledCoins:  transferredCoins,
+		},
+	)
 
 	return transferredCoins, err
 }

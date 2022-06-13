@@ -168,8 +168,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						TraderAddress: trader,
+						Pair:          pair.String(),
+						Margin:        sdk.ZeroDec(),
+						OpenNotional:  sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
 					BadDebt:                   sdk.ZeroDec(),
@@ -204,8 +206,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						TraderAddress: trader,
+						Pair:          pair.String(),
+						Margin:        sdk.ZeroDec(),
+						OpenNotional:  sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
 					BadDebt:                   sdk.ZeroDec(),
@@ -242,7 +246,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader.String(),
+						TraderAddress: trader,
 						Pair:          pair.String(),
 						Margin:        sdk.ZeroDec(),
 						OpenNotional:  sdk.ZeroDec(),
@@ -278,8 +282,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedEvent: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress: trader.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
+						TraderAddress: trader,
+						Pair:          pair.String(),
+						Margin:        sdk.ZeroDec(),
+						OpenNotional:  sdk.ZeroDec(),
 					},
 					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
 					BadDebt:                   sdk.ZeroDec(),
@@ -528,7 +534,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress:                       trader.String(),
+						TraderAddress:                       trader,
 						Pair:                                pair.String(),
 						Size_:                               sdk.MustNewDecFromStr("14999.999999925000000001"),
 						Margin:                              sdk.MustNewDecFromStr("50000"),
@@ -574,7 +580,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			internal_position_response_event: events.NewInternalPositionResponseEvent(
 				&types.PositionResp{
 					Position: &types.Position{
-						TraderAddress:                       trader.String(),
+						TraderAddress:                       trader,
 						Pair:                                pair.String(),
 						Size_:                               sdk.MustNewDecFromStr("-15000.000000115000000001"),
 						Margin:                              sdk.MustNewDecFromStr("50000"),

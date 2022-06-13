@@ -107,7 +107,7 @@ func TestGetMarginRatio(t *testing.T) {
 		{
 			name: "margin without price changes",
 			position: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
@@ -120,7 +120,7 @@ func TestGetMarginRatio(t *testing.T) {
 		{
 			name: "margin with price changes",
 			position: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "BTC:NUSD",
 				Size_:                               sdk.NewDec(10),
 				OpenNotional:                        sdk.NewDec(10),
@@ -234,7 +234,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
 				perpKeeper.SetPosition(ctx, pair, trader, &types.Position{
-					TraderAddress:                       trader.String(),
+					TraderAddress:                       trader,
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -277,7 +277,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
 				perpKeeper.SetPosition(ctx, pair, traderAddr, &types.Position{
-					TraderAddress:                       traderAddr.String(),
+					TraderAddress:                       traderAddr,
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
@@ -340,7 +340,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
 				perpKeeper.SetPosition(ctx, pair, traderAddr, &types.Position{
-					TraderAddress:                       traderAddr.String(),
+					TraderAddress:                       traderAddr,
 					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
@@ -380,7 +380,7 @@ func TestRemoveMargin(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
-				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+				assert.EqualValues(t, traderAddr, pos.TraderAddress)
 			},
 		},
 	}
@@ -448,7 +448,7 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set a position")
 				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
-					TraderAddress:                       traderAddr.String(),
+					TraderAddress:                       traderAddr,
 					Pair:                                assetPair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
@@ -498,7 +498,7 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set position")
 				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
-					TraderAddress:                       traderAddr.String(),
+					TraderAddress:                       traderAddr,
 					Pair:                                assetPair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
@@ -529,7 +529,7 @@ func TestAddMargin(t *testing.T) {
 
 				assert.EqualValues(t, sdk.NewDec(600).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
-				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+				assert.EqualValues(t, traderAddr, pos.TraderAddress)
 			},
 		},
 	}

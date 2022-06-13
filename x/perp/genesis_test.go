@@ -40,7 +40,7 @@ func TestGenesis(t *testing.T) {
 		// create some positions
 		for i := int64(0); i < 100; i++ {
 			require.NoError(t, app.PerpKeeper.Positions().Create(ctx, &types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
+				TraderAddress:                       sample.AccAddress(),
 				Pair:                                "NIBI:USDN",
 				Size_:                               sdk.NewDec(i + 1),
 				Margin:                              sdk.NewDec(i * 2),

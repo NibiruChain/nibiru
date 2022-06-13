@@ -34,21 +34,28 @@ message Params {
 // GenesisState defines the perp  module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
+
   repeated cosmos.base.v1beta1.Coin vault_balance = 2 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+
   repeated cosmos.base.v1beta1.Coin perp_ef_balance = 3 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+
   repeated cosmos.base.v1beta1.Coin fee_pool_balance = 4 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+
   repeated PairMetadata pair_metadata = 5;
+
   repeated Position positions = 6;
+
   repeated PrepaidBadDebt prepaid_bad_debts = 7;
+
   repeated string whitelisted_addresses = 8;
 }
 
@@ -56,7 +63,9 @@ message GenesisState {
 // the virtual liquidity pools.
 message Position {
   // address identifies the address owner of this position
-  string trader_address = 1;
+  bytes trader_address = 1 [
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
+  ];
 
   // pair identifies the pair associated with this position
   string pair = 2;
@@ -93,21 +102,27 @@ message PositionResp {
   string exchanged_quote_asset_amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string bad_debt = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string exchanged_position_size = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string funding_payment = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string realized_pnl = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string margin_to_vault = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
   string unrealized_pnl_after = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
@@ -164,6 +179,7 @@ enum MarginCalculationPriceOption {
 
 message PairMetadata {
   string pair = 1;
+
   repeated string cumulative_premium_fractions = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
@@ -171,6 +187,7 @@ message PairMetadata {
 
 message PrepaidBadDebt {
   string denom = 1;
+  
   string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];

@@ -245,7 +245,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 				tokenPair,
 				traderAddr,
 				&types.Position{
-					TraderAddress: traderAddr.String(),
+					TraderAddress: traderAddr,
 					Pair:          tokenPair.String(),
 					Size_:         sdk.NewDec(9999),
 					Margin:        tc.initialMargin.ToDec(),

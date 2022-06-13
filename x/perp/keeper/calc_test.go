@@ -76,8 +76,10 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					TraderAddress: trader.String(), Pair: pair.String(),
-					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
+					TraderAddress:                       trader,
+					Pair:                                pair.String(),
+					Margin:                              sdk.NewDec(100),
+					Size_:                               sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[0],
 				}
 
@@ -130,8 +132,10 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				})
 
 				pos := &types.Position{
-					TraderAddress: trader.String(), Pair: pair.String(),
-					Margin: sdk.NewDec(100), Size_: sdk.NewDec(200),
+					TraderAddress:                       trader,
+					Pair:                                pair.String(),
+					Margin:                              sdk.NewDec(100),
+					Size_:                               sdk.NewDec(200),
 					LastUpdateCumulativePremiumFraction: premiumFractions[1],
 				}
 

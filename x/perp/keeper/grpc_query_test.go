@@ -27,7 +27,7 @@ func TestQueryPosition_Ok(t *testing.T) {
 	require.NoError(t, err)
 
 	oldPosition := &types.Position{
-		TraderAddress: trader.String(),
+		TraderAddress: trader,
 		Pair:          vpoolPair.String(),
 		Size_:         sdk.NewDec(10),
 		OpenNotional:  sdk.NewDec(10),

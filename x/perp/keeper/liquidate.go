@@ -258,11 +258,6 @@ func (k Keeper) ExecutePartialLiquidation(
 ) (types.LiquidateResp, error) {
 	params := k.GetParams(ctx)
 
-	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
-	if err != nil {
-		return types.LiquidateResp{}, err
-	}
-
 	var baseAssetDir vpooltypes.Direction
 	if currentPosition.Size_.IsPositive() {
 		baseAssetDir = vpooltypes.Direction_ADD_TO_POOL
@@ -297,8 +292,12 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.GetLiquidationFeeAsDec())
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.SetPosition(ctx, currentPosition.GetAssetPair(), traderAddr,
-		positionResp.Position)
+	k.SetPosition(
+		ctx,
+		currentPosition.GetAssetPair(),
+		currentPosition.TraderAddress,
+		positionResp.Position,
+	)
 
 	// Compute splits for the liquidation fee
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)
