@@ -11,7 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
@@ -25,7 +25,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 			name: "open pos - uninitialized pool raised pair not supported error",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				pair, err := common.NewAssetPairFromStr("xxx:yyy")
 				require.NoError(t, err)
 
@@ -46,7 +46,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 			name: "open pos - vpool not set on the perp PairMetadata ",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				pair, err := common.NewAssetPairFromStr("xxx:yyy")
 				require.NoError(t, err)
 
@@ -81,7 +81,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 			name: "open pos - happy path 1",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				pair, err := common.NewAssetPairFromStr("xxx:yyy")
 				require.NoError(t, err)
 
@@ -142,7 +142,7 @@ func TestAddMargin_ShouldRaiseError(t *testing.T) {
 		{
 			name: "msg denom differs from pair quote asset",
 			test: func() {
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 
 				tokenPair, err := common.NewAssetPairFromStr("atom:nusd")
 				require.NoError(t, err)
@@ -202,7 +202,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 
 			tokenPair, err := common.NewAssetPairFromStr("atom:nusd")
 			require.NoError(t, err)
@@ -279,7 +279,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				removeAmt := sdk.NewInt(-5)
 
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
@@ -296,7 +296,7 @@ func TestRemoveMargin(t *testing.T) {
 		{
 			name: "zero margin remove - fail",
 			test: func() {
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
@@ -320,7 +320,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				removeAmt := sdk.NewInt(5)
 
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
@@ -338,7 +338,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "pool exists but trader doesn't have position - fail",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("osmo:nusd")
 				require.NoError(t, err)
@@ -371,7 +371,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "remove margin from healthy position - fast integration test 1",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testutil.NewNibiruApp(true)
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				traderAddr := sample.AccAddress()
 				pair, err := common.NewAssetPairFromStr("xxx:yyy")
 				require.NoError(t, err)

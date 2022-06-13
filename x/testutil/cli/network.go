@@ -45,7 +45,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -144,7 +144,7 @@ func DefaultConfig() Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return testutil.NewTestApp(true)
+			return testutilapp.NewTestApp(true)
 		},
 		GenesisState:  app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit: time.Second / 2,
@@ -159,6 +159,7 @@ func DefaultConfig() Config {
 			sdk.NewCoin(common.StableDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.GovDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.CollDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.TestTokenDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: storetypes.PruningOptionNothing,
 		CleanupDir:      true,

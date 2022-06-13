@@ -12,11 +12,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/incentivization"
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 func TestAppModule_InitGenesis_ExportGenesis(t *testing.T) {
-	app := testutil.NewTestApp(false)
+	app := testutilapp.NewTestApp(false)
 
 	am := incentivization.NewAppModule(app.AppCodec(), app.IncentivizationKeeper, app.AccountKeeper)
 	ctxUncached := app.NewContext(false, tmproto.Header{Time: time.Now()})
