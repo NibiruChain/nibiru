@@ -17,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
-	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
@@ -50,15 +49,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg = testutilcli.DefaultConfig()
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
-
-	lockupGenesis := lockuptypes.DefaultGenesis()
-	lockupGenesis.Locks = append(lockupGenesis.Locks, &lockuptypes.Lock{
-		LockId:   0,
-		Owner:    "",
-		Duration: 1 * time.Hour,
-		EndTime:  time.Time{},
-		Coins:    sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(100))),
-	})
 
 	s.cfg.GenesisState = genesisState
 	s.cfg.StartingTokens = sdk.NewCoins(
