@@ -11,12 +11,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestLockState(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	addr := sample.AccAddress()
 	lock := &types.Lock{
 		LockId:   0,
@@ -62,7 +62,7 @@ func Test_LocksState_232(t *testing.T) {
 	addr1 := sdk.AccAddress{197, 74, 130, 194, 229, 233, 119, 113, 119, 172, 13, 56, 95, 110, 234, 199, 255, 102, 24, 142}
 	addr2 := sdk.AccAddress{198, 74, 130, 194, 229, 233, 119, 113, 119, 172, 13, 56, 95, 110, 234, 199, 255, 102, 24, 143}
 
-	app, _ := testutil.NewNibiruApp(false)
+	app, _ := testutilapp.NewNibiruApp(false)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	// we create two locks for each addr one expired the other one not
