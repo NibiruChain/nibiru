@@ -1,0 +1,20 @@
+syntax = "proto3";
+package NibiruChain.pricefeed.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
+option (gogoproto.equal_all)         = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// WhitelistPriceOracleProposal is a proposal to whitelist an address that can propose prices.
+message WhitelistPriceOracleProposal {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  string title       = 1;
+  string description = 2;
+}
+
