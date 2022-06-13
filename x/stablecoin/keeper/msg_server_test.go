@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	sckeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestNewMsgServerImpl(t *testing.T) {
 		})
 	}
 
-	nibiruApp, _ := testutil.NewNibiruApp(true)
+	nibiruApp, _ := testutilapp.NewNibiruApp(true)
 	testCases := []TestCase{
 		{
 			name:   "Default NibiruApp.StablecoinKeeper, should pass",
