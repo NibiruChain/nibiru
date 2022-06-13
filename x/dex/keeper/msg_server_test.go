@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -153,7 +153,7 @@ func TestCreatePool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 			if tc.creatorAddr == nil {
@@ -298,7 +298,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -425,7 +425,7 @@ func TestMsgServerExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -627,7 +627,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 			// fund pool account

@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 func TestGetParams(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)

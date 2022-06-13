@@ -9,12 +9,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testkeeper"
 )
 
 func TestPostPrice(t *testing.T) {
-	k, ctx := testkeeper.PricefeedKeeper(t)
+	k, ctx := testutilkeeper.PricefeedKeeper(t)
 	msgSrv := keeper.NewMsgServerImpl(k)
 
 	_, addrs := sample.PrivKeyAddressPairs(4)

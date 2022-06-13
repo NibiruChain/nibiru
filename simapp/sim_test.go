@@ -8,7 +8,7 @@ import (
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	testutil "github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 // Profile with:
@@ -52,7 +52,7 @@ func fullAppSimulation(tb testing.TB, is_testing bool) {
 		}
 	}()
 
-	nibiru := testutil.NewTestApp( /*shouldUseDefaultGenesis*/ true)
+	nibiru := testutilapp.NewTestApp( /*shouldUseDefaultGenesis*/ true)
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(

@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 func TestParamsQuery(t *testing.T) {
-	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 	keeper := &nibiruApp.StablecoinKeeper
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()

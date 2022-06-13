@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
@@ -176,7 +176,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			// fund pool account
 			poolAddr := sample.AccAddress()

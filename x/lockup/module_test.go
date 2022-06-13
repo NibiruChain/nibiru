@@ -11,12 +11,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/lockup"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestAppModule_ExportGenesis_ImportGenesis(t *testing.T) {
-	app := testutil.NewTestApp(false)
+	app := testutilapp.NewTestApp(false)
 	am := lockup.NewAppModule(app.AppCodec(), app.LockupKeeper, app.AccountKeeper, app.BankKeeper)
 
 	ctxUncached := app.NewContext(false, tmproto.Header{Time: time.Now()})

@@ -7,7 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/dex"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 )
 
@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	dex.InitGenesis(ctx, app.DexKeeper, genesisState)
 	got := dex.ExportGenesis(ctx, app.DexKeeper)
 	require.NotNil(t, got)

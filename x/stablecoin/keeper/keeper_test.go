@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 
 	"github.com/stretchr/testify/require"
 )
@@ -47,7 +47,7 @@ func TestGetAndSetParams(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testutil.NewNibiruApp(true)
+			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 			stableKeeper := nibiruApp.StablecoinKeeper
 
 			params := tc.requiredParams()
@@ -60,7 +60,7 @@ func TestGetAndSetParams(t *testing.T) {
 
 func TestGetAndSetParams_Errors(t *testing.T) {
 	t.Run("Calling Get without setting causes a panic", func(t *testing.T) {
-		nibiruApp, ctx := testutil.NewNibiruApp(false)
+		nibiruApp, ctx := testutilapp.NewNibiruApp(false)
 		stableKeeper := nibiruApp.StablecoinKeeper
 
 		require.Panics(

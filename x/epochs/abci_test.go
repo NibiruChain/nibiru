@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
@@ -97,7 +97,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		app, ctx = testutil.NewNibiruApp(true)
+		app, ctx = testutilapp.NewNibiruApp(true)
 
 		// On init genesis, default epochs information is set
 		// To check init genesis again, should make it fresh status
@@ -138,7 +138,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
@@ -210,7 +210,7 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	}
 
 	now := time.Now()
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

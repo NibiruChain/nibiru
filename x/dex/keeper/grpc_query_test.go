@@ -10,13 +10,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestParamsQuery(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)
@@ -61,7 +61,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
 			queryServer := keeper.NewQuerier(app.DexKeeper)
@@ -87,7 +87,7 @@ func TestQueryPoolFail(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 			resp, err := queryServer.Pool(sdk.WrapSDKContext(ctx), nil)
 			require.Error(t, err)
@@ -204,7 +204,7 @@ func TestQueryPools(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			for _, existingPool := range tc.existingPools {
 				app.DexKeeper.SetPool(ctx, existingPool)
 			}
@@ -283,7 +283,7 @@ func TestQueryNumPools(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			sender := sample.AccAddress()
 			// need funds to create pools
 			require.NoError(t, simapp.FundAccount(
@@ -357,7 +357,7 @@ func TestQueryPoolParams(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
 			queryServer := keeper.NewQuerier(app.DexKeeper)
@@ -394,7 +394,7 @@ func TestQueryTotalShares(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
@@ -467,7 +467,7 @@ func TestQuerySpotPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
@@ -529,7 +529,7 @@ func TestQueryEstimateSwapExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
@@ -591,7 +591,7 @@ func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
@@ -659,7 +659,7 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
@@ -724,7 +724,7 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
