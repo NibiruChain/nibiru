@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 func NewPriceFeedProposalHandler(k Keeper) govtypes.Handler {
