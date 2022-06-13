@@ -186,7 +186,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
+	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  position.Pair,
 		TraderAddress:         traderAddr,
 		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
@@ -197,7 +197,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		BadDebt:               totalBadDebt,
 	})
 
-	return liquidationResp, nil
+	return liquidationResp, err
 }
 
 func (k Keeper) distributeLiquidateRewards(
@@ -328,7 +328,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
+	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  currentPosition.Pair,
 		TraderAddress:         traderAddr,
 		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
