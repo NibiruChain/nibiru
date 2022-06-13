@@ -14,7 +14,8 @@ message WhitelistPriceOracleProposal {
   option (gogoproto.equal)            = true;
   option (gogoproto.goproto_stringer) = false;
 
-  string title       = 1;
-  string description = 2;
+  string title          = 1;
+  string description    = 2;
+  string oracle_address = 3;
 }
 
