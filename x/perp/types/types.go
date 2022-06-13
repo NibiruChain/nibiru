@@ -26,6 +26,8 @@ var (
 	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
 	ErrPositionZero         = errors.New("position is zero")
 	ErrExchangeStopped      = errors.New("exchange is stopped")
+	// failed to remove margin; position has bad debt
+	ErrFailedRemoveMarginCanCauseBadDebt = errors.New("failed to remove margin; position would have bad debt if removed")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {

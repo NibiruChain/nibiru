@@ -106,27 +106,16 @@ func (k Keeper) afterPositionUpdate(
 	switch {
 	case marginToVaultInt.IsPositive():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
-		err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend))
-		if err != nil {
+		if err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToSend,
-			/* from */ traderAddr,
-			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount))
 	case marginToVaultInt.IsNegative():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(
-			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
-		if err != nil {
+		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
+			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToSend,
-			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-			/* to */ traderAddr,
-		)
 	}
 
 	transferredFee, err := k.transferFee(
@@ -141,7 +130,7 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:         traderAddr.String(),
+		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedPositionSize,
