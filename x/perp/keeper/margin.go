@@ -109,6 +109,7 @@ func (k Keeper) AddMargin(
 
 	position.Margin = remainingMargin.Margin
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
+	position.BlockNumber = ctx.BlockHeight()
 	k.SetPosition(ctx, pair, msgSender, position)
 
 	err = ctx.EventManager().EmitTypedEvent(
@@ -121,7 +122,6 @@ func (k Keeper) AddMargin(
 	)
 
 	return &types.MsgAddMarginResponse{
-		MarginAdded:    msg.Margin,
 		FundingPayment: remainingMargin.FundingPayment,
 		Position:       position,
 	}, err

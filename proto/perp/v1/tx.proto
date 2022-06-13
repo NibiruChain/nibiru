@@ -68,13 +68,11 @@ message MsgAddMargin {
 }
 
 message MsgAddMarginResponse {
-  cosmos.base.v1beta1.Coin margin_added = 1 [(gogoproto.nullable) = false];
-
-  string funding_payment = 2 [
+  string funding_payment = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
-  Position position = 3;
+  Position position = 2;
 }
 
 // -------------------------- Liquidate --------------------------
