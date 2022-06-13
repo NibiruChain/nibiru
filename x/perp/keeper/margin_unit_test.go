@@ -513,7 +513,7 @@ func TestAddMargin(t *testing.T) {
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         ctx.BlockHeight(),
+					BlockNumber:                         1,
 				})
 
 				t.Log("mock bankKeeper")
@@ -526,7 +526,6 @@ func TestAddMargin(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Log("assert correct response")
-				assert.EqualValues(t, msg.Margin, resp.MarginAdded)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
 				assert.EqualValues(t, sdk.NewDec(600), resp.Position.Margin)
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.OpenNotional)
@@ -545,17 +544,6 @@ func TestAddMargin(t *testing.T) {
 						FundingPayment: sdk.ZeroDec(),
 					},
 				)
-
-				pos, err := perpKeeper.GetPosition(ctx, assetPair, traderAddr)
-				require.NoError(t, err)
-				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
-				assert.EqualValues(t, sdk.NewDec(600), pos.Margin)
-				assert.EqualValues(t, sdk.NewDec(1_000), pos.OpenNotional)
-				assert.EqualValues(t, sdk.NewDec(1_000), pos.Size_)
-				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
-				assert.EqualValues(t, assetPair.String(), pos.Pair)
-				assert.EqualValues(t, sdk.ZeroDec(), pos.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, ctx.BlockHeight(), pos.BlockNumber)
 			},
 		},
 		{
@@ -593,7 +581,7 @@ func TestAddMargin(t *testing.T) {
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         ctx.BlockHeight(),
+					BlockNumber:                         1,
 				})
 
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
@@ -605,7 +593,6 @@ func TestAddMargin(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Log("assert correct response")
-				assert.EqualValues(t, sdk.NewInt64Coin("unusd", 100), resp.MarginAdded)
 				assert.EqualValues(t, sdk.NewDec(1), resp.FundingPayment)
 				assert.EqualValues(t, sdk.NewDec(599), resp.Position.Margin)
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.OpenNotional)
@@ -624,18 +611,6 @@ func TestAddMargin(t *testing.T) {
 						FundingPayment: sdk.NewDec(1),
 					},
 				)
-
-				t.Log("assert correct final position")
-				pos, err := perpKeeper.GetPosition(ctx, assetPair, traderAddr)
-				require.NoError(t, err)
-				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
-				assert.EqualValues(t, sdk.NewDec(599), pos.Margin)
-				assert.EqualValues(t, sdk.NewDec(1_000), pos.OpenNotional)
-				assert.EqualValues(t, sdk.NewDec(1_000), pos.Size_)
-				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
-				assert.EqualValues(t, assetPair.String(), pos.Pair)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.001"), pos.LastUpdateCumulativePremiumFraction)
-				assert.EqualValues(t, ctx.BlockHeight(), pos.BlockNumber)
 			},
 		},
 	}
