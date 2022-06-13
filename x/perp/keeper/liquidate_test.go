@@ -6,15 +6,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
-
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
@@ -144,7 +141,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		expectedLiquidatorBalance sdk.Coin
 		expectedPerpEFBalance     sdk.Coin
 		expectedBadDebt           sdk.Dec
-		expectedEvent             sdk.Event
+		expectedPositionResp      types.PositionResp
 	}{
 		{
 			name:           "happy path - Buy",
@@ -165,22 +162,19 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
-			expectedEvent: events.NewInternalPositionResponseEvent(
-				&types.PositionResp{
-					Position: &types.Position{
-						TraderAddress: trader.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
-					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
-					BadDebt:                   sdk.ZeroDec(),
-					ExchangedPositionSize:     sdk.MustNewDecFromStr("-24875.621890547263681592"),
-					FundingPayment:            sdk.ZeroDec(),
-					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.NewDec(-50_000),
-					UnrealizedPnlAfter:        sdk.ZeroDec(),
+			expectedPositionResp: types.PositionResp{
+				Position: &types.Position{
+					TraderAddress: trader.String(), Pair: pair.String(),
+					Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 				},
-				/* function */ "close_position_entirely",
-			),
+				ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
+				BadDebt:                   sdk.ZeroDec(),
+				ExchangedPositionSize:     sdk.MustNewDecFromStr("-24875.621890547263681592"),
+				FundingPayment:            sdk.ZeroDec(),
+				RealizedPnl:               sdk.ZeroDec(),
+				MarginToVault:             sdk.NewDec(-50_000),
+				UnrealizedPnlAfter:        sdk.ZeroDec(),
+			},
 		},
 		{
 			name:         "happy path - Sell",
@@ -201,22 +195,19 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_046_972),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
-			expectedEvent: events.NewInternalPositionResponseEvent(
-				&types.PositionResp{
-					Position: &types.Position{
-						TraderAddress: trader.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
-					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
-					BadDebt:                   sdk.ZeroDec(),
-					ExchangedPositionSize:     sdk.MustNewDecFromStr("25125.628140703517587940"),
-					FundingPayment:            sdk.ZeroDec(),
-					RealizedPnl:               sdk.MustNewDecFromStr("-0.000000000000000001"),
-					MarginToVault:             sdk.MustNewDecFromStr("-49999.999999999999999999"),
-					UnrealizedPnlAfter:        sdk.ZeroDec(),
+			expectedPositionResp: types.PositionResp{
+				Position: &types.Position{
+					TraderAddress: trader.String(), Pair: pair.String(),
+					Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 				},
-				/* function */ "close_position_entirely",
-			),
+				ExchangedQuoteAssetAmount: sdk.NewDec(50_000),
+				BadDebt:                   sdk.ZeroDec(),
+				ExchangedPositionSize:     sdk.MustNewDecFromStr("25125.628140703517587940"),
+				FundingPayment:            sdk.ZeroDec(),
+				RealizedPnl:               sdk.MustNewDecFromStr("-0.000000000000000001"),
+				MarginToVault:             sdk.MustNewDecFromStr("-49999.999999999999999999"),
+				UnrealizedPnlAfter:        sdk.ZeroDec(),
+			},
 		},
 		{
 			/* We open a position for 500k, with a liquidation fee of 50k.
@@ -239,24 +230,21 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
-			expectedEvent: events.NewInternalPositionResponseEvent(
-				&types.PositionResp{
-					Position: &types.Position{
-						TraderAddress: trader.String(),
-						Pair:          pair.String(),
-						Margin:        sdk.ZeroDec(),
-						OpenNotional:  sdk.ZeroDec(),
-					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
-					BadDebt:                   sdk.ZeroDec(),
-					ExchangedPositionSize:     sdk.MustNewDecFromStr("-238095.238095238095238095"),
-					FundingPayment:            sdk.ZeroDec(),
-					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.NewDec(-50),
-					UnrealizedPnlAfter:        sdk.ZeroDec(),
+			expectedPositionResp: types.PositionResp{
+				Position: &types.Position{
+					TraderAddress: trader.String(),
+					Pair:          pair.String(),
+					Margin:        sdk.ZeroDec(),
+					OpenNotional:  sdk.ZeroDec(),
 				},
-				/* function */ "close_position_entirely",
-			),
+				ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
+				BadDebt:                   sdk.ZeroDec(),
+				ExchangedPositionSize:     sdk.MustNewDecFromStr("-238095.238095238095238095"),
+				FundingPayment:            sdk.ZeroDec(),
+				RealizedPnl:               sdk.ZeroDec(),
+				MarginToVault:             sdk.NewDec(-50),
+				UnrealizedPnlAfter:        sdk.ZeroDec(),
+			},
 		},
 		{
 			// Same as above case but for shorts
@@ -275,22 +263,19 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
-			expectedEvent: events.NewInternalPositionResponseEvent(
-				&types.PositionResp{
-					Position: &types.Position{
-						TraderAddress: trader.String(), Pair: pair.String(),
-						Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
-					},
-					ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
-					BadDebt:                   sdk.ZeroDec(),
-					ExchangedPositionSize:     sdk.MustNewDecFromStr("263157.894736842105263158"),
-					FundingPayment:            sdk.ZeroDec(),
-					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.NewDec(-50),
-					UnrealizedPnlAfter:        sdk.ZeroDec(),
+			expectedPositionResp: types.PositionResp{
+				Position: &types.Position{
+					TraderAddress: trader.String(), Pair: pair.String(),
+					Margin: sdk.ZeroDec(), OpenNotional: sdk.ZeroDec(),
 				},
-				/* function */ "close_position_entirely",
-			),
+				ExchangedQuoteAssetAmount: sdk.NewDec(500_000),
+				BadDebt:                   sdk.ZeroDec(),
+				ExchangedPositionSize:     sdk.MustNewDecFromStr("263157.894736842105263158"),
+				FundingPayment:            sdk.ZeroDec(),
+				RealizedPnl:               sdk.ZeroDec(),
+				MarginToVault:             sdk.NewDec(-50),
+				UnrealizedPnlAfter:        sdk.ZeroDec(),
+			},
 		},
 	}
 
@@ -357,9 +342,6 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			liquidator := sample.AccAddress()
 			_, err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
-
-			t.Log("Verify expected values using internal event due to usage of private fns")
-			assert.Contains(t, ctx.EventManager().Events(), tc.expectedEvent)
 
 			t.Log("Check correctness of new position")
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
@@ -487,21 +469,20 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.4")
 
 	testCases := []struct {
-		name                      string
-		side                      types.Side
-		quote                     sdk.Int
-		leverage                  sdk.Dec
-		baseLimit                 sdk.Dec
-		liquidationFee            sdk.Dec
-		traderFunds               sdk.Coin
+		name           string
+		side           types.Side
+		quote          sdk.Int
+		leverage       sdk.Dec
+		baseLimit      sdk.Dec
+		liquidationFee sdk.Dec
+		traderFunds    sdk.Coin
+
 		expectedLiquidatorBalance sdk.Coin
 		expectedPerpEFBalance     sdk.Coin
 		expectedBadDebt           sdk.Dec
-
-		expectedPositionSize    sdk.Dec
-		expectedMarginRemaining sdk.Dec
-
-		internal_position_response_event sdk.Event
+		expectedPositionSize      sdk.Dec
+		expectedMarginRemaining   sdk.Dec
+		expectedPositionResp      types.PositionResp
 	}{
 		{
 			name:           "happy path - Buy",
@@ -525,27 +506,24 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
-			internal_position_response_event: events.NewInternalPositionResponseEvent(
-				&types.PositionResp{
-					Position: &types.Position{
-						TraderAddress:                       trader.String(),
-						Pair:                                pair.String(),
-						Size_:                               sdk.MustNewDecFromStr("14999.999999925000000001"),
-						Margin:                              sdk.MustNewDecFromStr("50000"),
-						OpenNotional:                        sdk.MustNewDecFromStr("29999.999999940000000001"),
-						LastUpdateCumulativePremiumFraction: sdk.OneDec(),
-						BlockNumber:                         1,
-					},
-					ExchangedQuoteAssetAmount: sdk.MustNewDecFromStr("20000.000000059999999999"),
-					BadDebt:                   sdk.ZeroDec(),
-					ExchangedPositionSize:     sdk.MustNewDecFromStr("-9999.999999950000000000"),
-					FundingPayment:            sdk.ZeroDec(),
-					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.ZeroDec(),
-					UnrealizedPnlAfter:        sdk.MustNewDecFromStr("0.000000000000000001"),
+			expectedPositionResp: types.PositionResp{
+				Position: &types.Position{
+					TraderAddress:                       trader.String(),
+					Pair:                                pair.String(),
+					Size_:                               sdk.MustNewDecFromStr("14999.999999925000000001"),
+					Margin:                              sdk.MustNewDecFromStr("50000"),
+					OpenNotional:                        sdk.MustNewDecFromStr("29999.999999940000000001"),
+					LastUpdateCumulativePremiumFraction: sdk.OneDec(),
+					BlockNumber:                         1,
 				},
-				/* function */ "decrease_position",
-			),
+				ExchangedQuoteAssetAmount: sdk.MustNewDecFromStr("20000.000000059999999999"),
+				BadDebt:                   sdk.ZeroDec(),
+				ExchangedPositionSize:     sdk.MustNewDecFromStr("-9999.999999950000000000"),
+				FundingPayment:            sdk.ZeroDec(),
+				RealizedPnl:               sdk.ZeroDec(),
+				MarginToVault:             sdk.ZeroDec(),
+				UnrealizedPnlAfter:        sdk.MustNewDecFromStr("0.000000000000000001"),
+			},
 		},
 		{
 			name:           "happy path - Sell",
@@ -571,27 +549,24 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
-			internal_position_response_event: events.NewInternalPositionResponseEvent(
-				&types.PositionResp{
-					Position: &types.Position{
-						TraderAddress:                       trader.String(),
-						Pair:                                pair.String(),
-						Size_:                               sdk.MustNewDecFromStr("-15000.000000115000000001"),
-						Margin:                              sdk.MustNewDecFromStr("50000"),
-						OpenNotional:                        sdk.MustNewDecFromStr("30000.000000140000000000"),
-						LastUpdateCumulativePremiumFraction: sdk.OneDec(),
-						BlockNumber:                         1,
-					},
-					ExchangedQuoteAssetAmount: sdk.MustNewDecFromStr("19999.999999860000000000"),
-					BadDebt:                   sdk.ZeroDec(),
-					ExchangedPositionSize:     sdk.MustNewDecFromStr("10000.000000010000000000"),
-					FundingPayment:            sdk.ZeroDec(),
-					RealizedPnl:               sdk.ZeroDec(),
-					MarginToVault:             sdk.ZeroDec(),
-					UnrealizedPnlAfter:        sdk.MustNewDecFromStr("-0.000000000000000001"),
+			expectedPositionResp: types.PositionResp{
+				Position: &types.Position{
+					TraderAddress:                       trader.String(),
+					Pair:                                pair.String(),
+					Size_:                               sdk.MustNewDecFromStr("-15000.000000115000000001"),
+					Margin:                              sdk.MustNewDecFromStr("50000"),
+					OpenNotional:                        sdk.MustNewDecFromStr("30000.000000140000000000"),
+					LastUpdateCumulativePremiumFraction: sdk.OneDec(),
+					BlockNumber:                         1,
 				},
-				/* function */ "decrease_position",
-			),
+				ExchangedQuoteAssetAmount: sdk.MustNewDecFromStr("19999.999999860000000000"),
+				BadDebt:                   sdk.ZeroDec(),
+				ExchangedPositionSize:     sdk.MustNewDecFromStr("10000.000000010000000000"),
+				FundingPayment:            sdk.ZeroDec(),
+				RealizedPnl:               sdk.ZeroDec(),
+				MarginToVault:             sdk.ZeroDec(),
+				UnrealizedPnlAfter:        sdk.MustNewDecFromStr("-0.000000000000000001"),
+			},
 		},
 	}
 
@@ -662,9 +637,6 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			liquidator := sample.AccAddress()
 			_, err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
-
-			t.Log("Verify expected values using internal event due to usage of private fns")
-			assert.Contains(t, ctx.EventManager().Events(), tc.internal_position_response_event)
 
 			t.Log("Check correctness of new position")
 			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
