@@ -8,9 +8,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
@@ -103,27 +103,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-/*
-Create a new wallet and attempt to fill it with the required balance.
-Tokens are sent by the validator, 'val'.
-*/
-func (s IntegrationTestSuite) fillWalletFromValidator(
-	addr sdk.AccAddress, balance sdk.Coins, val *testutilcli.Validator,
-) sdk.AccAddress {
-	_, err := banktestutil.MsgSendExec(
-		val.ClientCtx,
-		val.Address,
-		addr,
-		balance,
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutilcli.DefaultFeeString(s.cfg.BondDenom),
-	)
-	s.Require().NoError(err)
-
-	return addr
-}
-
 func (s IntegrationTestSuite) TestGetPriceCmd() {
 	val := s.network.Validators[0]
 
@@ -178,7 +157,8 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 				txResp := tc.respType.(*pftypes.QueryPriceResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 				s.Require().NoError(err)
-				s.Require().Equal(tc.expectedPrice, txResp.Price.Price)
+				s.Assert().Equal(tc.expectedPrice, txResp.Price.Price)
+				s.Assert().Equal(tc.args[0], txResp.Price.PairID)
 			}
 		})
 	}
@@ -191,9 +171,10 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		name string
 		args []string
 
-		expectedPrice sdk.Dec
-		expectErr     bool
-		respType      proto.Message
+		expectedPrice  sdk.Dec
+		expectedExpiry time.Time
+		expectErr      bool
+		respType       proto.Message
 	}{
 		{
 			name: "Get default price of collateral token",
@@ -239,10 +220,18 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 				txResp := tc.respType.(*pftypes.QueryRawPricesResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 				s.Require().NoError(err)
-				s.Require().Equal(tc.expectedPrice, txResp.RawPrices[0].Price)
+				s.Require().Equal(len(txResp.RawPrices), 1)
+				s.Assert().Equal(tc.expectedPrice, txResp.RawPrices[0].Price)
+				s.Assert().Equal(oracleAddress, txResp.RawPrices[0].OracleAddress)
+				// The initial prices are valid for one hour
+				s.Assert().True(expireWithinHours(txResp.RawPrices[0].GetExpiry(), 1))
 			}
 		})
 	}
+}
+func expireWithinHours(t time.Time, hours time.Duration) bool {
+	now := time.Now()
+	return t.After(now) && t.Before(now.Add(hours*time.Hour))
 }
 
 func (s IntegrationTestSuite) TestPairsCmd() {
@@ -280,18 +269,10 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 			txResp := tc.respType.(*pftypes.QueryPairsResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Require().Equal(len(tc.expectedPairs), len(txResp.Pairs))
+			s.Assert().Equal(len(tc.expectedPairs), len(txResp.Pairs))
 
 			for _, p := range txResp.Pairs {
-				found := false
-				for _, ep := range tc.expectedPairs {
-					if ep.PairID == p.PairID {
-						s.Require().Equal(ep, p)
-						found = true
-						break
-					}
-				}
-				s.Require().True(found)
+				s.Assert().Contains(tc.expectedPairs, p)
 			}
 		})
 	}
@@ -329,18 +310,10 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 			txResp := tc.respType.(*pftypes.QueryPricesResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Require().Equal(len(tc.expectedPricePairs), len(txResp.Prices))
+			s.Assert().Equal(len(tc.expectedPricePairs), len(txResp.Prices))
 
 			for _, pp := range txResp.Prices {
-				found := false
-				for _, epp := range tc.expectedPricePairs {
-					if epp.PairID == pp.PairID {
-						s.Require().Equal(epp.Price, pp.Price)
-						found = true
-						break
-					}
-				}
-				s.Require().True(found)
+				s.Assert().Contains(tc.expectedPricePairs, pp)
 			}
 		})
 	}
@@ -400,7 +373,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 				txResp := tc.respType.(*pftypes.QueryOraclesResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 				s.Require().NoError(err)
-				s.Require().Equal(tc.expectedOracles, txResp.Oracles)
+				s.Assert().Equal(tc.expectedOracles, txResp.Oracles)
 			}
 		})
 	}
@@ -419,14 +392,19 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		/* algo */ hd.Secp256k1,
 	)
 	s.Require().NoError(err)
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic("wrongOracle", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	wrongOracleAddress := sdk.AccAddress(info.GetPubKey().Address())
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
 	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin("stake", 100_000_000))
-	s.fillWalletFromValidator(oracle, gasFeeToken, val)
+	_, err = testutilcli.FillWalletFromValidator(wrongOracleAddress, gasFeeToken, val, s.cfg.BondDenom)
+	s.Require().NoError(err)
+	_, err = testutilcli.FillWalletFromValidator(oracle, gasFeeToken, val, s.cfg.BondDenom)
+	s.Require().NoError(err)
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, "oracle"),
 	}
 	testCases := []struct {
 		name string
@@ -435,6 +413,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		expectedPriceForPair map[string]sdk.Dec
 		respType             proto.Message
 		expectedCode         uint32
+		fromOracle           string
 	}{
 		{
 			name: "Set the price of the governance token",
@@ -443,15 +422,25 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedPriceForPair: map[string]sdk.Dec{gov.PairID(): sdk.NewDec(100)},
 			respType:             &sdk.TxResponse{},
+			fromOracle:           "oracle",
 		},
 		{
 			name: "Set the price of the collateral token",
 			args: []string{
 				col.Token0, col.Token1, "0.5", expireInOneHour,
 			},
-			// Why is the collateral price set to 1/price??
 			expectedPriceForPair: map[string]sdk.Dec{col.PairID(): sdk.NewDec(2)},
 			respType:             &sdk.TxResponse{},
+			fromOracle:           "oracle",
+		},
+		{
+			name: "Use invalid oracle",
+			args: []string{
+				col.Token0, col.Token1, "0.5", expireInOneHour,
+			},
+			respType:     &sdk.TxResponse{},
+			expectedCode: 6,
+			fromOracle:   "wrongOracle",
 		},
 		{
 			name: "Set invalid pair returns an error",
@@ -460,6 +449,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedCode: 5,
 			respType:     &sdk.TxResponse{},
+			fromOracle:   "oracle",
 		},
 		{
 			name: "Set expired pair returns an error",
@@ -468,6 +458,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedCode: 3,
 			respType:     &sdk.TxResponse{},
+			fromOracle:   "oracle",
 		},
 	}
 
@@ -478,6 +469,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			cmd := cli.CmdPostPrice()
 			clientCtx := val.ClientCtx
 
+			commonArgs = append(commonArgs, fmt.Sprintf("--%s=%s", flags.FlagFrom, tc.fromOracle))
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
@@ -485,7 +477,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			txResp := tc.respType.(*sdk.TxResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			s.Assert().Equal(tc.expectedCode, txResp.Code, out.String())
 
 			for pairID, price := range tc.expectedPriceForPair {
 				currentPrice, err := testutilcli.QueryRawPrice(clientCtx, pairID)
@@ -493,11 +485,11 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 				for _, rp := range currentPrice.RawPrices {
 					found := false
 					if rp.PairID == pairID {
-						s.Require().Equal(price, rp.Price)
+						s.Assert().Equal(price, rp.Price)
 						found = true
 						break
 					}
-					s.Require().True(found)
+					s.Assert().True(found)
 				}
 			}
 		})
@@ -534,7 +526,7 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 			txResp := tc.respType.(*pftypes.QueryParamsResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Require().Equal(tc.expectedParams, txResp.Params)
+			s.Assert().Equal(tc.expectedParams, txResp.Params)
 		})
 	}
 }

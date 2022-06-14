@@ -15,10 +15,10 @@ func TestMarketsQuery(t *testing.T) {
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.Params{
 		Pairs: []types.Pair{
-			{Token1: "btc", Token0: "usd", Oracles: nil, Active: true},
-			{Token1: "xrp", Token0: "usd", Oracles: nil, Active: true},
-			{Token1: "ada", Token0: "usd", Oracles: []sdk.AccAddress{[]byte("some oracle address")}, Active: true},
-			{Token1: "eth", Token0: "usd", Oracles: []sdk.AccAddress{[]byte("random oracle address")}, Active: false},
+			{Token0: "btc", Token1: "usd", Oracles: nil, Active: true},
+			{Token0: "xrp", Token1: "usd", Oracles: nil, Active: true},
+			{Token0: "ada", Token1: "usd", Oracles: []sdk.AccAddress{[]byte("some oracle address")}, Active: true},
+			{Token0: "eth", Token1: "usd", Oracles: []sdk.AccAddress{[]byte("random oracle address")}, Active: false},
 		},
 	}
 	keeper.SetParams(ctx, params)
