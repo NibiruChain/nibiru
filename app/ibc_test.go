@@ -18,7 +18,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
@@ -29,7 +29,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 	token0, token1 := "uatom", "unibi"
 	oracle := sample.AccAddress()
 	nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedtypes.Params{
