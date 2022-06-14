@@ -66,34 +66,39 @@ func (k Keeper) SetPrice(
 	}
 
 	// TODO: test this behavior when setting the inverse pair
-	pairName := common.RawPoolName([]string{token0, token1})
-	pairID := common.SortedPoolName([]string{token0, token1})
-	if (pairName != pairID) && (!price.Equal(sdk.ZeroDec())) {
-		price = sdk.OneDec().Quo(price)
+	rawPoolName := common.RawPoolName([]string{token0, token1})
+	sortedPoolName := common.SortedPoolName([]string{token0, token1})
+	if rawPoolName != sortedPoolName {
+		// need to invert
+		if price.IsZero() {
+			// cannot divide by zero
+			return types.PostedPrice{}, types.ErrNoValidPrice
+		} else {
+			price = sdk.OneDec().Quo(price)
+		}
 	}
 
-	_, err := k.GetOracle(ctx, pairID, oracle)
+	_, err := k.GetOracle(ctx, sortedPoolName, oracle)
 	if err != nil {
 		return types.PostedPrice{}, err
 	}
 
-	newRawPrice := types.NewPostedPrice(pairID, oracle, price, expiry)
+	newRawPrice := types.NewPostedPrice(sortedPoolName, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
-
-	err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
-		PairId:    pairID,
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
+		PairId:    sortedPoolName,
 		Oracle:    oracle.String(),
 		PairPrice: price,
 		Expiry:    expiry,
-	})
-	if err != nil {
+	}); err != nil {
 		panic(err)
 	}
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(pairID, oracle), k.cdc.MustMarshal(&newRawPrice))
+	store.Set(types.RawPriceKey(sortedPoolName, oracle), k.cdc.MustMarshal(&newRawPrice))
+
 	return newRawPrice, nil
 }
 

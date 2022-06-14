@@ -8,7 +8,6 @@ import (
 
 // x/pricefeed module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "Sample error")
 	// ErrEmptyInput error for empty input
 	ErrEmptyInput = sdkerrors.Register(ModuleName, 2, "Input must not be empty")
 	// ErrExpired error for posted price messages with expired price
