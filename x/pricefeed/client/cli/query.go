@@ -129,7 +129,7 @@ func CmdPairs() *cobra.Command {
 
 func CmdOracles() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "oracles",
+		Use:   "oracles [pair]",
 		Short: "Query oracles",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
