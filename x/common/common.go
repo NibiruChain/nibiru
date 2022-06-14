@@ -70,11 +70,11 @@ func (pair AssetPair) Proper() AssetPair {
 	}
 }
 
-func (pair AssetPair) GetBaseTokenDenom() string {
+func (pair AssetPair) BaseDenom() string {
 	return pair.Token0
 }
 
-func (pair AssetPair) GetQuoteTokenDenom() string {
+func (pair AssetPair) QuoteDenom() string {
 	return pair.Token1
 }
 

@@ -214,7 +214,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 				ctx,
 				traderAddr,
 				sdk.NewCoins(
-					sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), tc.addedMargin),
+					sdk.NewCoin(tokenPair.QuoteDenom(), tc.addedMargin),
 				),
 			)
 			require.NoErrorf(t, err, "fund account call should work")
@@ -256,7 +256,7 @@ func TestAddMargin_HappyPath(t *testing.T) {
 			msg := &types.MsgAddMargin{
 				Sender: traderAddr.String(), TokenPair: tokenPair.String(),
 				Margin: sdk.Coin{
-					Denom:  tokenPair.GetQuoteTokenDenom(),
+					Denom:  tokenPair.QuoteDenom(),
 					Amount: tc.addedMargin}}
 			_, err = nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
 			require.NoError(t, err)
@@ -360,7 +360,7 @@ func TestRemoveMargin(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
 					Sender: trader.String(), TokenPair: pair.String(),
-					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
+					Margin: sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt}}
 				_, err = perpKeeper.RemoveMargin(
 					goCtx, msg)
 				require.Error(t, err)
@@ -432,7 +432,7 @@ func TestRemoveMargin(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
 					Sender: traderAddr.String(), TokenPair: pair.String(),
-					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
+					Margin: sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt}}
 
 				t.Log("'RemoveMargin' from the position")
 				res, err := perpKeeper.RemoveMargin(goCtx, msg)

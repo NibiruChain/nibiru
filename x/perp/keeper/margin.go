@@ -53,14 +53,14 @@ func (k Keeper) AddMargin(
 	}
 
 	// validate margin denom
-	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
+	if msg.Margin.Denom != pair.QuoteDenom() {
 		err = fmt.Errorf("invalid margin denom")
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"margin_denom",
 			msg.Margin.Denom,
 			"quote_token_denom",
-			pair.GetQuoteTokenDenom(),
+			pair.QuoteDenom(),
 		)
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (k Keeper) AddMargin(
 	}
 
 	position.Margin = position.Margin.Add(addedMargin.ToDec())
-	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
+	coinToSend := sdk.NewCoin(pair.QuoteDenom(), addedMargin)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgSender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
@@ -150,14 +150,14 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// validate margin denom
-	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
+	if msg.Margin.Denom != pair.QuoteDenom() {
 		err = fmt.Errorf("invalid margin denom")
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"margin_denom",
 			msg.Margin.Denom,
 			"quote_token_denom",
-			pair.GetQuoteTokenDenom(),
+			pair.QuoteDenom(),
 		)
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (k Keeper) RemoveMargin(
 
 	k.Positions().Set(ctx, pair, traderAddr, position)
 
-	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
+	coinToSend := sdk.NewCoin(pair.QuoteDenom(), msg.Margin.Amount)
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
 	if err != nil {

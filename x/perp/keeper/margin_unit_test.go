@@ -219,7 +219,7 @@ func TestRemoveMargin(t *testing.T) {
 				msg := &types.MsgRemoveMargin{
 					Sender:    trader.String(),
 					TokenPair: pair.String(),
-					Margin:    sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)),
+					Margin:    sdk.NewCoin(pair.QuoteDenom(), sdk.NewInt(600)),
 				}
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
@@ -441,7 +441,7 @@ func TestAddMargin(t *testing.T) {
 				msg := &types.MsgAddMargin{
 					Sender:    traderAddr.String(),
 					TokenPair: assetPair.String(),
-					Margin:    sdk.NewInt64Coin(assetPair.GetQuoteTokenDenom(), 600),
+					Margin:    sdk.NewInt64Coin(assetPair.QuoteDenom(), 600),
 				}
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, assetPair).Return(true)

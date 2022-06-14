@@ -97,13 +97,13 @@ func (k Keeper) OpenPosition(
 	marginToVaultInt := positionResp.MarginToVault.RoundInt()
 	switch {
 	case marginToVaultInt.IsPositive():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
+		coinToSend := sdk.NewCoin(pair.QuoteDenom(), marginToVaultInt)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
 	case marginToVaultInt.IsNegative():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
+		coinToSend := sdk.NewCoin(pair.QuoteDenom(), marginToVaultInt.Abs())
 		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend)); err != nil {
 			return err
@@ -763,7 +763,7 @@ func (k Keeper) transferFee(
 
 	var err error
 	if hasSpread {
-		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread))
+		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.QuoteDenom(), spread))
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, trader, types.PerpEFModuleAccount, spreadCoins)
 		if err != nil {
@@ -771,7 +771,7 @@ func (k Keeper) transferFee(
 		}
 	}
 	if hasToll {
-		tollCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), toll))
+		tollCoins := sdk.NewCoins(sdk.NewCoin(pair.QuoteDenom(), toll))
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, trader, types.FeePoolModuleAccount, tollCoins)
 		if err != nil {

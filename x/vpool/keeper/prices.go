@@ -55,8 +55,8 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (
 ) {
 	currentPrice, err := k.pricefeedKeeper.GetCurrentPrice(
 		ctx,
-		/* token0 */ pair.GetBaseTokenDenom(),
-		/* token1 */ pair.GetQuoteTokenDenom(),
+		/* token0 */ pair.BaseDenom(),
+		/* token1 */ pair.QuoteDenom(),
 	)
 	if err != nil {
 		return sdk.ZeroDec(), err
