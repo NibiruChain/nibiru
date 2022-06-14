@@ -11,8 +11,8 @@ func DefaultGenesis() *GenesisState {
 		Vpools: []*Pool{
 			{
 				Pair:                  "ubtc:unusd",
-				BaseAssetReserve:      sdk.NewDec(10_000_000_000_000),
-				QuoteAssetReserve:     sdk.NewDec(10_000_000_000_000 * 30_000),
+				BaseAssetReserve:      sdk.NewDec(1_000),
+				QuoteAssetReserve:     sdk.NewDec(50_000_000),
 				TradeLimitRatio:       sdk.OneDec(),
 				FluctuationLimitRatio: sdk.OneDec(),
 				MaxOracleSpreadRatio:  sdk.OneDec(),
