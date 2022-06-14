@@ -40,8 +40,11 @@ CHAIN_ID=nibiru-localnet-0
 CHAIN_DIR=./data
 RPC_PORT=26657
 GRPC_PORT=9090
-MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
-GENESIS_COINS=1000000000stake,1000000000validatortoken,1000000000unibi,10000000000000unusd
+VALIDATOR_MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
+SHRIMP_MNEMONIC="item segment elevator fork swim tone search hope enough asthma apology pact embody extra trash educate deposit raccoon giant gift essay able female develop"
+WHALE_MNEMONIC="throw oblige vague twist clutch grunt physical sell conduct blossom owner delay suspect square kidney joy define book boss outside reason silk success you"
+LIQUIDATOR_MNEMONIC="oxygen tattoo pond upgrade barely sudden wheat correct dumb roast glance conduct scene profit female health speak hire north grab allow provide depend away"
+GENESIS_COINS=1000000000stake,1000000000unibi,10000000000000unusd
 
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
@@ -93,14 +96,6 @@ else
   echo_error "Failed to configure broadcast mode"
 fi
 
-# Configure output mode
-echo_info "Configuring output mode..."
-if $BINARY config output json --home $CHAIN_DIR; then
-  echo_success "Successfully configured output mode"
-else
-  echo_error "Failed to configure output mode"
-fi
-
 # Enable API Server
 echo_info "Enabling API server"
 if sed -i '' '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
@@ -126,12 +121,24 @@ else
 fi
 
 echo_info "Adding genesis accounts..."
-echo "$MNEMONIC" | $BINARY keys add validator --recover --home $CHAIN_DIR
-if $BINARY add-genesis-account $($BINARY keys show validator -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR; then
-  echo_success "Successfully added genesis accounts"
-else
-  echo_error "Failed to add genesis accounts"
-fi
+
+# validator
+echo "$VALIDATOR_MNEMONIC" | $BINARY keys add validator --recover --home $CHAIN_DIR
+$BINARY add-genesis-account $($BINARY keys show validator -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
+
+# shrimp
+echo "$SHRIMP_MNEMONIC" | $BINARY keys add shrimp --recover --home $CHAIN_DIR
+$BINARY add-genesis-account $($BINARY keys show shrimp -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
+
+# whale
+echo "$WHALE_MNEMONIC" | $BINARY keys add whale --recover --home $CHAIN_DIR
+$BINARY add-genesis-account $($BINARY keys show whale -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
+
+# liquidator
+echo "$LIQUIDATOR_MNEMONIC" | $BINARY keys add liquidator --home $CHAIN_DIR
+$BINARY add-genesis-account $($BINARY keys show liquidator -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
+
+echo_success "Genesis accounts added"
 
 echo_info "Adding gentx validator..."
 if $BINARY gentx validator 900000000stake --home $CHAIN_DIR --chain-id $CHAIN_ID; then
