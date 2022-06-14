@@ -6,24 +6,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-
 	"github.com/NibiruChain/nibiru/x/common"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-
+	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 )
 
 const (
