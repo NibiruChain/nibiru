@@ -134,7 +134,6 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		expectedPrice sdk.Dec
 		expectErr     bool
 		respType      proto.Message
-		expectedCode  uint32
 	}{
 		{
 			name: "Get default price of collateral token",
@@ -195,7 +194,6 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		expectedPrice sdk.Dec
 		expectErr     bool
 		respType      proto.Message
-		expectedCode  uint32
 	}{
 		{
 			name: "Get default price of collateral token",
@@ -258,7 +256,6 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 
 		expectedPairs pftypes.PairResponses
 		respType      proto.Message
-		expectedCode  uint32
 	}{
 		{
 			name: "Get current pairs",
@@ -310,7 +307,6 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 
 		expectedPricePairs []pftypes.CurrentPriceResponse
 		respType           proto.Message
-		expectedCode       uint32
 	}{
 		{
 			name: "Get current prices",
@@ -364,7 +360,6 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		expectedOracles []string
 		expectErr       bool
 		respType        proto.Message
-		expectedCode    uint32
 	}{
 		{
 			name: "Get the collateral oracles",
