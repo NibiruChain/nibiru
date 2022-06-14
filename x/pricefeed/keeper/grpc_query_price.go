@@ -22,7 +22,7 @@ func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*typ
 	if !found {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
-	tokens := common.DenomsFromPoolName(req.PairId)
+	tokens := common.DenomsFromPairName(req.PairId)
 	token0, token1 := tokens[0], tokens[1]
 	currentPrice, sdkErr := k.GetCurrentPrice(ctx, token0, token1)
 	if sdkErr != nil {

@@ -46,7 +46,7 @@ type PricefeedKeeper interface {
 	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
 	) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
-	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+	GatherCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
 }
 
 type DexKeeper interface {

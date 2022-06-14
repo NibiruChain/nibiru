@@ -125,7 +125,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			app.PricefeedKeeper.SetParams(ctx, markets)
 
-			_, err := app.PricefeedKeeper.SetPrice(
+			_, err := app.PricefeedKeeper.PostRawPrice(
 				ctx,
 				oracle,
 				/* token0 */ common.StableDenom,
@@ -134,7 +134,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
-			err = app.PricefeedKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+			err = app.PricefeedKeeper.GatherCurrentPrices(ctx, common.StableDenom, common.CollDenom)
 			require.NoError(t, err)
 
 			err = app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio)
@@ -176,9 +176,9 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	app.PricefeedKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
-	_, err := app.PricefeedKeeper.SetPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
+	_, err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
-	require.NoError(t, app.PricefeedKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom))
+	require.NoError(t, app.PricefeedKeeper.GatherCurrentPrices(ctx, common.StableDenom, common.CollDenom))
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
 
 	// Mint block #2
@@ -190,7 +190,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	_, err = app.PricefeedKeeper.SetPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
+	_, err = app.PricefeedKeeper.PostRawPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block

@@ -52,7 +52,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // SetPrice updates the posted price for a specific oracle
-func (k Keeper) SetPrice(
+func (k Keeper) PostRawPrice(
 	ctx sdk.Context,
 	oracle sdk.AccAddress,
 	token0 string,
@@ -66,9 +66,9 @@ func (k Keeper) SetPrice(
 	}
 
 	// TODO: test this behavior when setting the inverse pair
-	rawPoolName := common.RawPoolName([]string{token0, token1})
-	sortedPoolName := common.SortedPoolName([]string{token0, token1})
-	if rawPoolName != sortedPoolName {
+	rawPoolName := common.RawPairName([]string{token0, token1})
+	canonicalPoolName := common.SortedPairName([]string{token0, token1})
+	if rawPoolName != canonicalPoolName {
 		// need to invert
 		if price.IsZero() {
 			// cannot divide by zero
@@ -78,16 +78,16 @@ func (k Keeper) SetPrice(
 		}
 	}
 
-	_, err := k.GetOracle(ctx, sortedPoolName, oracle)
+	_, err := k.GetOracle(ctx, canonicalPoolName, oracle)
 	if err != nil {
 		return types.PostedPrice{}, err
 	}
 
-	newRawPrice := types.NewPostedPrice(sortedPoolName, oracle, price, expiry)
+	newRawPrice := types.NewPostedPrice(canonicalPoolName, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
 	if err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
-		PairId:    sortedPoolName,
+		PairId:    canonicalPoolName,
 		Oracle:    oracle.String(),
 		PairPrice: price,
 		Expiry:    expiry,
@@ -97,21 +97,21 @@ func (k Keeper) SetPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(sortedPoolName, oracle), k.cdc.MustMarshal(&newRawPrice))
+	store.Set(types.RawPriceKey(canonicalPoolName, oracle), k.cdc.MustMarshal(&newRawPrice))
 
 	return newRawPrice, nil
 }
 
-// SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
-func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
+// GatherCurrentPrices updates the price of an asset to the median of all valid oracle posted prices
+func (k Keeper) GatherCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.SortedName()
-	tokens := common.DenomsFromPoolName(pairID)
+	sortedPairName := assetPair.SortedName()
+	tokens := common.DenomsFromPairName(sortedPairName)
 	token0, token1 = tokens[0], tokens[1]
 
-	_, ok := k.GetPair(ctx, pairID)
+	_, ok := k.GetPair(ctx, sortedPairName)
 	if !ok {
-		return sdkerrors.Wrap(types.ErrInvalidPair, pairID)
+		return sdkerrors.Wrap(types.ErrInvalidPair, sortedPairName)
 	}
 	// store current price
 	validPrevPrice := true
@@ -120,7 +120,7 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 		validPrevPrice = false
 	}
 
-	postedPrices := k.GetRawPrices(ctx, pairID)
+	postedPrices := k.GetRawPrices(ctx, sortedPairName)
 
 	var notExpiredPrices []types.CurrentPrice
 	// filter out expired prices
@@ -137,7 +137,7 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 		// price if this is not set.
 		// This zero's out the current price stored value for that market and ensures
 		// that CDP methods that GetCurrentPrice will return error.
-		k.setCurrentPrice(ctx, pairID, types.CurrentPrice{})
+		k.setCurrentPrice(ctx, sortedPairName, types.CurrentPrice{})
 		return types.ErrNoValidPrice
 	}
 
@@ -147,7 +147,7 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	if validPrevPrice && !medianPrice.Equal(prevPrice.Price) {
 		// only emit event if price has changed
 		err = ctx.EventManager().EmitTypedEvent(&types.EventPairPriceUpdated{
-			PairId:    pairID,
+			PairId:    sortedPairName,
 			PairPrice: medianPrice,
 		})
 		if err != nil {
@@ -156,10 +156,10 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	}
 
 	currentPrice := types.NewCurrentPrice(token0, token1, medianPrice)
-	k.setCurrentPrice(ctx, pairID, currentPrice)
+	k.setCurrentPrice(ctx, sortedPairName, currentPrice)
 
 	// Update the TWA prices
-	err = k.updateTWAPPrice(ctx, pairID)
+	err = k.updateTWAPPrice(ctx, sortedPairName)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ With
 */
 
 func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
-	tokens := common.DenomsFromPoolName(pairID)
+	tokens := common.DenomsFromPairName(pairID)
 	token0, token1 := tokens[0], tokens[1]
 
 	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)

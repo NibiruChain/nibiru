@@ -30,7 +30,7 @@ func TestPairNameFromDenoms(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			sortedPoolName := common.SortedPoolName(tc.denoms)
+			sortedPoolName := common.SortedPairName(tc.denoms)
 			require.Equal(t, tc.poolName, sortedPoolName)
 		})
 	}

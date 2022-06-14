@@ -2,6 +2,7 @@ package types
 
 //go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PricefeedKeeper,VpoolKeeper
 
+// OR MANUALLY: mockgen -source=x/perp/types/expected_keepers.go -destination=x/testutil/mock/perp_interfaces.go -package=mock
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -58,7 +59,7 @@ type PricefeedKeeper interface {
 	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
 	) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
-	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+	GatherCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
 }
 
 type VpoolKeeper interface {

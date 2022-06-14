@@ -25,20 +25,20 @@ func (k Keeper) GetPairs(ctx sdk.Context) types.Pairs {
 }
 
 // GetOracles returns the oracles in the pricefeed store
-func (k Keeper) GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error) {
+func (k Keeper) GetOracles(ctx sdk.Context, canonicalPairName string) ([]sdk.AccAddress, error) {
 	for _, m := range k.GetPairs(ctx) {
-		if pairID == m.PairID() {
+		if canonicalPairName == m.CanonicalPairName() {
 			return m.Oracles, nil
 		}
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidPair, pairID)
+	return nil, sdkerrors.Wrap(types.ErrInvalidPair, canonicalPairName)
 }
 
 // GetOracle returns the oracle from the store or an error if not found
 func (k Keeper) GetOracle(
-	ctx sdk.Context, pairID string, address sdk.AccAddress,
+	ctx sdk.Context, canonicalPairName string, address sdk.AccAddress,
 ) (sdk.AccAddress, error) {
-	oracles, err := k.GetOracles(ctx, pairID)
+	oracles, err := k.GetOracles(ctx, canonicalPairName)
 	if err != nil {
 		// Error already wrapped
 		return nil, err
@@ -52,11 +52,11 @@ func (k Keeper) GetOracle(
 }
 
 // GetPair returns the market if it is in the pricefeed system
-func (k Keeper) GetPair(ctx sdk.Context, pairID string) (types.Pair, bool) {
+func (k Keeper) GetPair(ctx sdk.Context, canonicalPairName string) (types.Pair, bool) {
 	markets := k.GetPairs(ctx)
 
 	for i := range markets {
-		if markets[i].PairID() == pairID {
+		if markets[i].CanonicalPairName() == canonicalPairName {
 			return markets[i], true
 		}
 	}
@@ -68,13 +68,13 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 	var oracles []sdk.AccAddress
 	uniqueOracles := map[string]bool{}
 
-	for _, m := range k.GetPairs(ctx) {
-		for _, o := range m.Oracles {
+	for _, pair := range k.GetPairs(ctx) {
+		for _, oracle := range pair.Oracles {
 			// de-dup list of oracles
-			if _, found := uniqueOracles[o.String()]; !found {
-				oracles = append(oracles, o)
+			if _, found := uniqueOracles[oracle.String()]; !found {
+				oracles = append(oracles, oracle)
 			}
-			uniqueOracles[o.String()] = true
+			uniqueOracles[oracle.String()] = true
 		}
 	}
 	return oracles

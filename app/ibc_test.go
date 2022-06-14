@@ -38,14 +38,14 @@ func SetupNibiruTestingApp() (
 				Oracles: []sdk.AccAddress{oracle}, Active: true},
 		},
 	})
-	_, err := nibiruApp.PricefeedKeeper.SetPrice(
+	_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 		ctx, oracle, token0, token1, sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
 	)
 	if err != nil {
 		return nil, defaultGenesis
 	}
-	err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, token0, token1)
+	err = nibiruApp.PricefeedKeeper.GatherCurrentPrices(ctx, token0, token1)
 	if err != nil {
 		return nil, defaultGenesis
 	}

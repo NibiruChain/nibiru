@@ -47,7 +47,7 @@ type AssetPair struct {
 // SortedName is the name of the pool that corresponds to the two assets on this pair, sorted alphabetically.
 // OMSO:ATOM --> ATOM:OSMO
 func (pair AssetPair) SortedName() string {
-	return SortedPoolName([]string{pair.Token0, pair.Token1})
+	return SortedPairName([]string{pair.Token0, pair.Token1})
 }
 
 func (pair AssetPair) String() string {
@@ -78,18 +78,18 @@ func (pair AssetPair) QuoteDenom() string {
 	return pair.Token1
 }
 
-func DenomsFromPoolName(pool string) (denoms []string) {
-	return strings.Split(pool, ":")
+func DenomsFromPairName(pairName string) (denoms []string) {
+	return strings.Split(pairName, ":")
 }
 
-// SortedPoolName returns a string representing a pool of assets in sorted alphabetical order.
-func SortedPoolName(denoms []string) string {
+// SortedPairName returns a string representing a pool of assets in sorted alphabetical order.
+func SortedPairName(denoms []string) string {
 	sort.Strings(denoms)
 	return fmt.Sprintf("%s%s%s", denoms[0], PairSeparator, denoms[1])
 }
 
-// RawPoolName returns a string representing a pool of assets in the
+// RawPairName returns a string representing a pool of assets in the
 // exact order the denoms were given as args
-func RawPoolName(denoms []string) string {
+func RawPairName(denoms []string) string {
 	return fmt.Sprintf("%s%s%s", denoms[0], PairSeparator, denoms[1])
 }

@@ -158,18 +158,18 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -345,18 +345,18 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair)
 			}
 
@@ -518,18 +518,18 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -670,18 +670,18 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair)
 			}
 

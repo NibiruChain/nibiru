@@ -11,8 +11,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
-func (pair Pair) PairID() string {
-	return common.SortedPoolName([]string{pair.Token0, pair.Token1})
+func (pair Pair) CanonicalPairName() string {
+	return common.SortedPairName([]string{pair.Token0, pair.Token1})
 }
 
 // NewPair returns a new Pair
@@ -48,7 +48,7 @@ func (pair Pair) Inverse() Pair {
 
 // Validate performs a basic validation of the market params
 func (m Pair) Validate() error {
-	if strings.TrimSpace(m.PairID()) == "" {
+	if strings.TrimSpace(m.CanonicalPairName()) == "" {
 		return errors.New("market id cannot be blank")
 	}
 	if err := sdk.ValidateDenom(m.Token1); err != nil {
@@ -83,7 +83,7 @@ type Pairs []Pair
 func (ms Pairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, m := range ms {
-		pairID := common.SortedPoolName([]string{m.Token0, m.Token1})
+		pairID := common.SortedPairName([]string{m.Token0, m.Token1})
 		if seenPairs[pairID] {
 			return fmt.Errorf("duplicated market %s", pairID)
 		}
@@ -102,7 +102,7 @@ func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, act
 		strOracles = append(strOracles, oracle.String())
 	}
 
-	pairID := common.SortedPoolName([]string{token0, token1})
+	pairID := common.SortedPairName([]string{token0, token1})
 	return PairResponse{
 		PairID:  pairID,
 		Token1:  token1,
@@ -157,9 +157,9 @@ func NewCurrentPriceResponse(pairID string, price sdk.Dec) CurrentPriceResponse 
 type CurrentPriceResponses []CurrentPriceResponse
 
 // NewPostedPrice returns a new PostedPrice
-func NewPostedPrice(pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPrice {
+func NewPostedPrice(canonicalPairName string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPrice {
 	return PostedPrice{
-		PairID:        pairID,
+		PairID:        canonicalPairName,
 		OracleAddress: oracle,
 		Price:         price,
 		Expiry:        expiry,

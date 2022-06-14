@@ -28,7 +28,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		pricefeed.BeginBlocker(ctx, nibiruApp.PricefeedKeeper)
 	}
 	setPrice := func(price string) {
-		_, err := nibiruApp.PricefeedKeeper.SetPrice(
+		_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 			ctx, oracle, token0, token1,
 			sdk.MustNewDecFromStr(price), ctx.BlockTime().Add(time.Hour*5000*4))
 		require.NoError(t, err)
