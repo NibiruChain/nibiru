@@ -100,7 +100,7 @@ func (k Keeper) SetPrice(
 // SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
 func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.Name()
+	pairID := assetPair.SortedName()
 	tokens := common.DenomsFromPoolName(pairID)
 	token0, token1 = tokens[0], tokens[1]
 
@@ -246,7 +246,7 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.Name()
+	pairID := assetPair.SortedName()
 
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.CurrentPriceKey(pairID))
@@ -282,7 +282,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	}
 
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.Name()
+	pairID := assetPair.SortedName()
 
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pairID))

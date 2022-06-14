@@ -44,13 +44,14 @@ type AssetPair struct {
 	Token1 string
 }
 
-// Name is the name of the pool that corresponds to the two assets on this pair.
-func (pair AssetPair) Name() string {
+// SortedName is the name of the pool that corresponds to the two assets on this pair, sorted alphabetically.
+// OMSO:ATOM --> ATOM:OSMO
+func (pair AssetPair) SortedName() string {
 	return PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
 }
 
 func (pair AssetPair) PairID() string {
-	return pair.Name()
+	return pair.SortedName()
 }
 
 func (pair AssetPair) String() string {
@@ -58,7 +59,7 @@ func (pair AssetPair) String() string {
 }
 
 func (pair AssetPair) IsProperOrder() bool {
-	return pair.Name() == pair.String()
+	return pair.SortedName() == pair.String()
 }
 
 func (pair AssetPair) Inverse() AssetPair {

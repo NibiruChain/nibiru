@@ -30,7 +30,7 @@ func NewPair(
 // name is the name of the pool that corresponds to the two assets on this pair.
 func (pair Pair) Name() string {
 	assets := common.AssetPair{Token0: pair.Token0, Token1: pair.Token1}
-	return assets.Name()
+	return assets.SortedName()
 }
 
 func (pair Pair) AsString() string {
@@ -127,7 +127,7 @@ Returns:
 */
 func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	return CurrentPrice{PairID: assetPair.Name(), Price: price}
+	return CurrentPrice{PairID: assetPair.SortedName(), Price: price}
 }
 
 /*
@@ -142,7 +142,7 @@ Returns:
 */
 func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Int, price sdk.Dec) CurrentTWAP {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	return CurrentTWAP{PairID: assetPair.Name(), Numerator: numerator, Denominator: denominator, Price: price}
+	return CurrentTWAP{PairID: assetPair.SortedName(), Numerator: numerator, Denominator: denominator, Price: price}
 }
 
 // CurrentPrices is a slice of CurrentPrice

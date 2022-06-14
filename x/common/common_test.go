@@ -69,10 +69,10 @@ func TestAssetPair(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.proper {
 				require.True(t, tc.pair.IsProperOrder())
-				require.Equal(t, tc.pair.Name(), tc.pair.String())
+				require.Equal(t, tc.pair.SortedName(), tc.pair.String())
 			} else {
 				require.True(t, tc.pair.Inverse().IsProperOrder())
-				require.Equal(t, tc.pair.Name(), tc.pair.Inverse().String())
+				require.Equal(t, tc.pair.SortedName(), tc.pair.Inverse().String())
 			}
 
 			require.True(t, true)
