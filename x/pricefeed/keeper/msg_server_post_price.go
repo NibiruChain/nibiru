@@ -17,8 +17,8 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice) (*t
 		return nil, err
 	}
 
-	pairID := common.SortedPairName([]string{msg.Token0, msg.Token1})
-	_, err = k.GetOracle(ctx, pairID, from)
+	canonicalPairName := common.SortedPairName([]string{msg.Token0, msg.Token1})
+	_, err = k.GetOracle(ctx, canonicalPairName, from)
 	if err != nil {
 		return nil, err
 	}

@@ -69,7 +69,7 @@ func TestKeeper_GetPostPrice(t *testing.T) {
 	keeper.SetParams(ctx, mp)
 
 	token0, token1 := "tst", "usd"
-	pairID := "tst:usd"
+	canonicalPairName := "tst:usd"
 	prices := []struct {
 		oracle sdk.AccAddress
 		token0 string
@@ -97,7 +97,7 @@ func TestKeeper_GetPostPrice(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get raw prices
-		rawPrices := keeper.GetRawPrices(ctx, pairID)
+		rawPrices := keeper.GetRawPrices(ctx, canonicalPairName)
 
 		require.Equal(t, p.total, len(rawPrices))
 		require.Contains(t, rawPrices, pp)

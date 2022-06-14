@@ -66,9 +66,8 @@ func (k Keeper) PostRawPrice(
 	}
 
 	// TODO: test this behavior when setting the inverse pair
-	rawPoolName := common.RawPairName([]string{token0, token1})
-	canonicalPoolName := common.SortedPairName([]string{token0, token1})
-	if rawPoolName != canonicalPoolName {
+	canonicalPairName := common.SortedPairName([]string{token0, token1})
+	if canonicalPairName != common.RawPairName([]string{token0, token1}) {
 		// need to invert
 		if price.IsZero() {
 			// cannot divide by zero
@@ -78,16 +77,16 @@ func (k Keeper) PostRawPrice(
 		}
 	}
 
-	_, err := k.GetOracle(ctx, canonicalPoolName, oracle)
+	_, err := k.GetOracle(ctx, canonicalPairName, oracle)
 	if err != nil {
 		return types.PostedPrice{}, err
 	}
 
-	newRawPrice := types.NewPostedPrice(canonicalPoolName, oracle, price, expiry)
+	newRawPrice := types.NewPostedPrice(canonicalPairName, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
 	if err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
-		PairId:    canonicalPoolName,
+		PairId:    canonicalPairName,
 		Oracle:    oracle.String(),
 		PairPrice: price,
 		Expiry:    expiry,
@@ -97,7 +96,7 @@ func (k Keeper) PostRawPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(canonicalPoolName, oracle), k.cdc.MustMarshal(&newRawPrice))
+	store.Set(types.RawPriceKey(canonicalPairName, oracle), k.cdc.MustMarshal(&newRawPrice))
 
 	return newRawPrice, nil
 }
@@ -167,9 +166,9 @@ func (k Keeper) GatherCurrentPrices(ctx sdk.Context, token0 string, token1 strin
 	return nil
 }
 
-func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice types.CurrentPrice) {
+func (k Keeper) setCurrentPrice(ctx sdk.Context, canonicalPairName string, currentPrice types.CurrentPrice) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
+	store.Set(types.CurrentPriceKey(canonicalPairName), k.cdc.MustMarshal(&currentPrice))
 }
 
 /* updateTWAPPrice updates the twap price for a token0, token1 pair
@@ -183,8 +182,8 @@ With
 
 */
 
-func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
-	tokens := common.DenomsFromPairName(pairID)
+func (k Keeper) updateTWAPPrice(ctx sdk.Context, canonicalPairName string) error {
+	tokens := common.DenomsFromPairName(canonicalPairName)
 	token0, token1 := tokens[0], tokens[1]
 
 	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
@@ -196,7 +195,7 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	// Err there means no twap price have been set yet for this pair
 	if err != nil {
 		currentTWAP = types.CurrentTWAP{
-			PairID:      pairID,
+			PairID:      canonicalPairName,
 			Numerator:   sdk.MustNewDecFromStr("0"),
 			Denominator: sdk.NewInt(0),
 			Price:       sdk.MustNewDecFromStr("0"),
@@ -209,13 +208,13 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDecFromInt(blockUnixTime)))
 
 	newTWAP := types.CurrentTWAP{
-		PairID:      pairID,
+		PairID:      canonicalPairName,
 		Numerator:   newNumerator,
 		Denominator: newDenominator,
 		Price:       newNumerator.Quo(sdk.NewDecFromInt(newDenominator)),
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
+	store.Set(types.CurrentTWAPPriceKey("twap-"+canonicalPairName), k.cdc.MustMarshal(&newTWAP))
 
 	return nil
 }
@@ -251,10 +250,10 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.SortedName()
+	canonicalPairName := assetPair.SortedName()
 
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentPriceKey(pairID))
+	bz := store.Get(types.CurrentPriceKey(canonicalPairName))
 
 	if bz == nil {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
@@ -287,10 +286,10 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	}
 
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.SortedName()
+	canonicalPairName := assetPair.SortedName()
 
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pairID))
+	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + canonicalPairName))
 
 	if bz == nil {
 		return types.CurrentTWAP{}, types.ErrNoValidTWAP
@@ -321,9 +320,9 @@ func (k Keeper) IterateCurrentPrices(ctx sdk.Context, cb func(cp types.CurrentPr
 	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.CurrentPricePrefix)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		var cp types.CurrentPrice
-		k.cdc.MustUnmarshal(iterator.Value(), &cp)
-		if cb(cp) {
+		var currentPrice types.CurrentPrice
+		k.cdc.MustUnmarshal(iterator.Value(), &currentPrice)
+		if cb(currentPrice) {
 			break
 		}
 	}
@@ -331,22 +330,22 @@ func (k Keeper) IterateCurrentPrices(ctx sdk.Context, cb func(cp types.CurrentPr
 
 // GetCurrentPrices returns all current price objects from the store
 func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
-	var cps types.CurrentPrices
-	k.IterateCurrentPrices(ctx, func(cp types.CurrentPrice) (stop bool) {
-		cps = append(cps, cp)
+	var currentPrices types.CurrentPrices
+	k.IterateCurrentPrices(ctx, func(currentPrice types.CurrentPrice) (stop bool) {
+		currentPrices = append(currentPrices, currentPrice)
 		return false
 	})
-	return cps
+	return currentPrices
 }
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
 func (k Keeper) GetRawPrices(ctx sdk.Context, marketId string) types.PostedPrices {
-	var pps types.PostedPrices
-	k.IterateRawPricesByPair(ctx, marketId, func(pp types.PostedPrice) (stop bool) {
-		pps = append(pps, pp)
+	var postedPrices types.PostedPrices
+	k.IterateRawPricesByPair(ctx, marketId, func(postedPrice types.PostedPrice) (stop bool) {
+		postedPrices = append(postedPrices, postedPrice)
 		return false
 	})
-	return pps
+	return postedPrices
 }
 
 // IterateRawPrices iterates over all raw prices in the store and performs a callback function

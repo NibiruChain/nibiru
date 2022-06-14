@@ -17,12 +17,12 @@ func (k Keeper) Pairs(goCtx context.Context, req *types.QueryPairsRequest) (*typ
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var markets types.PairResponses
-	for _, market := range k.GetPairs(ctx) {
-		markets = append(markets, market.ToPairResponse())
+	var pairs types.PairResponses
+	for _, pair := range k.GetPairs(ctx) {
+		pairs = append(pairs, pair.ToPairResponse())
 	}
 
 	return &types.QueryPairsResponse{
-		Pairs: markets,
+		Pairs: pairs,
 	}, nil
 }

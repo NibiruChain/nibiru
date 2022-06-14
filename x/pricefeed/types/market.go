@@ -83,14 +83,14 @@ type Pairs []Pair
 func (ms Pairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, m := range ms {
-		pairID := common.SortedPairName([]string{m.Token0, m.Token1})
-		if seenPairs[pairID] {
-			return fmt.Errorf("duplicated market %s", pairID)
+		canonicalPairName := common.SortedPairName([]string{m.Token0, m.Token1})
+		if seenPairs[canonicalPairName] {
+			return fmt.Errorf("duplicated market %s", canonicalPairName)
 		}
 		if err := m.Validate(); err != nil {
 			return err
 		}
-		seenPairs[pairID] = true
+		seenPairs[canonicalPairName] = true
 	}
 	return nil
 }
@@ -102,9 +102,8 @@ func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, act
 		strOracles = append(strOracles, oracle.String())
 	}
 
-	pairID := common.SortedPairName([]string{token0, token1})
 	return PairResponse{
-		PairID:  pairID,
+		PairID:  common.SortedPairName([]string{token0, token1}),
 		Token1:  token1,
 		Token0:  token0,
 		Oracles: strOracles,
@@ -149,8 +148,8 @@ func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator
 type CurrentPrices []CurrentPrice
 
 // NewCurrentPriceResponse returns an instance of CurrentPriceResponse
-func NewCurrentPriceResponse(pairID string, price sdk.Dec) CurrentPriceResponse {
-	return CurrentPriceResponse{PairID: pairID, Price: price}
+func NewCurrentPriceResponse(canonicalPairName string, price sdk.Dec) CurrentPriceResponse {
+	return CurrentPriceResponse{PairID: canonicalPairName, Price: price}
 }
 
 // CurrentPriceResponses is a slice of CurrentPriceResponse
@@ -206,10 +205,10 @@ func (pps PostedPrices) Validate() error {
 
 // NewPostedPrice returns a new PostedPrice
 func NewPostedPriceResponse(
-	pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time,
+	canonicalPairName string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time,
 ) PostedPriceResponse {
 	return PostedPriceResponse{
-		PairID:        pairID,
+		PairID:        canonicalPairName,
 		OracleAddress: oracle.String(),
 		Price:         price,
 		Expiry:        expiry,

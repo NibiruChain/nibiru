@@ -18,9 +18,9 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var currentPrices types.CurrentPriceResponses
-	for _, cp := range k.GetCurrentPrices(ctx) {
-		if cp.PairID != "" {
-			currentPrices = append(currentPrices, types.CurrentPriceResponse(cp))
+	for _, currentPrice := range k.GetCurrentPrices(ctx) {
+		if currentPrice.PairID != "" {
+			currentPrices = append(currentPrices, types.CurrentPriceResponse(currentPrice))
 		}
 	}
 
