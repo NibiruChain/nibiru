@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -133,7 +132,7 @@ func (k Keeper) afterPositionUpdate(
 		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
-		PositionNotional:      positionResp.ExchangedPositionSize,
+		PositionNotional:      positionResp.ExchangedQuoteAssetAmount,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		Fee:                   transferredFee,
 		PositionSizeAfter:     positionResp.Position.Size_,
@@ -230,8 +229,6 @@ func (k Keeper) increasePosition(
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
-
-	events.EmitInternalPositionResponseEvent(ctx, positionResp, "increase_position")
 
 	k.Logger(ctx).Debug("increase_position",
 		"positionResp",
@@ -508,7 +505,6 @@ func (k Keeper) decreasePosition(
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
-	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
 
 	k.Logger(ctx).Debug("decrease_position",
 		"positionResp",
@@ -621,9 +617,6 @@ func (k Keeper) closeAndOpenReversePosition(
 		positionResp = closePositionResp
 	}
 
-	events.EmitInternalPositionResponseEvent(
-		ctx, positionResp, "close_and_open_reverse_position")
-
 	k.Logger(ctx).Debug("close_and_open_reverse_position",
 		"positionResp",
 		positionResp.String(),
@@ -723,9 +716,6 @@ func (k Keeper) closePositionEntirely(
 	); err != nil {
 		return nil, err
 	}
-
-	events.EmitInternalPositionResponseEvent(
-		ctx, positionResp, "close_position_entirely")
 
 	k.Logger(ctx).Debug("close_position_entirely",
 		"positionResp",
