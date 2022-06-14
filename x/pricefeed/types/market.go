@@ -12,7 +12,7 @@ import (
 )
 
 func (pair Pair) PairID() string {
-	return common.PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
+	return common.SortedPoolName([]string{pair.Token0, pair.Token1})
 }
 
 // NewPair returns a new Pair
@@ -83,7 +83,7 @@ type Pairs []Pair
 func (ms Pairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, m := range ms {
-		pairID := common.PoolNameFromDenoms([]string{m.Token0, m.Token1})
+		pairID := common.SortedPoolName([]string{m.Token0, m.Token1})
 		if seenPairs[pairID] {
 			return fmt.Errorf("duplicated market %s", pairID)
 		}
@@ -102,7 +102,7 @@ func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, act
 		strOracles = append(strOracles, oracle.String())
 	}
 
-	pairID := common.PoolNameFromDenoms([]string{token0, token1})
+	pairID := common.SortedPoolName([]string{token0, token1})
 	return PairResponse{
 		PairID:  pairID,
 		Token1:  token1,

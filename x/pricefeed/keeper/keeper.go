@@ -66,8 +66,8 @@ func (k Keeper) SetPrice(
 	}
 
 	// TODO: test this behavior when setting the inverse pair
-	pairName := common.RawPoolNameFromDenoms([]string{token0, token1})
-	pairID := common.PoolNameFromDenoms([]string{token0, token1})
+	pairName := common.RawPoolName([]string{token0, token1})
+	pairID := common.SortedPoolName([]string{token0, token1})
 	if (pairName != pairID) && (!price.Equal(sdk.ZeroDec())) {
 		price = sdk.OneDec().Quo(price)
 	}
