@@ -25,16 +25,6 @@ func TestPairNameFromDenoms(t *testing.T) {
 			denoms:   []string{"osmo", "atom"},
 			poolName: "atom:osmo",
 		},
-		{
-			name:     "X:Y:Z in correct order",
-			denoms:   []string{"x", "y", "z"},
-			poolName: "x:y:z",
-		},
-		{
-			name:     "X:Y:Z in wrong order",
-			denoms:   []string{"z", "x", "y"},
-			poolName: "x:y:z",
-		},
 	}
 
 	for _, testCase := range testCases {
