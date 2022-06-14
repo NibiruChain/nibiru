@@ -252,14 +252,12 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
 	testCases := []struct {
 		name string
-		args []string
 
 		expectedPairs pftypes.PairResponses
 		respType      proto.Message
 	}{
 		{
 			name: "Get current pairs",
-			args: []string{},
 			expectedPairs: pftypes.PairResponses{
 				pftypes.NewPairResponse(gov.Token1, gov.Token0, []sdk.AccAddress{oracle}, true),
 				pftypes.NewPairResponse(col.Token1, col.Token0, []sdk.AccAddress{oracle}, true),
@@ -275,7 +273,7 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 			cmd := cli.CmdPairs()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
@@ -303,14 +301,12 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 
 	testCases := []struct {
 		name string
-		args []string
 
 		expectedPricePairs []pftypes.CurrentPriceResponse
 		respType           proto.Message
 	}{
 		{
 			name: "Get current prices",
-			args: []string{},
 			expectedPricePairs: []pftypes.CurrentPriceResponse{
 				pftypes.NewCurrentPriceResponse(common.GovStablePool.PairID(), sdk.NewDec(10)),
 				pftypes.NewCurrentPriceResponse(common.CollStablePool.PairID(), sdk.NewDec(1)),
@@ -326,7 +322,7 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 			cmd := cli.CmdPrices()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
@@ -513,14 +509,12 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 
 	testCases := []struct {
 		name string
-		args []string
 
 		respType       proto.Message
 		expectedParams pftypes.Params
 	}{
 		{
 			name:           "Get all params",
-			args:           []string{},
 			respType:       &pftypes.QueryParamsResponse{},
 			expectedParams: NewPricefeedGen().Params,
 		},
@@ -533,7 +527,7 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 			cmd := cli.CmdQueryParams()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
