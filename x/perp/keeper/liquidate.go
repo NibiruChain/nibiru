@@ -128,7 +128,8 @@ func (k Keeper) ExecuteFullLiquidation(
 	ctx sdk.Context, liquidator sdk.AccAddress, position *types.Position,
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
-	tokenPair, err := common.NewAssetPairFromStr(position.Pair)
+
+	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -161,7 +162,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	if totalBadDebt.IsPositive() {
 		if err = k.realizeBadDebt(
 			ctx,
-			tokenPair.GetQuoteTokenDenom(),
+			position.GetAssetPair().GetQuoteTokenDenom(),
 			totalBadDebt.RoundInt(),
 		); err != nil {
 			return types.LiquidateResp{}, err
@@ -185,7 +186,18 @@ func (k Keeper) ExecuteFullLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	return liquidationResp, nil
+	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
+		Pair:                  position.Pair,
+		TraderAddress:         traderAddr,
+		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
+		ExchangedPositionSize: positionResp.ExchangedPositionSize,
+		LiquidatorAddress:     liquidator,
+		FeeToLiquidator:       sdk.NewCoin(position.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund:    sdk.NewCoin(position.GetAssetPair().GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
+		BadDebt:               totalBadDebt,
+	})
+
+	return liquidationResp, err
 }
 
 func (k Keeper) distributeLiquidateRewards(
@@ -304,17 +316,28 @@ func (k Keeper) ExecutePartialLiquidation(
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)
 	feeToPerpEcosystemFund := liquidationFeeAmount.Sub(feeToLiquidator)
 
-	response := types.LiquidateResp{
+	liquidationResponse := types.LiquidateResp{
 		BadDebt:                sdk.ZeroDec(),
 		FeeToLiquidator:        feeToLiquidator.RoundInt(),
 		FeeToPerpEcosystemFund: feeToPerpEcosystemFund.RoundInt(),
 		Liquidator:             liquidator.String(),
 		PositionResp:           positionResp,
 	}
-	err = k.distributeLiquidateRewards(ctx, response)
+	err = k.distributeLiquidateRewards(ctx, liquidationResponse)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
 
-	return response, err
+	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
+		Pair:                  currentPosition.Pair,
+		TraderAddress:         traderAddr,
+		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
+		ExchangedPositionSize: positionResp.ExchangedPositionSize,
+		LiquidatorAddress:     liquidator,
+		FeeToLiquidator:       sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
+		BadDebt:               liquidationResponse.BadDebt,
+	})
+
+	return liquidationResponse, err
 }
