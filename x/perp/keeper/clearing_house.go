@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -99,27 +98,16 @@ func (k Keeper) OpenPosition(
 	switch {
 	case marginToVaultInt.IsPositive():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
-		err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend))
-		if err != nil {
+		if err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToSend,
-			/* from */ traderAddr,
-			/* to */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount))
 	case marginToVaultInt.IsNegative():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(
-			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
-		if err != nil {
+		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
+			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
-		events.EmitTransfer(ctx,
-			/* coin */ coinToSend,
-			/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-			/* to */ traderAddr,
-		)
 	}
 
 	transferredFee, err := k.transferFee(
@@ -134,10 +122,10 @@ func (k Keeper) OpenPosition(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:         traderAddr.String(),
+		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
-		PositionNotional:      positionResp.ExchangedPositionSize,
+		PositionNotional:      positionResp.ExchangedQuoteAssetAmount,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		Fee:                   transferredFee,
 		PositionSizeAfter:     positionResp.Position.Size_,
@@ -263,8 +251,6 @@ func (k Keeper) increasePosition(
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
-
-	events.EmitInternalPositionResponseEvent(ctx, positionResp, "increase_position")
 
 	k.Logger(ctx).Debug("increase_position",
 		"positionResp",
@@ -541,7 +527,6 @@ func (k Keeper) decreasePosition(
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
-	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
 
 	k.Logger(ctx).Debug("decrease_position",
 		"positionResp",
@@ -654,9 +639,6 @@ func (k Keeper) closeAndOpenReversePosition(
 		positionResp = closePositionResp
 	}
 
-	events.EmitInternalPositionResponseEvent(
-		ctx, positionResp, "close_and_open_reverse_position")
-
 	k.Logger(ctx).Debug("close_and_open_reverse_position",
 		"positionResp",
 		positionResp.String(),
@@ -757,9 +739,6 @@ func (k Keeper) closePositionEntirely(
 		return nil, err
 	}
 
-	events.EmitInternalPositionResponseEvent(
-		ctx, positionResp, "close_position_entirely")
-
 	k.Logger(ctx).Debug("close_position_entirely",
 		"positionResp",
 		positionResp.String(),
@@ -773,10 +752,7 @@ func (k Keeper) transferFee(
 	ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress,
 	positionNotional sdk.Dec,
 ) (sdk.Int, error) {
-	toll, spread, err := k.CalcPerpTxFee(ctx, positionNotional)
-	if err != nil {
-		return sdk.Int{}, err
-	}
+	toll, spread := k.CalcPerpTxFee(ctx, positionNotional)
 
 	hasToll := toll.IsPositive()
 	hasSpread := spread.IsPositive()
@@ -785,6 +761,7 @@ func (k Keeper) transferFee(
 		return sdk.ZeroInt(), nil
 	}
 
+	var err error
 	if hasSpread {
 		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread))
 		err = k.BankKeeper.SendCoinsFromAccountToModule(
