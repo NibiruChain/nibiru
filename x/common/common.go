@@ -50,10 +50,6 @@ func (pair AssetPair) SortedName() string {
 	return PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
 }
 
-func (pair AssetPair) PairID() string {
-	return pair.SortedName()
-}
-
 func (pair AssetPair) String() string {
 	return fmt.Sprintf("%s%s%s", pair.Token0, PairSeparator, pair.Token1)
 }
