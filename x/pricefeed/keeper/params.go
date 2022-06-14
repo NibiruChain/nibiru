@@ -80,7 +80,7 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 	return oracles
 }
 
-// Whitelists given 'oracles' for all of the current pairs.
+// WhitelistOracles whitelists given 'oracles' for all of the current pairs.
 func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
 	startParams := k.GetParams(ctx)
 	var endPairs types.Pairs
