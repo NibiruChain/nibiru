@@ -1,14 +1,14 @@
 {
-    "height": "31",
-    "txhash": "760318EF59782195B1BC1246E2A773EB3A039166713E6601A47E06C7FDFA6A80",
+    "height": "38",
+    "txhash": "A9089AAF0166A6B3980892639D78FED26262AE27BF1FB18AFE4C38F5F95E493A",
     "codespace": "undefined",
     "code": 1,
     "data": "",
-    "raw_log": "failed to execute message; message index: 0: not enough free collateral",
+    "raw_log": "failed to execute message; message index: 0: failed to remove margin; position would have bad debt if removed",
     "logs": [],
     "info": "",
     "gas_wanted": "200000",
-    "gas_used": "63749",
+    "gas_used": "56437",
     "tx": null,
     "timestamp": "",
     "events": [
@@ -17,7 +17,7 @@
             "attributes": [
                 {
                     "key": "c3BlbmRlcg==",
-                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eA==",
+                    "value": "bmliaTE1YzNubXdtdm5xc2x6ZTQyZXV6ZGM4am5mdXM4eXNjM25mcnZrag==",
                     "index": true
                 },
                 {
@@ -52,7 +52,7 @@
                 },
                 {
                     "key": "c2VuZGVy",
-                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eA==",
+                    "value": "bmliaTE1YzNubXdtdm5xc2x6ZTQyZXV6ZGM4am5mdXM4eXNjM25mcnZrag==",
                     "index": true
                 },
                 {
@@ -67,7 +67,7 @@
             "attributes": [
                 {
                     "key": "c2VuZGVy",
-                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eA==",
+                    "value": "bmliaTE1YzNubXdtdm5xc2x6ZTQyZXV6ZGM4am5mdXM4eXNjM25mcnZrag==",
                     "index": true
                 }
             ]
@@ -87,7 +87,7 @@
             "attributes": [
                 {
                     "key": "YWNjX3NlcQ==",
-                    "value": "bmliaTF6bjl3djNrdXA1djloN2RzbXgwdGE5OHg5ejJnZ2ZmeTZ5dTI4eC8x",
+                    "value": "bmliaTE1YzNubXdtdm5xc2x6ZTQyZXV6ZGM4am5mdXM4eXNjM25mcnZrai8y",
                     "index": true
                 }
             ]
@@ -97,7 +97,7 @@
             "attributes": [
                 {
                     "key": "c2lnbmF0dXJl",
-                    "value": "TEFaZWZ4WTdvY2syVWlJaEdKVFhHdmdyWXRVY3VHcHRuZXdwUWlRY2RQWlk2eHRyVWlvRlMrdkFDQ1lZRVZLOEtGVEdnb0srRitiNlZMeC9QSktzd0E9PQ==",
+                    "value": "a01DcEI2MldXYXZWVFBZNjQzcnhRc3FTTDZyTHVLdzlHYi9hdVNvMzJXZ0dIcGtoUG5LcGNMY2xwSmhmZ2cwMy92SzhXL1ZuKzVjNUtsak5Rc3dzK3c9PQ==",
                     "index": true
                 }
             ]

@@ -176,6 +176,8 @@ func (k Keeper) RemoveMargin(
 	}
 	fmt.Printf("STEVENDEBUG position: %v\n", position)
 
+	// hello
+
 	marginDelta := msg.Margin.Amount.Neg()
 	fmt.Printf("STEVENDEBUG marginDelta: %+v\n", marginDelta)
 
