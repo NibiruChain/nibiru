@@ -44,6 +44,8 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
+	// STEVENDEBUG
+
 	return &types.QueryTraderPositionResponse{
 		Position: position,
 	}, nil

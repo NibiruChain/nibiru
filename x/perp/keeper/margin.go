@@ -201,9 +201,12 @@ func (k Keeper) RemoveMargin(
 	fmt.Printf("STEVENDEBUG position.Margin: %v\n", position.Margin)
 
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
+
+	fmt.Printf("STEVENDEBUG remainingMargin: %v\n", remainingMargin)
+
 	freeCollateral, err := k.calcFreeCollateral(
 		ctx, *position, remainingMargin.FundingPayment)
-	fmt.Printf("STEVENDEBUG freeCollateral: %v\n", freeCollateral)
+	fmt.Printf("STEVENDEBUG freeCollateral: %v err %+v \n", freeCollateral, err)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.IsPositive() {

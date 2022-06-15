@@ -483,7 +483,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"buy",
 		pair.String(),
 		"10",        // 10x Leverage
-		"1",         // Quote asset amount
+		"10",        // Quote asset amount
 		"0.0000001", // No limit basically
 	}
 	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
@@ -502,7 +502,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		"buy",
 		pair.String(),
 		"10",        // 10x Leverage
-		"1",         // Quote asset amount
+		"10",        // Quote asset amount
 		"0.0000001", // No limit basically
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
@@ -510,19 +510,30 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		s.T().Logf("user2 open position err: %+v", err)
 	}
 	s.Require().NoError(err)
-	s.checkStatus(val, pair, []sdk.AccAddress{s.users[1]})
+	s.checkStatus(val, pair, s.users)
 
-	// First user pulls out
-	s.T().Log("removing margin on user 1....")
+	// First user pulls out - close position (not remove margin)
+	// s.T().Log("removing margin on user 1....")
+	// args = []string{
+	// 	"--from",
+	// 	s.users[0].String(),
+	// 	pair.String(),
+	// 	fmt.Sprintf("%s%s", "10", common.TestStablePool.Token1), // Amount
+	// }
+	// out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
+	// fmt.Println(out.String())
+	// s.T().Log("STEVENDEBUG out: ", out.String())
+	s.T().Log("closing position (removing all margin) on first user....")
 	args = []string{
 		"--from",
 		s.users[0].String(),
 		pair.String(),
-		fmt.Sprintf("%s%s", "1", common.TestStablePool.Token1), // Amount
 	}
-	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
-	fmt.Println(out.String())
-	s.T().Log("STEVENDEBUG out: ", out.String())
+	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+	s.Require().NotContains(out.String(), "fail")
+
+	s.checkStatus(val, pair, s.users)
 
 	// Second user should have bad debt now
 }
