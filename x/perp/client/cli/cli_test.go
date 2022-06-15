@@ -12,6 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
@@ -19,7 +21,6 @@ import (
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 )
 
 var commonArgs = []string{
@@ -233,7 +234,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		val,
 		s.cfg.BondDenom,
 	)
-	fmt.Printf("STEVENDEBUG fill wallet out %+v\n", out.String())
 	s.Require().NoError(err)
 }
 
