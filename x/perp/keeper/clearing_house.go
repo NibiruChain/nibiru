@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -74,6 +73,13 @@ func (k Keeper) OpenPosition(
 		}
 	}
 
+	return k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, positionResp)
+}
+
+// afterPositionUpdate is called when a position has been updated.
+func (k Keeper) afterPositionUpdate(
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, params types.Params,
+	isNewPosition bool, positionResp *types.PositionResp) (err error) {
 	// update position in state
 	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
 
@@ -126,7 +132,7 @@ func (k Keeper) OpenPosition(
 		TraderAddress:         traderAddr,
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
-		PositionNotional:      positionResp.ExchangedPositionSize,
+		PositionNotional:      positionResp.ExchangedQuoteAssetAmount,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		Fee:                   transferredFee,
 		PositionSizeAfter:     positionResp.Position.Size_,
@@ -137,35 +143,6 @@ func (k Keeper) OpenPosition(
 		SpotPrice:             spotPrice,
 		FundingPayment:        positionResp.FundingPayment,
 	})
-}
-
-func (k Keeper) ClosePosition(
-	ctx sdk.Context,
-	pair common.AssetPair,
-	traderAddr sdk.AccAddress,
-) (err error) {
-	// checks
-	err = k.requireVpool(ctx, pair)
-	if err != nil {
-		return err
-	}
-
-	position, err := k.GetPosition(ctx, pair, traderAddr)
-	if err != nil {
-		// TODO: propagate this back to the cli
-		return err
-	}
-
-	_, err = k.closePositionEntirely(
-		ctx,
-		*position,
-		sdk.ZeroDec(), // TODO: double check this
-	)
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 /*
@@ -252,8 +229,6 @@ func (k Keeper) increasePosition(
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
-
-	events.EmitInternalPositionResponseEvent(ctx, positionResp, "increase_position")
 
 	k.Logger(ctx).Debug("increase_position",
 		"positionResp",
@@ -530,7 +505,6 @@ func (k Keeper) decreasePosition(
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
-	events.EmitInternalPositionResponseEvent(ctx, positionResp, "decrease_position")
 
 	k.Logger(ctx).Debug("decrease_position",
 		"positionResp",
@@ -643,9 +617,6 @@ func (k Keeper) closeAndOpenReversePosition(
 		positionResp = closePositionResp
 	}
 
-	events.EmitInternalPositionResponseEvent(
-		ctx, positionResp, "close_and_open_reverse_position")
-
 	k.Logger(ctx).Debug("close_and_open_reverse_position",
 		"positionResp",
 		positionResp.String(),
@@ -746,15 +717,36 @@ func (k Keeper) closePositionEntirely(
 		return nil, err
 	}
 
-	events.EmitInternalPositionResponseEvent(
-		ctx, positionResp, "close_position_entirely")
-
 	k.Logger(ctx).Debug("close_position_entirely",
 		"positionResp",
 		positionResp.String(),
 	)
 
 	return positionResp, nil
+}
+
+// ClosePosition gets the current position, and calls OpenPosition to open a reverse position with amount equal to the current open notional.
+func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) (*types.PositionResp, error) {
+	position, err := k.Positions().Get(ctx, pair, addr)
+	if err != nil {
+		return nil, err
+	}
+
+	currentOpenNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	if err != nil {
+		return nil, err
+	}
+	posResp, err := k.openReversePosition(ctx, *position, currentOpenNotional, sdk.NewDec(1), sdk.ZeroDec(), false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = k.afterPositionUpdate(ctx, pair, addr, k.GetParams(ctx), false, posResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return posResp, nil
 }
 
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299

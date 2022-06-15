@@ -9,12 +9,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testkeeper"
 )
 
 func TestPostPrice(t *testing.T) {
-	k, ctx := testkeeper.PricefeedKeeper(t)
+	k, ctx := testutilkeeper.PricefeedKeeper(t)
 	msgSrv := keeper.NewMsgServerImpl(k)
 
 	_, addrs := sample.PrivKeyAddressPairs(4)
@@ -49,7 +49,7 @@ func TestPostPrice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.giveMsg, func(t *testing.T) {
-			// Use MsgServer over keeper methods directly to tests against valid oracles
+			// Use MsgServer over keeper methods directly to test against valid oracles
 			msg := types.NewMsgPostPrice(
 				tt.giveOracle.String(), tt.giveToken0, tt.giveToken1,
 				sdk.MustNewDecFromStr("0.5"), tt.giveExpiry)

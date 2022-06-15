@@ -11,13 +11,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestQueryPosition_Ok(t *testing.T) {
 	t.Log("initialize keeper")
-	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 	perpKeeper := &nibiruApp.PerpKeeper
 
 	queryServer := keeper.NewQuerier(*perpKeeper)

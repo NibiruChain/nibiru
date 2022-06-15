@@ -10,13 +10,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	// Write to store
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
@@ -28,7 +28,7 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	// Write a pool number
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
@@ -43,7 +43,7 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	pool := types.Pool{
 		Id: 150,
@@ -150,7 +150,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			app.DexKeeper.SetPool(ctx, types.Pool{
 				Id: 1,
@@ -208,7 +208,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	poolCreationFeeCoin := sdk.NewInt64Coin(common.GovDenom, 1000_000_000)
 	app.DexKeeper.SetParams(ctx, types.NewParams(
@@ -275,7 +275,7 @@ func TestNewPool(t *testing.T) {
 }
 
 func TestNewPoolNotEnoughFunds(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
@@ -315,7 +315,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -335,7 +335,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 }
 
 func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -359,7 +359,7 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 }
 
 func TestNewPoolTooManyAssets(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -514,7 +514,7 @@ func TestJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -626,7 +626,7 @@ func TestExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutil.NewNibiruApp(true)
+			app, ctx := testutilapp.NewNibiruApp(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

@@ -5,16 +5,14 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/x/pricefeed"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/epochs"
+	"github.com/NibiruChain/nibiru/x/pricefeed"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
@@ -110,7 +108,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			app, ctx = testutil.NewNibiruApp(true)
+			app, ctx = testutilapp.NewNibiruApp(true)
 
 			ctx = ctx.WithBlockHeight(1)
 
@@ -151,7 +149,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochInfoChangesCollateralValidity(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	token0, token1 := common.StableDenom, common.CollDenom
 
 	runBlock := func(duration time.Duration) {

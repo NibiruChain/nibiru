@@ -4,10 +4,8 @@ import (
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Returns a sample account address (sdk.AccAddress)

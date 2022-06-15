@@ -8,11 +8,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 
 	chainStartTime := ctx.BlockTime()
 	chainStartHeight := ctx.BlockHeight()
@@ -46,7 +46,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
-	app, ctx := testutil.NewNibiruApp(true)
+	app, ctx := testutilapp.NewNibiruApp(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

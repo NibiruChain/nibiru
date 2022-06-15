@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 type KeeperTestSuite struct {
@@ -23,7 +23,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 	suite.app = nibiruApp
 	suite.ctx = ctx
 
