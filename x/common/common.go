@@ -26,6 +26,11 @@ var (
 	ErrInvalidTokenPair = fmt.Errorf("invalid token pair")
 )
 
+var (
+	PAIR_uBTC_uNUSD = AssetPair{Token0: "uBTC", Token1: "uNUSD"}
+	PAIR_uETH_uNUSD = AssetPair{Token0: "uETH", Token1: "uNUSD"}
+)
+
 func NewAssetPairFromStr(pair string) (AssetPair, error) {
 	split := strings.Split(pair, PairSeparator)
 	if len(split) != 2 {

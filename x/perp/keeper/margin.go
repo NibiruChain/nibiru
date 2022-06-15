@@ -26,9 +26,8 @@ func (k Keeper) AddMargin(
 	}
 
 	// validate margin amount
-	addedMargin := msg.Margin.Amount
-	if !addedMargin.IsPositive() {
-		err = fmt.Errorf("margin must be positive, not: %v", addedMargin.String())
+	if !msg.Margin.Amount.IsPositive() {
+		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"margin_amount",
@@ -66,7 +65,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// ------------- AddMargin -------------
-	position, err := k.Positions().Get(ctx, pair, msgSender)
+	position, err := k.GetPosition(ctx, pair, msgSender)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -78,8 +77,23 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	position.Margin = position.Margin.Add(addedMargin.ToDec())
-	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
+	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(
+		ctx, *position, msg.Margin.Amount.ToDec())
+	if err != nil {
+		return nil, err
+	}
+
+	if !remainingMargin.BadDebt.IsZero() {
+		err = fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"remaining_bad_debt",
+			remainingMargin.BadDebt.String(),
+		)
+		return nil, err
+	}
+
+	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgSender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
@@ -93,17 +107,24 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	k.Positions().Set(ctx, pair, msgSender, position)
+	position.Margin = remainingMargin.Margin
+	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
+	position.BlockNumber = ctx.BlockHeight()
+	k.SetPosition(ctx, pair, msgSender, position)
 
-	// TODO(https://github.com/NibiruChain/nibiru/issues/323): calculate the funding payment
-	fPayment := sdk.ZeroDec()
-	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
-		Pair:           pair.String(),
-		TraderAddress:  msgSender,
-		MarginAmount:   addedMargin,
-		FundingPayment: fPayment,
-	})
-	return &types.MsgAddMarginResponse{}, err
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.MarginChangedEvent{
+			Pair:           pair.String(),
+			TraderAddress:  msgSender,
+			MarginAmount:   msg.Margin.Amount,
+			FundingPayment: remainingMargin.FundingPayment,
+		},
+	)
+
+	return &types.MsgAddMarginResponse{
+		FundingPayment: remainingMargin.FundingPayment,
+		Position:       position,
+	}, err
 }
 
 /* RemoveMargin further leverages an existing position by directly removing
