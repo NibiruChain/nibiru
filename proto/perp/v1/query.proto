@@ -42,6 +42,9 @@ message QueryTraderPositionRequest {
 
 message QueryTraderPositionResponse {
   Position position = 1;
+  string bad_debt = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false]; // int
 }
 
 // ---------------------------------------- OtherQuery
