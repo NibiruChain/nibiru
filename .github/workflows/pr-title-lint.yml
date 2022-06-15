@@ -1,0 +1,15 @@
+name: PR lint
+
+on:
+  pull_request:
+    types: ['opened', 'edited', 'reopened', 'synchronize']
+
+jobs:
+  pr-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: seferov/pr-lint-action@master
+      with:
+        title-regex: '  ^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.]+\))?(!)?: ([\w ])+([\s\S]*)'
+        title-regex-flags: 'g' # optional
+        error-message: 'Please follow conventional commit style: https://www.conventionalcommits.org/en/v1.0.0/' # optional
