@@ -6,23 +6,29 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	"ngithub.com/cosmos/cosmos-sdk/client"
+	govclientrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 
 	// "github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 )
 
 var (
-	AddProposalHandler = govclient.NewProposalHandler(CmdAddOracleProposal, RESTHandlers.AddOracleProposalHandler)
+	AddProposalHandler = govclient.NewProposalHandler(CmdAddOracleProposal, AddOracleProposalHandler)
 )
 
-type RESTHandlers struct {
-	AddOracleProposalHandler govclient.RESTHandlerFn
-	// RemoveOracleProposalHandler
+func AddOracleProposalRESTHandler(clientCtx client.Context) govclientrest.ProposalRESTHandler {
+	return govclientrest.ProposalRESTHandler{
+		SubRoute: ,
+	}
 }
+
+var _ AddOracleProposalRESTHandler = (*govclient.RESTHandlerFn)(nil)
+
+// RemoveOracleProposalHandler
 
 // CmdAddOracleProposal implements the client command to submit a governance
 // proposal to whitelist an oracle for specified asset pairs.
