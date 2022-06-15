@@ -78,8 +78,7 @@ func (m Pair) ToPairResponse() PairResponse {
 // Pairs is a slice of Pair
 type Pairs []Pair
 
-// Validate checks if all the markets are valid and there are no duplicated
-// entries.
+// Validate checks if all the markets are valid and there are no duplicated entries.
 func (ms Pairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, m := range ms {

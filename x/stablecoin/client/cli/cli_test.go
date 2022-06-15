@@ -189,6 +189,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 				txResp := tc.respType.(*sdk.TxResponse)
+				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				s.Require().NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
@@ -292,6 +294,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				)
 
 				txResp := tc.respType.(*sdk.TxResponse)
+				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				s.Require().NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)

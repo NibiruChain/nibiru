@@ -49,7 +49,7 @@ func TestPostPrice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.giveMsg, func(t *testing.T) {
-			// Use MsgServer over keeper methods directly to tests against valid oracles
+			// Use MsgServer over keeper methods directly to test against valid oracles
 			msg := types.NewMsgPostPrice(
 				tt.giveOracle.String(), tt.giveToken0, tt.giveToken1,
 				sdk.MustNewDecFromStr("0.5"), tt.giveExpiry)
