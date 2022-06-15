@@ -167,7 +167,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
-		nibiruApp, ctx := testutil.NewNibiruApp(true)
+		nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 		pair, err := common.NewAssetPairFromStr("xxx:yyy")
 		require.NoError(t, err)
 
@@ -233,8 +233,10 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
 			WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
 
-		_, err = nibiruApp.PerpKeeper.ClosePosition(ctx, pair, alice)
+		posResp, err := nibiruApp.PerpKeeper.ClosePosition(ctx, pair, alice)
 		require.NoError(t, err)
+		require.True(t, posResp.BadDebt.IsZero())
+		require.True(t, !posResp.FundingPayment.IsZero() && posResp.FundingPayment.IsPositive())
 
 		position, err := nibiruApp.PerpKeeper.Positions().Get(ctx, pair, alice)
 		require.NoError(t, err)
