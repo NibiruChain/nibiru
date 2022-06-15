@@ -99,7 +99,7 @@ func (k Keeper) AddMargin(
 	fPayment := sdk.ZeroDec()
 	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
 		Pair:           pair.String(),
-		TraderAddress:  msgSender,
+		TraderAddress:  msgSender.String(),
 		MarginAmount:   addedMargin,
 		FundingPayment: fPayment,
 	})
@@ -219,7 +219,7 @@ func (k Keeper) RemoveMargin(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
 		Pair:           pair.String(),
-		TraderAddress:  traderAddr,
+		TraderAddress:  traderAddr.String(),
 		MarginAmount:   msg.Margin.Amount,
 		FundingPayment: remainingMargin.FundingPayment,
 	})

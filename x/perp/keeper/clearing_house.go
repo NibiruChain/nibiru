@@ -129,7 +129,7 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:         traderAddr,
+		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
 		Margin:                positionResp.Position.Margin,
 		PositionNotional:      positionResp.ExchangedQuoteAssetAmount,

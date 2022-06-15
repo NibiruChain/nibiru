@@ -95,11 +95,11 @@ func (k Keeper) Liquidate(
 	)
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		TraderAddress:         traderAddr,
+		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
 		ExchangedQuoteAmount:  liquidationResponse.PositionResp.ExchangedQuoteAssetAmount,
 		ExchangedPositionSize: liquidationResponse.PositionResp.ExchangedPositionSize,
-		LiquidatorAddress:     liquidatorAddr,
+		LiquidatorAddress:     liquidatorAddr.String(),
 		FeeToLiquidator:       feeToLiquidator,
 		FeeToEcosystemFund:    feeToEcosystemFund,
 		BadDebt:               liquidationResponse.BadDebt,
@@ -188,10 +188,10 @@ func (k Keeper) ExecuteFullLiquidation(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  position.Pair,
-		TraderAddress:         traderAddr,
+		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		LiquidatorAddress:     liquidator,
+		LiquidatorAddress:     liquidator.String(),
 		FeeToLiquidator:       sdk.NewCoin(position.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
 		FeeToEcosystemFund:    sdk.NewCoin(position.GetAssetPair().GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
 		BadDebt:               totalBadDebt,
@@ -330,10 +330,10 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  currentPosition.Pair,
-		TraderAddress:         traderAddr,
+		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		LiquidatorAddress:     liquidator,
+		LiquidatorAddress:     liquidator.String(),
 		FeeToLiquidator:       sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
 		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
 		BadDebt:               liquidationResponse.BadDebt,

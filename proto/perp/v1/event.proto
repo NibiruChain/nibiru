@@ -16,9 +16,7 @@ message PositionChangedEvent {
     string pair = 1;
 
     // owner of the position.
-    bytes trader_address = 2 [
-        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-    ];
+    string trader_address = 2;
   
     // amount of quote token (y) backing the position.
     string margin = 3 [
@@ -87,9 +85,7 @@ message PositionLiquidatedEvent {
     string pair = 1;
 
     // owner of the position.
-    bytes trader_address = 2 [
-        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-    ];
+    string trader_address = 2;
 
     // margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'vpool'.
     string exchanged_quote_amount = 3 [
@@ -104,9 +100,7 @@ message PositionLiquidatedEvent {
     ];
 
     // Address of the account that executed the tx.
-    bytes liquidator_address = 5 [
-        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-    ];
+    string liquidator_address = 5;
 
     // Commission (in margin units) received by 'liquidator'.
     cosmos.base.v1beta1.Coin fee_to_liquidator = 6 [
@@ -133,9 +127,7 @@ message PositionSettledEvent {
     string pair = 1;
 
     // Owner of the position.
-    bytes trader_address = 2 [
-        (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-    ];
+    string trader_address = 2;
 
     // Settled coin as dictated by the settlement price of the vpool.
     repeated cosmos.base.v1beta1.Coin settled_coins = 3 [
@@ -151,9 +143,7 @@ message MarginChangedEvent {
   string pair = 1;
 
   // Owner of the position.
-  bytes trader_address = 2 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-];
+  string trader_address = 2;
 
   // Amount of margin exchanged.
   string margin_amount = 3 [
