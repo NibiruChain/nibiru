@@ -1,0 +1,19 @@
+syntax = "proto3";
+package NibiruChain.pricefeed.v1;
+
+option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
+
+message AddOracleProposal {
+  string title = 1;
+  string description = 2;
+  string oracle = 3;
+  repeated string pairs = 4;
+}
+
+message AddOracleProposalWithDeposit {
+  string title = 1;
+  string description = 2;
+  string oracle = 3;
+  repeated string pairs = 4;
+  string deposit = 5;
+}

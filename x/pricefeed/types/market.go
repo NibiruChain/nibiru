@@ -95,6 +95,17 @@ func (ms Pairs) Validate() error {
 	return nil
 }
 
+// Contains checks if a token pair is contained within 'Pairs'
+func (pairs Pairs) ContainsAtIndex(pair Pair) (bool, int) {
+	for idx, element := range pairs {
+
+		if (element.Token0 == pair.Token0) && (element.Token1 == pair.Token1) {
+			return true, idx
+		}
+	}
+	return false, -1
+}
+
 // NewPairResponse returns a new PairResponse
 func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, active bool) PairResponse {
 	var strOracles []string
