@@ -129,9 +129,9 @@ func CmdPairs() *cobra.Command {
 
 func CmdOracles() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "oracles",
+		Use:   "oracles [pair]",
 		Short: "Query oracles",
-		Args:  cobra.ExactArgs(0),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -140,7 +140,12 @@ func CmdOracles() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryOraclesRequest{}
+			pair, err := common.NewAssetPairFromStr(args[0])
+			if err != nil {
+				return fmt.Errorf("invalid pair: %w", err)
+			}
+
+			params := &types.QueryOraclesRequest{PairId: pair.String()}
 
 			res, err := queryClient.Oracles(cmd.Context(), params)
 			if err != nil {

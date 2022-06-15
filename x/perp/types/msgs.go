@@ -13,6 +13,7 @@ var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
 var _ sdk.Msg = &MsgLiquidate{}
 var _ sdk.Msg = &MsgOpenPosition{}
+var _ sdk.Msg = &MsgClosePosition{}
 
 // MsgRemoveMargin
 

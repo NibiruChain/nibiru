@@ -25,6 +25,7 @@ var (
 	ErrPairNotFound         = errors.New("pair doesn't have live vpool")
 	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
 	ErrPositionZero         = errors.New("position is zero")
+	ErrExchangeStopped      = errors.New("exchange is stopped")
 	// failed to remove margin; position has bad debt
 	ErrFailedRemoveMarginCanCauseBadDebt = errors.New("failed to remove margin; position would have bad debt if removed")
 )
