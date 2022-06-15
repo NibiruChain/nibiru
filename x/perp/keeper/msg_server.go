@@ -61,6 +61,23 @@ func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	return &types.MsgOpenPositionResponse{}, nil
 }
 
+func (k msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	addr, err := sdk.AccAddressFromBech32(position.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	tokenPair, err := common.NewAssetPairFromStr(position.TokenPair)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = k.k.ClosePosition(ctx, tokenPair, addr)
+
+	return &types.MsgClosePositionResponse{}, err
+}
+
 func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 ) (*types.MsgLiquidateResponse, error) {
 	response, err := k.k.Liquidate(goCtx, msg)
@@ -69,27 +86,4 @@ func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 	}
 
 	return response, nil
-}
-
-func (k msgServer) ClosePosition(goCtx context.Context, req *types.MsgClosePosition,
-) (*types.MsgClosePositionResponse, error) {
-	pair, err := common.NewAssetPairFromStr(req.TokenPair)
-	if err != nil {
-		panic(err) // must not happen
-	}
-
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// TODO: fix that this err doesn't get returned if using tx broadcast in cli_test
-	err = k.k.ClosePosition(ctx, pair, sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(vpooltypes.ErrClosingPosition, err.Error())
-	}
-
-	return &types.MsgClosePositionResponse{}, nil
 }
