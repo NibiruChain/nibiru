@@ -19,6 +19,7 @@ import (
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 )
 
 var commonArgs = []string{
@@ -63,6 +64,50 @@ func NewPricefeedGen() *pftypes.GenesisState {
 			},
 		},
 	}
+}
+
+func (s *IntegrationTestSuite) checkBalances(val *testutilcli.Validator, users []sdk.AccAddress) {
+	s.T().Log("Checking trader balances.... \n \n")
+
+	for i := 0; i < len(users); i++ {
+		balance, err := banktestutil.QueryBalancesExec(
+			val.ClientCtx,
+			users[i],
+		)
+		s.T().Logf("user (acc: %+v) balance: \n %+v \n", users[i], balance)
+
+		s.Assert().NoErrorf(err, "checkBalances err: %+v", err)
+	}
+}
+
+func (s *IntegrationTestSuite) checkPositions(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
+	s.T().Log("Checking trader positions.... \n \n")
+
+	for i := 0; i < len(users); i++ {
+		queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, users[i])
+		s.T().Logf("user (acc: %+v) position: \n %+v \n", users[i], queryResp)
+
+		s.Assert().NoErrorf(err, "checkPositions err: %+v", err)
+	}
+}
+
+func (s *IntegrationTestSuite) checkReserveAssets(val *testutilcli.Validator, pair common.AssetPair) {
+	s.T().Log("Checking vpool reserve assets....")
+
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, pair)
+	s.T().Logf("reserve assets (pair: %+v): %+v %+v", pair, reserveAssets, err)
+	s.Assert().NoErrorf(err, "query reserve assets err: %+v", err)
+}
+
+func (s *IntegrationTestSuite) checkStatus(val *testutilcli.Validator, pair common.AssetPair, users []sdk.AccAddress) {
+	err := s.network.WaitForNextBlock()
+	s.Require().NoError(err)
+
+	s.checkReserveAssets(val, pair)
+	s.checkBalances(val, users)
+	s.checkPositions(val, pair, users)
+
+	s.T().Log("\n \n")
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -469,7 +514,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
 	}
 	out, _ = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
-	fmt.Printf("STEVENDEBUG out: %+v\n", out)
+	s.Require().Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
