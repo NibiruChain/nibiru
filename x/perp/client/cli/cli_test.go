@@ -223,7 +223,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	)
 	s.Require().NoError(err)
 
-	out, err := testutilcli.FillWalletFromValidator(user2,
+	_, err = testutilcli.FillWalletFromValidator(user2,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
