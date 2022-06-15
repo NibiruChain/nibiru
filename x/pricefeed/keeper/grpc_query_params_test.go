@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testkeeper"
+	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.PricefeedKeeper(t)
+	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.Params{
 		Pairs: []types.Pair{

@@ -246,7 +246,7 @@ func TestRemoveMargin(t *testing.T) {
 				_, err := perpKeeper.RemoveMargin(goCtx, msg)
 
 				require.Error(t, err)
-				require.ErrorContains(t, err, "position has bad debt")
+				require.ErrorContains(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 			},
 		},
 		{
