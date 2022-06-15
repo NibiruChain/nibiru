@@ -100,3 +100,14 @@ func RawPoolNameFromDenoms(denoms []string) string {
 	}
 	return poolName
 }
+
+type AssetPairs []AssetPair
+
+func (pairs AssetPairs) Contains(pair AssetPair) bool {
+	for _, element := range pairs {
+		if (element.Token0 == pair.Token0) && (element.Token1 == pair.Token1) {
+			return true
+		}
+	}
+	return false
+}

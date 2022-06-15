@@ -1,9 +1,13 @@
 package keeper
 
 import (
+	"fmt"
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
@@ -85,18 +89,92 @@ func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
 	startParams := k.GetParams(ctx)
 	var endPairs types.Pairs
 	for _, pair := range startParams.Pairs {
-		var pairOracles []sdk.AccAddress
-		uniquePairOracles := make(map[string]bool)
-		for _, o := range append(pair.Oracles, oracles...) {
-			if _, found := uniquePairOracles[(o.String())]; !found {
-				pairOracles = append(pairOracles, o)
-				uniquePairOracles[o.String()] = true
-			}
-		}
-		endPairs = append(endPairs,
-			types.Pair{Token0: pair.Token0, Token1: pair.Token1,
-				Oracles: pairOracles, Active: pair.Active})
+		endPair := appendOraclesToPair(pair, oracles)
+		endPairs = append(endPairs, endPair)
 	}
 	endParams := types.NewParams(endPairs)
 	k.SetParams(ctx, endParams)
+}
+
+// appendOraclesToPair returns a 'newPair', which has an Oracles field formed by
+// the unique set union of 'oracles' and 'pair.Oracles'.
+func appendOraclesToPair(pair types.Pair, oracles []sdk.AccAddress) (newPair types.Pair) {
+	var pairOracles []sdk.AccAddress
+	uniquePairOracles := make(map[string]bool)
+	for _, oracle := range append(pair.Oracles, oracles...) {
+		if _, found := uniquePairOracles[(oracle.String())]; !found {
+			pairOracles = append(pairOracles, oracle)
+			uniquePairOracles[oracle.String()] = true
+		}
+	}
+
+	// sort the oracles to make reads faster w/ binary search
+	pairOraclesStrings := []string{}
+	for _, oracle := range pairOracles {
+		pairOraclesStrings = append(pairOraclesStrings, oracle.String())
+	}
+	sort.Strings(pairOraclesStrings)
+	pairOracles = []sdk.AccAddress{}
+	for _, oracleStr := range pairOraclesStrings {
+		pairOracles = append(pairOracles, sdk.MustAccAddressFromBech32(oracleStr))
+	}
+
+	return types.Pair{
+		Token0: pair.Token0, Token1: pair.Token1,
+		Oracles: pairOracles, Active: pair.Active}
+}
+
+// WhitelistOracleForPairs whitelists 'oracles' for the given 'pairs'.
+func (k Keeper) WhitelistOraclesForPairs(
+	ctx sdk.Context, oracles []sdk.AccAddress, pairs []string,
+) error {
+	paramsPairs := k.GetPairs(ctx)
+
+	// Contained in params check
+	paramsIdxProposedIdxMap := make(map[int]int) // maps paramsIdx -> proposedIdx
+	// proposedIdx: index of the proposed pairs array
+	// paramsIdx: and the params pairs array to avoid unnecessary looping
+	for proposedIdx, pair := range pairs {
+		proposedPair, err := common.NewAssetPairFromStr(pair)
+		if err != nil {
+			return err
+		}
+
+		found, paramsIdx := paramsPairs.ContainsAtIndex(types.Pair{
+			Token0: proposedPair.Token0,
+			Token1: proposedPair.Token1,
+		})
+		paramsIdxProposedIdxMap[paramsIdx] = proposedIdx
+
+		if !found {
+			return fmt.Errorf("pair %v:%v not contained in params",
+				proposedPair.Token0, proposedPair.Token1)
+			// Refactor
+			// TODO create sdkerror for this
+			// NOTE Q: For reviewer, should we allow this to pass instead of throwing an error?
+			// That would make this function open up new pairs?
+			// Or, should that be a separate governance proposal?
+			// It seems convenient to be able to whitelist pairs by intializing them
+			// with oracles.
+		}
+	}
+
+	var endingParamsPairs types.Pairs
+	for paramIdx, paramPair := range paramsPairs {
+
+		var endingPair types.Pair
+		_, found := paramsIdxProposedIdxMap[paramIdx]
+
+		if !found {
+			endingPair = paramPair
+		} else {
+			endingPair = appendOraclesToPair(paramPair, oracles)
+		}
+
+		endingParamsPairs = append(endingParamsPairs, endingPair)
+	}
+
+	endParams := types.NewParams(endingParamsPairs)
+	k.SetParams(ctx, endParams)
+	return nil
 }

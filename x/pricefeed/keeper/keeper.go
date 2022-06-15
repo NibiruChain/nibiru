@@ -171,10 +171,10 @@ func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice typ
 We use the blocktime to update the twap price.
 
 Calculation is done as follow:
-	$$P_{TWAP} = \frac {\sum {P_j \times Bh_j }}{\sum{Bh_j}} $$
+	$$P_{TWAP} = \frac { \sum P_j \times t_B }{ \sum{t_B} } $$
 With
 	P_j: current posted price for the pair of tokens
-	Bh_j: current block timestamp
+	t_B: current block timestamp
 
 */
 
