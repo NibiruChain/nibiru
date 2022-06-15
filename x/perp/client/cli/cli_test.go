@@ -196,12 +196,18 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	val := s.network.Validators[0]
+
 	info, _, err := val.ClientCtx.Keyring.
 		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
-	s.users = []sdk.AccAddress{user1}
+	info, _, err = val.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user2 := sdk.AccAddress(info.GetPubKey().Address())
+
+	s.users = []sdk.AccAddress{user1, user2}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
@@ -214,6 +220,20 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		val,
 		s.cfg.BondDenom,
 	)
+	s.Require().NoError(err)
+
+	out, err := testutilcli.FillWalletFromValidator(user2,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	fmt.Printf("STEVENDEBUG fill wallet out %+v\n", out.String())
 	s.Require().NoError(err)
 }
 
