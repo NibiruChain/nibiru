@@ -401,6 +401,77 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.Require().Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 }
 
+func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
+	val := s.network.Validators[0]
+	pair := common.TestStablePool
+
+	first_user := s.users[0]
+	second_user := s.users[1]
+
+	// Open a position with first user
+	s.T().Log("opening a position with first user....")
+	args := []string{
+		"--from",
+		first_user.String(),
+		"buy",
+		pair.String(),
+		"10",        // 10x Leverage
+		"10",        // Quote asset amount
+		"0.0000001", // No limit basically
+	}
+	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+	s.checkStatus(val, pair, []sdk.AccAddress{first_user})
+
+	// Open a position with second user
+	s.T().Log("opening a position with second user....")
+	args = []string{
+		"--from",
+		second_user.String(),
+		"buy",
+		pair.String(),
+		"10",        // 10x Leverage
+		"10",        // Quote asset amount
+		"0.0000001", // No limit basically
+	}
+	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+	s.checkStatus(val, pair, s.users)
+
+	// First user pulls out - close position (not remove margin)
+	s.T().Log("closing position (removing all margin) on first user....")
+	args = []string{
+		"--from",
+		first_user.String(),
+		pair.String(),
+	}
+	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+	s.Require().NotContains(out.String(), "fail")
+
+	s.checkStatus(val, pair, s.users)
+
+	// Second user should have bad debt now
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, second_user)
+	fmt.Printf("queryResp: %+v\n", queryResp)
+	s.Require().Equal(
+		queryResp.BadDebt,
+		sdk.MustNewDecFromStr("17.999999999999999998"),
+	)
+	s.Require().NoError(err)
+
+	// Try remove
+	s.T().Log("removing margin on second user....")
+	args = []string{
+		"--from",
+		first_user.String(),
+		pair.String(),
+		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
+	}
+	out, _ = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
+	fmt.Printf("STEVENDEBUG out: %+v\n", out)
+}
+
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
