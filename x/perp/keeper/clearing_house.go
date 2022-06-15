@@ -131,11 +131,11 @@ func (k Keeper) afterPositionUpdate(
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
-		Margin:                positionResp.Position.Margin,
-		PositionNotional:      positionResp.ExchangedQuoteAssetAmount,
+		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.Position.Margin.RoundInt()),
+		PositionNotional:      positionResp.ExchangedQuoteAssetAmount, // TODO(https://github.com/NibiruChain/nibiru/issues/614): this is the wrong value
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		Fee:                   transferredFee,
-		PositionSizeAfter:     positionResp.Position.Size_,
+		TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), transferredFee),
+		PositionSize:          positionResp.Position.Size_,
 		RealizedPnl:           positionResp.RealizedPnl,
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
 		BadDebt:               positionResp.BadDebt,
