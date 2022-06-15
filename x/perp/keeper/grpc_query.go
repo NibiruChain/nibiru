@@ -44,7 +44,23 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
+	_, unrealizedPnL, err := q.getPositionNotionalAndUnrealizedPnL(
+		ctx,
+		*position,
+		types.PnLCalcOption_SPOT_PRICE,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	remaining, err := q.CalcRemainMarginWithFundingPayment(
+		ctx, *position, unrealizedPnL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryTraderPositionResponse{
 		Position: position,
+		BadDebt:  remaining.BadDebt,
 	}, nil
 }
