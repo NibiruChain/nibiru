@@ -445,24 +445,17 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"0.0000001",
 	}
 	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user1 open position err: %+v", err)
-	}
 	s.Require().NoError(err)
 
-	// Remove margin to trigger bad debt on user 1
+	// Remove margin should fail due to the new position (after remove margin) would have bad debt
 	s.T().Log("removing margin on user 1....")
 	args = []string{
 		"--from",
 		s.users[0].String(),
 		pair.String(),
-		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
+		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount: 100 unusd
 	}
 	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user1 remove margin err: %+v", err)
-	}
-
 	s.Require().Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 }
 
@@ -520,12 +513,12 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, second_user)
 	fmt.Printf("queryResp: %+v\n", queryResp)
 	s.Require().Equal(
+		sdk.MustNewDecFromStr("20.110658124635993007"),
 		queryResp.BadDebt,
-		sdk.MustNewDecFromStr("17.999999999999999998"),
 	)
 	s.Require().NoError(err)
 
-	// Try remove
+	// Try remove margin should fail due to the bad debt
 	s.T().Log("removing margin on second user....")
 	args = []string{
 		"--from",
