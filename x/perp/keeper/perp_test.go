@@ -176,7 +176,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		vpoolKeeper.CreatePool(
 			ctx,
 			pair,
-			/*tradeLimitRation*/ sdk.MustNewDecFromStr("0.9"),
+			/*tradeLimitRatio*/ sdk.MustNewDecFromStr("0.9"),
 			/*quoteAssetReserve*/ sdk.NewDec(10_000_000),
 			/*baseAssetReserve*/ sdk.NewDec(5_000_000),
 			/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
