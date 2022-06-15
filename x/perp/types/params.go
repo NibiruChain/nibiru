@@ -85,7 +85,7 @@ func DefaultParams() Params {
 	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
 
 	return NewParams(
-		/*Stopped=*/ true,
+		/*Stopped=*/ false,
 		/*MaintenanceMarginRatio=*/ maintenanceMarginRatio,
 		/*TollRatio=*/ tollRatio,
 		/*SpreadRatio=*/ spreadRatio,
