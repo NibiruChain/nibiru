@@ -496,7 +496,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	s.Require().NoError(err)
 	s.checkStatus(val, pair, s.users)
 
-	// First user pulls out - close position (not remove margin)
+	// First user pulls out - close positin
 	s.T().Log("closing position (removing all margin) on first user....")
 	args = []string{
 		"--from",
