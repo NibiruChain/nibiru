@@ -208,7 +208,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	user2 := sdk.AccAddress(info.GetPubKey().Address())
 
-	s.users = []sdk.AccAddress{user1, user2}
+	info, _, err = val.ClientCtx.Keyring.
+		NewMnemonic("user3", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.Require().NoError(err)
+	user3 := sdk.AccAddress(info.GetPubKey().Address())
+
+	s.users = []sdk.AccAddress{user1, user2, user3}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
@@ -224,6 +229,19 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	_, err = testutilcli.FillWalletFromValidator(user2,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
+			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
+			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
+			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+		),
+		val,
+		s.cfg.BondDenom,
+	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(user3,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
@@ -455,7 +473,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		pair.String(),
 		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount: 100 unusd
 	}
-	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
+	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
 	s.Require().Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 }
 
@@ -463,8 +481,8 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	val := s.network.Validators[0]
 	pair := common.TestStablePool
 
-	first_user := s.users[0]
-	second_user := s.users[1]
+	first_user := s.users[1]
+	second_user := s.users[2]
 
 	// Open a position with first user
 	s.T().Log("opening a position with first user....")
@@ -510,7 +528,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	s.checkStatus(val, pair, s.users)
 
 	// Second user should have bad debt now
-	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, second_user)
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, first_user)
 	fmt.Printf("queryResp: %+v\n", queryResp)
 	s.Require().Equal(
 		sdk.MustNewDecFromStr("20.110658124635993007"),

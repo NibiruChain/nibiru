@@ -737,6 +737,9 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.A
 		return nil, err
 	}
 	posResp, err := k.openReversePosition(ctx, *position, currentOpenNotional, sdk.NewDec(1), sdk.ZeroDec(), false)
+	fmt.Printf("STEVENDEBUG ClosePosition openReversePosition: %+v\n", posResp)
+	fmt.Printf("STEVENDEBUG ClosePosition openReversePosition err: %+v\n", err)
+
 	if err != nil {
 		return nil, err
 	}
