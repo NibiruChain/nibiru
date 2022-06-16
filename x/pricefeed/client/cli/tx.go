@@ -17,7 +17,7 @@ var (
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
-	cmd := &cobra.Command{
+	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      fmt.Sprintf("%s transactions subcommands", types.ModuleName),
 		DisableFlagParsing:         true,
@@ -25,8 +25,10 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdPostPrice())
-	// this line is used by starport scaffolding # 1
+	txCmd.AddCommand(
+		CmdPostPrice(),
+		CmdAddOracleProposal(),
+	)
 
-	return cmd
+	return txCmd
 }

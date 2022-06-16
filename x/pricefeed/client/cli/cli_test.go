@@ -541,7 +541,9 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		s.T().Log("Create oracle account and fill wallet")
 		s.Require().Len(s.network.Validators, 1)
 		val := s.network.Validators[0]
-		clientCtx := val.ClientCtx.WithOutputFormat("json")
+		clientCtx := val.ClientCtx.WithOutputFormat("json").
+			WithFromAddress(val.Address).
+			WithFrom(val.Address.String())
 
 		oracleKeyringInfo, err := val.ClientCtx.Keyring.NewAccount(
 			/* uid */ "delphi-oracle",
@@ -589,20 +591,19 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposalWithDeposit)
 		s.Assert().NoError(err)
 
-		s.T().Log("Check that proposal correctness and validity")
+		s.T().Log("Check proposal validity")
 		s.Require().NoError(proposal.Validate())
 
-		fmt.Printf("val.Address: %s\n", val.Address.String())
-		fmt.Printf("val.PubKey: %s\n", val.PubKey.String())
-		fmt.Printf("oracle: %s\n", oracle.String())
-
 		cmd := cli.CmdAddOracleProposal()
-		args := []string{proposalJSON.Name()}
+		args := []string{
+			proposalJSON.Name(),
+			fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+			fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		}
+
 		out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
 		fmt.Printf("out: %v\n", out)
-		fmt.Printf("proposal: %v\n", proposal.String())
-		fmt.Printf("\nproposalJSON: %v\n", proposalJSONString)
-		s.Require().NoErrorf(err, "error: %v", err.Error())
+		fmt.Printf("err: %v\n", err.Error())
 	})
 
 }
