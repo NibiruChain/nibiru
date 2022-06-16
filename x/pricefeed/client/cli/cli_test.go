@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"testing"
 	"time"
@@ -17,8 +18,10 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 )
 
 const (
@@ -529,6 +532,48 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 			s.Assert().Equal(tc.expectedParams, txResp.Params)
 		})
 	}
+}
+
+func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
+	s.Run("proposal to whitelist an oracle on ", func() {
+		s.Require().Len(s.network.Validators, 1)
+		val := s.network.Validators[0]
+		clientCtx := val.ClientCtx.WithOutputFormat("json")
+
+		proposal := types.AddOracleProposal{
+			Title:       "Cataclysm-004",
+			Description: "Whitelists Delphi to post prices for OHM and BTC",
+			Oracle: sdk.MustAccAddressFromBech32(
+				"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl").String(),
+			Pairs: []string{"ohm:usd", "btc:usd"},
+		}
+
+		s.T().Log("load example json as bytes")
+		proposalJSONString := fmt.Sprintf(`
+			{
+				"title": "%v",
+				"description": "%v",
+				"oracle": "%v",
+				"pairs": ["%v", "%v"],
+				"deposit": "1000unibi"
+			}	
+			`, proposal.Title, proposal.Description, proposal.Oracle, proposal.Pairs[0],
+			proposal.Pairs[1],
+		)
+		proposalJSON := sdktestutil.WriteToNewTempFile(
+			s.T(), proposalJSONString,
+		)
+		_, err := ioutil.ReadFile(proposalJSON.Name())
+		s.Assert().NoError(err)
+
+		cmd := cli.CmdAddOracleProposal()
+		args := []string{proposalJSON.Name()}
+		out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+		fmt.Printf("out: %v\n", out)
+		fmt.Printf("proposal: %v\n", proposal.String())
+		fmt.Printf("\nproposalJSON: %v\n", proposalJSONString)
+	})
+
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
