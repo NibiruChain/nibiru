@@ -1,23 +1,18 @@
 package cli_test
 
 import (
-	"fmt"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -32,15 +27,6 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	s.txArgs = []string{
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
-		fmt.Sprintf("--%s=userWithLock", flags.FlagFrom),
-	}
-	s.queryArgs = []string{
-		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-	}
 	if testing.Short() {
 		s.T().Skip("skipping lockup CLI tests")
 	}
@@ -86,58 +72,55 @@ func (s *IntegrationTestSuite) TestLockupCLI() {
 		"1000ATOM", // coins to lock
 		"10s",      // duration
 	}
-	result, err := clitestutil.ExecTestCLICmd(
-		s.network.Validators[0].ClientCtx,
-		cli.GetLockCoinsCmd(),
-		append(lockup1Args, s.txArgs...))
 
+	_, err := testutilcli.ExecTx(s.network, cli.GetLockCoinsCmd(), s.userWithLock, lockup1Args)
 	require.NoError(s.T(), err)
-	testutilcli.RequireTxOk(s.T(), s.network.Validators[0].ClientCtx.Codec, result.Bytes())
+
 	// test query lock
 	s.T().Log("testing query lock")
 	queryLockArgs := []string{"0"}
-	_, err = clitestutil.ExecTestCLICmd(s.network.Validators[0].ClientCtx, cli.GetQueryLockCmd(), append(queryLockArgs, s.queryArgs...))
-	require.NoError(s.T(), err)
+	queryLockResponse := new(types.QueryLockResponse)
+	require.NoError(s.T(), testutilcli.ExecQuery(s.network, cli.GetQueryLockCmd(), queryLockArgs, queryLockResponse))
+	require.Equal(s.T(), 10*time.Second, queryLockResponse.Lock.Duration)
+	require.Equal(s.T(), s.userWithLock.String(), queryLockResponse.Lock.Owner)
+	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("ATOM", 1000)), queryLockResponse.Lock.Coins)
+
 	// lock coins again
 	lockup2Args := []string{
 		"1000OSMO", // coins to lock
 		"10s",      // duration
 	}
-	result, err = clitestutil.ExecTestCLICmd(
-		s.network.Validators[0].ClientCtx,
-		cli.GetLockCoinsCmd(),
-		append(lockup2Args, s.txArgs...))
 
+	_, err = testutilcli.ExecTx(s.network, cli.GetLockCoinsCmd(), s.userWithLock, lockup2Args)
 	require.NoError(s.T(), err)
-	testutilcli.RequireTxOk(s.T(), s.network.Validators[0].ClientCtx.Codec, result.Bytes())
+
 	// test query multiple locks
 	s.T().Log("testing query locks by address")
 	queryLocksByAddressArgs := []string{s.userWithLock.String()}
-	result, err = clitestutil.ExecTestCLICmd(s.network.Validators[0].ClientCtx, cli.GetQueryLocksByAddressCmd(), append(queryLocksByAddressArgs, s.queryArgs...))
-	require.NoError(s.T(), err)
-	s.T().Logf("%s", result)
+	queryLocksByAddressResp := new(types.QueryLocksByAddressResponse)
+	require.NoError(s.T(), testutilcli.ExecQuery(s.network, cli.GetQueryLocksByAddressCmd(), queryLocksByAddressArgs, queryLocksByAddressResp))
+	require.Len(s.T(), queryLocksByAddressResp.Locks, 2)
+	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("ATOM", 1000)), queryLocksByAddressResp.Locks[0].Coins)
+	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("OSMO", 1000)), queryLocksByAddressResp.Locks[1].Coins)
+
 	// test query locked coins
 	s.T().Log("testing query locked coins")
 	queryLockedCoinsArgs := []string{s.userWithLock.String()}
-	result, err = clitestutil.ExecTestCLICmd(s.network.Validators[0].ClientCtx, cli.GetQueryLockedCoinsCmd(), append(queryLockedCoinsArgs, s.queryArgs...))
-	require.NoError(s.T(), err)
-	s.T().Logf("%s", result)
+	queryLockedCoinsResp := new(types.QueryLockedCoinsResponse)
+	require.NoError(s.T(), testutilcli.ExecQuery(s.network, cli.GetQueryLockedCoinsCmd(), queryLockedCoinsArgs, queryLockedCoinsResp))
+	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("ATOM", 1000), sdk.NewInt64Coin("OSMO", 1000)), queryLockedCoinsResp.LockedCoins)
 
 	// test initiate unlock
 	s.T().Log("testing initiate unlock")
 	initiateUnlockArgs := []string{"0"}
-	result, err = clitestutil.ExecTestCLICmd(s.network.Validators[0].ClientCtx, cli.GetInitiateUnlockCmd(), append(initiateUnlockArgs, s.txArgs...))
-	require.NoError(s.T(), err)
-	testutilcli.RequireTxOk(s.T(), s.network.Validators[0].ClientCtx.Codec, result.Bytes())
-	s.T().Logf("%s", result)
+	_, err = testutilcli.ExecTx(s.network, cli.GetInitiateUnlockCmd(), s.userWithLock, initiateUnlockArgs)
 	// wait some seconds then unlock funds
 	s.T().Logf("testing unlock funds")
 	require.NoError(s.T(), s.network.WaitForDuration(10*time.Second))
 
 	unlockArgs := []string{"0"}
-	result, err = clitestutil.ExecTestCLICmd(s.network.Validators[0].ClientCtx, cli.GetUnlockCmd(), append(unlockArgs, s.txArgs...))
+	_, err = testutilcli.ExecTx(s.network, cli.GetUnlockCmd(), s.userWithLock, unlockArgs)
 	require.NoError(s.T(), err)
-	testutilcli.RequireTxOk(s.T(), s.network.Validators[0].ClientCtx.Codec, result.Bytes())
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

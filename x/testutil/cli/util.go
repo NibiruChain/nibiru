@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -244,8 +243,4 @@ func txOK(cdc codec.Codec, txBytes []byte) error {
 	}
 
 	return nil
-}
-
-func RequireTxOk(t require.TestingT, cdc codec.Codec, txBytes []byte) {
-	require.NoError(t, txOK(cdc, txBytes))
 }
