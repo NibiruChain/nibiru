@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -18,7 +20,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
@@ -535,17 +536,33 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 }
 
 func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
-	s.Run("proposal to whitelist an oracle on ", func() {
+	s.Run("proposal to whitelist an oracle", func() {
+
+		s.T().Log("Create oracle account and fill wallet")
 		s.Require().Len(s.network.Validators, 1)
 		val := s.network.Validators[0]
 		clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-		proposal := types.AddOracleProposal{
+		oracleKeyringInfo, err := val.ClientCtx.Keyring.NewAccount(
+			/* uid */ "delphi-oracle",
+			/* mnemonic */ oracleMnemonic,
+			/* bip39Passphrase */ "",
+			/* hdPath */ sdk.FullFundraiserPath,
+			/* algo */ hd.Secp256k1,
+		)
+		s.Require().NoError(err)
+
+		s.T().Log("Fill oracle wallet so they can pay gas on post price")
+		gasTokens := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
+		oracle := sdk.AccAddress(oracleKeyringInfo.GetPubKey().Address())
+		_, err = testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom)
+		s.Require().NoError(err)
+
+		proposal := pftypes.AddOracleProposal{
 			Title:       "Cataclysm-004",
 			Description: "Whitelists Delphi to post prices for OHM and BTC",
-			Oracle: sdk.MustAccAddressFromBech32(
-				"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl").String(),
-			Pairs: []string{"ohm:usd", "btc:usd"},
+			Oracle:      oracleKeyringInfo.GetAddress().String(),
+			Pairs:       []string{"ohm:usd", "btc:usd"},
 		}
 
 		s.T().Log("load example json as bytes")
@@ -563,8 +580,21 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		proposalJSON := sdktestutil.WriteToNewTempFile(
 			s.T(), proposalJSONString,
 		)
-		_, err := ioutil.ReadFile(proposalJSON.Name())
+		contents, err := ioutil.ReadFile(proposalJSON.Name())
 		s.Assert().NoError(err)
+
+		s.T().Log("Unmarshal json bytes into proposal object")
+		encodingConfig := simappparams.MakeTestEncodingConfig()
+		proposalWithDeposit := &pftypes.AddOracleProposalWithDeposit{}
+		err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposalWithDeposit)
+		s.Assert().NoError(err)
+
+		s.T().Log("Check that proposal correctness and validity")
+		s.Require().NoError(proposal.Validate())
+
+		fmt.Printf("val.Address: %s\n", val.Address.String())
+		fmt.Printf("val.PubKey: %s\n", val.PubKey.String())
+		fmt.Printf("oracle: %s\n", oracle.String())
 
 		cmd := cli.CmdAddOracleProposal()
 		args := []string{proposalJSON.Name()}
@@ -572,6 +602,7 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		fmt.Printf("out: %v\n", out)
 		fmt.Printf("proposal: %v\n", proposal.String())
 		fmt.Printf("\nproposalJSON: %v\n", proposalJSONString)
+		s.Require().NoErrorf(err, "error: %v", err.Error())
 	})
 
 }
