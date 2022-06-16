@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 	"time"
-	_ "github.com/golang/mock/mockgen/model"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

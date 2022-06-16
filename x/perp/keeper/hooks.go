@@ -22,7 +22,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 			// FIXME: should we panic instead??
 			continue
 		}
-		if !k.VpoolKeeper.ExistsPool(ctx , assetPair) {
+		if !k.VpoolKeeper.ExistsPool(ctx, assetPair) {
 			// FIXME: should we panic instead??
 			continue
 		}
@@ -32,17 +32,19 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 			continue
 		}
 		marketTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, assetPair.Token0, assetPair.Token1)
+		if err != nil {
+			// FIXME: should we panic instead??
+			continue
+		}
 		fundingRate := marketTWAPPrice.Price.Sub(indexTWAPPrice.Price).Quo(sdk.NewDec(24))
 		md.CumulativePremiumFractions = append(md.CumulativePremiumFractions, fundingRate)
 		k.PairMetadata().Set(ctx, md)
 	}
 }
 
-
-
 // ___________________________________________________________________________________________________
 
-// Hooks wrapper struct for incentives keeper.
+// Hooks wrapper struct for perps keeper.
 type Hooks struct {
 	k Keeper
 }

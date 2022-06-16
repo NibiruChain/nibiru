@@ -89,6 +89,11 @@ func (k Keeper) savePoolAndSnapshot(
 
 	k.savePool(ctx, updatedPool)
 
+	// Subtle side effect, should this be reflected in the method name / explicitly updated after this method
+	if err := k.updateTWAPPrice(ctx, updatedPool.GetAssetPair().String()); err != nil {
+		return fmt.Errorf("failed to update TWAP: %w", err)
+	}
+
 	return nil
 }
 

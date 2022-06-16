@@ -238,5 +238,5 @@ type VpoolKeeper interface {
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 
 	// GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
-	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice vpooltypes.CurrentTWAP, err error)
+	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (vpooltypes.CurrentTWAP, error)
 }

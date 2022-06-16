@@ -312,7 +312,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	return price, nil
 }
 
-/* 
+/*
 updateTWAPPrice updates the twap price for a token0, token1 pair
 We use the blocktime to update the twap price.
 
@@ -329,7 +329,7 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	token0, token1 := tokens[0], tokens[1]
 
 	currentPrice, err := k.GetSpotPrice(ctx, common.AssetPair{
-		Token0: token0, 
+		Token0: token0,
 		Token1: token1,
 	})
 	if err != nil {
