@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -153,4 +154,53 @@ func TestAddOracleProposalFromJson(t *testing.T) {
 	proposalDeposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
 	assert.NoError(t, err)
 	assert.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)), proposalDeposit)
+}
+
+func TestWhitelistOraclesForPairs(t *testing.T) {
+
+	testCases := []struct {
+		name          string
+		startParams   types.Params
+		pairsToSet    []string
+		endAssetPairs []common.AssetPair
+	}{
+		{
+			name: "whitelist for specific pairs - happy",
+			startParams: types.Params{
+				Pairs: types.Pairs{
+					types.Pair{
+						Token0: "aaa", Token1: "usd",
+						Oracles: []sdk.AccAddress{}, Active: false},
+					types.Pair{
+						Token0: "bbb", Token1: "usd",
+						Oracles: []sdk.AccAddress{}, Active: false},
+					types.Pair{
+						Token0: "oraclepair", Token1: "usd",
+						Oracles: []sdk.AccAddress{}, Active: false},
+				},
+			},
+			pairsToSet: []string{"oraclepair:usd"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			var err error
+			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+			pricefeedKeeper := &nibiruApp.PricefeedKeeper
+			pricefeedKeeper.SetParams(ctx, tc.startParams)
+
+			oracles := []sdk.AccAddress{sample.AccAddress()}
+			err = pricefeedKeeper.WhitelistOraclesForPairs(
+				ctx,
+				oracles,
+				/* pairs */ []string{"oraclepair:usd"},
+			)
+			require.NoError(t, err)
+
+			require.EqualValues(t, oracles, pricefeedKeeper.GetAuthorizedAddresses(ctx))
+			// TODO Unique: Test is #wip. This is a temporary MVP while I finish refactoring.
+		})
+	}
 }

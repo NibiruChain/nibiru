@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -108,6 +106,7 @@ func appendOraclesToPair(pair types.Pair, oracles []sdk.AccAddress) (newPair typ
 	}
 
 	// TODO refactor: sort the oracles to make reads faster w/ binary search
+	//
 
 	return types.Pair{
 		Token0: pair.Token0, Token1: pair.Token1,
@@ -115,21 +114,24 @@ func appendOraclesToPair(pair types.Pair, oracles []sdk.AccAddress) (newPair typ
 }
 
 // WhitelistOracleForPairs whitelists 'oracles' for the given 'pairs'.
+// TODO Use maps and proto for asset pair
+// - https://github.com/NibiruChain/nibiru/issues/620
 func (k Keeper) WhitelistOraclesForPairs(
 	ctx sdk.Context, oracles []sdk.AccAddress, pairs []string,
 ) error {
 	paramsPairs := k.GetPairs(ctx)
 
-	// Contained in params check
 	paramsIdxProposedIdxMap := make(map[int]int) // maps paramsIdx -> proposedIdx
 	// proposedIdx: index of the proposed pairs array
 	// paramsIdx: and the params pairs array to avoid unnecessary looping
+	newPairs := []types.Pair{}
 	for proposedIdx, pair := range pairs {
 		proposedPair, err := common.NewAssetPairFromStr(pair)
 		if err != nil {
 			return err
 		}
 
+		// keeping the paramsIdx
 		found, paramsIdx := paramsPairs.ContainsAtIndex(types.Pair{
 			Token0: proposedPair.Token0,
 			Token1: proposedPair.Token1,
@@ -137,19 +139,16 @@ func (k Keeper) WhitelistOraclesForPairs(
 		paramsIdxProposedIdxMap[paramsIdx] = proposedIdx
 
 		if !found {
-			return fmt.Errorf("pair %v:%v not contained in params",
-				proposedPair.Token0, proposedPair.Token1)
-			// Refactor
-			// TODO create sdkerror for this
-			// NOTE Q: For reviewer, should we allow this to pass instead of throwing an error?
-			// That would make this function open up new pairs?
-			// Or, should that be a separate governance proposal?
-			// It seems convenient to be able to whitelist pairs by intializing them
-			// with oracles.
+			newPairs = append(newPairs, types.Pair{
+				Token0:  proposedPair.Token0,
+				Token1:  proposedPair.Token1,
+				Oracles: oracles,
+				Active:  false,
+			})
 		}
 	}
 
-	var endingParamsPairs types.Pairs
+	var endingParamsPairs types.Pairs = newPairs
 	for paramIdx, paramPair := range paramsPairs {
 		var endingPair types.Pair
 		_, found := paramsIdxProposedIdxMap[paramIdx]

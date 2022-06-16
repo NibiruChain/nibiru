@@ -44,6 +44,7 @@ func NewAssetPairFromStr(pair string) (AssetPair, error) {
 	return AssetPair{Token0: split[0], Token1: split[1]}, nil
 }
 
+// TODO make assetpair a proto type | https://github.com/NibiruChain/nibiru/issues/623
 type AssetPair struct {
 	Token0 string
 	Token1 string
