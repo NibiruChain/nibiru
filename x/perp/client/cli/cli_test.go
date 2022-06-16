@@ -286,7 +286,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		assetPair.String(),
 		"1",          // Leverage
 		"4000000",    // 4*10^6 unusd
-		"2000000000", // TODO: just threw a large number here, figure out a more appropriate amount
+		"2000000000", // Just a large number, basically no limit
 	}
 	res, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
@@ -318,6 +318,30 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.OpenNotional)
 	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Size_)
+
+	// Test open position again and finally close, to verify positions can reopen after closing
+	s.T().Log("G. Do a final open and close position to verify positions can reopen after closing")
+	args = []string{
+		"--from",
+		user.String(),
+		"buy",
+		assetPair.String(),
+		"1",       // Leverage
+		"1000000", // 1 BTC
+		"1",
+	}
+	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+	s.Assert().NotContains(out.String(), "fail")
+
+	// args = []string{
+	// 	"--from",
+	// 	user.String(),
+	// 	assetPair.String(),
+	// }
+	// out, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	// s.Require().NoError(err)
+	// s.Assert().NotContains(out.String(), "fail")
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
