@@ -377,9 +377,8 @@ func (k Keeper) openReversePosition(
 		return nil, err
 	}
 
-	switch currentPositionNotional.GT(openNotional) {
-	// position reduction
-	case true:
+	if currentPositionNotional.GT(openNotional) {
+		// position reduction
 		return k.decreasePosition(
 			ctx,
 			currentPosition,
@@ -387,8 +386,8 @@ func (k Keeper) openReversePosition(
 			baseAssetAmountLimit,
 			canOverFluctuationLimit,
 		)
-	// close and reverse
-	default:
+	} else {
+		// close and reverse
 		return k.closeAndOpenReversePosition(
 			ctx,
 			currentPosition,
