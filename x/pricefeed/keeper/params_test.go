@@ -121,9 +121,9 @@ func TestWhitelistOracles(t *testing.T) {
 }
 
 func TestAddOracleProposalFromJson(t *testing.T) {
-	// NOTE There's odd behavior where the test passes when you run the everything
-	// but fails when run individually due to a bech32 prefix error.
 	app.SetPrefixes(app.AccountAddressPrefix) // makes the nibi bech32 prefix valid
+	// NOTE The config prefix defaults to cosmos rather than nibi w/o SetPrefixes,
+	// causing a bech32 error
 
 	t.Log("load example json as bytes")
 	okJSON := sdktestutil.WriteToNewTempFile(t, `
