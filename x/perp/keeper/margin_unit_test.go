@@ -371,7 +371,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
 					Pair:           msg.TokenPair,
-					TraderAddress:  traderAddr,
+					TraderAddress:  traderAddr.String(),
 					MarginAmount:   msg.Margin.Amount,
 					FundingPayment: res.FundingPayment,
 				})
@@ -539,7 +539,7 @@ func TestAddMargin(t *testing.T) {
 				testutilevents.RequireHasTypedEvent(t, ctx,
 					&types.MarginChangedEvent{
 						Pair:           msg.TokenPair,
-						TraderAddress:  traderAddr,
+						TraderAddress:  traderAddr.String(),
 						MarginAmount:   msg.Margin.Amount,
 						FundingPayment: sdk.ZeroDec(),
 					},
@@ -602,11 +602,18 @@ func TestAddMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.001"), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
-				t.Log("Verify correct events emitted")
+				t.Log("assert correct final position in state")
+				pos, err := perpKeeper.GetPosition(ctx, assetPair, traderAddr)
+				require.NoError(t, err)
+				assert.EqualValues(t, sdk.NewDec(599).String(), pos.Margin.String())
+				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
+				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+
+				t.Log("assert correct events emitted")
 				testutilevents.RequireHasTypedEvent(t, ctx,
 					&types.MarginChangedEvent{
 						Pair:           msg.TokenPair,
-						TraderAddress:  traderAddr,
+						TraderAddress:  traderAddr.String(),
 						MarginAmount:   msg.Margin.Amount,
 						FundingPayment: sdk.NewDec(1),
 					},

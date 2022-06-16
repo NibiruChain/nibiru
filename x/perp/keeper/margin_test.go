@@ -516,7 +516,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
 					Pair:           pair.String(),
-					TraderAddress:  traderAddr,
+					TraderAddress:  traderAddr.String(),
 					MarginAmount:   msg.Margin.Amount,
 					FundingPayment: res.FundingPayment,
 				})
