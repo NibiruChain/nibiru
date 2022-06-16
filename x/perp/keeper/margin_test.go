@@ -134,7 +134,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 	}
 }
 
-func TestAddMargin_ShouldRaiseError(t *testing.T) {
+func TestAddMarginError(t *testing.T) {
 	tests := []struct {
 		name string
 		test func()
@@ -144,34 +144,89 @@ func TestAddMargin_ShouldRaiseError(t *testing.T) {
 			test: func() {
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 
-				tokenPair, err := common.NewAssetPairFromStr("atom:nusd")
-				require.NoError(t, err)
-
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
 				vpoolKeeper.CreatePool(
 					ctx,
-					/* pair */ tokenPair,
+					/* pair */ common.PAIR_uBTC_uNUSD,
 					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 					/* quoteReserves */ sdk.NewDec(10_000_000), //
 					/* baseReserves */ sdk.NewDec(5_000_000), // 5 tokens
 					/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
 					/* maxOracleSpreadRatio */ sdk.OneDec(),
 				)
-				require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+				require.True(t, vpoolKeeper.ExistsPool(ctx, common.PAIR_uBTC_uNUSD))
 
 				t.Log("create msg for MsgAddMargin with invalid denom")
-				traderAddr := sample.AccAddress()
 				msg := &types.MsgAddMargin{
-					Sender:    traderAddr.String(),
-					TokenPair: tokenPair.String(),
+					Sender:    sample.AccAddress().String(),
+					TokenPair: common.PAIR_uBTC_uNUSD.String(),
 					Margin:    sdk.NewCoin("notADenom", sdk.NewInt(400)),
 				}
 
-				goCtx := sdk.WrapSDKContext(ctx)
-				_, err = nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
+				_, err := nibiruApp.PerpKeeper.AddMargin(sdk.WrapSDKContext(ctx), msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, "invalid margin denom")
+			},
+		},
+		{
+			name: "invalid sender",
+			test: func() {
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+
+				t.Log("create vpool")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					/* pair */ common.PAIR_uBTC_uNUSD,
+					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
+					/* quoteReserves */ sdk.NewDec(10_000_000), //
+					/* baseReserves */ sdk.NewDec(5_000_000), // 5 tokens
+					/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
+					/* maxOracleSpreadRatio */ sdk.OneDec(),
+				)
+				require.True(t, vpoolKeeper.ExistsPool(ctx, common.PAIR_uBTC_uNUSD))
+
+				t.Log("create msg for MsgAddMargin with invalid denom")
+				msg := &types.MsgAddMargin{
+					Sender:    "",
+					TokenPair: common.PAIR_uBTC_uNUSD.String(),
+					Margin:    sdk.NewCoin("unusd", sdk.NewInt(400)),
+				}
+
+				_, err := nibiruApp.PerpKeeper.AddMargin(sdk.WrapSDKContext(ctx), msg)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "empty address string is not allowed")
+			},
+		},
+		{
+			name: "invalid negative margin add",
+			test: func() {
+				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+
+				t.Log("create vpool")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					/* pair */ common.PAIR_uBTC_uNUSD,
+					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
+					/* quoteReserves */ sdk.NewDec(10_000_000), //
+					/* baseReserves */ sdk.NewDec(5_000_000), // 5 tokens
+					/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
+					/* maxOracleSpreadRatio */ sdk.OneDec(),
+				)
+				require.True(t, vpoolKeeper.ExistsPool(ctx, common.PAIR_uBTC_uNUSD))
+
+				t.Log("create msg for MsgAddMargin with invalid denom")
+				msg := &types.MsgAddMargin{
+					Sender:    sample.AccAddress().String(),
+					TokenPair: common.PAIR_uBTC_uNUSD.String(),
+					Margin:    sdk.Coin{Denom: "unusd", Amount: sdk.NewInt(-400)},
+				}
+
+				_, err := nibiruApp.PerpKeeper.AddMargin(sdk.WrapSDKContext(ctx), msg)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "margin must be positive")
 			},
 		},
 	}
@@ -184,18 +239,32 @@ func TestAddMargin_ShouldRaiseError(t *testing.T) {
 	}
 }
 
-func TestAddMargin_HappyPath(t *testing.T) {
+func TestAddMarginSuccess(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialMargin  sdk.Int
-		addedMargin    sdk.Int
-		expectedMargin sdk.Int
+		name                            string
+		marginToAdd                     sdk.Int
+		latestCumulativePremiumFraction sdk.Dec
+		initialPosition                 types.Position
+
+		expectedMargin         sdk.Dec
+		expectedFundingPayment sdk.Dec
 	}{
 		{
-			name:           "add margin",
-			initialMargin:  sdk.NewInt(100),
-			addedMargin:    sdk.NewInt(100),
-			expectedMargin: sdk.NewInt(200),
+			name:                            "add margin",
+			marginToAdd:                     sdk.NewInt(100),
+			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
+			initialPosition: types.Position{
+				TraderAddress:                       sample.AccAddress().String(),
+				Pair:                                common.PAIR_uBTC_uNUSD.String(),
+				Size_:                               sdk.NewDec(1_000),
+				Margin:                              sdk.NewDec(100),
+				OpenNotional:                        sdk.NewDec(500),
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         1,
+			},
+
+			expectedMargin:         sdk.NewDec(199),
+			expectedFundingPayment: sdk.NewDec(1),
 		},
 	}
 
@@ -204,67 +273,71 @@ func TestAddMargin_HappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 
-			tokenPair, err := common.NewAssetPairFromStr("atom:nusd")
+			traderAddr, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
 			require.NoError(t, err)
 
-			t.Log("add margin funds (NUSD) to trader's account")
-			traderAddr := sample.AccAddress()
+			t.Log("add trader funds")
 			err = simapp.FundAccount(
 				nibiruApp.BankKeeper,
 				ctx,
 				traderAddr,
 				sdk.NewCoins(
-					sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), tc.addedMargin),
+					sdk.NewCoin(common.PAIR_uBTC_uNUSD.GetQuoteTokenDenom(), tc.marginToAdd),
 				),
 			)
 			require.NoErrorf(t, err, "fund account call should work")
 
-			t.Log("Set vpool defined by pair on VpoolKeeper")
+			t.Log("create vpool")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			vpoolKeeper.CreatePool(
 				ctx,
-				tokenPair,
+				common.PAIR_uBTC_uNUSD,
 				sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 				sdk.NewDec(10_000_000),       //
 				sdk.NewDec(5_000_000),        // 5 tokens
 				sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 			)
-			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+			require.True(t, vpoolKeeper.ExistsPool(ctx, common.PAIR_uBTC_uNUSD))
 
-			t.Log("Set vpool defined by pair on PerpKeeper")
+			t.Log("set pair metadata")
 			perpKeeper := &nibiruApp.PerpKeeper
-			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       tokenPair.String(),
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
-			})
+			perpKeeper.PairMetadata().Set(ctx,
+				&types.PairMetadata{
+					Pair: common.PAIR_uBTC_uNUSD.String(),
+					CumulativePremiumFractions: []sdk.Dec{
+						tc.latestCumulativePremiumFraction,
+					},
+				},
+			)
 
 			t.Log("establish initial position")
 			nibiruApp.PerpKeeper.SetPosition(
 				ctx,
-				tokenPair,
+				common.PAIR_uBTC_uNUSD,
 				traderAddr,
-				&types.Position{
-					TraderAddress: traderAddr.String(),
-					Pair:          tokenPair.String(),
-					Size_:         sdk.NewDec(9999),
-					Margin:        tc.initialMargin.ToDec(),
-				},
+				&tc.initialPosition,
 			)
 
 			goCtx := sdk.WrapSDKContext(ctx)
 			msg := &types.MsgAddMargin{
-				Sender: traderAddr.String(), TokenPair: tokenPair.String(),
+				Sender:    traderAddr.String(),
+				TokenPair: tc.initialPosition.Pair,
 				Margin: sdk.Coin{
-					Denom:  tokenPair.GetQuoteTokenDenom(),
-					Amount: tc.addedMargin}}
-			_, err = nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
+					Denom:  common.PAIR_uBTC_uNUSD.GetQuoteTokenDenom(),
+					Amount: tc.marginToAdd,
+				},
+			}
+			resp, err := nibiruApp.PerpKeeper.AddMargin(goCtx, msg)
 			require.NoError(t, err)
-
-			position, err := nibiruApp.PerpKeeper.GetPosition(
-				ctx, tokenPair, traderAddr)
-			require.NoError(t, err)
-			require.EqualValues(t, tc.expectedMargin, position.Margin.TruncateInt())
+			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
+			assert.EqualValues(t, tc.expectedMargin, resp.Position.Margin)
+			assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
+			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
+			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
+			assert.EqualValues(t, common.PAIR_uBTC_uNUSD.String(), resp.Position.Pair)
+			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LastUpdateCumulativePremiumFraction)
+			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
 	}
 }
