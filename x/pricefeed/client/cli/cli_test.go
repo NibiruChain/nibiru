@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"testing"
 	"time"
@@ -9,9 +10,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/ibc-go/v3/testing/simapp/params"
 	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -533,4 +538,38 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
+}
+
+func TestAddOracleProposalFromJson(t *testing.T) {
+
+	app.SetPrefixes(app.AccountAddressPrefix) // makes the nibi bech32 prefix valid
+
+	t.Log("load example json as bytes")
+	okJSON := sdktestutil.WriteToNewTempFile(t, `
+	{
+		"title": "Cataclysm-004",
+		"description": "Whitelists Delphi to post prices for OHM",
+		"oracle": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+		"pairs": ["uohm:uusd"],
+		"deposit": "1000unibi"
+	}	
+	`)
+	contents, err := ioutil.ReadFile(okJSON.Name())
+	assert.NoError(t, err)
+
+	t.Log("Unmarshal json bytes into proposal object")
+	encodingConfig := params.MakeTestEncodingConfig()
+	proposal := &pftypes.AddOracleProposalWithDeposit{}
+	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
+	assert.NoError(t, err)
+
+	t.Log("Check that proposal correctness and validity")
+	require.NoError(t, proposal.Validate())
+	assert.Equal(t, "Cataclysm-004", proposal.Title)
+	assert.Equal(t, "Whitelists Delphi to post prices for OHM", proposal.Description)
+	assert.Equal(t, "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl", proposal.Oracle)
+	assert.Equal(t, []string{"uohm:uusd"}, proposal.Pairs)
+	proposalDeposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)), proposalDeposit)
 }
