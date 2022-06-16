@@ -135,11 +135,21 @@ func (k Keeper) afterPositionUpdate(
 		return err
 	}
 
+	// calculate positionNotional (it's different depends on long or short side)
+	// long: unrealizedPnl = positionNotional - openNotional => positionNotional = openNotional + unrealizedPnl
+	// short: unrealizedPnl = openNotional - positionNotional => positionNotional = openNotional - unrealizedPnl
+	var positionNotional sdk.Dec = sdk.ZeroDec()
+	if positionResp.Position.Size_.IsPositive() {
+		positionNotional = positionResp.Position.OpenNotional.Add(positionResp.UnrealizedPnlAfter)
+	} else if positionResp.Position.Size_.IsNegative() {
+		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
+	}
+
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
 		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.Position.Margin.RoundInt()),
-		PositionNotional:      positionResp.ExchangedQuoteAssetAmount, // TODO(https://github.com/NibiruChain/nibiru/issues/614): this is the wrong value
+		PositionNotional:      positionNotional,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), transferredFee),
 		PositionSize:          positionResp.Position.Size_,
