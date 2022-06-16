@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -108,16 +107,7 @@ func appendOraclesToPair(pair types.Pair, oracles []sdk.AccAddress) (newPair typ
 		}
 	}
 
-	// sort the oracles to make reads faster w/ binary search
-	pairOraclesStrings := []string{}
-	for _, oracle := range pairOracles {
-		pairOraclesStrings = append(pairOraclesStrings, oracle.String())
-	}
-	sort.Strings(pairOraclesStrings)
-	pairOracles = []sdk.AccAddress{}
-	for _, oracleStr := range pairOraclesStrings {
-		pairOracles = append(pairOracles, sdk.MustAccAddressFromBech32(oracleStr))
-	}
+	// TODO refactor: sort the oracles to make reads faster w/ binary search
 
 	return types.Pair{
 		Token0: pair.Token0, Token1: pair.Token1,
@@ -161,7 +151,6 @@ func (k Keeper) WhitelistOraclesForPairs(
 
 	var endingParamsPairs types.Pairs
 	for paramIdx, paramPair := range paramsPairs {
-
 		var endingPair types.Pair
 		_, found := paramsIdxProposedIdxMap[paramIdx]
 

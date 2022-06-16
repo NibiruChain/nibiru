@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +14,8 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govclientrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 
 	"github.com/spf13/cobra"
 )
@@ -36,7 +37,6 @@ func AddOracleProposalRESTHandler(clientCtx client.Context) govclientrest.Propos
 	*/
 	restHandlerFnAddOracleProposal := func(clientCtx client.Context) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-
 			var req AddOracleProposalHttpRequest
 			if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
 				return
@@ -142,7 +142,6 @@ func CmdAddOracleProposal() *cobra.Command {
 				return err
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-
 		},
 	}
 

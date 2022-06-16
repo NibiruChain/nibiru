@@ -97,7 +97,6 @@ func (ms Pairs) Validate() error {
 // Contains checks if a token pair is contained within 'Pairs'
 func (pairs Pairs) ContainsAtIndex(pair Pair) (bool, int) {
 	for idx, element := range pairs {
-
 		if (element.Token0 == pair.Token0) && (element.Token1 == pair.Token1) {
 			return true, idx
 		}

@@ -1,11 +1,18 @@
 package keeper_test
 
 import (
+	"io/ioutil"
 	"testing"
 
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
 	"github.com/stretchr/testify/require"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -111,4 +118,39 @@ func TestWhitelistOracles(t *testing.T) {
 		},
 		)
 	}
+}
+
+func TestAddOracleProposalFromJson(t *testing.T) {
+	// NOTE There's odd behavior where the test passes when you run the everything
+	// but fails when run individually due to a bech32 prefix error.
+	app.SetPrefixes(app.AccountAddressPrefix) // makes the nibi bech32 prefix valid
+
+	t.Log("load example json as bytes")
+	okJSON := sdktestutil.WriteToNewTempFile(t, `
+	{
+		"title": "Cataclysm-004",
+		"description": "Whitelists Delphi to post prices for OHM",
+		"oracle": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+		"pairs": ["uohm:uusd"],
+		"deposit": "1000unibi"
+	}	
+	`)
+	contents, err := ioutil.ReadFile(okJSON.Name())
+	assert.NoError(t, err)
+
+	t.Log("Unmarshal json bytes into proposal object")
+	encodingConfig := simappparams.MakeTestEncodingConfig()
+	proposal := &types.AddOracleProposalWithDeposit{}
+	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
+	assert.NoError(t, err)
+
+	t.Log("Check that proposal correctness and validity")
+	require.NoError(t, proposal.Validate())
+	assert.Equal(t, "Cataclysm-004", proposal.Title)
+	assert.Equal(t, "Whitelists Delphi to post prices for OHM", proposal.Description)
+	assert.Equal(t, "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl", proposal.Oracle)
+	assert.Equal(t, []string{"uohm:uusd"}, proposal.Pairs)
+	proposalDeposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)), proposalDeposit)
 }

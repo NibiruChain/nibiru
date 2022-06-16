@@ -44,5 +44,4 @@ func NewProposalHandler(k keeper.Keeper) govtypes.Handler {
 				"unrecognized oracle propoal content type: %T", contentType)
 		}
 	}
-
 }

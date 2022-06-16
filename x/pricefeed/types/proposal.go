@@ -3,9 +3,10 @@ package types
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 const (
@@ -17,13 +18,11 @@ var _ govtypes.Content = &AddOracleProposal{}
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeAddOracle)
 	govtypes.RegisterProposalTypeCodec(&AddOracleProposal{}, "nibiru/AddOracleProposal")
-
 }
 
 func NewAddOracleProposal(
 	title string, description string, oracle string, pairs []string,
 ) *AddOracleProposal {
-
 	proposal := &AddOracleProposal{
 		Title:       title,
 		Description: description,
