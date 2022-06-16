@@ -73,24 +73,31 @@ func (k Keeper) OpenPosition(
 		}
 	}
 
-	return k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, positionResp)
+	return k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, *positionResp)
 }
 
 // afterPositionUpdate is called when a position has been updated.
 func (k Keeper) afterPositionUpdate(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, params types.Params,
-	isNewPosition bool, positionResp *types.PositionResp) (err error) {
+	ctx sdk.Context,
+	pair common.AssetPair,
+	traderAddr sdk.AccAddress,
+	params types.Params,
+	isNewPosition bool,
+	positionResp types.PositionResp,
+) (err error) {
 	// update position in state
 	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(
-			ctx, *positionResp.Position, types.MarginCalculationPriceOption_MAX_PNL)
+			ctx,
+			*positionResp.Position,
+			types.MarginCalculationPriceOption_MAX_PNL,
+		)
 		if err != nil {
 			return err
 		}
-		if err = requireMoreMarginRatio(
-			marginRatio, params.MaintenanceMarginRatio, true); err != nil {
+		if err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, true); err != nil {
 			return err
 		}
 	}
@@ -741,7 +748,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.A
 		return nil, err
 	}
 
-	err = k.afterPositionUpdate(ctx, pair, addr, k.GetParams(ctx), false, posResp)
+	err = k.afterPositionUpdate(ctx, pair, addr, k.GetParams(ctx), false, *posResp)
 	if err != nil {
 		return nil, err
 	}
