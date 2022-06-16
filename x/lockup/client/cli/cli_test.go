@@ -1,18 +1,20 @@
 package cli_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/lockup/types"
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/lockup/types"
+
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -22,8 +24,6 @@ type IntegrationTestSuite struct {
 	network *testutilcli.Network
 
 	userWithLock sdk.AccAddress
-	txArgs       []string
-	queryArgs    []string
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -114,6 +114,7 @@ func (s *IntegrationTestSuite) TestLockupCLI() {
 	s.T().Log("testing initiate unlock")
 	initiateUnlockArgs := []string{"0"}
 	_, err = testutilcli.ExecTx(s.network, cli.GetInitiateUnlockCmd(), s.userWithLock, initiateUnlockArgs)
+	require.NoError(s.T(), err)
 	// wait some seconds then unlock funds
 	s.T().Logf("testing unlock funds")
 	require.NoError(s.T(), s.network.WaitForDuration(10*time.Second))

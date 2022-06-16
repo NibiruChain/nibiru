@@ -2,12 +2,14 @@ package cli
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 type ExecTxOption func(*execTxOptions)
