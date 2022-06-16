@@ -21,6 +21,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -2672,8 +2673,7 @@ func TestClosePosition(t *testing.T) {
 			expectedBadDebt:        sdk.ZeroDec(),
 			expectedFundingPayment: sdk.MustNewDecFromStr("-2.1"),
 			expectedRealizedPnl:    sdk.NewDec(5),
-
-			expectedMarginToVault: sdk.MustNewDecFromStr("-17.6"), // old(10.5) + (5)(realizedPnL) - (-2.1)(fundingPayment)
+			expectedMarginToVault:  sdk.MustNewDecFromStr("-17.6"), // old(10.5) + (5)(realizedPnL) - (-2.1)(fundingPayment)
 		},
 		{
 			name: "decrease short position, negative PnL",
@@ -2699,8 +2699,7 @@ func TestClosePosition(t *testing.T) {
 			expectedBadDebt:        sdk.ZeroDec(),
 			expectedFundingPayment: sdk.NewDec(-2),
 			expectedRealizedPnl:    sdk.NewDec(-5),
-
-			expectedMarginToVault: sdk.NewDec(-7), // old(10) + (-0.25)(realizedPnL) - (-2)(fundingPayment)
+			expectedMarginToVault:  sdk.NewDec(-7), // old(10) + (-0.25)(realizedPnL) - (-2)(fundingPayment)
 		},
 	}
 
@@ -2710,12 +2709,17 @@ func TestClosePosition(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			traderAddr, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
 			require.NoError(t, err)
+			assetPair, err := common.NewAssetPairFromStr(tc.initialPosition.Pair)
+			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.SetPosition(ctx, tc.initialPosition.GetAssetPair(), traderAddr, &tc.initialPosition)
+			perpKeeper.SetPosition(ctx, assetPair, traderAddr, &tc.initialPosition)
 
 			t.Log("set params")
-			perpKeeper.SetParams(ctx, types.DefaultParams())
+			params := types.DefaultParams()
+			params.SpreadRatio = 0
+			params.TollRatio = 0
+			perpKeeper.SetParams(ctx, params)
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().
@@ -2740,7 +2744,7 @@ func TestClosePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetSpotPrice(
 					ctx,
-					tc.initialPosition.GetAssetPair(),
+					assetPair,
 				).Return(
 				tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
 				nil,
@@ -2753,7 +2757,7 @@ func TestClosePosition(t *testing.T) {
 				traderAddr,
 				sdk.NewCoins(
 					sdk.NewCoin(
-						/* NUSD */ tc.initialPosition.GetAssetPair().GetQuoteTokenDenom(),
+						/* NUSD */ assetPair.GetQuoteTokenDenom(),
 						tc.expectedMarginToVault.RoundInt().Abs(),
 					),
 				),
@@ -2770,7 +2774,7 @@ func TestClosePosition(t *testing.T) {
 			t.Log("close position")
 			resp, err := perpKeeper.ClosePosition(
 				ctx,
-				tc.initialPosition.GetAssetPair(),
+				assetPair,
 				traderAddr,
 			)
 
@@ -2790,6 +2794,22 @@ func TestClosePosition(t *testing.T) {
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
 			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+
+			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
+				Pair:                  tc.initialPosition.Pair,
+				TraderAddress:         tc.initialPosition.TraderAddress,
+				Margin:                sdk.NewInt64Coin(assetPair.GetQuoteTokenDenom(), 0),
+				PositionNotional:      sdk.ZeroDec(),
+				ExchangedPositionSize: tc.initialPosition.Size_.Neg(),
+				PositionSize:          sdk.ZeroDec(),
+				RealizedPnl:           tc.expectedRealizedPnl,
+				UnrealizedPnlAfter:    sdk.ZeroDec(),
+				BadDebt:               sdk.ZeroDec(),
+				LiquidationPenalty:    sdk.ZeroDec(),
+				SpotPrice:             tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
+				FundingPayment:        sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
+				TransactionFee:        sdk.NewInt64Coin(assetPair.GetQuoteTokenDenom(), 0),
+			})
 		})
 	}
 }
@@ -2850,9 +2870,11 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			traderAddr, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
 			require.NoError(t, err)
+			assetPair, err := common.NewAssetPairFromStr(tc.initialPosition.Pair)
+			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.SetPosition(ctx, tc.initialPosition.GetAssetPair(), traderAddr, &tc.initialPosition)
+			perpKeeper.SetPosition(ctx, assetPair, traderAddr, &tc.initialPosition)
 
 			t.Log("set params")
 			perpKeeper.SetParams(ctx, types.DefaultParams())
@@ -2888,7 +2910,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			t.Log("close position")
 			resp, err := perpKeeper.ClosePosition(
 				ctx,
-				tc.initialPosition.GetAssetPair(),
+				assetPair,
 				traderAddr,
 			)
 
