@@ -367,7 +367,7 @@ func (k Keeper) openReversePosition(
 	baseAssetAmountLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
-	openNotional := leverage.Mul(quoteAssetAmount)
+	notionalToDecreaseBy := leverage.Mul(quoteAssetAmount)
 	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		currentPosition,
@@ -377,12 +377,12 @@ func (k Keeper) openReversePosition(
 		return nil, err
 	}
 
-	if currentPositionNotional.GT(openNotional) {
+	if currentPositionNotional.GT(notionalToDecreaseBy) {
 		// position reduction
 		return k.decreasePosition(
 			ctx,
 			currentPosition,
-			openNotional,
+			notionalToDecreaseBy,
 			baseAssetAmountLimit,
 			canOverFluctuationLimit,
 		)
