@@ -100,16 +100,21 @@ func (k Keeper) afterPositionUpdate(
 			"bad debt must be zero to prevent attacker from leveraging it")
 	}
 
+	fmt.Println("STEVENDEBUG afterPositionUpdate - g")
 	// transfer trader <=> vault
 	marginToVaultInt := positionResp.MarginToVault.RoundInt()
 	switch {
 	case marginToVaultInt.IsPositive():
+		fmt.Println("STEVENDEBUG afterPositionUpdate - h")
+
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
 	case marginToVaultInt.IsNegative():
+		fmt.Println("STEVENDEBUG afterPositionUpdate - i")
+
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
 		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend)); err != nil {
@@ -745,6 +750,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.A
 	}
 
 	err = k.afterPositionUpdate(ctx, pair, addr, k.GetParams(ctx), false, posResp)
+	fmt.Printf("STEVENDEBUG ClosePosition afterPositionUpdate err: %+v\n", err)
 	if err != nil {
 		return nil, err
 	}

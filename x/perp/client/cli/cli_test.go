@@ -150,8 +150,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 		{
 			Pair:              common.TestStablePool.String(),
-			BaseAssetReserve:  sdk.MustNewDecFromStr("100"),
-			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
+			BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
+			QuoteAssetReserve: sdk.MustNewDecFromStr("600000"),
 
 			// below sets any trade is allowed
 			TradeLimitRatio:       sdk.NewDec(10_000_000), // 10000000 * 100%
@@ -528,7 +528,7 @@ func (s *IntegrationTestSuite) TestRemoveMarginOnUnderwaterPosition() {
 	s.checkStatus(val, pair, s.users)
 
 	// Second user should have bad debt now
-	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, first_user)
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, second_user)
 	fmt.Printf("queryResp: %+v\n", queryResp)
 	s.Require().Equal(
 		sdk.MustNewDecFromStr("20.110658124635993007"),
