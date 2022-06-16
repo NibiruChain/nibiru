@@ -541,9 +541,7 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		s.T().Log("Create oracle account and fill wallet")
 		s.Require().Len(s.network.Validators, 1)
 		val := s.network.Validators[0]
-		clientCtx := val.ClientCtx.WithOutputFormat("json").
-			WithFromAddress(val.Address).
-			WithFrom(val.Address.String())
+		clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 		oracleKeyringInfo, err := val.ClientCtx.Keyring.NewAccount(
 			/* uid */ "delphi-oracle",
@@ -599,6 +597,7 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 			proposalJSON.Name(),
 			fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 			fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+			fmt.Sprintf("--from=%s", val.Address.String()),
 		}
 
 		out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
