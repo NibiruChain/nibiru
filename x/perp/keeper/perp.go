@@ -27,8 +27,8 @@ func (k Keeper) GetPosition(
 }
 
 func (k Keeper) SetPosition(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
-	position *types.Position) {
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position,
+) {
 	k.Positions().Set(ctx, pair, traderAddr, position)
 }
 

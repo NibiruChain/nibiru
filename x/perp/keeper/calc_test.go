@@ -179,6 +179,7 @@ func TestCalcPerpTxFee(t *testing.T) {
 		/*SpreadRatio=*/ sdk.MustNewDecFromStr("0.0123"),
 		/*liquidationFee=*/ sdk.MustNewDecFromStr("0.01"),
 		/*partialLiquidationRatio=*/ sdk.MustNewDecFromStr("0.4"),
+		"hour",
 	)
 	perpKeeper.SetParams(ctx, currentParams)
 

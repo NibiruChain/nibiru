@@ -59,6 +59,7 @@ type PricefeedKeeper interface {
 	) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
 }
 
 type VpoolKeeper interface {
@@ -235,4 +236,7 @@ type VpoolKeeper interface {
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+
+	// GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
+	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice vpooltypes.CurrentTWAP, err error)
 }
