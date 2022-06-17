@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -44,11 +46,15 @@ func NewAssetPairFromStr(pair string) (AssetPair, error) {
 	return AssetPair{Token0: split[0], Token1: split[1]}, nil
 }
 
-// TODO make assetpair a proto type | https://github.com/NibiruChain/nibiru/issues/623
-type AssetPair struct {
-	Token0 string
-	Token1 string
+func MustNewAssetPairFromStr(pair string) AssetPair {
+	assetPair, err := NewAssetPairFromStr(pair)
+	if err != nil {
+		panic(err)
+	}
+	return assetPair
 }
+
+// TODO make assetpair a proto type | https://github.com/NibiruChain/nibiru/issues/623
 
 // Name is the name of the pool that corresponds to the two assets on this pair.
 func (pair AssetPair) Name() string {
@@ -59,9 +65,10 @@ func (pair AssetPair) PairID() string {
 	return pair.Name()
 }
 
-func (pair AssetPair) String() string {
+func (pair AssetPair) AsString() string {
 	return fmt.Sprintf("%s%s%s", pair.Token0, PairSeparator, pair.Token1)
-}
+} // Calling this AsString because I'm not seeing a clean way to rewrite
+// the proto-generated 'String' methood.
 
 func (pair AssetPair) IsProperOrder() bool {
 	return pair.Name() == pair.String()
@@ -109,6 +116,19 @@ func RawPoolNameFromDenoms(denoms []string) string {
 	return poolName
 }
 
+// Validate performs a basic validation of the market params
+func (pair AssetPair) Validate() error {
+	if err := sdk.ValidateDenom(pair.Token1); err != nil {
+		return fmt.Errorf("invalid token1 asset: %w", err)
+	}
+	if err := sdk.ValidateDenom(pair.Token0); err != nil {
+		return fmt.Errorf("invalid token0 asset: %w", err)
+	}
+	return nil
+}
+
+// ----------------------------------- AssetPairs
+
 type AssetPairs []AssetPair
 
 func (pairs AssetPairs) Contains(pair AssetPair) bool {
@@ -118,4 +138,37 @@ func (pairs AssetPairs) Contains(pair AssetPair) bool {
 		}
 	}
 	return false
+}
+
+func (pairs AssetPairs) Strings() []string {
+	pairsAsStrings := []string{}
+	for _, pair := range pairs {
+		pairsAsStrings = append(pairsAsStrings, pair.AsString())
+	}
+	return pairsAsStrings
+}
+
+func (pairs AssetPairs) Validate() error {
+	seenPairs := make(map[string]bool)
+	for _, pair := range pairs {
+		pairID := PoolNameFromDenoms([]string{pair.Token0, pair.Token1})
+		if seenPairs[pairID] {
+			return fmt.Errorf("duplicate pair %s", pairID)
+		}
+		if err := pair.Validate(); err != nil {
+			return err
+		}
+		seenPairs[pairID] = true
+	}
+	return nil
+}
+
+// Contains checks if a token pair is contained within 'Pairs'
+func (pairs AssetPairs) ContainsAtIndex(pair AssetPair) (bool, int) {
+	for idx, element := range pairs {
+		if (element.Token0 == pair.Token0) && (element.Token1 == pair.Token1) {
+			return true, idx
+		}
+	}
+	return false, -1
 }
