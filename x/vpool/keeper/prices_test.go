@@ -539,7 +539,6 @@ func TestGetTWAPPrice(t *testing.T) {
 			expectedPrices: []sdk.Dec{
 				sdk.MustNewDecFromStr("39556.660476959200196440"),
 				sdk.MustNewDecFromStr("39548.504707649598914130"),
-				sdk.MustNewDecFromStr("13548.504707649598914130"),
 			},
 		},
 	}
@@ -552,8 +551,9 @@ func TestGetTWAPPrice(t *testing.T) {
 			keeper, ctx := VpoolKeeper(t,
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 
+			cctx := ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
 			keeper.CreatePool(
-				ctx,
+				cctx,
 				BTCNusdPair,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				/*quoteAssetReserve=*/ sdk.NewDec(40_000_000),
@@ -561,17 +561,13 @@ func TestGetTWAPPrice(t *testing.T) {
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				/*maxSpread=*/ sdk.OneDec(),
 			)
-			// initialize TWAP to 0
-			cctx := ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
-			err := keeper.updateTWAPPrice(cctx, BTCNusdPair.String())
-			require.NoError(t, err)
-			// Make sure we start fresh
+			// Make sure price gets initialized correctly when the pool gets created
 			twap, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
 			require.NoError(t, err)
 			require.EqualValues(t, initialTWAP, twap.Price)
 			for i, p := range tc.positionUpdates {
 				// update the position and trigger TWAP recalculation
-				cctx := ctx.WithBlockHeader(tmproto.Header{Time: p.blockTs})
+				cctx = ctx.WithBlockHeader(tmproto.Header{Time: p.blockTs})
 				if p.baseAsset.IsNil() {
 					_, err = keeper.SwapQuoteForBase(cctx, BTCNusdPair, p.direction, p.quoteAsset, sdk.NewDec(0))
 				} else {

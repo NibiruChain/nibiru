@@ -53,6 +53,11 @@ func (k Keeper) savePool(
 ) {
 	bz := k.codec.MustMarshal(pool)
 	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(pool.GetAssetPair()), bz)
+
+	// Subtle side effect, should this be reflected in the method name
+	if err := k.updateTWAPPrice(ctx, pool.GetAssetPair().String()); err != nil {
+		panic(fmt.Sprintf("failed to update TWAP: %v", err))
+	}
 }
 
 /*
@@ -88,11 +93,6 @@ func (k Keeper) savePoolAndSnapshot(
 	}
 
 	k.savePool(ctx, updatedPool)
-
-	// Subtle side effect, should this be reflected in the method name / explicitly updated after this method
-	if err := k.updateTWAPPrice(ctx, updatedPool.GetAssetPair().String()); err != nil {
-		return fmt.Errorf("failed to update TWAP: %w", err)
-	}
 
 	return nil
 }
