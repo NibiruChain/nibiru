@@ -11,6 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
@@ -483,7 +484,23 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
-			// TODO(https://github.com/NibiruChain/nibiru/issues/625): Add assertions for PositionLiquidatedEvent
+			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
+				Pair:                  BtcNusdPair.String(),
+				TraderAddress:         traderAddr.String(),
+				ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
+				ExchangedPositionSize: positionResp.ExchangedPositionSize,
+				LiquidatorAddress:     liquidatorAddr.String(),
+				FeeToLiquidator:       sdk.NewCoin(BtcNusdPair.GetQuoteTokenDenom(), tc.expectedFundsToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(BtcNusdPair.GetQuoteTokenDenom(), tc.expectedFundsToPerpEF),
+				BadDebt:               tc.expectedLiquidationBadDebt,
+				Margin:                sdk.NewCoin(BtcNusdPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				PositionNotional:      positionResp.PositionNotional,
+				PositionSize:          newPosition.Size_,
+				UnrealizedPnl:         positionResp.UnrealizedPnlAfter,
+				MarkPrice:             sdk.OneDec(),
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+			})
 		})
 	}
 }
