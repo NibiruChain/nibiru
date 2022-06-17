@@ -307,10 +307,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			t.Log("check emitted events")
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
-				TraderAddress:         traderAddr,
+				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
-				LiquidatorAddress:     liquidatorAddr,
+				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
 				BadDebt:               resp.BadDebt,
@@ -588,10 +588,10 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			t.Log("check emitted events")
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
-				TraderAddress:         traderAddr,
+				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
-				LiquidatorAddress:     liquidator,
+				LiquidatorAddress:     liquidator.String(),
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
 				BadDebt:               resp.BadDebt,
