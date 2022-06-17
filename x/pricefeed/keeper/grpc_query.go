@@ -89,3 +89,68 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 		Prices: currentPrices,
 	}, nil
 }
+
+func (k Keeper) Oracles(goCtx context.Context, req *types.QueryOraclesRequest) (*types.QueryOraclesResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	_, err := common.NewAssetPairFromStr(req.PairId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "invalid market ID")
+	}
+
+	oracles := k.GetOraclesForPair(ctx, req.PairId)
+
+	var strOracles []string
+	for _, oracle := range oracles {
+		strOracles = append(strOracles, oracle.String())
+	}
+
+	return &types.QueryOraclesResponse{
+		Oracles: strOracles,
+	}, nil
+}
+
+func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+
+	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+}
+
+func (k Keeper) Pairs(goCtx context.Context, req *types.QueryPairsRequest,
+) (*types.QueryPairsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	var responses types.PairResponses
+	for _, pairStr := range k.GetParams(ctx).Pairs {
+		pair := common.MustNewAssetPairFromStr(pairStr)
+
+		var oracleStrings []string
+		for _, oracle := range k.OraclesStore().Get(ctx, pair) {
+			oracleStrings = append(oracleStrings, oracle.String())
+		}
+
+		responses = append(responses, types.PairResponse{
+			PairID:  pairStr,
+			Token0:  pair.Token0,
+			Token1:  pair.Token1,
+			Oracles: oracleStrings,
+			Active:  k.IsActivePair(ctx, pairStr),
+		})
+	}
+
+	// TODO improve these variable names. PairResponse is confusing on field "Pairs"
+	return &types.QueryPairsResponse{
+		Pairs: responses,
+	}, nil
+}

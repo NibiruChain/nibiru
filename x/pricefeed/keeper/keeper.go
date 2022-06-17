@@ -72,16 +72,16 @@ func (k Keeper) SetPrice(
 		price = sdk.OneDec().Quo(price)
 	}
 
-	_, err := k.GetOracle(ctx, pairID, oracle)
-	if err != nil {
-		return types.PostedPrice{}, err
+	if !k.IsWhitelistedOracle(ctx, pairID, oracle) {
+		return types.PostedPrice{}, fmt.Errorf(
+			"oracle %s cannot post on pair %v", oracle, pairID)
 	}
 
 	newRawPrice := types.NewPostedPrice(pairID, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
 
-	err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
+	err := ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
 		PairId:    pairID,
 		Oracle:    oracle.String(),
 		PairPrice: price,
@@ -104,8 +104,7 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	tokens := common.DenomsFromPoolName(pairID)
 	token0, token1 = tokens[0], tokens[1]
 
-	_, ok := k.GetPair(ctx, pairID)
-	if !ok {
+	if !k.IsActivePair(ctx, pairID) {
 		return sdkerrors.Wrap(types.ErrInvalidPair, pairID)
 	}
 	// store current price
