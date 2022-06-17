@@ -55,34 +55,41 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) SetPrice(
 	ctx sdk.Context,
 	oracle sdk.AccAddress,
-	token0 string,
-	token1 string,
+	pairStr string,
 	price sdk.Dec,
 	expiry time.Time,
-) (types.PostedPrice, error) {
+) (postedPrice types.PostedPrice, err error) {
 	// If the posted price expires before the current block, it is invalid.
 	if expiry.Before(ctx.BlockTime()) {
-		return types.PostedPrice{}, types.ErrExpired
+		return postedPrice, types.ErrExpired
 	}
 
-	// TODO: test this behavior when setting the inverse pair
-	pairName := common.RawPoolNameFromDenoms([]string{token0, token1})
-	pairID := common.PoolNameFromDenoms([]string{token0, token1})
-	if (pairName != pairID) && (!price.Equal(sdk.ZeroDec())) {
+	if !price.IsPositive() {
+		return postedPrice, fmt.Errorf("price must be positive, not: %s", price)
+	}
+
+	pair, err := common.NewAssetPairFromStr(pairStr)
+	if err != nil {
+		return postedPrice, err
+	}
+
+	// Set inverse price if the oracle gives the wrong string
+	if k.IsActivePair(ctx, pair.Inverse().AsString()) {
+		pair = pair.Inverse()
 		price = sdk.OneDec().Quo(price)
 	}
 
-	if !k.IsWhitelistedOracle(ctx, pairID, oracle) {
+	if !k.IsWhitelistedOracle(ctx, pair.AsString(), oracle) {
 		return types.PostedPrice{}, fmt.Errorf(
-			"oracle %s cannot post on pair %v", oracle, pairID)
+			"oracle %s cannot post on pair %v", oracle, pair.AsString())
 	}
 
-	newRawPrice := types.NewPostedPrice(pairID, oracle, price, expiry)
+	newPostedPrice := types.NewPostedPrice(pair.AsString(), oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
 
-	err := ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
-		PairId:    pairID,
+	err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
+		PairId:    pair.AsString(),
 		Oracle:    oracle.String(),
 		PairPrice: price,
 		Expiry:    expiry,
@@ -93,16 +100,14 @@ func (k Keeper) SetPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(pairID, oracle), k.cdc.MustMarshal(&newRawPrice))
-	return newRawPrice, nil
+	store.Set(types.RawPriceKey(pair.AsString(), oracle), k.cdc.MustMarshal(&newPostedPrice))
+	return newPostedPrice, nil
 }
 
 // SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
 func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.Name()
-	tokens := common.DenomsFromPoolName(pairID)
-	token0, token1 = tokens[0], tokens[1]
+	pairID := assetPair.AsString()
 
 	if !k.IsActivePair(ctx, pairID) {
 		return sdkerrors.Wrap(types.ErrInvalidPair, pairID)
@@ -244,24 +249,27 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 // GetCurrentPrice fetches the current median price of all oracles for a specific market
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
-	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.Name()
+	pair := common.AssetPair{Token0: token0, Token1: token1}
+	givenIsActive := k.IsActivePair(ctx, pair.AsString())
+	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().AsString())
+	if !givenIsActive && inverseIsActive {
+		pair = pair.Inverse()
+	}
 
+	// Retrieve current price from the KV store
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentPriceKey(pairID))
-
+	bz := store.Get(types.CurrentPriceKey(pair.AsString()))
 	if bz == nil {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
-
 	var price types.CurrentPrice
 	k.cdc.MustUnmarshal(bz, &price)
 	if price.Price.Equal(sdk.ZeroDec()) {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
 
-	if !assetPair.IsProperOrder() {
-		// Return the inverse price if the tokens are not in "proper" order.
+	if inverseIsActive {
+		// Return the inverse price if the tokens are not in params order.
 		inversePrice := sdk.OneDec().Quo(price.Price)
 		return types.NewCurrentPrice(
 			/* token0 */ token1,
@@ -334,9 +342,16 @@ func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
 }
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
-func (k Keeper) GetRawPrices(ctx sdk.Context, marketId string) types.PostedPrices {
+func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices {
+	inversePair := common.MustNewAssetPairFromStr(pairStr).Inverse()
+	if k.IsActivePair(ctx, inversePair.AsString()) {
+		panic(fmt.Errorf(
+			`cannot fetch posted prices using inverse pair, %v ;
+			Use pair, %v, instead`, inversePair.AsString(), pairStr))
+	}
+
 	var pps types.PostedPrices
-	k.IterateRawPricesByPair(ctx, marketId, func(pp types.PostedPrice) (stop bool) {
+	k.IterateRawPricesByPair(ctx, pairStr, func(pp types.PostedPrice) (stop bool) {
 		pps = append(pps, pp)
 		return false
 	})

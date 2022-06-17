@@ -59,7 +59,7 @@ func TestGetParams(t *testing.T) {
 }
 
 func TestWhitelistOracles(t *testing.T) {
-	var noOracles []sdk.AccAddress
+	var noOracles = []sdk.AccAddress{}
 
 	testCases := []struct {
 		name string
@@ -74,10 +74,8 @@ func TestWhitelistOracles(t *testing.T) {
 				oracle := sample.AccAddress()
 				for _, pairID := range pk.GetParams(ctx).Pairs {
 					require.False(t, pk.IsWhitelistedOracle(ctx, pairID, oracle))
-					require.EqualValues(t, pk.GetOraclesForPair(ctx, pairID), noOracles)
 				}
-				require.EqualValues(t,
-					pk.GetAuthorizedAddresses(ctx), noOracles)
+				require.EqualValues(t, []sdk.AccAddress(nil), pk.GetAuthorizedAddresses(ctx))
 			},
 		},
 		{
