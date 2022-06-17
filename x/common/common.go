@@ -71,7 +71,7 @@ func (pair AssetPair) AsString() string {
 // the proto-generated 'String' methood.
 
 func (pair AssetPair) IsProperOrder() bool {
-	return pair.Name() == pair.String()
+	return pair.Name() == pair.AsString()
 }
 
 func (pair AssetPair) Inverse() AssetPair {
