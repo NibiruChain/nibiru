@@ -431,6 +431,9 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
+			mocks.mockVpoolKeeper.EXPECT().
+				GetSpotPrice(ctx, BtcNusdPair).
+				Return(sdk.OneDec(), nil)
 
 			t.Log("create and set the initial position")
 			position := types.Position{
@@ -479,6 +482,8 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero
 			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
+
+			// TODO(https://github.com/NibiruChain/nibiru/issues/625): Add assertions for PositionLiquidatedEvent
 		})
 	}
 }

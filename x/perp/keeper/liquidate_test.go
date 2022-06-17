@@ -231,7 +231,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
-			t.Log("Set vpool defined by pair on VpoolKeeper")
+			t.Log("create vpool")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -244,7 +244,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
-			t.Log("Set vpool defined by pair on PerpKeeper")
+			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
@@ -305,6 +305,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
+			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
@@ -314,6 +316,13 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
 				BadDebt:               resp.BadDebt,
+				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionSize:          newPosition.Size_,
+				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				MarkPrice:             newMarkPrice,
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			})
 		})
 	}
@@ -586,6 +595,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			)
 
 			t.Log("check emitted events")
+			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
@@ -595,6 +606,13 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
 				BadDebt:               resp.BadDebt,
+				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionSize:          newPosition.Size_,
+				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				MarkPrice:             newMarkPrice,
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			})
 		})
 	}
