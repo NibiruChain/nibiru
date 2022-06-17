@@ -10,7 +10,7 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) {
 	// FIXME: should this be moved to BeforeEpochStart??
 	params := k.GetParams(ctx)
 	if epochIdentifier != params.DistrEpochIdentifier {
@@ -31,9 +31,15 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 			// FIXME: should we panic instead??
 			continue
 		}
+		if indexTWAPPrice.Price.IsZero() {
+			continue
+		}
 		marketTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, assetPair.Token0, assetPair.Token1)
 		if err != nil {
 			// FIXME: should we panic instead??
+			continue
+		}
+		if marketTWAPPrice.Price.IsZero() {
 			continue
 		}
 		fundingRate := marketTWAPPrice.Price.Sub(indexTWAPPrice.Price).Quo(sdk.NewDec(24))
