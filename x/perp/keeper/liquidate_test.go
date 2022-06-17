@@ -80,7 +80,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			))
 
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       pair.String(),
+				Pair:                       pair.AsString(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -255,7 +255,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				params.GetPartialLiquidationRatioAsDec(),
 			))
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       tokenPair.String(),
+				Pair:                       tokenPair.AsString(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -306,7 +306,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("check emitted events")
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.String(),
+				Pair:                  tokenPair.AsString(),
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
@@ -376,7 +376,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 			params.LiquidationFee = tc.liquidationFee.MulInt64(1_000_000).RoundInt64()
 			perpKeeper.SetParams(ctx, params)
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       pair.String(),
+				Pair:                       pair.AsString(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})
 
@@ -521,7 +521,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			))
 
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       tokenPair.String(),
+				Pair:                       tokenPair.AsString(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -587,7 +587,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("check emitted events")
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.String(),
+				Pair:                  tokenPair.AsString(),
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,

@@ -74,7 +74,7 @@ func TestDistributeLiquidateRewards_Error(t *testing.T) {
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
-								Pair: BtcNusdPair.String(),
+								Pair: BtcNusdPair.AsString(),
 							}},
 					},
 				)
@@ -122,7 +122,7 @@ func TestDistributeLiquidateRewards_Happy(t *testing.T) {
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
-								Pair: BtcNusdPair.String(),
+								Pair: BtcNusdPair.AsString(),
 							}},
 					},
 				)
@@ -407,7 +407,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			newParams.LiquidationFee = tc.liquidationFee
 			perpKeeper.SetParams(ctx, newParams)
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair: BtcNusdPair.String(),
+				Pair: BtcNusdPair.AsString(),
 				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case
 				},
@@ -435,7 +435,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			t.Log("create and set the initial position")
 			position := types.Position{
 				TraderAddress:                       traderAddr.String(),
-				Pair:                                BtcNusdPair.String(),
+				Pair:                                BtcNusdPair.AsString(),
 				Size_:                               tc.initialPositionSize,
 				Margin:                              tc.initialMargin,
 				OpenNotional:                        tc.initialOpenNotional,
@@ -473,7 +473,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			t.Log("assert new position fields")
 			newPosition := positionResp.Position
 			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
-			assert.EqualValues(t, BtcNusdPair.String(), newPosition.Pair)
+			assert.EqualValues(t, BtcNusdPair.AsString(), newPosition.Pair)
 			assert.True(t, newPosition.Size_.IsZero())        // always zero
 			assert.True(t, newPosition.Margin.IsZero())       // always zero
 			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero

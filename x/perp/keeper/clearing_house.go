@@ -148,7 +148,7 @@ func (k Keeper) afterPositionUpdate(
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:         traderAddr.String(),
-		Pair:                  pair.String(),
+		Pair:                  pair.AsString(),
 		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.Position.Margin.RoundInt()),
 		PositionNotional:      positionNotional,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
@@ -268,7 +268,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 		k.Logger(ctx).Error(
 			err.Error(),
 			"pair",
-			pair.String(),
+			pair.AsString(),
 		)
 		return sdk.Dec{}, err
 	}
@@ -922,7 +922,7 @@ func (k Keeper) swapQuoteForBase(
 		k.Logger(ctx).Error(
 			err.Error(),
 			"pair",
-			pair.String(),
+			pair.AsString(),
 			"side",
 			side.String(),
 			"quoteAssetAmount",

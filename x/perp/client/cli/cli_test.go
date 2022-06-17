@@ -99,7 +99,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 		{
-			Pair:              common.TestStablePool.String(),
+			Pair:              common.TestStablePool.AsString(),
 			BaseAssetReserve:  sdk.MustNewDecFromStr("100"),
 			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
 
@@ -127,7 +127,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 		{
-			Pair: common.TestStablePool.String(),
+			Pair: common.TestStablePool.AsString(),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -198,7 +198,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"--from",
 		user.String(),
 		"buy",
-		assetPair.String(),
+		assetPair.AsString(),
 		"1",       // Leverage
 		"1000000", // 1 BTC
 		"1",
@@ -218,7 +218,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair.AsString(), queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
 
@@ -227,7 +227,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"--from",
 		user.String(),
 		"buy",
-		assetPair.String(),
+		assetPair.AsString(),
 		/* leverage */ "2",
 		/* quoteAmt */ "1000000", // 10^6 unusd
 		/* baseAmtLimit */ "0",
@@ -240,7 +240,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair.AsString(), queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
 
@@ -249,7 +249,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"--from",
 		user.String(),
 		"sell",
-		assetPair.String(),
+		assetPair.AsString(),
 		"1",   // Leverage
 		"100", // unusd
 		"1",
@@ -270,7 +270,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair.AsString(), queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
 
@@ -279,7 +279,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"--from",
 		user.String(),
 		"sell",
-		assetPair.String(),
+		assetPair.AsString(),
 		"1",          // Leverage
 		"4000000",    // 4*10^6 unusd
 		"2000000000", // TODO: just threw a large number here, figure out a more appropriate amount
@@ -293,7 +293,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair.AsString(), queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
@@ -302,7 +302,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	args = []string{
 		"--from",
 		user.String(),
-		assetPair.String(),
+		assetPair.AsString(),
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
@@ -333,7 +333,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	args := []string{
 		"--from",
 		user.String(),
-		assetPair.String(),
+		assetPair.AsString(),
 	}
 	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.Assert().Contains(out.String(), "no position found")
@@ -370,7 +370,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"--from",
 		s.users[0].String(),
 		"buy",
-		pair.String(),
+		pair.AsString(),
 		"10", // Leverage
 		"1",  // Quote asset amount
 		"0.0000001",
@@ -386,7 +386,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	args = []string{
 		"--from",
 		s.users[0].String(),
-		pair.String(),
+		pair.AsString(),
 		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
 	}
 	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))

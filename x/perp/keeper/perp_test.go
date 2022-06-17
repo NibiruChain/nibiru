@@ -52,7 +52,7 @@ func TestGetAndSetPosition(t *testing.T) {
 
 				dummyPosition := &types.Position{
 					TraderAddress: traderAddr.String(),
-					Pair:          vpoolPair.String(),
+					Pair:          vpoolPair.AsString(),
 					Size_:         sdk.OneDec(),
 					Margin:        sdk.OneDec(),
 				}
@@ -102,7 +102,7 @@ func TestClearPosition(t *testing.T) {
 				for _, traderAddr := range traders {
 					dummyPosition := &types.Position{
 						TraderAddress: traderAddr.String(),
-						Pair:          vpoolPair.String(),
+						Pair:          vpoolPair.AsString(),
 						Size_:         sdk.OneDec(),
 						Margin:        sdk.OneDec(),
 					}
@@ -187,7 +187,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		perpKeeper := &nibiruApp.PerpKeeper
 		perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-			Pair: pair.String(),
+			Pair: pair.AsString(),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.2")},
 		})
@@ -211,7 +211,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		t.Log("open position for bob - long")
 		// force funding payments
 		perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-			Pair: pair.String(),
+			Pair: pair.AsString(),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},
 		})

@@ -86,7 +86,7 @@ func (p PositionsState) keyFromType(position *types.Position) []byte {
 
 func (p PositionsState) keyFromRaw(pair common.AssetPair, address sdk.AccAddress) []byte {
 	// TODO(mercilex): not sure if namespace overlap safe | update(mercilex) it is not overlap safe
-	return []byte(pair.String() + address.String())
+	return []byte(pair.AsString() + address.String())
 }
 
 func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error {
@@ -160,7 +160,7 @@ func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
 func (p PairMetadata) Get(ctx sdk.Context, pair common.AssetPair) (*types.PairMetadata, error) {
 	kv := p.getKV(ctx)
 
-	v := kv.Get([]byte(pair.String()))
+	v := kv.Get([]byte(pair.AsString()))
 	if v == nil {
 		return nil, types.ErrPairMetadataNotFound
 	}

@@ -96,7 +96,7 @@ func (k Keeper) Liquidate(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		TraderAddress:         traderAddr.String(),
-		Pair:                  pair.String(),
+		Pair:                  pair.AsString(),
 		ExchangedQuoteAmount:  liquidationResponse.PositionResp.ExchangedQuoteAssetAmount,
 		ExchangedPositionSize: liquidationResponse.PositionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidatorAddr.String(),

@@ -11,7 +11,7 @@ import (
 func (k Keeper) ClearPosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) error {
 	return k.Positions().Update(ctx, &types.Position{
 		TraderAddress:                       traderAddr.String(),
-		Pair:                                pair.String(),
+		Pair:                                pair.AsString(),
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
@@ -102,7 +102,7 @@ func (k Keeper) SettlePosition(
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionSettledEvent{
-		Pair:          tokenPair.String(),
+		Pair:          tokenPair.AsString(),
 		TraderAddress: traderAddr.String(),
 		SettledCoins:  transferredCoins,
 	})

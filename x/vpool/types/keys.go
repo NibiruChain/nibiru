@@ -26,12 +26,12 @@ var (
 
 // GetPoolKey returns pool key for KVStore
 func GetPoolKey(pair common.AssetPair) []byte {
-	return append(PoolKey, []byte(pair.String())...)
+	return append(PoolKey, []byte(pair.AsString())...)
 }
 
 // GetSnapshotCounterKey returns the KVStore for the Snapshot Pool counters.
 func GetSnapshotCounterKey(pair common.AssetPair) []byte {
-	return append(PoolReserveSnapshotCounter, []byte(pair.String())...)
+	return append(PoolReserveSnapshotCounter, []byte(pair.AsString())...)
 }
 
 // GetSnapshotKey returns the KVStore for the pool reserve snapshots.
@@ -39,7 +39,7 @@ func GetSnapshotKey(pair common.AssetPair, counter uint64) []byte {
 	return append(
 		PoolReserveSnapshots,
 		append(
-			[]byte(pair.String()),
+			[]byte(pair.AsString()),
 			sdk.Uint64ToBigEndian(counter)...,
 		)...,
 	)

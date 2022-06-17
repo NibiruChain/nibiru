@@ -74,7 +74,7 @@ func OpenPositionCmd() *cobra.Command {
 
 			msg := &types.MsgOpenPosition{
 				Sender:               clientCtx.GetFromAddress().String(),
-				TokenPair:            assetPair.String(),
+				TokenPair:            assetPair.AsString(),
 				Side:                 side,
 				QuoteAssetAmount:     amount,
 				Leverage:             leverage,

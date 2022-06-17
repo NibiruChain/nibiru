@@ -220,7 +220,7 @@ func (k Keeper) calcTwap(
 	// start from latest snapshot
 	latestSnapshotCounter, found := k.getSnapshotCounter(ctx, pair)
 	if !found {
-		return sdk.Dec{}, fmt.Errorf("Could not find snapshot counter for pair %s", pair.String())
+		return sdk.Dec{}, fmt.Errorf("Could not find snapshot counter for pair %s", pair.AsString())
 	}
 
 	var cumulativePrice sdk.Dec = sdk.ZeroDec()
