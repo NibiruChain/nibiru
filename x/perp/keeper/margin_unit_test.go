@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"fmt"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"math"
 	"testing"
 	"time"
 
@@ -302,9 +304,15 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Attempt to RemoveMargin when the vault lacks funds")
 				expectedError := fmt.Errorf("not enough funds in vault module account")
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(msg.Margin),
+				mocks.mockAccountKeeper.
+					EXPECT().GetModuleAddress(types.VaultModuleAccount).
+					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
+
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
+					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount, sdk.NewCoins(msg.Margin),
 				).Return(expectedError)
+
+				mocks.mockBankKeeper.EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()))
 
 				_, err = perpKeeper.RemoveMargin(goCtx, msg)
 
@@ -356,6 +364,14 @@ func TestRemoveMargin(t *testing.T) {
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
 					15*time.Minute,
 				).Return(sdk.NewDec(100), nil)
+
+				mocks.mockAccountKeeper.
+					EXPECT().GetModuleAddress(types.VaultModuleAccount).
+					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
+
+				mocks.mockBankKeeper.
+					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).
+					Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(math.MaxInt64)))
 
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
 					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(msg.Margin),
