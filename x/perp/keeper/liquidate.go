@@ -94,21 +94,10 @@ func (k Keeper) Liquidate(
 		liquidationResponse.FeeToPerpEcosystemFund,
 	)
 
-	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		TraderAddress:         traderAddr.String(),
-		Pair:                  pair.String(),
-		ExchangedQuoteAmount:  liquidationResponse.PositionResp.ExchangedNotionalValue,
-		ExchangedPositionSize: liquidationResponse.PositionResp.ExchangedPositionSize,
-		LiquidatorAddress:     liquidatorAddr.String(),
-		FeeToLiquidator:       feeToLiquidator,
-		FeeToEcosystemFund:    feeToEcosystemFund,
-		BadDebt:               liquidationResponse.BadDebt,
-	})
-
 	return &types.MsgLiquidateResponse{
 		FeeToLiquidator:        feeToLiquidator,
 		FeeToPerpEcosystemFund: feeToEcosystemFund,
-	}, err
+	}, nil
 }
 
 /*
