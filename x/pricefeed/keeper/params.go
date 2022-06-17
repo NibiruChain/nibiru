@@ -87,7 +87,6 @@ func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
 func (k Keeper) addOraclesForPair(
 	ctx sdk.Context, pair common.AssetPair, oracles []sdk.AccAddress,
 ) (endingOracles []sdk.AccAddress) {
-
 	startingOracles := k.OraclesStore().Get(ctx, pair)
 	uniquePairOracles := make(map[string]bool)
 	for _, oracle := range append(startingOracles, oracles...) {

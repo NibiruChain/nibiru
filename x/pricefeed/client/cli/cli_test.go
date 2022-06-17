@@ -42,30 +42,30 @@ type IntegrationTestSuite struct {
 func NewPricefeedGen() *pftypes.GenesisState {
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
 
+	pairs := common.AssetPairs{
+		{
+			Token0: common.GovStablePool.Token0,
+			Token1: common.GovStablePool.Token1,
+		},
+		{
+			Token0: common.CollStablePool.Token0,
+			Token1: common.CollStablePool.Token1,
+		},
+	}
+
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{
-			Pairs: []pftypes.Pair{
-				{
-					Token0:  common.GovStablePool.Token0,
-					Token1:  common.GovStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true,
-				},
-				{
-					Token0:  common.CollStablePool.Token0,
-					Token1:  common.CollStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true,
-				},
-			},
+			Pairs: pairs.Strings(),
 		},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.GovStablePool.PairID(),
+				PairID:        pairs[0].PairID(),
 				OracleAddress: oracle,
 				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				PairID:        common.CollStablePool.PairID(),
+				PairID:        pairs[1].PairID(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),

@@ -3,6 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
@@ -13,13 +14,11 @@ func HandleAddOracleProposal(ctx sdk.Context, k Keeper, proposal types.AddOracle
 	}
 	oracle := sdk.MustAccAddressFromBech32(proposal.Oracle)
 
-	if err := k.WhitelistOraclesForPairs(
+	k.WhitelistOraclesForPairs(
 		ctx,
-		/* oracles */ []sdk.AccAddress{oracle},
-		/* pairs */ proposal.Pairs,
-	); err != nil {
-		return err
-	}
+		/*oracles=*/ []sdk.AccAddress{oracle},
+		/*assetPairs=*/ common.MustNewAssetPairsFromStr(proposal.Pairs),
+	)
 
 	return nil
 }

@@ -39,13 +39,13 @@ func TestOraclesQuery(t *testing.T) {
 	keeper.WhitelistOraclesForPairs(
 		ctx,
 		/*oracles=*/ []sdk.AccAddress{oracleA, oracleB},
-		/*pairs=*/ []common.AssetPair{common.MustNewAssetPairFromStr(pairs[3])})
+		/*pairs=*/ []common.AssetPair{common.MustNewAssetPairFromStr(pairs[2])})
 
 	t.Log("whitelist oracle  C    on pair 3")
 	keeper.WhitelistOraclesForPairs(
 		ctx,
 		/*oracles=*/ []sdk.AccAddress{oracleC},
-		/*pairs=*/ []common.AssetPair{common.MustNewAssetPairFromStr(pairs[4])})
+		/*pairs=*/ []common.AssetPair{common.MustNewAssetPairFromStr(pairs[3])})
 
 	t.Log("Query for pair 2 oracles | ADA")
 	response, err := keeper.Oracles(wctx, &types.QueryOraclesRequest{PairId: pairs[2]})
@@ -58,14 +58,6 @@ func TestOraclesQuery(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
 		Oracles: []string{oracleC.String()}}, response)
-}
-
-func oraclesToAddress(accAddress []sdk.AccAddress) []string {
-	r := []string{}
-	for _, a := range accAddress {
-		r = append(r, a.String())
-	}
-	return r
 }
 
 func TestMarketsQuery(t *testing.T) {
@@ -83,7 +75,7 @@ func TestMarketsQuery(t *testing.T) {
 
 	t.Log("Set all pairs but 3 active")
 	keeper.ActivePairsStore().SetMany(ctx, pairs[:3], false)
-	keeper.ActivePairsStore().SetMany(ctx, common.AssetPairs{pairs[4]}, false)
+	keeper.ActivePairsStore().SetMany(ctx, common.AssetPairs{pairs[3]}, false)
 
 	response, err := keeper.Pairs(wctx, &types.QueryPairsRequest{})
 	require.NoError(t, err)

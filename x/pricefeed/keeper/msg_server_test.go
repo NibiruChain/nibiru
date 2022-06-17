@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
@@ -21,12 +22,12 @@ func TestPostPrice(t *testing.T) {
 	authorizedOracles := addrs[:2]
 	unauthorizedAddrs := addrs[2:]
 
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: "tst", Token0: "usd", Oracles: authorizedOracles, Active: true},
-		},
+	pair := common.MustNewAssetPairFromStr("usd:tst")
+	params := types.Params{
+		Pairs: []string{pair.AsString()},
 	}
-	k.SetParams(ctx, mp)
+	k.SetParams(ctx, params)
+	k.WhitelistOraclesForPairs(ctx, authorizedOracles, common.AssetPairs{pair})
 
 	tests := []struct {
 		giveMsg      string

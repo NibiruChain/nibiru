@@ -38,16 +38,13 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC))
 
-	markets := ptypes.NewParams([]ptypes.Pair{
-		{
-			Token0:  token0,
-			Token1:  token1,
-			Oracles: []sdk.AccAddress{oracle},
-			Active:  true,
-		},
-	})
-
-	nibiruApp.PricefeedKeeper.SetParams(ctx, markets)
+	oracles := []sdk.AccAddress{oracle}
+	pairs := common.AssetPairs{
+		{Token0: token0, Token1: token1},
+	}
+	params := ptypes.NewParams(pairs.Strings())
+	nibiruApp.PricefeedKeeper.SetParams(ctx, params) // makes pairs active
+	nibiruApp.PricefeedKeeper.WhitelistOraclesForPairs(ctx, oracles, pairs)
 
 	// Sim set price set the price for one hour
 	setPrice("0.9")
