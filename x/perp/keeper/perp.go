@@ -103,7 +103,7 @@ func (k Keeper) SettlePosition(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionSettledEvent{
 		Pair:          tokenPair.String(),
-		TraderAddress: traderAddr,
+		TraderAddress: traderAddr.String(),
 		SettledCoins:  transferredCoins,
 	})
 
