@@ -13,5 +13,5 @@ var (
 	ErrOpeningPosition      = sdkerrors.Register(ModuleName, 8, "error opening position")
 	ErrClosingPosition      = sdkerrors.Register(ModuleName, 9, "error closing position")
 	ErrNoValidPrice         = sdkerrors.Register(ModuleName, 10, "no valid prices available")
-	ErrNoValidTWAP          = sdkerrors.Register(ModuleName, 11, "TWA price not found")
+	ErrNoValidTWAP          = sdkerrors.Register(ModuleName, 11, "TWAP price not found")
 )

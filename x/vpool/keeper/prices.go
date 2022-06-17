@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -271,9 +272,9 @@ func (k Keeper) calcTwap(
 }
 
 // GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
-func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
+func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (types.CurrentTWAP, error) {
 	// Ensure we still have valid prices
-	_, err = k.GetSpotPrice(ctx, common.AssetPair{
+	_, err := k.GetSpotPrice(ctx, common.AssetPair{
 		Token0: token0,
 		Token1: token1,
 	})
@@ -338,7 +339,7 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 
 	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, token0, token1)
 	// Err there means no twap price have been set yet for this pair
-	if err != nil {
+	if errors.Is(err, types.ErrNoValidTWAP) {
 		currentTWAP = types.CurrentTWAP{
 			PairID:      pairID,
 			Numerator:   sdk.MustNewDecFromStr("0"),
