@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -563,6 +565,8 @@ func TestGetTWAPPrice(t *testing.T) {
 			)
 			err := keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
 			require.NoError(t, err)
+			poolCreationMarkPriceEvt := getMarkPriceEvent(sdk.NewDec(40_000), cctx.BlockHeader().Time)
+			testutilevents.RequireHasTypedEvent(t, cctx, poolCreationMarkPriceEvt)
 			// Make sure price gets initialized correctly when the pool gets created
 			twap, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
 			require.NoError(t, err)
@@ -577,11 +581,21 @@ func TestGetTWAPPrice(t *testing.T) {
 				}
 				require.NoError(t, err)
 				err = keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
+				markPriceEvt := getMarkPriceEvent(tc.expectedPrices[i], cctx.BlockHeader().Time)
+				testutilevents.RequireContainsTypedEvent(t, cctx, markPriceEvt)
 				require.NoError(t, err)
 				twapPrice, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedPrices[i], twapPrice.Price)
 			}
 		})
+	}
+}
+
+func getMarkPriceEvent(price sdk.Dec, ts time.Time) proto.Message {
+	return &types.MarkPriceChanged{
+		Pair:      BTCNusdPair.String(),
+		Price:     price,
+		Timestamp: ts,
 	}
 }

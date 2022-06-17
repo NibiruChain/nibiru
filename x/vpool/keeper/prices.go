@@ -371,5 +371,13 @@ func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.codec.MustMarshal(&newTWAP))
 
+	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
+		Pair:      pairID,
+		Price:     price,
+		Timestamp: ctx.BlockHeader().Time,
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
