@@ -14,6 +14,8 @@ import (
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
+	k.ActivePairsStore().
+		AddActivePairs(ctx, common.MustNewAssetPairsFromStr(genState.Params.Pairs))
 
 	// If posted prices are not expired, set them in the store
 	for _, pp := range genState.PostedPrices {

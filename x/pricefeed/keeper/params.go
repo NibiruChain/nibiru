@@ -17,6 +17,8 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 // SetParams set the params
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
+	k.ActivePairsStore().SetMany(
+		ctx, common.MustNewAssetPairsFromStr(params.Pairs), true)
 }
 
 // GetPairs returns the pairs from params
@@ -38,7 +40,7 @@ func (k Keeper) GetOraclesForPair(ctx sdk.Context, pairID string,
 // IsWhitelistedOracle returns true if the address is whitelisted, false if not.
 func (k Keeper) IsWhitelistedOracle(
 	ctx sdk.Context, pairID string, address sdk.AccAddress,
-) (bool) {
+) bool {
 	pair := common.MustNewAssetPairFromStr(pairID)
 	oracles := k.OraclesStore().Get(ctx, pair)
 	for _, addr := range oracles {

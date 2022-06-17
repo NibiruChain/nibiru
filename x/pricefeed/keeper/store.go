@@ -123,6 +123,14 @@ func (state ActivePairsState) Set(
 	} // else {do nothing}
 }
 
+func (state ActivePairsState) SetMany(
+	ctx sdk.Context, pairs common.AssetPairs, active bool,
+) {
+	for _, pair := range pairs {
+		state.Set(ctx, pair, active)
+	}
+}
+
 func (state ActivePairsState) AddActivePairs(
 	ctx sdk.Context, pairs []common.AssetPair,
 ) {

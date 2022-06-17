@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -15,45 +16,30 @@ import (
 func TestKeeper_SetGetPair(t *testing.T) {
 	app, ctx := testutilapp.NewNibiruApp(true)
 
-	token0, token1 := "usd", "tst"
-	tstusdPair := types.Pair{
-		Token1: token1, Token0: token0, Oracles: []sdk.AccAddress{}, Active: true}
-	token0, token1 = "abc", "xyz"
-	abcxyzPair := types.Pair{
-		Token1: token1, Token0: token0, Oracles: []sdk.AccAddress{}, Active: true}
-
-	mp := types.Params{
-		Pairs: types.Pairs{tstusdPair},
+	pairs := common.AssetPairs{
+		common.MustNewAssetPairFromStr("tst:usd"),
+		common.MustNewAssetPairFromStr("xyz:abc"),
 	}
+	app.PricefeedKeeper.ActivePairsStore().AddActivePairs(ctx, pairs)
+
 	keeper := app.PricefeedKeeper
-	keeper.SetParams(ctx, mp)
+	keeper.SetParams(ctx, types.Params{Pairs: []string{pairs[0].AsString()}})
 
-	markets := keeper.GetPairs(ctx)
-	require.Equal(t, len(markets), 1)
-	require.Equal(t, markets[0].PairID(), "tst:usd")
+	paramsPairs := keeper.GetPairs(ctx)
+	require.Len(t, paramsPairs, 1)
+	require.Equal(t, paramsPairs[0].AsString(), "tst:usd")
 
-	_, found := keeper.GetPair(ctx, "tst:usd")
-	require.True(t, found, "market should be found")
+	require.True(t, keeper.IsActivePair(ctx, pairs[0].AsString()))
+	require.True(t, !keeper.IsActivePair(ctx, pairs[1].AsString()))
 
-	_, found = keeper.GetPair(ctx, "invalid:market")
-	require.False(t, found, "invalid:market should not be found")
-
-	mp = types.Params{
-		Pairs: []types.Pair{
-			tstusdPair,
-			abcxyzPair,
-		},
+	params := types.Params{Pairs: pairs.Strings()}
+	keeper.SetParams(ctx, params)
+	paramsPairs = keeper.GetPairs(ctx)
+	require.Len(t, paramsPairs, 2)
+	for _, pair := range paramsPairs {
+		require.True(t, keeper.IsActivePair(ctx, pair.AsString()))
 	}
-
-	keeper.SetParams(ctx, mp)
-	markets = keeper.GetPairs(ctx)
-	require.Equal(t, len(markets), 2)
-	require.Equal(t, markets[0].PairID(), "tst:usd")
-	_, found = keeper.GetPair(ctx, "abc:xyz")
-	require.True(t, found, "market should be found")
-
-	_, found = keeper.GetPair(ctx, "nan")
-	require.False(t, found)
+	require.False(t, keeper.IsActivePair(ctx, "nan"))
 }
 
 func TestKeeper_GetSetPrice(t *testing.T) {
@@ -61,15 +47,12 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 	keeper := app.PricefeedKeeper
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: "tst", Token0: "usd", Oracles: addrs, Active: true},
-		},
-	}
-	keeper.SetParams(ctx, mp)
+	params := types.Params{Pairs: []string{"usd:tst"}}
+	keeper.SetParams(ctx, params)
 
+	// setting price with inverse pair
 	token0, token1 := "tst", "usd"
-	pairID := "tst:usd"
+	inversePair := common.AssetPair{Token0: token0, Token1: token1}
 	prices := []struct {
 		oracle sdk.AccAddress
 		token0 string
@@ -97,7 +80,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get raw prices
-		rawPrices := keeper.GetRawPrices(ctx, pairID)
+		rawPrices := keeper.GetRawPrices(ctx, inversePair.PairID())
 
 		require.Equal(t, p.total, len(rawPrices))
 		require.Contains(t, rawPrices, pp)
@@ -118,27 +101,27 @@ oracles is valid (i.e. registered with keeper.SetParams).
 func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 	app, ctx := testutilapp.NewNibiruApp(true)
 	keeper := app.PricefeedKeeper
-	token0, token1 := "tst", "usd"
+	pair := common.MustNewAssetPairFromStr("tst:usd")
+
 	price := sdk.MustNewDecFromStr("0.1")
 
 	// Register addrs[1] as the oracle.
 	_, addrs := sample.PrivKeyAddressPairs(2)
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: token1, Token0: token0,
-				Oracles: addrs[:1], Active: true},
-		}}
-	keeper.SetParams(ctx, mp)
 
-	// Set price with valid oracle given (addrs[1])
+	params := types.Params{Pairs: []string{pair.AsString()}}
+	keeper.SetParams(ctx, params)
+
+	// Set price with valid oracle given (addrs[0])
+	keeper.WhitelistOracles(ctx, []sdk.AccAddress{addrs[0]})
+	expiry := ctx.BlockTime().UTC().Add(1 * time.Hour)
 	_, err := keeper.SetPrice(
-		ctx, addrs[0], token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[0], pair.Token0, pair.Token1, price, expiry,
 	)
 	require.NoError(t, err)
 
 	// Set price with invalid oracle given (addrs[1])
 	_, err = keeper.SetPrice(
-		ctx, addrs[1], token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[1], pair.Token0, pair.Token1, price, expiry,
 	)
 	require.Error(t, err)
 }
@@ -151,29 +134,27 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 	app, ctx := testutilapp.NewNibiruApp(true)
 	keeper := app.PricefeedKeeper
 
-	token0, token1 := "tst", "usd"
+	pair := common.MustNewAssetPairFromStr("tst:usd")
 	price := sdk.MustNewDecFromStr("0.1")
 
 	_, addrs := sample.PrivKeyAddressPairs(10)
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: "tst", Token0: "usd",
-				Oracles: addrs[:5], Active: true},
-		},
+	params := types.Params{
+		Pairs: []string{pair.AsString()},
 	}
-	keeper.SetParams(ctx, mp)
+	keeper.SetParams(ctx, params)
+	keeper.WhitelistOraclesForPairs(ctx, addrs[:5], common.AssetPairs{pair})
 
 	for i, addr := range addrs {
 		if i < 5 {
 			// Valid oracle addresses. This shouldn't raise an error.
 			_, err := keeper.SetPrice(
-				ctx, addr, token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, pair.Token0, pair.Token1, price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.NoError(t, err)
 		} else {
 			// Invalid oracle addresses. This should raise errors.
 			_, err := keeper.SetPrice(
-				ctx, addr, token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, pair.Token0, pair.Token1, price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.Error(t, err)
 		}
@@ -187,13 +168,11 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "tst", "usd"
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token0: token0, Token1: token1,
-				Oracles: addrs, Active: true},
-		},
+	pair := common.AssetPair{Token0: token0, Token1: token1}
+	params := types.Params{
+		Pairs: []string{pair.AsString()},
 	}
-	keeper.SetParams(ctx, mp)
+	keeper.SetParams(ctx, params)
 
 	_, err := keeper.SetPrice(
 		ctx, addrs[0], token0, token1,
@@ -277,12 +256,11 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "usd", "tst"
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: token1, Token0: token0, Oracles: addrs, Active: true},
-		},
+	pair := common.AssetPair{Token0: token0, Token1: token1}
+	params := types.Params{
+		Pairs: []string{pair.AsString()},
 	}
-	keeper.SetParams(ctx, mp)
+	keeper.SetParams(ctx, params)
 
 	_, err := keeper.SetPrice(
 		ctx, addrs[0], token0, token1,
