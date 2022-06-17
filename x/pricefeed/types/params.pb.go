@@ -6,6 +6,7 @@ package types
 import (
 	bytes "bytes"
 	fmt "fmt"
+	_ "github.com/NibiruChain/nibiru/x/common"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
@@ -32,7 +33,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
-	Pairs Pairs `protobuf:"bytes,1,rep,name=pairs,proto3,castrepeated=Pairs" json:"pairs"`
+	Pairs []string `protobuf:"bytes,1,rep,name=pairs,proto3" json:"pairs,omitempty"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }
@@ -68,33 +69,29 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
-func (m *Params) GetPairs() Pairs {
+func (m *Params) GetPairs() []string {
 	if m != nil {
 		return m.Pairs
 	}
 	return nil
 }
 
-// Pair defines an asset in the pricefeed.
-type Pair struct {
-	Token0  string                                          `protobuf:"bytes,1,opt,name=token0,proto3" json:"token0,omitempty"`
-	Token1  string                                          `protobuf:"bytes,2,opt,name=token1,proto3" json:"token1,omitempty"`
-	Oracles []github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,rep,name=oracles,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"oracles,omitempty"`
-	Active  bool                                            `protobuf:"varint,4,opt,name=active,proto3" json:"active,omitempty"`
+type OraclesProto struct {
+	Oracles []github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,rep,name=oracles,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"oracles,omitempty"`
 }
 
-func (m *Pair) Reset()         { *m = Pair{} }
-func (m *Pair) String() string { return proto.CompactTextString(m) }
-func (*Pair) ProtoMessage()    {}
-func (*Pair) Descriptor() ([]byte, []int) {
+func (m *OraclesProto) Reset()         { *m = OraclesProto{} }
+func (m *OraclesProto) String() string { return proto.CompactTextString(m) }
+func (*OraclesProto) ProtoMessage()    {}
+func (*OraclesProto) Descriptor() ([]byte, []int) {
 	return fileDescriptor_76ce94fb65bc3a91, []int{1}
 }
-func (m *Pair) XXX_Unmarshal(b []byte) error {
+func (m *OraclesProto) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Pair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OraclesProto) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Pair.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OraclesProto.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -104,40 +101,63 @@ func (m *Pair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Pair) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pair.Merge(m, src)
+func (m *OraclesProto) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OraclesProto.Merge(m, src)
 }
-func (m *Pair) XXX_Size() int {
+func (m *OraclesProto) XXX_Size() int {
 	return m.Size()
 }
-func (m *Pair) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pair.DiscardUnknown(m)
+func (m *OraclesProto) XXX_DiscardUnknown() {
+	xxx_messageInfo_OraclesProto.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Pair proto.InternalMessageInfo
+var xxx_messageInfo_OraclesProto proto.InternalMessageInfo
 
-func (m *Pair) GetToken0() string {
-	if m != nil {
-		return m.Token0
-	}
-	return ""
-}
-
-func (m *Pair) GetToken1() string {
-	if m != nil {
-		return m.Token1
-	}
-	return ""
-}
-
-func (m *Pair) GetOracles() []github_com_cosmos_cosmos_sdk_types.AccAddress {
+func (m *OraclesProto) GetOracles() []github_com_cosmos_cosmos_sdk_types.AccAddress {
 	if m != nil {
 		return m.Oracles
 	}
 	return nil
 }
 
-func (m *Pair) GetActive() bool {
+type ActiveProto struct {
+	Active bool `protobuf:"varint,1,opt,name=active,proto3" json:"active,omitempty"`
+}
+
+func (m *ActiveProto) Reset()         { *m = ActiveProto{} }
+func (m *ActiveProto) String() string { return proto.CompactTextString(m) }
+func (*ActiveProto) ProtoMessage()    {}
+func (*ActiveProto) Descriptor() ([]byte, []int) {
+	return fileDescriptor_76ce94fb65bc3a91, []int{2}
+}
+func (m *ActiveProto) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ActiveProto) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ActiveProto.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ActiveProto) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ActiveProto.Merge(m, src)
+}
+func (m *ActiveProto) XXX_Size() int {
+	return m.Size()
+}
+func (m *ActiveProto) XXX_DiscardUnknown() {
+	xxx_messageInfo_ActiveProto.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ActiveProto proto.InternalMessageInfo
+
+func (m *ActiveProto) GetActive() bool {
 	if m != nil {
 		return m.Active
 	}
@@ -156,7 +176,7 @@ func (m *PostedPrice) Reset()         { *m = PostedPrice{} }
 func (m *PostedPrice) String() string { return proto.CompactTextString(m) }
 func (*PostedPrice) ProtoMessage()    {}
 func (*PostedPrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_76ce94fb65bc3a91, []int{2}
+	return fileDescriptor_76ce94fb65bc3a91, []int{3}
 }
 func (m *PostedPrice) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -217,7 +237,7 @@ func (m *CurrentPrice) Reset()         { *m = CurrentPrice{} }
 func (m *CurrentPrice) String() string { return proto.CompactTextString(m) }
 func (*CurrentPrice) ProtoMessage()    {}
 func (*CurrentPrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_76ce94fb65bc3a91, []int{3}
+	return fileDescriptor_76ce94fb65bc3a91, []int{4}
 }
 func (m *CurrentPrice) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -265,7 +285,7 @@ func (m *CurrentTWAP) Reset()         { *m = CurrentTWAP{} }
 func (m *CurrentTWAP) String() string { return proto.CompactTextString(m) }
 func (*CurrentTWAP) ProtoMessage()    {}
 func (*CurrentTWAP) Descriptor() ([]byte, []int) {
-	return fileDescriptor_76ce94fb65bc3a91, []int{4}
+	return fileDescriptor_76ce94fb65bc3a91, []int{5}
 }
 func (m *CurrentTWAP) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -302,87 +322,51 @@ func (m *CurrentTWAP) GetPairID() string {
 }
 
 func init() {
-	proto.RegisterType((*Params)(nil), "NibiruChain.pricefeed.v1.Params")
-	proto.RegisterType((*Pair)(nil), "NibiruChain.pricefeed.v1.Pair")
-	proto.RegisterType((*PostedPrice)(nil), "NibiruChain.pricefeed.v1.PostedPrice")
-	proto.RegisterType((*CurrentPrice)(nil), "NibiruChain.pricefeed.v1.CurrentPrice")
-	proto.RegisterType((*CurrentTWAP)(nil), "NibiruChain.pricefeed.v1.CurrentTWAP")
+	proto.RegisterType((*Params)(nil), "nibiru.pricefeed.v1.Params")
+	proto.RegisterType((*OraclesProto)(nil), "nibiru.pricefeed.v1.OraclesProto")
+	proto.RegisterType((*ActiveProto)(nil), "nibiru.pricefeed.v1.ActiveProto")
+	proto.RegisterType((*PostedPrice)(nil), "nibiru.pricefeed.v1.PostedPrice")
+	proto.RegisterType((*CurrentPrice)(nil), "nibiru.pricefeed.v1.CurrentPrice")
+	proto.RegisterType((*CurrentTWAP)(nil), "nibiru.pricefeed.v1.CurrentTWAP")
 }
 
 func init() { proto.RegisterFile("pricefeed/params.proto", fileDescriptor_76ce94fb65bc3a91) }
 
 var fileDescriptor_76ce94fb65bc3a91 = []byte{
-	// 520 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xbb, 0x6e, 0xdb, 0x30,
-	0x14, 0x35, 0xfd, 0x50, 0x12, 0x3a, 0xe9, 0x20, 0x14, 0x81, 0xea, 0x41, 0x32, 0x5c, 0xa0, 0xf0,
-	0x12, 0xaa, 0x4e, 0xd7, 0x2e, 0x7e, 0x2c, 0x46, 0x1f, 0x50, 0x85, 0x00, 0x2d, 0xba, 0x18, 0xb4,
-	0xc4, 0x38, 0x44, 0x22, 0x51, 0x20, 0xe9, 0x20, 0xfe, 0x0b, 0x8f, 0x05, 0xfa, 0x03, 0x45, 0xbf,
-	0x24, 0x63, 0xc6, 0xa2, 0x83, 0x93, 0xca, 0x7f, 0xd1, 0xa9, 0x20, 0x29, 0x3f, 0x96, 0x02, 0x79,
-	0x4c, 0xe2, 0xb9, 0xba, 0xf7, 0x9c, 0x73, 0xef, 0x95, 0x08, 0x0f, 0x33, 0x4e, 0x23, 0x72, 0x4a,
-	0x48, 0xec, 0x67, 0x98, 0xe3, 0x44, 0xa0, 0x8c, 0x33, 0xc9, 0x6c, 0xe7, 0x23, 0x1d, 0x53, 0x3e,
-	0xed, 0x9f, 0x61, 0x9a, 0xa2, 0x75, 0x0e, 0xba, 0xec, 0x34, 0x5e, 0x44, 0x4c, 0x24, 0x4c, 0x8c,
-	0x74, 0x9e, 0x6f, 0x80, 0x29, 0x6a, 0x3c, 0x9f, 0xb0, 0x09, 0x33, 0x71, 0x75, 0x2a, 0xa2, 0xde,
-	0x84, 0xb1, 0xc9, 0x05, 0xf1, 0x35, 0x1a, 0x4f, 0x4f, 0x7d, 0x49, 0x13, 0x22, 0x24, 0x4e, 0x32,
-	0x93, 0xd0, 0xfa, 0x00, 0xad, 0x40, 0x6b, 0xdb, 0x7d, 0x58, 0xcb, 0x30, 0xe5, 0xc2, 0x01, 0xcd,
-	0x4a, 0xbb, 0x7e, 0xec, 0xa2, 0xff, 0xb9, 0x40, 0x01, 0xa6, 0xbc, 0x77, 0x70, 0xbd, 0xf0, 0x4a,
-	0x3f, 0x6f, 0xbd, 0x9a, 0x42, 0x22, 0x34, 0xb5, 0xad, 0xef, 0x00, 0x56, 0x55, 0xc0, 0x3e, 0x84,
-	0x96, 0x64, 0xe7, 0x24, 0x7d, 0xed, 0x80, 0x26, 0x68, 0xef, 0x85, 0x05, 0x5a, 0xc7, 0x3b, 0x4e,
-	0x79, 0x2b, 0xde, 0xb1, 0xdf, 0xc1, 0x1d, 0xc6, 0x71, 0x74, 0x41, 0x84, 0x53, 0x69, 0x56, 0xda,
-	0xfb, 0xbd, 0xce, 0xdf, 0x85, 0x77, 0x34, 0xa1, 0xf2, 0x6c, 0x3a, 0x46, 0x11, 0x4b, 0x8a, 0x66,
-	0x8b, 0xc7, 0x91, 0x88, 0xcf, 0x7d, 0x39, 0xcb, 0x88, 0x40, 0xdd, 0x28, 0xea, 0xc6, 0x31, 0x27,
-	0x42, 0x84, 0x2b, 0x06, 0x25, 0x82, 0x23, 0x49, 0x2f, 0x89, 0x53, 0x6d, 0x82, 0xf6, 0x6e, 0x58,
-	0xa0, 0xd6, 0xbc, 0x0c, 0xeb, 0x01, 0x13, 0x92, 0xc4, 0x81, 0xea, 0xc7, 0x7e, 0x09, 0x77, 0x94,
-	0xed, 0x11, 0x8d, 0x8d, 0xcb, 0x1e, 0xcc, 0x17, 0x9e, 0xa5, 0xfc, 0x0f, 0x07, 0xa1, 0xa5, 0x5e,
-	0x0d, 0x63, 0xfb, 0x0b, 0x7c, 0x66, 0x78, 0x47, 0xd8, 0xe8, 0x68, 0xe7, 0x8f, 0x32, 0x78, 0x60,
-	0x88, 0x0a, 0x68, 0x0f, 0x60, 0x4d, 0xcf, 0xd5, 0xa9, 0x68, 0x71, 0xa4, 0x26, 0xfa, 0x7b, 0xe1,
-	0xbd, 0xba, 0x07, 0xe9, 0x80, 0x44, 0xa1, 0x29, 0xb6, 0xdf, 0x42, 0x8b, 0x5c, 0x65, 0x94, 0xcf,
-	0x74, 0xb3, 0xf5, 0xe3, 0x06, 0x32, 0x3b, 0x47, 0xab, 0x9d, 0xa3, 0x93, 0xd5, 0xce, 0x7b, 0xbb,
-	0x4a, 0x62, 0x7e, 0xeb, 0x81, 0xb0, 0xa8, 0x69, 0xcd, 0xe0, 0x7e, 0x7f, 0xca, 0x39, 0x49, 0xe5,
-	0x03, 0x46, 0xb2, 0x36, 0x5e, 0x7e, 0x82, 0xf1, 0xd6, 0xb7, 0x32, 0xac, 0x17, 0xda, 0x27, 0x9f,
-	0xbb, 0xc1, 0xfd, 0xa4, 0xdf, 0xc3, 0xbd, 0x74, 0x9a, 0x10, 0x8e, 0x25, 0xe3, 0x8f, 0x94, 0xdf,
-	0x10, 0xd8, 0x01, 0xac, 0xc7, 0x24, 0x65, 0x09, 0x4d, 0x35, 0xdf, 0xc3, 0xf7, 0x30, 0x4c, 0x65,
-	0xb8, 0x4d, 0xb1, 0x19, 0x4d, 0xf5, 0x09, 0xa3, 0xe9, 0x7d, 0xba, 0xfb, 0xe3, 0x82, 0x1f, 0xb9,
-	0x0b, 0xae, 0x73, 0x17, 0xdc, 0xe4, 0x2e, 0xb8, 0xcb, 0x5d, 0x30, 0x5f, 0xba, 0xa5, 0x9b, 0xa5,
-	0x5b, 0xfa, 0xb5, 0x74, 0x4b, 0x5f, 0xfd, 0x2d, 0xc2, 0xad, 0x1f, 0xd5, 0x4f, 0xf5, 0xd9, 0xbf,
-	0xf2, 0x37, 0x77, 0x8b, 0x66, 0x1f, 0x5b, 0xfa, 0x73, 0x78, 0xf3, 0x2f, 0x00, 0x00, 0xff, 0xff,
-	0x02, 0x43, 0x14, 0x7b, 0x75, 0x04, 0x00, 0x00,
+	// 495 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xbd, 0x6e, 0xdb, 0x3c,
+	0x14, 0x35, 0x9d, 0x44, 0x89, 0x29, 0x7f, 0xdf, 0xa0, 0x04, 0x81, 0xea, 0x41, 0x32, 0x54, 0xb4,
+	0xf0, 0x12, 0x11, 0x69, 0xd7, 0x2e, 0x76, 0xbc, 0x18, 0xfd, 0x13, 0x84, 0x00, 0x2d, 0xda, 0xc1,
+	0xa0, 0x25, 0x46, 0x21, 0x1a, 0x8a, 0x02, 0x49, 0x05, 0xf1, 0x5b, 0x78, 0xec, 0x23, 0xf4, 0x51,
+	0x32, 0x66, 0x2c, 0x3a, 0xb8, 0x85, 0xfc, 0x16, 0x9d, 0x0a, 0x91, 0x72, 0x9c, 0x31, 0x3f, 0x13,
+	0x75, 0x2e, 0x2f, 0xcf, 0x39, 0xb8, 0x47, 0x24, 0x3c, 0x2c, 0x04, 0x4d, 0xc8, 0x19, 0x21, 0x29,
+	0x2a, 0xb0, 0xc0, 0x4c, 0x86, 0x85, 0xe0, 0x8a, 0x3b, 0xfb, 0x39, 0x9d, 0x51, 0x51, 0x86, 0xb7,
+	0xdb, 0xe1, 0xe5, 0x71, 0xef, 0x59, 0xc2, 0x25, 0xe3, 0x72, 0xaa, 0x5b, 0x90, 0x01, 0xa6, 0xbf,
+	0x77, 0x90, 0xf1, 0x8c, 0x9b, 0x7a, 0xfd, 0xd5, 0x54, 0xfd, 0x8c, 0xf3, 0xec, 0x82, 0x20, 0x8d,
+	0x66, 0xe5, 0x19, 0x52, 0x94, 0x11, 0xa9, 0x30, 0x2b, 0x9a, 0x86, 0xfd, 0x84, 0x33, 0xc6, 0x73,
+	0x64, 0x16, 0x53, 0x0c, 0x3c, 0x68, 0x45, 0xda, 0x8b, 0x73, 0x00, 0x77, 0x0a, 0x4c, 0x85, 0x74,
+	0x41, 0x7f, 0x6b, 0xd0, 0x89, 0x0d, 0x08, 0xbe, 0xc2, 0xee, 0x47, 0x81, 0x93, 0x0b, 0x22, 0x23,
+	0xed, 0xf5, 0x2d, 0xdc, 0xe5, 0x06, 0xeb, 0xbe, 0xee, 0xe8, 0xf8, 0xef, 0xd2, 0x3f, 0xca, 0xa8,
+	0x3a, 0x2f, 0x67, 0x61, 0xc2, 0x59, 0xe3, 0xb4, 0x59, 0x8e, 0x64, 0xfa, 0x0d, 0xa9, 0x79, 0x41,
+	0x64, 0x38, 0x4c, 0x92, 0x61, 0x9a, 0x0a, 0x22, 0x65, 0xbc, 0x66, 0x08, 0x5e, 0x40, 0x7b, 0x98,
+	0x28, 0x7a, 0x49, 0x0c, 0xf7, 0x21, 0xb4, 0xb0, 0x86, 0x2e, 0xe8, 0x83, 0xc1, 0x5e, 0xdc, 0xa0,
+	0x60, 0xd1, 0x86, 0x76, 0xc4, 0xa5, 0x22, 0x69, 0x54, 0x4f, 0xc8, 0x79, 0x0e, 0x77, 0x6b, 0x73,
+	0x53, 0x9a, 0xea, 0xc6, 0xce, 0x08, 0x56, 0x4b, 0xdf, 0x8a, 0x30, 0x15, 0x93, 0x71, 0x6c, 0xd5,
+	0x5b, 0x93, 0xd4, 0xf9, 0x0c, 0xff, 0x37, 0x32, 0x53, 0x6c, 0x64, 0xdd, 0x76, 0x1f, 0x3c, 0xce,
+	0xef, 0x7f, 0x86, 0xa8, 0x81, 0xce, 0x18, 0xee, 0xe8, 0xa4, 0xdc, 0x2d, 0x2d, 0x1e, 0x5e, 0x2f,
+	0xfd, 0xd6, 0xaf, 0xa5, 0xff, 0xf2, 0x1e, 0xa4, 0x63, 0x92, 0xc4, 0xe6, 0xb0, 0xf3, 0x06, 0x5a,
+	0xe4, 0xaa, 0xa0, 0x62, 0xee, 0x6e, 0xf7, 0xc1, 0xc0, 0x7e, 0xd5, 0x0b, 0x4d, 0x7e, 0xe1, 0x3a,
+	0xbf, 0xf0, 0x74, 0x9d, 0xdf, 0x68, 0xaf, 0x96, 0x58, 0xfc, 0xf6, 0x41, 0xdc, 0x9c, 0x09, 0xe6,
+	0xb0, 0x7b, 0x52, 0x0a, 0x41, 0x72, 0xf5, 0x80, 0x91, 0xdc, 0x1a, 0x6f, 0x3f, 0xc1, 0x78, 0xf0,
+	0xbd, 0x0d, 0xed, 0x46, 0xfb, 0xf4, 0xd3, 0x30, 0xba, 0x9f, 0xf4, 0x3b, 0xd8, 0xc9, 0x4b, 0x46,
+	0x04, 0x56, 0x5c, 0x3c, 0x52, 0x7e, 0x43, 0xe0, 0x44, 0xd0, 0x4e, 0x49, 0xce, 0x19, 0xcd, 0x35,
+	0xdf, 0xc3, 0x73, 0x98, 0xe4, 0x2a, 0xbe, 0x4b, 0xb1, 0x19, 0xcd, 0xf6, 0x13, 0x46, 0x33, 0x7a,
+	0xff, 0xa3, 0xf2, 0xc0, 0x75, 0xe5, 0x81, 0x9b, 0xca, 0x03, 0x7f, 0x2a, 0x0f, 0x2c, 0x56, 0x5e,
+	0xeb, 0x66, 0xe5, 0xb5, 0x7e, 0xae, 0xbc, 0xd6, 0x17, 0x74, 0x87, 0xec, 0x83, 0xbe, 0xf1, 0x27,
+	0xe7, 0x98, 0xe6, 0xc8, 0xdc, 0x7e, 0x74, 0x85, 0x36, 0xcf, 0x83, 0x66, 0x9e, 0x59, 0xfa, 0x57,
+	0x78, 0xfd, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xe2, 0x35, 0x7d, 0x63, 0x38, 0x04, 0x00, 0x00,
 }
 
-func (this *Params) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Params)
-	if !ok {
-		that2, ok := that.(Params)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Params")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Params but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Params but is not nil && this == nil")
-	}
-	if len(this.Pairs) != len(that1.Pairs) {
-		return fmt.Errorf("Pairs this(%v) Not Equal that(%v)", len(this.Pairs), len(that1.Pairs))
-	}
-	for i := range this.Pairs {
-		if !this.Pairs[i].Equal(&that1.Pairs[i]) {
-			return fmt.Errorf("Pairs this[%v](%v) Not Equal that[%v](%v)", i, this.Pairs[i], i, that1.Pairs[i])
-		}
-	}
-	return nil
-}
 func (this *Params) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -406,64 +390,20 @@ func (this *Params) Equal(that interface{}) bool {
 		return false
 	}
 	for i := range this.Pairs {
-		if !this.Pairs[i].Equal(&that1.Pairs[i]) {
+		if this.Pairs[i] != that1.Pairs[i] {
 			return false
 		}
 	}
 	return true
 }
-func (this *Pair) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Pair)
-	if !ok {
-		that2, ok := that.(Pair)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Pair")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Pair but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Pair but is not nil && this == nil")
-	}
-	if this.Token0 != that1.Token0 {
-		return fmt.Errorf("Token0 this(%v) Not Equal that(%v)", this.Token0, that1.Token0)
-	}
-	if this.Token1 != that1.Token1 {
-		return fmt.Errorf("Token1 this(%v) Not Equal that(%v)", this.Token1, that1.Token1)
-	}
-	if len(this.Oracles) != len(that1.Oracles) {
-		return fmt.Errorf("Oracles this(%v) Not Equal that(%v)", len(this.Oracles), len(that1.Oracles))
-	}
-	for i := range this.Oracles {
-		if !bytes.Equal(this.Oracles[i], that1.Oracles[i]) {
-			return fmt.Errorf("Oracles this[%v](%v) Not Equal that[%v](%v)", i, this.Oracles[i], i, that1.Oracles[i])
-		}
-	}
-	if this.Active != that1.Active {
-		return fmt.Errorf("Active this(%v) Not Equal that(%v)", this.Active, that1.Active)
-	}
-	return nil
-}
-func (this *Pair) Equal(that interface{}) bool {
+func (this *OraclesProto) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*Pair)
+	that1, ok := that.(*OraclesProto)
 	if !ok {
-		that2, ok := that.(Pair)
+		that2, ok := that.(OraclesProto)
 		if ok {
 			that1 = &that2
 		} else {
@@ -475,12 +415,6 @@ func (this *Pair) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Token0 != that1.Token0 {
-		return false
-	}
-	if this.Token1 != that1.Token1 {
-		return false
-	}
 	if len(this.Oracles) != len(that1.Oracles) {
 		return false
 	}
@@ -489,49 +423,31 @@ func (this *Pair) Equal(that interface{}) bool {
 			return false
 		}
 	}
+	return true
+}
+func (this *ActiveProto) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*ActiveProto)
+	if !ok {
+		that2, ok := that.(ActiveProto)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
 	if this.Active != that1.Active {
 		return false
 	}
 	return true
-}
-func (this *PostedPrice) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*PostedPrice)
-	if !ok {
-		that2, ok := that.(PostedPrice)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *PostedPrice")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *PostedPrice but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *PostedPrice but is not nil && this == nil")
-	}
-	if this.PairID != that1.PairID {
-		return fmt.Errorf("PairID this(%v) Not Equal that(%v)", this.PairID, that1.PairID)
-	}
-	if !bytes.Equal(this.OracleAddress, that1.OracleAddress) {
-		return fmt.Errorf("OracleAddress this(%v) Not Equal that(%v)", this.OracleAddress, that1.OracleAddress)
-	}
-	if !this.Price.Equal(that1.Price) {
-		return fmt.Errorf("Price this(%v) Not Equal that(%v)", this.Price, that1.Price)
-	}
-	if !this.Expiry.Equal(that1.Expiry) {
-		return fmt.Errorf("Expiry this(%v) Not Equal that(%v)", this.Expiry, that1.Expiry)
-	}
-	return nil
 }
 func (this *PostedPrice) Equal(that interface{}) bool {
 	if that == nil {
@@ -566,39 +482,6 @@ func (this *PostedPrice) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *CurrentPrice) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*CurrentPrice)
-	if !ok {
-		that2, ok := that.(CurrentPrice)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *CurrentPrice")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *CurrentPrice but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *CurrentPrice but is not nil && this == nil")
-	}
-	if this.PairID != that1.PairID {
-		return fmt.Errorf("PairID this(%v) Not Equal that(%v)", this.PairID, that1.PairID)
-	}
-	if !this.Price.Equal(that1.Price) {
-		return fmt.Errorf("Price this(%v) Not Equal that(%v)", this.Price, that1.Price)
-	}
-	return nil
-}
 func (this *CurrentPrice) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -625,45 +508,6 @@ func (this *CurrentPrice) Equal(that interface{}) bool {
 		return false
 	}
 	return true
-}
-func (this *CurrentTWAP) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*CurrentTWAP)
-	if !ok {
-		that2, ok := that.(CurrentTWAP)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *CurrentTWAP")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *CurrentTWAP but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *CurrentTWAP but is not nil && this == nil")
-	}
-	if this.PairID != that1.PairID {
-		return fmt.Errorf("PairID this(%v) Not Equal that(%v)", this.PairID, that1.PairID)
-	}
-	if !this.Numerator.Equal(that1.Numerator) {
-		return fmt.Errorf("Numerator this(%v) Not Equal that(%v)", this.Numerator, that1.Numerator)
-	}
-	if !this.Denominator.Equal(that1.Denominator) {
-		return fmt.Errorf("Denominator this(%v) Not Equal that(%v)", this.Denominator, that1.Denominator)
-	}
-	if !this.Price.Equal(that1.Price) {
-		return fmt.Errorf("Price this(%v) Not Equal that(%v)", this.Price, that1.Price)
-	}
-	return nil
 }
 func (this *CurrentTWAP) Equal(that interface{}) bool {
 	if that == nil {
@@ -720,14 +564,9 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = l
 	if len(m.Pairs) > 0 {
 		for iNdEx := len(m.Pairs) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Pairs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintParams(dAtA, i, uint64(size))
-			}
+			i -= len(m.Pairs[iNdEx])
+			copy(dAtA[i:], m.Pairs[iNdEx])
+			i = encodeVarintParams(dAtA, i, uint64(len(m.Pairs[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -735,7 +574,7 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Pair) Marshal() (dAtA []byte, err error) {
+func (m *OraclesProto) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -745,12 +584,44 @@ func (m *Pair) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Pair) MarshalTo(dAtA []byte) (int, error) {
+func (m *OraclesProto) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Pair) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OraclesProto) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Oracles) > 0 {
+		for iNdEx := len(m.Oracles) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Oracles[iNdEx])
+			copy(dAtA[i:], m.Oracles[iNdEx])
+			i = encodeVarintParams(dAtA, i, uint64(len(m.Oracles[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ActiveProto) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ActiveProto) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ActiveProto) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -763,30 +634,7 @@ func (m *Pair) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x20
-	}
-	if len(m.Oracles) > 0 {
-		for iNdEx := len(m.Oracles) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Oracles[iNdEx])
-			copy(dAtA[i:], m.Oracles[iNdEx])
-			i = encodeVarintParams(dAtA, i, uint64(len(m.Oracles[iNdEx])))
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
-	if len(m.Token1) > 0 {
-		i -= len(m.Token1)
-		copy(dAtA[i:], m.Token1)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.Token1)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Token0) > 0 {
-		i -= len(m.Token0)
-		copy(dAtA[i:], m.Token0)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.Token0)))
-		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -964,34 +812,35 @@ func (m *Params) Size() (n int) {
 	var l int
 	_ = l
 	if len(m.Pairs) > 0 {
-		for _, e := range m.Pairs {
-			l = e.Size()
+		for _, s := range m.Pairs {
+			l = len(s)
 			n += 1 + l + sovParams(uint64(l))
 		}
 	}
 	return n
 }
 
-func (m *Pair) Size() (n int) {
+func (m *OraclesProto) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Token0)
-	if l > 0 {
-		n += 1 + l + sovParams(uint64(l))
-	}
-	l = len(m.Token1)
-	if l > 0 {
-		n += 1 + l + sovParams(uint64(l))
-	}
 	if len(m.Oracles) > 0 {
 		for _, b := range m.Oracles {
 			l = len(b)
 			n += 1 + l + sovParams(uint64(l))
 		}
 	}
+	return n
+}
+
+func (m *ActiveProto) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	if m.Active {
 		n += 2
 	}
@@ -1092,7 +941,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Pairs", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -1102,25 +951,23 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthParams
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthParams
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Pairs = append(m.Pairs, Pair{})
-			if err := m.Pairs[len(m.Pairs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Pairs = append(m.Pairs, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1143,7 +990,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Pair) Unmarshal(dAtA []byte) error {
+func (m *OraclesProto) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1166,77 +1013,13 @@ func (m *Pair) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Pair: wiretype end group for non-group")
+			return fmt.Errorf("proto: OraclesProto: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Pair: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OraclesProto: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Token0", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthParams
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthParams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Token0 = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Token1", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthParams
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthParams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Token1 = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Oracles", wireType)
 			}
@@ -1268,7 +1051,57 @@ func (m *Pair) Unmarshal(dAtA []byte) error {
 			m.Oracles = append(m.Oracles, make([]byte, postIndex-iNdEx))
 			copy(m.Oracles[len(m.Oracles)-1], dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		default:
+			iNdEx = preIndex
+			skippy, err := skipParams(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthParams
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ActiveProto) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowParams
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ActiveProto: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ActiveProto: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Active", wireType)
 			}

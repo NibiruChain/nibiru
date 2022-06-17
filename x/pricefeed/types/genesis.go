@@ -1,7 +1,5 @@
 package types
 
-// this line is used by starport scaffolding # genesis/types/import
-
 // DefaultIndex is the default capability global index
 const DefaultIndex uint64 = 1
 

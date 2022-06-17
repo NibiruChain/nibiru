@@ -1,5 +1,5 @@
 syntax = "proto3";
-package NibiruChain.pricefeed.v1;
+package nibiru.pricefeed.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
