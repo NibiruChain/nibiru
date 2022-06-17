@@ -753,7 +753,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount))
+				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedNotionalValue))
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
 				assert.EqualValues(t, sdk.NewDec(50), resp.ExchangedPositionSize)
 				assert.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))
@@ -826,7 +826,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount)) // equal to open notional
+				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedNotionalValue)) // equal to open notional
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
 				assert.EqualValues(t, sdk.NewDec(101), resp.ExchangedPositionSize) // equal to base amount bought
 				assert.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))           // 0.02 * 100
@@ -905,11 +905,11 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault) // openNotional / leverage
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)    // always zero for increasePosition
 
-				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
-				assert.EqualValues(t, sdk.NewDec(110), resp.ExchangedPositionSize)     // equal to base amount bought
-				assert.EqualValues(t, sdk.NewDec(22), resp.FundingPayment)             // 0.02 * 110
-				assert.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)        // 90 - 100
-				assert.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                     // 11(old) + 10(new) - 22(funding payment)
+				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedNotionalValue) // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(110), resp.ExchangedPositionSize)  // equal to base amount bought
+				assert.EqualValues(t, sdk.NewDec(22), resp.FundingPayment)          // 0.02 * 110
+				assert.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)     // 90 - 100
+				assert.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                  // 11(old) + 10(new) - 22(funding payment)
 
 				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
@@ -977,7 +977,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedNotionalValue) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
 				assert.EqualValues(t, sdk.NewDec(-200), resp.ExchangedPositionSize) // equal to amount of base asset IOUs
 				assert.EqualValues(t, sdk.NewDec(-2), resp.FundingPayment)          // -100 * 0.02
@@ -1051,7 +1051,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedNotionalValue) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
 				assert.EqualValues(t, sdk.NewDec(-99), resp.ExchangedPositionSize) // base asset IOUs
 				assert.EqualValues(t, sdk.NewDec(-2), resp.FundingPayment)         // -100 * 0.02
@@ -1131,7 +1131,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)                                     // always zero for increasePosition
 				assert.EqualValues(t, sdk.MustNewDecFromStr("10.5").String(), resp.MarginToVault.String()) // openNotional / leverage
 
-				assert.EqualValues(t, sdk.NewDec(105), resp.ExchangedQuoteAssetAmount)              // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(105), resp.ExchangedNotionalValue)                 // equal to open notional
 				assert.EqualValues(t, sdk.NewDec(-100), resp.ExchangedPositionSize)                 // base asset IOUs
 				assert.EqualValues(t, sdk.NewDec(30), resp.FundingPayment)                          // -100 * (-0.2)
 				assert.EqualValues(t, sdk.NewDec(-5), resp.UnrealizedPnlAfter)                      // 100 - 105
@@ -1407,7 +1407,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedQuoteAssetAmount)
+			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedNotionalValue)
 			assert.EqualValues(t, tc.initialPosition.Size_.Neg(), resp.ExchangedPositionSize) // sold back to vpool
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
@@ -1701,7 +1701,7 @@ func TestDecreasePosition(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			assert.EqualValues(t, tc.quoteAmountToDecrease, resp.ExchangedQuoteAssetAmount)
+			assert.EqualValues(t, tc.quoteAmountToDecrease, resp.ExchangedNotionalValue)
 			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
 			assert.EqualValues(t, tc.exchangedBaseAmount, resp.ExchangedPositionSize)
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
@@ -1802,7 +1802,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(300).String(), resp.ExchangedQuoteAssetAmount.String()) // 30 * 10
+				assert.EqualValues(t, sdk.NewDec(300).String(), resp.ExchangedNotionalValue.String()) // 30 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(-150), resp.ExchangedPositionSize)          // 100 original + 50 shorted
 				assert.EqualValues(t, sdk.NewDec(2).String(), resp.FundingPayment.String())  // 100 * 0.02
@@ -1895,7 +1895,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedQuoteAssetAmount.String()) // 20 * 10
+				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedNotionalValue.String()) // 20 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(-200), resp.ExchangedPositionSize)         // 100 original + 50 shorted
 				assert.EqualValues(t, sdk.NewDec(2).String(), resp.FundingPayment.String()) // 100 * 0.02
@@ -2062,7 +2062,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(300).String(), resp.ExchangedQuoteAssetAmount.String()) // 30 * 10
+				assert.EqualValues(t, sdk.NewDec(300).String(), resp.ExchangedNotionalValue.String()) // 30 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(-150), resp.ExchangedPositionSize)          // 100 original + 50 shorted
 				assert.EqualValues(t, sdk.NewDec(2).String(), resp.FundingPayment.String())  // 100 * 0.02
@@ -2228,7 +2228,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedQuoteAssetAmount.String()) // 20 * 10
+				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedNotionalValue.String()) // 20 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(300), resp.ExchangedPositionSize)           // 150 + 150
 				assert.EqualValues(t, sdk.NewDec(-3).String(), resp.FundingPayment.String()) // -150 * 0.02
@@ -2321,7 +2321,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(210).String(), resp.ExchangedQuoteAssetAmount.String()) // 21 * 10
+				assert.EqualValues(t, sdk.NewDec(210).String(), resp.ExchangedNotionalValue.String()) // 21 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(200), resp.ExchangedPositionSize) // 150 + 150
 				assert.EqualValues(t, sdk.NewDec(-2), resp.FundingPayment)         // -100 * 0.03
@@ -2484,7 +2484,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedQuoteAssetAmount.String()) // 20 * 10
+				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedNotionalValue.String()) // 20 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(300), resp.ExchangedPositionSize)           // 150 + 150
 				assert.EqualValues(t, sdk.NewDec(-3).String(), resp.FundingPayment.String()) // -150 * 0.02
@@ -2779,7 +2779,7 @@ func TestClosePosition(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedQuoteAssetAmount)
+			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedNotionalValue)
 			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
 			assert.EqualValues(t, tc.initialPosition.Size_.Neg(), resp.ExchangedPositionSize)
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)

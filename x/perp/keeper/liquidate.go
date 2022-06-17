@@ -97,7 +97,7 @@ func (k Keeper) Liquidate(
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
-		ExchangedQuoteAmount:  liquidationResponse.PositionResp.ExchangedQuoteAssetAmount,
+		ExchangedQuoteAmount:  liquidationResponse.PositionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: liquidationResponse.PositionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidatorAddr.String(),
 		FeeToLiquidator:       feeToLiquidator,
@@ -145,7 +145,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	remainMargin := positionResp.MarginToVault.Abs()
 
 	feeToLiquidator := params.GetLiquidationFeeAsDec().
-		Mul(positionResp.ExchangedQuoteAssetAmount).
+		Mul(positionResp.ExchangedNotionalValue).
 		QuoInt64(2)
 	totalBadDebt := positionResp.BadDebt
 
@@ -189,7 +189,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  position.Pair,
 		TraderAddress:         traderAddr.String(),
-		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
+		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidator.String(),
 		FeeToLiquidator:       sdk.NewCoin(position.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
@@ -305,7 +305,7 @@ func (k Keeper) ExecutePartialLiquidation(
 	}
 
 	// Remove the liquidation fee from the margin of the position
-	liquidationFeeAmount := positionResp.ExchangedQuoteAssetAmount.
+	liquidationFeeAmount := positionResp.ExchangedNotionalValue.
 		Mul(params.GetLiquidationFeeAsDec())
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
@@ -331,7 +331,7 @@ func (k Keeper) ExecutePartialLiquidation(
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  currentPosition.Pair,
 		TraderAddress:         traderAddr.String(),
-		ExchangedQuoteAmount:  positionResp.ExchangedQuoteAssetAmount,
+		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidator.String(),
 		FeeToLiquidator:       sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),

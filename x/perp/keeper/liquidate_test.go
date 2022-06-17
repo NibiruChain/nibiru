@@ -155,7 +155,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// txFee = exchangedQuote * 20 bps = 100
 			traderFunds: sdk.NewInt64Coin("NUSD", 50_100),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 50_000 * 0.1 / 2 = 2500
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 2_500),
 			// startingBalance = 1_000_000
@@ -175,7 +175,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			baseAssetLimit: sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.123123"),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 50_000 * 0.123123 / 2 = 3078.025 → 3078
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 3078),
 			// startingBalance = 1_000_000
@@ -197,7 +197,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("NUSD", 1150),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
 			// startingBalance = 1_000_000
@@ -215,7 +215,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("NUSD", 1150),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
 			// startingBalance = 1_000_000
@@ -308,7 +308,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
+				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
@@ -453,7 +453,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			expectedMarginRemaining: sdk.MustNewDecFromStr("47999.999999994000000000"), // approx 2k less but slippage
 
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * 0.4 * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
@@ -478,7 +478,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			expectedMarginRemaining: sdk.MustNewDecFromStr("48000.000000014000000000"),  // approx 2k less but slippage
 
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * 0.4 * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
@@ -589,7 +589,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
+				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidator.String(),
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
