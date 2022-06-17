@@ -36,6 +36,10 @@ func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (
 		return sdk.ZeroDec(), err
 	}
 
+	if pool.BaseAssetReserve.IsNil() || pool.BaseAssetReserve.IsZero() {
+		return pool.QuoteAssetReserve, nil
+	}
+
 	return pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve), nil
 }
 
@@ -353,11 +357,16 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 	newDenominator := currentTWAP.Denominator.Add(blockUnixTime)
 	newNumerator := currentTWAP.Numerator.Add(currentPrice.Mul(sdk.NewDecFromInt(blockUnixTime)))
 
+	price := sdk.NewDec(0)
+	if !newDenominator.IsZero() {
+		price = newNumerator.Quo(sdk.NewDecFromInt(newDenominator))
+	}
+
 	newTWAP := types.CurrentTWAP{
 		PairID:      pairID,
 		Numerator:   newNumerator,
 		Denominator: newDenominator,
-		Price:       newNumerator.Quo(sdk.NewDecFromInt(newDenominator)),
+		Price:       price,
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.codec.MustMarshal(&newTWAP))
