@@ -133,13 +133,13 @@ func CmdAddOracleProposal() *cobra.Command {
 				return err
 			}
 
-			proposalMsg := types.NewAddOracleProposal(
+			content := types.NewAddOracleProposal(
 				proposal.Title,
 				proposal.Description,
 				proposal.Oracle,
 				proposal.Pairs,
 			)
-			msg, err := govtypes.NewMsgSubmitProposal(proposalMsg, deposit, from)
+			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)
 			if err != nil {
 				return err
 			}

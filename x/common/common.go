@@ -62,7 +62,7 @@ func (pair AssetPair) Name() string {
 }
 
 func (pair AssetPair) PairID() string {
-	return pair.Name()
+	return pair.AsString()
 }
 
 func (pair AssetPair) AsString() string {

@@ -40,7 +40,7 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
 
 	pairs := common.AssetPairs{
 		{
@@ -53,6 +53,7 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		},
 	}
 
+	oracles := []sdk.AccAddress{oracle}
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{
 			Pairs: pairs.Strings(),
@@ -71,6 +72,7 @@ func NewPricefeedGen() *pftypes.GenesisState {
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 		},
+		GenesisOracles: oracles,
 	}
 }
 
@@ -600,9 +602,8 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 			fmt.Sprintf("--from=%s", val.Address.String()),
 		}
 
-		out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-		fmt.Printf("out: %v\n", out)
-		fmt.Printf("err: %v\n", err.Error())
+		_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+		s.Require().NoError(err)
 	})
 }
 

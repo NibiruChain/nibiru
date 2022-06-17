@@ -59,7 +59,6 @@ func TestGetParams(t *testing.T) {
 }
 
 func TestWhitelistOracles(t *testing.T) {
-
 	testCases := []struct {
 		name string
 		test func()

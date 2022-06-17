@@ -53,9 +53,9 @@ func CmdPrice() *cobra.Command {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			params := &types.QueryPriceRequest{PairId: pair.String()}
+			request := &types.QueryPriceRequest{PairId: pair.PairID()}
 
-			res, err := queryClient.Price(cmd.Context(), params)
+			res, err := queryClient.Price(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -80,11 +80,16 @@ func CmdPrices() *cobra.Command {
 				return err
 			}
 
+			_, err = common.NewAssetPairFromStr(args[0])
+			if err != nil {
+				return err
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryPricesRequest{}
+			request := &types.QueryPricesRequest{}
 
-			res, err := queryClient.Prices(cmd.Context(), params)
+			res, err := queryClient.Prices(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -111,9 +116,9 @@ func CmdPairs() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryPairsRequest{}
+			request := &types.QueryPairsRequest{}
 
-			res, err := queryClient.Pairs(cmd.Context(), params)
+			res, err := queryClient.Pairs(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -145,9 +150,9 @@ func CmdOracles() *cobra.Command {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			params := &types.QueryOraclesRequest{PairId: pair.String()}
+			request := &types.QueryOraclesRequest{PairId: pair.PairID()}
 
-			res, err := queryClient.Oracles(cmd.Context(), params)
+			res, err := queryClient.Oracles(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -201,11 +206,16 @@ func CmdRawPrices() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryRawPricesRequest{
+			_, err = common.NewAssetPairFromStr(args[0])
+			if err != nil {
+				return err
+			}
+
+			req := &types.QueryRawPricesRequest{
 				PairId: args[0],
 			}
 
-			res, err := queryClient.RawPrices(cmd.Context(), params)
+			res, err := queryClient.RawPrices(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

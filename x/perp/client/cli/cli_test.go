@@ -46,14 +46,9 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		panic(err)
 	}
 
+	pairs := common.AssetPairs{common.TestStablePool}
 	return &pftypes.GenesisState{
-		Params: pftypes.Params{
-			Pairs: []pftypes.Pair{
-				{Token0: common.TestStablePool.Token0,
-					Token1:  common.TestStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-			},
-		},
+		Params: pftypes.Params{Pairs: pairs.Strings()},
 		PostedPrices: []pftypes.PostedPrice{
 			{
 				PairID:        common.TestStablePool.PairID(),
@@ -62,6 +57,7 @@ func NewPricefeedGen() *pftypes.GenesisState {
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 		},
+		GenesisOracles: []sdk.AccAddress{oracle},
 	}
 }
 
