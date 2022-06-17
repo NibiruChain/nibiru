@@ -2809,6 +2809,8 @@ func TestClosePosition(t *testing.T) {
 				SpotPrice:             tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
 				FundingPayment:        sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
 				TransactionFee:        sdk.NewInt64Coin(assetPair.GetQuoteTokenDenom(), 0),
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			})
 		})
 	}

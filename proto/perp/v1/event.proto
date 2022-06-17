@@ -86,6 +86,12 @@ message PositionChangedEvent {
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
+
+    // The block number at which this position was changed.
+    int64 block_height = 14;
+
+    // The block time in unix milliseconds at which this position was changed.
+    int64 block_time_ms = 15;
 }
 
 // Emitted when a position is liquidated.
