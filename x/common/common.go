@@ -172,3 +172,10 @@ func (pairs AssetPairs) ContainsAtIndex(pair AssetPair) (bool, int) {
 	}
 	return false, -1
 }
+
+func MustNewAssetPairsFromStr(pairStrings []string) (pairs AssetPairs) {
+	for _, pairString := range pairStrings {
+		pairs = append(pairs, MustNewAssetPairFromStr(pairString))
+	}
+	return pairs
+}

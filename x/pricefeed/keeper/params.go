@@ -2,7 +2,6 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -20,48 +19,40 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
 
-// GetPairs returns the markets from params
-func (k Keeper) GetPairs(ctx sdk.Context) types.Pairs {
-	return k.GetParams(ctx).Pairs
-}
-
-// GetOracles returns the oracles in the pricefeed store
-func (k Keeper) GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error) {
-	for _, m := range k.GetPairs(ctx) {
-		if pairID == m.PairID() {
-			return m.Oracles, nil
-		}
+// GetPairs returns the pairs from params
+func (k Keeper) GetPairs(ctx sdk.Context) common.AssetPairs {
+	var pairs common.AssetPairs
+	for _, pairString := range k.GetParams(ctx).Pairs {
+		pairs = append(pairs, common.MustNewAssetPairFromStr(pairString))
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidPair, pairID)
+	return pairs
 }
 
-// GetOracle returns the oracle from the store or an error if not found
-func (k Keeper) GetOracle(
+// GetOraclesForPair returns the oracles for a valid asset pair
+func (k Keeper) GetOraclesForPair(ctx sdk.Context, pairID string,
+) (oracles []sdk.AccAddress) {
+	pair := common.MustNewAssetPairFromStr(pairID)
+	return k.OraclesStore().Get(ctx, pair)
+}
+
+// IsWhitelistedOracle returns true if the address is whitelisted, false if not.
+func (k Keeper) IsWhitelistedOracle(
 	ctx sdk.Context, pairID string, address sdk.AccAddress,
-) (sdk.AccAddress, error) {
-	oracles, err := k.GetOracles(ctx, pairID)
-	if err != nil {
-		// Error already wrapped
-		return nil, err
-	}
+) (bool) {
+	pair := common.MustNewAssetPairFromStr(pairID)
+	oracles := k.OraclesStore().Get(ctx, pair)
 	for _, addr := range oracles {
 		if addr.Equals(address) {
-			return addr, nil
+			return true
 		}
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidOracle, address.String())
+	return false
 }
 
 // GetPair returns the market if it is in the pricefeed system
-func (k Keeper) GetPair(ctx sdk.Context, pairID string) (types.Pair, bool) {
-	markets := k.GetPairs(ctx)
-
-	for i := range markets {
-		if markets[i].PairID() == pairID {
-			return markets[i], true
-		}
-	}
-	return types.Pair{}, false
+func (k Keeper) IsActivePair(ctx sdk.Context, pairID string) bool {
+	pair := common.MustNewAssetPairFromStr(pairID)
+	return k.ActivePairsStore().Get(ctx, pair)
 }
 
 // GetAuthorizedAddresses returns a list of addresses that have special authorization within this module, eg the oracles of all markets.
@@ -69,13 +60,13 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 	var oracles []sdk.AccAddress
 	uniqueOracles := map[string]bool{}
 
-	for _, m := range k.GetPairs(ctx) {
-		for _, o := range m.Oracles {
+	for _, pair := range k.GetPairs(ctx) {
+		for _, oracle := range k.OraclesStore().Get(ctx, pair) {
 			// de-dup list of oracles
-			if _, found := uniqueOracles[o.String()]; !found {
-				oracles = append(oracles, o)
+			if _, found := uniqueOracles[oracle.String()]; !found {
+				oracles = append(oracles, oracle)
 			}
-			uniqueOracles[o.String()] = true
+			uniqueOracles[oracle.String()] = true
 		}
 	}
 	return oracles
@@ -84,85 +75,47 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 // Whitelists given 'oracles' for all of the current pairs.
 func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
 	startParams := k.GetParams(ctx)
-	var endPairs types.Pairs
 	for _, pair := range startParams.Pairs {
-		endPair := appendOraclesToPair(pair, oracles)
-		endPairs = append(endPairs, endPair)
+		k.addOraclesForPair(ctx, common.MustNewAssetPairFromStr(pair), oracles)
 	}
-	endParams := types.NewParams(endPairs)
-	k.SetParams(ctx, endParams)
 }
 
-// appendOraclesToPair returns a 'newPair', which has an Oracles field formed by
+// addOraclesForPair returns a 'newPair', which has an Oracles field formed by
 // the unique set union of 'oracles' and 'pair.Oracles'.
-func appendOraclesToPair(pair types.Pair, oracles []sdk.AccAddress) (newPair types.Pair) {
-	var pairOracles []sdk.AccAddress
+func (k Keeper) addOraclesForPair(
+	ctx sdk.Context, pair common.AssetPair, oracles []sdk.AccAddress,
+) (endingOracles []sdk.AccAddress) {
+
+	startingOracles := k.OraclesStore().Get(ctx, pair)
 	uniquePairOracles := make(map[string]bool)
-	for _, oracle := range append(pair.Oracles, oracles...) {
+	for _, oracle := range append(startingOracles, oracles...) {
 		if _, found := uniquePairOracles[(oracle.String())]; !found {
-			pairOracles = append(pairOracles, oracle)
+			endingOracles = append(endingOracles, oracle)
 			uniquePairOracles[oracle.String()] = true
 		}
 	}
-
-	// TODO refactor: sort the oracles to make reads faster w/ binary search
-	//
-
-	return types.Pair{
-		Token0: pair.Token0, Token1: pair.Token1,
-		Oracles: pairOracles, Active: pair.Active}
+	// TODO ? refactor: sort the oracles to make reads faster w/ search algorithm
+	k.OraclesStore().Set(ctx, pair, endingOracles)
+	return endingOracles
 }
 
 // WhitelistOracleForPairs whitelists 'oracles' for the given 'pairs'.
 // TODO Use maps and proto for asset pair
 // - https://github.com/NibiruChain/nibiru/issues/620
 func (k Keeper) WhitelistOraclesForPairs(
-	ctx sdk.Context, oracles []sdk.AccAddress, pairs []string,
-) error {
+	ctx sdk.Context, oracles []sdk.AccAddress, proposedPairs []common.AssetPair,
+) {
 	paramsPairs := k.GetPairs(ctx)
 
-	paramsIdxProposedIdxMap := make(map[int]int) // maps paramsIdx -> proposedIdx
-	// proposedIdx: index of the proposed pairs array
-	// paramsIdx: and the params pairs array to avoid unnecessary looping
-	newPairs := []types.Pair{}
-	for proposedIdx, pair := range pairs {
-		proposedPair, err := common.NewAssetPairFromStr(pair)
-		if err != nil {
-			return err
+	newPairs := []common.AssetPair{}
+	for _, pair := range proposedPairs {
+		pairIDBytes := []byte(pair.AsString())
+		if !k.OraclesStore().getKV(ctx).Has(pairIDBytes) {
+			newPairs = append(newPairs, pair)
 		}
 
-		// keeping the paramsIdx
-		found, paramsIdx := paramsPairs.ContainsAtIndex(types.Pair{
-			Token0: proposedPair.Token0,
-			Token1: proposedPair.Token1,
-		})
-		paramsIdxProposedIdxMap[paramsIdx] = proposedIdx
-
-		if !found {
-			newPairs = append(newPairs, types.Pair{
-				Token0:  proposedPair.Token0,
-				Token1:  proposedPair.Token1,
-				Oracles: oracles,
-				Active:  false,
-			})
-		}
+		k.OraclesStore().AddOracles(ctx, pair, oracles)
 	}
-
-	var endingParamsPairs types.Pairs = newPairs
-	for paramIdx, paramPair := range paramsPairs {
-		var endingPair types.Pair
-		_, found := paramsIdxProposedIdxMap[paramIdx]
-
-		if !found {
-			endingPair = paramPair
-		} else {
-			endingPair = appendOraclesToPair(paramPair, oracles)
-		}
-
-		endingParamsPairs = append(endingParamsPairs, endingPair)
-	}
-
-	endParams := types.NewParams(endingParamsPairs)
-	k.SetParams(ctx, endParams)
-	return nil
+	endingPairs := append(paramsPairs, newPairs...)
+	k.SetParams(ctx, types.NewParams(endingPairs.Strings()))
 }

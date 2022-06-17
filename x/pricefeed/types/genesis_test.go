@@ -42,7 +42,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
-			desc: "invalid posted price - no valid pairs or oracles",
+			desc: "invalid posted price - no valid pairs",
 			genState: NewGenesisState(
 				NewParams(
 					/*pairs=*/ []string{},
