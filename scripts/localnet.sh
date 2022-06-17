@@ -2,29 +2,28 @@
 #set -e
 
 # Console log text colour
-red=`tput setaf 9`
-green=`tput setaf 10`
-blue=`tput setaf 12`
-reset=`tput sgr0`
+red=$(tput setaf 9)
+green=$(tput setaf 10)
+blue=$(tput setaf 12)
+reset=$(tput sgr0)
 
-echo_info () {
+echo_info() {
   echo "${blue}"
   echo "$1"
   echo "${reset}"
 }
 
-echo_error () {
+echo_error() {
   echo "${red}"
   echo "$1"
   echo "${reset}"
 }
 
-echo_success () {
+echo_success() {
   echo "${green}"
   echo "$1"
   echo "${reset}"
 }
-
 
 echo_info "Building from source..."
 if make build; then
@@ -44,12 +43,12 @@ VALIDATOR_MNEMONIC="guard cream sadness conduct invite crumble clock pudding hol
 SHRIMP_MNEMONIC="item segment elevator fork swim tone search hope enough asthma apology pact embody extra trash educate deposit raccoon giant gift essay able female develop"
 WHALE_MNEMONIC="throw oblige vague twist clutch grunt physical sell conduct blossom owner delay suspect square kidney joy define book boss outside reason silk success you"
 LIQUIDATOR_MNEMONIC="oxygen tattoo pond upgrade barely sudden wheat correct dumb roast glance conduct scene profit female health speak hire north grab allow provide depend away"
-GENESIS_COINS=1000000000stake,1000000000unibi,10000000000000unusd
+GENESIS_COINS=1000000000stake,10000000000000000000unibi,10000000000000000000unusd
 
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
-    echo_error "Terminating $BINARY..."
-    killall nibid
+  echo_error "Terminating $BINARY..."
+  killall nibid
 fi
 
 # Remove previous data
@@ -70,7 +69,6 @@ else
   echo_error "Failed to initialize $CHAIN_ID"
 fi
 
-
 # Configure keyring-backend to "test"
 echo_info "Configuring keyring-backend..."
 if $BINARY config keyring-backend test --home $CHAIN_DIR; then
@@ -78,7 +76,6 @@ if $BINARY config keyring-backend test --home $CHAIN_DIR; then
 else
   echo_error "Failed to configure keyring-backend"
 fi
-
 
 # Configure chain-id
 echo_info "Configuring chain-id..."
