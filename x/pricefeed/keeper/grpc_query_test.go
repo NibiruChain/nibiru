@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -74,7 +75,7 @@ func TestMarketsQuery(t *testing.T) {
 	keeper.OraclesStore().AddOracles(ctx, pairs[3], []sdk.AccAddress{oracle3})
 
 	t.Log("Set all pairs but 3 active")
-	keeper.ActivePairsStore().SetMany(ctx, pairs[:3], false)
+	keeper.ActivePairsStore().SetMany(ctx, pairs[:3], true)
 	keeper.ActivePairsStore().SetMany(ctx, common.AssetPairs{pairs[3]}, false)
 
 	response, err := keeper.Pairs(wctx, &types.QueryPairsRequest{})
@@ -85,14 +86,14 @@ func TestMarketsQuery(t *testing.T) {
 				PairID:  pairIDs[0],
 				Token0:  pairs[0].Token0,
 				Token1:  pairs[0].Token1,
-				Oracles: []string{},
+				Oracles: []string(nil),
 				Active:  true,
 			},
 			{
 				PairID:  pairIDs[1],
 				Token0:  pairs[1].Token0,
 				Token1:  pairs[1].Token1,
-				Oracles: []string{},
+				Oracles: []string(nil),
 				Active:  true,
 			},
 			{
@@ -111,5 +112,7 @@ func TestMarketsQuery(t *testing.T) {
 			},
 		},
 	}
-	require.Equal(t, expectedResponse, response)
+	for idx, pairResponse := range expectedResponse.Pairs {
+		assert.EqualValues(t, pairResponse, response.Pairs[idx])
+	}
 }

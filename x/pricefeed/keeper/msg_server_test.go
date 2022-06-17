@@ -43,7 +43,7 @@ func TestPostPrice(t *testing.T) {
 		{"expired", authorizedOracles[0], "tst", "usd",
 			ctx.BlockTime().UTC().Add(-time.Hour * 1), false, types.ErrExpired},
 		{"invalid", authorizedOracles[0], "invalid", "invalid",
-			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidPair},
+			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 		{"unauthorized", unauthorizedAddrs[0], "tst", "usd",
 			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 	}
