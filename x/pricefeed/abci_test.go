@@ -20,7 +20,11 @@ func TestTWAPriceUpdates(t *testing.T) {
 	var ctx sdk.Context
 
 	oracle := sample.AccAddress()
-	token0, token1 := common.StableDenom, common.CollDenom
+	pair := common.AssetPair{
+		Token0: common.CollDenom,
+		Token1: common.StableDenom,
+	}
+
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.
 			WithBlockHeight(ctx.BlockHeight() + 1).
@@ -29,7 +33,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	}
 	setPrice := func(price string) {
 		_, err := nibiruApp.PricefeedKeeper.SetPrice(
-			ctx, oracle, token0, token1,
+			ctx, oracle, pair.AsString(),
 			sdk.MustNewDecFromStr(price), ctx.BlockTime().Add(time.Hour*5000*4))
 		require.NoError(t, err)
 	}
@@ -39,9 +43,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC))
 
 	oracles := []sdk.AccAddress{oracle}
-	pairs := common.AssetPairs{
-		{Token0: token0, Token1: token1},
-	}
+	pairs := common.AssetPairs{pair}
 	params := ptypes.NewParams(pairs.Strings())
 	nibiruApp.PricefeedKeeper.SetParams(ctx, params) // makes pairs active
 	nibiruApp.PricefeedKeeper.WhitelistOraclesForPairs(ctx, oracles, pairs)
@@ -52,7 +54,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	err := nibiruApp.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8"))
 	require.NoError(t, err)
 
-	// Pass 5000 hours, previous price is alive and we post a new one
+	t.Log("Pass 5000 hours. Previous price is live and we post a new one")
 	runBlock(time.Hour * 5000)
 	setPrice("0.8")
 	runBlock(time.Hour * 5000)
@@ -65,13 +67,15 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600) / (1463385600 + 1481385600) = 0.8749844622444971
 	*/
-	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
+
+	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(
+		ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
 	priceFloat, err := price.Price.Float64()
 	require.NoError(t, err)
 	require.InDelta(t, 0.8748471867695528, priceFloat, 0.03)
 
-	// 5000 hours passed, both previous price is alive and we post a new one
+	t.Log("5000 hours passed, both previous prices are live and we post a new one")
 	setPrice("0.82")
 	runBlock(time.Hour * 5000)
 
@@ -84,7 +88,8 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600 + 0.82 * 1499385600) / (1463385600 + 1481385600 + 1499385600) = 0.8563426456960295
 	*/
-	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
+	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(
+		ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
 	priceFloat, err = price.Price.Float64()
 	require.NoError(t, err)
@@ -103,7 +108,8 @@ func TestTWAPriceUpdates(t *testing.T) {
 	*/
 	setPrice("0.83")
 	runBlock(time.Hour * 5000)
-	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(ctx, token0, token1)
+	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(
+		ctx, pair.Token0, pair.Token1)
 
 	require.NoError(t, err)
 	priceFloat, err = price.Price.Float64()

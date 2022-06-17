@@ -123,16 +123,13 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PricefeedKeeper
-			pfParams := pricefeedTypes.Params{
-				Pairs: []pricefeedTypes.Pair{
-					{Token0: common.GovDenom,
-						Token1:  common.StableDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{Token0: common.CollDenom,
-						Token1:  common.StableDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-				}}
+			pairs := common.AssetPairs{
+				{Token0: common.GovDenom, Token1: common.StableDenom},
+				{Token0: common.CollDenom, Token1: common.StableDenom},
+			}
+			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
+			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.MustNewDecFromStr("0.002")
@@ -159,18 +156,19 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pair := range pfParams.Pairs {
+			for _, pairStr := range pfParams.Pairs {
+				pair := common.MustNewAssetPairFromStr(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
+				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}
 
 			// Fund account
@@ -308,18 +306,13 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PricefeedKeeper
-			pfParams := pricefeedTypes.Params{
-				Pairs: []pricefeedTypes.Pair{
-					{
-						Token1:  common.GovDenom,
-						Token0:  common.StableDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{
-						Token1:  common.CollDenom,
-						Token0:  common.StableDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-				}}
+			pairs := common.AssetPairs{
+				common.CollStablePool,
+				common.GovStablePool,
+			}
+			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
+			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.ZeroDec()
@@ -343,21 +336,22 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				),
 			)
 
-			// Post prices to each pair with the oracle.
+			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pair := range pfParams.Pairs {
+			for _, pairStr := range pfParams.Pairs {
+				pair := common.MustNewAssetPairFromStr(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair)
+				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}
 
 			// Fund account
@@ -503,34 +497,34 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PricefeedKeeper
-			pfParams := pricefeedTypes.Params{
-				Pairs: []pricefeedTypes.Pair{
-					{Token1: common.StableDenom, Token0: common.GovDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{Token1: common.StableDenom, Token0: common.CollDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-				}}
+			pairs := common.AssetPairs{
+				{Token1: common.StableDenom, Token0: common.GovDenom},
+				{Token1: common.StableDenom, Token0: common.CollDenom},
+			}
+			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
+			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			defaultParams := types.DefaultParams()
 			defaultParams.IsCollateralRatioValid = true
 			nibiruApp.StablecoinKeeper.SetParams(ctx, defaultParams)
 
-			// Post prices to each pair with the oracle.
+			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pair := range pfParams.Pairs {
+			for _, pairStr := range pfParams.Pairs {
+				pair := common.MustNewAssetPairFromStr(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
+				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}
 
 			// Add collaterals to the module
@@ -659,30 +653,30 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PricefeedKeeper
-			pfParams := pricefeedTypes.Params{
-				Pairs: []pricefeedTypes.Pair{
-					{Token1: common.StableDenom, Token0: common.GovDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-					{Token1: common.StableDenom, Token0: common.CollDenom,
-						Oracles: []sdk.AccAddress{oracle}, Active: true},
-				}}
+			pairs := common.AssetPairs{
+				{Token0: common.GovDenom, Token1: common.StableDenom},
+				{Token0: common.CollDenom, Token1: common.StableDenom},
+			}
+			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
+			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
-			// Post prices to each pair with the oracle.
+			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovDenom, common.StableDenom, tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollDenom, common.StableDenom, tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pair := range pfParams.Pairs {
+			for _, pairStr := range pfParams.Pairs {
+				pair := common.MustNewAssetPairFromStr(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair)
+				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}
 
 			// Add collaterals to the module

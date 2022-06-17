@@ -1,5 +1,9 @@
 package types
 
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // DefaultIndex is the default capability global index
 const DefaultIndex uint64 = 1
 
@@ -13,10 +17,15 @@ func DefaultGenesis() *GenesisState {
 }
 
 // NewGenesisState creates a new genesis state for the pricefeed module
-func NewGenesisState(p Params, pp []PostedPrice) *GenesisState {
+func NewGenesisState(p Params, postedPrices []PostedPrice) *GenesisState {
+	var oracles []sdk.AccAddress
+	for _, postedPrice := range postedPrices {
+		oracles = append(oracles, postedPrice.OracleAddress)
+	}
 	return &GenesisState{
-		Params:       p,
-		PostedPrices: pp,
+		Params:         p,
+		PostedPrices:   postedPrices,
+		GenesisOracles: oracles,
 	}
 }
 

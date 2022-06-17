@@ -282,17 +282,21 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 
 // GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
 func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
+	pair := common.AssetPair{Token0: token0, Token1: token1}
+	givenIsActive := k.IsActivePair(ctx, pair.AsString())
+	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().AsString())
+	if !givenIsActive && inverseIsActive {
+		pair = pair.Inverse()
+	}
+
 	// Ensure we still have valid prices
 	_, err = k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {
 		return types.CurrentTWAP{}, types.ErrNoValidPrice
 	}
 
-	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.Name()
-
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pairID))
+	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pair.AsString()))
 
 	if bz == nil {
 		return types.CurrentTWAP{}, types.ErrNoValidTWAP
@@ -304,7 +308,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 		return types.CurrentTWAP{}, types.ErrNoValidPrice
 	}
 
-	if !assetPair.IsProperOrder() {
+	if inverseIsActive {
 		// Return the inverse price if the tokens are not in "proper" order.
 		inversePrice := sdk.OneDec().Quo(price.Price)
 		return types.NewCurrentTWAP(
