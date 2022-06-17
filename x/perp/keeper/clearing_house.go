@@ -22,6 +22,7 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAssetAmountLimit sdk.Dec,
 ) (err error) {
+	ctx.BlockTime().UnixMilli()
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return err
@@ -159,6 +160,8 @@ func (k Keeper) afterPositionUpdate(
 		LiquidationPenalty:    sdk.ZeroDec(),
 		SpotPrice:             spotPrice,
 		FundingPayment:        positionResp.FundingPayment,
+		BlockHeight:           ctx.BlockHeight(),
+		BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 	})
 }
 
