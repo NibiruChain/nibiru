@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"math"
 	"testing"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -392,7 +393,6 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("mock bank keeper")
 			if tc.expectedFundsToPerpEF.IsPositive() {
-
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
 					ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
 					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedFundsToPerpEF)),
