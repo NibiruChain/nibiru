@@ -17,12 +17,13 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 )
 
 const (
@@ -537,7 +538,6 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 
 func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 	s.Run("proposal to whitelist an oracle", func() {
-
 		s.T().Log("Create oracle account and fill wallet")
 		s.Require().Len(s.network.Validators, 1)
 		val := s.network.Validators[0]
@@ -604,7 +604,6 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		fmt.Printf("out: %v\n", out)
 		fmt.Printf("err: %v\n", err.Error())
 	})
-
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

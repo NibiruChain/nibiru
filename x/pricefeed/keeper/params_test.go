@@ -38,15 +38,12 @@ func TestGetParams(t *testing.T) {
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				k := nibiruApp.PricefeedKeeper
 				params := types.Params{
-					Pairs: []types.Pair{
-						{Token1: "btc", Token0: "usd", Oracles: nil, Active: true},
-						{Token1: "xrp", Token0: "usd", Oracles: nil, Active: true},
-					},
+					Pairs: []string{"btc:usd", "xrp:usd"},
 				}
 				k.SetParams(ctx, params)
 				require.EqualValues(t, params, k.GetParams(ctx))
 
-				params.Pairs = append(params.Pairs, types.DefaultPairs...)
+				params.Pairs = append(params.Pairs, types.DefaultPairs.Strings()...)
 				k.SetParams(ctx, params)
 				require.EqualValues(t, params, k.GetParams(ctx))
 			},
@@ -75,9 +72,9 @@ func TestWhitelistOracles(t *testing.T) {
 				pk := &nibiruApp.PricefeedKeeper
 
 				oracle := sample.AccAddress()
-				for _, pair := range pk.GetPairs(ctx) {
-					require.NotContains(t, pair.Oracles, oracle)
-					require.EqualValues(t, pair.Oracles, noOracles)
+				for _, pairID := range pk.GetParams(ctx).Pairs {
+					require.False(t, pk.IsWhitelistedOracle(ctx, pairID, oracle))
+					require.EqualValues(t, pk.GetOraclesForPair(ctx, pairID), noOracles)
 				}
 				require.EqualValues(t,
 					pk.GetAuthorizedAddresses(ctx), noOracles)
@@ -89,11 +86,9 @@ func TestWhitelistOracles(t *testing.T) {
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				pk := &nibiruApp.PricefeedKeeper
 
-				for _, pair := range pk.GetPairs(ctx) {
-					require.EqualValues(t, pair.Oracles, noOracles)
+				for _, pairID := range pk.GetParams(ctx).Pairs {
+					require.EqualValues(t, pk.GetOraclesForPair(ctx, pairID), noOracles)
 				}
-				require.EqualValues(t,
-					pk.GetAuthorizedAddresses(ctx), noOracles)
 
 				oracleA := sample.AccAddress()
 				oracleB := sample.AccAddress()
@@ -157,7 +152,6 @@ func TestAddOracleProposalFromJson(t *testing.T) {
 }
 
 func TestWhitelistOraclesForPairs(t *testing.T) {
-
 	testCases := []struct {
 		name          string
 		startParams   types.Params
@@ -167,17 +161,7 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 		{
 			name: "whitelist for specific pairs - happy",
 			startParams: types.Params{
-				Pairs: types.Pairs{
-					types.Pair{
-						Token0: "aaa", Token1: "usd",
-						Oracles: []sdk.AccAddress{}, Active: false},
-					types.Pair{
-						Token0: "bbb", Token1: "usd",
-						Oracles: []sdk.AccAddress{}, Active: false},
-					types.Pair{
-						Token0: "oraclepair", Token1: "usd",
-						Oracles: []sdk.AccAddress{}, Active: false},
-				},
+				Pairs: []string{"aaa:usd", "bbb:usd", "oraclepair:usd"},
 			},
 			pairsToSet: []string{"oraclepair:usd"},
 		},
@@ -186,20 +170,22 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			var err error
 			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 			pricefeedKeeper := &nibiruApp.PricefeedKeeper
 			pricefeedKeeper.SetParams(ctx, tc.startParams)
 
 			oracles := []sdk.AccAddress{sample.AccAddress()}
-			err = pricefeedKeeper.WhitelistOraclesForPairs(
+			pairStrings := []string{"oraclepair:usd"}
+			pairs := common.MustNewAssetPairsFromStr(pairStrings)
+			pricefeedKeeper.WhitelistOraclesForPairs(
 				ctx,
 				oracles,
-				/* pairs */ []string{"oraclepair:usd"},
+				/* pairs */ pairs,
 			)
-			require.NoError(t, err)
 
-			require.EqualValues(t, oracles, pricefeedKeeper.GetAuthorizedAddresses(ctx))
+			require.EqualValues(t,
+				oracles,
+				pricefeedKeeper.GetOraclesForPair(ctx, pairs[0].AsString()))
 			// TODO Unique: Test is #wip. This is a temporary MVP while I finish refactoring.
 		})
 	}
