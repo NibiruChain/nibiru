@@ -232,7 +232,7 @@ func (k Keeper) increasePosition(
 	}
 
 	positionResp.ExchangedNotionalValue = increasedNotional
-	positionResp.PositionNotional = positionNotional
+	positionResp.PositionNotional = positionNotional.Add(increasedNotional)
 	positionResp.UnrealizedPnlAfter = unrealizedPnL
 	positionResp.RealizedPnl = sdk.ZeroDec()
 	positionResp.MarginToVault = increaseMarginRequirement
