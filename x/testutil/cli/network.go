@@ -461,6 +461,35 @@ func (n *Network) WaitForNextBlock() error {
 	return err
 }
 
+// WaitForDuration waits for at least the duration provided in blockchain time.
+func (n *Network) WaitForDuration(duration time.Duration) error {
+	if len(n.Validators) == 0 {
+		return fmt.Errorf("no validators")
+	}
+	val := n.Validators[0]
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	lastBlock, err := val.RPCClient.Block(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	waitAtLeastUntil := lastBlock.Block.Time.Add(duration)
+
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		block, err := val.RPCClient.Block(ctx, nil)
+		if err != nil {
+			return err
+		}
+		if block.Block.Time.After(waitAtLeastUntil) {
+			return nil
+		}
+	}
+}
+
 // Cleanup removes the root testing (temporary) directory and stops both the
 // Tendermint and API services. It allows other callers to create and start
 // test networks. This method must be called when a test is finished, typically
