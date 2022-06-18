@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	tmtypes "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
@@ -217,7 +220,7 @@ func writeFile(name string, dir string, contents []byte) error {
 func FillWalletFromValidator(
 	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
 ) (sdk.AccAddress, error) {
-	_, err := banktestutil.MsgSendExec(
+	rawResp, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
 		addr,
@@ -229,6 +232,15 @@ func FillWalletFromValidator(
 	if err != nil {
 		return nil, err
 	}
+	return addr, txOK(val.ClientCtx.Codec, rawResp.Bytes())
+}
 
-	return addr, nil
+func txOK(cdc codec.Codec, txBytes []byte) error {
+	resp := new(sdk.TxResponse)
+	cdc.MustUnmarshalJSON(txBytes, resp)
+	if resp.Code != tmtypes.CodeTypeOK {
+		return fmt.Errorf("%s", resp.RawLog)
+	}
+
+	return nil
 }
