@@ -113,9 +113,9 @@ func TestWhitelistOracles(t *testing.T) {
 }
 
 func TestAddOracleProposalFromJson(t *testing.T) {
-	app.SetPrefixes(app.AccountAddressPrefix) // makes the nibi bech32 prefix valid
-	// NOTE The config prefix defaults to cosmos rather than nibi w/o SetPrefixes,
+	// NOTE config prefix defaults to cosmos rather than nibi without SetPrefixes,
 	// causing a bech32 error
+	app.SetPrefixes(app.AccountAddressPrefix) // makes the nibi bech32 prefix valid
 
 	t.Log("load example json as bytes")
 	okJSON := sdktestutil.WriteToNewTempFile(t, `
@@ -170,19 +170,30 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 			pricefeedKeeper := &nibiruApp.PricefeedKeeper
 			pricefeedKeeper.SetParams(ctx, tc.startParams)
 
-			oracles := []sdk.AccAddress{sample.AccAddress()}
-			pairStrings := []string{"oraclepair:usd"}
-			pairs := common.NewAssetPairs(pairStrings)
+			oracles := []sdk.AccAddress{sample.AccAddress(), sample.AccAddress()}
+			pairs := common.NewAssetPairs(tc.pairsToSet)
 			pricefeedKeeper.WhitelistOraclesForPairs(
 				ctx,
 				oracles,
 				/* pairs */ pairs,
 			)
 
-			require.EqualValues(t,
-				oracles,
-				pricefeedKeeper.GetOraclesForPair(ctx, pairs[0].AsString()))
-			// TODO Unique: Test is #wip. This is a temporary MVP while I finish refactoring.
+			t.Log("Verify that all 'pairsToSet' have the oracle set.")
+			for _, pairName := range tc.pairsToSet {
+				assert.EqualValues(t,
+					oracles,
+					pricefeedKeeper.GetOraclesForPair(ctx, pairName))
+			}
+
+			t.Log("Verify that all pairs outside 'pairsToSet' are unaffected.")
+			for _, pairName := range tc.startParams.Pairs {
+				pair := common.MustNewAssetPair(pairName)
+				if !pairs.Contains(pair) {
+					assert.EqualValues(t,
+						[]sdk.AccAddress{},
+						pricefeedKeeper.GetOraclesForPair(ctx, pairName))
+				}
+			}
 		})
 	}
 }

@@ -8,16 +8,19 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
+// OraclesStore maintains the "oracles" KVStore: maps pair name → oracles.
 func (k Keeper) OraclesStore() OraclesState {
 	return (OraclesState)(k)
 }
 
+// ActivePairsStore maintains the "active pairs" KVStore: maps pair name → isActive.
+// If a pair doesn't have a key in the store, the pair is inactive.
 func (k Keeper) ActivePairsStore() ActivePairsState {
 	return (ActivePairsState)(k)
 }
 
-// ---------------------------------------------------- OraclesState
-
+//-----------------------------------------------------------------------------
+// OraclesState implements methods for updating the "oracles" sdk.KVStore
 type OraclesState Keeper
 
 var oraclesNamespace = []byte("oracles")
@@ -78,7 +81,8 @@ func (state OraclesState) Iterate(
 	}
 }
 
-// ---------------------------------------------------- ActivePairsState
+//-----------------------------------------------------------------------------
+// ActivePairsState implements methods for updating the "active pairs" sdk.KVStore
 type ActivePairsState Keeper
 
 var activePairsNamespace = []byte("active pairs")

@@ -74,7 +74,7 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 	return oracles
 }
 
-// Whitelists given 'oracles' for all of the current pairs.
+// Whitelists given 'oracles' for all of the current pairs in the module params.
 func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
 	startParams := k.GetParams(ctx)
 	for _, pair := range startParams.Pairs {
@@ -95,14 +95,11 @@ func (k Keeper) addOraclesForPair(
 			uniquePairOracles[oracle.String()] = true
 		}
 	}
-	// TODO ? refactor: sort the oracles to make reads faster w/ search algorithm
 	k.OraclesStore().Set(ctx, pair, endingOracles)
 	return endingOracles
 }
 
 // WhitelistOracleForPairs whitelists 'oracles' for the given 'pairs'.
-// TODO Use maps and proto for asset pair
-// - https://github.com/NibiruChain/nibiru/issues/620
 func (k Keeper) WhitelistOraclesForPairs(
 	ctx sdk.Context, oracles []sdk.AccAddress, proposedPairs []common.AssetPair,
 ) {

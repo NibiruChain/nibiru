@@ -7,7 +7,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
-// TODO test: https://github.com/NibiruChain/nibiru/issues/591
 func HandleAddOracleProposal(ctx sdk.Context, k Keeper, proposal types.AddOracleProposal) error {
 	if err := proposal.Validate(); err != nil {
 		return err
