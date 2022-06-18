@@ -753,13 +753,14 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount))
+				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedNotionalValue))
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
 				assert.EqualValues(t, sdk.NewDec(50), resp.ExchangedPositionSize)
 				assert.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))
 				assert.EqualValues(t, sdk.NewDec(100), resp.UnrealizedPnlAfter)
+				assert.EqualValues(t, sdk.NewDec(300), resp.PositionNotional)
 
 				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
@@ -826,13 +827,14 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedQuoteAssetAmount)) // equal to open notional
+				assert.True(t, sdk.NewDec(100).Equal(resp.ExchangedNotionalValue)) // equal to open notional
 				assert.True(t, sdk.ZeroDec().Equal(resp.BadDebt))
 				assert.EqualValues(t, sdk.NewDec(101), resp.ExchangedPositionSize) // equal to base amount bought
 				assert.True(t, sdk.NewDec(2).Equal(resp.FundingPayment))           // 0.02 * 100
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)             // always zero for increasePosition
 				assert.True(t, sdk.NewDec(10).Equal(resp.MarginToVault))           // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 99 - 100
+				assert.EqualValues(t, sdk.NewDec(199), resp.PositionNotional)
 
 				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
@@ -902,14 +904,14 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault) // openNotional / leverage
-				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)    // always zero for increasePosition
-
-				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
-				assert.EqualValues(t, sdk.NewDec(110), resp.ExchangedPositionSize)     // equal to base amount bought
-				assert.EqualValues(t, sdk.NewDec(22), resp.FundingPayment)             // 0.02 * 110
-				assert.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)        // 90 - 100
-				assert.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                     // 11(old) + 10(new) - 22(funding payment)
+				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)           // openNotional / leverage
+				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)              // always zero for increasePosition
+				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedNotionalValue) // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(110), resp.ExchangedPositionSize)  // equal to base amount bought
+				assert.EqualValues(t, sdk.NewDec(22), resp.FundingPayment)          // 0.02 * 110
+				assert.EqualValues(t, sdk.NewDec(-10), resp.UnrealizedPnlAfter)     // 90 - 100
+				assert.EqualValues(t, sdk.NewDec(1), resp.BadDebt)                  // 11(old) + 10(new) - 22(funding payment)
+				assert.EqualValues(t, sdk.NewDec(200), resp.PositionNotional)
 
 				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
@@ -977,13 +979,14 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedNotionalValue) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
 				assert.EqualValues(t, sdk.NewDec(-200), resp.ExchangedPositionSize) // equal to amount of base asset IOUs
 				assert.EqualValues(t, sdk.NewDec(-2), resp.FundingPayment)          // -100 * 0.02
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)              // always zero for increasePosition
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)           // open notional / leverage
 				assert.EqualValues(t, sdk.NewDec(50), resp.UnrealizedPnlAfter)      // 100 - 50
+				assert.EqualValues(t, sdk.NewDec(150), resp.PositionNotional)
 
 				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
@@ -1051,13 +1054,14 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			then: func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error) {
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedQuoteAssetAmount) // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(100), resp.ExchangedNotionalValue) // equal to open notional
 				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
 				assert.EqualValues(t, sdk.NewDec(-99), resp.ExchangedPositionSize) // base asset IOUs
 				assert.EqualValues(t, sdk.NewDec(-2), resp.FundingPayment)         // -100 * 0.02
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)             // always zero for increasePosition
 				assert.EqualValues(t, sdk.NewDec(10), resp.MarginToVault)          // openNotional / leverage
 				assert.EqualValues(t, sdk.NewDec(-1), resp.UnrealizedPnlAfter)     // 100 - 101
+				assert.EqualValues(t, sdk.NewDec(201), resp.PositionNotional)
 
 				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
@@ -1130,12 +1134,12 @@ func TestIncreasePosition(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)                                     // always zero for increasePosition
 				assert.EqualValues(t, sdk.MustNewDecFromStr("10.5").String(), resp.MarginToVault.String()) // openNotional / leverage
-
-				assert.EqualValues(t, sdk.NewDec(105), resp.ExchangedQuoteAssetAmount)              // equal to open notional
-				assert.EqualValues(t, sdk.NewDec(-100), resp.ExchangedPositionSize)                 // base asset IOUs
-				assert.EqualValues(t, sdk.NewDec(30), resp.FundingPayment)                          // -100 * (-0.2)
-				assert.EqualValues(t, sdk.NewDec(-5), resp.UnrealizedPnlAfter)                      // 100 - 105
-				assert.EqualValues(t, sdk.MustNewDecFromStr("9.5").String(), resp.BadDebt.String()) // 10(old) + 10.5(new) - (30)(funding payment)
+				assert.EqualValues(t, sdk.NewDec(105), resp.ExchangedNotionalValue)                        // equal to open notional
+				assert.EqualValues(t, sdk.NewDec(-100), resp.ExchangedPositionSize)                        // base asset IOUs
+				assert.EqualValues(t, sdk.NewDec(30), resp.FundingPayment)                                 // -100 * (-0.2)
+				assert.EqualValues(t, sdk.NewDec(-5), resp.UnrealizedPnlAfter)                             // 100 - 105
+				assert.EqualValues(t, sdk.MustNewDecFromStr("9.5").String(), resp.BadDebt.String())        // 10(old) + 10.5(new) - (30)(funding payment)
+				assert.EqualValues(t, sdk.NewDec(210), resp.PositionNotional)
 
 				assert.EqualValues(t, initPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, initPosition.Pair, resp.Position.Pair)
@@ -1407,13 +1411,14 @@ func TestClosePositionEntirely(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedQuoteAssetAmount)
+			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedNotionalValue)
 			assert.EqualValues(t, tc.initialPosition.Size_.Neg(), resp.ExchangedPositionSize) // sold back to vpool
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
 			assert.EqualValues(t, tc.expectedRealizedPnl, resp.RealizedPnl)
 			assert.EqualValues(t, tc.expectedMarginToVault, resp.MarginToVault)
 			assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
+			assert.Equal(t, sdk.ZeroDec(), resp.PositionNotional)         // always zero
 
 			assert.EqualValues(t, tc.initialPosition.TraderAddress, resp.Position.TraderAddress)
 			assert.EqualValues(t, tc.initialPosition.Pair, resp.Position.Pair)
@@ -1436,7 +1441,7 @@ func TestDecreasePosition(t *testing.T) {
 		initialPosition       types.Position
 		baseAssetDir          vpooltypes.Direction
 		quoteAssetDir         vpooltypes.Direction
-		newPositionNotional   sdk.Dec
+		priorPositionNotional sdk.Dec
 		quoteAmountToDecrease sdk.Dec
 		exchangedBaseAmount   sdk.Dec
 		baseAssetLimit        sdk.Dec
@@ -1445,6 +1450,7 @@ func TestDecreasePosition(t *testing.T) {
 		expectedBadDebt            sdk.Dec
 		expectedRealizedPnl        sdk.Dec
 		expectedUnrealizedPnlAfter sdk.Dec
+		expectedPositionNotional   sdk.Dec
 
 		expectedFinalPositionMargin       sdk.Dec
 		expectedFinalPositionSize         sdk.Dec
@@ -1469,7 +1475,7 @@ func TestDecreasePosition(t *testing.T) {
 				BlockNumber:                         0,
 			},
 			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
-			newPositionNotional:   sdk.NewDec(200),
+			priorPositionNotional: sdk.NewDec(200),
 			quoteAssetDir:         vpooltypes.Direction_REMOVE_FROM_POOL,
 			quoteAmountToDecrease: sdk.NewDec(100),
 			exchangedBaseAmount:   sdk.NewDec(-50),
@@ -1479,6 +1485,7 @@ func TestDecreasePosition(t *testing.T) {
 			expectedFundingPayment:     sdk.NewDec(2),
 			expectedUnrealizedPnlAfter: sdk.NewDec(50),
 			expectedRealizedPnl:        sdk.NewDec(50),
+			expectedPositionNotional:   sdk.NewDec(100),
 
 			expectedFinalPositionMargin:       sdk.NewDec(58),
 			expectedFinalPositionSize:         sdk.NewDec(50),
@@ -1503,7 +1510,7 @@ func TestDecreasePosition(t *testing.T) {
 				BlockNumber:                         0,
 			},
 			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
-			newPositionNotional:   sdk.NewDec(100),
+			priorPositionNotional: sdk.NewDec(100),
 			quoteAssetDir:         vpooltypes.Direction_REMOVE_FROM_POOL,
 			quoteAmountToDecrease: sdk.NewDec(5),
 			exchangedBaseAmount:   sdk.MustNewDecFromStr("-5.25"),
@@ -1513,6 +1520,7 @@ func TestDecreasePosition(t *testing.T) {
 			expectedFundingPayment:     sdk.MustNewDecFromStr("2.1"),
 			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("-4.75"),
 			expectedRealizedPnl:        sdk.MustNewDecFromStr("-0.25"),
+			expectedPositionNotional:   sdk.NewDec(95),
 
 			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("8.15"), // 10.5(old) + (-0.25)(realized PnL) - (2.1)(funding payment)
 			expectedFinalPositionSize:         sdk.MustNewDecFromStr("99.75"),
@@ -1537,7 +1545,7 @@ func TestDecreasePosition(t *testing.T) {
 				BlockNumber:                         0,
 			},
 			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
-			newPositionNotional:   sdk.NewDec(100),
+			priorPositionNotional: sdk.NewDec(100),
 			quoteAssetDir:         vpooltypes.Direction_REMOVE_FROM_POOL,
 			quoteAmountToDecrease: sdk.NewDec(50),
 			exchangedBaseAmount:   sdk.NewDec(-50),
@@ -1547,6 +1555,7 @@ func TestDecreasePosition(t *testing.T) {
 			expectedFundingPayment:     sdk.NewDec(2),
 			expectedUnrealizedPnlAfter: sdk.NewDec(-25),
 			expectedRealizedPnl:        sdk.NewDec(-25),
+			expectedPositionNotional:   sdk.NewDec(50),
 
 			expectedFinalPositionMargin:       sdk.ZeroDec(), // 15(old) + (-25)(realized PnL) - (2)(funding payment)
 			expectedFinalPositionSize:         sdk.NewDec(50),
@@ -1573,7 +1582,7 @@ func TestDecreasePosition(t *testing.T) {
 				BlockNumber:                         0,
 			},
 			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
-			newPositionNotional:   sdk.NewDec(100),
+			priorPositionNotional: sdk.NewDec(100),
 			quoteAssetDir:         vpooltypes.Direction_ADD_TO_POOL,
 			quoteAmountToDecrease: sdk.NewDec(5),
 			exchangedBaseAmount:   sdk.MustNewDecFromStr("5.25"),
@@ -1583,6 +1592,7 @@ func TestDecreasePosition(t *testing.T) {
 			expectedFundingPayment:     sdk.MustNewDecFromStr("-2.1"),
 			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("4.75"),
 			expectedRealizedPnl:        sdk.MustNewDecFromStr("0.25"),
+			expectedPositionNotional:   sdk.NewDec(95),
 
 			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("12.85"), // old(10.5) + (0.25)(realizedPnL) - (-2.1)(fundingPayment)
 			expectedFinalPositionSize:         sdk.MustNewDecFromStr("-99.75"),
@@ -1607,7 +1617,7 @@ func TestDecreasePosition(t *testing.T) {
 				BlockNumber:                         0,
 			},
 			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
-			newPositionNotional:   sdk.NewDec(105),
+			priorPositionNotional: sdk.NewDec(105),
 			quoteAssetDir:         vpooltypes.Direction_ADD_TO_POOL,
 			quoteAmountToDecrease: sdk.MustNewDecFromStr("5.25"),
 			exchangedBaseAmount:   sdk.NewDec(5),
@@ -1617,6 +1627,7 @@ func TestDecreasePosition(t *testing.T) {
 			expectedFundingPayment:     sdk.NewDec(-2),
 			expectedUnrealizedPnlAfter: sdk.MustNewDecFromStr("-4.75"),
 			expectedRealizedPnl:        sdk.MustNewDecFromStr("-0.25"),
+			expectedPositionNotional:   sdk.MustNewDecFromStr("99.75"),
 
 			expectedFinalPositionMargin:       sdk.MustNewDecFromStr("11.75"), // old(10) + (-0.25)(realizedPnL) - (-2)(fundingPayment)
 			expectedFinalPositionSize:         sdk.NewDec(-95),
@@ -1641,7 +1652,7 @@ func TestDecreasePosition(t *testing.T) {
 				BlockNumber:                         0,
 			},
 			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
-			newPositionNotional:   sdk.NewDec(150),
+			priorPositionNotional: sdk.NewDec(150),
 			quoteAssetDir:         vpooltypes.Direction_ADD_TO_POOL,
 			quoteAmountToDecrease: sdk.NewDec(75),
 			exchangedBaseAmount:   sdk.NewDec(50),
@@ -1651,6 +1662,7 @@ func TestDecreasePosition(t *testing.T) {
 			expectedFundingPayment:     sdk.NewDec(-2),
 			expectedUnrealizedPnlAfter: sdk.NewDec(-25),
 			expectedRealizedPnl:        sdk.NewDec(-25),
+			expectedPositionNotional:   sdk.NewDec(75),
 
 			expectedFinalPositionMargin:       sdk.ZeroDec(),
 			expectedFinalPositionSize:         sdk.NewDec(-50),
@@ -1671,7 +1683,7 @@ func TestDecreasePosition(t *testing.T) {
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
-				Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+				Return( /*quoteAssetAmount=*/ tc.priorPositionNotional, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapQuoteForBase(
@@ -1691,7 +1703,7 @@ func TestDecreasePosition(t *testing.T) {
 				},
 			})
 
-			t.Log("decrease position by 5.25 NUSD in notional value")
+			t.Log("decrease position")
 			resp, err := perpKeeper.decreasePosition(
 				ctx,
 				tc.initialPosition,
@@ -1701,12 +1713,13 @@ func TestDecreasePosition(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			assert.EqualValues(t, tc.quoteAmountToDecrease, resp.ExchangedQuoteAssetAmount)
+			assert.EqualValues(t, tc.quoteAmountToDecrease, resp.ExchangedNotionalValue)
 			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
 			assert.EqualValues(t, tc.exchangedBaseAmount, resp.ExchangedPositionSize)
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedRealizedPnl, resp.RealizedPnl)
 			assert.EqualValues(t, tc.expectedUnrealizedPnlAfter, resp.UnrealizedPnlAfter)
+			assert.EqualValues(t, tc.expectedPositionNotional, resp.PositionNotional)
 			assert.EqualValues(t, sdk.ZeroDec(), resp.MarginToVault) // always zero for DecreasePosition
 
 			assert.EqualValues(t, tc.initialPosition.TraderAddress, resp.Position.TraderAddress)
@@ -1802,18 +1815,19 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(300).String(), resp.ExchangedQuoteAssetAmount.String()) // 30 * 10
-				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
-				assert.EqualValues(t, sdk.NewDec(-150), resp.ExchangedPositionSize)          // 100 original + 50 shorted
-				assert.EqualValues(t, sdk.NewDec(2).String(), resp.FundingPayment.String())  // 100 * 0.02
-				assert.EqualValues(t, sdk.NewDec(-98).String(), resp.MarginToVault.String()) // -1 * ( 10(oldMargin) + 100(unrealzedPnL) - 2(fundingPayment) ) + 10
+				assert.EqualValues(t, sdk.NewDec(300), resp.ExchangedNotionalValue) // 30 * 10
+				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
+				assert.EqualValues(t, sdk.NewDec(-150), resp.ExchangedPositionSize) // 100 original + 50 shorted
+				assert.EqualValues(t, sdk.NewDec(2), resp.FundingPayment)           // 100 * 0.02
+				assert.EqualValues(t, sdk.NewDec(-98), resp.MarginToVault)          // -1 * ( 10(oldMargin) + 100(unrealzedPnL) - 2(fundingPayment) ) + 10
 				assert.EqualValues(t, sdk.NewDec(100), resp.RealizedPnl)
+				assert.EqualValues(t, sdk.NewDec(100), resp.PositionNotional) // abs(200 - 300)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
 
 				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-50), resp.Position.Size_)
-				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
+				assert.EqualValues(t, sdk.NewDec(10), resp.Position.Margin)
 				assert.EqualValues(t, sdk.NewDec(100), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
@@ -1895,22 +1909,23 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedQuoteAssetAmount.String()) // 20 * 10
-				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
-				assert.EqualValues(t, sdk.NewDec(-200), resp.ExchangedPositionSize)         // 100 original + 50 shorted
-				assert.EqualValues(t, sdk.NewDec(2).String(), resp.FundingPayment.String()) // 100 * 0.02
+				assert.EqualValues(t, sdk.NewDec(200), resp.ExchangedNotionalValue) // 20 * 10
+				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
+				assert.EqualValues(t, sdk.NewDec(-200), resp.ExchangedPositionSize) // 100 original + 50 shorted
+				assert.EqualValues(t, sdk.NewDec(2), resp.FundingPayment)           // 100 * 0.02
 				// resp.MarginToVault
 				// = -1 * (oldMargin + unrealizedPnL - fundingPayment) + 10
 				// = -1 * (11  - 5 - 2 ) + 10
 				// =  				  -4 + 10  = 6
-				assert.EqualValues(t, sdk.NewDec(6).String(), resp.MarginToVault.String())
+				assert.EqualValues(t, sdk.NewDec(6), resp.MarginToVault)
 				assert.EqualValues(t, sdk.NewDec(-5), resp.RealizedPnl)
+				assert.EqualValues(t, sdk.NewDec(100), resp.PositionNotional) // abs(100 - 200)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
 
 				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-100), resp.Position.Size_)
-				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
+				assert.EqualValues(t, sdk.NewDec(10), resp.Position.Margin)
 				assert.EqualValues(t, sdk.NewDec(100), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
@@ -2062,18 +2077,19 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(300).String(), resp.ExchangedQuoteAssetAmount.String()) // 30 * 10
-				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
-				assert.EqualValues(t, sdk.NewDec(-150), resp.ExchangedPositionSize)          // 100 original + 50 shorted
-				assert.EqualValues(t, sdk.NewDec(2).String(), resp.FundingPayment.String())  // 100 * 0.02
-				assert.EqualValues(t, sdk.NewDec(-98).String(), resp.MarginToVault.String()) // -1 * ( 10(oldMargin) + 100(unrealzedPnL) - 2(fundingPayment) ) + 10
+				assert.EqualValues(t, sdk.NewDec(300), resp.ExchangedNotionalValue) // 30 * 10
+				assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
+				assert.EqualValues(t, sdk.NewDec(-150), resp.ExchangedPositionSize) // 100 original + 50 shorted
+				assert.EqualValues(t, sdk.NewDec(2), resp.FundingPayment)           // 100 * 0.02
+				assert.EqualValues(t, sdk.NewDec(-98), resp.MarginToVault)          // -1 * ( 10(oldMargin) + 100(unrealzedPnL) - 2(fundingPayment) ) + 10
 				assert.EqualValues(t, sdk.NewDec(100), resp.RealizedPnl)
+				assert.EqualValues(t, sdk.NewDec(100), resp.PositionNotional) // abs(200 - 300)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
 
 				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
 				assert.EqualValues(t, currentPosition.Pair, resp.Position.Pair)
 				assert.EqualValues(t, sdk.NewDec(-50), resp.Position.Size_)
-				assert.EqualValues(t, sdk.NewDec(10).String(), resp.Position.Margin.String())
+				assert.EqualValues(t, sdk.NewDec(10), resp.Position.Margin)
 				assert.EqualValues(t, sdk.NewDec(100), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
@@ -2228,12 +2244,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedQuoteAssetAmount.String()) // 20 * 10
+				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedNotionalValue.String()) // 20 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(300), resp.ExchangedPositionSize)           // 150 + 150
 				assert.EqualValues(t, sdk.NewDec(-3).String(), resp.FundingPayment.String()) // -150 * 0.02
 				assert.EqualValues(t, sdk.NewDec(50), resp.RealizedPnl)                      // 150 - 100
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
+				assert.EqualValues(t, sdk.NewDec(100), resp.PositionNotional)                // abs(100 - 200)
 				assert.EqualValues(t, sdk.NewDec(-58).String(), resp.MarginToVault.String()) // -1 * ( 15(oldMargin) + 50(PnL) - (-3)(fundingPayment) ) + 10
 
 				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
@@ -2321,12 +2338,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(210).String(), resp.ExchangedQuoteAssetAmount.String()) // 21 * 10
+				assert.EqualValues(t, sdk.NewDec(210).String(), resp.ExchangedNotionalValue.String()) // 21 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(200), resp.ExchangedPositionSize) // 150 + 150
 				assert.EqualValues(t, sdk.NewDec(-2), resp.FundingPayment)         // -100 * 0.03
 				assert.EqualValues(t, sdk.NewDec(-5), resp.RealizedPnl)            // 150 - 100
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
+				assert.EqualValues(t, sdk.NewDec(105), resp.PositionNotional)                             // abs(105 - 210)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("3.5").String(), resp.MarginToVault.String()) // -1 * ( 10(oldMargin) + (-5))(PnL) - (-2)(fundingPayment) ) + 10.5
 
 				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
@@ -2484,12 +2502,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedQuoteAssetAmount.String()) // 20 * 10
+				assert.EqualValues(t, sdk.NewDec(200).String(), resp.ExchangedNotionalValue.String()) // 20 * 10
 				assert.EqualValues(t, sdk.ZeroDec().String(), resp.BadDebt.String())
 				assert.EqualValues(t, sdk.NewDec(300), resp.ExchangedPositionSize)           // 150 + 150
 				assert.EqualValues(t, sdk.NewDec(-3).String(), resp.FundingPayment.String()) // -150 * 0.02
 				assert.EqualValues(t, sdk.NewDec(50), resp.RealizedPnl)                      // 150 - 100
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
+				assert.EqualValues(t, sdk.NewDec(100), resp.PositionNotional)                // abs(100 - 200)
 				assert.EqualValues(t, sdk.NewDec(-58).String(), resp.MarginToVault.String()) // -1 * ( 15(oldMargin) + 50(PnL) - (-3)(fundingPayment) ) + 10
 
 				assert.EqualValues(t, currentPosition.TraderAddress, resp.Position.TraderAddress)
@@ -2779,12 +2798,13 @@ func TestClosePosition(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedQuoteAssetAmount)
+			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedNotionalValue)
 			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
 			assert.EqualValues(t, tc.initialPosition.Size_.Neg(), resp.ExchangedPositionSize)
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedRealizedPnl, resp.RealizedPnl)
 			assert.EqualValues(t, tc.expectedMarginToVault, resp.MarginToVault)
+			assert.EqualValues(t, sdk.ZeroDec(), resp.PositionNotional)   // always zero
 			assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
 
 			assert.EqualValues(t, tc.initialPosition.TraderAddress, resp.Position.TraderAddress)
