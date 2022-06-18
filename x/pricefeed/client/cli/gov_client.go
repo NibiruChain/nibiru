@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -11,10 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/version"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govclientrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -26,64 +23,6 @@ var (
 	AddOracleProposalHandler = govclient.NewProposalHandler(
 		/* govclient.CLIHandlerFn */ CmdAddOracleProposal,
 		/* govclient.RESTHandlerFn */ AddOracleProposalRESTHandler)
-)
-
-/* AddOracleProposalRESTHandler defines a REST handler an 'AddOracleProposal'.
-The sub-route is mounted on the governance REST handler.
-*/
-func AddOracleProposalRESTHandler(clientCtx client.Context) govclientrest.ProposalRESTHandler {
-	/* restHandlerFnAddOracleProposal is an HTTP handler for an 'AddOracleProposal'.
-	A 'HandlerFunc' type is an adapter to allow the use of ordinary functions as HTTP
-	handlers. If f is a function with the appropriate signature, HandlerFunc(f)
-	is a Handler that calls f.
-	*/
-	restHandlerFnAddOracleProposal := func(clientCtx client.Context) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			var req AddOracleProposalHttpRequest
-			if !rest.ReadRESTReq(w, r, clientCtx.LegacyAmino, &req) {
-				return
-			}
-
-			req.BaseReq = req.BaseReq.Sanitize()
-			if !req.BaseReq.ValidateBasic(w) {
-				return
-			}
-
-			content := types.NewAddOracleProposal(
-				req.Title,
-				req.Description,
-				req.Oracle.String(),
-				req.Pairs,
-			)
-			msg, err := govtypes.NewMsgSubmitProposal(content, req.Deposit, req.Proposer)
-			if rest.CheckBadRequestError(w, err) {
-				return
-			}
-			if rest.CheckBadRequestError(w, msg.ValidateBasic()) {
-				return
-			}
-
-			tx.WriteGeneratedTxResponse(clientCtx, w, req.BaseReq, msg)
-		}
-	}
-
-	return govclientrest.ProposalRESTHandler{
-		SubRoute: "add_oracle",
-		Handler:  restHandlerFnAddOracleProposal(clientCtx),
-	}
-}
-
-type (
-	AddOracleProposalHttpRequest struct {
-		BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-
-		Proposer    sdk.AccAddress `json:"proposer" yaml:"proposer"`
-		Title       string         `json:"title" yaml:"title"`
-		Description string         `json:"description" yaml:"description"`
-		Oracle      sdk.AccAddress `json:"oracle" yaml:"oracle"`
-		Pairs       []string       `json:"pairs" yaml:"pairs"`
-		Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
-	}
 )
 
 // CmdAddOracleProposal implements the client command to submit a governance
@@ -123,7 +62,7 @@ func CmdAddOracleProposal() *cobra.Command {
 				return err
 			}
 
-			// marshals the contents into the the to which 'proposal' points.
+			// marshals the contents into the proto.Message to which 'proposal' points.
 			if err = clientCtx.Codec.UnmarshalJSON(contents, proposal); err != nil {
 				return err
 			}
