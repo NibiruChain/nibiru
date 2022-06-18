@@ -90,17 +90,18 @@ func (s *IntegrationTestSuite) setupOraclesForKeyring() {
 			/* hdPath */ sdk.FullFundraiserPath,
 			/* bip39Passphrase */ "",
 			/* algo */ hd.Secp256k1)
-		s.Require().NoError(err)
 		s.oracleMap[oracleUID] = sdk.AccAddress(info.GetPubKey().Address())
+		s.Require().NoError(err)
 	}
 
-	_, err := val.ClientCtx.Keyring.NewAccount(
+	info, err := val.ClientCtx.Keyring.NewAccount(
 		/* uid */ "genOracle",
 		/* mnemonic */ genOracleMnemonic,
 		/* bip39Passphrase */ "",
 		/* hdPath */ sdk.FullFundraiserPath,
 		/* algo */ hd.Secp256k1,
 	)
+	s.oracleMap["genOracle"] = sdk.AccAddress(info.GetPubKey().Address())
 	s.Require().NoError(err)
 
 	_, _, err = val.ClientCtx.Keyring.NewMnemonic(
@@ -426,34 +427,23 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 	}
 }
 func (s IntegrationTestSuite) TestSetPriceCmd() {
+	s.network.WaitForNextBlock()
 	val := s.network.Validators[0]
 
 	gov, col := common.GovStablePool, common.CollStablePool
 	now := time.Now()
 	expireInOneHour, expiredTS := strconv.Itoa(int(now.Add(1*time.Hour).Unix())), strconv.Itoa(int(now.Add(-1*time.Hour).Unix()))
 
-	wrongOracle := s.oracleMap["wrongOracle"]
-	genOracle, err := sdk.AccAddressFromBech32(genOracleAddress)
-	s.Require().NoError(err)
-
-	//DEBUG
-	fmt.Printf("\nDEBUG genOracle: %s", genOracle)
-	fmt.Printf("\nDEBUG wrongOracle: %s", wrongOracle)
-	keyringList, err := val.ClientCtx.Keyring.List()
-	fmt.Printf("\nDEBUG val.ClientCtx.Keyring.List: %v", keyringList)
-	fmt.Printf("\nDEBUG val.ClientCtx.Keyring.List err: %v", err)
-	info, err := val.ClientCtx.Keyring.Key("genOracle")
-	fmt.Printf("\nDEBUG keying.Keyring.info: %v", info)
-	fmt.Printf("\nDEBUG keying.Keyring.info err: %v", err)
-	fmt.Printf("\nDEBUG keying.Keyring.info.GetName(): %v", info.GetName())
-
-	s.Require().NoError(err)
-
-	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
-	_, err = testutilcli.FillWalletFromValidator(wrongOracle, gasFeeToken, val, s.cfg.BondDenom)
-	s.Require().NoError(err)
-	_, err = testutilcli.FillWalletFromValidator(genOracle, gasFeeToken, val, s.cfg.BondDenom)
-	s.Require().NoError(err)
+	var err error
+	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1_000_000))
+	for _, oracleName := range []string{"genOracle", "wrongOracle"} {
+		_, err = testutilcli.FillWalletFromValidator(
+			/*addr=*/ s.oracleMap[oracleName],
+			/*balanece=*/ gasFeeToken,
+			/*Validator=*/ val,
+			/*feesDenom=*/ s.cfg.BondDenom)
+		s.Require().NoError(err)
+	}
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -475,18 +465,20 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			args: []string{
 				gov.Token0, gov.Token1, "100", expireInOneHour,
 			},
-			expectedPriceForPair: map[string]sdk.Dec{gov.PairID(): sdk.NewDec(100)},
-			respType:             &sdk.TxResponse{},
-			fromOracle:           "oracle",
+			expectedPriceForPair: map[string]sdk.Dec{
+				gov.PairID(): sdk.NewDec(100)},
+			respType:   &sdk.TxResponse{},
+			fromOracle: "genOracle",
 		},
 		{
 			name: "Set the price of the collateral token",
 			args: []string{
-				col.Token0, col.Token1, "0.5", expireInOneHour,
+				col.Token0, col.Token1, "0.85", expireInOneHour,
 			},
-			expectedPriceForPair: map[string]sdk.Dec{col.PairID(): sdk.NewDec(2)},
-			respType:             &sdk.TxResponse{},
-			fromOracle:           "oracle",
+			expectedPriceForPair: map[string]sdk.Dec{
+				col.PairID(): sdk.MustNewDecFromStr("0.85")},
+			respType:   &sdk.TxResponse{},
+			fromOracle: "genOracle",
 		},
 		{
 			name: "Use invalid oracle",
@@ -502,9 +494,9 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			args: []string{
 				"invalid", "pair", "123", expireInOneHour,
 			},
-			expectedCode: 5,
+			expectedCode: 6,
 			respType:     &sdk.TxResponse{},
-			fromOracle:   "oracle",
+			fromOracle:   "genOracle",
 		},
 		{
 			name: "Set expired pair returns an error",
@@ -526,6 +518,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 			commonArgs = append(commonArgs,
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]))
+			// fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()))
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
 			s.Require().NoError(err)
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType))
