@@ -80,7 +80,6 @@ func NewPricefeedGen() *pftypes.GenesisState {
 }
 
 func (s *IntegrationTestSuite) setupOraclesForKeyring() {
-
 	val := s.network.Validators[0]
 	s.oracleUIDs = []string{"oracle", "wrongOracle"}
 
