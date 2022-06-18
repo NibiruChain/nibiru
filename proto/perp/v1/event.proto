@@ -134,6 +134,44 @@ message PositionLiquidatedEvent {
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
     ];
+
+    // Remaining margin in the position after liquidation
+    cosmos.base.v1beta1.Coin margin = 9 [
+      (gogoproto.moretags) = "yaml:\"margin\"",
+      (gogoproto.nullable) = false
+    ];
+
+    // Remaining position notional in the position after liquidation
+    string position_notional = 10 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // Remaining position size in the position after liquidation
+    string position_size = 11 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // Unrealized PnL in the position after liquidation
+    string unrealizedPnl = 12 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+
+    // Spot price of the vAMM after liquidation
+    string mark_price = 13 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The block number at which this liquidation occured.
+    int64 block_height = 14;
+
+    // The unix timestamp in milliseconds at which this liquidation occured. 
+    int64 block_time_ms = 15;
+
 }
 
 // Emitted when a position is settled.
