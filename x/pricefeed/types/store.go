@@ -58,7 +58,7 @@ func validateParamPairs(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	for _, pairStr := range pairs {
-		_, err := common.NewAssetPairFromStr(pairStr)
+		_, err := common.NewAssetPair(pairStr)
 		if err != nil {
 			return err
 		}

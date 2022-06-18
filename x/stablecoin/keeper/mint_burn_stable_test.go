@@ -166,7 +166,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPairFromStr(pairStr)
+				pair := common.MustNewAssetPair(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}
@@ -349,7 +349,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPairFromStr(pairStr)
+				pair := common.MustNewAssetPair(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}
@@ -522,7 +522,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPairFromStr(pairStr)
+				pair := common.MustNewAssetPair(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}
@@ -674,7 +674,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPairFromStr(pairStr)
+				pair := common.MustNewAssetPair(pairStr)
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
 			}

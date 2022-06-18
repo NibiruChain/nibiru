@@ -51,7 +51,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -101,7 +101,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")

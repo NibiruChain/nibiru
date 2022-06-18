@@ -40,13 +40,13 @@ func TestOraclesQuery(t *testing.T) {
 	keeper.WhitelistOraclesForPairs(
 		ctx,
 		/*oracles=*/ []sdk.AccAddress{oracleA, oracleB},
-		/*pairs=*/ []common.AssetPair{common.MustNewAssetPairFromStr(pairs[2])})
+		/*pairs=*/ []common.AssetPair{common.MustNewAssetPair(pairs[2])})
 
 	t.Log("whitelist oracle  C    on pair 3")
 	keeper.WhitelistOraclesForPairs(
 		ctx,
 		/*oracles=*/ []sdk.AccAddress{oracleC},
-		/*pairs=*/ []common.AssetPair{common.MustNewAssetPairFromStr(pairs[3])})
+		/*pairs=*/ []common.AssetPair{common.MustNewAssetPair(pairs[3])})
 
 	t.Log("Query for pair 2 oracles | ADA")
 	response, err := keeper.Oracles(wctx, &types.QueryOraclesRequest{PairId: pairs[2]})
@@ -65,7 +65,7 @@ func TestMarketsQuery(t *testing.T) {
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	pairIDs := []string{"btc:usd", "xrp:usd", "ada:usd", "eth:usd"}
-	pairs := common.MustNewAssetPairsFromStr(pairIDs)
+	pairs := common.NewAssetPairs(pairIDs)
 	params := types.Params{Pairs: pairIDs}
 	keeper.SetParams(ctx, params)
 

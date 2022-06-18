@@ -68,7 +68,7 @@ func (k Keeper) SetPrice(
 		return postedPrice, fmt.Errorf("price must be positive, not: %s", price)
 	}
 
-	pair, err := common.NewAssetPairFromStr(pairStr)
+	pair, err := common.NewAssetPair(pairStr)
 	if err != nil {
 		return postedPrice, err
 	}
@@ -347,7 +347,7 @@ func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
 func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices {
-	inversePair := common.MustNewAssetPairFromStr(pairStr).Inverse()
+	inversePair := common.MustNewAssetPair(pairStr).Inverse()
 	if k.IsActivePair(ctx, inversePair.AsString()) {
 		panic(fmt.Errorf(
 			`cannot fetch posted prices using inverse pair, %v ;

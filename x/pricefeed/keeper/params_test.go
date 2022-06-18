@@ -172,7 +172,7 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 
 			oracles := []sdk.AccAddress{sample.AccAddress()}
 			pairStrings := []string{"oraclepair:usd"}
-			pairs := common.MustNewAssetPairsFromStr(pairStrings)
+			pairs := common.NewAssetPairs(pairStrings)
 			pricefeedKeeper.WhitelistOraclesForPairs(
 				ctx,
 				oracles,

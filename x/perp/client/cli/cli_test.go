@@ -48,7 +48,7 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		Params: pftypes.Params{Pairs: pairs.Strings()},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.TestStablePool.PairID(),
+				PairID:        common.TestStablePool.Name(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),

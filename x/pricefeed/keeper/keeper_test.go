@@ -18,8 +18,8 @@ func TestKeeper_SetGetPair(t *testing.T) {
 	app, ctx := testutilapp.NewNibiruApp(true)
 
 	pairs := common.AssetPairs{
-		common.MustNewAssetPairFromStr("tst:usd"),
-		common.MustNewAssetPairFromStr("xyz:abc"),
+		common.MustNewAssetPair("tst:usd"),
+		common.MustNewAssetPair("xyz:abc"),
 	}
 
 	keeper := app.PricefeedKeeper
@@ -47,7 +47,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 	keeper := app.PricefeedKeeper
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
-	pair := common.MustNewAssetPairFromStr("tst:usd")
+	pair := common.MustNewAssetPair("tst:usd")
 	params := types.Params{Pairs: []string{pair.AsString()}}
 	keeper.SetParams(ctx, params)
 	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
@@ -98,7 +98,7 @@ oracles is valid (i.e. registered with keeper.SetParams).
 func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 	app, ctx := testutilapp.NewNibiruApp(true)
 	keeper := app.PricefeedKeeper
-	pair := common.MustNewAssetPairFromStr("tst:usd")
+	pair := common.MustNewAssetPair("tst:usd")
 
 	price := sdk.MustNewDecFromStr("0.1")
 
@@ -131,7 +131,7 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 	app, ctx := testutilapp.NewNibiruApp(true)
 	keeper := app.PricefeedKeeper
 
-	pair := common.MustNewAssetPairFromStr("tst:usd")
+	pair := common.MustNewAssetPair("tst:usd")
 	price := sdk.MustNewDecFromStr("0.1")
 
 	_, addrs := sample.PrivKeyAddressPairs(10)

@@ -33,7 +33,7 @@ func SetupNibiruTestingApp() (
 	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 
 	// Whitelist a pair and oracle
-	pair, err := common.NewAssetPairFromStr("uatom:unibi")
+	pair, err := common.NewAssetPair("uatom:unibi")
 	if err != nil {
 		return nil, defaultGenesis
 	}

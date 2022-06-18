@@ -17,7 +17,7 @@ func HandleAddOracleProposal(ctx sdk.Context, k Keeper, proposal types.AddOracle
 	k.WhitelistOraclesForPairs(
 		ctx,
 		/*oracles=*/ []sdk.AccAddress{oracle},
-		/*assetPairs=*/ common.MustNewAssetPairsFromStr(proposal.Pairs),
+		/*assetPairs=*/ common.NewAssetPairs(proposal.Pairs),
 	)
 
 	return nil

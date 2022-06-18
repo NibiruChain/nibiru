@@ -63,13 +63,13 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        pairs[0].PairID(),
+				PairID:        pairs[0].Name(),
 				OracleAddress: oracle,
 				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				PairID:        pairs[1].PairID(),
+				PairID:        pairs[1].Name(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),
@@ -164,7 +164,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.CollStablePool.PairID(),
+				common.CollStablePool.Name(),
 			},
 			expectedPrice: sdk.NewDec(1),
 			respType:      &pftypes.QueryPriceResponse{},
@@ -172,7 +172,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.GovStablePool.PairID(),
+				common.GovStablePool.Name(),
 			},
 			expectedPrice: sdk.NewDec(10),
 			respType:      &pftypes.QueryPriceResponse{},
@@ -226,7 +226,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.CollStablePool.PairID(),
+				common.CollStablePool.Name(),
 			},
 			expectedPrice: sdk.NewDec(1),
 			respType:      &pftypes.QueryRawPricesResponse{},
@@ -234,7 +234,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.GovStablePool.PairID(),
+				common.GovStablePool.Name(),
 			},
 			expectedPrice: sdk.NewDec(10),
 			respType:      &pftypes.QueryRawPricesResponse{},
@@ -336,8 +336,8 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 		{
 			name: "Get current prices",
 			expectedPricePairs: []pftypes.CurrentPriceResponse{
-				pftypes.NewCurrentPriceResponse(common.GovStablePool.PairID(), sdk.NewDec(10)),
-				pftypes.NewCurrentPriceResponse(common.CollStablePool.PairID(), sdk.NewDec(1)),
+				pftypes.NewCurrentPriceResponse(common.GovStablePool.Name(), sdk.NewDec(10)),
+				pftypes.NewCurrentPriceResponse(common.CollStablePool.Name(), sdk.NewDec(1)),
 			},
 			respType: &pftypes.QueryPricesResponse{},
 		},
@@ -380,7 +380,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		{
 			name: "Get the collateral oracles",
 			args: []string{
-				common.CollStablePool.PairID(),
+				common.CollStablePool.Name(),
 			},
 			expectedOracles: []string{genOracleAddress},
 			respType:        &pftypes.QueryOraclesResponse{},
@@ -388,7 +388,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		{
 			name: "Get the governance oracles",
 			args: []string{
-				common.GovStablePool.PairID(),
+				common.GovStablePool.Name(),
 			},
 			expectedOracles: []string{genOracleAddress},
 			respType:        &pftypes.QueryOraclesResponse{},
@@ -468,7 +468,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 				gov.Token0, gov.Token1, "100", expireInOneHour,
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
-				gov.PairID(): sdk.NewDec(100)},
+				gov.Name(): sdk.NewDec(100)},
 			respType:   &sdk.TxResponse{},
 			fromOracle: "genOracle",
 		},
@@ -478,7 +478,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 				col.Token0, col.Token1, "0.85", expireInOneHour,
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
-				col.PairID(): sdk.MustNewDecFromStr("0.85")},
+				col.Name(): sdk.MustNewDecFromStr("0.85")},
 			respType:   &sdk.TxResponse{},
 			fromOracle: "genOracle",
 		},

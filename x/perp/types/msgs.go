@@ -63,7 +63,7 @@ func (msg *MsgOpenPosition) ValidateBasic() error {
 	if msg.Side != Side_SELL && msg.Side != Side_BUY {
 		return fmt.Errorf("invalid side")
 	}
-	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
@@ -102,7 +102,7 @@ func (msg MsgLiquidate) ValidateBasic() (err error) {
 	if _, err = sdk.AccAddressFromBech32(msg.Trader); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid trader address (%s)", err)
 	}
-	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
 		return err
 	}
 	return nil
@@ -130,7 +130,7 @@ func (msg MsgClosePosition) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
-	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
 		return err
 	}
 	return nil

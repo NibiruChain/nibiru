@@ -52,7 +52,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 				}
 				keeper.PairMetadata().Set(ctx, metadata)
 
-				tokenPair, err := common.NewAssetPairFromStr(pair)
+				tokenPair, err := common.NewAssetPair(pair)
 				require.NoError(t, err)
 				latestCumulativePremiumFraction, err := keeper.
 					getLatestCumulativePremiumFraction(ctx, tokenPair)
@@ -2728,7 +2728,7 @@ func TestClosePosition(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			traderAddr, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
 			require.NoError(t, err)
-			assetPair, err := common.NewAssetPairFromStr(tc.initialPosition.Pair)
+			assetPair, err := common.NewAssetPair(tc.initialPosition.Pair)
 			require.NoError(t, err)
 
 			t.Log("set position")
@@ -2892,7 +2892,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			traderAddr, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
 			require.NoError(t, err)
-			assetPair, err := common.NewAssetPairFromStr(tc.initialPosition.Pair)
+			assetPair, err := common.NewAssetPair(tc.initialPosition.Pair)
 			require.NoError(t, err)
 
 			t.Log("set position")

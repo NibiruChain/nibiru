@@ -20,7 +20,7 @@ func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*typ
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pair, err := common.NewAssetPairFromStr(req.PairId)
+	pair, err := common.NewAssetPair(req.PairId)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (k Keeper) Oracles(goCtx context.Context, req *types.QueryOraclesRequest) (
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_, err := common.NewAssetPairFromStr(req.PairId)
+	_, err := common.NewAssetPair(req.PairId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
@@ -136,7 +136,7 @@ func (k Keeper) Pairs(goCtx context.Context, req *types.QueryPairsRequest,
 
 	var responses types.PairResponses
 	for _, pairStr := range k.GetParams(ctx).Pairs {
-		pair := common.MustNewAssetPairFromStr(pairStr)
+		pair := common.MustNewAssetPair(pairStr)
 
 		var oracleStrings []string
 		for _, oracle := range k.OraclesStore().Get(ctx, pair) {

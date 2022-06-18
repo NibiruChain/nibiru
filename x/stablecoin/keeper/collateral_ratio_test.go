@@ -354,7 +354,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pfPairString := range pricefeedParams.Pairs {
-				pfPair := common.MustNewAssetPairFromStr(pfPairString)
+				pfPair := common.MustNewAssetPair(pfPairString)
 				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pfPair.Token0, pfPair.Token1)
 				require.NoError(t, err, "Error posting price for market: %d", pfPair.AsString())
 			}

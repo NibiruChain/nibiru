@@ -18,7 +18,7 @@ func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, act
 		strOracles = append(strOracles, oracle.String())
 	}
 
-	pairID := common.RawPoolNameFromDenoms([]string{token0, token1})
+	pairID := common.PairNameFromDenoms([]string{token0, token1})
 	return PairResponse{
 		PairID:  pairID,
 		Token1:  token1,

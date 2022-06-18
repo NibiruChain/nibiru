@@ -47,13 +47,13 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		Params: pftypes.Params{Pairs: pairs.Strings()},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.GovStablePool.PairID(),
+				PairID:        common.GovStablePool.Name(),
 				OracleAddress: oracle,
 				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				PairID:        common.CollStablePool.PairID(),
+				PairID:        common.CollStablePool.Name(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),

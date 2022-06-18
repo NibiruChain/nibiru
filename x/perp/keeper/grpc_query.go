@@ -34,7 +34,7 @@ func (q queryServer) TraderPosition(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pair, err := common.NewAssetPairFromStr(req.TokenPair)
+	pair, err := common.NewAssetPair(req.TokenPair)
 	if err != nil {
 		return nil, err
 	}

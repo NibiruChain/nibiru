@@ -26,7 +26,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-				pair, err := common.NewAssetPairFromStr("xxx:yyy")
+				pair, err := common.NewAssetPair("xxx:yyy")
 				require.NoError(t, err)
 
 				trader := sample.AccAddress()
@@ -47,7 +47,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-				pair, err := common.NewAssetPairFromStr("xxx:yyy")
+				pair, err := common.NewAssetPair("xxx:yyy")
 				require.NoError(t, err)
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -82,7 +82,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-				pair, err := common.NewAssetPairFromStr("xxx:yyy")
+				pair, err := common.NewAssetPair("xxx:yyy")
 				require.NoError(t, err)
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -354,7 +354,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				goCtx := sdk.WrapSDKContext(ctx)
@@ -371,7 +371,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				goCtx := sdk.WrapSDKContext(ctx)
@@ -395,7 +395,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				goCtx := sdk.WrapSDKContext(ctx)
@@ -413,7 +413,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				trader := sample.AccAddress()
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				t.Log("Setup vpool defined by pair")
@@ -446,7 +446,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				traderAddr := sample.AccAddress()
-				pair, err := common.NewAssetPairFromStr("xxx:yyy")
+				pair, err := common.NewAssetPair("xxx:yyy")
 				require.NoError(t, err)
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")

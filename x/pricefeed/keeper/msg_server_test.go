@@ -22,7 +22,7 @@ func TestPostPrice(t *testing.T) {
 	authorizedOracles := addrs[:2]
 	unauthorizedAddrs := addrs[2:]
 
-	pair := common.MustNewAssetPairFromStr("usd:tst")
+	pair := common.MustNewAssetPair("usd:tst")
 	params := types.Params{
 		Pairs: []string{pair.AsString()},
 	}

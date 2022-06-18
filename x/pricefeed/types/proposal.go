@@ -64,7 +64,7 @@ func (m *AddOracleProposal) Validate() error {
 	}
 
 	for _, pairStr := range m.Pairs {
-		_, err = common.NewAssetPairFromStr(pairStr)
+		_, err = common.NewAssetPair(pairStr)
 		if err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ func (m *AddOracleProposalWithDeposit) Validate() error {
 	}
 
 	for _, pairStr := range m.Pairs {
-		_, err = common.NewAssetPairFromStr(pairStr)
+		_, err = common.NewAssetPair(pairStr)
 		if err != nil {
 			return err
 		}

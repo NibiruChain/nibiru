@@ -18,14 +18,14 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 	k.ActivePairsStore().SetMany(
-		ctx, common.MustNewAssetPairsFromStr(params.Pairs), true)
+		ctx, common.NewAssetPairs(params.Pairs), true)
 }
 
 // GetPairs returns the pairs from params
 func (k Keeper) GetPairs(ctx sdk.Context) common.AssetPairs {
 	var pairs common.AssetPairs
 	for _, pairString := range k.GetParams(ctx).Pairs {
-		pairs = append(pairs, common.MustNewAssetPairFromStr(pairString))
+		pairs = append(pairs, common.MustNewAssetPair(pairString))
 	}
 	return pairs
 }
@@ -33,7 +33,7 @@ func (k Keeper) GetPairs(ctx sdk.Context) common.AssetPairs {
 // GetOraclesForPair returns the oracles for a valid asset pair
 func (k Keeper) GetOraclesForPair(ctx sdk.Context, pairID string,
 ) (oracles []sdk.AccAddress) {
-	pair := common.MustNewAssetPairFromStr(pairID)
+	pair := common.MustNewAssetPair(pairID)
 	return k.OraclesStore().Get(ctx, pair)
 }
 
@@ -41,7 +41,7 @@ func (k Keeper) GetOraclesForPair(ctx sdk.Context, pairID string,
 func (k Keeper) IsWhitelistedOracle(
 	ctx sdk.Context, pairID string, address sdk.AccAddress,
 ) bool {
-	pair := common.MustNewAssetPairFromStr(pairID)
+	pair := common.MustNewAssetPair(pairID)
 	oracles := k.OraclesStore().Get(ctx, pair)
 	for _, addr := range oracles {
 		if addr.Equals(address) {
@@ -53,7 +53,7 @@ func (k Keeper) IsWhitelistedOracle(
 
 // GetPair returns the market if it is in the pricefeed system
 func (k Keeper) IsActivePair(ctx sdk.Context, pairID string) bool {
-	pair := common.MustNewAssetPairFromStr(pairID)
+	pair := common.MustNewAssetPair(pairID)
 	return k.ActivePairsStore().Get(ctx, pair)
 }
 
@@ -78,7 +78,7 @@ func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
 func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
 	startParams := k.GetParams(ctx)
 	for _, pair := range startParams.Pairs {
-		k.addOraclesForPair(ctx, common.MustNewAssetPairFromStr(pair), oracles)
+		k.addOraclesForPair(ctx, common.MustNewAssetPair(pair), oracles)
 	}
 }
 

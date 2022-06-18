@@ -27,7 +27,7 @@ func TestGetAndSetPosition(t *testing.T) {
 			test: func() {
 				trader := sample.AccAddress()
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				_, err = nibiruApp.PerpKeeper.GetPosition(
@@ -39,7 +39,7 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewAssetPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()
@@ -82,7 +82,7 @@ func TestClearPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewAssetPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				traders := []sdk.AccAddress{
@@ -168,7 +168,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
 		nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-		pair, err := common.NewAssetPairFromStr("xxx:yyy")
+		pair, err := common.NewAssetPair("xxx:yyy")
 		require.NoError(t, err)
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")

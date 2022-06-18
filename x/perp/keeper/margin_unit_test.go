@@ -262,7 +262,7 @@ func TestRemoveMargin(t *testing.T) {
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
 
-				pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+				pair, err := common.NewAssetPair(msg.TokenPair)
 				require.NoError(t, err)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
 					AnyTimes().Return(true)
@@ -325,7 +325,7 @@ func TestRemoveMargin(t *testing.T) {
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
 
-				pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+				pair, err := common.NewAssetPair(msg.TokenPair)
 				require.NoError(t, err)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
 					AnyTimes().Return(true)
@@ -483,7 +483,7 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				assetPair, err := common.NewAssetPairFromStr("uosmo:unusd")
+				assetPair, err := common.NewAssetPair("uosmo:unusd")
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()
@@ -551,7 +551,7 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				assetPair, err := common.NewAssetPairFromStr("uosmo:unusd")
+				assetPair, err := common.NewAssetPair("uosmo:unusd")
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()

@@ -48,12 +48,12 @@ func CmdPrice() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pair, err := common.NewAssetPairFromStr(args[0])
+			pair, err := common.NewAssetPair(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			request := &types.QueryPriceRequest{PairId: pair.PairID()}
+			request := &types.QueryPriceRequest{PairId: pair.Name()}
 
 			res, err := queryClient.Price(cmd.Context(), request)
 			if err != nil {
@@ -140,12 +140,12 @@ func CmdOracles() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pair, err := common.NewAssetPairFromStr(args[0])
+			pair, err := common.NewAssetPair(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			request := &types.QueryOraclesRequest{PairId: pair.PairID()}
+			request := &types.QueryOraclesRequest{PairId: pair.Name()}
 
 			res, err := queryClient.Oracles(cmd.Context(), request)
 			if err != nil {
@@ -201,7 +201,7 @@ func CmdRawPrices() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			_, err = common.NewAssetPairFromStr(args[0])
+			_, err = common.NewAssetPair(args[0])
 			if err != nil {
 				return err
 			}
