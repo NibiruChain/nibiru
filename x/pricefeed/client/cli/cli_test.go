@@ -24,23 +24,26 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 const (
-	oracleAddress  = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
-	oracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
+	genOracleAddress  = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
+	genOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
+	cfg        testutilcli.Config
+	network    *testutilcli.Network
+	oracleUIDs []string
+	oracleMap  map[string]sdk.AccAddress
 }
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
+	oracle := sdk.MustAccAddressFromBech32(genOracleAddress)
 
 	pairs := common.AssetPairs{
 		{
@@ -76,6 +79,41 @@ func NewPricefeedGen() *pftypes.GenesisState {
 	}
 }
 
+func (s *IntegrationTestSuite) setupOraclesForKeyring() {
+
+	val := s.network.Validators[0]
+	s.oracleUIDs = []string{"oracle", "wrongOracle"}
+
+	for _, oracleUID := range s.oracleUIDs {
+		info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+			/* uid */ oracleUID,
+			/* language */ keyring.English,
+			/* hdPath */ sdk.FullFundraiserPath,
+			/* bip39Passphrase */ "",
+			/* algo */ hd.Secp256k1)
+		s.Require().NoError(err)
+		s.oracleMap[oracleUID] = sdk.AccAddress(info.GetPubKey().Address())
+	}
+
+	_, err := val.ClientCtx.Keyring.NewAccount(
+		/* uid */ "genOracle",
+		/* mnemonic */ genOracleMnemonic,
+		/* bip39Passphrase */ "",
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* algo */ hd.Secp256k1,
+	)
+	s.Require().NoError(err)
+
+	_, _, err = val.ClientCtx.Keyring.NewMnemonic(
+		/* uid */ "oracle",
+		/* language */ keyring.English,
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* bip39Passphrase */ "",
+		/* algo */ hd.Secp256k1)
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "public key already exists in keybase")
+}
+
 func (s *IntegrationTestSuite) SetupSuite() {
 	/* 	Make test skip if -short is not used:
 	All tests: `go test ./...`
@@ -90,7 +128,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg = testutilcli.DefaultConfig()
 
-	// modification to pay fee with test bond denom "stake"
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 
@@ -100,6 +137,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.cfg.GenesisState = genesisState
 
 	s.network = testutilcli.New(s.T(), s.cfg)
+
+	s.oracleMap = make(map[string]sdk.AccAddress)
+	s.setupOraclesForKeyring()
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
@@ -229,7 +269,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 				s.Require().NoError(err)
 				s.Require().Equal(len(txResp.RawPrices), 1)
 				s.Assert().Equal(tc.expectedPrice, txResp.RawPrices[0].Price)
-				s.Assert().Equal(oracleAddress, txResp.RawPrices[0].OracleAddress)
+				s.Assert().Equal(genOracleAddress, txResp.RawPrices[0].OracleAddress)
 				// The initial prices are valid for one hour
 				s.Assert().True(expireWithinHours(txResp.RawPrices[0].GetExpiry(), 1))
 			}
@@ -245,7 +285,7 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 	val := s.network.Validators[0]
 
 	gov, col := common.GovStablePool, common.CollStablePool
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+	oracle, _ := sdk.AccAddressFromBech32(genOracleAddress)
 	testCases := []struct {
 		name string
 
@@ -319,8 +359,8 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 			s.Require().NoError(err)
 			s.Assert().Equal(len(tc.expectedPricePairs), len(txResp.Prices))
 
-			for _, pp := range txResp.Prices {
-				s.Assert().Contains(tc.expectedPricePairs, pp)
+			for _, priceResponse := range txResp.Prices {
+				s.Assert().Contains(tc.expectedPricePairs, priceResponse, tc.expectedPricePairs)
 			}
 		})
 	}
@@ -342,7 +382,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			args: []string{
 				common.CollStablePool.PairID(),
 			},
-			expectedOracles: []string{oracleAddress},
+			expectedOracles: []string{genOracleAddress},
 			respType:        &pftypes.QueryOraclesResponse{},
 		},
 		{
@@ -350,7 +390,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			args: []string{
 				common.GovStablePool.PairID(),
 			},
-			expectedOracles: []string{oracleAddress},
+			expectedOracles: []string{genOracleAddress},
 			respType:        &pftypes.QueryOraclesResponse{},
 		},
 		{
@@ -358,8 +398,9 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			args: []string{
 				"invalid:pair",
 			},
-			expectErr: true,
-			respType:  &pftypes.QueryOraclesResponse{},
+			expectErr:       false,
+			expectedOracles: []string{},
+			respType:        &pftypes.QueryOraclesResponse{},
 		},
 	}
 
@@ -372,7 +413,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			if tc.expectErr {
-				s.Require().Error(err)
+				s.Require().Error(err, out.String())
 			} else {
 				s.Require().NoError(err, out.String())
 				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
@@ -391,25 +432,33 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 	gov, col := common.GovStablePool, common.CollStablePool
 	now := time.Now()
 	expireInOneHour, expiredTS := strconv.Itoa(int(now.Add(1*time.Hour).Unix())), strconv.Itoa(int(now.Add(-1*time.Hour).Unix()))
-	_, err := val.ClientCtx.Keyring.NewAccount(
-		/* uid */ "oracle",
-		/* mnemonic */ oracleMnemonic,
-		/* bip39Passphrase */ "",
-		/* hdPath */ sdk.FullFundraiserPath,
-		/* algo */ hd.Secp256k1,
-	)
+
+	wrongOracle := s.oracleMap["wrongOracle"]
+	genOracle, err := sdk.AccAddressFromBech32(genOracleAddress)
 	s.Require().NoError(err)
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic("wrongOracle", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+
+	//DEBUG
+	fmt.Printf("\nDEBUG genOracle: %s", genOracle)
+	fmt.Printf("\nDEBUG wrongOracle: %s", wrongOracle)
+	keyringList, err := val.ClientCtx.Keyring.List()
+	fmt.Printf("\nDEBUG val.ClientCtx.Keyring.List: %v", keyringList)
+	fmt.Printf("\nDEBUG val.ClientCtx.Keyring.List err: %v", err)
+	info, err := val.ClientCtx.Keyring.Key("genOracle")
+	fmt.Printf("\nDEBUG keying.Keyring.info: %v", info)
+	fmt.Printf("\nDEBUG keying.Keyring.info err: %v", err)
+	fmt.Printf("\nDEBUG keying.Keyring.info.GetName(): %v", info.GetName())
+
 	s.Require().NoError(err)
-	wrongOracleAddress := sdk.AccAddress(info.GetPubKey().Address())
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
-	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin("stake", 100_000_000))
-	_, err = testutilcli.FillWalletFromValidator(wrongOracleAddress, gasFeeToken, val, s.cfg.BondDenom)
+
+	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
+	_, err = testutilcli.FillWalletFromValidator(wrongOracle, gasFeeToken, val, s.cfg.BondDenom)
 	s.Require().NoError(err)
-	_, err = testutilcli.FillWalletFromValidator(oracle, gasFeeToken, val, s.cfg.BondDenom)
+	_, err = testutilcli.FillWalletFromValidator(genOracle, gasFeeToken, val, s.cfg.BondDenom)
 	s.Require().NoError(err)
+
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
@@ -465,7 +514,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedCode: 3,
 			respType:     &sdk.TxResponse{},
-			fromOracle:   "oracle",
+			fromOracle:   "genOracle",
 		},
 	}
 
@@ -476,15 +525,16 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			cmd := cli.CmdPostPrice()
 			clientCtx := val.ClientCtx
 
-			commonArgs = append(commonArgs, fmt.Sprintf("--%s=%s", flags.FlagFrom, tc.fromOracle))
+			commonArgs = append(commonArgs,
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]))
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
-			s.Require().NoError(err, out.String())
-			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+			s.Require().NoError(err)
+			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType))
 
 			txResp := tc.respType.(*sdk.TxResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Assert().Equal(tc.expectedCode, txResp.Code, out.String())
+			s.Assert().Equal(tc.expectedCode, txResp.Code)
 
 			for pairID, price := range tc.expectedPriceForPair {
 				currentPrice, err := testutilcli.QueryRawPrice(clientCtx, pairID)
@@ -545,11 +595,11 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		val := s.network.Validators[0]
 		clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-		oracleKeyringInfo, err := val.ClientCtx.Keyring.NewAccount(
+		oracleKeyringInfo, _, err := val.ClientCtx.Keyring.NewMnemonic(
 			/* uid */ "delphi-oracle",
-			/* mnemonic */ oracleMnemonic,
-			/* bip39Passphrase */ "",
+			/* language */ keyring.English,
 			/* hdPath */ sdk.FullFundraiserPath,
+			/* bip39Passphrase */ "",
 			/* algo */ hd.Secp256k1,
 		)
 		s.Require().NoError(err)
@@ -563,8 +613,9 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		proposal := pftypes.AddOracleProposal{
 			Title:       "Cataclysm-004",
 			Description: "Whitelists Delphi to post prices for OHM and BTC",
-			Oracle:      oracleKeyringInfo.GetAddress().String(),
-			Pairs:       []string{"ohm:usd", "btc:usd"},
+			// Oracle:      oracleKeyringInfo.GetAddress().String(),
+			Oracle: sample.AccAddress().String(),
+			Pairs:  []string{"ohm:usd", "btc:usd"},
 		}
 
 		s.T().Log("load example json as bytes")

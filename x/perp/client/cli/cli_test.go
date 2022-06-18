@@ -35,12 +35,9 @@ type IntegrationTestSuite struct {
 	users   []sdk.AccAddress
 }
 
-const (
-	oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
-)
-
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
+	const oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 	oracle, err := sdk.AccAddressFromBech32(oracleAddress)
 	if err != nil {
 		panic(err)

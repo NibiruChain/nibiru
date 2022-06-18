@@ -80,11 +80,6 @@ func CmdPrices() *cobra.Command {
 				return err
 			}
 
-			_, err = common.NewAssetPairFromStr(args[0])
-			if err != nil {
-				return err
-			}
-
 			queryClient := types.NewQueryClient(clientCtx)
 
 			request := &types.QueryPricesRequest{}
