@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -30,22 +31,27 @@ func SetupNibiruTestingApp() (
 ) {
 	// create testing app
 	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-	token0, token1 := "uatom", "unibi"
+
+	// Whitelist a pair and oracle
+	pair, err := common.NewAssetPairFromStr("uatom:unibi")
+	if err != nil {
+		return nil, defaultGenesis
+	}
 	oracle := sample.AccAddress()
 	nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedtypes.Params{
-		Pairs: []pricefeedtypes.Pair{
-			{Token0: token0, Token1: token1,
-				Oracles: []sdk.AccAddress{oracle}, Active: true},
-		},
+		Pairs: []string{pair.AsString()},
 	})
-	_, err := nibiruApp.PricefeedKeeper.SetPrice(
-		ctx, oracle, token0, token1, sdk.OneDec(),
+	nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
+
+	_, err = nibiruApp.PricefeedKeeper.SetPrice(
+		ctx, oracle, pair.AsString(), sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
 	)
 	if err != nil {
 		return nil, defaultGenesis
 	}
-	err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, token0, token1)
+
+	err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 	if err != nil {
 		return nil, defaultGenesis
 	}
