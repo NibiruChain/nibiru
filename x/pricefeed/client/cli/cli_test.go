@@ -427,14 +427,16 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 	}
 }
 func (s IntegrationTestSuite) TestSetPriceCmd() {
-	s.network.WaitForNextBlock()
+	err := s.network.WaitForNextBlock()
+	s.Require().NoError(err)
+
 	val := s.network.Validators[0]
 
 	gov, col := common.GovStablePool, common.CollStablePool
 	now := time.Now()
-	expireInOneHour, expiredTS := strconv.Itoa(int(now.Add(1*time.Hour).Unix())), strconv.Itoa(int(now.Add(-1*time.Hour).Unix()))
+	expireInOneHour := strconv.Itoa(int(now.Add(1 * time.Hour).Unix()))
+	expiredTS := strconv.Itoa(int(now.Add(-1 * time.Hour).Unix()))
 
-	var err error
 	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1_000_000))
 	for _, oracleName := range []string{"genOracle", "wrongOracle"} {
 		_, err = testutilcli.FillWalletFromValidator(
@@ -518,7 +520,6 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 			commonArgs = append(commonArgs,
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]))
-			// fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()))
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
 			s.Require().NoError(err)
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType))

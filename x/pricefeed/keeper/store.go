@@ -17,6 +17,7 @@ func (k Keeper) ActivePairsStore() ActivePairsState {
 }
 
 // ---------------------------------------------------- OraclesState
+
 type OraclesState Keeper
 
 var oraclesNamespace = []byte("oracles")
@@ -35,7 +36,7 @@ func (state OraclesState) Get(
 		return []sdk.AccAddress{}
 	}
 
-	oraclesMarshaler := &types.OraclesProto{}
+	oraclesMarshaler := &types.OraclesMarshaler{}
 	state.cdc.MustUnmarshal(
 		/*bytes=*/ valueBytes,
 		/*codec.ProtoMarshaler=*/ oraclesMarshaler)
@@ -48,7 +49,7 @@ func (state OraclesState) Set(
 ) {
 	key := []byte(pair.AsString())
 	kvStore := state.getKV(ctx)
-	oraclesMarshaler := &types.OraclesProto{Oracles: oracles}
+	oraclesMarshaler := &types.OraclesMarshaler{Oracles: oracles}
 	kvStore.Set(key, state.cdc.MustMarshal(oraclesMarshaler))
 }
 
@@ -62,14 +63,14 @@ func (state OraclesState) AddOracles(
 
 func (state OraclesState) Iterate(
 	ctx sdk.Context,
-	do func(*types.OraclesProto) (stop bool),
+	do func(*types.OraclesMarshaler) (stop bool),
 ) {
 	kvStore := state.getKV(ctx)
 	iter := kvStore.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		oraclesMarshaler := &types.OraclesProto{}
+		oraclesMarshaler := &types.OraclesMarshaler{}
 		state.cdc.MustUnmarshal(iter.Value(), oraclesMarshaler)
 		if !do(oraclesMarshaler) {
 			break
@@ -96,12 +97,12 @@ func (state ActivePairsState) Get(
 		return false
 	}
 
-	activePairsMarshaler := &types.ActiveProto{}
+	activePairsMarshaler := &types.ActivePairMarshaler{}
 	state.cdc.MustUnmarshal(
 		/*bytes=*/ valueBytes,
 		/*codec.ProtoMarshaler=*/ activePairsMarshaler)
 
-	isActive := activePairsMarshaler.Active
+	isActive := activePairsMarshaler.IsActive
 	if (valueBytes != nil) && !isActive {
 		kvStore.Delete(key)
 	}
@@ -116,7 +117,7 @@ func (state ActivePairsState) Set(
 	key := []byte(pair.AsString())
 	kvStore := state.getKV(ctx)
 	if active {
-		activePairsMarshaler := &types.ActiveProto{Active: active}
+		activePairsMarshaler := &types.ActivePairMarshaler{IsActive: active}
 		kvStore.Set(key, state.cdc.MustMarshal(activePairsMarshaler))
 	} else if !active && kvStore.Has(key) {
 		kvStore.Delete(key)
@@ -141,14 +142,14 @@ func (state ActivePairsState) AddActivePairs(
 
 func (state ActivePairsState) Iterate(
 	ctx sdk.Context,
-	do func(*types.ActiveProto) (stop bool),
+	do func(*types.ActivePairMarshaler) (stop bool),
 ) {
 	kvStore := state.getKV(ctx)
 	iter := kvStore.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		activePairsMarshaler := &types.ActiveProto{}
+		activePairsMarshaler := &types.ActivePairMarshaler{}
 		state.cdc.MustUnmarshal(iter.Value(), activePairsMarshaler)
 		if !do(activePairsMarshaler) {
 			break
