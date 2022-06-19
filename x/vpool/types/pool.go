@@ -15,7 +15,7 @@ func NewPool(
 	maxOracleSpreadRatio sdk.Dec,
 ) *Pool {
 	return &Pool{
-		Pair:                  pair.AsString(),
+		Pair:                  pair.String(),
 		BaseAssetReserve:      baseAssetReserve,
 		QuoteAssetReserve:     quoteAssetReserve,
 		TradeLimitRatio:       tradeLimitRatio,

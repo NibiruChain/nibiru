@@ -28,7 +28,7 @@ func TestQueryPosition_Ok(t *testing.T) {
 
 	oldPosition := &types.Position{
 		TraderAddress: trader.String(),
-		Pair:          vpoolPair.AsString(),
+		Pair:          vpoolPair.String(),
 		Size_:         sdk.NewDec(10),
 		OpenNotional:  sdk.NewDec(10),
 		Margin:        sdk.NewDec(1),
@@ -41,7 +41,7 @@ func TestQueryPosition_Ok(t *testing.T) {
 		sdk.WrapSDKContext(ctx),
 		&types.QueryTraderPositionRequest{
 			Trader:    trader.String(),
-			TokenPair: vpoolPair.AsString(),
+			TokenPair: vpoolPair.String(),
 		},
 	)
 	fmt.Println("res:", res)

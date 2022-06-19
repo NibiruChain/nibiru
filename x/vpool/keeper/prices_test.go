@@ -42,7 +42,7 @@ func TestGetUnderlyingPrice(t *testing.T) {
 				).
 				Return(
 					pftypes.CurrentPrice{
-						PairID: tc.pair.AsString(),
+						PairID: tc.pair.String(),
 						Price:  tc.pricefeedPrice,
 					}, nil,
 				)

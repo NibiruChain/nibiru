@@ -33,7 +33,7 @@ func (state OraclesState) Get(
 	ctx sdk.Context, pair common.AssetPair,
 ) (oracles []sdk.AccAddress) {
 	kvStore := state.getKV(ctx)
-	key := []byte(pair.AsString())
+	key := []byte(pair.String())
 	valueBytes := kvStore.Get(key)
 	if valueBytes == nil {
 		return []sdk.AccAddress{}
@@ -50,7 +50,7 @@ func (state OraclesState) Get(
 func (state OraclesState) Set(
 	ctx sdk.Context, pair common.AssetPair, oracles []sdk.AccAddress,
 ) {
-	key := []byte(pair.AsString())
+	key := []byte(pair.String())
 	kvStore := state.getKV(ctx)
 	oraclesMarshaler := &types.OraclesMarshaler{Oracles: oracles}
 	kvStore.Set(key, state.cdc.MustMarshal(oraclesMarshaler))
@@ -95,7 +95,7 @@ func (state ActivePairsState) Get(
 	ctx sdk.Context, pair common.AssetPair,
 ) (active bool) {
 	kvStore := state.getKV(ctx)
-	key := []byte(pair.AsString())
+	key := []byte(pair.String())
 	valueBytes := kvStore.Get(key)
 	if valueBytes == nil {
 		return false
@@ -118,7 +118,7 @@ key-value store (i.e., pairs default to inactive if they don't exist). */
 func (state ActivePairsState) Set(
 	ctx sdk.Context, pair common.AssetPair, active bool,
 ) {
-	key := []byte(pair.AsString())
+	key := []byte(pair.String())
 	kvStore := state.getKV(ctx)
 	if active {
 		activePairsMarshaler := &types.ActivePairMarshaler{IsActive: active}

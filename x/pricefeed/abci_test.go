@@ -33,7 +33,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	}
 	setPrice := func(price string) {
 		_, err := nibiruApp.PricefeedKeeper.SetPrice(
-			ctx, oracle, pair.AsString(),
+			ctx, oracle, pair.String(),
 			sdk.MustNewDecFromStr(price), ctx.BlockTime().Add(time.Hour*5000*4))
 		require.NoError(t, err)
 	}

@@ -74,22 +74,22 @@ func (k Keeper) SetPrice(
 	}
 
 	// Set inverse price if the oracle gives the wrong string
-	if k.IsActivePair(ctx, pair.Inverse().AsString()) {
+	if k.IsActivePair(ctx, pair.Inverse().String()) {
 		pair = pair.Inverse()
 		price = sdk.OneDec().Quo(price)
 	}
 
-	if !k.IsWhitelistedOracle(ctx, pair.AsString(), oracle) {
+	if !k.IsWhitelistedOracle(ctx, pair.String(), oracle) {
 		return types.PostedPrice{}, fmt.Errorf(
-			"oracle %s cannot post on pair %v", oracle, pair.AsString())
+			"oracle %s cannot post on pair %v", oracle, pair.String())
 	}
 
-	newPostedPrice := types.NewPostedPrice(pair.AsString(), oracle, price, expiry)
+	newPostedPrice := types.NewPostedPrice(pair.String(), oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
-		PairId:    pair.AsString(),
+		PairId:    pair.String(),
 		Oracle:    oracle.String(),
 		PairPrice: price,
 		Expiry:    expiry,
@@ -100,14 +100,14 @@ func (k Keeper) SetPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(pair.AsString(), oracle), k.cdc.MustMarshal(&newPostedPrice))
+	store.Set(types.RawPriceKey(pair.String(), oracle), k.cdc.MustMarshal(&newPostedPrice))
 	return newPostedPrice, nil
 }
 
 // SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
 func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.AsString()
+	pairID := assetPair.String()
 
 	if !k.IsActivePair(ctx, pairID) {
 		return sdkerrors.Wrap(types.ErrInvalidPair, pairID)
@@ -250,15 +250,15 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
 	pair := common.AssetPair{Token0: token0, Token1: token1}
-	givenIsActive := k.IsActivePair(ctx, pair.AsString())
-	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().AsString())
+	givenIsActive := k.IsActivePair(ctx, pair.String())
+	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().String())
 	if !givenIsActive && inverseIsActive {
 		pair = pair.Inverse()
 	}
 
 	// Retrieve current price from the KV store
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentPriceKey(pair.AsString()))
+	bz := store.Get(types.CurrentPriceKey(pair.String()))
 	if bz == nil {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
@@ -283,8 +283,8 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 // GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
 func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
 	pair := common.AssetPair{Token0: token0, Token1: token1}
-	givenIsActive := k.IsActivePair(ctx, pair.AsString())
-	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().AsString())
+	givenIsActive := k.IsActivePair(ctx, pair.String())
+	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().String())
 	if !givenIsActive && inverseIsActive {
 		pair = pair.Inverse()
 	}
@@ -296,7 +296,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	}
 
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pair.AsString()))
+	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pair.String()))
 
 	if bz == nil {
 		return types.CurrentTWAP{}, types.ErrNoValidTWAP
@@ -348,10 +348,10 @@ func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
 func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices {
 	inversePair := common.MustNewAssetPair(pairStr).Inverse()
-	if k.IsActivePair(ctx, inversePair.AsString()) {
+	if k.IsActivePair(ctx, inversePair.String()) {
 		panic(fmt.Errorf(
 			`cannot fetch posted prices using inverse pair, %v ;
-			Use pair, %v, instead`, inversePair.AsString(), pairStr))
+			Use pair, %v, instead`, inversePair.String(), pairStr))
 	}
 
 	var pps types.PostedPrices

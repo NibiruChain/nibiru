@@ -39,12 +39,12 @@ func SetupNibiruTestingApp() (
 	}
 	oracle := sample.AccAddress()
 	nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedtypes.Params{
-		Pairs: []string{pair.AsString()},
+		Pairs: []string{pair.String()},
 	})
 	nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 	_, err = nibiruApp.PricefeedKeeper.SetPrice(
-		ctx, oracle, pair.AsString(), sdk.OneDec(),
+		ctx, oracle, pair.String(), sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
 	)
 	if err != nil {

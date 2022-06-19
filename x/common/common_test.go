@@ -69,12 +69,12 @@ func TestAssetPair_InverseAndSort(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.proper {
 				require.Truef(t, tc.pair.IsSortedOrder(),
-					"pair: '%v' name: '%v'", tc.pair.AsString(), tc.pair.SortedName())
-				require.EqualValues(t, tc.pair.SortedName(), tc.pair.AsString())
+					"pair: '%v' name: '%v'", tc.pair.String(), tc.pair.SortedName())
+				require.EqualValues(t, tc.pair.SortedName(), tc.pair.String())
 			} else {
 				require.Truef(t, tc.pair.Inverse().IsSortedOrder(),
-					"pair: '%v' name: '%v'", tc.pair.AsString(), tc.pair.SortedName())
-				require.EqualValues(t, tc.pair.SortedName(), tc.pair.Inverse().AsString())
+					"pair: '%v' name: '%v'", tc.pair.String(), tc.pair.SortedName())
+				require.EqualValues(t, tc.pair.SortedName(), tc.pair.Inverse().String())
 			}
 
 			require.True(t, true)
@@ -159,16 +159,15 @@ func TestAssetPair_Marshaling(t *testing.T) {
 				require.Error(t, (&pair).VerboseEqual(&mismatchToken1))
 				require.True(t, !(&pair).Equal(&mismatchToken1))
 
-				require.Error(t, (&pair).VerboseEqual(pair.AsString()))
+				require.Error(t, (&pair).VerboseEqual(pair.String()))
 				require.True(t, !(&pair).Equal(&mismatchToken1))
 			},
 		},
 		{
 			name: "panics suite",
 			test: func() {
-				pair := common.TestStablePool
 				require.Panics(t, func() {
-					common.MustNewAssetPair(pair.String())
+					common.MustNewAssetPair("aaa:bbb:ccc")
 				})
 			},
 		},

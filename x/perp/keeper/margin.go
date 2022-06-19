@@ -70,7 +70,7 @@ func (k Keeper) AddMargin(
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"pair",
-			pair.AsString(),
+			pair.String(),
 			"trader",
 			msg.Sender,
 		)
@@ -114,7 +114,7 @@ func (k Keeper) AddMargin(
 
 	err = ctx.EventManager().EmitTypedEvent(
 		&types.MarginChangedEvent{
-			Pair:           pair.AsString(),
+			Pair:           pair.String(),
 			TraderAddress:  msgSender.String(),
 			MarginAmount:   msg.Margin.Amount,
 			FundingPayment: remainingMargin.FundingPayment,
@@ -189,7 +189,7 @@ func (k Keeper) RemoveMargin(
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"pair",
-			pair.AsString(),
+			pair.String(),
 			"trader",
 			msg.Sender,
 		)
@@ -239,7 +239,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
-		Pair:           pair.AsString(),
+		Pair:           pair.String(),
 		TraderAddress:  traderAddr.String(),
 		MarginAmount:   msg.Margin.Amount,
 		FundingPayment: remainingMargin.FundingPayment,
@@ -310,11 +310,11 @@ func (k Keeper) GetMarginRatio(
 
 func (k Keeper) requireVpool(ctx sdk.Context, pair common.AssetPair) (err error) {
 	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
-		err = fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.AsString())
+		err = fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
 		k.Logger(ctx).Error(
 			err.Error(),
 			"pair",
-			pair.AsString(),
+			pair.String(),
 		)
 		return err
 	}

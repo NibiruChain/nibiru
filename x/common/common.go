@@ -81,21 +81,18 @@ func (pair AssetPair) SortedName() string {
 
 // Name returns the string representation of the asset pair.
 func (pair AssetPair) Name() string {
-	return pair.AsString()
+	return pair.String()
 }
 
-/* AsString returns the string representation of the asset pair.
+/* String returns the string representation of the asset pair.
 Note that this differs from the output of the proto-generated 'String' method.
-There isn't currently a clean way to overwrite 'String' without manually editing
-the common.pb.go type.
-related: https://github.com/NibiruChain/nibiru/issues/620
 */
-func (pair AssetPair) AsString() string {
+func (pair AssetPair) String() string {
 	return fmt.Sprintf("%s%s%s", pair.Token0, PairSeparator, pair.Token1)
 }
 
 func (pair AssetPair) IsSortedOrder() bool {
-	return pair.SortedName() == pair.AsString()
+	return pair.SortedName() == pair.String()
 }
 
 func (pair AssetPair) Inverse() AssetPair {
@@ -168,11 +165,11 @@ func (pairs AssetPairs) Contains(pair AssetPair) bool {
 }
 
 func (pairs AssetPairs) Strings() []string {
-	pairsAsStrings := []string{}
+	pairsStrings := []string{}
 	for _, pair := range pairs {
-		pairsAsStrings = append(pairsAsStrings, pair.AsString())
+		pairsStrings = append(pairsStrings, pair.String())
 	}
-	return pairsAsStrings
+	return pairsStrings
 }
 
 func (pairs AssetPairs) Validate() error {

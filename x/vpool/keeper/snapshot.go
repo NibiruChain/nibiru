@@ -31,7 +31,7 @@ func (k Keeper) addReserveSnapshot(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
-		Pair:         pair.AsString(),
+		Pair:         pair.String(),
 		QuoteReserve: quoteAssetReserve,
 		BaseReserve:  baseAssetReserve,
 	})

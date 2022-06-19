@@ -85,7 +85,7 @@ func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair,
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
 		vpoolcli.CmdGetVpoolReserveAssets(),
-		[]string{pair.AsString(),
+		[]string{pair.String(),
 			fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
 	if err != nil {
 		return vpooltypes.QueryReserveAssetsResponse{}, err
@@ -104,7 +104,7 @@ func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction st
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
 		vpoolcli.CmdGetBaseAssetPrice(),
-		[]string{pair.AsString(), direction, amount, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+		[]string{pair.String(), direction, amount, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
 		return vpooltypes.QueryBaseAssetPriceResponse{}, err
@@ -120,7 +120,7 @@ func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.A
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
 		cli.CmdQueryPosition(),
-		[]string{trader.String(), pair.AsString(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+		[]string{trader.String(), pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
 		return types.QueryTraderPositionResponse{}, err

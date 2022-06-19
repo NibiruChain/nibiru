@@ -75,7 +75,7 @@ func TestDistributeLiquidateRewards_Error(t *testing.T) {
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
-								Pair: BtcNusdPair.AsString(),
+								Pair: BtcNusdPair.String(),
 							}},
 					},
 				)
@@ -123,7 +123,7 @@ func TestDistributeLiquidateRewards_Happy(t *testing.T) {
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
-								Pair: BtcNusdPair.AsString(),
+								Pair: BtcNusdPair.String(),
 							}},
 					},
 				)
@@ -408,7 +408,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			newParams.LiquidationFee = tc.liquidationFee
 			perpKeeper.SetParams(ctx, newParams)
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair: BtcNusdPair.AsString(),
+				Pair: BtcNusdPair.String(),
 				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case
 				},
@@ -439,7 +439,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			t.Log("create and set the initial position")
 			position := types.Position{
 				TraderAddress:                       traderAddr.String(),
-				Pair:                                BtcNusdPair.AsString(),
+				Pair:                                BtcNusdPair.String(),
 				Size_:                               tc.initialPositionSize,
 				Margin:                              tc.initialMargin,
 				OpenNotional:                        tc.initialOpenNotional,
@@ -477,7 +477,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			t.Log("assert new position fields")
 			newPosition := positionResp.Position
 			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
-			assert.EqualValues(t, BtcNusdPair.AsString(), newPosition.Pair)
+			assert.EqualValues(t, BtcNusdPair.String(), newPosition.Pair)
 			assert.True(t, newPosition.Size_.IsZero())        // always zero
 			assert.True(t, newPosition.Margin.IsZero())       // always zero
 			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero
@@ -485,7 +485,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  BtcNusdPair.AsString(),
+				Pair:                  BtcNusdPair.String(),
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: positionResp.ExchangedPositionSize,

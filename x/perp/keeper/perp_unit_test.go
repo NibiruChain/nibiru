@@ -33,7 +33,7 @@ func TestSettlePosition(t *testing.T) {
 
 		pos := types.Position{
 			TraderAddress: traderAddr.String(),
-			Pair:          pair.AsString(),
+			Pair:          pair.String(),
 			Size_:         sdk.NewDec(10),
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
@@ -77,7 +77,7 @@ func TestSettlePosition(t *testing.T) {
 		// so total is 99_100 coin
 		pos := types.Position{
 			TraderAddress: traderAddr.String(),
-			Pair:          pair.AsString(),
+			Pair:          pair.String(),
 			Size_:         sdk.NewDec(100),
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
@@ -99,7 +99,7 @@ func TestSettlePosition(t *testing.T) {
 
 		pos := types.Position{
 			TraderAddress: traderAddr.String(),
-			Pair:          pair.AsString(),
+			Pair:          pair.String(),
 			Size_:         sdk.ZeroDec(),
 		}
 		err = k.Positions().Create(ctx, &pos)

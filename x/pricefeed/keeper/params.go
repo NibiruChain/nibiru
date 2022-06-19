@@ -107,7 +107,7 @@ func (k Keeper) WhitelistOraclesForPairs(
 
 	newPairs := []common.AssetPair{}
 	for _, pair := range proposedPairs {
-		pairIDBytes := []byte(pair.AsString())
+		pairIDBytes := []byte(pair.String())
 		if !k.OraclesStore().getKV(ctx).Has(pairIDBytes) {
 			newPairs = append(newPairs, pair)
 		}

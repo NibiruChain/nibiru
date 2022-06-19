@@ -156,11 +156,11 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -339,11 +339,11 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -512,11 +512,11 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -664,11 +664,11 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.AsString(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.AsString(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 

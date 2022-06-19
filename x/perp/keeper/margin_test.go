@@ -101,7 +101,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: pair.AsString(),
+					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.OneDec()},
 				})
@@ -160,7 +160,7 @@ func TestAddMarginError(t *testing.T) {
 				t.Log("create msg for MsgAddMargin with invalid denom")
 				msg := &types.MsgAddMargin{
 					Sender:    sample.AccAddress().String(),
-					TokenPair: common.PAIR_uBTC_uNUSD.AsString(),
+					TokenPair: common.PAIR_uBTC_uNUSD.String(),
 					Margin:    sdk.NewCoin("notADenom", sdk.NewInt(400)),
 				}
 
@@ -190,7 +190,7 @@ func TestAddMarginError(t *testing.T) {
 				t.Log("create msg for MsgAddMargin with invalid denom")
 				msg := &types.MsgAddMargin{
 					Sender:    "",
-					TokenPair: common.PAIR_uBTC_uNUSD.AsString(),
+					TokenPair: common.PAIR_uBTC_uNUSD.String(),
 					Margin:    sdk.NewCoin("unusd", sdk.NewInt(400)),
 				}
 
@@ -220,7 +220,7 @@ func TestAddMarginError(t *testing.T) {
 				t.Log("create msg for MsgAddMargin with invalid denom")
 				msg := &types.MsgAddMargin{
 					Sender:    sample.AccAddress().String(),
-					TokenPair: common.PAIR_uBTC_uNUSD.AsString(),
+					TokenPair: common.PAIR_uBTC_uNUSD.String(),
 					Margin:    sdk.Coin{Denom: "unusd", Amount: sdk.NewInt(-400)},
 				}
 
@@ -255,7 +255,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
 				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PAIR_uBTC_uNUSD.AsString(),
+				Pair:                                common.PAIR_uBTC_uNUSD.String(),
 				Size_:                               sdk.NewDec(1_000),
 				Margin:                              sdk.NewDec(100),
 				OpenNotional:                        sdk.NewDec(500),
@@ -304,7 +304,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			perpKeeper := &nibiruApp.PerpKeeper
 			perpKeeper.PairMetadata().Set(ctx,
 				&types.PairMetadata{
-					Pair: common.PAIR_uBTC_uNUSD.AsString(),
+					Pair: common.PAIR_uBTC_uNUSD.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						tc.latestCumulativePremiumFraction,
 					},
@@ -335,7 +335,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
 			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
-			assert.EqualValues(t, common.PAIR_uBTC_uNUSD.AsString(), resp.Position.Pair)
+			assert.EqualValues(t, common.PAIR_uBTC_uNUSD.String(), resp.Position.Pair)
 			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LastUpdateCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
@@ -359,7 +359,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: trader.String(), TokenPair: pair.AsString(),
+					Sender: trader.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err = nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
@@ -377,7 +377,7 @@ func TestRemoveMargin(t *testing.T) {
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
 					Sender:    trader.String(),
-					TokenPair: pair.AsString(),
+					TokenPair: pair.String(),
 					Margin: sdk.Coin{
 						Denom:  common.StableDenom,
 						Amount: sdk.ZeroInt(),
@@ -400,7 +400,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: trader.String(), TokenPair: pair.AsString(),
+					Sender: trader.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: common.StableDenom, Amount: removeAmt}}
 				_, err = nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
@@ -432,7 +432,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(5)
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: trader.String(), TokenPair: pair.AsString(),
+					Sender: trader.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
 				_, err = perpKeeper.RemoveMargin(
 					goCtx, msg)
@@ -467,7 +467,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: pair.AsString(),
+					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.1")},
@@ -504,7 +504,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(6)
 				goCtx := sdk.WrapSDKContext(ctx)
 				msg := &types.MsgRemoveMargin{
-					Sender: traderAddr.String(), TokenPair: pair.AsString(),
+					Sender: traderAddr.String(), TokenPair: pair.String(),
 					Margin: sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}}
 
 				t.Log("'RemoveMargin' from the position")
@@ -515,7 +515,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
-					Pair:           pair.AsString(),
+					Pair:           pair.String(),
 					TraderAddress:  traderAddr.String(),
 					MarginAmount:   msg.Margin.Amount,
 					FundingPayment: res.FundingPayment,

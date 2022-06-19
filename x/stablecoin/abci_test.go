@@ -123,7 +123,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			_, err := app.PricefeedKeeper.SetPrice(
 				ctx,
 				oracle,
-				pairs[0].AsString(),
+				pairs[0].String(),
 				/* price */ tc.price,
 				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
@@ -167,7 +167,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 
 	// Sim set price set the price for one hour
 	_, err := app.PricefeedKeeper.SetPrice(
-		ctx, oracle, pairs[0].AsString(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
+		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
 	require.NoError(t, app.PricefeedKeeper.SetCurrentPrices(ctx, pairs[0].Token0, pairs[0].Token1))
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
@@ -182,7 +182,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 
 	// Post price, collateral should be valid again
 	_, err = app.PricefeedKeeper.SetPrice(
-		ctx, oracle, pairs[0].AsString(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
+		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block

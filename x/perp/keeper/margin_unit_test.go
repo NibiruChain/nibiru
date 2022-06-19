@@ -218,7 +218,7 @@ func TestRemoveMargin(t *testing.T) {
 				}
 				msg := &types.MsgRemoveMargin{
 					Sender:    trader.String(),
-					TokenPair: pair.AsString(),
+					TokenPair: pair.String(),
 					Margin:    sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)),
 				}
 
@@ -226,7 +226,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: pair.AsString(),
+					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.1")},
@@ -235,7 +235,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
 				perpKeeper.SetPosition(ctx, pair, trader, &types.Position{
 					TraderAddress:                       trader.String(),
-					Pair:                                pair.AsString(),
+					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
 					Margin:                              sdk.NewDec(500),
@@ -269,7 +269,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: pair.AsString(),
+					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.1")},
@@ -278,7 +278,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Set position a healthy position that has 0 unrealized funding")
 				perpKeeper.SetPosition(ctx, pair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
-					Pair:                                pair.AsString(),
+					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
@@ -332,7 +332,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: pair.AsString(),
+					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.1")},
@@ -341,7 +341,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Set position a healthy position that has 0 unrealized funding")
 				perpKeeper.SetPosition(ctx, pair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
-					Pair:                                pair.AsString(),
+					Pair:                                pair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
@@ -440,7 +440,7 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: assetPair.AsString(),
+					Pair: assetPair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 					},
@@ -450,14 +450,14 @@ func TestAddMargin(t *testing.T) {
 				t.Log("build msg")
 				msg := &types.MsgAddMargin{
 					Sender:    traderAddr.String(),
-					TokenPair: assetPair.AsString(),
+					TokenPair: assetPair.String(),
 					Margin:    sdk.NewInt64Coin(assetPair.GetQuoteTokenDenom(), 600),
 				}
 
 				t.Log("set a position")
 				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
-					Pair:                                assetPair.AsString(),
+					Pair:                                assetPair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
@@ -490,7 +490,7 @@ func TestAddMargin(t *testing.T) {
 
 				msg := &types.MsgAddMargin{
 					Sender:    traderAddr.String(),
-					TokenPair: assetPair.AsString(),
+					TokenPair: assetPair.String(),
 					Margin:    sdk.NewInt64Coin("unusd", 100),
 				}
 
@@ -499,7 +499,7 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: assetPair.AsString(),
+					Pair: assetPair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 					},
@@ -508,7 +508,7 @@ func TestAddMargin(t *testing.T) {
 				t.Log("set position")
 				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
-					Pair:                                assetPair.AsString(),
+					Pair:                                assetPair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
@@ -531,7 +531,7 @@ func TestAddMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.Size_)
 				assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
-				assert.EqualValues(t, assetPair.AsString(), resp.Position.Pair)
+				assert.EqualValues(t, assetPair.String(), resp.Position.Pair)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
@@ -558,7 +558,7 @@ func TestAddMargin(t *testing.T) {
 
 				msg := &types.MsgAddMargin{
 					Sender:    traderAddr.String(),
-					TokenPair: assetPair.AsString(),
+					TokenPair: assetPair.String(),
 					Margin:    sdk.NewInt64Coin("unusd", 100),
 				}
 
@@ -567,7 +567,7 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-					Pair: assetPair.AsString(),
+					Pair: assetPair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.MustNewDecFromStr("0.001"),
 					},
@@ -576,7 +576,7 @@ func TestAddMargin(t *testing.T) {
 				t.Log("set position")
 				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
-					Pair:                                assetPair.AsString(),
+					Pair:                                assetPair.String(),
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
@@ -598,7 +598,7 @@ func TestAddMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.OpenNotional)
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.Size_)
 				assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
-				assert.EqualValues(t, assetPair.AsString(), resp.Position.Pair)
+				assert.EqualValues(t, assetPair.String(), resp.Position.Pair)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.001"), resp.Position.LastUpdateCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 

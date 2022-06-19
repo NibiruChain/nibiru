@@ -105,7 +105,7 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	return quoteAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapBaseForQuoteEvent{
-		Pair:        pair.AsString(),
+		Pair:        pair.String(),
 		QuoteAmount: quoteAssetAmount,
 		BaseAmount:  baseAssetAmount,
 	})
@@ -188,7 +188,7 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	return baseAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
-		Pair:        pair.AsString(),
+		Pair:        pair.String(),
 		QuoteAmount: quoteAssetAmount,
 		BaseAmount:  baseAssetAmount,
 	})

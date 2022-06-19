@@ -33,7 +33,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if !k.ActivePairsStore().Get(ctx, pair) {
 			continue
 		}
-		postedPrices := k.GetRawPrices(ctx, pair.AsString())
+		postedPrices := k.GetRawPrices(ctx, pair.String())
 
 		if len(postedPrices) == 0 {
 			continue
@@ -51,7 +51,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 	var postedPrices []types.PostedPrice
 	for _, assetPair := range k.GetPairs(ctx) {
-		pp := k.GetRawPrices(ctx, assetPair.AsString())
+		pp := k.GetRawPrices(ctx, assetPair.String())
 		postedPrices = append(postedPrices, pp...)
 	}
 	genesis.PostedPrices = postedPrices

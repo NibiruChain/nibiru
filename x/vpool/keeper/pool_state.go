@@ -39,7 +39,7 @@ func (k Keeper) getPool(ctx sdk.Context, pair common.AssetPair) (
 ) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
 	if bz == nil {
-		return nil, fmt.Errorf("Could not find vpool for pair %s", pair.AsString())
+		return nil, fmt.Errorf("Could not find vpool for pair %s", pair.String())
 	}
 
 	var pool types.Pool

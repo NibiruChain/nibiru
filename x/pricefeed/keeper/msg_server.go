@@ -38,13 +38,13 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
 
 	pair := common.AssetPair{Token0: msg.Token0, Token1: msg.Token1}
 
-	isWhitelisted := k.IsWhitelistedOracle(ctx, pair.AsString(), from)
+	isWhitelisted := k.IsWhitelistedOracle(ctx, pair.String(), from)
 	isWhitelistedForInverse := k.IsWhitelistedOracle(
-		ctx, pair.Inverse().AsString(), from)
+		ctx, pair.Inverse().String(), from)
 	if !(isWhitelisted || isWhitelistedForInverse) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidOracle,
 			`oracle is not whitelisted for pair %v
-			oracle: %s`, pair.AsString(), from)
+			oracle: %s`, pair.String(), from)
 	}
 
 	var postedPrice sdk.Dec
@@ -55,7 +55,7 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
 		postedPrice = msg.Price
 	}
 
-	_, err = k.SetPrice(ctx, from, pair.AsString(), postedPrice, msg.Expiry)
+	_, err = k.SetPrice(ctx, from, pair.String(), postedPrice, msg.Expiry)
 	if err != nil {
 		return nil, err
 	}

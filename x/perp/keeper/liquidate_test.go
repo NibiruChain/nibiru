@@ -80,7 +80,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			))
 
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       pair.AsString(),
+				Pair:                       pair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -255,7 +255,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				params.GetPartialLiquidationRatioAsDec(),
 			))
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       tokenPair.AsString(),
+				Pair:                       tokenPair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -308,7 +308,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.AsString(),
+				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
@@ -385,7 +385,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 			params.LiquidationFee = tc.liquidationFee.MulInt64(1_000_000).RoundInt64()
 			perpKeeper.SetParams(ctx, params)
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       pair.AsString(),
+				Pair:                       pair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})
 
@@ -530,7 +530,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			))
 
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
-				Pair:                       tokenPair.AsString(),
+				Pair:                       tokenPair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -598,7 +598,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.AsString(),
+				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,

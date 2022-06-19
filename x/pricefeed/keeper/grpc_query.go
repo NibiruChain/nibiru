@@ -27,7 +27,7 @@ func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*typ
 	if !k.GetPairs(ctx).Contains(pair) {
 		return nil, status.Error(codes.NotFound, "pair not in module params")
 	}
-	if !k.ActivePairsStore().getKV(ctx).Has([]byte(pair.AsString())) {
+	if !k.ActivePairsStore().getKV(ctx).Has([]byte(pair.String())) {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
 
