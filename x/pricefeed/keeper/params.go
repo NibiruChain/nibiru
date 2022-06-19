@@ -57,21 +57,16 @@ func (k Keeper) IsActivePair(ctx sdk.Context, pairID string) bool {
 	return k.ActivePairsStore().Get(ctx, pair)
 }
 
-// GetAuthorizedAddresses returns a list of addresses that have special authorization within this module, eg the oracles of all markets.
-func (k Keeper) GetAuthorizedAddresses(ctx sdk.Context) []sdk.AccAddress {
-	var oracles []sdk.AccAddress
-	uniqueOracles := map[string]bool{}
-
-	for _, pair := range k.GetPairs(ctx) {
-		for _, oracle := range k.OraclesStore().Get(ctx, pair) {
-			// de-dup list of oracles
-			if _, found := uniqueOracles[oracle.String()]; !found {
-				oracles = append(oracles, oracle)
-			}
-			uniqueOracles[oracle.String()] = true
-		}
+// GetOraclesForPairs returns the 'oraclesMatrix' corresponding to 'pairs'.
+// 'oraclesMatrix' is a list of oracles arrays in the order the 'pairs',
+// where oraclesMatrix[i] is the set of whitelisted oracles for pairs[i].
+// This effectively gives an ordered subset of the OraclesState KVStore.
+func (k Keeper) GetOraclesForPairs(ctx sdk.Context, pairs common.AssetPairs,
+) (oraclesMatrix [][]sdk.AccAddress) {
+	for _, pair := range pairs {
+		oraclesMatrix = append(oraclesMatrix, k.GetOraclesForPair(ctx, pair.String()))
 	}
-	return oracles
+	return oraclesMatrix
 }
 
 // Whitelists given 'oracles' for all of the current pairs in the module params.

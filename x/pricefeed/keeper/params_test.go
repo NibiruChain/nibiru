@@ -70,10 +70,13 @@ func TestWhitelistOracles(t *testing.T) {
 				pk := &nibiruApp.PricefeedKeeper
 
 				oracle := sample.AccAddress()
-				for _, pairID := range pk.GetParams(ctx).Pairs {
+				paramsPairs := pk.GetParams(ctx).Pairs
+				for _, pairID := range paramsPairs {
 					require.False(t, pk.IsWhitelistedOracle(ctx, pairID, oracle))
 				}
-				require.EqualValues(t, []sdk.AccAddress(nil), pk.GetAuthorizedAddresses(ctx))
+				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, common.NewAssetPairs(paramsPairs))
+				gotOracles := gotOraclesMatrix[0]
+				require.EqualValues(t, []sdk.AccAddress(nil), gotOracles)
 			},
 		},
 		{
@@ -82,7 +85,8 @@ func TestWhitelistOracles(t *testing.T) {
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				pk := &nibiruApp.PricefeedKeeper
 
-				for _, pairID := range pk.GetParams(ctx).Pairs {
+				paramsPairs := pk.GetParams(ctx).Pairs
+				for _, pairID := range paramsPairs {
 					require.EqualValues(t, []sdk.AccAddress(nil), pk.GetOraclesForPair(ctx, pairID))
 				}
 
@@ -91,13 +95,15 @@ func TestWhitelistOracles(t *testing.T) {
 
 				wantOracles := []sdk.AccAddress{oracleA}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOracles := pk.GetAuthorizedAddresses(ctx)
+				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, common.NewAssetPairs(paramsPairs))
+				gotOracles := gotOraclesMatrix[0]
 				require.EqualValues(t, wantOracles, gotOracles)
 				require.NotContains(t, gotOracles, oracleB)
 
 				wantOracles = []sdk.AccAddress{oracleA, oracleB}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOracles = pk.GetAuthorizedAddresses(ctx)
+				gotOraclesMatrix = pk.GetOraclesForPairs(ctx, common.NewAssetPairs(paramsPairs))
+				gotOracles = gotOraclesMatrix[0]
 				require.EqualValues(t, wantOracles, gotOracles)
 			},
 		},
