@@ -55,10 +55,10 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgMintStableResponse_HappyPath(t *testing.T) {
-	accFundsGovAmount := sdk.NewCoin(common.GovDenom, sdk.NewInt(10_000))
-	accFundsCollAmount := sdk.NewCoin(common.CollDenom, sdk.NewInt(900_000))
-	neededGovFees := sdk.NewCoin(common.GovDenom, sdk.NewInt(20))      // 0.002 fee
-	neededCollFees := sdk.NewCoin(common.CollDenom, sdk.NewInt(1_800)) // 0.002 fee
+	accFundsGovAmount := sdk.NewCoin(common.DenomGov, sdk.NewInt(10_000))
+	accFundsCollAmount := sdk.NewCoin(common.DenomColl, sdk.NewInt(900_000))
+	neededGovFees := sdk.NewCoin(common.DenomGov, sdk.NewInt(20))      // 0.002 fee
+	neededCollFees := sdk.NewCoin(common.DenomColl, sdk.NewInt(1_800)) // 0.002 fee
 
 	accFundsAmt := sdk.NewCoins(
 		accFundsGovAmount.Add(neededGovFees),
@@ -82,7 +82,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				Stable:  sdk.NewCoin(common.DenomStable, sdk.NewInt(1_000_000)),
 			},
 			govPrice:               sdk.MustNewDecFromStr("10"),
 			collPrice:              sdk.MustNewDecFromStr("1"),
@@ -94,18 +94,18 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				Stable:  sdk.NewCoin(common.DenomStable, sdk.NewInt(1_000_000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable:    sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+				Stable:    sdk.NewCoin(common.DenomStable, sdk.NewInt(1_000_000)),
 				UsedCoins: sdk.NewCoins(accFundsCollAmount, accFundsGovAmount),
 				FeesPayed: sdk.NewCoins(neededCollFees, neededGovFees),
 			},
 			govPrice:   sdk.MustNewDecFromStr("10"),
 			collPrice:  sdk.MustNewDecFromStr("1"),
-			supplyNIBI: sdk.NewCoin(common.GovDenom, sdk.NewInt(10)),
+			supplyNIBI: sdk.NewCoin(common.DenomGov, sdk.NewInt(10)),
 			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
-			supplyNUSD:             sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000)),
+			supplyNUSD:             sdk.NewCoin(common.DenomStable, sdk.NewInt(1_000_000)),
 			err:                    nil,
 			isCollateralRatioValid: true,
 		},
@@ -124,8 +124,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PricefeedKeeper
 			pairs := common.AssetPairs{
-				{Token0: common.GovDenom, Token1: common.StableDenom},
-				{Token0: common.CollDenom, Token1: common.StableDenom},
+				{Token0: common.DenomGov, Token1: common.DenomStable},
+				{Token0: common.DenomColl, Token1: common.DenomStable},
 			}
 			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -156,11 +156,11 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -195,7 +195,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 				ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount),
 			)
 			collFeesInEf := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
-			assert.Equal(t, sdk.NewCoins(sdk.NewCoin(common.CollDenom, collFeesInEf)), efModuleBalance)
+			assert.Equal(t, sdk.NewCoins(sdk.NewCoin(common.DenomColl, collFeesInEf)), efModuleBalance)
 
 			// Check balances in Treasury
 			treasuryModuleBalance := nibiruApp.BankKeeper.
@@ -205,8 +205,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			assert.Equal(
 				t,
 				sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, collFeesInTreasury),
-					sdk.NewCoin(common.GovDenom, govFeesInTreasury),
+					sdk.NewCoin(common.DenomColl, collFeesInTreasury),
+					sdk.NewCoin(common.DenomGov, govFeesInTreasury),
 				),
 				treasuryModuleBalance,
 			)
@@ -227,70 +227,70 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 		{
 			name: "User has no GOV",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(9001)),
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(0)),
+				sdk.NewCoin(common.DenomColl, sdk.NewInt(9001)),
+				sdk.NewCoin(common.DenomGov, sdk.NewInt(0)),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
+				Stable:  sdk.NewCoin(common.DenomStable, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(common.DenomStable, sdk.NewInt(0)),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       types.NotEnoughBalance.Wrap(common.GovDenom),
+			err:       types.NotEnoughBalance.Wrap(common.DenomGov),
 		}, {
 			name: "User has no COLL",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(0)),
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(9001)),
+				sdk.NewCoin(common.DenomColl, sdk.NewInt(0)),
+				sdk.NewCoin(common.DenomGov, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
+				Stable:  sdk.NewCoin(common.DenomStable, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(common.DenomStable, sdk.NewInt(0)),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
-			err:       types.NotEnoughBalance.Wrap(common.CollDenom),
+			err:       types.NotEnoughBalance.Wrap(common.DenomColl),
 		},
 		{
 			name: "Not enough GOV",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(9001)),
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(1)),
+				sdk.NewCoin(common.DenomColl, sdk.NewInt(9001)),
+				sdk.NewCoin(common.DenomGov, sdk.NewInt(1)),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(1000)),
+				Stable:  sdk.NewCoin(common.DenomStable, sdk.NewInt(1000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(common.DenomStable, sdk.NewInt(0)),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(1)).String()),
+				sdk.NewCoin(common.DenomGov, sdk.NewInt(1)).String()),
 		}, {
 			name: "Not enough COLL",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(1)),
-				sdk.NewCoin(common.GovDenom, sdk.NewInt(9001)),
+				sdk.NewCoin(common.DenomColl, sdk.NewInt(1)),
+				sdk.NewCoin(common.DenomGov, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.NewInt(100)),
+				Stable:  sdk.NewCoin(common.DenomStable, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(common.StableDenom, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(common.DenomStable, sdk.NewInt(0)),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(common.CollDenom, sdk.NewInt(1)).String()),
+				sdk.NewCoin(common.DenomColl, sdk.NewInt(1)).String()),
 		},
 	}
 
@@ -307,8 +307,8 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PricefeedKeeper
 			pairs := common.AssetPairs{
-				common.CollStablePool,
-				common.GovStablePool,
+				common.PairCollStable,
+				common.PairGovStable,
 			}
 			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -339,11 +339,11 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -427,14 +427,14 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 	}{
 		{
 			name:     "Not enough stable",
-			accFunds: sdk.NewCoins(sdk.NewInt64Coin(common.StableDenom, 10)),
+			accFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 10)),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(common.StableDenom, 9001),
+				Stable:  sdk.NewInt64Coin(common.DenomStable, 9001),
 			},
 			msgResponse: &types.MsgBurnStableResponse{
-				Collateral: sdk.NewCoin(common.GovDenom, sdk.ZeroInt()),
-				Gov:        sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
+				Collateral: sdk.NewCoin(common.DenomGov, sdk.ZeroInt()),
+				Gov:        sdk.NewCoin(common.DenomColl, sdk.ZeroInt()),
 			},
 			govPrice:     sdk.MustNewDecFromStr("10"),
 			collPrice:    sdk.MustNewDecFromStr("1"),
@@ -446,22 +446,22 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.StableDenom, 1000000000),
+				sdk.NewInt64Coin(common.DenomStable, 1000000000),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 100000000),
+				sdk.NewInt64Coin(common.DenomColl, 100000000),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.StableDenom, sdk.ZeroInt()),
+				Stable:  sdk.NewCoin(common.DenomStable, sdk.ZeroInt()),
 			},
 			msgResponse: &types.MsgBurnStableResponse{
-				Gov:        sdk.NewCoin(common.GovDenom, sdk.ZeroInt()),
-				Collateral: sdk.NewCoin(common.CollDenom, sdk.ZeroInt()),
+				Gov:        sdk.NewCoin(common.DenomGov, sdk.ZeroInt()),
+				Collateral: sdk.NewCoin(common.DenomColl, sdk.ZeroInt()),
 				FeesPayed:  sdk.NewCoins(),
 			},
 			expectedPass: true,
-			err:          types.NoCoinFound.Wrap(common.StableDenom).Error(),
+			err:          types.NoCoinFound.Wrap(common.DenomStable).Error(),
 		},
 	}
 
@@ -498,8 +498,8 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PricefeedKeeper
 			pairs := common.AssetPairs{
-				{Token1: common.StableDenom, Token0: common.GovDenom},
-				{Token1: common.StableDenom, Token0: common.CollDenom},
+				{Token1: common.DenomStable, Token0: common.DenomGov},
+				{Token1: common.DenomStable, Token0: common.DenomColl},
 			}
 			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -512,11 +512,11 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 
@@ -575,17 +575,17 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.StableDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomStable, 1_000_000_000),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+				sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(common.StableDenom, 10_000_000),
+				Stable:  sdk.NewInt64Coin(common.DenomStable, 10_000_000),
 			},
-			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
-			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
+			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 9000)),
+			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 9000), sdk.NewInt64Coin(common.DenomGov, 100)),
 			expectedPass:           false,
 			isCollateralRatioValid: false,
 			err:                    types.NoValidCollateralRatio,
@@ -595,27 +595,27 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.StableDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomStable, 1_000_000_000),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+				sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: sample.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(common.StableDenom, 10_000_000),
+				Stable:  sdk.NewInt64Coin(common.DenomStable, 10_000_000),
 			},
 			msgResponse: types.MsgBurnStableResponse{
-				Gov:        sdk.NewInt64Coin(common.GovDenom, 100_000-200),       // amount - fees 0,02%
-				Collateral: sdk.NewInt64Coin(common.CollDenom, 9_000_000-18_000), // amount - fees 0,02%
+				Gov:        sdk.NewInt64Coin(common.DenomGov, 100_000-200),       // amount - fees 0,02%
+				Collateral: sdk.NewInt64Coin(common.DenomColl, 9_000_000-18_000), // amount - fees 0,02%
 				FeesPayed: sdk.NewCoins(
-					sdk.NewInt64Coin(common.GovDenom, 200),
-					sdk.NewInt64Coin(common.CollDenom, 18_000),
+					sdk.NewInt64Coin(common.DenomGov, 200),
+					sdk.NewInt64Coin(common.DenomColl, 18_000),
 				),
 			},
-			supplyNIBI:             sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
-			supplyNUSD:             sdk.NewCoin(common.StableDenom, sdk.NewInt(1_000_000_000-10_000_000)),
-			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000)),
-			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 9000), sdk.NewInt64Coin(common.GovDenom, 100)),
+			supplyNIBI:             sdk.NewCoin(common.DenomGov, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
+			supplyNUSD:             sdk.NewCoin(common.DenomStable, sdk.NewInt(1_000_000_000-10_000_000)),
+			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 9000)),
+			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 9000), sdk.NewInt64Coin(common.DenomGov, 100)),
 			expectedPass:           true,
 			isCollateralRatioValid: true,
 		},
@@ -654,8 +654,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PricefeedKeeper
 			pairs := common.AssetPairs{
-				{Token0: common.GovDenom, Token1: common.StableDenom},
-				{Token0: common.CollDenom, Token1: common.StableDenom},
+				{Token0: common.DenomGov, Token1: common.DenomStable},
+				{Token0: common.DenomColl, Token1: common.DenomStable},
 			}
 			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -664,11 +664,11 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			_, err := priceKeeper.SetPrice(
-				ctx, oracle, common.GovStablePool.String(), tc.govPrice, priceExpiry,
+				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 			_, err = priceKeeper.SetPrice(
-				ctx, oracle, common.CollStablePool.String(), tc.collPrice, priceExpiry,
+				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
 

@@ -198,7 +198,7 @@ func TestRemoveMargin(t *testing.T) {
 				msg := &types.MsgRemoveMargin{
 					Sender:    trader.String(),
 					TokenPair: the3pool,
-					Margin:    sdk.NewCoin(common.StableDenom, sdk.NewInt(5))}
+					Margin:    sdk.NewCoin(common.DenomStable, sdk.NewInt(5))}
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
@@ -420,7 +420,7 @@ func TestAddMargin(t *testing.T) {
 				msg := &types.MsgAddMargin{
 					Sender:    trader.String(),
 					TokenPair: the3pool,
-					Margin:    sdk.NewInt64Coin(common.StableDenom, 5),
+					Margin:    sdk.NewInt64Coin(common.DenomStable, 5),
 				}
 				_, err := k.AddMargin(goCtx, msg)
 				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())

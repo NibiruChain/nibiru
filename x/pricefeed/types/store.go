@@ -11,8 +11,10 @@ import (
 // Parameter keys
 var (
 	DefaultPairs = common.AssetPairs{
-		{Token0: common.CollDenom, Token1: common.StableDenom},
-		{Token0: common.GovDenom, Token1: common.StableDenom},
+		{Token0: common.DenomColl, Token1: common.DenomStable},
+		{Token0: common.DenomGov, Token1: common.DenomStable},
+		{Token0: common.DenomGov, Token1: common.DenomStable},
+		{Token0: common.DenomGov, Token1: common.DenomStable},
 	}
 )
 

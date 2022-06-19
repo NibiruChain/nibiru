@@ -90,23 +90,23 @@ func TestNewAssetPair_Constructor(t *testing.T) {
 	}{
 		{
 			"only one token",
-			common.GovDenom,
+			common.DenomGov,
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s%s%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom,
-				common.PairSeparator, common.CollDenom),
+			fmt.Sprintf("%s%s%s%s%s", common.DenomGov, common.PairSeparator, common.DenomStable,
+				common.PairSeparator, common.DenomColl),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
-			fmt.Sprintf("%s%s%s", common.GovDenom, "%", common.StableDenom),
+			fmt.Sprintf("%s%s%s", common.DenomGov, "%", common.DenomStable),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom),
+			fmt.Sprintf("%s%s%s", common.DenomGov, common.PairSeparator, common.DenomStable),
 			nil,
 		},
 		{

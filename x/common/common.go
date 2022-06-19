@@ -11,29 +11,29 @@ import (
 )
 
 var (
-	GovDenom        = "unibi"
-	CollDenom       = "uust"
-	StableDenom     = "unusd"
-	StakeTokenDenom = "stake"
-	TestTokenDenom  = "test"
-	ModuleName      = "common"
+	DenomGov        = "unibi"
+	DenomColl       = "uusdc"
+	DenomStable     = "unusd"
+	DenomStakeToken = "stake"
+	DenomTestToken  = "test"
+	DenomAxlBTC     = "axlwbtc"
+	DenomAxlETH     = "axlweth"
+
+	ModuleName = "common"
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 
 	PairSeparator = ":"
 
-	WhitelistedColl = []string{CollDenom}
+	WhitelistedColl = []string{DenomColl}
 
-	GovStablePool  = AssetPair{Token0: GovDenom, Token1: StableDenom}
-	CollStablePool = AssetPair{Token0: CollDenom, Token1: StableDenom}
-	TestStablePool = AssetPair{Token0: TestTokenDenom, Token1: StableDenom}
+	PairGovStable  = AssetPair{Token0: DenomGov, Token1: DenomStable}
+	PairCollStable = AssetPair{Token0: DenomColl, Token1: DenomStable}
+	PairTestStable = AssetPair{Token0: DenomTestToken, Token1: DenomStable}
+	PairBTCStable  = AssetPair{Token0: DenomAxlBTC, Token1: DenomStable}
+	PairETHStable  = AssetPair{Token0: DenomAxlETH, Token1: DenomStable}
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
-)
-
-var (
-	PAIR_uBTC_uNUSD = AssetPair{Token0: "uBTC", Token1: "uNUSD"}
-	PAIR_uETH_uNUSD = AssetPair{Token0: "uETH", Token1: "uNUSD"}
 )
 
 //-----------------------------------------------------------------------------

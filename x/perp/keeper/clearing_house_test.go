@@ -41,7 +41,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 			name: "happy path",
 			test: func() {
 				keeper, _, ctx := getKeeper(t)
-				pair := fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom)
+				pair := fmt.Sprintf("%s%s%s", common.DenomGov, common.PairSeparator, common.DenomStable)
 
 				metadata := &types.PairMetadata{
 					Pair: pair,

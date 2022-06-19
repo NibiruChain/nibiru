@@ -84,8 +84,8 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			oracle := sample.AccAddress()
 			oracles := []sdk.AccAddress{oracle}
 			pair := common.AssetPair{
-				Token0: common.CollDenom,
-				Token1: common.StableDenom,
+				Token0: common.DenomColl,
+				Token1: common.DenomStable,
 			}
 			params := pftypes.Params{
 				Pairs: []string{pair.String()}}
@@ -104,7 +104,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
-			err = priceKeeper.SetCurrentPrices(ctx, common.CollDenom, common.StableDenom)
+			err = priceKeeper.SetCurrentPrices(ctx, common.DenomColl, common.DenomStable)
 			require.NoError(t, err)
 
 			err = stablecoinKeeper.EvaluateCollRatio(ctx)
@@ -201,7 +201,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			protocolColl:    sdk.NewInt(500),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
 			postedAssetPairs: []common.AssetPair{
-				common.CollStablePool,
+				common.PairCollStable,
 			},
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
@@ -212,7 +212,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			protocolColl:    sdk.NewInt(600),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 600 * 1 = 600
 			postedAssetPairs: []common.AssetPair{
-				common.CollStablePool,
+				common.PairCollStable,
 			},
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.5"),  // 0.5 * 1000 = 500
@@ -238,8 +238,8 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+					sdk.NewCoin(common.DenomColl, tc.protocolColl),
+					sdk.NewCoin(common.DenomStable, tc.stableSupply),
 				),
 			))
 
@@ -248,8 +248,8 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			oracles := []sdk.AccAddress{oracle}
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
-				{Token0: common.CollDenom, Token1: common.StableDenom},
-				{Token0: common.GovDenom, Token1: common.StableDenom},
+				{Token0: common.DenomColl, Token1: common.DenomStable},
+				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
 			pricefeedParams := pftypes.Params{
 				Pairs: pairs.Strings()}
@@ -258,7 +258,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			prices := map[common.AssetPair]sdk.Dec{
-				common.CollStablePool: tc.priceCollStable,
+				common.PairCollStable: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PricefeedKeeper.SetPrice(
@@ -331,13 +331,13 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+					sdk.NewCoin(common.DenomColl, tc.protocolColl),
+					sdk.NewCoin(common.DenomStable, tc.stableSupply),
 				),
 			))
 
 			// Set up markets for the pricefeed keeper.
-			pair := common.CollStablePool
+			pair := common.PairCollStable
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pftypes.Params{
@@ -389,16 +389,16 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+					sdk.NewCoin(common.DenomColl, tc.protocolColl),
+					sdk.NewCoin(common.DenomStable, tc.stableSupply),
 				),
 			))
 
 			// Set up markets for the pricefeed keeper.
 			oracle := sample.AccAddress()
 			pair := common.AssetPair{
-				Token0: common.StableDenom,
-				Token1: common.CollDenom}
+				Token0: common.DenomStable,
+				Token1: common.DenomColl}
 			pricefeedParams := pftypes.Params{
 				Pairs: []string{pair.String()}}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
@@ -444,7 +444,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceCollStable: sdk.OneDec(),
 			postedAssetPairs: []common.AssetPair{
-				common.CollStablePool},
+				common.PairCollStable},
 			govOut:       sdk.Int{},
 			expectedPass: false,
 		},
@@ -455,7 +455,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceGovStable:  sdk.OneDec(),
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool},
+				common.PairGovStable},
 			govOut:       sdk.Int{},
 			expectedPass: false,
 		},
@@ -465,8 +465,8 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:    sdk.NewInt(10_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.7 * 10_000 = 7_000
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			priceCollStable: sdk.OneDec(),
 			priceGovStable:  sdk.NewDec(2),
@@ -481,8 +481,8 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:    sdk.NewInt(100_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.7 * 100_000 = 70_000
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			priceCollStable: sdk.OneDec(),
 			priceGovStable:  sdk.NewDec(10),
@@ -497,8 +497,8 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:    sdk.NewInt(100_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.5"), // 0.5 * 100_000 = 50_000
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			priceCollStable: sdk.OneDec(),
 			priceGovStable:  sdk.NewDec(10),
@@ -517,8 +517,8 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.stableSupply),
+					sdk.NewCoin(common.DenomColl, tc.protocolColl),
+					sdk.NewCoin(common.DenomStable, tc.stableSupply),
 				),
 			))
 
@@ -527,16 +527,16 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			oracles := []sdk.AccAddress{oracle}
 			pairs := common.AssetPairs{
-				common.CollStablePool,
-				common.GovStablePool,
+				common.PairCollStable,
+				common.PairGovStable,
 			}
 			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, oracles)
 
 			prices := map[common.AssetPair]sdk.Dec{
-				common.GovStablePool:  tc.priceGovStable,
-				common.CollStablePool: tc.priceCollStable,
+				common.PairGovStable:  tc.priceGovStable,
+				common.PairCollStable: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PricefeedKeeper.SetPrice(
@@ -550,8 +550,8 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			prices = map[common.AssetPair]sdk.Dec{
-				common.CollStablePool: tc.priceCollStable,
-				common.GovStablePool:  tc.priceGovStable,
+				common.PairCollStable: tc.priceCollStable,
+				common.PairGovStable:  tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PricefeedKeeper.SetPrice(
@@ -612,8 +612,8 @@ func TestRecollateralize(t *testing.T) {
 		{
 			name: "both prices are $1",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
@@ -624,13 +624,13 @@ func TestRecollateralize(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomColl, 1_000_000_000),
 			),
 
 			expectedNeededUSD: sdk.NewDec(100_000),
 			msg: types.MsgRecollateralize{
 				Creator: sample.AccAddress().String(),
-				Coll:    sdk.NewCoin(common.CollDenom, sdk.NewInt(100_000)),
+				Coll:    sdk.NewCoin(common.DenomColl, sdk.NewInt(100_000)),
 			},
 			response: &types.MsgRecollateralizeResponse{
 				/*
@@ -638,15 +638,15 @@ func TestRecollateralize(t *testing.T) {
 					  = 100_000 * (1.002) / priceGovStable
 					  = 100_200 / priceGovStable
 				*/
-				Gov: sdk.NewCoin(common.GovDenom, sdk.NewInt(100_200)),
+				Gov: sdk.NewCoin(common.DenomGov, sdk.NewInt(100_200)),
 			},
 			expectedPass: true,
 		},
 		{
 			name: "arbitrary valid prices",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
@@ -657,13 +657,13 @@ func TestRecollateralize(t *testing.T) {
 			},
 			priceGovStable: sdk.NewDec(5),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomColl, 1_000_000_000),
 			),
 
 			expectedNeededUSD: sdk.MustNewDecFromStr("150000.5"),
 			msg: types.MsgRecollateralize{
 				Creator: sample.AccAddress().String(),
-				Coll:    sdk.NewCoin(common.CollDenom, sdk.NewInt(50_000)),
+				Coll:    sdk.NewCoin(common.DenomColl, sdk.NewInt(50_000)),
 			},
 			response: &types.MsgRecollateralizeResponse{
 				/*
@@ -673,15 +673,15 @@ func TestRecollateralize(t *testing.T) {
 					  = 55109.9499 / priceGovStable
 					  = 11021.98998 -> 11_021
 				*/
-				Gov: sdk.NewCoin(common.GovDenom, sdk.NewInt(11_021)),
+				Gov: sdk.NewCoin(common.DenomGov, sdk.NewInt(11_021)),
 			},
 			expectedPass: true,
 		},
 		{
 			name: "protocol has sufficient collateral - error",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			priceGovStable: sdk.NewDec(1),
 			scenario: NeededCollScenario{
@@ -693,13 +693,13 @@ func TestRecollateralize(t *testing.T) {
 			},
 			expectedNeededUSD: sdk.MustNewDecFromStr("-49.9995"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 1_000_000),
+				sdk.NewInt64Coin(common.DenomColl, 1_000_000),
 			),
 
 			// Since 'neededUSD' is
 			msg: types.MsgRecollateralize{
 				Creator: sample.AccAddress().String(),
-				Coll:    sdk.NewCoin(common.CollDenom, sdk.NewInt(100)),
+				Coll:    sdk.NewCoin(common.DenomColl, sdk.NewInt(100)),
 			},
 			expectedPass: false,
 			err:          fmt.Errorf("protocol has sufficient COLL"),
@@ -707,8 +707,8 @@ func TestRecollateralize(t *testing.T) {
 		{
 			name: "caller is broke - error",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			priceGovStable: sdk.NewDec(1),
 			scenario: NeededCollScenario{
@@ -720,13 +720,13 @@ func TestRecollateralize(t *testing.T) {
 			},
 			expectedNeededUSD: sdk.MustNewDecFromStr("150"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 99),
+				sdk.NewInt64Coin(common.DenomColl, 99),
 			),
 
 			// Since 'neededUSD' is
 			msg: types.MsgRecollateralize{
 				Creator: sample.AccAddress().String(),
-				Coll:    sdk.NewCoin(common.CollDenom, sdk.NewInt(200)),
+				Coll:    sdk.NewCoin(common.DenomColl, sdk.NewInt(200)),
 			},
 			expectedPass: false,
 			err:          fmt.Errorf("Not enough balance"),
@@ -734,8 +734,8 @@ func TestRecollateralize(t *testing.T) {
 		{
 			name: "negative msg.Coll.Amount - error",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			priceGovStable: sdk.NewDec(1),
 			scenario: NeededCollScenario{
@@ -747,20 +747,21 @@ func TestRecollateralize(t *testing.T) {
 			},
 			expectedNeededUSD: sdk.MustNewDecFromStr("400"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 400),
+				sdk.NewInt64Coin(common.DenomColl, 400),
 			),
 
 			msg: types.MsgRecollateralize{
 				Creator: sample.AccAddress().String(),
-				Coll:    sdk.Coin{Denom: common.CollDenom, Amount: sdk.NewInt(-200)},
+				Coll:    sdk.Coin{Denom: common.DenomColl, Amount: sdk.NewInt(-200)},
 			},
 			expectedPass: false,
-			err:          fmt.Errorf("collateral input, -200uust, must be positive"),
+			err: fmt.Errorf(
+				"collateral input, -200%v, must be positive", common.DenomColl),
 		},
 		{
 			name: "pricefeed prices are expired - error",
 			postedAssetPairs: []common.AssetPair{
-				common.CollStablePool,
+				common.PairCollStable,
 			},
 			priceGovStable: sdk.NewDec(1),
 			scenario: NeededCollScenario{
@@ -772,11 +773,11 @@ func TestRecollateralize(t *testing.T) {
 			},
 			expectedNeededUSD: sdk.MustNewDecFromStr("400"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.CollDenom, 400),
+				sdk.NewInt64Coin(common.DenomColl, 400),
 			),
 			msg: types.MsgRecollateralize{
 				Creator: sample.AccAddress().String(),
-				Coll:    sdk.NewInt64Coin(common.CollDenom, 400),
+				Coll:    sdk.NewInt64Coin(common.DenomColl, 400),
 			},
 
 			expectedPass: false,
@@ -794,8 +795,8 @@ func TestRecollateralize(t *testing.T) {
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.scenario.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.scenario.stableSupply),
+					sdk.NewCoin(common.DenomColl, tc.scenario.protocolColl),
+					sdk.NewCoin(common.DenomStable, tc.scenario.stableSupply),
 				),
 			))
 			// Fund account
@@ -813,16 +814,16 @@ func TestRecollateralize(t *testing.T) {
 			oracles := []sdk.AccAddress{oracle}
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
-				{Token0: common.CollDenom, Token1: common.StableDenom},
-				{Token0: common.GovDenom, Token1: common.StableDenom},
+				{Token0: common.DenomColl, Token1: common.DenomStable},
+				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
 			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, oracles)
 
 			prices := map[common.AssetPair]sdk.Dec{
-				common.GovStablePool:  tc.priceGovStable,
-				common.CollStablePool: tc.scenario.priceCollStable,
+				common.PairGovStable:  tc.priceGovStable,
+				common.PairCollStable: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PricefeedKeeper.SetPrice(
@@ -836,8 +837,8 @@ func TestRecollateralize(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			prices = map[common.AssetPair]sdk.Dec{
-				common.CollStablePool: tc.scenario.priceCollStable,
-				common.GovStablePool:  tc.priceGovStable,
+				common.PairCollStable: tc.scenario.priceCollStable,
+				common.PairGovStable:  tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PricefeedKeeper.SetPrice(
@@ -892,7 +893,7 @@ func TestRecollateralize_Short(t *testing.T) {
 				sender := sample.AccAddress()
 				msg := &types.MsgRecollateralize{
 					Creator: sender.String(),
-					Coll:    sdk.NewInt64Coin(common.CollDenom, 100),
+					Coll:    sdk.NewInt64Coin(common.DenomColl, 100),
 				}
 				_, err := nibiruApp.StablecoinKeeper.Recollateralize(goCtx, msg)
 				require.ErrorContains(t, err, "input prices are expired")
@@ -969,8 +970,8 @@ func TestBuyback(t *testing.T) {
 		{
 			name: "both prices are $1",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -981,32 +982,32 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000),
+				sdk.NewInt64Coin(common.DenomGov, 1_000_000),
 			),
 			expectedAccFundsAfter: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 900_000),  // accFunds - inGov.Amount
-				sdk.NewInt64Coin(common.CollDenom, 100_000), // response.Coll
+				sdk.NewInt64Coin(common.DenomGov, 900_000),  // accFunds - inGov.Amount
+				sdk.NewInt64Coin(common.DenomColl, 100_000), // response.Coll
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
 				Creator: sample.AccAddress().String(),
-				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
+				Gov:     sdk.NewCoin(common.DenomGov, sdk.NewInt(100_000)),
 			},
 			response: &types.MsgBuybackResponse{
 				/*
 					Coll.Amount = inUSD *  / priceCollStable
 					  = 100_000 / priceCollStable
 				*/
-				Coll: sdk.NewCoin(common.CollDenom, sdk.NewInt(100_000)),
+				Coll: sdk.NewCoin(common.DenomColl, sdk.NewInt(100_000)),
 			},
 			expectedPass: true,
 		},
 		{
 			name: "arbitrary valid prices",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(850_000),
@@ -1017,17 +1018,17 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.NewDec(5),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000),
+				sdk.NewInt64Coin(common.DenomGov, 1_000_000),
 			),
 			expectedAccFundsAfter: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 953_000),  // accFunds - inGov.Amount
-				sdk.NewInt64Coin(common.CollDenom, 213_636), // response.Coll
+				sdk.NewInt64Coin(common.DenomGov, 953_000),  // accFunds - inGov.Amount
+				sdk.NewInt64Coin(common.DenomColl, 213_636), // response.Coll
 			),
 
 			expectedNeededUSD: sdk.MustNewDecFromStr("-234999.15"),
 			msg: types.MsgBuyback{
 				Creator: sample.AccAddress().String(),
-				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(50_000)),
+				Gov:     sdk.NewCoin(common.DenomGov, sdk.NewInt(50_000)),
 			},
 			response: &types.MsgBuybackResponse{
 				/*
@@ -1039,15 +1040,15 @@ func TestBuyback(t *testing.T) {
 					  = 47000 * 5 / 1.099999
 					  = 213636.55785141626 -> 213_636
 				*/
-				Coll: sdk.NewCoin(common.CollDenom, sdk.NewInt(213_636)),
+				Coll: sdk.NewCoin(common.DenomColl, sdk.NewInt(213_636)),
 			},
 			expectedPass: true,
 		},
 		{
 			name: "msg has more NIBI than the protocol needs, only needed sent",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -1058,29 +1059,29 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000),
+				sdk.NewInt64Coin(common.DenomGov, 1_000_000),
 			),
 			expectedAccFundsAfter: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 900_000),  // accFunds - inGov.Amount
-				sdk.NewInt64Coin(common.CollDenom, 100_000), // response.Coll
+				sdk.NewInt64Coin(common.DenomGov, 900_000),  // accFunds - inGov.Amount
+				sdk.NewInt64Coin(common.DenomColl, 100_000), // response.Coll
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
 				Creator: sample.AccAddress().String(),
-				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(200_000)),
+				Gov:     sdk.NewCoin(common.DenomGov, sdk.NewInt(200_000)),
 			},
 			response: &types.MsgBuybackResponse{
 				// Coll.Amount = inUSD *  / priceCollStable
-				Coll: sdk.NewCoin(common.CollDenom, sdk.NewInt(100_000)),
+				Coll: sdk.NewCoin(common.DenomColl, sdk.NewInt(100_000)),
 			},
 			expectedPass: true,
 		},
 		{
 			name: "protocol under-collateralized, so buyback won't run",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -1091,13 +1092,13 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomGov, 1_000_000_000),
 			),
 
 			expectedNeededUSD: sdk.NewDec(100_000),
 			msg: types.MsgBuyback{
 				Creator: sample.AccAddress().String(),
-				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
+				Gov:     sdk.NewCoin(common.DenomGov, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
@@ -1105,8 +1106,8 @@ func TestBuyback(t *testing.T) {
 		{
 			name: "caller has insufficient funds",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -1117,13 +1118,13 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1),
+				sdk.NewInt64Coin(common.DenomGov, 1),
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
 				Creator: sample.AccAddress().String(),
-				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
+				Gov:     sdk.NewCoin(common.DenomGov, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
@@ -1131,7 +1132,7 @@ func TestBuyback(t *testing.T) {
 		{
 			name: "fail: missing collateral price post",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
+				common.PairGovStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -1142,13 +1143,13 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomGov, 1_000_000_000),
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
 				Creator: sample.AccAddress().String(),
-				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
+				Gov:     sdk.NewCoin(common.DenomGov, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
@@ -1156,7 +1157,7 @@ func TestBuyback(t *testing.T) {
 		{
 			name: "fail: missing NIBI price post",
 			postedAssetPairs: []common.AssetPair{
-				common.CollStablePool,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -1167,13 +1168,13 @@ func TestBuyback(t *testing.T) {
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.GovDenom, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomGov, 1_000_000_000),
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
 				Creator: sample.AccAddress().String(),
-				Gov:     sdk.NewCoin(common.GovDenom, sdk.NewInt(100_000)),
+				Gov:     sdk.NewCoin(common.DenomGov, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
 			expectedPass: false,
@@ -1192,8 +1193,8 @@ func TestBuyback(t *testing.T) {
 			// Fund module account based on scenario
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.scenario.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.scenario.stableSupply),
+					sdk.NewCoin(common.DenomColl, tc.scenario.protocolColl),
+					sdk.NewCoin(common.DenomStable, tc.scenario.stableSupply),
 				),
 			))
 
@@ -1211,16 +1212,16 @@ func TestBuyback(t *testing.T) {
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
-				{Token0: common.CollDenom, Token1: common.StableDenom},
-				{Token0: common.GovDenom, Token1: common.StableDenom},
+				{Token0: common.DenomColl, Token1: common.DenomStable},
+				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
 			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			prices := map[common.AssetPair]sdk.Dec{
-				common.GovStablePool:  tc.priceGovStable,
-				common.CollStablePool: tc.scenario.priceCollStable,
+				common.PairGovStable:  tc.priceGovStable,
+				common.PairCollStable: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PricefeedKeeper.SetPrice(
@@ -1276,8 +1277,8 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 		{
 			name: "both prices $1, correct amount out",
 			postedAssetPairs: []common.AssetPair{
-				common.GovStablePool,
-				common.CollStablePool,
+				common.PairGovStable,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -1307,7 +1308,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 		{
 			name: "both prices $1, only coll price posted",
 			postedAssetPairs: []common.AssetPair{
-				common.CollStablePool,
+				common.PairCollStable,
 			},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
@@ -1330,8 +1331,8 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
 				ctx, types.ModuleName, sdk.NewCoins(
-					sdk.NewCoin(common.CollDenom, tc.scenario.protocolColl),
-					sdk.NewCoin(common.StableDenom, tc.scenario.stableSupply),
+					sdk.NewCoin(common.DenomColl, tc.scenario.protocolColl),
+					sdk.NewCoin(common.DenomStable, tc.scenario.stableSupply),
 				),
 			))
 
@@ -1339,16 +1340,16 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
-				{Token0: common.CollDenom, Token1: common.StableDenom},
-				{Token0: common.GovDenom, Token1: common.StableDenom},
+				{Token0: common.DenomColl, Token1: common.DenomStable},
+				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
 			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			prices := map[common.AssetPair]sdk.Dec{
-				common.GovStablePool:  tc.priceGovStable,
-				common.CollStablePool: tc.scenario.priceCollStable,
+				common.PairGovStable:  tc.priceGovStable,
+				common.PairCollStable: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
 				_, err := nibiruApp.PricefeedKeeper.SetPrice(

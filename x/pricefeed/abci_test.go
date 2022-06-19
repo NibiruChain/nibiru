@@ -21,8 +21,8 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 	oracle := sample.AccAddress()
 	pair := common.AssetPair{
-		Token0: common.CollDenom,
-		Token1: common.StableDenom,
+		Token0: common.DenomColl,
+		Token1: common.DenomStable,
 	}
 
 	runBlock := func(duration time.Duration) {
