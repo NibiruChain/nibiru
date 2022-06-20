@@ -225,8 +225,7 @@ func (k Keeper) RemoveMargin(
 	k.Positions().Set(ctx, pair, traderAddr, position)
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
-	err = k.BankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend))
+	err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, msg.Margin.Amount)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),

@@ -118,9 +118,7 @@ func (k Keeper) afterPositionUpdate(
 			return err
 		}
 	case marginToVaultInt.IsNegative():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt.Abs())
-		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
-			ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(coinToSend)); err != nil {
+		if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, marginToVaultInt.Abs()); err != nil {
 			return err
 		}
 	}
