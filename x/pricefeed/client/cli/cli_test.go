@@ -67,13 +67,13 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        pairs[0].Name(),
+				PairID:        pairs[0].String(),
 				OracleAddress: oracle,
 				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				PairID:        pairs[1].Name(),
+				PairID:        pairs[1].String(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),
@@ -168,7 +168,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.PairCollStable.Name(),
+				common.PairCollStable.String(),
 			},
 			expectedPrice: sdk.NewDec(1),
 			respType:      &pftypes.QueryPriceResponse{},
@@ -176,7 +176,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.PairGovStable.Name(),
+				common.PairGovStable.String(),
 			},
 			expectedPrice: sdk.NewDec(10),
 			respType:      &pftypes.QueryPriceResponse{},
@@ -230,7 +230,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.PairCollStable.Name(),
+				common.PairCollStable.String(),
 			},
 			expectedPrice: sdk.NewDec(1),
 			respType:      &pftypes.QueryRawPricesResponse{},
@@ -238,7 +238,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.PairGovStable.Name(),
+				common.PairGovStable.String(),
 			},
 			expectedPrice: sdk.NewDec(10),
 			respType:      &pftypes.QueryRawPricesResponse{},
@@ -340,8 +340,8 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 		{
 			name: "Get current prices",
 			expectedPricePairs: []pftypes.CurrentPriceResponse{
-				pftypes.NewCurrentPriceResponse(common.PairGovStable.Name(), sdk.NewDec(10)),
-				pftypes.NewCurrentPriceResponse(common.PairCollStable.Name(), sdk.NewDec(1)),
+				pftypes.NewCurrentPriceResponse(common.PairGovStable.String(), sdk.NewDec(10)),
+				pftypes.NewCurrentPriceResponse(common.PairCollStable.String(), sdk.NewDec(1)),
 			},
 			respType: &pftypes.QueryPricesResponse{},
 		},
@@ -384,7 +384,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		{
 			name: "Get the collateral oracles",
 			args: []string{
-				common.PairCollStable.Name(),
+				common.PairCollStable.String(),
 			},
 			expectedOracles: []string{genOracleAddress},
 			respType:        &pftypes.QueryOraclesResponse{},
@@ -392,7 +392,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		{
 			name: "Get the governance oracles",
 			args: []string{
-				common.PairGovStable.Name(),
+				common.PairGovStable.String(),
 			},
 			expectedOracles: []string{genOracleAddress},
 			respType:        &pftypes.QueryOraclesResponse{},
@@ -472,7 +472,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 				gov.Token0, gov.Token1, "100", expireInOneHour,
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
-				gov.Name(): sdk.NewDec(100)},
+				gov.String(): sdk.NewDec(100)},
 			respType:   &sdk.TxResponse{},
 			fromOracle: "genOracle",
 		},
@@ -482,7 +482,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 				col.Token0, col.Token1, "0.85", expireInOneHour,
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
-				col.Name(): sdk.MustNewDecFromStr("0.85")},
+				col.String(): sdk.MustNewDecFromStr("0.85")},
 			respType:   &sdk.TxResponse{},
 			fromOracle: "genOracle",
 		},
@@ -585,135 +585,147 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 	}
 }
 
+/* Test for creating and passing a proposal to whitelist an oracle.
+- This proposal starts out with an insufficient deposit amount,
+  which is then increased.
+- The validators vote and the proposal passes.
+- The whitelisted oracle account then posts a price
+*/
 func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
-	s.Run("proposal to whitelist an oracle", func() {
-		s.T().Log("Create oracle account and fill wallet")
+	s.T().Log("Create oracle account")
+	s.Require().Len(s.network.Validators, 1)
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx.WithOutputFormat("json")
+	oracleKeyringInfo, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		/* uid */ "delphi-oracle",
+		/* language */ keyring.English,
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* bip39Passphrase */ "",
+		/* algo */ hd.Secp256k1,
+	)
+	s.Require().NoError(err)
 
-		s.Require().Len(s.network.Validators, 1)
-		val := s.network.Validators[0]
-		clientCtx := val.ClientCtx.WithOutputFormat("json")
+	s.T().Log("Fill oracle wallet to pay gas on post price")
+	gasTokens := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
+	oracle := sdk.AccAddress(oracleKeyringInfo.GetPubKey().Address())
+	_, err = testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom)
+	s.Require().NoError(err)
 
-		oracleKeyringInfo, _, err := val.ClientCtx.Keyring.NewMnemonic(
-			/* uid */ "delphi-oracle",
-			/* language */ keyring.English,
-			/* hdPath */ sdk.FullFundraiserPath,
-			/* bip39Passphrase */ "",
-			/* algo */ hd.Secp256k1,
-		)
-		s.Require().NoError(err)
+	s.T().Log("load example json as bytes")
+	proposal := pftypes.AddOracleProposal{
+		Title:       "Cataclysm-004",
+		Description: "Whitelists Delphi to post prices for OHM and BTC",
+		// Oracle:      oracleKeyringInfo.GetAddress().String(),
+		Oracle: sample.AccAddress().String(),
+		Pairs:  []string{"ohm:usd", "btc:usd"},
+	}
+	proposalJSONString := fmt.Sprintf(`
+		{
+			"title": "%v",
+			"description": "%v",
+			"oracle": "%v",
+			"pairs": ["%v", "%v"],
+			"deposit": "1000unibi"
+		}	
+		`, proposal.Title, proposal.Description, proposal.Oracle, proposal.Pairs[0],
+		proposal.Pairs[1],
+	)
+	proposalJSON := sdktestutil.WriteToNewTempFile(
+		s.T(), proposalJSONString,
+	)
+	contents, err := ioutil.ReadFile(proposalJSON.Name())
+	s.Assert().NoError(err)
 
-		s.T().Log("Fill oracle wallet so they can pay gas on post price")
+	s.T().Log("Unmarshal json bytes into proposal object; check validity")
+	encodingConfig := simappparams.MakeTestEncodingConfig()
+	proposalWithDeposit := &pftypes.AddOracleProposalWithDeposit{}
+	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposalWithDeposit)
+	s.Assert().NoError(err)
+	s.Require().NoError(proposal.Validate())
 
-		gasTokens := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
-		oracle := sdk.AccAddress(oracleKeyringInfo.GetPubKey().Address())
-		_, err = testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom)
-		s.Require().NoError(err)
+	s.T().Log("Submit proposal and unmarshal tx response")
+	cmd := cli.CmdAddOracleProposal()
+	args := []string{
+		proposalJSON.Name(),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		fmt.Sprintf("--from=%s", val.Address.String()),
+	}
+	out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+	s.Require().NoError(err)
+	s.Assert().NotContains(out.String(), "fail")
+	var txRespProtoMessage proto.Message = &sdk.TxResponse{}
+	s.Assert().NoError(
+		clientCtx.Codec.UnmarshalJSON(out.Bytes(), txRespProtoMessage),
+		out.String())
+	txResp := txRespProtoMessage.(*sdk.TxResponse)
+	err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+	s.Assert().NoError(err)
+	s.Assert().EqualValues(0, txResp.Code, out.String())
 
-		s.T().Log("load example json as bytes")
+	s.T().Log(`Check that proposal was correctly submitted with gov client
+			$ nibid query gov proposal 1`)
+	// the proposal tx won't be included until next block
+	s.Assert().NoError(s.network.WaitForNextBlock())
+	govQueryClient := govtypes.NewQueryClient(clientCtx)
+	proposalsQueryResponse, err := govQueryClient.Proposals(
+		context.Background(), &govtypes.QueryProposalsRequest{},
+	)
+	s.Require().NoError(err)
+	s.Assert().NotEmpty(proposalsQueryResponse.Proposals)
+	s.Assert().EqualValues(1, proposalsQueryResponse.Proposals[0].ProposalId,
+		"first proposal should have proposal ID of 1")
+	s.Assert().Equalf(
+		govtypes.StatusDepositPeriod,
+		proposalsQueryResponse.Proposals[0].Status,
+		"proposal should be in deposit period as it hasn't passed min deposit")
+	s.Assert().EqualValues(
+		sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)),
+		proposalsQueryResponse.Proposals[0].TotalDeposit,
+	)
 
-		proposal := pftypes.AddOracleProposal{
-			Title:       "Cataclysm-004",
-			Description: "Whitelists Delphi to post prices for OHM and BTC",
-			// Oracle:      oracleKeyringInfo.GetAddress().String(),
-			Oracle: sample.AccAddress().String(),
-			Pairs:  []string{"ohm:usd", "btc:usd"},
-		}
-		proposalJSONString := fmt.Sprintf(`
-			{
-				"title": "%v",
-				"description": "%v",
-				"oracle": "%v",
-				"pairs": ["%v", "%v"],
-				"deposit": "1000unibi"
-			}	
-			`, proposal.Title, proposal.Description, proposal.Oracle, proposal.Pairs[0],
-			proposal.Pairs[1],
-		)
-		proposalJSON := sdktestutil.WriteToNewTempFile(
-			s.T(), proposalJSONString,
-		)
-		contents, err := ioutil.ReadFile(proposalJSON.Name())
-		s.Assert().NoError(err)
+	s.T().Log(`Move proposal to vote status by meeting min deposit
+			$ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
+	govDepositParams, err := govQueryClient.Params(
+		context.Background(), &govtypes.QueryParamsRequest{ParamsType: govtypes.ParamDeposit})
+	s.Assert().NoError(err)
+	args = []string{
+		/*proposal-id=*/ "1",
+		/*deposit=*/ govDepositParams.DepositParams.MinDeposit.String(),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		fmt.Sprintf("--from=%s", val.Address.String()),
+	}
+	_, err = clitestutil.ExecTestCLICmd(clientCtx, govcli.NewCmdDeposit(), args)
+	s.Assert().NoError(err)
 
-		s.T().Log("Unmarshal json bytes into proposal object; check validity")
+	s.Assert().NoError(s.network.WaitForNextBlock())
+	govQueryClient = govtypes.NewQueryClient(clientCtx)
+	proposalsQueryResponse, err = govQueryClient.Proposals(
+		context.Background(), &govtypes.QueryProposalsRequest{})
+	s.Require().NoError(err)
+	s.Assert().Equalf(
+		govtypes.StatusVotingPeriod,
+		proposalsQueryResponse.Proposals[0].Status,
+		"proposal should be in voting period since min deposit has been met")
 
-		encodingConfig := simappparams.MakeTestEncodingConfig()
-		proposalWithDeposit := &pftypes.AddOracleProposalWithDeposit{}
-		err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposalWithDeposit)
-		s.Assert().NoError(err)
-		s.Require().NoError(proposal.Validate())
+	s.T().Log(`Vote on the proposal.
+			$ nibid tx gov vote [proposal-id] [option] [flags]
+			e.g. $ nibid tx gov vote 1 yes`)
+	args = []string{
+		/*proposal-id=*/ "1",
+		/*option=*/ "yes",
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		fmt.Sprintf("--from=%s", val.Address.String()),
+	}
+	_, err = clitestutil.ExecTestCLICmd(clientCtx, govcli.NewCmdVote(), args)
+	s.Assert().NoError(err)
+	txResp = &sdk.TxResponse{}
+	err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+	s.Assert().NoError(err)
+	s.Assert().EqualValues(0, txResp.Code, out.String())
 
-		s.T().Log("Submit proposal and unmarshal tx response")
-
-		cmd := cli.CmdAddOracleProposal()
-		args := []string{
-			proposalJSON.Name(),
-			fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-			fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
-			fmt.Sprintf("--from=%s", val.Address.String()),
-		}
-		out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-		s.Require().NoError(err)
-		s.Assert().NotContains(out.String(), "fail")
-		var txRespProtoMessage proto.Message = &sdk.TxResponse{}
-		s.Assert().NoError(
-			clientCtx.Codec.UnmarshalJSON(out.Bytes(), txRespProtoMessage),
-			out.String())
-		txResp := txRespProtoMessage.(*sdk.TxResponse)
-		err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
-		s.Assert().NoError(err)
-		s.Assert().EqualValues(0, txResp.Code, out.String())
-
-		s.T().Log("Check that proposal was correctly submitted with gov client")
-
-		// the proposal tx won't be included until next block
-		s.Assert().NoError(s.network.WaitForNextBlock())
-		govQueryClient := govtypes.NewQueryClient(clientCtx)
-		proposalsQueryResponse, err := govQueryClient.Proposals(
-			context.Background(), &govtypes.QueryProposalsRequest{},
-		)
-		s.Require().NoError(err)
-		s.Assert().NotEmpty(proposalsQueryResponse.Proposals)
-		s.Assert().EqualValues(1, proposalsQueryResponse.Proposals[0].ProposalId,
-			"first proposal should have proposal ID of 1")
-		s.Assert().Equalf(
-			govtypes.StatusDepositPeriod,
-			proposalsQueryResponse.Proposals[0].Status,
-			"proposal should be in deposit period as it hasn't passed min deposit")
-		s.Assert().EqualValues(
-			sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)),
-			proposalsQueryResponse.Proposals[0].TotalDeposit,
-		)
-
-		s.T().Log("Move proposal to vote status by meeting min deposit")
-
-		govDepositParams, err := govQueryClient.Params(
-			context.Background(), &govtypes.QueryParamsRequest{ParamsType: govtypes.ParamDeposit})
-		s.Assert().NoError(err)
-
-		args = []string{
-			/*id=*/ "1",
-			/*deposit=*/ govDepositParams.DepositParams.MinDeposit.String(),
-			fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-			fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
-			fmt.Sprintf("--from=%s", val.Address.String()),
-		}
-		_, err = clitestutil.ExecTestCLICmd(clientCtx, govcli.NewCmdDeposit(), args)
-		s.Assert().NoError(err)
-
-		s.Assert().NoError(s.network.WaitForNextBlock())
-		govQueryClient = govtypes.NewQueryClient(clientCtx)
-		proposalsQueryResponse, err = govQueryClient.Proposals(
-			context.Background(), &govtypes.QueryProposalsRequest{})
-		s.Require().NoError(err)
-		s.Assert().Equalf(
-			govtypes.StatusVotingPeriod,
-			proposalsQueryResponse.Proposals[0].Status,
-			"proposal should be in voting period since min deposit has been met")
-
-		s.T().Log("Vote on the proposal")
-
-	})
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

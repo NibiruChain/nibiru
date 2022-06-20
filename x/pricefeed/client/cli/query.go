@@ -53,7 +53,7 @@ func CmdPrice() *cobra.Command {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			request := &types.QueryPriceRequest{PairId: pair.Name()}
+			request := &types.QueryPriceRequest{PairId: pair.String()}
 
 			res, err := queryClient.QueryPrice(cmd.Context(), request)
 			if err != nil {
@@ -145,7 +145,7 @@ func CmdOracles() *cobra.Command {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			request := &types.QueryOraclesRequest{PairId: pair.Name()}
+			request := &types.QueryOraclesRequest{PairId: pair.String()}
 
 			res, err := queryClient.QueryOracles(cmd.Context(), request)
 			if err != nil {
