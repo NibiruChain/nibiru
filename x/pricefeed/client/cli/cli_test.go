@@ -712,7 +712,6 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 			"proposal should be in voting period since min deposit has been met")
 
 		s.T().Log("Vote on the proposal")
-
 	})
 }
 

@@ -43,6 +43,7 @@ VALIDATOR_MNEMONIC="guard cream sadness conduct invite crumble clock pudding hol
 SHRIMP_MNEMONIC="item segment elevator fork swim tone search hope enough asthma apology pact embody extra trash educate deposit raccoon giant gift essay able female develop"
 WHALE_MNEMONIC="throw oblige vague twist clutch grunt physical sell conduct blossom owner delay suspect square kidney joy define book boss outside reason silk success you"
 LIQUIDATOR_MNEMONIC="oxygen tattoo pond upgrade barely sudden wheat correct dumb roast glance conduct scene profit female health speak hire north grab allow provide depend away"
+ORACLE_MNEMONIC="abandon wave reason april rival valid saddle cargo aspect toe tomato stomach zero quick side potato artwork mixture over basket sort churn palace cherry"
 GENESIS_COINS=1000000000stake,10000000000000000000unibi,10000000000000000000unusd
 
 # Stop nibid if it is already running
@@ -132,8 +133,12 @@ echo "$WHALE_MNEMONIC" | $BINARY keys add whale --recover --home $CHAIN_DIR
 $BINARY add-genesis-account $($BINARY keys show whale -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
 
 # liquidator
-echo "$LIQUIDATOR_MNEMONIC" | $BINARY keys add liquidator --home $CHAIN_DIR
+echo "$LIQUIDATOR_MNEMONIC" | $BINARY keys add liquidator --home $CHAIN_DIR --recover
 $BINARY add-genesis-account $($BINARY keys show liquidator -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
+
+# oracle
+echo "$ORACLE_MNEMONIC" | $BINARY keys add oracle --home $CHAIN_DIR --recover
+$BINARY add-genesis-account $($BINARY keys show oracle -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
 
 echo_success "Genesis accounts added"
 

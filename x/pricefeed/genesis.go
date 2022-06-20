@@ -14,7 +14,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	k.SetParams(ctx, genState.Params)
 	k.ActivePairsStore().
 		AddActivePairs(ctx, common.NewAssetPairs(genState.Params.Pairs))
-	k.WhitelistOracles(ctx, genState.GenesisOracles)
+
+	k.WhitelistOracles(
+		ctx,
+		append(
+			genState.GenesisOracles,
+			sdk.MustAccAddressFromBech32("nibi1pzd5e402eld9kcc3h78tmfrm5rpzlzk6hnxkvu")),
+	)
 
 	// If posted prices are not expired, set them in the store
 	for _, pp := range genState.PostedPrices {
