@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -16,6 +17,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
+
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 
@@ -629,15 +632,14 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		contents, err := ioutil.ReadFile(proposalJSON.Name())
 		s.Assert().NoError(err)
 
-		s.T().Log("Unmarshal json bytes into proposal object")
+		s.T().Log("Unmarshal json bytes into proposal object; check validity")
 		encodingConfig := simappparams.MakeTestEncodingConfig()
 		proposalWithDeposit := &pftypes.AddOracleProposalWithDeposit{}
 		err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposalWithDeposit)
 		s.Assert().NoError(err)
-
-		s.T().Log("Check proposal validity")
 		s.Require().NoError(proposal.Validate())
 
+		s.T().Log("Submit proposal and unmarshal tx response")
 		cmd := cli.CmdAddOracleProposal()
 		args := []string{
 			proposalJSON.Name(),
@@ -645,9 +647,40 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 			fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 			fmt.Sprintf("--from=%s", val.Address.String()),
 		}
-
-		_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+		out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
 		s.Require().NoError(err)
+		s.Assert().NotContains(out.String(), "fail")
+		var txRespProtoMessage proto.Message = &sdk.TxResponse{}
+		s.Assert().NoError(
+			clientCtx.Codec.UnmarshalJSON(out.Bytes(), txRespProtoMessage),
+			out.String())
+		txResp := txRespProtoMessage.(*sdk.TxResponse)
+		err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+		s.Assert().NoError(err)
+		s.Assert().EqualValues(0, txResp.Code, out.String())
+
+		s.T().Log("Check that proposal was correctly submitted with gov client")
+		s.network.WaitForNextBlock() // the proposal tx isn't included until next block
+		govQueryClient := govtypes.NewQueryClient(clientCtx)
+		proposalsQueryResponse, err := govQueryClient.Proposals(
+			context.Background(), &govtypes.QueryProposalsRequest{},
+		)
+		s.Require().NoError(err)
+		var proposals []govtypes.Proposal = proposalsQueryResponse.Proposals
+		s.Assert().NotEmpty(proposalsQueryResponse.Proposals)
+		s.Assert().EqualValues(1, proposals[0].ProposalId,
+			"first proposal should have proposal ID of 1")
+		s.Assert().Equalf(
+			govtypes.StatusDepositPeriod,
+			proposals[0].Status,
+			"proposal should be in deposit period as it hasn't passed min deposit")
+		s.Assert().EqualValues(
+			sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)),
+			proposals[0].TotalDeposit,
+		)
+		govDepositParams, err := govQueryClient.Params(
+			context.Background(), &govtypes.QueryParamsRequest{ParamsType: govtypes.ParamDeposit})
+		fmt.Println(govDepositParams, err)
 	})
 }
 
