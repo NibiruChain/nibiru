@@ -13,13 +13,13 @@ var LiquidityRatioBands = sdk.MustNewDecFromStr("0.001")
 func (k Keeper) GetSupplyNUSD(
 	ctx sdk.Context,
 ) sdk.Coin {
-	return k.BankKeeper.GetSupply(ctx, common.StableDenom)
+	return k.BankKeeper.GetSupply(ctx, common.DenomStable)
 }
 
 func (k Keeper) GetSupplyNIBI(
 	ctx sdk.Context,
 ) sdk.Coin {
-	return k.BankKeeper.GetSupply(ctx, common.GovDenom)
+	return k.BankKeeper.GetSupply(ctx, common.DenomGov)
 }
 
 func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
@@ -27,7 +27,7 @@ func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
 }
 
 func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
-	pairID, err := k.DexKeeper.GetFromPair(ctx, common.GovDenom, common.StableDenom)
+	pairID, err := k.DexKeeper.GetFromPair(ctx, common.DenomGov, common.DenomStable)
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -37,7 +37,7 @@ func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
 		return sdk.Int{}, err
 	}
 
-	price, err := pool.CalcSpotPrice(common.GovDenom, common.StableDenom)
+	price, err := pool.CalcSpotPrice(common.DenomGov, common.DenomStable)
 	if err != nil {
 		return sdk.Int{}, err
 	}

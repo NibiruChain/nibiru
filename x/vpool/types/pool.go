@@ -25,7 +25,7 @@ func NewPool(
 }
 
 func (p *Pool) GetAssetPair() common.AssetPair {
-	pair, err := common.NewAssetPairFromStr(p.Pair)
+	pair, err := common.NewAssetPair(p.Pair)
 	if err != nil {
 		panic(err)
 	}

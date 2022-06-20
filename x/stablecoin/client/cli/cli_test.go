@@ -40,31 +40,26 @@ type IntegrationTestSuite struct {
 func NewPricefeedGen() *pftypes.GenesisState {
 	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
 
+	pairs := common.AssetPairs{
+		common.PairGovStable, common.PairCollStable,
+	}
 	return &pftypes.GenesisState{
-		Params: pftypes.Params{
-			Pairs: []pftypes.Pair{
-				{Token0: common.GovStablePool.Token0,
-					Token1:  common.GovStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-				{Token0: common.CollStablePool.Token0,
-					Token1:  common.CollStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-			},
-		},
+		Params: pftypes.Params{Pairs: pairs.Strings()},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.GovStablePool.PairID(),
+				PairID:        common.PairGovStable.Name(),
 				OracleAddress: oracle,
 				Price:         sdk.NewDec(10),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 			{
-				PairID:        common.CollStablePool.PairID(),
+				PairID:        common.PairCollStable.Name(),
 				OracleAddress: oracle,
 				Price:         sdk.OneDec(),
 				Expiry:        time.Now().Add(1 * time.Hour),
 			},
 		},
+		GenesisOracles: []sdk.AccAddress{oracle},
 	}
 }
 
@@ -89,7 +84,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// IsCollateralRatioValid behavior testted in x/stablecoin/abci_test.go
 	stableGen.Params.IsCollateralRatioValid = true
-	stableGen.ModuleAccountBalance = sdk.NewCoin(common.CollDenom, sdk.NewInt(10000000000))
+	stableGen.ModuleAccountBalance = sdk.NewCoin(common.DenomColl, sdk.NewInt(10000000000))
 
 	stableGenJson := s.cfg.Codec.MustMarshalJSON(stableGen)
 	genesisState[stabletypes.ModuleName] = stableGenJson
@@ -141,8 +136,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
+			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 		),
 		val)
 
@@ -201,7 +196,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 				s.Require().NoError(err)
 
 				s.Require().Equal(
-					balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
+					balRes.Balances.AmountOf(common.DenomStable), tc.expectedStable)
 			}
 		})
 	}
@@ -218,7 +213,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
-			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
 	)
@@ -256,8 +251,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			expectedStable:   sdk.ZeroInt(),
 			expectedColl:     sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
 			expectedGov:      sdk.ZeroInt(),
-			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
-			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
+			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 50_000)),
+			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 50_000)),
 			expectErr:        false,
 			respType:         &sdk.TxResponse{},
 			expectedCode:     0,
@@ -306,11 +301,11 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				s.Require().NoError(err)
 
 				s.Require().Equal(
-					tc.expectedColl, balRes.Balances.AmountOf(common.CollDenom))
+					tc.expectedColl, balRes.Balances.AmountOf(common.DenomColl))
 				s.Require().Equal(
-					tc.expectedGov, balRes.Balances.AmountOf(common.GovDenom))
+					tc.expectedGov, balRes.Balances.AmountOf(common.DenomGov))
 				s.Require().Equal(
-					tc.expectedStable, balRes.Balances.AmountOf(common.StableDenom))
+					tc.expectedStable, balRes.Balances.AmountOf(common.DenomStable))
 
 				// Query treasury pool balance
 				resp, err = banktestutil.QueryBalancesExec(

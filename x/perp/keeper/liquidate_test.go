@@ -50,7 +50,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-			pair, err2 := common.NewAssetPairFromStr("BTC:NUSD")
+			pair, err2 := common.NewAssetPair("BTC:NUSD")
 			require.NoError(t, err2)
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -126,7 +126,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair, err := common.NewAssetPairFromStr("BTC:NUSD")
+	tokenPair, err := common.NewAssetPair("BTC:NUSD")
 	require.NoError(t, err)
 
 	traderAddr := sample.AccAddress()
@@ -155,7 +155,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			// txFee = exchangedQuote * 20 bps = 100
 			traderFunds: sdk.NewInt64Coin("NUSD", 50_100),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 50_000 * 0.1 / 2 = 2500
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 2_500),
 			// startingBalance = 1_000_000
@@ -175,7 +175,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			baseAssetLimit: sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.123123"),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 50_000 * 0.123123 / 2 = 3078.025 → 3078
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 3078),
 			// startingBalance = 1_000_000
@@ -197,7 +197,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("NUSD", 1150),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
 			// startingBalance = 1_000_000
@@ -215,7 +215,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("NUSD", 1150),
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 500_000 * 0.1 / 2 = 25_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
 			// startingBalance = 1_000_000
@@ -231,7 +231,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
-			t.Log("Set vpool defined by pair on VpoolKeeper")
+			t.Log("create vpool")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -244,7 +244,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
-			t.Log("Set vpool defined by pair on PerpKeeper")
+			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
@@ -305,15 +305,24 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
+			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
+				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
 				BadDebt:               resp.BadDebt,
+				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionSize:          newPosition.Size_,
+				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				MarkPrice:             newMarkPrice,
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			})
 		})
 	}
@@ -354,7 +363,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Initialize keepers, pair, and liquidator")
 			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-			pair, err := common.NewAssetPairFromStr("xxx:yyy")
+			pair, err := common.NewAssetPair("xxx:yyy")
 			require.NoError(t, err)
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			perpKeeper := &nibiruApp.PerpKeeper
@@ -418,7 +427,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 
 func TestExecutePartialLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair, err := common.NewAssetPairFromStr("xxx:yyy")
+	tokenPair, err := common.NewAssetPair("xxx:yyy")
 	require.NoError(t, err)
 
 	traderAddr := sample.AccAddress()
@@ -453,7 +462,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			expectedMarginRemaining: sdk.MustNewDecFromStr("47999.999999994000000000"), // approx 2k less but slippage
 
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * 0.4 * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
@@ -478,7 +487,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			expectedMarginRemaining: sdk.MustNewDecFromStr("48000.000000014000000000"),  // approx 2k less but slippage
 
 			// feeToLiquidator
-			//   = positionResp.ExchangedQuoteAssetAmount * 0.4 * liquidationFee / 2
+			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
@@ -586,15 +595,24 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			)
 
 			t.Log("check emitted events")
+			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedQuoteAssetAmount,
+				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidator.String(),
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
 				BadDebt:               resp.BadDebt,
+				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionSize:          newPosition.Size_,
+				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				MarkPrice:             newMarkPrice,
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			})
 		})
 	}

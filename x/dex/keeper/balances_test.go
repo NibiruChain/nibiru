@@ -8,6 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
@@ -27,11 +28,11 @@ func TestCheckBalances(t *testing.T) {
 			name: "has enough funds",
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin("unusd", 100),
+				sdk.NewInt64Coin(common.DenomStable, 100),
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin("unusd", 100),
+				sdk.NewInt64Coin(common.DenomStable, 100),
 			),
 			expectedError: nil,
 		},
@@ -42,7 +43,7 @@ func TestCheckBalances(t *testing.T) {
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin("unusd", 100),
+				sdk.NewInt64Coin(common.DenomStable, 100),
 			),
 			expectedError: sdkerrors.ErrInsufficientFunds,
 		},

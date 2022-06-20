@@ -151,15 +151,15 @@ func DefaultConfig() Config {
 		ChainID:       "chain-" + tmrand.NewRand().Str(6),
 		NumValidators: 1,
 		BondDenom:     sdk.DefaultBondDenom, // TODO(https://github.com/NibiruChain/nibiru/issues/582): remove 'stake' denom and replace with 'unibi'
-		MinGasPrices:  fmt.Sprintf("0.000006%s", common.GovDenom),
+		MinGasPrices:  fmt.Sprintf("0.000006%s", common.DenomGov),
 		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
-			sdk.NewCoin(common.StableDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.GovDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.CollDenom, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.TestTokenDenom, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.DenomStable, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.DenomGov, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.DenomColl, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.DenomTestToken, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: storetypes.PruningOptionNothing,
 		CleanupDir:      true,
@@ -459,6 +459,35 @@ func (n *Network) WaitForNextBlock() error {
 	}
 
 	return err
+}
+
+// WaitForDuration waits for at least the duration provided in blockchain time.
+func (n *Network) WaitForDuration(duration time.Duration) error {
+	if len(n.Validators) == 0 {
+		return fmt.Errorf("no validators")
+	}
+	val := n.Validators[0]
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	lastBlock, err := val.RPCClient.Block(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	waitAtLeastUntil := lastBlock.Block.Time.Add(duration)
+
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		block, err := val.RPCClient.Block(ctx, nil)
+		if err != nil {
+			return err
+		}
+		if block.Block.Time.After(waitAtLeastUntil) {
+			return nil
+		}
+	}
 }
 
 // Cleanup removes the root testing (temporary) directory and stops both the

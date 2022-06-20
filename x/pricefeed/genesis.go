@@ -1,10 +1,9 @@
 package pricefeed
 
 import (
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
@@ -12,15 +11,15 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	// this line is used by starport scaffolding # genesis/module/init
 	k.SetParams(ctx, genState.Params)
+	k.ActivePairsStore().
+		AddActivePairs(ctx, common.NewAssetPairs(genState.Params.Pairs))
+	k.WhitelistOracles(ctx, genState.GenesisOracles)
 
-	// Iterate through the posted prices and set them in the store if they are not expired
+	// If posted prices are not expired, set them in the store
 	for _, pp := range genState.PostedPrices {
 		if pp.Expiry.After(ctx.BlockTime()) {
-			tokens := strings.Split(pp.PairID, ":")
-			token0, token1 := tokens[0], tokens[1]
-			_, err := k.SetPrice(ctx, pp.OracleAddress, token0, token1, pp.Price, pp.Expiry)
+			_, err := k.SetPrice(ctx, pp.OracleAddress, pp.PairID, pp.Price, pp.Expiry)
 			if err != nil {
 				panic(err)
 			}
@@ -29,16 +28,17 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	params := k.GetParams(ctx)
 
 	// Set the current price (if any) based on what's now in the store
-	for _, market := range params.Pairs {
-		if !market.Active {
+	for _, pairID := range params.Pairs {
+		pair := common.MustNewAssetPair(pairID)
+		if !k.ActivePairsStore().Get(ctx, pair) {
 			continue
 		}
-		rps := k.GetRawPrices(ctx, market.PairID())
+		postedPrices := k.GetRawPrices(ctx, pair.String())
 
-		if len(rps) == 0 {
+		if len(postedPrices) == 0 {
 			continue
 		}
-		err := k.SetCurrentPrices(ctx, market.Token0, market.Token1)
+		err := k.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
 		if err != nil {
 			panic(err)
 		}
@@ -50,8 +50,8 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
 	var postedPrices []types.PostedPrice
-	for _, market := range k.GetPairs(ctx) {
-		pp := k.GetRawPrices(ctx, market.PairID())
+	for _, assetPair := range k.GetPairs(ctx) {
+		pp := k.GetRawPrices(ctx, assetPair.String())
 		postedPrices = append(postedPrices, pp...)
 	}
 	genesis.PostedPrices = postedPrices
