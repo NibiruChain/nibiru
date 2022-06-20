@@ -13,7 +13,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*types.QueryPriceResponse, error) {
+func (k Keeper) QueryPrice(goCtx context.Context, req *types.QueryPriceRequest) (*types.QueryPriceResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -43,7 +43,7 @@ func (k Keeper) Price(goCtx context.Context, req *types.QueryPriceRequest) (*typ
 	}, nil
 }
 
-func (k Keeper) RawPrices(
+func (k Keeper) QueryRawPrices(
 	goCtx context.Context, req *types.QueryRawPricesRequest,
 ) (*types.QueryRawPricesResponse, error) {
 	if req == nil {
@@ -71,7 +71,7 @@ func (k Keeper) RawPrices(
 	}, nil
 }
 
-func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*types.QueryPricesResponse, error) {
+func (k Keeper) QueryPrices(goCtx context.Context, req *types.QueryPricesRequest) (*types.QueryPricesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -90,7 +90,7 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 	}, nil
 }
 
-func (k Keeper) Oracles(goCtx context.Context, req *types.QueryOraclesRequest) (*types.QueryOraclesResponse, error) {
+func (k Keeper) QueryOracles(goCtx context.Context, req *types.QueryOraclesRequest) (*types.QueryOraclesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -117,7 +117,7 @@ func (k Keeper) Oracles(goCtx context.Context, req *types.QueryOraclesRequest) (
 	}, nil
 }
 
-func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (k Keeper) QueryParams(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -126,7 +126,7 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-func (k Keeper) Pairs(goCtx context.Context, req *types.QueryPairsRequest,
+func (k Keeper) QueryPairs(goCtx context.Context, req *types.QueryPairsRequest,
 ) (*types.QueryPairsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")

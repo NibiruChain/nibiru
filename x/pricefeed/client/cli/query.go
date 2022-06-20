@@ -55,7 +55,7 @@ func CmdPrice() *cobra.Command {
 
 			request := &types.QueryPriceRequest{PairId: pair.Name()}
 
-			res, err := queryClient.Price(cmd.Context(), request)
+			res, err := queryClient.QueryPrice(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -84,7 +84,7 @@ func CmdPrices() *cobra.Command {
 
 			request := &types.QueryPricesRequest{}
 
-			res, err := queryClient.Prices(cmd.Context(), request)
+			res, err := queryClient.QueryPrices(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -113,7 +113,7 @@ func CmdPairs() *cobra.Command {
 
 			request := &types.QueryPairsRequest{}
 
-			res, err := queryClient.Pairs(cmd.Context(), request)
+			res, err := queryClient.QueryPairs(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -147,7 +147,7 @@ func CmdOracles() *cobra.Command {
 
 			request := &types.QueryOraclesRequest{PairId: pair.Name()}
 
-			res, err := queryClient.Oracles(cmd.Context(), request)
+			res, err := queryClient.QueryOracles(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -174,7 +174,7 @@ func CmdQueryParams() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
+			res, err := queryClient.QueryParams(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
@@ -210,7 +210,7 @@ func CmdRawPrices() *cobra.Command {
 				PairId: args[0],
 			}
 
-			res, err := queryClient.RawPrices(cmd.Context(), req)
+			res, err := queryClient.QueryRawPrices(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

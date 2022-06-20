@@ -21,7 +21,7 @@ func TestParamsQuery(t *testing.T) {
 	}
 	keeper.SetParams(ctx, params)
 
-	response, err := keeper.Params(wctx, &types.QueryParamsRequest{})
+	response, err := keeper.QueryParams(wctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
 }
@@ -49,13 +49,13 @@ func TestOraclesQuery(t *testing.T) {
 		/*pairs=*/ []common.AssetPair{common.MustNewAssetPair(pairs[3])})
 
 	t.Log("Query for pair 2 oracles | ADA")
-	response, err := keeper.Oracles(wctx, &types.QueryOraclesRequest{PairId: pairs[2]})
+	response, err := keeper.QueryOracles(wctx, &types.QueryOraclesRequest{PairId: pairs[2]})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
 		Oracles: []string{oracleA.String(), oracleB.String()}}, response)
 
 	t.Log("Query for pair 3 oracles | ETH")
-	response, err = keeper.Oracles(wctx, &types.QueryOraclesRequest{PairId: pairs[3]})
+	response, err = keeper.QueryOracles(wctx, &types.QueryOraclesRequest{PairId: pairs[3]})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
 		Oracles: []string{oracleC.String()}}, response)
@@ -78,7 +78,7 @@ func TestMarketsQuery(t *testing.T) {
 	keeper.ActivePairsStore().SetMany(ctx, pairs[:3], true)
 	keeper.ActivePairsStore().SetMany(ctx, common.AssetPairs{pairs[3]}, false)
 
-	response, err := keeper.Pairs(wctx, &types.QueryPairsRequest{})
+	response, err := keeper.QueryPairs(wctx, &types.QueryPairsRequest{})
 	require.NoError(t, err)
 	expectedResponse := &types.QueryPairsResponse{
 		Pairs: []types.PairResponse{

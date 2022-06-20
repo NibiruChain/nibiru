@@ -660,7 +660,8 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposal() {
 		s.Assert().EqualValues(0, txResp.Code, out.String())
 
 		s.T().Log("Check that proposal was correctly submitted with gov client")
-		s.network.WaitForNextBlock() // the proposal tx isn't included until next block
+		// the proposal tx won't be included until next block
+		s.Assert().NoError(s.network.WaitForNextBlock())
 		govQueryClient := govtypes.NewQueryClient(clientCtx)
 		proposalsQueryResponse, err := govQueryClient.Proposals(
 			context.Background(), &govtypes.QueryProposalsRequest{},
