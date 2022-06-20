@@ -90,7 +90,7 @@ func (k Keeper) SettlePosition(
 		if err != nil {
 			panic(err) // NOTE(mercilex): must never happen
 		}
-		err = k.BankKeeper.SendCoinsFromModuleToAccount(
+		err = k.BankKeeper.SendCoinsFromModuleToAccount( // NOTE(mercilex): withdraw is not applied here
 			ctx,
 			types.VaultModuleAccount,
 			traderAddr,

@@ -255,14 +255,8 @@ func (k Keeper) distributeLiquidateRewards(
 	// Transfer fee from PerpEF to liquidator
 	feeToLiquidator := liquidateResp.FeeToLiquidator
 	if feeToLiquidator.IsPositive() {
-		coinToLiquidator := sdk.NewCoin(
-			pair.GetQuoteTokenDenom(), feeToLiquidator)
-		if err = k.BankKeeper.SendCoinsFromModuleToAccount(
-			ctx,
-			/* from */ types.VaultModuleAccount,
-			/* to */ liquidator,
-			sdk.NewCoins(coinToLiquidator),
-		); err != nil {
+		err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), liquidator, feeToLiquidator)
+		if err != nil {
 			return err
 		}
 	}
