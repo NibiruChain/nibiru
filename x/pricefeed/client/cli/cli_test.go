@@ -725,7 +725,6 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 	err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(0, txResp.Code, out.String())
-
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
