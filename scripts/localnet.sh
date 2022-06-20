@@ -137,8 +137,8 @@ echo "$LIQUIDATOR_MNEMONIC" | $BINARY keys add liquidator --home $CHAIN_DIR --re
 $BINARY add-genesis-account $($BINARY keys show liquidator -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
 
 # oracle
-echo "$ORACLE_MNEMONIC" | $BINARY keys add oracle --home $CHAIN_DIR --recover
-$BINARY add-genesis-account $($BINARY keys show oracle -a --home $CHAIN_DIR) $GENESIS_COINS --home $CHAIN_DIR
+echo "$ORACLE_MNEMONIC" | $BINARY keys add oracle --home $CHAIN_DIR --recover --keyring-backend test
+$BINARY add-genesis-account $($BINARY keys show oracle -a --home $CHAIN_DIR --keyring-backend test) $GENESIS_COINS --home $CHAIN_DIR
 
 echo_success "Genesis accounts added"
 

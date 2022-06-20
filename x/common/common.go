@@ -16,6 +16,7 @@ var (
 	DenomStable     = "unusd"
 	DenomStakeToken = "stake"
 	DenomTestToken  = "test"
+	DenomuBTC       = "ubtc"
 	DenomAxlBTC     = "axlwbtc"
 	DenomAxlETH     = "axlweth"
 

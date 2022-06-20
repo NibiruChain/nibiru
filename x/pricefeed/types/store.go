@@ -15,7 +15,7 @@ var (
 		{Token0: common.DenomGov, Token1: common.DenomStable},
 		{Token0: common.DenomGov, Token1: common.DenomStable},
 		{Token0: common.DenomGov, Token1: common.DenomStable},
-		{Token0: "btc", Token1: "usd"},
+		{Token0: common.DenomuBTC, Token1: common.DenomStable},
 	}
 )
 
