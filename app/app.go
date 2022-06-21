@@ -115,6 +115,7 @@ import (
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
+	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin"
@@ -151,6 +152,8 @@ var (
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
 			upgradeclient.CancelProposalHandler,
+			pricefeedcli.AddOracleProposalHandler,
+			// pricefeedcli.RemoveOracleProposalHandler, // TODO
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
 		),
