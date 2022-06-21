@@ -63,7 +63,7 @@ func NewPricefeedGen() *pftypes.GenesisState {
 	oracles := []sdk.AccAddress{oracle}
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{
-			Pairs: pairs.Strings(),
+			Pairs: pairs,
 		},
 		PostedPrices: []pftypes.PostedPrice{
 			{
@@ -725,6 +725,15 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 	err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(0, txResp.Code, out.String())
+
+	s.Assert().NoError(s.network.WaitForNextBlock())
+	proposalsQueryResponse, err = govQueryClient.Proposals(
+		context.Background(), &govtypes.QueryProposalsRequest{})
+	s.Require().NoError(err)
+	s.Assert().Equalf(
+		govtypes.StatusVotingPeriod,
+		proposalsQueryResponse.Proposals[0].Status,
+		"proposal should be in voting period since min deposit has been met")
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

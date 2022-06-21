@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ func TestKeeper_SetGetPair(t *testing.T) {
 	}
 
 	keeper := app.PricefeedKeeper
-	keeper.SetParams(ctx, types.Params{Pairs: []string{pairs[0].String()}})
+	keeper.SetParams(ctx, types.Params{Pairs: common.AssetPairs{pairs[0]}})
 
 	paramsPairs := keeper.GetPairs(ctx)
 	require.Len(t, paramsPairs, 1)
@@ -32,7 +31,7 @@ func TestKeeper_SetGetPair(t *testing.T) {
 	require.True(t, keeper.IsActivePair(ctx, pairs[0].String()))
 	require.True(t, !keeper.IsActivePair(ctx, pairs[1].String()))
 
-	params := types.Params{Pairs: pairs.Strings()}
+	params := types.Params{Pairs: pairs}
 	keeper.SetParams(ctx, params)
 	paramsPairs = keeper.GetPairs(ctx)
 	require.Len(t, paramsPairs, 2)
@@ -48,7 +47,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
 	pair := common.MustNewAssetPair("tst:usd")
-	params := types.Params{Pairs: []string{pair.String()}}
+	params := types.Params{Pairs: common.AssetPairs{pair}}
 	keeper.SetParams(ctx, params)
 	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
 
@@ -105,7 +104,7 @@ func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 	// Register addrs[1] as the oracle.
 	_, addrs := sample.PrivKeyAddressPairs(2)
 
-	params := types.Params{Pairs: []string{pair.String()}}
+	params := types.Params{Pairs: common.AssetPairs{pair}}
 	keeper.SetParams(ctx, params)
 
 	// Set price with valid oracle given (addrs[0])
@@ -136,7 +135,7 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 
 	_, addrs := sample.PrivKeyAddressPairs(10)
 	params := types.Params{
-		Pairs: []string{pair.String()},
+		Pairs: common.AssetPairs{pair},
 	}
 	keeper.SetParams(ctx, params)
 	keeper.WhitelistOraclesForPairs(ctx, addrs[:5], common.AssetPairs{pair})
@@ -167,7 +166,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	token0, token1 := "tst", "usd"
 	pair := common.AssetPair{Token0: token0, Token1: token1}
 	params := types.Params{
-		Pairs: []string{pair.String()},
+		Pairs: common.AssetPairs{pair},
 	}
 	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
 	keeper.SetParams(ctx, params)
@@ -215,8 +214,6 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	price, err := keeper.GetCurrentPrice(ctx, token0, token1)
 	require.NoError(t, err)
 
-	fmt.Printf("DEBUG activepairs: %v", keeper.GetParams(ctx).Pairs)
-	// fmt.Printf("DEBUG activepairs: %v", keeper.GetParams(ctx).Pairs)
 	expCurPrice := sdk.MustNewDecFromStr("0.34")
 	require.Truef(
 		t,
@@ -258,7 +255,7 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	token0, token1 := "usd", "tst"
 	pair := common.AssetPair{Token0: token0, Token1: token1}
 	params := types.Params{
-		Pairs: []string{pair.String()},
+		Pairs: common.AssetPairs{pair},
 	}
 	keeper.SetParams(ctx, params)
 	keeper.OraclesStore().AddOracles(ctx, pair, oracles)

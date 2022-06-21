@@ -44,7 +44,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 	oracles := []sdk.AccAddress{oracle}
 	pairs := common.AssetPairs{pair}
-	params := ptypes.NewParams(pairs.Strings())
+	params := ptypes.NewParams(pairs)
 	nibiruApp.PricefeedKeeper.SetParams(ctx, params) // makes pairs active
 	nibiruApp.PricefeedKeeper.WhitelistOraclesForPairs(ctx, oracles, pairs)
 

@@ -18,14 +18,14 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 	k.ActivePairsStore().SetMany(
-		ctx, common.NewAssetPairs(params.Pairs), true)
+		ctx, params.Pairs, true)
 }
 
 // GetPairs returns the pairs from params
 func (k Keeper) GetPairs(ctx sdk.Context) common.AssetPairs {
 	var pairs common.AssetPairs
-	for _, pairString := range k.GetParams(ctx).Pairs {
-		pairs = append(pairs, common.MustNewAssetPair(pairString))
+	for _, pair := range k.GetParams(ctx).Pairs {
+		pairs = append(pairs, pair)
 	}
 	return pairs
 }
@@ -73,7 +73,7 @@ func (k Keeper) GetOraclesForPairs(ctx sdk.Context, pairs common.AssetPairs,
 func (k Keeper) WhitelistOracles(ctx sdk.Context, oracles []sdk.AccAddress) {
 	startParams := k.GetParams(ctx)
 	for _, pair := range startParams.Pairs {
-		k.addOraclesForPair(ctx, common.MustNewAssetPair(pair), oracles)
+		k.addOraclesForPair(ctx, pair, oracles)
 	}
 }
 
@@ -110,5 +110,5 @@ func (k Keeper) WhitelistOraclesForPairs(
 		k.OraclesStore().AddOracles(ctx, pair, oracles)
 	}
 	endingPairs := append(paramsPairs, newPairs...)
-	k.SetParams(ctx, types.NewParams(endingPairs.Strings()))
+	k.SetParams(ctx, types.NewParams(endingPairs))
 }

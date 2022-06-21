@@ -116,7 +116,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			pairs := common.AssetPairs{
 				common.PairCollStable,
 			}
-			markets := ptypes.NewParams(pairs.Strings())
+			markets := ptypes.NewParams(pairs)
 			app.PricefeedKeeper.SetParams(ctx, markets)
 			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -160,7 +160,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	pairs := common.AssetPairs{
 		{Token0: common.DenomColl, Token1: common.DenomStable},
 	}
-	markets := ptypes.NewParams(pairs.Strings())
+	markets := ptypes.NewParams(pairs)
 	app.PricefeedKeeper.SetParams(ctx, markets)
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 	app.PricefeedKeeper.SetParams(ctx, markets)

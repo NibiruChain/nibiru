@@ -20,7 +20,7 @@ var (
 
 // NewParams creates a new AssetParams object
 func NewParams(
-	pairs []string,
+	pairs common.AssetPairs,
 ) Params {
 	return Params{
 		Pairs: pairs,
@@ -29,7 +29,7 @@ func NewParams(
 
 // DefaultParams default params for pricefeed
 func DefaultParams() Params {
-	return NewParams(DefaultPairs.Strings())
+	return NewParams(DefaultPairs)
 }
 
 // ParamKeyTable Key declaration for parameters
@@ -55,13 +55,12 @@ func (p Params) Validate() error {
 }
 
 func validateParamPairs(i interface{}) error {
-	pairs, ok := i.([]string)
+	pairs, ok := i.([]common.AssetPair)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	for _, pairStr := range pairs {
-		_, err := common.NewAssetPair(pairStr)
-		if err != nil {
+	for _, pair := range pairs {
+		if err := pair.Validate(); err != nil {
 			return err
 		}
 	}

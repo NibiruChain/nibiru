@@ -45,7 +45,7 @@ func NewPricefeedGen() *pftypes.GenesisState {
 
 	pairs := common.AssetPairs{common.PairTestStable}
 	return &pftypes.GenesisState{
-		Params: pftypes.Params{Pairs: pairs.Strings()},
+		Params: pftypes.Params{Pairs: pairs},
 		PostedPrices: []pftypes.PostedPrice{
 			{
 				PairID:        common.PairTestStable.String(),

@@ -127,7 +127,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 				{Token0: common.DenomGov, Token1: common.DenomStable},
 				{Token0: common.DenomColl, Token1: common.DenomStable},
 			}
-			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
+			pfParams := pricefeedTypes.Params{Pairs: pairs}
 			priceKeeper.SetParams(ctx, pfParams)
 			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -165,10 +165,9 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPair(pairStr)
+			for _, pair := range pfParams.Pairs {
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Fund account
@@ -310,7 +309,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				common.PairCollStable,
 				common.PairGovStable,
 			}
-			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
+			pfParams := pricefeedTypes.Params{Pairs: pairs}
 			priceKeeper.SetParams(ctx, pfParams)
 			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -348,10 +347,9 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPair(pairStr)
+			for _, pair := range pfParams.Pairs {
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Fund account
@@ -501,7 +499,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				{Token1: common.DenomStable, Token0: common.DenomGov},
 				{Token1: common.DenomStable, Token0: common.DenomColl},
 			}
-			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
+			pfParams := pricefeedTypes.Params{Pairs: pairs}
 			priceKeeper.SetParams(ctx, pfParams)
 			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -521,10 +519,9 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPair(pairStr)
+			for _, pair := range pfParams.Pairs {
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Add collaterals to the module
@@ -657,7 +654,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				{Token0: common.DenomGov, Token1: common.DenomStable},
 				{Token0: common.DenomColl, Token1: common.DenomStable},
 			}
-			pfParams := pricefeedTypes.Params{Pairs: pairs.Strings()}
+			pfParams := pricefeedTypes.Params{Pairs: pairs}
 			priceKeeper.SetParams(ctx, pfParams)
 			priceKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -673,10 +670,9 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pairStr := range pfParams.Pairs {
-				pair := common.MustNewAssetPair(pairStr)
+			for _, pair := range pfParams.Pairs {
 				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pairStr)
+				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
 			// Add collaterals to the module

@@ -88,7 +88,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 				Token1: common.DenomStable,
 			}
 			params := pftypes.Params{
-				Pairs: []string{pair.String()}}
+				Pairs: common.AssetPairs{pair}}
 
 			priceKeeper.SetParams(ctx, params)
 			priceKeeper.WhitelistOracles(ctx, oracles)
@@ -251,8 +251,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 				{Token0: common.DenomColl, Token1: common.DenomStable},
 				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
-			pricefeedParams := pftypes.Params{
-				Pairs: pairs.Strings()}
+			pricefeedParams := pftypes.Params{Pairs: pairs}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, oracles)
 
@@ -341,7 +340,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 			oracle := sample.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pftypes.Params{
-				Pairs: []string{pair.String()},
+				Pairs: common.AssetPairs{pair},
 			}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.OraclesStore().AddOracles(
@@ -353,8 +352,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 			require.NoError(t, err)
 
 			// Update the 'CurrentPrice' posted by the oracles.
-			for _, pfPairString := range pricefeedParams.Pairs {
-				pfPair := common.MustNewAssetPair(pfPairString)
+			for _, pfPair := range pricefeedParams.Pairs {
 				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pfPair.Token0, pfPair.Token1)
 				require.NoError(t, err, "Error posting price for market: %d", pfPair.String())
 			}
@@ -400,7 +398,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 				Token0: common.DenomStable,
 				Token1: common.DenomColl}
 			pricefeedParams := pftypes.Params{
-				Pairs: []string{pair.String()}}
+				Pairs: common.AssetPairs{pair}}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -530,7 +528,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				common.PairCollStable,
 				common.PairGovStable,
 			}
-			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
+			pricefeedParams := pftypes.Params{Pairs: pairs}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, oracles)
 
@@ -817,7 +815,7 @@ func TestRecollateralize(t *testing.T) {
 				{Token0: common.DenomColl, Token1: common.DenomStable},
 				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
-			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
+			pricefeedParams := pftypes.Params{Pairs: pairs}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, oracles)
 
@@ -1215,7 +1213,7 @@ func TestBuyback(t *testing.T) {
 				{Token0: common.DenomColl, Token1: common.DenomStable},
 				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
-			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
+			pricefeedParams := pftypes.Params{Pairs: pairs}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -1343,7 +1341,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 				{Token0: common.DenomColl, Token1: common.DenomStable},
 				{Token0: common.DenomGov, Token1: common.DenomStable},
 			}
-			pricefeedParams := pftypes.Params{Pairs: pairs.Strings()}
+			pricefeedParams := pftypes.Params{Pairs: pairs}
 			nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedParams)
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 

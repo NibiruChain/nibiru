@@ -3,6 +3,7 @@ package nibiru.pricefeed.v1;
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
+import "common/common.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
@@ -12,7 +13,7 @@ option (gogoproto.equal_all)         = true;
 message Params {
   // Pairs is the list of valid trading pairs for the module. 
   // Add new trading pairs 
-  repeated string pairs = 1; 
+  repeated common.AssetPair pairs = 1 [(gogoproto.nullable) = false]; 
 }
 
 // OraclesMarshaler is a codec.ProtoMarshaler for an oracles array in the 
@@ -35,8 +36,12 @@ message PostedPrice {
   bytes  oracle_address = 2 [
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
   ];
-  string price = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
-  google.protobuf.Timestamp expiry = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  string price = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false];
+  google.protobuf.Timestamp expiry = 4 [
+    (gogoproto.stdtime) = true, 
+    (gogoproto.nullable) = false];
 }
 
 // CurrentPrice defines the current price for an asset pair in the pricefeed

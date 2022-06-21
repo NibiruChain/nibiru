@@ -32,11 +32,13 @@ func CmdAddOracleProposal() *cobra.Command {
 		Use:   "add-oracle [proposal-json]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Submit a proposal to whitelist an oracle",
-		Long: strings.TrimSpace(fmt.Sprintf(
-			`TODO docs
+		Example: strings.TrimSpace(fmt.Sprintf(`
 			Example: 
 			$ %s tx gov add-oracle <path/to/proposal.json> --from=<key_or_address>
-			
+			`, version.AppName)),
+		Long: strings.TrimSpace(
+			`Submits a proposal to whitelist an oracle on specified pairs
+
 			A proposal.json for 'AddOracleProposal' contains:
 			{
 			  "title": "Cataclysm-004",
@@ -45,9 +47,7 @@ func CmdAddOracleProposal() *cobra.Command {
 			  "pairs": ["uohm:uusd"],
 			  "deposit": "1000unibi"
 			}
-			`,
-			version.AppName,
-		)),
+			`),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

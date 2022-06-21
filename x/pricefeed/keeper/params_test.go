@@ -38,12 +38,12 @@ func TestGetParams(t *testing.T) {
 				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
 				k := nibiruApp.PricefeedKeeper
 				params := types.Params{
-					Pairs: []string{"btc:usd", "xrp:usd"},
+					Pairs: common.NewAssetPairs("btc:usd", "xrp:usd"),
 				}
 				k.SetParams(ctx, params)
 				require.EqualValues(t, params, k.GetParams(ctx))
 
-				params.Pairs = append(params.Pairs, types.DefaultPairs.Strings()...)
+				params.Pairs = append(params.Pairs, types.DefaultPairs...)
 				k.SetParams(ctx, params)
 				require.EqualValues(t, params, k.GetParams(ctx))
 			},
@@ -71,10 +71,10 @@ func TestWhitelistOracles(t *testing.T) {
 
 				oracle := sample.AccAddress()
 				paramsPairs := pk.GetParams(ctx).Pairs
-				for _, pairID := range paramsPairs {
-					require.False(t, pk.IsWhitelistedOracle(ctx, pairID, oracle))
+				for _, pair := range paramsPairs {
+					require.False(t, pk.IsWhitelistedOracle(ctx, pair.String(), oracle))
 				}
-				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, common.NewAssetPairs(paramsPairs))
+				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, paramsPairs)
 				gotOracles := gotOraclesMatrix[0]
 				require.EqualValues(t, []sdk.AccAddress(nil), gotOracles)
 			},
@@ -86,8 +86,8 @@ func TestWhitelistOracles(t *testing.T) {
 				pk := &nibiruApp.PricefeedKeeper
 
 				paramsPairs := pk.GetParams(ctx).Pairs
-				for _, pairID := range paramsPairs {
-					require.EqualValues(t, []sdk.AccAddress(nil), pk.GetOraclesForPair(ctx, pairID))
+				for _, pair := range paramsPairs {
+					require.EqualValues(t, []sdk.AccAddress(nil), pk.GetOraclesForPair(ctx, pair.String()))
 				}
 
 				oracleA := sample.AccAddress()
@@ -95,14 +95,14 @@ func TestWhitelistOracles(t *testing.T) {
 
 				wantOracles := []sdk.AccAddress{oracleA}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, common.NewAssetPairs(paramsPairs))
+				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, paramsPairs)
 				gotOracles := gotOraclesMatrix[0]
 				require.EqualValues(t, wantOracles, gotOracles)
 				require.NotContains(t, gotOracles, oracleB)
 
 				wantOracles = []sdk.AccAddress{oracleA, oracleB}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOraclesMatrix = pk.GetOraclesForPairs(ctx, common.NewAssetPairs(paramsPairs))
+				gotOraclesMatrix = pk.GetOraclesForPairs(ctx, paramsPairs)
 				gotOracles = gotOraclesMatrix[0]
 				require.EqualValues(t, wantOracles, gotOracles)
 			},
@@ -157,15 +157,15 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 	testCases := []struct {
 		name          string
 		startParams   types.Params
-		pairsToSet    []string
-		endAssetPairs []common.AssetPair
+		pairsToSet    common.AssetPairs
+		endAssetPairs common.AssetPairs
 	}{
 		{
 			name: "whitelist for specific pairs - happy",
 			startParams: types.Params{
-				Pairs: []string{"aaa:usd", "bbb:usd", "oraclepair:usd"},
+				Pairs: common.NewAssetPairs("aaa:usd", "bbb:usd", "oraclepair:usd"),
 			},
-			pairsToSet: []string{"oraclepair:usd"},
+			pairsToSet: common.NewAssetPairs("oraclepair:usd"),
 		},
 	}
 
@@ -177,27 +177,25 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 			pricefeedKeeper.SetParams(ctx, tc.startParams)
 
 			oracles := []sdk.AccAddress{sample.AccAddress(), sample.AccAddress()}
-			pairs := common.NewAssetPairs(tc.pairsToSet)
 			pricefeedKeeper.WhitelistOraclesForPairs(
 				ctx,
 				oracles,
-				/* pairs */ pairs,
+				/* pairs */ tc.pairsToSet,
 			)
 
 			t.Log("Verify that all 'pairsToSet' have the oracle set.")
-			for _, pairName := range tc.pairsToSet {
+			for _, pair := range tc.pairsToSet {
 				assert.EqualValues(t,
 					oracles,
-					pricefeedKeeper.GetOraclesForPair(ctx, pairName))
+					pricefeedKeeper.GetOraclesForPair(ctx, pair.String()))
 			}
 
 			t.Log("Verify that all pairs outside 'pairsToSet' are unaffected.")
-			for _, pairName := range tc.startParams.Pairs {
-				pair := common.MustNewAssetPair(pairName)
-				if !pairs.Contains(pair) {
+			for _, pair := range tc.startParams.Pairs {
+				if !tc.pairsToSet.Contains(pair) {
 					assert.EqualValues(t,
 						[]sdk.AccAddress{},
-						pricefeedKeeper.GetOraclesForPair(ctx, pairName))
+						pricefeedKeeper.GetOraclesForPair(ctx, pair.String()))
 				}
 			}
 		})

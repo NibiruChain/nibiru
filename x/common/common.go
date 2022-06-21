@@ -143,7 +143,7 @@ type AssetPairs []AssetPair
 
 // NewAssetPairs constructs a new asset pair set. A panic will occur if one of
 // the provided pair names is invalid.
-func NewAssetPairs(pairStrings []string) (pairs AssetPairs) {
+func NewAssetPairs(pairStrings ...string) (pairs AssetPairs) {
 	for _, pairString := range pairStrings {
 		pairs = append(pairs, MustNewAssetPair(pairString))
 	}

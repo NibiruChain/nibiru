@@ -16,9 +16,7 @@ import (
 func TestParamsQuery(t *testing.T) {
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	params := types.Params{
-		Pairs: []string{"btc:usd", "xrp:usd"},
-	}
+	params := types.Params{Pairs: common.NewAssetPairs("btc:usd", "xrp:usd")}
 	keeper.SetParams(ctx, params)
 
 	response, err := keeper.QueryParams(wctx, &types.QueryParamsRequest{})
@@ -29,7 +27,7 @@ func TestParamsQuery(t *testing.T) {
 func TestOraclesQuery(t *testing.T) {
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	pairs := []string{"usd:btc", "usd:xrp", "usd:ada", "usd:eth"}
+	pairs := common.NewAssetPairs("usd:btc", "usd:xrp", "usd:ada", "usd:eth")
 	params := types.Params{Pairs: pairs}
 	keeper.SetParams(ctx, params)
 
@@ -40,22 +38,24 @@ func TestOraclesQuery(t *testing.T) {
 	keeper.WhitelistOraclesForPairs(
 		ctx,
 		/*oracles=*/ []sdk.AccAddress{oracleA, oracleB},
-		/*pairs=*/ []common.AssetPair{common.MustNewAssetPair(pairs[2])})
+		/*pairs=*/ []common.AssetPair{pairs[2]})
 
 	t.Log("whitelist oracle  C    on pair 3")
 	keeper.WhitelistOraclesForPairs(
 		ctx,
 		/*oracles=*/ []sdk.AccAddress{oracleC},
-		/*pairs=*/ []common.AssetPair{common.MustNewAssetPair(pairs[3])})
+		/*pairs=*/ []common.AssetPair{pairs[3]})
 
 	t.Log("Query for pair 2 oracles | ADA")
-	response, err := keeper.QueryOracles(wctx, &types.QueryOraclesRequest{PairId: pairs[2]})
+	response, err := keeper.QueryOracles(wctx, &types.QueryOraclesRequest{
+		PairId: pairs[2].String()})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
 		Oracles: []string{oracleA.String(), oracleB.String()}}, response)
 
 	t.Log("Query for pair 3 oracles | ETH")
-	response, err = keeper.QueryOracles(wctx, &types.QueryOraclesRequest{PairId: pairs[3]})
+	response, err = keeper.QueryOracles(wctx, &types.QueryOraclesRequest{
+		PairId: pairs[3].String()})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
 		Oracles: []string{oracleC.String()}}, response)
@@ -64,9 +64,8 @@ func TestOraclesQuery(t *testing.T) {
 func TestMarketsQuery(t *testing.T) {
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	pairIDs := []string{"btc:usd", "xrp:usd", "ada:usd", "eth:usd"}
-	pairs := common.NewAssetPairs(pairIDs)
-	params := types.Params{Pairs: pairIDs}
+	pairs := common.NewAssetPairs("btc:usd", "xrp:usd", "ada:usd", "eth:usd")
+	params := types.Params{Pairs: pairs}
 	keeper.SetParams(ctx, params)
 
 	t.Log("Give pairs 2 and 3 distinct oracles")
@@ -83,28 +82,28 @@ func TestMarketsQuery(t *testing.T) {
 	expectedResponse := &types.QueryPairsResponse{
 		Pairs: []types.PairResponse{
 			{
-				PairID:  pairIDs[0],
+				PairID:  pairs[0].String(),
 				Token0:  pairs[0].Token0,
 				Token1:  pairs[0].Token1,
 				Oracles: []string(nil),
 				Active:  true,
 			},
 			{
-				PairID:  pairIDs[1],
+				PairID:  pairs[1].String(),
 				Token0:  pairs[1].Token0,
 				Token1:  pairs[1].Token1,
 				Oracles: []string(nil),
 				Active:  true,
 			},
 			{
-				PairID:  pairIDs[2],
+				PairID:  pairs[2].String(),
 				Token0:  pairs[2].Token0,
 				Token1:  pairs[2].Token1,
 				Oracles: []string{oracle2.String()},
 				Active:  true,
 			},
 			{
-				PairID:  pairIDs[3],
+				PairID:  pairs[3].String(),
 				Token0:  pairs[3].Token0,
 				Token1:  pairs[3].Token1,
 				Oracles: []string{oracle3.String()},

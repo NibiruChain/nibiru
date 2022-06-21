@@ -24,7 +24,7 @@ func TestPostPrice(t *testing.T) {
 
 	pair := common.MustNewAssetPair("usd:tst")
 	params := types.Params{
-		Pairs: []string{pair.String()},
+		Pairs: common.AssetPairs{pair},
 	}
 	k.SetParams(ctx, params)
 	k.WhitelistOraclesForPairs(ctx, authorizedOracles, common.AssetPairs{pair})

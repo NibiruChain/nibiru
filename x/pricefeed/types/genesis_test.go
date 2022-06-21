@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -35,7 +37,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state - full",
 			genState: NewGenesisState(
 				NewParams(
-					/*pairs=*/ []string{"xrp:bnb"},
+					/*pairs=*/ common.NewAssetPairs("xrp:bnb"),
 				),
 				[]PostedPrice{NewPostedPrice("xrp", addr, sdk.OneDec(), now)},
 			),
@@ -45,7 +47,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "invalid posted price - no valid pairs",
 			genState: NewGenesisState(
 				NewParams(
-					/*pairs=*/ []string{},
+					/*pairs=*/ common.AssetPairs{},
 				),
 				[]PostedPrice{NewPostedPrice("xrp", nil, sdk.OneDec(), now)},
 			),
@@ -55,7 +57,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "duplicated posted price at same timestamp - invalid",
 			genState: NewGenesisState(
 				NewParams(
-					/*pairs=*/ []string{},
+					/*pairs=*/ common.AssetPairs{},
 				),
 				[]PostedPrice{
 					NewPostedPrice("xrp", addr, sdk.OneDec(), now),

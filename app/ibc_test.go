@@ -39,7 +39,7 @@ func SetupNibiruTestingApp() (
 	}
 	oracle := sample.AccAddress()
 	nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedtypes.Params{
-		Pairs: []string{pair.String()},
+		Pairs: common.AssetPairs{pair},
 	})
 	nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 

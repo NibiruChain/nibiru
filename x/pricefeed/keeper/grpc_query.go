@@ -135,20 +135,18 @@ func (k Keeper) QueryPairs(goCtx context.Context, req *types.QueryPairsRequest,
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var responses types.PairResponses
-	for _, pairStr := range k.GetParams(ctx).Pairs {
-		pair := common.MustNewAssetPair(pairStr)
-
+	for _, pair := range k.GetParams(ctx).Pairs {
 		var oracleStrings []string
 		for _, oracle := range k.OraclesStore().Get(ctx, pair) {
 			oracleStrings = append(oracleStrings, oracle.String())
 		}
 
 		responses = append(responses, types.PairResponse{
-			PairID:  pairStr,
+			PairID:  pair.String(),
 			Token0:  pair.Token0,
 			Token1:  pair.Token1,
 			Oracles: oracleStrings,
-			Active:  k.IsActivePair(ctx, pairStr),
+			Active:  k.IsActivePair(ctx, pair.String()),
 		})
 	}
 
