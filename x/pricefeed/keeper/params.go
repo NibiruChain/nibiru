@@ -58,15 +58,15 @@ func (k Keeper) IsActivePair(ctx sdk.Context, pairID string) bool {
 }
 
 // GetOraclesForPairs returns the 'oraclesMatrix' corresponding to 'pairs'.
-// 'oraclesMatrix' is a list of oracles arrays in the order the 'pairs',
-// where oraclesMatrix[i] is the set of whitelisted oracles for pairs[i].
-// This effectively gives an ordered subset of the OraclesState KVStore.
+// 'oraclesMap' is a map from pair → list of oracles.
+// This function effectively gives a subset of the OraclesState KVStore.
 func (k Keeper) GetOraclesForPairs(ctx sdk.Context, pairs common.AssetPairs,
-) (oraclesMatrix [][]sdk.AccAddress) {
+) map[common.AssetPair][]sdk.AccAddress {
+	oraclesMap := make(map[common.AssetPair][]sdk.AccAddress)
 	for _, pair := range pairs {
-		oraclesMatrix = append(oraclesMatrix, k.GetOraclesForPair(ctx, pair.String()))
+		oraclesMap[pair] = k.GetOraclesForPair(ctx, pair.String())
 	}
-	return oraclesMatrix
+	return oraclesMap
 }
 
 // Whitelists given 'oracles' for all of the current pairs in the module params.

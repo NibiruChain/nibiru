@@ -74,8 +74,8 @@ func TestWhitelistOracles(t *testing.T) {
 				for _, pair := range paramsPairs {
 					require.False(t, pk.IsWhitelistedOracle(ctx, pair.String(), oracle))
 				}
-				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, paramsPairs)
-				gotOracles := gotOraclesMatrix[0]
+				gotOraclesMap := pk.GetOraclesForPairs(ctx, paramsPairs)
+				gotOracles := gotOraclesMap[paramsPairs[0]]
 				require.EqualValues(t, []sdk.AccAddress(nil), gotOracles)
 			},
 		},
@@ -95,15 +95,15 @@ func TestWhitelistOracles(t *testing.T) {
 
 				wantOracles := []sdk.AccAddress{oracleA}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOraclesMatrix := pk.GetOraclesForPairs(ctx, paramsPairs)
-				gotOracles := gotOraclesMatrix[0]
+				gotOraclesMap := pk.GetOraclesForPairs(ctx, paramsPairs)
+				gotOracles := gotOraclesMap[paramsPairs[0]]
 				require.EqualValues(t, wantOracles, gotOracles)
 				require.NotContains(t, gotOracles, oracleB)
 
 				wantOracles = []sdk.AccAddress{oracleA, oracleB}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOraclesMatrix = pk.GetOraclesForPairs(ctx, paramsPairs)
-				gotOracles = gotOraclesMatrix[0]
+				gotOraclesMap = pk.GetOraclesForPairs(ctx, paramsPairs)
+				gotOracles = gotOraclesMap[paramsPairs[0]]
 				require.EqualValues(t, wantOracles, gotOracles)
 			},
 		},
