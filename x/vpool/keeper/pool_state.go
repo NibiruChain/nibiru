@@ -53,11 +53,6 @@ func (k Keeper) savePool(
 ) {
 	bz := k.codec.MustMarshal(pool)
 	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(pool.GetAssetPair()), bz)
-
-	// Subtle side effect, should this be reflected in the method name
-	if err := k.updateTWAPPrice(ctx, pool.GetAssetPair().String()); err != nil {
-		panic(fmt.Sprintf("failed to update TWAP: %v", err))
-	}
 }
 
 /*

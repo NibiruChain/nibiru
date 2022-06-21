@@ -48,9 +48,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			validatePartialLiquidationRatio,
 		),
 		paramtypes.NewParamSetPair(
-			[]byte("DistrEpochIdentifier"),
-			&p.DistrEpochIdentifier,
-			validateDistrEpochIdentifier,
+			[]byte("EpochIdentifier"),
+			&p.EpochIdentifier,
+			validateEpochIdentifier,
 		),
 	}
 }
@@ -63,7 +63,7 @@ func NewParams(
 	spreadRatio sdk.Dec,
 	liquidationFee sdk.Dec,
 	partialLiquidationRatio sdk.Dec,
-	distrEpochIdentifier string,
+	epochIdentifier string,
 ) Params {
 	million := sdk.NewDec(1_000_000)
 
@@ -79,7 +79,7 @@ func NewParams(
 		SpreadRatio:             spreadRationInt,
 		LiquidationFee:          liquidationFeeInt,
 		PartialLiquidationRatio: partialLiquidationRatioInt,
-		DistrEpochIdentifier:    distrEpochIdentifier,
+		EpochIdentifier:         epochIdentifier,
 	}
 }
 
@@ -90,7 +90,7 @@ func DefaultParams() Params {
 	liquidationFee := sdk.MustNewDecFromStr("0.0125")
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.50")
 	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
-	distrEpochIdentifier := "hour"
+	epochIdentifier := "hour"
 
 	return NewParams(
 		/*Stopped=*/ false,
@@ -99,7 +99,7 @@ func DefaultParams() Params {
 		/*SpreadRatio=*/ spreadRatio,
 		/*LiquidationFee=*/ liquidationFee,
 		/*PartialLiquidationRatio=*/ partialLiquidationRatio,
-		/*DistrEpochIdentifier=*/ distrEpochIdentifier,
+		/*EpochIdentifier=*/ epochIdentifier,
 	)
 }
 
@@ -209,7 +209,7 @@ func validatePartialLiquidationRatio(i interface{}) error {
 	}
 }
 
-func validateDistrEpochIdentifier(i interface{}) error {
+func validateEpochIdentifier(i interface{}) error {
 	_, err := getAsString(i)
 	if err != nil {
 		return err

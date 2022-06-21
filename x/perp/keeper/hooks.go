@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -11,38 +13,45 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) {
-	// FIXME: should this be moved to BeforeEpochStart??
 	params := k.GetParams(ctx)
-	if epochIdentifier != params.DistrEpochIdentifier {
+	if epochIdentifier != params.EpochIdentifier || params.Stopped {
 		return
 	}
 	for _, md := range k.PairMetadata().GetAll(ctx) {
 		assetPair, err := common.NewAssetPairFromStr(md.Pair)
 		if err != nil {
-			// FIXME: should we panic instead??
+			ctx.Logger().Error("invalid asset pair", "assetPair", md.Pair, "error", err)
 			continue
 		}
 		if !k.VpoolKeeper.ExistsPool(ctx, assetPair) {
-			// FIXME: should we panic instead??
+			ctx.Logger().Error("no pool for pair found", "assetPair", assetPair)
 			continue
 		}
 		indexTWAPPrice, err := k.PricefeedKeeper.GetCurrentTWAPPrice(ctx, assetPair.Token0, assetPair.Token1)
 		if err != nil {
-			// FIXME: should we panic instead??
+			ctx.Logger().Error("failed to fetch twap index price", "assetPair", assetPair, "error", err)
 			continue
 		}
 		if indexTWAPPrice.Price.IsZero() {
+			ctx.Logger().Error("index price is zero", "assetPair", assetPair)
 			continue
 		}
-		marketTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, assetPair.Token0, assetPair.Token1)
+		markTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, assetPair.Token0, assetPair.Token1)
 		if err != nil {
-			// FIXME: should we panic instead??
+			ctx.Logger().Error("failed to fetch twap mark price", "assetPair", assetPair, "error", err)
 			continue
 		}
-		if marketTWAPPrice.Price.IsZero() {
+		if markTWAPPrice.Price.IsZero() {
+			ctx.Logger().Error("mark price is zero", "assetPair", assetPair)
 			continue
 		}
-		fundingRate := marketTWAPPrice.Price.Sub(indexTWAPPrice.Price).Quo(sdk.NewDec(24))
+		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
+		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
+		fundingRate := markTWAPPrice.Price.Sub(indexTWAPPrice.Price).Quo(sdk.NewDec(int64(intervalsPerDay)))
+
+		if len(md.CumulativePremiumFractions) > 0 {
+			fundingRate = md.CumulativePremiumFractions[len(md.CumulativePremiumFractions)-1].Add(fundingRate)
+		}
 		md.CumulativePremiumFractions = append(md.CumulativePremiumFractions, fundingRate)
 		k.PairMetadata().Set(ctx, md)
 	}

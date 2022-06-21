@@ -31,7 +31,7 @@ message Params {
   int64 partial_liquidation_ratio = 6;
 
   // specifies the interval on which the fundingPayment is being updated
-  string distr_epoch_identifier = 7;
+  string epoch_identifier = 7;
 }
 
 // GenesisState defines the perp  module's genesis state.

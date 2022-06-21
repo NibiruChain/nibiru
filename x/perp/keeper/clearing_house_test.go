@@ -118,6 +118,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	mockedBankKeeper := mock.NewMockBankKeeper(ctrl)
 	mockedPricefeedKeeper := mock.NewMockPricefeedKeeper(ctrl)
 	mockedVpoolKeeper := mock.NewMockVpoolKeeper(ctrl)
+	mockedEpochKeeper := mock.NewMockEpochKeeper(ctrl)
 
 	mockedAccountKeeper.
 		EXPECT().GetModuleAddress(types.ModuleName).
@@ -131,6 +132,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		mockedBankKeeper,
 		mockedPricefeedKeeper,
 		mockedVpoolKeeper,
+		mockedEpochKeeper,
 	)
 
 	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, log.NewNopLogger())

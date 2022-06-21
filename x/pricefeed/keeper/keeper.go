@@ -193,21 +193,21 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		currentTWAP = types.CurrentTWAP{
 			PairID:      pairID,
 			Numerator:   sdk.MustNewDecFromStr("0"),
-			Denominator: sdk.NewInt(0),
+			Denominator: sdk.MustNewDecFromStr("0"),
 			Price:       sdk.MustNewDecFromStr("0"),
 		}
 	}
 
 	blockUnixTime := sdk.NewInt(ctx.BlockTime().Unix())
 
-	newDenominator := currentTWAP.Denominator.Add(blockUnixTime)
+	newDenominator := currentTWAP.Denominator.Add(sdk.NewDecFromInt(blockUnixTime))
 	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.Mul(sdk.NewDecFromInt(blockUnixTime)))
 
 	newTWAP := types.CurrentTWAP{
 		PairID:      pairID,
 		Numerator:   newNumerator,
 		Denominator: newDenominator,
-		Price:       newNumerator.Quo(sdk.NewDecFromInt(newDenominator)),
+		Price:       newNumerator.Quo(newDenominator),
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))

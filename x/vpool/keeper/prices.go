@@ -36,8 +36,9 @@ func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (
 		return sdk.ZeroDec(), err
 	}
 
-	if pool.BaseAssetReserve.IsNil() || pool.BaseAssetReserve.IsZero() {
-		return pool.QuoteAssetReserve, nil
+	if pool.BaseAssetReserve.IsNil() || pool.BaseAssetReserve.IsZero() ||
+		pool.QuoteAssetReserve.IsNil() || pool.QuoteAssetReserve.IsZero() {
+		return sdk.ZeroDec(), nil
 	}
 
 	return pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve), nil
@@ -290,7 +291,6 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	pairID := assetPair.Name()
 
 	store := ctx.KVStore(k.storeKey)
-	// TODO: Why do we have 2 prefixes (0x03 and twap?)
 	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pairID))
 
 	if bz == nil {
@@ -329,7 +329,7 @@ With
 
 */
 
-func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
+func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
 	tokens := common.DenomsFromPoolName(pairID)
 	token0, token1 := tokens[0], tokens[1]
 
@@ -347,19 +347,19 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		currentTWAP = types.CurrentTWAP{
 			PairID:      pairID,
 			Numerator:   sdk.MustNewDecFromStr("0"),
-			Denominator: sdk.NewInt(0),
+			Denominator: sdk.MustNewDecFromStr("0"),
 			Price:       sdk.MustNewDecFromStr("0"),
 		}
 	}
 
 	blockUnixTime := sdk.NewInt(ctx.BlockTime().Unix())
 
-	newDenominator := currentTWAP.Denominator.Add(blockUnixTime)
+	newDenominator := currentTWAP.Denominator.Add(sdk.NewDecFromInt(blockUnixTime))
 	newNumerator := currentTWAP.Numerator.Add(currentPrice.Mul(sdk.NewDecFromInt(blockUnixTime)))
 
 	price := sdk.NewDec(0)
 	if !newDenominator.IsZero() {
-		price = newNumerator.Quo(sdk.NewDecFromInt(newDenominator))
+		price = newNumerator.Quo(newDenominator)
 	}
 
 	newTWAP := types.CurrentTWAP{

@@ -78,7 +78,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		SpreadRatio:             5,
 		LiquidationFee:          7,
 		PartialLiquidationRatio: 10,
-		DistrEpochIdentifier:    "hour",
+		EpochIdentifier:         "hour",
 	})
 	k.PairMetadata().Set(ctx, &types.PairMetadata{
 		Pair: BtcNusdPair.String(),
