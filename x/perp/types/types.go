@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,15 +18,14 @@ const (
 
 // x/perp module sentinel errors
 var (
-	ErrMarginHighEnough = sdkerrors.Register(ModuleName, 1,
-		"Margin is higher than required maintenant margin ratio")
-	ErrPositionNotFound     = errors.New("no position found")
-	ErrPairNotFound         = errors.New("pair doesn't have live vpool")
-	ErrPairMetadataNotFound = errors.New("pair doesn't have metadata")
-	ErrPositionZero         = errors.New("position is zero")
-	ErrExchangeStopped      = errors.New("exchange is stopped")
+	ErrMarginHighEnough     = sdkerrors.Register(ModuleName, 1, "margin is higher than required maintenance margin ratio")
+	ErrPositionNotFound     = sdkerrors.Register(ModuleName, 2, "no position found")
+	ErrPairNotFound         = sdkerrors.Register(ModuleName, 3, "pair doesn't have live vpool")
+	ErrPairMetadataNotFound = sdkerrors.Register(ModuleName, 4, "pair doesn't have metadata")
+	ErrPositionZero         = sdkerrors.Register(ModuleName, 5, "position is zero")
+	ErrExchangeStopped      = sdkerrors.Register(ModuleName, 6, "exchange is stopped")
 	// failed to remove margin; position has bad debt
-	ErrFailedRemoveMarginCanCauseBadDebt = errors.New("failed to remove margin; position would have bad debt if removed")
+	ErrFailedRemoveMarginCanCauseBadDebt = sdkerrors.Register(ModuleName, 7, "failed to remove margin; position would have bad debt if removed")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {

@@ -126,11 +126,8 @@ func TestClearPosition(t *testing.T) {
 
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traders[0])
-				require.NoError(t, err)
-				require.EqualValues(t,
-					types.ZeroPosition(ctx, vpoolPair, traders[0]),
-					outPosition,
-				)
+				require.ErrorIs(t, err, types.ErrPositionNotFound)
+				require.Nil(t, outPosition)
 
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traders[1])
@@ -145,11 +142,8 @@ func TestClearPosition(t *testing.T) {
 				)
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traders[1])
-				require.NoError(t, err)
-				require.EqualValues(t,
-					types.ZeroPosition(ctx, vpoolPair, traders[1]),
-					outPosition,
-				)
+				require.ErrorIs(t, err, types.ErrPositionNotFound)
+				require.Nil(t, outPosition)
 				t.Log("Success, all trader positions have been cleared.")
 			},
 		},
