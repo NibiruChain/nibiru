@@ -233,10 +233,14 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		require.True(t, !posResp.FundingPayment.IsZero() && posResp.FundingPayment.IsPositive())
 
 		position, err := nibiruApp.PerpKeeper.Positions().Get(ctx, pair, alice)
-		require.NoError(t, err)
+		require.ErrorIs(t, err, types.ErrPositionNotFound)
+		require.Nil(t, position)
 
-		require.True(t, position.Size_.IsZero())
-		require.True(t, position.Margin.IsZero())
-		require.True(t, position.OpenNotional.IsZero())
+		// this tests the following issue https://github.com/NibiruChain/nibiru/issues/645
+		// in which opening a position from the same address on the same pair
+		// was not possible after calling close position, due to bad data clearance.
+
+		err = nibiruApp.PerpKeeper.OpenPosition(ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)
+		require.NoError(t, err)
 	})
 }

@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,7 +88,9 @@ func (k Keeper) afterPositionUpdate(
 	positionResp types.PositionResp,
 ) (err error) {
 	// update position in state
-	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
+	if !positionResp.Position.Size_.IsZero() {
+		k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
+	}
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(
@@ -113,6 +116,7 @@ func (k Keeper) afterPositionUpdate(
 	switch {
 	case marginToVaultInt.IsPositive():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
+		log.Printf("depositing %s from %s", coinToSend, traderAddr)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
