@@ -15,11 +15,17 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	k.ActivePairsStore().
 		AddActivePairs(ctx, common.NewAssetPairs(genState.Params.Pairs))
 
+	demoOracles := []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32("nibi1pzd5e402eld9kcc3h78tmfrm5rpzlzk6hnxkvu"), // oracle_coinmarketcap
+		sdk.MustAccAddressFromBech32("nibi15cdcxznuwpuk5hw7t678wpyesy78kwy00qcesa"), // coingecko
+		sdk.MustAccAddressFromBech32("nibi1x5zknk8va44th5vjpg0fagf0lxx0rvurpmp8gs"), // binance websocket
+	}
+
 	k.WhitelistOracles(
 		ctx,
 		append(
 			genState.GenesisOracles,
-			sdk.MustAccAddressFromBech32("nibi1pzd5e402eld9kcc3h78tmfrm5rpzlzk6hnxkvu")),
+			demoOracles...),
 	)
 
 	// If posted prices are not expired, set them in the store

@@ -22,7 +22,6 @@ func NewGenesisState(p Params, postedPrices []PostedPrice) *GenesisState {
 	for _, postedPrice := range postedPrices {
 		oracles = append(oracles, postedPrice.OracleAddress)
 	}
-	oracles = append(oracles, sdk.MustAccAddressFromBech32("nibi1pzd5e402eld9kcc3h78tmfrm5rpzlzk6hnxkvu"))
 	return &GenesisState{
 		Params:         p,
 		PostedPrices:   postedPrices,
