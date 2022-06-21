@@ -1,10 +1,8 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"log"
-
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 /*
@@ -58,7 +56,6 @@ func (k Keeper) Withdraw(
 	}
 
 	// Transfer from Vault to receiver
-	log.Printf("sending %s to %s", sdk.NewCoin(denom, amountToWithdraw), receiver)
 	return k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
 		/* from */ types.VaultModuleAccount,

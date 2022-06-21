@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -116,7 +115,6 @@ func (k Keeper) afterPositionUpdate(
 	switch {
 	case marginToVaultInt.IsPositive():
 		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
-		log.Printf("depositing %s from %s", coinToSend, traderAddr)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
@@ -689,7 +687,6 @@ func (k Keeper) closePositionEntirely(
 	}
 
 	positionResp.RealizedPnl = unrealizedPnL
-
 	// calculate remaining margin with funding payment
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, currentPosition, unrealizedPnL)

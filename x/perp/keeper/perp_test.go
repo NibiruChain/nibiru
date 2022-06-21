@@ -190,7 +190,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 
 		alice := sample.AccAddress()
 		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
-			sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
 
 		aliceSide := types.Side_BUY

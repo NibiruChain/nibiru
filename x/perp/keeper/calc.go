@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"fmt"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NOTE hardcoded for now. Need to discuss whether this should be part of the
@@ -29,6 +29,13 @@ type RemainingMarginWithFundingPayment struct {
 
 	/* LatestCumulativePremiumFraction: latest cumulative premium fraction. Units are (margin units)/position size. */
 	LatestCumulativePremiumFraction sdk.Dec
+}
+
+func (r RemainingMarginWithFundingPayment) String() string {
+	return fmt.Sprintf(
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativePremiumFraction: %s}",
+		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativePremiumFraction,
+	)
 }
 
 func (k Keeper) CalcRemainMarginWithFundingPayment(
