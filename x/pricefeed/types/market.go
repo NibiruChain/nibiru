@@ -73,9 +73,10 @@ func NewCurrentPriceResponse(pairID string, price sdk.Dec) CurrentPriceResponse 
 type CurrentPriceResponses []CurrentPriceResponse
 
 // NewPostedPrice returns a new PostedPrice
-func NewPostedPrice(pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time) PostedPrice {
+func NewPostedPrice(pair common.AssetPair, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time,
+) PostedPrice {
 	return PostedPrice{
-		PairID:        pairID,
+		PairID:        pair.String(),
 		OracleAddress: oracle,
 		Price:         price,
 		Expiry:        expiry,
@@ -86,6 +87,9 @@ func NewPostedPrice(pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry 
 func (pp PostedPrice) Validate() error {
 	if strings.TrimSpace(pp.PairID) == "" {
 		return errors.New("market id cannot be blank")
+	}
+	if _, err := common.NewAssetPair(pp.PairID); err != nil {
+		return err
 	}
 	if len(pp.OracleAddress) == 0 {
 		return errors.New("oracle address cannot be empty")

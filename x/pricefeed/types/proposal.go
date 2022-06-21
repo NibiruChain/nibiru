@@ -72,24 +72,3 @@ func (m *AddOracleProposal) Validate() error {
 
 	return nil
 }
-
-func (m *AddOracleProposalWithDeposit) Validate() error {
-	_, err := sdk.AccAddressFromBech32(m.Oracle)
-	if err != nil {
-		return err
-	}
-
-	for _, pairStr := range m.Pairs {
-		_, err = common.NewAssetPair(pairStr)
-		if err != nil {
-			return err
-		}
-	}
-
-	_, err = sdk.ParseCoinsNormalized(m.Deposit)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}

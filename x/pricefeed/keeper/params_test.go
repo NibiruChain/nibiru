@@ -129,8 +129,7 @@ func TestAddOracleProposalFromJson(t *testing.T) {
 		"title": "Cataclysm-004",
 		"description": "Whitelists Delphi to post prices for OHM",
 		"oracle": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-		"pairs": ["uohm:uusd"],
-		"deposit": "1000unibi"
+		"pairs": ["uohm:uusd"]
 	}	
 	`)
 	contents, err := ioutil.ReadFile(okJSON.Name())
@@ -138,7 +137,7 @@ func TestAddOracleProposalFromJson(t *testing.T) {
 
 	t.Log("Unmarshal json bytes into proposal object")
 	encodingConfig := simappparams.MakeTestEncodingConfig()
-	proposal := &types.AddOracleProposalWithDeposit{}
+	proposal := &types.AddOracleProposal{}
 	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
 	assert.NoError(t, err)
 
@@ -148,9 +147,6 @@ func TestAddOracleProposalFromJson(t *testing.T) {
 	assert.Equal(t, "Whitelists Delphi to post prices for OHM", proposal.Description)
 	assert.Equal(t, "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl", proposal.Oracle)
 	assert.Equal(t, []string{"uohm:uusd"}, proposal.Pairs)
-	proposalDeposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
-	assert.NoError(t, err)
-	assert.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)), proposalDeposit)
 }
 
 func TestWhitelistOraclesForPairs(t *testing.T) {

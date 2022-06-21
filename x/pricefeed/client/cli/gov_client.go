@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -29,12 +30,12 @@ var (
 // proposal to whitelist an oracle for specified asset pairs.
 func CmdAddOracleProposal() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-oracle [proposal-json]",
+		Use:   "add-oracle [proposal-json] --deposit=[deposit]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Submit a proposal to whitelist an oracle",
 		Example: strings.TrimSpace(fmt.Sprintf(`
 			Example: 
-			$ %s tx gov add-oracle <path/to/proposal.json> --from=<key_or_address>
+			$ %s tx gov add-oracle <path/to/proposal.json> --from=<key_or_address> --deposit="1000unibi"
 			`, version.AppName)),
 		Long: strings.TrimSpace(
 			`Submits a proposal to whitelist an oracle on specified pairs
@@ -44,8 +45,7 @@ func CmdAddOracleProposal() *cobra.Command {
 			  "title": "Cataclysm-004",
 			  "description": "Whitelists Delphi to post prices for OHM",
 			  "oracle": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-			  "pairs": ["uohm:uusd"],
-			  "deposit": "1000unibi"
+			  "pairs": ["uohm:uusd"]
 			}
 			`),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -56,7 +56,7 @@ func CmdAddOracleProposal() *cobra.Command {
 
 			from := clientCtx.GetFromAddress()
 
-			proposal := &types.AddOracleProposalWithDeposit{}
+			proposal := &types.AddOracleProposal{}
 			contents, err := ioutil.ReadFile(args[0])
 			if err != nil {
 				return err
@@ -67,7 +67,11 @@ func CmdAddOracleProposal() *cobra.Command {
 				return err
 			}
 
-			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			depositStr, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositStr)
 			if err != nil {
 				return err
 			}
@@ -82,11 +86,19 @@ func CmdAddOracleProposal() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	// Define the deposit flag
+	cmd.Flags().String(
+		govcli.FlagDeposit,
+		/*defaultValue=*/ "",
+		/*usage=*/ "governance deposit for proposal")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd

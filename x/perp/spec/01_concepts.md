@@ -34,13 +34,20 @@ The value of a perp's underlying asset is referred to as the **index price**. Fo
 
 Suppose a trader wanted exposure to 5 ETH through the purchase of a perpetual contract. On Nibi-Perps, going long on 5 ETH means that the trader buys the ETH perp with a **position size** of 5. Position size is computed as the position notional mutlipled by the mark price of the asset. 
 
+```go 
+k = baseReserves * quoteReserves
+notionalDelta = margin * leverage // (leverage is negative if short)
+baseReservesAfterSwap = k / (quoteReserves + notionalDelta)
+position_size = baseReserves - baseReservesAfterSwap
+```
+
 #### Position Notional Value
 
 The notional value of the position, or **position notional**, is the total value a position controls  in units of the quote asset. Notional value expresses the value a derivatives contract theoretically controls. On Nibiru, it is defined more concretely by
 
-```
-price = quote_reserves / base_reserves
-positionNotional = position_size * price
+```go
+markPrice = quote_reserves / base_reserves
+positionNotional = position_size * markPrice
 leverage = positionNotional / margin.
 ```
 

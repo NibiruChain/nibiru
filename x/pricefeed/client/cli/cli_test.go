@@ -612,7 +612,7 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 	s.Require().NoError(err)
 
 	s.T().Log("load example json as bytes")
-	proposal := pftypes.AddOracleProposal{
+	proposal := &pftypes.AddOracleProposal{
 		Title:       "Cataclysm-004",
 		Description: "Whitelists Delphi to post prices for OHM and BTC",
 		// Oracle:      oracleKeyringInfo.GetAddress().String(),
@@ -624,8 +624,7 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 			"title": "%v",
 			"description": "%v",
 			"oracle": "%v",
-			"pairs": ["%v", "%v"],
-			"deposit": "1000unibi"
+			"pairs": ["%v", "%v"]
 		}	
 		`, proposal.Title, proposal.Description, proposal.Oracle, proposal.Pairs[0],
 		proposal.Pairs[1],
@@ -638,8 +637,8 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 
 	s.T().Log("Unmarshal json bytes into proposal object; check validity")
 	encodingConfig := simappparams.MakeTestEncodingConfig()
-	proposalWithDeposit := &pftypes.AddOracleProposalWithDeposit{}
-	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposalWithDeposit)
+	proposal = &pftypes.AddOracleProposal{}
+	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
 	s.Assert().NoError(err)
 	s.Require().NoError(proposal.Validate())
 
@@ -647,6 +646,7 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 	cmd := cli.CmdAddOracleProposal()
 	args := []string{
 		proposalJSON.Name(),
+		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 		fmt.Sprintf("--from=%s", val.Address.String()),

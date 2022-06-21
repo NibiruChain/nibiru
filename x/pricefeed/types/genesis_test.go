@@ -18,6 +18,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	addr := sdk.AccAddress(pubkey.Address())
 	now := time.Now()
 
+	examplePairs := common.NewAssetPairs("xrp:bnb")
 	for _, tc := range []struct {
 		desc     string
 		genState *GenesisState
@@ -37,9 +38,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state - full",
 			genState: NewGenesisState(
 				NewParams(
-					/*pairs=*/ common.NewAssetPairs("xrp:bnb"),
+					/*pairs=*/ examplePairs,
 				),
-				[]PostedPrice{NewPostedPrice("xrp", addr, sdk.OneDec(), now)},
+				[]PostedPrice{NewPostedPrice(examplePairs[0], addr, sdk.OneDec(), now)},
 			),
 			valid: true,
 		},
@@ -49,7 +50,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				NewParams(
 					/*pairs=*/ common.AssetPairs{},
 				),
-				[]PostedPrice{NewPostedPrice("xrp", nil, sdk.OneDec(), now)},
+				[]PostedPrice{NewPostedPrice(examplePairs[0], nil, sdk.OneDec(), now)},
 			),
 			valid: false,
 		},
@@ -60,8 +61,8 @@ func TestGenesisState_Validate(t *testing.T) {
 					/*pairs=*/ common.AssetPairs{},
 				),
 				[]PostedPrice{
-					NewPostedPrice("xrp", addr, sdk.OneDec(), now),
-					NewPostedPrice("xrp", addr, sdk.OneDec(), now),
+					NewPostedPrice(examplePairs[0], addr, sdk.OneDec(), now),
+					NewPostedPrice(examplePairs[0], addr, sdk.OneDec(), now),
 				},
 			),
 			valid: false,

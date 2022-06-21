@@ -9,11 +9,3 @@ message AddOracleProposal {
   string oracle = 3;
   repeated string pairs = 4;
 }
-
-message AddOracleProposalWithDeposit {
-  string title = 1;
-  string description = 2;
-  string oracle = 3;
-  repeated string pairs = 4;
-  string deposit = 5;
-}

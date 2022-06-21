@@ -84,7 +84,7 @@ func (k Keeper) SetPrice(
 			"oracle %s cannot post on pair %v", oracle, pair.String())
 	}
 
-	newPostedPrice := types.NewPostedPrice(pair.String(), oracle, price, expiry)
+	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
 
 	// Emit an event containing the oracle's new price
 
