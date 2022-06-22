@@ -561,6 +561,8 @@ func TestGetTWAPPrice(t *testing.T) {
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				/*maxSpread=*/ sdk.OneDec(),
 			)
+			err := keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
+			require.NoError(t, err)
 			// Make sure price gets initialized correctly when the pool gets created
 			twap, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
 			require.NoError(t, err)
@@ -573,6 +575,8 @@ func TestGetTWAPPrice(t *testing.T) {
 				} else {
 					_, err = keeper.SwapBaseForQuote(cctx, BTCNusdPair, p.direction, p.baseAsset, sdk.NewDec(0))
 				}
+				require.NoError(t, err)
+				err = keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
 				require.NoError(t, err)
 				twapPrice, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
 				require.NoError(t, err)

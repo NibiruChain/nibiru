@@ -89,6 +89,7 @@ type mockedDependencies struct {
 	mockBankKeeper      *mock.MockBankKeeper
 	mockPricefeedKeeper *mock.MockPricefeedKeeper
 	mockVpoolKeeper     *mock.MockVpoolKeeper
+	mockEpochKeeper     *mock.MockEpochKeeper
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
@@ -142,6 +143,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		mockBankKeeper:      mockedBankKeeper,
 		mockPricefeedKeeper: mockedPricefeedKeeper,
 		mockVpoolKeeper:     mockedVpoolKeeper,
+		mockEpochKeeper:     mockedEpochKeeper,
 	}, ctx
 }
 

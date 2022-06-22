@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -72,7 +74,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 
 func initParams(ctx sdk.Context, k Keeper) {
 	k.SetParams(ctx, types.Params{
-		Stopped:                 true,
+		Stopped:                 false,
 		MaintenanceMarginRatio:  sdk.NewDec(100),
 		TollRatio:               10,
 		SpreadRatio:             5,
@@ -89,6 +91,11 @@ func initParams(ctx sdk.Context, k Keeper) {
 
 func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice, markPrice int64) {
 	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, gomock.Any()).Return(true)
+	if indexPrice != 0 && markPrice != 0 {
+		mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "hour").Return(
+			epochtypes.EpochInfo{Duration: time.Hour},
+		)
+	}
 	mocks.mockPricefeedKeeper.EXPECT().
 		GetCurrentTWAPPrice(ctx, token0, token1).
 		Return(pftypes.CurrentTWAP{
