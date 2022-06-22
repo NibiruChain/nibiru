@@ -28,7 +28,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 const (
@@ -144,6 +143,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.oracleMap = make(map[string]sdk.AccAddress)
 	s.setupOraclesForKeyring()
+
+	// app.ModuleBasics.
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
@@ -615,9 +616,8 @@ func (s IntegrationTestSuite) TestCmdAddOracleProposalAndVote() {
 	proposal := &pftypes.AddOracleProposal{
 		Title:       "Cataclysm-004",
 		Description: "Whitelists Delphi to post prices for OHM and BTC",
-		// Oracle:      oracleKeyringInfo.GetAddress().String(),
-		Oracle: sample.AccAddress().String(),
-		Pairs:  []string{"ohm:usd", "btc:usd"},
+		Oracle:      oracleKeyringInfo.GetAddress().String(),
+		Pairs:       []string{"ohm:usd", "btc:usd"},
 	}
 	proposalJSONString := fmt.Sprintf(`
 		{
