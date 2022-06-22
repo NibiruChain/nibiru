@@ -1,7 +1,10 @@
 package keeper
 
 import (
+	"math"
 	"testing"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -106,6 +109,13 @@ func TestDistributeLiquidateRewards_Happy(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, BtcNusdPair).Return(true)
 
+				mocks.mockAccountKeeper.
+					EXPECT().GetModuleAddress(types.VaultModuleAccount).
+					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
+
+				mocks.mockBankKeeper.
+					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), "NUSD").
+					Return(sdk.NewCoin("NUSD", sdk.NewInt(math.MaxInt64)))
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
 					ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
 					sdk.NewCoins(sdk.NewCoin("NUSD", sdk.OneInt())),
@@ -390,6 +400,12 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 				).Return(nil)
 			}
 			if tc.expectedFundsToLiquidator.IsPositive() {
+				mocks.mockAccountKeeper.
+					EXPECT().GetModuleAddress(types.VaultModuleAccount).
+					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
+				mocks.mockBankKeeper.
+					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), "NUSD").
+					Return(sdk.NewCoin("NUSD", sdk.NewInt(math.MaxInt64)))
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
 					ctx, types.VaultModuleAccount, liquidatorAddr,
 					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedFundsToLiquidator)),

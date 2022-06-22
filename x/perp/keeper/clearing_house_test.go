@@ -2772,6 +2772,7 @@ func TestClosePosition(t *testing.T) {
 			)
 
 			t.Log("mock bank keeper")
+			t.Logf("expecting sending: %s", sdk.NewCoin(assetPair.GetQuoteTokenDenom(), tc.expectedMarginToVault.RoundInt().Abs()))
 			mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
 				ctx,
 				types.VaultModuleAccount,
@@ -2782,7 +2783,12 @@ func TestClosePosition(t *testing.T) {
 						tc.expectedMarginToVault.RoundInt().Abs(),
 					),
 				),
-			)
+			).Return(nil)
+
+			mocks.mockBankKeeper.EXPECT().GetBalance(ctx, sdk.AccAddress{0x1, 0x2, 0x3}, assetPair.GetQuoteTokenDenom()).
+				Return(sdk.NewCoin("NUSD", sdk.NewInt(100000000000)))
+			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(types.VaultModuleAccount).
+				Return(sdk.AccAddress{0x1, 0x2, 0x3})
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
