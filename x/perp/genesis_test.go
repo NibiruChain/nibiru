@@ -57,7 +57,7 @@ func TestGenesis(t *testing.T) {
 
 		// whitelist some addrs
 		for i := 0; i < 5; i++ {
-			app.PerpKeeper.Whitelist().Whitelist(ctx, sample.AccAddress())
+			app.PerpKeeper.Whitelist().Add(ctx, sample.AccAddress())
 		}
 
 		// export genesis

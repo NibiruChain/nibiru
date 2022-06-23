@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/cosmos/cosmos-sdk/codec"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -33,8 +32,8 @@ func (k Keeper) PairMetadata(ctx sdk.Context) PairMetadata {
 	return newPairMetadata(ctx, k.storeKey, k.cdc)
 }
 
-func (k Keeper) Whitelist() Whitelist {
-	return (Whitelist)(k)
+func (k Keeper) Whitelist(ctx sdk.Context) Whitelist {
+	return newWhitelist(ctx, k.storeKey, k.cdc)
 }
 
 func (k Keeper) PrepaidBadDebtState() PrepaidBadDebtState {
@@ -209,26 +208,28 @@ func (p PairMetadata) GetAll() []*types.PairMetadata {
 
 var whitelistNamespace = []byte{0x3}
 
-type Whitelist Keeper
-
-func (w Whitelist) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(w.storeKey), whitelistNamespace)
+type Whitelist struct {
+	whitelists sdk.KVStore
+	cdc        codec.BinaryCodec
 }
 
-func (w Whitelist) IsWhitelisted(ctx sdk.Context, address sdk.AccAddress) bool {
-	kv := w.getKV(ctx)
-
-	return kv.Has(address)
+func newWhitelist(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) Whitelist {
+	return Whitelist{
+		whitelists: prefix.NewStore(ctx.KVStore(key), whitelistNamespace),
+		cdc:        cdc,
+	}
 }
 
-func (w Whitelist) Whitelist(ctx sdk.Context, address sdk.AccAddress) {
-	kv := w.getKV(ctx)
-	kv.Set(address, []byte{})
+func (w Whitelist) IsWhitelisted(address sdk.AccAddress) bool {
+	return w.whitelists.Has(address)
 }
 
-func (w Whitelist) Iterate(ctx sdk.Context, do func(addr sdk.AccAddress) (stop bool)) {
-	kv := w.getKV(ctx)
-	iter := kv.Iterator(nil, nil)
+func (w Whitelist) Add(address sdk.AccAddress) {
+	w.whitelists.Set(address, []byte{})
+}
+
+func (w Whitelist) Iterate(do func(addr sdk.AccAddress) (stop bool)) {
+	iter := w.whitelists.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
