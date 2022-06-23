@@ -1,11 +1,12 @@
 package types
 
-//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PricefeedKeeper,VpoolKeeper
+//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PricefeedKeeper,VpoolKeeper,EpochKeeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 
 	"time"
 
@@ -59,6 +60,7 @@ type PricefeedKeeper interface {
 	) (sdk.AccAddress, error)
 	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
 }
 
 type VpoolKeeper interface {
@@ -235,4 +237,12 @@ type VpoolKeeper interface {
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+
+	// GetCurrentTWAPPrice fetches the TWAP for the specified token pair / pool
+	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (vpooltypes.CurrentTWAP, error)
+}
+
+type EpochKeeper interface {
+	// GetEpochInfo returns epoch info by identifier.
+	GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo
 }

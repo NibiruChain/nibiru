@@ -6,7 +6,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -475,6 +478,110 @@ func TestCalcTwap(t *testing.T) {
 			require.NoError(t, err)
 			require.EqualValuesf(t, tc.expectedPrice, price,
 				"expected %s, got %s", tc.expectedPrice.String(), price.String())
+		})
+	}
+}
+
+func TestGetTWAPPrice(t *testing.T) {
+	type positionUpdate struct {
+		quoteAsset sdk.Dec
+		baseAsset  sdk.Dec
+		blockTs    time.Time
+		direction  types.Direction
+	}
+	tests := []struct {
+		name            string
+		pair            common.AssetPair
+		positionUpdates []positionUpdate
+
+		expectedPrices []sdk.Dec
+	}{
+		{
+			name:            "Add quote to position",
+			pair:            BTCNusdPair,
+			positionUpdates: []positionUpdate{{quoteAsset: sdk.NewDec(5_000), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
+			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("40006.667083333333333336")},
+		}, {
+			name:            "Remove quote from position",
+			pair:            BTCNusdPair,
+			positionUpdates: []positionUpdate{{quoteAsset: sdk.NewDec(4_000), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
+			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("39994.666933333333333333")},
+		}, {
+			name: "Add and remove to/from quote position to return to initial TWAP",
+			pair: BTCNusdPair,
+			positionUpdates: []positionUpdate{
+				{quoteAsset: sdk.NewDec(700), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
+				{quoteAsset: sdk.NewDec(1_234), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
+			},
+			expectedPrices: []sdk.Dec{
+				sdk.MustNewDecFromStr("40001.120009799999999993"),
+				sdk.MustNewDecFromStr("39999.843674908525000000"),
+			},
+		}, {
+			name:            "Add base to position",
+			pair:            BTCNusdPair,
+			positionUpdates: []positionUpdate{{baseAsset: sdk.NewDec(50), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
+			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("37520.786092214663643235")},
+		},
+		{
+			name:            "Remove base from position",
+			pair:            BTCNusdPair,
+			positionUpdates: []positionUpdate{{baseAsset: sdk.NewDec(40), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
+			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("42268.518518518518518519")},
+		},
+		{
+			name: "Add and remove to/from base position to return to initial TWAP",
+			pair: BTCNusdPair,
+			positionUpdates: []positionUpdate{
+				{baseAsset: sdk.NewDec(7), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
+				{baseAsset: sdk.MustNewDecFromStr("1.234"), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
+			},
+			expectedPrices: []sdk.Dec{
+				sdk.MustNewDecFromStr("39556.660476959200196440"),
+				sdk.MustNewDecFromStr("39548.504707649598914130"),
+			},
+		},
+	}
+
+	token0, token1 := BTCNusdPair.Token0, BTCNusdPair.Token1
+	initialTWAP := sdk.NewDec(40_000)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			keeper, ctx := VpoolKeeper(t,
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+
+			cctx := ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
+			keeper.CreatePool(
+				cctx,
+				BTCNusdPair,
+				/*tradeLimitRatio=*/ sdk.OneDec(),
+				/*quoteAssetReserve=*/ sdk.NewDec(40_000_000),
+				/*baseAssetReserve=*/ sdk.NewDec(1_000),
+				/*fluctuationLimitratio=*/ sdk.OneDec(),
+				/*maxSpread=*/ sdk.OneDec(),
+			)
+			err := keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
+			require.NoError(t, err)
+			// Make sure price gets initialized correctly when the pool gets created
+			twap, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
+			require.NoError(t, err)
+			require.EqualValues(t, initialTWAP, twap.Price)
+			for i, p := range tc.positionUpdates {
+				// update the position and trigger TWAP recalculation
+				cctx = ctx.WithBlockHeader(tmproto.Header{Time: p.blockTs})
+				if p.baseAsset.IsNil() {
+					_, err = keeper.SwapQuoteForBase(cctx, BTCNusdPair, p.direction, p.quoteAsset, sdk.NewDec(0))
+				} else {
+					_, err = keeper.SwapBaseForQuote(cctx, BTCNusdPair, p.direction, p.baseAsset, sdk.NewDec(0))
+				}
+				require.NoError(t, err)
+				err = keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
+				require.NoError(t, err)
+				twapPrice, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedPrices[i], twapPrice.Price)
+			}
 		})
 	}
 }

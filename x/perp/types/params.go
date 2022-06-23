@@ -47,6 +47,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&p.PartialLiquidationRatio,
 			validatePartialLiquidationRatio,
 		),
+		paramtypes.NewParamSetPair(
+			[]byte("EpochIdentifier"),
+			&p.EpochIdentifier,
+			validateEpochIdentifier,
+		),
 	}
 }
 
@@ -58,6 +63,7 @@ func NewParams(
 	spreadRatio sdk.Dec,
 	liquidationFee sdk.Dec,
 	partialLiquidationRatio sdk.Dec,
+	epochIdentifier string,
 ) Params {
 	million := sdk.NewDec(1_000_000)
 
@@ -73,6 +79,7 @@ func NewParams(
 		SpreadRatio:             spreadRationInt,
 		LiquidationFee:          liquidationFeeInt,
 		PartialLiquidationRatio: partialLiquidationRatioInt,
+		EpochIdentifier:         epochIdentifier,
 	}
 }
 
@@ -83,6 +90,7 @@ func DefaultParams() Params {
 	liquidationFee := sdk.MustNewDecFromStr("0.0125")
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.50")
 	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
+	epochIdentifier := "hour"
 
 	return NewParams(
 		/*Stopped=*/ false,
@@ -91,6 +99,7 @@ func DefaultParams() Params {
 		/*SpreadRatio=*/ spreadRatio,
 		/*LiquidationFee=*/ liquidationFee,
 		/*PartialLiquidationRatio=*/ partialLiquidationRatio,
+		/*EpochIdentifier=*/ epochIdentifier,
 	)
 }
 
@@ -200,12 +209,12 @@ func validatePartialLiquidationRatio(i interface{}) error {
 	}
 }
 
-func getAsInt64(i interface{}) (int64, error) {
-	value, ok := i.(int64)
-	if !ok {
-		return 0, fmt.Errorf("invalid parameter type: %T", i)
+func validateEpochIdentifier(i interface{}) error {
+	_, err := getAsString(i)
+	if err != nil {
+		return err
 	}
-	return value, nil
+	return nil
 }
 
 func validateStopped(i interface{}) error {
@@ -222,4 +231,20 @@ func validateMaintenanceMarginRatio(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return nil
+}
+
+func getAsString(i interface{}) (string, error) {
+	value, ok := i.(string)
+	if !ok {
+		return "invalid", fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return value, nil
+}
+
+func getAsInt64(i interface{}) (int64, error) {
+	value, ok := i.(int64)
+	if !ok {
+		return 0, fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return value, nil
 }
