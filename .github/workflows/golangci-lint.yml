@@ -18,7 +18,6 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.17
-          cache: true
 
       - uses: actions/checkout@v3
 
