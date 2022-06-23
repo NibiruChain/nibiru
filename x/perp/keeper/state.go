@@ -24,8 +24,8 @@ func (k Keeper) Params(
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-func (k Keeper) Positions() PositionsState {
-	return (PositionsState)(k)
+func (k Keeper) Positions(ctx sdk.Context) PositionsState {
+	return newPositions(ctx, k.storeKey, k.cdc)
 }
 
 func (k Keeper) PairMetadata(ctx sdk.Context) PairMetadata {
@@ -69,10 +69,16 @@ func (p ParamsState) Set(ctx sdk.Context, params *types.Params) {
 
 var positionsNamespace = []byte{0x1}
 
-type PositionsState Keeper
+type PositionsState struct {
+	positions sdk.KVStore
+	cdc       codec.BinaryCodec
+}
 
-func (p PositionsState) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(p.storeKey), positionsNamespace)
+func newPositions(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) PositionsState {
+	return PositionsState{
+		positions: prefix.NewStore(ctx.KVStore(key), positionsNamespace),
+		cdc:       cdc,
+	}
 }
 
 func (p PositionsState) keyFromType(position *types.Position) []byte {
@@ -88,22 +94,19 @@ func (p PositionsState) keyFromRaw(pair common.AssetPair, address sdk.AccAddress
 	return []byte(pair.String() + address.String())
 }
 
-func (p PositionsState) Create(ctx sdk.Context, position *types.Position) error {
+func (p PositionsState) Create(position *types.Position) error {
 	key := p.keyFromType(position)
-	kv := p.getKV(ctx)
-	if kv.Has(key) {
+	if p.positions.Has(key) {
 		return fmt.Errorf("already exists")
 	}
 
-	kv.Set(key, p.cdc.MustMarshal(position))
+	p.positions.Set(key, p.cdc.MustMarshal(position))
 	return nil
 }
 
-func (p PositionsState) Get(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
-	kv := p.getKV(ctx)
-
+func (p PositionsState) Get(pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
 	key := p.keyFromRaw(pair, traderAddr)
-	valueBytes := kv.Get(key)
+	valueBytes := p.positions.Get(key)
 	if valueBytes == nil {
 		return nil, types.ErrPositionNotFound
 	}
@@ -114,29 +117,24 @@ func (p PositionsState) Get(ctx sdk.Context, pair common.AssetPair, traderAddr s
 	return position, nil
 }
 
-func (p PositionsState) Update(ctx sdk.Context, position *types.Position) error {
-	kv := p.getKV(ctx)
+func (p PositionsState) Update(position *types.Position) error {
 	key := p.keyFromType(position)
 
-	if !kv.Has(key) {
+	if !p.positions.Has(key) {
 		return types.ErrPositionNotFound
 	}
 
-	kv.Set(key, p.cdc.MustMarshal(position))
+	p.positions.Set(key, p.cdc.MustMarshal(position))
 	return nil
 }
 
-func (p PositionsState) Set(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position,
-) {
+func (p PositionsState) Set(pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position) {
 	positionID := p.keyFromRaw(pair, traderAddr)
-	kvStore := p.getKV(ctx)
-	kvStore.Set(positionID, p.cdc.MustMarshal(position))
+	p.positions.Set(positionID, p.cdc.MustMarshal(position))
 }
 
-func (p PositionsState) Iterate(ctx sdk.Context, do func(position *types.Position) (stop bool)) {
-	store := p.getKV(ctx)
-	iter := store.Iterator(nil, nil)
+func (p PositionsState) Iterate(do func(position *types.Position) (stop bool)) {
+	iter := p.positions.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
@@ -148,14 +146,13 @@ func (p PositionsState) Iterate(ctx sdk.Context, do func(position *types.Positio
 	}
 }
 
-func (p PositionsState) Delete(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) error {
-	store := p.getKV(ctx)
+func (p PositionsState) Delete(pair common.AssetPair, addr sdk.AccAddress) error {
 	primaryKey := p.keyFromRaw(pair, addr)
 
-	if !store.Has(primaryKey) {
+	if !p.positions.Has(primaryKey) {
 		return types.ErrPositionNotFound.Wrapf("in pair %s", pair)
 	}
-	store.Delete(primaryKey)
+	p.positions.Delete(primaryKey)
 
 	return nil
 }

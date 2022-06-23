@@ -54,7 +54,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// create positions
 	for _, p := range genState.Positions {
-		err := k.Positions().Create(ctx, p)
+		err := k.Positions(ctx).Create(p)
 		if err != nil {
 			panic(fmt.Errorf("unable to re-create position %s: %w", p, err))
 		}
@@ -106,7 +106,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.VaultBalance = vaultAccountBalance
 
 	// export positions
-	k.Positions().Iterate(ctx, func(position *types.Position) (stop bool) {
+	k.Positions(ctx).Iterate(func(position *types.Position) (stop bool) {
 		genesis.Positions = append(genesis.Positions, position)
 		return false
 	})

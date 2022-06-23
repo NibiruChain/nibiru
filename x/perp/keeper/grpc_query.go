@@ -39,7 +39,7 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
-	position, err := q.Keeper.Positions().Get(ctx, pair, trader)
+	position, err := q.Keeper.Positions(ctx).Get(pair, trader)
 	if err != nil {
 		return nil, err
 	}

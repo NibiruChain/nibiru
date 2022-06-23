@@ -232,7 +232,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		require.True(t, posResp.BadDebt.IsZero())
 		require.True(t, !posResp.FundingPayment.IsZero() && posResp.FundingPayment.IsPositive())
 
-		position, err := nibiruApp.PerpKeeper.Positions().Get(ctx, pair, alice)
+		position, err := nibiruApp.PerpKeeper.Positions(ctx).Get(pair, alice)
 		require.ErrorIs(t, err, types.ErrPositionNotFound)
 		require.Nil(t, position)
 
