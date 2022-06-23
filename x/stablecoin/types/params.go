@@ -20,7 +20,7 @@ func NewParams(
 	feeRatio sdk.Dec,
 	efFeeRatio sdk.Dec,
 	bonusRateRecoll sdk.Dec,
-	DistrEpochIdentifier string,
+	distrEpochIdentifier string,
 	adjustmentStep sdk.Dec,
 	priceLowerBound sdk.Dec,
 	priceUpperBound sdk.Dec,
@@ -41,7 +41,7 @@ func NewParams(
 		FeeRatio:               feeRationInt,
 		EfFeeRatio:             efFeeRatioInt,
 		BonusRateRecoll:        bonusRateRecollInt,
-		DistrEpochIdentifier:   DistrEpochIdentifier,
+		DistrEpochIdentifier:   distrEpochIdentifier,
 		AdjustmentStep:         adjustmentStepInt,
 		PriceLowerBound:        priceLowerBoundInt,
 		PriceUpperBound:        priceUpperBoundInt,
@@ -55,13 +55,13 @@ func DefaultParams() Params {
 	feeRatio := sdk.MustNewDecFromStr("0.002")
 	efFeeRatio := sdk.MustNewDecFromStr("0.5")
 	bonusRateRecoll := sdk.MustNewDecFromStr("0.002")
-	DistrEpochIdentifier := "15 min"
+	distrEpochIdentifier := "15 min"
 	adjustmentStep := sdk.MustNewDecFromStr("0.0025")
 	priceLowerBound := sdk.MustNewDecFromStr("0.9999")
 	priceUpperBound := sdk.MustNewDecFromStr("1.0001")
 	isCollateralRatioValid := false // Will be valid once we start posting prices and updating the collateral
 
-	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll, DistrEpochIdentifier,
+	return NewParams(genesisCollRatio, feeRatio, efFeeRatio, bonusRateRecoll, distrEpochIdentifier,
 		adjustmentStep,
 		priceLowerBound,
 		priceUpperBound, isCollateralRatioValid)

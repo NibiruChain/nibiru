@@ -22,6 +22,7 @@ var (
 	PoolKey                    = []byte{0x00}
 	PoolReserveSnapshotCounter = []byte{0x01}
 	PoolReserveSnapshots       = []byte{0x02}
+	TWAPPricePrefix            = []byte{0x03}
 )
 
 // GetPoolKey returns pool key for KVStore
@@ -43,4 +44,9 @@ func GetSnapshotKey(pair common.AssetPair, counter uint64) []byte {
 			sdk.Uint64ToBigEndian(counter)...,
 		)...,
 	)
+}
+
+// CurrentTWAPPriceKey returns the prefix for the current TWAP price
+func CurrentTWAPPriceKey(twapPairID string) []byte {
+	return append(TWAPPricePrefix, []byte(twapPairID)...)
 }

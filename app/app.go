@@ -439,7 +439,7 @@ func NewNibiruApp(
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.PricefeedKeeper, app.VpoolKeeper,
+		app.AccountKeeper, app.BankKeeper, app.PricefeedKeeper, app.VpoolKeeper, app.EpochsKeeper,
 	)
 
 	app.EpochsKeeper = epochskeeper.NewKeeper(

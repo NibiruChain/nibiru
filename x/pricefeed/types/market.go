@@ -139,7 +139,7 @@ Args:
 Returns:
   (CurrentTWAP): Current TWAP price for the asset pair.
 */
-func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Int, price sdk.Dec) CurrentTWAP {
+func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Dec, price sdk.Dec) CurrentTWAP {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	return CurrentTWAP{PairID: assetPair.Name(), Numerator: numerator, Denominator: denominator, Price: price}
 }

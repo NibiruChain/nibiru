@@ -29,6 +29,9 @@ message Params {
 
   // partial_liquidation_ratio is the share we try to liquidate if the margin is higher than liquidation fee
   int64 partial_liquidation_ratio = 6;
+
+  // specifies the interval on which the fundingPayment is being updated
+  string epoch_identifier = 7;
 }
 
 // GenesisState defines the perp  module's genesis state.

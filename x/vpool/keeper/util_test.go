@@ -39,8 +39,7 @@ func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 
 	vpoolKeeper = NewKeeper(
 		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
-		storeKey,
-		pricefeedKeeper,
+		storeKey, pricefeedKeeper,
 	)
 	ctx = sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 

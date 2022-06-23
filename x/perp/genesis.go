@@ -125,5 +125,10 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		genesis.WhitelistedAddresses = append(genesis.WhitelistedAddresses, addr.String())
 		return false
 	})
+
+	// export pairMetadata
+	metadata := k.PairMetadata().GetAll(ctx)
+	genesis.PairMetadata = metadata
+
 	return genesis
 }
