@@ -180,7 +180,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		perpKeeper := &nibiruApp.PerpKeeper
-		perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+		perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 			Pair: pair.String(),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.2")},
@@ -204,7 +204,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 
 		t.Log("open position for bob - long")
 		// force funding payments
-		perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+		perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 			Pair: pair.String(),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},
@@ -232,7 +232,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		require.True(t, posResp.BadDebt.IsZero())
 		require.True(t, !posResp.FundingPayment.IsZero() && posResp.FundingPayment.IsPositive())
 
-		position, err := nibiruApp.PerpKeeper.Positions(ctx).Get(pair, alice)
+		position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, alice)
 		require.ErrorIs(t, err, types.ErrPositionNotFound)
 		require.Nil(t, position)
 

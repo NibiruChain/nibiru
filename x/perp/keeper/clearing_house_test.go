@@ -50,7 +50,7 @@ func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
 						sdk.NewDec(2), // returns the latest from the list
 					},
 				}
-				keeper.PairMetadata(ctx).Set(metadata)
+				keeper.PairMetadataState(ctx).Set(metadata)
 
 				tokenPair, err := common.NewAssetPairFromStr(pair)
 				require.NoError(t, err)
@@ -732,7 +732,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(200), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -806,7 +806,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(99), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -883,7 +883,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -958,7 +958,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(50), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -1033,7 +1033,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(101), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -1111,7 +1111,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(105), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -1401,7 +1401,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
-			perpKeeper.PairMetadata(ctx).Set(&tc.pairMetadata)
+			perpKeeper.PairMetadataState(ctx).Set(&tc.pairMetadata)
 
 			t.Log("close position")
 			resp, err := perpKeeper.closePositionEntirely(
@@ -1695,7 +1695,7 @@ func TestDecreasePosition(t *testing.T) {
 				).Return( /*baseAssetAmount=*/ tc.baseAssetLimit, nil)
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
-			perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: "BTC:NUSD",
 				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
@@ -1797,7 +1797,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*baseAssetLimit=*/ sdk.NewDec(50), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -1891,7 +1891,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*baseAssetLimit=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -1980,7 +1980,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2059,7 +2059,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*baseAssetLimit=*/ sdk.NewDec(50), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2145,7 +2145,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*quoteAssetAmount=*/ sdk.NewDec(200), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2226,7 +2226,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(150), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2320,7 +2320,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2405,7 +2405,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*quoteAssetAmount=*/ sdk.NewDec(150), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2484,7 +2484,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(150), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2570,7 +2570,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					).Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative premium fraction")
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: "BTC:NUSD",
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -2789,7 +2789,7 @@ func TestClosePosition(t *testing.T) {
 				Return(sdk.AccAddress{0x1, 0x2, 0x3})
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
-			perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: "BTC:NUSD",
 				CumulativePremiumFractions: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
@@ -2928,7 +2928,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
-			perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: "BTC:NUSD",
 				CumulativePremiumFractions: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC

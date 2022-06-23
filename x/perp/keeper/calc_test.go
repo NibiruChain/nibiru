@@ -70,7 +70,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair:                       pair.String(),
 					CumulativePremiumFractions: premiumFractions,
 				})
@@ -124,7 +124,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadata(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair:                       pair.String(),
 					CumulativePremiumFractions: premiumFractions,
 				})
