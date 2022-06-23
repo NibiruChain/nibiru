@@ -1,11 +1,9 @@
-name: Create Release
+name: Master Release
 
 # Runs on master merge only.
 on:
   push:
     branches: ["master"]
-  pull_request:
-    branches: ["**"]
 
 jobs:
   all-tests:
@@ -17,31 +15,25 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.17
+          cache: true
 
-      # https://github.com/actions/cache/blob/main/examples.md#go---modules
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      # - name: Run all tests.
-      #   run: go test -v ./... -cover
+      - name: Run all tests.
+        run: go test -v ./... -cover
 
   release:
     runs-on: ubuntu-latest
     needs: all-tests
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: 1.17
+          cache: true
 
       - name: Bump version and push tag
         id: tag_version
