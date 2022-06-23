@@ -52,7 +52,7 @@ func TestGenesis(t *testing.T) {
 
 		// create some prepaid bad debt
 		for i := 0; i < 10; i++ {
-			app.PerpKeeper.PrepaidBadDebtState().Set(ctx, fmt.Sprintf("%d", i), sdk.NewInt(int64(i)))
+			app.PerpKeeper.PrepaidBadDebtState(ctx).Set(fmt.Sprintf("%d", i), sdk.NewInt(int64(i)))
 		}
 
 		// whitelist some addrs

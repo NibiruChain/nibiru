@@ -2,11 +2,12 @@ package cli_test
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -321,7 +322,6 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	status, ok := status.FromError(err)
 	require.True(s.T(), ok)
 	require.Equal(s.T(), status.Code(), codes.InvalidArgument)
-
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {

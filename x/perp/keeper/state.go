@@ -3,12 +3,14 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -173,7 +175,6 @@ type PairMetadataState struct {
 }
 
 func (p PairMetadataState) Get(pair common.AssetPair) (*types.PairMetadata, error) {
-
 	v := p.pairsMetadata.Get([]byte(pair.String()))
 	if v == nil {
 		return nil, types.ErrPairMetadataNotFound
@@ -190,7 +191,6 @@ func (p PairMetadataState) Set(metadata *types.PairMetadata) {
 }
 
 func (p PairMetadataState) GetAll() []*types.PairMetadata {
-
 	iterator := p.pairsMetadata.Iterator(nil, nil)
 
 	var pairMetadatas []*types.PairMetadata
@@ -250,7 +250,6 @@ func newPrepaidBadDebtState(ctx sdk.Context, key sdk.StoreKey, _ codec.BinaryCod
 
 // Get Fetches the amount of bad debt prepaid by denom. Returns zero if the denom is not found.
 func (s PrepaidBadDebtState) Get(denom string) (amount sdk.Int) {
-
 	v := s.prepaidBadDebt.Get([]byte(denom))
 	if v == nil {
 		return sdk.ZeroInt()
