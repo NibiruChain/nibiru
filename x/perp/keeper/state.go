@@ -149,6 +149,18 @@ func (p PositionsState) Iterate(ctx sdk.Context, do func(position *types.Positio
 	}
 }
 
+func (p PositionsState) Delete(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) error {
+	store := p.getKV(ctx)
+	primaryKey := p.keyFromRaw(pair, addr)
+
+	if !store.Has(primaryKey) {
+		return types.ErrPositionNotFound.Wrapf("in pair %s", pair)
+	}
+	store.Delete(primaryKey)
+
+	return nil
+}
+
 var pairMetadataNamespace = []byte{0x2}
 
 type PairMetadata Keeper
