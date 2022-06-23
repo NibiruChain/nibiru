@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
 
@@ -157,14 +158,19 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 	return nil
 }
 
-func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
+func initGenFiles(
+	cfg Config,
+	genAccounts []authtypes.GenesisAccount,
+	genBalances []banktypes.Balance,
+	genFiles []string,
+) (Config, error) {
 	// set the accounts in the genesis state
 	var authGenState authtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &authGenState)
 
 	accounts, err := authtypes.PackAccounts(genAccounts)
 	if err != nil {
-		return err
+		return cfg, err
 	}
 
 	authGenState.Accounts = append(authGenState.Accounts, accounts...)
@@ -173,13 +179,14 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[banktypes.ModuleName], &bankGenState)
-
 	bankGenState.Balances = append(bankGenState.Balances, genBalances...)
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
+	// TODO
+	cfg.GenesisState = testapp.NewTestGenesisState(cfg.Codec, cfg.GenesisState)
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
-		return err
+		return cfg, err
 	}
 
 	genDoc := types.GenesisDoc{
@@ -191,11 +198,11 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	// generate empty genesis files for each validator and save
 	for i := 0; i < cfg.NumValidators; i++ {
 		if err := genDoc.SaveAs(genFiles[i]); err != nil {
-			return err
+			return cfg, err
 		}
 	}
 
-	return nil
+	return cfg, nil
 }
 
 func writeFile(name string, dir string, contents []byte) error {

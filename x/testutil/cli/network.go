@@ -27,6 +27,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+
+	// simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,6 +36,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	tmcfg "github.com/tendermint/tendermint/config"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
@@ -45,7 +48,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -98,6 +101,7 @@ type (
 		T          *testing.T
 		BaseDir    string
 		Validators []*Validator
+		RootCmd    *cobra.Command
 
 		Config Config
 	}
@@ -144,7 +148,7 @@ func DefaultConfig() Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return testutilapp.NewTestApp(true)
+			return testapp.NewTestApp(true)
 		},
 		GenesisState:  app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit: time.Second / 2,
@@ -169,7 +173,7 @@ func DefaultConfig() Config {
 }
 
 // New creates a new Network for integration tests.
-func New(t *testing.T, cfg Config) *Network {
+func NewNetwork(t *testing.T, cfg Config) *Network {
 	// only one caller/test can create and use a network at a time
 	t.Log("acquiring test network lock")
 	lock.Lock()
@@ -375,8 +379,9 @@ func New(t *testing.T, cfg Config) *Network {
 			ValAddress: sdk.ValAddress(addr),
 		}
 	}
-
-	require.NoError(t, initGenFiles(cfg, genAccounts, genBalances, genFiles))
+	cfgAfterInit, err := initGenFiles(cfg, genAccounts, genBalances, genFiles)
+	cfg = cfgAfterInit
+	require.NoError(t, err)
 	require.NoError(t, collectGenFiles(cfg, network.Validators, network.BaseDir))
 
 	t.Log("starting test network...")
@@ -529,4 +534,41 @@ func (n *Network) Cleanup() {
 // UpdateStartingToken allows to update the starting tokens of an existing
 func (cfg *Config) UpdateStartingToken(startingTokens sdk.Coins) {
 	cfg.StartingTokens = startingTokens
+}
+
+// TestConfig returns a configuration using the TestGenesis instead of the default
+func TestConfig() Config {
+	encCfg := app.MakeTestEncodingConfig()
+	defaultGen := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
+	testGen := testapp.NewTestGenesisState(encCfg.Marshaler, defaultGen)
+
+	return Config{
+		Codec:             encCfg.Marshaler,
+		TxConfig:          encCfg.TxConfig,
+		LegacyAmino:       encCfg.Amino,
+		InterfaceRegistry: encCfg.InterfaceRegistry,
+		AccountRetriever:  authtypes.AccountRetriever{},
+		AppConstructor: func(val Validator) servertypes.Application {
+			return testapp.NewTestAppWithGenesis(testGen)
+		},
+		GenesisState:  testGen,
+		TimeoutCommit: time.Second / 2,
+		ChainID:       "chain-" + tmrand.NewRand().Str(6),
+		NumValidators: 1,
+		BondDenom:     sdk.DefaultBondDenom, // TODO(https://github.com/NibiruChain/nibiru/issues/582): remove 'stake' denom and replace with 'unibi'
+		MinGasPrices:  fmt.Sprintf("0.000006%s", common.DenomGov),
+		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
+		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		StartingTokens: sdk.NewCoins(
+			sdk.NewCoin(common.DenomStable, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.DenomGov, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.DenomColl, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(common.DenomTestToken, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+		),
+		PruningStrategy: storetypes.PruningOptionNothing,
+		CleanupDir:      true,
+		SigningAlgo:     string(hd.Secp256k1Type),
+		KeyringOptions:  []keyring.Option{},
+	}
 }
