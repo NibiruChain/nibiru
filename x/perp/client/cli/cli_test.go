@@ -2,6 +2,9 @@ package cli_test
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"testing"
 	"time"
 
@@ -314,10 +317,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Margin)
-	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.OpenNotional)
-	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Size_)
+	s.Error(err)
+	status, ok := status.FromError(err)
+	require.True(s.T(), ok)
+	require.Equal(s.T(), status.Code(), codes.InvalidArgument)
+
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
