@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
@@ -41,7 +42,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 
 	s.T().Log("setting up integration test suite")
-	s.network = testutilcli.New(s.T(), s.cfg)
+
+	app.SetPrefixes(app.AccountAddressPrefix)
+	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	// create a new user address
 	s.testAccount = s.NewAccount("NewAddr")

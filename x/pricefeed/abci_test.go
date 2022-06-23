@@ -11,8 +11,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestTWAPriceUpdates(t *testing.T) {
@@ -38,7 +38,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	nibiruApp, ctx = testutilapp.NewNibiruApp(true)
+	nibiruApp, ctx = testapp.NewNibiruApp(true)
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC))
 

@@ -94,7 +94,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg.GenesisState = genesisState
 
-	s.network = testutilcli.New(s.T(), s.cfg)
+	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)

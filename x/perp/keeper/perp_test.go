@@ -11,8 +11,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +26,7 @@ func TestGetAndSetPosition(t *testing.T) {
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
 				trader := sample.AccAddress()
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruApp(true)
 				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
@@ -43,7 +43,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruApp(true)
 
 				_, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traderAddr)
@@ -88,7 +88,7 @@ func TestClearPosition(t *testing.T) {
 				traders := []sdk.AccAddress{
 					sample.AccAddress(), sample.AccAddress(),
 				}
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruApp(true)
 
 				t.Log("vpool contains no positions to start")
 				for _, trader := range traders {
@@ -167,7 +167,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
-		nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+		nibiruApp, ctx := testapp.NewNibiruApp(true)
 		pair, err := common.NewAssetPair("xxx:yyy")
 		require.NoError(t, err)
 

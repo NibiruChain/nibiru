@@ -11,9 +11,9 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
@@ -49,7 +49,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+			nibiruApp, ctx := testapp.NewNibiruApp(true)
 			pair, err2 := common.NewAssetPair("BTC:NUSD")
 			require.NoError(t, err2)
 
@@ -228,7 +228,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+			nibiruApp, ctx := testapp.NewNibiruApp(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			t.Log("create vpool")
@@ -362,7 +362,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Initialize keepers, pair, and liquidator")
-			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+			nibiruApp, ctx := testapp.NewNibiruApp(true)
 			pair, err := common.NewAssetPair("xxx:yyy")
 			require.NoError(t, err)
 			vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -501,7 +501,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+			nibiruApp, ctx := testapp.NewNibiruApp(true)
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper

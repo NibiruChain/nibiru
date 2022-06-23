@@ -12,17 +12,19 @@ import (
 )
 
 // NewPairResponse returns a new PairResponse
-func NewPairResponse(token1 string, token0 string, oracles []sdk.AccAddress, active bool) PairResponse {
+func NewPairResponse(pair common.AssetPair, oracles []sdk.AccAddress, active bool) PairResponse {
+	if err := pair.Validate(); err != nil {
+		panic(err)
+	}
 	var strOracles []string
 	for _, oracle := range oracles {
 		strOracles = append(strOracles, oracle.String())
 	}
 
-	pairID := common.PairNameFromDenoms([]string{token0, token1})
 	return PairResponse{
-		PairID:  pairID,
-		Token1:  token1,
-		Token0:  token0,
+		PairID:  pair.String(),
+		Token1:  pair.Token1,
+		Token0:  pair.Token0,
 		Oracles: strOracles,
 		Active:  active,
 	}

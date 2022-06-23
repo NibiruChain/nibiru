@@ -9,8 +9,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGenesis(t *testing.T) {
@@ -19,7 +19,7 @@ func TestGenesis(t *testing.T) {
 		ModuleAccountBalance: sdk.NewCoin(common.DenomColl, sdk.ZeroInt()),
 	}
 
-	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruApp(true)
 	k := nibiruApp.StablecoinKeeper
 	stablecoin.InitGenesis(ctx, k, genesisState)
 	got := stablecoin.ExportGenesis(ctx, k)

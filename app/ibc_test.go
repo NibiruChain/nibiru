@@ -19,8 +19,8 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 /* SetupTestingApp returns the TestingApp and default genesis state used to
@@ -30,7 +30,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruApp(true)
 
 	// Whitelist a pair and oracle
 	pair, err := common.NewAssetPair("uatom:unibi")

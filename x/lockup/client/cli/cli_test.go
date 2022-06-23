@@ -33,17 +33,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up lockup CLI testing suite")
 
-	s.cfg = testutilcli.DefaultConfig()
-	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+	app.SetPrefixes(app.AccountAddressPrefix)
+	s.cfg = testutilcli.TestConfig()
 
-	s.cfg.GenesisState = genesisState
 	s.cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin("ATOM", 1_000_000),
 		sdk.NewInt64Coin("OSMO", 1_000_000),
 		sdk.NewInt64Coin("unibi", 1_000_000_000))
 
-	app.SetPrefixes(app.AccountAddressPrefix)
-	s.network = testutilcli.New(s.T(), s.cfg)
+	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
 	require.NoError(s.T(), err)
 

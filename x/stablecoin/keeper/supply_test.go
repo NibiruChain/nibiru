@@ -10,12 +10,12 @@ import (
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/mock"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestKeeper_GetStableMarketCap(t *testing.T) {
-	nibiruApp, ctx := testutilapp.NewNibiruApp(false)
+	nibiruApp, ctx := testapp.NewNibiruApp(false)
 	k := nibiruApp.StablecoinKeeper
 
 	// We set some supply
@@ -31,7 +31,7 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
-	nibiruApp, ctx := testutilapp.NewNibiruApp(false)
+	nibiruApp, ctx := testapp.NewNibiruApp(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()
@@ -67,7 +67,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
-	nibiruApp, ctx := testutilapp.NewNibiruApp(false)
+	nibiruApp, ctx := testapp.NewNibiruApp(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()

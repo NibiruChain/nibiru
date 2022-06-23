@@ -13,10 +13,11 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -129,7 +130,6 @@ func NewTestGenesisStateFromDefault() app.GenesisState {
 
 func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
 ) (testGenState app.GenesisState) {
-
 	testGenState = inGenState
 
 	// Set short voting period to allow fast gov proposals in tests

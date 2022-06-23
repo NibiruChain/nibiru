@@ -1,6 +1,8 @@
 package pricefeed
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
@@ -22,6 +24,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			if err != nil {
 				panic(err)
 			}
+		} else {
+			panic(fmt.Errorf("failed to post prices for pair %v", pp.PairID))
 		}
 	}
 	params := k.GetParams(ctx)
