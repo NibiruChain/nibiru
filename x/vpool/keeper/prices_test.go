@@ -496,18 +496,21 @@ func TestGetTWAPPrice(t *testing.T) {
 		pair            common.AssetPair
 		positionUpdates []positionUpdate
 
-		expectedPrices []sdk.Dec
+		expectedTwapPrices []sdk.Dec
+		expectedMarkPrices []sdk.Dec
 	}{
 		{
-			name:            "Add quote to position",
-			pair:            BTCNusdPair,
-			positionUpdates: []positionUpdate{{quoteAsset: sdk.NewDec(5_000), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
-			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("40006.667083333333333336")},
+			name:               "Add quote to position",
+			pair:               BTCNusdPair,
+			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(5_000), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
+			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("40006.667083333333333336")},
+			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("40010.000625000000000004")},
 		}, {
-			name:            "Remove quote from position",
-			pair:            BTCNusdPair,
-			positionUpdates: []positionUpdate{{quoteAsset: sdk.NewDec(4_000), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
-			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("39994.666933333333333333")},
+			name:               "Remove quote from position",
+			pair:               BTCNusdPair,
+			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(4_000), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
+			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("39994.666933333333333333")},
+			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("39992.000400000000000000")},
 		}, {
 			name: "Add and remove to/from quote position to return to initial TWAP",
 			pair: BTCNusdPair,
@@ -515,21 +518,26 @@ func TestGetTWAPPrice(t *testing.T) {
 				{quoteAsset: sdk.NewDec(700), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
 				{quoteAsset: sdk.NewDec(1_234), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
 			},
-			expectedPrices: []sdk.Dec{
+			expectedTwapPrices: []sdk.Dec{
 				sdk.MustNewDecFromStr("40001.120009799999999993"),
 				sdk.MustNewDecFromStr("39999.843674908525000000"),
 			},
+			expectedMarkPrices: []sdk.Dec{
+				sdk.MustNewDecFromStr("40001.400012249999999991"),
+				sdk.MustNewDecFromStr("39998.932007128900000006"),
+			},
 		}, {
-			name:            "Add base to position",
-			pair:            BTCNusdPair,
-			positionUpdates: []positionUpdate{{baseAsset: sdk.NewDec(50), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
-			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("37520.786092214663643235")},
-		},
+			name:               "Add base to position",
+			pair:               BTCNusdPair,
+			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(50), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
+			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("37520.786092214663643235")},
+			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("36281.179138321995464853")}},
 		{
-			name:            "Remove base from position",
-			pair:            BTCNusdPair,
-			positionUpdates: []positionUpdate{{baseAsset: sdk.NewDec(40), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
-			expectedPrices:  []sdk.Dec{sdk.MustNewDecFromStr("42268.518518518518518519")},
+			name:               "Remove base from position",
+			pair:               BTCNusdPair,
+			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(40), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
+			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("42268.518518518518518519")},
+			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("43402.777777777777777778")},
 		},
 		{
 			name: "Add and remove to/from base position to return to initial TWAP",
@@ -538,9 +546,13 @@ func TestGetTWAPPrice(t *testing.T) {
 				{baseAsset: sdk.NewDec(7), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
 				{baseAsset: sdk.MustNewDecFromStr("1.234"), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
 			},
-			expectedPrices: []sdk.Dec{
+			expectedTwapPrices: []sdk.Dec{
 				sdk.MustNewDecFromStr("39556.660476959200196440"),
 				sdk.MustNewDecFromStr("39548.504707649598914130"),
+			},
+			expectedMarkPrices: []sdk.Dec{
+				sdk.MustNewDecFromStr("39445.825596199000245550"),
+				sdk.MustNewDecFromStr("39542.679158142740855338"),
 			},
 		},
 	}
@@ -554,6 +566,7 @@ func TestGetTWAPPrice(t *testing.T) {
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 
 			cctx := ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
+			// Creation of the pool does NOT trigger a markPriceChanged event
 			keeper.CreatePool(
 				cctx,
 				BTCNusdPair,
@@ -565,8 +578,6 @@ func TestGetTWAPPrice(t *testing.T) {
 			)
 			err := keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
 			require.NoError(t, err)
-			poolCreationMarkPriceEvt := getMarkPriceEvent(sdk.NewDec(40_000), cctx.BlockHeader().Time)
-			testutilevents.RequireHasTypedEvent(t, cctx, poolCreationMarkPriceEvt)
 			// Make sure price gets initialized correctly when the pool gets created
 			twap, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
 			require.NoError(t, err)
@@ -580,13 +591,13 @@ func TestGetTWAPPrice(t *testing.T) {
 					_, err = keeper.SwapBaseForQuote(cctx, BTCNusdPair, p.direction, p.baseAsset, sdk.NewDec(0))
 				}
 				require.NoError(t, err)
-				err = keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
-				markPriceEvt := getMarkPriceEvent(tc.expectedPrices[i], cctx.BlockHeader().Time)
+				markPriceEvt := getMarkPriceEvent(tc.expectedMarkPrices[i], cctx.BlockHeader().Time)
 				testutilevents.RequireContainsTypedEvent(t, cctx, markPriceEvt)
+				err = keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
 				require.NoError(t, err)
 				twapPrice, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedPrices[i], twapPrice.Price)
+				assert.Equal(t, tc.expectedTwapPrices[i], twapPrice.Price)
 			}
 		})
 	}

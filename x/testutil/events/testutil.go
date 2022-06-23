@@ -37,6 +37,7 @@ func RequireHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Messa
 }
 
 func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
+	foundEvents := []proto.Message{}
 	for _, abciEvent := range ctx.EventManager().Events() {
 		if abciEvent.Type != proto.MessageName(event) {
 			continue
@@ -49,8 +50,10 @@ func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.
 
 		if reflect.DeepEqual(typedEvent, event) {
 			return
+		} else {
+			foundEvents = append(foundEvents, typedEvent)
 		}
 	}
 
-	t.Errorf("event not found")
+	t.Errorf("event not found, event: %+v, found events: %+v", event, foundEvents)
 }

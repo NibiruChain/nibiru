@@ -28,9 +28,7 @@ ret:
   - price: the price of the token pair as sdk.Dec
   - err: error
 */
-func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (
-	price sdk.Dec, err error,
-) {
+func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
@@ -56,9 +54,7 @@ ret:
   - price: price as sdk.Dec
   - err: error
 */
-func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (
-	price sdk.Dec, err error,
-) {
+func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	currentPrice, err := k.pricefeedKeeper.GetCurrentPrice(
 		ctx,
 		/* token0 */ pair.GetBaseTokenDenom(),
@@ -370,14 +366,5 @@ func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.codec.MustMarshal(&newTWAP))
-
-	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
-		Pair:      pairID,
-		Price:     price,
-		Timestamp: ctx.BlockHeader().Time,
-	}); err != nil {
-		return err
-	}
-
 	return nil
 }
