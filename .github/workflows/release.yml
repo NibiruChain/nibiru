@@ -4,8 +4,6 @@ name: Master Release
 on:
   push:
     branches: ["master"]
-  pull_request:
-    branches: ["**"]
 
 jobs:
   all-tests:
