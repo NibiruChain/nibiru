@@ -314,10 +314,9 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Margin)
-	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.OpenNotional)
-	s.Assert().EqualValues(sdk.ZeroDec(), queryResp.Position.Size_)
+	s.Require().NotNil(err)
+	s.Assert().Contains(err.Error(), perptypes.ErrPositionNotFound.Error())
+	s.Assert().Nil(queryResp.Position)
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
