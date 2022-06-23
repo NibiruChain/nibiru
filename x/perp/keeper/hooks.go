@@ -47,7 +47,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		}
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-		fundingRate := markTWAPPrice.Price.Sub(indexTWAPPrice.Price).Quo(sdk.NewDec(int64(intervalsPerDay)))
+		fundingRate := markTWAPPrice.Price.Sub(indexTWAPPrice.Price).QuoInt64(int64(intervalsPerDay))
 
 		if len(md.CumulativePremiumFractions) > 0 {
 			fundingRate = md.CumulativePremiumFractions[len(md.CumulativePremiumFractions)-1].Add(fundingRate)

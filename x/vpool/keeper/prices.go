@@ -346,9 +346,9 @@ func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
 	if errors.Is(err, types.ErrNoValidTWAP) {
 		currentTWAP = types.CurrentTWAP{
 			PairID:      pairID,
-			Numerator:   sdk.MustNewDecFromStr("0"),
-			Denominator: sdk.MustNewDecFromStr("0"),
-			Price:       sdk.MustNewDecFromStr("0"),
+			Numerator:   sdk.ZeroDec(),
+			Denominator: sdk.ZeroDec(),
+			Price:       sdk.ZeroDec(),
 		}
 	}
 
