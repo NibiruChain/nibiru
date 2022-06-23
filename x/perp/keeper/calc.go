@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -29,6 +31,13 @@ type RemainingMarginWithFundingPayment struct {
 
 	/* LatestCumulativePremiumFraction: latest cumulative premium fraction. Units are (margin units)/position size. */
 	LatestCumulativePremiumFraction sdk.Dec
+}
+
+func (r RemainingMarginWithFundingPayment) String() string {
+	return fmt.Sprintf(
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativePremiumFraction: %s}",
+		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativePremiumFraction,
+	)
 }
 
 func (k Keeper) CalcRemainMarginWithFundingPayment(
