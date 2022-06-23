@@ -49,7 +49,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set pair metadata
 	for _, p := range genState.PairMetadata {
-		k.PairMetadata().Set(ctx, p)
+		k.PairMetadata(ctx).Set(p)
 	}
 
 	// create positions

@@ -62,10 +62,10 @@ func TestPairMetadata_GetAll(t *testing.T) {
 	perpKeeper, _, ctx := getKeeper(t)
 
 	for _, m := range pairMetadatas {
-		perpKeeper.PairMetadata().Set(ctx, m)
+		perpKeeper.PairMetadata(ctx).Set(m)
 	}
 
-	savedMetadata := perpKeeper.PairMetadata().GetAll(ctx)
+	savedMetadata := perpKeeper.PairMetadata(ctx).GetAll()
 	require.Len(t, savedMetadata, 2)
 
 	for _, sm := range savedMetadata {

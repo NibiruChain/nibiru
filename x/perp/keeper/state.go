@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 	"fmt"
-
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,8 +29,8 @@ func (k Keeper) Positions() PositionsState {
 	return (PositionsState)(k)
 }
 
-func (k Keeper) PairMetadata() PairMetadata {
-	return (PairMetadata)(k)
+func (k Keeper) PairMetadata(ctx sdk.Context) PairMetadata {
+	return newPairMetadata(ctx, k.storeKey, k.cdc)
 }
 
 func (k Keeper) Whitelist() Whitelist {
@@ -163,16 +163,22 @@ func (p PositionsState) Delete(ctx sdk.Context, pair common.AssetPair, addr sdk.
 
 var pairMetadataNamespace = []byte{0x2}
 
-type PairMetadata Keeper
-
-func (p PairMetadata) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(p.storeKey), pairMetadataNamespace)
+func newPairMetadata(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) PairMetadata {
+	store := ctx.KVStore(key)
+	return PairMetadata{
+		pairsMetadata: prefix.NewStore(store, pairMetadataNamespace),
+		cdc:           cdc,
+	}
 }
 
-func (p PairMetadata) Get(ctx sdk.Context, pair common.AssetPair) (*types.PairMetadata, error) {
-	kv := p.getKV(ctx)
+type PairMetadata struct {
+	pairsMetadata sdk.KVStore
+	cdc           codec.BinaryCodec
+}
 
-	v := kv.Get([]byte(pair.String()))
+func (p PairMetadata) Get(pair common.AssetPair) (*types.PairMetadata, error) {
+
+	v := p.pairsMetadata.Get([]byte(pair.String()))
 	if v == nil {
 		return nil, types.ErrPairMetadataNotFound
 	}
@@ -183,15 +189,13 @@ func (p PairMetadata) Get(ctx sdk.Context, pair common.AssetPair) (*types.PairMe
 	return pairMetadata, nil
 }
 
-func (p PairMetadata) Set(ctx sdk.Context, metadata *types.PairMetadata) {
-	kv := p.getKV(ctx)
-	kv.Set([]byte(metadata.Pair), p.cdc.MustMarshal(metadata))
+func (p PairMetadata) Set(metadata *types.PairMetadata) {
+	p.pairsMetadata.Set([]byte(metadata.Pair), p.cdc.MustMarshal(metadata))
 }
 
-func (p PairMetadata) GetAll(ctx sdk.Context) []*types.PairMetadata {
-	store := ctx.KVStore(p.storeKey)
+func (p PairMetadata) GetAll() []*types.PairMetadata {
 
-	iterator := sdk.KVStorePrefixIterator(store, pairMetadataNamespace)
+	iterator := p.pairsMetadata.Iterator(nil, nil)
 
 	var pairMetadatas []*types.PairMetadata
 	for ; iterator.Valid(); iterator.Next() {
