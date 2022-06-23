@@ -71,6 +71,20 @@ func (s IncentivizationProgramState) Create(program *types.IncentivizationProgra
 	s.index(pk, program)
 }
 
+func (s IncentivizationProgramState) Update(id uint64, remainingEpochs int64) error {
+	program, err := s.Get(id)
+	if err != nil {
+		return err
+	}
+	program.RemainingEpochs = remainingEpochs
+	pk := sdk.Uint64ToBigEndian(id)
+	s.incentivizationPrograms.Set(pk, s.cdc.MustMarshal(program))
+
+	// No need to reindex atm, should we leave it just to be save
+	s.index(pk, program)
+	return nil
+}
+
 func (s IncentivizationProgramState) Get(id uint64) (*types.IncentivizationProgram, error) {
 	bytes := s.incentivizationPrograms.Get(sdk.Uint64ToBigEndian(id))
 	if bytes == nil {

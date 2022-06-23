@@ -12,7 +12,7 @@ import (
 
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
+	ltypes "github.com/NibiruChain/nibiru/x/lockup/types"
 )
 
 const (
@@ -31,7 +31,7 @@ const (
 	FundsModuleAccountAddressPrefix = "incentivization_escrow_"
 )
 
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk lockupkeeper.Keeper) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper, dk dexkeeper.Keeper, lk types.LockupKeeper) Keeper {
 	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
@@ -49,7 +49,7 @@ type Keeper struct {
 	ak authkeeper.AccountKeeper
 	bk bankkeeper.Keeper
 	dk dexkeeper.Keeper
-	lk lockupkeeper.Keeper
+	lk types.LockupKeeper
 }
 
 func (k Keeper) CreateIncentivizationProgram(
@@ -113,10 +113,62 @@ func (k Keeper) FundIncentivizationProgram(ctx sdk.Context, id uint64, funder sd
 // Distribute distributes incentivization rewards to accounts
 // that meet incentivization program criteria.
 func (k Keeper) Distribute(ctx sdk.Context) error {
-	panic("impl")
+	activePrograms := k.getActivePrograms(ctx)
+	now := ctx.BlockTime()
+	for _, p := range activePrograms {
+		escrowAddr, err := sdk.AccAddressFromBech32(p.EscrowAddress)
+		if err != nil {
+			panic(err)
+		}
+		balance := k.bk.GetBalance(ctx, escrowAddr, p.LpDenom)
+		if balance.IsZero() {
+			// TODO: should we panic or simply ignore
+			continue
+		}
+		locks := []*ltypes.Lock{}
+		totalLockedAmt := sdk.NewInt(0)
+		k.lk.LocksByDenomUnlockingAfter(ctx, p.LpDenom, p.MinLockupDuration, func(lock *ltypes.Lock) bool {
+			if lock.Coins.Empty() || lock.EndTime.Before(now) {
+				return false
+			}
+			locks = append(locks, lock)
+			totalLockedAmt = totalLockedAmt.Add(lock.Coins.AmountOf(p.LpDenom))
+			return false
+		})
+		for _, lock := range locks {
+			amt := balance.Amount.Mul(lock.Coins.AmountOf(p.LpDenom)).Quo(totalLockedAmt.Mul(sdk.NewInt(p.RemainingEpochs)))
+			if amt.IsPositive() {
+				coins := sdk.Coins{{
+					Denom:  p.LpDenom,
+					Amount: amt,
+				}}
+				k.bk.SendCoins(ctx, escrowAddr, lock.OwnerAddress(), coins)
+			}
+		}
+		// Can this be calculated from the current time or do we need to update??
+		p.RemainingEpochs -= 1
+		if err := k.IncentivizationProgramsState(ctx).Update(p.Id, p.RemainingEpochs); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // NewEscrowAccountName returns the escrow module account name
 func NewEscrowAccountName(id uint64) string {
 	return fmt.Sprintf("%s%d", FundsModuleAccountAddressPrefix, id)
+}
+
+func (k Keeper) getActivePrograms(ctx sdk.Context) []*types.IncentivizationProgram {
+	programs := []*types.IncentivizationProgram{}
+	now := ctx.BlockTime()
+
+	k.IncentivizationProgramsState(ctx).IteratePrograms(func(p *types.IncentivizationProgram) bool {
+		if p.RemainingEpochs <= 0 || p.StartTime.Add(p.MinLockupDuration).After(now) {
+			return false
+		}
+		programs = append(programs, p)
+		return false
+	})
+	return programs
 }
