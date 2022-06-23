@@ -1,9 +1,11 @@
-name: Master Release
+name: Create Release
 
 # Runs on master merge only.
 on:
   push:
     branches: ["master"]
+  pull_request:
+    branches: ["**"]
 
 jobs:
   all-tests:
