@@ -80,7 +80,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 				"hour",
 			))
 
-			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       pair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
@@ -256,7 +256,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				params.GetPartialLiquidationRatioAsDec(),
 				"hour",
 			))
-			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       tokenPair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
@@ -385,7 +385,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 			params := types.DefaultParams()
 			params.LiquidationFee = tc.liquidationFee.MulInt64(1_000_000).RoundInt64()
 			perpKeeper.SetParams(ctx, params)
-			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       pair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -531,7 +531,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				"hour",
 			))
 
-			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       tokenPair.String(),
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})

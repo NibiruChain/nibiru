@@ -160,7 +160,7 @@ func TestGetMarginRatio(t *testing.T) {
 				).
 				Return(tc.newPrice, nil)
 
-			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       "BTC:NUSD",
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
@@ -228,7 +228,7 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -271,7 +271,7 @@ func TestRemoveMargin(t *testing.T) {
 					AnyTimes().Return(true)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -340,7 +340,7 @@ func TestRemoveMargin(t *testing.T) {
 					AnyTimes().Return(true)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -456,7 +456,7 @@ func TestAddMargin(t *testing.T) {
 				}
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: assetPair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -515,7 +515,7 @@ func TestAddMargin(t *testing.T) {
 					AnyTimes().Return(true)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: assetPair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -583,7 +583,7 @@ func TestAddMargin(t *testing.T) {
 					AnyTimes().Return(true)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: assetPair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.MustNewDecFromStr("0.001"),
