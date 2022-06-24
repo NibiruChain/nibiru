@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -93,21 +92,10 @@ func CmdAddOracleProposal() *cobra.Command {
 		},
 	}
 
-	// Define the deposit flag
 	cmd.Flags().String(
 		/*name=*/ govcli.FlagDeposit,
 		/*defaultValue=*/ "",
 		/*usage=*/ "governance deposit for proposal")
-
-	cmd.Flags().String(
-		/*name=*/ flags.FlagKeyringBackend,
-		/*defaultValue=*/ flags.DefaultKeyringBackend,
-		/*usage=*/ "Select keyring's backend (os|file|kwallet|pass|test|memory)")
-	// cmd.Flags().BoolP(
-	// 	/*name=*/ flags.FlagSkipConfirmation,
-	// 	/*shorthand=*/ "y", false, "Skip tx broadcasting prompt confirmation")
-
-	// flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
