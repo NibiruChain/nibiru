@@ -40,7 +40,12 @@ func AddOracleProposalRESTHandler(clientCtx client.Context) govclientrest.Propos
 				req.Oracle.String(),
 				req.Pairs,
 			)
-			msg, err := govtypes.NewMsgSubmitProposal(content, req.Deposit, req.Proposer)
+			fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+			if rest.CheckBadRequestError(w, err) {
+				return
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(content, req.Deposit, fromAddr)
 			if rest.CheckBadRequestError(w, err) {
 				return
 			}
@@ -62,7 +67,6 @@ type (
 	AddOracleProposalHttpRequest struct {
 		BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-		Proposer    sdk.AccAddress `json:"proposer" yaml:"proposer"`
 		Title       string         `json:"title" yaml:"title"`
 		Description string         `json:"description" yaml:"description"`
 		Oracle      sdk.AccAddress `json:"oracle" yaml:"oracle"`

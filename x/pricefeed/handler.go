@@ -33,7 +33,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 /* NewPropsalHandler defines a function that handles a proposal after it has
 passed the governance process */
-func NewProposalHandler(k *keeper.Keeper) govtypes.Handler {
+func NewProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch contentType := content.(type) {
 		case *types.AddOracleProposal:
@@ -47,11 +47,14 @@ func NewProposalHandler(k *keeper.Keeper) govtypes.Handler {
 }
 
 func handleAddOracleProposal(
-	ctx sdk.Context, k *keeper.Keeper, proposal *types.AddOracleProposal) error {
+	ctx sdk.Context, k keeper.Keeper, proposal *types.AddOracleProposal) error {
 	if err := proposal.Validate(); err != nil {
 		return err
 	}
-	oracle := sdk.MustAccAddressFromBech32(proposal.Oracle)
+	oracle, err := sdk.AccAddressFromBech32(proposal.Oracle)
+	if err != nil {
+		return sdkerrors.Wrapf(err, " oracle: %s", oracle)
+	}
 
 	k.WhitelistOraclesForPairs(
 		ctx,
