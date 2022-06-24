@@ -1,18 +1,13 @@
 package keeper_test
 
 import (
-	"io/ioutil"
 	"testing"
 
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -116,37 +111,6 @@ func TestWhitelistOracles(t *testing.T) {
 		},
 		)
 	}
-}
-
-func TestAddOracleProposalFromJson(t *testing.T) {
-	// NOTE config prefix defaults to cosmos rather than nibi without SetPrefixes,
-	// causing a bech32 error
-	app.SetPrefixes(app.AccountAddressPrefix) // makes the nibi bech32 prefix valid
-
-	t.Log("load example json as bytes")
-	okJSON := sdktestutil.WriteToNewTempFile(t, `
-	{
-		"title": "Cataclysm-004",
-		"description": "Whitelists Delphi to post prices for OHM",
-		"oracle": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-		"pairs": ["uohm:uusd"]
-	}	
-	`)
-	contents, err := ioutil.ReadFile(okJSON.Name())
-	assert.NoError(t, err)
-
-	t.Log("Unmarshal json bytes into proposal object")
-	encodingConfig := simappparams.MakeTestEncodingConfig()
-	proposal := &types.AddOracleProposal{}
-	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
-	assert.NoError(t, err)
-
-	t.Log("Check that proposal correctness and validity")
-	require.NoError(t, proposal.Validate())
-	assert.Equal(t, "Cataclysm-004", proposal.Title)
-	assert.Equal(t, "Whitelists Delphi to post prices for OHM", proposal.Description)
-	assert.Equal(t, "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl", proposal.Oracle)
-	assert.Equal(t, []string{"uohm:uusd"}, proposal.Pairs)
 }
 
 func TestWhitelistOraclesForPairs(t *testing.T) {
