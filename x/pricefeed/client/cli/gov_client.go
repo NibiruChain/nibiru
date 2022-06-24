@@ -32,9 +32,8 @@ func CmdAddOracleProposal() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Submit a proposal to whitelist an oracle",
 		Example: strings.TrimSpace(fmt.Sprintf(`
-			Example: 
-			$ %s tx gov add-oracle <path/to/proposal.json> --from=<key_or_address> --deposit="1000unibi"
-			`, version.AppName)),
+			$ %s tx %s submit-proposal add-oracle <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 
+			`, version.AppName, govtypes.ModuleName)),
 		Long: strings.TrimSpace(
 			`Submits a proposal to whitelist an oracle on specified pairs
 

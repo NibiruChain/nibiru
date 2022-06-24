@@ -31,9 +31,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	}
 }
 
-/* NewPropsalHandler defines a function that handles a proposal after it has
+/* NewPricefeedPropsalHandler defines a function that handles a proposal after it has
 passed the governance process */
-func NewProposalHandler(k keeper.Keeper) govtypes.Handler {
+func NewPricefeedProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch contentType := content.(type) {
 		case *types.AddOracleProposal:

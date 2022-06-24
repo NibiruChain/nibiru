@@ -599,7 +599,8 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	s.Assert().NoError(err)
 	s.Require().NoError(proposal.Validate())
 
-	s.T().Log("Submit proposal and unmarshal tx response")
+	s.T().Log(`Submit proposal and unmarshal tx response
+	$ nibid tx gov submit-proposal add-oracle [path-to-proposal.json] --deposit=[deposit] [flags]`)
 	args := []string{
 		proposalJSON.Name(),
 		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
@@ -608,7 +609,7 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 		fmt.Sprintf("--from=%s", val.Address.String()),
 	}
 	cmd := cli.CmdAddOracleProposal()
-	flags.AddTxFlagsToCmd(cmd)
+	flags.AddTxFlagsToCmd(cmd) // NOTE 'nibid tx gov' has these flags automatically
 	out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, args)
 	s.Require().NoError(err)
 	s.Assert().NotContains(out.String(), "fail")
