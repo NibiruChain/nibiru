@@ -9,15 +9,7 @@ import (
 
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) ClearPosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) error {
-	return k.Positions().Update(ctx, &types.Position{
-		TraderAddress:                       traderAddr.String(),
-		Pair:                                pair.String(),
-		Size_:                               sdk.ZeroDec(),
-		Margin:                              sdk.ZeroDec(),
-		OpenNotional:                        sdk.ZeroDec(),
-		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		BlockNumber:                         ctx.BlockHeight(),
-	})
+	return k.Positions().Delete(ctx, pair, traderAddr)
 }
 
 func (k Keeper) GetPosition(
@@ -27,8 +19,8 @@ func (k Keeper) GetPosition(
 }
 
 func (k Keeper) SetPosition(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
-	position *types.Position) {
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position,
+) {
 	k.Positions().Set(ctx, pair, traderAddr, position)
 }
 

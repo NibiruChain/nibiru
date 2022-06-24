@@ -126,11 +126,8 @@ func TestClearPosition(t *testing.T) {
 
 				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traders[0])
-				require.NoError(t, err)
-				require.EqualValues(t,
-					types.ZeroPosition(ctx, vpoolPair, traders[0]),
-					outPosition,
-				)
+				require.ErrorIs(t, err, types.ErrPositionNotFound)
+				require.Nil(t, outPosition)
 
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traders[1])
@@ -145,11 +142,8 @@ func TestClearPosition(t *testing.T) {
 				)
 				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traders[1])
-				require.NoError(t, err)
-				require.EqualValues(t,
-					types.ZeroPosition(ctx, vpoolPair, traders[1]),
-					outPosition,
-				)
+				require.ErrorIs(t, err, types.ErrPositionNotFound)
+				require.Nil(t, outPosition)
 				t.Log("Success, all trader positions have been cleared.")
 			},
 		},
@@ -196,7 +190,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 
 		alice := sample.AccAddress()
 		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
-			sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
 
 		aliceSide := types.Side_BUY
@@ -239,10 +233,14 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		require.True(t, !posResp.FundingPayment.IsZero() && posResp.FundingPayment.IsPositive())
 
 		position, err := nibiruApp.PerpKeeper.Positions().Get(ctx, pair, alice)
-		require.NoError(t, err)
+		require.ErrorIs(t, err, types.ErrPositionNotFound)
+		require.Nil(t, position)
 
-		require.True(t, position.Size_.IsZero())
-		require.True(t, position.Margin.IsZero())
-		require.True(t, position.OpenNotional.IsZero())
+		// this tests the following issue https://github.com/NibiruChain/nibiru/issues/645
+		// in which opening a position from the same address on the same pair
+		// was not possible after calling close position, due to bad data clearance.
+
+		err = nibiruApp.PerpKeeper.OpenPosition(ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)
+		require.NoError(t, err)
 	})
 }

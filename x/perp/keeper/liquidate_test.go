@@ -77,6 +77,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 				params.GetSpreadRatioAsDec(),
 				tc.liquidationFee,
 				params.GetPartialLiquidationRatioAsDec(),
+				"hour",
 			))
 
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
@@ -253,6 +254,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				params.GetSpreadRatioAsDec(),
 				tc.liquidationFee,
 				params.GetPartialLiquidationRatioAsDec(),
+				"hour",
 			))
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
 				Pair:                       tokenPair.String(),
@@ -288,10 +290,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, tokenPair, traderAddr)
-			assert.Equal(t, sdk.ZeroDec(), newPosition.Size_)
-			assert.True(t, newPosition.Margin.IsZero())
-			assert.True(t, newPosition.OpenNotional.IsZero())
+			newPosition, err := nibiruApp.PerpKeeper.GetPosition(ctx, tokenPair, traderAddr)
+			require.ErrorIs(t, err, types.ErrPositionNotFound)
+			require.Nil(t, newPosition)
 
 			t.Log("Check correctness of liquidation fee distributions")
 			liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
@@ -316,9 +317,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
 				BadDebt:               resp.BadDebt,
-				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), sdk.ZeroInt()),
 				PositionNotional:      resp.PositionResp.PositionNotional,
-				PositionSize:          newPosition.Size_,
+				PositionSize:          sdk.ZeroDec(),
 				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
 				MarkPrice:             newMarkPrice,
 				BlockHeight:           ctx.BlockHeight(),
@@ -527,6 +528,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				params.GetSpreadRatioAsDec(),
 				tc.liquidationFee,
 				partialLiquidationRatio,
+				"hour",
 			))
 
 			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{

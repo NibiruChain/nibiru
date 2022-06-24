@@ -87,7 +87,9 @@ func (k Keeper) afterPositionUpdate(
 	positionResp types.PositionResp,
 ) (err error) {
 	// update position in state
-	k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
+	if !positionResp.Position.Size_.IsZero() {
+		k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
+	}
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(
@@ -685,7 +687,6 @@ func (k Keeper) closePositionEntirely(
 	}
 
 	positionResp.RealizedPnl = unrealizedPnL
-
 	// calculate remaining margin with funding payment
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, currentPosition, unrealizedPnL)
