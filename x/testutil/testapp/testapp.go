@@ -121,6 +121,9 @@ const (
 	GenOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
 )
 
+/* NewTestGenesisStateFromDefault returns 'NewGenesisState' using the default
+genesis as input. The blockchain genesis state is represented as a map from module
+identifier strings to raw json messages. */
 func NewTestGenesisStateFromDefault() app.GenesisState {
 	encodingConfig := app.MakeTestEncodingConfig()
 	codec := encodingConfig.Marshaler
@@ -128,6 +131,15 @@ func NewTestGenesisStateFromDefault() app.GenesisState {
 	return NewTestGenesisState(codec, genState)
 }
 
+/* NewTestGenesisState transforms 'inGenState' to add genesis parameter changes
+that are well suited to integration testing, then returns the transformed genesis.
+The blockchain genesis state is represented as a map from module identifier strings
+to raw json messages.
+
+Args:
+- codec: Serializer for the module genesis state proto.Messages
+- inGenState: Input genesis state before the custom test setup is applied
+*/
 func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
 ) (testGenState app.GenesisState) {
 	testGenState = inGenState
@@ -151,7 +163,11 @@ func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
 	return testGenState
 }
 
-// GenesisPricefeed returns an x/pricefeed GenesisState to specify the module parameters.
+// ----------------------------------------------------------------------------
+// Module types.GenesisState functions
+
+/* GenesisPricefeed returns an x/pricefeed GenesisState with additional
+configuration for convenience during integration tests. */
 func GenesisPricefeed() *pricefeedtypes.GenesisState {
 	oracle := sdk.MustAccAddressFromBech32(GenOracleAddress)
 	oracles := []sdk.AccAddress{oracle}
