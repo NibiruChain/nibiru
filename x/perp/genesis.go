@@ -127,7 +127,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	})
 
 	// export pairMetadata
-	metadata := k.PairMetadata().GetAll(ctx)
+	metadata := k.PairMetadataState(ctx).GetAll()
 	genesis.PairMetadata = metadata
 
 	return genesis
