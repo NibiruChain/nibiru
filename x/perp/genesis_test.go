@@ -39,7 +39,7 @@ func TestGenesis(t *testing.T) {
 		})
 		// create some positions
 		for i := int64(0); i < 100; i++ {
-			require.NoError(t, app.PerpKeeper.Positions().Create(ctx, &types.Position{
+			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
 				TraderAddress:                       sample.AccAddress().String(),
 				Pair:                                "NIBI:USDN",
 				Size_:                               sdk.NewDec(i + 1),
@@ -52,12 +52,12 @@ func TestGenesis(t *testing.T) {
 
 		// create some prepaid bad debt
 		for i := 0; i < 10; i++ {
-			app.PerpKeeper.PrepaidBadDebtState().Set(ctx, fmt.Sprintf("%d", i), sdk.NewInt(int64(i)))
+			app.PerpKeeper.PrepaidBadDebtState(ctx).Set(fmt.Sprintf("%d", i), sdk.NewInt(int64(i)))
 		}
 
 		// whitelist some addrs
 		for i := 0; i < 5; i++ {
-			app.PerpKeeper.Whitelist().Whitelist(ctx, sample.AccAddress())
+			app.PerpKeeper.WhitelistState(ctx).Add(sample.AccAddress())
 		}
 
 		// export genesis

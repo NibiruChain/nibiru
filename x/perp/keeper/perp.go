@@ -9,19 +9,19 @@ import (
 
 // TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) ClearPosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) error {
-	return k.Positions().Delete(ctx, pair, traderAddr)
+	return k.PositionsState(ctx).Delete(pair, traderAddr)
 }
 
 func (k Keeper) GetPosition(
 	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
 ) (*types.Position, error) {
-	return k.Positions().Get(ctx, pair, traderAddr)
+	return k.PositionsState(ctx).Get(pair, traderAddr)
 }
 
 func (k Keeper) SetPosition(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position,
-) {
-	k.Positions().Set(ctx, pair, traderAddr, position)
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
+	position *types.Position) {
+	k.PositionsState(ctx).Set(pair, traderAddr, position)
 }
 
 // SettlePosition settles a trader position

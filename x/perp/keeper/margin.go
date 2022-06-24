@@ -184,7 +184,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// ------------- RemoveMargin -------------
-	position, err := k.Positions().Get(ctx, pair, traderAddr)
+	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -222,7 +222,7 @@ func (k Keeper) RemoveMargin(
 		return res, fmt.Errorf("not enough free collateral")
 	}
 
-	k.Positions().Set(ctx, pair, traderAddr, position)
+	k.PositionsState(ctx).Set(pair, traderAddr, position)
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, msg.Margin.Amount)
