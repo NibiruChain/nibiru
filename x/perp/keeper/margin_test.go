@@ -100,7 +100,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.OneDec()},
@@ -302,7 +302,7 @@ func TestAddMarginSuccess(t *testing.T) {
 
 			t.Log("set pair metadata")
 			perpKeeper := &nibiruApp.PerpKeeper
-			perpKeeper.PairMetadata().Set(ctx,
+			perpKeeper.PairMetadataState(ctx).Set(
 				&types.PairMetadata{
 					Pair: common.PAIR_uBTC_uNUSD.String(),
 					CumulativePremiumFractions: []sdk.Dec{
@@ -466,7 +466,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: pair.String(),
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
