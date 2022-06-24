@@ -216,11 +216,6 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			// val := s.network.Validators[0]
-			// clientCtx := val.ClientCtx.WithOutputFormat("json")
-
-			// out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
-
 			cmd := cli.CmdRawPrices()
 			queryResp := new(pricefeedtypes.QueryRawPricesResponse)
 			err := testutilcli.ExecQuery(
@@ -483,7 +478,6 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 		s.Run(tc.name, func() {
 			cmd := cli.CmdPostPrice()
-			fmt.Printf("\nDEBUG cmd: %v\n", cmd)
 			clientCtx := val.ClientCtx
 
 			commonArgs = append(commonArgs,
@@ -579,9 +573,8 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	proposal := &pricefeedtypes.AddOracleProposal{
 		Title:       "Cataclysm-004",
 		Description: "Whitelists Delphi to post prices for OHM and BTC",
-		// Oracle:      oracleKeyringInfo.GetAddress().String(),
-		Oracle: oracle.String(),
-		Pairs:  []string{"ohm:usd", "btc:usd"},
+		Oracle:      oracle.String(),
+		Pairs:       []string{"ohm:usd", "btc:usd"},
 	}
 	proposalJSONString := fmt.Sprintf(`
 		{
@@ -700,8 +693,23 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	}, 20*time.Second, 2*time.Second,
 		"proposal should pass after voting period")
 
-	// TODO Verify that the new pair was added to the params following the proposal
-	// TODO Verify that the oracle was whitelisted with a query.
+	s.T().Log("verify that the new proposed pairs have been added to the params")
+	cmd = cli.CmdQueryParams()
+	args = []string{}
+	queryResp := &pricefeedtypes.QueryParamsResponse{}
+	s.Require().NoError(testutilcli.ExecQuery(s.network, cmd, args, queryResp))
+	proposalPairs := common.NewAssetPairs(proposal.Pairs...)
+	expectedPairs := append(pricefeedtypes.DefaultPairs, proposalPairs...)
+	s.Assert().EqualValues(expectedPairs, queryResp.Params.Pairs)
+
+	s.T().Log("verify that the oracle was whitelisted with a query")
+	cmd = cli.CmdOracles()
+	for _, pair := range proposalPairs {
+		args = []string{pair.String()}
+		queryResp := &pricefeedtypes.QueryOraclesResponse{}
+		s.Assert().NoError(testutilcli.ExecQuery(s.network, cmd, args, queryResp))
+		s.Assert().Contains(queryResp.Oracles, proposal.Oracle)
+	}
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
