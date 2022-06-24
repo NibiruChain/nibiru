@@ -49,12 +49,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set pair metadata
 	for _, p := range genState.PairMetadata {
-		k.PairMetadata().Set(ctx, p)
+		k.PairMetadataState(ctx).Set(p)
 	}
 
 	// create positions
 	for _, p := range genState.Positions {
-		err := k.Positions().Create(ctx, p)
+		err := k.PositionsState(ctx).Create(p)
 		if err != nil {
 			panic(fmt.Errorf("unable to re-create position %s: %w", p, err))
 		}
@@ -65,7 +65,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set prepaid debt position
 	for _, pbd := range genState.PrepaidBadDebts {
-		k.PrepaidBadDebtState().Set(ctx, pbd.Denom, pbd.Amount)
+		k.PrepaidBadDebtState(ctx).Set(pbd.Denom, pbd.Amount)
 	}
 
 	// set whitelist
@@ -74,7 +74,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if err != nil {
 			panic(err)
 		}
-		k.Whitelist().Whitelist(ctx, addr)
+		k.WhitelistState(ctx).Add(addr)
 	}
 }
 
@@ -106,13 +106,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.VaultBalance = vaultAccountBalance
 
 	// export positions
-	k.Positions().Iterate(ctx, func(position *types.Position) (stop bool) {
+	k.PositionsState(ctx).Iterate(func(position *types.Position) (stop bool) {
 		genesis.Positions = append(genesis.Positions, position)
 		return false
 	})
 
 	// export prepaid bad debt
-	k.PrepaidBadDebtState().Iterate(ctx, func(denom string, amount sdk.Int) (stop bool) {
+	k.PrepaidBadDebtState(ctx).Iterate(func(denom string, amount sdk.Int) (stop bool) {
 		genesis.PrepaidBadDebts = append(genesis.PrepaidBadDebts, &types.PrepaidBadDebt{
 			Denom:  denom,
 			Amount: amount,
@@ -121,13 +121,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	})
 
 	// export whitelist
-	k.Whitelist().Iterate(ctx, func(addr sdk.AccAddress) (stop bool) {
+	k.WhitelistState(ctx).Iterate(func(addr sdk.AccAddress) (stop bool) {
 		genesis.WhitelistedAddresses = append(genesis.WhitelistedAddresses, addr.String())
 		return false
 	})
 
 	// export pairMetadata
-	metadata := k.PairMetadata().GetAll(ctx)
+	metadata := k.PairMetadataState(ctx).GetAll()
 	genesis.PairMetadata = metadata
 
 	return genesis

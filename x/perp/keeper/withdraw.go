@@ -43,7 +43,7 @@ func (k Keeper) Withdraw(
 		// and the balance of entire vault is not enough
 		// need money from PerpEF to pay first, and record this prepaidBadDebt
 		shortage := amountToWithdraw.Sub(vaultQuoteBalance.Amount)
-		k.PrepaidBadDebtState().Increment(ctx, denom, shortage)
+		k.PrepaidBadDebtState(ctx).Increment(denom, shortage)
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,
@@ -78,15 +78,15 @@ can consume the credit we have built before withdrawing more from the ecosystem 
 func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
 	err error,
 ) {
-	prepaidBadDebtBalance := k.PrepaidBadDebtState().Get(ctx, denom)
+	prepaidBadDebtBalance := k.PrepaidBadDebtState(ctx).Get(denom)
 
 	if prepaidBadDebtBalance.GTE(badDebtToRealize) {
 		// prepaidBadDebtBalance > totalBadDebt
-		k.PrepaidBadDebtState().Decrement(ctx, denom, badDebtToRealize)
+		k.PrepaidBadDebtState(ctx).Decrement(denom, badDebtToRealize)
 	} else {
 		// totalBadDebt > prepaidBadDebtBalance
 
-		k.PrepaidBadDebtState().Set(ctx, denom, sdk.ZeroInt())
+		k.PrepaidBadDebtState(ctx).Set(denom, sdk.ZeroInt())
 
 		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
 			/*from=*/ types.PerpEFModuleAccount,

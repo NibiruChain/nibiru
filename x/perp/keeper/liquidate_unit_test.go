@@ -423,7 +423,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			newParams := types.DefaultParams()
 			newParams.LiquidationFee = tc.liquidationFee
 			perpKeeper.SetParams(ctx, newParams)
-			perpKeeper.PairMetadata().Set(ctx, &types.PairMetadata{
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: BtcNusdPair.String(),
 				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case

@@ -5,6 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -314,9 +318,10 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
 	s.T().Logf("query response: %+v", queryResp)
-	s.Require().NotNil(err)
-	s.Assert().Contains(err.Error(), perptypes.ErrPositionNotFound.Error())
-	s.Assert().Nil(queryResp.Position)
+	s.Error(err)
+	status, ok := status.FromError(err)
+	require.True(s.T(), ok)
+	require.Equal(s.T(), status.Code(), codes.InvalidArgument)
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {

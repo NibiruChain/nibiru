@@ -60,7 +60,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			initParams(ctx, keeper)
 			setMockPrices(ctx, mocks, tc.indexPrice, tc.markPrice)
 			keeper.AfterEpochEnd(ctx, "hour", 0)
-			pair, err := keeper.PairMetadata().Get(ctx, BtcNusdPair)
+			pair, err := keeper.PairMetadataState(ctx).Get(BtcNusdPair)
 			require.NoError(t, err)
 			assert.Equal(t, pair.Pair, BtcNusdPair.String())
 			expected := []sdk.Dec{sdk.NewDec(0)}
@@ -82,7 +82,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		PartialLiquidationRatio: 10,
 		EpochIdentifier:         "hour",
 	})
-	k.PairMetadata().Set(ctx, &types.PairMetadata{
+	k.PairMetadataState(ctx).Set(&types.PairMetadata{
 		Pair: BtcNusdPair.String(),
 		// start with one entry to ensure we append
 		CumulativePremiumFractions: []sdk.Dec{sdk.NewDec(0)},

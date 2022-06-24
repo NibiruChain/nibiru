@@ -38,7 +38,7 @@ func TestSettlePosition(t *testing.T) {
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
 		}
-		err = k.Positions().Create(ctx, &pos)
+		err = k.PositionsState(ctx).Create(&pos)
 		require.NoError(t, err)
 
 		coins, err := k.SettlePosition(ctx, pos)
@@ -82,7 +82,7 @@ func TestSettlePosition(t *testing.T) {
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
 		}
-		err = k.Positions().Create(ctx, &pos)
+		err = k.PositionsState(ctx).Create(&pos)
 		require.NoError(t, err)
 
 		coins, err := k.SettlePosition(ctx, pos)
@@ -102,7 +102,7 @@ func TestSettlePosition(t *testing.T) {
 			Pair:          pair.String(),
 			Size_:         sdk.ZeroDec(),
 		}
-		err = k.Positions().Create(ctx, &pos)
+		err = k.PositionsState(ctx).Create(&pos)
 		require.NoError(t, err)
 
 		coins, err := k.SettlePosition(ctx, pos)

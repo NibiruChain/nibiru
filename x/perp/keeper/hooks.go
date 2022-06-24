@@ -17,7 +17,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 	if epochIdentifier != params.EpochIdentifier || params.Stopped {
 		return
 	}
-	for _, md := range k.PairMetadata().GetAll(ctx) {
+	for _, md := range k.PairMetadataState(ctx).GetAll() {
 		assetPair, err := common.NewAssetPairFromStr(md.Pair)
 		if err != nil {
 			ctx.Logger().Error("invalid asset pair", "assetPair", md.Pair, "error", err)
@@ -53,7 +53,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 			fundingRate = md.CumulativePremiumFractions[len(md.CumulativePremiumFractions)-1].Add(fundingRate)
 		}
 		md.CumulativePremiumFractions = append(md.CumulativePremiumFractions, fundingRate)
-		k.PairMetadata().Set(ctx, md)
+		k.PairMetadataState(ctx).Set(md)
 	}
 }
 
