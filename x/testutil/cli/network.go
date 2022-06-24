@@ -36,7 +36,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	tmcfg "github.com/tendermint/tendermint/config"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
@@ -101,7 +100,6 @@ type (
 		T          *testing.T
 		BaseDir    string
 		Validators []*Validator
-		RootCmd    *cobra.Command
 
 		Config Config
 	}
@@ -379,8 +377,7 @@ func NewNetwork(t *testing.T, cfg Config) *Network {
 			ValAddress: sdk.ValAddress(addr),
 		}
 	}
-	cfgAfterInit, err := initGenFiles(cfg, genAccounts, genBalances, genFiles)
-	cfg = cfgAfterInit
+	cfg, err = initGenFiles(cfg, genAccounts, genBalances, genFiles)
 	require.NoError(t, err)
 	require.NoError(t, collectGenFiles(cfg, network.Validators, network.BaseDir))
 

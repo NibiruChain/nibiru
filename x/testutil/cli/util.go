@@ -183,7 +183,6 @@ func initGenFiles(
 	bankGenState.Balances = append(bankGenState.Balances, genBalances...)
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
-	// TODO
 	cfg.GenesisState = testapp.NewTestGenesisState(cfg.Codec, cfg.GenesisState)
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {

@@ -23,47 +23,16 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
-// New creates application instance with in-memory database and disabled logging.
+// NewTestApp creates an application instance ('app.NibiruApp') with an in-memory
+// database ('tmdb.MemDB') and disabled logging. It either uses the application's
+// default genesis state or a blank one.
 func NewTestApp(shouldUseDefaultGenesis bool) *app.NibiruApp {
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-
-	nodeHome := filepath.Join(userHomeDir, ".nibid")
-	db := tmdb.NewMemDB()
-	logger := log.NewNopLogger()
-
 	encoding := app.MakeTestEncodingConfig()
-
-	testApp := app.NewNibiruApp(
-		logger,
-		db,
-		/*traceStore=*/ nil,
-		/*loadLatest=*/ true,
-		/*skipUpgradeHeights=*/ map[int64]bool{},
-		/*homePath=*/ nodeHome,
-		/*invCheckPeriod=*/ 0,
-		/*encodingConfig=*/ encoding,
-		/*appOpts=*/ simapp.EmptyAppOptions{},
-	)
-
-	var stateBytes = []byte("{}")
+	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
-		genesisState := app.NewDefaultGenesisState(encoding.Marshaler)
-		stateBytes, err = json.MarshalIndent(genesisState, "", " ")
-		if err != nil {
-			panic(err)
-		}
+		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
-
-	// InitChain updates deliverState which is required when app.NewContext is called
-	testApp.InitChain(abci.RequestInitChain{
-		ConsensusParams: simapp.DefaultConsensusParams,
-		AppStateBytes:   stateBytes,
-	})
-
-	return testApp
+	return NewTestAppWithGenesis(appGenesis)
 }
 
 /* NewNibiruApp creates an 'app.NibiruApp' instance with an in-memory
@@ -75,6 +44,9 @@ func NewNibiruApp(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
 	return newNibiruApp, ctx
 }
 
+// NewTestAppWithGenesis initializes a chain with the given genesis state to
+//  creates an application instance ('app.NibiruApp'). This app uses an
+// in-memory database ('tmdb.MemDB') and has logging disabled.
 func NewTestAppWithGenesis(gen app.GenesisState) *app.NibiruApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {

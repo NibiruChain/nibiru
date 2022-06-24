@@ -26,7 +26,7 @@ func (s *TestappSuite) SetupSuite() {
 	s.pairs = pricefeedtypes.DefaultPairs
 }
 
-func (s *TestappSuite) TestGenesisPricefeed_A() {
+func (s *TestappSuite) TestGenesisPricefeed() {
 	genPf := testapp.GenesisPricefeed()
 	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs), genPf.Params)
 	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs), genPf.Params)
