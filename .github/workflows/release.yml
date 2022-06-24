@@ -15,16 +15,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.17
-
-      # https://github.com/actions/cache/blob/main/examples.md#go---modules
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cache: true
 
       - name: Run all tests.
         run: go test -v ./... -cover
@@ -33,22 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: all-tests
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: 1.17
-
-      # https://github.com/actions/cache/blob/main/examples.md#go---modules
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cache: true
 
       - name: Bump version and push tag
         id: tag_version
