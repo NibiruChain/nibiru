@@ -6,11 +6,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGetSetDenomLiquidity(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetDenomLiquidity(ctx, "nibi", sdk.NewInt(1000))
@@ -22,7 +22,7 @@ func TestGetSetDenomLiquidity(t *testing.T) {
 }
 
 func TestGetTotalLiquidity(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetDenomLiquidity(ctx, "atom", sdk.NewInt(123))
@@ -40,7 +40,7 @@ func TestGetTotalLiquidity(t *testing.T) {
 }
 
 func TestSetTotalLiquidity(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
@@ -56,7 +56,7 @@ func TestSetTotalLiquidity(t *testing.T) {
 }
 
 func TestRecordTotalLiquidityIncrease(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
@@ -73,7 +73,7 @@ func TestRecordTotalLiquidityIncrease(t *testing.T) {
 }
 
 func TestRecordTotalLiquidityDecrease(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(

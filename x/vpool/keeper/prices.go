@@ -277,21 +277,15 @@ func (k Keeper) calcTwap(
 }
 
 // GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
-func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (types.CurrentTWAP, error) {
+func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, pair common.AssetPair) (types.CurrentTWAP, error) {
 	// Ensure we still have valid prices
-	_, err := k.GetSpotPrice(ctx, common.AssetPair{
-		Token0: token0,
-		Token1: token1,
-	})
+	_, err := k.GetSpotPrice(ctx, pair)
 	if err != nil {
 		return types.CurrentTWAP{}, types.ErrNoValidPrice
 	}
 
-	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	pairID := assetPair.Name()
-
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pairID))
+	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pair.String()))
 
 	if bz == nil {
 		return types.CurrentTWAP{}, types.ErrNoValidTWAP
@@ -301,17 +295,6 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	k.codec.MustUnmarshal(bz, &price)
 	if price.Price.IsZero() {
 		return types.CurrentTWAP{}, types.ErrNoValidPrice
-	}
-
-	if !assetPair.IsProperOrder() {
-		// Return the inverse price if the tokens are not in "proper" order.
-		inversePrice := sdk.OneDec().Quo(price.Price)
-		return types.NewCurrentTWAP(
-			/* token0 */ token1,
-			/* token1 */ token0,
-			/* numerator */ price.Numerator,
-			/* denominator */ price.Denominator,
-			/* price */ inversePrice), nil
 	}
 
 	return price, nil
@@ -330,18 +313,17 @@ With
 */
 
 func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
-	tokens := common.DenomsFromPoolName(pairID)
-	token0, token1 := tokens[0], tokens[1]
-
-	currentPrice, err := k.GetSpotPrice(ctx, common.AssetPair{
-		Token0: token0,
-		Token1: token1,
-	})
+	pair, err := common.NewAssetPair(pairID)
 	if err != nil {
 		return err
 	}
 
-	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, token0, token1)
+	currentPrice, err := k.GetSpotPrice(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, pair)
 	// Err there means no twap price have been set yet for this pair
 	if errors.Is(err, types.ErrNoValidTWAP) {
 		currentTWAP = types.CurrentTWAP{

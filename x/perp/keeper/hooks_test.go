@@ -16,7 +16,7 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-var token0, token1 = BtcNusdPair.Token0, BtcNusdPair.Token1
+var pair = BtcNusdPair
 
 func TestEndOfEpochTwapCalculation(t *testing.T) {
 	tests := []struct {
@@ -97,13 +97,13 @@ func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice, markPr
 		)
 	}
 	mocks.mockPricefeedKeeper.EXPECT().
-		GetCurrentTWAPPrice(ctx, token0, token1).
+		GetCurrentTWAPPrice(ctx, pair.Token0, pair.Token1).
 		Return(pftypes.CurrentTWAP{
 			PairID: BtcNusdPair.String(),
 			Price:  sdk.NewDec(indexPrice),
 		}, nil).MaxTimes(1)
 	mocks.mockVpoolKeeper.EXPECT().
-		GetCurrentTWAPPrice(ctx, token0, token1).
+		GetCurrentTWAPPrice(ctx, pair).
 		Return(vpooltypes.CurrentTWAP{
 			PairID: BtcNusdPair.String(),
 			Price:  sdk.NewDec(markPrice),

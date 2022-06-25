@@ -28,7 +28,7 @@ import (
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))).String()),
+	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.DenomGov, sdk.NewInt(10))).String()),
 }
 
 type IntegrationTestSuite struct {
@@ -39,33 +39,23 @@ type IntegrationTestSuite struct {
 	users   []sdk.AccAddress
 }
 
-const (
-	oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
-)
-
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	oracle, err := sdk.AccAddressFromBech32(oracleAddress)
-	if err != nil {
-		panic(err)
-	}
+	const oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
 
+	pairs := common.AssetPairs{common.PairTestStable}
 	return &pftypes.GenesisState{
-		Params: pftypes.Params{
-			Pairs: []pftypes.Pair{
-				{Token0: common.TestStablePool.Token0,
-					Token1:  common.TestStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-			},
-		},
+		Params: pftypes.Params{Pairs: pairs},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.TestStablePool.PairID(),
-				OracleAddress: oracle,
-				Price:         sdk.OneDec(),
-				Expiry:        time.Now().Add(1 * time.Hour),
+				PairID: common.PairTestStable.String(),
+				Oracle: oracle.String(),
+				Price:  sdk.OneDec(),
+				Expiry: time.Now().Add(1 * time.Hour),
 			},
 		},
+		GenesisOracles: []string{oracle.String()},
 	}
 }
 
@@ -81,11 +71,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = testutilcli.DefaultConfig()
-
 	app.SetPrefixes(app.AccountAddressPrefix)
+	encodingConfig := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
+	s.cfg = testutilcli.BuildNetworkConfig(defaultAppGenesis)
 
-	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+	genesisState := defaultAppGenesis
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
@@ -107,7 +98,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 		{
-			Pair:              common.TestStablePool.String(),
+			Pair:              common.PairTestStable.String(),
 			BaseAssetReserve:  sdk.MustNewDecFromStr("100"),
 			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
 
@@ -135,7 +126,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 		{
-			Pair: common.TestStablePool.String(),
+			Pair: common.PairTestStable.String(),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -149,7 +140,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg.GenesisState = genesisState
 
-	s.network = testutilcli.New(s.T(), s.cfg)
+	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
@@ -165,10 +156,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
-			sdk.NewInt64Coin(common.TestTokenDenom, 50_000_000),
-			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
+			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
+			sdk.NewInt64Coin(common.DenomTestToken, 50_000_000),
+			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
 		s.cfg.BondDenom,
@@ -370,7 +361,7 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
-	pair := common.TestStablePool
+	pair := common.PairTestStable
 
 	// Open a position with first user
 	s.T().Log("opening a position with user 1....")
@@ -395,7 +386,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"--from",
 		s.users[0].String(),
 		pair.String(),
-		fmt.Sprintf("%s%s", "100", common.TestStablePool.Token1), // Amount
+		fmt.Sprintf("%s%s", "100", common.PairTestStable.Token1), // Amount
 	}
 	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
 	if err != nil {

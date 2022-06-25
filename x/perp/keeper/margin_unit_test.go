@@ -201,7 +201,7 @@ func TestRemoveMargin(t *testing.T) {
 				msg := &types.MsgRemoveMargin{
 					Sender:    trader.String(),
 					TokenPair: the3pool,
-					Margin:    sdk.NewCoin(common.StableDenom, sdk.NewInt(5))}
+					Margin:    sdk.NewCoin(common.DenomStable, sdk.NewInt(5))}
 				_, err := k.RemoveMargin(goCtx, msg)
 				require.Error(t, err)
 				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
@@ -265,7 +265,7 @@ func TestRemoveMargin(t *testing.T) {
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
 
-				pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+				pair, err := common.NewAssetPair(msg.TokenPair)
 				require.NoError(t, err)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
 					AnyTimes().Return(true)
@@ -334,7 +334,7 @@ func TestRemoveMargin(t *testing.T) {
 					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
 				}
 
-				pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+				pair, err := common.NewAssetPair(msg.TokenPair)
 				require.NoError(t, err)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
 					AnyTimes().Return(true)
@@ -437,7 +437,7 @@ func TestAddMargin(t *testing.T) {
 				msg := &types.MsgAddMargin{
 					Sender:    trader.String(),
 					TokenPair: the3pool,
-					Margin:    sdk.NewInt64Coin(common.StableDenom, 5),
+					Margin:    sdk.NewInt64Coin(common.DenomStable, 5),
 				}
 				_, err := k.AddMargin(goCtx, msg)
 				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
@@ -500,7 +500,7 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				assetPair, err := common.NewAssetPairFromStr("uosmo:unusd")
+				assetPair, err := common.NewAssetPair("uosmo:unusd")
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()
@@ -568,7 +568,7 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				assetPair, err := common.NewAssetPairFromStr("uosmo:unusd")
+				assetPair, err := common.NewAssetPair("uosmo:unusd")
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()

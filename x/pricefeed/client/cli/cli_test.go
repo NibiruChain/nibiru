@@ -9,64 +9,67 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 const (
-	oracleAddress  = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
-	oracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
+	genOracleAddress  = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
+	genOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
+	cfg        testutilcli.Config
+	network    *testutilcli.Network
+	oracleUIDs []string
+	oracleMap  map[string]sdk.AccAddress
 }
 
-// NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
-func NewPricefeedGen() *pftypes.GenesisState {
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+func (s *IntegrationTestSuite) setupOraclesForKeyring() {
+	val := s.network.Validators[0]
+	s.oracleUIDs = []string{"oracle", "wrongOracle"}
 
-	return &pftypes.GenesisState{
-		Params: pftypes.Params{
-			Pairs: []pftypes.Pair{
-				{
-					Token0:  common.GovStablePool.Token0,
-					Token1:  common.GovStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true,
-				},
-				{
-					Token0:  common.CollStablePool.Token0,
-					Token1:  common.CollStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true,
-				},
-			},
-		},
-		PostedPrices: []pftypes.PostedPrice{
-			{
-				PairID:        common.GovStablePool.PairID(),
-				OracleAddress: oracle,
-				Price:         sdk.NewDec(10),
-				Expiry:        time.Now().Add(1 * time.Hour),
-			},
-			{
-				PairID:        common.CollStablePool.PairID(),
-				OracleAddress: oracle,
-				Price:         sdk.OneDec(),
-				Expiry:        time.Now().Add(1 * time.Hour),
-			},
-		},
+	for _, oracleUID := range s.oracleUIDs {
+		info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+			/* uid */ oracleUID,
+			/* language */ keyring.English,
+			/* hdPath */ sdk.FullFundraiserPath,
+			/* bip39Passphrase */ "",
+			/* algo */ hd.Secp256k1)
+		s.oracleMap[oracleUID] = sdk.AccAddress(info.GetPubKey().Address())
+		s.Require().NoError(err)
 	}
+
+	info, err := val.ClientCtx.Keyring.NewAccount(
+		/* uid */ "genOracle",
+		/* mnemonic */ genOracleMnemonic,
+		/* bip39Passphrase */ "",
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* algo */ hd.Secp256k1,
+	)
+	s.oracleMap["genOracle"] = sdk.AccAddress(info.GetPubKey().Address())
+	s.Require().NoError(err)
+
+	_, _, err = val.ClientCtx.Keyring.NewMnemonic(
+		/* uid */ "oracle",
+		/* language */ keyring.English,
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* bip39Passphrase */ "",
+		/* algo */ hd.Secp256k1)
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "public key already exists in keybase")
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -81,21 +84,27 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = testutilcli.DefaultConfig()
-
-	// modification to pay fee with test bond denom "stake"
 	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 
-	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
-	genesisState[pftypes.ModuleName] = pricefeedGenJson
+	encCfg := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
+	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
+	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
 
-	s.cfg.GenesisState = genesisState
+	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
-	s.network = testutilcli.New(s.T(), s.cfg)
+	s.oracleMap = make(map[string]sdk.AccAddress)
+	s.setupOraclesForKeyring()
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
+
+	res, err := testutilcli.QueryPrice(
+		s.network.Validators[0].ClientCtx,
+		common.PairGovStable.String(),
+	)
+	s.Require().NoError(err)
+	s.Assert().Equal(sdk.NewDec(10), res.Price.Price)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -104,8 +113,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 func (s IntegrationTestSuite) TestGetPriceCmd() {
-	val := s.network.Validators[0]
-
 	testCases := []struct {
 		name string
 		args []string
@@ -117,18 +124,18 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.CollStablePool.PairID(),
+				common.PairCollStable.String(),
 			},
 			expectedPrice: sdk.NewDec(1),
-			respType:      &pftypes.QueryPriceResponse{},
+			respType:      &pricefeedtypes.QueryPriceResponse{},
 		},
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.GovStablePool.PairID(),
+				common.PairGovStable.String(),
 			},
 			expectedPrice: sdk.NewDec(10),
-			respType:      &pftypes.QueryPriceResponse{},
+			respType:      &pricefeedtypes.QueryPriceResponse{},
 		},
 		{
 			name: "Invalid pair returns an error",
@@ -136,7 +143,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 				"invalid:pair",
 			},
 			expectErr: true,
-			respType:  &pftypes.QueryPriceResponse{},
+			respType:  &pricefeedtypes.QueryPriceResponse{},
 		},
 	}
 
@@ -145,28 +152,25 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 
 		s.Run(tc.name, func() {
 			cmd := cli.CmdPrice()
-			clientCtx := val.ClientCtx.WithOutputFormat("json")
+			queryResp := new(pricefeedtypes.QueryPriceResponse)
+			err := testutilcli.ExecQuery(
+				s.network, cmd,
+				append(tc.args, fmt.Sprintf("--%s=json", tmcli.OutputFlag)),
+				queryResp,
+			)
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
-				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
-
-				txResp := tc.respType.(*pftypes.QueryPriceResponse)
-				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 				s.Require().NoError(err)
-				s.Assert().Equal(tc.expectedPrice, txResp.Price.Price)
-				s.Assert().Equal(tc.args[0], txResp.Price.PairID)
+				s.Assert().Equal(tc.expectedPrice, queryResp.Price.Price)
+				s.Assert().Equal(tc.args[0], queryResp.Price.PairID)
 			}
 		})
 	}
 }
 
 func (s IntegrationTestSuite) TestGetRawPricesCmd() {
-	val := s.network.Validators[0]
-
 	testCases := []struct {
 		name string
 		args []string
@@ -179,18 +183,18 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.CollStablePool.PairID(),
+				common.PairCollStable.String(),
 			},
 			expectedPrice: sdk.NewDec(1),
-			respType:      &pftypes.QueryRawPricesResponse{},
+			respType:      &pricefeedtypes.QueryRawPricesResponse{},
 		},
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.GovStablePool.PairID(),
+				common.PairGovStable.String(),
 			},
 			expectedPrice: sdk.NewDec(10),
-			respType:      &pftypes.QueryRawPricesResponse{},
+			respType:      &pricefeedtypes.QueryRawPricesResponse{},
 		},
 		{
 			name: "Invalid pair returns an error",
@@ -199,7 +203,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 			},
 			expectedPrice: sdk.NewDec(10),
 			expectErr:     true,
-			respType:      &pftypes.QueryRawPricesResponse{},
+			respType:      &pricefeedtypes.QueryRawPricesResponse{},
 		},
 	}
 
@@ -208,23 +212,22 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 
 		s.Run(tc.name, func() {
 			cmd := cli.CmdRawPrices()
-			clientCtx := val.ClientCtx.WithOutputFormat("json")
+			queryResp := new(pricefeedtypes.QueryRawPricesResponse)
+			err := testutilcli.ExecQuery(
+				s.network, cmd,
+				append(tc.args, fmt.Sprintf("--%s=json", tmcli.OutputFlag)),
+				queryResp,
+			)
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
-				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
-
-				txResp := tc.respType.(*pftypes.QueryRawPricesResponse)
-				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 				s.Require().NoError(err)
-				s.Require().Equal(len(txResp.RawPrices), 1)
-				s.Assert().Equal(tc.expectedPrice, txResp.RawPrices[0].Price)
-				s.Assert().Equal(oracleAddress, txResp.RawPrices[0].OracleAddress)
+				s.Require().Equal(len(queryResp.RawPrices), 1)
+				s.Assert().Equal(tc.expectedPrice, queryResp.RawPrices[0].Price)
+				s.Assert().Equal(genOracleAddress, queryResp.RawPrices[0].OracleAddress)
 				// The initial prices are valid for one hour
-				s.Assert().True(expireWithinHours(txResp.RawPrices[0].GetExpiry(), 1))
+				s.Assert().True(expireWithinHours(queryResp.RawPrices[0].GetExpiry(), 1))
 			}
 		})
 	}
@@ -237,21 +240,22 @@ func expireWithinHours(t time.Time, hours time.Duration) bool {
 func (s IntegrationTestSuite) TestPairsCmd() {
 	val := s.network.Validators[0]
 
-	gov, col := common.GovStablePool, common.CollStablePool
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+	oracle, _ := sdk.AccAddressFromBech32(genOracleAddress)
 	testCases := []struct {
 		name string
 
-		expectedPairs pftypes.PairResponses
+		expectedPairs pricefeedtypes.PairResponses
 		respType      proto.Message
 	}{
 		{
 			name: "Get current pairs",
-			expectedPairs: pftypes.PairResponses{
-				pftypes.NewPairResponse(gov.Token1, gov.Token0, []sdk.AccAddress{oracle}, true),
-				pftypes.NewPairResponse(col.Token1, col.Token0, []sdk.AccAddress{oracle}, true),
+			expectedPairs: pricefeedtypes.PairResponses{
+				pricefeedtypes.NewPairResponse(common.PairGovStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewPairResponse(common.PairCollStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewPairResponse(common.PairBTCStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewPairResponse(common.PairETHStable, []sdk.AccAddress{oracle}, true),
 			},
-			respType: &pftypes.QueryPairsResponse{},
+			respType: &pricefeedtypes.QueryPairsResponse{},
 		},
 	}
 
@@ -262,11 +266,11 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 			cmd := cli.CmdPairs()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, nil)
+			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-			txResp := tc.respType.(*pftypes.QueryPairsResponse)
+			txResp := tc.respType.(*pricefeedtypes.QueryPairsResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
 			s.Assert().Equal(len(tc.expectedPairs), len(txResp.Pairs))
@@ -283,16 +287,16 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 	testCases := []struct {
 		name string
 
-		expectedPricePairs []pftypes.CurrentPriceResponse
+		expectedPricePairs []pricefeedtypes.CurrentPriceResponse
 		respType           proto.Message
 	}{
 		{
 			name: "Get current prices",
-			expectedPricePairs: []pftypes.CurrentPriceResponse{
-				pftypes.NewCurrentPriceResponse(common.GovStablePool.PairID(), sdk.NewDec(10)),
-				pftypes.NewCurrentPriceResponse(common.CollStablePool.PairID(), sdk.NewDec(1)),
+			expectedPricePairs: []pricefeedtypes.CurrentPriceResponse{
+				pricefeedtypes.NewCurrentPriceResponse(common.PairGovStable.String(), sdk.NewDec(10)),
+				pricefeedtypes.NewCurrentPriceResponse(common.PairCollStable.String(), sdk.NewDec(1)),
 			},
-			respType: &pftypes.QueryPricesResponse{},
+			respType: &pricefeedtypes.QueryPricesResponse{},
 		},
 	}
 
@@ -303,17 +307,17 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 			cmd := cli.CmdPrices()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, nil)
+			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-			txResp := tc.respType.(*pftypes.QueryPricesResponse)
+			txResp := tc.respType.(*pricefeedtypes.QueryPricesResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
 			s.Assert().Equal(len(tc.expectedPricePairs), len(txResp.Prices))
 
-			for _, pp := range txResp.Prices {
-				s.Assert().Contains(tc.expectedPricePairs, pp)
+			for _, priceResponse := range txResp.Prices {
+				s.Assert().Contains(tc.expectedPricePairs, priceResponse, tc.expectedPricePairs)
 			}
 		})
 	}
@@ -333,26 +337,27 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		{
 			name: "Get the collateral oracles",
 			args: []string{
-				common.CollStablePool.PairID(),
+				common.PairCollStable.String(),
 			},
-			expectedOracles: []string{oracleAddress},
-			respType:        &pftypes.QueryOraclesResponse{},
+			expectedOracles: []string{genOracleAddress},
+			respType:        &pricefeedtypes.QueryOraclesResponse{},
 		},
 		{
 			name: "Get the governance oracles",
 			args: []string{
-				common.GovStablePool.PairID(),
+				common.PairGovStable.String(),
 			},
-			expectedOracles: []string{oracleAddress},
-			respType:        &pftypes.QueryOraclesResponse{},
+			expectedOracles: []string{genOracleAddress},
+			respType:        &pricefeedtypes.QueryOraclesResponse{},
 		},
 		{
 			name: "Invalid pair returns an error",
 			args: []string{
 				"invalid:pair",
 			},
-			expectErr: true,
-			respType:  &pftypes.QueryOraclesResponse{},
+			expectErr:       false,
+			expectedOracles: []string{},
+			respType:        &pricefeedtypes.QueryOraclesResponse{},
 		},
 	}
 
@@ -363,14 +368,14 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			cmd := cli.CmdOracles()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			if tc.expectErr {
-				s.Require().Error(err)
+				s.Require().Error(err, out.String())
 			} else {
 				s.Require().NoError(err, out.String())
 				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*pftypes.QueryOraclesResponse)
+				txResp := tc.respType.(*pricefeedtypes.QueryOraclesResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 				s.Require().NoError(err)
 				s.Assert().Equal(tc.expectedOracles, txResp.Oracles)
@@ -379,30 +384,29 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 	}
 }
 func (s IntegrationTestSuite) TestSetPriceCmd() {
+	err := s.network.WaitForNextBlock()
+	s.Require().NoError(err)
+
 	val := s.network.Validators[0]
 
-	gov, col := common.GovStablePool, common.CollStablePool
+	gov, col := common.PairGovStable, common.PairCollStable
 	now := time.Now()
-	expireInOneHour, expiredTS := strconv.Itoa(int(now.Add(1*time.Hour).Unix())), strconv.Itoa(int(now.Add(-1*time.Hour).Unix()))
-	_, err := val.ClientCtx.Keyring.NewAccount(
-		/* uid */ "oracle",
-		/* mnemonic */ oracleMnemonic,
-		/* bip39Passphrase */ "",
-		/* hdPath */ sdk.FullFundraiserPath,
-		/* algo */ hd.Secp256k1,
-	)
-	s.Require().NoError(err)
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic("wrongOracle", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
-	wrongOracleAddress := sdk.AccAddress(info.GetPubKey().Address())
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
-	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin("stake", 100_000_000))
-	_, err = testutilcli.FillWalletFromValidator(wrongOracleAddress, gasFeeToken, val, s.cfg.BondDenom)
-	s.Require().NoError(err)
-	_, err = testutilcli.FillWalletFromValidator(oracle, gasFeeToken, val, s.cfg.BondDenom)
-	s.Require().NoError(err)
+	expireInOneHour := strconv.Itoa(int(now.Add(1 * time.Hour).Unix()))
+	expiredTS := strconv.Itoa(int(now.Add(-1 * time.Hour).Unix()))
+
+	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1_000_000))
+	for _, oracleName := range []string{"genOracle", "wrongOracle"} {
+		_, err = testutilcli.FillWalletFromValidator(
+			/*addr=*/ s.oracleMap[oracleName],
+			/*balanece=*/ gasFeeToken,
+			/*Validator=*/ val,
+			/*feesDenom=*/ s.cfg.BondDenom)
+		s.Require().NoError(err)
+	}
+
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
@@ -420,18 +424,20 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			args: []string{
 				gov.Token0, gov.Token1, "100", expireInOneHour,
 			},
-			expectedPriceForPair: map[string]sdk.Dec{gov.PairID(): sdk.NewDec(100)},
-			respType:             &sdk.TxResponse{},
-			fromOracle:           "oracle",
+			expectedPriceForPair: map[string]sdk.Dec{
+				gov.String(): sdk.NewDec(100)},
+			respType:   &sdk.TxResponse{},
+			fromOracle: "genOracle",
 		},
 		{
 			name: "Set the price of the collateral token",
 			args: []string{
-				col.Token0, col.Token1, "0.5", expireInOneHour,
+				col.Token0, col.Token1, "0.85", expireInOneHour,
 			},
-			expectedPriceForPair: map[string]sdk.Dec{col.PairID(): sdk.NewDec(2)},
-			respType:             &sdk.TxResponse{},
-			fromOracle:           "oracle",
+			expectedPriceForPair: map[string]sdk.Dec{
+				col.String(): sdk.MustNewDecFromStr("0.85")},
+			respType:   &sdk.TxResponse{},
+			fromOracle: "genOracle",
 		},
 		{
 			name: "Use invalid oracle",
@@ -447,9 +453,9 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			args: []string{
 				"invalid", "pair", "123", expireInOneHour,
 			},
-			expectedCode: 5,
+			expectedCode: 6,
 			respType:     &sdk.TxResponse{},
-			fromOracle:   "oracle",
+			fromOracle:   "genOracle",
 		},
 		{
 			name: "Set expired pair returns an error",
@@ -458,7 +464,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedCode: 3,
 			respType:     &sdk.TxResponse{},
-			fromOracle:   "oracle",
+			fromOracle:   "genOracle",
 		},
 	}
 
@@ -469,15 +475,16 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			cmd := cli.CmdPostPrice()
 			clientCtx := val.ClientCtx
 
-			commonArgs = append(commonArgs, fmt.Sprintf("--%s=%s", flags.FlagFrom, tc.fromOracle))
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
-			s.Require().NoError(err, out.String())
-			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+			commonArgs = append(commonArgs,
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]))
+			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
+			s.Require().NoError(err)
+			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType))
 
 			txResp := tc.respType.(*sdk.TxResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Assert().Equal(tc.expectedCode, txResp.Code, out.String())
+			s.Assert().Equal(tc.expectedCode, txResp.Code)
 
 			for pairID, price := range tc.expectedPriceForPair {
 				currentPrice, err := testutilcli.QueryRawPrice(clientCtx, pairID)
@@ -499,16 +506,22 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 func (s IntegrationTestSuite) TestGetParamsCmd() {
 	val := s.network.Validators[0]
 
+	var pricefeedGenState pricefeedtypes.GenesisState
+	s.cfg.Codec.MustUnmarshalJSON(
+		s.cfg.GenesisState[pricefeedtypes.ModuleName],
+		&pricefeedGenState,
+	)
+
 	testCases := []struct {
 		name string
 
 		respType       proto.Message
-		expectedParams pftypes.Params
+		expectedParams pricefeedtypes.Params
 	}{
 		{
 			name:           "Get all params",
-			respType:       &pftypes.QueryParamsResponse{},
-			expectedParams: NewPricefeedGen().Params,
+			respType:       &pricefeedtypes.QueryParamsResponse{},
+			expectedParams: pricefeedGenState.Params,
 		},
 	}
 
@@ -519,11 +532,11 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 			cmd := cli.CmdQueryParams()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, nil)
+			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-			txResp := tc.respType.(*pftypes.QueryParamsResponse)
+			txResp := tc.respType.(*pricefeedtypes.QueryParamsResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
 			s.Assert().Equal(tc.expectedParams, txResp.Params)

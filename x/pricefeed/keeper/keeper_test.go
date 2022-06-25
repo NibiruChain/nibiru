@@ -5,107 +5,88 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestKeeper_SetGetPair(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
-	token0, token1 := "usd", "tst"
-	tstusdPair := types.Pair{
-		Token1: token1, Token0: token0, Oracles: []sdk.AccAddress{}, Active: true}
-	token0, token1 = "abc", "xyz"
-	abcxyzPair := types.Pair{
-		Token1: token1, Token0: token0, Oracles: []sdk.AccAddress{}, Active: true}
-
-	mp := types.Params{
-		Pairs: types.Pairs{tstusdPair},
+	pairs := common.AssetPairs{
+		common.MustNewAssetPair("tst:usd"),
+		common.MustNewAssetPair("xyz:abc"),
 	}
+
 	keeper := app.PricefeedKeeper
-	keeper.SetParams(ctx, mp)
+	keeper.SetParams(ctx, types.Params{Pairs: common.AssetPairs{pairs[0]}})
 
-	markets := keeper.GetPairs(ctx)
-	require.Equal(t, len(markets), 1)
-	require.Equal(t, markets[0].PairID(), "tst:usd")
+	paramsPairs := keeper.GetPairs(ctx)
+	require.Len(t, paramsPairs, 1)
+	require.Equal(t, paramsPairs[0].String(), "tst:usd")
 
-	_, found := keeper.GetPair(ctx, "tst:usd")
-	require.True(t, found, "market should be found")
+	require.True(t, keeper.IsActivePair(ctx, pairs[0].String()))
+	require.True(t, !keeper.IsActivePair(ctx, pairs[1].String()))
 
-	_, found = keeper.GetPair(ctx, "invalid:market")
-	require.False(t, found, "invalid:market should not be found")
-
-	mp = types.Params{
-		Pairs: []types.Pair{
-			tstusdPair,
-			abcxyzPair,
-		},
+	params := types.Params{Pairs: pairs}
+	keeper.SetParams(ctx, params)
+	paramsPairs = keeper.GetPairs(ctx)
+	require.Len(t, paramsPairs, 2)
+	for _, pair := range paramsPairs {
+		require.True(t, keeper.IsActivePair(ctx, pair.String()))
 	}
-
-	keeper.SetParams(ctx, mp)
-	markets = keeper.GetPairs(ctx)
-	require.Equal(t, len(markets), 2)
-	require.Equal(t, markets[0].PairID(), "tst:usd")
-	_, found = keeper.GetPair(ctx, "abc:xyz")
-	require.True(t, found, "market should be found")
-
-	_, found = keeper.GetPair(ctx, "nan")
-	require.False(t, found)
+	require.False(t, keeper.IsActivePair(ctx, "nan:nan"))
 }
 
 func TestKeeper_GetSetPrice(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: "tst", Token0: "usd", Oracles: addrs, Active: true},
-		},
-	}
-	keeper.SetParams(ctx, mp)
+	pair := common.MustNewAssetPair("tst:usd")
+	params := types.Params{Pairs: common.AssetPairs{pair}}
+	keeper.SetParams(ctx, params)
+	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
 
-	token0, token1 := "tst", "usd"
-	pairID := "tst:usd"
-	prices := []struct {
-		oracle sdk.AccAddress
-		token0 string
-		token1 string
-		price  sdk.Dec
-		total  int
+	priceInfos := []struct {
+		oracle  sdk.AccAddress
+		pairStr string
+		price   sdk.Dec
+		total   int
 	}{
-		{addrs[0], token0, token1, sdk.MustNewDecFromStr("0.33"), 1},
-		{addrs[1], token0, token1, sdk.MustNewDecFromStr("0.35"), 2},
-		{addrs[0], token0, token1, sdk.MustNewDecFromStr("0.37"), 2},
+		{addrs[0], pair.String(), sdk.MustNewDecFromStr("0.33"), 1},
+		{addrs[1], pair.String(), sdk.MustNewDecFromStr("0.35"), 2},
+		{addrs[0], pair.String(), sdk.MustNewDecFromStr("0.37"), 2},
 	}
 
-	for _, p := range prices {
+	for _, priceInfo := range priceInfos {
 		// Set price by oracle 1
-
 		pp, err := keeper.SetPrice(
 			ctx,
-			p.oracle,
-			p.token0,
-			p.token1,
-			p.price,
+			priceInfo.oracle,
+			priceInfo.pairStr,
+			priceInfo.price,
 			time.Now().UTC().Add(1*time.Hour),
 		)
 
 		require.NoError(t, err)
 
 		// Get raw prices
-		rawPrices := keeper.GetRawPrices(ctx, pairID)
+		rawPrices := keeper.GetRawPrices(ctx, pair.String())
 
-		require.Equal(t, p.total, len(rawPrices))
+		require.Equal(t, priceInfo.total, len(rawPrices))
 		require.Contains(t, rawPrices, pp)
 
 		// Find the oracle and require price to be same
-		for _, rp := range rawPrices {
-			if p.oracle.Equals(rp.OracleAddress) {
-				require.Equal(t, p.price, rp.Price)
+		for _, postedPrice := range rawPrices {
+			oracleThatPosted, err := sdk.AccAddressFromBech32(postedPrice.Oracle)
+			assert.NoError(t, err)
+			if priceInfo.oracle.Equals(oracleThatPosted) {
+				require.Equal(t, priceInfo.price, postedPrice.Price)
 			}
 		}
 	}
@@ -116,29 +97,29 @@ Test case where two oracles try to set prices for a market and only one of the
 oracles is valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracle(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
-	token0, token1 := "tst", "usd"
+	pair := common.MustNewAssetPair("tst:usd")
+
 	price := sdk.MustNewDecFromStr("0.1")
 
 	// Register addrs[1] as the oracle.
 	_, addrs := sample.PrivKeyAddressPairs(2)
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: token1, Token0: token0,
-				Oracles: addrs[:1], Active: true},
-		}}
-	keeper.SetParams(ctx, mp)
 
-	// Set price with valid oracle given (addrs[1])
+	params := types.Params{Pairs: common.AssetPairs{pair}}
+	keeper.SetParams(ctx, params)
+
+	// Set price with valid oracle given (addrs[0])
+	keeper.WhitelistOracles(ctx, []sdk.AccAddress{addrs[0]})
+	expiry := ctx.BlockTime().UTC().Add(1 * time.Hour)
 	_, err := keeper.SetPrice(
-		ctx, addrs[0], token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[0], pair.String(), price, expiry,
 	)
 	require.NoError(t, err)
 
 	// Set price with invalid oracle given (addrs[1])
 	_, err = keeper.SetPrice(
-		ctx, addrs[1], token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+		ctx, addrs[1], pair.String(), price, expiry,
 	)
 	require.Error(t, err)
 }
@@ -148,32 +129,30 @@ Test case where several oracles try to set prices for a market
 and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracles(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
-	token0, token1 := "tst", "usd"
+	pair := common.MustNewAssetPair("tst:usd")
 	price := sdk.MustNewDecFromStr("0.1")
 
 	_, addrs := sample.PrivKeyAddressPairs(10)
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: "tst", Token0: "usd",
-				Oracles: addrs[:5], Active: true},
-		},
+	params := types.Params{
+		Pairs: common.AssetPairs{pair},
 	}
-	keeper.SetParams(ctx, mp)
+	keeper.SetParams(ctx, params)
+	keeper.WhitelistOraclesForPairs(ctx, addrs[:5], common.AssetPairs{pair})
 
 	for i, addr := range addrs {
 		if i < 5 {
 			// Valid oracle addresses. This shouldn't raise an error.
 			_, err := keeper.SetPrice(
-				ctx, addr, token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, pair.String(), price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.NoError(t, err)
 		} else {
 			// Invalid oracle addresses. This should raise errors.
 			_, err := keeper.SetPrice(
-				ctx, addr, token0, token1, price, time.Now().UTC().Add(1*time.Hour),
+				ctx, addr, pair.String(), price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.Error(t, err)
 		}
@@ -183,46 +162,45 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 // TestKeeper_GetSetCurrentPrice Test Setting the median price of an Asset
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
-	app, ctx := testutilapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "tst", "usd"
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token0: token0, Token1: token1,
-				Oracles: addrs, Active: true},
-		},
+	pair := common.AssetPair{Token0: token0, Token1: token1}
+	params := types.Params{
+		Pairs: common.AssetPairs{pair},
 	}
-	keeper.SetParams(ctx, mp)
+	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
+	keeper.SetParams(ctx, params)
 
 	_, err := keeper.SetPrice(
-		ctx, addrs[0], token0, token1,
+		ctx, addrs[0], pair.String(),
 		sdk.MustNewDecFromStr("0.33"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
 	_, err = keeper.SetPrice(
-		ctx, addrs[1], token0, token1,
+		ctx, addrs[1], pair.String(),
 		sdk.MustNewDecFromStr("0.35"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
 	_, err = keeper.SetPrice(
-		ctx, addrs[2], token0, token1,
+		ctx, addrs[2], pair.String(),
 		sdk.MustNewDecFromStr("0.34"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
-	// Add an expired one which should fail
+	t.Log("Add an expired one which should fail")
 	_, err = keeper.SetPrice(
-		ctx, addrs[3], token0, token1,
+		ctx, addrs[3], pair.String(),
 		sdk.MustNewDecFromStr("0.9"),
 		ctx.BlockTime().Add(-time.Hour*1))
 	require.Error(t, err)
 
-	// Add a non-expired price, but will not be counted when BlockTime is changed
+	t.Log("Add a non-expired price, but will not be counted when BlockTime is changed")
 	_, err = keeper.SetPrice(
-		ctx, addrs[3], token0, token1,
+		ctx, addrs[3], pair.String(),
 		sdk.MustNewDecFromStr("0.9"),
 		time.Now().Add(time.Minute*30))
 	require.NoError(t, err)
@@ -231,24 +209,24 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45))
 
 	// Set current price
-	err = keeper.SetCurrentPrices(ctx, "tst", "usd")
+	err = keeper.SetCurrentPrices(ctx, token0, token1)
 	require.NoError(t, err)
 
 	// Get current price
-	price, err := keeper.GetCurrentPrice(ctx, "tst", "usd")
-	require.Nil(t, err)
+	price, err := keeper.GetCurrentPrice(ctx, token0, token1)
+	require.NoError(t, err)
 
 	expCurPrice := sdk.MustNewDecFromStr("0.34")
 	require.Truef(
 		t,
 		price.Price.Equal(expCurPrice),
-		"expected current price to equal %v, actual %v",
+		"expected current price to equal %s, actual %s",
 		expCurPrice, price.Price,
 	)
 
 	// Even number of oracles
 	_, err = keeper.SetPrice(
-		ctx, addrs[4], token0, token1,
+		ctx, addrs[4], pair.String(),
 		sdk.MustNewDecFromStr("0.36"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
@@ -272,32 +250,32 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 }
 
 func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
-	_, addrs := sample.PrivKeyAddressPairs(5)
-	app, ctx := testutilapp.NewNibiruApp(true)
+	_, oracles := sample.PrivKeyAddressPairs(5)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "usd", "tst"
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: token1, Token0: token0, Oracles: addrs, Active: true},
-		},
+	pair := common.AssetPair{Token0: token0, Token1: token1}
+	params := types.Params{
+		Pairs: common.AssetPairs{pair},
 	}
-	keeper.SetParams(ctx, mp)
+	keeper.SetParams(ctx, params)
+	keeper.OraclesStore().AddOracles(ctx, pair, oracles)
 
 	_, err := keeper.SetPrice(
-		ctx, addrs[0], token0, token1,
+		ctx, oracles[0], pair.String(),
 		sdk.MustNewDecFromStr("0.33"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
 	_, err = keeper.SetPrice(
-		ctx, addrs[1], token0, token1,
+		ctx, oracles[1], pair.String(),
 		sdk.MustNewDecFromStr("0.35"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
 	_, err = keeper.SetPrice(
-		ctx, addrs[2], token0, token1,
+		ctx, oracles[2], pair.String(),
 		sdk.MustNewDecFromStr("0.34"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
@@ -306,7 +284,7 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Now().UTC().Add(time.Hour * 2))
 
 	err = keeper.SetCurrentPrices(ctx, token0, token1)
-	require.ErrorIs(t, types.ErrNoValidPrice, err, "there should be no valid prices to be set")
+	require.ErrorContains(t, err, "input prices are expired")
 
 	_, err = keeper.GetCurrentPrice(ctx, token0, token1)
 	require.ErrorIs(t, types.ErrNoValidPrice, err, "current prices should be invalid")

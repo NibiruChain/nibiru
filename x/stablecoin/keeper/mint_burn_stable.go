@@ -93,16 +93,16 @@ func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceGov, err := k.PricefeedKeeper.GetCurrentPrice(
-		ctx, common.GovDenom, common.StableDenom)
+		ctx, common.DenomGov, common.DenomStable)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
 	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
-	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
+	neededGov := sdk.NewCoin(common.DenomGov, neededGovAmt)
 	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
-	govFee := sdk.NewCoin(common.GovDenom, govFeeAmt)
+	govFee := sdk.NewCoin(common.DenomGov, govFeeAmt)
 
 	return neededGov, govFee, nil
 }
@@ -115,16 +115,16 @@ func (k Keeper) calcNeededCollateralAndFees(
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceColl, err := k.PricefeedKeeper.GetCurrentPrice(
-		ctx, common.CollDenom, common.StableDenom)
+		ctx, common.DenomColl, common.DenomStable)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
-	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
+	neededColl := sdk.NewCoin(common.DenomColl, neededCollAmt)
 	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
-	collFee := sdk.NewCoin(common.CollDenom, collFeeAmt)
+	collFee := sdk.NewCoin(common.DenomColl, collFeeAmt)
 
 	return neededColl, collFee, nil
 }
@@ -252,7 +252,7 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 		amountEf := c.Amount.ToDec().Mul(efFeeRatio).TruncateInt()
 		amountTreasury := c.Amount.Sub(amountEf)
 
-		if c.Denom == common.GovDenom {
+		if c.Denom == common.DenomGov {
 			stableCoins := sdk.NewCoins(sdk.NewCoin(c.Denom, amountEf))
 			err := k.BankKeeper.SendCoinsFromAccountToModule(
 				ctx, account, types.StableEFModuleAccount, stableCoins)

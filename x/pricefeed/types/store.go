@@ -10,15 +10,18 @@ import (
 
 // Parameter keys
 var (
-	KeyPairs     = []byte("Pairs")
-	DefaultPairs = []Pair{
-		{Token0: common.CollDenom, Token1: common.StableDenom, Active: true},
-		{Token0: common.GovDenom, Token1: common.StableDenom, Active: true},
+	DefaultPairs = common.AssetPairs{
+		common.PairGovStable,
+		common.PairCollStable,
+		common.PairBTCStable,
+		common.PairETHStable,
 	}
 )
 
 // NewParams creates a new AssetParams object
-func NewParams(pairs []Pair) Params {
+func NewParams(
+	pairs common.AssetPairs,
+) Params {
 	return Params{
 		Pairs: pairs,
 	}
@@ -38,20 +41,29 @@ func ParamKeyTable() paramtypes.KeyTable {
 // pairs of pricefeed module's parameters.
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyPairs, &p.Pairs, validatePairParams),
+		paramtypes.NewParamSetPair([]byte("Pairs"), &p.Pairs, validateParamPairs),
 	}
 }
 
 // Validate ensure that params have valid values
 func (p Params) Validate() error {
-	return validatePairParams(p.Pairs)
+	err := validateParamPairs(p.Pairs)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func validatePairParams(i interface{}) error {
-	markets, ok := i.(Pairs)
+func validateParamPairs(i interface{}) error {
+	pairs, ok := i.([]common.AssetPair)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
+	for _, pair := range pairs {
+		if err := pair.Validate(); err != nil {
+			return err
+		}
+	}
 
-	return markets.Validate()
+	return nil
 }

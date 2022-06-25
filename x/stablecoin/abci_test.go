@@ -12,8 +12,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type test struct {
@@ -30,10 +30,10 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 	tests := []test{
 		{
-			Name:              "Price higher than peg, wait for correct amount of time",
+			Name:              "Collateral price higher than stable, wait for correct amount of time",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -72,10 +72,10 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			},
 		},
 		{
-			Name:              "Price higher than peg, and we wait for 2 updates, coll ratio should be updated twice",
+			Name:              "Collateral price higher than stable, and we wait for 2 updates, coll ratio should be updated twice",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.805"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.795"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -88,10 +88,10 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			},
 		},
 		{
-			Name:              "Price higher than peg, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once",
+			Name:              "Collateral price higher than stable, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -108,33 +108,27 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			app, ctx = testutilapp.NewNibiruApp(true)
+			app, ctx = testapp.NewNibiruAppAndContext(true)
 
 			ctx = ctx.WithBlockHeight(1)
 
 			oracle := sample.AccAddress()
-			markets := ptypes.NewParams([]ptypes.Pair{
-
-				{
-					Token0:  common.CollDenom,
-					Token1:  common.StableDenom,
-					Oracles: []sdk.AccAddress{oracle},
-					Active:  true,
-				},
-			})
-
+			pairs := common.AssetPairs{
+				common.PairCollStable,
+			}
+			markets := ptypes.NewParams(pairs)
 			app.PricefeedKeeper.SetParams(ctx, markets)
+			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			_, err := app.PricefeedKeeper.SetPrice(
 				ctx,
 				oracle,
-				/* token0 */ common.StableDenom,
-				/* token1 */ common.CollDenom,
+				pairs[0].String(),
 				/* price */ tc.price,
 				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
-			err = app.PricefeedKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom)
+			err = app.PricefeedKeeper.SetCurrentPrices(ctx, pairs[0].Token0, pairs[0].Token1)
 			require.NoError(t, err)
 
 			err = app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio)
@@ -149,8 +143,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochInfoChangesCollateralValidity(t *testing.T) {
-	app, ctx := testutilapp.NewNibiruApp(true)
-	token0, token1 := common.StableDenom, common.CollDenom
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
@@ -164,21 +157,19 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 	oracle := sample.AccAddress()
-	markets := ptypes.NewParams([]ptypes.Pair{
-
-		{
-			Token0:  common.CollDenom,
-			Token1:  common.StableDenom,
-			Oracles: []sdk.AccAddress{oracle},
-			Active:  true,
-		},
-	})
+	pairs := common.AssetPairs{
+		{Token0: common.DenomColl, Token1: common.DenomStable},
+	}
+	markets := ptypes.NewParams(pairs)
+	app.PricefeedKeeper.SetParams(ctx, markets)
+	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 	app.PricefeedKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
-	_, err := app.PricefeedKeeper.SetPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
+	_, err := app.PricefeedKeeper.SetPrice(
+		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
-	require.NoError(t, app.PricefeedKeeper.SetCurrentPrices(ctx, common.StableDenom, common.CollDenom))
+	require.NoError(t, app.PricefeedKeeper.SetCurrentPrices(ctx, pairs[0].Token0, pairs[0].Token1))
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
 
 	// Mint block #2
@@ -190,7 +181,8 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	_, err = app.PricefeedKeeper.SetPrice(ctx, oracle, token0, token1, sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
+	_, err = app.PricefeedKeeper.SetPrice(
+		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +19,7 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	nibiruApp, _ := testutilapp.NewNibiruApp(true)
+	nibiruApp, _ := testapp.NewNibiruAppAndContext(true)
 	testCases := []TestCase{
 		{
 			name:           "PricefeedKeeper from x/pricefeed",

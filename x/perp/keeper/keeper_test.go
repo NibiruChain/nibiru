@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +38,7 @@ func TestGetAndSetParams(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			params := tc.requiredParams()
@@ -51,7 +51,7 @@ func TestGetAndSetParams(t *testing.T) {
 
 func TestGetAndSetParams_Errors(t *testing.T) {
 	t.Run("Calling Get without setting causes a panic", func(t *testing.T) {
-		nibiruApp, ctx := testutilapp.NewNibiruApp(false)
+		nibiruApp, ctx := testapp.NewNibiruAppAndContext(false)
 		perpKeeper := &nibiruApp.PerpKeeper
 
 		require.Panics(

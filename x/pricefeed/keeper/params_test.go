@@ -6,9 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGetParams(t *testing.T) {
@@ -19,7 +22,7 @@ func TestGetParams(t *testing.T) {
 		{
 			name: "calling GetParams without setting returns default",
 			test: func() {
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 				k := nibiruApp.PricefeedKeeper
 				require.EqualValues(t, types.DefaultParams(), k.GetParams(ctx))
 			},
@@ -27,13 +30,10 @@ func TestGetParams(t *testing.T) {
 		{
 			name: "params match after manual set and include default",
 			test: func() {
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 				k := nibiruApp.PricefeedKeeper
 				params := types.Params{
-					Pairs: []types.Pair{
-						{Token1: "btc", Token0: "usd", Oracles: nil, Active: true},
-						{Token1: "xrp", Token0: "usd", Oracles: nil, Active: true},
-					},
+					Pairs: common.NewAssetPairs("btc:usd", "xrp:usd"),
 				}
 				k.SetParams(ctx, params)
 				require.EqualValues(t, params, k.GetParams(ctx))
@@ -54,8 +54,6 @@ func TestGetParams(t *testing.T) {
 }
 
 func TestWhitelistOracles(t *testing.T) {
-	var noOracles []sdk.AccAddress
-
 	testCases := []struct {
 		name string
 		test func()
@@ -63,42 +61,44 @@ func TestWhitelistOracles(t *testing.T) {
 		{
 			name: "genesis - no oracle provided",
 			test: func() {
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 				pk := &nibiruApp.PricefeedKeeper
 
 				oracle := sample.AccAddress()
-				for _, pair := range pk.GetPairs(ctx) {
-					require.NotContains(t, pair.Oracles, oracle)
-					require.EqualValues(t, pair.Oracles, noOracles)
+				paramsPairs := pk.GetParams(ctx).Pairs
+				for _, pair := range paramsPairs {
+					require.False(t, pk.IsWhitelistedOracle(ctx, pair.String(), oracle))
 				}
-				require.EqualValues(t,
-					pk.GetAuthorizedAddresses(ctx), noOracles)
+				gotOraclesMap := pk.GetOraclesForPairs(ctx, paramsPairs)
+				gotOracles := gotOraclesMap[paramsPairs[0]]
+				require.EqualValues(t, []sdk.AccAddress(nil), gotOracles)
 			},
 		},
 		{
 			name: "multiple oracles whitelisted at different times ",
 			test: func() {
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 				pk := &nibiruApp.PricefeedKeeper
 
-				for _, pair := range pk.GetPairs(ctx) {
-					require.EqualValues(t, pair.Oracles, noOracles)
+				paramsPairs := pk.GetParams(ctx).Pairs
+				for _, pair := range paramsPairs {
+					require.EqualValues(t, []sdk.AccAddress(nil), pk.GetOraclesForPair(ctx, pair.String()))
 				}
-				require.EqualValues(t,
-					pk.GetAuthorizedAddresses(ctx), noOracles)
 
 				oracleA := sample.AccAddress()
 				oracleB := sample.AccAddress()
 
 				wantOracles := []sdk.AccAddress{oracleA}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOracles := pk.GetAuthorizedAddresses(ctx)
+				gotOraclesMap := pk.GetOraclesForPairs(ctx, paramsPairs)
+				gotOracles := gotOraclesMap[paramsPairs[0]]
 				require.EqualValues(t, wantOracles, gotOracles)
 				require.NotContains(t, gotOracles, oracleB)
 
 				wantOracles = []sdk.AccAddress{oracleA, oracleB}
 				pk.WhitelistOracles(ctx, wantOracles)
-				gotOracles = pk.GetAuthorizedAddresses(ctx)
+				gotOraclesMap = pk.GetOraclesForPairs(ctx, paramsPairs)
+				gotOracles = gotOraclesMap[paramsPairs[0]]
 				require.EqualValues(t, wantOracles, gotOracles)
 			},
 		},
@@ -110,5 +110,54 @@ func TestWhitelistOracles(t *testing.T) {
 			tc.test()
 		},
 		)
+	}
+}
+
+func TestWhitelistOraclesForPairs(t *testing.T) {
+	testCases := []struct {
+		name          string
+		startParams   types.Params
+		pairsToSet    common.AssetPairs
+		endAssetPairs common.AssetPairs
+	}{
+		{
+			name: "whitelist for specific pairs - happy",
+			startParams: types.Params{
+				Pairs: common.NewAssetPairs("aaa:usd", "bbb:usd", "oraclepair:usd"),
+			},
+			pairsToSet: common.NewAssetPairs("oraclepair:usd"),
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			pricefeedKeeper := &nibiruApp.PricefeedKeeper
+			pricefeedKeeper.SetParams(ctx, tc.startParams)
+
+			oracles := []sdk.AccAddress{sample.AccAddress(), sample.AccAddress()}
+			pricefeedKeeper.WhitelistOraclesForPairs(
+				ctx,
+				oracles,
+				/* pairs */ tc.pairsToSet,
+			)
+
+			t.Log("Verify that all 'pairsToSet' have the oracle set.")
+			for _, pair := range tc.pairsToSet {
+				assert.EqualValues(t,
+					oracles,
+					pricefeedKeeper.GetOraclesForPair(ctx, pair.String()))
+			}
+
+			t.Log("Verify that all pairs outside 'pairsToSet' are unaffected.")
+			for _, pair := range tc.startParams.Pairs {
+				if !tc.pairsToSet.Contains(pair) {
+					assert.EqualValues(t,
+						[]sdk.AccAddress{},
+						pricefeedKeeper.GetOraclesForPair(ctx, pair.String()))
+				}
+			}
+		})
 	}
 }

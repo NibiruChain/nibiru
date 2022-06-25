@@ -48,14 +48,14 @@ func CmdPrice() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pair, err := common.NewAssetPairFromStr(args[0])
+			pair, err := common.NewAssetPair(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			params := &types.QueryPriceRequest{PairId: pair.String()}
+			request := &types.QueryPriceRequest{PairId: pair.String()}
 
-			res, err := queryClient.Price(cmd.Context(), params)
+			res, err := queryClient.QueryPrice(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -82,9 +82,9 @@ func CmdPrices() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryPricesRequest{}
+			request := &types.QueryPricesRequest{}
 
-			res, err := queryClient.Prices(cmd.Context(), params)
+			res, err := queryClient.QueryPrices(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -111,9 +111,9 @@ func CmdPairs() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryPairsRequest{}
+			request := &types.QueryPairsRequest{}
 
-			res, err := queryClient.Pairs(cmd.Context(), params)
+			res, err := queryClient.QueryPairs(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -140,14 +140,14 @@ func CmdOracles() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pair, err := common.NewAssetPairFromStr(args[0])
+			pair, err := common.NewAssetPair(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			params := &types.QueryOraclesRequest{PairId: pair.String()}
+			request := &types.QueryOraclesRequest{PairId: pair.String()}
 
-			res, err := queryClient.Oracles(cmd.Context(), params)
+			res, err := queryClient.QueryOracles(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -174,7 +174,7 @@ func CmdQueryParams() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
+			res, err := queryClient.QueryParams(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
@@ -201,11 +201,16 @@ func CmdRawPrices() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryRawPricesRequest{
+			_, err = common.NewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
+			req := &types.QueryRawPricesRequest{
 				PairId: args[0],
 			}
 
-			res, err := queryClient.RawPrices(cmd.Context(), params)
+			res, err := queryClient.QueryRawPrices(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

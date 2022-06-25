@@ -58,7 +58,7 @@ func OpenPositionCmd() *cobra.Command {
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
 
-			assetPair, err := common.NewAssetPairFromStr(args[1])
+			assetPair, err := common.NewAssetPair(args[1])
 			if err != nil {
 				return err
 			}

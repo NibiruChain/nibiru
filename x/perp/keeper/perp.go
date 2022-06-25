@@ -30,7 +30,7 @@ func (k Keeper) SettlePosition(
 	currentPosition types.Position,
 ) (transferredCoins sdk.Coins, err error) {
 	// Validate token pair
-	tokenPair, err := common.NewAssetPairFromStr(currentPosition.Pair)
+	tokenPair, err := common.NewAssetPair(currentPosition.Pair)
 	if err != nil {
 		return sdk.Coins{}, err
 	}

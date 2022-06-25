@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -15,12 +16,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 )
 
 func TestMsgServer_CreateIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testutilapp.NewTestApp(false)
+		app := testapp.NewNibiruApp(false)
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -55,7 +55,7 @@ func TestMsgServer_CreateIncentivizationProgram(t *testing.T) {
 
 func TestMsgServer_FundIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testutilapp.NewTestApp(false)
+		app := testapp.NewNibiruApp(false)
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -94,7 +94,7 @@ func TestMsgServer_FundIncentivizationProgram(t *testing.T) {
 }
 
 func TestQueryServer_IncentivizationProgram(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	q := keeper.NewQueryServer(app.IncentivizationKeeper)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -108,7 +108,7 @@ func TestQueryServer_IncentivizationProgram(t *testing.T) {
 }
 
 func TestQueryServer_IncentivizationPrograms(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	q := keeper.NewQueryServer(app.IncentivizationKeeper)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 

@@ -18,7 +18,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		return
 	}
 	for _, md := range k.PairMetadataState(ctx).GetAll() {
-		assetPair, err := common.NewAssetPairFromStr(md.Pair)
+		assetPair, err := common.NewAssetPair(md.Pair)
 		if err != nil {
 			ctx.Logger().Error("invalid asset pair", "assetPair", md.Pair, "error", err)
 			continue
@@ -36,7 +36,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 			ctx.Logger().Error("index price is zero", "assetPair", assetPair)
 			continue
 		}
-		markTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, assetPair.Token0, assetPair.Token1)
+		markTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, assetPair)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "assetPair", assetPair, "error", err)
 			continue

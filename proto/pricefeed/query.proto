@@ -1,5 +1,5 @@
 syntax = "proto3";
-package NibiruChain.pricefeed.v1;
+package nibiru.pricefeed.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
@@ -13,33 +13,33 @@ option (gogoproto.verbose_equal_all) = true;
 
 // Query defines the gRPC querier service for pricefeed module
 service Query {
-  // Params queries all parameters of the pricefeed module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+  // QueryParams queries all parameters of the pricefeed module.
+  rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/nibiru/pricefeed/v1beta1/params";
   }
 
-  // Price queries price details for a pair
-  rpc Price(QueryPriceRequest) returns (QueryPriceResponse) {
+  // QueryPrice queries price details for a pair
+  rpc QueryPrice(QueryPriceRequest) returns (QueryPriceResponse) {
     option (google.api.http).get = "/nibiru/pricefeed/v1beta1/prices/{pair_id}";
   }
 
-  // Prices queries all prices
-  rpc Prices(QueryPricesRequest) returns (QueryPricesResponse) {
+  // QueryPrices queries all prices
+  rpc QueryPrices(QueryPricesRequest) returns (QueryPricesResponse) {
     option (google.api.http).get = "/nibiru/pricefeed/v1beta1/prices";
   }
 
-  // RawPrices queries all raw prices for an asset pair
-  rpc RawPrices(QueryRawPricesRequest) returns (QueryRawPricesResponse) {
+  // QueryRawPrices queries all raw prices for an asset pair
+  rpc QueryRawPrices(QueryRawPricesRequest) returns (QueryRawPricesResponse) {
     option (google.api.http).get = "/nibiru/pricefeed/v1beta1/rawprices/{pair_id}";
   }
 
-  // Oracles queries all oracles for an asset pair
-  rpc Oracles(QueryOraclesRequest) returns (QueryOraclesResponse) {
+  // QueryOracles queries all oracles for an asset pair
+  rpc QueryOracles(QueryOraclesRequest) returns (QueryOraclesResponse) {
     option (google.api.http).get = "/nibiru/pricefeed/v1beta1/oracles/{pair_id}";
   }
 
-  // Pairs queries all pairs
-  rpc Pairs(QueryPairsRequest) returns (QueryPairsResponse) {
+  // QueryPairs queries all pairs
+  rpc QueryPairs(QueryPairsRequest) returns (QueryPairsResponse) {
     option (google.api.http).get = "/nibiru/pricefeed/v1beta1/pairs";
   }
 }

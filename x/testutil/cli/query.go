@@ -80,8 +80,13 @@ func ExecQuery(network *Network, cmd *cobra.Command, args []string, result codec
 	}
 }
 
-func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair) (vpooltypes.QueryReserveAssetsResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(ctx, vpoolcli.CmdGetVpoolReserveAssets(), []string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
+func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair,
+) (vpooltypes.QueryReserveAssetsResponse, error) {
+	out, err := clitestutil.ExecTestCLICmd(
+		ctx,
+		vpoolcli.CmdGetVpoolReserveAssets(),
+		[]string{pair.String(),
+			fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
 	if err != nil {
 		return vpooltypes.QueryReserveAssetsResponse{}, err
 	}

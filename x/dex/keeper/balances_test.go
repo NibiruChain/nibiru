@@ -8,8 +8,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestCheckBalances(t *testing.T) {
@@ -27,11 +28,11 @@ func TestCheckBalances(t *testing.T) {
 			name: "has enough funds",
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin("unusd", 100),
+				sdk.NewInt64Coin(common.DenomStable, 100),
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin("unusd", 100),
+				sdk.NewInt64Coin(common.DenomStable, 100),
 			),
 			expectedError: nil,
 		},
@@ -42,7 +43,7 @@ func TestCheckBalances(t *testing.T) {
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin("unusd", 100),
+				sdk.NewInt64Coin(common.DenomStable, 100),
 			),
 			expectedError: sdkerrors.ErrInsufficientFunds,
 		},
@@ -51,7 +52,7 @@ func TestCheckBalances(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutilapp.NewNibiruApp(true)
+			app, ctx := testapp.NewNibiruAppAndContext(true)
 
 			// fund user account
 			sender := sample.AccAddress()

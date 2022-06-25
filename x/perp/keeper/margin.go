@@ -37,7 +37,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// validate token pair
-	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+	pair, err := common.NewAssetPair(msg.TokenPair)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -155,7 +155,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// validate token pair
-	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+	pair, err := common.NewAssetPair(msg.TokenPair)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),

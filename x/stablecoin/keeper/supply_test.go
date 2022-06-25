@@ -10,17 +10,17 @@ import (
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/mock"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestKeeper_GetStableMarketCap(t *testing.T) {
-	nibiruApp, ctx := testutilapp.NewNibiruApp(false)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(false)
 	k := nibiruApp.StablecoinKeeper
 
 	// We set some supply
 	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.StableDenom, 1_000_000),
+		sdktypes.NewInt64Coin(common.DenomStable, 1_000_000),
 	))
 	require.NoError(t, err)
 
@@ -31,7 +31,7 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
-	nibiruApp, ctx := testutilapp.NewNibiruApp(false)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()
@@ -41,11 +41,11 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{
-			Token:  sdktypes.NewInt64Coin(common.GovDenom, 2_000_000),
+			Token:  sdktypes.NewInt64Coin(common.DenomGov, 2_000_000),
 			Weight: sdktypes.NewInt(100),
 		},
 		{
-			Token:  sdktypes.NewInt64Coin(common.StableDenom, 1_000_000),
+			Token:  sdktypes.NewInt64Coin(common.DenomStable, 1_000_000),
 			Weight: sdktypes.NewInt(100),
 		},
 	}
@@ -56,7 +56,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.GovDenom, 1_000_000),
+		sdktypes.NewInt64Coin(common.DenomGov, 1_000_000),
 	))
 	require.NoError(t, err)
 
@@ -67,7 +67,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
-	nibiruApp, ctx := testutilapp.NewNibiruApp(false)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()
@@ -77,11 +77,11 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{
-			Token:  sdktypes.NewInt64Coin(common.GovDenom, 2_000_000),
+			Token:  sdktypes.NewInt64Coin(common.DenomGov, 2_000_000),
 			Weight: sdktypes.NewInt(100),
 		},
 		{
-			Token:  sdktypes.NewInt64Coin(common.StableDenom, 1_000_000),
+			Token:  sdktypes.NewInt64Coin(common.DenomStable, 1_000_000),
 			Weight: sdktypes.NewInt(100),
 		},
 	}
@@ -92,12 +92,12 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.GovDenom, 1_000_000),
+		sdktypes.NewInt64Coin(common.DenomGov, 1_000_000),
 	))
 	require.NoError(t, err)
 
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.StableDenom, 1_000_000),
+		sdktypes.NewInt64Coin(common.DenomStable, 1_000_000),
 	))
 	require.NoError(t, err)
 

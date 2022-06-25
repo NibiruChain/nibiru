@@ -11,8 +11,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/stretchr/testify/require"
 )
@@ -26,8 +26,8 @@ func TestGetAndSetPosition(t *testing.T) {
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
 				trader := sample.AccAddress()
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-				pair, err := common.NewAssetPairFromStr("osmo:nusd")
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				pair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				_, err = nibiruApp.PerpKeeper.GetPosition(
@@ -39,11 +39,11 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewAssetPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				traderAddr := sample.AccAddress()
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 
 				_, err = nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traderAddr)
@@ -82,13 +82,13 @@ func TestClearPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewAssetPairFromStr("osmo:nusd")
+				vpoolPair, err := common.NewAssetPair("osmo:nusd")
 				require.NoError(t, err)
 
 				traders := []sdk.AccAddress{
 					sample.AccAddress(), sample.AccAddress(),
 				}
-				nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 
 				t.Log("vpool contains no positions to start")
 				for _, trader := range traders {
@@ -161,8 +161,8 @@ func TestKeeper_ClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
-		nibiruApp, ctx := testutilapp.NewNibiruApp(true)
-		pair, err := common.NewAssetPairFromStr("xxx:yyy")
+		nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+		pair, err := common.NewAssetPair("xxx:yyy")
 		require.NoError(t, err)
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")

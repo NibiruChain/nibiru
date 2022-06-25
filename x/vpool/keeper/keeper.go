@@ -196,7 +196,7 @@ func (k Keeper) SwapQuoteForBase(
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
 	if pool.FluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		pair, err := common.NewAssetPairFromStr(pool.Pair)
+		pair, err := common.NewAssetPair(pool.Pair)
 		if err != nil {
 			return err
 		}

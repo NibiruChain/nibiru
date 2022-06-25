@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -34,7 +34,7 @@ func TestGenesis(t *testing.T) {
 
 	genesisState := types.GenesisState{Vpools: vpools}
 
-	nibiruApp, ctx := testutilapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 	k := nibiruApp.VpoolKeeper
 	vpool.InitGenesis(ctx, k, genesisState)
 

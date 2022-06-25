@@ -237,7 +237,7 @@ func validateEfFeeRatio(i interface{}) error {
 }
 
 func validateDistrEpochIdentifier(i interface{}) error {
-	_, err := getAsString(i)
+	_, err := getString(i)
 	if err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func validatePriceUpperBound(i interface{}) error {
 	}
 }
 
-func getAsString(i interface{}) (string, error) {
+func getString(i interface{}) (string, error) {
 	value, ok := i.(string)
 	if !ok {
 		return "invalid", fmt.Errorf("invalid parameter type: %T", i)

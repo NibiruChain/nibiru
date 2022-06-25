@@ -11,13 +11,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGenesis(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testutilapp.NewTestApp(false)
+		app := testapp.NewNibiruApp(false)
 		ctxUncached := app.NewContext(false, tmproto.Header{})
 		ctx, _ := ctxUncached.CacheContext()
 		// fund module accounts
