@@ -1849,7 +1849,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			inputLeverage:       sdk.NewDec(10),
 			inputBaseAssetLimit: sdk.NewDec(200),
 
-			expectedErr: fmt.Errorf(""),
+			expectedErr: fmt.Errorf("underwater position"),
 		},
 		{
 			name: "existing long position, positive PnL, zero base asset limit",
@@ -1906,7 +1906,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			inputLeverage:       sdk.NewDec(10),
 			inputBaseAssetLimit: sdk.NewDec(5),
 
-			expectedErr: fmt.Errorf(""),
+			expectedErr: fmt.Errorf("position size changed by greater than the specified base limit"),
 		},
 
 		/*==========================SHORT POSITIONS===========================*/
@@ -2000,7 +2000,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			inputLeverage:       sdk.NewDec(10),
 			inputBaseAssetLimit: sdk.NewDec(200),
 
-			expectedErr: fmt.Errorf(""),
+			expectedErr: fmt.Errorf("underwater position"),
 		},
 		{
 			name: "close short position, positive PnL, no base amount limit",
@@ -2058,7 +2058,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			inputLeverage:       sdk.NewDec(10),
 			inputBaseAssetLimit: sdk.NewDec(5),
 
-			expectedErr: fmt.Errorf(""),
+			expectedErr: fmt.Errorf("position size changed by greater than the specified base limit"),
 		},
 	}
 
@@ -2133,7 +2133,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			)
 
 			if tc.expectedErr != nil {
-				require.Error(t, err)
+				require.ErrorContains(t, err, tc.expectedErr.Error())
 				assert.Nil(t, resp)
 			} else {
 				require.NoError(t, err)
