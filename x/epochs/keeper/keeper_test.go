@@ -23,7 +23,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	nibiruApp, ctx := testapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 	suite.app = nibiruApp
 	suite.ctx = ctx
 

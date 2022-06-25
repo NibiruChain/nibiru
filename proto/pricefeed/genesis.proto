@@ -13,7 +13,5 @@ message GenesisState {
   repeated PostedPrice posted_prices = 2 [
     (gogoproto.castrepeated) = "PostedPrices", 
     (gogoproto.nullable) = false];
-  repeated bytes genesis_oracles = 3 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-  ];
+  repeated string genesis_oracles = 3;
 }

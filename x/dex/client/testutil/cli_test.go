@@ -450,7 +450,9 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	cfg := testutilcli.DefaultConfig()
+	encodingConfig := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
+	cfg := testutilcli.BuildNetworkConfig(defaultAppGenesis)
 	cfg.UpdateStartingToken(
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.DenomStable, 20000),

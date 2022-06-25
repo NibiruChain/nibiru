@@ -20,6 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 const (
@@ -85,7 +86,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	s.cfg = testutilcli.TestConfig()
+	encCfg := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
+	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
+	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 

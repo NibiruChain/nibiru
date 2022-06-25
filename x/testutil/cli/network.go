@@ -28,7 +28,6 @@ import (
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 
-	// simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -134,9 +133,8 @@ func DefaultFeeString(denom string) string {
 	return fmt.Sprintf("--%s=%s", flags.FlagFees, feeCoins.String())
 }
 
-// DefaultConfig returns a default configuration suitable for nearly all
-// testing requirements.
-func DefaultConfig() Config {
+// BuildNetworkConfig returns a configuration for a local in-testing network
+func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeTestEncodingConfig()
 
 	return Config{
@@ -146,9 +144,9 @@ func DefaultConfig() Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return testapp.NewTestApp(true)
+			return testapp.NewNibiruAppWithGenesis(appGenesis)
 		},
-		GenesisState:  app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
+		GenesisState:  appGenesis,
 		TimeoutCommit: time.Second / 2,
 		ChainID:       "chain-" + tmrand.NewRand().Str(6),
 		NumValidators: 1,
@@ -531,41 +529,4 @@ func (n *Network) Cleanup() {
 // UpdateStartingToken allows to update the starting tokens of an existing
 func (cfg *Config) UpdateStartingToken(startingTokens sdk.Coins) {
 	cfg.StartingTokens = startingTokens
-}
-
-// TestConfig returns a configuration using the TestGenesis instead of the default
-func TestConfig() Config {
-	encCfg := app.MakeTestEncodingConfig()
-	defaultGen := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
-	testGen := testapp.NewTestGenesisState(encCfg.Marshaler, defaultGen)
-
-	return Config{
-		Codec:             encCfg.Marshaler,
-		TxConfig:          encCfg.TxConfig,
-		LegacyAmino:       encCfg.Amino,
-		InterfaceRegistry: encCfg.InterfaceRegistry,
-		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor: func(val Validator) servertypes.Application {
-			return testapp.NewTestAppWithGenesis(testGen)
-		},
-		GenesisState:  testGen,
-		TimeoutCommit: time.Second / 2,
-		ChainID:       "chain-" + tmrand.NewRand().Str(6),
-		NumValidators: 1,
-		BondDenom:     sdk.DefaultBondDenom, // TODO(https://github.com/NibiruChain/nibiru/issues/582): remove 'stake' denom and replace with 'unibi'
-		MinGasPrices:  fmt.Sprintf("0.000006%s", common.DenomGov),
-		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		StartingTokens: sdk.NewCoins(
-			sdk.NewCoin(common.DenomStable, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.DenomGov, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.DenomColl, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.DenomTestToken, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
-		),
-		PruningStrategy: storetypes.PruningOptionNothing,
-		CleanupDir:      true,
-		SigningAlgo:     string(hd.Secp256k1Type),
-		KeyringOptions:  []keyring.Option{},
-	}
 }

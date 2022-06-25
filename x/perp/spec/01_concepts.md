@@ -46,8 +46,7 @@ position_size = baseReserves - baseReservesAfterSwap
 The notional value of the position, or **position notional**, is the total value a position controls  in units of the quote asset. Notional value expresses the value a derivatives contract theoretically controls. On Nibiru, it is defined more concretely by
 
 ```go
-markPrice = quote_reserves / base_reserves
-positionNotional = position_size * markPrice
+positionNotional = abs(quoteReserves - k/(baseReserves + position_size))
 leverage = positionNotional / margin.
 ```
 

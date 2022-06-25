@@ -17,7 +17,7 @@ import (
 
 func TestGenesis(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testapp.NewTestApp(false)
+		app := testapp.NewNibiruApp(false)
 		ctxUncached := app.NewContext(false, tmproto.Header{})
 		ctx, _ := ctxUncached.CacheContext()
 		// fund module accounts

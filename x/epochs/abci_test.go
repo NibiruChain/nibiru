@@ -97,7 +97,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		app, ctx = testapp.NewNibiruApp(true)
+		app, ctx = testapp.NewNibiruAppAndContext(true)
 
 		// On init genesis, default epochs information is set
 		// To check init genesis again, should make it fresh status
@@ -138,7 +138,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
@@ -210,7 +210,7 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	}
 
 	now := time.Now()
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

@@ -38,7 +38,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	nibiruApp, ctx = testapp.NewNibiruApp(true)
+	nibiruApp, ctx = testapp.NewNibiruAppAndContext(true)
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC))
 

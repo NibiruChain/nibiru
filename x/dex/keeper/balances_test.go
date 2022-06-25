@@ -52,7 +52,7 @@ func TestCheckBalances(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruApp(true)
+			app, ctx := testapp.NewNibiruAppAndContext(true)
 
 			// fund user account
 			sender := sample.AccAddress()

@@ -19,7 +19,7 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	nibiruApp, _ := testapp.NewNibiruApp(true)
+	nibiruApp, _ := testapp.NewNibiruAppAndContext(true)
 	testCases := []TestCase{
 		{
 			name:           "PricefeedKeeper from x/pricefeed",

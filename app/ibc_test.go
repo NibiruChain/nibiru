@@ -30,7 +30,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, ctx := testapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 
 	// Whitelist a pair and oracle
 	pair, err := common.NewAssetPair("uatom:unibi")

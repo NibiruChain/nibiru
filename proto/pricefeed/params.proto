@@ -33,9 +33,7 @@ message ActivePairMarshaler {
 // PostedPrice defines a price for an asset pair posted by a specific oracle.
 message PostedPrice {
   string pair_id      = 1 [(gogoproto.customname) = "PairID"];
-  bytes  oracle_address = 2 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-  ];
+  string oracle = 2;
   string price = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];

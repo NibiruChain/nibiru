@@ -12,7 +12,7 @@ import (
 // TestModuleAccounts verifies that all x/perp module accounts are connected
 // to the base application
 func TestModuleAccounts(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 
 	perpAcc := nibiruApp.PerpKeeper.AccountKeeper.GetModuleAccount(
 		ctx, types.ModuleName)

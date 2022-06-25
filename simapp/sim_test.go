@@ -52,7 +52,7 @@ func fullAppSimulation(tb testing.TB, is_testing bool) {
 		}
 	}()
 
-	nibiru := testapp.NewTestApp( /*shouldUseDefaultGenesis*/ true)
+	nibiru := testapp.NewNibiruApp( /*shouldUseDefaultGenesis*/ true)
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(

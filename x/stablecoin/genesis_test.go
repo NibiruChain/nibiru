@@ -19,7 +19,7 @@ func TestGenesis(t *testing.T) {
 		ModuleAccountBalance: sdk.NewCoin(common.DenomColl, sdk.ZeroInt()),
 	}
 
-	nibiruApp, ctx := testapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 	k := nibiruApp.StablecoinKeeper
 	stablecoin.InitGenesis(ctx, k, genesisState)
 	got := stablecoin.ExportGenesis(ctx, k)

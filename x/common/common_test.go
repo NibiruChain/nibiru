@@ -154,13 +154,13 @@ func TestAssetPair_Marshaling(t *testing.T) {
 				require.True(t, (&pair).Equal(&matchingOther))
 
 				require.Error(t, (&pair).VerboseEqual(&inversePair))
-				require.True(t, !(&pair).Equal(&inversePair))
+				require.False(t, (&pair).Equal(&inversePair))
 
 				require.Error(t, (&pair).VerboseEqual(&mismatchToken1))
 				require.True(t, !(&pair).Equal(&mismatchToken1))
 
 				require.Error(t, (&pair).VerboseEqual(pair.String()))
-				require.True(t, !(&pair).Equal(&mismatchToken1))
+				require.False(t, (&pair).Equal(&mismatchToken1))
 			},
 		},
 		{

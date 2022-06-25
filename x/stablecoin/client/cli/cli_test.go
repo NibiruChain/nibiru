@@ -38,7 +38,7 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
 
 	pairs := common.AssetPairs{
 		common.PairGovStable, common.PairCollStable,
@@ -47,19 +47,19 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		Params: pftypes.Params{Pairs: pairs},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.PairGovStable.String(),
-				OracleAddress: oracle,
-				Price:         sdk.NewDec(10),
-				Expiry:        time.Now().Add(1 * time.Hour),
+				PairID: common.PairGovStable.String(),
+				Oracle: oracle.String(),
+				Price:  sdk.NewDec(10),
+				Expiry: time.Now().Add(1 * time.Hour),
 			},
 			{
-				PairID:        common.PairCollStable.String(),
-				OracleAddress: oracle,
-				Price:         sdk.OneDec(),
-				Expiry:        time.Now().Add(1 * time.Hour),
+				PairID: common.PairCollStable.String(),
+				Oracle: oracle.String(),
+				Price:  sdk.OneDec(),
+				Expiry: time.Now().Add(1 * time.Hour),
 			},
 		},
-		GenesisOracles: []sdk.AccAddress{oracle},
+		GenesisOracles: []string{oracle.String()},
 	}
 }
 
@@ -75,7 +75,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = testutilcli.DefaultConfig()
+	encodingConfig := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
+	s.cfg = testutilcli.BuildNetworkConfig(defaultAppGenesis)
 
 	// modification to pay fee with test bond denom "stake"
 	app.SetPrefixes(app.AccountAddressPrefix)

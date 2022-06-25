@@ -42,23 +42,20 @@ type IntegrationTestSuite struct {
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
 	const oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
-	oracle, err := sdk.AccAddressFromBech32(oracleAddress)
-	if err != nil {
-		panic(err)
-	}
+	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
 
 	pairs := common.AssetPairs{common.PairTestStable}
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{Pairs: pairs},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.PairTestStable.String(),
-				OracleAddress: oracle,
-				Price:         sdk.OneDec(),
-				Expiry:        time.Now().Add(1 * time.Hour),
+				PairID: common.PairTestStable.String(),
+				Oracle: oracle.String(),
+				Price:  sdk.OneDec(),
+				Expiry: time.Now().Add(1 * time.Hour),
 			},
 		},
-		GenesisOracles: []sdk.AccAddress{oracle},
+		GenesisOracles: []string{oracle.String()},
 	}
 }
 
@@ -74,11 +71,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = testutilcli.DefaultConfig()
-
 	app.SetPrefixes(app.AccountAddressPrefix)
+	encodingConfig := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
+	s.cfg = testutilcli.BuildNetworkConfig(defaultAppGenesis)
 
-	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+	genesisState := defaultAppGenesis
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()

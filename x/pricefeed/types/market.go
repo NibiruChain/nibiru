@@ -78,10 +78,10 @@ type CurrentPriceResponses []CurrentPriceResponse
 func NewPostedPrice(pair common.AssetPair, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time,
 ) PostedPrice {
 	return PostedPrice{
-		PairID:        pair.String(),
-		OracleAddress: oracle,
-		Price:         price,
-		Expiry:        expiry,
+		PairID: pair.String(),
+		Oracle: oracle.String(),
+		Price:  price,
+		Expiry: expiry,
 	}
 }
 
@@ -93,8 +93,11 @@ func (pp PostedPrice) Validate() error {
 	if _, err := common.NewAssetPair(pp.PairID); err != nil {
 		return err
 	}
-	if len(pp.OracleAddress) == 0 {
+	if len(pp.Oracle) == 0 {
 		return errors.New("oracle address cannot be empty")
+	}
+	if _, err := sdk.AccAddressFromBech32(pp.Oracle); err != nil {
+		return err
 	}
 	if pp.Price.IsNegative() {
 		return fmt.Errorf("posted price cannot be negative %s", pp.Price)
@@ -113,14 +116,14 @@ type PostedPrices []PostedPrice
 func (pps PostedPrices) Validate() error {
 	seenPrices := make(map[string]bool)
 	for _, pp := range pps {
-		if !pp.OracleAddress.Empty() && seenPrices[pp.PairID+pp.OracleAddress.String()] {
-			return fmt.Errorf("duplicated posted price for marked id %s and oracle address %s", pp.PairID, pp.OracleAddress)
+		if !(pp.Oracle == "") && seenPrices[pp.PairID+pp.Oracle] {
+			return fmt.Errorf("duplicated posted price for market id %s and oracle address %s", pp.PairID, pp.Oracle)
 		}
 
 		if err := pp.Validate(); err != nil {
 			return err
 		}
-		seenPrices[pp.PairID+pp.OracleAddress.String()] = true
+		seenPrices[pp.PairID+pp.Oracle] = true
 	}
 
 	return nil

@@ -15,7 +15,7 @@ import (
    'NibiruApp.KeeperName'
 */
 func TestExpectedKeepers(t *testing.T) {
-	nibiruApp, _ := testapp.NewNibiruApp(true)
+	nibiruApp, _ := testapp.NewNibiruAppAndContext(true)
 	testCases := []struct {
 		name           string
 		expectedKeeper interface{}

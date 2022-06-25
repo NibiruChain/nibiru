@@ -17,7 +17,7 @@ import (
 
 func TestQueryPosition_Ok(t *testing.T) {
 	t.Log("initialize keeper")
-	nibiruApp, ctx := testapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeper
 
 	queryServer := keeper.NewQuerier(*perpKeeper)

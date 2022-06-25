@@ -16,7 +16,7 @@ import (
 )
 
 func TestAppModule_InitGenesis_ExportGenesis(t *testing.T) {
-	app := testapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 
 	am := incentivization.NewAppModule(app.AppCodec(), app.IncentivizationKeeper, app.AccountKeeper)
 	ctxUncached := app.NewContext(false, tmproto.Header{Time: time.Now()})

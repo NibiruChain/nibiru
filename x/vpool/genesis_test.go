@@ -34,7 +34,7 @@ func TestGenesis(t *testing.T) {
 
 	genesisState := types.GenesisState{Vpools: vpools}
 
-	nibiruApp, ctx := testapp.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 	k := nibiruApp.VpoolKeeper
 	vpool.InitGenesis(ctx, k, genesisState)
 

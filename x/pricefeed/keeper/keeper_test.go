@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestKeeper_SetGetPair(t *testing.T) {
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 
 	pairs := common.AssetPairs{
 		common.MustNewAssetPair("tst:usd"),
@@ -42,7 +43,7 @@ func TestKeeper_SetGetPair(t *testing.T) {
 }
 
 func TestKeeper_GetSetPrice(t *testing.T) {
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
@@ -64,7 +65,6 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 
 	for _, priceInfo := range priceInfos {
 		// Set price by oracle 1
-
 		pp, err := keeper.SetPrice(
 			ctx,
 			priceInfo.oracle,
@@ -83,7 +83,9 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 
 		// Find the oracle and require price to be same
 		for _, postedPrice := range rawPrices {
-			if priceInfo.oracle.Equals(postedPrice.OracleAddress) {
+			oracleThatPosted, err := sdk.AccAddressFromBech32(postedPrice.Oracle)
+			assert.NoError(t, err)
+			if priceInfo.oracle.Equals(oracleThatPosted) {
 				require.Equal(t, priceInfo.price, postedPrice.Price)
 			}
 		}
@@ -95,7 +97,7 @@ Test case where two oracles try to set prices for a market and only one of the
 oracles is valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracle(t *testing.T) {
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 	pair := common.MustNewAssetPair("tst:usd")
 
@@ -127,7 +129,7 @@ Test case where several oracles try to set prices for a market
 and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_SetPriceWrongOracles(t *testing.T) {
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	pair := common.MustNewAssetPair("tst:usd")
@@ -160,7 +162,7 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 // TestKeeper_GetSetCurrentPrice Test Setting the median price of an Asset
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "tst", "usd"
@@ -249,7 +251,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	_, oracles := sample.PrivKeyAddressPairs(5)
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "usd", "tst"

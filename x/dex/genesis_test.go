@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	app, ctx := testapp.NewNibiruApp(true)
+	app, ctx := testapp.NewNibiruAppAndContext(true)
 	dex.InitGenesis(ctx, app.DexKeeper, genesisState)
 	got := dex.ExportGenesis(ctx, app.DexKeeper)
 	require.NotNil(t, got)
