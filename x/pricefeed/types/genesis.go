@@ -22,9 +22,15 @@ func DefaultGenesis() *GenesisState {
 // NewGenesisState creates a new genesis state for the pricefeed module
 func NewGenesisState(p Params, postedPrices []PostedPrice) *GenesisState {
 	var oracles []string
+	seenOracles := make(map[string]bool)
 	for _, postedPrice := range postedPrices {
 		oracle := sdk.MustAccAddressFromBech32(postedPrice.Oracle)
-		oracles = append(oracles, oracle.String())
+		if seenOracles[oracle.String()] {
+			continue
+		} else {
+			oracles = append(oracles, oracle.String())
+		}
+		seenOracles[oracle.String()] = true
 	}
 	return &GenesisState{
 		Params:         p,
