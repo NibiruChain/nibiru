@@ -1,0 +1,13 @@
+syntax = "proto3";
+package nibiru.pricefeed.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
+
+message AddOracleProposal {
+  string title = 1;
+  string description = 2;
+  string oracle = 3 [(gogoproto.moretags) = "yaml:\"oracle\""];;
+  repeated string pairs = 4 [(gogoproto.moretags) = "yaml:\"pairs\""];
+}

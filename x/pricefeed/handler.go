@@ -6,6 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
@@ -26,4 +29,39 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
 	}
+}
+
+/* NewPricefeedPropsalHandler defines a function that handles a proposal after it has
+passed the governance process */
+func NewPricefeedProposalHandler(k keeper.Keeper) govtypes.Handler {
+	return func(ctx sdk.Context, content govtypes.Content) error {
+		switch contentType := content.(type) {
+		case *types.AddOracleProposal:
+			return handleAddOracleProposal(ctx, k, contentType)
+		default:
+			return sdkerrors.Wrapf(
+				sdkerrors.ErrUnknownRequest,
+				"unrecognized %s proposal content type: %T", types.ModuleName, contentType)
+		}
+	}
+}
+
+func handleAddOracleProposal(
+	ctx sdk.Context, k keeper.Keeper, proposal *types.AddOracleProposal) error {
+	if err := proposal.Validate(); err != nil {
+		return err
+	}
+	oracle, err := sdk.AccAddressFromBech32(proposal.Oracle)
+	if err != nil {
+		return sdkerrors.Wrapf(err, " oracle: %s", oracle)
+	}
+
+	k.WhitelistOraclesForPairs(
+		ctx,
+		/*oracles=*/ []sdk.AccAddress{oracle},
+		/*assetPairs=*/ common.NewAssetPairs(proposal.Pairs...),
+	)
+
+	// TODO Emit typed event for when oracles get added
+	return nil
 }
