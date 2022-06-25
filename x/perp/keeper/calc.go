@@ -94,7 +94,7 @@ position without making it go underwater.
 func (k Keeper) calcFreeCollateral(
 	ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
 ) (accountExcessEquity sdk.Int, err error) {
-	pair, err := common.NewAssetPairFromStr(pos.Pair)
+	pair, err := common.NewAssetPair(pos.Pair)
 	if err != nil {
 		return sdk.Int{}, common.ErrInvalidTokenPair
 	}

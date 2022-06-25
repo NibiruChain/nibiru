@@ -33,7 +33,7 @@ func (k Keeper) Liquidate(
 	}
 
 	// validate pair
-	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+	pair, err := common.NewAssetPair(msg.TokenPair)
 	if err != nil {
 		return res, err
 	}
@@ -118,7 +118,7 @@ func (k Keeper) ExecuteFullLiquidation(
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
 
-	pair, err := common.NewAssetPairFromStr(position.Pair)
+	pair, err := common.NewAssetPair(position.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -224,7 +224,7 @@ func (k Keeper) distributeLiquidateRewards(
 	}
 
 	// validate pair
-	pair, err := common.NewAssetPairFromStr(liquidateResp.PositionResp.Position.Pair)
+	pair, err := common.NewAssetPair(liquidateResp.PositionResp.Position.Pair)
 	if err != nil {
 		return err
 	}
@@ -270,7 +270,7 @@ func (k Keeper) ExecutePartialLiquidation(
 ) (types.LiquidateResp, error) {
 	params := k.GetParams(ctx)
 
-	pair, err := common.NewAssetPairFromStr(currentPosition.Pair)
+	pair, err := common.NewAssetPair(currentPosition.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}

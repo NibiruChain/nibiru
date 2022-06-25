@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
@@ -21,12 +22,12 @@ func TestPostPrice(t *testing.T) {
 	authorizedOracles := addrs[:2]
 	unauthorizedAddrs := addrs[2:]
 
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: "tst", Token0: "usd", Oracles: authorizedOracles, Active: true},
-		},
+	pair := common.MustNewAssetPair("usd:tst")
+	params := types.Params{
+		Pairs: common.AssetPairs{pair},
 	}
-	k.SetParams(ctx, mp)
+	k.SetParams(ctx, params)
+	k.WhitelistOraclesForPairs(ctx, authorizedOracles, common.AssetPairs{pair})
 
 	tests := []struct {
 		giveMsg      string
@@ -42,7 +43,7 @@ func TestPostPrice(t *testing.T) {
 		{"expired", authorizedOracles[0], "tst", "usd",
 			ctx.BlockTime().UTC().Add(-time.Hour * 1), false, types.ErrExpired},
 		{"invalid", authorizedOracles[0], "invalid", "invalid",
-			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidPair},
+			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 		{"unauthorized", unauthorizedAddrs[0], "tst", "usd",
 			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 	}

@@ -40,13 +40,13 @@ func TestPairNameFromDenoms(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			outPoolName := common.PoolNameFromDenoms(tc.denoms)
+			outPoolName := common.SortedPairNameFromDenoms(tc.denoms)
 			require.Equal(t, tc.poolName, outPoolName)
 		})
 	}
 }
 
-func TestAssetPair(t *testing.T) {
+func TestAssetPair_InverseAndSort(t *testing.T) {
 	testCases := []struct {
 		name   string
 		pair   common.AssetPair
@@ -68,11 +68,13 @@ func TestAssetPair(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.proper {
-				require.True(t, tc.pair.IsProperOrder())
-				require.Equal(t, tc.pair.Name(), tc.pair.String())
+				require.Truef(t, tc.pair.IsSortedOrder(),
+					"pair: '%v' name: '%v'", tc.pair.String(), tc.pair.SortedName())
+				require.EqualValues(t, tc.pair.SortedName(), tc.pair.String())
 			} else {
-				require.True(t, tc.pair.Inverse().IsProperOrder())
-				require.Equal(t, tc.pair.Name(), tc.pair.Inverse().String())
+				require.Truef(t, tc.pair.Inverse().IsSortedOrder(),
+					"pair: '%v' name: '%v'", tc.pair.String(), tc.pair.SortedName())
+				require.EqualValues(t, tc.pair.SortedName(), tc.pair.Inverse().String())
 			}
 
 			require.True(t, true)
@@ -80,7 +82,7 @@ func TestAssetPair(t *testing.T) {
 	}
 }
 
-func TestAsset_Constructor(t *testing.T) {
+func TestNewAssetPair_Constructor(t *testing.T) {
 	tests := []struct {
 		name      string
 		tokenPair string
@@ -88,33 +90,38 @@ func TestAsset_Constructor(t *testing.T) {
 	}{
 		{
 			"only one token",
-			common.GovDenom,
+			common.DenomGov,
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s%s%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom,
-				common.PairSeparator, common.CollDenom),
+			fmt.Sprintf("%s%s%s%s%s", common.DenomGov, common.PairSeparator, common.DenomStable,
+				common.PairSeparator, common.DenomColl),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
-			fmt.Sprintf("%s%s%s", common.GovDenom, "%", common.StableDenom),
+			fmt.Sprintf("%s%s%s", common.DenomGov, "%", common.DenomStable),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s%s%s", common.GovDenom, common.PairSeparator, common.StableDenom),
+			fmt.Sprintf("%s%s%s", common.DenomGov, common.PairSeparator, common.DenomStable),
 			nil,
+		},
+		{
+			"empty token identifier",
+			fmt.Sprintf("%s%s%s", "", common.PairSeparator, "eth"),
+			fmt.Errorf("empty token identifiers are not allowed"),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := common.NewAssetPairFromStr(tc.tokenPair)
+			_, err := common.NewAssetPair(tc.tokenPair)
 			if tc.err != nil {
-				require.Equal(t, tc.err, err)
+				require.ErrorContains(t, err, tc.err.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -123,9 +130,53 @@ func TestAsset_Constructor(t *testing.T) {
 }
 
 func TestAsset_GetQuoteBaseToken(t *testing.T) {
-	pair, err := common.NewAssetPairFromStr("uatom:unibi")
+	pair, err := common.NewAssetPair("uatom:unibi")
 	require.NoError(t, err)
 
 	require.Equal(t, "uatom", pair.GetBaseTokenDenom())
 	require.Equal(t, "unibi", pair.GetQuoteTokenDenom())
+}
+
+func TestAssetPair_Marshaling(t *testing.T) {
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "verbose equal suite",
+			test: func() {
+				pair := common.MustNewAssetPair("abc:xyz")
+				matchingOther := common.MustNewAssetPair("abc:xyz")
+				mismatchToken1 := common.MustNewAssetPair("abc:abc")
+				inversePair := common.MustNewAssetPair("xyz:abc")
+
+				require.NoError(t, (&pair).VerboseEqual(&matchingOther))
+				require.True(t, (&pair).Equal(&matchingOther))
+
+				require.Error(t, (&pair).VerboseEqual(&inversePair))
+				require.False(t, (&pair).Equal(&inversePair))
+
+				require.Error(t, (&pair).VerboseEqual(&mismatchToken1))
+				require.True(t, !(&pair).Equal(&mismatchToken1))
+
+				require.Error(t, (&pair).VerboseEqual(pair.String()))
+				require.False(t, (&pair).Equal(&mismatchToken1))
+			},
+		},
+		{
+			name: "panics suite",
+			test: func() {
+				require.Panics(t, func() {
+					common.MustNewAssetPair("aaa:bbb:ccc")
+				})
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
 }
