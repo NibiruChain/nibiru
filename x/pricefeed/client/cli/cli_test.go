@@ -576,18 +576,18 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	proposal := &pricefeedtypes.AddOracleProposal{
 		Title:       "Cataclysm-004",
 		Description: "Whitelists Delphi to post prices for OHM and BTC",
-		Oracle:      oracle.String(),
+		Oracles:     []string{oracle.String()},
 		Pairs:       []string{"ohm:usd", "btc:usd"},
 	}
 	proposalJSONString := fmt.Sprintf(`
 		{
 			"title": "%v",
 			"description": "%v",
-			"oracle": "%v",
+			"oracles": ["%v"],
 			"pairs": ["%v", "%v"]
 		}	
-		`, proposal.Title, proposal.Description, proposal.Oracle, proposal.Pairs[0],
-		proposal.Pairs[1],
+		`, proposal.Title, proposal.Description, proposal.Oracles[0],
+		proposal.Pairs[0], proposal.Pairs[1],
 	)
 	proposalJSON := sdktestutil.WriteToNewTempFile(
 		s.T(), proposalJSONString,
@@ -711,7 +711,9 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 		args = []string{pair.String()}
 		queryResp := &pricefeedtypes.QueryOraclesResponse{}
 		s.Assert().NoError(testutilcli.ExecQuery(s.network, cmd, args, queryResp))
-		s.Assert().Contains(queryResp.Oracles, proposal.Oracle)
+		for _, proposalOracle := range proposal.Oracles {
+			s.Assert().Contains(queryResp.Oracles, proposalOracle)
+		}
 	}
 }
 

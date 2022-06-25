@@ -42,7 +42,7 @@ func CmdAddOracleProposal() *cobra.Command {
 			{
 			  "title": "Cataclysm-004",
 			  "description": "Whitelists Delphi to post prices for OHM",
-			  "oracle": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+			  "oracles": ["nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"],
 			  "pairs": ["uohm:uusd"]
 			}
 			`),
@@ -77,7 +77,7 @@ func CmdAddOracleProposal() *cobra.Command {
 			content := types.NewAddOracleProposal(
 				proposal.Title,
 				proposal.Description,
-				proposal.Oracle,
+				proposal.Oracles,
 				proposal.Pairs,
 			)
 			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)

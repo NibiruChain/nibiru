@@ -21,12 +21,12 @@ func init() {
 }
 
 func NewAddOracleProposal(
-	title string, description string, oracle string, pairs []string,
+	title string, description string, oracles []string, pairs []string,
 ) *AddOracleProposal {
 	proposal := &AddOracleProposal{
 		Title:       title,
 		Description: description,
-		Oracle:      oracle,
+		Oracles:     oracles,
 		Pairs:       pairs,
 	}
 
@@ -58,13 +58,21 @@ func (m *AddOracleProposal) ValidateBasic() error {
 }
 
 func (m *AddOracleProposal) Validate() error {
-	_, err := sdk.AccAddressFromBech32(m.Oracle)
-	if err != nil {
-		return err
+	seenOracles := make(map[string]bool)
+	for _, oracleStr := range m.Oracles {
+		_, err := sdk.AccAddressFromBech32(oracleStr)
+		if err != nil {
+			return err
+		}
+
+		if seenOracles[oracleStr] {
+			continue
+		}
+		seenOracles[oracleStr] = true
 	}
 
 	for _, pairStr := range m.Pairs {
-		_, err = common.NewAssetPair(pairStr)
+		_, err := common.NewAssetPair(pairStr)
 		if err != nil {
 			return err
 		}

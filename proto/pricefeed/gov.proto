@@ -8,6 +8,6 @@ option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
 message AddOracleProposal {
   string title = 1;
   string description = 2;
-  string oracle = 3 [(gogoproto.moretags) = "yaml:\"oracle\""];;
+  repeated string oracles = 3 [(gogoproto.moretags) = "yaml:\"oracles\""];
   repeated string pairs = 4 [(gogoproto.moretags) = "yaml:\"pairs\""];
 }

@@ -51,14 +51,11 @@ func handleAddOracleProposal(
 	if err := proposal.Validate(); err != nil {
 		return err
 	}
-	oracle, err := sdk.AccAddressFromBech32(proposal.Oracle)
-	if err != nil {
-		return sdkerrors.Wrapf(err, " oracle: %s", oracle)
-	}
+	oracles := common.StringsToAddrs(proposal.Oracles...)
 
 	k.WhitelistOraclesForPairs(
 		ctx,
-		/*oracles=*/ []sdk.AccAddress{oracle},
+		/*oracles=*/ oracles,
 		/*assetPairs=*/ common.NewAssetPairs(proposal.Pairs...),
 	)
 

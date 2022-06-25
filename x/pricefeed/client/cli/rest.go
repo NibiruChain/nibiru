@@ -37,10 +37,16 @@ func AddOracleProposalRESTHandler(clientCtx client.Context) govclientrest.Propos
 			content := types.NewAddOracleProposal(
 				req.Title,
 				req.Description,
-				req.Oracle.String(),
+				req.Oracles,
 				req.Pairs,
 			)
-			msg, err := govtypes.NewMsgSubmitProposal(content, req.Deposit, req.Proposer)
+
+			fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+			if rest.CheckBadRequestError(w, err) {
+				return
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(content, req.Deposit, fromAddr)
 			if rest.CheckBadRequestError(w, err) {
 				return
 			}
@@ -62,11 +68,10 @@ type (
 	AddOracleProposalHttpRequest struct {
 		BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-		Proposer    sdk.AccAddress `json:"proposer" yaml:"proposer"`
-		Title       string         `json:"title" yaml:"title"`
-		Description string         `json:"description" yaml:"description"`
-		Oracle      sdk.AccAddress `json:"oracle" yaml:"oracle"`
-		Pairs       []string       `json:"pairs" yaml:"pairs"`
-		Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
+		Title       string    `json:"title" yaml:"title"`
+		Description string    `json:"description" yaml:"description"`
+		Oracles     []string  `json:"oracle" yaml:"oracles"`
+		Pairs       []string  `json:"pairs" yaml:"pairs"`
+		Deposit     sdk.Coins `json:"deposit" yaml:"deposit"`
 	}
 )
