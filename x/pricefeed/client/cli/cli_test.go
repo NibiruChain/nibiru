@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
