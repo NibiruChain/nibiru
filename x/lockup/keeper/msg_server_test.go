@@ -13,12 +13,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestMsgServer_LockTokens(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	s := keeper.NewMsgServerImpl(app.LockupKeeper)
 
@@ -38,7 +38,7 @@ func TestMsgServer_LockTokens(t *testing.T) {
 }
 
 func TestMsgServer_InitiateUnlock(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	s := keeper.NewMsgServerImpl(app.LockupKeeper)
 
@@ -64,7 +64,7 @@ func TestMsgServer_InitiateUnlock(t *testing.T) {
 }
 
 func TestMsgServer_Unlock(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	s := keeper.NewMsgServerImpl(app.LockupKeeper)
 
@@ -98,7 +98,7 @@ func TestMsgServer_Unlock(t *testing.T) {
 }
 
 func TestQueryServer_Lock(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	s := keeper.NewMsgServerImpl(app.LockupKeeper)
 	q := keeper.NewQueryServerImpl(app.LockupKeeper)
@@ -127,7 +127,7 @@ func TestQueryServer_Lock(t *testing.T) {
 }
 
 func TestQueryServer_LockedCoins(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	s := keeper.NewMsgServerImpl(app.LockupKeeper)
 	q := keeper.NewQueryServerImpl(app.LockupKeeper)
@@ -153,7 +153,7 @@ func TestQueryServer_LockedCoins(t *testing.T) {
 }
 
 func TestQueryServer_LocksByAddress(t *testing.T) {
-	app := testutilapp.NewTestApp(false)
+	app := testapp.NewNibiruApp(false)
 	uncachedCtx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 	s := keeper.NewMsgServerImpl(app.LockupKeeper)
 	q := keeper.NewQueryServerImpl(app.LockupKeeper)

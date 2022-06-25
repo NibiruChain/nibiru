@@ -8,10 +8,11 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	testutilapp "github.com/NibiruChain/nibiru/x/testutil/app"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestSwapExactAmountIn(t *testing.T) {
@@ -39,21 +40,21 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:          sdk.NewInt64Coin("unibi", 100),
-			tokenOutDenom:    "unusd",
-			expectedTokenOut: sdk.NewInt64Coin("unusd", 50),
+			tokenOutDenom:    common.DenomStable,
+			expectedTokenOut: sdk.NewInt64Coin(common.DenomStable, 50),
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("unusd", 50),
+				sdk.NewInt64Coin(common.DenomStable, 50),
 			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 200),
-					sdk.NewInt64Coin("unusd", 50),
+					sdk.NewInt64Coin(common.DenomStable, 50),
 				),
 				/*shares=*/ 100,
 			),
@@ -68,12 +69,12 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:       sdk.NewInt64Coin("unibi", 100),
-			tokenOutDenom: "unusd",
+			tokenOutDenom: common.DenomStable,
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1),
 			),
@@ -81,7 +82,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -96,12 +97,12 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:       sdk.NewInt64Coin("foo", 100),
-			tokenOutDenom: "unusd",
+			tokenOutDenom: common.DenomStable,
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
@@ -109,7 +110,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -124,7 +125,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -137,7 +138,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -152,7 +153,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -165,7 +166,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin("unusd", 100),
+					sdk.NewInt64Coin(common.DenomStable, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -176,7 +177,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testutilapp.NewNibiruApp(true)
+			app, ctx := testapp.NewNibiruAppAndContext(true)
 
 			// fund pool account
 			poolAddr := sample.AccAddress()

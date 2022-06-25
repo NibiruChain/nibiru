@@ -19,7 +19,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.SetParams(ctx, params)
 	}
 
-	_, err := k.PricefeedKeeper.GetCurrentTWAPPrice(ctx, common.StableDenom, common.CollDenom)
+	_, err := k.PricefeedKeeper.GetCurrentTWAPPrice(ctx, common.DenomStable, common.DenomColl)
 	if err != nil {
 		params := k.GetParams(ctx)
 		params.IsCollateralRatioValid = false

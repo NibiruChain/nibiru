@@ -20,6 +20,7 @@ type Keeper struct {
 	AccountKeeper   types.AccountKeeper
 	PricefeedKeeper types.PricefeedKeeper
 	VpoolKeeper     types.VpoolKeeper
+	EpochKeeper     types.EpochKeeper
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -32,6 +33,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	priceKeeper types.PricefeedKeeper,
 	vpoolKeeper types.VpoolKeeper,
+	epochKeeper types.EpochKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
@@ -52,6 +54,7 @@ func NewKeeper(
 		BankKeeper:      bankKeeper,
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
+		EpochKeeper:     epochKeeper,
 	}
 }
 
