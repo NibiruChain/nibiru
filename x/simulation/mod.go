@@ -58,8 +58,8 @@ func GenAndDeliverTxWithRandFees(
 		return simtypes.NoOpMsg(moduleName, msg.Type(), "message doesn't leave room for fees"), nil, err
 	}
 
-	// Only allow fees in common.GovDenom
-	coins = sdk.NewCoins(sdk.NewCoin(common.GovDenom, coins.AmountOf(common.GovDenom)))
+	// Only allow fees in common.DenomGov
+	coins = sdk.NewCoins(sdk.NewCoin(common.DenomGov, coins.AmountOf(common.DenomGov)))
 
 	fees, err = simtypes.RandomFees(r, ctx, coins)
 	if err != nil {

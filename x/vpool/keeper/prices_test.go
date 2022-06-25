@@ -557,7 +557,6 @@ func TestGetTWAPPrice(t *testing.T) {
 		},
 	}
 
-	token0, token1 := BTCNusdPair.Token0, BTCNusdPair.Token1
 	initialTWAP := sdk.NewDec(40_000)
 	for _, tc := range tests {
 		tc := tc
@@ -579,7 +578,8 @@ func TestGetTWAPPrice(t *testing.T) {
 			err := keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
 			require.NoError(t, err)
 			// Make sure price gets initialized correctly when the pool gets created
-			twap, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
+			pair := BTCNusdPair
+			twap, err := keeper.GetCurrentTWAPPrice(ctx, pair)
 			require.NoError(t, err)
 			require.EqualValues(t, initialTWAP, twap.Price)
 			for i, p := range tc.positionUpdates {
@@ -595,7 +595,7 @@ func TestGetTWAPPrice(t *testing.T) {
 				testutilevents.RequireContainsTypedEvent(t, cctx, markPriceEvt)
 				err = keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
 				require.NoError(t, err)
-				twapPrice, err := keeper.GetCurrentTWAPPrice(ctx, token0, token1)
+				twapPrice, err := keeper.GetCurrentTWAPPrice(ctx, pair)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedTwapPrices[i], twapPrice.Price)
 			}

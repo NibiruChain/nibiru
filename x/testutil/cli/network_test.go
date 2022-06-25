@@ -29,7 +29,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.network = network.New(s.T(), cli.DefaultConfig())
+	s.network = network.New(s.T(), network.DefaultConfig())
 	s.Require().NotNil(s.network)
 
 	_, err := s.network.WaitForHeight(1)

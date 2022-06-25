@@ -31,7 +31,7 @@ func (q queryServer) ReserveAssets(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	tokenPair, err := common.NewAssetPairFromStr(req.Pair)
+	tokenPair, err := common.NewAssetPair(req.Pair)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -77,7 +77,7 @@ func (q queryServer) BaseAssetPrice(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pair, err := common.NewAssetPairFromStr(req.Pair)
+	pair, err := common.NewAssetPair(req.Pair)
 	if err != nil {
 		return nil, err
 	}

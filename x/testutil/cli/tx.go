@@ -53,7 +53,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 	}
 
 	options := execTxOptions{
-		fees:             sdk.NewCoins(sdk.NewCoin(common.GovDenom, sdk.NewInt(10))),
+		fees:             sdk.NewCoins(sdk.NewCoin(common.DenomGov, sdk.NewInt(10))),
 		skipConfirmation: true,
 		broadcastMode:    flags.BroadcastBlock,
 	}

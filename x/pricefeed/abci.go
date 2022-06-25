@@ -13,7 +13,7 @@ import (
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Update the current price of each asset.
 	for _, pair := range k.GetPairs(ctx) {
-		if !pair.Active {
+		if !k.IsActivePair(ctx, pair.String()) {
 			continue
 		}
 

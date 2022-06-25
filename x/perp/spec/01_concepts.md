@@ -29,15 +29,24 @@ The **mark price** is the value of the derivative asset (the perp) on the exchan
 The value of a perp's underlying asset is referred to as the **index price**. For example, a BTC:USD perp has BTC as its **base asset** and dollar collateral such as USDC as could be its **quote asset**. The dollar value of BTC on spot exchanges is the index price of the BTC:USD perp. Thus we'd call BTC **"the underlying"**. Usually, the index price is taken as the average of spot prices across major exchanges. 
 
 ## Leverage and Perp Position Value
+
 #### Position Size
 
 Suppose a trader wanted exposure to 5 ETH through the purchase of a perpetual contract. On Nibi-Perps, going long on 5 ETH means that the trader buys the ETH perp with a **position size** of 5. Position size is computed as the position notional mutlipled by the mark price of the asset. 
+
+```go 
+k = baseReserves * quoteReserves
+notionalDelta = margin * leverage // (leverage is negative if short)
+baseReservesAfterSwap = k / (quoteReserves + notionalDelta)
+position_size = baseReserves - baseReservesAfterSwap
+```
 
 #### Position Notional Value
 
 The notional value of the position, or **position notional**, is the total value a position controls  in units of the quote asset. Notional value expresses the value a derivatives contract theoretically controls. On Nibiru, it is defined more concretely by
 
-```
+```go
+positionNotional = abs(quoteReserves - k/(baseReserves + position_size))
 leverage = positionNotional / margin.
 ```
 

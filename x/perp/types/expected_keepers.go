@@ -53,12 +53,12 @@ type PricefeedKeeper interface {
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
-	GetPair(ctx sdk.Context, pairID string) (pftypes.Pair, bool)
+	IsActivePair(ctx sdk.Context, pairID string) bool
 	// Returns the pairs from the x/pricefeed params
-	GetPairs(ctx sdk.Context) pftypes.Pairs
-	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
-	) (sdk.AccAddress, error)
-	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
+	GetPairs(ctx sdk.Context) common.AssetPairs
+	IsWhitelistedOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
+	) bool
+	GetOraclesForPair(ctx sdk.Context, pairID string) (oracles []sdk.AccAddress)
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
 	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
 }
@@ -239,7 +239,7 @@ type VpoolKeeper interface {
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 
 	// GetCurrentTWAPPrice fetches the TWAP for the specified token pair / pool
-	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (vpooltypes.CurrentTWAP, error)
+	GetCurrentTWAPPrice(ctx sdk.Context, pair common.AssetPair) (vpooltypes.CurrentTWAP, error)
 }
 
 type EpochKeeper interface {
