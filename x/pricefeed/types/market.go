@@ -11,8 +11,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
-// NewPairResponse returns a new PairResponse
-func NewPairResponse(pair common.AssetPair, oracles []sdk.AccAddress, active bool) PairResponse {
+// Required for gogoproto.castrepeated = "Markets"
+type Markets []Market
+
+func NewMarket(pair common.AssetPair, oracles []sdk.AccAddress, active bool) Market {
 	if err := pair.Validate(); err != nil {
 		panic(err)
 	}
@@ -20,18 +22,19 @@ func NewPairResponse(pair common.AssetPair, oracles []sdk.AccAddress, active boo
 	for _, oracle := range oracles {
 		strOracles = append(strOracles, oracle.String())
 	}
-
-	return PairResponse{
+	return Market{
 		PairID:  pair.String(),
-		Token1:  pair.Token1,
-		Token0:  pair.Token0,
 		Oracles: strOracles,
 		Active:  active,
 	}
 }
 
-// PairResponses is a slice of PairResponse
-type PairResponses []PairResponse
+// NewQueryMarketsResponse returns a new QueryMarketsResponse
+func NewQueryMarketsResponse(pair common.AssetPair, oracles []sdk.AccAddress, active bool) QueryMarketsResponse {
+	return QueryMarketsResponse{
+		Markets: []Market{NewMarket(pair, oracles, active)},
+	}
+}
 
 /*
 NewCurrentPrice returns an instance of CurrentPrice

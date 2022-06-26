@@ -117,7 +117,8 @@ func (k Keeper) QueryOracles(goCtx context.Context, req *types.QueryOraclesReque
 	}, nil
 }
 
-func (k Keeper) QueryParams(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (k Keeper) QueryParams(c context.Context, req *types.QueryParamsRequest,
+) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -126,32 +127,29 @@ func (k Keeper) QueryParams(c context.Context, req *types.QueryParamsRequest) (*
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-func (k Keeper) QueryPairs(goCtx context.Context, req *types.QueryPairsRequest,
-) (*types.QueryPairsResponse, error) {
+func (k Keeper) QueryMarkets(goCtx context.Context, req *types.QueryMarketsRequest,
+) (*types.QueryMarketsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var responses types.PairResponses
+	var markets types.Markets
 	for _, pair := range k.GetParams(ctx).Pairs {
 		var oracleStrings []string
 		for _, oracle := range k.OraclesStore().Get(ctx, pair) {
 			oracleStrings = append(oracleStrings, oracle.String())
 		}
 
-		responses = append(responses, types.PairResponse{
+		markets = append(markets, types.Market{
 			PairID:  pair.String(),
-			Token0:  pair.Token0,
-			Token1:  pair.Token1,
 			Oracles: oracleStrings,
 			Active:  k.IsActivePair(ctx, pair.String()),
 		})
 	}
 
-	// TODO improve these variable names. PairResponse is confusing on field "Pairs"
-	return &types.QueryPairsResponse{
-		Pairs: responses,
+	return &types.QueryMarketsResponse{
+		Markets: markets,
 	}, nil
 }
