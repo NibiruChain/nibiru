@@ -150,13 +150,10 @@ func NewAssetPairs(pairStrings ...string) (pairs AssetPairs) {
 	return pairs
 }
 
+// Contains checks if a token pair is contained within 'Pairs'
 func (pairs AssetPairs) Contains(pair AssetPair) bool {
-	for _, element := range pairs {
-		if (element.Token0 == pair.Token0) && (element.Token1 == pair.Token1) {
-			return true
-		}
-	}
-	return false
+	isContained, _ := pairs.ContainsAtIndex(pair)
+	return isContained
 }
 
 func (pairs AssetPairs) Strings() []string {
@@ -170,7 +167,7 @@ func (pairs AssetPairs) Strings() []string {
 func (pairs AssetPairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, pair := range pairs {
-		pairID := SortedPairNameFromDenoms([]string{pair.Token0, pair.Token1})
+		pairID := pair.String()
 		if seenPairs[pairID] {
 			return fmt.Errorf("duplicate pair %s", pairID)
 		}
@@ -182,7 +179,9 @@ func (pairs AssetPairs) Validate() error {
 	return nil
 }
 
-// Contains checks if a token pair is contained within 'Pairs'
+// ContainsAtIndex checks if a token pair is contained within 'Pairs' and
+// a boolean for this condition alongside the corresponding index of 'pair' in
+// the slice of pairs.
 func (pairs AssetPairs) ContainsAtIndex(pair AssetPair) (bool, int) {
 	for idx, element := range pairs {
 		if (element.Token0 == pair.Token0) && (element.Token1 == pair.Token1) {

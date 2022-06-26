@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -179,4 +180,22 @@ func TestAssetPair_Marshaling(t *testing.T) {
 			tc.test()
 		})
 	}
+}
+
+func TestAssetPairs_Contains(t *testing.T) {
+	pairs := common.AssetPairs{
+		common.PairBTCStable, common.PairETHStable,
+	}
+
+	pair := common.PairGovStable
+	isContained, atIdx := pairs.ContainsAtIndex(pair)
+	assert.False(t, isContained)
+	assert.Equal(t, -1, atIdx)
+	assert.False(t, pairs.Contains(pair))
+
+	pair = pairs[0]
+	isContained, atIdx = pairs.ContainsAtIndex(pair)
+	assert.True(t, isContained)
+	assert.Equal(t, 0, atIdx)
+	assert.True(t, pairs.Contains(pair))
 }

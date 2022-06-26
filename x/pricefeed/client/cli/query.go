@@ -25,17 +25,17 @@ func GetQueryCmd() *cobra.Command {
 
 	queryCmd.AddCommand(
 		CmdQueryParams(),
-		CmdPrice(),
-		CmdPrices(),
-		CmdRawPrices(),
-		CmdOracles(),
-		CmdPairs(),
+		CmdQueryPrice(),
+		CmdQueryPrices(),
+		CmdQueryRawPrices(),
+		CmdQueryOracles(),
+		CmdQueryMarkets(),
 	)
 
 	return queryCmd
 }
 
-func CmdPrice() *cobra.Command {
+func CmdQueryPrice() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "price [pair-id]",
 		Short: "Display current price for the given pair",
@@ -69,7 +69,7 @@ func CmdPrice() *cobra.Command {
 	return cmd
 }
 
-func CmdPrices() *cobra.Command {
+func CmdQueryPrices() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prices",
 		Short: "Display current prices for all pairs",
@@ -98,7 +98,7 @@ func CmdPrices() *cobra.Command {
 	return cmd
 }
 
-func CmdPairs() *cobra.Command {
+func CmdQueryMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
 		Short: "Query markets",
@@ -111,9 +111,9 @@ func CmdPairs() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			request := &types.QueryPairsRequest{}
+			request := &types.QueryMarketsRequest{}
 
-			res, err := queryClient.QueryPairs(cmd.Context(), request)
+			res, err := queryClient.QueryMarkets(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -127,7 +127,7 @@ func CmdPairs() *cobra.Command {
 	return cmd
 }
 
-func CmdOracles() *cobra.Command {
+func CmdQueryOracles() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "oracles [pair]",
 		Short: "Query oracles",
@@ -188,7 +188,7 @@ func CmdQueryParams() *cobra.Command {
 	return cmd
 }
 
-func CmdRawPrices() *cobra.Command {
+func CmdQueryRawPrices() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "raw-prices [market-id]",
 		Short: "Query RawPrices",

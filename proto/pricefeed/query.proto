@@ -38,9 +38,9 @@ service Query {
     option (google.api.http).get = "/nibiru/pricefeed/v1beta1/oracles/{pair_id}";
   }
 
-  // QueryPairs queries all pairs
-  rpc QueryPairs(QueryPairsRequest) returns (QueryPairsResponse) {
-    option (google.api.http).get = "/nibiru/pricefeed/v1beta1/pairs";
+  // QueryMarkets queries all markets
+  rpc QueryMarkets(QueryMarketsRequest) returns (QueryMarketsResponse) {
+    option (google.api.http).get = "/nibiru/pricefeed/v1beta1/markets";
   }
 }
 
@@ -112,15 +112,16 @@ message QueryOraclesResponse {
   repeated string oracles = 1;
 }
 
-// QueryPairsRequest is the request type for the Query/Pairs RPC method.
-message QueryPairsRequest {}
+// QueryMarketsRequest is the request type for the Query/Pairs RPC method.
+message QueryMarketsRequest {}
 
-// QueryPairsResponse is the response type for the Query/Pairs RPC method.
-message QueryPairsResponse {
+// QueryMarketsResponse is the response type for the Query/Pairs RPC method.
+message QueryMarketsResponse {
   option (gogoproto.goproto_getters) = false;
 
-  // List of 'PairResponse'
-  repeated PairResponse pairs = 1 [(gogoproto.castrepeated) = "PairResponses", (gogoproto.nullable) = false];
+  repeated Market markets = 1 [
+    (gogoproto.castrepeated) = "Markets", 
+    (gogoproto.nullable) = false];
 }
 
 // PostedPriceResponse defines a price for 'PairID' posted by a specific oracle.
@@ -138,11 +139,9 @@ message CurrentPriceResponse {
   string price = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 
-// PairResponse defines an asset in the pricefeed.
-message PairResponse {
+// Market defines an asset in the pricefeed.
+message Market {
   string          pair_id   = 1 [(gogoproto.customname) = "PairID"];
-  string          token0  = 2;
-  string          token1 = 3;
-  repeated string oracles     = 4;
-  bool            active      = 5;
+  repeated string oracles     = 2;
+  bool            active      = 3;
 }
