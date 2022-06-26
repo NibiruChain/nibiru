@@ -211,7 +211,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		})
 		bob := sample.AccAddress()
 		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,
-			sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+			sdk.NewCoins(sdk.NewInt64Coin("yyy", 62)))
 		require.NoError(t, err)
 
 		bobSide := types.Side_BUY

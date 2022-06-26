@@ -90,11 +90,11 @@ func TestOpenPosition_Setup(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					sdk.NewDec(10_000_000),       //
-					sdk.NewDec(5_000_000),        // 5 tokens
-					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-					sdk.MustNewDecFromStr("0.1"),
+					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					/* quoteAssetReserve */ sdk.NewDec(10_000_000), //
+					/* baseAssetReserve */ sdk.NewDec(5_000_000), // 5 tokens
+					/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
+					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
@@ -110,7 +110,7 @@ func TestOpenPosition_Setup(t *testing.T) {
 
 				trader := sample.AccAddress()
 				err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, trader,
-					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60)))
+					sdk.NewCoins(sdk.NewInt64Coin("yyy", 62))) // extra 2yyy for fees
 				require.NoError(t, err)
 
 				t.Log("Open long position with 10x leverage")

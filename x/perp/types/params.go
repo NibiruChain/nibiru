@@ -28,14 +28,14 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			validateMaintenanceMarginRatio,
 		),
 		paramtypes.NewParamSetPair(
-			[]byte("TollRatio"),
-			&p.TollRatio,
-			validateTollRatio,
+			[]byte("FeePoolFeeRatio"),
+			&p.FeePoolFeeRatio,
+			validateFeePoolFeeRatio,
 		),
 		paramtypes.NewParamSetPair(
-			[]byte("SpreadRatio"),
-			&p.SpreadRatio,
-			validateSpreadRatio,
+			[]byte("EcosystemFundFeeRatio"),
+			&p.EcosystemFundFeeRatio,
+			validateEcosystemFundFeeRatio,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("LiquidationFee"),
@@ -59,24 +59,22 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func NewParams(
 	stopped bool,
 	maintenanceMarginRatio sdk.Dec,
-	tollRatio sdk.Dec,
-	spreadRatio sdk.Dec,
+	feePoolFeeRatio sdk.Dec,
+	ecosystemFundFeeRatio sdk.Dec,
 	liquidationFee sdk.Dec,
 	partialLiquidationRatio sdk.Dec,
 	epochIdentifier string,
 ) Params {
 	million := sdk.NewDec(1_000_000)
 
-	tollRatioInt := tollRatio.Mul(million).RoundInt().Int64()
-	spreadRationInt := spreadRatio.Mul(million).RoundInt().Int64()
 	liquidationFeeInt := liquidationFee.Mul(million).RoundInt().Int64()
 	partialLiquidationRatioInt := partialLiquidationRatio.Mul(million).RoundInt().Int64()
 
 	return Params{
 		Stopped:                 stopped,
 		MaintenanceMarginRatio:  maintenanceMarginRatio,
-		TollRatio:               tollRatioInt,
-		SpreadRatio:             spreadRationInt,
+		FeePoolFeeRatio:         feePoolFeeRatio,
+		EcosystemFundFeeRatio:   ecosystemFundFeeRatio,
 		LiquidationFee:          liquidationFeeInt,
 		PartialLiquidationRatio: partialLiquidationRatioInt,
 		EpochIdentifier:         epochIdentifier,
@@ -85,8 +83,8 @@ func NewParams(
 
 // DefaultParams returns the default parameters for the x/perp module.
 func DefaultParams() Params {
-	tollRatio := sdk.MustNewDecFromStr("0.001")
-	spreadRatio := sdk.MustNewDecFromStr("0.001")
+	feePoolFeeRatio := sdk.MustNewDecFromStr("0.001")
+	ecosystemFundFeeRatio := sdk.MustNewDecFromStr("0.001")
 	liquidationFee := sdk.MustNewDecFromStr("0.0125")
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.50")
 	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
@@ -95,20 +93,12 @@ func DefaultParams() Params {
 	return NewParams(
 		/*Stopped=*/ false,
 		/*MaintenanceMarginRatio=*/ maintenanceMarginRatio,
-		/*TollRatio=*/ tollRatio,
-		/*SpreadRatio=*/ spreadRatio,
+		/*FeePoolFeeRatio=*/ feePoolFeeRatio,
+		/*EcosystemFundFeeRatio=*/ ecosystemFundFeeRatio,
 		/*LiquidationFee=*/ liquidationFee,
 		/*PartialLiquidationRatio=*/ partialLiquidationRatio,
 		/*EpochIdentifier=*/ epochIdentifier,
 	)
-}
-
-func (p *Params) GetSpreadRatioAsDec() sdk.Dec {
-	return sdk.NewDec(p.SpreadRatio).QuoInt64(1_000_000)
-}
-
-func (p *Params) GetTollRatioAsDec() sdk.Dec {
-	return sdk.NewDec(p.TollRatio).QuoInt64(1_000_000)
 }
 
 func (p *Params) GetLiquidationFeeAsDec() sdk.Dec {
@@ -136,7 +126,7 @@ func (p *Params) Validate() error {
 		return err
 	}
 
-	err = validateTollRatio(p.TollRatio)
+	err = validateFeePoolFeeRatio(p.FeePoolFeeRatio)
 	if err != nil {
 		return err
 	}
@@ -146,37 +136,37 @@ func (p *Params) Validate() error {
 		return err
 	}
 
-	return validateSpreadRatio(p.SpreadRatio)
+	return validateEcosystemFundFeeRatio(p.EcosystemFundFeeRatio)
 }
 
-func validateTollRatio(i interface{}) error {
-	tollRatio, err := getAsInt64(i)
-	if err != nil {
-		return err
+func validateFeePoolFeeRatio(i interface{}) error {
+	ratio, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if tollRatio > 1_000_000 {
-		return fmt.Errorf("Toll ratio is above max value(1e6): %d", tollRatio)
-	} else if tollRatio < 0 {
-		return fmt.Errorf("Toll Ratio is negative: %d", tollRatio)
-	} else {
-		return nil
+	if ratio.GT(sdk.OneDec()) {
+		return fmt.Errorf("Fee pool fee ratio is above max value(1.00): %s", ratio.String())
+	} else if ratio.IsNegative() {
+		return fmt.Errorf("Fee pool fee ratio is negative: %s", ratio.String())
 	}
+
+	return nil
 }
 
-func validateSpreadRatio(i interface{}) error {
-	spreadRatio, err := getAsInt64(i)
-	if err != nil {
-		return err
+func validateEcosystemFundFeeRatio(i interface{}) error {
+	ratio, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if spreadRatio > 1_000_000 {
-		return fmt.Errorf("spread ratio is above max value(1e6): %d", spreadRatio)
-	} else if spreadRatio < 0 {
-		return fmt.Errorf("spread ratio is negative: %d", spreadRatio)
-	} else {
-		return nil
+	if ratio.GT(sdk.OneDec()) {
+		return fmt.Errorf("Ecosystem fund fee ratio is above max value(1.00): %s", ratio.String())
+	} else if ratio.IsNegative() {
+		return fmt.Errorf("Ecosystem fund fee ratio is negative: %s", ratio.String())
 	}
+
+	return nil
 }
 
 func validateLiquidationFee(i interface{}) error {

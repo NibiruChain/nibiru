@@ -76,8 +76,8 @@ func initParams(ctx sdk.Context, k Keeper) {
 	k.SetParams(ctx, types.Params{
 		Stopped:                 false,
 		MaintenanceMarginRatio:  sdk.NewDec(100),
-		TollRatio:               10,
-		SpreadRatio:             5,
+		FeePoolFeeRatio:         sdk.MustNewDecFromStr("0.00001"),
+		EcosystemFundFeeRatio:   sdk.MustNewDecFromStr("0.000005"),
 		LiquidationFee:          7,
 		PartialLiquidationRatio: 10,
 		EpochIdentifier:         "hour",

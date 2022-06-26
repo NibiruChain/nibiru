@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -32,8 +33,8 @@ func TestGenesis(t *testing.T) {
 		app.PerpKeeper.SetParams(ctx, types.Params{
 			Stopped:                 true,
 			MaintenanceMarginRatio:  sdk.NewDec(100),
-			TollRatio:               10,
-			SpreadRatio:             5,
+			FeePoolFeeRatio:         sdk.MustNewDecFromStr("0.00001"),
+			EcosystemFundFeeRatio:   sdk.MustNewDecFromStr("0.000005"),
 			LiquidationFee:          7,
 			PartialLiquidationRatio: 10,
 		})
@@ -41,7 +42,7 @@ func TestGenesis(t *testing.T) {
 		for i := int64(0); i < 100; i++ {
 			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
 				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                "NIBI:USDN",
+				Pair:                                common.PairGovStable.String(),
 				Size_:                               sdk.NewDec(i + 1),
 				Margin:                              sdk.NewDec(i * 2),
 				OpenNotional:                        sdk.NewDec(i * 100),

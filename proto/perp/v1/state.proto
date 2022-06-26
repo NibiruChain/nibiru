@@ -16,11 +16,17 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
 
-  // toll_ratio is the ratio transferred to the the fee pool
-  int64 toll_ratio = 3;
+  // treasury_fee_ratio is the ratio transferred to the the fee pool
+  string fee_pool_fee_ratio = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-  // spread_ratio is the ratio transferred to the PerpEF.
-  int64 spread_ratio = 4;
+  // ecosystem_fund_fee_ratio is the ratio transferred to the PerpEF.
+  string ecosystem_fund_fee_ratio = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // LiquidationFee is the percentage of liquidated position that will be given
   // to out as a reward. Half of the liquidation fee is given to the liquidator,

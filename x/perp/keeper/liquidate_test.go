@@ -73,8 +73,8 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
 				params.MaintenanceMarginRatio,
-				params.GetTollRatioAsDec(),
-				params.GetSpreadRatioAsDec(),
+				params.FeePoolFeeRatio,
+				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
 				params.GetPartialLiquidationRatioAsDec(),
 				"hour",
@@ -250,8 +250,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
 				params.MaintenanceMarginRatio,
-				params.GetTollRatioAsDec(),
-				params.GetSpreadRatioAsDec(),
+				params.FeePoolFeeRatio,
+				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
 				params.GetPartialLiquidationRatioAsDec(),
 				"hour",
@@ -524,8 +524,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
 				params.MaintenanceMarginRatio,
-				params.GetTollRatioAsDec(),
-				params.GetSpreadRatioAsDec(),
+				params.FeePoolFeeRatio,
+				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
 				partialLiquidationRatio,
 				"hour",
