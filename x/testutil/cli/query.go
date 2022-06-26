@@ -138,7 +138,7 @@ func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.A
 func QueryPrice(ctx client.Context, pairID string) (pricefeedtypes.QueryPriceResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
-		pricefeedcli.CmdPrice(),
+		pricefeedcli.CmdQueryPrice(),
 		[]string{pairID, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
@@ -157,7 +157,7 @@ func QueryPrice(ctx client.Context, pairID string) (pricefeedtypes.QueryPriceRes
 func QueryRawPrice(ctx client.Context, pairID string) (pricefeedtypes.QueryRawPricesResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
-		pricefeedcli.CmdRawPrices(),
+		pricefeedcli.CmdQueryRawPrices(),
 		[]string{pairID, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {

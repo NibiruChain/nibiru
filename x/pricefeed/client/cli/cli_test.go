@@ -1,19 +1,27 @@
 package cli_test
 
 import (
+	"context"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"testing"
 	"time"
 
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
+
+	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -151,7 +159,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdPrice()
+			cmd := cli.CmdQueryPrice()
 			queryResp := new(pricefeedtypes.QueryPriceResponse)
 			err := testutilcli.ExecQuery(
 				s.network, cmd,
@@ -211,7 +219,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdRawPrices()
+			cmd := cli.CmdQueryRawPrices()
 			queryResp := new(pricefeedtypes.QueryRawPricesResponse)
 			err := testutilcli.ExecQuery(
 				s.network, cmd,
@@ -244,18 +252,18 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 	testCases := []struct {
 		name string
 
-		expectedPairs pricefeedtypes.PairResponses
-		respType      proto.Message
+		expectedMarkets []pricefeedtypes.Market
+		respType        proto.Message
 	}{
 		{
 			name: "Get current pairs",
-			expectedPairs: pricefeedtypes.PairResponses{
-				pricefeedtypes.NewPairResponse(common.PairGovStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewPairResponse(common.PairCollStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewPairResponse(common.PairBTCStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewPairResponse(common.PairETHStable, []sdk.AccAddress{oracle}, true),
+			expectedMarkets: []pricefeedtypes.Market{
+				pricefeedtypes.NewMarket(common.PairGovStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.PairCollStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.PairBTCStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.PairETHStable, []sdk.AccAddress{oracle}, true),
 			},
-			respType: &pricefeedtypes.QueryPairsResponse{},
+			respType: &pricefeedtypes.QueryMarketsResponse{},
 		},
 	}
 
@@ -263,20 +271,20 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdPairs()
+			cmd := cli.CmdQueryMarkets()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-			txResp := tc.respType.(*pricefeedtypes.QueryPairsResponse)
+			txResp := tc.respType.(*pricefeedtypes.QueryMarketsResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Assert().Equal(len(tc.expectedPairs), len(txResp.Pairs))
+			s.Assert().Equal(len(tc.expectedMarkets), len(txResp.Markets))
 
-			for _, p := range txResp.Pairs {
-				s.Assert().Contains(tc.expectedPairs, p)
+			for _, market := range txResp.Markets {
+				s.Assert().Contains(tc.expectedMarkets, market)
 			}
 		})
 	}
@@ -304,7 +312,7 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdPrices()
+			cmd := cli.CmdQueryPrices()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
@@ -365,7 +373,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdOracles()
+			cmd := cli.CmdQueryOracles()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
@@ -541,6 +549,171 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 			s.Require().NoError(err)
 			s.Assert().Equal(tc.expectedParams, txResp.Params)
 		})
+	}
+}
+
+func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
+	s.T().Log("Create oracle account")
+	s.Require().Len(s.network.Validators, 1)
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx.WithOutputFormat("json")
+	oracleKeyringInfo, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		/* uid */ "delphi-oracle",
+		/* language */ keyring.English,
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* bip39Passphrase */ "",
+		/* algo */ hd.Secp256k1,
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("Fill oracle wallet to pay gas on post price")
+	gasTokens := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
+	oracle := sdk.AccAddress(oracleKeyringInfo.GetPubKey().Address())
+	_, err = testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom)
+	s.Require().NoError(err)
+
+	s.T().Log("load example json as bytes")
+	proposal := &pricefeedtypes.AddOracleProposal{
+		Title:       "Cataclysm-004",
+		Description: "Whitelists Delphi to post prices for OHM and BTC",
+		Oracles:     []string{oracle.String()},
+		Pairs:       []string{"ohm:usd", "btc:usd"},
+	}
+	proposalJSONString := fmt.Sprintf(`
+		{
+			"title": "%v",
+			"description": "%v",
+			"oracles": ["%v"],
+			"pairs": ["%v", "%v"]
+		}	
+		`, proposal.Title, proposal.Description, proposal.Oracles[0],
+		proposal.Pairs[0], proposal.Pairs[1],
+	)
+	proposalJSON := sdktestutil.WriteToNewTempFile(
+		s.T(), proposalJSONString,
+	)
+	contents, err := ioutil.ReadFile(proposalJSON.Name())
+	s.Assert().NoError(err)
+
+	s.T().Log("Unmarshal json bytes into proposal object; check validity")
+	encodingConfig := simappparams.MakeTestEncodingConfig()
+	proposal = &pricefeedtypes.AddOracleProposal{}
+	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
+	s.Assert().NoError(err)
+	s.Require().NoError(proposal.Validate())
+
+	s.T().Log("Submit proposal and unmarshal tx response")
+	args := []string{
+		proposalJSON.Name(),
+		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		fmt.Sprintf("--from=%s", val.Address.String()),
+	}
+	cmd := cli.CmdAddOracleProposal()
+	flags.AddTxFlagsToCmd(cmd)
+	out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, args)
+	s.Require().NoError(err)
+	s.Assert().NotContains(out.String(), "fail")
+	var txRespProtoMessage proto.Message = &sdk.TxResponse{}
+	s.Assert().NoError(
+		clientCtx.Codec.UnmarshalJSON(out.Bytes(), txRespProtoMessage),
+		out.String())
+	txResp := txRespProtoMessage.(*sdk.TxResponse)
+	err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+	s.Assert().NoError(err)
+	s.Assert().EqualValues(0, txResp.Code, out.String())
+
+	s.T().Log(`Check that proposal was correctly submitted with gov client
+			$ nibid query gov proposal 1`)
+	// the proposal tx won't be included until next block
+	s.Assert().NoError(s.network.WaitForNextBlock())
+	govQueryClient := govtypes.NewQueryClient(clientCtx)
+	proposalsQueryResponse, err := govQueryClient.Proposals(
+		context.Background(), &govtypes.QueryProposalsRequest{},
+	)
+	s.Require().NoError(err)
+	s.Assert().NotEmpty(proposalsQueryResponse.Proposals)
+	s.Assert().EqualValues(1, proposalsQueryResponse.Proposals[0].ProposalId,
+		"first proposal should have proposal ID of 1")
+	s.Assert().Equalf(
+		govtypes.StatusDepositPeriod,
+		proposalsQueryResponse.Proposals[0].Status,
+		"proposal should be in deposit period as it hasn't passed min deposit")
+	s.Assert().EqualValues(
+		sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)),
+		proposalsQueryResponse.Proposals[0].TotalDeposit,
+	)
+
+	s.T().Log(`Move proposal to vote status by meeting min deposit
+			$ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
+	govDepositParams, err := govQueryClient.Params(
+		context.Background(), &govtypes.QueryParamsRequest{ParamsType: govtypes.ParamDeposit})
+	s.Assert().NoError(err)
+	args = []string{
+		/*proposal-id=*/ "1",
+		/*deposit=*/ govDepositParams.DepositParams.MinDeposit.String(),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		fmt.Sprintf("--from=%s", val.Address.String()),
+	}
+	_, err = sdktestutilcli.ExecTestCLICmd(clientCtx, govcli.NewCmdDeposit(), args)
+	s.Assert().NoError(err)
+
+	s.Assert().NoError(s.network.WaitForNextBlock())
+	govQueryClient = govtypes.NewQueryClient(clientCtx)
+	proposalsQueryResponse, err = govQueryClient.Proposals(
+		context.Background(), &govtypes.QueryProposalsRequest{})
+	s.Require().NoError(err)
+	s.Assert().Equalf(
+		govtypes.StatusVotingPeriod,
+		proposalsQueryResponse.Proposals[0].Status,
+		"proposal should be in voting period since min deposit has been met")
+
+	s.T().Log(`Vote on the proposal.
+			$ nibid tx gov vote [proposal-id] [option] [flags]
+			e.g. $ nibid tx gov vote 1 yes`)
+	args = []string{
+		/*proposal-id=*/ "1",
+		/*option=*/ "yes",
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		fmt.Sprintf("--from=%s", val.Address.String()),
+	}
+	_, err = sdktestutilcli.ExecTestCLICmd(clientCtx, govcli.NewCmdVote(), args)
+	s.Assert().NoError(err)
+	txResp = &sdk.TxResponse{}
+	err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+	s.Assert().NoError(err)
+	s.Assert().EqualValues(0, txResp.Code, out.String())
+
+	s.Assert().NoError(s.network.WaitForNextBlock())
+	s.Require().Eventuallyf(func() bool {
+		proposalsQueryResponse, err = govQueryClient.Proposals(
+			context.Background(), &govtypes.QueryProposalsRequest{})
+		s.Require().NoError(err)
+		return govtypes.StatusPassed == proposalsQueryResponse.Proposals[0].Status
+	}, 20*time.Second, 2*time.Second,
+		"proposal should pass after voting period")
+
+	s.T().Log("verify that the new proposed pairs have been added to the params")
+	cmd = cli.CmdQueryParams()
+	args = []string{}
+	queryResp := &pricefeedtypes.QueryParamsResponse{}
+	s.Require().NoError(testutilcli.ExecQuery(s.network, cmd, args, queryResp))
+	proposalPairs := common.NewAssetPairs(proposal.Pairs...)
+	expectedPairs := append(pricefeedtypes.DefaultPairs, proposalPairs...)
+	s.Assert().EqualValues(expectedPairs, queryResp.Params.Pairs)
+
+	s.T().Log("verify that the oracle was whitelisted with a query")
+	cmd = cli.CmdQueryOracles()
+	for _, pair := range proposalPairs {
+		args = []string{pair.String()}
+		queryResp := &pricefeedtypes.QueryOraclesResponse{}
+		s.Assert().NoError(testutilcli.ExecQuery(s.network, cmd, args, queryResp))
+		for _, proposalOracle := range proposal.Oracles {
+			s.Assert().Contains(queryResp.Oracles, proposalOracle)
+		}
 	}
 }
 
