@@ -75,7 +75,7 @@ func (k Keeper) Liquidate(
 	}
 
 	var liquidationResponse types.LiquidateResp
-	if marginRatioBasedOnSpot.GTE(params.GetPartialLiquidationRatioAsDec()) {
+	if marginRatioBasedOnSpot.GTE(params.PartialLiquidationRatio) {
 		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidatorAddr, position)
 	} else {
 		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidatorAddr, position)
@@ -138,7 +138,7 @@ func (k Keeper) ExecuteFullLiquidation(
 
 	remainMargin := positionResp.MarginToVault.Abs()
 
-	feeToLiquidator := params.GetLiquidationFeeAsDec().
+	feeToLiquidator := params.LiquidationFeeRatio.
 		Mul(positionResp.ExchangedNotionalValue).
 		QuoInt64(2)
 	totalBadDebt := positionResp.BadDebt
@@ -291,7 +291,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		ctx,
 		currentPosition.GetAssetPair(),
 		baseAssetDir,
-		/* abs= */ currentPosition.Size_.Mul(params.GetPartialLiquidationRatioAsDec()),
+		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
 	)
 	if err != nil {
 		return types.LiquidateResp{}, err
@@ -311,7 +311,7 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	// Remove the liquidation fee from the margin of the position
 	liquidationFeeAmount := positionResp.ExchangedNotionalValue.
-		Mul(params.GetLiquidationFeeAsDec())
+		Mul(params.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
 	k.SetPosition(ctx, currentPosition.GetAssetPair(), traderAddr,

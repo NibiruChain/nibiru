@@ -32,11 +32,11 @@ func TestGenesis(t *testing.T) {
 		// create some params
 		app.PerpKeeper.SetParams(ctx, types.Params{
 			Stopped:                 true,
-			MaintenanceMarginRatio:  sdk.NewDec(100),
+			MaintenanceMarginRatio:  sdk.OneDec(),
 			FeePoolFeeRatio:         sdk.MustNewDecFromStr("0.00001"),
 			EcosystemFundFeeRatio:   sdk.MustNewDecFromStr("0.000005"),
-			LiquidationFee:          7,
-			PartialLiquidationRatio: 10,
+			LiquidationFeeRatio:     sdk.MustNewDecFromStr("0.000007"),
+			PartialLiquidationRatio: sdk.MustNewDecFromStr("0.00001"),
 		})
 		// create some positions
 		for i := int64(0); i < 100; i++ {

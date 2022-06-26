@@ -25,27 +25,27 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(
 			[]byte("MaintenanceMarginRatio"),
 			&p.MaintenanceMarginRatio,
-			validateMaintenanceMarginRatio,
+			validatePercentageRatio,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("FeePoolFeeRatio"),
 			&p.FeePoolFeeRatio,
-			validateFeePoolFeeRatio,
+			validatePercentageRatio,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("EcosystemFundFeeRatio"),
 			&p.EcosystemFundFeeRatio,
-			validateEcosystemFundFeeRatio,
+			validatePercentageRatio,
 		),
 		paramtypes.NewParamSetPair(
-			[]byte("LiquidationFee"),
-			&p.LiquidationFee,
-			validateLiquidationFee,
+			[]byte("LiquidationFeeRatio"),
+			&p.LiquidationFeeRatio,
+			validatePercentageRatio,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("PartialLiquidationRatio"),
 			&p.PartialLiquidationRatio,
-			validatePartialLiquidationRatio,
+			validatePercentageRatio,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("EpochIdentifier"),
@@ -61,22 +61,17 @@ func NewParams(
 	maintenanceMarginRatio sdk.Dec,
 	feePoolFeeRatio sdk.Dec,
 	ecosystemFundFeeRatio sdk.Dec,
-	liquidationFee sdk.Dec,
+	liquidationFeeRatio sdk.Dec,
 	partialLiquidationRatio sdk.Dec,
 	epochIdentifier string,
 ) Params {
-	million := sdk.NewDec(1_000_000)
-
-	liquidationFeeInt := liquidationFee.Mul(million).RoundInt().Int64()
-	partialLiquidationRatioInt := partialLiquidationRatio.Mul(million).RoundInt().Int64()
-
 	return Params{
 		Stopped:                 stopped,
 		MaintenanceMarginRatio:  maintenanceMarginRatio,
 		FeePoolFeeRatio:         feePoolFeeRatio,
 		EcosystemFundFeeRatio:   ecosystemFundFeeRatio,
-		LiquidationFee:          liquidationFeeInt,
-		PartialLiquidationRatio: partialLiquidationRatioInt,
+		LiquidationFeeRatio:     liquidationFeeRatio,
+		PartialLiquidationRatio: partialLiquidationRatio,
 		EpochIdentifier:         epochIdentifier,
 	}
 }
@@ -101,14 +96,6 @@ func DefaultParams() Params {
 	)
 }
 
-func (p *Params) GetLiquidationFeeAsDec() sdk.Dec {
-	return sdk.NewDec(p.LiquidationFee).QuoInt64(1_000_000)
-}
-
-func (p *Params) GetPartialLiquidationRatioAsDec() sdk.Dec {
-	return sdk.NewDec(p.PartialLiquidationRatio).QuoInt64(1_000_000)
-}
-
 // Validate validates the set of params
 func (p *Params) Validate() error {
 	err := validateStopped(p.Stopped)
@@ -116,87 +103,42 @@ func (p *Params) Validate() error {
 		return err
 	}
 
-	err = validateMaintenanceMarginRatio(p.MaintenanceMarginRatio)
+	err = validatePercentageRatio(p.MaintenanceMarginRatio)
 	if err != nil {
 		return err
 	}
 
-	err = validateLiquidationFee(p.LiquidationFee)
+	err = validatePercentageRatio(p.LiquidationFeeRatio)
 	if err != nil {
 		return err
 	}
 
-	err = validateFeePoolFeeRatio(p.FeePoolFeeRatio)
+	err = validatePercentageRatio(p.FeePoolFeeRatio)
 	if err != nil {
 		return err
 	}
 
-	err = validatePartialLiquidationRatio(p.PartialLiquidationRatio)
+	err = validatePercentageRatio(p.PartialLiquidationRatio)
 	if err != nil {
 		return err
 	}
 
-	return validateEcosystemFundFeeRatio(p.EcosystemFundFeeRatio)
+	return validatePercentageRatio(p.EcosystemFundFeeRatio)
 }
 
-func validateFeePoolFeeRatio(i interface{}) error {
+func validatePercentageRatio(i interface{}) error {
 	ratio, ok := i.(sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	if ratio.GT(sdk.OneDec()) {
-		return fmt.Errorf("Fee pool fee ratio is above max value(1.00): %s", ratio.String())
+		return fmt.Errorf("Ratio is above max value(1.00): %s", ratio.String())
 	} else if ratio.IsNegative() {
-		return fmt.Errorf("Fee pool fee ratio is negative: %s", ratio.String())
+		return fmt.Errorf("Ratio is negative: %s", ratio.String())
 	}
 
 	return nil
-}
-
-func validateEcosystemFundFeeRatio(i interface{}) error {
-	ratio, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if ratio.GT(sdk.OneDec()) {
-		return fmt.Errorf("Ecosystem fund fee ratio is above max value(1.00): %s", ratio.String())
-	} else if ratio.IsNegative() {
-		return fmt.Errorf("Ecosystem fund fee ratio is negative: %s", ratio.String())
-	}
-
-	return nil
-}
-
-func validateLiquidationFee(i interface{}) error {
-	liquidationFee, err := getAsInt64(i)
-	if err != nil {
-		return err
-	}
-
-	if liquidationFee > 1_000_000 {
-		return fmt.Errorf("spread ratio is above max value(1e6): %d", liquidationFee)
-	} else if liquidationFee < 0 {
-		return fmt.Errorf("spread ratio is negative: %d", liquidationFee)
-	} else {
-		return nil
-	}
-}
-
-func validatePartialLiquidationRatio(i interface{}) error {
-	partialLiquidationRatio, err := getAsInt64(i)
-	if err != nil {
-		return err
-	}
-
-	if partialLiquidationRatio > 1_000_000 {
-		return fmt.Errorf("spread ratio is above max value(1e6): %d", partialLiquidationRatio)
-	} else if partialLiquidationRatio < 0 {
-		return fmt.Errorf("spread ratio is negative: %d", partialLiquidationRatio)
-	} else {
-		return nil
-	}
 }
 
 func validateEpochIdentifier(i interface{}) error {
@@ -215,26 +157,10 @@ func validateStopped(i interface{}) error {
 	return nil
 }
 
-func validateMaintenanceMarginRatio(i interface{}) error {
-	_, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
 func getAsString(i interface{}) (string, error) {
 	value, ok := i.(string)
 	if !ok {
 		return "invalid", fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return value, nil
-}
-
-func getAsInt64(i interface{}) (int64, error) {
-	value, ok := i.(int64)
-	if !ok {
-		return 0, fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return value, nil
 }
