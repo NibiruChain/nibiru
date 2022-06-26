@@ -77,41 +77,33 @@ func TestMarketsQuery(t *testing.T) {
 	keeper.ActivePairsStore().SetMany(ctx, pairs[:3], true)
 	keeper.ActivePairsStore().SetMany(ctx, common.AssetPairs{pairs[3]}, false)
 
-	response, err := keeper.QueryPairs(wctx, &types.QueryPairsRequest{})
+	queryResp, err := keeper.QueryMarkets(wctx, &types.QueryMarketsRequest{})
 	require.NoError(t, err)
-	expectedResponse := &types.QueryPairsResponse{
-		Pairs: []types.PairResponse{
+	wantQueryResponse := &types.QueryMarketsResponse{
+		Markets: []types.Market{
 			{
 				PairID:  pairs[0].String(),
-				Token0:  pairs[0].Token0,
-				Token1:  pairs[0].Token1,
 				Oracles: []string(nil),
 				Active:  true,
 			},
 			{
 				PairID:  pairs[1].String(),
-				Token0:  pairs[1].Token0,
-				Token1:  pairs[1].Token1,
 				Oracles: []string(nil),
 				Active:  true,
 			},
 			{
 				PairID:  pairs[2].String(),
-				Token0:  pairs[2].Token0,
-				Token1:  pairs[2].Token1,
 				Oracles: []string{oracle2.String()},
 				Active:  true,
 			},
 			{
 				PairID:  pairs[3].String(),
-				Token0:  pairs[3].Token0,
-				Token1:  pairs[3].Token1,
 				Oracles: []string{oracle3.String()},
 				Active:  false,
 			},
 		},
 	}
-	for idx, pairResponse := range expectedResponse.Pairs {
-		assert.EqualValues(t, pairResponse, response.Pairs[idx])
+	for idx, wantMarket := range wantQueryResponse.Markets {
+		assert.EqualValues(t, wantMarket, queryResp.Markets[idx])
 	}
 }

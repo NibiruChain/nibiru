@@ -159,7 +159,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdPrice()
+			cmd := cli.CmdQueryPrice()
 			queryResp := new(pricefeedtypes.QueryPriceResponse)
 			err := testutilcli.ExecQuery(
 				s.network, cmd,
@@ -219,7 +219,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdRawPrices()
+			cmd := cli.CmdQueryRawPrices()
 			queryResp := new(pricefeedtypes.QueryRawPricesResponse)
 			err := testutilcli.ExecQuery(
 				s.network, cmd,
@@ -252,18 +252,18 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 	testCases := []struct {
 		name string
 
-		expectedPairs pricefeedtypes.PairResponses
-		respType      proto.Message
+		expectedMarkets []pricefeedtypes.Market
+		respType        proto.Message
 	}{
 		{
 			name: "Get current pairs",
-			expectedPairs: pricefeedtypes.PairResponses{
-				pricefeedtypes.NewPairResponse(common.PairGovStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewPairResponse(common.PairCollStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewPairResponse(common.PairBTCStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewPairResponse(common.PairETHStable, []sdk.AccAddress{oracle}, true),
+			expectedMarkets: []pricefeedtypes.Market{
+				pricefeedtypes.NewMarket(common.PairGovStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.PairCollStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.PairBTCStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.PairETHStable, []sdk.AccAddress{oracle}, true),
 			},
-			respType: &pricefeedtypes.QueryPairsResponse{},
+			respType: &pricefeedtypes.QueryMarketsResponse{},
 		},
 	}
 
@@ -271,20 +271,20 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdPairs()
+			cmd := cli.CmdQueryMarkets()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-			txResp := tc.respType.(*pricefeedtypes.QueryPairsResponse)
+			txResp := tc.respType.(*pricefeedtypes.QueryMarketsResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Assert().Equal(len(tc.expectedPairs), len(txResp.Pairs))
+			s.Assert().Equal(len(tc.expectedMarkets), len(txResp.Markets))
 
-			for _, p := range txResp.Pairs {
-				s.Assert().Contains(tc.expectedPairs, p)
+			for _, market := range txResp.Markets {
+				s.Assert().Contains(tc.expectedMarkets, market)
 			}
 		})
 	}
@@ -312,7 +312,7 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdPrices()
+			cmd := cli.CmdQueryPrices()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
@@ -373,7 +373,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdOracles()
+			cmd := cli.CmdQueryOracles()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
@@ -706,7 +706,7 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	s.Assert().EqualValues(expectedPairs, queryResp.Params.Pairs)
 
 	s.T().Log("verify that the oracle was whitelisted with a query")
-	cmd = cli.CmdOracles()
+	cmd = cli.CmdQueryOracles()
 	for _, pair := range proposalPairs {
 		args = []string{pair.String()}
 		queryResp := &pricefeedtypes.QueryOraclesResponse{}
