@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/events"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -27,9 +26,8 @@ func (k Keeper) AddMargin(
 	}
 
 	// validate margin amount
-	addedMargin := msg.Margin.Amount
-	if !addedMargin.IsPositive() {
-		err = fmt.Errorf("margin must be positive, not: %v", addedMargin.String())
+	if !msg.Margin.Amount.IsPositive() {
+		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"margin_amount",
@@ -39,7 +37,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// validate token pair
-	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+	pair, err := common.NewAssetPair(msg.TokenPair)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -67,7 +65,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// ------------- AddMargin -------------
-	position, err := k.Positions().Get(ctx, pair, msgSender)
+	position, err := k.GetPosition(ctx, pair, msgSender)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -79,8 +77,23 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	position.Margin = position.Margin.Add(addedMargin.ToDec())
-	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), addedMargin)
+	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(
+		ctx, *position, msg.Margin.Amount.ToDec())
+	if err != nil {
+		return nil, err
+	}
+
+	if !remainingMargin.BadDebt.IsZero() {
+		err = fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
+		k.Logger(ctx).Debug(
+			err.Error(),
+			"remaining_bad_debt",
+			remainingMargin.BadDebt.String(),
+		)
+		return nil, err
+	}
+
+	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgSender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
@@ -94,18 +107,24 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	events.EmitTransfer(ctx,
-		/* coin */ coinToSend,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		/* to */ msgSender,
+	position.Margin = remainingMargin.Margin
+	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
+	position.BlockNumber = ctx.BlockHeight()
+	k.SetPosition(ctx, pair, msgSender, position)
+
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.MarginChangedEvent{
+			Pair:           pair.String(),
+			TraderAddress:  msgSender.String(),
+			MarginAmount:   msg.Margin.Amount,
+			FundingPayment: remainingMargin.FundingPayment,
+		},
 	)
 
-	k.Positions().Set(ctx, pair, msgSender, position)
-
-	// TODO(https://github.com/NibiruChain/nibiru/issues/323): calculate the funding payment
-	fPayment := sdk.ZeroDec()
-	events.EmitMarginChange(ctx, msgSender, pair.String(), addedMargin, fPayment)
-	return &types.MsgAddMarginResponse{}, nil
+	return &types.MsgAddMarginResponse{
+		FundingPayment: remainingMargin.FundingPayment,
+		Position:       position,
+	}, err
 }
 
 /* RemoveMargin further leverages an existing position by directly removing
@@ -119,7 +138,7 @@ func (k Keeper) RemoveMargin(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate trader
-	msgSender, err := sdk.AccAddressFromBech32(msg.Sender)
+	traderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +155,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// validate token pair
-	pair, err := common.NewAssetPairFromStr(msg.TokenPair)
+	pair, err := common.NewAssetPair(msg.TokenPair)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -165,7 +184,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// ------------- RemoveMargin -------------
-	position, err := k.Positions().Get(ctx, pair, msgSender)
+	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -178,36 +197,35 @@ func (k Keeper) RemoveMargin(
 	}
 
 	marginDelta := msg.Margin.Amount.Neg()
-	remaining, err := k.CalcRemainMarginWithFundingPayment(
+	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(
 		ctx, *position, marginDelta.ToDec())
 	if err != nil {
 		return nil, err
 	}
-	if !remaining.BadDebt.IsZero() {
-		err = fmt.Errorf("failed to remove margin; position has bad debt")
+	if !remainingMargin.BadDebt.IsZero() {
+		err = types.ErrFailedRemoveMarginCanCauseBadDebt
 		k.Logger(ctx).Debug(
 			err.Error(),
 			"remaining_bad_debt",
-			remaining.BadDebt.String(),
+			remainingMargin.BadDebt.String(),
 		)
 		return nil, err
 	}
 
-	position.Margin = remaining.Margin
-	position.LastUpdateCumulativePremiumFraction = remaining.LatestCumulativePremiumFraction
+	position.Margin = remainingMargin.Margin
+	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	freeCollateral, err := k.calcFreeCollateral(
-		ctx, *position, remaining.FundingPayment)
+		ctx, *position, remainingMargin.FundingPayment)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.IsPositive() {
 		return res, fmt.Errorf("not enough free collateral")
 	}
 
-	k.Positions().Set(ctx, pair, msgSender, position)
+	k.PositionsState(ctx).Set(pair, traderAddr, position)
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
-	err = k.BankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.VaultModuleAccount, msgSender, sdk.NewCoins(coinToSend))
+	err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, msg.Margin.Amount)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -219,24 +237,17 @@ func (k Keeper) RemoveMargin(
 		return nil, err
 	}
 
-	events.EmitTransfer(ctx,
-		/* coin */ coinToSend,
-		/* from */ k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		/* to */ msgSender,
-	)
-
-	events.EmitMarginChange(
-		ctx,
-		msgSender,
-		pair.String(),
-		msg.Margin.Amount,
-		remaining.FundingPayment,
-	)
+	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
+		Pair:           pair.String(),
+		TraderAddress:  traderAddr.String(),
+		MarginAmount:   msg.Margin.Amount,
+		FundingPayment: remainingMargin.FundingPayment,
+	})
 
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      coinToSend,
-		FundingPayment: remaining.FundingPayment,
-	}, nil
+		FundingPayment: remainingMargin.FundingPayment,
+	}, err
 }
 
 // GetMarginRatio calculates the MarginRatio from a Position

@@ -10,8 +10,6 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	// this line is used by starport scaffolding # genesis/module/init
-
 	if genState.ModuleAccountBalance.Amount.GT(sdk.ZeroInt()) {
 		if err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(genState.ModuleAccountBalance)); err != nil {
 			panic(err)

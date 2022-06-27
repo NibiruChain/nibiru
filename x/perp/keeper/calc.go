@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -29,6 +31,13 @@ type RemainingMarginWithFundingPayment struct {
 
 	/* LatestCumulativePremiumFraction: latest cumulative premium fraction. Units are (margin units)/position size. */
 	LatestCumulativePremiumFraction sdk.Dec
+}
+
+func (r RemainingMarginWithFundingPayment) String() string {
+	return fmt.Sprintf(
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativePremiumFraction: %s}",
+		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativePremiumFraction,
+	)
 }
 
 func (k Keeper) CalcRemainMarginWithFundingPayment(
@@ -85,7 +94,7 @@ position without making it go underwater.
 func (k Keeper) calcFreeCollateral(
 	ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
 ) (accountExcessEquity sdk.Int, err error) {
-	pair, err := common.NewAssetPairFromStr(pos.Pair)
+	pair, err := common.NewAssetPair(pos.Pair)
 	if err != nil {
 		return sdk.Int{}, common.ErrInvalidTokenPair
 	}
@@ -134,9 +143,9 @@ Returns:
 	toll (sdk.Int): Amount of tokens transferred to the the fee pool.
 	spread (sdk.Int): Amount of tokens transferred to the PerpEF.
 */
-func (k Keeper) CalcPerpTxFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, spread sdk.Int, err error) {
+func (k Keeper) CalcPerpTxFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, spread sdk.Int) {
 	if quoteAmt.Equal(sdk.ZeroDec()) {
-		return sdk.ZeroInt(), sdk.ZeroInt(), nil
+		return sdk.ZeroInt(), sdk.ZeroInt()
 	}
 
 	params := k.GetParams(ctx)
@@ -144,5 +153,5 @@ func (k Keeper) CalcPerpTxFee(ctx sdk.Context, quoteAmt sdk.Dec) (toll sdk.Int, 
 	tollRatio := params.GetTollRatioAsDec()
 	spreadRatio := params.GetSpreadRatioAsDec()
 
-	return quoteAmt.Mul(tollRatio).TruncateInt(), quoteAmt.Mul(spreadRatio).TruncateInt(), nil
+	return quoteAmt.Mul(tollRatio).TruncateInt(), quoteAmt.Mul(spreadRatio).TruncateInt()
 }

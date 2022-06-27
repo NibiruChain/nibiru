@@ -416,22 +416,22 @@ func (m *QueryOraclesResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryOraclesResponse proto.InternalMessageInfo
 
-// QueryPairsRequest is the request type for the Query/Pairs RPC method.
-type QueryPairsRequest struct {
+// QueryMarketsRequest is the request type for the Query/Pairs RPC method.
+type QueryMarketsRequest struct {
 }
 
-func (m *QueryPairsRequest) Reset()         { *m = QueryPairsRequest{} }
-func (m *QueryPairsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryPairsRequest) ProtoMessage()    {}
-func (*QueryPairsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryMarketsRequest) Reset()         { *m = QueryMarketsRequest{} }
+func (m *QueryMarketsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryMarketsRequest) ProtoMessage()    {}
+func (*QueryMarketsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d96dcacfb6f84073, []int{10}
 }
-func (m *QueryPairsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryMarketsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryPairsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryMarketsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryPairsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryMarketsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -441,36 +441,35 @@ func (m *QueryPairsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-func (m *QueryPairsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPairsRequest.Merge(m, src)
+func (m *QueryMarketsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryMarketsRequest.Merge(m, src)
 }
-func (m *QueryPairsRequest) XXX_Size() int {
+func (m *QueryMarketsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryPairsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPairsRequest.DiscardUnknown(m)
+func (m *QueryMarketsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryMarketsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryPairsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryMarketsRequest proto.InternalMessageInfo
 
-// QueryPairsResponse is the response type for the Query/Pairs RPC method.
-type QueryPairsResponse struct {
-	// List of 'PairResponse'
-	Pairs PairResponses `protobuf:"bytes,1,rep,name=pairs,proto3,castrepeated=PairResponses" json:"pairs"`
+// QueryMarketsResponse is the response type for the Query/Pairs RPC method.
+type QueryMarketsResponse struct {
+	Markets Markets `protobuf:"bytes,1,rep,name=markets,proto3,castrepeated=Markets" json:"markets"`
 }
 
-func (m *QueryPairsResponse) Reset()         { *m = QueryPairsResponse{} }
-func (m *QueryPairsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryPairsResponse) ProtoMessage()    {}
-func (*QueryPairsResponse) Descriptor() ([]byte, []int) {
+func (m *QueryMarketsResponse) Reset()         { *m = QueryMarketsResponse{} }
+func (m *QueryMarketsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryMarketsResponse) ProtoMessage()    {}
+func (*QueryMarketsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d96dcacfb6f84073, []int{11}
 }
-func (m *QueryPairsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryMarketsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryPairsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryMarketsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryPairsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryMarketsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -480,17 +479,17 @@ func (m *QueryPairsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *QueryPairsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPairsResponse.Merge(m, src)
+func (m *QueryMarketsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryMarketsResponse.Merge(m, src)
 }
-func (m *QueryPairsResponse) XXX_Size() int {
+func (m *QueryMarketsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryPairsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPairsResponse.DiscardUnknown(m)
+func (m *QueryMarketsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryMarketsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryPairsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryMarketsResponse proto.InternalMessageInfo
 
 // PostedPriceResponse defines a price for 'PairID' posted by a specific oracle.
 type PostedPriceResponse struct {
@@ -601,27 +600,25 @@ func (m *CurrentPriceResponse) GetPairID() string {
 	return ""
 }
 
-// PairResponse defines an asset in the pricefeed.
-type PairResponse struct {
+// Market defines an asset in the pricefeed.
+type Market struct {
 	PairID  string   `protobuf:"bytes,1,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`
-	Token0  string   `protobuf:"bytes,2,opt,name=token0,proto3" json:"token0,omitempty"`
-	Token1  string   `protobuf:"bytes,3,opt,name=token1,proto3" json:"token1,omitempty"`
-	Oracles []string `protobuf:"bytes,4,rep,name=oracles,proto3" json:"oracles,omitempty"`
-	Active  bool     `protobuf:"varint,5,opt,name=active,proto3" json:"active,omitempty"`
+	Oracles []string `protobuf:"bytes,2,rep,name=oracles,proto3" json:"oracles,omitempty"`
+	Active  bool     `protobuf:"varint,3,opt,name=active,proto3" json:"active,omitempty"`
 }
 
-func (m *PairResponse) Reset()         { *m = PairResponse{} }
-func (m *PairResponse) String() string { return proto.CompactTextString(m) }
-func (*PairResponse) ProtoMessage()    {}
-func (*PairResponse) Descriptor() ([]byte, []int) {
+func (m *Market) Reset()         { *m = Market{} }
+func (m *Market) String() string { return proto.CompactTextString(m) }
+func (*Market) ProtoMessage()    {}
+func (*Market) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d96dcacfb6f84073, []int{14}
 }
-func (m *PairResponse) XXX_Unmarshal(b []byte) error {
+func (m *Market) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *PairResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Market) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_PairResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Market.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -631,47 +628,33 @@ func (m *PairResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *PairResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PairResponse.Merge(m, src)
+func (m *Market) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Market.Merge(m, src)
 }
-func (m *PairResponse) XXX_Size() int {
+func (m *Market) XXX_Size() int {
 	return m.Size()
 }
-func (m *PairResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_PairResponse.DiscardUnknown(m)
+func (m *Market) XXX_DiscardUnknown() {
+	xxx_messageInfo_Market.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PairResponse proto.InternalMessageInfo
+var xxx_messageInfo_Market proto.InternalMessageInfo
 
-func (m *PairResponse) GetPairID() string {
+func (m *Market) GetPairID() string {
 	if m != nil {
 		return m.PairID
 	}
 	return ""
 }
 
-func (m *PairResponse) GetToken0() string {
-	if m != nil {
-		return m.Token0
-	}
-	return ""
-}
-
-func (m *PairResponse) GetToken1() string {
-	if m != nil {
-		return m.Token1
-	}
-	return ""
-}
-
-func (m *PairResponse) GetOracles() []string {
+func (m *Market) GetOracles() []string {
 	if m != nil {
 		return m.Oracles
 	}
 	return nil
 }
 
-func (m *PairResponse) GetActive() bool {
+func (m *Market) GetActive() bool {
 	if m != nil {
 		return m.Active
 	}
@@ -679,82 +662,80 @@ func (m *PairResponse) GetActive() bool {
 }
 
 func init() {
-	proto.RegisterType((*QueryParamsRequest)(nil), "NibiruChain.pricefeed.v1.QueryParamsRequest")
-	proto.RegisterType((*QueryParamsResponse)(nil), "NibiruChain.pricefeed.v1.QueryParamsResponse")
-	proto.RegisterType((*QueryPriceRequest)(nil), "NibiruChain.pricefeed.v1.QueryPriceRequest")
-	proto.RegisterType((*QueryPriceResponse)(nil), "NibiruChain.pricefeed.v1.QueryPriceResponse")
-	proto.RegisterType((*QueryPricesRequest)(nil), "NibiruChain.pricefeed.v1.QueryPricesRequest")
-	proto.RegisterType((*QueryPricesResponse)(nil), "NibiruChain.pricefeed.v1.QueryPricesResponse")
-	proto.RegisterType((*QueryRawPricesRequest)(nil), "NibiruChain.pricefeed.v1.QueryRawPricesRequest")
-	proto.RegisterType((*QueryRawPricesResponse)(nil), "NibiruChain.pricefeed.v1.QueryRawPricesResponse")
-	proto.RegisterType((*QueryOraclesRequest)(nil), "NibiruChain.pricefeed.v1.QueryOraclesRequest")
-	proto.RegisterType((*QueryOraclesResponse)(nil), "NibiruChain.pricefeed.v1.QueryOraclesResponse")
-	proto.RegisterType((*QueryPairsRequest)(nil), "NibiruChain.pricefeed.v1.QueryPairsRequest")
-	proto.RegisterType((*QueryPairsResponse)(nil), "NibiruChain.pricefeed.v1.QueryPairsResponse")
-	proto.RegisterType((*PostedPriceResponse)(nil), "NibiruChain.pricefeed.v1.PostedPriceResponse")
-	proto.RegisterType((*CurrentPriceResponse)(nil), "NibiruChain.pricefeed.v1.CurrentPriceResponse")
-	proto.RegisterType((*PairResponse)(nil), "NibiruChain.pricefeed.v1.PairResponse")
+	proto.RegisterType((*QueryParamsRequest)(nil), "nibiru.pricefeed.v1.QueryParamsRequest")
+	proto.RegisterType((*QueryParamsResponse)(nil), "nibiru.pricefeed.v1.QueryParamsResponse")
+	proto.RegisterType((*QueryPriceRequest)(nil), "nibiru.pricefeed.v1.QueryPriceRequest")
+	proto.RegisterType((*QueryPriceResponse)(nil), "nibiru.pricefeed.v1.QueryPriceResponse")
+	proto.RegisterType((*QueryPricesRequest)(nil), "nibiru.pricefeed.v1.QueryPricesRequest")
+	proto.RegisterType((*QueryPricesResponse)(nil), "nibiru.pricefeed.v1.QueryPricesResponse")
+	proto.RegisterType((*QueryRawPricesRequest)(nil), "nibiru.pricefeed.v1.QueryRawPricesRequest")
+	proto.RegisterType((*QueryRawPricesResponse)(nil), "nibiru.pricefeed.v1.QueryRawPricesResponse")
+	proto.RegisterType((*QueryOraclesRequest)(nil), "nibiru.pricefeed.v1.QueryOraclesRequest")
+	proto.RegisterType((*QueryOraclesResponse)(nil), "nibiru.pricefeed.v1.QueryOraclesResponse")
+	proto.RegisterType((*QueryMarketsRequest)(nil), "nibiru.pricefeed.v1.QueryMarketsRequest")
+	proto.RegisterType((*QueryMarketsResponse)(nil), "nibiru.pricefeed.v1.QueryMarketsResponse")
+	proto.RegisterType((*PostedPriceResponse)(nil), "nibiru.pricefeed.v1.PostedPriceResponse")
+	proto.RegisterType((*CurrentPriceResponse)(nil), "nibiru.pricefeed.v1.CurrentPriceResponse")
+	proto.RegisterType((*Market)(nil), "nibiru.pricefeed.v1.Market")
 }
 
 func init() { proto.RegisterFile("pricefeed/query.proto", fileDescriptor_d96dcacfb6f84073) }
 
 var fileDescriptor_d96dcacfb6f84073 = []byte{
-	// 869 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0xcf, 0x6f, 0x1b, 0x45,
-	0x14, 0xf6, 0xa4, 0xfe, 0x51, 0x0f, 0x14, 0x89, 0x89, 0x1d, 0x2c, 0xab, 0xec, 0x9a, 0x45, 0x94,
-	0x88, 0xc6, 0xbb, 0xb5, 0x0b, 0x3d, 0x20, 0x84, 0x84, 0x9b, 0x4b, 0x39, 0x00, 0x5d, 0x38, 0xc1,
-	0x21, 0x1a, 0xdb, 0x13, 0x77, 0x68, 0xbd, 0xb3, 0x9d, 0x59, 0x27, 0x8d, 0x10, 0x07, 0x7a, 0x42,
-	0x70, 0xa0, 0x12, 0x82, 0x03, 0x12, 0x12, 0x17, 0x24, 0xc4, 0x5f, 0xd2, 0x63, 0x25, 0x2e, 0x88,
-	0x43, 0x5a, 0x1c, 0xf8, 0x3f, 0xd0, 0xce, 0xbc, 0xdd, 0xee, 0x26, 0xfe, 0xb1, 0xa2, 0xa7, 0x64,
-	0xdf, 0xbc, 0xef, 0xbd, 0xef, 0x7d, 0xf3, 0xe6, 0x33, 0x6e, 0x86, 0x92, 0x8f, 0xd8, 0x3e, 0x63,
-	0x63, 0xef, 0xee, 0x8c, 0xc9, 0x23, 0x37, 0x94, 0x22, 0x12, 0xa4, 0xf5, 0x01, 0x1f, 0x72, 0x39,
-	0xbb, 0x7e, 0x8b, 0xf2, 0xc0, 0x4d, 0x53, 0xdc, 0x83, 0x5e, 0xbb, 0x31, 0x11, 0x13, 0xa1, 0x93,
-	0xbc, 0xf8, 0x3f, 0x93, 0xdf, 0xbe, 0x38, 0x11, 0x62, 0x72, 0x87, 0x79, 0x34, 0xe4, 0x1e, 0x0d,
-	0x02, 0x11, 0xd1, 0x88, 0x8b, 0x40, 0xc1, 0xa9, 0x0d, 0xa7, 0xfa, 0x6b, 0x38, 0xdb, 0xf7, 0x22,
-	0x3e, 0x65, 0x2a, 0xa2, 0xd3, 0x10, 0x12, 0xb6, 0x9e, 0xb2, 0x08, 0xa9, 0xa4, 0x53, 0x00, 0x3a,
-	0x0d, 0x4c, 0x6e, 0xc6, 0xac, 0x3e, 0xd2, 0x41, 0x9f, 0xdd, 0x9d, 0x31, 0x15, 0x39, 0x9f, 0xe1,
-	0xcd, 0x5c, 0x54, 0x85, 0x22, 0x50, 0x8c, 0xbc, 0x8b, 0xab, 0x06, 0xdc, 0x42, 0x1d, 0xb4, 0xfd,
-	0x5c, 0xbf, 0xe3, 0x2e, 0x1b, 0xc2, 0x35, 0xc8, 0x41, 0xf9, 0xe1, 0xb1, 0x5d, 0xf2, 0x01, 0xf5,
-	0x76, 0xf9, 0xeb, 0x5f, 0xec, 0x92, 0xd3, 0xc7, 0x2f, 0x9a, 0xe2, 0x71, 0x3e, 0x74, 0x24, 0x2f,
-	0xe1, 0x5a, 0x48, 0xb9, 0xdc, 0xe3, 0x63, 0x5d, 0xbb, 0x1e, 0x63, 0xb8, 0xbc, 0x31, 0x06, 0xcc,
-	0x7e, 0x42, 0xd3, 0x60, 0x80, 0xcf, 0xfb, 0xb8, 0xa2, 0x9b, 0x02, 0x1d, 0x77, 0x39, 0x9d, 0xeb,
-	0x33, 0x29, 0x59, 0x10, 0xe5, 0xe0, 0x40, 0xce, 0x94, 0x80, 0x3e, 0x8d, 0x6c, 0x9f, 0x54, 0x8e,
-	0xfb, 0x28, 0xd1, 0x03, 0xc2, 0xd0, 0x9f, 0xe1, 0xaa, 0x06, 0xc7, 0x7a, 0x9c, 0xfb, 0x1f, 0x04,
-	0x5e, 0x8e, 0x09, 0xfc, 0xfe, 0xd8, 0x6e, 0x2e, 0x3a, 0x55, 0x3e, 0x14, 0x07, 0x6a, 0xd7, 0x70,
-	0x53, 0x73, 0xf0, 0xe9, 0x61, 0x8e, 0xdd, 0x3a, 0xe9, 0xbe, 0x41, 0x78, 0xeb, 0x34, 0x10, 0xf8,
-	0x7f, 0x8e, 0xb1, 0xa4, 0x87, 0x7b, 0xb9, 0x19, 0xba, 0x2b, 0xee, 0x54, 0xa8, 0x88, 0x8d, 0xf3,
-	0x23, 0x5c, 0x84, 0x11, 0x1a, 0x0b, 0x0e, 0x95, 0x5f, 0x97, 0x49, 0x4f, 0x20, 0xf3, 0x26, 0x08,
-	0xf9, 0xa1, 0xa4, 0xa3, 0x3b, 0x85, 0x47, 0xb8, 0x86, 0x1b, 0x79, 0x14, 0xf0, 0x6f, 0xe1, 0x9a,
-	0x30, 0x21, 0x4d, 0xbe, 0xee, 0x27, 0x9f, 0x80, 0xdb, 0x4c, 0x36, 0x8d, 0x72, 0x99, 0x5e, 0xa6,
-	0x48, 0x37, 0x5e, 0x07, 0xa1, 0xd4, 0xc7, 0xb8, 0x12, 0xb7, 0x4c, 0x54, 0xb8, 0xb4, 0x6a, 0xb3,
-	0xb9, 0x4c, 0xc7, 0x6f, 0xc2, 0xf8, 0x17, 0xb2, 0x51, 0xe5, 0x9b, 0x5a, 0xc0, 0xe2, 0x5f, 0x84,
-	0x37, 0x17, 0xa8, 0x43, 0x5e, 0x3d, 0x35, 0xf4, 0x00, 0xcf, 0x8f, 0xed, 0x6a, 0x5c, 0xe8, 0xc6,
-	0x6e, 0x22, 0x00, 0x79, 0x0d, 0xbf, 0x60, 0x66, 0xda, 0xa3, 0xe3, 0xb1, 0x64, 0x4a, 0xb5, 0x36,
-	0xb4, 0x40, 0x17, 0x4c, 0xf4, 0x3d, 0x13, 0x24, 0xbb, 0xc9, 0x4b, 0x38, 0xa7, 0x2b, 0xb9, 0x31,
-	0xad, 0xbf, 0x8e, 0xed, 0x4b, 0x13, 0x1e, 0xdd, 0x9a, 0x0d, 0xdd, 0x91, 0x98, 0x7a, 0x23, 0xa1,
-	0xa6, 0x42, 0xc1, 0x9f, 0xae, 0x1a, 0xdf, 0xf6, 0xa2, 0xa3, 0x90, 0x29, 0x77, 0x97, 0x8d, 0xe0,
-	0x0d, 0x90, 0x77, 0x70, 0x95, 0xdd, 0x0b, 0xb9, 0x3c, 0x6a, 0x95, 0xf5, 0x83, 0x6a, 0xbb, 0xc6,
-	0x56, 0xdc, 0xc4, 0x56, 0xdc, 0x4f, 0x12, 0x5b, 0x19, 0x9c, 0x8f, 0x5b, 0x3c, 0x78, 0x6c, 0x23,
-	0x1f, 0x30, 0xce, 0x57, 0x08, 0x37, 0x16, 0x2d, 0x72, 0xb1, 0x41, 0xd3, 0x09, 0x36, 0x9e, 0x61,
-	0x02, 0xe7, 0x07, 0x84, 0x9f, 0xcf, 0x5e, 0x45, 0xb1, 0xde, 0x5b, 0xb8, 0x1a, 0x89, 0xdb, 0x2c,
-	0xb8, 0x02, 0xe2, 0xc2, 0x57, 0x1a, 0xef, 0x19, 0x59, 0x21, 0xde, 0xcb, 0xee, 0x5d, 0x39, 0xb7,
-	0x77, 0x31, 0x82, 0x8e, 0x22, 0x7e, 0xc0, 0x5a, 0x95, 0x0e, 0xda, 0x3e, 0xef, 0xc3, 0x57, 0xff,
-	0xa7, 0x1a, 0xae, 0xe8, 0xad, 0x23, 0xdf, 0x21, 0x5c, 0x35, 0xe6, 0x48, 0x76, 0x96, 0x2f, 0xd9,
-	0x59, 0x4f, 0x6e, 0x77, 0x0b, 0x66, 0x9b, 0xc1, 0x9d, 0xed, 0xfb, 0x7f, 0xfc, 0xf3, 0xfd, 0x86,
-	0x43, 0x3a, 0x5e, 0xa0, 0x61, 0xde, 0xd3, 0x1f, 0x80, 0x83, 0xde, 0x90, 0x45, 0xb4, 0x07, 0x3f,
-	0x04, 0xe4, 0x47, 0x84, 0x2b, 0xfa, 0xc2, 0xc8, 0xe5, 0x75, 0x2d, 0x32, 0x8e, 0xdd, 0xde, 0x29,
-	0x96, 0x0c, 0x74, 0xfa, 0x9a, 0xce, 0x0e, 0x79, 0x63, 0x05, 0x1d, 0x6d, 0x14, 0xde, 0x17, 0x70,
-	0x5f, 0x5f, 0x1a, 0xa9, 0x74, 0x90, 0x14, 0x6a, 0x56, 0x5c, 0xaa, 0x9c, 0x0d, 0x16, 0x92, 0xca,
-	0xd0, 0xf8, 0x15, 0xe1, 0x7a, 0x6a, 0xa3, 0xc4, 0x5b, 0xd3, 0xe6, 0xb4, 0x53, 0xb7, 0xaf, 0x14,
-	0x07, 0x00, 0xb5, 0xb7, 0x34, 0x35, 0x8f, 0x74, 0x97, 0x53, 0x93, 0xf4, 0xf0, 0x8c, 0x72, 0x3f,
-	0x23, 0x5c, 0x03, 0xb3, 0x24, 0xeb, 0xc4, 0xc8, 0x5b, 0x71, 0xdb, 0x2d, 0x9a, 0x0e, 0x0c, 0xaf,
-	0x6a, 0x86, 0x5d, 0x72, 0x79, 0x39, 0x43, 0x78, 0x1c, 0x19, 0x7e, 0xdf, 0xc6, 0x2b, 0x17, 0x5b,
-	0xe4, 0xfa, 0x95, 0xcb, 0x58, 0xf7, 0xfa, 0x95, 0xcb, 0x5a, 0xba, 0xf3, 0xba, 0x66, 0xf6, 0x0a,
-	0xb1, 0x57, 0xbd, 0x00, 0x2e, 0xd5, 0xe0, 0xe6, 0x93, 0xbf, 0x2d, 0xf4, 0xdb, 0xdc, 0x42, 0x0f,
-	0xe7, 0x16, 0x7a, 0x34, 0xb7, 0xd0, 0x93, 0xb9, 0x85, 0x1e, 0x9c, 0x58, 0xa5, 0x47, 0x27, 0x56,
-	0xe9, 0xcf, 0x13, 0xab, 0xf4, 0xa9, 0x97, 0x71, 0xa1, 0x0c, 0x85, 0xa4, 0xf0, 0xbd, 0x4c, 0x69,
-	0x6d, 0x49, 0xc3, 0xaa, 0x76, 0xcc, 0xab, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0xcb, 0x77, 0xa2,
-	0xfa, 0xfd, 0x09, 0x00, 0x00,
+	// 843 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x94, 0x4f, 0x4f, 0x1b, 0x47,
+	0x18, 0xc6, 0xbd, 0x06, 0x6c, 0x18, 0x5a, 0xaa, 0x0e, 0x36, 0xb5, 0x5c, 0xba, 0xa6, 0x8b, 0x0a,
+	0x06, 0xca, 0xae, 0x30, 0x2d, 0x52, 0xab, 0x5e, 0x6a, 0x68, 0xa5, 0x1e, 0x9a, 0xc0, 0x2a, 0xca,
+	0x21, 0x17, 0x67, 0xec, 0x1d, 0xcc, 0x0a, 0xec, 0x5d, 0x66, 0xd7, 0xfc, 0x51, 0xc4, 0x21, 0x51,
+	0x22, 0x45, 0x39, 0x44, 0x44, 0xb9, 0xe4, 0xc8, 0x31, 0xca, 0x27, 0xe1, 0x88, 0x94, 0x4b, 0x94,
+	0x03, 0x10, 0x93, 0x7c, 0x8f, 0x68, 0x67, 0xde, 0x35, 0xbb, 0x66, 0xfd, 0x27, 0xca, 0xc9, 0xde,
+	0x99, 0x79, 0xde, 0xe7, 0x37, 0xef, 0xbe, 0xfb, 0xa0, 0xb4, 0xcd, 0xcc, 0x0a, 0xdd, 0xa4, 0xd4,
+	0xd0, 0x76, 0x1b, 0x94, 0x1d, 0xaa, 0x36, 0xb3, 0x5c, 0x0b, 0x8f, 0xd7, 0xcd, 0xb2, 0xc9, 0x1a,
+	0x6a, 0x6b, 0x57, 0xdd, 0x5b, 0xca, 0xa6, 0xaa, 0x56, 0xd5, 0xe2, 0xfb, 0x9a, 0xf7, 0x4f, 0x1c,
+	0xcd, 0x4e, 0x56, 0x2d, 0xab, 0xba, 0x43, 0x35, 0x62, 0x9b, 0x1a, 0xa9, 0xd7, 0x2d, 0x97, 0xb8,
+	0xa6, 0x55, 0x77, 0x60, 0x37, 0x07, 0xbb, 0xfc, 0xa9, 0xdc, 0xd8, 0xd4, 0x5c, 0xb3, 0x46, 0x1d,
+	0x97, 0xd4, 0x6c, 0x38, 0x30, 0x71, 0x0d, 0x60, 0x13, 0x46, 0x6a, 0x20, 0x54, 0x52, 0x08, 0x6f,
+	0x78, 0x40, 0xeb, 0x7c, 0x51, 0xa7, 0xbb, 0x0d, 0xea, 0xb8, 0xca, 0x5d, 0x34, 0x1e, 0x5a, 0x75,
+	0x6c, 0xab, 0xee, 0x50, 0xfc, 0x07, 0x4a, 0x08, 0x71, 0x46, 0x9a, 0x92, 0xf2, 0xa3, 0x85, 0x1f,
+	0xd5, 0x08, 0x7e, 0x55, 0x88, 0x8a, 0x83, 0xa7, 0xe7, 0xb9, 0x98, 0x0e, 0x82, 0x3f, 0x07, 0x9f,
+	0x9e, 0xe4, 0x62, 0x4a, 0x01, 0x7d, 0x2f, 0xea, 0x7a, 0xe7, 0xc1, 0x0c, 0xff, 0x80, 0x92, 0x36,
+	0x31, 0x59, 0xc9, 0x34, 0x78, 0xd9, 0x11, 0x4f, 0x63, 0xb2, 0xff, 0x0c, 0xd0, 0x10, 0x9f, 0x50,
+	0x68, 0x00, 0xe5, 0x1f, 0x34, 0xc4, 0x4d, 0x81, 0x64, 0x2e, 0x92, 0x64, 0xb5, 0xc1, 0x18, 0xad,
+	0xbb, 0x21, 0x25, 0x70, 0x09, 0x35, 0x58, 0xa4, 0x82, 0x16, 0xad, 0x26, 0x1c, 0xf9, 0x4d, 0x80,
+	0x55, 0x70, 0xbe, 0x8f, 0x12, 0x5c, 0xeb, 0x35, 0x61, 0xe0, 0xcb, 0xac, 0x7f, 0xf2, 0xac, 0xdf,
+	0x5c, 0xe4, 0xd2, 0x51, 0xbb, 0x8e, 0x0e, 0x75, 0x01, 0x6a, 0x05, 0xa5, 0xb9, 0xbd, 0x4e, 0xf6,
+	0x43, 0x5c, 0xbd, 0xfa, 0xf5, 0x44, 0x42, 0x13, 0xed, 0x42, 0x40, 0xa7, 0x08, 0x31, 0xb2, 0x5f,
+	0x0a, 0xe1, 0xe7, 0xa3, 0xdf, 0xa1, 0xe5, 0xb8, 0xd4, 0x08, 0xd3, 0x4f, 0x02, 0x7d, 0x2a, 0x62,
+	0xd3, 0xd1, 0x47, 0x98, 0x6f, 0x07, 0x1c, 0xbf, 0x41, 0xfb, 0x6e, 0x33, 0x52, 0xd9, 0xe9, 0x9b,
+	0x7e, 0x05, 0xa5, 0xc2, 0x2a, 0x40, 0xcf, 0xa0, 0xa4, 0x25, 0x96, 0x38, 0xf7, 0x88, 0xee, 0x3f,
+	0x82, 0x2e, 0x0d, 0x6e, 0xff, 0x13, 0xb6, 0x4d, 0xdd, 0xd6, 0x3b, 0x34, 0xa0, 0x5c, 0x6b, 0x19,
+	0xca, 0xfd, 0x8b, 0x92, 0x35, 0xb1, 0x04, 0x6d, 0x88, 0x1e, 0x65, 0x21, 0x2b, 0x7e, 0x07, 0x37,
+	0x4f, 0xfa, 0x65, 0x7c, 0x31, 0x98, 0x7f, 0x92, 0xd0, 0x78, 0x44, 0x53, 0xf0, 0x74, 0xdb, 0x5d,
+	0x8b, 0xa8, 0x79, 0x9e, 0x4b, 0xac, 0x7b, 0xf7, 0x5d, 0xf3, 0xef, 0x8d, 0x7f, 0x41, 0x63, 0xe2,
+	0x2a, 0x25, 0x62, 0x18, 0x8c, 0x3a, 0x4e, 0x26, 0xce, 0xfb, 0xf2, 0xad, 0x58, 0xfd, 0x5b, 0x2c,
+	0xe2, 0x35, 0x7f, 0xe0, 0x07, 0x78, 0x25, 0xd5, 0x43, 0x7a, 0x7f, 0x9e, 0x9b, 0xa9, 0x9a, 0xee,
+	0x56, 0xa3, 0xac, 0x56, 0xac, 0x9a, 0x56, 0xb1, 0x9c, 0x9a, 0xe5, 0xc0, 0xcf, 0xa2, 0x63, 0x6c,
+	0x6b, 0xee, 0xa1, 0x4d, 0x1d, 0x75, 0x8d, 0x56, 0x60, 0xde, 0xf1, 0x5f, 0x28, 0x41, 0x0f, 0x6c,
+	0x93, 0x1d, 0x66, 0x06, 0xf9, 0x77, 0x93, 0x55, 0x45, 0x70, 0xa8, 0x7e, 0x70, 0xa8, 0x77, 0xfc,
+	0xe0, 0x28, 0x0e, 0x7b, 0x16, 0xc7, 0x17, 0x39, 0x49, 0x07, 0x8d, 0xf2, 0x50, 0x42, 0xa9, 0xa8,
+	0xd1, 0xed, 0xef, 0xa2, 0xad, 0x1b, 0xc4, 0xbf, 0xe2, 0x06, 0x4a, 0x09, 0x25, 0xc4, 0x5b, 0xe8,
+	0xcf, 0x34, 0x30, 0x37, 0xf1, 0xd0, 0xdc, 0xe0, 0x09, 0x94, 0x20, 0x15, 0xd7, 0xdc, 0x13, 0x1d,
+	0x1d, 0xd6, 0xe1, 0xa9, 0xf0, 0x38, 0x89, 0x86, 0xf8, 0xcc, 0xe0, 0x67, 0x12, 0x1a, 0x0d, 0xc4,
+	0x20, 0x9e, 0x8d, 0x9c, 0x91, 0x9b, 0xf1, 0x99, 0xcd, 0xf7, 0x3e, 0x28, 0x1a, 0xa7, 0xe4, 0x1f,
+	0xbd, 0xfd, 0xf8, 0x32, 0xae, 0xe0, 0x29, 0x4d, 0x28, 0xb4, 0xeb, 0x98, 0xde, 0x5b, 0x2a, 0x53,
+	0x97, 0x2c, 0x41, 0x5c, 0xe3, 0x17, 0x12, 0x42, 0xd7, 0x71, 0x84, 0x67, 0xba, 0x58, 0x04, 0xc2,
+	0x35, 0x3b, 0xdb, 0xf3, 0x1c, 0x90, 0x14, 0x38, 0xc9, 0xaf, 0x78, 0xbe, 0x0b, 0x09, 0xff, 0xbc,
+	0xb5, 0x07, 0xd0, 0xf5, 0xa3, 0x40, 0x83, 0xf8, 0x0e, 0xee, 0x65, 0xd6, 0x57, 0x83, 0x42, 0x91,
+	0xd5, 0x57, 0x83, 0x84, 0xf9, 0x89, 0x84, 0xc6, 0xc2, 0xb9, 0x87, 0xe7, 0x3b, 0xdb, 0xb4, 0xa7,
+	0x6a, 0x76, 0xa1, 0xaf, 0xb3, 0x40, 0xf5, 0x3b, 0xa7, 0xd2, 0xf0, 0x62, 0x67, 0x2a, 0x46, 0xf6,
+	0x6f, 0xf4, 0xeb, 0x95, 0x84, 0xbe, 0x09, 0xa6, 0x1b, 0xee, 0xd2, 0x87, 0x70, 0x6c, 0x66, 0xe7,
+	0xfa, 0x38, 0x09, 0x70, 0xcb, 0x1c, 0x6e, 0x11, 0x2f, 0x74, 0x86, 0x83, 0x6f, 0x20, 0x80, 0xf6,
+	0xdc, 0x47, 0x83, 0x88, 0xeb, 0x86, 0x16, 0xce, 0xd8, 0x6e, 0x68, 0x6d, 0xb1, 0xab, 0xcc, 0x71,
+	0xb4, 0x69, 0xfc, 0x73, 0x67, 0x34, 0x48, 0xd6, 0xe2, 0xc6, 0xe5, 0x07, 0x59, 0x7a, 0xdd, 0x94,
+	0xa5, 0xd3, 0xa6, 0x2c, 0x9d, 0x35, 0x65, 0xe9, 0xb2, 0x29, 0x4b, 0xc7, 0x57, 0x72, 0xec, 0xec,
+	0x4a, 0x8e, 0xbd, 0xbb, 0x92, 0x63, 0xf7, 0xb4, 0x40, 0x70, 0xdc, 0xe2, 0xe5, 0x56, 0xb7, 0x88,
+	0x59, 0xf7, 0x4b, 0x1f, 0x04, 0x8a, 0xf3, 0x14, 0x29, 0x27, 0x78, 0xc8, 0x2d, 0x7f, 0x0e, 0x00,
+	0x00, 0xff, 0xff, 0x3a, 0x8f, 0x28, 0x79, 0x8d, 0x09, 0x00, 0x00,
 }
 
 func (this *QueryParamsRequest) VerboseEqual(that interface{}) error {
@@ -1315,7 +1296,7 @@ func (this *QueryOraclesResponse) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *QueryPairsRequest) VerboseEqual(that interface{}) error {
+func (this *QueryMarketsRequest) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -1323,33 +1304,33 @@ func (this *QueryPairsRequest) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*QueryPairsRequest)
+	that1, ok := that.(*QueryMarketsRequest)
 	if !ok {
-		that2, ok := that.(QueryPairsRequest)
+		that2, ok := that.(QueryMarketsRequest)
 		if ok {
 			that1 = &that2
 		} else {
-			return fmt.Errorf("that is not of type *QueryPairsRequest")
+			return fmt.Errorf("that is not of type *QueryMarketsRequest")
 		}
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt.Errorf("that is type *QueryPairsRequest but is nil && this != nil")
+		return fmt.Errorf("that is type *QueryMarketsRequest but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *QueryPairsRequest but is not nil && this == nil")
+		return fmt.Errorf("that is type *QueryMarketsRequest but is not nil && this == nil")
 	}
 	return nil
 }
-func (this *QueryPairsRequest) Equal(that interface{}) bool {
+func (this *QueryMarketsRequest) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*QueryPairsRequest)
+	that1, ok := that.(*QueryMarketsRequest)
 	if !ok {
-		that2, ok := that.(QueryPairsRequest)
+		that2, ok := that.(QueryMarketsRequest)
 		if ok {
 			that1 = &that2
 		} else {
@@ -1363,7 +1344,7 @@ func (this *QueryPairsRequest) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *QueryPairsResponse) VerboseEqual(that interface{}) error {
+func (this *QueryMarketsResponse) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -1371,41 +1352,41 @@ func (this *QueryPairsResponse) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*QueryPairsResponse)
+	that1, ok := that.(*QueryMarketsResponse)
 	if !ok {
-		that2, ok := that.(QueryPairsResponse)
+		that2, ok := that.(QueryMarketsResponse)
 		if ok {
 			that1 = &that2
 		} else {
-			return fmt.Errorf("that is not of type *QueryPairsResponse")
+			return fmt.Errorf("that is not of type *QueryMarketsResponse")
 		}
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt.Errorf("that is type *QueryPairsResponse but is nil && this != nil")
+		return fmt.Errorf("that is type *QueryMarketsResponse but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *QueryPairsResponse but is not nil && this == nil")
+		return fmt.Errorf("that is type *QueryMarketsResponse but is not nil && this == nil")
 	}
-	if len(this.Pairs) != len(that1.Pairs) {
-		return fmt.Errorf("Pairs this(%v) Not Equal that(%v)", len(this.Pairs), len(that1.Pairs))
+	if len(this.Markets) != len(that1.Markets) {
+		return fmt.Errorf("Markets this(%v) Not Equal that(%v)", len(this.Markets), len(that1.Markets))
 	}
-	for i := range this.Pairs {
-		if !this.Pairs[i].Equal(&that1.Pairs[i]) {
-			return fmt.Errorf("Pairs this[%v](%v) Not Equal that[%v](%v)", i, this.Pairs[i], i, that1.Pairs[i])
+	for i := range this.Markets {
+		if !this.Markets[i].Equal(&that1.Markets[i]) {
+			return fmt.Errorf("Markets this[%v](%v) Not Equal that[%v](%v)", i, this.Markets[i], i, that1.Markets[i])
 		}
 	}
 	return nil
 }
-func (this *QueryPairsResponse) Equal(that interface{}) bool {
+func (this *QueryMarketsResponse) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*QueryPairsResponse)
+	that1, ok := that.(*QueryMarketsResponse)
 	if !ok {
-		that2, ok := that.(QueryPairsResponse)
+		that2, ok := that.(QueryMarketsResponse)
 		if ok {
 			that1 = &that2
 		} else {
@@ -1417,11 +1398,11 @@ func (this *QueryPairsResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if len(this.Pairs) != len(that1.Pairs) {
+	if len(this.Markets) != len(that1.Markets) {
 		return false
 	}
-	for i := range this.Pairs {
-		if !this.Pairs[i].Equal(&that1.Pairs[i]) {
+	for i := range this.Markets {
+		if !this.Markets[i].Equal(&that1.Markets[i]) {
 			return false
 		}
 	}
@@ -1559,7 +1540,7 @@ func (this *CurrentPriceResponse) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *PairResponse) VerboseEqual(that interface{}) error {
+func (this *Market) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -1567,31 +1548,25 @@ func (this *PairResponse) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*PairResponse)
+	that1, ok := that.(*Market)
 	if !ok {
-		that2, ok := that.(PairResponse)
+		that2, ok := that.(Market)
 		if ok {
 			that1 = &that2
 		} else {
-			return fmt.Errorf("that is not of type *PairResponse")
+			return fmt.Errorf("that is not of type *Market")
 		}
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt.Errorf("that is type *PairResponse but is nil && this != nil")
+		return fmt.Errorf("that is type *Market but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *PairResponse but is not nil && this == nil")
+		return fmt.Errorf("that is type *Market but is not nil && this == nil")
 	}
 	if this.PairID != that1.PairID {
 		return fmt.Errorf("PairID this(%v) Not Equal that(%v)", this.PairID, that1.PairID)
-	}
-	if this.Token0 != that1.Token0 {
-		return fmt.Errorf("Token0 this(%v) Not Equal that(%v)", this.Token0, that1.Token0)
-	}
-	if this.Token1 != that1.Token1 {
-		return fmt.Errorf("Token1 this(%v) Not Equal that(%v)", this.Token1, that1.Token1)
 	}
 	if len(this.Oracles) != len(that1.Oracles) {
 		return fmt.Errorf("Oracles this(%v) Not Equal that(%v)", len(this.Oracles), len(that1.Oracles))
@@ -1606,14 +1581,14 @@ func (this *PairResponse) VerboseEqual(that interface{}) error {
 	}
 	return nil
 }
-func (this *PairResponse) Equal(that interface{}) bool {
+func (this *Market) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*PairResponse)
+	that1, ok := that.(*Market)
 	if !ok {
-		that2, ok := that.(PairResponse)
+		that2, ok := that.(Market)
 		if ok {
 			that1 = &that2
 		} else {
@@ -1626,12 +1601,6 @@ func (this *PairResponse) Equal(that interface{}) bool {
 		return false
 	}
 	if this.PairID != that1.PairID {
-		return false
-	}
-	if this.Token0 != that1.Token0 {
-		return false
-	}
-	if this.Token1 != that1.Token1 {
 		return false
 	}
 	if len(this.Oracles) != len(that1.Oracles) {
@@ -1660,18 +1629,18 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Params queries all parameters of the pricefeed module.
-	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// Price queries price details for a pair
-	Price(ctx context.Context, in *QueryPriceRequest, opts ...grpc.CallOption) (*QueryPriceResponse, error)
-	// Prices queries all prices
-	Prices(ctx context.Context, in *QueryPricesRequest, opts ...grpc.CallOption) (*QueryPricesResponse, error)
-	// RawPrices queries all raw prices for an asset pair
-	RawPrices(ctx context.Context, in *QueryRawPricesRequest, opts ...grpc.CallOption) (*QueryRawPricesResponse, error)
-	// Oracles queries all oracles for an asset pair
-	Oracles(ctx context.Context, in *QueryOraclesRequest, opts ...grpc.CallOption) (*QueryOraclesResponse, error)
-	// Pairs queries all pairs
-	Pairs(ctx context.Context, in *QueryPairsRequest, opts ...grpc.CallOption) (*QueryPairsResponse, error)
+	// QueryParams queries all parameters of the pricefeed module.
+	QueryParams(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	// QueryPrice queries price details for a pair
+	QueryPrice(ctx context.Context, in *QueryPriceRequest, opts ...grpc.CallOption) (*QueryPriceResponse, error)
+	// QueryPrices queries all prices
+	QueryPrices(ctx context.Context, in *QueryPricesRequest, opts ...grpc.CallOption) (*QueryPricesResponse, error)
+	// QueryRawPrices queries all raw prices for an asset pair
+	QueryRawPrices(ctx context.Context, in *QueryRawPricesRequest, opts ...grpc.CallOption) (*QueryRawPricesResponse, error)
+	// QueryOracles queries all oracles for an asset pair
+	QueryOracles(ctx context.Context, in *QueryOraclesRequest, opts ...grpc.CallOption) (*QueryOraclesResponse, error)
+	// QueryMarkets queries all markets
+	QueryMarkets(ctx context.Context, in *QueryMarketsRequest, opts ...grpc.CallOption) (*QueryMarketsResponse, error)
 }
 
 type queryClient struct {
@@ -1682,54 +1651,54 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error) {
+func (c *queryClient) QueryParams(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error) {
 	out := new(QueryParamsResponse)
-	err := c.cc.Invoke(ctx, "/NibiruChain.pricefeed.v1.Query/Params", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.pricefeed.v1.Query/QueryParams", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) Price(ctx context.Context, in *QueryPriceRequest, opts ...grpc.CallOption) (*QueryPriceResponse, error) {
+func (c *queryClient) QueryPrice(ctx context.Context, in *QueryPriceRequest, opts ...grpc.CallOption) (*QueryPriceResponse, error) {
 	out := new(QueryPriceResponse)
-	err := c.cc.Invoke(ctx, "/NibiruChain.pricefeed.v1.Query/Price", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.pricefeed.v1.Query/QueryPrice", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) Prices(ctx context.Context, in *QueryPricesRequest, opts ...grpc.CallOption) (*QueryPricesResponse, error) {
+func (c *queryClient) QueryPrices(ctx context.Context, in *QueryPricesRequest, opts ...grpc.CallOption) (*QueryPricesResponse, error) {
 	out := new(QueryPricesResponse)
-	err := c.cc.Invoke(ctx, "/NibiruChain.pricefeed.v1.Query/Prices", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.pricefeed.v1.Query/QueryPrices", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) RawPrices(ctx context.Context, in *QueryRawPricesRequest, opts ...grpc.CallOption) (*QueryRawPricesResponse, error) {
+func (c *queryClient) QueryRawPrices(ctx context.Context, in *QueryRawPricesRequest, opts ...grpc.CallOption) (*QueryRawPricesResponse, error) {
 	out := new(QueryRawPricesResponse)
-	err := c.cc.Invoke(ctx, "/NibiruChain.pricefeed.v1.Query/RawPrices", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.pricefeed.v1.Query/QueryRawPrices", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) Oracles(ctx context.Context, in *QueryOraclesRequest, opts ...grpc.CallOption) (*QueryOraclesResponse, error) {
+func (c *queryClient) QueryOracles(ctx context.Context, in *QueryOraclesRequest, opts ...grpc.CallOption) (*QueryOraclesResponse, error) {
 	out := new(QueryOraclesResponse)
-	err := c.cc.Invoke(ctx, "/NibiruChain.pricefeed.v1.Query/Oracles", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.pricefeed.v1.Query/QueryOracles", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) Pairs(ctx context.Context, in *QueryPairsRequest, opts ...grpc.CallOption) (*QueryPairsResponse, error) {
-	out := new(QueryPairsResponse)
-	err := c.cc.Invoke(ctx, "/NibiruChain.pricefeed.v1.Query/Pairs", in, out, opts...)
+func (c *queryClient) QueryMarkets(ctx context.Context, in *QueryMarketsRequest, opts ...grpc.CallOption) (*QueryMarketsResponse, error) {
+	out := new(QueryMarketsResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.pricefeed.v1.Query/QueryMarkets", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1738,182 +1707,182 @@ func (c *queryClient) Pairs(ctx context.Context, in *QueryPairsRequest, opts ...
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Params queries all parameters of the pricefeed module.
-	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// Price queries price details for a pair
-	Price(context.Context, *QueryPriceRequest) (*QueryPriceResponse, error)
-	// Prices queries all prices
-	Prices(context.Context, *QueryPricesRequest) (*QueryPricesResponse, error)
-	// RawPrices queries all raw prices for an asset pair
-	RawPrices(context.Context, *QueryRawPricesRequest) (*QueryRawPricesResponse, error)
-	// Oracles queries all oracles for an asset pair
-	Oracles(context.Context, *QueryOraclesRequest) (*QueryOraclesResponse, error)
-	// Pairs queries all pairs
-	Pairs(context.Context, *QueryPairsRequest) (*QueryPairsResponse, error)
+	// QueryParams queries all parameters of the pricefeed module.
+	QueryParams(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	// QueryPrice queries price details for a pair
+	QueryPrice(context.Context, *QueryPriceRequest) (*QueryPriceResponse, error)
+	// QueryPrices queries all prices
+	QueryPrices(context.Context, *QueryPricesRequest) (*QueryPricesResponse, error)
+	// QueryRawPrices queries all raw prices for an asset pair
+	QueryRawPrices(context.Context, *QueryRawPricesRequest) (*QueryRawPricesResponse, error)
+	// QueryOracles queries all oracles for an asset pair
+	QueryOracles(context.Context, *QueryOraclesRequest) (*QueryOraclesResponse, error)
+	// QueryMarkets queries all markets
+	QueryMarkets(context.Context, *QueryMarketsRequest) (*QueryMarketsResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
+func (*UnimplementedQueryServer) QueryParams(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryParams not implemented")
 }
-func (*UnimplementedQueryServer) Price(ctx context.Context, req *QueryPriceRequest) (*QueryPriceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Price not implemented")
+func (*UnimplementedQueryServer) QueryPrice(ctx context.Context, req *QueryPriceRequest) (*QueryPriceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryPrice not implemented")
 }
-func (*UnimplementedQueryServer) Prices(ctx context.Context, req *QueryPricesRequest) (*QueryPricesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Prices not implemented")
+func (*UnimplementedQueryServer) QueryPrices(ctx context.Context, req *QueryPricesRequest) (*QueryPricesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryPrices not implemented")
 }
-func (*UnimplementedQueryServer) RawPrices(ctx context.Context, req *QueryRawPricesRequest) (*QueryRawPricesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RawPrices not implemented")
+func (*UnimplementedQueryServer) QueryRawPrices(ctx context.Context, req *QueryRawPricesRequest) (*QueryRawPricesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryRawPrices not implemented")
 }
-func (*UnimplementedQueryServer) Oracles(ctx context.Context, req *QueryOraclesRequest) (*QueryOraclesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Oracles not implemented")
+func (*UnimplementedQueryServer) QueryOracles(ctx context.Context, req *QueryOraclesRequest) (*QueryOraclesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryOracles not implemented")
 }
-func (*UnimplementedQueryServer) Pairs(ctx context.Context, req *QueryPairsRequest) (*QueryPairsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Pairs not implemented")
+func (*UnimplementedQueryServer) QueryMarkets(ctx context.Context, req *QueryMarketsRequest) (*QueryMarketsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryMarkets not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
 }
 
-func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Query_QueryParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryParamsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Params(ctx, in)
+		return srv.(QueryServer).QueryParams(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NibiruChain.pricefeed.v1.Query/Params",
+		FullMethod: "/nibiru.pricefeed.v1.Query/QueryParams",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Params(ctx, req.(*QueryParamsRequest))
+		return srv.(QueryServer).QueryParams(ctx, req.(*QueryParamsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_Price_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Query_QueryPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryPriceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Price(ctx, in)
+		return srv.(QueryServer).QueryPrice(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NibiruChain.pricefeed.v1.Query/Price",
+		FullMethod: "/nibiru.pricefeed.v1.Query/QueryPrice",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Price(ctx, req.(*QueryPriceRequest))
+		return srv.(QueryServer).QueryPrice(ctx, req.(*QueryPriceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_Prices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Query_QueryPrices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryPricesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Prices(ctx, in)
+		return srv.(QueryServer).QueryPrices(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NibiruChain.pricefeed.v1.Query/Prices",
+		FullMethod: "/nibiru.pricefeed.v1.Query/QueryPrices",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Prices(ctx, req.(*QueryPricesRequest))
+		return srv.(QueryServer).QueryPrices(ctx, req.(*QueryPricesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_RawPrices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Query_QueryRawPrices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryRawPricesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).RawPrices(ctx, in)
+		return srv.(QueryServer).QueryRawPrices(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NibiruChain.pricefeed.v1.Query/RawPrices",
+		FullMethod: "/nibiru.pricefeed.v1.Query/QueryRawPrices",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).RawPrices(ctx, req.(*QueryRawPricesRequest))
+		return srv.(QueryServer).QueryRawPrices(ctx, req.(*QueryRawPricesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_Oracles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Query_QueryOracles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryOraclesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Oracles(ctx, in)
+		return srv.(QueryServer).QueryOracles(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NibiruChain.pricefeed.v1.Query/Oracles",
+		FullMethod: "/nibiru.pricefeed.v1.Query/QueryOracles",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Oracles(ctx, req.(*QueryOraclesRequest))
+		return srv.(QueryServer).QueryOracles(ctx, req.(*QueryOraclesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_Pairs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryPairsRequest)
+func _Query_QueryMarkets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryMarketsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Pairs(ctx, in)
+		return srv.(QueryServer).QueryMarkets(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NibiruChain.pricefeed.v1.Query/Pairs",
+		FullMethod: "/nibiru.pricefeed.v1.Query/QueryMarkets",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Pairs(ctx, req.(*QueryPairsRequest))
+		return srv.(QueryServer).QueryMarkets(ctx, req.(*QueryMarketsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 var _Query_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "NibiruChain.pricefeed.v1.Query",
+	ServiceName: "nibiru.pricefeed.v1.Query",
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Params",
-			Handler:    _Query_Params_Handler,
+			MethodName: "QueryParams",
+			Handler:    _Query_QueryParams_Handler,
 		},
 		{
-			MethodName: "Price",
-			Handler:    _Query_Price_Handler,
+			MethodName: "QueryPrice",
+			Handler:    _Query_QueryPrice_Handler,
 		},
 		{
-			MethodName: "Prices",
-			Handler:    _Query_Prices_Handler,
+			MethodName: "QueryPrices",
+			Handler:    _Query_QueryPrices_Handler,
 		},
 		{
-			MethodName: "RawPrices",
-			Handler:    _Query_RawPrices_Handler,
+			MethodName: "QueryRawPrices",
+			Handler:    _Query_QueryRawPrices_Handler,
 		},
 		{
-			MethodName: "Oracles",
-			Handler:    _Query_Oracles_Handler,
+			MethodName: "QueryOracles",
+			Handler:    _Query_QueryOracles_Handler,
 		},
 		{
-			MethodName: "Pairs",
-			Handler:    _Query_Pairs_Handler,
+			MethodName: "QueryMarkets",
+			Handler:    _Query_QueryMarkets_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -2228,7 +2197,7 @@ func (m *QueryOraclesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryPairsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryMarketsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2238,12 +2207,12 @@ func (m *QueryPairsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryPairsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryMarketsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryPairsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryMarketsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2251,7 +2220,7 @@ func (m *QueryPairsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryPairsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryMarketsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2261,20 +2230,20 @@ func (m *QueryPairsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryPairsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryMarketsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryPairsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryMarketsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Pairs) > 0 {
-		for iNdEx := len(m.Pairs) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Markets) > 0 {
+		for iNdEx := len(m.Markets) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Pairs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Markets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -2383,7 +2352,7 @@ func (m *CurrentPriceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *PairResponse) Marshal() (dAtA []byte, err error) {
+func (m *Market) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2393,12 +2362,12 @@ func (m *PairResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PairResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *Market) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *PairResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Market) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2411,7 +2380,7 @@ func (m *PairResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x28
+		dAtA[i] = 0x18
 	}
 	if len(m.Oracles) > 0 {
 		for iNdEx := len(m.Oracles) - 1; iNdEx >= 0; iNdEx-- {
@@ -2419,22 +2388,8 @@ func (m *PairResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			copy(dAtA[i:], m.Oracles[iNdEx])
 			i = encodeVarintQuery(dAtA, i, uint64(len(m.Oracles[iNdEx])))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x12
 		}
-	}
-	if len(m.Token1) > 0 {
-		i -= len(m.Token1)
-		copy(dAtA[i:], m.Token1)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Token1)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Token0) > 0 {
-		i -= len(m.Token0)
-		copy(dAtA[i:], m.Token0)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Token0)))
-		i--
-		dAtA[i] = 0x12
 	}
 	if len(m.PairID) > 0 {
 		i -= len(m.PairID)
@@ -2581,7 +2536,7 @@ func (m *QueryOraclesResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryPairsRequest) Size() (n int) {
+func (m *QueryMarketsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2590,14 +2545,14 @@ func (m *QueryPairsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryPairsResponse) Size() (n int) {
+func (m *QueryMarketsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.Pairs) > 0 {
-		for _, e := range m.Pairs {
+	if len(m.Markets) > 0 {
+		for _, e := range m.Markets {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -2641,21 +2596,13 @@ func (m *CurrentPriceResponse) Size() (n int) {
 	return n
 }
 
-func (m *PairResponse) Size() (n int) {
+func (m *Market) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
 	l = len(m.PairID)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	l = len(m.Token0)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	l = len(m.Token1)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -3439,7 +3386,7 @@ func (m *QueryOraclesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryPairsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryMarketsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3462,10 +3409,10 @@ func (m *QueryPairsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPairsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryMarketsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPairsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryMarketsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -3489,7 +3436,7 @@ func (m *QueryPairsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryPairsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryMarketsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3512,15 +3459,15 @@ func (m *QueryPairsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPairsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryMarketsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPairsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryMarketsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pairs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Markets", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3547,8 +3494,8 @@ func (m *QueryPairsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Pairs = append(m.Pairs, PairResponse{})
-			if err := m.Pairs[len(m.Pairs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Markets = append(m.Markets, Market{})
+			if err := m.Markets[len(m.Markets)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3870,7 +3817,7 @@ func (m *CurrentPriceResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PairResponse) Unmarshal(dAtA []byte) error {
+func (m *Market) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3893,10 +3840,10 @@ func (m *PairResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PairResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: Market: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PairResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Market: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3933,70 +3880,6 @@ func (m *PairResponse) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Token0", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Token0 = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Token1", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Token1 = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Oracles", wireType)
 			}
 			var stringLen uint64
@@ -4027,7 +3910,7 @@ func (m *PairResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.Oracles = append(m.Oracles, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 5:
+		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Active", wireType)
 			}

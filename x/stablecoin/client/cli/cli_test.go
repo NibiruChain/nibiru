@@ -5,31 +5,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	"github.com/gogo/protobuf/proto"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/NibiruChain/nibiru/app"
-
-	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
-	utils "github.com/NibiruChain/nibiru/x/testutil"
-
-	"github.com/NibiruChain/nibiru/x/common"
-	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
+	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 const (
@@ -46,33 +38,28 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	oracle, _ := sdk.AccAddressFromBech32(oracleAddress)
+	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
 
+	pairs := common.AssetPairs{
+		common.PairGovStable, common.PairCollStable,
+	}
 	return &pftypes.GenesisState{
-		Params: pftypes.Params{
-			Pairs: []pftypes.Pair{
-				{Token0: common.GovStablePool.Token0,
-					Token1:  common.GovStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-				{Token0: common.CollStablePool.Token0,
-					Token1:  common.CollStablePool.Token1,
-					Oracles: []sdk.AccAddress{oracle}, Active: true},
-			},
-		},
+		Params: pftypes.Params{Pairs: pairs},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID:        common.GovStablePool.PairID(),
-				OracleAddress: oracle,
-				Price:         sdk.NewDec(10),
-				Expiry:        time.Now().Add(1 * time.Hour),
+				PairID: common.PairGovStable.String(),
+				Oracle: oracle.String(),
+				Price:  sdk.NewDec(10),
+				Expiry: time.Now().Add(1 * time.Hour),
 			},
 			{
-				PairID:        common.CollStablePool.PairID(),
-				OracleAddress: oracle,
-				Price:         sdk.OneDec(),
-				Expiry:        time.Now().Add(1 * time.Hour),
+				PairID: common.PairCollStable.String(),
+				Oracle: oracle.String(),
+				Price:  sdk.OneDec(),
+				Expiry: time.Now().Add(1 * time.Hour),
 			},
 		},
+		GenesisOracles: []string{oracle.String()},
 	}
 }
 
@@ -88,7 +75,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.cfg = utils.DefaultConfig()
+	encodingConfig := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
+	s.cfg = testutilcli.BuildNetworkConfig(defaultAppGenesis)
 
 	// modification to pay fee with test bond denom "stake"
 	app.SetPrefixes(app.AccountAddressPrefix)
@@ -97,7 +86,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// IsCollateralRatioValid behavior testted in x/stablecoin/abci_test.go
 	stableGen.Params.IsCollateralRatioValid = true
-	stableGen.ModuleAccountBalance = sdk.NewCoin(common.CollDenom, sdk.NewInt(10000000000))
+	stableGen.ModuleAccountBalance = sdk.NewCoin(common.DenomColl, sdk.NewInt(10000000000))
 
 	stableGenJson := s.cfg.Codec.MustMarshalJSON(stableGen)
 	genesisState[stabletypes.ModuleName] = stableGenJson
@@ -107,7 +96,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg.GenesisState = genesisState
 
-	s.network = testutilcli.New(s.T(), s.cfg)
+	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
@@ -132,7 +121,7 @@ func (s IntegrationTestSuite) fillWalletFromValidator(
 		balance,
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		utils.DefaultFeeString(s.cfg.BondDenom),
+		testutilcli.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 
@@ -149,8 +138,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(common.GovDenom, 100_000_000),
-			sdk.NewInt64Coin(common.CollDenom, 100_000_000),
+			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
+			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 		),
 		val)
 
@@ -197,6 +186,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 				txResp := tc.respType.(*sdk.TxResponse)
+				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				s.Require().NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
@@ -207,7 +198,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 				s.Require().NoError(err)
 
 				s.Require().Equal(
-					balRes.Balances.AmountOf(common.StableDenom), tc.expectedStable)
+					balRes.Balances.AmountOf(common.DenomStable), tc.expectedStable)
 			}
 		})
 	}
@@ -224,7 +215,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
-			sdk.NewInt64Coin(common.StableDenom, 50_000_000),
+			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
 	)
@@ -262,8 +253,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			expectedStable:   sdk.ZeroInt(),
 			expectedColl:     sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
 			expectedGov:      sdk.ZeroInt(),
-			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
-			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(common.CollDenom, 50_000)),
+			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 50_000)),
+			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 50_000)),
 			expectErr:        false,
 			respType:         &sdk.TxResponse{},
 			expectedCode:     0,
@@ -300,6 +291,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				)
 
 				txResp := tc.respType.(*sdk.TxResponse)
+				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				s.Require().NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
@@ -310,11 +303,11 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				s.Require().NoError(err)
 
 				s.Require().Equal(
-					tc.expectedColl, balRes.Balances.AmountOf(common.CollDenom))
+					tc.expectedColl, balRes.Balances.AmountOf(common.DenomColl))
 				s.Require().Equal(
-					tc.expectedGov, balRes.Balances.AmountOf(common.GovDenom))
+					tc.expectedGov, balRes.Balances.AmountOf(common.DenomGov))
 				s.Require().Equal(
-					tc.expectedStable, balRes.Balances.AmountOf(common.StableDenom))
+					tc.expectedStable, balRes.Balances.AmountOf(common.DenomStable))
 
 				// Query treasury pool balance
 				resp, err = banktestutil.QueryBalancesExec(

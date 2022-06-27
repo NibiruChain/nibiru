@@ -13,6 +13,7 @@ var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
 var _ sdk.Msg = &MsgLiquidate{}
 var _ sdk.Msg = &MsgOpenPosition{}
+var _ sdk.Msg = &MsgClosePosition{}
 
 // MsgRemoveMargin
 
@@ -62,17 +63,17 @@ func (msg *MsgOpenPosition) ValidateBasic() error {
 	if msg.Side != Side_SELL && msg.Side != Side_BUY {
 		return fmt.Errorf("invalid side")
 	}
-	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
-	if !msg.Leverage.GT(sdk.ZeroDec()) {
+	if msg.Leverage.LTE(sdk.ZeroDec()) {
 		return fmt.Errorf("leverage must always be greater than zero")
 	}
-	if !msg.BaseAssetAmountLimit.GT(sdk.ZeroInt()) {
-		return fmt.Errorf("base asset amount limit must always be greater than zero")
+	if msg.BaseAssetAmountLimit.LT(sdk.ZeroInt()) {
+		return fmt.Errorf("base asset amount limit must not be negative")
 	}
 	if !msg.QuoteAssetAmount.GT(sdk.ZeroInt()) {
 		return fmt.Errorf("quote asset amount must be always greater than zero")
@@ -101,7 +102,7 @@ func (msg MsgLiquidate) ValidateBasic() (err error) {
 	if _, err = sdk.AccAddressFromBech32(msg.Trader); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid trader address (%s)", err)
 	}
-	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
 		return err
 	}
 	return nil
@@ -129,7 +130,7 @@ func (msg MsgClosePosition) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
-	if _, err := common.NewAssetPairFromStr(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
 		return err
 	}
 	return nil

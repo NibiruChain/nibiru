@@ -42,7 +42,7 @@ func FlagSetJoinPool() *flag.FlagSet {
 	fs := flag.NewFlagSet("join-pool", flag.PanicOnError)
 
 	fs.Uint64(FlagPoolId, 0, "The id of pool")
-	fs.StringArray(FlagTokensIn, []string{""}, "Amount of each denom to send into the pool (specify multiple denoms with: --tokens-in=1uust --tokens-in=1unusd)")
+	fs.StringArray(FlagTokensIn, []string{""}, "Amount of each denom to send into the pool (specify multiple denoms with: --tokens-in=1uusdc --tokens-in=1unusd)")
 	return fs
 }
 

@@ -12,7 +12,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/stablecoin/events"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -94,16 +93,16 @@ func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceGov, err := k.PricefeedKeeper.GetCurrentPrice(
-		ctx, common.GovDenom, common.StableDenom)
+		ctx, common.DenomGov, common.DenomStable)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
 	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
-	neededGov := sdk.NewCoin(common.GovDenom, neededGovAmt)
+	neededGov := sdk.NewCoin(common.DenomGov, neededGovAmt)
 	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
-	govFee := sdk.NewCoin(common.GovDenom, govFeeAmt)
+	govFee := sdk.NewCoin(common.DenomGov, govFeeAmt)
 
 	return neededGov, govFee, nil
 }
@@ -116,16 +115,16 @@ func (k Keeper) calcNeededCollateralAndFees(
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceColl, err := k.PricefeedKeeper.GetCurrentPrice(
-		ctx, common.CollDenom, common.StableDenom)
+		ctx, common.DenomColl, common.DenomStable)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
-	neededColl := sdk.NewCoin(common.CollDenom, neededCollAmt)
+	neededColl := sdk.NewCoin(common.DenomColl, neededCollAmt)
 	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
-	collFee := sdk.NewCoin(common.CollDenom, collFeeAmt)
+	collFee := sdk.NewCoin(common.DenomColl, collFeeAmt)
 
 	return neededColl, collFee, nil
 }
@@ -141,9 +140,13 @@ func (k Keeper) sendCoinsToModuleAccount(
 	}
 
 	for _, coin := range coins {
-		events.EmitTransfer(ctx, coin, from.String(), types.ModuleName)
+		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+		err = ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+			Coin: coin, From: from.String(), To: moduleAddress.String()})
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -158,7 +161,12 @@ func (k Keeper) sendCoinsFromModuleAccountToUser(
 	}
 
 	for _, coin := range coins {
-		events.EmitTransfer(ctx, coin, types.ModuleName, to.String())
+		moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+		err = ctx.EventManager().EmitTypedEvent(&types.EventTransfer{
+			Coin: coin, From: moduleAddress.String(), To: to.String()})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -180,7 +188,11 @@ func (k Keeper) burnGovTokens(ctx sdk.Context, govTokens sdk.Coin) error {
 		return err
 	}
 
-	events.EmitBurnNIBI(ctx, govTokens)
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventBurnNIBI{Amount: govTokens.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -191,7 +203,11 @@ func (k Keeper) burnStableTokens(ctx sdk.Context, stable sdk.Coin) error {
 		return err
 	}
 
-	events.EmitBurnStable(ctx, stable)
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventBurnStable{Amount: stable.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -203,7 +219,10 @@ func (k Keeper) mintStable(ctx sdk.Context, stable sdk.Coin) error {
 		return err
 	}
 
-	events.EmitMintStable(ctx, stable)
+	err = ctx.EventManager().EmitTypedEvent(&types.EventMintStable{Amount: stable.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -215,12 +234,15 @@ func (k Keeper) mintGov(ctx sdk.Context, gov sdk.Coin) error {
 		return err
 	}
 
-	events.EmitMintNIBI(ctx, gov)
+	err = ctx.EventManager().EmitTypedEvent(&types.EventMintNIBI{Amount: gov.Amount})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-// splitAndSendFeesToEfAndTreasury sends the coins to the Stable Ecosystem Fund and treasury pool
+// splitAndSendFeesToEfAndTreasury sends fees to the Stable Ecosystem Fund and treasury pool
 func (k Keeper) splitAndSendFeesToEfAndTreasury(
 	ctx sdk.Context, account sdk.AccAddress, efFeeRatio sdk.Dec, coins sdk.Coins,
 ) error {
@@ -230,9 +252,10 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 		amountEf := c.Amount.ToDec().Mul(efFeeRatio).TruncateInt()
 		amountTreasury := c.Amount.Sub(amountEf)
 
-		if c.Denom == common.GovDenom {
+		if c.Denom == common.DenomGov {
 			stableCoins := sdk.NewCoins(sdk.NewCoin(c.Denom, amountEf))
-			err := k.BankKeeper.SendCoinsFromAccountToModule(ctx, account, types.StableEFModuleAccount, stableCoins)
+			err := k.BankKeeper.SendCoinsFromAccountToModule(
+				ctx, account, types.StableEFModuleAccount, stableCoins)
 			if err != nil {
 				return err
 			}

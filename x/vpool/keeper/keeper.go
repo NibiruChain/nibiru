@@ -28,21 +28,6 @@ type Keeper struct {
 	pricefeedKeeper types.PricefeedKeeper
 }
 
-//CalcPerpTxFee calculates the total tx fee for exchanging 'quoteAmt' of tokens on
-//the exchange.
-//
-//Args:
-//  quoteAmt (sdk.Int):
-//
-//Returns:
-//  toll (sdk.Int): Amount of tokens transferred to the the fee pool.
-//  spread (sdk.Int): Amount of tokens transferred to the PerpEF.
-//
-func (k Keeper) CalcPerpTxFee(ctx sdk.Context, pair common.AssetPair, quoteAmt sdk.Int) (toll sdk.Int, spread sdk.Int, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 /*
 Trades baseAssets in exchange for quoteAssets.
 The base asset is a crypto asset like BTC.
@@ -119,15 +104,11 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventSwapBaseForQuote,
-			sdk.NewAttribute(types.AttributeQuoteAssetAmount, baseAssetAmount.String()),
-			sdk.NewAttribute(types.AttributeBaseAssetAmount, quoteAssetAmount.String()),
-		),
-	)
-
-	return quoteAssetAmount, nil
+	return quoteAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapBaseForQuoteEvent{
+		Pair:        pair.String(),
+		QuoteAmount: quoteAssetAmount,
+		BaseAmount:  baseAssetAmount,
+	})
 }
 
 /*
@@ -206,20 +187,16 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventSwapQuoteForBase,
-			sdk.NewAttribute(types.AttributeQuoteAssetAmount, quoteAssetAmount.String()),
-			sdk.NewAttribute(types.AttributeBaseAssetAmount, baseAssetAmount.String()),
-		),
-	)
-
-	return baseAssetAmount, nil
+	return baseAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
+		Pair:        pair.String(),
+		QuoteAmount: quoteAssetAmount,
+		BaseAmount:  baseAssetAmount,
+	})
 }
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
 	if pool.FluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		pair, err := common.NewAssetPairFromStr(pool.Pair)
+		pair, err := common.NewAssetPair(pool.Pair)
 		if err != nil {
 			return err
 		}

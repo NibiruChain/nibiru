@@ -25,17 +25,17 @@ func GetQueryCmd() *cobra.Command {
 
 	queryCmd.AddCommand(
 		CmdQueryParams(),
-		CmdPrice(),
-		CmdPrices(),
-		CmdRawPrices(),
-		CmdOracles(),
-		CmdPairs(),
+		CmdQueryPrice(),
+		CmdQueryPrices(),
+		CmdQueryRawPrices(),
+		CmdQueryOracles(),
+		CmdQueryMarkets(),
 	)
 
 	return queryCmd
 }
 
-func CmdPrice() *cobra.Command {
+func CmdQueryPrice() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "price [pair-id]",
 		Short: "Display current price for the given pair",
@@ -48,14 +48,14 @@ func CmdPrice() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pair, err := common.NewAssetPairFromStr(args[0])
+			pair, err := common.NewAssetPair(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid pair: %w", err)
 			}
 
-			params := &types.QueryPriceRequest{PairId: pair.String()}
+			request := &types.QueryPriceRequest{PairId: pair.String()}
 
-			res, err := queryClient.Price(cmd.Context(), params)
+			res, err := queryClient.QueryPrice(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -69,7 +69,7 @@ func CmdPrice() *cobra.Command {
 	return cmd
 }
 
-func CmdPrices() *cobra.Command {
+func CmdQueryPrices() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prices",
 		Short: "Display current prices for all pairs",
@@ -82,9 +82,9 @@ func CmdPrices() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryPricesRequest{}
+			request := &types.QueryPricesRequest{}
 
-			res, err := queryClient.Prices(cmd.Context(), params)
+			res, err := queryClient.QueryPrices(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -98,7 +98,7 @@ func CmdPrices() *cobra.Command {
 	return cmd
 }
 
-func CmdPairs() *cobra.Command {
+func CmdQueryMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
 		Short: "Query markets",
@@ -111,9 +111,9 @@ func CmdPairs() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryPairsRequest{}
+			request := &types.QueryMarketsRequest{}
 
-			res, err := queryClient.Pairs(cmd.Context(), params)
+			res, err := queryClient.QueryMarkets(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -127,11 +127,11 @@ func CmdPairs() *cobra.Command {
 	return cmd
 }
 
-func CmdOracles() *cobra.Command {
+func CmdQueryOracles() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "oracles",
+		Use:   "oracles [pair]",
 		Short: "Query oracles",
-		Args:  cobra.ExactArgs(0),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -140,9 +140,14 @@ func CmdOracles() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryOraclesRequest{}
+			pair, err := common.NewAssetPair(args[0])
+			if err != nil {
+				return fmt.Errorf("invalid pair: %w", err)
+			}
 
-			res, err := queryClient.Oracles(cmd.Context(), params)
+			request := &types.QueryOraclesRequest{PairId: pair.String()}
+
+			res, err := queryClient.QueryOracles(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -169,7 +174,7 @@ func CmdQueryParams() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
+			res, err := queryClient.QueryParams(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
@@ -183,7 +188,7 @@ func CmdQueryParams() *cobra.Command {
 	return cmd
 }
 
-func CmdRawPrices() *cobra.Command {
+func CmdQueryRawPrices() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "raw-prices [market-id]",
 		Short: "Query RawPrices",
@@ -196,11 +201,16 @@ func CmdRawPrices() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryRawPricesRequest{
+			_, err = common.NewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
+			req := &types.QueryRawPricesRequest{
 				PairId: args[0],
 			}
 
-			res, err := queryClient.RawPrices(cmd.Context(), params)
+			res, err := queryClient.QueryRawPrices(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

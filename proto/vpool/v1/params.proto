@@ -12,3 +12,11 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
 }
+
+// CurrentTWAP states defines the numerator and denominator for the TWAP calculation
+message CurrentTWAP {
+  string pair_id = 1 [(gogoproto.customname) = "PairID"];
+  string numerator = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string denominator = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string price = 4 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}

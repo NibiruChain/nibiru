@@ -2,9 +2,25 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	tmtypes "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/server/api"
+	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
+	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/p2p"
@@ -13,14 +29,6 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/local"
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
-
-	"github.com/cosmos/cosmos-sdk/server/api"
-	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
-	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 )
 
 func startInProcess(cfg Config, val *Validator) error {
@@ -151,14 +159,19 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 	return nil
 }
 
-func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
+func initGenFiles(
+	cfg Config,
+	genAccounts []authtypes.GenesisAccount,
+	genBalances []banktypes.Balance,
+	genFiles []string,
+) (Config, error) {
 	// set the accounts in the genesis state
 	var authGenState authtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &authGenState)
 
 	accounts, err := authtypes.PackAccounts(genAccounts)
 	if err != nil {
-		return err
+		return cfg, err
 	}
 
 	authGenState.Accounts = append(authGenState.Accounts, accounts...)
@@ -167,13 +180,13 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[banktypes.ModuleName], &bankGenState)
-
 	bankGenState.Balances = append(bankGenState.Balances, genBalances...)
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
+	cfg.GenesisState = testapp.NewTestGenesisState(cfg.Codec, cfg.GenesisState)
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
-		return err
+		return cfg, err
 	}
 
 	genDoc := types.GenesisDoc{
@@ -185,11 +198,11 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	// generate empty genesis files for each validator and save
 	for i := 0; i < cfg.NumValidators; i++ {
 		if err := genDoc.SaveAs(genFiles[i]); err != nil {
-			return err
+			return cfg, err
 		}
 	}
 
-	return nil
+	return cfg, nil
 }
 
 func writeFile(name string, dir string, contents []byte) error {
@@ -204,6 +217,36 @@ func writeFile(name string, dir string, contents []byte) error {
 	err = tmos.WriteFile(file, contents, 0644)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// FillWalletFromValidator fills the wallet with some coins that come from the validator.
+// Used for cli tests.
+func FillWalletFromValidator(
+	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
+) (sdk.AccAddress, error) {
+	rawResp, err := banktestutil.MsgSendExec(
+		val.ClientCtx,
+		val.Address,
+		addr,
+		balance,
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		DefaultFeeString(feesDenom),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return addr, txOK(val.ClientCtx.Codec, rawResp.Bytes())
+}
+
+func txOK(cdc codec.Codec, txBytes []byte) error {
+	resp := new(sdk.TxResponse)
+	cdc.MustUnmarshalJSON(txBytes, resp)
+	if resp.Code != tmtypes.CodeTypeOK {
+		return fmt.Errorf("%s", resp.RawLog)
 	}
 
 	return nil

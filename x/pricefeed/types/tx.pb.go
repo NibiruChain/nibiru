@@ -117,40 +117,154 @@ func (m *MsgPostPriceResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgPostPriceResponse proto.InternalMessageInfo
 
+type EventOracleUpdatePrice struct {
+	PairId    string                                 `protobuf:"bytes,1,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`
+	Oracle    string                                 `protobuf:"bytes,2,opt,name=oracle,proto3" json:"oracle,omitempty"`
+	PairPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=pair_price,json=pairPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"pair_price"`
+	Expiry    time.Time                              `protobuf:"bytes,4,opt,name=expiry,proto3,stdtime" json:"expiry"`
+}
+
+func (m *EventOracleUpdatePrice) Reset()         { *m = EventOracleUpdatePrice{} }
+func (m *EventOracleUpdatePrice) String() string { return proto.CompactTextString(m) }
+func (*EventOracleUpdatePrice) ProtoMessage()    {}
+func (*EventOracleUpdatePrice) Descriptor() ([]byte, []int) {
+	return fileDescriptor_27d54c954ce5f810, []int{2}
+}
+func (m *EventOracleUpdatePrice) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventOracleUpdatePrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventOracleUpdatePrice.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventOracleUpdatePrice) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventOracleUpdatePrice.Merge(m, src)
+}
+func (m *EventOracleUpdatePrice) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventOracleUpdatePrice) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventOracleUpdatePrice.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventOracleUpdatePrice proto.InternalMessageInfo
+
+func (m *EventOracleUpdatePrice) GetPairId() string {
+	if m != nil {
+		return m.PairId
+	}
+	return ""
+}
+
+func (m *EventOracleUpdatePrice) GetOracle() string {
+	if m != nil {
+		return m.Oracle
+	}
+	return ""
+}
+
+func (m *EventOracleUpdatePrice) GetExpiry() time.Time {
+	if m != nil {
+		return m.Expiry
+	}
+	return time.Time{}
+}
+
+type EventPairPriceUpdated struct {
+	PairId    string                                 `protobuf:"bytes,1,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`
+	PairPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=pair_price,json=pairPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"pair_price"`
+}
+
+func (m *EventPairPriceUpdated) Reset()         { *m = EventPairPriceUpdated{} }
+func (m *EventPairPriceUpdated) String() string { return proto.CompactTextString(m) }
+func (*EventPairPriceUpdated) ProtoMessage()    {}
+func (*EventPairPriceUpdated) Descriptor() ([]byte, []int) {
+	return fileDescriptor_27d54c954ce5f810, []int{3}
+}
+func (m *EventPairPriceUpdated) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventPairPriceUpdated) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventPairPriceUpdated.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventPairPriceUpdated) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventPairPriceUpdated.Merge(m, src)
+}
+func (m *EventPairPriceUpdated) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventPairPriceUpdated) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventPairPriceUpdated.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventPairPriceUpdated proto.InternalMessageInfo
+
+func (m *EventPairPriceUpdated) GetPairId() string {
+	if m != nil {
+		return m.PairId
+	}
+	return ""
+}
+
 func init() {
-	proto.RegisterType((*MsgPostPrice)(nil), "NibiruChain.pricefeed.v1.MsgPostPrice")
-	proto.RegisterType((*MsgPostPriceResponse)(nil), "NibiruChain.pricefeed.v1.MsgPostPriceResponse")
+	proto.RegisterType((*MsgPostPrice)(nil), "nibiru.pricefeed.v1.MsgPostPrice")
+	proto.RegisterType((*MsgPostPriceResponse)(nil), "nibiru.pricefeed.v1.MsgPostPriceResponse")
+	proto.RegisterType((*EventOracleUpdatePrice)(nil), "nibiru.pricefeed.v1.EventOracleUpdatePrice")
+	proto.RegisterType((*EventPairPriceUpdated)(nil), "nibiru.pricefeed.v1.EventPairPriceUpdated")
 }
 
 func init() { proto.RegisterFile("pricefeed/tx.proto", fileDescriptor_27d54c954ce5f810) }
 
 var fileDescriptor_27d54c954ce5f810 = []byte{
-	// 396 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x51, 0xbf, 0x6f, 0xd3, 0x40,
-	0x14, 0xf6, 0xb5, 0x69, 0x44, 0x0f, 0xa6, 0x53, 0x55, 0x59, 0x56, 0x75, 0xae, 0x2c, 0x54, 0x75,
-	0xe9, 0x1d, 0x29, 0x1b, 0x62, 0x0a, 0x5d, 0x8b, 0x8a, 0xc5, 0xc4, 0x66, 0xbb, 0x17, 0xe7, 0x14,
-	0xec, 0x77, 0xf2, 0x5d, 0x50, 0xb2, 0x32, 0xc1, 0x16, 0xc4, 0x3f, 0xc0, 0xc8, 0x9f, 0x92, 0x31,
-	0x12, 0x0b, 0x42, 0x28, 0x04, 0x87, 0x3f, 0x04, 0xf9, 0x6c, 0x27, 0x5e, 0x90, 0x98, 0xee, 0xbd,
-	0xef, 0x7d, 0xef, 0xc7, 0xf7, 0x1d, 0x26, 0xaa, 0x90, 0x89, 0x18, 0x09, 0x71, 0xcf, 0xcd, 0x8c,
-	0xa9, 0x02, 0x0c, 0x10, 0xf7, 0xa5, 0x8c, 0x65, 0x31, 0x7d, 0x31, 0x8e, 0x64, 0xce, 0x76, 0x75,
-	0xf6, 0x6e, 0xe0, 0x9d, 0xa4, 0x90, 0x82, 0x25, 0xf1, 0x2a, 0xaa, 0xf9, 0x9e, 0x9f, 0x02, 0xa4,
-	0x6f, 0x05, 0xb7, 0x59, 0x3c, 0x1d, 0x71, 0x23, 0x33, 0xa1, 0x4d, 0x94, 0xa9, 0x86, 0x70, 0xd6,
-	0x10, 0x22, 0x25, 0x79, 0x94, 0xe7, 0x60, 0x22, 0x23, 0x21, 0xd7, 0x75, 0x35, 0xf8, 0x89, 0xf0,
-	0xa3, 0x5b, 0x9d, 0xde, 0x81, 0x36, 0x77, 0xd5, 0x32, 0x42, 0x70, 0x6f, 0x54, 0x40, 0xe6, 0xa2,
-	0x73, 0x74, 0x79, 0x1c, 0xda, 0x98, 0x9c, 0xe2, 0xbe, 0x81, 0x89, 0xc8, 0x9f, 0xb8, 0x07, 0x16,
-	0x6d, 0xb2, 0x1d, 0x3e, 0x70, 0x0f, 0x3b, 0xf8, 0x80, 0xdc, 0xe0, 0x23, 0x7b, 0xb9, 0xdb, 0xab,
-	0xe0, 0x21, 0x5b, 0xae, 0x7d, 0xe7, 0xc7, 0xda, 0xbf, 0x48, 0xa5, 0x19, 0x4f, 0x63, 0x96, 0x40,
-	0xc6, 0x13, 0xd0, 0x19, 0xe8, 0xe6, 0xb9, 0xd2, 0xf7, 0x13, 0x6e, 0xe6, 0x4a, 0x68, 0x76, 0x23,
-	0x92, 0xb0, 0x6e, 0x26, 0xcf, 0x71, 0x5f, 0xcc, 0x94, 0x2c, 0xe6, 0xee, 0xd1, 0x39, 0xba, 0x7c,
-	0x78, 0xed, 0xb1, 0x5a, 0x09, 0x6b, 0xa5, 0xb2, 0xd7, 0xad, 0xd4, 0xe1, 0x83, 0x6a, 0xc5, 0xe2,
-	0x97, 0x8f, 0xc2, 0xa6, 0xe7, 0x59, 0xef, 0xc3, 0x17, 0xdf, 0x09, 0x4e, 0xf1, 0x49, 0x57, 0x5d,
-	0x28, 0xb4, 0x82, 0x5c, 0x8b, 0xeb, 0x4f, 0x08, 0x1f, 0xde, 0xea, 0x94, 0x7c, 0x44, 0xf8, 0x78,
-	0xaf, 0xfd, 0x82, 0xfd, 0xcb, 0x7c, 0xd6, 0x9d, 0xe2, 0xb1, 0xff, 0xe3, 0xb5, 0xdb, 0x82, 0xc7,
-	0xef, 0xbf, 0xfd, 0xf9, 0x7c, 0x40, 0x83, 0x33, 0x9e, 0xdb, 0x3e, 0xbe, 0xff, 0x77, 0x05, 0xda,
-	0x5c, 0xd9, 0x74, 0xf8, 0x6a, 0xf3, 0x9b, 0xa2, 0xaf, 0x25, 0x45, 0xcb, 0x92, 0xa2, 0x55, 0x49,
-	0xd1, 0xa6, 0xa4, 0x68, 0xb1, 0xa5, 0xce, 0x6a, 0x4b, 0x9d, 0xef, 0x5b, 0xea, 0xbc, 0xe1, 0x1d,
-	0x03, 0x3b, 0x17, 0xb4, 0x53, 0x67, 0x9d, 0xb9, 0xd6, 0xcd, 0xb8, 0x6f, 0xad, 0x7a, 0xfa, 0x37,
-	0x00, 0x00, 0xff, 0xff, 0x01, 0xb5, 0xef, 0xe4, 0x69, 0x02, 0x00, 0x00,
+	// 485 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x93, 0xcf, 0x6f, 0xd3, 0x30,
+	0x14, 0xc7, 0xe3, 0xb6, 0x2b, 0xd4, 0x70, 0x32, 0xa3, 0x44, 0xd5, 0xe4, 0x8c, 0x08, 0xa1, 0x71,
+	0x98, 0x4d, 0xc7, 0x0d, 0x71, 0x2a, 0xe3, 0xc0, 0xa1, 0x50, 0x2a, 0xb8, 0x70, 0x41, 0x69, 0xe2,
+	0x66, 0xd6, 0x96, 0xd8, 0x8a, 0xdd, 0xa9, 0x3b, 0x4d, 0xe2, 0x80, 0x38, 0x4e, 0xe2, 0x1f, 0xe0,
+	0xc8, 0x9f, 0xb2, 0xe3, 0x24, 0x24, 0x84, 0x10, 0x1a, 0x23, 0xe5, 0x0f, 0x41, 0xb1, 0x93, 0x2e,
+	0x20, 0x10, 0x02, 0x4e, 0xf1, 0xfb, 0xf5, 0xf5, 0xfb, 0xbc, 0xe7, 0x40, 0x24, 0x33, 0x1e, 0xb2,
+	0x29, 0x63, 0x11, 0xd5, 0x73, 0x22, 0x33, 0xa1, 0x05, 0xba, 0x92, 0xf2, 0x09, 0xcf, 0x66, 0x64,
+	0x19, 0x22, 0xfb, 0xfd, 0xde, 0x6a, 0x2c, 0x62, 0x61, 0xe2, 0xb4, 0x38, 0xd9, 0xd4, 0x9e, 0x17,
+	0x0b, 0x11, 0xef, 0x31, 0x6a, 0xac, 0xc9, 0x6c, 0x4a, 0x35, 0x4f, 0x98, 0xd2, 0x41, 0x22, 0xcb,
+	0x84, 0xb5, 0x32, 0x21, 0x90, 0x9c, 0x06, 0x69, 0x2a, 0x74, 0xa0, 0xb9, 0x48, 0x95, 0x8d, 0xfa,
+	0x9f, 0x01, 0xbc, 0x3c, 0x54, 0xf1, 0x48, 0x28, 0x3d, 0x2a, 0x2e, 0x43, 0x08, 0xb6, 0xa6, 0x99,
+	0x48, 0x5c, 0xb0, 0x0e, 0x36, 0x3a, 0x63, 0x73, 0x46, 0x5d, 0xd8, 0xd6, 0x62, 0x97, 0xa5, 0xb7,
+	0xdd, 0x86, 0xf1, 0x96, 0xd6, 0xd2, 0xdf, 0x77, 0x9b, 0x35, 0x7f, 0x1f, 0x6d, 0xc3, 0x15, 0xd3,
+	0xb9, 0xdb, 0x2a, 0xdc, 0x03, 0x72, 0x7c, 0xea, 0x39, 0x9f, 0x4e, 0xbd, 0x9b, 0x31, 0xd7, 0x3b,
+	0xb3, 0x09, 0x09, 0x45, 0x42, 0x43, 0xa1, 0x12, 0xa1, 0xca, 0xcf, 0xa6, 0x8a, 0x76, 0xa9, 0x3e,
+	0x90, 0x4c, 0x91, 0x6d, 0x16, 0x8e, 0x6d, 0x31, 0xba, 0x07, 0xdb, 0x6c, 0x2e, 0x79, 0x76, 0xe0,
+	0xae, 0xac, 0x83, 0x8d, 0x4b, 0x5b, 0x3d, 0x62, 0x49, 0x48, 0x85, 0x4a, 0x9e, 0x56, 0xa8, 0x83,
+	0x8b, 0xc5, 0x15, 0x47, 0x5f, 0x3c, 0x30, 0x2e, 0x6b, 0xee, 0xb6, 0x5e, 0xbf, 0xf5, 0x1c, 0xbf,
+	0x0b, 0x57, 0xeb, 0x74, 0x63, 0xa6, 0xa4, 0x48, 0x15, 0xf3, 0x3f, 0x00, 0xd8, 0x7d, 0xb0, 0xcf,
+	0x52, 0xfd, 0x38, 0x0b, 0xc2, 0x3d, 0xf6, 0x4c, 0x46, 0x81, 0x66, 0x76, 0x00, 0xd7, 0xe0, 0x05,
+	0x19, 0xf0, 0xec, 0x05, 0x8f, 0xca, 0x19, 0xb4, 0x0b, 0xf3, 0x61, 0x54, 0xd0, 0x0a, 0x93, 0x5d,
+	0x4d, 0xc1, 0x5a, 0x68, 0x08, 0xa1, 0x29, 0xb0, 0xc8, 0xcd, 0x7f, 0x42, 0xee, 0x14, 0x0a, 0xa3,
+	0x9f, 0xb0, 0x5b, 0x7f, 0x8f, 0xed, 0x1f, 0xc2, 0xab, 0x86, 0x6b, 0x54, 0xe9, 0x59, 0xb4, 0xe8,
+	0xf7, 0x58, 0x3f, 0xb6, 0xdf, 0xf8, 0xcf, 0xf6, 0xb7, 0x5e, 0x01, 0xd8, 0x1c, 0xaa, 0x18, 0x1d,
+	0xc2, 0xce, 0xf9, 0xa3, 0xba, 0x4e, 0x7e, 0xf1, 0xa0, 0x49, 0x7d, 0x33, 0xbd, 0x5b, 0x7f, 0x4c,
+	0x59, 0x2e, 0xef, 0xc6, 0xcb, 0xf7, 0xdf, 0xde, 0x34, 0xb0, 0xbf, 0x46, 0x6d, 0x09, 0x3d, 0xff,
+	0x83, 0xa4, 0x50, 0x7a, 0xd3, 0x98, 0x83, 0x27, 0x67, 0x5f, 0x31, 0x78, 0x97, 0x63, 0x70, 0x9c,
+	0x63, 0x70, 0x92, 0x63, 0x70, 0x96, 0x63, 0x70, 0xb4, 0xc0, 0xce, 0xc9, 0x02, 0x3b, 0x1f, 0x17,
+	0xd8, 0x79, 0x4e, 0x6b, 0x74, 0x8f, 0x8c, 0xd2, 0xfd, 0x9d, 0x80, 0xa7, 0x95, 0xea, 0xbc, 0xa6,
+	0x6b, 0x50, 0x27, 0x6d, 0xb3, 0x82, 0x3b, 0xdf, 0x03, 0x00, 0x00, 0xff, 0xff, 0x95, 0x73, 0xaf,
+	0x70, 0xb3, 0x03, 0x00, 0x00,
 }
 
 func (this *MsgPostPrice) VerboseEqual(that interface{}) error {
@@ -279,6 +393,138 @@ func (this *MsgPostPriceResponse) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *EventOracleUpdatePrice) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*EventOracleUpdatePrice)
+	if !ok {
+		that2, ok := that.(EventOracleUpdatePrice)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *EventOracleUpdatePrice")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *EventOracleUpdatePrice but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *EventOracleUpdatePrice but is not nil && this == nil")
+	}
+	if this.PairId != that1.PairId {
+		return fmt.Errorf("PairId this(%v) Not Equal that(%v)", this.PairId, that1.PairId)
+	}
+	if this.Oracle != that1.Oracle {
+		return fmt.Errorf("Oracle this(%v) Not Equal that(%v)", this.Oracle, that1.Oracle)
+	}
+	if !this.PairPrice.Equal(that1.PairPrice) {
+		return fmt.Errorf("PairPrice this(%v) Not Equal that(%v)", this.PairPrice, that1.PairPrice)
+	}
+	if !this.Expiry.Equal(that1.Expiry) {
+		return fmt.Errorf("Expiry this(%v) Not Equal that(%v)", this.Expiry, that1.Expiry)
+	}
+	return nil
+}
+func (this *EventOracleUpdatePrice) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*EventOracleUpdatePrice)
+	if !ok {
+		that2, ok := that.(EventOracleUpdatePrice)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.PairId != that1.PairId {
+		return false
+	}
+	if this.Oracle != that1.Oracle {
+		return false
+	}
+	if !this.PairPrice.Equal(that1.PairPrice) {
+		return false
+	}
+	if !this.Expiry.Equal(that1.Expiry) {
+		return false
+	}
+	return true
+}
+func (this *EventPairPriceUpdated) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*EventPairPriceUpdated)
+	if !ok {
+		that2, ok := that.(EventPairPriceUpdated)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *EventPairPriceUpdated")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *EventPairPriceUpdated but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *EventPairPriceUpdated but is not nil && this == nil")
+	}
+	if this.PairId != that1.PairId {
+		return fmt.Errorf("PairId this(%v) Not Equal that(%v)", this.PairId, that1.PairId)
+	}
+	if !this.PairPrice.Equal(that1.PairPrice) {
+		return fmt.Errorf("PairPrice this(%v) Not Equal that(%v)", this.PairPrice, that1.PairPrice)
+	}
+	return nil
+}
+func (this *EventPairPriceUpdated) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*EventPairPriceUpdated)
+	if !ok {
+		that2, ok := that.(EventPairPriceUpdated)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.PairId != that1.PairId {
+		return false
+	}
+	if !this.PairPrice.Equal(that1.PairPrice) {
+		return false
+	}
+	return true
+}
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
@@ -306,7 +552,7 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 
 func (c *msgClient) PostPrice(ctx context.Context, in *MsgPostPrice, opts ...grpc.CallOption) (*MsgPostPriceResponse, error) {
 	out := new(MsgPostPriceResponse)
-	err := c.cc.Invoke(ctx, "/NibiruChain.pricefeed.v1.Msg/PostPrice", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.pricefeed.v1.Msg/PostPrice", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +587,7 @@ func _Msg_PostPrice_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/NibiruChain.pricefeed.v1.Msg/PostPrice",
+		FullMethod: "/nibiru.pricefeed.v1.Msg/PostPrice",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).PostPrice(ctx, req.(*MsgPostPrice))
@@ -350,7 +596,7 @@ func _Msg_PostPrice_Handler(srv interface{}, ctx context.Context, dec func(inter
 }
 
 var _Msg_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "NibiruChain.pricefeed.v1.Msg",
+	ServiceName: "nibiru.pricefeed.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -447,6 +693,101 @@ func (m *MsgPostPriceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *EventOracleUpdatePrice) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventOracleUpdatePrice) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventOracleUpdatePrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	n2, err2 := github_com_gogo_protobuf_types.StdTimeMarshalTo(m.Expiry, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(m.Expiry):])
+	if err2 != nil {
+		return 0, err2
+	}
+	i -= n2
+	i = encodeVarintTx(dAtA, i, uint64(n2))
+	i--
+	dAtA[i] = 0x22
+	{
+		size := m.PairPrice.Size()
+		i -= size
+		if _, err := m.PairPrice.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if len(m.Oracle) > 0 {
+		i -= len(m.Oracle)
+		copy(dAtA[i:], m.Oracle)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Oracle)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.PairId) > 0 {
+		i -= len(m.PairId)
+		copy(dAtA[i:], m.PairId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PairId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventPairPriceUpdated) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventPairPriceUpdated) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventPairPriceUpdated) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.PairPrice.Size()
+		i -= size
+		if _, err := m.PairPrice.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.PairId) > 0 {
+		i -= len(m.PairId)
+		copy(dAtA[i:], m.PairId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PairId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -489,6 +830,42 @@ func (m *MsgPostPriceResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *EventOracleUpdatePrice) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.PairId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Oracle)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.PairPrice.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = github_com_gogo_protobuf_types.SizeOfStdTime(m.Expiry)
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *EventPairPriceUpdated) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.PairId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.PairPrice.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -740,6 +1117,303 @@ func (m *MsgPostPriceResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgPostPriceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventOracleUpdatePrice) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventOracleUpdatePrice: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventOracleUpdatePrice: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PairId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PairId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Oracle", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Oracle = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PairPrice", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.PairPrice.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Expiry", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(&m.Expiry, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventPairPriceUpdated) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventPairPriceUpdated: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventPairPriceUpdated: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PairId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PairId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PairPrice", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.PairPrice.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+package nibiru.perp.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "perp/v1/state.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
+
+// Emitted when a position changes.
+// TODO: Is there a way to split this into different events without creating too much complexity?
+message PositionChangedEvent {
+    // identifier of the corresponding virtual pool for the position
+    string pair = 1;
+
+    // owner of the position.
+    string trader_address = 2;
+  
+    // amount of margin backing the position.
+    cosmos.base.v1beta1.Coin margin = 3[
+      (gogoproto.moretags) = "yaml:\"margin\"",
+      (gogoproto.nullable) = false
+    ];
+  
+    // margin * leverage * vPrice. 'notional' is the virtual size times the virtual price on 'vpool'.
+    string position_notional = 4 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+  
+    // magnitude of the change to vsize. The vsize is the amount of base assets for the position, margin * leverage * priceBasePerQuote.
+    string exchanged_position_size = 5 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false];
+
+    // transaction fee paid
+    cosmos.base.v1beta1.Coin transaction_fee = 6[
+      (gogoproto.moretags) = "yaml:\"transaction_fee\"",
+      (gogoproto.nullable) = false
+    ];
+  
+    // position virtual size after the change
+    string position_size = 7 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+  
+    // realize profits and losses after the change
+    string realized_pnl = 8 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+  
+    // unrealized profits and losses after the change
+    string unrealized_pnl_after = 9 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+  
+    // Amount of bad debt cleared by the PerpEF during the change. Bad debt is negative net margin past the liquidation point of a position.
+    string bad_debt = 10 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+  
+    // amt of margin (y) lost due to liquidation
+    string liquidation_penalty = 11 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // vPrice defined as yRes / xRes for a vpool, where yRes is the quote reserves and xRes is the base reserves.
+    string spot_price = 12 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+      
+    /* A funding payment made or received by the trader on the current position. 
+    'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
+    is the receiver of the payment. Its magnitude is abs(vSize * fundingRate). 
+    Funding payments act to converge the mark price (vPrice) and index price 
+    (average price on major exchanges).
+      */
+    string funding_payment = 13 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The block number at which this position was changed.
+    int64 block_height = 14;
+
+    // The block time in unix milliseconds at which this position was changed.
+    int64 block_time_ms = 15;
+}
+
+// Emitted when a position is liquidated.
+message PositionLiquidatedEvent {
+    // identifier of the corresponding virtual pool for the position
+    string pair = 1;
+
+    // owner of the position.
+    string trader_address = 2;
+
+    // margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'vpool'.
+    string exchanged_quote_amount = 3 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+    // virtual amount of base assets for the position, which would be margin * leverage * priceBasePerQuote.
+    string exchanged_position_size = 4 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+    // Address of the account that executed the tx.
+    string liquidator_address = 5;
+
+    // Commission (in margin units) received by 'liquidator'.
+    cosmos.base.v1beta1.Coin fee_to_liquidator = 6 [
+        (gogoproto.moretags) = "yaml:\"fee_to_liquidator\"",
+        (gogoproto.nullable) = false
+    ];
+
+    // Commission (in margin units) given to the ecosystem fund.
+    cosmos.base.v1beta1.Coin fee_to_ecosystem_fund = 7 [
+        (gogoproto.moretags) = "yaml:\"fee_to_ecosystem_fund\"",
+        (gogoproto.nullable) = false
+    ];
+
+    //  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is negative net margin past the liquidation point of a position.
+    string bad_debt = 8 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+    // Remaining margin in the position after liquidation
+    cosmos.base.v1beta1.Coin margin = 9 [
+      (gogoproto.moretags) = "yaml:\"margin\"",
+      (gogoproto.nullable) = false
+    ];
+
+    // Remaining position notional in the position after liquidation
+    string position_notional = 10 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // Remaining position size in the position after liquidation
+    string position_size = 11 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // Unrealized PnL in the position after liquidation
+    string unrealizedPnl = 12 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+
+    // Spot price of the vAMM after liquidation
+    string mark_price = 13 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The block number at which this liquidation occured.
+    int64 block_height = 14;
+
+    // The unix timestamp in milliseconds at which this liquidation occured. 
+    int64 block_time_ms = 15;
+
+}
+
+// Emitted when a position is settled.
+message PositionSettledEvent {
+    // Identifier for the virtual pool of the position.
+    string pair = 1;
+
+    // Owner of the position.
+    string trader_address = 2;
+
+    // Settled coin as dictated by the settlement price of the vpool.
+    repeated cosmos.base.v1beta1.Coin settled_coins = 3 [
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+        (gogoproto.moretags) = "yaml:\"settled_coins\"",
+        (gogoproto.nullable) = false
+    ];
+}
+
+// Emitted when a position's margin is changed (AddMargin or RemoveMargin).
+message MarginChangedEvent {
+  // Identifier for the virtual pool of the position.
+  string pair = 1;
+
+  // Owner of the position.
+  string trader_address = 2;
+
+  // Amount of margin exchanged.
+  string margin_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Amount of funding payment applied.
+  string funding_payment = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}

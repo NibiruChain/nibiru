@@ -2,7 +2,7 @@ package types // noalias
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -11,9 +11,9 @@ import (
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
-	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
-	SetAccount(sdk.Context, types.AccountI)
+	GetModuleAccount(ctx sdk.Context, moduleName string) authtypes.ModuleAccountI
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
+	SetAccount(sdk.Context, authtypes.AccountI)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -41,11 +41,9 @@ type PricefeedKeeper interface {
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
 	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
-	GetPair(ctx sdk.Context, pairID string) (pftypes.Pair, bool)
-	GetPairs(ctx sdk.Context) pftypes.Pairs
-	GetOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
-	) (sdk.AccAddress, error)
-	GetOracles(ctx sdk.Context, pairID string) ([]sdk.AccAddress, error)
+	IsWhitelistedOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
+	) bool
+	GetOraclesForPair(ctx sdk.Context, pairID string) (oracles []sdk.AccAddress)
 	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
 }
 

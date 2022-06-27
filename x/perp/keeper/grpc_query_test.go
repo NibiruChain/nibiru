@@ -11,19 +11,19 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestQueryPosition_Ok(t *testing.T) {
 	t.Log("initialize keeper")
-	nibiruApp, ctx := testutil.NewNibiruApp(true)
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeper
 
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	trader := sample.AccAddress()
-	vpoolPair, err := common.NewAssetPairFromStr("btc:nusd")
+	vpoolPair, err := common.NewAssetPair("btc:nusd")
 	require.NoError(t, err)
 
 	oldPosition := &types.Position{

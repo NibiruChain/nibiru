@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,33 +48,30 @@ func TestAsInt(t *testing.T) {
 
 func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 	testCases := []struct {
-		name              string
-		govAmt            sdk.Int
-		priceGov          sdk.Dec
-		priceColl         sdk.Dec
-		collRatio         sdk.Dec
-		neededCollAmt     sdk.Int
-		mintableStableAmt sdk.Int
-		err               error
+		name                      string
+		govAmt                    sdk.Int
+		priceGov                  sdk.Dec
+		priceColl                 sdk.Dec
+		collRatio                 sdk.Dec
+		expectedNeededCollAmt     sdk.Int
+		expectedMintableStableAmt sdk.Int
 	}{
 		{
-			name:              "Low collateral ratio",
-			govAmt:            sdk.NewInt(10),
-			priceGov:          sdk.NewDec(80), // 80 * 10 = 800
-			priceColl:         sdk.NewDec(10), // c * 10 = 200
-			collRatio:         sdk.MustNewDecFromStr("0.2"),
-			neededCollAmt:     sdk.NewInt(20), // → c = 20
-			mintableStableAmt: sdk.NewInt(1000),
-			err:               nil,
+			name:                      "Low collateral ratio",
+			govAmt:                    sdk.NewInt(10),
+			priceGov:                  sdk.NewDec(80), // 80 * 10 = 800
+			priceColl:                 sdk.NewDec(10), // c * 10 = 200
+			collRatio:                 sdk.MustNewDecFromStr("0.2"),
+			expectedNeededCollAmt:     sdk.NewInt(20), // → c = 20
+			expectedMintableStableAmt: sdk.NewInt(1000),
 		}, {
-			name:              "High collateral ratio",
-			govAmt:            sdk.NewInt(10),
-			priceGov:          sdk.OneDec(),               // 10 * 1 = 10
-			priceColl:         sdk.MustNewDecFromStr("2"), // c * 2 = 90
-			collRatio:         sdk.MustNewDecFromStr("0.9"),
-			neededCollAmt:     sdk.NewInt(45), // → c = 45
-			mintableStableAmt: sdk.NewInt(100),
-			err:               nil,
+			name:                      "High collateral ratio",
+			govAmt:                    sdk.NewInt(10),
+			priceGov:                  sdk.OneDec(),               // 10 * 1 = 10
+			priceColl:                 sdk.MustNewDecFromStr("2"), // c * 2 = 90
+			collRatio:                 sdk.MustNewDecFromStr("0.9"),
+			expectedNeededCollAmt:     sdk.NewInt(45), // → c = 45
+			expectedMintableStableAmt: sdk.NewInt(100),
 		},
 	}
 	for _, testCase := range testCases {
@@ -82,10 +79,8 @@ func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			neededCollAmt, mintableStableAmt := keeper.NeededCollAmtGivenGov(
 				tc.govAmt, tc.priceGov, tc.priceColl, tc.collRatio)
-			testutil.RequireEqualWithMessage(
-				t, neededCollAmt, tc.neededCollAmt, "neededCollAmt")
-			testutil.RequireEqualWithMessage(
-				t, mintableStableAmt, tc.mintableStableAmt, "mintableStableAmt")
+			assert.EqualValues(t, tc.expectedNeededCollAmt, neededCollAmt)
+			assert.EqualValues(t, tc.expectedMintableStableAmt, mintableStableAmt)
 		})
 	}
 }

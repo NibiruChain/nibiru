@@ -7,26 +7,27 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testkeeper"
 )
 
 func TestPostPrice(t *testing.T) {
-	k, ctx := testkeeper.PricefeedKeeper(t)
+	k, ctx := testutilkeeper.PricefeedKeeper(t)
 	msgSrv := keeper.NewMsgServerImpl(k)
 
 	_, addrs := sample.PrivKeyAddressPairs(4)
 	authorizedOracles := addrs[:2]
 	unauthorizedAddrs := addrs[2:]
 
-	mp := types.Params{
-		Pairs: []types.Pair{
-			{Token1: "tst", Token0: "usd", Oracles: authorizedOracles, Active: true},
-		},
+	pair := common.MustNewAssetPair("usd:tst")
+	params := types.Params{
+		Pairs: common.AssetPairs{pair},
 	}
-	k.SetParams(ctx, mp)
+	k.SetParams(ctx, params)
+	k.WhitelistOraclesForPairs(ctx, authorizedOracles, common.AssetPairs{pair})
 
 	tests := []struct {
 		giveMsg      string
@@ -42,14 +43,14 @@ func TestPostPrice(t *testing.T) {
 		{"expired", authorizedOracles[0], "tst", "usd",
 			ctx.BlockTime().UTC().Add(-time.Hour * 1), false, types.ErrExpired},
 		{"invalid", authorizedOracles[0], "invalid", "invalid",
-			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidPair},
+			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 		{"unauthorized", unauthorizedAddrs[0], "tst", "usd",
 			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.giveMsg, func(t *testing.T) {
-			// Use MsgServer over keeper methods directly to tests against valid oracles
+			// Use MsgServer over keeper methods directly to test against valid oracles
 			msg := types.NewMsgPostPrice(
 				tt.giveOracle.String(), tt.giveToken0, tt.giveToken1,
 				sdk.MustNewDecFromStr("0.5"), tt.giveExpiry)

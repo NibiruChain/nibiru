@@ -34,12 +34,12 @@ func (q queryServer) TraderPosition(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pair, err := common.NewAssetPairFromStr(req.TokenPair)
+	pair, err := common.NewAssetPair(req.TokenPair)
 	if err != nil {
 		return nil, err
 	}
 
-	position, err := q.Keeper.Positions().Get(ctx, pair, trader)
+	position, err := q.Keeper.PositionsState(ctx).Get(pair, trader)
 	if err != nil {
 		return nil, err
 	}

@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
@@ -42,7 +42,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 
 	s.T().Log("setting up integration test suite")
-	s.network = testutilcli.New(s.T(), s.cfg)
+
+	app.SetPrefixes(app.AccountAddressPrefix)
+	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	// create a new user address
 	s.testAccount = s.NewAccount("NewAddr")
@@ -51,9 +53,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.FundAccount(
 		s.testAccount,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(common.StableDenom, 20000),
-			sdk.NewInt64Coin(common.CollDenom, 20000),
-			sdk.NewInt64Coin(common.GovDenom, 2e9), // for pool creation fee and more for tx fees
+			sdk.NewInt64Coin(common.DenomStable, 20000),
+			sdk.NewInt64Coin(common.DenomColl, 20000),
+			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
 		),
 	)
 }
@@ -82,8 +84,8 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 	}{
 		{
 			name:              "create pool with insufficient funds",
-			tokenWeights:      fmt.Sprintf("1%s, 1%s", common.GovDenom, common.StableDenom),
-			initialDeposit:    fmt.Sprintf("1000000000%s,10000000000%s", common.GovDenom, common.StableDenom),
+			tokenWeights:      fmt.Sprintf("1%s, 1%s", common.DenomGov, common.DenomStable),
+			initialDeposit:    fmt.Sprintf("1000000000%s,10000000000%s", common.DenomGov, common.DenomStable),
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
@@ -95,8 +97,8 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 		},
 		{
 			name:              "create pool with invalid weights",
-			tokenWeights:      fmt.Sprintf("0%s, 1%s", common.GovDenom, common.StableDenom),
-			initialDeposit:    fmt.Sprintf("10000%s,10000%s", common.GovDenom, common.StableDenom),
+			tokenWeights:      fmt.Sprintf("0%s, 1%s", common.DenomGov, common.DenomStable),
+			initialDeposit:    fmt.Sprintf("10000%s,10000%s", common.DenomGov, common.DenomStable),
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
@@ -107,8 +109,8 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 		},
 		{
 			name:              "create pool with deposit not matching weights",
-			tokenWeights:      "1unibi, 1uust",
-			initialDeposit:    "1000foo,10000uust",
+			tokenWeights:      "1unibi, 1uusdc",
+			initialDeposit:    "1000foo,10000uusdc",
 			swapFee:           "0.003",
 			exitFee:           "0.003",
 			extraArgs:         []string{},
@@ -119,8 +121,8 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 		},
 		{
 			name:              "create pool with sufficient funds",
-			tokenWeights:      "1unibi,1uust",
-			initialDeposit:    "100unibi,100uust",
+			tokenWeights:      "1unibi,1uusdc",
+			initialDeposit:    "100unibi,100uusdc",
 			swapFee:           "0.01",
 			exitFee:           "0.01",
 			extraArgs:         []string{},
@@ -146,7 +148,7 @@ func (s IntegrationTestSuite) TestACreatePoolCmd() {
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				// Query balance
-				cmd := dexcli.CmdTotalPoolLiquidity()
+				cmd := cli.CmdTotalPoolLiquidity()
 				out, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, tc.queryArgs)
 
 				if !tc.queryexpectedPass {
@@ -169,8 +171,8 @@ func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
-		/*tokenWeights=*/ "5unibi,5uust",
-		/*initialDeposit=*/ "100unibi,100uust",
+		/*tokenWeights=*/ "5unibi,5uusdc",
+		/*initialDeposit=*/ "100unibi,100uusdc",
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
 	)
@@ -187,7 +189,7 @@ func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 		{
 			name:         "join pool with insufficient balance",
 			poolId:       1,
-			tokensIn:     "1000000000unibi,10000000000uust",
+			tokensIn:     "1000000000unibi,10000000000uusdc",
 			expectErr:    false,
 			respType:     &sdk.TxResponse{},
 			expectedCode: 5, // bankKeeper code for insufficient funds
@@ -195,7 +197,7 @@ func (s IntegrationTestSuite) TestBNewJoinPoolCmd() {
 		{
 			name:         "join pool with sufficient balance",
 			poolId:       1,
-			tokensIn:     "100unibi,100uust",
+			tokensIn:     "100unibi,100uusdc",
 			expectErr:    false,
 			respType:     &sdk.TxResponse{},
 			expectedCode: 0,
@@ -273,7 +275,7 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 			respType:           &sdk.TxResponse{},
 			expectedCode:       0,
 			expectedunibi:      sdk.NewInt(100 - 10 - 1), // Received unibi minus 10unibi tx fee minus 1 exit pool fee
-			expectedOtherToken: sdk.NewInt(100 - 1),      // Received uust minus 1 exit pool fee
+			expectedOtherToken: sdk.NewInt(100 - 1),      // Received uusdc minus 1 exit pool fee
 		},
 	}
 
@@ -309,8 +311,8 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				fmt.Println(finalBalance)
 
 				s.Require().Equal(
-					originalBalance.Balances.AmountOf("uust").Add(tc.expectedOtherToken),
-					finalBalance.Balances.AmountOf("uust"),
+					originalBalance.Balances.AmountOf("uusdc").Add(tc.expectedOtherToken),
+					finalBalance.Balances.AmountOf("uusdc"),
 				)
 				s.Require().Equal(
 					originalBalance.Balances.AmountOf("unibi").Add(tc.expectedunibi),
@@ -342,7 +344,7 @@ func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := dexcli.CmdTotalLiquidity()
+			cmd := cli.CmdTotalLiquidity()
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
@@ -373,14 +375,14 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 			name:          "zero pool id",
 			poolId:        0,
 			tokenIn:       "50unibi",
-			tokenOutDenom: "uust",
+			tokenOutDenom: "uusdc",
 			expectErr:     true,
 		},
 		{
 			name:          "invalid token in",
 			poolId:        1,
 			tokenIn:       "0unibi",
-			tokenOutDenom: "uust",
+			tokenOutDenom: "uusdc",
 			expectErr:     true,
 		},
 		{
@@ -394,7 +396,7 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 			name:          "pool not found",
 			poolId:        1000000,
 			tokenIn:       "50unibi",
-			tokenOutDenom: "uust",
+			tokenOutDenom: "uusdc",
 			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrPoolNotFound.ABCICode(),
 			expectErr:     false,
@@ -403,7 +405,7 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 			name:          "token in denom not found",
 			poolId:        1,
 			tokenIn:       "50foo",
-			tokenOutDenom: "uust",
+			tokenOutDenom: "uusdc",
 			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
@@ -421,7 +423,7 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 			name:          "successful swap",
 			poolId:        1,
 			tokenIn:       "50unibi",
-			tokenOutDenom: "uust",
+			tokenOutDenom: "uusdc",
 			respType:      &sdk.TxResponse{},
 			expectedCode:  0,
 			expectErr:     false,
@@ -448,12 +450,14 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	cfg := testutil.DefaultConfig()
+	encodingConfig := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
+	cfg := testutilcli.BuildNetworkConfig(defaultAppGenesis)
 	cfg.UpdateStartingToken(
 		sdk.NewCoins(
-			sdk.NewInt64Coin(common.StableDenom, 20000),
-			sdk.NewInt64Coin(common.CollDenom, 20000),
-			sdk.NewInt64Coin(common.GovDenom, 2e9), // for pool creation fee and more for tx fees
+			sdk.NewInt64Coin(common.DenomStable, 20000),
+			sdk.NewInt64Coin(common.DenomColl, 20000),
+			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
 		),
 	)
 	suite.Run(t, &IntegrationTestSuite{cfg: cfg})
@@ -480,7 +484,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutil.DefaultFeeString(s.cfg.BondDenom),
+		testutilcli.DefaultFeeString(s.cfg.BondDenom),
 	)
 	s.Require().NoError(err)
 }

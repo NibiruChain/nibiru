@@ -25,7 +25,7 @@ func NewPool(
 }
 
 func (p *Pool) GetAssetPair() common.AssetPair {
-	pair, err := common.NewAssetPairFromStr(p.Pair)
+	pair, err := common.NewAssetPair(p.Pair)
 	if err != nil {
 		panic(err)
 	}
@@ -144,4 +144,22 @@ func (p *Pool) IncreaseQuoteAssetReserve(amount sdk.Dec) {
 // DecreaseQuoteAssetReserve decreases the base reserve by amount
 func (p *Pool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
 	p.QuoteAssetReserve = p.QuoteAssetReserve.Sub(amount)
+}
+
+/*
+NewCurrentTWAP returns an instance of CurrentTWAP
+
+Args:
+  token0 (string):
+  token1 (string):
+  price (sdk.Dec): Price in units of token1 / token0
+Returns:
+  (CurrentTWAP): Current TWAP price for the asset pair.
+*/
+func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Dec, price sdk.Dec) CurrentTWAP {
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	if err := assetPair.Validate(); err != nil {
+		panic(err)
+	}
+	return CurrentTWAP{PairID: assetPair.String(), Numerator: numerator, Denominator: denominator, Price: price}
 }
