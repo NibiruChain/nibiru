@@ -154,7 +154,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 	tests := []struct {
 		name string
 
-		liquidationFee      int64
+		liquidationFee      sdk.Dec
 		initialPositionSize sdk.Dec
 		initialMargin       sdk.Dec
 		initialOpenNotional sdk.Dec
@@ -188,7 +188,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			*/
 			name: "remaining margin more than liquidation fee",
 
-			liquidationFee:      100_000, // 0.1 liquidation fee
+			liquidationFee:      sdk.MustNewDecFromStr("0.1"),
 			initialPositionSize: sdk.NewDec(100),
 			initialMargin:       sdk.NewDec(10),
 			initialOpenNotional: sdk.NewDec(100),
@@ -222,7 +222,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			*/
 			name: "remaining margin less than liquidation fee but greater than zero",
 
-			liquidationFee:      300_000, // 0.3 liquidation fee
+			liquidationFee:      sdk.MustNewDecFromStr("0.3"),
 			initialPositionSize: sdk.NewDec(100),
 			initialMargin:       sdk.NewDec(10),
 			initialOpenNotional: sdk.NewDec(100),
@@ -259,7 +259,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			*/
 			name: "position has + margin and bad debt - 1",
 
-			liquidationFee:      300_000, // 0.3 liquidation fee
+			liquidationFee:      sdk.MustNewDecFromStr("0.3"),
 			initialPositionSize: sdk.NewDec(100),
 			initialMargin:       sdk.NewDec(10),
 			initialOpenNotional: sdk.NewDec(100),
@@ -292,7 +292,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			*/
 			name: "remaining margin more than liquidation fee",
 
-			liquidationFee:      100_000, // 0.1 liquidation fee
+			liquidationFee:      sdk.MustNewDecFromStr("0.1"),
 			initialPositionSize: sdk.NewDec(-100),
 			initialMargin:       sdk.NewDec(10),
 			initialOpenNotional: sdk.NewDec(100),
@@ -326,7 +326,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			*/
 			name: "remaining margin less than liquidation fee but greater than zero",
 
-			liquidationFee:      300_000, // 0.3 liquidation fee
+			liquidationFee:      sdk.MustNewDecFromStr("0.3"),
 			initialPositionSize: sdk.NewDec(-100),
 			initialMargin:       sdk.NewDec(10),
 			initialOpenNotional: sdk.NewDec(100),
@@ -363,7 +363,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 			*/
 			name: "position has + margin and bad debt - 2",
 
-			liquidationFee:      300_000, // 0.3 liquidation fee
+			liquidationFee:      sdk.MustNewDecFromStr("0.3"),
 			initialPositionSize: sdk.NewDec(-100),
 			initialMargin:       sdk.NewDec(10),
 			initialOpenNotional: sdk.NewDec(100),
@@ -421,7 +421,7 @@ func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
 
 			t.Log("setup perp keeper params")
 			newParams := types.DefaultParams()
-			newParams.LiquidationFee = tc.liquidationFee
+			newParams.LiquidationFeeRatio = tc.liquidationFee
 			perpKeeper.SetParams(ctx, newParams)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: BtcNusdPair.String(),

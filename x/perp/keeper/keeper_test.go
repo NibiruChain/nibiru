@@ -27,8 +27,12 @@ func TestGetAndSetParams(t *testing.T) {
 			"Get non-default params",
 			func() types.Params {
 				params := types.Params{
-					Stopped:                true,
-					MaintenanceMarginRatio: sdk.OneDec(),
+					Stopped:                 true,
+					MaintenanceMarginRatio:  sdk.OneDec(),
+					FeePoolFeeRatio:         sdk.OneDec(),
+					EcosystemFundFeeRatio:   sdk.OneDec(),
+					LiquidationFeeRatio:     sdk.OneDec(),
+					PartialLiquidationRatio: sdk.OneDec(),
 				}
 				return params
 			},

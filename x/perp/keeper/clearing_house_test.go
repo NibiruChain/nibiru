@@ -2293,8 +2293,8 @@ func TestClosePosition(t *testing.T) {
 
 			t.Log("set params")
 			params := types.DefaultParams()
-			params.SpreadRatio = 0
-			params.TollRatio = 0
+			params.FeePoolFeeRatio = sdk.ZeroDec()
+			params.EcosystemFundFeeRatio = sdk.ZeroDec()
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("mock vpool keeper")
