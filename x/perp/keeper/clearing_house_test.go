@@ -2181,11 +2181,11 @@ func TestTransferFee(t *testing.T) {
 
 			var wantError error = nil
 			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
-				ctx, trader, types.PerpEFModuleAccount,
+				ctx, trader, types.FeePoolModuleAccount,
 				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
 			).Return(wantError)
 			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
-				ctx, trader, types.FeePoolModuleAccount,
+				ctx, trader, types.PerpEFModuleAccount,
 				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
 			).Return(wantError)
 
@@ -2198,7 +2198,13 @@ func TestTransferFee(t *testing.T) {
 		func(t *testing.T) {
 			k, mocks, ctx, pair, trader, positionNotional := setup()
 
-			expectedError := fmt.Errorf("trader missing funds for spread")
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				ctx, trader, types.FeePoolModuleAccount,
+				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
+			).Return(nil)
+
+			expectedError := fmt.Errorf(
+				"trader missing funds for %s", types.PerpEFModuleAccount)
 			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
 				ctx, trader, types.PerpEFModuleAccount,
 				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5))).
@@ -2211,12 +2217,9 @@ func TestTransferFee(t *testing.T) {
 	t.Run("not enough funds for Fee Pool (toll) - error",
 		func(t *testing.T) {
 			k, mocks, ctx, pair, trader, positionNotional := setup()
-			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
-				ctx, trader, types.PerpEFModuleAccount,
-				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
-			).Return(nil)
 
-			expectedError := fmt.Errorf("trader missing funds for toll")
+			expectedError := fmt.Errorf(
+				"trader missing funds for %s", types.FeePoolModuleAccount)
 			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
 				ctx,
 				/* from */ trader,
