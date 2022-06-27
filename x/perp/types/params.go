@@ -2,6 +2,7 @@ package types
 
 import (
 	fmt "fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -52,6 +53,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&p.EpochIdentifier,
 			validateEpochIdentifier,
 		),
+		paramtypes.NewParamSetPair(
+			[]byte("TwapLookbackWindow"),
+			&p.TwapLookbackWindow,
+			validateTwapLookbackWindow,
+		),
 	}
 }
 
@@ -64,6 +70,7 @@ func NewParams(
 	liquidationFeeRatio sdk.Dec,
 	partialLiquidationRatio sdk.Dec,
 	epochIdentifier string,
+	twapLookbackWindow time.Duration,
 ) Params {
 	return Params{
 		Stopped:                 stopped,
@@ -73,26 +80,21 @@ func NewParams(
 		LiquidationFeeRatio:     liquidationFeeRatio,
 		PartialLiquidationRatio: partialLiquidationRatio,
 		EpochIdentifier:         epochIdentifier,
+		TwapLookbackWindow:      twapLookbackWindow,
 	}
 }
 
 // DefaultParams returns the default parameters for the x/perp module.
 func DefaultParams() Params {
-	feePoolFeeRatio := sdk.MustNewDecFromStr("0.001")
-	ecosystemFundFeeRatio := sdk.MustNewDecFromStr("0.001")
-	liquidationFee := sdk.MustNewDecFromStr("0.0125")
-	partialLiquidationRatio := sdk.MustNewDecFromStr("0.50")
-	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
-	epochIdentifier := "hour"
-
 	return NewParams(
-		/*Stopped=*/ false,
-		/*MaintenanceMarginRatio=*/ maintenanceMarginRatio,
-		/*FeePoolFeeRatio=*/ feePoolFeeRatio,
-		/*EcosystemFundFeeRatio=*/ ecosystemFundFeeRatio,
-		/*LiquidationFee=*/ liquidationFee,
-		/*PartialLiquidationRatio=*/ partialLiquidationRatio,
-		/*EpochIdentifier=*/ epochIdentifier,
+		/* stopped */ false,
+		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"),
+		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"),
+		/* liquidationFee */ sdk.MustNewDecFromStr("0.0125"),
+		/* partialLiquidationRatio */ sdk.MustNewDecFromStr("0.50"),
+		/* epochIdentifier */ "hour",
+		/* twapLookbackWindow */ 15*time.Minute,
 	)
 }
 
@@ -163,4 +165,15 @@ func getAsString(i interface{}) (string, error) {
 		return "invalid", fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return value, nil
+}
+
+func validateTwapLookbackWindow(i interface{}) error {
+	val, ok := i.(time.Duration)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if val <= 0 {
+		return fmt.Errorf("twap lookback window must be positive, current value is %s", val.String())
+	}
+	return nil
 }
