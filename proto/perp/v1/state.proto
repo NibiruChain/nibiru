@@ -14,21 +14,34 @@ message Params {
 
   string maintenance_margin_ratio = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+    ];
 
-  // toll_ratio is the ratio transferred to the the fee pool
-  int64 toll_ratio = 3;
+  // FeePoolFeeRatio is the ratio transferred to the the fee pool
+  string fee_pool_fee_ratio = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-  // spread_ratio is the ratio transferred to the PerpEF.
-  int64 spread_ratio = 4;
+  // EcosystemFundFeeRatio is the ratio transferred to the PerpEF.
+  string ecosystem_fund_fee_ratio = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-  // LiquidationFee is the percentage of liquidated position that will be given
+  // LiquidationFeeRatio is the percentage of liquidated position that will be given
   // to out as a reward. Half of the liquidation fee is given to the liquidator,
   // and the other half is given to the ecosystem fund.
-  int64 liquidation_fee = 5;
+  string liquidation_fee_ratio = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-  // partial_liquidation_ratio is the share we try to liquidate if the margin is higher than liquidation fee
-  int64 partial_liquidation_ratio = 6;
+  // PartialLiquidationRatio is the share we try to liquidate if the margin is higher than liquidation fee
+  string partial_liquidation_ratio = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // specifies the interval on which the fundingPayment is being updated
   string epoch_identifier = 7;

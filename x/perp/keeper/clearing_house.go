@@ -783,37 +783,47 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.A
 
 // TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
-	ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress,
+	ctx sdk.Context,
+	pair common.AssetPair,
+	trader sdk.AccAddress,
 	positionNotional sdk.Dec,
-) (sdk.Int, error) {
-	toll, spread := k.CalcPerpTxFee(ctx, positionNotional)
-
-	hasToll := toll.IsPositive()
-	hasSpread := spread.IsPositive()
-
-	if !hasToll && !hasSpread {
-		return sdk.ZeroInt(), nil
-	}
-
-	var err error
-	if hasSpread {
-		spreadCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), spread))
-		err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, trader, types.PerpEFModuleAccount, spreadCoins)
-		if err != nil {
-			return sdk.Int{}, err
-		}
-	}
-	if hasToll {
-		tollCoins := sdk.NewCoins(sdk.NewCoin(pair.GetQuoteTokenDenom(), toll))
-		err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, trader, types.FeePoolModuleAccount, tollCoins)
-		if err != nil {
+) (fees sdk.Int, err error) {
+	params := k.GetParams(ctx)
+	feeToFeePool := params.FeePoolFeeRatio.Mul(positionNotional).RoundInt()
+	if feeToFeePool.IsPositive() {
+		if err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx,
+			/* from */ trader,
+			/* to */ types.FeePoolModuleAccount,
+			/* coins */ sdk.NewCoins(
+				sdk.NewCoin(
+					pair.GetQuoteTokenDenom(),
+					feeToFeePool,
+				),
+			),
+		); err != nil {
 			return sdk.Int{}, err
 		}
 	}
 
-	return toll.Add(spread), nil
+	feeToEcosystemFund := params.EcosystemFundFeeRatio.Mul(positionNotional).RoundInt()
+	if feeToEcosystemFund.IsPositive() {
+		if err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx,
+			/* from */ trader,
+			/* to */ types.PerpEFModuleAccount,
+			/* coins */ sdk.NewCoins(
+				sdk.NewCoin(
+					pair.GetQuoteTokenDenom(),
+					feeToEcosystemFund,
+				),
+			),
+		); err != nil {
+			return sdk.Int{}, err
+		}
+	}
+
+	return feeToFeePool.Add(feeToEcosystemFund), nil
 }
 
 /*
