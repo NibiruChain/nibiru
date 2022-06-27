@@ -104,6 +104,19 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
+	spotPrice, err := k.GetSpotPrice(ctx, pair)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
+		Pair:      pair.String(),
+		Price:     spotPrice,
+		Timestamp: ctx.BlockHeader().Time,
+	}); err != nil {
+		return sdk.Dec{}, err
+	}
+
 	return quoteAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapBaseForQuoteEvent{
 		Pair:        pair.String(),
 		QuoteAmount: quoteAssetAmount,
@@ -185,6 +198,18 @@ func (k Keeper) SwapQuoteForBase(
 
 	if err = k.savePoolAndSnapshot(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
+	}
+
+	spotPrice, err := k.GetSpotPrice(ctx, pair)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
+		Pair:      pair.String(),
+		Price:     spotPrice,
+		Timestamp: ctx.BlockHeader().Time,
+	}); err != nil {
+		return sdk.Dec{}, err
 	}
 
 	return baseAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{

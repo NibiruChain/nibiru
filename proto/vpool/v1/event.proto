@@ -5,6 +5,7 @@ package nibiru.vpool.v1;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
@@ -47,5 +48,18 @@ message SwapBaseForQuoteEvent {
     string base_amount = 3 [
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
+    ];
+}
+
+message MarkPriceChanged {
+    string pair = 1;
+    string price = 2 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+    google.protobuf.Timestamp timestamp = 3 [
+      (gogoproto.stdtime) = true,
+      (gogoproto.nullable) = false
     ];
 }
