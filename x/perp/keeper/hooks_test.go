@@ -75,17 +75,17 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 func initParams(ctx sdk.Context, k Keeper) {
 	k.SetParams(ctx, types.Params{
 		Stopped:                 false,
-		MaintenanceMarginRatio:  sdk.NewDec(100),
-		TollRatio:               10,
-		SpreadRatio:             5,
-		LiquidationFee:          7,
-		PartialLiquidationRatio: 10,
+		MaintenanceMarginRatio:  sdk.OneDec(),
+		FeePoolFeeRatio:         sdk.MustNewDecFromStr("0.00001"),
+		EcosystemFundFeeRatio:   sdk.MustNewDecFromStr("0.000005"),
+		LiquidationFeeRatio:     sdk.MustNewDecFromStr("0.000007"),
+		PartialLiquidationRatio: sdk.MustNewDecFromStr("0.00001"),
 		EpochIdentifier:         "hour",
 	})
 	k.PairMetadataState(ctx).Set(&types.PairMetadata{
 		Pair: BtcNusdPair.String(),
 		// start with one entry to ensure we append
-		CumulativePremiumFractions: []sdk.Dec{sdk.NewDec(0)},
+		CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 	})
 }
 

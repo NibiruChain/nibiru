@@ -73,10 +73,10 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
 				params.MaintenanceMarginRatio,
-				params.GetTollRatioAsDec(),
-				params.GetSpreadRatioAsDec(),
+				params.FeePoolFeeRatio,
+				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
-				params.GetPartialLiquidationRatioAsDec(),
+				params.PartialLiquidationRatio,
 				"hour",
 			))
 
@@ -250,10 +250,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
 				params.MaintenanceMarginRatio,
-				params.GetTollRatioAsDec(),
-				params.GetSpreadRatioAsDec(),
+				params.FeePoolFeeRatio,
+				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
-				params.GetPartialLiquidationRatioAsDec(),
+				params.PartialLiquidationRatio,
 				"hour",
 			))
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
@@ -383,7 +383,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 
 			t.Log("Set perp params")
 			params := types.DefaultParams()
-			params.LiquidationFee = tc.liquidationFee.MulInt64(1_000_000).RoundInt64()
+			params.LiquidationFeeRatio = tc.liquidationFee
 			perpKeeper.SetParams(ctx, params)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       pair.String(),
@@ -524,8 +524,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
 				params.MaintenanceMarginRatio,
-				params.GetTollRatioAsDec(),
-				params.GetSpreadRatioAsDec(),
+				params.FeePoolFeeRatio,
+				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
 				partialLiquidationRatio,
 				"hour",

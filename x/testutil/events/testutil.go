@@ -1,6 +1,8 @@
 package events
 
 import (
+	"reflect"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
@@ -32,4 +34,26 @@ func RequireHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Messa
 	}
 
 	t.Errorf("event not found")
+}
+
+func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
+	foundEvents := []proto.Message{}
+	for _, abciEvent := range ctx.EventManager().Events() {
+		if abciEvent.Type != proto.MessageName(event) {
+			continue
+		}
+		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
+			Type:       abciEvent.Type,
+			Attributes: abciEvent.Attributes,
+		})
+		require.NoError(t, err)
+
+		if reflect.DeepEqual(typedEvent, event) {
+			return
+		} else {
+			foundEvents = append(foundEvents, typedEvent)
+		}
+	}
+
+	t.Errorf("event not found, event: %+v, found events: %+v", event, foundEvents)
 }
