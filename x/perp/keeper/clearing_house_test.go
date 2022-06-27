@@ -2606,75 +2606,75 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 }
 
 func TestTransferFee(t *testing.T) {
-	tests := []struct {
-		name string
-		test func()
-	}{
-		{
-			name: "not enough funds for spread - error",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-				pair, err := common.NewAssetPair("btc:usdc")
-				perpKeeper.SetParams(ctx, types.DefaultParams())
-				metadata := &types.PairMetadata{
-					Pair: pair.String(),
-				}
-				perpKeeper.PairMetadataState(ctx).Set(metadata)
-				assert.NoError(t, err)
-				trader := sample.AccAddress()
-
-				positionNotional := sdk.NewDec(5_000)
-				expectedError := fmt.Errorf("trader missing funds for spread")
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
-					ctx, trader, types.PerpEFModuleAccount,
-					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5))).
-					Return(expectedError)
-				// toll = quote * feeRatioFeePool
-				// spread = quote * feeRatioEcosystemFund
-				_, err = perpKeeper.transferFee(ctx, pair, trader, positionNotional)
-				require.ErrorContains(t, err, expectedError.Error())
-			},
-		},
-		{
-			name: "not enough funds for toll - error",
-			test: func() {
-				perpKeeper, mocks, ctx := getKeeper(t)
-				pair, err := common.NewAssetPair("btc:usdc")
-				perpKeeper.SetParams(ctx, types.DefaultParams())
-				metadata := &types.PairMetadata{
-					Pair: pair.String(),
-				}
-				perpKeeper.PairMetadataState(ctx).Set(metadata)
-				assert.NoError(t, err)
-				trader := sample.AccAddress()
-
-				positionNotional := sdk.NewDec(5_000)
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
-					ctx, trader, types.PerpEFModuleAccount,
-					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
-				).Return(nil)
-				// toll = quote * feeRatioFeePool
-				// spread = quote * feeRatioEcosystemFund
-				expectedError := fmt.Errorf("trader missing funds for toll")
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
-					ctx,
-					/* from */ trader,
-					/* to */ types.FeePoolModuleAccount,
-					sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
-				).Return(expectedError)
-
-				_, err = perpKeeper.transferFee(ctx, pair, trader, positionNotional)
-				require.ErrorContains(t, err, expectedError.Error())
-			},
-		},
+	setup := func() (
+		k Keeper, mocks mockedDependencies, ctx sdk.Context, pair common.AssetPair,
+		trader sdk.AccAddress, positionNotional sdk.Dec,
+	) {
+		perpKeeper, mocks, ctx := getKeeper(t)
+		pair = common.MustNewAssetPair("btc:usdc")
+		perpKeeper.SetParams(ctx, types.DefaultParams())
+		metadata := &types.PairMetadata{
+			Pair: pair.String(),
+		}
+		perpKeeper.PairMetadataState(ctx).Set(metadata)
+		trader = sample.AccAddress()
+		positionNotional = sdk.NewDec(5_000)
+		return perpKeeper, mocks, ctx, pair, trader, positionNotional
 	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+	t.Run("trader has funds - happy",
+		func(t *testing.T) {
+			k, mocks, ctx, pair, trader, positionNotional := setup()
+
+			var wantError error = nil
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				ctx, trader, types.PerpEFModuleAccount,
+				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
+			).Return(wantError)
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				ctx, trader, types.FeePoolModuleAccount,
+				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
+			).Return(wantError)
+
+			_, err := k.transferFee(
+				ctx, pair, trader, positionNotional)
+			require.NoError(t, err)
 		})
-	}
+
+	t.Run("not enough funds for Perp Ecosystem Fund (spread) - error",
+		func(t *testing.T) {
+			k, mocks, ctx, pair, trader, positionNotional := setup()
+
+			expectedError := fmt.Errorf("trader missing funds for spread")
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				ctx, trader, types.PerpEFModuleAccount,
+				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5))).
+				Return(expectedError)
+			_, err := k.transferFee(
+				ctx, pair, trader, positionNotional)
+			require.ErrorContains(t, err, expectedError.Error())
+		})
+
+	t.Run("not enough funds for Fee Pool (toll) - error",
+		func(t *testing.T) {
+			k, mocks, ctx, pair, trader, positionNotional := setup()
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				ctx, trader, types.PerpEFModuleAccount,
+				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
+			).Return(nil)
+
+			expectedError := fmt.Errorf("trader missing funds for toll")
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
+				ctx,
+				/* from */ trader,
+				/* to */ types.FeePoolModuleAccount,
+				sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 5)),
+			).Return(expectedError)
+
+			_, err := k.transferFee(
+				ctx, pair, trader, positionNotional)
+			require.ErrorContains(t, err, expectedError.Error())
+		})
 }
 
 func TestClosePosition(t *testing.T) {
@@ -3014,7 +3014,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			t.Log("close position")
 			resp, err := perpKeeper.ClosePosition(
 				ctx,
-				BtcNusdPair,
+				assetPair,
 				traderAddr,
 			)
 
