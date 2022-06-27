@@ -3,6 +3,7 @@ package perp_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,6 +38,7 @@ func TestGenesis(t *testing.T) {
 			EcosystemFundFeeRatio:   sdk.MustNewDecFromStr("0.000005"),
 			LiquidationFeeRatio:     sdk.MustNewDecFromStr("0.000007"),
 			PartialLiquidationRatio: sdk.MustNewDecFromStr("0.00001"),
+			TwapLookbackWindow:      15 * time.Minute,
 		})
 		// create some positions
 		for i := int64(0); i < 100; i++ {
