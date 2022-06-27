@@ -81,6 +81,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		LiquidationFeeRatio:     sdk.MustNewDecFromStr("0.000007"),
 		PartialLiquidationRatio: sdk.MustNewDecFromStr("0.00001"),
 		EpochIdentifier:         "hour",
+		TwapLookbackWindow:      15 * time.Minute,
 	})
 	k.PairMetadataState(ctx).Set(&types.PairMetadata{
 		Pair: BtcNusdPair.String(),

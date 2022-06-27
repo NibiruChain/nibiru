@@ -138,6 +138,8 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 
 	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, log.NewNopLogger())
 
+	k.SetParams(ctx, types.DefaultParams())
+
 	return k, mockedDependencies{
 		mockAccountKeeper:   mockedAccountKeeper,
 		mockBankKeeper:      mockedBankKeeper,

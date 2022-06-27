@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -318,7 +317,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 			currentPosition.GetAssetPair(),
 			baseAssetDirection,
 			positionSizeAbs,
-			/*lookbackInterval=*/ 15*time.Minute,
+			/*lookbackInterval=*/ k.GetParams(ctx).TwapLookbackWindow,
 		)
 		if err != nil {
 			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
