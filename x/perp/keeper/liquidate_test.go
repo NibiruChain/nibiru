@@ -78,6 +78,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 				tc.liquidationFee,
 				params.PartialLiquidationRatio,
 				"hour",
+				15*time.Minute,
 			))
 
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
@@ -255,6 +256,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				tc.liquidationFee,
 				params.PartialLiquidationRatio,
 				"hour",
+				15*time.Minute,
 			))
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       tokenPair.String(),
@@ -529,6 +531,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				tc.liquidationFee,
 				partialLiquidationRatio,
 				"hour",
+				15*time.Minute,
 			))
 
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
