@@ -780,7 +780,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.A
 	return positionResp, nil
 }
 
-// TODO test: transferFee | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) transferFee(
 	ctx sdk.Context,
 	pair common.AssetPair,
