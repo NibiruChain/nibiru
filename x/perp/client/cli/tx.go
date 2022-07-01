@@ -29,6 +29,7 @@ func GetTxCmd() *cobra.Command {
 		AddMarginCmd(),
 		LiquidateCmd(),
 		OpenPositionCmd(),
+		ClosePositionCmd(),
 	)
 
 	return txCmd
