@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -46,7 +45,7 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	marginDelta sdk.Dec,
 ) (remaining RemainingMarginWithFundingPayment, err error) {
 	remaining.LatestCumulativePremiumFraction, err = k.
-		getLatestCumulativePremiumFraction(ctx, currentPosition.GetAssetPair())
+		getLatestCumulativePremiumFraction(ctx, currentPosition.Pair)
 	if err != nil {
 		return remaining, err
 	}
@@ -94,11 +93,11 @@ position without making it go underwater.
 func (k Keeper) calcFreeCollateral(
 	ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
 ) (accountExcessEquity sdk.Int, err error) {
-	pair, err := common.NewAssetPair(pos.Pair)
-	if err != nil {
-		return sdk.Int{}, common.ErrInvalidTokenPair
+	if err = pos.Pair.Validate(); err != nil {
+		return sdk.Int{}, err
 	}
-	err = k.requireVpool(ctx, pair)
+
+	err = k.requireVpool(ctx, pos.Pair)
 	if err != nil {
 		return sdk.Int{}, err
 	}

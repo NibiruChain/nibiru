@@ -203,7 +203,7 @@ func (k Keeper) increasePosition(
 
 	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
-		currentPosition.GetAssetPair(),
+		currentPosition.Pair,
 		side,
 		increasedNotional,
 		baseAssetAmountLimit,
@@ -314,7 +314,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	case types.PnLCalcOption_TWAP:
 		positionNotional, err = k.VpoolKeeper.GetBaseAssetTWAP(
 			ctx,
-			currentPosition.GetAssetPair(),
+			currentPosition.Pair,
 			baseAssetDirection,
 			positionSizeAbs,
 			/*lookbackInterval=*/ k.GetParams(ctx).TwapLookbackWindow,
@@ -326,7 +326,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	case types.PnLCalcOption_SPOT_PRICE:
 		positionNotional, err = k.VpoolKeeper.GetBaseAssetPrice(
 			ctx,
-			currentPosition.GetAssetPair(),
+			currentPosition.Pair,
 			baseAssetDirection,
 			positionSizeAbs,
 		)
@@ -336,7 +336,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 	case types.PnLCalcOption_ORACLE:
 		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(
-			ctx, currentPosition.GetAssetPair())
+			ctx, currentPosition.Pair)
 		if err != nil {
 			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
@@ -465,7 +465,7 @@ func (k Keeper) decreasePosition(
 
 	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
-		currentPosition.GetAssetPair(),
+		currentPosition.Pair,
 		sideToTake,
 		decreasedNotional,
 		baseAssetAmountLimit,
@@ -604,7 +604,7 @@ func (k Keeper) closeAndOpenReversePosition(
 
 		newPosition := types.ZeroPosition(
 			ctx,
-			existingPosition.GetAssetPair(),
+			existingPosition.Pair,
 			trader,
 		)
 		increasePositionResp, err := k.increasePosition(
@@ -706,7 +706,7 @@ func (k Keeper) closePositionEntirely(
 
 	ExchangedNotionalValue, err := k.VpoolKeeper.SwapBaseForQuote(
 		ctx,
-		currentPosition.GetAssetPair(),
+		currentPosition.Pair,
 		baseAssetDirection,
 		currentPosition.Size_.Abs(),
 		quoteAssetAmountLimit,
@@ -728,7 +728,7 @@ func (k Keeper) closePositionEntirely(
 
 	if err = k.ClearPosition(
 		ctx,
-		currentPosition.GetAssetPair(),
+		currentPosition.Pair,
 		trader,
 	); err != nil {
 		return nil, err
