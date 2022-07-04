@@ -127,10 +127,10 @@ func PairNameFromDenoms(denoms []string) string {
 // Validate performs a basic validation of the market params
 func (pair AssetPair) Validate() error {
 	if err := sdk.ValidateDenom(pair.Token1); err != nil {
-		return fmt.Errorf("invalid token1 asset: %w", err)
+		return ErrInvalidTokenPair.Wrapf("invalid token1 asset: %s", err)
 	}
 	if err := sdk.ValidateDenom(pair.Token0); err != nil {
-		return fmt.Errorf("invalid token0 asset: %w", err)
+		return ErrInvalidTokenPair.Wrapf("invalid token0 asset: %s", err)
 	}
 	return nil
 }

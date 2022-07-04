@@ -50,8 +50,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-			pair, err2 := common.NewAssetPair("BTC:NUSD")
-			require.NoError(t, err2)
+			pair := common.MustNewAssetPair("BTC:NUSD")
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -82,7 +81,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			))
 
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       pair.String(),
+				Pair:                       pair,
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -128,8 +127,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair, err := common.NewAssetPair("BTC:NUSD")
-	require.NoError(t, err)
+	tokenPair := common.MustNewAssetPair("BTC:NUSD")
 
 	traderAddr := sample.AccAddress()
 
@@ -259,7 +257,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       tokenPair.String(),
+				Pair:                       tokenPair,
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
@@ -366,8 +364,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Initialize keepers, pair, and liquidator")
 			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-			pair, err := common.NewAssetPair("xxx:yyy")
-			require.NoError(t, err)
+			pair := common.MustNewAssetPair("xxx:yyy")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			perpKeeper := &nibiruApp.PerpKeeper
 
@@ -388,7 +385,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 			params.LiquidationFeeRatio = tc.liquidationFee
 			perpKeeper.SetParams(ctx, params)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       pair.String(),
+				Pair:                       pair,
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})
 
@@ -430,8 +427,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 
 func TestExecutePartialLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair, err := common.NewAssetPair("xxx:yyy")
-	require.NoError(t, err)
+	tokenPair := common.MustNewAssetPair("xxx:yyy")
 
 	traderAddr := sample.AccAddress()
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.4")
@@ -535,7 +531,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			))
 
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       tokenPair.String(),
+				Pair:                       tokenPair,
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 

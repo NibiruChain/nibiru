@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
@@ -17,43 +16,38 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 	if epochIdentifier != params.EpochIdentifier || params.Stopped {
 		return
 	}
-	for _, md := range k.PairMetadataState(ctx).GetAll() {
-		assetPair, err := common.NewAssetPair(md.Pair)
-		if err != nil {
-			ctx.Logger().Error("invalid asset pair", "assetPair", md.Pair, "error", err)
+	for _, pairMetadata := range k.PairMetadataState(ctx).GetAll() {
+		if !k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
+			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
-		if !k.VpoolKeeper.ExistsPool(ctx, assetPair) {
-			ctx.Logger().Error("no pool for pair found", "assetPair", assetPair)
-			continue
-		}
-		indexTWAPPrice, err := k.PricefeedKeeper.GetCurrentTWAPPrice(ctx, assetPair.Token0, assetPair.Token1)
+		indexTWAPPrice, err := k.PricefeedKeeper.GetCurrentTWAPPrice(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
 		if err != nil {
-			ctx.Logger().Error("failed to fetch twap index price", "assetPair", assetPair, "error", err)
+			ctx.Logger().Error("failed to fetch twap index price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
 		}
 		if indexTWAPPrice.Price.IsZero() {
-			ctx.Logger().Error("index price is zero", "assetPair", assetPair)
+			ctx.Logger().Error("index price is zero", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
-		markTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, assetPair)
+		markTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, pairMetadata.Pair)
 		if err != nil {
-			ctx.Logger().Error("failed to fetch twap mark price", "assetPair", assetPair, "error", err)
+			ctx.Logger().Error("failed to fetch twap mark price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
 		}
 		if markTWAPPrice.Price.IsZero() {
-			ctx.Logger().Error("mark price is zero", "assetPair", assetPair)
+			ctx.Logger().Error("mark price is zero", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 		fundingRate := markTWAPPrice.Price.Sub(indexTWAPPrice.Price).QuoInt64(int64(intervalsPerDay))
 
-		if len(md.CumulativePremiumFractions) > 0 {
-			fundingRate = md.CumulativePremiumFractions[len(md.CumulativePremiumFractions)-1].Add(fundingRate)
+		if len(pairMetadata.CumulativePremiumFractions) > 0 {
+			fundingRate = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(fundingRate)
 		}
-		md.CumulativePremiumFractions = append(md.CumulativePremiumFractions, fundingRate)
-		k.PairMetadataState(ctx).Set(md)
+		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, fundingRate)
+		k.PairMetadataState(ctx).Set(pairMetadata)
 	}
 }
 
