@@ -3,6 +3,7 @@ package keeper
 import (
 	"math"
 	"testing"
+	"time"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -17,6 +18,161 @@ import (
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
+
+func TestLiquidate(t *testing.T) {
+	tests := []struct {
+		name string
+
+		initialPositionSize         sdk.Dec
+		initialPositionMargin       sdk.Dec
+		initialPositionOpenNotional sdk.Dec
+
+		newPositionNotional sdk.Dec
+
+		expectedLiquidatorFee sdk.Coin
+		expectedPerpEFFee     sdk.Coin
+
+		expectedPositionSize         sdk.Dec
+		expectedPositionMargin       sdk.Dec
+		expectedPositionOpenNotional sdk.Dec
+		expectedUnrealizedPnl        sdk.Dec
+	}{
+		{
+			name: "ExecutePartialLiquidation",
+
+			initialPositionSize:         sdk.OneDec(),
+			initialPositionMargin:       sdk.NewDec(100),
+			initialPositionOpenNotional: sdk.NewDec(1000),
+
+			newPositionNotional: sdk.NewDec(959), // just below 6.25% margin ratio
+
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 3),
+			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 3),
+
+			expectedPositionSize:         sdk.MustNewDecFromStr("0.5"),
+			expectedPositionMargin:       sdk.MustNewDecFromStr("73.50625"),
+			expectedPositionOpenNotional: sdk.NewDec(500),
+			expectedUnrealizedPnl:        sdk.MustNewDecFromStr("-20.5"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			perpKeeper, mocks, ctx := getKeeper(t)
+			traderAddr := sample.AccAddress()
+			liquidatorAddr := sample.AccAddress()
+			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
+
+			t.Log("set position")
+			position := types.Position{
+				TraderAddress: traderAddr.String(),
+				Pair:          common.PairBTCStable.String(),
+				Size_:         tc.initialPositionSize,
+				Margin:        tc.initialPositionMargin,
+				OpenNotional:  tc.initialPositionOpenNotional,
+			}
+			perpKeeper.SetPosition(ctx, common.PairBTCStable, traderAddr, &position)
+
+			t.Log("set params")
+			params := types.DefaultParams()
+			perpKeeper.SetParams(ctx, params)
+
+			t.Log("set pair metadata")
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				Pair: common.PairBTCStable.String(),
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			})
+
+			t.Log("mock vpool keeper")
+			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.PairBTCStable).Return(false)
+			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.PairBTCStable).Return(tc.newPositionNotional, nil)
+
+			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
+				ctx,
+				common.PairBTCStable,
+				vpooltypes.Direction_ADD_TO_POOL,
+				sdk.OneDec(),
+				15*time.Minute,
+			).Return(tc.newPositionNotional, nil)
+			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
+				ctx,
+				common.PairBTCStable,
+				vpooltypes.Direction_ADD_TO_POOL,
+				sdk.OneDec(),
+			).Return(tc.newPositionNotional, nil).Times(4)
+			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
+				ctx,
+				common.PairBTCStable,
+				vpooltypes.Direction_ADD_TO_POOL,
+				tc.initialPositionSize.Mul(params.PartialLiquidationRatio),
+			).Return(tc.newPositionNotional.Mul(params.PartialLiquidationRatio), nil)
+			mocks.mockVpoolKeeper.EXPECT().SwapQuoteForBase(
+				ctx,
+				common.PairBTCStable,
+				vpooltypes.Direction_REMOVE_FROM_POOL,
+				/* quoteAmt */ tc.newPositionNotional.Mul(params.PartialLiquidationRatio),
+				/* baseLimit */ sdk.ZeroDec(),
+			).Return(tc.initialPositionSize.Mul(params.PartialLiquidationRatio), nil)
+
+			t.Log("mock account keeper")
+			mocks.mockAccountKeeper.
+				EXPECT().GetModuleAddress(types.VaultModuleAccount).
+				Return(vaultAddr)
+
+			t.Log("mock bank keeper")
+			mocks.mockBankKeeper.
+				EXPECT().GetBalance(ctx, vaultAddr, common.DenomStable).
+				Return(sdk.NewInt64Coin(common.DenomStable, 1_000))
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
+				ctx, types.VaultModuleAccount, liquidatorAddr,
+				sdk.NewCoins(tc.expectedLiquidatorFee),
+			).Return(nil)
+			mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
+				ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
+				sdk.NewCoins(tc.expectedPerpEFFee),
+			).Return(nil)
+
+			t.Log("execute liquidation")
+			feeToLiquidator, feeToFund, err := perpKeeper.Liquidate(ctx, liquidatorAddr, common.PairBTCStable, traderAddr)
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedLiquidatorFee, feeToLiquidator)
+			assert.EqualValues(t, tc.expectedPerpEFFee, feeToFund)
+
+			t.Log("assert new position and event")
+			newPosition, err := perpKeeper.GetPosition(ctx, common.PairBTCStable, traderAddr)
+			require.NoError(t, err)
+			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
+			assert.EqualValues(t, common.PairBTCStable.String(), newPosition.Pair)
+			assert.EqualValues(t, tc.expectedPositionSize, newPosition.Size_)
+			assert.EqualValues(t, tc.expectedPositionMargin, newPosition.Margin)
+			assert.EqualValues(t, tc.expectedPositionOpenNotional, newPosition.OpenNotional)
+			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
+			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
+
+			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
+				Pair:                  common.PairBTCStable.String(),
+				TraderAddress:         traderAddr.String(),
+				ExchangedQuoteAmount:  tc.newPositionNotional.Mul(params.PartialLiquidationRatio),
+				ExchangedPositionSize: tc.initialPositionSize.Mul(params.PartialLiquidationRatio).Neg(),
+				LiquidatorAddress:     liquidatorAddr.String(),
+				FeeToLiquidator:       tc.expectedLiquidatorFee,
+				FeeToEcosystemFund:    tc.expectedPerpEFFee,
+				BadDebt:               sdk.ZeroDec(),
+				Margin:                sdk.NewCoin(common.DenomStable, tc.expectedPositionMargin.RoundInt()),
+				PositionNotional:      tc.newPositionNotional.Mul(params.PartialLiquidationRatio),
+				PositionSize:          tc.initialPositionSize.Mul(params.PartialLiquidationRatio),
+				UnrealizedPnl:         tc.expectedUnrealizedPnl,
+				MarkPrice:             tc.newPositionNotional,
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+			})
+		})
+	}
+}
 
 func TestDistributeLiquidateRewards_Error(t *testing.T) {
 	testcases := []struct {
