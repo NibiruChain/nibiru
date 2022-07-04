@@ -27,10 +27,9 @@ func TestGetAndSetPosition(t *testing.T) {
 			test: func() {
 				trader := sample.AccAddress()
 				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-				pair, err := common.NewAssetPair("osmo:nusd")
-				require.NoError(t, err)
+				pair := common.MustNewAssetPair("osmo:nusd")
 
-				_, err = nibiruApp.PerpKeeper.GetPosition(
+				_, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, pair, trader)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
@@ -39,20 +38,19 @@ func TestGetAndSetPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewAssetPair("osmo:nusd")
-				require.NoError(t, err)
+				vpoolPair := common.MustNewAssetPair("osmo:nusd")
 
 				traderAddr := sample.AccAddress()
 				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 
-				_, err = nibiruApp.PerpKeeper.GetPosition(
+				_, err := nibiruApp.PerpKeeper.GetPosition(
 					ctx, vpoolPair, traderAddr)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 
 				dummyPosition := &types.Position{
 					TraderAddress: traderAddr.String(),
-					Pair:          vpoolPair.String(),
+					Pair:          vpoolPair,
 					Size_:         sdk.OneDec(),
 					Margin:        sdk.OneDec(),
 				}
@@ -82,8 +80,7 @@ func TestClearPosition(t *testing.T) {
 		{
 			name: "set - creating position with set works and shows up in get",
 			test: func() {
-				vpoolPair, err := common.NewAssetPair("osmo:nusd")
-				require.NoError(t, err)
+				vpoolPair := common.MustNewAssetPair("osmo:nusd")
 
 				traders := []sdk.AccAddress{
 					sample.AccAddress(), sample.AccAddress(),
@@ -102,7 +99,7 @@ func TestClearPosition(t *testing.T) {
 				for _, traderAddr := range traders {
 					dummyPosition := &types.Position{
 						TraderAddress: traderAddr.String(),
-						Pair:          vpoolPair.String(),
+						Pair:          vpoolPair,
 						Size_:         sdk.OneDec(),
 						Margin:        sdk.OneDec(),
 					}
@@ -162,8 +159,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
 		nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-		pair, err := common.NewAssetPair("xxx:yyy")
-		require.NoError(t, err)
+		pair := common.MustNewAssetPair("xxx:yyy")
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")
 		vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -180,16 +176,18 @@ func TestKeeper_ClosePosition(t *testing.T) {
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		perpKeeper := &nibiruApp.PerpKeeper
-		perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-			Pair: pair.String(),
-			CumulativePremiumFractions: []sdk.Dec{
-				sdk.MustNewDecFromStr("0.2")},
-		})
+		perpKeeper.PairMetadataState(ctx).Set(
+			&types.PairMetadata{
+				Pair: pair,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.MustNewDecFromStr("0.2")},
+			},
+		)
 
 		t.Log("open position for alice - long")
 
 		alice := sample.AccAddress()
-		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+		err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
 
@@ -205,7 +203,7 @@ func TestKeeper_ClosePosition(t *testing.T) {
 		t.Log("open position for bob - long")
 		// force funding payments
 		perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-			Pair: pair.String(),
+			Pair: pair,
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},
 		})

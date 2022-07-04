@@ -88,7 +88,7 @@ func (p PositionsState) keyFromType(position *types.Position) []byte {
 	if err != nil {
 		panic(err)
 	}
-	return p.keyFromRaw(position.GetAssetPair(), traderAddress)
+	return p.keyFromRaw(position.Pair, traderAddress)
 }
 
 func (p PositionsState) keyFromRaw(pair common.AssetPair, address sdk.AccAddress) []byte {
@@ -187,7 +187,7 @@ func (p PairMetadataState) Get(pair common.AssetPair) (*types.PairMetadata, erro
 }
 
 func (p PairMetadataState) Set(metadata *types.PairMetadata) {
-	p.pairsMetadata.Set([]byte(metadata.Pair), p.cdc.MustMarshal(metadata))
+	p.pairsMetadata.Set([]byte(metadata.Pair.String()), p.cdc.MustMarshal(metadata))
 }
 
 func (p PairMetadataState) GetAll() []*types.PairMetadata {

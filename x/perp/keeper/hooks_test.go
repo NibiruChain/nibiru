@@ -10,13 +10,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
-
-var pair = BtcNusdPair
 
 func TestEndOfEpochTwapCalculation(t *testing.T) {
 	tests := []struct {
@@ -60,9 +59,9 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			initParams(ctx, keeper)
 			setMockPrices(ctx, mocks, tc.indexPrice, tc.markPrice)
 			keeper.AfterEpochEnd(ctx, "hour", 0)
-			pair, err := keeper.PairMetadataState(ctx).Get(BtcNusdPair)
+			pair, err := keeper.PairMetadataState(ctx).Get(common.PairBTCStable)
 			require.NoError(t, err)
-			assert.Equal(t, pair.Pair, BtcNusdPair.String())
+			assert.Equal(t, pair.Pair, common.PairBTCStable)
 			expected := []sdk.Dec{sdk.NewDec(0)}
 			if tc.expectedFundingRate != "" {
 				expected = append(expected, sdk.MustNewDecFromStr(tc.expectedFundingRate))
@@ -84,7 +83,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		TwapLookbackWindow:      15 * time.Minute,
 	})
 	k.PairMetadataState(ctx).Set(&types.PairMetadata{
-		Pair: BtcNusdPair.String(),
+		Pair: common.PairBTCStable,
 		// start with one entry to ensure we append
 		CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 	})
@@ -98,15 +97,15 @@ func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice, markPr
 		)
 	}
 	mocks.mockPricefeedKeeper.EXPECT().
-		GetCurrentTWAPPrice(ctx, pair.Token0, pair.Token1).
+		GetCurrentTWAPPrice(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1).
 		Return(pftypes.CurrentTWAP{
-			PairID: BtcNusdPair.String(),
+			PairID: common.PairBTCStable.String(),
 			Price:  sdk.NewDec(indexPrice),
 		}, nil).MaxTimes(1)
 	mocks.mockVpoolKeeper.EXPECT().
-		GetCurrentTWAPPrice(ctx, pair).
+		GetCurrentTWAPPrice(ctx, common.PairBTCStable).
 		Return(vpooltypes.CurrentTWAP{
-			PairID: BtcNusdPair.String(),
+			PairID: common.PairBTCStable.String(),
 			Price:  sdk.NewDec(markPrice),
 		}, nil).MaxTimes(1)
 }

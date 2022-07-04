@@ -114,19 +114,19 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis := perptypes.DefaultGenesis()
 	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
 		{
-			Pair: "ubtc:unibi",
+			Pair: common.MustNewAssetPair("ubtc:unibi"),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
 		},
 		{
-			Pair: "eth:unibi",
+			Pair: common.MustNewAssetPair("eth:unibi"),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
 		},
 		{
-			Pair: common.PairTestStable.String(),
+			Pair: common.PairTestStable,
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -217,7 +217,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
 
@@ -239,7 +239,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
 
@@ -269,7 +269,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
 	s.Assert().EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
 
@@ -292,7 +292,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair.String(), queryResp.Position.Pair)
+	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
 	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)

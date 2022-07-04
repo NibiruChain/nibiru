@@ -31,7 +31,7 @@ var (
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
 		TraderAddress:                       traderAddr.String(),
-		Pair:                                tokenPair.String(),
+		Pair:                                tokenPair,
 		Size_:                               sdk.ZeroDec(),
 		Margin:                              sdk.ZeroDec(),
 		OpenNotional:                        sdk.ZeroDec(),
