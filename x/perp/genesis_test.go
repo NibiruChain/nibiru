@@ -44,7 +44,7 @@ func TestGenesis(t *testing.T) {
 		for i := int64(0); i < 100; i++ {
 			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
 				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PairGovStable.String(),
+				Pair:                                common.PairGovStable,
 				Size_:                               sdk.NewDec(i + 1),
 				Margin:                              sdk.NewDec(i * 2),
 				OpenNotional:                        sdk.NewDec(i * 100),

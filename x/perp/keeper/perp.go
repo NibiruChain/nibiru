@@ -29,12 +29,6 @@ func (k Keeper) SettlePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
 ) (transferredCoins sdk.Coins, err error) {
-	// Validate token pair
-	tokenPair, err := common.NewAssetPair(currentPosition.Pair)
-	if err != nil {
-		return sdk.Coins{}, err
-	}
-
 	// Validate trader address
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
 	if err != nil {
@@ -47,7 +41,7 @@ func (k Keeper) SettlePosition(
 
 	err = k.ClearPosition(
 		ctx,
-		tokenPair,
+		currentPosition.Pair,
 		traderAddr,
 	)
 	if err != nil {
@@ -55,7 +49,7 @@ func (k Keeper) SettlePosition(
 	}
 
 	// run calculations on settled values
-	settlementPrice, err := k.VpoolKeeper.GetSettlementPrice(ctx, tokenPair)
+	settlementPrice, err := k.VpoolKeeper.GetSettlementPrice(ctx, currentPosition.Pair)
 	if err != nil {
 		return
 	}
@@ -74,10 +68,10 @@ func (k Keeper) SettlePosition(
 		}
 	}
 
-	transferredCoins = sdk.NewCoins(sdk.NewInt64Coin(tokenPair.GetQuoteTokenDenom(), 0))
+	transferredCoins = sdk.NewCoins(sdk.NewInt64Coin(currentPosition.Pair.GetQuoteTokenDenom(), 0))
 	settledValueInt := settledValue.RoundInt()
 	if settledValueInt.IsPositive() {
-		toTransfer := sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), settledValueInt)
+		toTransfer := sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), settledValueInt)
 		transferredCoins = sdk.NewCoins(toTransfer)
 		if err != nil {
 			panic(err) // NOTE(mercilex): must never happen
@@ -94,7 +88,7 @@ func (k Keeper) SettlePosition(
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionSettledEvent{
-		Pair:          tokenPair.String(),
+		Pair:          currentPosition.Pair.String(),
 		TraderAddress: traderAddr.String(),
 		SettledCoins:  transferredCoins,
 	})
