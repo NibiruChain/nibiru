@@ -389,7 +389,9 @@ func TestDistributeLiquidateRewards_Error(t *testing.T) {
 				perpKeeper, _, ctx := getKeeper(t)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
+					types.LiquidateResp{
+						BadDebt:                sdk.OneDec(),
+						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             "",
 					},
@@ -403,13 +405,16 @@ func TestDistributeLiquidateRewards_Error(t *testing.T) {
 				perpKeeper, _, ctx := getKeeper(t)
 				liquidator := sample.AccAddress()
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
+					types.LiquidateResp{
+						BadDebt:                sdk.OneDec(),
+						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
 								Pair: "dai:usdc:usdt",
-							}},
+							},
+						},
 					},
 				)
 				require.Error(t, err)
@@ -423,13 +428,16 @@ func TestDistributeLiquidateRewards_Error(t *testing.T) {
 				liquidator := sample.AccAddress()
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, BtcNusdPair).Return(false)
 				err := perpKeeper.distributeLiquidateRewards(ctx,
-					types.LiquidateResp{BadDebt: sdk.OneDec(), FeeToLiquidator: sdk.OneInt(),
+					types.LiquidateResp{
+						BadDebt:                sdk.OneDec(),
+						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator.String(),
 						PositionResp: &types.PositionResp{
 							Position: &types.Position{
 								Pair: BtcNusdPair.String(),
-							}},
+							},
+						},
 					},
 				)
 				require.Error(t, err)
