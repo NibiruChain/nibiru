@@ -160,7 +160,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	}
 
 	liquidationResp = types.LiquidateResp{
-		BadDebt:                totalBadDebt,
+		BadDebt:                totalBadDebt.RoundInt(),
 		FeeToLiquidator:        feeToLiquidator.RoundInt(),
 		FeeToPerpEcosystemFund: feeToPerpEcosystemFund.RoundInt(),
 		Liquidator:             liquidator.String(),
@@ -313,7 +313,7 @@ func (k Keeper) ExecutePartialLiquidation(
 	feeToPerpEcosystemFund := liquidationFeeAmount.Sub(feeToLiquidator)
 
 	liquidationResponse := types.LiquidateResp{
-		BadDebt:                sdk.ZeroDec(),
+		BadDebt:                sdk.ZeroInt(),
 		FeeToLiquidator:        feeToLiquidator.RoundInt(),
 		FeeToPerpEcosystemFund: feeToPerpEcosystemFund.RoundInt(),
 		Liquidator:             liquidator.String(),
@@ -337,7 +337,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		LiquidatorAddress:     liquidator.String(),
 		FeeToLiquidator:       sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
 		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
-		BadDebt:               liquidationResponse.BadDebt,
+		BadDebt:               liquidationResponse.BadDebt.ToDec(),
 		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationResponse.PositionResp.Position.Margin.RoundInt()),
 		PositionNotional:      liquidationResponse.PositionResp.PositionNotional,
 		PositionSize:          liquidationResponse.PositionResp.Position.Size_,

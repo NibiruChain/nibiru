@@ -366,6 +366,171 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 	}
 }
 
+func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
+	tests := []struct {
+		name string
+
+		initialPositionSize         sdk.Dec
+		initialPositionMargin       sdk.Dec
+		initialPositionOpenNotional sdk.Dec
+
+		newPositionNotional sdk.Dec
+
+		expectedLiquidatorFee sdk.Coin
+		expectedPerpEFFee     sdk.Coin
+
+		expectedPositionBadDebt    sdk.Dec
+		expectedLiquidationBadDebt sdk.Dec
+	}{
+		{
+			name: "Full Liquidation - at 0% margin ratio",
+
+			initialPositionSize:         sdk.OneDec(),
+			initialPositionMargin:       sdk.NewDec(100),
+			initialPositionOpenNotional: sdk.NewDec(1000),
+
+			newPositionNotional: sdk.NewDec(900), // at 0% margin ratio
+
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6), // 911 * 0.0125 / 2
+			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0), // no margin left for perp ef
+
+			expectedPositionBadDebt:    sdk.ZeroDec(),
+			expectedLiquidationBadDebt: sdk.NewDec(6),
+		},
+		{
+			name: "Full Liquidation - below 0% margin ratio",
+
+			initialPositionSize:         sdk.OneDec(),
+			initialPositionMargin:       sdk.NewDec(100),
+			initialPositionOpenNotional: sdk.NewDec(1000),
+
+			newPositionNotional: sdk.NewDec(899),
+
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6),
+			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0),
+
+			expectedPositionBadDebt:    sdk.NewDec(1),
+			expectedLiquidationBadDebt: sdk.NewDec(6),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			perpKeeper, mocks, ctx := getKeeper(t)
+			traderAddr := sample.AccAddress()
+			liquidatorAddr := sample.AccAddress()
+			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
+
+			t.Log("set position")
+			position := types.Position{
+				TraderAddress: traderAddr.String(),
+				Pair:          common.PairBTCStable.String(),
+				Size_:         tc.initialPositionSize,
+				Margin:        tc.initialPositionMargin,
+				OpenNotional:  tc.initialPositionOpenNotional,
+			}
+			perpKeeper.SetPosition(ctx, common.PairBTCStable, traderAddr, &position)
+
+			t.Log("set params")
+			params := types.DefaultParams()
+			perpKeeper.SetParams(ctx, params)
+
+			t.Log("set pair metadata")
+			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				Pair: common.PairBTCStable.String(),
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			})
+
+			t.Log("mock vpool keeper")
+			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.PairBTCStable).Return(false)
+			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
+			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.PairBTCStable).Return(markPrice, nil)
+
+			mocks.mockVpoolKeeper.EXPECT().
+				GetBaseAssetTWAP(
+					ctx,
+					common.PairBTCStable,
+					vpooltypes.Direction_ADD_TO_POOL,
+					tc.initialPositionSize,
+					15*time.Minute,
+				).
+				Return(tc.newPositionNotional, nil)
+			mocks.mockVpoolKeeper.EXPECT().
+				GetBaseAssetPrice(
+					ctx,
+					common.PairBTCStable,
+					vpooltypes.Direction_ADD_TO_POOL,
+					tc.initialPositionSize,
+				).
+				Return(tc.newPositionNotional, nil).Times(3)
+			mocks.mockVpoolKeeper.EXPECT().
+				SwapBaseForQuote(
+					ctx,
+					common.PairBTCStable,
+					vpooltypes.Direction_ADD_TO_POOL,
+					/* baseAmt */ tc.initialPositionSize,
+					/* quoteLimit */ sdk.ZeroDec(),
+				).
+				Return(tc.newPositionNotional, nil)
+
+			t.Log("mock account keeper")
+			mocks.mockAccountKeeper.EXPECT().
+				GetModuleAddress(types.VaultModuleAccount).
+				Return(vaultAddr)
+
+			t.Log("mock bank keeper")
+			mocks.mockBankKeeper.EXPECT().
+				GetBalance(ctx, vaultAddr, common.DenomStable).
+				Return(sdk.NewInt64Coin(common.DenomStable, 1_000))
+			mocks.mockBankKeeper.EXPECT().
+				SendCoinsFromModuleToAccount(
+					ctx, types.VaultModuleAccount, liquidatorAddr,
+					sdk.NewCoins(tc.expectedLiquidatorFee),
+				).
+				Return(nil)
+			mocks.mockBankKeeper.EXPECT().
+				SendCoinsFromModuleToModule(
+					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount,
+					sdk.NewCoins(sdk.NewCoin(common.DenomStable, tc.expectedLiquidationBadDebt.RoundInt())),
+				).
+				Return(nil)
+
+			t.Log("execute liquidation")
+			feeToLiquidator, feeToFund, err := perpKeeper.Liquidate(ctx, liquidatorAddr, common.PairBTCStable, traderAddr)
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedLiquidatorFee, feeToLiquidator)
+			assert.EqualValues(t, tc.expectedPerpEFFee.String(), feeToFund.String())
+
+			t.Log("assert new position and event")
+			newPosition, err := perpKeeper.GetPosition(ctx, common.PairBTCStable, traderAddr)
+			require.ErrorIs(t, err, types.ErrPositionNotFound)
+			assert.Nil(t, newPosition)
+
+			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
+				Pair:                  common.PairBTCStable.String(),
+				TraderAddress:         traderAddr.String(),
+				ExchangedQuoteAmount:  tc.newPositionNotional,
+				ExchangedPositionSize: tc.initialPositionSize.Neg(),
+				LiquidatorAddress:     liquidatorAddr.String(),
+				FeeToLiquidator:       tc.expectedLiquidatorFee,
+				FeeToEcosystemFund:    tc.expectedPerpEFFee,
+				BadDebt:               tc.expectedLiquidationBadDebt.Add(tc.expectedPositionBadDebt),
+				Margin:                sdk.NewInt64Coin(common.DenomStable, 0),
+				PositionNotional:      sdk.ZeroDec(), // always zero
+				PositionSize:          sdk.ZeroDec(), // always zero
+				UnrealizedPnl:         sdk.ZeroDec(), // always zero
+				MarkPrice:             markPrice,
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+			})
+		})
+	}
+}
+
 func TestDistributeLiquidateRewards(t *testing.T) {
 	testcases := []struct {
 		name string
@@ -388,7 +553,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{
-						BadDebt:                sdk.OneDec(),
+						BadDebt:                sdk.OneInt(),
 						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             "",
@@ -404,7 +569,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 				liquidator := sample.AccAddress()
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{
-						BadDebt:                sdk.OneDec(),
+						BadDebt:                sdk.OneInt(),
 						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator.String(),
@@ -427,7 +592,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, BtcNusdPair).Return(false)
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{
-						BadDebt:                sdk.OneDec(),
+						BadDebt:                sdk.OneInt(),
 						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator.String(),
@@ -468,7 +633,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{
-						BadDebt:                sdk.OneDec(),
+						BadDebt:                sdk.OneInt(),
 						FeeToLiquidator:        sdk.OneInt(),
 						FeeToPerpEcosystemFund: sdk.OneInt(),
 						Liquidator:             liquidator.String(),
