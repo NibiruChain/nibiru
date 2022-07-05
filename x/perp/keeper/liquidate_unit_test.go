@@ -5,21 +5,19 @@ import (
 	"testing"
 	"time"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestLiquidatePartialLiquidation(t *testing.T) {
+func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 	tests := []struct {
 		name string
 
@@ -210,7 +208,7 @@ func TestLiquidatePartialLiquidation(t *testing.T) {
 	}
 }
 
-func TestLiquidateFullLiquidation(t *testing.T) {
+func TestLiquidateIntoFullLiquidation(t *testing.T) {
 	tests := []struct {
 		name string
 
@@ -368,7 +366,7 @@ func TestLiquidateFullLiquidation(t *testing.T) {
 	}
 }
 
-func TestDistributeLiquidateRewards_Error(t *testing.T) {
+func TestDistributeLiquidateRewards(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func()
@@ -444,21 +442,6 @@ func TestDistributeLiquidateRewards_Error(t *testing.T) {
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
 		},
-	}
-
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
-}
-
-func TestDistributeLiquidateRewards_Happy(t *testing.T) {
-	testcases := []struct {
-		name string
-		test func()
-	}{
 		{
 			name: "healthy liquidation",
 			test: func() {
@@ -508,7 +491,7 @@ func TestDistributeLiquidateRewards_Happy(t *testing.T) {
 	}
 }
 
-func TestExecuteFullLiquidation_UnitWithMocks(t *testing.T) {
+func TestExecuteFullLiquidation(t *testing.T) {
 	tests := []struct {
 		name string
 
