@@ -1,4 +1,4 @@
-syntax="proto3";
+syntax = "proto3";
 
 package nibiru.vpool.v1;
 
@@ -6,6 +6,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
+import "common/common.proto";
 
 enum Direction {
   DIRECTION_UNSPECIFIED = 0;
@@ -40,6 +41,7 @@ message ReserveSnapshot {
 
   // milliseconds since unix epoch
   int64 timestamp_ms = 3;
+
   int64 block_number = 4;
 }
 
@@ -47,30 +49,37 @@ message ReserveSnapshot {
 // No real liquidity exists in this pool.
 message Pool {
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
-  string pair = 1;
+  common.AssetPair pair = 1 [
+    (gogoproto.nullable) = false
+  ];
 
   // base asset is the crypto asset, e.g. BTC or ETH
   string base_asset_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // quote asset is usually stablecoin, in our case NUSD
   string quote_asset_reserve = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
     
   // ratio applied to reserves in order not to over trade
   string trade_limit_ratio = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // percentage that a single open or close position can alter the reserve amounts
   string fluctuation_limit_ratio = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // max_oracle_spread_ratio
   string max_oracle_spread_ratio = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];    
+    (gogoproto.nullable) = false
+  ];    
 }

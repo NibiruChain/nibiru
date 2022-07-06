@@ -10,8 +10,7 @@ import (
 )
 
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
-	pair, err := common.NewAssetPair("BTC:NUSD")
-	require.NoError(t, err)
+	pair := common.MustNewAssetPair("BTC:NUSD")
 
 	pool := NewPool(
 		pair,
@@ -33,8 +32,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
-	pair, err := common.NewAssetPair("BTC:NUSD")
-	require.NoError(t, err)
+	pair := common.MustNewAssetPair("BTC:NUSD")
 
 	tests := []struct {
 		name               string
@@ -106,8 +104,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 }
 
 func TestGetQuoteAmountByBaseAmount(t *testing.T) {
-	pair, err := common.NewAssetPair("BTC:NUSD")
-	require.NoError(t, err)
+	pair := common.MustNewAssetPair("BTC:NUSD")
 
 	tests := []struct {
 		name                string
@@ -179,8 +176,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 }
 
 func TestIncreaseDecreaseReserves(t *testing.T) {
-	pair, err := common.NewAssetPair("ATOM:NUSD")
-	require.NoError(t, err)
+	pair := common.MustNewAssetPair("ATOM:NUSD")
 
 	pool := NewPool(
 		pair,
