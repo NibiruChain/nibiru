@@ -52,7 +52,7 @@ func (k Keeper) savePool(
 	pool *types.Pool,
 ) {
 	bz := k.codec.MustMarshal(pool)
-	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(pool.GetAssetPair()), bz)
+	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(pool.Pair), bz)
 }
 
 /*
@@ -80,7 +80,7 @@ func (k Keeper) savePoolAndSnapshot(
 
 	if err = k.addReserveSnapshot(
 		ctx,
-		updatedPool.GetAssetPair(),
+		updatedPool.Pair,
 		updatedPool.QuoteAssetReserve,
 		updatedPool.BaseAssetReserve,
 	); err != nil {

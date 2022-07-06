@@ -21,7 +21,7 @@ func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing
 
 	pool := getSamplePool()
 
-	err := vpoolKeeper.addReserveSnapshot(ctx, pool.GetAssetPair(), pool.QuoteAssetReserve, pool.BaseAssetReserve)
+	err := vpoolKeeper.addReserveSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 
 	_, _, err = vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)
@@ -44,8 +44,8 @@ func TestSaveSnapshot(t *testing.T) {
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 	ctx = ctx.WithBlockHeight(expectedBlockHeight).WithBlockTime(expectedTime)
-	vpoolKeeper.saveSnapshot(ctx, pool.GetAssetPair(), 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, expectedTime, expectedBlockHeight)
-	vpoolKeeper.saveSnapshotCounter(ctx, pool.GetAssetPair(), 0)
+	vpoolKeeper.saveSnapshot(ctx, pool.Pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, expectedTime, expectedBlockHeight)
+	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
 
 	snapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)
 	require.NoError(t, err)
@@ -74,18 +74,18 @@ func TestGetSnapshot(t *testing.T) {
 	t.Log("Save snapshot 0")
 	vpoolKeeper.saveSnapshot(
 		ctx,
-		pool.GetAssetPair(),
+		pool.Pair,
 		0,
 		pool.QuoteAssetReserve,
 		pool.BaseAssetReserve,
 		expectedTime,
 		expectedHeight,
 	)
-	vpoolKeeper.saveSnapshotCounter(ctx, pool.GetAssetPair(), 0)
+	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
 
 	t.Log("Check snapshot 0")
 	requireLastSnapshotCounterEqual(t, ctx, vpoolKeeper, pool, 0)
-	oldSnapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, pool.GetAssetPair())
+	oldSnapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, pool.Pair)
 	require.NoError(t, err)
 	require.Equal(t, firstSnapshot, oldSnapshot)
 	require.Equal(t, uint64(0), counter)
@@ -98,7 +98,7 @@ func TestGetSnapshot(t *testing.T) {
 	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
 	vpoolKeeper.saveSnapshot(
 		ctx,
-		pool.GetAssetPair(),
+		pool.Pair,
 		1,
 		pool.QuoteAssetReserve,
 		pool.BaseAssetReserve,
@@ -107,14 +107,14 @@ func TestGetSnapshot(t *testing.T) {
 	)
 
 	t.Log("Fetch snapshot 1")
-	newSnapshot, err := vpoolKeeper.getSnapshot(ctx, pool.GetAssetPair(), 1)
+	newSnapshot, err := vpoolKeeper.getSnapshot(ctx, pool.Pair, 1)
 	require.NoError(t, err)
 	require.Equal(t, differentSnapshot, newSnapshot)
 	require.NotEqual(t, differentSnapshot, oldSnapshot)
 }
 
 func requireLastSnapshotCounterEqual(t *testing.T, ctx sdk.Context, keeper Keeper, pool *types.Pool, counter uint64) {
-	c, found := keeper.getSnapshotCounter(ctx, pool.GetAssetPair())
+	c, found := keeper.getSnapshotCounter(ctx, pool.Pair)
 	require.True(t, found)
 	require.Equal(t, counter, c)
 }

@@ -264,7 +264,21 @@ func TestGetVpools(t *testing.T) {
 
 		require.EqualValues(t, 2, len(pools))
 
-		require.Contains(t, pools[0].String(), `pair:"BTC:NUSD" base_asset_reserve:"5000000000000000000000000" quote_asset_reserve:"10000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
-		require.Contains(t, pools[1].String(), `pair:"ETH:NUSD" base_asset_reserve:"10000000000000000000000000" quote_asset_reserve:"5000000000000000000000000" trade_limit_ratio:"1000000000000000000" fluctuation_limit_ratio:"1000000000000000000" max_oracle_spread_ratio:"1000000000000000000"`)
+		require.EqualValues(t, *pools[0], types.Pool{
+			Pair:                  BTCNusdPair,
+			BaseAssetReserve:      sdk.NewDec(5_000_000),
+			QuoteAssetReserve:     sdk.NewDec(10_000_000),
+			TradeLimitRatio:       sdk.OneDec(),
+			FluctuationLimitRatio: sdk.OneDec(),
+			MaxOracleSpreadRatio:  sdk.OneDec(),
+		})
+		require.EqualValues(t, *pools[1], types.Pool{
+			Pair:                  ETHNusdPair,
+			BaseAssetReserve:      sdk.NewDec(10_000_000),
+			QuoteAssetReserve:     sdk.NewDec(5_000_000),
+			TradeLimitRatio:       sdk.OneDec(),
+			FluctuationLimitRatio: sdk.OneDec(),
+			MaxOracleSpreadRatio:  sdk.OneDec(),
+		})
 	})
 }

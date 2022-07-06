@@ -15,22 +15,13 @@ func NewPool(
 	maxOracleSpreadRatio sdk.Dec,
 ) *Pool {
 	return &Pool{
-		Pair:                  pair.String(),
+		Pair:                  pair,
 		BaseAssetReserve:      baseAssetReserve,
 		QuoteAssetReserve:     quoteAssetReserve,
 		TradeLimitRatio:       tradeLimitRatio,
 		FluctuationLimitRatio: fluctuationLimitRatio,
 		MaxOracleSpreadRatio:  maxOracleSpreadRatio,
 	}
-}
-
-func (p *Pool) GetAssetPair() common.AssetPair {
-	pair, err := common.NewAssetPair(p.Pair)
-	if err != nil {
-		panic(err)
-	}
-
-	return pair
 }
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on

@@ -221,18 +221,13 @@ func (k Keeper) SwapQuoteForBase(
 
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
 	if pool.FluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		pair, err := common.NewAssetPair(pool.Pair)
-		if err != nil {
-			return err
-		}
-
-		latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pair)
+		latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pool.Pair)
 		if err != nil {
 			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 		}
 
 		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 0 {
-			latestSnapshot, err = k.getSnapshot(ctx, pair, counter-1)
+			latestSnapshot, err = k.getSnapshot(ctx, pool.Pair, counter-1)
 			if err != nil {
 				return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
 			}

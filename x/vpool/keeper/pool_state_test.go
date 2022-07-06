@@ -46,7 +46,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 
 	vpools := []*types2.Pool{
 		{
-			Pair:                  "BTC:NUSD",
+			Pair:                  common.MustNewAssetPair("BTC:NUSD"),
 			BaseAssetReserve:      sdk.NewDec(1_000_000),      // 1
 			QuoteAssetReserve:     sdk.NewDec(30_000_000_000), // 30,000
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.88"),
@@ -54,7 +54,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.20"),
 		},
 		{
-			Pair:                  "ETH:NUSD",
+			Pair:                  common.MustNewAssetPair("ETH:NUSD"),
 			BaseAssetReserve:      sdk.NewDec(2_000_000),      // 1
 			QuoteAssetReserve:     sdk.NewDec(60_000_000_000), // 30,000
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.77"),
