@@ -213,8 +213,12 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("166.663888935184413593"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{
@@ -235,8 +239,12 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503125"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000938"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000938"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
 	args = []string{
@@ -265,8 +273,12 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737846"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999999506"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000494"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatio)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	args = []string{
@@ -288,9 +300,12 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("1000099.999999999999999651"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000843"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
 
 	s.T().Log("F. Close position")
 	args = []string{
@@ -303,11 +318,13 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.PairBTCStable, user)
+
 	s.T().Logf("query response: %+v", queryResp)
 	s.Error(err)
+
 	status, ok := status.FromError(err)
 	s.True(ok)
-	s.EqualValues(codes.NotFound, status.Code())
+	s.EqualValues(codes.InvalidArgument, status.Code())
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
