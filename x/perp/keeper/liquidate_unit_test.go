@@ -391,11 +391,11 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 
 			newPositionNotional: sdk.NewDec(900), // at 0% margin ratio
 
-			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6), // 911 * 0.0125 / 2
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6), // 900 * 0.0125 / 2
 			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0), // no margin left for perp ef
 
 			expectedPositionBadDebt:    sdk.ZeroDec(),
-			expectedLiquidationBadDebt: sdk.NewDec(6),
+			expectedLiquidationBadDebt: sdk.MustNewDecFromStr("5.625"),
 		},
 		{
 			name: "Full Liquidation - below 0% margin ratio",
@@ -410,7 +410,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0),
 
 			expectedPositionBadDebt:    sdk.NewDec(1),
-			expectedLiquidationBadDebt: sdk.NewDec(6),
+			expectedLiquidationBadDebt: sdk.MustNewDecFromStr("5.61875"),
 		},
 	}
 
@@ -495,7 +495,12 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			mocks.mockBankKeeper.EXPECT().
 				SendCoinsFromModuleToModule(
 					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount,
-					sdk.NewCoins(sdk.NewCoin(common.DenomStable, tc.expectedLiquidationBadDebt.RoundInt())),
+					sdk.NewCoins(
+						sdk.NewCoin(
+							common.DenomStable,
+							tc.expectedLiquidationBadDebt.Add(tc.expectedPositionBadDebt).RoundInt(),
+						),
+					),
 				).
 				Return(nil)
 
@@ -668,7 +673,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		// amount of quote obtained by trading <initialPositionSize> base
 		baseAssetPriceInQuote sdk.Dec
 
-		expectedLiquidationBadDebt     sdk.Dec
+		expectedLiquidationBadDebt     sdk.Int
 		expectedFundsToPerpEF          sdk.Int
 		expectedFundsToLiquidator      sdk.Int
 		expectedExchangedNotionalValue sdk.Dec
@@ -701,7 +706,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
 
-			expectedLiquidationBadDebt:     sdk.ZeroDec(),
+			expectedLiquidationBadDebt:     sdk.ZeroInt(),
 			expectedFundsToPerpEF:          sdk.NewInt(5),
 			expectedFundsToLiquidator:      sdk.NewInt(5),
 			expectedExchangedNotionalValue: sdk.NewDec(100),
@@ -735,7 +740,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
 
-			expectedLiquidationBadDebt:     sdk.NewDec(5),
+			expectedLiquidationBadDebt:     sdk.NewInt(5),
 			expectedFundsToPerpEF:          sdk.ZeroInt(),
 			expectedFundsToLiquidator:      sdk.NewInt(15),
 			expectedExchangedNotionalValue: sdk.NewDec(100),
@@ -772,7 +777,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			baseAssetPriceInQuote: sdk.NewDec(80), // price dropped
 
-			expectedLiquidationBadDebt:     sdk.NewDec(22),
+			expectedLiquidationBadDebt:     sdk.NewInt(22),
 			expectedFundsToPerpEF:          sdk.ZeroInt(),
 			expectedFundsToLiquidator:      sdk.NewInt(12),
 			expectedExchangedNotionalValue: sdk.NewDec(80),
@@ -805,7 +810,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
 
-			expectedLiquidationBadDebt:     sdk.ZeroDec(),
+			expectedLiquidationBadDebt:     sdk.ZeroInt(),
 			expectedFundsToPerpEF:          sdk.NewInt(5),
 			expectedFundsToLiquidator:      sdk.NewInt(5),
 			expectedExchangedNotionalValue: sdk.NewDec(100),
@@ -839,7 +844,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
 
-			expectedLiquidationBadDebt:     sdk.NewDec(5),
+			expectedLiquidationBadDebt:     sdk.NewInt(5),
 			expectedFundsToPerpEF:          sdk.ZeroInt(),
 			expectedFundsToLiquidator:      sdk.NewInt(15),
 			expectedExchangedNotionalValue: sdk.NewDec(100),
@@ -876,7 +881,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			baseAssetPriceInQuote: sdk.NewDec(120), // price increased
 
-			expectedLiquidationBadDebt:     sdk.NewDec(28),
+			expectedLiquidationBadDebt:     sdk.NewInt(28),
 			expectedFundsToPerpEF:          sdk.ZeroInt(),
 			expectedFundsToLiquidator:      sdk.NewInt(18),
 			expectedExchangedNotionalValue: sdk.NewDec(120),
@@ -917,11 +922,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedFundsToLiquidator)),
 				).Return(nil)
 			}
-			expectedTotalBadDebtInt := tc.expectedLiquidationBadDebt.RoundInt()
-			if expectedTotalBadDebtInt.IsPositive() {
+			if tc.expectedLiquidationBadDebt.IsPositive() {
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
 					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount,
-					sdk.NewCoins(sdk.NewCoin("NUSD", expectedTotalBadDebtInt)),
+					sdk.NewCoins(sdk.NewCoin("NUSD", tc.expectedLiquidationBadDebt)),
 				)
 			}
 
@@ -1014,7 +1018,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       sdk.NewCoin(BtcNusdPair.GetQuoteTokenDenom(), tc.expectedFundsToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(BtcNusdPair.GetQuoteTokenDenom(), tc.expectedFundsToPerpEF),
-				BadDebt:               tc.expectedLiquidationBadDebt,
+				BadDebt:               tc.expectedLiquidationBadDebt.ToDec(),
 				Margin:                sdk.NewCoin(BtcNusdPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
 				PositionNotional:      positionResp.PositionNotional,
 				PositionSize:          newPosition.Size_,
