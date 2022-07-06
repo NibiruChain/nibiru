@@ -44,7 +44,20 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
+	positionNotional, unrealizedPnl, err := q.Keeper.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	if err != nil {
+		return nil, err
+	}
+
+	marginRatio, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_SPOT)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryTraderPositionResponse{
-		Position: position,
+		Position:         position,
+		PositionNotional: positionNotional,
+		UnrealizedPnl:    unrealizedPnl,
+		MarginRatio:      marginRatio,
 	}, nil
 }
