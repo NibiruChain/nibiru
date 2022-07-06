@@ -109,11 +109,6 @@ func (k Keeper) ExecuteFullLiquidation(
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
 
-	pair, err := common.NewAssetPair(position.Pair)
-	if err != nil {
-		return types.LiquidateResp{}, err
-	}
-
 	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
@@ -147,7 +142,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	if totalBadDebt.IsPositive() {
 		if err = k.realizeBadDebt(
 			ctx,
-			position.GetAssetPair().GetQuoteTokenDenom(),
+			position.Pair.GetQuoteTokenDenom(),
 			totalBadDebt.RoundInt(),
 		); err != nil {
 			return types.LiquidateResp{}, err
@@ -171,21 +166,21 @@ func (k Keeper) ExecuteFullLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	markPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
+	markPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, position.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		Pair:                  position.Pair,
+		Pair:                  position.Pair.String(),
 		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidator.String(),
-		FeeToLiquidator:       sdk.NewCoin(position.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund:    sdk.NewCoin(position.GetAssetPair().GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
+		FeeToLiquidator:       sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund:    sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
 		BadDebt:               totalBadDebt,
-		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationResp.PositionResp.Position.Margin.RoundInt()),
+		Margin:                sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), liquidationResp.PositionResp.Position.Margin.RoundInt()),
 		PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 		PositionSize:          liquidationResp.PositionResp.Position.Size_,
 		UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
@@ -215,10 +210,7 @@ func (k Keeper) distributeLiquidateRewards(
 	}
 
 	// validate pair
-	pair, err := common.NewAssetPair(liquidateResp.PositionResp.Position.Pair)
-	if err != nil {
-		return err
-	}
+	pair := liquidateResp.PositionResp.Position.Pair
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return err
@@ -261,11 +253,6 @@ func (k Keeper) ExecutePartialLiquidation(
 ) (types.LiquidateResp, error) {
 	params := k.GetParams(ctx)
 
-	pair, err := common.NewAssetPair(currentPosition.Pair)
-	if err != nil {
-		return types.LiquidateResp{}, err
-	}
-
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
@@ -280,7 +267,7 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
 		ctx,
-		currentPosition.GetAssetPair(),
+		currentPosition.Pair,
 		baseAssetDir,
 		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
 	)
@@ -305,7 +292,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.SetPosition(ctx, currentPosition.GetAssetPair(), traderAddr,
+	k.SetPosition(ctx, currentPosition.Pair, traderAddr,
 		positionResp.Position)
 
 	// Compute splits for the liquidation fee
@@ -324,21 +311,21 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	markPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
+	markPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, currentPosition.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		Pair:                  currentPosition.Pair,
+		Pair:                  currentPosition.Pair.String(),
 		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidator.String(),
-		FeeToLiquidator:       sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.GetAssetPair().GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
+		FeeToLiquidator:       sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
 		BadDebt:               liquidationResponse.BadDebt.ToDec(),
-		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), liquidationResponse.PositionResp.Position.Margin.RoundInt()),
+		Margin:                sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), liquidationResponse.PositionResp.Position.Margin.RoundInt()),
 		PositionNotional:      liquidationResponse.PositionResp.PositionNotional,
 		PositionSize:          liquidationResponse.PositionResp.Position.Size_,
 		UnrealizedPnl:         liquidationResponse.PositionResp.UnrealizedPnlAfter,

@@ -23,12 +23,11 @@ func TestQueryPosition_Ok(t *testing.T) {
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	trader := sample.AccAddress()
-	vpoolPair, err := common.NewAssetPair("btc:nusd")
-	require.NoError(t, err)
+	vpoolPair := common.MustNewAssetPair("btc:nusd")
 
 	oldPosition := &types.Position{
 		TraderAddress: trader.String(),
-		Pair:          vpoolPair.String(),
+		Pair:          vpoolPair,
 		Size_:         sdk.NewDec(10),
 		OpenNotional:  sdk.NewDec(10),
 		Margin:        sdk.NewDec(1),

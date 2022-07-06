@@ -6,6 +6,7 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/duration.proto";
+import "common/common.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
@@ -56,24 +57,31 @@ message Params {
   ];
 }
 
-// GenesisState defines the perp  module's genesis state.
+// GenesisState defines the perp module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
+
   repeated cosmos.base.v1beta1.Coin vault_balance = 2 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+
   repeated cosmos.base.v1beta1.Coin perp_ef_balance = 3 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+
   repeated cosmos.base.v1beta1.Coin fee_pool_balance = 4 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false
   ];
+
   repeated PairMetadata pair_metadata = 5;
+
   repeated Position positions = 6;
+
   repeated PrepaidBadDebt prepaid_bad_debts = 7;
+
   repeated string whitelisted_addresses = 8;
 }
 
@@ -84,7 +92,9 @@ message Position {
   string trader_address = 1;
 
   // pair identifies the pair associated with this position
-  string pair = 2;
+  common.AssetPair pair = 2 [
+    (gogoproto.nullable) = false
+  ];
 
   // Position size.
   string size = 3 [
@@ -108,7 +118,7 @@ message Position {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false]; // int
 
-  // BlockNumber is the block number of the change to the position.
+  // BlockNumber is the last block number when this position changed.
   int64 block_number = 7;
 }
 
@@ -209,7 +219,10 @@ enum MarginCalculationPriceOption {
 }
 
 message PairMetadata {
-  string pair = 1;
+  common.AssetPair pair = 1 [
+    (gogoproto.nullable) = false
+  ];
+
   repeated string cumulative_premium_fractions = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
@@ -217,6 +230,7 @@ message PairMetadata {
 
 message PrepaidBadDebt {
   string denom = 1;
+
   string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];

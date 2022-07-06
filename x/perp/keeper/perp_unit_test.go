@@ -16,8 +16,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		traderAddr := sample.AccAddress()
-		pair, err := common.NewAssetPair("LUNA:UST")
-		require.NoError(t, err)
+		pair := common.MustNewAssetPair("LUNA:UST")
 
 		dep.mockVpoolKeeper.
 			EXPECT().
@@ -33,12 +32,12 @@ func TestSettlePosition(t *testing.T) {
 
 		pos := types.Position{
 			TraderAddress: traderAddr.String(),
-			Pair:          pair.String(),
+			Pair:          pair,
 			Size_:         sdk.NewDec(10),
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
 		}
-		err = k.PositionsState(ctx).Create(&pos)
+		err := k.PositionsState(ctx).Create(&pos)
 		require.NoError(t, err)
 
 		coins, err := k.SettlePosition(ctx, pos)
@@ -52,8 +51,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price not zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		traderAddr := sample.AccAddress()
-		pair, err := common.NewAssetPair("LUNA:UST") // memeing
-		require.NoError(t, err)
+		pair := common.MustNewAssetPair("LUNA:UST") // memeing
 
 		dep.mockVpoolKeeper.
 			EXPECT().
@@ -77,12 +75,12 @@ func TestSettlePosition(t *testing.T) {
 		// so total is 99_100 coin
 		pos := types.Position{
 			TraderAddress: traderAddr.String(),
-			Pair:          pair.String(),
+			Pair:          pair,
 			Size_:         sdk.NewDec(100),
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
 		}
-		err = k.PositionsState(ctx).Create(&pos)
+		err := k.PositionsState(ctx).Create(&pos)
 		require.NoError(t, err)
 
 		coins, err := k.SettlePosition(ctx, pos)
@@ -94,15 +92,14 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("position size is zero", func(t *testing.T) {
 		k, _, ctx := getKeeper(t)
 		traderAddr := sample.AccAddress()
-		pair, err := common.NewAssetPair("LUNA:UST")
-		require.NoError(t, err)
+		pair := common.MustNewAssetPair("LUNA:UST")
 
 		pos := types.Position{
 			TraderAddress: traderAddr.String(),
-			Pair:          pair.String(),
+			Pair:          pair,
 			Size_:         sdk.ZeroDec(),
 		}
-		err = k.PositionsState(ctx).Create(&pos)
+		err := k.PositionsState(ctx).Create(&pos)
 		require.NoError(t, err)
 
 		coins, err := k.SettlePosition(ctx, pos)

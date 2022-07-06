@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -48,13 +49,13 @@ func TestPrepaidBadDebtState(t *testing.T) {
 func TestPairMetadata_GetAll(t *testing.T) {
 	pairMetadatas := []*types.PairMetadata{
 		{
-			Pair: "ubtc:unibi",
+			Pair: common.MustNewAssetPair("ubtc:unibi"),
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("1"),
 			},
 		},
 		{
-			Pair:                       "ueth:unibi",
+			Pair:                       common.MustNewAssetPair("ueth:unibi"),
 			CumulativePremiumFractions: nil,
 		},
 	}
