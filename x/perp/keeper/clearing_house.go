@@ -359,15 +359,6 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		unrealizedPnL = currentPosition.OpenNotional.Sub(positionNotional)
 	}
 
-	k.Logger(ctx).Debug("get_position_notional_and_unrealized_pnl",
-		"position",
-		currentPosition.String(),
-		"position_notional",
-		positionNotional.String(),
-		"unrealized_pnl",
-		unrealizedPnL.String(),
-	)
-
 	return positionNotional, unrealizedPnL, nil
 }
 
