@@ -81,7 +81,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []*vpooltypes.Pool{
 		{
-			Pair:                  common.PairBTCStable.String(),
+			Pair:                  common.PairBTCStable,
 			BaseAssetReserve:      sdk.NewDec(10_000_000),
 			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
@@ -89,7 +89,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 		{
-			Pair:                  "eth:unibi",
+			Pair:                  common.MustNewAssetPair("eth:unibi"),
 			BaseAssetReserve:      sdk.NewDec(10_000_000),
 			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
@@ -97,7 +97,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 		{
-			Pair:              common.PairTestStable.String(),
+			Pair:              common.PairTestStable,
 			BaseAssetReserve:  sdk.MustNewDecFromStr("100"),
 			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
 

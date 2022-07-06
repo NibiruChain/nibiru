@@ -13,7 +13,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, vp := range genState.Vpools {
 		k.CreatePool(
 			ctx,
-			vp.GetAssetPair(),
+			vp.Pair,
 			vp.TradeLimitRatio,
 			vp.QuoteAssetReserve,
 			vp.BaseAssetReserve,
