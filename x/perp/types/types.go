@@ -53,8 +53,8 @@ func (l *LiquidateResp) Validate() error {
 		}
 	}
 
-	// nil sdk.Dec check
-	for _, field := range []sdk.Dec{l.BadDebt} {
+	// nil sdk.Int check
+	for _, field := range []sdk.Int{l.BadDebt} {
 		if field.IsNil() {
 			return nilFieldError
 		}
