@@ -286,7 +286,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (entire) position")
 			liquidatorAddr := sample.AccAddress()
-			resp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, position)
+			liquidationResp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, position)
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
@@ -311,16 +311,16 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
-				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
+				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
+				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidatorAddr.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
-				BadDebt:               resp.BadDebt,
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               liquidationResp.BadDebt.ToDec(),
 				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), sdk.ZeroInt()),
-				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          sdk.ZeroDec(),
-				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
 				MarkPrice:             newMarkPrice,
 				BlockHeight:           ctx.BlockHeight(),
 				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
@@ -564,7 +564,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (partial) position")
 			liquidator := sample.AccAddress()
-			resp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
+			liquidationResp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
@@ -601,16 +601,16 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
-				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
+				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
+				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidator.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
-				BadDebt:               resp.BadDebt,
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               liquidationResp.BadDebt.ToDec(),
 				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
-				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          newPosition.Size_,
-				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
 				MarkPrice:             newMarkPrice,
 				BlockHeight:           ctx.BlockHeight(),
 				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
