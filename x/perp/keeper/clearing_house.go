@@ -29,11 +29,11 @@ func (k Keeper) OpenPosition(
 	params := k.GetParams(ctx)
 	// TODO: missing checks
 
-	position, err := k.GetPosition(ctx, pair, traderAddr)
+	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-		k.SetPosition(ctx, pair, traderAddr, position)
+		k.PositionsState(ctx).Set(pair, traderAddr, position)
 	} else if err != nil && !isNewPosition {
 		return err
 	}
@@ -86,7 +86,7 @@ func (k Keeper) afterPositionUpdate(
 ) (err error) {
 	// update position in state
 	if !positionResp.Position.Size_.IsZero() {
-		k.SetPosition(ctx, pair, traderAddr, positionResp.Position)
+		k.PositionsState(ctx).Set(pair, traderAddr, positionResp.Position)
 	}
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
@@ -625,7 +625,7 @@ func (k Keeper) closePositionEntirely(
 
 // ClosePosition gets the current position, and calls OpenPosition to open a reverse position with amount equal to the current open notional.
 func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) (*types.PositionResp, error) {
-	position, err := k.GetPosition(ctx, pair, addr)
+	position, err := k.PositionsState(ctx).Get(pair, addr)
 	if err != nil {
 		return nil, err
 	}

@@ -236,7 +236,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
-				perpKeeper.SetPosition(ctx, pair, trader, &types.Position{
+				perpKeeper.PositionsState(ctx).Set(pair, trader, &types.Position{
 					TraderAddress:                       trader.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -279,7 +279,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.SetPosition(ctx, pair, traderAddr, &types.Position{
+				perpKeeper.PositionsState(ctx).Set(pair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -348,7 +348,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.SetPosition(ctx, pair, traderAddr, &types.Position{
+				perpKeeper.PositionsState(ctx).Set(pair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -393,7 +393,7 @@ func TestRemoveMargin(t *testing.T) {
 					FundingPayment: res.FundingPayment,
 				})
 
-				pos, err := perpKeeper.GetPosition(ctx, pair, traderAddr)
+				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
@@ -472,7 +472,7 @@ func TestAddMargin(t *testing.T) {
 				}
 
 				t.Log("set a position")
-				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
+				perpKeeper.PositionsState(ctx).Set(assetPair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                assetPair,
 					Size_:                               sdk.NewDec(1_000),
@@ -522,7 +522,7 @@ func TestAddMargin(t *testing.T) {
 				})
 
 				t.Log("set position")
-				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
+				perpKeeper.PositionsState(ctx).Set(assetPair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                assetPair,
 					Size_:                               sdk.NewDec(1_000),
@@ -589,7 +589,7 @@ func TestAddMargin(t *testing.T) {
 				})
 
 				t.Log("set position")
-				perpKeeper.SetPosition(ctx, assetPair, traderAddr, &types.Position{
+				perpKeeper.PositionsState(ctx).Set(assetPair, traderAddr, &types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                assetPair,
 					Size_:                               sdk.NewDec(1_000),
@@ -618,7 +618,7 @@ func TestAddMargin(t *testing.T) {
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
 				t.Log("assert correct final position in state")
-				pos, err := perpKeeper.GetPosition(ctx, assetPair, traderAddr)
+				pos, err := perpKeeper.PositionsState(ctx).Get(assetPair, traderAddr)
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(599).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())

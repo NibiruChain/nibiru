@@ -66,7 +66,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// ------------- AddMargin -------------
-	position, err := k.GetPosition(ctx, pair, msgSender)
+	position, err := k.PositionsState(ctx).Get(pair, msgSender)
 	if err != nil {
 		k.Logger(ctx).Debug(
 			err.Error(),
@@ -111,7 +111,7 @@ func (k Keeper) AddMargin(
 	position.Margin = remainingMargin.Margin
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	position.BlockNumber = ctx.BlockHeight()
-	k.SetPosition(ctx, pair, msgSender, position)
+	k.PositionsState(ctx).Set(pair, msgSender, position)
 
 	err = ctx.EventManager().EmitTypedEvent(
 		&types.MarginChangedEvent{

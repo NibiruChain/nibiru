@@ -12,18 +12,6 @@ func (k Keeper) ClearPosition(ctx sdk.Context, pair common.AssetPair, traderAddr
 	return k.PositionsState(ctx).Delete(pair, traderAddr)
 }
 
-func (k Keeper) GetPosition(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
-) (*types.Position, error) {
-	return k.PositionsState(ctx).Get(pair, traderAddr)
-}
-
-func (k Keeper) SetPosition(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress,
-	position *types.Position) {
-	k.PositionsState(ctx).Set(pair, traderAddr, position)
-}
-
 // SettlePosition settles a trader position
 func (k Keeper) SettlePosition(
 	ctx sdk.Context,
