@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -82,7 +81,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []*vpooltypes.Pool{
 		{
-			Pair:                  common.MustNewAssetPair("ubtc:unibi"),
+			Pair:                  common.PairBTCStable,
 			BaseAssetReserve:      sdk.NewDec(10_000_000),
 			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
@@ -114,7 +113,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis := perptypes.DefaultGenesis()
 	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
 		{
-			Pair: common.MustNewAssetPair("ubtc:unibi"),
+			Pair: common.PairBTCStable,
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -143,12 +142,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	_, err := s.network.WaitForHeight(1)
-	s.Require().NoError(err)
+	s.NoError(err)
 
 	val := s.network.Validators[0]
 	info, _, err := val.ClientCtx.Keyring.
 		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
+	s.NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
 	s.users = []sdk.AccAddress{user1}
@@ -164,7 +163,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		val,
 		s.cfg.BondDenom,
 	)
-	s.Require().NoError(err)
+	s.NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -174,145 +173,158 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
-	assetPair := common.AssetPair{
-		Token0: "ubtc",
-		Token1: "unibi",
-	}
 
 	user := s.users[0]
 
 	s.T().Log("A. check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.PairBTCStable)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(sdk.NewDec(10_000_000), reserveAssets.BaseAssetReserve)
-	s.Assert().EqualValues(sdk.NewDec(60_000_000_000), reserveAssets.QuoteAssetReserve)
+	s.NoError(err)
+	s.EqualValues(sdk.NewDec(10_000_000), reserveAssets.BaseAssetReserve)
+	s.EqualValues(sdk.NewDec(60_000_000_000), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("A. check trader has no existing positions")
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
-	s.Assert().Error(err, "no position found")
+	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.PairBTCStable, user)
+	s.Error(err, "no position found")
 
 	s.T().Log("B. open position")
 	args := []string{
 		"--from",
 		user.String(),
 		"buy",
-		assetPair.String(),
-		"1",       // Leverage
-		"1000000", // 1 BTC
-		"1",
+		common.PairBTCStable.String(),
+		/* leverage */ "1",
+		/* quoteAmt */ "1000000", // 10^6 uNUSD
+		/* baseAssetLimit */ "1",
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	s.Require().NoError(err)
+	s.NoError(err)
 
 	s.T().Log("B. check vpool balance after open position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.PairBTCStable)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
-	s.Assert().EqualValues(sdk.NewDec(60_001_000_000), reserveAssets.QuoteAssetReserve)
+	s.NoError(err)
+	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
+	s.EqualValues(sdk.NewDec(60_001_000_000), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("B. check vpool balances")
-	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, common.PairBTCStable, user)
 	s.T().Logf("query response: %+v", queryResp)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
-	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
-	s.Assert().EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
+	s.NoError(err)
+	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("166.663888935184413593"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{
 		"--from",
 		user.String(),
 		"buy",
-		assetPair.String(),
+		common.PairBTCStable.String(),
 		/* leverage */ "2",
-		/* quoteAmt */ "1000000", // 10^6 unusd
+		/* quoteAmt */ "1000000", // 10^6 uNUSD
 		/* baseAmtLimit */ "0",
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	s.Require().NoError(err)
+	s.NoError(err)
 
 	s.T().Log("C. check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.PairBTCStable, user)
 	s.T().Logf("query response: %+v", queryResp)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
-	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
-	s.Assert().EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
+	s.NoError(err)
+	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503125"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000938"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000938"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
 	args = []string{
 		"--from",
 		user.String(),
 		"sell",
-		assetPair.String(),
-		"1",   // Leverage
-		"100", // unusd
-		"1",
+		common.PairBTCStable.String(),
+		/* leverage */ "1",
+		/* quoteAmt */ "100", // 100 uNUSD
+		/* baseAssetLimit */ "1",
 	}
 	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	s.Require().NoError(err)
-	s.Assert().NotContains(res.String(), "fail")
+	s.NoError(err)
+	s.NotContains(res.String(), "fail")
 
 	s.T().Log("D. Check vpool after opening reverse position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.PairBTCStable)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)
-	s.Assert().EqualValues(sdk.NewDec(60_002_999_900), reserveAssets.QuoteAssetReserve)
+	s.NoError(err)
+	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)
+	s.EqualValues(sdk.NewDec(60_002_999_900), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("D. Check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.PairBTCStable, user)
 	s.T().Logf("query response: %+v", queryResp)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
-	s.Assert().EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
-	s.Assert().EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
+	s.NoError(err)
+	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737846"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999999506"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000494"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatio)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	args = []string{
 		"--from",
 		user.String(),
 		"sell",
-		assetPair.String(),
-		"1",          // Leverage
-		"4000000",    // 4*10^6 unusd
-		"2000000000", // TODO: just threw a large number here, figure out a more appropriate amount
+		common.PairBTCStable.String(),
+		/* leverage */ "1",
+		/* quoteAmt */ "4000000", // 4*10^6 uNUSD
+		/* baseAssetLimit */ "0",
 	}
 	res, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	s.Require().NoError(err)
-	s.Assert().NotContains(res.String(), "fail")
+	s.NoError(err)
+	s.NotContains(res.String(), "fail")
 
 	s.T().Log("E. Check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.PairBTCStable, user)
 	s.T().Logf("query response: %+v", queryResp)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.Assert().EqualValues(assetPair, queryResp.Position.Pair)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
+	s.NoError(err)
+	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.EqualValues(common.PairBTCStable, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("1000099.999999999999999651"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000843"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
 
 	s.T().Log("F. Close position")
 	args = []string{
 		"--from",
 		user.String(),
-		assetPair.String(),
+		common.PairBTCStable.String(),
 	}
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.Require().NoError(err)
+	s.NoError(err)
 
 	s.T().Log("F. check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.PairBTCStable, user)
+
 	s.T().Logf("query response: %+v", queryResp)
 	s.Error(err)
+
 	status, ok := status.FromError(err)
-	require.True(s.T(), ok)
-	require.Equal(s.T(), status.Code(), codes.InvalidArgument)
+	s.True(ok)
+	s.EqualValues(codes.InvalidArgument, status.Code())
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
@@ -326,7 +338,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 
 	// verify trader has no position (empty)
 	_, err := testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
-	s.Assert().Error(err, "no position found")
+	s.Error(err, "no position found")
 
 	// close position should produce error
 	args := []string{
@@ -335,7 +347,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		assetPair.String(),
 	}
 	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.Assert().Contains(out.String(), "no position found")
+	s.Contains(out.String(), "no position found")
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
@@ -347,15 +359,15 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 
 	s.T().Log("check vpool balances")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
-	s.Require().NoError(err)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
+	s.NoError(err)
+	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("check prices")
 	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, assetPair, "1", "100")
 	s.T().Logf("priceInfo: %+v", priceInfo)
-	s.Assert().EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
-	s.Require().NoError(err)
+	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
+	s.NoError(err)
 }
 
 func (s *IntegrationTestSuite) TestRemoveMargin() {
@@ -378,7 +390,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	if err != nil {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
-	s.Require().NoError(err)
+	s.NoError(err)
 
 	// Remove margin to trigger bad debt on user 1
 	s.T().Log("removing margin on user 1....")
@@ -393,7 +405,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		s.T().Logf("user1 remove margin err: %+v", err)
 	}
 
-	s.Require().Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+	s.Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

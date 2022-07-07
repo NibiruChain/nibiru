@@ -41,7 +41,23 @@ message QueryTraderPositionRequest {
 }
 
 message QueryTraderPositionResponse {
+  // The position as it exists in the blockchain state
   Position position = 1;
+
+  // The position's current notional value, if it were to be entirely closed (in margin units).
+  string position_notional = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The position's unrealized PnL.
+  string unrealized_pnl = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The position's margin ratio, calculated from margin, unrealized PnL, and position notional.
+  string margin_ratio = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
 }
 
 // ---------------------------------------- OtherQuery

@@ -71,7 +71,7 @@ func OpenPositionCmd() *cobra.Command {
 				return fmt.Errorf("invalid quote amount: %s", args[3])
 			}
 
-			baseAssetAmountLimit := sdk.MustNewDecFromStr(args[4])
+			baseAmtLimit := sdk.MustNewDecFromStr(args[4])
 
 			msg := &types.MsgOpenPosition{
 				Sender:               clientCtx.GetFromAddress().String(),
@@ -79,7 +79,7 @@ func OpenPositionCmd() *cobra.Command {
 				Side:                 side,
 				QuoteAssetAmount:     amount,
 				Leverage:             leverage,
-				BaseAssetAmountLimit: baseAssetAmountLimit.RoundInt(),
+				BaseAssetAmountLimit: baseAmtLimit.RoundInt(),
 			}
 
 			if err := msg.ValidateBasic(); err != nil {
