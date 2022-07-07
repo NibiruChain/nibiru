@@ -68,7 +68,7 @@ func TestGetAndSetPosition(t *testing.T) {
 	}
 }
 
-func TestClearPosition(t *testing.T) {
+func TestDeletePosition(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()
@@ -110,8 +110,7 @@ func TestClearPosition(t *testing.T) {
 				t.Log("attempt to clear all positions")
 
 				require.NoError(t,
-					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolPair, traders[0]),
+					nibiruApp.PerpKeeper.PositionsState(ctx).Delete(vpoolPair, traders[0]),
 				)
 
 				outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[0])
@@ -125,9 +124,9 @@ func TestClearPosition(t *testing.T) {
 
 				t.Log("clearing position of trader 1...")
 				require.NoError(t,
-					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolPair, traders[1]),
+					nibiruApp.PerpKeeper.PositionsState(ctx).Delete(vpoolPair, traders[1]),
 				)
+
 				outPosition, err = nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[1])
 				require.ErrorIs(t, err, types.ErrPositionNotFound)
 				require.Nil(t, outPosition)
@@ -144,7 +143,7 @@ func TestClearPosition(t *testing.T) {
 	}
 }
 
-func TestKeeper_ClosePosition(t *testing.T) {
+func TestKeeperClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")

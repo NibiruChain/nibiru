@@ -3,14 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
-
-// TODO test: ClearPosition | https://github.com/NibiruChain/nibiru/issues/299
-func (k Keeper) ClearPosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) error {
-	return k.PositionsState(ctx).Delete(pair, traderAddr)
-}
 
 // SettlePosition settles a trader position
 func (k Keeper) SettlePosition(
@@ -27,19 +21,17 @@ func (k Keeper) SettlePosition(
 		return sdk.NewCoins(), nil
 	}
 
-	err = k.ClearPosition(
-		ctx,
+	if err = k.PositionsState(ctx).Delete(
 		currentPosition.Pair,
 		traderAddr,
-	)
-	if err != nil {
-		return
+	); err != nil {
+		return sdk.NewCoins(), nil
 	}
 
 	// run calculations on settled values
 	settlementPrice, err := k.VpoolKeeper.GetSettlementPrice(ctx, currentPosition.Pair)
 	if err != nil {
-		return
+		return sdk.NewCoins(), nil
 	}
 
 	settledValue := sdk.ZeroDec()

@@ -607,8 +607,7 @@ func (k Keeper) closePositionEntirely(
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
-	if err = k.ClearPosition(
-		ctx,
+	if err = k.PositionsState(ctx).Delete(
 		currentPosition.Pair,
 		trader,
 	); err != nil {
