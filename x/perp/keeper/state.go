@@ -1,30 +1,15 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/x/common"
-
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
-
-func (k Keeper) Params(
-	goCtx context.Context, req *types.QueryParamsRequest,
-) (*types.QueryParamsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
-}
 
 func (k Keeper) PositionsState(ctx sdk.Context) PositionsState {
 	return newPositions(ctx, k.storeKey, k.cdc)
@@ -40,33 +25,6 @@ func (k Keeper) WhitelistState(ctx sdk.Context) WhitelistState {
 
 func (k Keeper) PrepaidBadDebtState(ctx sdk.Context) PrepaidBadDebtState {
 	return newPrepaidBadDebtState(ctx, k.storeKey, k.cdc)
-}
-
-var paramsNamespace = []byte{0x0}
-var paramsKey = []byte{0x0}
-
-type ParamsState Keeper
-
-func (p ParamsState) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(p.storeKey), paramsNamespace)
-}
-
-func (p ParamsState) Get(ctx sdk.Context) (*types.Params, error) {
-	kv := p.getKV(ctx)
-
-	value := kv.Get(paramsKey)
-	if value == nil {
-		return nil, fmt.Errorf("not found")
-	}
-
-	params := new(types.Params)
-	p.cdc.MustUnmarshal(value, params)
-	return params, nil
-}
-
-func (p ParamsState) Set(ctx sdk.Context, params *types.Params) {
-	kv := p.getKV(ctx)
-	kv.Set(paramsKey, p.cdc.MustMarshal(params))
 }
 
 var positionsNamespace = []byte{0x1}
