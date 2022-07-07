@@ -27,7 +27,7 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestKeeper_getLatestCumulativePremiumFraction(t *testing.T) {
+func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()

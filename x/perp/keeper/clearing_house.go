@@ -19,13 +19,12 @@ func (k Keeper) OpenPosition(
 	traderAddr sdk.AccAddress,
 	quoteAssetAmount sdk.Int,
 	leverage sdk.Dec,
-	baseAssetAmountLimit sdk.Dec,
+	baseAmtLimit sdk.Dec,
 ) (err error) {
-	ctx.BlockTime().UnixMilli()
-	err = k.requireVpool(ctx, pair)
-	if err != nil {
+	if err = k.requireVpool(ctx, pair); err != nil {
 		return err
 	}
+
 	// require params
 	params := k.GetParams(ctx)
 	// TODO: missing checks
@@ -52,7 +51,7 @@ func (k Keeper) OpenPosition(
 			*position,
 			side,
 			/* openNotional */ leverage.MulInt(quoteAssetAmount),
-			/* minPositionSize */ baseAssetAmountLimit,
+			/* minPositionSize */ baseAmtLimit,
 			/* leverage */ leverage)
 		if err != nil {
 			return err
@@ -65,7 +64,7 @@ func (k Keeper) OpenPosition(
 			*position,
 			/* quoteAssetAmount */ quoteAssetAmount.ToDec(),
 			/* leverage */ leverage,
-			/* baseAssetAmountLimit */ baseAssetAmountLimit,
+			/* baseAmtLimit */ baseAmtLimit,
 			/* canOverFluctuationLimit */ false,
 		)
 		if err != nil {
@@ -184,7 +183,7 @@ args:
   - currentPosition: the current position
   - side: whether the position is increasing in the BUY or SELL direction
   - increasedNotional: the notional value to increase the position by, in margin units
-  - baseAssetAmountLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
+  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
   - leverage: the amount of leverage to take, as sdk.Dec
 
 ret:
@@ -196,7 +195,7 @@ func (k Keeper) increasePosition(
 	currentPosition types.Position,
 	side types.Side,
 	increasedNotional sdk.Dec,
-	baseAssetAmountLimit sdk.Dec,
+	baseAmtLimit sdk.Dec,
 	leverage sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{}
@@ -206,7 +205,7 @@ func (k Keeper) increasePosition(
 		currentPosition.Pair,
 		side,
 		increasedNotional,
-		baseAssetAmountLimit,
+		baseAmtLimit,
 		false,
 	)
 	if err != nil {
@@ -249,11 +248,6 @@ func (k Keeper) increasePosition(
 		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                         ctx.BlockHeight(),
 	}
-
-	k.Logger(ctx).Debug("increase_position",
-		"positionResp",
-		positionResp.String(),
-	)
 
 	return positionResp, nil
 }
@@ -377,7 +371,7 @@ func (k Keeper) openReversePosition(
 	currentPosition types.Position,
 	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
-	baseAssetAmountLimit sdk.Dec,
+	baseAmtLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
 	notionalToDecreaseBy := leverage.Mul(quoteAssetAmount)
@@ -396,7 +390,7 @@ func (k Keeper) openReversePosition(
 			ctx,
 			currentPosition,
 			notionalToDecreaseBy,
-			baseAssetAmountLimit,
+			baseAmtLimit,
 			canOverFluctuationLimit,
 		)
 	} else {
@@ -406,7 +400,7 @@ func (k Keeper) openReversePosition(
 			currentPosition,
 			quoteAssetAmount,
 			leverage,
-			baseAssetAmountLimit,
+			baseAmtLimit,
 		)
 	}
 }
@@ -425,7 +419,7 @@ args:
   - ctx: cosmos-sdk context
   - currentPosition: the current position
   - decreasedNotional: the notional value to decrease the position by, in margin units
-  - baseAssetAmountLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
+  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
   - canOverFluctuationLimit: whether or not the position change can go over the fluctuation limit
 
 ret:
@@ -437,7 +431,7 @@ func (k Keeper) decreasePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
 	decreasedNotional sdk.Dec,
-	baseAssetAmountLimit sdk.Dec,
+	baseAmtLimit sdk.Dec,
 	canOverFluctuationLimit bool,
 ) (positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{
@@ -468,7 +462,7 @@ func (k Keeper) decreasePosition(
 		currentPosition.Pair,
 		sideToTake,
 		decreasedNotional,
-		baseAssetAmountLimit,
+		baseAmtLimit,
 		canOverFluctuationLimit,
 	)
 	if err != nil {
@@ -541,7 +535,7 @@ args:
   - existingPosition: current position
   - quoteAssetAmount: the amount of notional value to move by. Must be greater than the existingPosition's notional value.
   - leverage: the amount of leverage to take
-  - baseAssetAmountLimit: limit on the base asset movement to ensure trader doesn't get screwed
+  - baseAmtLimit: limit on the base asset movement to ensure trader doesn't get screwed
 
 ret:
   - positionResp: response object containing information about the position change
@@ -552,7 +546,7 @@ func (k Keeper) closeAndOpenReversePosition(
 	existingPosition types.Position,
 	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
-	baseAssetAmountLimit sdk.Dec,
+	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
 	trader, err := sdk.AccAddressFromBech32(existingPosition.TraderAddress)
 	if err != nil {
@@ -582,15 +576,15 @@ func (k Keeper) closeAndOpenReversePosition(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
 			closePositionResp.ExchangedNotionalValue.String(), reverseNotionalValue.String())
 	} else if remainingReverseNotionalValue.IsPositive() {
-		updatedBaseAssetAmountLimit := baseAssetAmountLimit
-		if baseAssetAmountLimit.IsPositive() {
-			updatedBaseAssetAmountLimit = baseAssetAmountLimit.
+		updatedbaseAmtLimit := baseAmtLimit
+		if baseAmtLimit.IsPositive() {
+			updatedbaseAmtLimit = baseAmtLimit.
 				Sub(closePositionResp.ExchangedPositionSize.Abs())
 		}
-		if updatedBaseAssetAmountLimit.IsNegative() {
+		if updatedbaseAmtLimit.IsNegative() {
 			return nil, fmt.Errorf(
 				"position size changed by greater than the specified base limit: %s",
-				baseAssetAmountLimit.String(),
+				baseAmtLimit.String(),
 			)
 		}
 
@@ -612,7 +606,7 @@ func (k Keeper) closeAndOpenReversePosition(
 			*newPosition,
 			sideToTake,
 			remainingReverseNotionalValue,
-			updatedBaseAssetAmountLimit,
+			updatedbaseAmtLimit,
 			leverage,
 		)
 		if err != nil {

@@ -289,7 +289,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
 		/* leverage */ sdk.OneDec(),
-		/* baseAssetAmountLimit */ sdk.ZeroDec(),
+		/* baseAmtLimit */ sdk.ZeroDec(),
 		/* canOverFluctuationLimit */ true,
 	)
 	if err != nil {
