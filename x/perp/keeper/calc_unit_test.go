@@ -14,7 +14,7 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestCalcFreeCollateral(t *testing.T) {
+func TestCalcFreeCollateralErrors(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()
