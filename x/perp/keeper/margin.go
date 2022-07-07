@@ -214,8 +214,7 @@ func (k Keeper) RemoveMargin(
 
 	position.Margin = remainingMargin.Margin
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
-	freeCollateral, err := k.calcFreeCollateral(
-		ctx, *position, remainingMargin.FundingPayment)
+	freeCollateral, err := k.calcFreeCollateral(ctx, *position)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.IsPositive() {
@@ -309,13 +308,7 @@ func (k Keeper) GetMarginRatio(
 
 func (k Keeper) requireVpool(ctx sdk.Context, pair common.AssetPair) (err error) {
 	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
-		err = fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
-		k.Logger(ctx).Error(
-			err.Error(),
-			"pair",
-			pair.String(),
-		)
-		return err
+		return types.ErrPairNotFound.Wrap(pair.String())
 	}
 	return nil
 }
