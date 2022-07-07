@@ -403,11 +403,6 @@ func (k Keeper) decreasePosition(
 		BlockNumber:                         ctx.BlockHeight(),
 	}
 
-	k.Logger(ctx).Debug("decrease_position",
-		"positionResp",
-		positionResp.String(),
-	)
-
 	return positionResp, nil
 }
 
@@ -515,11 +510,6 @@ func (k Keeper) closeAndOpenReversePosition(
 		positionResp = closePositionResp
 	}
 
-	k.Logger(ctx).Debug("close_and_open_reverse_position",
-		"positionResp",
-		positionResp.String(),
-	)
-
 	return positionResp, nil
 }
 
@@ -613,11 +603,6 @@ func (k Keeper) closePositionEntirely(
 	); err != nil {
 		return nil, err
 	}
-
-	k.Logger(ctx).Debug("close_position_entirely",
-		"positionResp",
-		positionResp.String(),
-	)
 
 	return positionResp, nil
 }
@@ -740,26 +725,8 @@ func (k Keeper) swapQuoteForBase(
 	baseAmount, err = k.VpoolKeeper.SwapQuoteForBase(
 		ctx, pair, quoteAssetDirection, quoteAssetAmount, baseAssetLimit)
 	if err != nil {
-		k.Logger(ctx).Error(
-			err.Error(),
-			"pair",
-			pair.String(),
-			"side",
-			side.String(),
-			"quoteAssetAmount",
-			quoteAssetAmount.String(),
-			"baseAssetLimit",
-			baseAssetLimit.String(),
-		)
 		return sdk.Dec{}, err
 	}
-
-	k.Logger(ctx).Debug("swap_quote_for_base",
-		"side",
-		side.String(),
-		"baseAmt",
-		baseAmount.Abs(),
-	)
 
 	if side == types.Side_BUY {
 		return baseAmount, nil
