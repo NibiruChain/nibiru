@@ -203,6 +203,24 @@ func (p PairMetadataState) GetAll() []*types.PairMetadata {
 	return pairMetadatas
 }
 
+// getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
+// specific pair.
+func (k Keeper) getLatestCumulativePremiumFraction(
+	ctx sdk.Context, pair common.AssetPair,
+) (sdk.Dec, error) {
+	pairMetadata, err := k.PairMetadataState(ctx).Get(pair)
+	if err != nil {
+		k.Logger(ctx).Error(
+			err.Error(),
+			"pair",
+			pair.String(),
+		)
+		return sdk.Dec{}, err
+	}
+	// this should never fail
+	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
+}
+
 var whitelistNamespace = []byte{0x3}
 
 type WhitelistState struct {
