@@ -53,8 +53,8 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	if currentPosition.Size_.IsZero() {
 		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
-		remaining.FundingPayment = remaining.LatestCumulativePremiumFraction.
-			Sub(currentPosition.LastUpdateCumulativePremiumFraction).
+		remaining.FundingPayment = (remaining.LatestCumulativePremiumFraction.
+			Sub(currentPosition.LastUpdateCumulativePremiumFraction)).
 			Mul(currentPosition.Size_)
 	}
 
@@ -97,8 +97,7 @@ func (k Keeper) calcFreeCollateral(
 		return sdk.Int{}, err
 	}
 
-	err = k.requireVpool(ctx, pos.Pair)
-	if err != nil {
+	if err = k.requireVpool(ctx, pos.Pair); err != nil {
 		return sdk.Int{}, err
 	}
 
@@ -124,10 +123,6 @@ func (k Keeper) calcFreeCollateral(
 		marginRequirement = initMarginRatio.Mul(positionNotional).RoundInt()
 	}
 	accountExcessEquity = minAccountValue.Sub(marginRequirement.ToDec()).TruncateInt()
-	k.Logger(ctx).Debug(
-		"calc_free_collateral",
-		"amount",
-		accountExcessEquity.String(),
-	)
+
 	return accountExcessEquity, nil
 }
