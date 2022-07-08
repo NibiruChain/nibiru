@@ -44,5 +44,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 * [#686](https://github.com/NibiruChain/nibiru/pull/686) Add changelog enforcer to github actions.
-
-
+* [#681](https://github.com/NibiruChain/nibiru/pull/681) Remove automatic release and leave integration tests when merge into master.
