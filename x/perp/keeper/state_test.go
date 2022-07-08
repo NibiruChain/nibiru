@@ -73,3 +73,52 @@ func TestPairMetadata_GetAll(t *testing.T) {
 		require.Contains(t, pairMetadatas, sm)
 	}
 }
+
+func TestGetLatestCumulativePremiumFraction(t *testing.T) {
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "happy path",
+			test: func() {
+				keeper, _, ctx := getKeeper(t)
+
+				metadata := &types.PairMetadata{
+					Pair: common.PairGovStable,
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.NewDec(1),
+						sdk.NewDec(2), // returns the latest from the list
+					},
+				}
+				keeper.PairMetadataState(ctx).Set(metadata)
+
+				latestCumulativePremiumFraction, err := keeper.
+					getLatestCumulativePremiumFraction(ctx, common.PairGovStable)
+
+				require.NoError(t, err)
+				assert.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
+			},
+		},
+		{
+			name: "uninitialized vpool has no metadata | fail",
+			test: func() {
+				perpKeeper, _, ctx := getKeeper(t)
+				vpool := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
+				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
+					ctx, vpool)
+				require.Error(t, err)
+				assert.EqualValues(t, sdk.Dec{}, lcpf)
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
+}

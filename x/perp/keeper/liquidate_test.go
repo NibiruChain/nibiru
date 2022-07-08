@@ -99,7 +99,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
+			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -117,7 +117,7 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			require.Error(t, err)
 
 			// No change in the position
-			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
+			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
 			assert.Equal(t, position.Size_, newPosition.Size_)
 			assert.Equal(t, position.Margin, newPosition.Margin)
 			assert.Equal(t, position.OpenNotional, newPosition.OpenNotional)
@@ -273,7 +273,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, tokenPair, traderAddr)
+			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -286,11 +286,11 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (entire) position")
 			liquidatorAddr := sample.AccAddress()
-			resp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, position)
+			liquidationResp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, position)
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, err := nibiruApp.PerpKeeper.GetPosition(ctx, tokenPair, traderAddr)
+			newPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
 			require.ErrorIs(t, err, types.ErrPositionNotFound)
 			require.Nil(t, newPosition)
 
@@ -311,16 +311,16 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
-				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
+				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
+				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidatorAddr.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
-				BadDebt:               resp.BadDebt,
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               liquidationResp.BadDebt.ToDec(),
 				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), sdk.ZeroInt()),
-				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          sdk.ZeroDec(),
-				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
 				MarkPrice:             newMarkPrice,
 				BlockHeight:           ctx.BlockHeight(),
 				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
@@ -399,7 +399,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 				ctx, pair, tc.side, trader, tc.quote, tc.leverage, tc.baseLimit))
 
 			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
+			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -417,7 +417,7 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 			require.Error(t, err)
 
 			// No change in the position
-			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, pair, trader)
+			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
 			require.Equal(t, position.Size_, newPosition.Size_)
 			require.Equal(t, position.Margin, newPosition.Margin)
 			require.Equal(t, position.OpenNotional, newPosition.OpenNotional)
@@ -551,7 +551,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.GetPosition(ctx, tokenPair, traderAddr)
+			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -564,11 +564,11 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (partial) position")
 			liquidator := sample.AccAddress()
-			resp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
+			liquidationResp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, _ := nibiruApp.PerpKeeper.GetPosition(ctx, tokenPair, traderAddr)
+			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
 			assert.Equal(t, tc.expectedPositionSize, newPosition.Size_)
 			assert.Equal(t, tc.expectedMarginRemaining, newPosition.Margin)
 
@@ -601,16 +601,16 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
 				TraderAddress:         traderAddr.String(),
-				ExchangedQuoteAmount:  resp.PositionResp.ExchangedNotionalValue,
-				ExchangedPositionSize: resp.PositionResp.ExchangedPositionSize,
+				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
+				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidator.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), resp.FeeToPerpEcosystemFund),
-				BadDebt:               resp.BadDebt,
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               liquidationResp.BadDebt.ToDec(),
 				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
-				PositionNotional:      resp.PositionResp.PositionNotional,
+				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          newPosition.Size_,
-				UnrealizedPnl:         resp.PositionResp.UnrealizedPnlAfter,
+				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
 				MarkPrice:             newMarkPrice,
 				BlockHeight:           ctx.BlockHeight(),
 				BlockTimeMs:           ctx.BlockTime().UnixMilli(),

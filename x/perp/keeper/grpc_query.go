@@ -44,7 +44,31 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
+	positionNotional, unrealizedPnl, err := q.Keeper.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	if err != nil {
+		return nil, err
+	}
+
+	marginRatio, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_SPOT)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryTraderPositionResponse{
-		Position: position,
+		Position:         position,
+		PositionNotional: positionNotional,
+		UnrealizedPnl:    unrealizedPnl,
+		MarginRatio:      marginRatio,
 	}, nil
+}
+
+func (q queryServer) Params(
+	goCtx context.Context, req *types.QueryParamsRequest,
+) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	return &types.QueryParamsResponse{Params: q.Keeper.GetParams(ctx)}, nil
 }
