@@ -93,7 +93,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.SetPosition(ctx, common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -177,7 +177,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee, feeToFund)
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.GetPosition(ctx, common.PairBTCStable, traderAddr)
+			newPosition, err := perpKeeper.PositionsState(ctx).Get(common.PairBTCStable, traderAddr)
 			require.NoError(t, err)
 			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
 			assert.EqualValues(t, common.PairBTCStable, newPosition.Pair)
@@ -263,7 +263,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.SetPosition(ctx, common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -341,7 +341,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee.String(), feeToFund.String())
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.GetPosition(ctx, common.PairBTCStable, traderAddr)
+			newPosition, err := perpKeeper.PositionsState(ctx).Get(common.PairBTCStable, traderAddr)
 			require.ErrorIs(t, err, types.ErrPositionNotFound)
 			assert.Nil(t, newPosition)
 
@@ -430,7 +430,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.SetPosition(ctx, common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -511,7 +511,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee.String(), feeToFund.String())
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.GetPosition(ctx, common.PairBTCStable, traderAddr)
+			newPosition, err := perpKeeper.PositionsState(ctx).Get(common.PairBTCStable, traderAddr)
 			require.ErrorIs(t, err, types.ErrPositionNotFound)
 			assert.Nil(t, newPosition)
 
@@ -950,7 +950,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         ctx.BlockHeight(),
 			}
-			perpKeeper.SetPosition(ctx, common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
 
 			t.Log("execute full liquidation")
 			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(

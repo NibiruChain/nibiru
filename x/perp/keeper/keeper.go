@@ -62,12 +62,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// GetModuleAccountBalance gets the airdrop coin balance of module account.
-func (k Keeper) GetModuleAccountBalance(ctx sdk.Context, denom string) sdk.Coin {
-	moduleAccAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-	return k.BankKeeper.GetBalance(ctx, moduleAccAddr, denom)
-}
-
 // GetParams get all parameters as types.Params
 func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.ParamSubspace.GetParamSet(ctx, &params)
