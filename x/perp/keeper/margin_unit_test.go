@@ -267,15 +267,41 @@ func TestRemoveMargin(t *testing.T) {
 
 				pair := common.MustNewAssetPair(msg.TokenPair)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
-					AnyTimes().Return(true)
+				t.Log("mock vpool keeper")
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
+				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
+					ctx,
+					pair,
+					vpooltypes.Direction_ADD_TO_POOL,
+					sdk.NewDec(1_000),
+				).Return(sdk.NewDec(1000), nil).Times(2)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
+					ctx,
+					pair,
+					vpooltypes.Direction_ADD_TO_POOL,
+					sdk.NewDec(1_000),
+					15*time.Minute,
+				).Return(sdk.NewDec(1000), nil)
 
-				t.Log("Set vpool defined by pair on PerpKeeper")
+				t.Log("mock account keeper")
+				mocks.mockAccountKeeper.
+					EXPECT().GetModuleAddress(types.VaultModuleAccount).
+					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
+
+				t.Log("mock bank keeper")
+				expectedError := fmt.Errorf("not enough funds in vault module account")
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
+					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount, sdk.NewCoins(msg.Margin),
+				).Return(expectedError)
+				mocks.mockBankKeeper.EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()))
+
+				t.Log("set pair metadata")
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: pair,
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.1")},
+					},
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
@@ -285,36 +311,11 @@ func TestRemoveMargin(t *testing.T) {
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
-					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
+					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         ctx.BlockHeight(),
 				})
 
-				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
-					ctx,
-					pair,
-					vpooltypes.Direction_ADD_TO_POOL,
-					sdk.NewDec(1_000),
-				).Return(sdk.NewDec(1000), nil)
-				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
-					ctx,
-					pair,
-					vpooltypes.Direction_ADD_TO_POOL,
-					sdk.NewDec(1_000),
-					15*time.Minute,
-				).Return(sdk.NewDec(1000), nil)
-
 				t.Log("Attempt to RemoveMargin when the vault lacks funds")
-				expectedError := fmt.Errorf("not enough funds in vault module account")
-				mocks.mockAccountKeeper.
-					EXPECT().GetModuleAddress(types.VaultModuleAccount).
-					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
-
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
-					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount, sdk.NewCoins(msg.Margin),
-				).Return(expectedError)
-
-				mocks.mockBankKeeper.EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()))
-
 				_, err := perpKeeper.RemoveMargin(goCtx, msg)
 
 				require.Error(t, err)
@@ -336,15 +337,36 @@ func TestRemoveMargin(t *testing.T) {
 
 				pair := common.MustNewAssetPair(msg.TokenPair)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).
-					AnyTimes().Return(true)
+				t.Log("mock vpool keeper")
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true).Times(2)
+				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
+					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
+					Return(sdk.NewDec(1000), nil).Times(2)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
+					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
+					15*time.Minute,
+				).Return(sdk.NewDec(1000), nil)
 
-				t.Log("Set vpool defined by pair on PerpKeeper")
+				t.Log("mock account keeper")
+				mocks.mockAccountKeeper.
+					EXPECT().GetModuleAddress(types.VaultModuleAccount).
+					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
+
+				t.Log("mock bank keeper")
+				mocks.mockBankKeeper.
+					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).
+					Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(math.MaxInt64)))
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
+					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(msg.Margin),
+				).Return(nil)
+
+				t.Log("set pair metadata")
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair: pair,
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.1")},
+					},
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
@@ -354,29 +376,9 @@ func TestRemoveMargin(t *testing.T) {
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1_000),
 					Margin:                              sdk.NewDec(500),
-					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
+					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         ctx.BlockHeight(),
 				})
-
-				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
-					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
-					Return(sdk.NewDec(1000), nil)
-				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
-					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
-					15*time.Minute,
-				).Return(sdk.NewDec(1000), nil)
-
-				mocks.mockAccountKeeper.
-					EXPECT().GetModuleAddress(types.VaultModuleAccount).
-					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
-
-				mocks.mockBankKeeper.
-					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).
-					Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(math.MaxInt64)))
-
-				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(msg.Margin),
-				).Return(nil)
 
 				t.Log("'RemoveMargin' from the position")
 				res, err := perpKeeper.RemoveMargin(goCtx, msg)
@@ -386,17 +388,80 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
-				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
-					Pair:           msg.TokenPair,
-					TraderAddress:  traderAddr.String(),
-					MarginAmount:   msg.Margin.Amount,
-					FundingPayment: res.FundingPayment,
-				})
+				testutilevents.RequireHasTypedEvent(t, ctx,
+					&types.PositionChangedEvent{
+						Pair:                  msg.TokenPair,
+						TraderAddress:         traderAddr.String(),
+						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 400),
+						PositionNotional:      sdk.NewDec(1000),
+						ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when removing margin
+						TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when removing margin
+						PositionSize:          sdk.NewDec(1000),
+						RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
+						UnrealizedPnlAfter:    sdk.ZeroDec(),
+						BadDebt:               sdk.ZeroDec(), // always zero when removing margin
+						FundingPayment:        sdk.ZeroDec(),
+						SpotPrice:             sdk.OneDec(),
+						BlockHeight:           ctx.BlockHeight(),
+						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+						LiquidationPenalty:    sdk.ZeroDec(),
+					},
+				)
 
 				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
+				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
+			},
+		},
+		{
+			name: "happy path - massive funding payment",
+			test: func() {
+				perpKeeper, mocks, ctx := getKeeper(t)
+				goCtx := sdk.WrapSDKContext(ctx)
+
+				traderAddr := sample.AccAddress()
+				msg := &types.MsgRemoveMargin{
+					Sender:    traderAddr.String(),
+					TokenPair: "osmo:nusd",
+					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
+				}
+
+				pair := common.MustNewAssetPair(msg.TokenPair)
+
+				t.Log("mock vpool keeper")
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+
+				t.Log("set pair metadata")
+				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+					Pair: pair,
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.OneDec(),
+					},
+				})
+
+				t.Log("Set position a healthy position that has 0 unrealized funding")
+				perpKeeper.PositionsState(ctx).Set(pair, traderAddr, &types.Position{
+					TraderAddress:                       traderAddr.String(),
+					Pair:                                pair,
+					Size_:                               sdk.NewDec(500),
+					OpenNotional:                        sdk.NewDec(500),
+					Margin:                              sdk.NewDec(500),
+					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                         ctx.BlockHeight(),
+				})
+
+				t.Log("'RemoveMargin' from the position")
+				res, err := perpKeeper.RemoveMargin(goCtx, msg)
+
+				require.ErrorIs(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt)
+				require.Nil(t, res)
+
+				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
+				require.NoError(t, err)
+				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Margin.String())
+				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Size_.String())
 				assert.EqualValues(t, traderAddr.String(), pos.TraderAddress)
 			},
 		},
