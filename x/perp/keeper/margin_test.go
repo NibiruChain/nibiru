@@ -464,10 +464,8 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-					Pair: pair,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.1")},
+					Pair:                       pair,
+					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 				})
 
 				t.Log("increment block height and time for twap calculation")
@@ -475,24 +473,19 @@ func TestRemoveMargin(t *testing.T) {
 					WithBlockTime(time.Now().Add(time.Minute))
 
 				t.Log("Fund trader account with sufficient quote")
-
-				err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
-					sdk.NewCoins(
-						sdk.NewInt64Coin("yyy", 66),
-					))
-				require.NoError(t, err)
+				require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
+					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60))),
+				)
 
 				t.Log("Open long position with 5x leverage")
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(5)
-				baseLimit := sdk.NewInt(10)
-				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, traderAddr, quote, leverage, baseLimit.ToDec())
-				require.NoError(t, err)
+				baseLimit := sdk.ZeroDec()
+				require.NoError(t, perpKeeper.OpenPosition(ctx, pair, side, traderAddr, quote, leverage, baseLimit))
 
 				t.Log("Position should be accessible following 'OpenPosition'")
-				_, err = nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, traderAddr)
+				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, traderAddr)
 				require.NoError(t, err)
 
 				t.Log("Verify correct events emitted for 'OpenPosition'")
@@ -513,12 +506,25 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
-				testutilevents.RequireHasTypedEvent(t, ctx, &types.MarginChangedEvent{
-					Pair:           pair.String(),
-					TraderAddress:  traderAddr.String(),
-					MarginAmount:   msg.Margin.Amount,
-					FundingPayment: res.FundingPayment,
-				})
+				testutilevents.RequireContainsTypedEvent(t, ctx,
+					&types.PositionChangedEvent{
+						Pair:                  msg.TokenPair,
+						TraderAddress:         traderAddr.String(),
+						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 54),
+						PositionNotional:      sdk.NewDec(300),
+						ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when removing margin
+						TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when removing margin
+						PositionSize:          sdk.MustNewDecFromStr("299.910026991902429271"),
+						RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
+						UnrealizedPnlAfter:    sdk.ZeroDec(),
+						BadDebt:               sdk.ZeroDec(), // always zero when removing margin
+						FundingPayment:        sdk.ZeroDec(),
+						SpotPrice:             sdk.MustNewDecFromStr("1.00060009"),
+						BlockHeight:           ctx.BlockHeight(),
+						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+						LiquidationPenalty:    sdk.ZeroDec(),
+					},
+				)
 			},
 		},
 	}
