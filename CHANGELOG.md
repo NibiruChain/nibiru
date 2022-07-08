@@ -46,4 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#686](https://github.com/NibiruChain/nibiru/pull/686) Reorganize PerpKeeper methods
 
-- [*687](https://github.com/NibiruChain/nibiru/pull/686) Emit `PositionChangedEvent` upon changing margin (BREAKING CHANGE)
+### State Machine Breaking Change
+
+- [*687](https://github.com/NibiruChain/nibiru/pull/686) Emit `PositionChangedEvent` upon changing margin.
