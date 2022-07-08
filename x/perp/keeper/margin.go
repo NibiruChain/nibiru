@@ -21,7 +21,7 @@ func (k Keeper) AddMargin(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate trader
-	msgSender, err := sdk.AccAddressFromBech32(msg.Sender)
+	traderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// ------------- AddMargin -------------
-	position, err := k.PositionsState(ctx).Get(pair, msgSender)
+	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (k Keeper) AddMargin(
 
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
-		ctx, msgSender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
+		ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
 		return nil, err
 	}
@@ -75,14 +75,35 @@ func (k Keeper) AddMargin(
 	position.Margin = remainingMargin.Margin
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	position.BlockNumber = ctx.BlockHeight()
-	k.PositionsState(ctx).Set(pair, msgSender, position)
+	k.PositionsState(ctx).Set(pair, traderAddr, position)
+
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	if err != nil {
+		return nil, err
+	}
+
+	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
+	if err != nil {
+		return nil, err
+	}
 
 	err = ctx.EventManager().EmitTypedEvent(
-		&types.MarginChangedEvent{
-			Pair:           pair.String(),
-			TraderAddress:  msgSender.String(),
-			MarginAmount:   msg.Margin.Amount,
-			FundingPayment: remainingMargin.FundingPayment,
+		&types.PositionChangedEvent{
+			Pair:                  pair.String(),
+			TraderAddress:         traderAddr.String(),
+			Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), position.Margin.RoundInt()),
+			PositionNotional:      positionNotional,
+			ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when adding margin
+			TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+			PositionSize:          position.Size_,
+			RealizedPnl:           sdk.ZeroDec(), // always zero when adding margin
+			UnrealizedPnlAfter:    unrealizedPnl,
+			BadDebt:               remainingMargin.BadDebt, // always zero when adding margin
+			FundingPayment:        remainingMargin.FundingPayment,
+			SpotPrice:             spotPrice,
+			BlockHeight:           ctx.BlockHeight(),
+			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+			LiquidationPenalty:    sdk.ZeroDec(),
 		},
 	)
 
@@ -138,8 +159,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	marginDelta := msg.Margin.Amount.Neg()
-	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, *position, marginDelta.ToDec())
+	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(ctx, *position, marginDelta.ToDec())
 	if err != nil {
 		return nil, err
 	}
@@ -151,28 +171,49 @@ func (k Keeper) RemoveMargin(
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	freeCollateral, err := k.calcFreeCollateral(ctx, *position)
 	if err != nil {
-		return res, err
+		return nil, err
 	} else if !freeCollateral.IsPositive() {
-		return res, fmt.Errorf("not enough free collateral")
+		return nil, fmt.Errorf("not enough free collateral")
 	}
 
 	k.PositionsState(ctx).Set(pair, traderAddr, position)
 
-	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
-	err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, msg.Margin.Amount)
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(&types.MarginChangedEvent{
-		Pair:           pair.String(),
-		TraderAddress:  traderAddr.String(),
-		MarginAmount:   msg.Margin.Amount,
-		FundingPayment: remainingMargin.FundingPayment,
-	})
+	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, msg.Margin.Amount); err != nil {
+		return nil, err
+	}
+
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.PositionChangedEvent{
+			Pair:                  pair.String(),
+			TraderAddress:         traderAddr.String(),
+			Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), position.Margin.RoundInt()),
+			PositionNotional:      positionNotional,
+			ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when removing margin
+			TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when removing margin
+			PositionSize:          position.Size_,
+			RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
+			UnrealizedPnlAfter:    unrealizedPnl,
+			BadDebt:               remainingMargin.BadDebt, // always zero when removing margin
+			FundingPayment:        remainingMargin.FundingPayment,
+			SpotPrice:             spotPrice,
+			BlockHeight:           ctx.BlockHeight(),
+			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+			LiquidationPenalty:    sdk.ZeroDec(),
+		},
+	)
 
 	return &types.MsgRemoveMarginResponse{
-		MarginOut:      coinToSend,
+		MarginOut:      sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount),
 		FundingPayment: remainingMargin.FundingPayment,
 	}, err
 }
