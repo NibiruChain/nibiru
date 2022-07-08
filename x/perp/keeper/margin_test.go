@@ -517,7 +517,7 @@ func TestRemoveMargin(t *testing.T) {
 						PositionSize:          sdk.MustNewDecFromStr("299.910026991902429271"),
 						RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
-						BadDebt:               sdk.ZeroDec(), // always zero when removing margin
+						BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
 						SpotPrice:             sdk.MustNewDecFromStr("1.00060009"),
 						BlockHeight:           ctx.BlockHeight(),
