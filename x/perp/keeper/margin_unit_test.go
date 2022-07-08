@@ -294,14 +294,14 @@ func TestRemoveMargin(t *testing.T) {
 					pair,
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.NewDec(1_000),
-				).Return(sdk.NewDec(100), nil)
+				).Return(sdk.NewDec(1000), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
 					ctx,
 					pair,
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.NewDec(1_000),
 					15*time.Minute,
-				).Return(sdk.NewDec(100), nil)
+				).Return(sdk.NewDec(1000), nil)
 
 				t.Log("Attempt to RemoveMargin when the vault lacks funds")
 				expectedError := fmt.Errorf("not enough funds in vault module account")
@@ -360,11 +360,11 @@ func TestRemoveMargin(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
-					Return(sdk.NewDec(100), nil)
+					Return(sdk.NewDec(1000), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
 					15*time.Minute,
-				).Return(sdk.NewDec(100), nil)
+				).Return(sdk.NewDec(1000), nil)
 
 				mocks.mockAccountKeeper.
 					EXPECT().GetModuleAddress(types.VaultModuleAccount).
