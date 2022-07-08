@@ -59,10 +59,7 @@ message PositionChangedEvent {
     ];
   
     // Amount of bad debt cleared by the PerpEF during the change. Bad debt is negative net margin past the liquidation point of a position.
-    string bad_debt = 10 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+    cosmos.base.v1beta1.Coin bad_debt = 10 [(gogoproto.nullable) = false];
   
     // amt of margin (y) lost due to liquidation
     string liquidation_penalty = 11 [
@@ -130,12 +127,10 @@ message PositionLiquidatedEvent {
     ];
 
     //  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is negative net margin past the liquidation point of a position.
-    string bad_debt = 8 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
+    cosmos.base.v1beta1.Coin bad_debt = 8 [(gogoproto.nullable) = false];
 
-    // Remaining margin in the position after liquidation
+
+  // Remaining margin in the position after liquidation
     cosmos.base.v1beta1.Coin margin = 9 [
       (gogoproto.moretags) = "yaml:\"margin\"",
       (gogoproto.nullable) = false

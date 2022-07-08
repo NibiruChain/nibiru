@@ -195,7 +195,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       tc.expectedLiquidatorFee,
 				FeeToEcosystemFund:    tc.expectedPerpEFFee,
-				BadDebt:               sdk.ZeroDec(),
+				BadDebt:               sdk.NewCoin(common.DenomStable, sdk.ZeroInt()),
 				Margin:                sdk.NewCoin(common.DenomStable, tc.expectedPositionMargin.RoundInt()),
 				PositionNotional:      tc.newPositionNotional.Sub(tc.exchangedNotional),
 				PositionSize:          tc.initialPositionSize.Sub(tc.exchangedSize),
@@ -353,7 +353,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       tc.expectedLiquidatorFee,
 				FeeToEcosystemFund:    tc.expectedPerpEFFee,
-				BadDebt:               sdk.ZeroDec(),
+				BadDebt:               sdk.NewCoin(common.DenomStable, sdk.ZeroInt()),
 				Margin:                sdk.NewCoin(common.DenomStable, sdk.ZeroInt()),
 				PositionNotional:      sdk.ZeroDec(), // always zero
 				PositionSize:          sdk.ZeroDec(), // always zero
@@ -523,7 +523,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       tc.expectedLiquidatorFee,
 				FeeToEcosystemFund:    tc.expectedPerpEFFee,
-				BadDebt:               tc.expectedLiquidationBadDebt.Add(tc.expectedPositionBadDebt),
+				BadDebt:               sdk.NewCoin(common.DenomStable, tc.expectedLiquidationBadDebt.Add(tc.expectedPositionBadDebt).RoundInt()),
 				Margin:                sdk.NewInt64Coin(common.DenomStable, 0),
 				PositionNotional:      sdk.ZeroDec(), // always zero
 				PositionSize:          sdk.ZeroDec(), // always zero
@@ -996,7 +996,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				LiquidatorAddress:     liquidatorAddr.String(),
 				FeeToLiquidator:       sdk.NewCoin(common.PairBTCStable.GetQuoteTokenDenom(), tc.expectedFundsToLiquidator),
 				FeeToEcosystemFund:    sdk.NewCoin(common.PairBTCStable.GetQuoteTokenDenom(), tc.expectedFundsToPerpEF),
-				BadDebt:               tc.expectedLiquidationBadDebt.ToDec(),
+				BadDebt:               sdk.NewCoin(common.DenomStable, tc.expectedLiquidationBadDebt),
 				Margin:                sdk.NewCoin(common.PairBTCStable.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
 				PositionNotional:      positionResp.PositionNotional,
 				PositionSize:          newPosition.Size_,
