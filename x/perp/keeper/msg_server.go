@@ -23,17 +23,17 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{k: keeper}
 }
 
-func (k msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin,
+func (m msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin,
 ) (*types.MsgRemoveMarginResponse, error) {
-	return k.k.RemoveMargin(ctx, margin)
+	return m.k.RemoveMargin(ctx, margin)
 }
 
-func (k msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
+func (m msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
 ) (*types.MsgAddMarginResponse, error) {
-	return k.k.AddMargin(ctx, margin)
+	return m.k.AddMargin(ctx, margin)
 }
 
-func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
+func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
 ) (response *types.MsgOpenPositionResponse, err error) {
 	pair, err := common.NewAssetPair(req.TokenPair)
 	if err != nil {
@@ -45,7 +45,7 @@ func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err = k.k.OpenPosition(
+	err = m.k.OpenPosition(
 		ctx,
 		pair,
 		req.Side,
@@ -61,7 +61,7 @@ func (k msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	return &types.MsgOpenPositionResponse{}, nil
 }
 
-func (k msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
+func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	addr, err := sdk.AccAddressFromBech32(position.Sender)
 	if err != nil {
@@ -73,17 +73,37 @@ func (k msgServer) ClosePosition(goCtx context.Context, position *types.MsgClose
 		panic(err)
 	}
 
-	_, err = k.k.ClosePosition(ctx, tokenPair, addr)
+	_, err = m.k.ClosePosition(ctx, tokenPair, addr)
 
 	return &types.MsgClosePositionResponse{}, err
 }
 
-func (k msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
+func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 ) (*types.MsgLiquidateResponse, error) {
-	response, err := k.k.Liquidate(goCtx, msg)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	liquidatorAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
 
-	return response, nil
+	traderAddr, err := sdk.AccAddressFromBech32(msg.Trader)
+	if err != nil {
+		return nil, err
+	}
+
+	pair, err := common.NewAssetPair(msg.TokenPair)
+	if err != nil {
+		return nil, err
+	}
+
+	feeToLiquidator, feeToFund, err := m.k.Liquidate(ctx, liquidatorAddr, pair, traderAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgLiquidateResponse{
+		FeeToLiquidator:        feeToLiquidator,
+		FeeToPerpEcosystemFund: feeToFund,
+	}, nil
 }

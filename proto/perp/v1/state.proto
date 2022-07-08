@@ -172,7 +172,7 @@ message PositionResp {
 message LiquidateResp {
   // Amount of bad debt created by the liquidation event
   string bad_debt = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false];
 
   // Fee paid to the liquidator
