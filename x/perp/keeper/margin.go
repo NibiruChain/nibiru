@@ -98,7 +98,7 @@ func (k Keeper) AddMargin(
 			PositionSize:          position.Size_,
 			RealizedPnl:           sdk.ZeroDec(), // always zero when adding margin
 			UnrealizedPnlAfter:    unrealizedPnl,
-			BadDebt:               remainingMargin.BadDebt, // always zero when adding margin
+			BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when adding margin
 			FundingPayment:        remainingMargin.FundingPayment,
 			SpotPrice:             spotPrice,
 			BlockHeight:           ctx.BlockHeight(),
@@ -203,7 +203,7 @@ func (k Keeper) RemoveMargin(
 			PositionSize:          position.Size_,
 			RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
 			UnrealizedPnlAfter:    unrealizedPnl,
-			BadDebt:               remainingMargin.BadDebt, // always zero when removing margin
+			BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when removing margin
 			FundingPayment:        remainingMargin.FundingPayment,
 			SpotPrice:             spotPrice,
 			BlockHeight:           ctx.BlockHeight(),
