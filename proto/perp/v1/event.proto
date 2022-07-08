@@ -189,24 +189,3 @@ message PositionSettledEvent {
         (gogoproto.nullable) = false
     ];
 }
-
-// Emitted when a position's margin is changed (AddMargin or RemoveMargin).
-message MarginChangedEvent {
-  // Identifier for the virtual pool of the position.
-  string pair = 1;
-
-  // Owner of the position.
-  string trader_address = 2;
-
-  // Amount of margin exchanged.
-  string margin_amount = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-
-  // Amount of funding payment applied.
-  string funding_payment = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-}
