@@ -32,7 +32,7 @@ func (k Keeper) Liquidate(
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	position, err := k.GetPosition(ctx, pair, traderAddr)
+	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -179,7 +179,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		LiquidatorAddress:     liquidator.String(),
 		FeeToLiquidator:       sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
 		FeeToEcosystemFund:    sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
-		BadDebt:               totalBadDebt,
+		BadDebt:               sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), totalBadDebt.RoundInt()),
 		Margin:                sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), liquidationResp.PositionResp.Position.Margin.RoundInt()),
 		PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 		PositionSize:          liquidationResp.PositionResp.Position.Size_,
@@ -292,7 +292,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.SetPosition(ctx, currentPosition.Pair, traderAddr,
+	k.PositionsState(ctx).Set(currentPosition.Pair, traderAddr,
 		positionResp.Position)
 
 	// Compute splits for the liquidation fee
@@ -324,7 +324,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		LiquidatorAddress:     liquidator.String(),
 		FeeToLiquidator:       sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
 		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
-		BadDebt:               liquidationResponse.BadDebt.ToDec(),
+		BadDebt:               sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), liquidationResponse.BadDebt),
 		Margin:                sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), liquidationResponse.PositionResp.Position.Margin.RoundInt()),
 		PositionNotional:      liquidationResponse.PositionResp.PositionNotional,
 		PositionSize:          liquidationResponse.PositionResp.Position.Size_,

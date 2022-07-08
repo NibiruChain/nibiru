@@ -45,3 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improvements
 * [#686](https://github.com/NibiruChain/nibiru/pull/686) Add changelog enforcer to github actions.
 * [#681](https://github.com/NibiruChain/nibiru/pull/681) Remove automatic release and leave integration tests when merge into master.
+
+- [#686](https://github.com/NibiruChain/nibiru/pull/686) Add changelog enforcer to github actions.
+- [#686](https://github.com/NibiruChain/nibiru/pull/686) Reorganize PerpKeeper methods
+
+### State Machine Breaking Change
+
+- [#687](https://github.com/NibiruChain/nibiru/pull/687) Emit `PositionChangedEvent` upon changing margin.
+- [#685](https://github.com/NibiruChain/nibiru/pull/685) Represent `PositionChangedEvent` bad debt as Coin.
