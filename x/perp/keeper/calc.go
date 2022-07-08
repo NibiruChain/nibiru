@@ -8,10 +8,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-// NOTE hardcoded for now. Need to discuss whether this should be part of the
-// Params of x/perp
-var initMarginRatio = sdk.MustNewDecFromStr("0.01")
-
 type RemainingMarginWithFundingPayment struct {
 	// Margin: amount of quote token (y) backing the position.
 	Margin sdk.Dec
@@ -79,55 +75,37 @@ be removed without giving the position bad debt
 Args:
 - ctx: Carries information about the current state of the SDK application.
 - pos: position for which to compute free collateral.
-- fundingPayment: A funding payment (margin units) made or received by the trader on
-the current position. 'fundingPayment' is positive if 'owner' is the sender
-and negative if 'owner' is the receiver of the payment. Its magnitude is
-abs(vSize * fundingRate). Funding payments act to converge the mark price
-(vPrice) and index price (average price on major exchanges).
 
 Returns:
-- accountExcessEquity: Amount of collateral (margin) that can be removed from the
+- freeCollateral: Amount of collateral (margin) that can be removed from the
 position without making it go underwater.
 - err: error
 */
 func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, pos types.Position, fundingPayment sdk.Dec,
-) (accountExcessEquity sdk.Int, err error) {
+	ctx sdk.Context, pos types.Position,
+) (freeCollateral sdk.Dec, err error) {
 	if err = pos.Pair.Validate(); err != nil {
-		return sdk.Int{}, err
+		return sdk.Dec{}, err
 	}
 
-	err = k.requireVpool(ctx, pos.Pair)
-	if err != nil {
-		return sdk.Int{}, err
+	if err := k.requireVpool(ctx, pos.Pair); err != nil {
+		return sdk.Dec{}, err
 	}
 
-	unrealizedPnL, positionNotional, err := k.
+	params := k.GetParams(ctx)
+
+	positionNotional, unrealizedPnL, err := k.
 		getPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
 			pos,
 			types.PnLPreferenceOption_MIN,
 		)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdk.Dec{}, err
 	}
-	remainingMargin := pos.Margin.Sub(fundingPayment)
-	minAccountValue := sdk.MinDec(remainingMargin, remainingMargin.Add(unrealizedPnL))
+	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
 
-	// Get margin requirement. This rounds up, so 16.5 margin required -> 17
-	var marginRequirement sdk.Int
-	if pos.Size_.IsPositive() {
-		// if long position, use open notional
-		marginRequirement = initMarginRatio.Mul(pos.OpenNotional).RoundInt()
-	} else {
-		// if short, use current notional
-		marginRequirement = initMarginRatio.Mul(positionNotional).RoundInt()
-	}
-	accountExcessEquity = minAccountValue.Sub(marginRequirement.ToDec()).TruncateInt()
-	k.Logger(ctx).Debug(
-		"calc_free_collateral",
-		"amount",
-		accountExcessEquity.String(),
-	)
-	return accountExcessEquity, nil
+	maintenanceMarginRequirement := positionNotional.Mul(params.MaintenanceMarginRatio)
+
+	return remainingMargin.Sub(maintenanceMarginRequirement), nil
 }

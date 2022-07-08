@@ -28,22 +28,12 @@ func (k Keeper) AddMargin(
 	// validate margin amount
 	if !msg.Margin.Amount.IsPositive() {
 		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"margin_amount",
-			msg.Margin.Amount.String(),
-		)
 		return nil, err
 	}
 
 	// validate token pair
 	pair, err := common.NewAssetPair(msg.TokenPair)
 	if err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"token_pair",
-			msg.TokenPair,
-		)
 		return nil, err
 	}
 	// validate vpool exists
@@ -54,26 +44,12 @@ func (k Keeper) AddMargin(
 	// validate margin denom
 	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
 		err = fmt.Errorf("invalid margin denom")
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"margin_denom",
-			msg.Margin.Denom,
-			"quote_token_denom",
-			pair.GetQuoteTokenDenom(),
-		)
 		return nil, err
 	}
 
 	// ------------- AddMargin -------------
 	position, err := k.GetPosition(ctx, pair, msgSender)
 	if err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"pair",
-			pair.String(),
-			"trader",
-			msg.Sender,
-		)
 		return nil, err
 	}
 
@@ -85,11 +61,6 @@ func (k Keeper) AddMargin(
 
 	if !remainingMargin.BadDebt.IsZero() {
 		err = fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"remaining_bad_debt",
-			remainingMargin.BadDebt.String(),
-		)
 		return nil, err
 	}
 
@@ -97,13 +68,6 @@ func (k Keeper) AddMargin(
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, msgSender, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
 	); err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"trader",
-			msg.Sender,
-			"coin",
-			coinToSend.String(),
-		)
 		return nil, err
 	}
 
@@ -146,22 +110,12 @@ func (k Keeper) RemoveMargin(
 	// validate margin amount
 	if !msg.Margin.Amount.IsPositive() {
 		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"margin_amount",
-			msg.Margin.Amount.String(),
-		)
 		return nil, err
 	}
 
 	// validate token pair
 	pair, err := common.NewAssetPair(msg.TokenPair)
 	if err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"token_pair",
-			msg.TokenPair,
-		)
 		return nil, err
 	}
 
@@ -173,26 +127,12 @@ func (k Keeper) RemoveMargin(
 	// validate margin denom
 	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
 		err = fmt.Errorf("invalid margin denom")
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"margin_denom",
-			msg.Margin.Denom,
-			"quote_token_denom",
-			pair.GetQuoteTokenDenom(),
-		)
 		return nil, err
 	}
 
 	// ------------- RemoveMargin -------------
 	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"pair",
-			pair.String(),
-			"trader",
-			msg.Sender,
-		)
 		return nil, err
 	}
 
@@ -203,19 +143,12 @@ func (k Keeper) RemoveMargin(
 		return nil, err
 	}
 	if !remainingMargin.BadDebt.IsZero() {
-		err = types.ErrFailedRemoveMarginCanCauseBadDebt
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"remaining_bad_debt",
-			remainingMargin.BadDebt.String(),
-		)
-		return nil, err
+		return nil, types.ErrFailedRemoveMarginCanCauseBadDebt
 	}
 
 	position.Margin = remainingMargin.Margin
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
-	freeCollateral, err := k.calcFreeCollateral(
-		ctx, *position, remainingMargin.FundingPayment)
+	freeCollateral, err := k.calcFreeCollateral(ctx, *position)
 	if err != nil {
 		return res, err
 	} else if !freeCollateral.IsPositive() {
@@ -227,13 +160,6 @@ func (k Keeper) RemoveMargin(
 	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, msg.Margin.Amount)
 	if err != nil {
-		k.Logger(ctx).Debug(
-			err.Error(),
-			"to",
-			msg.Sender,
-			"coin",
-			coinToSend.String(),
-		)
 		return nil, err
 	}
 
@@ -309,13 +235,7 @@ func (k Keeper) GetMarginRatio(
 
 func (k Keeper) requireVpool(ctx sdk.Context, pair common.AssetPair) (err error) {
 	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
-		err = fmt.Errorf("%v: %v", types.ErrPairNotFound.Error(), pair.String())
-		k.Logger(ctx).Error(
-			err.Error(),
-			"pair",
-			pair.String(),
-		)
-		return err
+		return types.ErrPairNotFound.Wrap(pair.String())
 	}
 	return nil
 }
