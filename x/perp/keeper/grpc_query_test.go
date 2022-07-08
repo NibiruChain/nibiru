@@ -107,7 +107,7 @@ func TestQueryPosition(t *testing.T) {
 			})
 
 			t.Log("initialize position")
-			perpKeeper.SetPosition(ctx, common.PairBTCStable, traderAddr, tc.initialPosition)
+			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
 
 			t.Log("query position")
 			resp, err := queryServer.TraderPosition(

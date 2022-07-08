@@ -42,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Improvements
-* [#686](https://github.com/NibiruChain/nibiru/pull/686) Add changelog enforcer to github actions.
+- [#686](https://github.com/NibiruChain/nibiru/pull/686) Add changelog enforcer to github actions.
 
-
+- [#686](https://github.com/NibiruChain/nibiru/pull/686) Reorganize PerpKeeper methods

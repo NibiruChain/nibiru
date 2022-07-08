@@ -29,8 +29,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 				pair := common.MustNewAssetPair("osmo:nusd")
 
-				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, pair, trader)
+				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 			},
@@ -43,8 +42,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				traderAddr := sample.AccAddress()
 				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 
-				_, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traderAddr)
+				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 
@@ -54,10 +52,8 @@ func TestGetAndSetPosition(t *testing.T) {
 					Size_:         sdk.OneDec(),
 					Margin:        sdk.OneDec(),
 				}
-				nibiruApp.PerpKeeper.SetPosition(
-					ctx, vpoolPair, traderAddr, dummyPosition)
-				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traderAddr)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(vpoolPair, traderAddr, dummyPosition)
+				outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPosition, outPosition)
 			},
@@ -72,7 +68,7 @@ func TestGetAndSetPosition(t *testing.T) {
 	}
 }
 
-func TestClearPosition(t *testing.T) {
+func TestDeletePosition(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()
@@ -89,8 +85,7 @@ func TestClearPosition(t *testing.T) {
 
 				t.Log("vpool contains no positions to start")
 				for _, trader := range traders {
-					_, err := nibiruApp.PerpKeeper.GetPosition(
-						ctx, vpoolPair, trader)
+					_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, trader)
 					require.Error(t, err)
 					require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 				}
@@ -103,10 +98,8 @@ func TestClearPosition(t *testing.T) {
 						Size_:         sdk.OneDec(),
 						Margin:        sdk.OneDec(),
 					}
-					nibiruApp.PerpKeeper.SetPosition(
-						ctx, vpoolPair, traderAddr, dummyPosition)
-					outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-						ctx, vpoolPair, traderAddr)
+					nibiruApp.PerpKeeper.PositionsState(ctx).Set(vpoolPair, traderAddr, dummyPosition)
+					outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 					require.NoError(t, err)
 					require.EqualValues(t, dummyPosition, outPosition)
 					t.Logf("position created successfully on vpool, %v, for trader %v",
@@ -117,28 +110,24 @@ func TestClearPosition(t *testing.T) {
 				t.Log("attempt to clear all positions")
 
 				require.NoError(t,
-					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolPair, traders[0]),
+					nibiruApp.PerpKeeper.PositionsState(ctx).Delete(vpoolPair, traders[0]),
 				)
 
-				outPosition, err := nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traders[0])
+				outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[0])
 				require.ErrorIs(t, err, types.ErrPositionNotFound)
 				require.Nil(t, outPosition)
 
-				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traders[1])
+				outPosition, err = nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[1])
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPositions[1], outPosition)
 				t.Log("trader 1 has a position and trader 0 does not.")
 
 				t.Log("clearing position of trader 1...")
 				require.NoError(t,
-					nibiruApp.PerpKeeper.ClearPosition(
-						ctx, vpoolPair, traders[1]),
+					nibiruApp.PerpKeeper.PositionsState(ctx).Delete(vpoolPair, traders[1]),
 				)
-				outPosition, err = nibiruApp.PerpKeeper.GetPosition(
-					ctx, vpoolPair, traders[1])
+
+				outPosition, err = nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[1])
 				require.ErrorIs(t, err, types.ErrPositionNotFound)
 				require.Nil(t, outPosition)
 				t.Log("Success, all trader positions have been cleared.")
@@ -154,7 +143,7 @@ func TestClearPosition(t *testing.T) {
 	}
 }
 
-func TestKeeper_ClosePosition(t *testing.T) {
+func TestKeeperClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")

@@ -32,7 +32,7 @@ func (k Keeper) Liquidate(
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	position, err := k.GetPosition(ctx, pair, traderAddr)
+	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -292,7 +292,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.SetPosition(ctx, currentPosition.Pair, traderAddr,
+	k.PositionsState(ctx).Set(currentPosition.Pair, traderAddr,
 		positionResp.Position)
 
 	// Compute splits for the liquidation fee
