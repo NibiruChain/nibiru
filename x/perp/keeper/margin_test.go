@@ -309,8 +309,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			)
 
 			t.Log("establish initial position")
-			nibiruApp.PerpKeeper.SetPosition(
-				ctx,
+			nibiruApp.PerpKeeper.PositionsState(ctx).Set(
 				common.PairBTCStable,
 				traderAddr,
 				&tc.initialPosition,
@@ -493,7 +492,7 @@ func TestRemoveMargin(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Log("Position should be accessible following 'OpenPosition'")
-				_, err = nibiruApp.PerpKeeper.GetPosition(ctx, pair, traderAddr)
+				_, err = nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, traderAddr)
 				require.NoError(t, err)
 
 				t.Log("Verify correct events emitted for 'OpenPosition'")
