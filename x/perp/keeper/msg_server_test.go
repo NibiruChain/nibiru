@@ -73,7 +73,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
 			if err == nil {
 				t.Log("fund trader")
-				simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds)
+				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 			}
 
 			resp, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
@@ -142,7 +142,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			traderAddr, err2 := sdk.AccAddressFromBech32(tc.sender)
 			if err == nil && err2 == nil {
 				t.Log("create position")
-				app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.OneDec(),
@@ -150,8 +150,8 @@ func TestMsgServerClosePosition(t *testing.T) {
 					OpenNotional:                        sdk.OneDec(),
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         1,
-				})
-				simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1)))
+				}))
+				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1))))
 			}
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
@@ -236,7 +236,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 				require.NoError(t, app.PricefeedKeeper.SetCurrentPrices(ctx, pair.GetBaseTokenDenom(), pair.GetQuoteTokenDenom()))
 
 				t.Log("create position")
-				app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.OneDec(),
@@ -244,8 +244,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 					OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         1,
-				})
-				simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1)))
+				}))
+				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1))))
 			}
 
 			resp, err := msgServer.Liquidate(sdk.WrapSDKContext(ctx), &types.MsgLiquidate{
