@@ -47,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#686](https://github.com/NibiruChain/nibiru/pull/686) Add changelog enforcer to github actions.
 * [#681](https://github.com/NibiruChain/nibiru/pull/681) Remove automatic release and leave integration tests when merge into master.
 * [#684](https://github.com/NibiruChain/nibiru/pull/684) Reorganize PerpKeeper methods.
-
+* [#690](https://github.com/NibiruChain/nibiru/pull/690) Call `closePositionEntirely` from `ClosePosition`.
+* 
 ### API Breaking
 
 * [#687](https://github.com/NibiruChain/nibiru/pull/687) Emit `PositionChangedEvent` upon changing margin.
