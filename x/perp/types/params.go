@@ -91,8 +91,8 @@ func DefaultParams() Params {
 		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"),
 		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"),
-		/* liquidationFee */ sdk.MustNewDecFromStr("0.0125"),
-		/* partialLiquidationRatio */ sdk.MustNewDecFromStr("0.50"),
+		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"),
+		/* partialLiquidationRatio */ sdk.MustNewDecFromStr("0.25"),
 		/* epochIdentifier */ "hour",
 		/* twapLookbackWindow */ 15*time.Minute,
 	)
