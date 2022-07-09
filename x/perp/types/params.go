@@ -93,7 +93,7 @@ func DefaultParams() Params {
 		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"),
 		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"),
 		/* partialLiquidationRatio */ sdk.MustNewDecFromStr("0.25"),
-		/* epochIdentifier */ "hour",
+		/* epochIdentifier */ "30 min",
 		/* twapLookbackWindow */ 15*time.Minute,
 	)
 }
