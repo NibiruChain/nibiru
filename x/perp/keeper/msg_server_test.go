@@ -41,6 +41,13 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			expectedErr: common.ErrInvalidTokenPair,
 		},
 		{
+			name:        "invalid address",
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			pair:        common.PairBTCStable.String(),
+			sender:      "bar",
+			expectedErr: fmt.Errorf("decoding bech32 failed"),
+		},
+		{
 			name:        "success",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
 			pair:        common.PairBTCStable.String(),
@@ -62,8 +69,11 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})
 
-			t.Log("fund trader")
-			simapp.FundAccount(app.BankKeeper, ctx, sdk.MustAccAddressFromBech32(tc.sender), tc.traderFunds)
+			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
+			if err == nil {
+				t.Log("fund trader")
+				simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds)
+			}
 
 			resp, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
 				Sender:               tc.sender,
@@ -75,7 +85,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			})
 
 			if tc.expectedErr != nil {
-				require.ErrorIs(t, err, tc.expectedErr)
+				require.ErrorContains(t, err, tc.expectedErr.Error())
 				require.Nil(t, resp)
 			} else {
 				require.NoError(t, err)
