@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -75,6 +76,80 @@ func TestMsgServerOpenPosition(t *testing.T) {
 
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr)
+				require.Nil(t, resp)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+			}
+		})
+	}
+}
+
+func TestMsgServerClosePosition(t *testing.T) {
+	tests := []struct {
+		name string
+
+		pair   string
+		sender string
+
+		expectedErr error
+	}{
+		{
+			name:        "invalid pair",
+			pair:        "foo",
+			sender:      sample.AccAddress().String(),
+			expectedErr: common.ErrInvalidTokenPair,
+		},
+		{
+			name:        "invalid address",
+			pair:        common.PairBTCStable.String(),
+			sender:      "foo",
+			expectedErr: fmt.Errorf("decoding bech32 failed"),
+		},
+		{
+			name:        "success",
+			pair:        common.PairBTCStable.String(),
+			sender:      sample.AccAddress().String(),
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewNibiruAppAndContext(true)
+			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+			t.Log("create vpool")
+			app.VpoolKeeper.CreatePool(ctx, common.PairBTCStable, sdk.OneDec(), sdk.NewDec(1_000_000), sdk.NewDec(1_000_000), sdk.OneDec(), sdk.OneDec())
+			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				Pair:                       common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+			})
+
+			pair, err := common.NewAssetPair(tc.pair)
+			traderAddr, err2 := sdk.AccAddressFromBech32(tc.sender)
+			if err == nil && err2 == nil {
+				t.Log("create position")
+				app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+					TraderAddress:                       traderAddr.String(),
+					Pair:                                pair,
+					Size_:                               sdk.OneDec(),
+					Margin:                              sdk.OneDec(),
+					OpenNotional:                        sdk.OneDec(),
+					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                         1,
+				})
+				simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1)))
+			}
+
+			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
+				Sender:    tc.sender,
+				TokenPair: tc.pair,
+			})
+
+			if tc.expectedErr != nil {
+				require.ErrorContains(t, err, tc.expectedErr.Error())
 				require.Nil(t, resp)
 			} else {
 				require.NoError(t, err)
