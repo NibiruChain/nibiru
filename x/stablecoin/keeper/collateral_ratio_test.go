@@ -96,7 +96,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
 			require.NoError(t, err)
 
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx,
 				oracle,
 				/* pairStr */ pair.String(),
@@ -260,7 +260,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 				common.PairCollStable: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, pair.String(), prices[pair], priceExpiry)
 				require.NoError(t, err)
 
@@ -347,7 +347,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 				ctx, pair, []sdk.AccAddress{oracle})
 
 			// Post prices to each market with the oracle.
-			_, err := nibiruApp.PricefeedKeeper.SetPrice(
+			_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 				ctx, oracle, pair.String(), tc.priceCollStable, priceExpiry)
 			require.NoError(t, err)
 
@@ -537,7 +537,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				common.PairCollStable: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, pair.String(), prices[pair], priceExpiry)
 				require.NoError(t, err)
 
@@ -552,7 +552,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				common.PairGovStable:  tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, assetPair.String(),
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)
@@ -824,7 +824,7 @@ func TestRecollateralize(t *testing.T) {
 				common.PairCollStable: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, pair.String(), prices[pair], priceExpiry)
 				require.NoError(t, err)
 
@@ -839,7 +839,7 @@ func TestRecollateralize(t *testing.T) {
 				common.PairGovStable:  tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, assetPair.String(),
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)
@@ -1222,7 +1222,7 @@ func TestBuyback(t *testing.T) {
 				common.PairCollStable: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, pair.String(), prices[pair], priceExpiry)
 				require.NoError(t, err)
 
@@ -1233,7 +1233,7 @@ func TestBuyback(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, assetPair.String(),
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)
@@ -1350,7 +1350,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 				common.PairCollStable: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, pair.String(), prices[pair], priceExpiry)
 				require.NoError(t, err)
 
@@ -1361,7 +1361,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 
 			// Post prices to each specified market with the oracle.
 			for _, assetPair := range tc.postedAssetPairs {
-				_, err := nibiruApp.PricefeedKeeper.SetPrice(
+				_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 					ctx, oracle, assetPair.String(),
 					prices[assetPair], priceExpiry)
 				require.NoError(t, err)

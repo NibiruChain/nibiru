@@ -22,7 +22,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, pp := range genState.PostedPrices {
 		if pp.Expiry.After(ctx.BlockTime()) {
 			oracle := sdk.MustAccAddressFromBech32(pp.Oracle)
-			_, err := k.SetPrice(ctx, oracle, pp.PairID, pp.Price, pp.Expiry)
+			_, err := k.PostRawPrice(ctx, oracle, pp.PairID, pp.Price, pp.Expiry)
 			if err != nil {
 				panic(err)
 			}

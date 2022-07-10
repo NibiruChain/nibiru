@@ -51,8 +51,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// SetPrice updates the posted price for a specific oracle
-func (k Keeper) SetPrice(
+// PostRawPrice updates the posted price for a specific oracle
+func (k Keeper) PostRawPrice(
 	ctx sdk.Context,
 	oracle sdk.AccAddress,
 	pairStr string,

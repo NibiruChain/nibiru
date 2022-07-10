@@ -155,11 +155,11 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
@@ -337,11 +337,11 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
@@ -509,11 +509,11 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)
@@ -660,11 +660,11 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.SetPrice(
+			_, err := priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
 			)
 			require.NoError(t, err)
-			_, err = priceKeeper.SetPrice(
+			_, err = priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
 			)
 			require.NoError(t, err)

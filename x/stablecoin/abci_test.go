@@ -120,7 +120,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			app.PricefeedKeeper.SetParams(ctx, markets)
 			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
-			_, err := app.PricefeedKeeper.SetPrice(
+			_, err := app.PricefeedKeeper.PostRawPrice(
 				ctx,
 				oracle,
 				pairs[0].String(),
@@ -166,7 +166,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	app.PricefeedKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
-	_, err := app.PricefeedKeeper.SetPrice(
+	_, err := app.PricefeedKeeper.PostRawPrice(
 		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
 	require.NoError(t, app.PricefeedKeeper.SetCurrentPrices(ctx, pairs[0].Token0, pairs[0].Token1))
@@ -181,7 +181,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	_, err = app.PricefeedKeeper.SetPrice(
+	_, err = app.PricefeedKeeper.PostRawPrice(
 		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
 	require.NoError(t, err)
 

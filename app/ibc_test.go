@@ -43,7 +43,7 @@ func SetupNibiruTestingApp() (
 	})
 	nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
-	_, err = nibiruApp.PricefeedKeeper.SetPrice(
+	_, err = nibiruApp.PricefeedKeeper.PostRawPrice(
 		ctx, oracle, pair.String(), sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
 	)
