@@ -484,7 +484,7 @@ func TestCalcTwap(t *testing.T) {
 	}
 }
 
-func TestGetTWAPPrice(t *testing.T) {
+func TestGetTWAP(t *testing.T) {
 	type positionUpdate struct {
 		quoteAsset sdk.Dec
 		baseAsset  sdk.Dec
@@ -496,20 +496,20 @@ func TestGetTWAPPrice(t *testing.T) {
 		pair            common.AssetPair
 		positionUpdates []positionUpdate
 
-		expectedTwapPrices []sdk.Dec
+		expectedTWAPs      []sdk.Dec
 		expectedMarkPrices []sdk.Dec
 	}{
 		{
 			name:               "Add quote to position",
 			pair:               BTCNusdPair,
 			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(5_000), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("40006.667083333333333336")},
+			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("40006.667083333333333336")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("40010.000625000000000004")},
 		}, {
 			name:               "Remove quote from position",
 			pair:               BTCNusdPair,
 			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(4_000), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("39994.666933333333333333")},
+			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("39994.666933333333333333")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("39992.000400000000000000")},
 		}, {
 			name: "Add and remove to/from quote position to return to initial TWAP",
@@ -518,7 +518,7 @@ func TestGetTWAPPrice(t *testing.T) {
 				{quoteAsset: sdk.NewDec(700), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
 				{quoteAsset: sdk.NewDec(1_234), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
 			},
-			expectedTwapPrices: []sdk.Dec{
+			expectedTWAPs: []sdk.Dec{
 				sdk.MustNewDecFromStr("40001.120009799999999993"),
 				sdk.MustNewDecFromStr("39999.843674908525000000"),
 			},
@@ -530,13 +530,13 @@ func TestGetTWAPPrice(t *testing.T) {
 			name:               "Add base to position",
 			pair:               BTCNusdPair,
 			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(50), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("37520.786092214663643235")},
+			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("37520.786092214663643235")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("36281.179138321995464853")}},
 		{
 			name:               "Remove base from position",
 			pair:               BTCNusdPair,
 			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(40), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTwapPrices: []sdk.Dec{sdk.MustNewDecFromStr("42268.518518518518518519")},
+			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("42268.518518518518518519")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("43402.777777777777777778")},
 		},
 		{
@@ -546,7 +546,7 @@ func TestGetTWAPPrice(t *testing.T) {
 				{baseAsset: sdk.NewDec(7), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
 				{baseAsset: sdk.MustNewDecFromStr("1.234"), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
 			},
-			expectedTwapPrices: []sdk.Dec{
+			expectedTWAPs: []sdk.Dec{
 				sdk.MustNewDecFromStr("39556.660476959200196440"),
 				sdk.MustNewDecFromStr("39548.504707649598914130"),
 			},
@@ -575,11 +575,11 @@ func TestGetTWAPPrice(t *testing.T) {
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				/*maxSpread=*/ sdk.OneDec(),
 			)
-			err := keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
+			err := keeper.UpdateTWAP(cctx, BTCNusdPair.String())
 			require.NoError(t, err)
 			// Make sure price gets initialized correctly when the pool gets created
 			pair := BTCNusdPair
-			twap, err := keeper.GetCurrentTWAPPrice(ctx, pair)
+			twap, err := keeper.GetCurrentTWAP(ctx, pair)
 			require.NoError(t, err)
 			require.EqualValues(t, initialTWAP, twap.Price)
 			for i, p := range tc.positionUpdates {
@@ -593,11 +593,11 @@ func TestGetTWAPPrice(t *testing.T) {
 				require.NoError(t, err)
 				markPriceEvt := getMarkPriceEvent(tc.expectedMarkPrices[i], cctx.BlockHeader().Time)
 				testutilevents.RequireContainsTypedEvent(t, cctx, markPriceEvt)
-				err = keeper.UpdateTWAPPrice(cctx, BTCNusdPair.String())
+				err = keeper.UpdateTWAP(cctx, BTCNusdPair.String())
 				require.NoError(t, err)
-				twapPrice, err := keeper.GetCurrentTWAPPrice(ctx, pair)
+				twap, err := keeper.GetCurrentTWAP(ctx, pair)
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedTwapPrices[i], twapPrice.Price)
+				assert.Equal(t, tc.expectedTWAPs[i], twap.Price)
 			}
 		})
 	}

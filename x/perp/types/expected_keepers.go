@@ -60,7 +60,7 @@ type PricefeedKeeper interface {
 	) bool
 	GetOraclesForPair(ctx sdk.Context, pairID string) (oracles []sdk.AccAddress)
 	GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error
-	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
+	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
 }
 
 type VpoolKeeper interface {
@@ -238,8 +238,8 @@ type VpoolKeeper interface {
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 
-	// GetCurrentTWAPPrice fetches the TWAP for the specified token pair / pool
-	GetCurrentTWAPPrice(ctx sdk.Context, pair common.AssetPair) (vpooltypes.CurrentTWAP, error)
+	// GetCurrentTWAP fetches the TWAP for the specified token pair / pool
+	GetCurrentTWAP(ctx sdk.Context, pair common.AssetPair) (vpooltypes.CurrentTWAP, error)
 }
 
 type EpochKeeper interface {

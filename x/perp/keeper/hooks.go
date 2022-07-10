@@ -21,27 +21,27 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
-		indexTWAPPrice, err := k.PricefeedKeeper.GetCurrentTWAPPrice(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
+		indexTWAP, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap index price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
 		}
-		if indexTWAPPrice.Price.IsZero() {
+		if indexTWAP.Price.IsZero() {
 			ctx.Logger().Error("index price is zero", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
-		markTWAPPrice, err := k.VpoolKeeper.GetCurrentTWAPPrice(ctx, pairMetadata.Pair)
+		markTWAP, err := k.VpoolKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
 		}
-		if markTWAPPrice.Price.IsZero() {
+		if markTWAP.Price.IsZero() {
 			ctx.Logger().Error("mark price is zero", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-		fundingRate := markTWAPPrice.Price.Sub(indexTWAPPrice.Price).QuoInt64(int64(intervalsPerDay))
+		fundingRate := markTWAP.Price.Sub(indexTWAP.Price).QuoInt64(int64(intervalsPerDay))
 
 		if len(pairMetadata.CumulativePremiumFractions) > 0 {
 			fundingRate = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(fundingRate)

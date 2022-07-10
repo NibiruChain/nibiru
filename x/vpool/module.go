@@ -173,7 +173,7 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	for _, pool := range am.keeper.GetAllPools(ctx) {
 		assetPair := pool.Pair.String()
-		if err := am.keeper.UpdateTWAPPrice(ctx, assetPair); err != nil {
+		if err := am.keeper.UpdateTWAP(ctx, assetPair); err != nil {
 			ctx.Logger().Error("failed to update TWAP", "assetPair", assetPair, "error", err)
 		}
 	}
