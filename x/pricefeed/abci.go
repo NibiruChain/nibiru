@@ -17,7 +17,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 			continue
 		}
 
-		err := k.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+		err := k.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 		if err != nil && !errors.Is(err, types.ErrNoValidPrice) {
 			panic(err)
 		}

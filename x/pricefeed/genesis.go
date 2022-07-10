@@ -42,7 +42,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if len(postedPrices) == 0 {
 			continue
 		}
-		err := k.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+		err := k.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 		if err != nil {
 			panic(err)
 		}

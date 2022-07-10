@@ -44,7 +44,7 @@ type PricefeedKeeper interface {
 	IsWhitelistedOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
 	) bool
 	GetOraclesForPair(ctx sdk.Context, pairID string) (oracles []sdk.AccAddress)
-	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
+	GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error
 }
 
 type DexKeeper interface {

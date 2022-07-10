@@ -104,8 +104,8 @@ func (k Keeper) PostRawPrice(
 	return newPostedPrice, nil
 }
 
-// SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
-func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
+// GatherRawPrices updates the price of an asset to the median of all valid oracle inputs
+func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	pairID := assetPair.String()
 

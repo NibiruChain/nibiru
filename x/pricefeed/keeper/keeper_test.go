@@ -209,7 +209,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45))
 
 	// Set current price
-	err = keeper.SetCurrentPrices(ctx, token0, token1)
+	err = keeper.GatherRawPrices(ctx, token0, token1)
 	require.NoError(t, err)
 
 	// Get current price
@@ -231,7 +231,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
-	err = keeper.SetCurrentPrices(ctx, token0, token1)
+	err = keeper.GatherRawPrices(ctx, token0, token1)
 	require.NoError(t, err)
 
 	price, err = keeper.GetCurrentPrice(ctx, "tst", "usd")
@@ -249,7 +249,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.Equal(t, price, prices[0])
 }
 
-func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
+func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {
 	_, oracles := sample.PrivKeyAddressPairs(5)
 	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
@@ -283,7 +283,7 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	// Update block time such that all prices expire
 	ctx = ctx.WithBlockTime(time.Now().UTC().Add(time.Hour * 2))
 
-	err = keeper.SetCurrentPrices(ctx, token0, token1)
+	err = keeper.GatherRawPrices(ctx, token0, token1)
 	require.ErrorContains(t, err, "input prices are expired")
 
 	_, err = keeper.GetCurrentPrice(ctx, token0, token1)

@@ -166,7 +166,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -348,7 +348,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -520,7 +520,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -671,7 +671,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 

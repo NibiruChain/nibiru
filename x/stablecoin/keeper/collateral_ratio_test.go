@@ -104,7 +104,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
-			err = priceKeeper.SetCurrentPrices(ctx, common.DenomColl, common.DenomStable)
+			err = priceKeeper.GatherRawPrices(ctx, common.DenomColl, common.DenomStable)
 			require.NoError(t, err)
 
 			err = stablecoinKeeper.EvaluateCollRatio(ctx)
@@ -265,7 +265,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -353,7 +353,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pfPair := range pricefeedParams.Pairs {
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pfPair.Token0, pfPair.Token1)
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pfPair.Token0, pfPair.Token1)
 				require.NoError(t, err, "Error posting price for market: %d", pfPair.String())
 			}
 
@@ -542,7 +542,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -558,7 +558,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())
@@ -829,7 +829,7 @@ func TestRecollateralize(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -845,7 +845,7 @@ func TestRecollateralize(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())
@@ -1227,7 +1227,7 @@ func TestBuyback(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -1239,7 +1239,7 @@ func TestBuyback(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())
@@ -1355,7 +1355,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -1367,7 +1367,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update the 'CurrentPrice' posted by the oracles.
-				err = nibiruApp.PricefeedKeeper.SetCurrentPrices(
+				err = nibiruApp.PricefeedKeeper.GatherRawPrices(
 					ctx, assetPair.Token0, assetPair.Token1)
 				require.NoError(
 					t, err, "Error posting price for pair: %d", assetPair.String())
