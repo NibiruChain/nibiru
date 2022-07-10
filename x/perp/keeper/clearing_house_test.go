@@ -184,8 +184,9 @@ func TestOpenPositionSuccess(t *testing.T) {
 
 			t.Log("set pricefeed oracle")
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			nibiruApp.PricefeedKeeper.SetPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
-			nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, common.DenomAxlBTC, common.DenomStable)
+			_, err := nibiruApp.PricefeedKeeper.SetPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+			require.NoError(t, err)
+			require.NoError(t, nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, common.DenomAxlBTC, common.DenomStable))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
@@ -203,7 +204,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			})
 
 			t.Log("initialize trader funds")
-			simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds)
+			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
@@ -212,7 +213,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			err = nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.NoError(t, err)
 
 			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(common.PairBTCStable, traderAddr)
@@ -301,8 +302,9 @@ func TestOpenPositionError(t *testing.T) {
 
 			t.Log("set pricefeed oracle")
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			nibiruApp.PricefeedKeeper.SetPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
-			nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, common.DenomAxlBTC, common.DenomStable)
+			_, err := nibiruApp.PricefeedKeeper.SetPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+			require.NoError(t, err)
+			require.NoError(t, nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, common.DenomAxlBTC, common.DenomStable))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
@@ -320,7 +322,7 @@ func TestOpenPositionError(t *testing.T) {
 			})
 
 			t.Log("initialize trader funds")
-			simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds)
+			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
@@ -329,7 +331,7 @@ func TestOpenPositionError(t *testing.T) {
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			err = nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.ErrorContains(t, err, tc.expectedErr.Error())
 		})
 	}
