@@ -607,7 +607,19 @@ func (k Keeper) closePositionEntirely(
 	return positionResp, nil
 }
 
-// ClosePosition gets the current position, and calls OpenPosition to open a reverse position with amount equal to the current open notional.
+/**
+ClosePosition closes a position entirely and transfers the remaining margin back to the user.
+Errors if the position has bad debt.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the trading pair
+  - traderAddr: the trader's address
+
+ret:
+  - positionResp: the response containing the updated position and applied funding payment, bad debt, PnL
+  - err: error if any
+*/
 func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
 	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
