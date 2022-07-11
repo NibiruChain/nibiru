@@ -607,34 +607,38 @@ func (k Keeper) closePositionEntirely(
 	return positionResp, nil
 }
 
-// ClosePosition gets the current position, and calls OpenPosition to open a reverse position with amount equal to the current open notional.
-func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, addr sdk.AccAddress) (*types.PositionResp, error) {
-	position, err := k.PositionsState(ctx).Get(pair, addr)
+/**
+ClosePosition closes a position entirely and transfers the remaining margin back to the user.
+Errors if the position has bad debt.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the trading pair
+  - traderAddr: the trader's address
+
+ret:
+  - positionResp: the response containing the updated position and applied funding payment, bad debt, PnL
+  - err: error if any
+*/
+func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
+	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	positionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	positionResp, err := k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
 	if err != nil {
 		return nil, err
 	}
 
-	positionResp, err := k.openReversePosition(
-		ctx,
-		*position,
-		positionNotional,
-		/* leverage */ sdk.OneDec(),
-		/* baseLimit */ sdk.ZeroDec(),
-		/* canOverFluctuationLimit */ false,
-	)
-	if err != nil {
-		return nil, err
+	if positionResp.BadDebt.IsPositive() {
+		return nil, fmt.Errorf("underwater position")
 	}
 
 	if err = k.afterPositionUpdate(
 		ctx,
 		pair,
-		addr,
+		traderAddr,
 		k.GetParams(ctx),
 		/* isNewPosition */ false,
 		*positionResp,
