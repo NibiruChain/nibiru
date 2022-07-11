@@ -240,6 +240,20 @@ func (m *MockPricefeedKeeper) EXPECT() *MockPricefeedKeeperMockRecorder {
 	return m.recorder
 }
 
+// GatherRawPrices mocks base method.
+func (m *MockPricefeedKeeper) GatherRawPrices(arg0 types2.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GatherRawPrices", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GatherRawPrices indicates an expected call of GatherRawPrices.
+func (mr *MockPricefeedKeeperMockRecorder) GatherRawPrices(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GatherRawPrices", reflect.TypeOf((*MockPricefeedKeeper)(nil).GatherRawPrices), arg0, arg1, arg2)
+}
+
 // GetCurrentPrice mocks base method.
 func (m *MockPricefeedKeeper) GetCurrentPrice(arg0 types2.Context, arg1, arg2 string) (types0.CurrentPrice, error) {
 	m.ctrl.T.Helper()
@@ -269,19 +283,19 @@ func (mr *MockPricefeedKeeperMockRecorder) GetCurrentPrices(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentPrices", reflect.TypeOf((*MockPricefeedKeeper)(nil).GetCurrentPrices), arg0)
 }
 
-// GetCurrentTWAPPrice mocks base method.
-func (m *MockPricefeedKeeper) GetCurrentTWAPPrice(arg0 types2.Context, arg1, arg2 string) (types0.CurrentTWAP, error) {
+// GetCurrentTWAP mocks base method.
+func (m *MockPricefeedKeeper) GetCurrentTWAP(arg0 types2.Context, arg1, arg2 string) (types0.CurrentTWAP, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCurrentTWAPPrice", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetCurrentTWAP", arg0, arg1, arg2)
 	ret0, _ := ret[0].(types0.CurrentTWAP)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetCurrentTWAPPrice indicates an expected call of GetCurrentTWAPPrice.
-func (mr *MockPricefeedKeeperMockRecorder) GetCurrentTWAPPrice(arg0, arg1, arg2 interface{}) *gomock.Call {
+// GetCurrentTWAP indicates an expected call of GetCurrentTWAP.
+func (mr *MockPricefeedKeeperMockRecorder) GetCurrentTWAP(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAPPrice", reflect.TypeOf((*MockPricefeedKeeper)(nil).GetCurrentTWAPPrice), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAP", reflect.TypeOf((*MockPricefeedKeeper)(nil).GetCurrentTWAP), arg0, arg1, arg2)
 }
 
 // GetOraclesForPair mocks base method.
@@ -354,20 +368,6 @@ func (mr *MockPricefeedKeeperMockRecorder) IsWhitelistedOracle(arg0, arg1, arg2 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsWhitelistedOracle", reflect.TypeOf((*MockPricefeedKeeper)(nil).IsWhitelistedOracle), arg0, arg1, arg2)
 }
 
-// SetCurrentPrices mocks base method.
-func (m *MockPricefeedKeeper) SetCurrentPrices(arg0 types2.Context, arg1, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetCurrentPrices", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetCurrentPrices indicates an expected call of SetCurrentPrices.
-func (mr *MockPricefeedKeeperMockRecorder) SetCurrentPrices(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCurrentPrices", reflect.TypeOf((*MockPricefeedKeeper)(nil).SetCurrentPrices), arg0, arg1, arg2)
-}
-
 // MockVpoolKeeper is a mock of VpoolKeeper interface.
 type MockVpoolKeeper struct {
 	ctrl     *gomock.Controller
@@ -435,19 +435,19 @@ func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetTWAP(arg0, arg1, arg2, arg3, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseAssetTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetBaseAssetTWAP), arg0, arg1, arg2, arg3, arg4)
 }
 
-// GetCurrentTWAPPrice mocks base method.
-func (m *MockVpoolKeeper) GetCurrentTWAPPrice(arg0 types2.Context, arg1 common.AssetPair) (types1.CurrentTWAP, error) {
+// GetCurrentTWAP mocks base method.
+func (m *MockVpoolKeeper) GetCurrentTWAP(arg0 types2.Context, arg1 common.AssetPair) (types1.CurrentTWAP, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCurrentTWAPPrice", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetCurrentTWAP", arg0, arg1)
 	ret0, _ := ret[0].(types1.CurrentTWAP)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetCurrentTWAPPrice indicates an expected call of GetCurrentTWAPPrice.
-func (mr *MockVpoolKeeperMockRecorder) GetCurrentTWAPPrice(arg0, arg1 interface{}) *gomock.Call {
+// GetCurrentTWAP indicates an expected call of GetCurrentTWAP.
+func (mr *MockVpoolKeeperMockRecorder) GetCurrentTWAP(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAPPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetCurrentTWAPPrice), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetCurrentTWAP), arg0, arg1)
 }
 
 // GetQuoteAssetPrice mocks base method.

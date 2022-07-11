@@ -42,7 +42,7 @@ func TestKeeper_SetGetPair(t *testing.T) {
 	require.False(t, keeper.IsActivePair(ctx, "nan:nan"))
 }
 
-func TestKeeper_GetSetPrice(t *testing.T) {
+func TestKeeper_GetPostRawPrice(t *testing.T) {
 	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
@@ -65,7 +65,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 
 	for _, priceInfo := range priceInfos {
 		// Set price by oracle 1
-		pp, err := keeper.SetPrice(
+		pp, err := keeper.PostRawPrice(
 			ctx,
 			priceInfo.oracle,
 			priceInfo.pairStr,
@@ -96,7 +96,7 @@ func TestKeeper_GetSetPrice(t *testing.T) {
 Test case where two oracles try to set prices for a market and only one of the
 oracles is valid (i.e. registered with keeper.SetParams).
 */
-func TestKeeper_SetPriceWrongOracle(t *testing.T) {
+func TestKeeper_PostRawPriceWrongOracle(t *testing.T) {
 	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 	pair := common.MustNewAssetPair("tst:usd")
@@ -112,13 +112,13 @@ func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 	// Set price with valid oracle given (addrs[0])
 	keeper.WhitelistOracles(ctx, []sdk.AccAddress{addrs[0]})
 	expiry := ctx.BlockTime().UTC().Add(1 * time.Hour)
-	_, err := keeper.SetPrice(
+	_, err := keeper.PostRawPrice(
 		ctx, addrs[0], pair.String(), price, expiry,
 	)
 	require.NoError(t, err)
 
 	// Set price with invalid oracle given (addrs[1])
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, addrs[1], pair.String(), price, expiry,
 	)
 	require.Error(t, err)
@@ -128,7 +128,7 @@ func TestKeeper_SetPriceWrongOracle(t *testing.T) {
 Test case where several oracles try to set prices for a market
 and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
 */
-func TestKeeper_SetPriceWrongOracles(t *testing.T) {
+func TestKeeper_PostRawPriceWrongOracles(t *testing.T) {
 	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
@@ -145,13 +145,13 @@ func TestKeeper_SetPriceWrongOracles(t *testing.T) {
 	for i, addr := range addrs {
 		if i < 5 {
 			// Valid oracle addresses. This shouldn't raise an error.
-			_, err := keeper.SetPrice(
+			_, err := keeper.PostRawPrice(
 				ctx, addr, pair.String(), price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.NoError(t, err)
 		} else {
 			// Invalid oracle addresses. This should raise errors.
-			_, err := keeper.SetPrice(
+			_, err := keeper.PostRawPrice(
 				ctx, addr, pair.String(), price, time.Now().UTC().Add(1*time.Hour),
 			)
 			require.Error(t, err)
@@ -173,33 +173,33 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
 	keeper.SetParams(ctx, params)
 
-	_, err := keeper.SetPrice(
+	_, err := keeper.PostRawPrice(
 		ctx, addrs[0], pair.String(),
 		sdk.MustNewDecFromStr("0.33"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, addrs[1], pair.String(),
 		sdk.MustNewDecFromStr("0.35"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, addrs[2], pair.String(),
 		sdk.MustNewDecFromStr("0.34"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
 	t.Log("Add an expired one which should fail")
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, addrs[3], pair.String(),
 		sdk.MustNewDecFromStr("0.9"),
 		ctx.BlockTime().Add(-time.Hour*1))
 	require.Error(t, err)
 
 	t.Log("Add a non-expired price, but will not be counted when BlockTime is changed")
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, addrs[3], pair.String(),
 		sdk.MustNewDecFromStr("0.9"),
 		time.Now().Add(time.Minute*30))
@@ -209,7 +209,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45))
 
 	// Set current price
-	err = keeper.SetCurrentPrices(ctx, token0, token1)
+	err = keeper.GatherRawPrices(ctx, token0, token1)
 	require.NoError(t, err)
 
 	// Get current price
@@ -225,13 +225,13 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	)
 
 	// Even number of oracles
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, addrs[4], pair.String(),
 		sdk.MustNewDecFromStr("0.36"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
-	err = keeper.SetCurrentPrices(ctx, token0, token1)
+	err = keeper.GatherRawPrices(ctx, token0, token1)
 	require.NoError(t, err)
 
 	price, err = keeper.GetCurrentPrice(ctx, "tst", "usd")
@@ -249,7 +249,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.Equal(t, price, prices[0])
 }
 
-func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
+func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {
 	_, oracles := sample.PrivKeyAddressPairs(5)
 	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
@@ -262,19 +262,19 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	keeper.SetParams(ctx, params)
 	keeper.OraclesStore().AddOracles(ctx, pair, oracles)
 
-	_, err := keeper.SetPrice(
+	_, err := keeper.PostRawPrice(
 		ctx, oracles[0], pair.String(),
 		sdk.MustNewDecFromStr("0.33"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, oracles[1], pair.String(),
 		sdk.MustNewDecFromStr("0.35"),
 		time.Now().Add(time.Hour*1))
 	require.NoError(t, err)
 
-	_, err = keeper.SetPrice(
+	_, err = keeper.PostRawPrice(
 		ctx, oracles[2], pair.String(),
 		sdk.MustNewDecFromStr("0.34"),
 		time.Now().Add(time.Hour*1))
@@ -283,7 +283,7 @@ func TestKeeper_ExpiredSetCurrentPrices(t *testing.T) {
 	// Update block time such that all prices expire
 	ctx = ctx.WithBlockTime(time.Now().UTC().Add(time.Hour * 2))
 
-	err = keeper.SetCurrentPrices(ctx, token0, token1)
+	err = keeper.GatherRawPrices(ctx, token0, token1)
 	require.ErrorContains(t, err, "input prices are expired")
 
 	_, err = keeper.GetCurrentPrice(ctx, token0, token1)

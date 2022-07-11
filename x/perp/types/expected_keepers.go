@@ -49,6 +49,17 @@ type BankKeeper interface {
 }
 
 type PricefeedKeeper interface {
+	/* GetCurrentPrice fetches the current median price of all oracles for a specific market.
+
+	args:
+	- ctx: cosmos-sdk context
+	- token0: the base asset
+	- token1: the quote asset
+
+	ret:
+	- currPrice: the current price
+	- err: error if any
+	*/
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
@@ -59,8 +70,19 @@ type PricefeedKeeper interface {
 	IsWhitelistedOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
 	) bool
 	GetOraclesForPair(ctx sdk.Context, pairID string) (oracles []sdk.AccAddress)
-	SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error
-	GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
+
+	/* GatherRawPrices updates the current price of an asset to the median of all valid posted oracle prices.
+
+	args:
+	- ctx: cosmos-sdk context
+	- token0: the base asset
+	- token1: the quote asset
+
+	ret:
+	- err: error if any
+	*/
+	GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error
+	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
 }
 
 type VpoolKeeper interface {
@@ -238,8 +260,8 @@ type VpoolKeeper interface {
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 
-	// GetCurrentTWAPPrice fetches the TWAP for the specified token pair / pool
-	GetCurrentTWAPPrice(ctx sdk.Context, pair common.AssetPair) (vpooltypes.CurrentTWAP, error)
+	// GetCurrentTWAP fetches the TWAP for the specified token pair / pool
+	GetCurrentTWAP(ctx sdk.Context, pair common.AssetPair) (vpooltypes.CurrentTWAP, error)
 }
 
 type EpochKeeper interface {

@@ -43,7 +43,7 @@ func SetupNibiruTestingApp() (
 	})
 	nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
-	_, err = nibiruApp.PricefeedKeeper.SetPrice(
+	_, err = nibiruApp.PricefeedKeeper.PostRawPrice(
 		ctx, oracle, pair.String(), sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
 	)
@@ -51,7 +51,7 @@ func SetupNibiruTestingApp() (
 		return nil, defaultGenesis
 	}
 
-	err = nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, pair.Token0, pair.Token1)
+	err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
 	if err != nil {
 		return nil, defaultGenesis
 	}

@@ -32,7 +32,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		pricefeed.BeginBlocker(ctx, nibiruApp.PricefeedKeeper)
 	}
 	setPrice := func(price string) {
-		_, err := nibiruApp.PricefeedKeeper.SetPrice(
+		_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
 			ctx, oracle, pair.String(),
 			sdk.MustNewDecFromStr(price), ctx.BlockTime().Add(time.Hour*5000*4))
 		require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600) / (1463385600 + 1481385600) = 0.8749844622444971
 	*/
 
-	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(
+	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAP(
 		ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
 	priceFloat, err := price.Price.Float64()
@@ -88,7 +88,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600 + 0.82 * 1499385600) / (1463385600 + 1481385600 + 1499385600) = 0.8563426456960295
 	*/
-	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(
+	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
 		ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
 	priceFloat, err = price.Price.Float64()
@@ -108,7 +108,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	*/
 	setPrice("0.83")
 	runBlock(time.Hour * 5000)
-	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAPPrice(
+	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
 		ctx, pair.Token0, pair.Token1)
 
 	require.NoError(t, err)
