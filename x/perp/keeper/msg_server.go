@@ -4,11 +4,9 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 type msgServer struct {
@@ -37,7 +35,7 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 ) (response *types.MsgOpenPositionResponse, err error) {
 	pair, err := common.NewAssetPair(req.TokenPair)
 	if err != nil {
-		panic(err) // must not happen
+		return nil, err
 	}
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
@@ -45,6 +43,7 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	err = m.k.OpenPosition(
 		ctx,
 		pair,
@@ -55,7 +54,7 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 		req.BaseAssetAmountLimit.ToDec(),
 	)
 	if err != nil {
-		return nil, sdkerrors.Wrap(vpooltypes.ErrOpeningPosition, err.Error())
+		return nil, err
 	}
 
 	return &types.MsgOpenPositionResponse{}, nil
@@ -63,17 +62,10 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 
 func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	addr, err := sdk.AccAddressFromBech32(position.Sender)
-	if err != nil {
-		panic(err)
-	}
+	traderAddr := sdk.MustAccAddressFromBech32(position.Sender)
+	tokenPair := common.MustNewAssetPair(position.TokenPair)
 
-	tokenPair, err := common.NewAssetPair(position.TokenPair)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = m.k.ClosePosition(ctx, tokenPair, addr)
+	_, err := m.k.ClosePosition(ctx, tokenPair, traderAddr)
 
 	return &types.MsgClosePositionResponse{}, err
 }

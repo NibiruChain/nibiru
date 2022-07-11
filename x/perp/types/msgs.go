@@ -126,8 +126,7 @@ func (m MsgClosePosition) Route() string { return RouterKey }
 func (m MsgClosePosition) Type() string  { return "liquidate_msg" }
 
 func (msg MsgClosePosition) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
 	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
