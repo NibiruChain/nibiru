@@ -62,17 +62,10 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 
 func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	addr, err := sdk.AccAddressFromBech32(position.Sender)
-	if err != nil {
-		return nil, err
-	}
+	traderAddr := sdk.MustAccAddressFromBech32(position.Sender)
+	tokenPair := common.MustNewAssetPair(position.TokenPair)
 
-	tokenPair, err := common.NewAssetPair(position.TokenPair)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = m.k.ClosePosition(ctx, tokenPair, addr)
+	_, err := m.k.ClosePosition(ctx, tokenPair, traderAddr)
 
 	return &types.MsgClosePositionResponse{}, err
 }

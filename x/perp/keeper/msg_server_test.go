@@ -106,18 +106,6 @@ func TestMsgServerClosePosition(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:        "invalid pair",
-			pair:        "foo",
-			sender:      sample.AccAddress().String(),
-			expectedErr: common.ErrInvalidTokenPair,
-		},
-		{
-			name:        "invalid address",
-			pair:        common.PairBTCStable.String(),
-			sender:      "foo",
-			expectedErr: fmt.Errorf("decoding bech32 failed"),
-		},
-		{
 			name:        "success",
 			pair:        common.PairBTCStable.String(),
 			sender:      sample.AccAddress().String(),
