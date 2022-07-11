@@ -1847,7 +1847,6 @@ func TestClosePosition(t *testing.T) {
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
-				AnyTimes().
 				Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
