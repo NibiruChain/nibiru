@@ -438,7 +438,7 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 		return sdk.Dec{}, sdk.Dec{}, err
 	}
 
-	twapPositionNotional, twapPricePnL, err := k.getPositionNotionalAndUnrealizedPnL(
+	twapPositionNotional, twapPnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
 		position,
 		types.PnLCalcOption_TWAP,
@@ -457,10 +457,10 @@ func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	switch pnLPreferenceOption {
 	case types.PnLPreferenceOption_MAX:
 		positionNotional = sdk.MaxDec(spotPositionNotional, twapPositionNotional)
-		unrealizedPnl = sdk.MaxDec(spotPricePnl, twapPricePnL)
+		unrealizedPnl = sdk.MaxDec(spotPricePnl, twapPnl)
 	case types.PnLPreferenceOption_MIN:
 		positionNotional = sdk.MinDec(spotPositionNotional, twapPositionNotional)
-		unrealizedPnl = sdk.MinDec(spotPricePnl, twapPricePnL)
+		unrealizedPnl = sdk.MinDec(spotPricePnl, twapPnl)
 	default:
 		panic("invalid pnl preference option " + pnLPreferenceOption.String())
 	}

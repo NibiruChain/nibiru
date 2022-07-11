@@ -219,9 +219,9 @@ func TestMsgServerLiquidate(t *testing.T) {
 				t.Log("set pricefeed oracle price")
 				oracle := sample.AccAddress()
 				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-				_, err = app.PricefeedKeeper.SetPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+				_, err = app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 				require.NoError(t, err)
-				require.NoError(t, app.PricefeedKeeper.SetCurrentPrices(ctx, pair.GetBaseTokenDenom(), pair.GetQuoteTokenDenom()))
+				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.GetBaseTokenDenom(), pair.GetQuoteTokenDenom()))
 
 				t.Log("create position")
 				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{

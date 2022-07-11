@@ -51,8 +51,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// SetPrice updates the posted price for a specific oracle
-func (k Keeper) SetPrice(
+// PostRawPrice updates the posted price for a specific oracle
+func (k Keeper) PostRawPrice(
 	ctx sdk.Context,
 	oracle sdk.AccAddress,
 	pairStr string,
@@ -104,8 +104,18 @@ func (k Keeper) SetPrice(
 	return newPostedPrice, nil
 }
 
-// SetCurrentPrices updates the price of an asset to the median of all valid oracle inputs
-func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) error {
+/*
+GatherRawPrices updates the current price of an asset to the median of all valid posted oracle prices.
+
+args:
+  - ctx: cosmos-sdk context
+  - token0: the base asset
+  - token1: the quote asset
+
+ret:
+  - err: error if any
+*/
+func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	pairID := assetPair.String()
 
@@ -158,7 +168,7 @@ func (k Keeper) SetCurrentPrices(ctx sdk.Context, token0 string, token1 string) 
 	k.setCurrentPrice(ctx, pairID, currentPrice)
 
 	// Update the TWA prices
-	err = k.updateTWAPPrice(ctx, pairID)
+	err = k.updateTWAP(ctx, pairID)
 	if err != nil {
 		return err
 	}
@@ -171,7 +181,7 @@ func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice typ
 	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
 }
 
-/* updateTWAPPrice updates the twap price for a token0, token1 pair
+/* updateTWAP updates the twap price for a token0, token1 pair
 We use the blocktime to update the twap price.
 
 Calculation is done as follow:
@@ -182,7 +192,7 @@ With
 
 */
 
-func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
+func (k Keeper) updateTWAP(ctx sdk.Context, pairID string) error {
 	tokens := common.DenomsFromPoolName(pairID)
 	token0, token1 := tokens[0], tokens[1]
 
@@ -191,7 +201,7 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		return err
 	}
 
-	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, token0, token1)
+	currentTWAP, err := k.GetCurrentTWAP(ctx, token0, token1)
 	// Err there means no twap price have been set yet for this pair
 	if err != nil {
 		currentTWAP = types.CurrentTWAP{
@@ -214,7 +224,7 @@ func (k Keeper) updateTWAPPrice(ctx sdk.Context, pairID string) error {
 		Price:       newNumerator.Quo(newDenominator),
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
+	store.Set(types.CurrentTWAPKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
 
 	return nil
 }
@@ -246,7 +256,18 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 	return mean
 }
 
-// GetCurrentPrice fetches the current median price of all oracles for a specific market
+/*
+GetCurrentPrice fetches the current median price of all oracles for a specific market.
+
+args:
+  - ctx: cosmos-sdk context
+  - token0: the base asset
+  - token1: the quote asset
+
+ret:
+  - currPrice: the current price
+  - err: error if any
+*/
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
 	pair := common.AssetPair{Token0: token0, Token1: token1}
@@ -280,8 +301,8 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	return price, nil
 }
 
-// GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
-func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
+// GetCurrentTWAP fetches the current median price of all oracles for a specific market
+func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
 	pair := common.AssetPair{Token0: token0, Token1: token1}
 	givenIsActive := k.IsActivePair(ctx, pair.String())
 	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().String())
@@ -296,7 +317,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, token0 string, token1 strin
 	}
 
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pair.String()))
+	bz := store.Get(types.CurrentTWAPKey("twap-" + pair.String()))
 
 	if bz == nil {
 		return types.CurrentTWAP{}, types.ErrNoValidTWAP

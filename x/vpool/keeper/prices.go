@@ -272,8 +272,8 @@ func (k Keeper) calcTwap(
 	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
 }
 
-// GetCurrentTWAPPrice fetches the current median price of all oracles for a specific market
-func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, pair common.AssetPair) (types.CurrentTWAP, error) {
+// GetCurrentTWAP fetches the current median price of all oracles for a specific market
+func (k Keeper) GetCurrentTWAP(ctx sdk.Context, pair common.AssetPair) (types.CurrentTWAP, error) {
 	// Ensure we still have valid prices
 	_, err := k.GetSpotPrice(ctx, pair)
 	if err != nil {
@@ -281,7 +281,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, pair common.AssetPair) (typ
 	}
 
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPPriceKey("twap-" + pair.String()))
+	bz := store.Get(types.CurrentTWAPKey("twap-" + pair.String()))
 
 	if bz == nil {
 		return types.CurrentTWAP{}, types.ErrNoValidTWAP
@@ -297,7 +297,7 @@ func (k Keeper) GetCurrentTWAPPrice(ctx sdk.Context, pair common.AssetPair) (typ
 }
 
 /*
-updateTWAPPrice updates the twap price for a token0, token1 pair
+updateTWAP updates the twap price for a token0, token1 pair
 We use the blocktime to update the twap price.
 
 Calculation is done as follow:
@@ -308,7 +308,7 @@ With
 
 */
 
-func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
+func (k Keeper) UpdateTWAP(ctx sdk.Context, pairID string) error {
 	pair, err := common.NewAssetPair(pairID)
 	if err != nil {
 		return err
@@ -319,7 +319,7 @@ func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
 		return err
 	}
 
-	currentTWAP, err := k.GetCurrentTWAPPrice(ctx, pair)
+	currentTWAP, err := k.GetCurrentTWAP(ctx, pair)
 	// Err there means no twap price have been set yet for this pair
 	if errors.Is(err, types.ErrNoValidTWAP) {
 		currentTWAP = types.CurrentTWAP{
@@ -347,6 +347,6 @@ func (k Keeper) UpdateTWAPPrice(ctx sdk.Context, pairID string) error {
 		Price:       price,
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentTWAPPriceKey("twap-"+pairID), k.codec.MustMarshal(&newTWAP))
+	store.Set(types.CurrentTWAPKey("twap-"+pairID), k.codec.MustMarshal(&newTWAP))
 	return nil
 }
