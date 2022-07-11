@@ -44,17 +44,17 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			initialPositionMargin:       sdk.NewDec(100),
 			initialPositionOpenNotional: sdk.NewDec(1000),
 
-			newPositionNotional: sdk.NewDec(959),                // just below 6.25% margin ratio
-			exchangedSize:       sdk.MustNewDecFromStr("0.5"),   // 1 * 0.5
-			exchangedNotional:   sdk.MustNewDecFromStr("479.5"), // 959 * 0.5
+			newPositionNotional: sdk.NewDec(959),                 // just below 6.25% margin ratio
+			exchangedSize:       sdk.MustNewDecFromStr("0.25"),   // 1 * 0.25
+			exchangedNotional:   sdk.MustNewDecFromStr("239.75"), // 959 * 0.25
 
-			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 3), // 959 * 0.5 * 0.0125 / 2
-			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 3), // 959 * 0.5 * 0.0125 / 2
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 3), // 959 * 0.25 * 0.025 / 2
+			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 3), // 959 * 0.25 * 0.025 / 2
 
-			expectedPositionSize:         sdk.MustNewDecFromStr("0.5"),
-			expectedPositionMargin:       sdk.MustNewDecFromStr("73.50625"), // 100 - 20.5 - 959*0.5*0.0125
-			expectedPositionOpenNotional: sdk.NewDec(500),
-			expectedUnrealizedPnl:        sdk.MustNewDecFromStr("-20.5"), // -41 * 0.5
+			expectedPositionSize:         sdk.MustNewDecFromStr("0.75"),     // 1 - 0.25
+			expectedUnrealizedPnl:        sdk.MustNewDecFromStr("-30.75"),   // -41 * 0.75
+			expectedPositionMargin:       sdk.MustNewDecFromStr("83.75625"), // 100 - 20.5 - 959 * 0.25 * 0.025
+			expectedPositionOpenNotional: sdk.NewDec(750),
 		},
 		{
 			name: "Partial Liquidation - just above full liquidation",
@@ -63,17 +63,17 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			initialPositionMargin:       sdk.NewDec(100),
 			initialPositionOpenNotional: sdk.NewDec(1000),
 
-			newPositionNotional: sdk.MustNewDecFromStr("911.3924051"),  // at 1.25% margin ratio
-			exchangedSize:       sdk.MustNewDecFromStr("0.5"),          // 1 * 0.5
-			exchangedNotional:   sdk.MustNewDecFromStr("455.69620255"), // 911.3924051 * 0.5
+			newPositionNotional: sdk.MustNewDecFromStr("923.0769231"),  // at 2.5% margin ratio
+			exchangedSize:       sdk.MustNewDecFromStr("0.25"),         // 1 * 0.5
+			exchangedNotional:   sdk.MustNewDecFromStr("230.76923078"), // 923.0769231 * 0.5
 
-			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 3), // 911.3924051 * 0.5 * 0.0125 / 2
-			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 3), // 911.3924051 * 0.5 * 0.0125 / 2
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 3), // 923.0769231 * 0.25 * 0.025 / 2
+			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 3), // 923.0769231 * 0.25 * 0.025 / 2
 
-			expectedPositionSize:         sdk.MustNewDecFromStr("0.5"),
-			expectedPositionMargin:       sdk.MustNewDecFromStr("50.000000018125"), // 100 - 88.60759494*0.5 - 911.3924051*0.5*0.0125
-			expectedPositionOpenNotional: sdk.NewDec(500),
-			expectedUnrealizedPnl:        sdk.MustNewDecFromStr("-44.30379745"), // -88.60759494 * 0.5
+			expectedPositionSize:         sdk.MustNewDecFromStr("0.75"),          // 1 - 0.25
+			expectedUnrealizedPnl:        sdk.MustNewDecFromStr("-57.692307675"), // -76.92307692 * 0.75
+			expectedPositionMargin:       sdk.MustNewDecFromStr("75.0000000055"), // 100 - 19.23076923 - 923.0769231 * 0.25 * 0.025
+			expectedPositionOpenNotional: sdk.MustNewDecFromStr("749.999999995"),
 		},
 	}
 
@@ -222,27 +222,27 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 		expectedPerpEFFee     sdk.Coin
 	}{
 		{
-			name: "Full Liquidation - just under 1.25% margin ratio",
+			name: "Full Liquidation - just under 2.5% margin ratio",
 
 			initialPositionSize:         sdk.OneDec(),
 			initialPositionMargin:       sdk.NewDec(100),
 			initialPositionOpenNotional: sdk.NewDec(1000),
 
-			newPositionNotional: sdk.NewDec(911), // just below 1.25% margin ratio
+			newPositionNotional: sdk.NewDec(923), // just below 2.5% margin ratio
 
-			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6), // 911 * 0.0125 / 2
-			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 5), // 11 - 6
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 12), // 923 * 0.025 / 2
+			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 11), // 23 - 12
 		},
 		{
-			name: "Full Liquidation - at 0.625%",
+			name: "Full Liquidation - at 1.25%",
 
 			initialPositionSize:         sdk.OneDec(),
 			initialPositionMargin:       sdk.NewDec(100),
 			initialPositionOpenNotional: sdk.NewDec(1000),
 
-			newPositionNotional: sdk.MustNewDecFromStr("905.6603774"), // at 0.625% margin ratio
+			newPositionNotional: sdk.MustNewDecFromStr("911.3924051"), // at 1.25% margin ratio
 
-			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6),
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 11),
 			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0),
 		},
 	}
@@ -391,11 +391,11 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 
 			newPositionNotional: sdk.NewDec(900), // at 0% margin ratio
 
-			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6), // 900 * 0.0125 / 2
-			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0), // no margin left for perp ef
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 11), // 900 * 0.025 / 2
+			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0),  // no margin left for perp ef
 
 			expectedPositionBadDebt:    sdk.ZeroDec(),
-			expectedLiquidationBadDebt: sdk.MustNewDecFromStr("5.625"),
+			expectedLiquidationBadDebt: sdk.MustNewDecFromStr("11.25"),
 		},
 		{
 			name: "Full Liquidation - below 0% margin ratio",
@@ -406,11 +406,11 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 
 			newPositionNotional: sdk.NewDec(899),
 
-			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 6),
+			expectedLiquidatorFee: sdk.NewInt64Coin(common.DenomStable, 11), // 899 * 0.025 / 2
 			expectedPerpEFFee:     sdk.NewInt64Coin(common.DenomStable, 0),
 
 			expectedPositionBadDebt:    sdk.NewDec(1),
-			expectedLiquidationBadDebt: sdk.MustNewDecFromStr("5.61875"),
+			expectedLiquidationBadDebt: sdk.MustNewDecFromStr("11.2375"),
 		},
 	}
 
