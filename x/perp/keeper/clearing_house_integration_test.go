@@ -184,9 +184,9 @@ func TestOpenPositionSuccess(t *testing.T) {
 
 			t.Log("set pricefeed oracle")
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			_, err := nibiruApp.PricefeedKeeper.SetPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+			_, err := nibiruApp.PricefeedKeeper.PostRawPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 			require.NoError(t, err)
-			require.NoError(t, nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, common.DenomAxlBTC, common.DenomStable))
+			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomAxlBTC, common.DenomStable))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
@@ -302,9 +302,9 @@ func TestOpenPositionError(t *testing.T) {
 
 			t.Log("set pricefeed oracle")
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			_, err := nibiruApp.PricefeedKeeper.SetPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+			_, err := nibiruApp.PricefeedKeeper.PostRawPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 			require.NoError(t, err)
-			require.NoError(t, nibiruApp.PricefeedKeeper.SetCurrentPrices(ctx, common.DenomAxlBTC, common.DenomStable))
+			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomAxlBTC, common.DenomStable))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
