@@ -104,7 +104,17 @@ func (k Keeper) PostRawPrice(
 	return newPostedPrice, nil
 }
 
-// GatherRawPrices updates the price of an asset to the median of all valid oracle inputs
+/*
+GatherRawPrices updates the current price of an asset to the median of all valid posted oracle prices.
+
+args:
+  - ctx: cosmos-sdk context
+  - token0: the base asset
+  - token1: the quote asset
+
+ret:
+  - err: error if any
+*/
 func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	pairID := assetPair.String()
@@ -246,7 +256,18 @@ func (k Keeper) calculateMeanPrice(priceA, priceB types.CurrentPrice) sdk.Dec {
 	return mean
 }
 
-// GetCurrentPrice fetches the current median price of all oracles for a specific market
+/*
+GetCurrentPrice fetches the current median price of all oracles for a specific market.
+
+args:
+  - ctx: cosmos-sdk context
+  - token0: the base asset
+  - token1: the quote asset
+
+ret:
+  - currPrice: the current price
+  - err: error if any
+*/
 func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 ) (currPrice types.CurrentPrice, err error) {
 	pair := common.AssetPair{Token0: token0, Token1: token1}
