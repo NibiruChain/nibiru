@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#686](https://github.com/NibiruChain/nibiru/pull/686) Add changelog enforcer to github actions.
 * [#681](https://github.com/NibiruChain/nibiru/pull/681) Remove automatic release and leave integration tests when merge into master.
 * [#684](https://github.com/NibiruChain/nibiru/pull/684) Reorganize PerpKeeper methods.
+* [#689](https://github.com/NibiruChain/nibiru/pull/689) Apply funding rate calculation 48 times per day.
 
 ### API Breaking
 
@@ -55,4 +56,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Testing
 
+* [#695](https://github.com/NibiruChain/nibiru/pull/695) Add `OpenPosition` integration tests.
 * [#692](https://github.com/NibiruChain/nibiru/pull/692) Add test coverage for Perp MsgServer methods.
+* [#689](https://github.com/NibiruChain/nibiru/pull/689) Change liquidation params to 2.5% liquidation fee ratio and 25% partial liquidation ratio.
