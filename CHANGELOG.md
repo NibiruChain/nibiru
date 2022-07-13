@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-* Add release process guide
+* [#701](https://github.com/NibiruChain/nibiru/pull/701) Add release process guide
 
 ## [v0.9.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.9.2) - 2022-07-11
 
