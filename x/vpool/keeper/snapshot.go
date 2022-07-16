@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -23,10 +22,10 @@ func (k Keeper) addReserveSnapshot(
 	}
 
 	if ctx.BlockHeight() == lastSnapshot.BlockNumber {
-		k.saveSnapshot(ctx, pair, lastCounter, quoteAssetReserve, baseAssetReserve, ctx.BlockTime(), ctx.BlockHeight())
+		k.saveSnapshot(ctx, pair, lastCounter, quoteAssetReserve, baseAssetReserve)
 	} else {
 		newCounter := lastCounter + 1
-		k.saveSnapshot(ctx, pair, newCounter, quoteAssetReserve, baseAssetReserve, ctx.BlockTime(), ctx.BlockHeight())
+		k.saveSnapshot(ctx, pair, newCounter, quoteAssetReserve, baseAssetReserve)
 		k.saveSnapshotCounter(ctx, pair, newCounter)
 	}
 
@@ -58,15 +57,12 @@ func (k Keeper) saveSnapshot(
 	counter uint64,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
-	timestamp time.Time,
-	blockNumber int64,
-
 ) {
 	snapshot := &types.ReserveSnapshot{
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
-		TimestampMs:       timestamp.UnixMilli(),
-		BlockNumber:       blockNumber,
+		TimestampMs:       ctx.BlockTime().UnixMilli(),
+		BlockNumber:       ctx.BlockHeight(),
 	}
 
 	ctx.KVStore(k.storeKey).Set(

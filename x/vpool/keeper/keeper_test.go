@@ -237,50 +237,48 @@ func TestSwapBaseForQuote(t *testing.T) {
 }
 
 func TestGetVpools(t *testing.T) {
-	t.Run("Get all pools", func(t *testing.T) {
-		vpoolKeeper, ctx := VpoolKeeper(t,
-			mock.NewMockPricefeedKeeper(gomock.NewController(t)),
-		)
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+	)
 
-		vpoolKeeper.CreatePool(
-			ctx,
-			BTCNusdPair,
-			sdk.OneDec(),
-			sdk.NewDec(10_000_000),
-			sdk.NewDec(5_000_000),
-			sdk.OneDec(),
-			sdk.OneDec(),
-		)
-		vpoolKeeper.CreatePool(
-			ctx,
-			ETHNusdPair,
-			sdk.OneDec(),
-			sdk.NewDec(5_000_000),
-			sdk.NewDec(10_000_000),
-			sdk.OneDec(),
-			sdk.OneDec(),
-		)
+	vpoolKeeper.CreatePool(
+		ctx,
+		BTCNusdPair,
+		sdk.OneDec(),
+		sdk.NewDec(10_000_000),
+		sdk.NewDec(5_000_000),
+		sdk.OneDec(),
+		sdk.OneDec(),
+	)
+	vpoolKeeper.CreatePool(
+		ctx,
+		ETHNusdPair,
+		sdk.OneDec(),
+		sdk.NewDec(5_000_000),
+		sdk.NewDec(10_000_000),
+		sdk.OneDec(),
+		sdk.OneDec(),
+	)
 
-		pools := vpoolKeeper.GetAllPools(ctx)
+	pools := vpoolKeeper.GetAllPools(ctx)
 
-		require.EqualValues(t, 2, len(pools))
+	require.EqualValues(t, 2, len(pools))
 
-		require.EqualValues(t, *pools[0], types.Pool{
-			Pair:                  BTCNusdPair,
-			BaseAssetReserve:      sdk.NewDec(5_000_000),
-			QuoteAssetReserve:     sdk.NewDec(10_000_000),
-			TradeLimitRatio:       sdk.OneDec(),
-			FluctuationLimitRatio: sdk.OneDec(),
-			MaxOracleSpreadRatio:  sdk.OneDec(),
-		})
-		require.EqualValues(t, *pools[1], types.Pool{
-			Pair:                  ETHNusdPair,
-			BaseAssetReserve:      sdk.NewDec(10_000_000),
-			QuoteAssetReserve:     sdk.NewDec(5_000_000),
-			TradeLimitRatio:       sdk.OneDec(),
-			FluctuationLimitRatio: sdk.OneDec(),
-			MaxOracleSpreadRatio:  sdk.OneDec(),
-		})
+	require.EqualValues(t, *pools[0], types.Pool{
+		Pair:                  BTCNusdPair,
+		BaseAssetReserve:      sdk.NewDec(5_000_000),
+		QuoteAssetReserve:     sdk.NewDec(10_000_000),
+		TradeLimitRatio:       sdk.OneDec(),
+		FluctuationLimitRatio: sdk.OneDec(),
+		MaxOracleSpreadRatio:  sdk.OneDec(),
+	})
+	require.EqualValues(t, *pools[1], types.Pool{
+		Pair:                  ETHNusdPair,
+		BaseAssetReserve:      sdk.NewDec(10_000_000),
+		QuoteAssetReserve:     sdk.NewDec(5_000_000),
+		TradeLimitRatio:       sdk.OneDec(),
+		FluctuationLimitRatio: sdk.OneDec(),
+		MaxOracleSpreadRatio:  sdk.OneDec(),
 	})
 }
 
@@ -391,3 +389,52 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 		})
 	}
 }
+
+// func TestCheckFluctuationLimitRatio(t *testing.T) {
+// 	tests := []struct {
+// 		name           string
+// 		pool           *types.Pool
+// 		prevSnapshot   *types.ReserveSnapshot
+// 		latestSnapshot *types.ReserveSnapshot
+// 		ctxBlockNumber int64
+
+// 		isOverLimit bool
+// 	}{
+// 		{
+// 			name: "uses current snapshot",
+// 			pool: &types.Pool{
+// 				Pair:                  common.PairBTCStable,
+// 				QuoteAssetReserve:     sdk.OneDec(),
+// 				BaseAssetReserve:      sdk.OneDec(),
+// 				FluctuationLimitRatio: sdk.ZeroDec(),
+// 				TradeLimitRatio:       sdk.OneDec(),
+// 				MaxOracleSpreadRatio:  sdk.OneDec(),
+// 			},
+// 			prevSnapshot: &types.ReserveSnapshot{
+// 				QuoteAssetReserve: sdk.NewDec(1000),
+// 				BaseAssetReserve:  sdk.OneDec(),
+// 				TimestampMs:       0,
+// 				BlockNumber:       0,
+// 			},
+// 			latestSnapshot: &types.ReserveSnapshot{
+// 				QuoteAssetReserve: sdk.NewDec(1000),
+// 				BaseAssetReserve:  sdk.OneDec(),
+// 				TimestampMs:       1,
+// 				BlockNumber:       1,
+// 			},
+// 			isOverLimit: false,
+// 		},
+// 	}
+
+// 	for _, tc := range tests {
+// 		tc := tc
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			vpoolKeeper, ctx := VpoolKeeper(t,
+// 				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+// 			)
+
+// 			vpoolKeeper.savePool(ctx, tc.pool)
+// 			vpoolKeeper.saveSnapshot(ctx)
+// 		})
+// 	}
+// }

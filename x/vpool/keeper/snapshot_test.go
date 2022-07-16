@@ -44,7 +44,7 @@ func TestSaveSnapshot(t *testing.T) {
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 	ctx = ctx.WithBlockHeight(expectedBlockHeight).WithBlockTime(expectedTime)
-	vpoolKeeper.saveSnapshot(ctx, pool.Pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, expectedTime, expectedBlockHeight)
+	vpoolKeeper.saveSnapshot(ctx, pool.Pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
 
 	snapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)
@@ -78,8 +78,6 @@ func TestGetSnapshot(t *testing.T) {
 		0,
 		pool.QuoteAssetReserve,
 		pool.BaseAssetReserve,
-		expectedTime,
-		expectedHeight,
 	)
 	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
 
@@ -95,14 +93,13 @@ func TestGetSnapshot(t *testing.T) {
 	differentSnapshot.BlockNumber = expectedHeight + 1
 	differentSnapshot.TimestampMs = expectedTime.Add(time.Second).UnixMilli()
 	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
+	ctx = ctx.WithBlockHeight(expectedHeight + 1).WithBlockTime(expectedTime.Add(time.Second))
 	vpoolKeeper.saveSnapshot(
 		ctx,
 		pool.Pair,
 		1,
 		pool.QuoteAssetReserve,
 		pool.BaseAssetReserve,
-		time.UnixMilli(differentSnapshot.TimestampMs),
-		differentSnapshot.BlockNumber,
 	)
 
 	t.Log("Fetch snapshot 1")

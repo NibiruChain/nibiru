@@ -457,14 +457,13 @@ func TestCalcTwap(t *testing.T) {
 			)
 
 			for i, snapshot := range tc.reserveSnapshots {
+				ctx = ctx.WithBlockHeight(snapshot.BlockNumber).WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
 				vpoolKeeper.saveSnapshot(
 					ctx,
 					tc.pair,
 					uint64(i+1),
 					snapshot.QuoteAssetReserve,
 					snapshot.BaseAssetReserve,
-					time.UnixMilli(snapshot.TimestampMs),
-					snapshot.BlockNumber,
 				)
 			}
 			vpoolKeeper.saveSnapshotCounter(ctx, tc.pair, uint64(len(tc.reserveSnapshots)))

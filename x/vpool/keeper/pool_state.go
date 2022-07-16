@@ -29,7 +29,7 @@ func (k Keeper) CreatePool(
 	)
 
 	k.savePool(ctx, pool)
-	k.saveSnapshot(ctx, pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve, ctx.BlockTime(), ctx.BlockHeight())
+	k.saveSnapshot(ctx, pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	k.saveSnapshotCounter(ctx, pair, 0)
 }
 
@@ -66,7 +66,7 @@ args:
 ret:
   - err: error
 */
-func (k Keeper) savePoolAndSnapshot(
+func (k Keeper) updatePool(
 	ctx sdk.Context,
 	updatedPool *types.Pool,
 	skipFluctuationCheck bool,

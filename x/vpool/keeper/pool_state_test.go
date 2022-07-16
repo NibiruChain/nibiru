@@ -42,7 +42,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 
-	vpools := []types.Pool{
+	vpools := []*types.Pool{
 		{
 			Pair:                  common.MustNewAssetPair("BTC:NUSD"),
 			BaseAssetReserve:      sdk.NewDec(1_000_000),      // 1
@@ -62,7 +62,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 	}
 
 	for _, vpool := range vpools {
-		vpoolKeeper.savePool(ctx, &vpool)
+		vpoolKeeper.savePool(ctx, vpool)
 	}
 
 	pools := vpoolKeeper.GetAllPools(ctx)
