@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -390,51 +391,96 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 	}
 }
 
-// func TestCheckFluctuationLimitRatio(t *testing.T) {
-// 	tests := []struct {
-// 		name           string
-// 		pool           *types.Pool
-// 		prevSnapshot   *types.ReserveSnapshot
-// 		latestSnapshot *types.ReserveSnapshot
-// 		ctxBlockNumber int64
+func TestCheckFluctuationLimitRatio(t *testing.T) {
+	tests := []struct {
+		name           string
+		pool           *types.Pool
+		prevSnapshot   *types.ReserveSnapshot
+		latestSnapshot *types.ReserveSnapshot
+		ctxBlockHeight int64
 
-// 		isOverLimit bool
-// 	}{
-// 		{
-// 			name: "uses current snapshot",
-// 			pool: &types.Pool{
-// 				Pair:                  common.PairBTCStable,
-// 				QuoteAssetReserve:     sdk.OneDec(),
-// 				BaseAssetReserve:      sdk.OneDec(),
-// 				FluctuationLimitRatio: sdk.ZeroDec(),
-// 				TradeLimitRatio:       sdk.OneDec(),
-// 				MaxOracleSpreadRatio:  sdk.OneDec(),
-// 			},
-// 			prevSnapshot: &types.ReserveSnapshot{
-// 				QuoteAssetReserve: sdk.NewDec(1000),
-// 				BaseAssetReserve:  sdk.OneDec(),
-// 				TimestampMs:       0,
-// 				BlockNumber:       0,
-// 			},
-// 			latestSnapshot: &types.ReserveSnapshot{
-// 				QuoteAssetReserve: sdk.NewDec(1000),
-// 				BaseAssetReserve:  sdk.OneDec(),
-// 				TimestampMs:       1,
-// 				BlockNumber:       1,
-// 			},
-// 			isOverLimit: false,
-// 		},
-// 	}
+		expectedErr error
+	}{
+		{
+			name: "uses latest snapshot - does not result in error",
+			pool: &types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(1002),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			prevSnapshot: &types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			latestSnapshot: &types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1002),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       1,
+				BlockNumber:       1,
+			},
+			ctxBlockHeight: 2,
+			expectedErr:    nil,
+		},
+		{
+			name: "uses previous snapshot snapshot - results in error",
+			pool: &types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(1002),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			prevSnapshot: &types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			latestSnapshot: &types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1002),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       1,
+				BlockNumber:       1,
+			},
+			ctxBlockHeight: 1,
+			expectedErr:    types.ErrOverFluctuationLimit,
+		},
+	}
 
-// 	for _, tc := range tests {
-// 		tc := tc
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			vpoolKeeper, ctx := VpoolKeeper(t,
-// 				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
-// 			)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+			)
 
-// 			vpoolKeeper.savePool(ctx, tc.pool)
-// 			vpoolKeeper.saveSnapshot(ctx)
-// 		})
-// 	}
-// }
+			vpoolKeeper.savePool(ctx, tc.pool)
+
+			t.Log("save snapshot 0")
+			ctx = ctx.WithBlockHeight(tc.prevSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
+			vpoolKeeper.saveSnapshot(ctx, common.PairBTCStable, 0, tc.prevSnapshot.QuoteAssetReserve, tc.prevSnapshot.BaseAssetReserve)
+
+			t.Log("save snapshot 1")
+			ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
+			vpoolKeeper.saveSnapshot(ctx, common.PairBTCStable, 1, tc.latestSnapshot.QuoteAssetReserve, tc.latestSnapshot.BaseAssetReserve)
+			vpoolKeeper.saveSnapshotCounter(ctx, common.PairBTCStable, 1)
+
+			t.Log("check fluctuation limit")
+			ctx = ctx.WithBlockHeight(tc.ctxBlockHeight)
+			err := vpoolKeeper.checkFluctuationLimitRatio(ctx, tc.pool)
+
+			t.Log("check error if any")
+			if tc.expectedErr != nil {
+				require.ErrorContains(t, err, tc.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
