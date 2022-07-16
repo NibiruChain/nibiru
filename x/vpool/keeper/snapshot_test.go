@@ -84,7 +84,6 @@ func TestGetSnapshot(t *testing.T) {
 	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
 
 	t.Log("Check snapshot 0")
-	requireLastSnapshotCounterEqual(t, ctx, vpoolKeeper, pool, 0)
 	oldSnapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, pool.Pair)
 	require.NoError(t, err)
 	require.Equal(t, firstSnapshot, oldSnapshot)
@@ -111,12 +110,6 @@ func TestGetSnapshot(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, differentSnapshot, newSnapshot)
 	require.NotEqual(t, differentSnapshot, oldSnapshot)
-}
-
-func requireLastSnapshotCounterEqual(t *testing.T, ctx sdk.Context, keeper Keeper, pool *types.Pool, counter uint64) {
-	c, found := keeper.getSnapshotCounter(ctx, pool.Pair)
-	require.True(t, found)
-	require.Equal(t, counter, c)
 }
 
 func TestGetSnapshotPrice(t *testing.T) {
