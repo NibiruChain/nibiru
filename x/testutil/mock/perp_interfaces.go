@@ -540,33 +540,33 @@ func (mr *MockVpoolKeeperMockRecorder) IsOverSpreadLimit(arg0, arg1 interface{})
 }
 
 // SwapBaseForQuote mocks base method.
-func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types2.Context, arg1 common.AssetPair, arg2 types1.Direction, arg3, arg4 types2.Dec) (types2.Dec, error) {
+func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types2.Context, arg1 common.AssetPair, arg2 types1.Direction, arg3, arg4 types2.Dec, arg5 bool) (types2.Dec, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SwapBaseForQuote", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "SwapBaseForQuote", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(types2.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SwapBaseForQuote indicates an expected call of SwapBaseForQuote.
-func (mr *MockVpoolKeeperMockRecorder) SwapBaseForQuote(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockVpoolKeeperMockRecorder) SwapBaseForQuote(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwapBaseForQuote", reflect.TypeOf((*MockVpoolKeeper)(nil).SwapBaseForQuote), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwapBaseForQuote", reflect.TypeOf((*MockVpoolKeeper)(nil).SwapBaseForQuote), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // SwapQuoteForBase mocks base method.
-func (m *MockVpoolKeeper) SwapQuoteForBase(arg0 types2.Context, arg1 common.AssetPair, arg2 types1.Direction, arg3, arg4 types2.Dec) (types2.Dec, error) {
+func (m *MockVpoolKeeper) SwapQuoteForBase(arg0 types2.Context, arg1 common.AssetPair, arg2 types1.Direction, arg3, arg4 types2.Dec, arg5 bool) (types2.Dec, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SwapQuoteForBase", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "SwapQuoteForBase", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(types2.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SwapQuoteForBase indicates an expected call of SwapQuoteForBase.
-func (mr *MockVpoolKeeperMockRecorder) SwapQuoteForBase(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockVpoolKeeperMockRecorder) SwapQuoteForBase(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwapQuoteForBase", reflect.TypeOf((*MockVpoolKeeper)(nil).SwapQuoteForBase), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwapQuoteForBase", reflect.TypeOf((*MockVpoolKeeper)(nil).SwapQuoteForBase), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // MockEpochKeeper is a mock of EpochKeeper interface.
