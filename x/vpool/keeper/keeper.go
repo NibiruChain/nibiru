@@ -230,6 +230,11 @@ ret:
   - err: error if any
 */
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
+	if pool.FluctuationLimitRatio.IsZero() {
+		// early return to avoid expensive state operations
+		return nil
+	}
+
 	latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pool.Pair)
 	if err != nil {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)

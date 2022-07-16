@@ -451,6 +451,51 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			ctxBlockHeight: 1,
 			expectedErr:    types.ErrOverFluctuationLimit,
 		},
+		{
+			name: "only one snapshot - no error",
+			pool: &types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(1000),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			prevSnapshot: &types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			latestSnapshot: nil,
+			ctxBlockHeight: 0,
+			expectedErr:    nil,
+		},
+		{
+			name: "zero fluctuation limit - no error",
+			pool: &types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(2000),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.ZeroDec(),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			prevSnapshot: &types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			latestSnapshot: &types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1002),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       1,
+				BlockNumber:       1,
+			},
+			ctxBlockHeight: 2,
+			expectedErr:    nil,
+		},
 	}
 
 	for _, tc := range tests {
@@ -465,11 +510,14 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			t.Log("save snapshot 0")
 			ctx = ctx.WithBlockHeight(tc.prevSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
 			vpoolKeeper.saveSnapshot(ctx, common.PairBTCStable, 0, tc.prevSnapshot.QuoteAssetReserve, tc.prevSnapshot.BaseAssetReserve)
+			vpoolKeeper.saveSnapshotCounter(ctx, common.PairBTCStable, 0)
 
-			t.Log("save snapshot 1")
-			ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
-			vpoolKeeper.saveSnapshot(ctx, common.PairBTCStable, 1, tc.latestSnapshot.QuoteAssetReserve, tc.latestSnapshot.BaseAssetReserve)
-			vpoolKeeper.saveSnapshotCounter(ctx, common.PairBTCStable, 1)
+			if tc.latestSnapshot != nil {
+				t.Log("save snapshot 1")
+				ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
+				vpoolKeeper.saveSnapshot(ctx, common.PairBTCStable, 1, tc.latestSnapshot.QuoteAssetReserve, tc.latestSnapshot.BaseAssetReserve)
+				vpoolKeeper.saveSnapshotCounter(ctx, common.PairBTCStable, 1)
+			}
 
 			t.Log("check fluctuation limit")
 			ctx = ctx.WithBlockHeight(tc.ctxBlockHeight)
