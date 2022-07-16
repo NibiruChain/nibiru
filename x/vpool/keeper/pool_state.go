@@ -61,7 +61,7 @@ Saves an updated pool to state and snapshots it.
 args:
   - ctx: cosmos-sdk context
   - updatedPool: pool object to save to state
-  - skipFluctuationCheck: override fluctuation check from last snapshot
+  - skipFluctuationCheck: determines if a fluctuation check should be done against the last snapshot
 
 ret:
   - err: error
@@ -78,7 +78,7 @@ func (k Keeper) updatePool(
 		}
 	}
 
-	if err = k.addReserveSnapshot(
+	if err = k.updateSnapshot(
 		ctx,
 		updatedPool.Pair,
 		updatedPool.QuoteAssetReserve,

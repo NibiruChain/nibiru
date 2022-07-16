@@ -21,7 +21,7 @@ func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing
 
 	pool := getSamplePool()
 
-	err := vpoolKeeper.addReserveSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
+	err := vpoolKeeper.updateSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 
 	_, _, err = vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)

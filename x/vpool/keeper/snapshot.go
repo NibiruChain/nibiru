@@ -9,12 +9,22 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-// addReserveSnapshot adds a snapshot of the current pool status and blocktime and blocknum.
-func (k Keeper) addReserveSnapshot(
+/**
+updateSnapshot updates the snapshot of the current vpool.
+It creates a new one if the current block height is greater than the previous snapshot's block height.
+Otherwise, it updates the latest snapshot in state.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the asset pair
+  - quoteReserve: the amount of quote assets in the vpool
+  - baseReserve: the amount of base assets in the vpool
+*/
+func (k Keeper) updateSnapshot(
 	ctx sdk.Context,
 	pair common.AssetPair,
-	quoteAssetReserve sdk.Dec,
-	baseAssetReserve sdk.Dec,
+	quoteReserve sdk.Dec,
+	baseReserve sdk.Dec,
 ) error {
 	lastSnapshot, lastCounter, err := k.getLatestReserveSnapshot(ctx, pair)
 	if err != nil {
@@ -22,17 +32,17 @@ func (k Keeper) addReserveSnapshot(
 	}
 
 	if ctx.BlockHeight() == lastSnapshot.BlockNumber {
-		k.saveSnapshot(ctx, pair, lastCounter, quoteAssetReserve, baseAssetReserve)
+		k.saveSnapshot(ctx, pair, lastCounter, quoteReserve, baseReserve)
 	} else {
 		newCounter := lastCounter + 1
-		k.saveSnapshot(ctx, pair, newCounter, quoteAssetReserve, baseAssetReserve)
+		k.saveSnapshot(ctx, pair, newCounter, quoteReserve, baseReserve)
 		k.saveSnapshotCounter(ctx, pair, newCounter)
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
 		Pair:         pair.String(),
-		QuoteReserve: quoteAssetReserve,
-		BaseReserve:  baseAssetReserve,
+		QuoteReserve: quoteReserve,
+		BaseReserve:  baseReserve,
 	})
 }
 
