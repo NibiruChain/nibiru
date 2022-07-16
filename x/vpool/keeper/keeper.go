@@ -230,10 +230,6 @@ ret:
   - err: error if any
 */
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
-	if pool.FluctuationLimitRatio.IsZero() {
-		return nil
-	}
-
 	latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pool.Pair)
 	if err != nil {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
@@ -256,6 +252,8 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 /**
 isOverFluctuationLimit compares the updated pool's reserves with the given reserve snapshot, and errors if the fluctuation is above the bounds.
 
+If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
+
 args:
   - pool: the updated vpool
   - snapshot: the snapshot to compare against
@@ -264,6 +262,10 @@ ret:
   - bool: true if the fluctuation limit is violated. false otherwise
 */
 func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
+	if pool.FluctuationLimitRatio.IsZero() {
+		return false
+	}
+
 	price := pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve)
 
 	lastPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)

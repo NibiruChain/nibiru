@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -281,4 +282,112 @@ func TestGetVpools(t *testing.T) {
 			MaxOracleSpreadRatio:  sdk.OneDec(),
 		})
 	})
+}
+
+func TestIsOverFluctuationLimit(t *testing.T) {
+	tests := []struct {
+		name     string
+		pool     types.Pool
+		snapshot types.ReserveSnapshot
+
+		isOverLimit bool
+	}{
+		{
+			name: "zero fluctuation limit ratio",
+			pool: types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.OneDec(),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.ZeroDec(),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			snapshot: types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			isOverLimit: false,
+		},
+		{
+			name: "lower limit of fluctuation limit",
+			pool: types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(999),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			snapshot: types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			isOverLimit: false,
+		},
+		{
+			name: "upper limit of fluctuation limit",
+			pool: types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(1001),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			snapshot: types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			isOverLimit: false,
+		},
+		{
+			name: "under fluctuation limit",
+			pool: types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(998),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			snapshot: types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			isOverLimit: true,
+		},
+		{
+			name: "over fluctuation limit",
+			pool: types.Pool{
+				Pair:                  common.PairBTCStable,
+				QuoteAssetReserve:     sdk.NewDec(1002),
+				BaseAssetReserve:      sdk.OneDec(),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:       sdk.OneDec(),
+				MaxOracleSpreadRatio:  sdk.OneDec(),
+			},
+			snapshot: types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			isOverLimit: true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			assert.EqualValues(t, tc.isOverLimit, isOverFluctuationLimit(&tc.pool, tc.snapshot))
+		})
+	}
 }
