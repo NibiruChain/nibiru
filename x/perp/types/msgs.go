@@ -42,6 +42,23 @@ func (m MsgAddMargin) Route() string { return RouterKey }
 func (m MsgAddMargin) Type() string  { return "add_margin_msg" }
 
 func (m MsgAddMargin) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return err
+	}
+
+	pair, err := common.NewAssetPair(m.TokenPair)
+	if err != nil {
+		return err
+	}
+
+	if !m.Margin.Amount.IsPositive() {
+		return fmt.Errorf("margin must be positive, not: %v", m.Margin.Amount.String())
+	}
+
+	if m.Margin.Denom != pair.GetQuoteTokenDenom() {
+		return fmt.Errorf("invalid margin denom, expected %s, got %s", pair.GetQuoteTokenDenom(), m.Margin.Denom)
+	}
+
 	return nil
 }
 
