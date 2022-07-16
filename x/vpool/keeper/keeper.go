@@ -39,6 +39,7 @@ args:
   - dir: either add or remove from pool
   - baseAssetAmount: the amount of quote asset being traded
   - quoteAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
+  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
 
 ret:
   - quoteAssetAmount: the amount of quote asset swapped
@@ -50,6 +51,7 @@ func (k Keeper) SwapBaseForQuote(
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 	quoteAmountLimit sdk.Dec,
+	skipFluctuationLimitCheck bool,
 ) (quoteAssetAmount sdk.Dec, err error) {
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Dec{}, types.ErrPairNotSupported
@@ -76,14 +78,14 @@ func (k Keeper) SwapBaseForQuote(
 	if !quoteAmountLimit.IsZero() {
 		// if going long and the base amount retrieved from the pool is less than the limit
 		if dir == types.Direction_ADD_TO_POOL && quoteAssetAmount.LT(quoteAmountLimit) {
-			return sdk.Dec{}, fmt.Errorf(
+			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
 				"quote amount (%s) is less than selected limit (%s)",
 				quoteAssetAmount.String(),
 				quoteAmountLimit.String(),
 			)
 			// if going short and the base amount retrieved from the pool is greater than the limit
 		} else if dir == types.Direction_REMOVE_FROM_POOL && quoteAssetAmount.GT(quoteAmountLimit) {
-			return sdk.Dec{}, fmt.Errorf(
+			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
 				"quote amount (%s) is greater than selected limit (%s)",
 				quoteAssetAmount.String(),
 				quoteAmountLimit.String(),
@@ -99,7 +101,7 @@ func (k Keeper) SwapBaseForQuote(
 		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
 	}
 
-	if err = k.updatePool(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
+	if err = k.updatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
@@ -134,6 +136,7 @@ args:
   - dir: either add or remove from pool
   - quoteAssetAmount: the amount of quote asset being traded
   - baseAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
+  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
 
 ret:
   - baseAssetAmount: the amount of base asset swapped
@@ -145,6 +148,7 @@ func (k Keeper) SwapQuoteForBase(
 	dir types.Direction,
 	quoteAssetAmount sdk.Dec,
 	baseAmountLimit sdk.Dec,
+	skipFluctuationLimitCheck bool,
 ) (baseAssetAmount sdk.Dec, err error) {
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Dec{}, types.ErrPairNotSupported
@@ -172,14 +176,14 @@ func (k Keeper) SwapQuoteForBase(
 	if !baseAmountLimit.IsZero() {
 		// if going long and the base amount retrieved from the pool is less than the limit
 		if dir == types.Direction_ADD_TO_POOL && baseAssetAmount.LT(baseAmountLimit) {
-			return sdk.Dec{}, types.ErrAssetOverUserLimit.Wrapf(
+			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
 				"base amount (%s) is less than selected limit (%s)",
 				baseAssetAmount.String(),
 				baseAmountLimit.String(),
 			)
 			// if going short and the base amount retrieved from the pool is greater than the limit
 		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAssetAmount.GT(baseAmountLimit) {
-			return sdk.Dec{}, types.ErrAssetOverUserLimit.Wrapf(
+			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
 				"base amount (%s) is greater than selected limit (%s)",
 				baseAssetAmount.String(),
 				baseAmountLimit.String(),
@@ -195,7 +199,7 @@ func (k Keeper) SwapQuoteForBase(
 		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
 	}
 
-	if err = k.updatePool(ctx, pool, false /*skipFluctuationCheck*/); err != nil {
+	if err = k.updatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
@@ -221,6 +225,7 @@ func (k Keeper) SwapQuoteForBase(
 /**
 Check's that a pool that we're about to save to state does not violate the fluctuation limit.
 Always tries to check against a snapshot from a previous block. If one doesn't exist, then it just uses the current snapshot.
+This should run prior to updating the snapshot, otherwise it will compare the currently updated vpool to itself.
 
 args:
   - ctx: the cosmos-sdk context

@@ -563,10 +563,10 @@ func TestGetTWAP(t *testing.T) {
 			keeper, ctx := VpoolKeeper(t,
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 
-			cctx := ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
+			ctx = ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
 			// Creation of the pool does NOT trigger a markPriceChanged event
 			keeper.CreatePool(
-				cctx,
+				ctx,
 				BTCNusdPair,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				/*quoteAssetReserve=*/ sdk.NewDec(40_000_000),
@@ -574,7 +574,7 @@ func TestGetTWAP(t *testing.T) {
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				/*maxSpread=*/ sdk.OneDec(),
 			)
-			err := keeper.UpdateTWAP(cctx, BTCNusdPair.String())
+			err := keeper.UpdateTWAP(ctx, BTCNusdPair.String())
 			require.NoError(t, err)
 			// Make sure price gets initialized correctly when the pool gets created
 			pair := BTCNusdPair
@@ -583,16 +583,16 @@ func TestGetTWAP(t *testing.T) {
 			require.EqualValues(t, initialTWAP, twap.Price)
 			for i, p := range tc.positionUpdates {
 				// update the position and trigger TWAP recalculation
-				cctx = ctx.WithBlockHeader(tmproto.Header{Time: p.blockTs})
+				ctx = ctx.WithBlockHeader(tmproto.Header{Time: p.blockTs})
 				if p.baseAsset.IsNil() {
-					_, err = keeper.SwapQuoteForBase(cctx, BTCNusdPair, p.direction, p.quoteAsset, sdk.NewDec(0))
+					_, err = keeper.SwapQuoteForBase(ctx, BTCNusdPair, p.direction, p.quoteAsset, sdk.NewDec(0), true)
 				} else {
-					_, err = keeper.SwapBaseForQuote(cctx, BTCNusdPair, p.direction, p.baseAsset, sdk.NewDec(0))
+					_, err = keeper.SwapBaseForQuote(ctx, BTCNusdPair, p.direction, p.baseAsset, sdk.NewDec(0), true)
 				}
 				require.NoError(t, err)
-				markPriceEvt := getMarkPriceEvent(tc.expectedMarkPrices[i], cctx.BlockHeader().Time)
-				testutilevents.RequireContainsTypedEvent(t, cctx, markPriceEvt)
-				err = keeper.UpdateTWAP(cctx, BTCNusdPair.String())
+				markPriceEvt := getMarkPriceEvent(tc.expectedMarkPrices[i], ctx.BlockHeader().Time)
+				testutilevents.RequireContainsTypedEvent(t, ctx, markPriceEvt)
+				err = keeper.UpdateTWAP(ctx, BTCNusdPair.String())
 				require.NoError(t, err)
 				twap, err := keeper.GetCurrentTWAP(ctx, pair)
 				require.NoError(t, err)
