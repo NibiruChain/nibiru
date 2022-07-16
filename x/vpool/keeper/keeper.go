@@ -64,8 +64,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, err
 	}
 
-	if dir == types.Direction_REMOVE_FROM_POOL &&
-		!pool.HasEnoughBaseReserve(baseAssetAmount) {
+	if dir == types.Direction_REMOVE_FROM_POOL && !pool.HasEnoughBaseReserve(baseAssetAmount) {
 		return sdk.Dec{}, types.ErrOverTradingLimit
 	}
 
@@ -219,28 +218,51 @@ func (k Keeper) SwapQuoteForBase(
 	})
 }
 
+/**
+Check's that a pool that we're about to save to state does not violate the fluctuation limit.
+Always tries to check against a snapshot from a previous block. If one doesn't exist, then it just uses the current snapshot.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the updated vpool
+
+ret:
+  - err: error if any
+*/
 func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
-	if pool.FluctuationLimitRatio.GT(sdk.ZeroDec()) {
-		latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pool.Pair)
+	if pool.FluctuationLimitRatio.IsZero() {
+		return nil
+	}
+
+	latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pool.Pair)
+	if err != nil {
+		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+	}
+
+	if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 0 {
+		latestSnapshot, err = k.getSnapshot(ctx, pool.Pair, counter-1)
 		if err != nil {
-			return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+			return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
 		}
+	}
 
-		if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 0 {
-			latestSnapshot, err = k.getSnapshot(ctx, pool.Pair, counter-1)
-			if err != nil {
-				return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
-			}
-		}
-
-		if isOverFluctuationLimit(pool, latestSnapshot) {
-			return types.ErrOverFluctuationLimit
-		}
+	if isOverFluctuationLimit(pool, latestSnapshot) {
+		return types.ErrOverFluctuationLimit
 	}
 
 	return nil
 }
 
+/**
+isOverFluctuationLimit compares the updated pool's reserves with the given reserve snapshot, and errors if the fluctuation is above the bounds.
+
+args:
+  - pool: the updated vpool
+  - snapshot: the snapshot to compare against
+
+ret:
+  - bool: true if the fluctuation limit is violated. false otherwise
+*/
 func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
 	price := pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve)
 
@@ -255,7 +277,18 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 	return false
 }
 
-func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (isIt bool) {
+/**
+IsOverSpreadLimit compares the current spot price of the vpool (given by pair) to the underlying's index price (given by an oracle).
+It panics if you provide it with a pair that doesn't exist in the state.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the asset pair
+
+ret:
+  - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
+*/
+func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 	spotPrice, err := k.GetSpotPrice(ctx, pair)
 	if err != nil {
 		panic(err)
@@ -270,5 +303,6 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (isIt 
 	if err != nil {
 		panic(err)
 	}
+
 	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
