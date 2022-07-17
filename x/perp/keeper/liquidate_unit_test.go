@@ -145,6 +145,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 					vpooltypes.Direction_REMOVE_FROM_POOL,
 					/* quoteAmt */ tc.exchangedNotional,
 					/* baseLimit */ sdk.ZeroDec(),
+					/* skipFluctuationLimitCheck */ true,
 				).
 				Return(tc.exchangedSize, nil)
 
@@ -307,6 +308,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 					vpooltypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
+					/* skipFluctuationLimitCheck */ false,
 				).
 				Return(tc.newPositionNotional, nil)
 
@@ -474,6 +476,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 					vpooltypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
+					/* skipFluctuationLimitCheck */ false,
 				).
 				Return(tc.newPositionNotional, nil)
 
@@ -935,6 +938,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
+					/* skipFluctuationLimitCheck */ false,
 				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetSpotPrice(ctx, common.PairBTCStable).
