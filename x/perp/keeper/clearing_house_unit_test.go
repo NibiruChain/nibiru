@@ -118,6 +118,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
+						/* skipFluctuationLimitCheck */ false,
 					).Return(sdk.NewDec(5), nil)
 			},
 			side:               types.Side_BUY,
@@ -133,6 +134,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
+						/* skipFluctuationLimitCheck */ false,
 					).Return(sdk.NewDec(5), nil)
 			},
 			side:               types.Side_SELL,
@@ -193,6 +195,7 @@ func TestIncreasePosition(t *testing.T) {
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(50),
+						/* skipFluctuationLimitCheck */ false,
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(50), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -269,6 +272,7 @@ func TestIncreasePosition(t *testing.T) {
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(101),
+						/* skipFluctuationLimitCheck */ false,
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(101), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -346,6 +350,7 @@ func TestIncreasePosition(t *testing.T) {
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(110),
+						/* skipFluctuationLimitCheck */ false,
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(110), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -421,6 +426,7 @@ func TestIncreasePosition(t *testing.T) {
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(200),
+						/* skipFluctuationLimitCheck */ false,
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(200), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -496,6 +502,7 @@ func TestIncreasePosition(t *testing.T) {
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(99),
+						/* skipFluctuationLimitCheck */ false,
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(99), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -574,6 +581,7 @@ func TestIncreasePosition(t *testing.T) {
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(105),
 						/*baseAssetLimit=*/ sdk.NewDec(100),
+						/* skipFluctuationLimitCheck */ false,
 					).Return( /*baseAssetAmount=*/ sdk.NewDec(100), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
@@ -872,6 +880,7 @@ func TestClosePositionEntirely(t *testing.T) {
 					/*quoteAssetDirection=*/ tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ tc.quoteAssetLimit,
+					/* skipFluctuationLimitCheck */ false,
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
@@ -1166,6 +1175,7 @@ func TestDecreasePosition(t *testing.T) {
 					/*quoteAssetDirection=*/ tc.quoteAssetDir,
 					/*quoteAssetAmount=*/ tc.quoteAmountToDecrease,
 					/*baseAssetLimit=*/ tc.exchangedBaseAmount.Abs(),
+					/* skipFluctuationLimitCheck */ false,
 				).Return( /*baseAssetAmount=*/ tc.baseAssetLimit, nil)
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
@@ -1183,7 +1193,7 @@ func TestDecreasePosition(t *testing.T) {
 				tc.initialPosition,
 				/*openNotional=*/ tc.quoteAmountToDecrease, // NUSD
 				/*baseLimit=*/ tc.baseAssetLimit, // BTC
-				/*canOverFluctuationLimit=*/ false,
+				/*skipFluctuationLimitCheck=*/ false,
 			)
 
 			require.NoError(t, err)
@@ -1571,6 +1581,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
+					/* skipFluctuationLimitCheck */ false,
 				).Return( /*quoteAssetAmount=*/ tc.mockQuoteAmount, nil)
 
 			if tc.expectedErr == nil {
@@ -1581,6 +1592,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 						/*quoteAssetDirection=*/ tc.mockQuoteDir,
 						/*quoteAssetAmount=*/ tc.inputQuoteAmount.Mul(tc.inputLeverage).Sub(tc.mockQuoteAmount),
 						/*baseAssetLimit=*/ sdk.MaxDec(tc.inputBaseAssetLimit.Sub(currentPosition.Size_.Abs()), sdk.ZeroDec()),
+						/* skipFluctuationLimitCheck */ false,
 					).Return( /*baseAssetAmount=*/ tc.mockBaseAmount, nil)
 			}
 
@@ -1856,6 +1868,7 @@ func TestClosePosition(t *testing.T) {
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
+					/* skipFluctuationLimitCheck */ false,
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
@@ -2021,6 +2034,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
+					/* skipFluctuationLimitCheck */ false,
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative premium fraction")
