@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### API Breaking
+
+* [#709](https://github.com/NibiruChain/nibiru/pull/709) Add fields to `OpenPosition` response.
+
 ## [v0.9.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.9.2) - 2022-07-11
 
 ### Improvements
