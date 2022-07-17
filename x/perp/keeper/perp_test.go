@@ -184,9 +184,8 @@ func TestKeeperClosePosition(t *testing.T) {
 		aliceQuote := sdk.NewInt(60)
 		aliceLeverage := sdk.NewDec(10)
 		aliceBaseLimit := sdk.NewDec(150)
-		err = nibiruApp.PerpKeeper.OpenPosition(
+		_, err = nibiruApp.PerpKeeper.OpenPosition(
 			ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)
-
 		require.NoError(t, err)
 
 		t.Log("open position for bob - long")
@@ -205,9 +204,8 @@ func TestKeeperClosePosition(t *testing.T) {
 		bobQuote := sdk.NewInt(60)
 		bobLeverage := sdk.NewDec(10)
 		bobBaseLimit := sdk.NewDec(150)
-		err = nibiruApp.PerpKeeper.OpenPosition(
+		_, err = nibiruApp.PerpKeeper.OpenPosition(
 			ctx, pair, bobSide, bob, bobQuote, bobLeverage, bobBaseLimit)
-
 		require.NoError(t, err)
 
 		t.Log("testing close position")
@@ -226,8 +224,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		// this tests the following issue https://github.com/NibiruChain/nibiru/issues/645
 		// in which opening a position from the same address on the same pair
 		// was not possible after calling close position, due to bad data clearance.
-
-		err = nibiruApp.PerpKeeper.OpenPosition(ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)
+		_, err = nibiruApp.PerpKeeper.OpenPosition(ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)
 		require.NoError(t, err)
 	})
 }

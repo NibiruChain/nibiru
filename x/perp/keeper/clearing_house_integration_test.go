@@ -30,21 +30,29 @@ func TestOpenPositionSuccess(t *testing.T) {
 		leverage  sdk.Dec
 		baseLimit sdk.Dec
 
-		expectedMargin       sdk.Dec
-		expectedOpenNotional sdk.Dec
-		expectedSize         sdk.Dec
+		expectedMargin           sdk.Dec
+		expectedOpenNotional     sdk.Dec
+		expectedSize             sdk.Dec
+		expectedPositionNotional sdk.Dec
+		expectedUnrealizedPnl    sdk.Dec
+		expectedRealizedPnl      sdk.Dec
+		expectedMarginToVault    sdk.Dec
 	}{
 		{
-			name:                 "new long position",
-			traderFunds:          sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition:      nil,
-			side:                 types.Side_BUY,
-			margin:               sdk.NewInt(1000),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.NewDec(1000),
-			expectedOpenNotional: sdk.NewDec(10_000),
-			expectedSize:         sdk.MustNewDecFromStr("9999.999900000001"),
+			name:                     "new long position",
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition:          nil,
+			side:                     types.Side_BUY,
+			margin:                   sdk.NewInt(1000),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.NewDec(1000),
+			expectedOpenNotional:     sdk.NewDec(10_000),
+			expectedSize:             sdk.MustNewDecFromStr("9999.999900000001"),
+			expectedPositionNotional: sdk.NewDec(10_000),
+			expectedUnrealizedPnl:    sdk.ZeroDec(),
+			expectedRealizedPnl:      sdk.ZeroDec(),
+			expectedMarginToVault:    sdk.NewDec(1000),
 		},
 		{
 			name:        "existing long position, go more long",
@@ -57,13 +65,17 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
 			},
-			side:                 types.Side_BUY,
-			margin:               sdk.NewInt(1000),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.NewDec(2000),
-			expectedOpenNotional: sdk.NewDec(20_000),
-			expectedSize:         sdk.MustNewDecFromStr("19999.999900000001"),
+			side:                     types.Side_BUY,
+			margin:                   sdk.NewInt(1000),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.NewDec(2000),
+			expectedOpenNotional:     sdk.NewDec(20_000),
+			expectedSize:             sdk.MustNewDecFromStr("19999.999900000001"),
+			expectedPositionNotional: sdk.MustNewDecFromStr("20000.000099999999"),
+			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("0.000099999999"),
+			expectedRealizedPnl:      sdk.ZeroDec(),
+			expectedMarginToVault:    sdk.NewDec(1000),
 		},
 		{
 			name:        "existing long position, decrease a bit",
@@ -76,13 +88,17 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
 			},
-			side:                 types.Side_SELL,
-			margin:               sdk.NewInt(500),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.MustNewDecFromStr("999.99995000000025"),
-			expectedOpenNotional: sdk.MustNewDecFromStr("4999.99995000000025"),
-			expectedSize:         sdk.MustNewDecFromStr("4999.999974999999875"),
+			side:                     types.Side_SELL,
+			margin:                   sdk.NewInt(500),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.MustNewDecFromStr("999.99995000000025"),
+			expectedOpenNotional:     sdk.MustNewDecFromStr("4999.99995000000025"),
+			expectedSize:             sdk.MustNewDecFromStr("4999.999974999999875"),
+			expectedPositionNotional: sdk.MustNewDecFromStr("4999.999900000001"),
+			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00004999999925"),
+			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.00004999999975"),
+			expectedMarginToVault:    sdk.ZeroDec(),
 		},
 		{
 			name:        "existing long position, decrease a lot",
@@ -95,25 +111,33 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
 			},
-			side:                 types.Side_SELL,
-			margin:               sdk.NewInt(3000),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.MustNewDecFromStr("2000.0000099999999"),
-			expectedOpenNotional: sdk.MustNewDecFromStr("20000.000099999999"),
-			expectedSize:         sdk.MustNewDecFromStr("-20000.000900000027000001"),
+			side:                     types.Side_SELL,
+			margin:                   sdk.NewInt(3000),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.MustNewDecFromStr("2000.0000099999999"),
+			expectedOpenNotional:     sdk.MustNewDecFromStr("20000.000099999999"),
+			expectedSize:             sdk.MustNewDecFromStr("-20000.000900000027000001"),
+			expectedPositionNotional: sdk.MustNewDecFromStr("20000.000099999999"),
+			expectedUnrealizedPnl:    sdk.ZeroDec(),
+			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.000099999999"),
+			expectedMarginToVault:    sdk.MustNewDecFromStr("1000.0001099999989"),
 		},
 		{
-			name:                 "new short position",
-			traderFunds:          sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition:      nil,
-			side:                 types.Side_SELL,
-			margin:               sdk.NewInt(1000),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.NewDec(1000),
-			expectedOpenNotional: sdk.NewDec(10_000),
-			expectedSize:         sdk.MustNewDecFromStr("-10000.000100000001"),
+			name:                     "new short position",
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition:          nil,
+			side:                     types.Side_SELL,
+			margin:                   sdk.NewInt(1000),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.NewDec(1000),
+			expectedOpenNotional:     sdk.NewDec(10_000),
+			expectedSize:             sdk.MustNewDecFromStr("-10000.000100000001"),
+			expectedPositionNotional: sdk.NewDec(10_000),
+			expectedUnrealizedPnl:    sdk.ZeroDec(),
+			expectedRealizedPnl:      sdk.ZeroDec(),
+			expectedMarginToVault:    sdk.NewDec(1000),
 		},
 		{
 			name:        "existing short position, go more short",
@@ -126,13 +150,17 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
 			},
-			side:                 types.Side_SELL,
-			margin:               sdk.NewInt(1000),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.NewDec(2000),
-			expectedOpenNotional: sdk.NewDec(20_000),
-			expectedSize:         sdk.MustNewDecFromStr("-20000.000100000001"),
+			side:                     types.Side_SELL,
+			margin:                   sdk.NewInt(1000),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.NewDec(2000),
+			expectedOpenNotional:     sdk.NewDec(20_000),
+			expectedSize:             sdk.MustNewDecFromStr("-20000.000100000001"),
+			expectedPositionNotional: sdk.MustNewDecFromStr("19999.999899999999"),
+			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("0.000100000001"),
+			expectedRealizedPnl:      sdk.ZeroDec(),
+			expectedMarginToVault:    sdk.NewDec(1000),
 		},
 		{
 			name:        "existing short position, decrease a bit",
@@ -145,13 +173,17 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
 			},
-			side:                 types.Side_BUY,
-			margin:               sdk.NewInt(500),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.MustNewDecFromStr("999.99994999999975"),
-			expectedOpenNotional: sdk.MustNewDecFromStr("5000.00005000000025"),
-			expectedSize:         sdk.MustNewDecFromStr("-5000.000024999999875"),
+			side:                     types.Side_BUY,
+			margin:                   sdk.NewInt(500),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.MustNewDecFromStr("999.99994999999975"),
+			expectedOpenNotional:     sdk.MustNewDecFromStr("5000.00005000000025"),
+			expectedSize:             sdk.MustNewDecFromStr("-5000.000024999999875"),
+			expectedPositionNotional: sdk.MustNewDecFromStr("5000.000100000001"),
+			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00005000000075"),
+			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.00005000000025"),
+			expectedMarginToVault:    sdk.ZeroDec(),
 		},
 		{
 			name:        "existing short position, decrease a lot",
@@ -164,13 +196,17 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
 			},
-			side:                 types.Side_BUY,
-			margin:               sdk.NewInt(3000),
-			leverage:             sdk.NewDec(10),
-			baseLimit:            sdk.ZeroDec(),
-			expectedMargin:       sdk.MustNewDecFromStr("1999.9999899999999"),
-			expectedOpenNotional: sdk.MustNewDecFromStr("19999.999899999999"),
-			expectedSize:         sdk.MustNewDecFromStr("19999.999100000026999999"),
+			side:                     types.Side_BUY,
+			margin:                   sdk.NewInt(3000),
+			leverage:                 sdk.NewDec(10),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.MustNewDecFromStr("1999.9999899999999"),
+			expectedOpenNotional:     sdk.MustNewDecFromStr("19999.999899999999"),
+			expectedSize:             sdk.MustNewDecFromStr("19999.999100000026999999"),
+			expectedPositionNotional: sdk.MustNewDecFromStr("19999.999899999999"),
+			expectedUnrealizedPnl:    sdk.ZeroDec(),
+			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.000100000001"),
+			expectedMarginToVault:    sdk.MustNewDecFromStr("1000.0000900000009"),
 		},
 	}
 
@@ -181,6 +217,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 			traderAddr := sample.AccAddress()
 			oracle := sample.AccAddress()
+			exchangedSize := tc.expectedSize
 
 			t.Log("set pricefeed oracle")
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
@@ -210,12 +247,31 @@ func TestOpenPositionSuccess(t *testing.T) {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
 				nibiruApp.PerpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			err = nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			resp, err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.NoError(t, err)
 
+			t.Log("assert position response")
+			assert.EqualValues(t, common.PairBTCStable, resp.Position.Pair)
+			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
+			assert.EqualValues(t, tc.expectedMargin, resp.Position.Margin, "margin")
+			assert.EqualValues(t, tc.expectedOpenNotional, resp.Position.OpenNotional, "open notional")
+			assert.EqualValues(t, tc.expectedSize, resp.Position.Size_, "position size")
+			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+			assert.EqualValues(t, tc.leverage.MulInt(tc.margin), resp.ExchangedNotionalValue)
+			assert.EqualValues(t, exchangedSize, resp.ExchangedPositionSize)
+			assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
+			assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
+			assert.EqualValues(t, tc.expectedRealizedPnl, resp.RealizedPnl)
+			assert.EqualValues(t, tc.expectedUnrealizedPnl, resp.UnrealizedPnlAfter)
+			assert.EqualValues(t, tc.expectedMarginToVault, resp.MarginToVault)
+			assert.EqualValues(t, tc.expectedPositionNotional, resp.PositionNotional)
+
+			t.Log("assert position in state")
 			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(common.PairBTCStable, traderAddr)
 			require.NoError(t, err)
 			assert.EqualValues(t, common.PairBTCStable, position.Pair)
@@ -331,8 +387,77 @@ func TestOpenPositionError(t *testing.T) {
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			err = nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			resp, err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.PairBTCStable, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.ErrorContains(t, err, tc.expectedErr.Error())
+			require.Nil(t, resp)
+		})
+	}
+}
+
+func TestOpenPositionInvalidPair(t *testing.T) {
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "open pos - uninitialized pool raised pair not supported error",
+			test: func() {
+				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				pair := common.MustNewAssetPair("xxx:yyy")
+
+				trader := sample.AccAddress()
+
+				t.Log("open a position on invalid 'pair'")
+				side := types.Side_BUY
+				quote := sdk.NewInt(60)
+				leverage := sdk.NewDec(10)
+				baseLimit := sdk.NewDec(150)
+				resp, err := nibiruApp.PerpKeeper.OpenPosition(
+					ctx, pair, side, trader, quote, leverage, baseLimit)
+				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
+				require.Nil(t, resp)
+			},
+		},
+		{
+			name: "open pos - vpool not set on the perp PairMetadata ",
+			test: func() {
+				t.Log("Setup Nibiru app, pair, and trader")
+				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				pair := common.MustNewAssetPair("xxx:yyy")
+
+				t.Log("Set vpool defined by pair on VpoolKeeper")
+				vpoolKeeper := &nibiruApp.VpoolKeeper
+				vpoolKeeper.CreatePool(
+					ctx,
+					pair,
+					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
+					sdk.NewDec(10_000_000),       //
+					sdk.NewDec(5_000_000),        // 5 tokens
+					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+					sdk.MustNewDecFromStr("0.1"),
+				)
+
+				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+
+				t.Log("Attempt to open long position (expected unsuccessful)")
+				trader := sample.AccAddress()
+				side := types.Side_BUY
+				quote := sdk.NewInt(60)
+				leverage := sdk.NewDec(10)
+				baseLimit := sdk.NewDec(150)
+				resp, err := nibiruApp.PerpKeeper.OpenPosition(
+					ctx, pair, side, trader, quote, leverage, baseLimit)
+				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
+				require.Nil(t, resp)
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
 		})
 	}
 }
