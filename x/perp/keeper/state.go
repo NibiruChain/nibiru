@@ -151,14 +151,14 @@ func (p PairMetadataState) Set(metadata *types.PairMetadata) {
 func (p PairMetadataState) GetAll() []*types.PairMetadata {
 	iterator := p.pairsMetadata.Iterator(nil, nil)
 
-	var pairMetadatas []*types.PairMetadata
+	var allPairMetadata []*types.PairMetadata
 	for ; iterator.Valid(); iterator.Next() {
 		var pairMetadata = new(types.PairMetadata)
 		p.cdc.MustUnmarshal(iterator.Value(), pairMetadata)
-		pairMetadatas = append(pairMetadatas, pairMetadata)
+		allPairMetadata = append(allPairMetadata, pairMetadata)
 	}
 
-	return pairMetadatas
+	return allPairMetadata
 }
 
 // getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
