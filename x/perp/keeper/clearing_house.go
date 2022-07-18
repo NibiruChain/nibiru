@@ -630,7 +630,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr
 	positionResp, err := k.closePositionEntirely(
 		ctx,
 		*position,
-		sdk.ZeroDec(),
+		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ false,
 	)
 	if err != nil {

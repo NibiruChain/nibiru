@@ -129,7 +129,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.OneDec(),
 				).
-				Return(tc.newPositionNotional, nil).Times(4)
+				Return(tc.newPositionNotional, nil).Times(3)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
@@ -308,7 +308,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 					vpooltypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
-					/* skipFluctuationLimitCheck */ false,
+					/* skipFluctuationLimitCheck */ true,
 				).
 				Return(tc.newPositionNotional, nil)
 
@@ -476,7 +476,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 					vpooltypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
-					/* skipFluctuationLimitCheck */ false,
+					/* skipFluctuationLimitCheck */ true,
 				).
 				Return(tc.newPositionNotional, nil)
 
@@ -938,7 +938,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
-					/* skipFluctuationLimitCheck */ false,
+					/* skipFluctuationLimitCheck */ true,
 				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetSpotPrice(ctx, common.PairBTCStable).
