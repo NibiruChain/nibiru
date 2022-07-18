@@ -891,6 +891,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				ctx,
 				tc.initialPosition,
 				/*quoteAssetLimit=*/ tc.quoteAssetLimit, // NUSD
+				/* skipFluctuationLimitCheck */ false,
 			)
 
 			require.NoError(t, err)

@@ -204,7 +204,7 @@ func (k Keeper) increasePosition(
 		side,
 		increasedNotional,
 		baseAmtLimit,
-		false,
+		/* skipFluctuationLimitCheck */ false,
 	)
 	if err != nil {
 		return nil, err
@@ -311,7 +311,6 @@ ret:
   - positionResp: contains the result of the decrease position and the new position
   - err: error
 */
-// TODO(https://github.com/NibiruChain/nibiru/issues/403): implement fluctuation limit check
 func (k Keeper) decreasePosition(
 	ctx sdk.Context,
 	currentPosition types.Position,
@@ -416,6 +415,7 @@ args:
   - quoteAssetAmount: the amount of notional value to move by. Must be greater than the existingPosition's notional value.
   - leverage: the amount of leverage to take
   - baseAmtLimit: limit on the base asset movement to ensure trader doesn't get screwed
+  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
 
 ret:
   - positionResp: response object containing information about the position change
@@ -436,7 +436,8 @@ func (k Keeper) closeAndOpenReversePosition(
 	closePositionResp, err := k.closePositionEntirely(
 		ctx,
 		existingPosition,
-		sdk.ZeroDec(),
+		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
+		/* skipFluctuationLimitCheck */ false,
 	)
 	if err != nil {
 		return nil, err
@@ -456,12 +457,11 @@ func (k Keeper) closeAndOpenReversePosition(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
 			closePositionResp.ExchangedNotionalValue.String(), reverseNotionalValue.String())
 	} else if remainingReverseNotionalValue.IsPositive() {
-		updatedbaseAmtLimit := baseAmtLimit
+		updatedBaseAmtLimit := baseAmtLimit
 		if baseAmtLimit.IsPositive() {
-			updatedbaseAmtLimit = baseAmtLimit.
-				Sub(closePositionResp.ExchangedPositionSize.Abs())
+			updatedBaseAmtLimit = baseAmtLimit.Sub(closePositionResp.ExchangedPositionSize.Abs())
 		}
-		if updatedbaseAmtLimit.IsNegative() {
+		if updatedBaseAmtLimit.IsNegative() {
 			return nil, fmt.Errorf(
 				"position size changed by greater than the specified base limit: %s",
 				baseAmtLimit.String(),
@@ -486,12 +486,13 @@ func (k Keeper) closeAndOpenReversePosition(
 			*newPosition,
 			sideToTake,
 			remainingReverseNotionalValue,
-			updatedbaseAmtLimit,
+			updatedBaseAmtLimit,
 			leverage,
 		)
 		if err != nil {
 			return nil, err
 		}
+
 		positionResp = &types.PositionResp{
 			Position:               increasePositionResp.Position,
 			PositionNotional:       increasePositionResp.PositionNotional,
@@ -519,6 +520,7 @@ args:
   - ctx: cosmos-sdk context
   - currentPosition: current position
   - quoteAssetAmountLimit: a limit on quote asset to ensure trader doesn't get screwed
+  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
 
 ret:
   - positionResp: response object containing information about the position change
@@ -528,6 +530,7 @@ func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	currentPosition types.Position,
 	quoteAssetAmountLimit sdk.Dec,
+	skipFluctuationLimitCheck bool,
 ) (positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, fmt.Errorf("zero position size")
@@ -579,7 +582,7 @@ func (k Keeper) closePositionEntirely(
 		baseAssetDirection,
 		currentPosition.Size_.Abs(),
 		quoteAssetAmountLimit,
-		false,
+		skipFluctuationLimitCheck,
 	)
 	if err != nil {
 		return nil, err
@@ -625,7 +628,12 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr
 		return nil, err
 	}
 
-	positionResp, err := k.closePositionEntirely(ctx, *position, sdk.ZeroDec())
+	positionResp, err := k.closePositionEntirely(
+		ctx,
+		*position,
+		sdk.ZeroDec(),
+		/* skipFluctuationLimitCheck */ false,
+	)
 	if err != nil {
 		return nil, err
 	}
