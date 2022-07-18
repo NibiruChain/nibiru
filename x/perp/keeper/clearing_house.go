@@ -318,8 +318,11 @@ func (k Keeper) decreasePosition(
 	baseAmtLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
 ) (positionResp *types.PositionResp, err error) {
+	if currentPosition.Size_.IsZero() {
+		return nil, fmt.Errorf("current position size is zero, nothing to decrease")
+	}
+
 	positionResp = &types.PositionResp{
-		RealizedPnl:   sdk.ZeroDec(),
 		MarginToVault: sdk.ZeroDec(),
 	}
 
@@ -353,12 +356,10 @@ func (k Keeper) decreasePosition(
 		return nil, err
 	}
 
-	if !currentPosition.Size_.IsZero() {
-		positionResp.RealizedPnl = currentUnrealizedPnL.Mul(
-			positionResp.ExchangedPositionSize.Abs().
-				Quo(currentPosition.Size_.Abs()),
-		)
-	}
+	positionResp.RealizedPnl = currentUnrealizedPnL.Mul(
+		positionResp.ExchangedPositionSize.Abs().
+			Quo(currentPosition.Size_.Abs()),
+	)
 
 	remaining, err := k.CalcRemainMarginWithFundingPayment(
 		ctx,
