@@ -6,6 +6,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "perp/v1/state.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "common/common.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
@@ -183,4 +184,43 @@ message PositionSettledEvent {
         (gogoproto.moretags) = "yaml:\"settled_coins\"",
         (gogoproto.nullable) = false
     ];
+}
+
+// Emitted when a new funding rate is calculated.
+message FundingRateChangedEvent {
+
+    // The pair for which the funding rate was calculated.
+    string pair = 1;
+
+    // The mark price of the pair.
+    string mark_price = 2 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The oracle index price of the pair.
+    string index_price = 3 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The latest funding rate.
+    string latest_funding_rate = 4 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The latest cumulative funding rate.
+    // The funding rate a position will pay is the difference between this value
+    // and the latest cumulative funding rate on the position.
+    string cumulative_funding_rate = 5 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The block number at which the funding rate was calculated.
+    int64 block_height = 6;
+
+    // The block time in unix milliseconds at which the funding rate was calculated.
+    int64 block_time_ms = 7;
 }

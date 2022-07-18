@@ -20,9 +20,9 @@ func (k Keeper) OpenPosition(
 	quoteAssetAmount sdk.Int,
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
-) (err error) {
+) (positionResp *types.PositionResp, err error) {
 	if err = k.requireVpool(ctx, pair); err != nil {
-		return err
+		return nil, err
 	}
 
 	// require params
@@ -35,17 +35,14 @@ func (k Keeper) OpenPosition(
 		position = types.ZeroPosition(ctx, pair, traderAddr)
 		k.PositionsState(ctx).Set(pair, traderAddr, position)
 	} else if err != nil && !isNewPosition {
-		return err
+		return nil, err
 	}
 
-	var positionResp *types.PositionResp
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
 	var openSideMatchesPosition = sameSideLong || sameSideShort
-	switch {
-	case isNewPosition || openSideMatchesPosition:
+	if isNewPosition || openSideMatchesPosition {
 		// increase position case
-
 		positionResp, err = k.increasePosition(
 			ctx,
 			*position,
@@ -54,11 +51,10 @@ func (k Keeper) OpenPosition(
 			/* minPositionSize */ baseAmtLimit,
 			/* leverage */ leverage)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-	// everything else decreases the position
-	default:
+	} else {
+		// everything else decreases the position
 		positionResp, err = k.openReversePosition(
 			ctx,
 			*position,
@@ -68,11 +64,15 @@ func (k Keeper) OpenPosition(
 			/* skipFluctuationLimitCheck */ false,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, *positionResp)
+	if err = k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, *positionResp); err != nil {
+		return nil, err
+	}
+
+	return positionResp, nil
 }
 
 // afterPositionUpdate is called when a position has been updated.
@@ -90,8 +90,7 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.BadDebt.IsZero() {
-		return fmt.Errorf(
-			"bad debt must be zero to prevent attacker from leveraging it")
+		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
 	}
 
 	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
@@ -109,22 +108,21 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	// transfer trader <=> vault
-	marginToVaultInt := positionResp.MarginToVault.RoundInt()
+	marginToVault := positionResp.MarginToVault.RoundInt()
 	switch {
-	case marginToVaultInt.IsPositive():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVaultInt)
+	case marginToVault.IsPositive():
+		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
-	case marginToVaultInt.IsNegative():
-		if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, marginToVaultInt.Abs()); err != nil {
+	case marginToVault.IsNegative():
+		if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, marginToVault.Abs()); err != nil {
 			return err
 		}
 	}
 
-	transferredFee, err := k.transferFee(
-		ctx, pair, traderAddr, positionResp.ExchangedNotionalValue)
+	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedNotionalValue)
 	if err != nil {
 		return err
 	}
