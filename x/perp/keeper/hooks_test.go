@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
@@ -14,59 +13,107 @@ import (
 	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestEndOfEpochTwapCalculation(t *testing.T) {
 	tests := []struct {
-		name                  string
-		indexPrice, markPrice int64
-		expectedFundingRate   string
+		name                            string
+		indexPrice                      sdk.Dec
+		markPrice                       sdk.Dec
+		expectedCumulativeFundingRates  []sdk.Dec
+		expectedFundingRateChangedEvent *types.FundingRateChangedEvent
 	}{
 		{
-			name: "check empty price",
+			name:                            "check empty prices",
+			indexPrice:                      sdk.ZeroDec(),
+			markPrice:                       sdk.ZeroDec(),
+			expectedCumulativeFundingRates:  []sdk.Dec{sdk.ZeroDec()},
+			expectedFundingRateChangedEvent: nil,
 		},
 		{
-			name:      "empty index price",
-			markPrice: 10,
+			name:                            "empty index price",
+			indexPrice:                      sdk.ZeroDec(),
+			markPrice:                       sdk.NewDec(10),
+			expectedCumulativeFundingRates:  []sdk.Dec{sdk.ZeroDec()},
+			expectedFundingRateChangedEvent: nil,
 		},
 		{
-			name:       "empty mark price",
-			indexPrice: 10,
+			name:                            "empty mark price",
+			indexPrice:                      sdk.NewDec(10),
+			markPrice:                       sdk.ZeroDec(),
+			expectedCumulativeFundingRates:  []sdk.Dec{sdk.ZeroDec()},
+			expectedFundingRateChangedEvent: nil,
 		},
 		{
-			name:                "equal prices",
-			indexPrice:          10,
-			markPrice:           10,
-			expectedFundingRate: "0",
+			name:                           "equal prices",
+			indexPrice:                     sdk.NewDec(10),
+			markPrice:                      sdk.NewDec(10),
+			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.ZeroDec()},
+			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
+				Pair:                  common.PairBTCStable.String(),
+				MarkPrice:             sdk.NewDec(10),
+				IndexPrice:            sdk.NewDec(10),
+				LatestFundingRate:     sdk.ZeroDec(),
+				CumulativeFundingRate: sdk.ZeroDec(),
+				BlockHeight:           1,
+				BlockTimeMs:           1,
+			},
 		},
 		{
-			name:                "calculate funding rate with higher index price",
-			indexPrice:          462,
-			markPrice:           19,
-			expectedFundingRate: "-18.458333333333333333",
+			name:                           "calculate funding rate with higher index price",
+			markPrice:                      sdk.NewDec(19),
+			indexPrice:                     sdk.NewDec(462),
+			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("-18.458333333333333333")},
+			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
+				Pair:                  common.PairBTCStable.String(),
+				MarkPrice:             sdk.NewDec(19),
+				IndexPrice:            sdk.NewDec(462),
+				LatestFundingRate:     sdk.MustNewDecFromStr("-18.458333333333333333"),
+				CumulativeFundingRate: sdk.MustNewDecFromStr("-18.458333333333333333"),
+				BlockHeight:           1,
+				BlockTimeMs:           1,
+			},
 		},
 		{
-			name:                "calculate funding rate with higher mark price",
-			indexPrice:          64,
-			markPrice:           745,
-			expectedFundingRate: "28.375000000000000000",
+			name:                           "calculate funding rate with higher mark price",
+			markPrice:                      sdk.NewDec(745),
+			indexPrice:                     sdk.NewDec(64),
+			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("28.375")},
+			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
+				Pair:                  common.PairBTCStable.String(),
+				MarkPrice:             sdk.NewDec(745),
+				IndexPrice:            sdk.NewDec(64),
+				LatestFundingRate:     sdk.MustNewDecFromStr("28.375"),
+				CumulativeFundingRate: sdk.MustNewDecFromStr("28.375"),
+				BlockHeight:           1,
+				BlockTimeMs:           1,
+			},
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, mocks, ctx := getKeeper(t)
-			initParams(ctx, keeper)
+			perpKeeper, mocks, ctx := getKeeper(t)
+			ctx = ctx.WithBlockHeight(1).WithBlockTime(time.UnixMilli(1))
+
+			t.Log("initialize params")
+			initParams(ctx, perpKeeper)
+
+			t.Log("set mocks")
 			setMockPrices(ctx, mocks, tc.indexPrice, tc.markPrice)
-			keeper.AfterEpochEnd(ctx, "hour", 0)
-			pair, err := keeper.PairMetadataState(ctx).Get(common.PairBTCStable)
+
+			perpKeeper.AfterEpochEnd(ctx, "hour", 1)
+
+			t.Log("assert PairMetadataState")
+			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.PairBTCStable)
 			require.NoError(t, err)
-			assert.Equal(t, pair.Pair, common.PairBTCStable)
-			expected := []sdk.Dec{sdk.NewDec(0)}
-			if tc.expectedFundingRate != "" {
-				expected = append(expected, sdk.MustNewDecFromStr(tc.expectedFundingRate))
+			assert.Equal(t, tc.expectedCumulativeFundingRates, pair.CumulativePremiumFractions)
+
+			if tc.expectedFundingRateChangedEvent != nil {
+				t.Log("assert FundingRateChangedEvent")
+				testutilevents.RequireContainsTypedEvent(t, ctx, tc.expectedFundingRateChangedEvent)
 			}
-			assert.Equal(t, expected, pair.CumulativePremiumFractions)
 		})
 	}
 }
@@ -89,23 +136,24 @@ func initParams(ctx sdk.Context, k Keeper) {
 	})
 }
 
-func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice, markPrice int64) {
-	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, gomock.Any()).Return(true)
-	if indexPrice != 0 && markPrice != 0 {
-		mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "hour").Return(
-			epochtypes.EpochInfo{Duration: time.Hour},
-		)
-	}
+func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec, markPrice sdk.Dec) {
+	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true)
+
+	mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "hour").Return(
+		epochtypes.EpochInfo{Duration: time.Hour},
+	).MaxTimes(1)
+
 	mocks.mockPricefeedKeeper.EXPECT().
 		GetCurrentTWAP(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1).
 		Return(pftypes.CurrentTWAP{
 			PairID: common.PairBTCStable.String(),
-			Price:  sdk.NewDec(indexPrice),
+			Price:  indexPrice,
 		}, nil).MaxTimes(1)
+
 	mocks.mockVpoolKeeper.EXPECT().
 		GetCurrentTWAP(ctx, common.PairBTCStable).
 		Return(vpooltypes.CurrentTWAP{
 			PairID: common.PairBTCStable.String(),
-			Price:  sdk.NewDec(markPrice),
+			Price:  markPrice,
 		}, nil).MaxTimes(1)
 }
