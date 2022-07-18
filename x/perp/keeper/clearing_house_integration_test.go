@@ -334,7 +334,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:          sdk.NewInt(1000),
 			leverage:        sdk.NewDec(10),
 			baseLimit:       sdk.NewDec(10_000),
-			expectedErr:     vpooltypes.ErrAssetOverUserLimit,
+			expectedErr:     vpooltypes.ErrAssetFailsUserLimit,
 		},
 		{
 			name:            "new short position not under base limit",
@@ -344,7 +344,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:          sdk.NewInt(1000),
 			leverage:        sdk.NewDec(10),
 			baseLimit:       sdk.NewDec(10_000),
-			expectedErr:     vpooltypes.ErrAssetOverUserLimit,
+			expectedErr:     vpooltypes.ErrAssetFailsUserLimit,
 		},
 	}
 
