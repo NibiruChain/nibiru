@@ -5,9 +5,9 @@ This document outlines the process for releasing a new version of the Nibiru bin
 ## Step 1) Create a new release branch off master
 
 ```sh
-$ git checkout master
-$ git branch releases/v0.x.y
-$ git switch releases/v0.x.y
+git checkout master
+git branch releases/v0.x.y
+git switch releases/v0.x.y
 ```
 
 ## Step 2) Update the changelog
@@ -18,8 +18,8 @@ $ git switch releases/v0.x.y
 ## Step 3) Create a tag
 
 ```sh
-$ git tag -a -s -m "Create new release v0.x.y" v0.x.y
-$ git push origin v0.x.y
+git tag -a -s -m "Create new release v0.x.y" v0.x.y
+git push origin v0.x.y
 ```
 
 ## Step 4) Go to the [GitHub Releases](https://github.com/NibiruChain/nibiru/releases) page
@@ -31,11 +31,10 @@ $ git push origin v0.x.y
 ## Step 5) Build the binaries locally
 
 ```sh
-$ cd nibiru/
-$ ignite chain build --release -t linux:amd64 -t darwin:amd64 -t darwin:arm64
+cd nibiru/
+
+ignite chain build --release -t linux:amd64 -t linux:arm64 -t darwin:amd64 -t darwin:arm64
 ```
-
-
 
 ## Step 6) Upload the files in the release/ directory to GitHub
 
