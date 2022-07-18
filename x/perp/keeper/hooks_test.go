@@ -94,23 +94,24 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, mocks, ctx := getKeeper(t)
+			perpKeeper, mocks, ctx := getKeeper(t)
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(time.UnixMilli(1))
 
 			t.Log("initialize params")
-			initParams(ctx, keeper)
+			initParams(ctx, perpKeeper)
 
 			t.Log("set mocks")
 			setMockPrices(ctx, mocks, tc.indexPrice, tc.markPrice)
 
-			keeper.AfterEpochEnd(ctx, "hour", 1)
+			perpKeeper.AfterEpochEnd(ctx, "hour", 1)
 
-			pair, err := keeper.PairMetadataState(ctx).Get(common.PairBTCStable)
+			t.Log("assert PairMetadataState")
+			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.PairBTCStable)
 			require.NoError(t, err)
-
 			assert.Equal(t, tc.expectedCumulativeFundingRates, pair.CumulativePremiumFractions)
 
 			if tc.expectedFundingRateChangedEvent != nil {
+				t.Log("assert FundingRateChangedEvent")
 				testutilevents.RequireContainsTypedEvent(t, ctx, tc.expectedFundingRateChangedEvent)
 			}
 		})
