@@ -18,6 +18,109 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
+func TestMsgServerAddMargin(t *testing.T) {
+	tests := []struct {
+		name string
+
+		traderFunds     sdk.Coins
+		initialPosition *types.Position
+		margin          sdk.Coin
+
+		expectedErr error
+	}{
+		{
+			name:        "trader not enough funds",
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
+			initialPosition: &types.Position{
+				Pair:                                common.PairBTCStable,
+				Size_:                               sdk.OneDec(),
+				Margin:                              sdk.OneDec(),
+				OpenNotional:                        sdk.OneDec(),
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         1,
+			},
+			margin:      sdk.NewInt64Coin(common.DenomStable, 1000),
+			expectedErr: sdkerrors.ErrInsufficientFunds,
+		},
+		{
+			name:            "no initial position",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			initialPosition: nil,
+			margin:          sdk.NewInt64Coin(common.DenomStable, 1000),
+			expectedErr:     types.ErrPositionNotFound,
+		},
+		{
+			name:        "success",
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			initialPosition: &types.Position{
+				Pair:                                common.PairBTCStable,
+				Size_:                               sdk.OneDec(),
+				Margin:                              sdk.OneDec(),
+				OpenNotional:                        sdk.OneDec(),
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         1,
+			},
+			margin:      sdk.NewInt64Coin(common.DenomStable, 1000),
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewNibiruAppAndContext(true)
+			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+			traderAddr := sample.AccAddress()
+
+			t.Log("create vpool")
+			app.VpoolKeeper.CreatePool(
+				ctx,
+				common.PairBTCStable,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteReserve */ sdk.NewDec(1_000_000),
+				/* baseReserve */ sdk.NewDec(1_000_000),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+			)
+			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				Pair:                       common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+			})
+
+			t.Log("fund trader")
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
+
+			if tc.initialPosition != nil {
+				t.Log("create position")
+				tc.initialPosition.TraderAddress = traderAddr.String()
+				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(tc.initialPosition))
+			}
+
+			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
+				Sender:    traderAddr.String(),
+				TokenPair: common.PairBTCStable.String(),
+				Margin:    tc.margin,
+			})
+
+			if tc.expectedErr != nil {
+				require.ErrorContains(t, err, tc.expectedErr.Error())
+				require.Nil(t, resp)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				assert.EqualValues(t, resp.FundingPayment, sdk.ZeroDec())
+				assert.Equal(t, resp.Position.Pair, tc.initialPosition.Pair)
+				assert.Equal(t, resp.Position.TraderAddress, tc.initialPosition.TraderAddress)
+				assert.Equal(t, resp.Position.Margin, tc.initialPosition.Margin.Add(tc.margin.Amount.ToDec()))
+				assert.Equal(t, resp.Position.OpenNotional, tc.initialPosition.OpenNotional)
+				assert.Equal(t, resp.Position.Size_, tc.initialPosition.Size_)
+				assert.Equal(t, resp.Position.BlockNumber, ctx.BlockHeight())
+				assert.Equal(t, resp.Position.LastUpdateCumulativePremiumFraction, sdk.ZeroDec())
+			}
+		})
+	}
+}
+
 func TestMsgServerOpenPosition(t *testing.T) {
 	tests := []struct {
 		name string

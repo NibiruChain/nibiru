@@ -15,36 +15,10 @@ import (
 to it. Adding margin increases the margin ratio of the corresponding position.
 */
 func (k Keeper) AddMargin(
-	goCtx context.Context, msg *types.MsgAddMargin,
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
-	// ------------- Message Setup -------------
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// validate trader
-	traderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
-
-	// validate margin amount
-	if !msg.Margin.Amount.IsPositive() {
-		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
-		return nil, err
-	}
-
-	// validate token pair
-	pair, err := common.NewAssetPair(msg.TokenPair)
-	if err != nil {
-		return nil, err
-	}
 	// validate vpool exists
 	if err = k.requireVpool(ctx, pair); err != nil {
-		return nil, err
-	}
-
-	// validate margin denom
-	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
-		err = fmt.Errorf("invalid margin denom")
 		return nil, err
 	}
 
@@ -54,20 +28,20 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(
-		ctx, *position, msg.Margin.Amount.ToDec())
+	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(ctx, *position, margin.Amount.ToDec())
 	if err != nil {
 		return nil, err
 	}
 
 	if !remainingMargin.BadDebt.IsZero() {
-		err = fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
-		return nil, err
+		return nil, fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
 	}
 
-	coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount)
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
-		ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend),
+		ctx,
+		/* from */ traderAddr,
+		/* to */ types.VaultModuleAccount,
+		/* amount */ sdk.NewCoins(margin),
 	); err != nil {
 		return nil, err
 	}
@@ -87,7 +61,7 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(
+	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
 			Pair:                  pair.String(),
 			TraderAddress:         traderAddr.String(),
@@ -105,12 +79,14 @@ func (k Keeper) AddMargin(
 			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			LiquidationPenalty:    sdk.ZeroDec(),
 		},
-	)
+	); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgAddMarginResponse{
 		FundingPayment: remainingMargin.FundingPayment,
 		Position:       position,
-	}, err
+	}, nil
 }
 
 /* RemoveMargin further leverages an existing position by directly removing
