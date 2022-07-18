@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
@@ -47,11 +48,27 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 		fundingRate := markTWAP.Price.Sub(indexTWAP.Price).QuoInt64(int64(intervalsPerDay))
 
+		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
+		cumulativeFundingRate := fundingRate
 		if len(pairMetadata.CumulativePremiumFractions) > 0 {
-			fundingRate = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(fundingRate)
+			cumulativeFundingRate = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(fundingRate)
 		}
-		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, fundingRate)
+
+		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, cumulativeFundingRate)
 		k.PairMetadataState(ctx).Set(pairMetadata)
+
+		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
+			Pair:                  pairMetadata.Pair.String(),
+			MarkPrice:             markTWAP.Price,
+			IndexPrice:            indexTWAP.Price,
+			LatestFundingRate:     fundingRate,
+			CumulativeFundingRate: cumulativeFundingRate,
+			BlockHeight:           ctx.BlockHeight(),
+			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+		}); err != nil {
+			ctx.Logger().Error("failed to emit FundingRateChangedEvent", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
+			continue
+		}
 	}
 }
 
