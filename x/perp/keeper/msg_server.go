@@ -26,9 +26,12 @@ func (m msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMarg
 	return m.k.RemoveMargin(ctx, margin)
 }
 
-func (m msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
+func (m msgServer) AddMargin(ctx context.Context, msg *types.MsgAddMargin,
 ) (*types.MsgAddMarginResponse, error) {
-	return m.k.AddMargin(ctx, margin)
+	// These fields should have already been validated by MsgAddMargin.ValidateBasic() prior to being sent to the msgServer.
+	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
+	pair := common.MustNewAssetPair(msg.TokenPair)
+	return m.k.AddMargin(sdk.UnwrapSDKContext(ctx), pair, traderAddr, msg.Margin)
 }
 
 func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
