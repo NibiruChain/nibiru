@@ -93,13 +93,8 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Open position")
-			err = nibiruApp.PerpKeeper.OpenPosition(
+			positionResp, err := nibiruApp.PerpKeeper.OpenPosition(
 				ctx, pair, tc.side, trader, tc.quote, tc.leverage, tc.baseLimit)
-
-			require.NoError(t, err)
-
-			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -112,15 +107,15 @@ func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
 
 			t.Log("Liquidate the position")
 			liquidator := sample.AccAddress()
-			_, err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, position)
+			_, err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, positionResp.Position)
 
 			require.Error(t, err)
 
 			// No change in the position
 			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
-			assert.Equal(t, position.Size_, newPosition.Size_)
-			assert.Equal(t, position.Margin, newPosition.Margin)
-			assert.Equal(t, position.OpenNotional, newPosition.OpenNotional)
+			assert.Equal(t, positionResp.Position.Size_, newPosition.Size_)
+			assert.Equal(t, positionResp.Position.Margin, newPosition.Margin)
+			assert.Equal(t, positionResp.Position.OpenNotional, newPosition.OpenNotional)
 		})
 	}
 }
@@ -268,12 +263,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Open position")
-			err = nibiruApp.PerpKeeper.OpenPosition(
+			positionResp, err := nibiruApp.PerpKeeper.OpenPosition(
 				ctx, tokenPair, tc.positionSide, traderAddr, tc.quoteAmount, tc.leverage, tc.baseAssetLimit)
-			require.NoError(t, err)
-
-			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -286,7 +277,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (entire) position")
 			liquidatorAddr := sample.AccAddress()
-			liquidationResp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, position)
+			liquidationResp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, positionResp.Position)
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
@@ -395,11 +386,8 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 				sdk.NewCoins(tc.traderFunds)))
 
 			t.Log("Open position")
-			require.NoError(t, nibiruApp.PerpKeeper.OpenPosition(
-				ctx, pair, tc.side, trader, tc.quote, tc.leverage, tc.baseLimit))
-
-			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
+			positionResp, err := nibiruApp.PerpKeeper.OpenPosition(
+				ctx, pair, tc.side, trader, tc.quote, tc.leverage, tc.baseLimit)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -412,15 +400,15 @@ func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
 
 			t.Log("Liquidate the position")
 			liquidator := sample.AccAddress()
-			_, err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
+			_, err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, positionResp.Position)
 
 			require.Error(t, err)
 
 			// No change in the position
 			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
-			require.Equal(t, position.Size_, newPosition.Size_)
-			require.Equal(t, position.Margin, newPosition.Margin)
-			require.Equal(t, position.OpenNotional, newPosition.OpenNotional)
+			require.Equal(t, positionResp.Position.Size_, newPosition.Size_)
+			require.Equal(t, positionResp.Position.Margin, newPosition.Margin)
+			require.Equal(t, positionResp.Position.OpenNotional, newPosition.OpenNotional)
 		})
 	}
 }
@@ -546,12 +534,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				WithBlockTime(time.Now().Add(time.Minute))
 
 			t.Log("Open position")
-			err = nibiruApp.PerpKeeper.OpenPosition(
+			positionResp, err := nibiruApp.PerpKeeper.OpenPosition(
 				ctx, tokenPair, tc.side, traderAddr, tc.quote, tc.leverage, tc.baseLimit)
-			require.NoError(t, err)
-
-			t.Log("Get the position")
-			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
 			require.NoError(t, err)
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
@@ -564,7 +548,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Liquidate the (partial) position")
 			liquidator := sample.AccAddress()
-			liquidationResp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, position)
+			liquidationResp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, positionResp.Position)
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")

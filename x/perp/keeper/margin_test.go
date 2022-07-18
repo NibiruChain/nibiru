@@ -16,121 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
-func TestOpenPosition_Setup(t *testing.T) {
-	testCases := []struct {
-		name string
-		test func()
-	}{
-		{
-			name: "open pos - uninitialized pool raised pair not supported error",
-			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-				pair := common.MustNewAssetPair("xxx:yyy")
-
-				trader := sample.AccAddress()
-
-				t.Log("open a position on invalid 'pair'")
-				side := types.Side_BUY
-				quote := sdk.NewInt(60)
-				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewDec(150)
-				err := nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, trader, quote, leverage, baseLimit)
-				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
-			},
-		},
-		{
-			name: "open pos - vpool not set on the perp PairMetadata ",
-			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-				pair := common.MustNewAssetPair("xxx:yyy")
-
-				t.Log("Set vpool defined by pair on VpoolKeeper")
-				vpoolKeeper := &nibiruApp.VpoolKeeper
-				vpoolKeeper.CreatePool(
-					ctx,
-					pair,
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					sdk.NewDec(10_000_000),       //
-					sdk.NewDec(5_000_000),        // 5 tokens
-					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-					sdk.MustNewDecFromStr("0.1"),
-				)
-
-				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
-
-				t.Log("Attempt to open long position (expected unsuccessful)")
-				trader := sample.AccAddress()
-				side := types.Side_BUY
-				quote := sdk.NewInt(60)
-				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewDec(150)
-				err := nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, trader, quote, leverage, baseLimit)
-
-				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
-			},
-		},
-		{
-			name: "open pos - happy path 1",
-			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-				pair := common.MustNewAssetPair("xxx:yyy")
-
-				t.Log("Set vpool defined by pair on VpoolKeeper")
-				vpoolKeeper := &nibiruApp.VpoolKeeper
-				vpoolKeeper.CreatePool(
-					ctx,
-					pair,
-					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					/* quoteAssetReserve */ sdk.NewDec(10_000_000), //
-					/* baseAssetReserve */ sdk.NewDec(5_000_000), // 5 tokens
-					/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
-					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
-				)
-				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
-
-				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-					Pair: pair,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.OneDec()},
-				})
-
-				t.Log("Fund trader account with sufficient quote")
-
-				trader := sample.AccAddress()
-				err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, trader,
-					sdk.NewCoins(sdk.NewInt64Coin("yyy", 62))) // extra 2yyy for fees
-				require.NoError(t, err)
-
-				t.Log("Open long position with 10x leverage")
-				side := types.Side_BUY
-				quote := sdk.NewInt(60)
-				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewDec(150)
-				err = nibiruApp.PerpKeeper.OpenPosition(
-					ctx, pair, side, trader, quote, leverage, baseLimit)
-
-				require.NoError(t, err)
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
-}
-
 func TestAddMarginError(t *testing.T) {
 	tests := []struct {
 		name string
@@ -482,13 +367,8 @@ func TestRemoveMargin(t *testing.T) {
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(5)
 				baseLimit := sdk.ZeroDec()
-				require.NoError(t, perpKeeper.OpenPosition(ctx, pair, side, traderAddr, quote, leverage, baseLimit))
-
-				t.Log("Position should be accessible following 'OpenPosition'")
-				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, traderAddr)
+				_, err := perpKeeper.OpenPosition(ctx, pair, side, traderAddr, quote, leverage, baseLimit)
 				require.NoError(t, err)
-
-				t.Log("Verify correct events emitted for 'OpenPosition'")
 
 				t.Log("Attempt to remove 10% of the position")
 				removeAmt := sdk.NewInt(6)

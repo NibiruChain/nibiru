@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -33,20 +34,6 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			pair:        common.PairBTCStable.String(),
 			sender:      sample.AccAddress().String(),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
-		},
-		{
-			name:        "invalid pair",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			pair:        "foo",
-			sender:      sample.AccAddress().String(),
-			expectedErr: common.ErrInvalidTokenPair,
-		},
-		{
-			name:        "invalid address",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			pair:        common.PairBTCStable.String(),
-			sender:      "bar",
-			expectedErr: fmt.Errorf("decoding bech32 failed"),
 		},
 		{
 			name:        "success",
@@ -91,6 +78,20 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, resp)
+				assert.EqualValues(t, tc.pair, resp.Position.Pair.String())
+				assert.EqualValues(t, tc.sender, resp.Position.TraderAddress)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.Position.Size_)
+				assert.EqualValues(t, sdk.NewDec(1000), resp.Position.Margin)
+				assert.EqualValues(t, sdk.NewDec(10_000), resp.Position.OpenNotional)
+				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.NewDec(10_000), resp.ExchangedNotionalValue)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.ExchangedPositionSize)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
+				assert.EqualValues(t, sdk.NewDec(1000), resp.MarginToVault)
+				assert.EqualValues(t, sdk.NewDec(10_000), resp.PositionNotional)
 			}
 		})
 	}

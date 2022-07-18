@@ -33,22 +33,14 @@ func (m msgServer) AddMargin(ctx context.Context, margin *types.MsgAddMargin,
 
 func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
 ) (response *types.MsgOpenPositionResponse, err error) {
-	pair, err := common.NewAssetPair(req.TokenPair)
-	if err != nil {
-		return nil, err
-	}
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, err
-	}
+	pair := common.MustNewAssetPair(req.TokenPair)
+	traderAddr := sdk.MustAccAddressFromBech32(req.Sender)
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	err = m.k.OpenPosition(
-		ctx,
+	positionResp, err := m.k.OpenPosition(
+		sdk.UnwrapSDKContext(goCtx),
 		pair,
 		req.Side,
-		sender,
+		traderAddr,
 		req.QuoteAssetAmount,
 		req.Leverage,
 		req.BaseAssetAmountLimit.ToDec(),
@@ -57,7 +49,16 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 		return nil, err
 	}
 
-	return &types.MsgOpenPositionResponse{}, nil
+	return &types.MsgOpenPositionResponse{
+		Position:               positionResp.Position,
+		ExchangedNotionalValue: positionResp.ExchangedNotionalValue,
+		ExchangedPositionSize:  positionResp.ExchangedPositionSize,
+		FundingPayment:         positionResp.FundingPayment,
+		RealizedPnl:            positionResp.RealizedPnl,
+		UnrealizedPnlAfter:     positionResp.UnrealizedPnlAfter,
+		MarginToVault:          positionResp.MarginToVault,
+		PositionNotional:       positionResp.PositionNotional,
+	}, nil
 }
 
 func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {

@@ -116,7 +116,43 @@ message MsgOpenPosition {
 }
 
 message MsgOpenPositionResponse {
+  Position position = 1;
 
+  // The amount of quote assets exchanged.
+  string exchanged_notional_value = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The amount of base assets exchanged. 
+  string exchanged_position_size = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The funding payment applied on this position change, measured in quote units.
+  string funding_payment = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The amount of PnL realized on this position changed, measured in quote units.
+  string realized_pnl = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The unrealized PnL in the position after the position change, measured in quote units.
+  string unrealized_pnl_after = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The amount of margin the trader has to give to the vault.
+  // A negative value means the vault pays the trader.
+  string margin_to_vault = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // The position's notional value after the position change, measured in quote units.
+  string position_notional = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
 }
 
 // -------------------------- ClosePosition --------------------------
