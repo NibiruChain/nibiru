@@ -450,7 +450,7 @@ func NewNibiruApp(
 		appCodec, keys[epochstypes.StoreKey],
 	)
 	app.EpochsKeeper.SetHooks(
-		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks()),
+		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks(), app.PerpKeeper.Hooks()),
 	)
 
 	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
