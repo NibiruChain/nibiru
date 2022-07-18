@@ -8,10 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-
-	types2 "github.com/NibiruChain/nibiru/x/vpool/types"
-
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestCreatePool(t *testing.T) {
@@ -44,7 +42,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 
-	vpools := []*types2.Pool{
+	vpools := []*types.Pool{
 		{
 			Pair:                  common.MustNewAssetPair("BTC:NUSD"),
 			BaseAssetReserve:      sdk.NewDec(1_000_000),      // 1
@@ -63,8 +61,8 @@ func TestKeeper_GetAllPools(t *testing.T) {
 		},
 	}
 
-	for _, vp := range vpools {
-		vpoolKeeper.savePool(ctx, vp)
+	for _, vpool := range vpools {
+		vpoolKeeper.savePool(ctx, vpool)
 	}
 
 	pools := vpoolKeeper.GetAllPools(ctx)
