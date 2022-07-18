@@ -61,7 +61,6 @@ func (k Keeper) OpenPosition(
 			/* quoteAssetAmount */ quoteAssetAmount.ToDec(),
 			/* leverage */ leverage,
 			/* baseAmtLimit */ baseAmtLimit,
-			/* skipFluctuationLimitCheck */ false,
 		)
 		if err != nil {
 			return nil, err
@@ -257,7 +256,6 @@ func (k Keeper) openReversePosition(
 	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
-	skipFluctuationLimitCheck bool,
 ) (positionResp *types.PositionResp, err error) {
 	notionalToDecreaseBy := leverage.Mul(quoteAssetAmount)
 	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
@@ -276,7 +274,7 @@ func (k Keeper) openReversePosition(
 			currentPosition,
 			notionalToDecreaseBy,
 			baseAmtLimit,
-			skipFluctuationLimitCheck,
+			/* skipFluctuationLimitCheck */ false,
 		)
 	} else {
 		// close and reverse
