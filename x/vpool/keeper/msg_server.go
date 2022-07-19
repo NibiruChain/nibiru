@@ -15,7 +15,7 @@ type queryServer struct {
 	Keeper
 }
 
-func NewQuerier(k Keeper) queryServer {
+func NewQuerier(k Keeper) types.QueryServer {
 	return queryServer{Keeper: k}
 }
 
