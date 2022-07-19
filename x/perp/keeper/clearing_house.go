@@ -11,7 +11,22 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-// TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
+/*
+OpenPosition opens a position on the selected pair.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the pair where the position will be opened
+  - side: whether the position in the BUY or SELL direction
+  - traderAddr: the address of the trader who opens the position
+  - quoteAssetAmount: the amount of quote asset
+  - leverage: the amount of leverage to take, as sdk.Dec
+  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
+
+ret:
+  - positionResp: contains the result of the open position and the new position
+  - err: error
+*/
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
 	pair common.AssetPair,
@@ -21,16 +36,16 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	if err = k.requireVpool(ctx, pair); err != nil {
+	err = k.checkOpenPositionRequirements(ctx, pair, quoteAssetAmount, leverage)
+	if err != nil {
 		return nil, err
 	}
 
 	// require params
 	params := k.GetParams(ctx)
-	// TODO: missing checks
 
 	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
-	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
+	isNewPosition := errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
 		k.PositionsState(ctx).Set(position)
@@ -73,6 +88,28 @@ func (k Keeper) OpenPosition(
 	}
 
 	return positionResp, nil
+}
+
+// checkOpenPositionRequirements checks the minimum requirements to open a position.
+//
+// - Checks that the VPool exists.
+// - Checks that quote asset is not zero.
+// - Checks that leverage is not zero.
+//
+func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.AssetPair, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
+	if err := k.requireVpool(ctx, pair); err != nil {
+		return err
+	}
+
+	if quoteAssetAmount.IsZero() {
+		return types.ErrQuoteAmountIsZero
+	}
+
+	if leverage.IsZero() {
+		return types.ErrLeverageIsZero
+	}
+
+	return nil
 }
 
 // afterPositionUpdate is called when a position has been updated.
@@ -606,7 +643,7 @@ func (k Keeper) closePositionEntirely(
 	return positionResp, nil
 }
 
-/**
+/*
 ClosePosition closes a position entirely and transfers the remaining margin back to the user.
 Errors if the position has bad debt.
 
