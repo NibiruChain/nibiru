@@ -40,15 +40,19 @@ func (w Whitelist) Remove(addr sdk.AccAddress) error {
 }
 
 // Iterate iterates over all the whitelisted addresses until it finishes
-// or false is returned from the do function.
+// or true is returned from the do function.
 func (w Whitelist) Iterate(do func(addr sdk.AccAddress) (stop bool)) {
 	iter := w.store.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		addr := iter.Key()
-		if !do(addr) {
+		if do(addr) {
 			break
 		}
 	}
+}
+
+func (w Whitelist) IsWhitelisted(addr sdk.AccAddress) bool {
+	return w.store.Has(addr)
 }
