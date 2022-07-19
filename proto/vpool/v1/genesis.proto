@@ -9,6 +9,11 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 // GenesisState defines the vpool module's genesis state.
 message GenesisState {
+  // vpools represent the virtual pools state.
   repeated Pool vpools = 1;
+  // params represents the genesis parameters.
   Params params = 2 [(gogoproto.nullable) = false];
+  // whitelist represents the list of addresses which are allowed
+  // to create pools.
+  repeated string whitelist = 3;
 }
