@@ -21,6 +21,18 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			vp.MaxOracleSpreadRatio,
 		)
 	}
+
+	for _, addr := range genState.Whitelist {
+		whitelist := k.Whitelist(ctx)
+		addr, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			panic(err)
+		}
+		err = whitelist.Add(addr)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -29,6 +41,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	var genState types.GenesisState
 	genState.Vpools = pools
+
+	k.Whitelist(ctx).Iterate(func(addr sdk.AccAddress) (stop bool) {
+		genState.Whitelist = append(genState.Whitelist, addr.String())
+		return false
+	})
 
 	return &genState
 }
