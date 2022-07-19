@@ -23,6 +23,7 @@ var (
 	PoolReserveSnapshotCounter = []byte{0x01}
 	PoolReserveSnapshots       = []byte{0x02}
 	TWAPPrefix                 = []byte{0x03}
+	WhitelistPrefix            = []byte{0x04}
 )
 
 // GetPoolKey returns pool key for KVStore

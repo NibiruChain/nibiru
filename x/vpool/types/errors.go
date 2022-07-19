@@ -12,4 +12,7 @@ var (
 	ErrAssetFailsUserLimit  = sdkerrors.Register(ModuleName, 7, "amount of assets traded does not meet user-defined limit")
 	ErrNoValidPrice         = sdkerrors.Register(ModuleName, 8, "no valid prices available")
 	ErrNoValidTWAP          = sdkerrors.Register(ModuleName, 9, "TWAP price not found")
+	ErrUnauthorized         = sdkerrors.Register(ModuleName, 10, "unauthorized address is not whitelisted")
+	ErrAlreadyInWhitelist   = sdkerrors.Register(ModuleName, 11, "address is already in the whitelist")
+	ErrNotInWhitelist       = sdkerrors.Register(ModuleName, 12, "address is not in the whitelist")
 )
