@@ -2,14 +2,16 @@ package keeper_test
 
 import (
 	"bytes"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
+	"sort"
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"sort"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestWhitelist(t *testing.T) {
@@ -65,7 +67,5 @@ func TestWhitelist(t *testing.T) {
 		})
 
 		require.Equal(t, expected, got)
-
 	})
-
 }

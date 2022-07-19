@@ -2,8 +2,10 @@ package types
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 var (
@@ -55,7 +57,6 @@ func (m *MsgCreatePool) ValidateBasic() error {
 	}
 
 	return nil
-
 }
 
 func (m *MsgCreatePool) GetSigners() []sdk.AccAddress {

@@ -23,9 +23,35 @@ type msgServer struct {
 	k Keeper
 }
 
-func (m msgServer) CreatePool(ctx context.Context, pool *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (m msgServer) CreatePool(goCtx context.Context, pool *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	addr, err := sdk.AccAddressFromBech32(pool.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	// check if whitelisted
+	if !m.k.Whitelist(ctx).IsWhitelisted(addr) {
+		return nil, types.ErrUnauthorized.Wrapf("%s", addr)
+	}
+
+	// check if oracle exists
+	if !m.k.pricefeedKeeper.IsActivePair(ctx, pool.Pair) {
+		return nil, types.ErrNoValidPrice.Wrapf("pair is not active: %s", pool.Pair)
+	}
+
+	// create pool
+	m.k.CreatePool(
+		ctx,
+		common.MustNewAssetPair(pool.Pair),
+		pool.TradeLimitRatio,
+		pool.QuoteAssetReserve,
+		pool.BaseAssetReserve,
+		pool.FluctuationLimitRatio,
+		pool.MaxOracleSpreadRatio,
+	)
+
+	return &types.MsgCreatePoolResponse{}, nil
 }
 
 type queryServer struct {
