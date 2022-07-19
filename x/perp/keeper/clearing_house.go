@@ -36,20 +36,13 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	if err = k.requireVpool(ctx, pair); err != nil {
+	err = k.checkOpenPositionRequirements(ctx, pair, quoteAssetAmount, leverage)
+	if err != nil {
 		return nil, err
 	}
 
 	// require params
 	params := k.GetParams(ctx)
-
-	if quoteAssetAmount.IsZero() {
-		return nil, types.ErrQuoteAmountIsZero
-	}
-
-	if leverage.IsZero() {
-		return nil, types.ErrLeverageIsZero
-	}
 
 	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	isNewPosition := errors.Is(err, types.ErrPositionNotFound)
@@ -95,6 +88,28 @@ func (k Keeper) OpenPosition(
 	}
 
 	return positionResp, nil
+}
+
+// checkOpenPositionRequirements checks the minimum requirements to open a position.
+//
+// - Checks that the VPool exists.
+// - Checks that quote asset is not zero.
+// - Checks that leverage is not zero.
+//
+func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.AssetPair, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
+	if err := k.requireVpool(ctx, pair); err != nil {
+		return err
+	}
+
+	if quoteAssetAmount.IsZero() {
+		return types.ErrQuoteAmountIsZero
+	}
+
+	if leverage.IsZero() {
+		return types.ErrLeverageIsZero
+	}
+
+	return nil
 }
 
 // afterPositionUpdate is called when a position has been updated.
