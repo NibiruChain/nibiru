@@ -42,10 +42,17 @@ func (k Keeper) OpenPosition(
 
 	// require params
 	params := k.GetParams(ctx)
-	// TODO: missing checks
+
+	if quoteAssetAmount.IsZero() {
+		return nil, types.ErrQuoteAmountIsZero
+	}
+
+	if leverage.IsZero() {
+		return nil, types.ErrLeverageIsZero
+	}
 
 	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
-	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
+	isNewPosition := errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
 		k.PositionsState(ctx).Set(position)
@@ -621,7 +628,7 @@ func (k Keeper) closePositionEntirely(
 	return positionResp, nil
 }
 
-/**
+/*
 ClosePosition closes a position entirely and transfers the remaining margin back to the user.
 Errors if the position has bad debt.
 
