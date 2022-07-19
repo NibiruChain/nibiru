@@ -11,7 +11,22 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-// TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
+/*
+OpenPosition opens a position on the selected pair.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the pair where the position will be opened
+  - side: whether the position in the BUY or SELL direction
+  - traderAddr: the address of the trader who opens the position
+  - quoteAssetAmount: the amount of quote asset
+  - leverage: the amount of leverage to take, as sdk.Dec
+  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
+
+ret:
+  - positionResp: contains the result of the open position and the new position
+  - err: error
+*/
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
 	pair common.AssetPair,
