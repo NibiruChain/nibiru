@@ -11,6 +11,23 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
+var (
+	_ types.MsgServer = (*msgServer)(nil)
+)
+
+func NewMsgServer(k Keeper) types.MsgServer {
+	return msgServer{k: k}
+}
+
+type msgServer struct {
+	k Keeper
+}
+
+func (m msgServer) CreatePool(ctx context.Context, pool *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 type queryServer struct {
 	Keeper
 }
