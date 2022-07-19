@@ -292,8 +292,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.PositionsState(ctx).Set(currentPosition.Pair, traderAddr,
-		positionResp.Position)
+	k.PositionsState(ctx).Set(positionResp.Position)
 
 	// Compute splits for the liquidation fee
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)

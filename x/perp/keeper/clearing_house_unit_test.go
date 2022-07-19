@@ -854,12 +854,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("set up initial position")
-			trader, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
-			require.NoError(t, err)
-
 			perpKeeper.PositionsState(ctx).Set(
-				tc.initialPosition.Pair,
-				trader,
 				&tc.initialPosition,
 			)
 
@@ -1559,8 +1554,6 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				BlockNumber:                         0,
 			}
 			perpKeeper.PositionsState(ctx).Set(
-				common.PairBTCStable,
-				traderAddr,
 				&currentPosition,
 			)
 
@@ -1843,7 +1836,7 @@ func TestClosePosition(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.PositionsState(ctx).Set(tc.initialPosition.Pair, traderAddr, &tc.initialPosition)
+			perpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -2011,7 +2004,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.PositionsState(ctx).Set(tc.initialPosition.Pair, traderAddr, &tc.initialPosition)
+			perpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
 
 			t.Log("set params")
 			perpKeeper.SetParams(ctx, types.DefaultParams())

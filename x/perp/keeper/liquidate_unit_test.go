@@ -93,7 +93,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(&position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -264,7 +264,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(&position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -432,7 +432,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(&position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -954,7 +954,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         ctx.BlockHeight(),
 			}
-			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, &position)
+			perpKeeper.PositionsState(ctx).Set(&position)
 
 			t.Log("execute full liquidation")
 			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(

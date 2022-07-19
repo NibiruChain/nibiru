@@ -33,7 +33,7 @@ func (k Keeper) OpenPosition(
 	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-		k.PositionsState(ctx).Set(pair, traderAddr, position)
+		k.PositionsState(ctx).Set(position)
 	} else if err != nil && !isNewPosition {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (k Keeper) afterPositionUpdate(
 ) (err error) {
 	// update position in state
 	if !positionResp.Position.Size_.IsZero() {
-		k.PositionsState(ctx).Set(pair, traderAddr, positionResp.Position)
+		k.PositionsState(ctx).Set(positionResp.Position)
 	}
 
 	if !positionResp.BadDebt.IsZero() {
