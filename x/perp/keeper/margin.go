@@ -49,7 +49,7 @@ func (k Keeper) AddMargin(
 	position.Margin = remainingMargin.Margin
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	position.BlockNumber = ctx.BlockHeight()
-	k.PositionsState(ctx).Set(pair, traderAddr, position)
+	k.PositionsState(ctx).Set(position)
 
 	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
@@ -152,7 +152,7 @@ func (k Keeper) RemoveMargin(
 		return nil, fmt.Errorf("not enough free collateral")
 	}
 
-	k.PositionsState(ctx).Set(pair, traderAddr, position)
+	k.PositionsState(ctx).Set(position)
 
 	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {

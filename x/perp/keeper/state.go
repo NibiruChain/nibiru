@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -42,16 +43,15 @@ func newPositions(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) Posi
 }
 
 func (p PositionsState) keyFromType(position *types.Position) []byte {
-	traderAddress, err := sdk.AccAddressFromBech32(position.TraderAddress)
-	if err != nil {
-		panic(err)
-	}
-	return p.keyFromRaw(position.Pair, traderAddress)
+	return p.keyFromRaw(position.Pair, position.TraderAddress)
 }
 
-func (p PositionsState) keyFromRaw(pair common.AssetPair, address sdk.AccAddress) []byte {
-	// TODO(mercilex): not sure if namespace overlap safe | update(mercilex) it is not overlap safe
-	return []byte(pair.String() + address.String())
+func (p PositionsState) keyFromRaw(pair common.AssetPair, address string) []byte {
+	buf := bytes.NewBufferString(pair.String())
+	buf.WriteByte(0xff) // required in case we have two pairs such as BTCUSD and BTCUSDT to avoid prefix overlaps.
+	buf.WriteString(address)
+	buf.WriteByte(0xff) // this might be not required, if bechified addresses are constant size.
+	return buf.Bytes()
 }
 
 func (p PositionsState) Create(position *types.Position) error {
@@ -65,7 +65,7 @@ func (p PositionsState) Create(position *types.Position) error {
 }
 
 func (p PositionsState) Get(pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
-	key := p.keyFromRaw(pair, traderAddr)
+	key := p.keyFromRaw(pair, traderAddr.String())
 	valueBytes := p.positions.Get(key)
 	if valueBytes == nil {
 		return nil, types.ErrPositionNotFound
@@ -88,8 +88,8 @@ func (p PositionsState) Update(position *types.Position) error {
 	return nil
 }
 
-func (p PositionsState) Set(pair common.AssetPair, traderAddr sdk.AccAddress, position *types.Position) {
-	positionID := p.keyFromRaw(pair, traderAddr)
+func (p PositionsState) Set(position *types.Position) {
+	positionID := p.keyFromRaw(position.Pair, position.TraderAddress)
 	p.positions.Set(positionID, p.cdc.MustMarshal(position))
 }
 
@@ -107,7 +107,7 @@ func (p PositionsState) Iterate(do func(position *types.Position) (stop bool)) {
 }
 
 func (p PositionsState) Delete(pair common.AssetPair, addr sdk.AccAddress) error {
-	primaryKey := p.keyFromRaw(pair, addr)
+	primaryKey := p.keyFromRaw(pair, addr.String())
 
 	if !p.positions.Has(primaryKey) {
 		return types.ErrPositionNotFound.Wrapf("in pair %s", pair)

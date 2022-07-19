@@ -246,7 +246,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
@@ -383,7 +383,7 @@ func TestOpenPositionError(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))

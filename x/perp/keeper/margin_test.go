@@ -84,11 +84,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			)
 
 			t.Log("establish initial position")
-			nibiruApp.PerpKeeper.PositionsState(ctx).Set(
-				common.PairBTCStable,
-				traderAddr,
-				&tc.initialPosition,
-			)
+			nibiruApp.PerpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
 
 			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, common.PairBTCStable, traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
