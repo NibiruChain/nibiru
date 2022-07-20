@@ -35,7 +35,7 @@ service Query {
 
   // Parameters of a single pool.
   rpc PoolParams(QueryPoolParamsRequest) returns (QueryPoolParamsResponse) {
-    option (google.api.http).get = "/nibiru/dex/pools/{poolId}/params";
+    option (google.api.http).get = "/nibiru/dex/pools/{pool_id}/params";
   }
 
   // Number of pools.
@@ -53,17 +53,17 @@ service Query {
   rpc TotalPoolLiquidity(QueryTotalPoolLiquidityRequest)
       returns (QueryTotalPoolLiquidityResponse) {
     option (google.api.http).get =
-        "/nibiru/dex/pools/{poolId}/total_pool_liquidity";
+        "/nibiru/dex/pools/{pool_id}/total_pool_liquidity";
   }
 
   // Total shares in a single pool.
   rpc TotalShares(QueryTotalSharesRequest) returns (QueryTotalSharesResponse) {
-    option (google.api.http).get = "/nibiru/dex/pools/{poolId}/total_shares";
+    option (google.api.http).get = "/nibiru/dex/pools/{pool_id}/total_shares";
   }
 
   // Instantaneous price of an asset in a pool.
   rpc SpotPrice(QuerySpotPriceRequest) returns (QuerySpotPriceResponse) {
-    option (google.api.http).get = "/nibiru/dex/pools/{poolId}/prices";
+    option (google.api.http).get = "/nibiru/dex/pools/{pool_id}/prices";
   }
 
   // Estimates the amount of assets returned given an exact amount of tokens to
@@ -71,7 +71,7 @@ service Query {
   rpc EstimateSwapExactAmountIn(QuerySwapExactAmountInRequest)
       returns (QuerySwapExactAmountInResponse) {
     option (google.api.http).get =
-        "/nibiru/dex/{poolId}/estimate/swap_exact_amount_in";
+        "/nibiru/dex/{pool_id}/estimate/swap_exact_amount_in";
   }
 
   // Estimates the amount of tokens required to return the exact amount of
@@ -79,7 +79,7 @@ service Query {
   rpc EstimateSwapExactAmountOut(QuerySwapExactAmountOutRequest)
       returns (QuerySwapExactAmountOutResponse) {
     option (google.api.http).get =
-        "/nibiru/dex/{poolId}/estimate/swap_exact_amount_out";
+        "/nibiru/dex/{pool_id}/estimate/swap_exact_amount_out";
   }
 
   // Estimates the amount of pool shares returned given an amount of tokens to
@@ -87,7 +87,7 @@ service Query {
   rpc EstimateJoinExactAmountIn(QueryJoinExactAmountInRequest)
       returns (QueryJoinExactAmountInResponse) {
     option (google.api.http).get =
-        "/nibiru/dex/{poolId}/estimate/join_exact_amount_in";
+        "/nibiru/dex/{pool_id}/estimate/join_exact_amount_in";
   }
 
   // Estimates the amount of tokens required to obtain an exact amount of pool
@@ -95,7 +95,7 @@ service Query {
   rpc EstimateJoinExactAmountOut(QueryJoinExactAmountOutRequest)
       returns (QueryJoinExactAmountOutResponse) {
     option (google.api.http).get =
-        "/nibiru/dex/{poolId}/estimate/join_exact_amount_out";
+        "/nibiru/dex/{pool_id}/estimate/join_exact_amount_out";
   }
 
   // Estimates the amount of tokens returned to the user given an exact amount
@@ -103,7 +103,7 @@ service Query {
   rpc EstimateExitExactAmountIn(QueryExitExactAmountInRequest)
       returns (QueryExitExactAmountInResponse) {
     option (google.api.http).get =
-        "/nibiru/dex/{poolId}/estimate/exit_exact_amount_in";
+        "/nibiru/dex/{pool_id}/estimate/exit_exact_amount_in";
   }
 
   // Estimates the amount of pool shares required to extract an exact amount of
@@ -111,7 +111,7 @@ service Query {
   rpc EstimateExitExactAmountOut(QueryExitExactAmountOutRequest)
       returns (QueryExitExactAmountOutResponse) {
     option (google.api.http).get =
-        "/nibiru/dex/{poolId}/estimate/exit_exact_amount_out";
+        "/nibiru/dex/{pool_id}/estimate/exit_exact_amount_out";
   }
 }
 
@@ -125,11 +125,11 @@ message QueryParamsResponse {
 
 message QueryPoolNumberRequest {}
 message QueryPoolNumberResponse {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
 }
 
 message QueryPoolRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
 }
 message QueryPoolResponse {
   Pool pool = 1;
@@ -147,15 +147,15 @@ message QueryPoolsResponse {
 }
 
 message QueryPoolParamsRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
 }
 message QueryPoolParamsResponse {
-  PoolParams poolParams = 1;
+  PoolParams pool_params = 1;
 }
 
 message QueryNumPoolsRequest {}
 message QueryNumPoolsResponse {
-  uint64 numPools = 1;
+  uint64 num_pools = 1;
 }
 
 // --------------------------------------------
@@ -172,7 +172,7 @@ message QueryTotalLiquidityResponse {
 // --------------------------------------------
 // Query total liquidity for a pool
 message QueryTotalPoolLiquidityRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
 }
 
 message QueryTotalPoolLiquidityResponse {  
@@ -184,11 +184,11 @@ message QueryTotalPoolLiquidityResponse {
 }
 
 message QueryTotalSharesRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
 }
 message QueryTotalSharesResponse {
   // sum of all LP tokens sent out
-  cosmos.base.v1beta1.Coin totalShares = 1 [
+  cosmos.base.v1beta1.Coin total_shares = 1 [
     (gogoproto.moretags) = "yaml:\"total_shares\"",
     (gogoproto.nullable) = false
   ];
@@ -198,28 +198,28 @@ message QueryTotalSharesResponse {
 // For example, if the price of NIBI = 9.123 NUSD, then setting tokenInDenom=NUSD
 // and tokenOutDenom=NIBI would give "9.123".
 message QuerySpotPriceRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
   // the denomination of the token you are giving into the pool
-  string tokenInDenom = 2;
+  string token_in_denom = 2;
   // the denomination of the token you are taking out of the pool
-  string tokenOutDenom = 3;
+  string token_out_denom = 3;
 }
 message QuerySpotPriceResponse {
-  string spotPrice = 1;
+  string spot_price = 1;
 }
 
 // Given an exact amount of tokens in and a target tokenOutDenom, calculates
 // the expected amount of tokens out received from a swap.
 message QuerySwapExactAmountInRequest {
-  uint64 poolId = 1;
-  cosmos.base.v1beta1.Coin tokenIn = 2 [
+  uint64 pool_id = 1;
+  cosmos.base.v1beta1.Coin token_in = 2 [
     (gogoproto.moretags) = "yaml:\"token_in\"",
     (gogoproto.nullable) = false
   ];
-  string tokenOutDenom = 3;
+  string token_out_denom = 3;
 }
 message QuerySwapExactAmountInResponse {
-  cosmos.base.v1beta1.Coin tokenOut = 2 [
+  cosmos.base.v1beta1.Coin token_out = 2 [
     (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
@@ -228,23 +228,23 @@ message QuerySwapExactAmountInResponse {
 // Given an exact amount of tokens out and a target tokenInDenom, calculates
 // the expected amount of tokens in required to do the swap.
 message QuerySwapExactAmountOutRequest {
-  uint64 poolId = 1;
-  cosmos.base.v1beta1.Coin tokenOut = 2 [
+  uint64 pool_id = 1;
+  cosmos.base.v1beta1.Coin token_out = 2 [
     (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
-  string tokenInDenom = 3;
+  string token_in_denom = 3;
 }
 message QuerySwapExactAmountOutResponse {
-  cosmos.base.v1beta1.Coin tokenIn = 2 [
+  cosmos.base.v1beta1.Coin token_in = 2 [
     (gogoproto.moretags) = "yaml:\"token_in\"",
     (gogoproto.nullable) = false
   ];
 }
 
 message QueryJoinExactAmountInRequest {
-  uint64 poolId = 1;
-  repeated cosmos.base.v1beta1.Coin tokensIn = 2 [
+  uint64 pool_id = 1;
+  repeated cosmos.base.v1beta1.Coin tokens_in = 2 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"tokens_in\"",
     (gogoproto.nullable) = false
@@ -253,14 +253,14 @@ message QueryJoinExactAmountInRequest {
 message QueryJoinExactAmountInResponse {
 
   // amount of pool shares returned to user after join
-  string poolSharesOut = 1 [
+  string pool_shares_out = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.moretags) = "yaml:\"pool_shares_out\"",
     (gogoproto.nullable) = false
   ];
 
   // coins remaining after pool join
-  repeated cosmos.base.v1beta1.Coin remCoins = 2 [
+  repeated cosmos.base.v1beta1.Coin rem_coins = 2 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"rem_coins\"",
     (gogoproto.nullable) = false
@@ -268,14 +268,14 @@ message QueryJoinExactAmountInResponse {
 }
 
 message QueryJoinExactAmountOutRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
 }
 message QueryJoinExactAmountOutResponse {}
 
 message QueryExitExactAmountInRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
   // amount of pool shares to return to pool
-  string poolSharesIn = 2 [
+  string pool_shares_in = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.moretags) = "yaml:\"pool_shares_in\"",
     (gogoproto.nullable) = false
@@ -283,7 +283,7 @@ message QueryExitExactAmountInRequest {
 }
 message QueryExitExactAmountInResponse {
   // coins obtained after exiting
-  repeated cosmos.base.v1beta1.Coin tokensOut = 1 [
+  repeated cosmos.base.v1beta1.Coin tokens_out = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"tokens_out\"",
     (gogoproto.nullable) = false
@@ -291,6 +291,6 @@ message QueryExitExactAmountInResponse {
 }
 
 message QueryExitExactAmountOutRequest {
-  uint64 poolId = 1;
+  uint64 pool_id = 1;
 }
 message QueryExitExactAmountOutResponse {}
