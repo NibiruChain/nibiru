@@ -212,7 +212,7 @@ func TestRemoveMargin(t *testing.T) {
 					BlockNumber:                         ctx.BlockHeight(),
 				})
 
-				_, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)))
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)))
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt.Error())
@@ -280,7 +280,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Attempt to RemoveMargin when the vault lacks funds")
-				_, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, expectedError.Error())
@@ -339,11 +339,18 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("'RemoveMargin' from the position")
-				marginOut, fundingPayment, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
+				marginOut, fundingPayment, position, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
 
 				require.NoError(t, err)
 				assert.EqualValues(t, marginToWithdraw, marginOut)
 				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
+				assert.EqualValues(t, pair, position.Pair)
+				assert.EqualValues(t, traderAddr, position.TraderAddress)
+				assert.EqualValues(t, sdk.NewDec(400), position.Margin)
+				assert.EqualValues(t, sdk.NewDec(1000), position.OpenNotional)
+				assert.EqualValues(t, sdk.NewDec(1000), position.Size_)
+				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
+				assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireHasTypedEvent(t, ctx,
@@ -405,7 +412,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("'RemoveMargin' from the position")
-				_, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
 
 				require.ErrorIs(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt)
 

@@ -115,7 +115,7 @@ func TestRemoveMargin(t *testing.T) {
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
-				_, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: common.DenomStable, Amount: removeAmt})
+				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: common.DenomStable, Amount: removeAmt})
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -142,7 +142,7 @@ func TestRemoveMargin(t *testing.T) {
 				)
 
 				removeAmt := sdk.NewInt(5)
-				_, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt})
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt})
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
@@ -199,10 +199,17 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(6)
 
 				t.Log("'RemoveMargin' from the position")
-				marginOut, fundingPayment, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt})
+				marginOut, fundingPayment, position, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt})
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}, marginOut)
 				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
+				assert.EqualValues(t, pair, position.Pair)
+				assert.EqualValues(t, traderAddr, position.TraderAddress)
+				assert.EqualValues(t, sdk.NewDec(55), position.Margin)
+				assert.EqualValues(t, sdk.NewDec(300), position.OpenNotional)
+				assert.EqualValues(t, sdk.NewDec(300), position.Size_)
+				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
+				assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,

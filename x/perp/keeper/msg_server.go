@@ -27,7 +27,7 @@ func (m msgServer) RemoveMargin(ctx context.Context, msg *types.MsgRemoveMargin,
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
 	pair := common.MustNewAssetPair(msg.TokenPair)
 
-	marginOut, fundingPayment, err := m.k.RemoveMargin(sdk.UnwrapSDKContext(ctx), pair, traderAddr, msg.Margin)
+	marginOut, fundingPayment, position, err := m.k.RemoveMargin(sdk.UnwrapSDKContext(ctx), pair, traderAddr, msg.Margin)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +35,7 @@ func (m msgServer) RemoveMargin(ctx context.Context, msg *types.MsgRemoveMargin,
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      marginOut,
 		FundingPayment: fundingPayment,
+		Position:       position,
 	}, nil
 }
 
