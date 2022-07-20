@@ -204,10 +204,10 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}, marginOut)
 				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
 				assert.EqualValues(t, pair, position.Pair)
-				assert.EqualValues(t, traderAddr, position.TraderAddress)
-				assert.EqualValues(t, sdk.NewDec(55), position.Margin)
+				assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
+				assert.EqualValues(t, sdk.NewDec(54), position.Margin)
 				assert.EqualValues(t, sdk.NewDec(300), position.OpenNotional)
-				assert.EqualValues(t, sdk.NewDec(300), position.Size_)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("299.910026991902429271"), position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
 				assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
 

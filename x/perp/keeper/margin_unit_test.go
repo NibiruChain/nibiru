@@ -345,7 +345,7 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, marginToWithdraw, marginOut)
 				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
 				assert.EqualValues(t, pair, position.Pair)
-				assert.EqualValues(t, traderAddr, position.TraderAddress)
+				assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
 				assert.EqualValues(t, sdk.NewDec(400), position.Margin)
 				assert.EqualValues(t, sdk.NewDec(1000), position.OpenNotional)
 				assert.EqualValues(t, sdk.NewDec(1000), position.Size_)
