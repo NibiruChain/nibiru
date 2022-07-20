@@ -53,7 +53,7 @@ message QueryModuleAccountBalances {}
 
 message QueryModuleAccountBalancesResponse {
   // ModuleAccountBalances is the balance of all coins in the x/stablecoin module.
-  repeated cosmos.base.v1beta1.Coin moduleAccountBalances = 1 [
+  repeated cosmos.base.v1beta1.Coin module_account_balances = 1 [
     (gogoproto.moretags) = "yaml:\"coins\"",
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
@@ -67,8 +67,8 @@ message QueryModuleAccountBalancesResponse {
 message QueryCirculatingSupplies {}
 
 message QueryCirculatingSuppliesResponse {
-    cosmos.base.v1beta1.Coin NIBI = 1 [(gogoproto.nullable) = false];
-    cosmos.base.v1beta1.Coin NUSD = 2 [(gogoproto.nullable) = false];
+    cosmos.base.v1beta1.Coin nibi = 1 [(gogoproto.nullable) = false];
+    cosmos.base.v1beta1.Coin nusd = 2 [(gogoproto.nullable) = false];
 }
 
 // ---------------------------------------- GovToMintStable

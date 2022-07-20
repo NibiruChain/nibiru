@@ -21,7 +21,9 @@ service Msg {
     option (google.api.http).post = "/nibiru/lockup/init_unlock";
   }
 
-  rpc Unlock(MsgUnlock) returns (MsgUnlockResponse) {}
+  rpc Unlock(MsgUnlock) returns (MsgUnlockResponse) {
+    option (google.api.http).post = "/nibiru/lockup/unlock";
+  }
 }
 
 message MsgLockTokens {

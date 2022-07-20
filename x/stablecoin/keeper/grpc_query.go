@@ -47,8 +47,8 @@ func (k Keeper) CirculatingSupplies(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	return &types.QueryCirculatingSuppliesResponse{
-		NIBI: k.GetSupplyNIBI(ctx),
-		NUSD: k.GetSupplyNUSD(ctx),
+		Nibi: k.GetSupplyNIBI(ctx),
+		Nusd: k.GetSupplyNUSD(ctx),
 	}, nil
 }
 

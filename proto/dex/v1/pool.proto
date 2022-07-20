@@ -10,13 +10,13 @@ option go_package = "github.com/NibiruChain/nibiru/x/dex/types";
 
 // Configuration parameters for the pool.
 message PoolParams {
-  string swapFee = 1 [
+  string swap_fee = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"swap_fee\"",
     (gogoproto.nullable) = false
   ];
 
-  string exitFee = 2 [
+  string exit_fee = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"exit_fee\"",
     (gogoproto.nullable) = false
@@ -47,27 +47,27 @@ message Pool {
   string address = 2 [(gogoproto.moretags) = "yaml:\"address\""];
 
   // Fees and other pool-specific parameters.
-  PoolParams poolParams = 3 [
+  PoolParams pool_params = 3 [
     (gogoproto.moretags) = "yaml:\"pool_params\"",
     (gogoproto.nullable) = false
   ];
 
   // These are assumed to be sorted by denomiation.
   // They contain the pool asset and the information about the weight
-  repeated PoolAsset poolAssets = 4 [
+  repeated PoolAsset pool_assets = 4 [
     (gogoproto.moretags) = "yaml:\"pool_assets\"",
     (gogoproto.nullable) = false
   ];
 
   // sum of all non-normalized pool weights
-  string totalWeight = 5 [
+  string total_weight = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.moretags) = "yaml:\"total_weight\"",
     (gogoproto.nullable) = false
   ];
 
   // sum of all LP tokens sent out
-  cosmos.base.v1beta1.Coin totalShares = 6 [
+  cosmos.base.v1beta1.Coin total_shares = 6 [
     (gogoproto.moretags) = "yaml:\"total_shares\"",
     (gogoproto.nullable) = false
   ];
