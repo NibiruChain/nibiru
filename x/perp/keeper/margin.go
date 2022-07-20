@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -92,80 +91,67 @@ func (k Keeper) AddMargin(
 /* RemoveMargin further leverages an existing position by directly removing
 the margin (collateral) that backs it from the vault. This also decreases the
 margin ratio of the position.
+
+Fails if the position goes underwater.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the asset pair
+  - traderAddr: the trader's address
+  - margin: the amount of margin to withdraw. Must be positive.
+
+ret:
+  - marginOut: the amount of margin removed
+  - fundingPayment: the funding payment that was applied with this position interaction
+  - err: error if any
 */
 func (k Keeper) RemoveMargin(
-	goCtx context.Context, msg *types.MsgRemoveMargin,
-) (res *types.MsgRemoveMarginResponse, err error) {
-	// ------------- Message Setup -------------
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// validate trader
-	traderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
-
-	// validate margin amount
-	if !msg.Margin.Amount.IsPositive() {
-		err = fmt.Errorf("margin must be positive, not: %v", msg.Margin.Amount.String())
-		return nil, err
-	}
-
-	// validate token pair
-	pair, err := common.NewAssetPair(msg.TokenPair)
-	if err != nil {
-		return nil, err
-	}
-
+	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, margin sdk.Coin,
+) (marginOut sdk.Coin, fundingPayment sdk.Dec, err error) {
 	// validate vpool exists
 	if err = k.requireVpool(ctx, pair); err != nil {
-		return nil, err
-	}
-
-	// validate margin denom
-	if msg.Margin.Denom != pair.GetQuoteTokenDenom() {
-		err = fmt.Errorf("invalid margin denom")
-		return nil, err
+		return sdk.Coin{}, sdk.Dec{}, err
 	}
 
 	// ------------- RemoveMargin -------------
 	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
 	if err != nil {
-		return nil, err
+		return sdk.Coin{}, sdk.Dec{}, err
 	}
 
-	marginDelta := msg.Margin.Amount.Neg()
+	marginDelta := margin.Amount.Neg()
 	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(ctx, *position, marginDelta.ToDec())
 	if err != nil {
-		return nil, err
+		return sdk.Coin{}, sdk.Dec{}, err
 	}
 	if !remainingMargin.BadDebt.IsZero() {
-		return nil, types.ErrFailedRemoveMarginCanCauseBadDebt
+		return sdk.Coin{}, sdk.Dec{}, types.ErrFailedRemoveMarginCanCauseBadDebt
 	}
 
 	position.Margin = remainingMargin.Margin
 	position.LastUpdateCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
+
 	freeCollateral, err := k.calcFreeCollateral(ctx, *position)
 	if err != nil {
-		return nil, err
+		return sdk.Coin{}, sdk.Dec{}, err
 	} else if !freeCollateral.IsPositive() {
-		return nil, fmt.Errorf("not enough free collateral")
+		return sdk.Coin{}, sdk.Dec{}, fmt.Errorf("not enough free collateral")
 	}
 
 	k.PositionsState(ctx).Set(position)
 
 	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
-		return nil, err
+		return sdk.Coin{}, sdk.Dec{}, err
 	}
 
 	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
 	if err != nil {
-		return nil, err
+		return sdk.Coin{}, sdk.Dec{}, err
 	}
 
-	if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, msg.Margin.Amount); err != nil {
-		return nil, err
+	if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, margin.Amount); err != nil {
+		return sdk.Coin{}, sdk.Dec{}, err
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(
@@ -188,10 +174,7 @@ func (k Keeper) RemoveMargin(
 		},
 	)
 
-	return &types.MsgRemoveMarginResponse{
-		MarginOut:      sdk.NewCoin(pair.GetQuoteTokenDenom(), msg.Margin.Amount),
-		FundingPayment: remainingMargin.FundingPayment,
-	}, err
+	return margin, remainingMargin.FundingPayment, nil
 }
 
 // GetMarginRatio calculates the MarginRatio from a Position
