@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 
 	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 

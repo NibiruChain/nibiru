@@ -2,8 +2,10 @@ package vpool
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
+
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

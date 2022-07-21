@@ -2,11 +2,13 @@ package cli
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
-	govclientrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	govclientrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
