@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	"io"
 	"net/http"
 	"os"
@@ -154,6 +155,7 @@ var (
 			upgradeclient.ProposalHandler,
 			upgradeclient.CancelProposalHandler,
 			pricefeedcli.AddOracleProposalHandler,
+			vpoolcli.CreatePoolProposalHandler,
 			// pricefeedcli.RemoveOracleProposalHandler, // TODO
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
