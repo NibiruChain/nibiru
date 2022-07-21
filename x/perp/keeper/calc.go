@@ -70,7 +70,8 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 }
 
 /* calcFreeCollateral computes the amount of collateral backing the position that can
-be removed without giving the position bad debt
+be removed without giving the position bad debt. Factors in the unrealized PnL when
+calculating free collateral.
 
 Args:
 - ctx: Carries information about the current state of the SDK application.

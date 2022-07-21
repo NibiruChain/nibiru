@@ -82,6 +82,77 @@ func TestMsgAddMargin_ValidateBasic(t *testing.T) {
 	}
 }
 
+func TestMsgRemoveMargin_ValidateBasic(t *testing.T) {
+	type test struct {
+		msg         *MsgRemoveMargin
+		expectedErr error
+	}
+
+	cases := map[string]test{
+		"ok": {
+			msg: &MsgRemoveMargin{
+				Sender:    sample.AccAddress().String(),
+				TokenPair: "NIBI:NUSD",
+				Margin:    sdk.NewInt64Coin("NUSD", 100),
+			},
+			expectedErr: nil,
+		},
+		"empty address": {
+			msg: &MsgRemoveMargin{
+				Sender:    "",
+				TokenPair: "NIBI:NUSD",
+				Margin:    sdk.NewInt64Coin("NUSD", 100),
+			},
+			expectedErr: fmt.Errorf("empty address string is not allowed"),
+		},
+		"invalid address": {
+			msg: &MsgRemoveMargin{
+				Sender:    "foobar",
+				TokenPair: "NIBI:NUSD",
+				Margin:    sdk.NewInt64Coin("NUSD", 100),
+			},
+			expectedErr: fmt.Errorf("decoding bech32 failed"),
+		},
+		"invalid token pair": {
+			msg: &MsgRemoveMargin{
+				Sender:    sample.AccAddress().String(),
+				TokenPair: "NIBI-NUSD",
+				Margin:    sdk.NewInt64Coin("NUSD", 100),
+			},
+			expectedErr: common.ErrInvalidTokenPair,
+		},
+		"invalid margin amount": {
+			msg: &MsgRemoveMargin{
+				Sender:    sample.AccAddress().String(),
+				TokenPair: "NIBI:NUSD",
+				Margin:    sdk.NewInt64Coin("NUSD", 0),
+			},
+			expectedErr: fmt.Errorf("margin must be positive"),
+		},
+		"invalid margin denom": {
+			msg: &MsgRemoveMargin{
+				Sender:    sample.AccAddress().String(),
+				TokenPair: "NIBI:NUSD",
+				Margin:    sdk.NewInt64Coin("USDC", 100),
+			},
+			expectedErr: fmt.Errorf("invalid margin denom"),
+		},
+	}
+
+	for name, tc := range cases {
+		tc := tc
+		name := name
+		t.Run(name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expectedErr != nil {
+				require.ErrorContains(t, err, tc.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 	type test struct {
 		msg     *MsgOpenPosition

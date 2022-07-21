@@ -48,12 +48,16 @@ message MsgRemoveMargin {
 }
 
 message MsgRemoveMarginResponse {
-  // MarginOut: tokens transferred back to the trader
+  // tokens transferred back to the trader
   cosmos.base.v1beta1.Coin margin_out = 1 [(gogoproto.nullable) = false];
 
+  // the funding payment applied on this position interaction
   string funding_payment = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
+  // The resulting position
+  Position position = 3;
 }
 
 // -------------------------- AddMargin --------------------------

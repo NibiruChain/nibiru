@@ -109,13 +109,133 @@ func TestMsgServerAddMargin(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, resp)
 				assert.EqualValues(t, resp.FundingPayment, sdk.ZeroDec())
-				assert.Equal(t, resp.Position.Pair, tc.initialPosition.Pair)
-				assert.Equal(t, resp.Position.TraderAddress, tc.initialPosition.TraderAddress)
-				assert.Equal(t, resp.Position.Margin, tc.initialPosition.Margin.Add(tc.margin.Amount.ToDec()))
-				assert.Equal(t, resp.Position.OpenNotional, tc.initialPosition.OpenNotional)
-				assert.Equal(t, resp.Position.Size_, tc.initialPosition.Size_)
-				assert.Equal(t, resp.Position.BlockNumber, ctx.BlockHeight())
-				assert.Equal(t, resp.Position.LastUpdateCumulativePremiumFraction, sdk.ZeroDec())
+				assert.EqualValues(t, tc.initialPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, tc.initialPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, tc.initialPosition.Margin.Add(tc.margin.Amount.ToDec()), resp.Position.Margin)
+				assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
+				assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
+				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+			}
+		})
+	}
+}
+
+func TestMsgServerRemoveMargin(t *testing.T) {
+	tests := []struct {
+		name string
+
+		vaultFunds      sdk.Coins
+		initialPosition *types.Position
+		marginToRemove  sdk.Coin
+
+		expectedErr error
+	}{
+		{
+			name:       "position not enough margin",
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			initialPosition: &types.Position{
+				Pair:                                common.PairBTCStable,
+				Size_:                               sdk.OneDec(),
+				Margin:                              sdk.OneDec(),
+				OpenNotional:                        sdk.OneDec(),
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         1,
+			},
+			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
+			expectedErr:    types.ErrFailedRemoveMarginCanCauseBadDebt,
+		},
+		{
+			name:            "no initial position",
+			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 0)),
+			initialPosition: nil,
+			marginToRemove:  sdk.NewInt64Coin(common.DenomStable, 1000),
+			expectedErr:     types.ErrPositionNotFound,
+		},
+		{
+			name:       "vault insufficient funds",
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
+			initialPosition: &types.Position{
+				Pair:                                common.PairBTCStable,
+				Size_:                               sdk.OneDec(),
+				Margin:                              sdk.NewDec(1_000_000),
+				OpenNotional:                        sdk.OneDec(),
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         1,
+			},
+			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
+			expectedErr:    sdkerrors.ErrInsufficientFunds,
+		},
+		{
+			name:       "success",
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			initialPosition: &types.Position{
+				Pair:                                common.PairBTCStable,
+				Size_:                               sdk.OneDec(),
+				Margin:                              sdk.NewDec(1_000_000),
+				OpenNotional:                        sdk.OneDec(),
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         1,
+			},
+			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
+			expectedErr:    nil,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewNibiruAppAndContext(true)
+			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+			traderAddr := sample.AccAddress()
+
+			t.Log("create vpool")
+			app.VpoolKeeper.CreatePool(
+				ctx,
+				common.PairBTCStable,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteReserve */ sdk.NewDec(1_000_000),
+				/* baseReserve */ sdk.NewDec(1_000_000),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+			)
+			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				Pair:                       common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+			})
+
+			t.Log("fund vault")
+			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
+
+			if tc.initialPosition != nil {
+				t.Log("create position")
+				tc.initialPosition.TraderAddress = traderAddr.String()
+				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(tc.initialPosition))
+			}
+
+			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(ctx.BlockHeight() + 1)
+
+			resp, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
+				Sender:    traderAddr.String(),
+				TokenPair: common.PairBTCStable.String(),
+				Margin:    tc.marginToRemove,
+			})
+
+			if tc.expectedErr != nil {
+				require.ErrorContains(t, err, tc.expectedErr.Error())
+				require.Nil(t, resp)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				assert.EqualValues(t, tc.marginToRemove, resp.MarginOut)
+				assert.EqualValues(t, resp.FundingPayment, sdk.ZeroDec())
+				assert.EqualValues(t, tc.initialPosition.Pair, resp.Position.Pair)
+				assert.EqualValues(t, tc.initialPosition.TraderAddress, resp.Position.TraderAddress)
+				assert.EqualValues(t, tc.initialPosition.Margin.Sub(tc.marginToRemove.Amount.ToDec()), resp.Position.Margin)
+				assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
+				assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
+				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
 			}
 		})
 	}

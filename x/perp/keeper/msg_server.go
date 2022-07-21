@@ -21,9 +21,22 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{k: keeper}
 }
 
-func (m msgServer) RemoveMargin(ctx context.Context, margin *types.MsgRemoveMargin,
+func (m msgServer) RemoveMargin(ctx context.Context, msg *types.MsgRemoveMargin,
 ) (*types.MsgRemoveMarginResponse, error) {
-	return m.k.RemoveMargin(ctx, margin)
+	// These fields should have already been validated by MsgRemoveMargin.ValidateBasic() prior to being sent to the msgServer.
+	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
+	pair := common.MustNewAssetPair(msg.TokenPair)
+
+	marginOut, fundingPayment, position, err := m.k.RemoveMargin(sdk.UnwrapSDKContext(ctx), pair, traderAddr, msg.Margin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgRemoveMarginResponse{
+		MarginOut:      marginOut,
+		FundingPayment: fundingPayment,
+		Position:       position,
+	}, nil
 }
 
 func (m msgServer) AddMargin(ctx context.Context, msg *types.MsgAddMargin,
