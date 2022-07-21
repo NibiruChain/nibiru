@@ -39,7 +39,7 @@ func CmdCreatePoolProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-pool [proposal-json] --deposit=[deposit]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Submit a proposal to whitelist an oracle",
+		Short: "Submit a proposal to create a new vpool",
 		Example: strings.TrimSpace(fmt.Sprintf(`
 			Example: 
 			$ %s tx gov submit-proposal create-pool <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 
