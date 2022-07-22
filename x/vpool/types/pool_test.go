@@ -19,6 +19,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 		sdk.NewDec(10_000_000),       // 10
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.1"),
+		sdk.MustNewDecFromStr("10"),
 	)
 
 	// less that max ratio
@@ -87,6 +88,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				/*baseAssetReserve=*/ tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
 				/*maxOracleSpreadRatio=*/ sdk.MustNewDecFromStr("0.1"),
+				/*maxLeverage=*/ sdk.MustNewDecFromStr("10"),
 			)
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
@@ -159,6 +161,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				/*baseAssetReserve=*/ tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				/*maxOracleSpreadRatio=*/ sdk.OneDec(),
+				/*maxLeverage=*/ sdk.MustNewDecFromStr("10"),
 			)
 
 			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
@@ -185,6 +188,7 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		/*baseAssetReserve*/ sdk.NewDec(1_000_000),
 		/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 		/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.01"),
+		/*maxLeverage*/ sdk.MustNewDecFromStr("10"),
 	)
 
 	t.Log("decrease quote asset reserve")

@@ -81,5 +81,9 @@ message Pool {
   string max_oracle_spread_ratio = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false
-  ];    
+  ];
+
+  string max_leverage = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
 }

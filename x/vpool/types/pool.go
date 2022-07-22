@@ -13,6 +13,7 @@ func NewPool(
 	baseAssetReserve sdk.Dec,
 	fluctuationLimitRatio sdk.Dec,
 	maxOracleSpreadRatio sdk.Dec,
+	maxLeverage sdk.Dec,
 ) *Pool {
 	return &Pool{
 		Pair:                  pair,
@@ -21,6 +22,7 @@ func NewPool(
 		TradeLimitRatio:       tradeLimitRatio,
 		FluctuationLimitRatio: fluctuationLimitRatio,
 		MaxOracleSpreadRatio:  maxOracleSpreadRatio,
+		MaxLeverage:           maxLeverage,
 	}
 }
 

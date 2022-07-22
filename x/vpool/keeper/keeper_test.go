@@ -165,6 +165,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				/* baseAssetReserve */ sdk.NewDec(5_000_000), // 5 tokens
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"),
 			)
 
 			baseAmt, err := vpoolKeeper.SwapQuoteForBase(
@@ -349,6 +350,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 				/* baseAssetReserve */ sdk.NewDec(5_000_000), // 5 tokens
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"),
 			)
 
 			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
@@ -396,6 +398,7 @@ func TestGetVpools(t *testing.T) {
 		sdk.NewDec(5_000_000),
 		sdk.OneDec(),
 		sdk.OneDec(),
+		sdk.MustNewDecFromStr("10"),
 	)
 	vpoolKeeper.CreatePool(
 		ctx,
@@ -405,6 +408,7 @@ func TestGetVpools(t *testing.T) {
 		sdk.NewDec(10_000_000),
 		sdk.OneDec(),
 		sdk.OneDec(),
+		sdk.MustNewDecFromStr("10"),
 	)
 
 	pools := vpoolKeeper.GetAllPools(ctx)
@@ -418,6 +422,7 @@ func TestGetVpools(t *testing.T) {
 		TradeLimitRatio:       sdk.OneDec(),
 		FluctuationLimitRatio: sdk.OneDec(),
 		MaxOracleSpreadRatio:  sdk.OneDec(),
+		MaxLeverage:           sdk.MustNewDecFromStr("10"),
 	})
 	require.EqualValues(t, *pools[1], types.Pool{
 		Pair:                  ETHNusdPair,
@@ -426,6 +431,7 @@ func TestGetVpools(t *testing.T) {
 		TradeLimitRatio:       sdk.OneDec(),
 		FluctuationLimitRatio: sdk.OneDec(),
 		MaxOracleSpreadRatio:  sdk.OneDec(),
+		MaxLeverage:           sdk.MustNewDecFromStr("10"),
 	})
 }
 

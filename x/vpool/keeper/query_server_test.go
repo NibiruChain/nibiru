@@ -27,6 +27,7 @@ func TestQueryReserveAssets(t *testing.T) {
 		/* baseAmount */ sdk.NewDec(1000),
 		/* fluctuationLimitRatio */ sdk.ZeroDec(),
 		/* maxOracleSpreadRatio */ sdk.ZeroDec(),
+		/* maxLeverage */ sdk.OneDec(),
 	)
 	vpoolKeeper.savePool(ctx, pool)
 

@@ -25,6 +25,7 @@ func TestCreatePool(t *testing.T) {
 		sdk.NewDec(5_000_000),        // 5 tokens
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+		sdk.MustNewDecFromStr("10"),  // 0.9 ratio
 	)
 
 	exists := vpoolKeeper.ExistsPool(ctx, BTCNusdPair)

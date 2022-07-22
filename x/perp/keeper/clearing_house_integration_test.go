@@ -234,6 +234,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
 				/* fluctuationLimit */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"), // 100%
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -391,6 +392,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
 				/* fluctuationLimit */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"), // 100%
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -456,6 +458,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 					sdk.MustNewDecFromStr("0.1"),
+					/* maxLeverage */ sdk.MustNewDecFromStr("10"), // 100%
 				)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))

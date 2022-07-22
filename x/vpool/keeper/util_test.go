@@ -58,6 +58,7 @@ func getSamplePool() *types.Pool {
 		sdk.NewDec(5_000_000),
 		fluctuationLimit,
 		maxOracleSpreadRatio,
+		sdk.OneDec(),
 	)
 
 	return pool

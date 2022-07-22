@@ -132,6 +132,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				/* baseAssetReserves */ sdk.NewDec(5_000_000),
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"), // 100%
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
@@ -303,6 +304,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				/* baseAssetReserves */ sdk.NewDec(5_000_000_000_000_000),
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maxLeverage */ sdk.OneDec(),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 

@@ -81,6 +81,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 				/* baseReserve */ sdk.NewDec(1_000_000),
 				/* fluctuationLimitRatio */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maxLeverage */ sdk.OneDec(),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -198,6 +199,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				/* baseReserve */ sdk.NewDec(1_000_000),
 				/* fluctuationLimitRatio */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"), // 100%
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -274,7 +276,16 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(ctx, common.PairBTCStable, sdk.OneDec(), sdk.NewDec(1_000_000), sdk.NewDec(1_000_000), sdk.OneDec(), sdk.OneDec())
+			app.VpoolKeeper.CreatePool(
+				ctx,
+				common.PairBTCStable,
+				sdk.OneDec(),
+				sdk.NewDec(1_000_000),
+				sdk.NewDec(1_000_000),
+				sdk.OneDec(),
+				sdk.OneDec(),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"), // 100%
+			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
@@ -352,6 +363,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				/* baseAssetReserve */ sdk.NewDec(1_000_000),
 				/* fluctuationLimitRatio */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maxLeverage */ sdk.OneDec(),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -439,7 +451,16 @@ func TestMsgServerLiquidate(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(ctx, common.PairBTCStable, sdk.OneDec(), sdk.NewDec(1_000_000), sdk.NewDec(1_000_000), sdk.OneDec(), sdk.OneDec())
+			app.VpoolKeeper.CreatePool(
+				ctx,
+				common.PairBTCStable,
+				sdk.OneDec(),
+				sdk.NewDec(1_000_000),
+				sdk.NewDec(1_000_000),
+				sdk.OneDec(),
+				sdk.OneDec(),
+				/* maxLeverage */ sdk.MustNewDecFromStr("10"),
+			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
