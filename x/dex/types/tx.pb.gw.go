@@ -68,7 +68,7 @@ func local_request_Msg_CreatePool_0(ctx context.Context, marshaler runtime.Marsh
 }
 
 var (
-	filter_Msg_JoinPool_0 = &utilities.DoubleArray{Encoding: map[string]int{"poolId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Msg_JoinPool_0 = &utilities.DoubleArray{Encoding: map[string]int{"pool_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Msg_JoinPool_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -82,15 +82,15 @@ func request_Msg_JoinPool_0(ctx context.Context, marshaler runtime.Marshaler, cl
 		_   = err
 	)
 
-	val, ok = pathParams["poolId"]
+	val, ok = pathParams["pool_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "poolId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pool_id")
 	}
 
 	protoReq.PoolId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "poolId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pool_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -116,15 +116,15 @@ func local_request_Msg_JoinPool_0(ctx context.Context, marshaler runtime.Marshal
 		_   = err
 	)
 
-	val, ok = pathParams["poolId"]
+	val, ok = pathParams["pool_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "poolId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pool_id")
 	}
 
 	protoReq.PoolId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "poolId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pool_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -140,7 +140,7 @@ func local_request_Msg_JoinPool_0(ctx context.Context, marshaler runtime.Marshal
 }
 
 var (
-	filter_Msg_ExitPool_0 = &utilities.DoubleArray{Encoding: map[string]int{"poolId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Msg_ExitPool_0 = &utilities.DoubleArray{Encoding: map[string]int{"pool_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Msg_ExitPool_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -154,15 +154,15 @@ func request_Msg_ExitPool_0(ctx context.Context, marshaler runtime.Marshaler, cl
 		_   = err
 	)
 
-	val, ok = pathParams["poolId"]
+	val, ok = pathParams["pool_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "poolId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pool_id")
 	}
 
 	protoReq.PoolId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "poolId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pool_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -188,15 +188,15 @@ func local_request_Msg_ExitPool_0(ctx context.Context, marshaler runtime.Marshal
 		_   = err
 	)
 
-	val, ok = pathParams["poolId"]
+	val, ok = pathParams["pool_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "poolId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pool_id")
 	}
 
 	protoReq.PoolId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "poolId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pool_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -212,7 +212,7 @@ func local_request_Msg_ExitPool_0(ctx context.Context, marshaler runtime.Marshal
 }
 
 var (
-	filter_Msg_SwapAssets_0 = &utilities.DoubleArray{Encoding: map[string]int{"poolId": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Msg_SwapAssets_0 = &utilities.DoubleArray{Encoding: map[string]int{"pool_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Msg_SwapAssets_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -226,15 +226,15 @@ func request_Msg_SwapAssets_0(ctx context.Context, marshaler runtime.Marshaler, 
 		_   = err
 	)
 
-	val, ok = pathParams["poolId"]
+	val, ok = pathParams["pool_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "poolId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pool_id")
 	}
 
 	protoReq.PoolId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "poolId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pool_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -260,15 +260,15 @@ func local_request_Msg_SwapAssets_0(ctx context.Context, marshaler runtime.Marsh
 		_   = err
 	)
 
-	val, ok = pathParams["poolId"]
+	val, ok = pathParams["pool_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "poolId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pool_id")
 	}
 
 	protoReq.PoolId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "poolId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pool_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -496,11 +496,11 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 var (
 	pattern_Msg_CreatePool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "pool"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_JoinPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "poolId", "join"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_JoinPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "pool_id", "join"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_ExitPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "poolId", "exit"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_ExitPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "pool_id", "exit"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_SwapAssets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "poolId", "swap"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_SwapAssets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"nibiru", "dex", "pool_id", "swap"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

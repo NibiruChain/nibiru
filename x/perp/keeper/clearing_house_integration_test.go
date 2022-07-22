@@ -246,7 +246,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
@@ -346,6 +346,26 @@ func TestOpenPositionError(t *testing.T) {
 			baseLimit:       sdk.NewDec(10_000),
 			expectedErr:     vpooltypes.ErrAssetFailsUserLimit,
 		},
+		{
+			name:            "quote asset amount is zero",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition: nil,
+			side:            types.Side_SELL,
+			margin:          sdk.NewInt(0),
+			leverage:        sdk.NewDec(10),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     types.ErrQuoteAmountIsZero,
+		},
+		{
+			name:            "leverage amount is zero",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition: nil,
+			side:            types.Side_SELL,
+			margin:          sdk.NewInt(1000),
+			leverage:        sdk.NewDec(0),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     types.ErrLeverageIsZero,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -383,7 +403,7 @@ func TestOpenPositionError(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))

@@ -52,7 +52,7 @@ func TestGetAndSetPosition(t *testing.T) {
 					Size_:         sdk.OneDec(),
 					Margin:        sdk.OneDec(),
 				}
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(vpoolPair, traderAddr, dummyPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(dummyPosition)
 				outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPosition, outPosition)
@@ -98,7 +98,7 @@ func TestDeletePosition(t *testing.T) {
 						Size_:         sdk.OneDec(),
 						Margin:        sdk.OneDec(),
 					}
-					nibiruApp.PerpKeeper.PositionsState(ctx).Set(vpoolPair, traderAddr, dummyPosition)
+					nibiruApp.PerpKeeper.PositionsState(ctx).Set(dummyPosition)
 					outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 					require.NoError(t, err)
 					require.EqualValues(t, dummyPosition, outPosition)
