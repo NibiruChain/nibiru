@@ -693,3 +693,64 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		})
 	}
 }
+
+func TestGetMaintenanceMarginRatio(t *testing.T) {
+	tests := []struct {
+		name     string
+		pool     *types.Pool
+		snapshot types.ReserveSnapshot
+
+		expectedMaintenanceMarginRatio sdk.Dec
+	}{
+		{
+			name: "zero fluctuation limit ratio",
+			pool: &types.Pool{
+				Pair:                   common.PairBTCStable,
+				QuoteAssetReserve:      sdk.OneDec(),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.ZeroDec(),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
+			},
+			snapshot: types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
+		},
+		{
+			name: "zero fluctuation limit ratio",
+			pool: &types.Pool{
+				Pair:                   common.PairBTCStable,
+				QuoteAssetReserve:      sdk.OneDec(),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.ZeroDec(),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
+			},
+			snapshot: types.ReserveSnapshot{
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				TimestampMs:       0,
+				BlockNumber:       0,
+			},
+			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := VpoolKeeper(t,
+				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+			)
+			vpoolKeeper.savePool(ctx, tc.pool)
+
+			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, vpoolKeeper.GetMaintenanceMarginratio(ctx, common.PairBTCStable))
+		})
+	}
+}

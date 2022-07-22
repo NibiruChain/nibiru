@@ -32,6 +32,23 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	require.False(t, pool.HasEnoughQuoteReserve(sdk.NewDec(9_000_001)))
 }
 
+func TestSetMarginRatio(t *testing.T) {
+	pair := common.MustNewAssetPair("BTC:NUSD")
+
+	pool := NewPool(
+		pair,
+		sdk.MustNewDecFromStr("0.9"), // 0.9
+		sdk.NewDec(10_000_000),       // 10
+		sdk.NewDec(10_000_000),       // 10
+		sdk.MustNewDecFromStr("0.1"),
+		sdk.MustNewDecFromStr("0.1"),
+		/*maintenanceMarginRatio*/ sdk.MustNewDecFromStr("0.42"),
+	)
+
+	// less that max ratio
+	require.Equal(t, pool.MaintenanceMarginRatio, sdk.MustNewDecFromStr("0.42"))
+}
+
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
