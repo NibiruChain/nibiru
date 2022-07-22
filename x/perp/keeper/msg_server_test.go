@@ -324,15 +324,15 @@ func TestMsgServerClosePosition(t *testing.T) {
 	tests := []struct {
 		name string
 
-		pair   string
-		sender string
+		pair       common.AssetPair
+		traderAddr sdk.AccAddress
 
 		expectedErr error
 	}{
 		{
 			name:        "success",
-			pair:        common.PairBTCStable.String(),
-			sender:      sample.AccAddress().String(),
+			pair:        common.PairBTCStable,
+			traderAddr:  sample.AccAddress(),
 			expectedErr: nil,
 		},
 	}
@@ -344,31 +344,35 @@ func TestMsgServerClosePosition(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(ctx, common.PairBTCStable, sdk.OneDec(), sdk.NewDec(1_000_000), sdk.NewDec(1_000_000), sdk.OneDec(), sdk.OneDec())
+			app.VpoolKeeper.CreatePool(
+				ctx,
+				common.PairBTCStable,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
+				/* baseAssetReserve */ sdk.NewDec(1_000_000),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})
 
-			pair, err := common.NewAssetPair(tc.pair)
-			traderAddr, err2 := sdk.AccAddressFromBech32(tc.sender)
-			if err == nil && err2 == nil {
-				t.Log("create position")
-				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-					TraderAddress:                       traderAddr.String(),
-					Pair:                                pair,
-					Size_:                               sdk.OneDec(),
-					Margin:                              sdk.OneDec(),
-					OpenNotional:                        sdk.OneDec(),
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         1,
-				}))
-				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1))))
-			}
+			t.Log("create position")
+			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+				TraderAddress:                       tc.traderAddr.String(),
+				Pair:                                tc.pair,
+				Size_:                               sdk.OneDec(),
+				Margin:                              sdk.OneDec(),
+				OpenNotional:                        sdk.OneDec(),
+				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                         1,
+			}))
+			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.GetQuoteTokenDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
-				Sender:    tc.sender,
-				TokenPair: tc.pair,
+				Sender:    tc.traderAddr.String(),
+				TokenPair: tc.pair.String(),
 			})
 
 			if tc.expectedErr != nil {
@@ -377,6 +381,11 @@ func TestMsgServerClosePosition(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, resp)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.999999000000999999"), resp.ExchangedNotionalValue)
+				assert.EqualValues(t, sdk.NewDec(-1), resp.ExchangedPositionSize)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.999999000000999999"), resp.MarginToTrader)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.000000999999000001"), resp.RealizedPnl)
 			}
 		})
 	}

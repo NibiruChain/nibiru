@@ -82,9 +82,18 @@ func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClose
 	traderAddr := sdk.MustAccAddressFromBech32(position.Sender)
 	tokenPair := common.MustNewAssetPair(position.TokenPair)
 
-	_, err := m.k.ClosePosition(ctx, tokenPair, traderAddr)
+	resp, err := m.k.ClosePosition(ctx, tokenPair, traderAddr)
+	if err != nil {
+		return nil, err
+	}
 
-	return &types.MsgClosePositionResponse{}, err
+	return &types.MsgClosePositionResponse{
+		ExchangedNotionalValue: resp.ExchangedNotionalValue,
+		ExchangedPositionSize:  resp.ExchangedPositionSize,
+		FundingPayment:         resp.FundingPayment,
+		RealizedPnl:            resp.RealizedPnl,
+		MarginToTrader:         resp.MarginToVault.Neg(),
+	}, nil
 }
 
 func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
