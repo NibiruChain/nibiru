@@ -57,7 +57,9 @@ func (k Keeper) Liquidate(
 	}
 
 	params := k.GetParams(ctx)
-	err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, false)
+
+	maintenanceMarginratio := k.VpoolKeeper.GetMaintenanceMarginratio(ctx, pair)
+	err = requireMoreMarginRatio(marginRatio, maintenanceMarginratio, false)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, types.ErrMarginHighEnough
 	}
