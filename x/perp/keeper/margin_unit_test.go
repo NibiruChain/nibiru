@@ -180,49 +180,15 @@ func TestRemoveMargin(t *testing.T) {
 		test func()
 	}{
 		{
-			name: "fail - invalid sender",
-			test: func() {
-				k, _, ctx := getKeeper(t)
-				goCtx := sdk.WrapSDKContext(ctx)
-
-				msg := &types.MsgRemoveMargin{Sender: ""}
-				_, err := k.RemoveMargin(goCtx, msg)
-				require.Error(t, err)
-			},
-		},
-		{
-			name: "fail - invalid token pair",
-			test: func() {
-				k, _, ctx := getKeeper(t)
-				goCtx := sdk.WrapSDKContext(ctx)
-
-				trader := sample.AccAddress()
-				the3pool := "dai:usdc:usdt"
-				msg := &types.MsgRemoveMargin{
-					Sender:    trader.String(),
-					TokenPair: the3pool,
-					Margin:    sdk.NewCoin(common.DenomStable, sdk.NewInt(5))}
-				_, err := k.RemoveMargin(goCtx, msg)
-				require.Error(t, err)
-				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
-			},
-		},
-		{
 			name: "fail - request is too large",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				goCtx := sdk.WrapSDKContext(ctx)
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
-				trader := sample.AccAddress()
+				traderAddr := sample.AccAddress()
 				pair := common.AssetPair{
 					Token0: "osmo",
 					Token1: "nusd",
-				}
-				msg := &types.MsgRemoveMargin{
-					Sender:    trader.String(),
-					TokenPair: pair.String(),
-					Margin:    sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)),
 				}
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
@@ -237,7 +203,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
 				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                       trader.String(),
+					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
 					OpenNotional:                        sdk.NewDec(1000),
@@ -246,7 +212,7 @@ func TestRemoveMargin(t *testing.T) {
 					BlockNumber:                         ctx.BlockHeight(),
 				})
 
-				_, err := perpKeeper.RemoveMargin(goCtx, msg)
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)))
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt.Error())
@@ -256,16 +222,10 @@ func TestRemoveMargin(t *testing.T) {
 			name: "fail - vault doesn't have enough funds",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				goCtx := sdk.WrapSDKContext(ctx)
 
 				traderAddr := sample.AccAddress()
-				msg := &types.MsgRemoveMargin{
-					Sender:    traderAddr.String(),
-					TokenPair: "osmo:nusd",
-					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
-				}
-
-				pair := common.MustNewAssetPair(msg.TokenPair)
+				pair := common.MustNewAssetPair("osmo:nusd")
+				marginToWithdraw := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 100)
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
@@ -292,9 +252,13 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("mock bank keeper")
 				expectedError := fmt.Errorf("not enough funds in vault module account")
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
-					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount, sdk.NewCoins(msg.Margin),
+					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount, sdk.NewCoins(marginToWithdraw),
 				).Return(expectedError)
-				mocks.mockBankKeeper.EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()))
+				mocks.mockBankKeeper.EXPECT().GetBalance(
+					ctx,
+					authtypes.NewModuleAddress(types.VaultModuleAccount),
+					pair.GetQuoteTokenDenom(),
+				).Return(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 0))
 
 				t.Log("set pair metadata")
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
@@ -316,7 +280,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Attempt to RemoveMargin when the vault lacks funds")
-				_, err := perpKeeper.RemoveMargin(goCtx, msg)
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, expectedError.Error())
@@ -326,16 +290,10 @@ func TestRemoveMargin(t *testing.T) {
 			name: "happy path - zero funding",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				goCtx := sdk.WrapSDKContext(ctx)
 
 				traderAddr := sample.AccAddress()
-				msg := &types.MsgRemoveMargin{
-					Sender:    traderAddr.String(),
-					TokenPair: "osmo:nusd",
-					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
-				}
-
-				pair := common.MustNewAssetPair(msg.TokenPair)
+				pair := common.MustNewAssetPair("osmo:nusd")
+				marginToWithdraw := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 100)
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true).Times(2)
@@ -358,7 +316,7 @@ func TestRemoveMargin(t *testing.T) {
 					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).
 					Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(math.MaxInt64)))
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(msg.Margin),
+					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(marginToWithdraw),
 				).Return(nil)
 
 				t.Log("set pair metadata")
@@ -381,16 +339,23 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("'RemoveMargin' from the position")
-				res, err := perpKeeper.RemoveMargin(goCtx, msg)
+				marginOut, fundingPayment, position, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
 
 				require.NoError(t, err)
-				assert.EqualValues(t, msg.Margin, res.MarginOut)
-				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
+				assert.EqualValues(t, marginToWithdraw, marginOut)
+				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
+				assert.EqualValues(t, pair, position.Pair)
+				assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
+				assert.EqualValues(t, sdk.NewDec(400), position.Margin)
+				assert.EqualValues(t, sdk.NewDec(1000), position.OpenNotional)
+				assert.EqualValues(t, sdk.NewDec(1000), position.Size_)
+				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
+				assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireHasTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:                  msg.TokenPair,
+						Pair:                  pair.String(),
 						TraderAddress:         traderAddr.String(),
 						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 400),
 						PositionNotional:      sdk.NewDec(1000),
@@ -419,16 +384,10 @@ func TestRemoveMargin(t *testing.T) {
 			name: "happy path - massive funding payment",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				goCtx := sdk.WrapSDKContext(ctx)
 
 				traderAddr := sample.AccAddress()
-				msg := &types.MsgRemoveMargin{
-					Sender:    traderAddr.String(),
-					TokenPair: "osmo:nusd",
-					Margin:    sdk.NewCoin("nusd", sdk.NewInt(100)),
-				}
-
-				pair := common.MustNewAssetPair(msg.TokenPair)
+				pair := common.MustNewAssetPair("osmo:nusd")
+				marginToWithdraw := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 100)
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
@@ -453,10 +412,9 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("'RemoveMargin' from the position")
-				res, err := perpKeeper.RemoveMargin(goCtx, msg)
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, marginToWithdraw)
 
 				require.ErrorIs(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt)
-				require.Nil(t, res)
 
 				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
 				require.NoError(t, err)
