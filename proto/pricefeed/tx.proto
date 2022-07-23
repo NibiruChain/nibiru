@@ -22,7 +22,7 @@ message MsgPostPrice {
   option (gogoproto.goproto_getters) = false;
 
   // From: address of oracle
-  string from = 1;
+  string oracle = 1;
   // Token0: denominator unit of the price, a.k.a. quote asset
   string token0 = 2 ;
   // Token1: numerator unit of price, a.k.a. base asset
