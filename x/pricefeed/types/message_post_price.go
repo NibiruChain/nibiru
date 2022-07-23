@@ -19,7 +19,7 @@ var _ sdk.Msg = &MsgPostPrice{}
 
 func NewMsgPostPrice(creator string, token0 string, token1 string, price sdk.Dec, expiry time.Time) *MsgPostPrice {
 	return &MsgPostPrice{
-		From:   creator,
+		Oracle: creator,
 		Token0: token0,
 		Token1: token1,
 		Price:  price,
@@ -36,7 +36,7 @@ func (msg *MsgPostPrice) Type() string {
 }
 
 func (msg *MsgPostPrice) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.From)
+	creator, err := sdk.AccAddressFromBech32(msg.Oracle)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func (msg *MsgPostPrice) GetSignBytes() []byte {
 }
 
 func (msg *MsgPostPrice) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.From)
+	_, err := sdk.AccAddressFromBech32(msg.Oracle)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}

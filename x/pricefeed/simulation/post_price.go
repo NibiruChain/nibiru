@@ -20,7 +20,7 @@ func SimulateMsgPostPrice(
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		msg := &types.MsgPostPrice{
-			From: simAccount.Address.String(),
+			Oracle: simAccount.Address.String(),
 		}
 
 		// TODO: Handling the PostPrice simulation

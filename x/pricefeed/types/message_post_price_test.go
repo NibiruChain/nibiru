@@ -18,13 +18,13 @@ func TestMsgPostPrice_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid address",
 			msg: MsgPostPrice{
-				From: "invalid_address",
+				Oracle: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgPostPrice{
-				From: sample.AccAddress().String(),
+				Oracle: sample.AccAddress().String(),
 			},
 		},
 	}
