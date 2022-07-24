@@ -3,12 +3,10 @@ package cli_test
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	"io/ioutil"
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -20,9 +18,13 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"io/ioutil"
-	"testing"
-	"time"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 type IntegrationTestSuite struct {
