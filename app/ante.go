@@ -6,11 +6,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+
+	"github.com/NibiruChain/nibiru/app/antedecorators"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 )
 
 type AnteHandlerOptions struct {
 	ante.HandlerOptions
 	IBCKeeper *ibckeeper.Keeper
+
+	PricefeedKeeper *pricefeedkeeper.Keeper
+	PerpKeeper      *perpkeeper.Keeper
 }
 
 /* NewAnteHandler returns and AnteHandler that checks and increments sequence
@@ -32,9 +39,17 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	if options.IBCKeeper == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "ibc keeper is required for AnteHandler")
 	}
+	if options.PricefeedKeeper == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "pricefeed keeper is required for ante builder")
+	}
+	if options.PerpKeeper == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "perp keeper is required for ante builder")
+	}
 
+	memPoolDecorator := ante.NewMempoolFeeDecorator()
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
+		antedecorators.NewGaslessDecorator([]sdk.AnteDecorator{&memPoolDecorator}, *options.PricefeedKeeper, *options.PerpKeeper),
 		ante.NewRejectExtensionOptionsDecorator(),
 		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
