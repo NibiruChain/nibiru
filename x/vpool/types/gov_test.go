@@ -1,8 +1,9 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
