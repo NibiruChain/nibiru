@@ -76,8 +76,5 @@ func pricefeedPostPriceIsGasless(msg *pricefeedtypes.MsgPostPrice, ctx sdk.Conte
 
 func liquidateIsGasless(msg *perptypes.MsgLiquidate, ctx sdk.Context, keeper perpkeeper.Keeper) bool {
 	_, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return false
-	}
-	return true // TODO: check if within whitelist for liquidators
+	return err == nil // TODO: check if within whitelist for liquidators
 }
