@@ -450,18 +450,18 @@ func (mr *MockVpoolKeeperMockRecorder) GetCurrentTWAP(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetCurrentTWAP), arg0, arg1)
 }
 
-// GetMaintenanceMarginratio mocks base method.
-func (m *MockVpoolKeeper) GetMaintenanceMarginratio(arg0 types2.Context, arg1 common.AssetPair) types2.Dec {
+// GetMaintenanceMarginRatio mocks base method.
+func (m *MockVpoolKeeper) GetMaintenanceMarginRatio(arg0 types2.Context, arg1 common.AssetPair) types2.Dec {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMaintenanceMarginratio", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetMaintenanceMarginRatio", arg0, arg1)
 	ret0, _ := ret[0].(types2.Dec)
 	return ret0
 }
 
-// GetMaintenanceMarginratio indicates an expected call of GetMaintenanceMarginratio.
-func (mr *MockVpoolKeeperMockRecorder) GetMaintenanceMarginratio(arg0, arg1 interface{}) *gomock.Call {
+// GetMaintenanceMarginRatio indicates an expected call of GetMaintenanceMarginRatio.
+func (mr *MockVpoolKeeperMockRecorder) GetMaintenanceMarginRatio(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaintenanceMarginratio", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaintenanceMarginratio), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaintenanceMarginRatio", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaintenanceMarginRatio), arg0, arg1)
 }
 
 // GetQuoteAssetPrice mocks base method.

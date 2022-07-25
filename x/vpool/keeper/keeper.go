@@ -320,7 +320,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 }
 
 /**
-GetMaintenanceMarginratio returns the maintenance margin ratio for the pool from the asset pair.
+GetMaintenanceMarginRatio returns the maintenance margin ratio for the pool from the asset pair.
 
 args:
   - ctx: the cosmos-sdk context
@@ -329,7 +329,7 @@ args:
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
 */
-func (k Keeper) GetMaintenanceMarginratio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		panic(err)

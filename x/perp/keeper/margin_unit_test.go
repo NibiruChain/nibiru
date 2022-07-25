@@ -229,7 +229,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginratio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
 				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx,
@@ -298,7 +298,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginratio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)

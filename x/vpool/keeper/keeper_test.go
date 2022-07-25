@@ -750,7 +750,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 			)
 			vpoolKeeper.savePool(ctx, tc.pool)
 
-			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, vpoolKeeper.GetMaintenanceMarginratio(ctx, common.PairBTCStable))
+			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, vpoolKeeper.GetMaintenanceMarginRatio(ctx, common.PairBTCStable))
 		})
 	}
 }
