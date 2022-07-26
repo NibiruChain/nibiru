@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#712](https://github.com/NibiruChain/nibiru/pull/712) Add funding rate calculation and `FundingRateChangedEvent`.
 
 ### Upgrades
-
+* [#725](https://github.com/NibiruChain/nibiru/pull/725) Add governance handler for creating new virtual pools.
 * [#702](https://github.com/NibiruChain/nibiru/pull/702) Add upgrade handler for v0.10.0.
 
 ## [v0.9.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.9.2) - 2022-07-11
