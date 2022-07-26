@@ -10,7 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var (
+const (
 	DenomGov    = "unibi"
 	DenomColl   = "uusdc"
 	DenomStable = "unusd"
@@ -22,9 +22,9 @@ var (
 	TreasuryPoolModuleAccount = "treasury_pool"
 
 	PairSeparator = ":"
+)
 
-	WhitelistedColl = []string{DenomColl}
-
+var (
 	PairGovStable  = AssetPair{Token0: DenomGov, Token1: DenomStable}
 	PairCollStable = AssetPair{Token0: DenomColl, Token1: DenomStable}
 	PairBTCStable  = AssetPair{Token0: DenomBTC, Token1: DenomStable}
