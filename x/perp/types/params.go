@@ -44,9 +44,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			validatePercentageRatio,
 		),
 		paramtypes.NewParamSetPair(
-			[]byte("EpochIdentifier"),
-			&p.EpochIdentifier,
-			validateEpochIdentifier,
+			[]byte("FundingRateInterval"),
+			&p.FundingRateInterval,
+			validateFundingRateInterval,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("TwapLookbackWindow"),
@@ -63,7 +63,7 @@ func NewParams(
 	ecosystemFundFeeRatio sdk.Dec,
 	liquidationFeeRatio sdk.Dec,
 	partialLiquidationRatio sdk.Dec,
-	epochIdentifier string,
+	fundingRateInterval string,
 	twapLookbackWindow time.Duration,
 ) Params {
 	return Params{
@@ -72,7 +72,7 @@ func NewParams(
 		EcosystemFundFeeRatio:   ecosystemFundFeeRatio,
 		LiquidationFeeRatio:     liquidationFeeRatio,
 		PartialLiquidationRatio: partialLiquidationRatio,
-		EpochIdentifier:         epochIdentifier,
+		FundingRateInterval:     fundingRateInterval,
 		TwapLookbackWindow:      twapLookbackWindow,
 	}
 }
@@ -130,7 +130,7 @@ func validatePercentageRatio(i interface{}) error {
 	return nil
 }
 
-func validateEpochIdentifier(i interface{}) error {
+func validateFundingRateInterval(i interface{}) error {
 	_, err := getAsString(i)
 	if err != nil {
 		return err

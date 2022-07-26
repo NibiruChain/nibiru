@@ -40,8 +40,8 @@ message Params {
     (gogoproto.nullable) = false
   ];
 
-  // specifies the interval on which the fundingPayment is being updated
-  string epoch_identifier = 7;
+  // specifies the interval on which the funding rate is updated
+  string funding_rate_interval = 7;
 
   // amount of time to look back for TWAP calculations
   google.protobuf.Duration twap_lookback_window = 8 [
