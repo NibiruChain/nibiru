@@ -212,12 +212,13 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	for _, pool := range queryResp.Pools {
 		if pool.Pair.String() == proposal.Pair {
 			require.Equal(s.T(), pool, &vpooltypes.Pool{
-				Pair:                  common.MustNewAssetPair(proposal.Pair),
-				BaseAssetReserve:      proposal.BaseAssetReserve,
-				QuoteAssetReserve:     proposal.QuoteAssetReserve,
-				TradeLimitRatio:       proposal.TradeLimitRatio,
-				FluctuationLimitRatio: proposal.FluctuationLimitRatio,
-				MaxOracleSpreadRatio:  proposal.MaxOracleSpreadRatio,
+				Pair:                   common.MustNewAssetPair(proposal.Pair),
+				BaseAssetReserve:       proposal.BaseAssetReserve,
+				QuoteAssetReserve:      proposal.QuoteAssetReserve,
+				TradeLimitRatio:        proposal.TradeLimitRatio,
+				FluctuationLimitRatio:  proposal.FluctuationLimitRatio,
+				MaxOracleSpreadRatio:   proposal.MaxOracleSpreadRatio,
+				MaintenanceMarginRatio: proposal.MaintenanceMarginRatio,
 			})
 			found = true
 		}
