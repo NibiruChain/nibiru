@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/golang/mock/gomock"
 	"math"
 	"testing"
 	"time"
+
+	"github.com/golang/mock/gomock"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
