@@ -150,13 +150,13 @@ func (k Keeper) afterPositionUpdate(
 	marginToVault := positionResp.MarginToVault.RoundInt()
 	switch {
 	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVault)
+		coinToSend := sdk.NewCoin(pair.QuoteDenom(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
 	case marginToVault.IsNegative():
-		if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, marginToVault.Abs()); err != nil {
+		if err = k.Withdraw(ctx, pair.QuoteDenom(), traderAddr, marginToVault.Abs()); err != nil {
 			return err
 		}
 	}
@@ -184,14 +184,14 @@ func (k Keeper) afterPositionUpdate(
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
-		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.Position.Margin.RoundInt()),
+		Margin:                sdk.NewCoin(pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
 		PositionNotional:      positionNotional,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), transferredFee),
+		TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), transferredFee),
 		PositionSize:          positionResp.Position.Size_,
 		RealizedPnl:           positionResp.RealizedPnl,
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
-		BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.BadDebt.RoundInt()),
+		BadDebt:               sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
 		LiquidationPenalty:    sdk.ZeroDec(),
 		SpotPrice:             spotPrice,
 		FundingPayment:        positionResp.FundingPayment,
@@ -702,7 +702,7 @@ func (k Keeper) transferFee(
 			/* to */ types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.GetQuoteTokenDenom(),
+					pair.QuoteDenom(),
 					feeToFeePool,
 				),
 			),
@@ -719,7 +719,7 @@ func (k Keeper) transferFee(
 			/* to */ types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.GetQuoteTokenDenom(),
+					pair.QuoteDenom(),
 					feeToEcosystemFund,
 				),
 			),

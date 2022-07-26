@@ -64,14 +64,14 @@ func (k Keeper) AddMargin(
 		&types.PositionChangedEvent{
 			Pair:                  pair.String(),
 			TraderAddress:         traderAddr.String(),
-			Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), position.Margin.RoundInt()),
+			Margin:                sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
 			PositionNotional:      positionNotional,
-			ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when adding margin
-			TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+			ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when adding margin
+			TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 			PositionSize:          position.Size_,
 			RealizedPnl:           sdk.ZeroDec(), // always zero when adding margin
 			UnrealizedPnlAfter:    unrealizedPnl,
-			BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when adding margin
+			BadDebt:               sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when adding margin
 			FundingPayment:        remainingMargin.FundingPayment,
 			SpotPrice:             spotPrice,
 			BlockHeight:           ctx.BlockHeight(),
@@ -150,7 +150,7 @@ func (k Keeper) RemoveMargin(
 		return sdk.Coin{}, sdk.Dec{}, nil, err
 	}
 
-	if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, margin.Amount); err != nil {
+	if err = k.Withdraw(ctx, pair.QuoteDenom(), traderAddr, margin.Amount); err != nil {
 		return sdk.Coin{}, sdk.Dec{}, nil, err
 	}
 
@@ -158,14 +158,14 @@ func (k Keeper) RemoveMargin(
 		&types.PositionChangedEvent{
 			Pair:                  pair.String(),
 			TraderAddress:         traderAddr.String(),
-			Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), position.Margin.RoundInt()),
+			Margin:                sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
 			PositionNotional:      positionNotional,
-			ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when removing margin
-			TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when removing margin
+			ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when removing margin
+			TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 			PositionSize:          position.Size_,
 			RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
 			UnrealizedPnlAfter:    unrealizedPnl,
-			BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when removing margin
+			BadDebt:               sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when removing margin
 			FundingPayment:        remainingMargin.FundingPayment,
 			SpotPrice:             spotPrice,
 			BlockHeight:           ctx.BlockHeight(),

@@ -144,7 +144,7 @@ func TestRemoveMargin(t *testing.T) {
 				)
 
 				removeAmt := sdk.NewInt(5)
-				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt})
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
@@ -202,9 +202,9 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(6)
 
 				t.Log("'RemoveMargin' from the position")
-				marginOut, fundingPayment, position, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt})
+				marginOut, fundingPayment, position, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
 				require.NoError(t, err)
-				assert.EqualValues(t, sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt}, marginOut)
+				assert.EqualValues(t, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt}, marginOut)
 				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
 				assert.EqualValues(t, pair, position.Pair)
 				assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
@@ -219,14 +219,14 @@ func TestRemoveMargin(t *testing.T) {
 					&types.PositionChangedEvent{
 						Pair:                  pair.String(),
 						TraderAddress:         traderAddr.String(),
-						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 54),
+						Margin:                sdk.NewInt64Coin(pair.QuoteDenom(), 54),
 						PositionNotional:      sdk.NewDec(300),
-						ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when removing margin
-						TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when removing margin
+						ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when removing margin
+						TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 						PositionSize:          sdk.MustNewDecFromStr("299.910026991902429271"),
 						RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
-						BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
 						SpotPrice:             sdk.MustNewDecFromStr("1.00060009"),
 						BlockHeight:           ctx.BlockHeight(),

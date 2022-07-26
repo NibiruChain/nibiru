@@ -81,12 +81,12 @@ func (k Keeper) Liquidate(
 	}
 
 	feeToLiquidator = sdk.NewCoin(
-		pair.GetQuoteTokenDenom(),
+		pair.QuoteDenom(),
 		liquidationResponse.FeeToLiquidator,
 	)
 
 	feeToFund = sdk.NewCoin(
-		pair.GetQuoteTokenDenom(),
+		pair.QuoteDenom(),
 		liquidationResponse.FeeToPerpEcosystemFund,
 	)
 
@@ -144,7 +144,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	if totalBadDebt.IsPositive() {
 		if err = k.realizeBadDebt(
 			ctx,
-			position.Pair.GetQuoteTokenDenom(),
+			position.Pair.QuoteDenom(),
 			totalBadDebt.RoundInt(),
 		); err != nil {
 			return types.LiquidateResp{}, err
@@ -179,10 +179,10 @@ func (k Keeper) ExecuteFullLiquidation(
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidator.String(),
-		FeeToLiquidator:       sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund:    sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
-		BadDebt:               sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), totalBadDebt.RoundInt()),
-		Margin:                sdk.NewCoin(position.Pair.GetQuoteTokenDenom(), liquidationResp.PositionResp.Position.Margin.RoundInt()),
+		FeeToLiquidator:       sdk.NewCoin(position.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund:    sdk.NewCoin(position.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
+		BadDebt:               sdk.NewCoin(position.Pair.QuoteDenom(), totalBadDebt.RoundInt()),
+		Margin:                sdk.NewCoin(position.Pair.QuoteDenom(), liquidationResp.PositionResp.Position.Margin.RoundInt()),
 		PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 		PositionSize:          liquidationResp.PositionResp.Position.Size_,
 		UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
@@ -226,7 +226,7 @@ func (k Keeper) distributeLiquidateRewards(
 	feeToPerpEF := liquidateResp.FeeToPerpEcosystemFund
 	if feeToPerpEF.IsPositive() {
 		coinToPerpEF := sdk.NewCoin(
-			pair.GetQuoteTokenDenom(), feeToPerpEF)
+			pair.QuoteDenom(), feeToPerpEF)
 		if err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			/* from */ types.VaultModuleAccount,
@@ -240,7 +240,7 @@ func (k Keeper) distributeLiquidateRewards(
 	// Transfer fee from vault to liquidator
 	feeToLiquidator := liquidateResp.FeeToLiquidator
 	if feeToLiquidator.IsPositive() {
-		err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), liquidator, feeToLiquidator)
+		err = k.Withdraw(ctx, pair.QuoteDenom(), liquidator, feeToLiquidator)
 		if err != nil {
 			return err
 		}
@@ -323,10 +323,10 @@ func (k Keeper) ExecutePartialLiquidation(
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
 		LiquidatorAddress:     liquidator.String(),
-		FeeToLiquidator:       sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), feeToPerpEcosystemFund.RoundInt()),
-		BadDebt:               sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), liquidationResponse.BadDebt),
-		Margin:                sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), liquidationResponse.PositionResp.Position.Margin.RoundInt()),
+		FeeToLiquidator:       sdk.NewCoin(currentPosition.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
+		BadDebt:               sdk.NewCoin(currentPosition.Pair.QuoteDenom(), liquidationResponse.BadDebt),
+		Margin:                sdk.NewCoin(currentPosition.Pair.QuoteDenom(), liquidationResponse.PositionResp.Position.Margin.RoundInt()),
 		PositionNotional:      liquidationResponse.PositionResp.PositionNotional,
 		PositionSize:          liquidationResponse.PositionResp.Position.Size_,
 		UnrealizedPnl:         liquidationResponse.PositionResp.UnrealizedPnlAfter,
