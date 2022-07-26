@@ -1,6 +1,8 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 const (
 	// ModuleName defines the module name
@@ -31,7 +33,11 @@ var (
 	RawPriceFeedPrefix = []byte{0x01}
 
 	// TWAPPrefix prefix for the current price of an asset
+	// TODO: Can we delete/reuse this key or should we leave this for backwards comp
 	TWAPPrefix = []byte{0x02}
+
+	// Snapshot prefix for the median oracle price at a specific point in time
+	PriceSnapshotPrefix = []byte{0x03}
 )
 
 // CurrentPriceKey returns the prefix for the current price
@@ -57,6 +63,16 @@ func RawPriceKey(pairID string, oracleAddr sdk.AccAddress) []byte {
 	return append(
 		RawPriceIteratorKey(pairID),
 		lengthPrefixWithByte(oracleAddr)...,
+	)
+}
+
+func PriceSnapshotKey(pairId string, blockHeight int64) []byte {
+	return append(
+		PriceSnapshotPrefix,
+		append(
+			[]byte(pairId),
+			sdk.Uint64ToBigEndian(uint64(blockHeight))...,
+		)...,
 	)
 }
 
