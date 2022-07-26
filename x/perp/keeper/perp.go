@@ -48,10 +48,10 @@ func (k Keeper) SettlePosition(
 		}
 	}
 
-	transferredCoins = sdk.NewCoins(sdk.NewInt64Coin(currentPosition.Pair.GetQuoteTokenDenom(), 0))
+	transferredCoins = sdk.NewCoins(sdk.NewInt64Coin(currentPosition.Pair.QuoteDenom(), 0))
 	settledValueInt := settledValue.RoundInt()
 	if settledValueInt.IsPositive() {
-		toTransfer := sdk.NewCoin(currentPosition.Pair.GetQuoteTokenDenom(), settledValueInt)
+		toTransfer := sdk.NewCoin(currentPosition.Pair.QuoteDenom(), settledValueInt)
 		transferredCoins = sdk.NewCoins(toTransfer)
 		if err != nil {
 			panic(err) // NOTE(mercilex): must never happen

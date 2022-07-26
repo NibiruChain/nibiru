@@ -66,7 +66,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
+func (s IntegrationTestSuite) TestX_CmdAddVpool() {
 	s.Require().Len(s.network.Validators, 1)
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
@@ -211,14 +211,15 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	found := false
 	for _, pool := range queryResp.Pools {
 		if pool.Pair.String() == proposal.Pair {
-			require.Equal(s.T(), pool, &vpooltypes.Pool{
-				Pair:                  common.MustNewAssetPair(proposal.Pair),
-				BaseAssetReserve:      proposal.BaseAssetReserve,
-				QuoteAssetReserve:     proposal.QuoteAssetReserve,
-				TradeLimitRatio:       proposal.TradeLimitRatio,
-				FluctuationLimitRatio: proposal.FluctuationLimitRatio,
-				MaxOracleSpreadRatio:  proposal.MaxOracleSpreadRatio,
-			})
+			require.Equal(s.T(), &vpooltypes.Pool{
+				Pair:                   common.MustNewAssetPair(proposal.Pair),
+				BaseAssetReserve:       proposal.BaseAssetReserve,
+				QuoteAssetReserve:      proposal.QuoteAssetReserve,
+				TradeLimitRatio:        proposal.TradeLimitRatio,
+				FluctuationLimitRatio:  proposal.FluctuationLimitRatio,
+				MaxOracleSpreadRatio:   proposal.MaxOracleSpreadRatio,
+				MaintenanceMarginRatio: proposal.MaintenanceMarginRatio,
+			}, pool)
 			found = true
 		}
 	}

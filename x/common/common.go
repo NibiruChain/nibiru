@@ -10,28 +10,25 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var (
-	DenomGov        = "unibi"
-	DenomColl       = "uusdc"
-	DenomStable     = "unusd"
-	DenomStakeToken = "stake"
-	DenomTestToken  = "test"
-	DenomAxlBTC     = "axlwbtc"
-	DenomAxlETH     = "axlweth"
+const (
+	DenomGov    = "unibi"
+	DenomColl   = "uusdc"
+	DenomStable = "unusd"
+	DenomBTC    = "ubtc"
+	DenomETH    = "ueth"
 
 	ModuleName = "common"
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 
 	PairSeparator = ":"
+)
 
-	WhitelistedColl = []string{DenomColl}
-
+var (
 	PairGovStable  = AssetPair{Token0: DenomGov, Token1: DenomStable}
 	PairCollStable = AssetPair{Token0: DenomColl, Token1: DenomStable}
-	PairTestStable = AssetPair{Token0: DenomTestToken, Token1: DenomStable}
-	PairBTCStable  = AssetPair{Token0: DenomAxlBTC, Token1: DenomStable}
-	PairETHStable  = AssetPair{Token0: DenomAxlETH, Token1: DenomStable}
+	PairBTCStable  = AssetPair{Token0: DenomBTC, Token1: DenomStable}
+	PairETHStable  = AssetPair{Token0: DenomETH, Token1: DenomStable}
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
 )
@@ -94,11 +91,11 @@ func (pair AssetPair) Inverse() AssetPair {
 	return AssetPair{pair.Token1, pair.Token0}
 }
 
-func (pair AssetPair) GetBaseTokenDenom() string {
+func (pair AssetPair) BaseDenom() string {
 	return pair.Token0
 }
 
-func (pair AssetPair) GetQuoteTokenDenom() string {
+func (pair AssetPair) QuoteDenom() string {
 	return pair.Token1
 }
 

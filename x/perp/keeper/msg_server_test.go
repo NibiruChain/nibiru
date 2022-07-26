@@ -372,7 +372,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
 			}))
-			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.GetQuoteTokenDenom(), 1))))
+			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
 				Sender:    tc.traderAddr.String(),
@@ -458,7 +458,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 				_, err = app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 				require.NoError(t, err)
-				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.GetBaseTokenDenom(), pair.GetQuoteTokenDenom()))
+				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 				t.Log("create position")
 				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
@@ -470,7 +470,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         1,
 				}))
-				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 1))))
+				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 1))))
 			}
 
 			resp, err := msgServer.Liquidate(sdk.WrapSDKContext(ctx), &types.MsgLiquidate{

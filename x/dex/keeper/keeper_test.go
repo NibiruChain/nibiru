@@ -53,11 +53,11 @@ func TestSetAndFetchPool(t *testing.T) {
 		},
 		PoolAssets: []types.PoolAsset{
 			{
-				Token:  sdk.NewCoin("validatortoken", sdk.NewInt(1000)),
+				Token:  sdk.NewCoin(common.DenomBTC, sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
 			{
-				Token:  sdk.NewCoin(common.DenomStakeToken, sdk.NewInt(1000)),
+				Token:  sdk.NewCoin(common.DenomStable, sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
 		},

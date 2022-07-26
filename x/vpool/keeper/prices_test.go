@@ -42,8 +42,8 @@ func TestGetUnderlyingPrice(t *testing.T) {
 				EXPECT().
 				GetCurrentPrice(
 					gomock.Eq(ctx),
-					gomock.Eq(tc.pair.GetBaseTokenDenom()),
-					gomock.Eq(tc.pair.GetQuoteTokenDenom()),
+					gomock.Eq(tc.pair.BaseDenom()),
+					gomock.Eq(tc.pair.QuoteDenom()),
 				).
 				Return(
 					pftypes.CurrentPrice{

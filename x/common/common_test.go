@@ -134,8 +134,8 @@ func TestAsset_GetQuoteBaseToken(t *testing.T) {
 	pair, err := common.NewAssetPair("uatom:unibi")
 	require.NoError(t, err)
 
-	require.Equal(t, "uatom", pair.GetBaseTokenDenom())
-	require.Equal(t, "unibi", pair.GetQuoteTokenDenom())
+	require.Equal(t, "uatom", pair.BaseDenom())
+	require.Equal(t, "unibi", pair.QuoteDenom())
 }
 
 func TestAssetPair_Marshaling(t *testing.T) {

@@ -35,7 +35,6 @@ func DefaultParams() Params {
 			common.DenomGov,
 			common.DenomColl,
 			common.DenomStable,
-			common.DenomStakeToken,
 		},
 	}
 }
