@@ -132,6 +132,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				/* baseAssetReserves */ sdk.NewDec(5_000_000),
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
@@ -139,7 +140,6 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
-				params.MaintenanceMarginRatio,
 				params.FeePoolFeeRatio,
 				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
@@ -303,6 +303,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				/* baseAssetReserves */ sdk.NewDec(5_000_000_000_000_000),
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
@@ -312,7 +313,6 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
-				params.MaintenanceMarginRatio,
 				params.FeePoolFeeRatio,
 				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
