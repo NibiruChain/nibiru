@@ -29,7 +29,6 @@ func TestGetAndSetParams(t *testing.T) {
 			func() types.Params {
 				params := types.Params{
 					Stopped:                 true,
-					MaintenanceMarginRatio:  sdk.OneDec(),
 					FeePoolFeeRatio:         sdk.OneDec(),
 					EcosystemFundFeeRatio:   sdk.OneDec(),
 					LiquidationFeeRatio:     sdk.OneDec(),

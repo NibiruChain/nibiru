@@ -121,7 +121,6 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 func initParams(ctx sdk.Context, k Keeper) {
 	k.SetParams(ctx, types.Params{
 		Stopped:                 false,
-		MaintenanceMarginRatio:  sdk.OneDec(),
 		FeePoolFeeRatio:         sdk.MustNewDecFromStr("0.00001"),
 		EcosystemFundFeeRatio:   sdk.MustNewDecFromStr("0.000005"),
 		LiquidationFeeRatio:     sdk.MustNewDecFromStr("0.000007"),

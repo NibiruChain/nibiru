@@ -318,3 +318,22 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 
 	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
+
+/**
+GetMaintenanceMarginRatio returns the maintenance margin ratio for the pool from the asset pair.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the asset pair
+
+ret:
+  - sdk.Dec: The maintenance margin ratio for the pool
+*/
+func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+
+	return pool.MaintenanceMarginRatio
+}

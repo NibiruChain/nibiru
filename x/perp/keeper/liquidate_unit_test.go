@@ -109,6 +109,8 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.PairBTCStable).Return(sdk.MustNewDecFromStr("0.0625"))
+
 			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.PairBTCStable).Return(false)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
 			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.PairBTCStable).Return(markPrice, nil)
@@ -280,6 +282,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.PairBTCStable).Return(sdk.MustNewDecFromStr("0.0625"))
 			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.PairBTCStable).Return(false)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
 			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.PairBTCStable).Return(markPrice, nil)
@@ -448,6 +451,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.PairBTCStable).Return(sdk.MustNewDecFromStr("0.0625"))
 			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.PairBTCStable).Return(false)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
 			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.PairBTCStable).Return(markPrice, nil)
@@ -576,6 +580,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				liquidator := sample.AccAddress()
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(false)
+
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{
 						BadDebt:                sdk.OneInt(),
