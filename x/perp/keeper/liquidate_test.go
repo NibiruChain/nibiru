@@ -22,8 +22,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 	traderAddr := sample.AccAddress()
 
-	testCases := []struct {
-		name                      string
+	type test struct {
 		positionSide              types.Side
 		quoteAmount               sdk.Int
 		leverage                  sdk.Dec
@@ -33,9 +32,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		expectedLiquidatorBalance sdk.Coin
 		expectedPerpEFBalance     sdk.Coin
 		expectedBadDebt           sdk.Dec
-	}{
-		{
-			name:           "happy path - Buy",
+	}
+
+	testCases := map[string]test{
+		"happy path - Buy": {
 			positionSide:   types.Side_BUY,
 			quoteAmount:    sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
@@ -54,8 +54,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 		},
-		{
-			name:         "happy path - Sell",
+		"happy path - Sell": {
 			positionSide: types.Side_SELL,
 			quoteAmount:  sdk.NewInt(50_000),
 			// There's a 20 bps tx fee on open position.
@@ -74,13 +73,12 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_046_972),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 		},
-		{
+		"happy path - bad debt, long": {
 			/* We open a position for 500k, with a liquidation fee of 50k.
 			This means 25k for the liquidator, and 25k for the perp fund.
 			Because the user only have margin for 50, we create 24950 of bad
 			debt (25000 due to liquidator minus 50).
 			*/
-			name:           "happy path - BadDebt, long",
 			positionSide:   types.Side_BUY,
 			quoteAmount:    sdk.NewInt(50),
 			leverage:       sdk.MustNewDecFromStr("10000"),
@@ -96,9 +94,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
 		},
-		{
+		"happy path - bad debt, short": {
 			// Same as above case but for shorts
-			name:           "happy path - BadDebt, short",
 			positionSide:   types.Side_SELL,
 			quoteAmount:    sdk.NewInt(50),
 			leverage:       sdk.MustNewDecFromStr("10000"),
@@ -116,9 +113,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
+	for name, testCase := range testCases {
 		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
@@ -135,6 +132,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 
 			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
@@ -305,6 +303,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
+			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
 			t.Log("Set vpool defined by pair on PerpKeeper")
