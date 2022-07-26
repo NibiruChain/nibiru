@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -58,7 +57,7 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
-		return sdk.Dec{}, types.ErrNoValidPrice
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
 	if baseAssetAmount.IsZero() {
@@ -159,7 +158,7 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
-		return sdk.Dec{}, types.ErrNoValidPrice
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
 	if quoteAssetAmount.IsZero() {

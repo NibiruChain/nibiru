@@ -373,7 +373,7 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
-	pair := common.PairTestStable
+	pair := common.PairBTCStable
 
 	// Open a position with first user
 	s.T().Log("opening a position with user 1....")
@@ -386,11 +386,12 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"1",  // Quote asset amount
 		"0.0000001",
 	}
-	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	resp, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	if err != nil {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
 	s.NoError(err)
+	s.T().Logf("%s", resp.String())
 
 	// Remove margin to trigger bad debt on user 1
 	s.T().Log("removing margin on user 1....")

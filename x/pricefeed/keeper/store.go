@@ -3,6 +3,7 @@ package keeper
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"log"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -153,6 +154,7 @@ func (state ActivePairsState) Iterate(
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
+		log.Printf("%s", iter.Key())
 		activePairsMarshaler := &types.ActivePairMarshaler{}
 		state.cdc.MustUnmarshal(iter.Value(), activePairsMarshaler)
 		if !do(activePairsMarshaler) {
