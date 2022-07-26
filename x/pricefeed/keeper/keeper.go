@@ -273,8 +273,10 @@ func (k Keeper) GetCurrentTWAP(
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
 
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
 	// essentially a reverse linked list traversal
-	k.IteratePriceSnapshotsFrom(ctx, nil, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
+	k.IteratePriceSnapshotsFrom(ctx, startKey, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
 		var timeElapsedMs int64
 		if ps.TimestampMs <= lowerLimitTimestampMs {
 			// current snapshot is below the lower limit
@@ -300,7 +302,6 @@ func (k Keeper) GetCurrentTWAP(
 
 	// definition of TWAP
 	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
-
 }
 
 // IterateCurrentPrices iterates over all current price objects in the store and performs a callback function

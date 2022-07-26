@@ -143,7 +143,7 @@ func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec
 	).MaxTimes(1)
 
 	mocks.mockPricefeedKeeper.EXPECT().
-		GetCurrentTWAP(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1).
+		GetCurrentTWAP(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1, 15 * time.Minute).
 		Return(pftypes.CurrentTWAP{
 			PairID: common.PairBTCStable.String(),
 			Price:  indexPrice,

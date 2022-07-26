@@ -224,6 +224,20 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 		expCurPrice, price.Price,
 	)
 
+	// Check TWAP Price
+	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1, 1*time.Minute)
+	expectedTwap := sdk.MustNewDecFromStr("0.34")
+	require.NoError(t, err)
+	require.Truef(
+		t,
+		twap.Equal(expectedTwap),
+		"expected twap price to be: %s, got: %s",
+		expectedTwap, twap,
+	)
+
+	// fast forward block height
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 	// Even number of oracles
 	_, err = keeper.PostRawPrice(
 		ctx, addrs[4], pair.String(),
@@ -247,6 +261,17 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	prices := keeper.GetCurrentPrices(ctx)
 	require.Equal(t, 1, len(prices))
 	require.Equal(t, price, prices[0])
+
+	// Check TWAP Price
+	twap, err = keeper.GetCurrentTWAP(ctx, token0, token1, 1*time.Minute)
+	expectedTwap = sdk.MustNewDecFromStr("0.34")
+	require.NoError(t, err)
+	require.Truef(
+		t,
+		twap.Equal(expectedTwap),
+		"expected twap price to be: %s, got: %s",
+		expectedTwap, twap,
+	)
 }
 
 func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {

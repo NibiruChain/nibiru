@@ -1,6 +1,8 @@
 package types // noalias
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -35,8 +37,7 @@ type BankKeeper interface {
 }
 
 type PricefeedKeeper interface {
-	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
-	) (pftypes.CurrentTWAP, error)
+	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string, lookbackInterval time.Duration) (sdk.Dec, error)
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices

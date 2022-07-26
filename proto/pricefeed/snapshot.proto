@@ -12,11 +12,13 @@ option (gogoproto.verbose_equal_all) = true;
 
 // a snapshot of the pricefeed oracle's median price at a given point in time
 message PriceSnapshot {
+  // the token pair
+  string pair_id = 1;
   // the median prices of all oracles
-  string price = 1 [
+  string price = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 
   // milliseconds since unix epoch
-  int64 timestamp_ms = 2;
+  int64 timestamp_ms = 3;
 }

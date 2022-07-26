@@ -1,6 +1,8 @@
 package stablecoin
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -19,7 +21,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.SetParams(ctx, params)
 	}
 
-	_, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, common.DenomStable, common.DenomColl)
+	_, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, common.DenomStable, common.DenomColl, 15*time.Minute)
 	if err != nil {
 		params := k.GetParams(ctx)
 		params.IsCollateralRatioValid = false

@@ -284,18 +284,18 @@ func (mr *MockPricefeedKeeperMockRecorder) GetCurrentPrices(arg0 interface{}) *g
 }
 
 // GetCurrentTWAP mocks base method.
-func (m *MockPricefeedKeeper) GetCurrentTWAP(arg0 types2.Context, arg1, arg2 string) (types0.CurrentTWAP, error) {
+func (m *MockPricefeedKeeper) GetCurrentTWAP(arg0 types2.Context, arg1, arg2 string, arg3 time.Duration) (types2.Dec, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCurrentTWAP", arg0, arg1, arg2)
-	ret0, _ := ret[0].(types0.CurrentTWAP)
+	ret := m.ctrl.Call(m, "GetCurrentTWAP", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(types2.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCurrentTWAP indicates an expected call of GetCurrentTWAP.
-func (mr *MockPricefeedKeeperMockRecorder) GetCurrentTWAP(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockPricefeedKeeperMockRecorder) GetCurrentTWAP(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAP", reflect.TypeOf((*MockPricefeedKeeper)(nil).GetCurrentTWAP), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAP", reflect.TypeOf((*MockPricefeedKeeper)(nil).GetCurrentTWAP), arg0, arg1, arg2, arg3)
 }
 
 // GetOraclesForPair mocks base method.
