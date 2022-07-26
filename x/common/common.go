@@ -15,7 +15,6 @@ var (
 	DenomColl       = "uusdc"
 	DenomStable     = "unusd"
 	DenomStakeToken = "stake"
-	DenomTestToken  = "test"
 	DenomBTC        = "ubtc"
 	DenomETH        = "ueth"
 
@@ -29,7 +28,6 @@ var (
 
 	PairGovStable  = AssetPair{Token0: DenomGov, Token1: DenomStable}
 	PairCollStable = AssetPair{Token0: DenomColl, Token1: DenomStable}
-	PairTestStable = AssetPair{Token0: DenomTestToken, Token1: DenomStable}
 	PairBTCStable  = AssetPair{Token0: DenomBTC, Token1: DenomStable}
 	PairETHStable  = AssetPair{Token0: DenomETH, Token1: DenomStable}
 
