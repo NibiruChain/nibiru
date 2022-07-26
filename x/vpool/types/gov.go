@@ -63,7 +63,7 @@ func (m *CreatePoolProposal) ValidateBasic() error {
 	}
 
 	if m.MaintenanceMarginRatio.LT(sdk.ZeroDec()) || m.MaintenanceMarginRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("maintainance margin ratio ratio must be 0 <= ratio <= 1")
+		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
 	}
 
 	return nil
