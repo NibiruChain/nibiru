@@ -81,9 +81,9 @@ func NewParams(
 func DefaultParams() Params {
 	return NewParams(
 		/* stopped */ false,
-		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"),
-		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"),
-		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"),
+		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"), // 10 bps
+		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"), // 10 bps
+		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"), // 250 bps
 		/* partialLiquidationRatio */ sdk.MustNewDecFromStr("0.25"),
 		/* epochIdentifier */ "30 min",
 		/* twapLookbackWindow */ 15*time.Minute,
