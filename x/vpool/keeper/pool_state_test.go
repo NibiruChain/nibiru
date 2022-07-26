@@ -25,6 +25,7 @@ func TestCreatePool(t *testing.T) {
 		sdk.NewDec(5_000_000),        // 5 tokens
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
+		sdk.MustNewDecFromStr("0.0625"),
 	)
 
 	exists := vpoolKeeper.ExistsPool(ctx, BTCNusdPair)
@@ -44,20 +45,22 @@ func TestKeeper_GetAllPools(t *testing.T) {
 
 	vpools := []*types.Pool{
 		{
-			Pair:                  common.MustNewAssetPair("BTC:NUSD"),
-			BaseAssetReserve:      sdk.NewDec(1_000_000),      // 1
-			QuoteAssetReserve:     sdk.NewDec(30_000_000_000), // 30,000
-			TradeLimitRatio:       sdk.MustNewDecFromStr("0.88"),
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.20"),
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.20"),
+			Pair:                   common.MustNewAssetPair("BTC:NUSD"),
+			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1
+			QuoteAssetReserve:      sdk.NewDec(30_000_000_000), // 30,000
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 		},
 		{
-			Pair:                  common.MustNewAssetPair("ETH:NUSD"),
-			BaseAssetReserve:      sdk.NewDec(2_000_000),      // 1
-			QuoteAssetReserve:     sdk.NewDec(60_000_000_000), // 30,000
-			TradeLimitRatio:       sdk.MustNewDecFromStr("0.77"),
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.30"),
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.30"),
+			Pair:                   common.MustNewAssetPair("ETH:NUSD"),
+			BaseAssetReserve:       sdk.NewDec(2_000_000),      // 1
+			QuoteAssetReserve:      sdk.NewDec(60_000_000_000), // 30,000
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 		},
 	}
 

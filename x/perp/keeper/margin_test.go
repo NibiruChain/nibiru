@@ -69,6 +69,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				sdk.NewDec(5_000_000),                              // 5 tokens
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
 				/* maxOracleSpreadRatio */ sdk.OneDec(), // 100%
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, common.PairBTCStable))
 
@@ -139,6 +140,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* x */ sdk.NewDec(1_000_000), //
 					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
 					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				)
 
 				removeAmt := sdk.NewInt(5)
@@ -168,6 +170,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* x */ baseReserves,
 					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
 					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.4"), // 0.9 ratio
+					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

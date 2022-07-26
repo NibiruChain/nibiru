@@ -55,6 +55,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true)
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.PairBTCStable).Return(sdk.MustNewDecFromStr("0.0625"))
 
 				pos := types.ZeroPosition(ctx, common.PairBTCStable, sample.AccAddress())
 
@@ -158,6 +159,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true)
+			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.PairBTCStable).Return(sdk.MustNewDecFromStr("0.0625"))
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 				ctx,
 				common.PairBTCStable,

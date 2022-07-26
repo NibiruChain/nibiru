@@ -229,6 +229,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
 				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx,
@@ -296,7 +297,10 @@ func TestRemoveMargin(t *testing.T) {
 				marginToWithdraw := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 100)
 
 				t.Log("mock vpool keeper")
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true).Times(2)
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+
 				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).

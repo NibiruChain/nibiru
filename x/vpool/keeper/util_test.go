@@ -50,6 +50,7 @@ func getSamplePool() *types.Pool {
 	ratioLimit, _ := sdk.NewDecFromStr("0.9")
 	fluctuationLimit, _ := sdk.NewDecFromStr("0.1")
 	maxOracleSpreadRatio := sdk.MustNewDecFromStr("0.1")
+	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
 
 	pool := types.NewPool(
 		BTCNusdPair,
@@ -58,6 +59,7 @@ func getSamplePool() *types.Pool {
 		sdk.NewDec(5_000_000),
 		fluctuationLimit,
 		maxOracleSpreadRatio,
+		maintenanceMarginRatio,
 	)
 
 	return pool

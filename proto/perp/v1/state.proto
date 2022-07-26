@@ -14,11 +14,6 @@ message Params {
   // stopped identifies if the perp exchange is stopped or not
   bool stopped = 1;
 
-  string maintenance_margin_ratio = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-    ];
-
   // FeePoolFeeRatio is the ratio transferred to the the fee pool
   string fee_pool_fee_ratio = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

@@ -24,11 +24,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			validateStopped,
 		),
 		paramtypes.NewParamSetPair(
-			[]byte("MaintenanceMarginRatio"),
-			&p.MaintenanceMarginRatio,
-			validatePercentageRatio,
-		),
-		paramtypes.NewParamSetPair(
 			[]byte("FeePoolFeeRatio"),
 			&p.FeePoolFeeRatio,
 			validatePercentageRatio,
@@ -64,7 +59,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // NewParams creates a new Params instance
 func NewParams(
 	stopped bool,
-	maintenanceMarginRatio sdk.Dec,
 	feePoolFeeRatio sdk.Dec,
 	ecosystemFundFeeRatio sdk.Dec,
 	liquidationFeeRatio sdk.Dec,
@@ -74,7 +68,6 @@ func NewParams(
 ) Params {
 	return Params{
 		Stopped:                 stopped,
-		MaintenanceMarginRatio:  maintenanceMarginRatio,
 		FeePoolFeeRatio:         feePoolFeeRatio,
 		EcosystemFundFeeRatio:   ecosystemFundFeeRatio,
 		LiquidationFeeRatio:     liquidationFeeRatio,
@@ -88,7 +81,6 @@ func NewParams(
 func DefaultParams() Params {
 	return NewParams(
 		/* stopped */ false,
-		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"),
 		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"),
 		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"),
@@ -101,11 +93,6 @@ func DefaultParams() Params {
 // Validate validates the set of params
 func (p *Params) Validate() error {
 	err := validateStopped(p.Stopped)
-	if err != nil {
-		return err
-	}
-
-	err = validatePercentageRatio(p.MaintenanceMarginRatio)
 	if err != nil {
 		return err
 	}
