@@ -15,14 +15,6 @@ const (
 
 var _ govtypes.Content = &CreatePoolProposal{}
 
-// NEVER MUTATE THESE!
-// they exist for comparisons only and to avoid constant allocations of a new big int
-// which is used only for reading.
-var (
-	oneDec  = sdk.OneDec()
-	zeroDec = sdk.ZeroDec()
-)
-
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeCreatePool)
 	govtypes.RegisterProposalTypeCodec(&CreatePoolProposal{}, "nibiru/CreatePoolProposal")
@@ -46,30 +38,27 @@ func (m *CreatePoolProposal) ValidateBasic() error {
 	}
 
 	// trade limit ratio always between 0 and 1
-	// TODO(mercilex): does it really make sense for this to be equal to zero?
-	if m.TradeLimitRatio.LT(zeroDec) || m.TradeLimitRatio.GT(oneDec) {
+	if m.TradeLimitRatio.LT(sdk.ZeroDec()) || m.TradeLimitRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")
 	}
 
 	// quote asset reserve always > 0
-	if m.QuoteAssetReserve.LTE(zeroDec) {
+	if !m.QuoteAssetReserve.IsPositive() {
 		return fmt.Errorf("quote asset reserve must be > 0")
 	}
 
 	// base asset reserve always > 0
-	if m.BaseAssetReserve.LTE(zeroDec) {
+	if !m.BaseAssetReserve.IsPositive() {
 		return fmt.Errorf("base asset reserve must be > 0")
 	}
 
 	// fluctuation limit ratio between 0 and 1
-	// TODO(mercilex): does it really make sense for this to be equal to zero?
-	if m.FluctuationLimitRatio.LT(zeroDec) || m.FluctuationLimitRatio.GT(oneDec) {
+	if m.FluctuationLimitRatio.LT(sdk.ZeroDec()) || m.FluctuationLimitRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1")
 	}
 
 	// max oracle spread ratio between 0 and 1
-	// TODO(mercilex): does it really make sense for this to be equal to zero?
-	if m.MaxOracleSpreadRatio.LT(zeroDec) || m.MaxOracleSpreadRatio.GT(oneDec) {
+	if m.MaxOracleSpreadRatio.LT(sdk.ZeroDec()) || m.MaxOracleSpreadRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("max oracle spread ratio must be 0 <= ratio <= 1")
 	}
 

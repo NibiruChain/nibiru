@@ -41,7 +41,6 @@ func NewCreatePoolProposalHandler(k keeper.Keeper) govtypes.Handler {
 				m.FluctuationLimitRatio,
 				m.MaxOracleSpreadRatio,
 			)
-			// TODO(mercilex): oracle missing, pool should not be tradeable
 			return nil
 		default:
 			return sdkerrors.Wrapf(
