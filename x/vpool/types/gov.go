@@ -62,5 +62,9 @@ func (m *CreatePoolProposal) ValidateBasic() error {
 		return fmt.Errorf("max oracle spread ratio must be 0 <= ratio <= 1")
 	}
 
+	if m.MaintenanceMarginRatio.LT(sdk.ZeroDec()) || m.MaintenanceMarginRatio.GT(sdk.OneDec()) {
+		return fmt.Errorf("maintainance margin ratio ratio must be 0 <= ratio <= 1")
+	}
+
 	return nil
 }

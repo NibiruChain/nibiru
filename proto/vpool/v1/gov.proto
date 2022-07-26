@@ -40,4 +40,10 @@ message CreatePoolProposal {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+
+  // maintenance_margin_ratio
+  string maintenance_margin_ratio = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }

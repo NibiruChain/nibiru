@@ -40,6 +40,7 @@ func NewCreatePoolProposalHandler(k keeper.Keeper) govtypes.Handler {
 				m.BaseAssetReserve,
 				m.FluctuationLimitRatio,
 				m.MaxOracleSpreadRatio,
+				m.MaintenanceMarginRatio,
 			)
 			return nil
 		default:
