@@ -18,7 +18,7 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 		{
 			name: "single asset",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
@@ -33,15 +33,15 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 		{
 			name: "middle asset",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bar", 100),
 					Weight: sdk.NewInt(1),
 				},
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("zee", 100),
 					Weight: sdk.NewInt(1),
 				},
@@ -56,11 +56,11 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 		{
 			name: "asset to the left",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bar", 100),
 					Weight: sdk.NewInt(1),
 				},
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 200),
 					Weight: sdk.NewInt(1),
 				},
@@ -104,7 +104,7 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 		{
 			name: "empty denom",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
@@ -115,7 +115,7 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 		{
 			name: "denom not found - input denom lexicographically higher",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bar", 100),
 					Weight: sdk.NewInt(1),
 				},
@@ -126,7 +126,7 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 		{
 			name: "denom not found - input denom lexicographically lower",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
@@ -157,7 +157,7 @@ func TestPoolBalances(t *testing.T) {
 		{
 			name: "happy path single asset",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
@@ -167,11 +167,11 @@ func TestPoolBalances(t *testing.T) {
 		{
 			name: "happy path multiple asset",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bar", 100),
 					Weight: sdk.NewInt(1),
 				},
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 200),
 					Weight: sdk.NewInt(1),
 				},
@@ -203,13 +203,13 @@ func TestSortPoolAssets(t *testing.T) {
 		{
 			name: "single asset",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
 			},
 			expectedPoolAsset: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
@@ -218,21 +218,21 @@ func TestSortPoolAssets(t *testing.T) {
 		{
 			name: "happy path multiple asset",
 			poolAssets: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bar", 200),
 					Weight: sdk.NewInt(1),
 				},
 			},
 			expectedPoolAsset: []PoolAsset{
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("bar", 200),
 					Weight: sdk.NewInt(1),
 				},
-				PoolAsset{
+				{
 					Token:  sdk.NewInt64Coin("foo", 100),
 					Weight: sdk.NewInt(1),
 				},

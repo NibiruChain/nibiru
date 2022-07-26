@@ -11,12 +11,11 @@ import (
 )
 
 var (
-	DenomGov        = "unibi"
-	DenomColl       = "uusdc"
-	DenomStable     = "unusd"
-	DenomStakeToken = "stake"
-	DenomBTC        = "ubtc"
-	DenomETH        = "ueth"
+	DenomGov    = "unibi"
+	DenomColl   = "uusdc"
+	DenomStable = "unusd"
+	DenomBTC    = "ubtc"
+	DenomETH    = "ueth"
 
 	ModuleName = "common"
 
