@@ -165,7 +165,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				tokenPair.GetQuoteTokenDenom(), 1_000_000))
+				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -183,13 +183,13 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Check correctness of liquidation fee distributions")
 			liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
-				ctx, liquidatorAddr, tokenPair.GetQuoteTokenDenom())
+				ctx, liquidatorAddr, tokenPair.QuoteDenom())
 			assert.EqualValues(t, tc.expectedLiquidatorBalance, liquidatorBalance)
 
 			perpEFAddr := nibiruApp.AccountKeeper.GetModuleAddress(
 				types.PerpEFModuleAccount)
 			perpEFBalance := nibiruApp.BankKeeper.GetBalance(
-				ctx, perpEFAddr, tokenPair.GetQuoteTokenDenom())
+				ctx, perpEFAddr, tokenPair.QuoteDenom())
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
@@ -201,10 +201,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidatorAddr.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
-				BadDebt:               sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.BadDebt),
-				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), sdk.ZeroInt()),
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.BadDebt),
+				Margin:                sdk.NewCoin(tokenPair.QuoteDenom(), sdk.ZeroInt()),
 				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          sdk.ZeroDec(),
 				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
@@ -343,7 +343,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				tokenPair.GetQuoteTokenDenom(), 1_000_000))
+				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -365,7 +365,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper.GetBalance(
 					ctx,
 					liquidator,
-					tokenPair.GetQuoteTokenDenom(),
+					tokenPair.QuoteDenom(),
 				).String(),
 			)
 
@@ -378,7 +378,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper.GetBalance(
 					ctx,
 					nibiruApp.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
-					tokenPair.GetQuoteTokenDenom(),
+					tokenPair.QuoteDenom(),
 				).String(),
 			)
 
@@ -391,10 +391,10 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidator.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
-				BadDebt:               sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.BadDebt),
-				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.BadDebt),
+				Margin:                sdk.NewCoin(tokenPair.QuoteDenom(), newPosition.Margin.RoundInt()),
 				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          newPosition.Size_,
 				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,

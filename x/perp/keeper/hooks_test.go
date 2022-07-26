@@ -103,7 +103,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			t.Log("set mocks")
 			setMockPrices(ctx, mocks, tc.indexPrice, tc.markPrice)
 
-			perpKeeper.AfterEpochEnd(ctx, "hour", 1)
+			perpKeeper.AfterEpochEnd(ctx, "30 min", 1)
 
 			t.Log("assert PairMetadataState")
 			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.PairBTCStable)
@@ -125,7 +125,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		EcosystemFundFeeRatio:   sdk.MustNewDecFromStr("0.000005"),
 		LiquidationFeeRatio:     sdk.MustNewDecFromStr("0.000007"),
 		PartialLiquidationRatio: sdk.MustNewDecFromStr("0.00001"),
-		EpochIdentifier:         "hour",
+		FundingRateInterval:     "30 min",
 		TwapLookbackWindow:      15 * time.Minute,
 	})
 	k.PairMetadataState(ctx).Set(&types.PairMetadata{
@@ -138,7 +138,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec, markPrice sdk.Dec) {
 	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true)
 
-	mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "hour").Return(
+	mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "30 min").Return(
 		epochtypes.EpochInfo{Duration: time.Hour},
 	).MaxTimes(1)
 
