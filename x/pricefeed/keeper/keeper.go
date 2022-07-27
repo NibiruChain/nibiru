@@ -275,8 +275,9 @@ func (k Keeper) GetCurrentTWAP(
 
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
+	endKey := types.PriceSnapshotKey(assetPair.String(), -1)
 	// essentially a reverse linked list traversal
-	k.IteratePriceSnapshotsFrom(ctx, startKey, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
+	k.IteratePriceSnapshotsFrom(ctx, startKey, endKey, true, func(ps *types.PriceSnapshot) (stop bool) {
 		var timeElapsedMs int64
 		if ps.TimestampMs <= lowerLimitTimestampMs {
 			// current snapshot is below the lower limit

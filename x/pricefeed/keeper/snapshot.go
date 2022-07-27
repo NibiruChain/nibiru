@@ -38,7 +38,7 @@ func (k Keeper) IteratePriceSnapshotsFrom(
 	for ; iter.Valid(); iter.Next() {
 		priceSnapshot := &types.PriceSnapshot{}
 		k.cdc.MustUnmarshal(iter.Value(), priceSnapshot)
-		if !do(priceSnapshot) {
+		if do(priceSnapshot) {
 			break
 		}
 	}

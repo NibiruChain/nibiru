@@ -206,7 +206,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.NoError(t, err)
 
 	// Update block time such that first 3 prices valid but last one is expired
-	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45))
+	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45)).WithBlockHeight(1)
 
 	// Set current price
 	err = keeper.GatherRawPrices(ctx, token0, token1)
@@ -224,8 +224,11 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 		expCurPrice, price.Price,
 	)
 
+	// Allow some time to pass
+	// TODO: If no time passes between setting and getting twap it returns a div by zero/err in our case now
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
 	// Check TWAP Price
-	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1, 1*time.Minute)
+	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1, 5*time.Minute)
 	expectedTwap := sdk.MustNewDecFromStr("0.34")
 	require.NoError(t, err)
 	require.Truef(
@@ -235,9 +238,10 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 		expectedTwap, twap,
 	)
 
-	// fast forward block height
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	// fast forward block height as twap snapshots are indexed by blockHeight
+	ctx = ctx.WithBlockHeight(2)
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+
 	// Even number of oracles
 	_, err = keeper.PostRawPrice(
 		ctx, addrs[4], pair.String(),
@@ -262,8 +266,9 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.Equal(t, 1, len(prices))
 	require.Equal(t, price, prices[0])
 
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 	// Check TWAP Price
-	twap, err = keeper.GetCurrentTWAP(ctx, token0, token1, 1*time.Minute)
+	twap, err = keeper.GetCurrentTWAP(ctx, token0, token1, 5*time.Minute)
 	expectedTwap = sdk.MustNewDecFromStr("0.34")
 	require.NoError(t, err)
 	require.Truef(
