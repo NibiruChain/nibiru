@@ -53,6 +53,7 @@ func TestGaslessDecorator(t *testing.T) {
 		FakeAnteDecoratorThree{},
 	}
 	chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)
-	chainedHandler(sdk.Context{}, FakeTx{}, false)
+	_, err := chainedHandler(sdk.Context{}, FakeTx{}, false)
+	require.NoError(t, err)
 	require.Equal(t, "onetwothree", output)
 }
