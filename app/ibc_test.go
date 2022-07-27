@@ -66,6 +66,8 @@ func SetupNibiruTestingApp() (
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
 func init() {
 	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+
+	app.SetPrefixes(app.AccountAddressPrefix)
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.

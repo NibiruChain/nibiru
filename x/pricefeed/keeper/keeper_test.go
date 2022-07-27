@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,11 +47,13 @@ func TestKeeper_GetPostRawPrice(t *testing.T) {
 	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
-	_, addrs := sample.PrivKeyAddressPairs(2)
+	_, _, addr1 := testdata.KeyTestPubAddr()
+	_, _, addr2 := testdata.KeyTestPubAddr()
+
 	pair := common.MustNewAssetPair("tst:usd")
 	params := types.Params{Pairs: common.AssetPairs{pair}}
 	keeper.SetParams(ctx, params)
-	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
+	keeper.OraclesStore().AddOracles(ctx, pair, []sdk.AccAddress{addr1, addr2})
 
 	priceInfos := []struct {
 		oracle  sdk.AccAddress
@@ -58,9 +61,9 @@ func TestKeeper_GetPostRawPrice(t *testing.T) {
 		price   sdk.Dec
 		total   int
 	}{
-		{addrs[0], pair.String(), sdk.MustNewDecFromStr("0.33"), 1},
-		{addrs[1], pair.String(), sdk.MustNewDecFromStr("0.35"), 2},
-		{addrs[0], pair.String(), sdk.MustNewDecFromStr("0.37"), 2},
+		{addr1, pair.String(), sdk.MustNewDecFromStr("0.33"), 1},
+		{addr2, pair.String(), sdk.MustNewDecFromStr("0.35"), 2},
+		{addr1, pair.String(), sdk.MustNewDecFromStr("0.37"), 2},
 	}
 
 	for _, priceInfo := range priceInfos {

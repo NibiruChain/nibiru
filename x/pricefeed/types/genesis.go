@@ -16,6 +16,11 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:       DefaultParams(),
 		PostedPrices: []PostedPrice{},
+		GenesisOracles: []string{
+			"nibi1hk04vteklhmtwe0zpt7023p5zcgu49e5v3atyp", // CoinMarketCap
+			"nibi10hj3gq54uxd9l5d6a7sn4dcvhd0l3wdgt2zvyp", // CoinGecko
+			"nibi1r8gjajmlp9tkff0759rmujv568pa7q6v7u4m3z", // Binance
+		},
 	}
 }
 

@@ -5,17 +5,14 @@ import (
 	"testing"
 	"time"
 
-	tmtypes "github.com/tendermint/tendermint/types"
-
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
@@ -23,28 +20,28 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
-func TestGenesis_DefaultGenesis(t *testing.T) {
-	genesisState := types.GenesisState{
-		Params: types.DefaultParams(),
-	}
+func TestDefaultGenesis(t *testing.T) {
+	app.SetPrefixes(app.AccountAddressPrefix)
+	genesisState := types.DefaultGenesis()
 
 	k, ctx := testutilkeeper.PricefeedKeeper(t)
-	pricefeed.InitGenesis(ctx, k, genesisState)
+	pricefeed.InitGenesis(ctx, k, *genesisState)
 	got := pricefeed.ExportGenesis(ctx, k)
 	require.NotNil(t, got)
 
 	assert.EqualValues(t, types.DefaultPairs, got.Params.Pairs)
-	assert.Empty(t, got.GenesisOracles)
+	assert.Contains(t, got.GenesisOracles, "nibi1hk04vteklhmtwe0zpt7023p5zcgu49e5v3atyp")
+	assert.Contains(t, got.GenesisOracles, "nibi10hj3gq54uxd9l5d6a7sn4dcvhd0l3wdgt2zvyp")
+	assert.Contains(t, got.GenesisOracles, "nibi1r8gjajmlp9tkff0759rmujv568pa7q6v7u4m3z")
 	assert.Empty(t, got.PostedPrices)
 
-	nullify.Fill(&genesisState)
+	nullify.Fill(genesisState)
 	nullify.Fill(got)
 
-	require.Equal(t, genesisState, *got)
+	require.Equal(t, *genesisState, *got)
 }
 
 func TestGenesis_TestGenesis(t *testing.T) {
-	app.SetPrefixes(app.AccountAddressPrefix)
 	appGenesis := testapp.NewTestGenesisStateFromDefault()
 	pfGenesisState := testapp.PricefeedGenesis()
 

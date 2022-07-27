@@ -10,12 +10,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
-// InitGenesis initializes the capability module's state from a provided genesis
-// state.
+// InitGenesis initializes the pricefeed module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
-	k.ActivePairsStore().
-		AddActivePairs(ctx, genState.Params.Pairs)
+	k.ActivePairsStore().AddActivePairs(ctx, genState.Params.Pairs)
 	k.WhitelistOracles(ctx, common.StringsToAddrs(genState.GenesisOracles...))
 
 	// If posted prices are not expired, set them in the store

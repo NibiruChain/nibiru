@@ -4,30 +4,31 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestPostPrice(t *testing.T) {
+	app.SetPrefixes(app.AccountAddressPrefix)
 	k, ctx := testutilkeeper.PricefeedKeeper(t)
 	msgSrv := keeper.NewMsgServerImpl(k)
 
-	_, addrs := sample.PrivKeyAddressPairs(4)
-	authorizedOracles := addrs[:2]
-	unauthorizedAddrs := addrs[2:]
+	_, _, addr1 := testdata.KeyTestPubAddr()
+	_, _, addr2 := testdata.KeyTestPubAddr()
 
 	pair := common.MustNewAssetPair("usd:tst")
 	params := types.Params{
 		Pairs: common.AssetPairs{pair},
 	}
 	k.SetParams(ctx, params)
-	k.WhitelistOraclesForPairs(ctx, authorizedOracles, common.AssetPairs{pair})
+	k.WhitelistOraclesForPairs(ctx, []sdk.AccAddress{addr1}, common.AssetPairs{pair})
 
 	tests := []struct {
 		giveMsg      string
@@ -38,13 +39,13 @@ func TestPostPrice(t *testing.T) {
 		wantAccepted bool
 		errorKind    error
 	}{
-		{"authorized", authorizedOracles[0], "tst", "usd",
+		{"authorized", addr1, "tst", "usd",
 			ctx.BlockTime().UTC().Add(time.Hour * 1), true, nil},
-		{"expired", authorizedOracles[0], "tst", "usd",
+		{"expired", addr1, "tst", "usd",
 			ctx.BlockTime().UTC().Add(-time.Hour * 1), false, types.ErrExpired},
-		{"invalid", authorizedOracles[0], "invalid", "invalid",
+		{"invalid", addr1, "invalid", "invalid",
 			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
-		{"unauthorized", unauthorizedAddrs[0], "tst", "usd",
+		{"unauthorized", addr2, "tst", "usd",
 			ctx.BlockTime().UTC().Add(time.Hour * 1), false, types.ErrInvalidOracle},
 	}
 

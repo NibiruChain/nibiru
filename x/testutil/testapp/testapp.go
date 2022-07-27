@@ -59,6 +59,7 @@ func NewNibiruAppWithGenesis(gen app.GenesisState) *app.NibiruApp {
 
 	encoding := app.MakeTestEncodingConfig()
 
+	app.SetPrefixes(app.AccountAddressPrefix)
 	nibiruApp := app.NewNibiruApp(
 		logger,
 		db,
