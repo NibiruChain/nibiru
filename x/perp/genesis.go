@@ -35,6 +35,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 				"%s registered balance does not match bank balance: %s <-> %s",
 				types.VaultModuleAccount, genState.VaultBalance, balance))
 	}
+
 	// check perp ef balance
 	perpEFAccount := k.AccountKeeper.GetModuleAccount(ctx, types.PerpEFModuleAccount)
 	if perpEFAccount == nil {
