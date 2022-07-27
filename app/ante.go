@@ -49,9 +49,9 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	memPoolDecorator := ante.NewMempoolFeeDecorator()
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
-		antedecorators.NewGaslessDecorator([]sdk.AnteDecorator{&memPoolDecorator}, *options.PricefeedKeeper, *options.PerpKeeper),
 		ante.NewRejectExtensionOptionsDecorator(),
-		ante.NewMempoolFeeDecorator(),
+		antedecorators.NewGaslessDecorator([]sdk.AnteDecorator{&memPoolDecorator}, *options.PricefeedKeeper, *options.PerpKeeper),
+		//ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),

@@ -611,6 +611,7 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	cmd := cli.CmdAddOracleProposal()
 	flags.AddTxFlagsToCmd(cmd)
 	out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, args)
+	fmt.Println(out)
 	s.Require().NoError(err)
 	s.Assert().NotContains(out.String(), "fail")
 	var txRespProtoMessage proto.Message = &sdk.TxResponse{}
