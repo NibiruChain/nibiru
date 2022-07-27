@@ -57,6 +57,10 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
+	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
+	}
+
 	if baseAssetAmount.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
@@ -152,6 +156,10 @@ func (k Keeper) SwapQuoteForBase(
 ) (baseAssetAmount sdk.Dec, err error) {
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Dec{}, types.ErrPairNotSupported
+	}
+
+	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
 	if quoteAssetAmount.IsZero() {
