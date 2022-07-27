@@ -215,7 +215,7 @@ func TestRemoveMargin(t *testing.T) {
 					BlockNumber:                         ctx.BlockHeight(),
 				})
 
-				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(600)))
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.NewCoin(pair.QuoteDenom(), sdk.NewInt(600)))
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt.Error())
@@ -228,7 +228,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				traderAddr := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
-				marginToWithdraw := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 100)
+				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
@@ -261,8 +261,8 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockBankKeeper.EXPECT().GetBalance(
 					ctx,
 					authtypes.NewModuleAddress(types.VaultModuleAccount),
-					pair.GetQuoteTokenDenom(),
-				).Return(sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 0))
+					pair.QuoteDenom(),
+				).Return(sdk.NewInt64Coin(pair.QuoteDenom(), 0))
 
 				t.Log("set pair metadata")
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
@@ -297,7 +297,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				traderAddr := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
-				marginToWithdraw := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 100)
+				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
@@ -320,8 +320,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("mock bank keeper")
 				mocks.mockBankKeeper.
-					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.GetQuoteTokenDenom()).
-					Return(sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.NewInt(math.MaxInt64)))
+					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), pair.QuoteDenom()).
+					Return(sdk.NewCoin(pair.QuoteDenom(), sdk.NewInt(math.MaxInt64)))
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
 					ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(marginToWithdraw),
 				).Return(nil)
@@ -364,14 +364,14 @@ func TestRemoveMargin(t *testing.T) {
 					&types.PositionChangedEvent{
 						Pair:                  pair.String(),
 						TraderAddress:         traderAddr.String(),
-						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 400),
+						Margin:                sdk.NewInt64Coin(pair.QuoteDenom(), 400),
 						PositionNotional:      sdk.NewDec(1000),
-						ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when removing margin
-						TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when removing margin
+						ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when removing margin
+						TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 						PositionSize:          sdk.NewDec(1000),
 						RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
-						BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
 						SpotPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
@@ -394,7 +394,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				traderAddr := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
-				marginToWithdraw := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 100)
+				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
@@ -455,7 +455,7 @@ func TestAddMargin(t *testing.T) {
 					Token0: "uosmo",
 					Token1: "unusd",
 				}
-				margin := sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 600)
+				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
@@ -540,14 +540,14 @@ func TestAddMargin(t *testing.T) {
 					&types.PositionChangedEvent{
 						Pair:                  pair.String(),
 						TraderAddress:         traderAddr.String(),
-						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 600),
+						Margin:                sdk.NewInt64Coin(pair.QuoteDenom(), 600),
 						PositionNotional:      sdk.NewDec(1000),
-						ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when adding margin
-						TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+						ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when adding margin
+						TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						PositionSize:          sdk.NewDec(1000),
 						RealizedPnl:           sdk.ZeroDec(), // always zero when adding margin
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
-						BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
 						SpotPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
@@ -610,14 +610,14 @@ func TestAddMargin(t *testing.T) {
 					&types.PositionChangedEvent{
 						Pair:                  pair.String(),
 						TraderAddress:         traderAddr.String(),
-						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 599),
+						Margin:                sdk.NewInt64Coin(pair.QuoteDenom(), 599),
 						PositionNotional:      sdk.NewDec(1000),
-						ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when adding margin
-						TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+						ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when adding margin
+						TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						PositionSize:          sdk.NewDec(1000),
 						RealizedPnl:           sdk.ZeroDec(), // always zero when adding margin
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
-						BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.OneDec(),
 						SpotPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),

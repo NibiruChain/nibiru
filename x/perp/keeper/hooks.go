@@ -14,7 +14,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) {
 	params := k.GetParams(ctx)
-	if epochIdentifier != params.EpochIdentifier || params.Stopped {
+	if epochIdentifier != params.FundingRateInterval || params.Stopped {
 		return
 	}
 

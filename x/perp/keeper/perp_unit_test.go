@@ -44,7 +44,7 @@ func TestSettlePosition(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, sdk.NewCoins(
-			sdk.NewCoin( /*denom=*/ pair.GetQuoteTokenDenom(), pos.Margin.TruncateInt()),
+			sdk.NewCoin( /*denom=*/ pair.QuoteDenom(), pos.Margin.TruncateInt()),
 		), coins) // TODO(mercilex): here we should have different denom, depends on Transfer impl
 	})
 
@@ -86,7 +86,7 @@ func TestSettlePosition(t *testing.T) {
 		coins, err := k.SettlePosition(ctx, pos)
 		require.NoError(t, err)
 		require.Equal(t, coins, sdk.NewCoins(
-			sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 99100))) // todo(mercilex): modify denom once transfer is impl
+			sdk.NewInt64Coin(pair.QuoteDenom(), 99100))) // todo(mercilex): modify denom once transfer is impl
 	})
 
 	t.Run("position size is zero", func(t *testing.T) {

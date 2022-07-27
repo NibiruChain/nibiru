@@ -44,9 +44,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			validatePercentageRatio,
 		),
 		paramtypes.NewParamSetPair(
-			[]byte("EpochIdentifier"),
-			&p.EpochIdentifier,
-			validateEpochIdentifier,
+			[]byte("FundingRateInterval"),
+			&p.FundingRateInterval,
+			validateFundingRateInterval,
 		),
 		paramtypes.NewParamSetPair(
 			[]byte("TwapLookbackWindow"),
@@ -63,7 +63,7 @@ func NewParams(
 	ecosystemFundFeeRatio sdk.Dec,
 	liquidationFeeRatio sdk.Dec,
 	partialLiquidationRatio sdk.Dec,
-	epochIdentifier string,
+	fundingRateInterval string,
 	twapLookbackWindow time.Duration,
 ) Params {
 	return Params{
@@ -72,7 +72,7 @@ func NewParams(
 		EcosystemFundFeeRatio:   ecosystemFundFeeRatio,
 		LiquidationFeeRatio:     liquidationFeeRatio,
 		PartialLiquidationRatio: partialLiquidationRatio,
-		EpochIdentifier:         epochIdentifier,
+		FundingRateInterval:     fundingRateInterval,
 		TwapLookbackWindow:      twapLookbackWindow,
 	}
 }
@@ -81,9 +81,9 @@ func NewParams(
 func DefaultParams() Params {
 	return NewParams(
 		/* stopped */ false,
-		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"),
-		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"),
-		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"),
+		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"), // 10 bps
+		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"), // 10 bps
+		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"), // 250 bps
 		/* partialLiquidationRatio */ sdk.MustNewDecFromStr("0.25"),
 		/* epochIdentifier */ "30 min",
 		/* twapLookbackWindow */ 15*time.Minute,
@@ -130,7 +130,7 @@ func validatePercentageRatio(i interface{}) error {
 	return nil
 }
 
-func validateEpochIdentifier(i interface{}) error {
+func validateFundingRateInterval(i interface{}) error {
 	_, err := getAsString(i)
 	if err != nil {
 		return err

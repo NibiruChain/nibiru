@@ -159,7 +159,6 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 			sdk.NewCoin(common.DenomStable, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.DenomGov, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(common.DenomColl, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.DenomTestToken, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: storetypes.PruningOptionNothing,
 		CleanupDir:      true,
