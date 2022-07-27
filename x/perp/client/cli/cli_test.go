@@ -359,13 +359,11 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"1",  // Quote asset amount
 		"0.0000001",
 	}
-	resp, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	if err != nil {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
 	s.NoError(err)
-	s.T().Logf("%s", resp.String())
-
 	// Remove margin to trigger bad debt on user 1
 	s.T().Log("removing margin on user 1....")
 	args = []string{

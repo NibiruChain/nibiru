@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"log"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -155,7 +153,6 @@ func (state ActivePairsState) Iterate(
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		log.Printf("%s", iter.Key())
 		activePairsMarshaler := &types.ActivePairMarshaler{}
 		state.cdc.MustUnmarshal(iter.Value(), activePairsMarshaler)
 		if !do(activePairsMarshaler) {
