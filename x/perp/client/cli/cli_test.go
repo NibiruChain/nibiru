@@ -364,7 +364,6 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
 	s.NoError(err)
-
 	// Remove margin to trigger bad debt on user 1
 	s.T().Log("removing margin on user 1....")
 	args = []string{

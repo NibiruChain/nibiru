@@ -10,4 +10,5 @@ type PricefeedKeeper interface {
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string) (
 		pftypes.CurrentPrice, error,
 	)
+	IsActivePair(ctx sdk.Context, pairID string) bool
 }

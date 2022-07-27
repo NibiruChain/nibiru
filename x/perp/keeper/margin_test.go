@@ -174,6 +174,8 @@ func TestRemoveMargin(t *testing.T) {
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
+				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
+
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{

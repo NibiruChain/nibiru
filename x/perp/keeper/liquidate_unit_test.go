@@ -647,7 +647,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 	}
 }
 
-func TestExecuteFullLiquidation(t *testing.T) {
+func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 	tests := []struct {
 		name string
 

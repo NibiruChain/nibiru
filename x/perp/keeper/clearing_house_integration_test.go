@@ -460,6 +460,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					sdk.MustNewDecFromStr("0.1"),
 					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				)
+				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
