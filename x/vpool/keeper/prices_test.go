@@ -564,8 +564,10 @@ func TestGetTWAP(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+			pfKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
+			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+
+			keeper, ctx := VpoolKeeper(t, pfKeeper)
 
 			ctx = ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
 			// Creation of the pool does NOT trigger a markPriceChanged event

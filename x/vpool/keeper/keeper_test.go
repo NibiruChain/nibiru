@@ -153,9 +153,10 @@ func TestSwapQuoteForBase(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
-			)
+			pfKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
+			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+
+			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -338,9 +339,10 @@ func TestSwapBaseForQuote(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
-			)
+			pfKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
+			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+
+			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
 
 			vpoolKeeper.CreatePool(
 				ctx,
