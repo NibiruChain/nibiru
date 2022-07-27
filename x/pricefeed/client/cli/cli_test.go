@@ -570,7 +570,9 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	_, err = testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom)
 	s.Require().NoError(err)
 
-	s.T().Log("load example json as bytes")
+	// ----------------------------------------------------------------------
+	s.T().Log("load example proposal json as bytes")
+	// ----------------------------------------------------------------------
 	proposal := &pricefeedtypes.AddOracleProposal{
 		Title:       "Cataclysm-004",
 		Description: "Whitelists Delphi to post prices for OHM and BTC",
@@ -593,14 +595,19 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	contents, err := ioutil.ReadFile(proposalJSON.Name())
 	s.Assert().NoError(err)
 
+	// ----------------------------------------------------------------------
 	s.T().Log("Unmarshal json bytes into proposal object; check validity")
+	// ----------------------------------------------------------------------
 	encodingConfig := simappparams.MakeTestEncodingConfig()
 	proposal = &pricefeedtypes.AddOracleProposal{}
 	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
 	s.Assert().NoError(err)
 	s.Require().NoError(proposal.Validate())
 
-	s.T().Log("Submit proposal and unmarshal tx response")
+	// ----------------------------------------------------------------------
+	s.T().Log(`Submit proposal and unmarshal tx response
+	$ nibid tx gov submit-proposal add-oracle [proposal-json] --deposit=[deposit] [flags]`)
+	// ----------------------------------------------------------------------
 	args := []string{
 		proposalJSON.Name(),
 		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
@@ -623,8 +630,11 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(0, txResp.Code, out.String())
 
+	// ----------------------------------------------------------------------
 	s.T().Log(`Check that proposal was correctly submitted with gov client
-			$ nibid query gov proposal 1`)
+	$ nibid query gov proposal 1
+	`)
+	// ----------------------------------------------------------------------
 	// the proposal tx won't be included until next block
 	s.Assert().NoError(s.network.WaitForNextBlock())
 	govQueryClient := govtypes.NewQueryClient(clientCtx)
@@ -644,8 +654,10 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 		proposalsQueryResponse.Proposals[0].TotalDeposit,
 	)
 
+	// ----------------------------------------------------------------------
 	s.T().Log(`Move proposal to vote status by meeting min deposit
-			$ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
+	$ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
+	// ----------------------------------------------------------------------
 	govDepositParams, err := govQueryClient.Params(
 		context.Background(), &govtypes.QueryParamsRequest{ParamsType: govtypes.ParamDeposit})
 	s.Assert().NoError(err)
@@ -669,9 +681,11 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 		proposalsQueryResponse.Proposals[0].Status,
 		"proposal should be in voting period since min deposit has been met")
 
+	// ----------------------------------------------------------------------
 	s.T().Log(`Vote on the proposal.
-			$ nibid tx gov vote [proposal-id] [option] [flags]
-			e.g. $ nibid tx gov vote 1 yes`)
+	$ nibid tx gov vote [proposal-id] [option] [flags]
+	For example, $ nibid tx gov vote 1 yes`)
+	// ----------------------------------------------------------------------
 	args = []string{
 		/*proposal-id=*/ "1",
 		/*option=*/ "yes",
@@ -695,7 +709,9 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	}, 20*time.Second, 2*time.Second,
 		"proposal should pass after voting period")
 
+	// ----------------------------------------------------------------------
 	s.T().Log("verify that the new proposed pairs have been added to the params")
+	// ----------------------------------------------------------------------
 	cmd = cli.CmdQueryParams()
 	args = []string{}
 	queryResp := &pricefeedtypes.QueryParamsResponse{}
@@ -704,7 +720,9 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	expectedPairs := append(pricefeedtypes.DefaultPairs, proposalPairs...)
 	s.Assert().EqualValues(expectedPairs, queryResp.Params.Pairs)
 
+	// ----------------------------------------------------------------------
 	s.T().Log("verify that the oracle was whitelisted with a query")
+	// ----------------------------------------------------------------------
 	cmd = cli.CmdQueryOracles()
 	for _, pair := range proposalPairs {
 		args = []string{pair.String()}
