@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#735](https://github.com/NibiruChain/nibiru/pull/735) - Bump github.com/spf13/cobra from 1.4.0 to 1.5.0
 * [#729](https://github.com/NibiruChain/nibiru/pull/729) - move maintenance margin to the vpool module
 * [#741](https://github.com/NibiruChain/nibiru/pull/741) - remove unused code and refactored variable names.
+* [#742](https://github.com/NibiruChain/nibiru/pull/742) - Vpools are not tradeable if they have invalid oracle prices.
 
 ### API Breaking
 
