@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -43,12 +43,12 @@ func NewPricefeedGen() *pftypes.GenesisState {
 	const oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
 
-	pairs := common.AssetPairs{common.PairTestStable}
+	pairs := common.AssetPairs{common.PairBTCStable}
 	return &pftypes.GenesisState{
 		Params: pftypes.Params{Pairs: pairs},
 		PostedPrices: []pftypes.PostedPrice{
 			{
-				PairID: common.PairTestStable.String(),
+				PairID: common.PairBTCStable.String(),
 				Oracle: oracle.String(),
 				Price:  sdk.OneDec(),
 				Expiry: time.Now().Add(1 * time.Hour),
@@ -89,22 +89,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 		{
-			Pair:                  common.MustNewAssetPair("eth:unibi"),
+			Pair:                  common.PairETHStable,
 			BaseAssetReserve:      sdk.NewDec(10_000_000),
 			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
 			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
-		},
-		{
-			Pair:              common.PairTestStable,
-			BaseAssetReserve:  sdk.MustNewDecFromStr("100"),
-			QuoteAssetReserve: sdk.MustNewDecFromStr("600"),
-
-			// below sets any trade is allowed
-			TradeLimitRatio:       sdk.NewDec(10_000_000), // 10000000 * 100%
-			FluctuationLimitRatio: sdk.NewDec(10_000_000), // 1_000_000 is 1
-			MaxOracleSpreadRatio:  sdk.NewDec(10_000_000),
 		},
 	}
 	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
@@ -120,12 +110,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 		{
 			Pair: common.MustNewAssetPair("eth:unibi"),
-			CumulativePremiumFractions: []sdk.Dec{
-				sdk.ZeroDec(),
-			},
-		},
-		{
-			Pair: common.PairTestStable,
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -157,7 +141,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
 			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
-			sdk.NewInt64Coin(common.DenomTestToken, 50_000_000),
 			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
@@ -197,7 +180,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		/* quoteAmt */ "1000000", // 10^6 uNUSD
 		/* baseAssetLimit */ "1",
 	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.NoError(err)
 
 	s.T().Log("B. check vpool balance after open position")
@@ -230,7 +213,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		/* quoteAmt */ "1000000", // 10^6 uNUSD
 		/* baseAmtLimit */ "0",
 	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.NoError(err)
 
 	s.T().Log("C. check trader position")
@@ -256,7 +239,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		/* quoteAmt */ "100", // 100 uNUSD
 		/* baseAssetLimit */ "1",
 	}
-	res, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	res, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.NoError(err)
 	s.NotContains(res.String(), "fail")
 
@@ -290,7 +273,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		/* quoteAmt */ "4000000", // 4*10^6 uNUSD
 		/* baseAssetLimit */ "0",
 	}
-	res, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	res, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	s.NoError(err)
 	s.NotContains(res.String(), "fail")
 
@@ -313,7 +296,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		user.String(),
 		common.PairBTCStable.String(),
 	}
-	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.NoError(err)
 
 	s.T().Log("F. check trader position")
@@ -329,42 +312,33 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	val := s.network.Validators[0]
-	assetPair := common.AssetPair{
-		Token0: "eth",
-		Token1: "unibi",
-	}
-
 	user := s.users[0]
 
 	// verify trader has no position (empty)
-	_, err := testutilcli.QueryTraderPosition(val.ClientCtx, assetPair, user)
+	_, err := testutilcli.QueryTraderPosition(val.ClientCtx, common.PairETHStable, user)
 	s.Error(err, "no position found")
 
 	// close position should produce error
 	args := []string{
 		"--from",
 		user.String(),
-		assetPair.String(),
+		common.PairETHStable.String(),
 	}
-	out, _ := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	out, _ := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
 	s.Contains(out.String(), "no position found")
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
 	val := s.network.Validators[0]
-	assetPair := common.AssetPair{
-		Token0: "eth",
-		Token1: "unibi",
-	}
 
 	s.T().Log("check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, assetPair)
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.PairETHStable)
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("check prices")
-	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, assetPair, "1", "100")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.PairETHStable, "1", "100")
 	s.T().Logf("priceInfo: %+v", priceInfo)
 	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
 	s.NoError(err)
@@ -373,7 +347,6 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Set up the user accounts
 	val := s.network.Validators[0]
-	pair := common.PairTestStable
 
 	// Open a position with first user
 	s.T().Log("opening a position with user 1....")
@@ -381,12 +354,12 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"--from",
 		s.users[0].String(),
 		"buy",
-		pair.String(),
+		common.PairBTCStable.String(),
 		"10", // Leverage
 		"1",  // Quote asset amount
 		"0.0000001",
 	}
-	_, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
 	if err != nil {
 		s.T().Logf("user1 open position err: %+v", err)
 	}
@@ -397,10 +370,10 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	args = []string{
 		"--from",
 		s.users[0].String(),
-		pair.String(),
-		fmt.Sprintf("%s%s", "100", common.PairTestStable.Token1), // Amount
+		common.PairBTCStable.String(),
+		fmt.Sprintf("%s%s", "100", common.DenomStable), // Amount
 	}
-	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
+	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
 	if err != nil {
 		s.T().Logf("user1 remove margin err: %+v", err)
 	}

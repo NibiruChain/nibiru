@@ -93,8 +93,6 @@ func (k Keeper) calcFreeCollateral(
 		return sdk.Dec{}, err
 	}
 
-	params := k.GetParams(ctx)
-
 	positionNotional, unrealizedPnL, err := k.
 		getPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
@@ -106,7 +104,8 @@ func (k Keeper) calcFreeCollateral(
 	}
 	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
 
-	maintenanceMarginRequirement := positionNotional.Mul(params.MaintenanceMarginRatio)
+	maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pos.GetPair())
+	maintenanceMarginRequirement := positionNotional.Mul(maintenanceMarginRatio)
 
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
 }

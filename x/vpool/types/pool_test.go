@@ -19,6 +19,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 		sdk.NewDec(10_000_000),       // 10
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.1"),
+		sdk.MustNewDecFromStr("0.0625"),
 	)
 
 	// less that max ratio
@@ -29,6 +30,23 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 
 	// more than ratio limit
 	require.False(t, pool.HasEnoughQuoteReserve(sdk.NewDec(9_000_001)))
+}
+
+func TestSetMarginRatio(t *testing.T) {
+	pair := common.MustNewAssetPair("BTC:NUSD")
+
+	pool := NewPool(
+		pair,
+		sdk.MustNewDecFromStr("0.9"), // 0.9
+		sdk.NewDec(10_000_000),       // 10
+		sdk.NewDec(10_000_000),       // 10
+		sdk.MustNewDecFromStr("0.1"),
+		sdk.MustNewDecFromStr("0.1"),
+		/*maintenanceMarginRatio*/ sdk.MustNewDecFromStr("0.42"),
+	)
+
+	// less that max ratio
+	require.Equal(t, pool.MaintenanceMarginRatio, sdk.MustNewDecFromStr("0.42"))
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
@@ -87,6 +105,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				/*baseAssetReserve=*/ tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
 				/*maxOracleSpreadRatio=*/ sdk.MustNewDecFromStr("0.1"),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
@@ -159,6 +178,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				/*baseAssetReserve=*/ tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				/*maxOracleSpreadRatio=*/ sdk.OneDec(),
+				/*maintenanceMarginRatio=*/ sdk.MustNewDecFromStr("0.0625"),
 			)
 
 			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
@@ -185,6 +205,7 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		/*baseAssetReserve*/ sdk.NewDec(1_000_000),
 		/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 		/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.01"),
+		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 	)
 
 	t.Log("decrease quote asset reserve")
