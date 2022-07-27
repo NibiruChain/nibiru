@@ -8,6 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -375,6 +379,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			s.Require().NoError(err)
 			if tc.expectErr {
 				s.Require().Error(err, out.String())
 			} else {
@@ -389,6 +394,15 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		})
 	}
 }
+
+func queryBankBalance(ctx client.Context, s IntegrationTestSuite, account sdk.AccAddress) (finalBalance banktypes.QueryAllBalancesResponse) {
+	resp, err := banktestutil.QueryBalancesExec(ctx, account)
+	s.Require().NoError(err)
+	s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
+
+	return
+}
+
 func (s IntegrationTestSuite) TestSetPriceCmd() {
 	err := s.network.WaitForNextBlock()
 	s.Require().NoError(err)
@@ -400,11 +414,11 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 	expireInOneHour := strconv.Itoa(int(now.Add(1 * time.Hour).Unix()))
 	expiredTS := strconv.Itoa(int(now.Add(-1 * time.Hour).Unix()))
 
-	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1_000_000))
+	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1))
 	for _, oracleName := range []string{"genOracle", "wrongOracle"} {
 		_, err = testutilcli.FillWalletFromValidator(
 			/*addr=*/ s.oracleMap[oracleName],
-			/*balanece=*/ gasFeeToken,
+			/*balance=*/ gasFeeToken,
 			/*Validator=*/ val,
 			/*feesDenom=*/ s.cfg.BondDenom)
 		s.Require().NoError(err)
@@ -414,13 +428,13 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 	}
 	testCases := []struct {
 		name string
 		args []string
 
 		expectedPriceForPair map[string]sdk.Dec
+		expectedFeePaid      sdk.Int
 		respType             proto.Message
 		expectedCode         uint32
 		fromOracle           string
@@ -432,8 +446,9 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
 				gov.String(): sdk.NewDec(100)},
-			respType:   &sdk.TxResponse{},
-			fromOracle: "genOracle",
+			expectedFeePaid: sdk.NewInt(0),
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 		{
 			name: "Set the price of the collateral token",
@@ -442,35 +457,39 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
 				col.String(): sdk.MustNewDecFromStr("0.85")},
-			respType:   &sdk.TxResponse{},
-			fromOracle: "genOracle",
+			expectedFeePaid: sdk.NewInt(0),
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 		{
 			name: "Use invalid oracle",
 			args: []string{
 				col.Token0, col.Token1, "0.5", expireInOneHour,
 			},
-			respType:     &sdk.TxResponse{},
-			expectedCode: 6,
-			fromOracle:   "wrongOracle",
+			expectedFeePaid: sdk.NewInt(0),
+			respType:        &sdk.TxResponse{},
+			expectedCode:    6,
+			fromOracle:      "wrongOracle",
 		},
 		{
 			name: "Set invalid pair returns an error",
 			args: []string{
 				"invalid", "pair", "123", expireInOneHour,
 			},
-			expectedCode: 6,
-			respType:     &sdk.TxResponse{},
-			fromOracle:   "genOracle",
+			expectedFeePaid: sdk.NewInt(0),
+			expectedCode:    6,
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 		{
 			name: "Set expired pair returns an error",
 			args: []string{
 				col.Token0, col.Token1, "100", expiredTS,
 			},
-			expectedCode: 3,
-			respType:     &sdk.TxResponse{},
-			fromOracle:   "genOracle",
+			expectedCode:    3,
+			expectedFeePaid: sdk.NewInt(0),
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 	}
 
@@ -482,10 +501,21 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			clientCtx := val.ClientCtx
 
 			commonArgs = append(commonArgs,
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]))
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]),
+			)
+
+			bankBalanceStart := queryBankBalance(clientCtx, s, s.oracleMap[tc.fromOracle])
+
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
+			bankBalanceEnd := queryBankBalance(clientCtx, s, s.oracleMap[tc.fromOracle])
+
 			s.Require().NoError(err)
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType))
+
+			s.Require().EqualValues(
+				tc.expectedFeePaid.Int64(),
+				bankBalanceEnd.Balances.AmountOf(common.DenomGov).Sub(bankBalanceStart.Balances.AmountOf(common.DenomGov)).Int64(),
+			)
 
 			txResp := tc.respType.(*sdk.TxResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)

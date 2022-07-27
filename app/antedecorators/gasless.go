@@ -1,8 +1,11 @@
 package antedecorators
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
@@ -64,14 +67,14 @@ func isTxGasless(tx sdk.Tx, ctx sdk.Context, pricefeedKeeper pricefeedkeeper.Kee
 }
 
 func pricefeedPostPriceIsGasless(msg *pricefeedtypes.MsgPostPrice, ctx sdk.Context, keeper pricefeedkeeper.Keeper) bool {
-	return true
-	// valAddr, err := sdk.AccAddressFromBech32(msg.Oracle)
-	// if err != nil {
-	// 	return false
-	// }
+	valAddr, err := sdk.AccAddressFromBech32(msg.Oracle)
+	if err != nil {
+		return false
+	}
 
-	// pair := common.AssetPair{Token0: msg.Token0, Token1: msg.Token1}
-	// return keeper.IsWhitelistedOracle(ctx, pair.String(), valAddr)
+	pair := common.AssetPair{Token0: msg.Token0, Token1: msg.Token1}
+	fmt.Println(msg.Oracle, keeper.IsWhitelistedOracle(ctx, pair.String(), valAddr))
+	return keeper.IsWhitelistedOracle(ctx, pair.String(), valAddr)
 }
 
 func liquidateIsGasless(msg *perptypes.MsgLiquidate, ctx sdk.Context, keeper perpkeeper.Keeper) bool {

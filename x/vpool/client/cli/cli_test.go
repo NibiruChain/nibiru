@@ -65,7 +65,6 @@ func (s *VpoolCLISuite) TearDownSuite() {
 }
 
 func (s VpoolCLISuite) TestX_CmdAddVpool() {
-
 	s.Require().Len(s.network.Validators, 1)
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
