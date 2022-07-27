@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package nibiru.vpool.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
+
+message CreatePoolProposal {
+  string title = 1;
+  string description = 2;
+  // pair represents the pair of the vpool.
+  string pair = 3;
+  // trade_limit_ratio represents the limit on trading amounts.
+  string trade_limit_ratio = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // quote_asset_reserve is the amount of quote asset the pool will be initialized with.
+  string quote_asset_reserve = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // base_asset_reserve is the amount of base asset the pool will be initialized with.
+  string base_asset_reserve = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // fluctuation_limit_ratio represents the maximum price
+  // percentage difference a trade can create on the pool.
+  string fluctuation_limit_ratio = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // max_oracle_spread_ratio represents the maximum price percentage
+  // difference that can exist between oracle price and vpool prices after a trade.
+  string max_oracle_spread_ratio = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // maintenance_margin_ratio
+  string maintenance_margin_ratio = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}

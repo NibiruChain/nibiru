@@ -82,4 +82,10 @@ message Pool {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false
   ];    
+  
+  // maintenance_margin_ratio
+  string maintenance_margin_ratio = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+    ];
 }

@@ -160,6 +160,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			/*baseAssetReserve*/ sdk.NewDec(5_000_000),
 			/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 			/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.1"),
+			/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
