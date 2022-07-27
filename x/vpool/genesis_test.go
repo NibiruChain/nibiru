@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -38,17 +39,15 @@ func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{Vpools: vpools}
 
 	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-	k := nibiruApp.VpoolKeeper
-	vpool.InitGenesis(ctx, k, genesisState)
+	vpoolKeeper := nibiruApp.VpoolKeeper
+	vpool.InitGenesis(ctx, vpoolKeeper, genesisState)
 
 	for _, vp := range vpools {
-		require.True(t, k.ExistsPool(ctx, vp.Pair))
+		require.True(t, vpoolKeeper.ExistsPool(ctx, vp.Pair))
 	}
 
-	exportedGenesis := vpool.ExportGenesis(ctx, k)
-	require.Len(t, exportedGenesis.Vpools, 2)
-
-	for _, exportedVpool := range exportedGenesis.Vpools {
-		require.Contains(t, genesisState.Vpools, exportedVpool)
+	exportedGenesis := vpool.ExportGenesis(ctx, vpoolKeeper)
+	for _, vpool := range genesisState.Vpools {
+		assert.Contains(t, exportedGenesis.Vpools, vpool)
 	}
 }
