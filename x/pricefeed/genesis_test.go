@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -41,26 +40,48 @@ func TestDefaultGenesis(t *testing.T) {
 	require.Equal(t, *genesisState, *got)
 }
 
-func TestGenesis_TestGenesis(t *testing.T) {
-	appGenesis := testapp.NewTestGenesisStateFromDefault()
-	pfGenesisState := testapp.PricefeedGenesis()
+func TestInitGenesis(t *testing.T) {
+	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	pricefeedKeeper := nibiruApp.PricefeedKeeper
 
-	nibiruApp := testapp.NewNibiruAppWithGenesis(appGenesis)
-	ctx := nibiruApp.NewContext(false, tmproto.Header{})
-	k := nibiruApp.PricefeedKeeper
-	pricefeed.InitGenesis(ctx, k, pfGenesisState)
-	params := k.GetParams(ctx)
-	assert.Equal(t, pfGenesisState.Params, params)
-
-	// genOracle should be whitelisted on all pairs
-	for _, pair := range params.Pairs {
-		assert.True(t, k.IsWhitelistedOracle(
-			ctx, pair.String(), sdk.MustAccAddressFromBech32(pfGenesisState.GenesisOracles[0])))
+	pricefeedGenesis := types.DefaultGenesis()
+	pricefeedGenesis.PostedPrices = []types.PostedPrice{
+		{
+			PairID: common.PairGovStable.String(),
+			Oracle: pricefeedGenesis.GenesisOracles[0],
+			Price:  sdk.NewDec(10),
+			Expiry: time.Now().Add(1 * time.Hour),
+		},
+		{
+			PairID: common.PairCollStable.String(),
+			Oracle: pricefeedGenesis.GenesisOracles[1],
+			Price:  sdk.OneDec(),
+			Expiry: time.Now().Add(1 * time.Hour),
+		},
 	}
 
-	// prices are only posted for PairGovStable and PairCollStable
-	assert.NotEmpty(t, k.GetRawPrices(ctx, params.Pairs[0].String()))
-	assert.NotEmpty(t, k.GetRawPrices(ctx, params.Pairs[1].String()))
+	pricefeed.InitGenesis(ctx, pricefeedKeeper, *pricefeedGenesis)
+
+	t.Log("assert params")
+	params := pricefeedKeeper.GetParams(ctx)
+	assert.Equal(t, pricefeedGenesis.Params, params)
+
+	t.Log("assert oracles")
+	for _, pair := range params.Pairs {
+		for _, oracle := range pricefeedGenesis.GenesisOracles {
+			assert.True(t,
+				pricefeedKeeper.IsWhitelistedOracle(
+					ctx,
+					pair.String(),
+					sdk.MustAccAddressFromBech32(oracle),
+				),
+			)
+		}
+	}
+
+	t.Log("assert raw prices")
+	assert.NotEmpty(t, pricefeedKeeper.GetRawPrices(ctx, common.PairGovStable.String()))
+	assert.NotEmpty(t, pricefeedKeeper.GetRawPrices(ctx, common.PairCollStable.String()))
 }
 
 func TestGenesisState_Validate(t *testing.T) {
