@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -88,7 +87,7 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 
 	// Should take TWAP price
 	stablePrice, err := k.PricefeedKeeper.GetCurrentTWAP(
-		ctx, common.DenomStable, common.DenomColl, 15*time.Minute)
+		ctx, common.DenomStable, common.DenomColl)
 	if err != nil {
 		return err
 	}

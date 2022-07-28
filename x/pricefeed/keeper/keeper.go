@@ -257,17 +257,21 @@ Note the open-ended right bracket.
 args:
   - ctx: cosmos-sdk context
   - pair: the token pair
-  - lookbackInterval: how far back to calculate TWAP
 
 ret:
   - price: TWAP as sdk.Dec
   - err: error
 */
-func (k Keeper) GetCurrentTWAP(
-	ctx sdk.Context, token0 string, token1 string, lookbackInterval time.Duration,
-) (price sdk.Dec, err error) {
+func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (price sdk.Dec, err error) {
+	// Ensure we still have valid prices
+	_, err = k.GetCurrentPrice(ctx, token0, token1)
+	if err != nil {
+		return sdk.Dec{}, types.ErrNoValidPrice
+	}
+
+	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
 	// earliest timestamp we'll look back until
-	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
+	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackWindow).UnixMilli()
 
 	var cumulativePrice sdk.Dec = sdk.ZeroDec()
 	var cumulativePeriodMs int64 = 0
@@ -275,9 +279,8 @@ func (k Keeper) GetCurrentTWAP(
 
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
-	endKey := types.PriceSnapshotKey(assetPair.String(), -1)
-	// essentially a reverse linked list traversal
-	k.IteratePriceSnapshotsFrom(ctx, startKey, endKey, true, func(ps *types.PriceSnapshot) (stop bool) {
+	// traverse snapshots in reverse order
+	k.IteratePriceSnapshotsFrom(ctx, startKey, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
 		var timeElapsedMs int64
 		if ps.TimestampMs <= lowerLimitTimestampMs {
 			// current snapshot is below the lower limit
@@ -296,9 +299,9 @@ func (k Keeper) GetCurrentTWAP(
 		return false
 	})
 
-	// Should we return 0 or an error??
+	// TODO: Should we return 0 or an error??
 	if cumulativePeriodMs == 0 {
-		return sdk.Dec{}, fmt.Errorf("No prices available for %s:%s", token0, token1)
+		return sdk.ZeroDec(), nil
 	}
 
 	// definition of TWAP

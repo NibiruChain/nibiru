@@ -168,7 +168,8 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	token0, token1 := "tst", "usd"
 	pair := common.AssetPair{Token0: token0, Token1: token1}
 	params := types.Params{
-		Pairs: common.AssetPairs{pair},
+		Pairs:              common.AssetPairs{pair},
+		TwapLookbackWindow: 15 * time.Minute,
 	}
 	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
 	keeper.SetParams(ctx, params)
@@ -228,7 +229,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	// TODO: If no time passes between setting and getting twap it returns a div by zero/err in our case now
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
 	// Check TWAP Price
-	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1, 5*time.Minute)
+	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1)
 	expectedTwap := sdk.MustNewDecFromStr("0.34")
 	require.NoError(t, err)
 	require.Truef(
@@ -268,8 +269,8 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 	// Check TWAP Price
-	twap, err = keeper.GetCurrentTWAP(ctx, token0, token1, 5*time.Minute)
-	expectedTwap = sdk.MustNewDecFromStr("0.34")
+	twap, err = keeper.GetCurrentTWAP(ctx, token0, token1)
+	expectedTwap = sdk.MustNewDecFromStr("0.340625")
 	require.NoError(t, err)
 	require.Truef(
 		t,

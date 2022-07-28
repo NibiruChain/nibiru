@@ -88,7 +88,9 @@ func TestSetCollRatioUpdate(t *testing.T) {
 				Token1: common.DenomStable,
 			}
 			params := pftypes.Params{
-				Pairs: common.AssetPairs{pair}}
+				Pairs:              common.AssetPairs{pair},
+				TwapLookbackWindow: 15 * time.Minute,
+			}
 
 			priceKeeper.SetParams(ctx, params)
 			priceKeeper.WhitelistOracles(ctx, oracles)
@@ -107,6 +109,8 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			err = priceKeeper.GatherRawPrices(ctx, common.DenomColl, common.DenomStable)
 			require.NoError(t, err)
 
+			// pricefeed TWAP requires time passed between setting and querying
+			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 			err = stablecoinKeeper.EvaluateCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(
@@ -125,7 +129,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			name:              "Collateral price is higher than stable",
 			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("1.1"),
-			expectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			expectedPass:      true,
 		},
 		{
@@ -146,7 +150,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			name:              "Collateral price is lower than stable",
 			inCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			expectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
+			expectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
 			expectedPass:      true,
 		},
 	}

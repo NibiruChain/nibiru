@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -28,10 +29,10 @@ func (k Keeper) IteratePriceSnapshotsFrom(
 	reverse bool,
 	do func(*types.PriceSnapshot) (stop bool),
 ) {
-	kvStore := ctx.KVStore(k.storeKey)
-	iter := kvStore.Iterator(start, end)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceSnapshotPrefix)
+	iter := store.Iterator(start, end)
 	if reverse {
-		iter = kvStore.ReverseIterator(start, end)
+		iter = store.ReverseIterator(start, end)
 	}
 	defer iter.Close()
 

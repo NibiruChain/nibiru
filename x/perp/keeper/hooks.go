@@ -24,7 +24,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 			continue
 		}
 
-		indexTWAPPrice, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1, 15*time.Minute)
+		indexTWAPPrice, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap index price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
