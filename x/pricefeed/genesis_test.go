@@ -16,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
@@ -29,10 +30,8 @@ func TestDefaultGenesis(t *testing.T) {
 	require.NotNil(t, got)
 
 	assert.EqualValues(t, types.DefaultPairs, got.Params.Pairs)
-	assert.Contains(t, got.GenesisOracles, "nibi1hk04vteklhmtwe0zpt7023p5zcgu49e5v3atyp")
-	assert.Contains(t, got.GenesisOracles, "nibi10hj3gq54uxd9l5d6a7sn4dcvhd0l3wdgt2zvyp")
-	assert.Contains(t, got.GenesisOracles, "nibi1r8gjajmlp9tkff0759rmujv568pa7q6v7u4m3z")
 	assert.Empty(t, got.PostedPrices)
+	assert.Empty(t, got.GenesisOracles)
 
 	nullify.Fill(genesisState)
 	nullify.Fill(got)
@@ -43,18 +42,20 @@ func TestDefaultGenesis(t *testing.T) {
 func TestInitGenesis(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 	pricefeedKeeper := nibiruApp.PricefeedKeeper
+	oracle := sample.AccAddress()
 
 	pricefeedGenesis := types.DefaultGenesis()
+	pricefeedGenesis.GenesisOracles = []string{oracle.String()}
 	pricefeedGenesis.PostedPrices = []types.PostedPrice{
 		{
 			PairID: common.PairGovStable.String(),
-			Oracle: pricefeedGenesis.GenesisOracles[0],
+			Oracle: oracle.String(),
 			Price:  sdk.NewDec(10),
 			Expiry: time.Now().Add(1 * time.Hour),
 		},
 		{
 			PairID: common.PairCollStable.String(),
-			Oracle: pricefeedGenesis.GenesisOracles[1],
+			Oracle: oracle.String(),
 			Price:  sdk.OneDec(),
 			Expiry: time.Now().Add(1 * time.Hour),
 		},
@@ -66,18 +67,7 @@ func TestInitGenesis(t *testing.T) {
 	params := pricefeedKeeper.GetParams(ctx)
 	assert.Equal(t, pricefeedGenesis.Params, params)
 
-	t.Log("assert oracles")
-	for _, pair := range params.Pairs {
-		for _, oracle := range pricefeedGenesis.GenesisOracles {
-			assert.True(t,
-				pricefeedKeeper.IsWhitelistedOracle(
-					ctx,
-					pair.String(),
-					sdk.MustAccAddressFromBech32(oracle),
-				),
-			)
-		}
-	}
+	assert.True(t, pricefeedKeeper.IsWhitelistedOracle(ctx, common.PairGovStable.String(), oracle))
 
 	t.Log("assert raw prices")
 	assert.NotEmpty(t, pricefeedKeeper.GetRawPrices(ctx, common.PairGovStable.String()))

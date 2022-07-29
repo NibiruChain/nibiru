@@ -67,14 +67,11 @@ func TestWhitelistOracles(t *testing.T) {
 				oracle := sample.AccAddress()
 				paramsPairs := pk.GetParams(ctx).Pairs
 				for _, pair := range paramsPairs {
-					require.False(t, pk.IsWhitelistedOracle(ctx, pair.String(), oracle))
+					assert.False(t, pk.IsWhitelistedOracle(ctx, pair.String(), oracle))
 				}
 				gotOraclesMap := pk.GetOraclesForPairs(ctx, paramsPairs)
 				gotOracles := gotOraclesMap[paramsPairs[0]]
-				require.EqualValues(t, 3, len(gotOracles))
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1hk04vteklhmtwe0zpt7023p5zcgu49e5v3atyp"))
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi10hj3gq54uxd9l5d6a7sn4dcvhd0l3wdgt2zvyp"))
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1r8gjajmlp9tkff0759rmujv568pa7q6v7u4m3z"))
+				assert.Empty(t, gotOracles)
 			},
 		},
 		{
@@ -86,36 +83,25 @@ func TestWhitelistOracles(t *testing.T) {
 				paramsPairs := pk.GetParams(ctx).Pairs
 				for _, pair := range paramsPairs {
 					gotOracles := pk.GetOraclesForPair(ctx, pair.String())
-					require.EqualValues(t, 3, len(gotOracles))
-					require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1hk04vteklhmtwe0zpt7023p5zcgu49e5v3atyp"))
-					require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi10hj3gq54uxd9l5d6a7sn4dcvhd0l3wdgt2zvyp"))
-					require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1r8gjajmlp9tkff0759rmujv568pa7q6v7u4m3z"))
+					assert.Empty(t, gotOracles)
 				}
 
 				oracleA := sample.AccAddress()
 				oracleB := sample.AccAddress()
 
-				wantOracles := []sdk.AccAddress{oracleA}
-				pk.WhitelistOracles(ctx, wantOracles)
+				pk.WhitelistOracles(ctx, []sdk.AccAddress{oracleA})
 				gotOraclesMap := pk.GetOraclesForPairs(ctx, paramsPairs)
 				gotOracles := gotOraclesMap[paramsPairs[0]]
-				require.EqualValues(t, 4, len(gotOracles))
+				require.EqualValues(t, 1, len(gotOracles))
 				require.Contains(t, gotOracles, oracleA)
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1hk04vteklhmtwe0zpt7023p5zcgu49e5v3atyp"))
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi10hj3gq54uxd9l5d6a7sn4dcvhd0l3wdgt2zvyp"))
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1r8gjajmlp9tkff0759rmujv568pa7q6v7u4m3z"))
 				require.NotContains(t, gotOracles, oracleB)
 
-				wantOracles = []sdk.AccAddress{oracleA, oracleB}
-				pk.WhitelistOracles(ctx, wantOracles)
+				pk.WhitelistOracles(ctx, []sdk.AccAddress{oracleA, oracleB})
 				gotOraclesMap = pk.GetOraclesForPairs(ctx, paramsPairs)
 				gotOracles = gotOraclesMap[paramsPairs[0]]
-				require.EqualValues(t, 5, len(gotOracles))
+				require.EqualValues(t, 2, len(gotOracles))
 				require.Contains(t, gotOracles, oracleA)
 				require.Contains(t, gotOracles, oracleB)
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1hk04vteklhmtwe0zpt7023p5zcgu49e5v3atyp"))
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi10hj3gq54uxd9l5d6a7sn4dcvhd0l3wdgt2zvyp"))
-				require.Contains(t, gotOracles, sdk.MustAccAddressFromBech32("nibi1r8gjajmlp9tkff0759rmujv568pa7q6v7u4m3z"))
 			},
 		},
 	}
