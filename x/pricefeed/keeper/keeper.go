@@ -269,6 +269,12 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (p
 		return sdk.Dec{}, types.ErrNoValidPrice
 	}
 
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	givenIsActive := k.IsActivePair(ctx, assetPair.String())
+	inverseIsActive := k.IsActivePair(ctx, assetPair.Inverse().String())
+	if !givenIsActive && inverseIsActive {
+		assetPair = assetPair.Inverse()
+	}
 	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
 	// earliest timestamp we'll look back until
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackWindow).UnixMilli()
@@ -277,7 +283,6 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (p
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
 
-	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
 	// traverse snapshots in reverse order
 	k.IteratePriceSnapshotsFrom(ctx, startKey, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
@@ -304,8 +309,12 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (p
 		return sdk.ZeroDec(), nil
 	}
 
-	// definition of TWAP
-	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
+	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
+
+	if !twap.IsZero() && inverseIsActive {
+		return sdk.OneDec().Quo(twap), nil
+	}
+	return twap, nil
 }
 
 // IterateCurrentPrices iterates over all current price objects in the store and performs a callback function

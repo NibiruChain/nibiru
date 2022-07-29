@@ -32,10 +32,6 @@ var (
 	// RawPriceFeedPrefix prefix for the raw pricefeed of an asset
 	RawPriceFeedPrefix = []byte{0x01}
 
-	// TWAPPrefix prefix for the current price of an asset
-	// TODO: Can we delete/reuse this key or should we leave this for backwards comp
-	TWAPPrefix = []byte{0x02}
-
 	// Snapshot prefix for the median oracle price at a specific point in time
 	PriceSnapshotPrefix = []byte{0x03}
 )
@@ -43,11 +39,6 @@ var (
 // CurrentPriceKey returns the prefix for the current price
 func CurrentPriceKey(pairID string) []byte {
 	return append(CurrentPricePrefix, []byte(pairID)...)
-}
-
-// CurrentTWAPKey returns the prefix for the current TWAP price
-func CurrentTWAPKey(twapPairID string) []byte {
-	return append(TWAPPrefix, []byte(twapPairID)...)
 }
 
 // RawPriceIteratorKey returns the prefix for the raw price for a single market

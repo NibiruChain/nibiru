@@ -226,22 +226,15 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	)
 
 	// Allow some time to pass
-	// TODO: If no time passes between setting and getting twap it returns a div by zero/err in our case now
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
 	// Check TWAP Price
 	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1)
 	expectedTwap := sdk.MustNewDecFromStr("0.34")
 	require.NoError(t, err)
-	require.Truef(
-		t,
-		twap.Equal(expectedTwap),
-		"expected twap price to be: %s, got: %s",
-		expectedTwap, twap,
-	)
+	assert.Equal(t, expectedTwap, twap, "expected twap price to be: %s, got: %s", expectedTwap, twap)
 
 	// fast forward block height as twap snapshots are indexed by blockHeight
-	ctx = ctx.WithBlockHeight(2)
-	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 
 	// Even number of oracles
 	_, err = keeper.PostRawPrice(

@@ -70,7 +70,6 @@ func TestTWAPriceUpdates(t *testing.T) {
 	*/
 
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
-	// params := nibiruApp.PricefeedKeeper.GetParams(ctx)
 	nibiruApp.PricefeedKeeper.SetParams(ctx, params)
 	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAP(
 		ctx, pair.Token0, pair.Token1)

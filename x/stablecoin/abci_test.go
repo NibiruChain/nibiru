@@ -33,7 +33,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			Name:              "Collateral price higher than stable, wait for correct amount of time",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -75,7 +75,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			Name:              "Collateral price higher than stable, and we wait for 2 updates, coll ratio should be updated twice",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.805"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.795"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -91,7 +91,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			Name:              "Collateral price higher than stable, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
 			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -116,9 +116,8 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			pairs := common.AssetPairs{
 				common.PairCollStable,
 			}
-			twapLookbackWindow := 15 * time.Minute
-			markets := ptypes.NewParams(pairs, twapLookbackWindow)
-			app.PricefeedKeeper.SetParams(ctx, markets)
+			params := ptypes.NewParams(pairs, 15*time.Minute)
+			app.PricefeedKeeper.SetParams(ctx, params)
 			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			_, err := app.PricefeedKeeper.PostRawPrice(
@@ -162,10 +161,9 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 		{Token0: common.DenomColl, Token1: common.DenomStable},
 	}
 	twapLookbackWindow := 15 * time.Minute
-	markets := ptypes.NewParams(pairs, twapLookbackWindow)
-	app.PricefeedKeeper.SetParams(ctx, markets)
+	params := ptypes.NewParams(pairs, twapLookbackWindow)
+	app.PricefeedKeeper.SetParams(ctx, params)
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-	app.PricefeedKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
 	_, err := app.PricefeedKeeper.PostRawPrice(

@@ -13,6 +13,7 @@ func (k Keeper) saveOrUpdateSnapshot(
 	price sdk.Dec,
 ) {
 	snapshot := &types.PriceSnapshot{
+		PairId:      pair,
 		Price:       price,
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	}

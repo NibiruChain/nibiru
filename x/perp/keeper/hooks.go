@@ -24,12 +24,12 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 			continue
 		}
 
-		indexTWAPPrice, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
+		indexTWAP, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap index price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
 		}
-		if indexTWAPPrice.IsZero() {
+		if indexTWAP.IsZero() {
 			ctx.Logger().Error("index price is zero", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
@@ -46,7 +46,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-		fundingRate := markTWAP.Price.Sub(indexTWAPPrice).QuoInt64(int64(intervalsPerDay))
+		fundingRate := markTWAP.Price.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
 		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
 		cumulativeFundingRate := fundingRate
@@ -60,7 +60,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                  pairMetadata.Pair.String(),
 			MarkPrice:             markTWAP.Price,
-			IndexPrice:            indexTWAPPrice,
+			IndexPrice:            indexTWAP,
 			LatestFundingRate:     fundingRate,
 			CumulativeFundingRate: cumulativeFundingRate,
 			BlockHeight:           ctx.BlockHeight(),
