@@ -163,6 +163,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		perpKeeper := &nibiruApp.PerpKeeper
