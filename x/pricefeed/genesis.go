@@ -27,7 +27,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 				panic(err)
 			}
 		} else {
-			panic(fmt.Errorf("failed to post prices for pair %v", pp.PairID))
+			panic(fmt.Errorf("failed to post prices for pair %v due to expiry date in the past: %v", pp.PairID, pp.Expiry))
 		}
 	}
 	params := k.GetParams(ctx)
