@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Improvements
+
+* [#767](https://github.com/NibiruChain/nibiru/pull/767) Add fluctuation limit checks on `OpenPosition`.
+
 ## [v0.11.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.11.0) - 2022-07-29
 
 ### Documentation
