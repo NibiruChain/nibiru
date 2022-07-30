@@ -288,7 +288,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
 	s.EqualValues(sdk.MustNewDecFromStr("1000099.999999999999999651"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000843"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
+	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
+	s.InDelta(1, queryResp.MarginRatio.MustFloat64(), 0.001)
 
 	s.T().Log("F. Close position")
 	args = []string{
