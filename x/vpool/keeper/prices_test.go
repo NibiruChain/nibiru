@@ -42,8 +42,8 @@ func TestGetUnderlyingPrice(t *testing.T) {
 				EXPECT().
 				GetCurrentPrice(
 					gomock.Eq(ctx),
-					gomock.Eq(tc.pair.GetBaseTokenDenom()),
-					gomock.Eq(tc.pair.GetQuoteTokenDenom()),
+					gomock.Eq(tc.pair.BaseDenom()),
+					gomock.Eq(tc.pair.QuoteDenom()),
 				).
 				Return(
 					pftypes.CurrentPrice{
@@ -97,6 +97,7 @@ func TestGetSpotPrice(t *testing.T) {
 				tc.baseAssetReserve,
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				sdk.OneDec(),
+				sdk.MustNewDecFromStr("0.0625"),
 			)
 
 			price, err := vpoolKeeper.GetSpotPrice(ctx, tc.pair)
@@ -169,6 +170,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				sdk.OneDec(),
+				sdk.MustNewDecFromStr("0.0625"),
 			)
 
 			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
@@ -248,6 +250,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 				tc.baseAssetReserve,
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				sdk.OneDec(),
+				sdk.MustNewDecFromStr("0.0625"),
 			)
 
 			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
@@ -454,6 +457,7 @@ func TestCalcTwap(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.ZeroDec(),
 				sdk.OneDec(),
+				sdk.OneDec(),
 			)
 
 			for i, snapshot := range tc.reserveSnapshots {
@@ -560,8 +564,10 @@ func TestGetTWAP(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			keeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+			pfKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
+			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+
+			keeper, ctx := VpoolKeeper(t, pfKeeper)
 
 			ctx = ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
 			// Creation of the pool does NOT trigger a markPriceChanged event
@@ -573,6 +579,7 @@ func TestGetTWAP(t *testing.T) {
 				/*baseAssetReserve=*/ sdk.NewDec(1_000),
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				/*maxSpread=*/ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			err := keeper.UpdateTWAP(ctx, BTCNusdPair.String())
 			require.NoError(t, err)

@@ -98,6 +98,7 @@ func TestQueryPosition(t *testing.T) {
 				/* baseReserve */ tc.baseAssetReserve,
 				/* fluctuationLimitRatio */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,
@@ -107,7 +108,7 @@ func TestQueryPosition(t *testing.T) {
 			})
 
 			t.Log("initialize position")
-			perpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+			perpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 
 			t.Log("query position")
 			resp, err := queryServer.TraderPosition(

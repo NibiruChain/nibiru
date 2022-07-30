@@ -16,118 +16,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
-func TestExecuteFullLiquidation_EmptyPosition(t *testing.T) {
-	testCases := []struct {
-		name           string
-		side           types.Side
-		quote          sdk.Int
-		leverage       sdk.Dec
-		baseLimit      sdk.Dec
-		liquidationFee sdk.Dec
-		traderFunds    sdk.Coin
-	}{
-		{
-			name:           "liquidateEmptyPositionBUY",
-			side:           types.Side_BUY,
-			quote:          sdk.NewInt(0),
-			leverage:       sdk.OneDec(),
-			baseLimit:      sdk.ZeroDec(),
-			liquidationFee: sdk.MustNewDecFromStr("0.1"),
-			traderFunds:    sdk.NewInt64Coin("NUSD", 60),
-		},
-		{
-			name:           "liquidateEmptyPositionSELL",
-			side:           types.Side_SELL,
-			quote:          sdk.NewInt(0),
-			leverage:       sdk.OneDec(),
-			baseLimit:      sdk.ZeroDec(),
-			liquidationFee: sdk.MustNewDecFromStr("0.1"),
-			traderFunds:    sdk.NewInt64Coin("NUSD", 60),
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-			pair := common.MustNewAssetPair("BTC:NUSD")
-
-			t.Log("Set vpool defined by pair on VpoolKeeper")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			vpoolKeeper.CreatePool(
-				ctx,
-				pair,
-				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
-				/* quoteAssetReserves */ sdk.NewDec(10_000_000),
-				/* baseAssetReserves */ sdk.NewDec(5_000_000),
-				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
-				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
-			)
-			require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
-
-			t.Log("Set vpool defined by pair on PerpKeeper")
-			perpKeeper := &nibiruApp.PerpKeeper
-			params := types.DefaultParams()
-
-			perpKeeper.SetParams(ctx, types.NewParams(
-				params.Stopped,
-				params.MaintenanceMarginRatio,
-				params.FeePoolFeeRatio,
-				params.EcosystemFundFeeRatio,
-				tc.liquidationFee,
-				params.PartialLiquidationRatio,
-				"hour",
-				15*time.Minute,
-			))
-
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       pair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
-			})
-
-			t.Log("Fund trader account with sufficient quote")
-			var err error
-			trader := sample.AccAddress()
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, trader,
-				sdk.NewCoins(tc.traderFunds))
-			require.NoError(t, err)
-
-			t.Log("Open position")
-			positionResp, err := nibiruApp.PerpKeeper.OpenPosition(
-				ctx, pair, tc.side, trader, tc.quote, tc.leverage, tc.baseLimit)
-			require.NoError(t, err)
-
-			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
-			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				pair.GetQuoteTokenDenom(), 1_000_000))
-			assert.NoError(t, simapp.FundModuleAccount(
-				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
-			assert.NoError(t, simapp.FundModuleAccount(
-				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
-
-			t.Log("Liquidate the position")
-			liquidator := sample.AccAddress()
-			_, err = nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidator, positionResp.Position)
-
-			require.Error(t, err)
-
-			// No change in the position
-			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
-			assert.Equal(t, positionResp.Position.Size_, newPosition.Size_)
-			assert.Equal(t, positionResp.Position.Margin, newPosition.Margin)
-			assert.Equal(t, positionResp.Position.OpenNotional, newPosition.OpenNotional)
-		})
-	}
-}
-
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
 	tokenPair := common.MustNewAssetPair("BTC:NUSD")
 
 	traderAddr := sample.AccAddress()
 
-	testCases := []struct {
-		name                      string
+	type test struct {
 		positionSide              types.Side
 		quoteAmount               sdk.Int
 		leverage                  sdk.Dec
@@ -137,9 +32,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		expectedLiquidatorBalance sdk.Coin
 		expectedPerpEFBalance     sdk.Coin
 		expectedBadDebt           sdk.Dec
-	}{
-		{
-			name:           "happy path - Buy",
+	}
+
+	testCases := map[string]test{
+		"happy path - Buy": {
 			positionSide:   types.Side_BUY,
 			quoteAmount:    sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
@@ -158,8 +54,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 		},
-		{
-			name:         "happy path - Sell",
+		"happy path - Sell": {
 			positionSide: types.Side_SELL,
 			quoteAmount:  sdk.NewInt(50_000),
 			// There's a 20 bps tx fee on open position.
@@ -178,13 +73,12 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_046_972),
 			expectedBadDebt:       sdk.MustNewDecFromStr("0"),
 		},
-		{
+		"happy path - bad debt, long": {
 			/* We open a position for 500k, with a liquidation fee of 50k.
 			This means 25k for the liquidator, and 25k for the perp fund.
 			Because the user only have margin for 50, we create 24950 of bad
 			debt (25000 due to liquidator minus 50).
 			*/
-			name:           "happy path - BadDebt, long",
 			positionSide:   types.Side_BUY,
 			quoteAmount:    sdk.NewInt(50),
 			leverage:       sdk.MustNewDecFromStr("10000"),
@@ -200,9 +94,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
 		},
-		{
+		"happy path - bad debt, short": {
 			// Same as above case but for shorts
-			name:           "happy path - BadDebt, short",
 			positionSide:   types.Side_SELL,
 			quoteAmount:    sdk.NewInt(50),
 			leverage:       sdk.MustNewDecFromStr("10000"),
@@ -220,9 +113,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
+	for name, testCase := range testCases {
 		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
@@ -236,14 +129,15 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				/* baseAssetReserves */ sdk.NewDec(5_000_000),
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 
 			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
-				params.MaintenanceMarginRatio,
 				params.FeePoolFeeRatio,
 				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
@@ -269,7 +163,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				tokenPair.GetQuoteTokenDenom(), 1_000_000))
+				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -287,13 +181,13 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Check correctness of liquidation fee distributions")
 			liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
-				ctx, liquidatorAddr, tokenPair.GetQuoteTokenDenom())
+				ctx, liquidatorAddr, tokenPair.QuoteDenom())
 			assert.EqualValues(t, tc.expectedLiquidatorBalance, liquidatorBalance)
 
 			perpEFAddr := nibiruApp.AccountKeeper.GetModuleAddress(
 				types.PerpEFModuleAccount)
 			perpEFBalance := nibiruApp.BankKeeper.GetBalance(
-				ctx, perpEFAddr, tokenPair.GetQuoteTokenDenom())
+				ctx, perpEFAddr, tokenPair.QuoteDenom())
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
@@ -305,10 +199,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidatorAddr.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
-				BadDebt:               sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.BadDebt),
-				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), sdk.ZeroInt()),
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.BadDebt),
+				Margin:                sdk.NewCoin(tokenPair.QuoteDenom(), sdk.ZeroInt()),
 				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          sdk.ZeroDec(),
 				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
@@ -316,99 +210,6 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				BlockHeight:           ctx.BlockHeight(),
 				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			})
-		})
-	}
-}
-
-func TestExecutePartialLiquidation_EmptyPosition(t *testing.T) {
-	testCases := []struct {
-		name           string
-		side           types.Side
-		quote          sdk.Int
-		leverage       sdk.Dec
-		baseLimit      sdk.Dec
-		liquidationFee sdk.Dec
-		traderFunds    sdk.Coin
-	}{
-		{
-			name:           "liquidateEmptyPositionBUY",
-			side:           types.Side_BUY,
-			quote:          sdk.NewInt(0),
-			leverage:       sdk.OneDec(),
-			baseLimit:      sdk.ZeroDec(),
-			liquidationFee: sdk.MustNewDecFromStr("0.1"),
-			traderFunds:    sdk.NewInt64Coin("yyy", 60),
-		},
-		{
-			name:           "liquidateEmptyPositionSELL",
-			side:           types.Side_SELL,
-			quote:          sdk.NewInt(0),
-			leverage:       sdk.OneDec(),
-			baseLimit:      sdk.ZeroDec(),
-			liquidationFee: sdk.MustNewDecFromStr("0.1"),
-			traderFunds:    sdk.NewInt64Coin("yyy", 60),
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Log("Initialize keepers, pair, and liquidator")
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-			pair := common.MustNewAssetPair("xxx:yyy")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			perpKeeper := &nibiruApp.PerpKeeper
-
-			t.Log("Create vpool")
-			vpoolKeeper.CreatePool(
-				ctx,
-				pair,
-				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
-				/* quoteAssetReserves */ sdk.NewDec(10_000_000),
-				/* baseAssetReserves */ sdk.NewDec(5_000_000),
-				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
-				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
-			)
-			require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
-
-			t.Log("Set perp params")
-			params := types.DefaultParams()
-			params.LiquidationFeeRatio = tc.liquidationFee
-			perpKeeper.SetParams(ctx, params)
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       pair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
-			})
-
-			t.Log("Fund trader account with sufficient quote")
-			trader := sample.AccAddress()
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, trader,
-				sdk.NewCoins(tc.traderFunds)))
-
-			t.Log("Open position")
-			positionResp, err := nibiruApp.PerpKeeper.OpenPosition(
-				ctx, pair, tc.side, trader, tc.quote, tc.leverage, tc.baseLimit)
-			require.NoError(t, err)
-
-			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
-			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				pair.GetQuoteTokenDenom(), 1_000_000))
-			assert.NoError(t, simapp.FundModuleAccount(
-				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
-			assert.NoError(t, simapp.FundModuleAccount(
-				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
-
-			t.Log("Liquidate the position")
-			liquidator := sample.AccAddress()
-			_, err = nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, positionResp.Position)
-
-			require.Error(t, err)
-
-			// No change in the position
-			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
-			require.Equal(t, positionResp.Position.Size_, newPosition.Size_)
-			require.Equal(t, positionResp.Position.Margin, newPosition.Margin)
-			require.Equal(t, positionResp.Position.OpenNotional, newPosition.OpenNotional)
 		})
 	}
 }
@@ -500,7 +301,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				/* baseAssetReserves */ sdk.NewDec(5_000_000_000_000_000),
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
+			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
 			t.Log("Set vpool defined by pair on PerpKeeper")
@@ -509,7 +312,6 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			perpKeeper.SetParams(ctx, types.NewParams(
 				params.Stopped,
-				params.MaintenanceMarginRatio,
 				params.FeePoolFeeRatio,
 				params.EcosystemFundFeeRatio,
 				tc.liquidationFee,
@@ -540,7 +342,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				tokenPair.GetQuoteTokenDenom(), 1_000_000))
+				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -562,7 +364,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper.GetBalance(
 					ctx,
 					liquidator,
-					tokenPair.GetQuoteTokenDenom(),
+					tokenPair.QuoteDenom(),
 				).String(),
 			)
 
@@ -575,7 +377,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper.GetBalance(
 					ctx,
 					nibiruApp.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
-					tokenPair.GetQuoteTokenDenom(),
+					tokenPair.QuoteDenom(),
 				).String(),
 			)
 
@@ -588,10 +390,10 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
 				LiquidatorAddress:     liquidator.String(),
-				FeeToLiquidator:       sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToLiquidator),
-				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.FeeToPerpEcosystemFund),
-				BadDebt:               sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), liquidationResp.BadDebt),
-				Margin:                sdk.NewCoin(tokenPair.GetQuoteTokenDenom(), newPosition.Margin.RoundInt()),
+				FeeToLiquidator:       sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.FeeToPerpEcosystemFund),
+				BadDebt:               sdk.NewCoin(tokenPair.QuoteDenom(), liquidationResp.BadDebt),
+				Margin:                sdk.NewCoin(tokenPair.QuoteDenom(), newPosition.Margin.RoundInt()),
 				PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 				PositionSize:          newPosition.Size_,
 				UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,

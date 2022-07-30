@@ -69,6 +69,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				sdk.NewDec(5_000_000),                              // 5 tokens
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
 				/* maxOracleSpreadRatio */ sdk.OneDec(), // 100%
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, common.PairBTCStable))
 
@@ -84,11 +85,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			)
 
 			t.Log("establish initial position")
-			nibiruApp.PerpKeeper.PositionsState(ctx).Set(
-				common.PairBTCStable,
-				traderAddr,
-				&tc.initialPosition,
-			)
+			nibiruApp.PerpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
 
 			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, common.PairBTCStable, traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
@@ -109,47 +106,7 @@ func TestRemoveMargin(t *testing.T) {
 		name string
 		test func()
 	}{
-		{
-			name: "negative margin remove - fail",
-			test: func() {
-				removeAmt := sdk.NewInt(-5)
 
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-				trader := sample.AccAddress()
-				pair := common.MustNewAssetPair("osmo:nusd")
-
-				goCtx := sdk.WrapSDKContext(ctx)
-				msg := &types.MsgRemoveMargin{
-					Sender:    trader.String(),
-					TokenPair: pair.String(),
-					Margin:    sdk.Coin{Denom: common.DenomStable, Amount: removeAmt},
-				}
-				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
-				require.Error(t, err)
-				require.ErrorContains(t, err, "margin must be positive")
-			},
-		},
-		{
-			name: "zero margin remove - fail",
-			test: func() {
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
-				trader := sample.AccAddress()
-				pair := common.MustNewAssetPair("osmo:nusd")
-
-				goCtx := sdk.WrapSDKContext(ctx)
-				msg := &types.MsgRemoveMargin{
-					Sender:    trader.String(),
-					TokenPair: pair.String(),
-					Margin: sdk.Coin{
-						Denom:  common.DenomStable,
-						Amount: sdk.ZeroInt(),
-					},
-				}
-				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
-				require.Error(t, err)
-				require.ErrorContains(t, err, "margin must be positive")
-			},
-		},
 		{
 			name: "vpool doesn't exit - fail",
 			test: func() {
@@ -159,13 +116,7 @@ func TestRemoveMargin(t *testing.T) {
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
-				goCtx := sdk.WrapSDKContext(ctx)
-				msg := &types.MsgRemoveMargin{
-					Sender:    trader.String(),
-					TokenPair: pair.String(),
-					Margin:    sdk.Coin{Denom: common.DenomStable, Amount: removeAmt},
-				}
-				_, err := nibiruApp.PerpKeeper.RemoveMargin(goCtx, msg)
+				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: common.DenomStable, Amount: removeAmt})
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -189,23 +140,18 @@ func TestRemoveMargin(t *testing.T) {
 					/* x */ sdk.NewDec(1_000_000), //
 					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
 					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
+					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				)
 
 				removeAmt := sdk.NewInt(5)
-				goCtx := sdk.WrapSDKContext(ctx)
-				msg := &types.MsgRemoveMargin{
-					Sender:    trader.String(),
-					TokenPair: pair.String(),
-					Margin:    sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt},
-				}
-				_, err := perpKeeper.RemoveMargin(
-					goCtx, msg)
+				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
+
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
 			},
 		},
 		{
-			name: "remove margin from healthy position - fast integration test 1",
+			name: "remove margin from healthy position",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
@@ -224,8 +170,11 @@ func TestRemoveMargin(t *testing.T) {
 					/* x */ baseReserves,
 					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
 					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.4"), // 0.9 ratio
+					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+
+				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
@@ -253,32 +202,33 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Attempt to remove 10% of the position")
 				removeAmt := sdk.NewInt(6)
-				goCtx := sdk.WrapSDKContext(ctx)
-				msg := &types.MsgRemoveMargin{
-					Sender:    traderAddr.String(),
-					TokenPair: pair.String(),
-					Margin:    sdk.Coin{Denom: pair.GetQuoteTokenDenom(), Amount: removeAmt},
-				}
 
 				t.Log("'RemoveMargin' from the position")
-				res, err := perpKeeper.RemoveMargin(goCtx, msg)
+				marginOut, fundingPayment, position, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
 				require.NoError(t, err)
-				assert.EqualValues(t, msg.Margin, res.MarginOut)
-				assert.EqualValues(t, sdk.ZeroDec(), res.FundingPayment)
+				assert.EqualValues(t, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt}, marginOut)
+				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
+				assert.EqualValues(t, pair, position.Pair)
+				assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
+				assert.EqualValues(t, sdk.NewDec(54), position.Margin)
+				assert.EqualValues(t, sdk.NewDec(300), position.OpenNotional)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("299.910026991902429271"), position.Size_)
+				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
+				assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:                  msg.TokenPair,
+						Pair:                  pair.String(),
 						TraderAddress:         traderAddr.String(),
-						Margin:                sdk.NewInt64Coin(pair.GetQuoteTokenDenom(), 54),
+						Margin:                sdk.NewInt64Coin(pair.QuoteDenom(), 54),
 						PositionNotional:      sdk.NewDec(300),
-						ExchangedPositionSize: sdk.ZeroDec(),                                         // always zero when removing margin
-						TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when removing margin
+						ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when removing margin
+						TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 						PositionSize:          sdk.MustNewDecFromStr("299.910026991902429271"),
 						RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
-						BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), sdk.ZeroInt()), // always zero when adding margin
+						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
 						SpotPrice:             sdk.MustNewDecFromStr("1.00060009"),
 						BlockHeight:           ctx.BlockHeight(),

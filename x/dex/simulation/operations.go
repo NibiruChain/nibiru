@@ -22,15 +22,12 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
+		fundAccountWithTokens(ctx, simAccount.Address, bk)
+
 		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
 		msg := &types.MsgCreatePool{
 			Creator: simAccount.Address.String(),
-		}
-
-		if simCoins.Len() <= 1 {
-			fundAccountWithTokens(ctx, simAccount.Address, bk)
-			simCoins = bk.SpendableCoins(ctx, simAccount.Address)
 		}
 
 		whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
@@ -51,7 +48,6 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 
 		msg.PoolParams = &poolParams
 		msg.PoolAssets = poolAssets
-
 		spentCoins := PoolAssetsCoins(poolAssets)
 
 		txGen := simapp.MakeTestEncodingConfig().TxConfig
@@ -281,7 +277,8 @@ func genPoolAssets(
 	r *rand.Rand,
 	acct simtypes.Account,
 	coins sdk.Coins,
-	whitelistedAssets map[string]bool) []types.PoolAsset {
+	whitelistedAssets map[string]bool,
+) []types.PoolAsset {
 	denomIndices := r.Perm(coins.Len())
 	assets := []types.PoolAsset{}
 

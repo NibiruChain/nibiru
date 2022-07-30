@@ -11,7 +11,22 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-// TODO test: OpenPosition | https://github.com/NibiruChain/nibiru/issues/299
+/*
+OpenPosition opens a position on the selected pair.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the pair where the position will be opened
+  - side: whether the position in the BUY or SELL direction
+  - traderAddr: the address of the trader who opens the position
+  - quoteAssetAmount: the amount of quote asset
+  - leverage: the amount of leverage to take, as sdk.Dec
+  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
+
+ret:
+  - positionResp: contains the result of the open position and the new position
+  - err: error
+*/
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
 	pair common.AssetPair,
@@ -21,19 +36,19 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	if err = k.requireVpool(ctx, pair); err != nil {
+	err = k.checkOpenPositionRequirements(ctx, pair, quoteAssetAmount, leverage)
+	if err != nil {
 		return nil, err
 	}
 
 	// require params
 	params := k.GetParams(ctx)
-	// TODO: missing checks
 
 	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
-	var isNewPosition bool = errors.Is(err, types.ErrPositionNotFound)
+	isNewPosition := errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-		k.PositionsState(ctx).Set(pair, traderAddr, position)
+		k.PositionsState(ctx).Set(position)
 	} else if err != nil && !isNewPosition {
 		return nil, err
 	}
@@ -74,6 +89,28 @@ func (k Keeper) OpenPosition(
 	return positionResp, nil
 }
 
+// checkOpenPositionRequirements checks the minimum requirements to open a position.
+//
+// - Checks that the VPool exists.
+// - Checks that quote asset is not zero.
+// - Checks that leverage is not zero.
+//
+func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.AssetPair, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
+	if err := k.requireVpool(ctx, pair); err != nil {
+		return err
+	}
+
+	if quoteAssetAmount.IsZero() {
+		return types.ErrQuoteAmountIsZero
+	}
+
+	if leverage.IsZero() {
+		return types.ErrLeverageIsZero
+	}
+
+	return nil
+}
+
 // afterPositionUpdate is called when a position has been updated.
 func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context,
@@ -85,7 +122,7 @@ func (k Keeper) afterPositionUpdate(
 ) (err error) {
 	// update position in state
 	if !positionResp.Position.Size_.IsZero() {
-		k.PositionsState(ctx).Set(pair, traderAddr, positionResp.Position)
+		k.PositionsState(ctx).Set(positionResp.Position)
 	}
 
 	if !positionResp.BadDebt.IsZero() {
@@ -101,7 +138,9 @@ func (k Keeper) afterPositionUpdate(
 		if err != nil {
 			return err
 		}
-		if err = requireMoreMarginRatio(marginRatio, params.MaintenanceMarginRatio, true); err != nil {
+
+		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
+		if err = requireMoreMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
 			return err
 		}
 	}
@@ -110,13 +149,13 @@ func (k Keeper) afterPositionUpdate(
 	marginToVault := positionResp.MarginToVault.RoundInt()
 	switch {
 	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(pair.GetQuoteTokenDenom(), marginToVault)
+		coinToSend := sdk.NewCoin(pair.QuoteDenom(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
 	case marginToVault.IsNegative():
-		if err = k.Withdraw(ctx, pair.GetQuoteTokenDenom(), traderAddr, marginToVault.Abs()); err != nil {
+		if err = k.Withdraw(ctx, pair.QuoteDenom(), traderAddr, marginToVault.Abs()); err != nil {
 			return err
 		}
 	}
@@ -144,14 +183,14 @@ func (k Keeper) afterPositionUpdate(
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:         traderAddr.String(),
 		Pair:                  pair.String(),
-		Margin:                sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.Position.Margin.RoundInt()),
+		Margin:                sdk.NewCoin(pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
 		PositionNotional:      positionNotional,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		TransactionFee:        sdk.NewCoin(pair.GetQuoteTokenDenom(), transferredFee),
+		TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), transferredFee),
 		PositionSize:          positionResp.Position.Size_,
 		RealizedPnl:           positionResp.RealizedPnl,
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
-		BadDebt:               sdk.NewCoin(pair.GetQuoteTokenDenom(), positionResp.BadDebt.RoundInt()),
+		BadDebt:               sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
 		LiquidationPenalty:    sdk.ZeroDec(),
 		SpotPrice:             spotPrice,
 		FundingPayment:        positionResp.FundingPayment,
@@ -608,7 +647,7 @@ func (k Keeper) closePositionEntirely(
 	return positionResp, nil
 }
 
-/**
+/*
 ClosePosition closes a position entirely and transfers the remaining margin back to the user.
 Errors if the position has bad debt.
 
@@ -670,7 +709,7 @@ func (k Keeper) transferFee(
 			/* to */ types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.GetQuoteTokenDenom(),
+					pair.QuoteDenom(),
 					feeToFeePool,
 				),
 			),
@@ -687,7 +726,7 @@ func (k Keeper) transferFee(
 			/* to */ types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.GetQuoteTokenDenom(),
+					pair.QuoteDenom(),
 					feeToEcosystemFund,
 				),
 			),

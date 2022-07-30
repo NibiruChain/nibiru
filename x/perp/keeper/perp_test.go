@@ -52,7 +52,7 @@ func TestGetAndSetPosition(t *testing.T) {
 					Size_:         sdk.OneDec(),
 					Margin:        sdk.OneDec(),
 				}
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(vpoolPair, traderAddr, dummyPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(dummyPosition)
 				outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 				require.NoError(t, err)
 				require.EqualValues(t, dummyPosition, outPosition)
@@ -98,7 +98,7 @@ func TestDeletePosition(t *testing.T) {
 						Size_:         sdk.OneDec(),
 						Margin:        sdk.OneDec(),
 					}
-					nibiruApp.PerpKeeper.PositionsState(ctx).Set(vpoolPair, traderAddr, dummyPosition)
+					nibiruApp.PerpKeeper.PositionsState(ctx).Set(dummyPosition)
 					outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 					require.NoError(t, err)
 					require.EqualValues(t, dummyPosition, outPosition)
@@ -160,8 +160,10 @@ func TestKeeperClosePosition(t *testing.T) {
 			/*baseAssetReserve*/ sdk.NewDec(5_000_000),
 			/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 			/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.1"),
+			/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		perpKeeper := &nibiruApp.PerpKeeper

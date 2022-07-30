@@ -57,6 +57,10 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
+	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
+	}
+
 	if baseAssetAmount.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
@@ -152,6 +156,10 @@ func (k Keeper) SwapQuoteForBase(
 ) (baseAssetAmount sdk.Dec, err error) {
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Dec{}, types.ErrPairNotSupported
+	}
+
+	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
 	if quoteAssetAmount.IsZero() {
@@ -317,4 +325,23 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 	}
 
 	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
+}
+
+/**
+GetMaintenanceMarginRatio returns the maintenance margin ratio for the pool from the asset pair.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the asset pair
+
+ret:
+  - sdk.Dec: The maintenance margin ratio for the pool
+*/
+func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+
+	return pool.MaintenanceMarginRatio
 }

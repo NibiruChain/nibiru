@@ -223,7 +223,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 			_, err := nibiruApp.PricefeedKeeper.PostRawPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 			require.NoError(t, err)
-			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomAxlBTC, common.DenomStable))
+			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomBTC, common.DenomStable))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
@@ -234,6 +234,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
 				/* fluctuationLimit */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -246,7 +247,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
@@ -346,6 +347,26 @@ func TestOpenPositionError(t *testing.T) {
 			baseLimit:       sdk.NewDec(10_000),
 			expectedErr:     vpooltypes.ErrAssetFailsUserLimit,
 		},
+		{
+			name:            "quote asset amount is zero",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition: nil,
+			side:            types.Side_SELL,
+			margin:          sdk.NewInt(0),
+			leverage:        sdk.NewDec(10),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     types.ErrQuoteAmountIsZero,
+		},
+		{
+			name:            "leverage amount is zero",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition: nil,
+			side:            types.Side_SELL,
+			margin:          sdk.NewInt(1000),
+			leverage:        sdk.NewDec(0),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     types.ErrLeverageIsZero,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -360,7 +381,7 @@ func TestOpenPositionError(t *testing.T) {
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 			_, err := nibiruApp.PricefeedKeeper.PostRawPrice(ctx, oracle, common.PairBTCStable.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 			require.NoError(t, err)
-			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomAxlBTC, common.DenomStable))
+			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomBTC, common.DenomStable))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
@@ -371,6 +392,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
 				/* fluctuationLimit */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -383,7 +405,7 @@ func TestOpenPositionError(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(common.PairBTCStable, traderAddr, tc.initialPosition)
+				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
@@ -436,7 +458,9 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					sdk.NewDec(5_000_000),        // 5 tokens
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 					sdk.MustNewDecFromStr("0.1"),
+					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				)
+				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
