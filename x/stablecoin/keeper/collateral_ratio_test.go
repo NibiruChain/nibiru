@@ -88,7 +88,9 @@ func TestSetCollRatioUpdate(t *testing.T) {
 				Token1: common.DenomStable,
 			}
 			params := pftypes.Params{
-				Pairs: common.AssetPairs{pair}}
+				Pairs:              common.AssetPairs{pair},
+				TwapLookbackWindow: 15 * time.Minute,
+			}
 
 			priceKeeper.SetParams(ctx, params)
 			priceKeeper.WhitelistOracles(ctx, oracles)
@@ -107,6 +109,8 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			err = priceKeeper.GatherRawPrices(ctx, common.DenomColl, common.DenomStable)
 			require.NoError(t, err)
 
+			// pricefeed TWAP requires time passed between setting and querying
+			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 			err = stablecoinKeeper.EvaluateCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(

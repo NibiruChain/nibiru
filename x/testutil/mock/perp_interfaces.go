@@ -284,10 +284,10 @@ func (mr *MockPricefeedKeeperMockRecorder) GetCurrentPrices(arg0 interface{}) *g
 }
 
 // GetCurrentTWAP mocks base method.
-func (m *MockPricefeedKeeper) GetCurrentTWAP(arg0 types2.Context, arg1, arg2 string) (types0.CurrentTWAP, error) {
+func (m *MockPricefeedKeeper) GetCurrentTWAP(arg0 types2.Context, arg1, arg2 string) (types2.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCurrentTWAP", arg0, arg1, arg2)
-	ret0, _ := ret[0].(types0.CurrentTWAP)
+	ret0, _ := ret[0].(types2.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
