@@ -168,7 +168,8 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	token0, token1 := "tst", "usd"
 	pair := common.AssetPair{Token0: token0, Token1: token1}
 	params := types.Params{
-		Pairs: common.AssetPairs{pair},
+		Pairs:              common.AssetPairs{pair},
+		TwapLookbackWindow: 15 * time.Minute,
 	}
 	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
 	keeper.SetParams(ctx, params)
@@ -206,7 +207,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.NoError(t, err)
 
 	// Update block time such that first 3 prices valid but last one is expired
-	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45))
+	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45)).WithBlockHeight(1)
 
 	// Set current price
 	err = keeper.GatherRawPrices(ctx, token0, token1)
@@ -223,6 +224,17 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 		"expected current price to equal %s, actual %s",
 		expCurPrice, price.Price,
 	)
+
+	// Allow some time to pass
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
+	// Check TWAP Price
+	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1)
+	expectedTwap := sdk.MustNewDecFromStr("0.34")
+	require.NoError(t, err)
+	assert.Equal(t, expectedTwap, twap, "expected twap price to be: %s, got: %s", expectedTwap, twap)
+
+	// fast forward block height as twap snapshots are indexed by blockHeight
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 
 	// Even number of oracles
 	_, err = keeper.PostRawPrice(
@@ -247,6 +259,18 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	prices := keeper.GetCurrentPrices(ctx)
 	require.Equal(t, 1, len(prices))
 	require.Equal(t, price, prices[0])
+
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+	// Check TWAP Price
+	twap, err = keeper.GetCurrentTWAP(ctx, token0, token1)
+	expectedTwap = sdk.MustNewDecFromStr("0.340625")
+	require.NoError(t, err)
+	require.Truef(
+		t,
+		twap.Equal(expectedTwap),
+		"expected twap price to be: %s, got: %s",
+		expectedTwap, twap,
+	)
 }
 
 func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {

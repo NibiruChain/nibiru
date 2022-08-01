@@ -12,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -143,11 +142,7 @@ func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec
 	).MaxTimes(1)
 
 	mocks.mockPricefeedKeeper.EXPECT().
-		GetCurrentTWAP(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1).
-		Return(pftypes.CurrentTWAP{
-			PairID: common.PairBTCStable.String(),
-			Price:  indexPrice,
-		}, nil).MaxTimes(1)
+		GetCurrentTWAP(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1).Return(indexPrice, nil).MaxTimes(1)
 
 	mocks.mockVpoolKeeper.EXPECT().
 		GetCurrentTWAP(ctx, common.PairBTCStable).

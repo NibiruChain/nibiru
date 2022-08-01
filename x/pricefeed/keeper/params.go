@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -28,6 +30,10 @@ func (k Keeper) GetPairs(ctx sdk.Context) common.AssetPairs {
 		pairs = append(pairs, pair)
 	}
 	return pairs
+}
+
+func (k Keeper) GetTwapLookbackWindow(ctx sdk.Context) time.Duration {
+	return k.GetParams(ctx).TwapLookbackWindow
 }
 
 // GetOraclesForPair returns the oracles for a valid asset pair
@@ -110,5 +116,5 @@ func (k Keeper) WhitelistOraclesForPairs(
 		k.OraclesStore().AddOracles(ctx, pair, oracles)
 	}
 	endingPairs := append(paramsPairs, newPairs...)
-	k.SetParams(ctx, types.NewParams(endingPairs))
+	k.SetParams(ctx, types.NewParams(endingPairs, k.GetTwapLookbackWindow(ctx)))
 }

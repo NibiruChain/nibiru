@@ -57,6 +57,5 @@ func (gs GenesisState) Validate() error {
 				postedPrice.PairID)
 		}
 	}
-
 	return nil
 }

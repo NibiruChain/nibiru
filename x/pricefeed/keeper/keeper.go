@@ -168,10 +168,7 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 	k.setCurrentPrice(ctx, pairID, currentPrice)
 
 	// Update the TWA prices
-	err = k.updateTWAP(ctx, pairID)
-	if err != nil {
-		return err
-	}
+	k.saveOrUpdateSnapshot(ctx, pairID, currentPrice.Price)
 
 	return nil
 }
@@ -179,54 +176,6 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice types.CurrentPrice) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
-}
-
-/* updateTWAP updates the twap price for a token0, token1 pair
-We use the blocktime to update the twap price.
-
-Calculation is done as follow:
-	$$P_{TWAP} = \frac { \sum P_j \times t_B }{ \sum{t_B} } $$
-With
-	P_j: current posted price for the pair of tokens
-	t_B: current block timestamp
-
-*/
-
-func (k Keeper) updateTWAP(ctx sdk.Context, pairID string) error {
-	tokens := common.DenomsFromPoolName(pairID)
-	token0, token1 := tokens[0], tokens[1]
-
-	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
-	if err != nil {
-		return err
-	}
-
-	currentTWAP, err := k.GetCurrentTWAP(ctx, token0, token1)
-	// Err there means no twap price have been set yet for this pair
-	if err != nil {
-		currentTWAP = types.CurrentTWAP{
-			PairID:      pairID,
-			Numerator:   sdk.ZeroDec(),
-			Denominator: sdk.ZeroDec(),
-			Price:       sdk.ZeroDec(),
-		}
-	}
-
-	blockUnixTime := sdk.NewInt(ctx.BlockTime().Unix())
-
-	newDenominator := currentTWAP.Denominator.Add(sdk.NewDecFromInt(blockUnixTime))
-	newNumerator := currentTWAP.Numerator.Add(currentPrice.Price.MulInt(blockUnixTime))
-
-	newTWAP := types.CurrentTWAP{
-		PairID:      pairID,
-		Numerator:   newNumerator,
-		Denominator: newDenominator,
-		Price:       newNumerator.Quo(newDenominator),
-	}
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentTWAPKey("twap-"+pairID), k.cdc.MustMarshal(&newTWAP))
-
-	return nil
 }
 
 // CalculateMedianPrice calculates the median prices for the input prices.
@@ -301,46 +250,71 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	return price, nil
 }
 
-// GetCurrentTWAP fetches the current median price of all oracles for a specific market
-func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (currPrice types.CurrentTWAP, err error) {
-	pair := common.AssetPair{Token0: token0, Token1: token1}
-	givenIsActive := k.IsActivePair(ctx, pair.String())
-	inverseIsActive := k.IsActivePair(ctx, pair.Inverse().String())
-	if !givenIsActive && inverseIsActive {
-		pair = pair.Inverse()
-	}
+/*
+Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
+Note the open-ended right bracket.
 
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair
+
+ret:
+  - price: TWAP as sdk.Dec
+  - err: error
+*/
+func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (price sdk.Dec, err error) {
 	// Ensure we still have valid prices
 	_, err = k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {
-		return types.CurrentTWAP{}, types.ErrNoValidPrice
+		return sdk.Dec{}, types.ErrNoValidPrice
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPKey("twap-" + pair.String()))
+	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	givenIsActive := k.IsActivePair(ctx, assetPair.String())
+	inverseIsActive := k.IsActivePair(ctx, assetPair.Inverse().String())
+	if !givenIsActive && inverseIsActive {
+		assetPair = assetPair.Inverse()
+	}
+	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
+	// earliest timestamp we'll look back until
+	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackWindow).UnixMilli()
 
-	if bz == nil {
-		return types.CurrentTWAP{}, types.ErrNoValidTWAP
+	var cumulativePrice sdk.Dec = sdk.ZeroDec()
+	var cumulativePeriodMs int64 = 0
+	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
+
+	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
+	// traverse snapshots in reverse order
+	k.IteratePriceSnapshotsFrom(ctx, startKey, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
+		var timeElapsedMs int64
+		if ps.TimestampMs <= lowerLimitTimestampMs {
+			// current snapshot is below the lower limit
+			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
+		} else {
+			timeElapsedMs = prevTimestampMs - ps.TimestampMs
+		}
+		cumulativePrice = cumulativePrice.Add(ps.Price.MulInt64(timeElapsedMs))
+		cumulativePeriodMs += timeElapsedMs
+
+		// end early if we're already beyond the lower limit timestamp
+		if ps.TimestampMs <= lowerLimitTimestampMs {
+			return true
+		}
+		prevTimestampMs = ps.TimestampMs
+		return false
+	})
+
+	// TODO: Should we return 0 or an error??
+	if cumulativePeriodMs == 0 {
+		return sdk.ZeroDec(), nil
 	}
 
-	var price types.CurrentTWAP
-	k.cdc.MustUnmarshal(bz, &price)
-	if price.Price.IsZero() {
-		return types.CurrentTWAP{}, types.ErrNoValidPrice
-	}
+	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
 
-	if inverseIsActive {
-		// Return the inverse price if the tokens are not in "proper" order.
-		inversePrice := sdk.OneDec().Quo(price.Price)
-		return types.NewCurrentTWAP(
-			/* token0 */ token1,
-			/* token1 */ token0,
-			/* numerator */ price.Numerator,
-			/* denominator */ price.Denominator,
-			/* price */ inversePrice), nil
+	if !twap.IsZero() && inverseIsActive {
+		return sdk.OneDec().Quo(twap), nil
 	}
-
-	return price, nil
+	return twap, nil
 }
 
 // IterateCurrentPrices iterates over all current price objects in the store and performs a callback function

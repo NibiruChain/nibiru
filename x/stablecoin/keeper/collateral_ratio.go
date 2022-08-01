@@ -92,9 +92,9 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 		return err
 	}
 
-	if stablePrice.Price.GTE(upperBound) {
+	if stablePrice.GTE(upperBound) {
 		err = k.updateCollRatio(ctx, true)
-	} else if stablePrice.Price.LTE(lowerBound) {
+	} else if stablePrice.LTE(lowerBound) {
 		err = k.updateCollRatio(ctx, false)
 	}
 	if err != nil {

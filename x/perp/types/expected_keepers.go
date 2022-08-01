@@ -82,7 +82,7 @@ type PricefeedKeeper interface {
 	- err: error if any
 	*/
 	GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error
-	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentTWAP, error)
+	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (sdk.Dec, error)
 }
 
 type VpoolKeeper interface {

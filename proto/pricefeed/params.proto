@@ -4,6 +4,7 @@ package nibiru.pricefeed.v1;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "common/common.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
@@ -14,6 +15,14 @@ message Params {
   // Pairs is the list of valid trading pairs for the module. 
   // Add new trading pairs 
   repeated common.AssetPair pairs = 1 [(gogoproto.nullable) = false]; 
+
+  // amount of time to look back for TWAP calculations
+  google.protobuf.Duration twap_lookback_window = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.jsontag) = "twap_lookback_window,omitempty",
+    (gogoproto.moretags) = "yaml:\"twap_lookback_window\""
+  ];
 }
 
 // OraclesMarshaler is a codec.ProtoMarshaler for an oracles array in the 
