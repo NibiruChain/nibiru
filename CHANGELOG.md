@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Bug Fixes
+
+* [#766](https://github.com/NibiruChain/nibiru/pull/766) Fixed margin ratio calculation for trader position.
+
 ## [v0.11.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.11.0) - 2022-07-29
 
 ### Documentation
