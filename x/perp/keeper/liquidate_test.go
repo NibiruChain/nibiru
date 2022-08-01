@@ -81,34 +81,34 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			*/
 			positionSide:   types.Side_BUY,
 			quoteAmount:    sdk.NewInt(50),
-			leverage:       sdk.MustNewDecFromStr("10000"),
+			leverage:       sdk.MustNewDecFromStr("10"),
 			baseAssetLimit: sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("NUSD", 1150),
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
-			//   = 500_000 * 0.1 / 2 = 25_000
-			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
+			//   = 500 * 0.1 / 2 = 25
+			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25),
 			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
+			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1000025),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
 		},
 		"happy path - bad debt, short": {
 			// Same as above case but for shorts
 			positionSide:   types.Side_SELL,
 			quoteAmount:    sdk.NewInt(50),
-			leverage:       sdk.MustNewDecFromStr("10000"),
+			leverage:       sdk.MustNewDecFromStr("10"),
 			baseAssetLimit: sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			traderFunds:    sdk.NewInt64Coin("NUSD", 1150),
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
-			//   = 500_000 * 0.1 / 2 = 25_000
-			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25_000),
+			//   = 500 * 0.1 / 2 = 25
+			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 25),
 			// startingBalance = 1_000_000
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 975_550),
+			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1000025),
 			expectedBadDebt:       sdk.MustNewDecFromStr("24950"),
 		},
 	}
@@ -155,6 +155,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
 				sdk.NewCoins(tc.traderFunds))
 			require.NoError(t, err)
+
+			t.Log("increment block height and time for TWAP calculation")
+			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
+				WithBlockTime(time.Now().Add(time.Minute))
 
 			t.Log("Open position")
 			positionResp, err := nibiruApp.PerpKeeper.OpenPosition(
