@@ -148,6 +148,7 @@ func PricefeedGenesis() pricefeedtypes.GenesisState {
 	var gen pricefeedtypes.GenesisState
 	pairs := pricefeedtypes.DefaultPairs
 	gen.Params.Pairs = pairs
+	gen.Params.TwapLookbackWindow = 15 * time.Minute
 	gen.PostedPrices = []pricefeedtypes.PostedPrice{
 		{
 			PairID: pairs[0].String(), // PairGovStable
