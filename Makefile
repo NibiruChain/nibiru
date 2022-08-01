@@ -114,12 +114,16 @@ localnet:
 .PHONY: localnet
 
 ###############################################################################
-###                            Simulations                            ###
+###                            Tests & Simulations                          ###
 ###############################################################################
 
 BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./simapp
+PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simapp')
+
+test-unit:
+	go test -mod=readonly $(PACKAGES_NOSIMULATION)
 
 runsim: $(RUNSIM)
 $(RUNSIM):
