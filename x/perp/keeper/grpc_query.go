@@ -49,7 +49,7 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
-	marginRatio, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_SPOT)
+	marginRatio, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
 	}
