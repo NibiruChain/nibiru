@@ -304,9 +304,8 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (p
 		return false
 	})
 
-	// TODO: Should we return 0 or an error??
 	if cumulativePeriodMs == 0 {
-		return sdk.ZeroDec(), nil
+		return sdk.Dec{}, fmt.Errorf("failed to calculate twap, no time passed since price was posted")
 	}
 
 	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
