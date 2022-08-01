@@ -85,7 +85,6 @@ func TestAppStateDeterminism(t *testing.T) {
 		config.Seed = rand.Int63()
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
-
 			db := dbm.NewMemDB()
 			app := testapp.NewNibiruApp( /*shouldUseDefaultGenesis*/ true)
 
