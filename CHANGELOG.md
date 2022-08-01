@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#741](https://github.com/NibiruChain/nibiru/pull/741) - remove unused code and refactored variable names.
 * [#742](https://github.com/NibiruChain/nibiru/pull/742) - Vpools are not tradeable if they have invalid oracle prices.
 * [#739](https://github.com/NibiruChain/nibiru/pull/739) - Bump github.com/spf13/viper from 1.11.0 to 1.12.0
+* [#765](https://github.com/NibiruChain/nibiru/pull/765) - Added pricefeed simulation
 
 ### API Breaking
 
