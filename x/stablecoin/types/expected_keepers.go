@@ -35,8 +35,7 @@ type BankKeeper interface {
 }
 
 type PricefeedKeeper interface {
-	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
-	) (pftypes.CurrentTWAP, error)
+	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (sdk.Dec, error)
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices

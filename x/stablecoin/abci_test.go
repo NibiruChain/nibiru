@@ -116,8 +116,8 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			pairs := common.AssetPairs{
 				common.PairCollStable,
 			}
-			markets := ptypes.NewParams(pairs)
-			app.PricefeedKeeper.SetParams(ctx, markets)
+			params := ptypes.NewParams(pairs, 15*time.Minute)
+			app.PricefeedKeeper.SetParams(ctx, params)
 			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 			_, err := app.PricefeedKeeper.PostRawPrice(
@@ -160,10 +160,10 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	pairs := common.AssetPairs{
 		{Token0: common.DenomColl, Token1: common.DenomStable},
 	}
-	markets := ptypes.NewParams(pairs)
-	app.PricefeedKeeper.SetParams(ctx, markets)
+	twapLookbackWindow := 15 * time.Minute
+	params := ptypes.NewParams(pairs, twapLookbackWindow)
+	app.PricefeedKeeper.SetParams(ctx, params)
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-	app.PricefeedKeeper.SetParams(ctx, markets)
 
 	// Sim set price set the price for one hour
 	_, err := app.PricefeedKeeper.PostRawPrice(

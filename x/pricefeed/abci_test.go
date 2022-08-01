@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
+	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
@@ -44,7 +45,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 
 	oracles := []sdk.AccAddress{oracle}
 	pairs := common.AssetPairs{pair}
-	params := ptypes.NewParams(pairs)
+	params := ptypes.NewParams(pairs, 15_001*time.Hour)
 	nibiruApp.PricefeedKeeper.SetParams(ctx, params) // makes pairs active
 	nibiruApp.PricefeedKeeper.WhitelistOraclesForPairs(ctx, oracles, pairs)
 
@@ -62,18 +63,20 @@ func TestTWAPriceUpdates(t *testing.T) {
 	/*
 		New price should be.
 
-		T0: 1463385600
-		T1: 1481385600
+		deltaT1: 10minutes / 600_000
+		deltaT2: 5000hours / 18_000_000_000
 
-		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600) / (1463385600 + 1481385600) = 0.8749844622444971
+		(0.8 * 600_000 + 0.9 * 18_000_000_000) / 18_000_600_000 = 0.899996666777774074
 	*/
 
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
+	nibiruApp.PricefeedKeeper.SetParams(ctx, params)
 	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAP(
 		ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
-	priceFloat, err := price.Price.Float64()
+	priceFloat, err := price.Float64()
 	require.NoError(t, err)
-	require.InDelta(t, 0.8748471867695528, priceFloat, 0.03)
+	require.InDelta(t, 0.899996666777774074, priceFloat, 0.03)
 
 	t.Log("5000 hours passed, both previous prices are live and we post a new one")
 	setPrice("0.82")
@@ -82,37 +85,64 @@ func TestTWAPriceUpdates(t *testing.T) {
 	/*
 		New price should be.
 
-		T0: 1463385600
-		T1: 1481385600
-		T1: 1499385600
+		deltaT1: 10min / 600_000
+		deltaT2: 5000h + 10min / 18_000_600_000
+		deltaT3: 5000h + 10min / 18_000_600_000
 
-		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600 + 0.82 * 1499385600) / (1463385600 + 1481385600 + 1499385600) = 0.8563426456960295
+		(0.82 * 600_000 + 0.8 * 18_000_600_000 + 0.9 * 18_000_000_000) / 36_001_200_000 = 0.849998666711109629
 	*/
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
 	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
 		ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
-	priceFloat, err = price.Price.Float64()
+	priceFloat, err = price.Float64()
 	require.NoError(t, err)
-	require.InDelta(t, 0.8563426456960295, priceFloat, 0.02)
+	require.InDelta(t, 0.849998666711109629, priceFloat, 0.02)
 
 	// 5000 hours passed, first price is now expired
 	/*
 		New price should be.
 
-		T0: 1463385600
-		T1: 1481385600
-		T1: 1499385600
-		T4: 1517385600
+		deltaT1: 10min / 600_000
+		deltaT2: 5000h + 10min / 18_000_600_000
+		deltaT3: 5000h + 10min/ 18_000_600_000
+		deltaT4: 5000h + 10min/ 18_000_600_000
 
-		(0.9 * 1463385600 + (0.9 + 0.8) / 2 * 1481385600 + 0.82 * 1499385600 + .82 * 1517385600) / (1463385600 + 1481385600 + 1499385600 + 1517385600) = 0.8470923873660615
+		(0.83 * 600_000 + 0.82 * 18_000_600_000 + 0.8 * 18_000_600_000 + 0.9 * 18_000_000_000) / 54_001_800_000 = 0.839999222248147283
 	*/
 	setPrice("0.83")
 	runBlock(time.Hour * 5000)
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
 	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
 		ctx, pair.Token0, pair.Token1)
 
 	require.NoError(t, err)
-	priceFloat, err = price.Price.Float64()
+	priceFloat, err = price.Float64()
 	require.NoError(t, err)
-	require.InDelta(t, 0.8470923873660615, priceFloat, 0.01)
+	require.InDelta(t, 0.839999222248147283, priceFloat, 0.01)
+
+	// ensure the lookbackInterval is properly adhered
+	/*
+		New price should be.
+
+		deltaT1: 10min / 600_000
+		deltaT2: 5000h + 10min / 18_000_600_000
+		deltaT4: 2000h - 20min / 7_198_800_000
+
+		(0.83 * 600_000 + 0.82 * 18_000_600_000 + 0.8 * 7_198_800_000) / 25_200_000_000 = 0.839999222248147283
+	*/
+	setLookbackWindow(ctx, nibiruApp.PricefeedKeeper, 7_000*time.Hour)
+	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
+		ctx, pair.Token0, pair.Token1)
+
+	require.NoError(t, err)
+	priceFloat, err = price.Float64()
+	require.NoError(t, err)
+	require.InDelta(t, 0.814286904761904761, priceFloat, 0.01)
+}
+
+func setLookbackWindow(ctx sdk.Context, pfk pricefeedkeeper.Keeper, d time.Duration) {
+	params := pfk.GetParams(ctx)
+	params.TwapLookbackWindow = d
+	pfk.SetParams(ctx, params)
 }
