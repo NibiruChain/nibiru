@@ -3,6 +3,7 @@ package pricefeed
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
@@ -30,15 +31,23 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgPostPrice int = 100
 	AssetPairsKey                 = "Pairs"
+	TwapLookbackWindow            = "TwapLookbackWindow"
 	maxAssetPairs                 = 100
 	maxPostedPrices               = 100
+	maxLookbackWindowMinutes      = 7 * 24 * 60
 )
 
 // GenerateGenesisState creates a randomized GenState of the module
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	var assetPairs common.AssetPairs
+	var (
+		assetPairs         common.AssetPairs
+		twapLookbackWindow time.Duration
+	)
 	simState.AppParams.GetOrGenerate(simState.Cdc, AssetPairsKey, &assetPairs, simState.Rand,
 		func(r *rand.Rand) { assetPairs = genAssetPairs(r) },
+	)
+	simState.AppParams.GetOrGenerate(simState.Cdc, TwapLookbackWindow, &twapLookbackWindow, simState.Rand,
+		func(r *rand.Rand) { twapLookbackWindow = genTwapLookbackWindow(r) },
 	)
 	oracles := make([]string, len(simState.Accounts))
 	for i := range oracles {
@@ -60,7 +69,8 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	}
 	pricefeedGenesis := types.GenesisState{
 		Params: types.Params{
-			Pairs: assetPairs,
+			Pairs:              assetPairs,
+			TwapLookbackWindow: twapLookbackWindow,
 		},
 		PostedPrices:   postedPrices,
 		GenesisOracles: oracles,
@@ -78,6 +88,9 @@ func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
 	return []simtypes.ParamChange{
 		simulation.NewSimParamChange(types.ModuleName, "Pairs", func(r *rand.Rand) string {
 			return string(types.Amino.MustMarshalJSON(genAssetPairs(r)))
+		}),
+		simulation.NewSimParamChange(types.ModuleName, "TwapLookbackWindow", func(r *rand.Rand) string {
+			return fmt.Sprintf("\"%d\"", genTwapLookbackWindow(r))
 		}),
 	}
 }
@@ -106,13 +119,13 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 func genAssetPairs(r *rand.Rand) common.AssetPairs {
 	assetPairs := make(common.AssetPairs, r.Intn(maxAssetPairs))
 	for i := range assetPairs {
-		// is 5 chars for assetPairs long enough??
 		a1, a2 := simtypes.RandStringOfLength(r, 5), simtypes.RandStringOfLength(r, 5)
-		pair, err := common.NewAssetPair(fmt.Sprintf("%s:%s", a1, a2))
-		if err != nil {
-			panic(fmt.Sprintf("failed to generate asset pair: %v", err))
-		}
+		pair := common.MustNewAssetPair(fmt.Sprintf("%s:%s", a1, a2))
 		assetPairs[i] = pair
 	}
 	return assetPairs
+}
+
+func genTwapLookbackWindow(r *rand.Rand) time.Duration {
+	return time.Duration(r.Intn(maxLookbackWindowMinutes)) * time.Minute
 }

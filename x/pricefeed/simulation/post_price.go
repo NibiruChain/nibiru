@@ -16,7 +16,7 @@ import (
 
 var maxPrice = sdk.NewDec(100_000)
 
-const minutesTenYears = 5_256_000
+const minutesTenYears = 10 * 365 * 24 * 60 // 5_256_000
 
 func GenPrice(r *rand.Rand) sdk.Dec {
 	return sdk.OneDec().Add(simtypes.RandomDecAmount(r, maxPrice)) // must be > 0
