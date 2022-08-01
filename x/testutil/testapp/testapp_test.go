@@ -2,6 +2,7 @@ package testapp_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -16,21 +17,23 @@ import (
 type TestappSuite struct {
 	suite.Suite
 
-	genOracle sdk.AccAddress
-	pairs     common.AssetPairs
+	genOracle          sdk.AccAddress
+	pairs              common.AssetPairs
+	twapLookbackWindow time.Duration
 }
 
 func (s *TestappSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	s.genOracle = sdk.MustAccAddressFromBech32(testapp.GenOracleAddress)
 	s.pairs = pricefeedtypes.DefaultPairs
+	s.twapLookbackWindow = pricefeedtypes.DefaultLookbackWindow
 }
 
 // TestPricefeedGenesis verifies that the expected pricefeed state for integration tests
 func (s *TestappSuite) TestPricefeedGenesis() {
 	genPf := testapp.PricefeedGenesis()
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs), genPf.Params)
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs), genPf.Params)
+	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
+	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
 	s.Assert().EqualValues(s.pairs[0].String(), genPf.PostedPrices[0].PairID)
 	s.Assert().EqualValues(s.pairs[1].String(), genPf.PostedPrices[1].PairID)
 	expectedGenesisOracles := []string{s.genOracle.String()}
@@ -59,8 +62,8 @@ func (s *TestappSuite) TestNewTestGenesisState() {
 	s.Assert().NotEqualValues(bzTest, bzDefault)
 	s.Assert().NotEqualValues(testGenPfState, defaultGenPfState)
 
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs), testGenPfState.Params)
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs), testGenPfState.Params)
+	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), testGenPfState.Params)
+	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), testGenPfState.Params)
 	s.Assert().EqualValues(s.pairs[0].String(), testGenPfState.PostedPrices[0].PairID)
 	s.Assert().EqualValues(s.pairs[1].String(), testGenPfState.PostedPrices[1].PairID)
 	expectedGenesisOracles := []string{s.genOracle.String()}
