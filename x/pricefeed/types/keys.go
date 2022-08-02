@@ -29,8 +29,10 @@ var (
 	// CurrentPricePrefix prefix for the current price of an asset
 	CurrentPricePrefix = []byte{0x00}
 
-	// RawPriceFeedPrefix prefix for the raw pricefeed of an asset
-	RawPriceFeedPrefix = []byte{0x01}
+	// RawPricesNamespace is the bytes prefix for RawPrice objects state
+	RawPricesNamespace = []byte{0x01}
+	// RawPricesObjectsPrefix is the KV prefix in which RawPrices objects are stored.
+	RawPricesObjectsPrefix = append(RawPricesNamespace, 0x00)
 
 	// Snapshot prefix for the median oracle price at a specific point in time
 	PriceSnapshotPrefix = []byte{0x03}
@@ -39,22 +41,6 @@ var (
 // CurrentPriceKey returns the prefix for the current price
 func CurrentPriceKey(pairID string) []byte {
 	return append(CurrentPricePrefix, []byte(pairID)...)
-}
-
-// RawPriceIteratorKey returns the prefix for the raw price for a single market
-func RawPriceIteratorKey(pairID string) []byte {
-	return append(
-		RawPriceFeedPrefix,
-		lengthPrefixWithByte([]byte(pairID))...,
-	)
-}
-
-// RawPriceKey returns the prefix for the raw price
-func RawPriceKey(pairID string, oracleAddr sdk.AccAddress) []byte {
-	return append(
-		RawPriceIteratorKey(pairID),
-		lengthPrefixWithByte(oracleAddr)...,
-	)
 }
 
 func PriceSnapshotKey(pairId string, blockHeight int64) []byte {

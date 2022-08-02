@@ -98,9 +98,9 @@ func (k Keeper) PostRawPrice(
 		panic(err)
 	}
 
-	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(pair.String(), oracle), k.cdc.MustMarshal(&newPostedPrice))
+	// create new raw price instance for the given pair from the oracle
+	k.RawPrices(ctx).Create(&newPostedPrice)
+
 	return newPostedPrice, nil
 }
 
@@ -129,7 +129,7 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 		validPrevPrice = false
 	}
 
-	postedPrices := k.GetRawPrices(ctx, pairID)
+	postedPrices := k.RawPrices(ctx).GetForPair(assetPair)
 
 	var notExpiredPrices []types.CurrentPrice
 	// filter out expired prices
@@ -338,34 +338,4 @@ func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
 		return false
 	})
 	return cps
-}
-
-// GetRawPrices fetches the set of all prices posted by oracles for an asset
-func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices {
-	inversePair := common.MustNewAssetPair(pairStr).Inverse()
-	if k.IsActivePair(ctx, inversePair.String()) {
-		panic(fmt.Errorf(
-			`cannot fetch posted prices using inverse pair, %v ;
-			Use pair, %v, instead`, inversePair.String(), pairStr))
-	}
-
-	var pps types.PostedPrices
-	k.IterateRawPricesByPair(ctx, pairStr, func(pp types.PostedPrice) (stop bool) {
-		pps = append(pps, pp)
-		return false
-	})
-	return pps
-}
-
-// IterateRawPrices iterates over all raw prices in the store and performs a callback function
-func (k Keeper) IterateRawPricesByPair(ctx sdk.Context, marketId string, cb func(record types.PostedPrice) (stop bool)) {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.RawPriceIteratorKey((marketId)))
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var record types.PostedPrice
-		k.cdc.MustUnmarshal(iterator.Value(), &record)
-		if cb(record) {
-			break
-		}
-	}
 }

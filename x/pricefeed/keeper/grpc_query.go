@@ -57,7 +57,7 @@ func (k Keeper) QueryRawPrices(
 	}
 
 	var prices types.PostedPriceResponses
-	for _, rp := range k.GetRawPrices(ctx, req.PairId) {
+	for _, rp := range k.RawPrices(ctx).GetForPair(common.MustNewAssetPair(req.PairId)) {
 		prices = append(prices, types.PostedPriceResponse{
 			PairID:        rp.PairID,
 			OracleAddress: rp.Oracle,

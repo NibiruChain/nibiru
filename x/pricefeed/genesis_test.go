@@ -62,8 +62,8 @@ func TestGenesis_TestGenesis(t *testing.T) {
 	}
 
 	// prices are only posted for PairGovStable and PairCollStable
-	assert.NotEmpty(t, k.GetRawPrices(ctx, params.Pairs[0].String()))
-	assert.NotEmpty(t, k.GetRawPrices(ctx, params.Pairs[1].String()))
+	assert.NotEmpty(t, k.RawPrices(ctx).GetForPair(params.Pairs[0]))
+	assert.NotEmpty(t, k.RawPrices(ctx).GetForPair(params.Pairs[1]))
 }
 
 func TestGenesisState_Validate(t *testing.T) {

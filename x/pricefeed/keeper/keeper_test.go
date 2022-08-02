@@ -76,7 +76,7 @@ func TestKeeper_GetPostRawPrice(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get raw prices
-		rawPrices := keeper.GetRawPrices(ctx, pair.String())
+		rawPrices := keeper.RawPrices(ctx).GetForPair(pair)
 
 		require.Equal(t, priceInfo.total, len(rawPrices))
 		require.Contains(t, rawPrices, pp)
