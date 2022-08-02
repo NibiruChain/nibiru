@@ -25,14 +25,6 @@ message Params {
   ];
 }
 
-// OraclesMarshaler is a codec.ProtoMarshaler for an oracles array in the 
-// OraclesState sdk.KVStore.  
-message OraclesMarshaler {
-  repeated bytes oracles = 1 [
-    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
-  ];
-}
-
 // ActivePairMarshaler is a codec.ProtoMarshaler for the "IsActive" status of  
 // a pair in the ActivePairState sdk.KVStore.  
 message ActivePairMarshaler {
