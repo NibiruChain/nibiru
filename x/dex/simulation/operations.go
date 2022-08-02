@@ -226,6 +226,22 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		// Ugly but does the job
 		poolId := uint64(sdk.MustNewDecFromStr(strings.Replace(tokenOut.Denom, "nibiru/pool/", "", 1)).TruncateInt().Int64())
 
+		// check if there are enough tokens to withdraw
+		pool, err := k.FetchPool(ctx, poolId)
+		if err != nil {
+			panic(err)
+		}
+		tokensOut, err := pool.TokensOutFromPoolSharesIn(tokenOut.Amount)
+		if err != nil {
+			panic(err)
+		}
+
+		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
+		if !tokensOut.IsValid() {
+			return simtypes.NoOpMsg(
+				types.ModuleName, msg.Type(), "not enough pool tokens to exit pool"), nil, nil
+		}
+
 		msg = &types.MsgExitPool{
 			Sender:     simAccount.Address.String(),
 			PoolId:     poolId,
