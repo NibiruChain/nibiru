@@ -112,3 +112,56 @@ localnet:
 	./scripts/localnet.sh
 
 .PHONY: localnet
+
+###############################################################################
+###                            Tests & Simulations                          ###
+###############################################################################
+
+BINDIR ?= $(GOPATH)/bin
+BUILDDIR ?= $(CURDIR)/build
+SIMAPP = ./simapp
+PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simapp')
+
+test-unit:
+	go test -mod=readonly $(PACKAGES_NOSIMULATION)
+
+runsim: $(RUNSIM)
+$(RUNSIM):
+	@echo "Installing runsim..."
+	@(cd /tmp && go get github.com/cosmos/tools/cmd/runsim@v1.0.0)
+
+test-sim-nondeterminism:
+	@echo "Running non-determinism test..."
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
+
+test-sim-custom-genesis-fast:
+	@echo "Running custom genesis simulation..."
+	@go test -mod=readonly $(SIMAPP) -run TestFullAppSimulation  \
+		-Enabled=true -NumBlocks=100 -BlockSize=200 -Commit=true -Seed=99 -Period=5 -v -timeout 24h
+
+test-sim-custom-genesis-multi-seed: runsim
+	@echo "Running multi-seed custom genesis simulation..."
+	@$(BINDIR)/runsim -SimAppPkg=$(SIMAPP) -ExitOnFail 400 5 TestFullAppSimulation
+
+test-sim-multi-seed-long: runsim
+	@echo "Running long multi-seed application simulation. This may take awhile!"
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 500 50 TestFullAppSimulation
+
+test-sim-multi-seed-short: runsim
+	@echo "Running short multi-seed application simulation. This may take awhile!"
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 10 TestFullAppSimulation
+
+test-sim-benchmark-invariants:
+	@echo "Running simulation invariant benchmarks..."
+	@go test -mod=readonly $(SIMAPP) -benchmem -bench=BenchmarkInvariants -run=^$ \
+	-Enabled=true -NumBlocks=1000 -BlockSize=200 \
+	-Period=1 -Commit=true -Seed=57 -v -timeout 24h
+
+.PHONY: \
+test-sim-nondeterminism \
+test-sim-custom-genesis-fast \
+test-sim-custom-genesis-multi-seed \
+test-sim-multi-seed-short \
+test-sim-multi-seed-long \
+test-sim-benchmark-invariants
