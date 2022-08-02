@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	simulation "github.com/NibiruChain/nibiru/x/simulation"
+	"github.com/NibiruChain/nibiru/x/simulation"
 )
 
 // SimulateMsgCreateBalancerPool generates a MsgCreatePool with random values.

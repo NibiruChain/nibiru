@@ -18,4 +18,4 @@ jobs:
           cache: true
 
       - name: Run all unit tests.
-        run: go test -v ./... -short -cover
+        run: make test-unit

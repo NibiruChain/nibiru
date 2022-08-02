@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#741](https://github.com/NibiruChain/nibiru/pull/741) - remove unused code and refactored variable names.
 * [#742](https://github.com/NibiruChain/nibiru/pull/742) - Vpools are not tradeable if they have invalid oracle prices.
 * [#739](https://github.com/NibiruChain/nibiru/pull/739) - Bump github.com/spf13/viper from 1.11.0 to 1.12.0
-
+* [#739](https://github.com/NibiruChain/nibiru/pull/739) - add simulation tests to make file
 ### API Breaking
 
 * [#721](https://github.com/NibiruChain/nibiru/pull/721) - Updated proto property names to adhere to standard snake_casing and added Unlock REST endpoint
@@ -120,3 +120,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#695](https://github.com/NibiruChain/nibiru/pull/695) Add `OpenPosition` integration tests.
 * [#692](https://github.com/NibiruChain/nibiru/pull/692) Add test coverage for Perp MsgServer methods.
+* [#768](https://github.com/NibiruChain/nibiru/pull/768) Update simulation tests to read flags over static values
