@@ -29,55 +29,32 @@ func (s OraclesState) getKV(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(s.storeKey), oraclesNamespace)
 }
 
+func (s OraclesState) pairKV(ctx sdk.Context, pair common.AssetPair) sdk.KVStore {
+	prefixKey := append([]byte(pair.String()), 0x00) // null terminated to avoid prefix overlaps of BTC/USD -> BTC/USDT
+	return prefix.NewStore(s.getKV(ctx), prefixKey)
+}
+
 func (s OraclesState) Get(
 	ctx sdk.Context, pair common.AssetPair,
 ) (oracles []sdk.AccAddress) {
-	kvStore := s.getKV(ctx)
-	key := []byte(pair.String())
-	valueBytes := kvStore.Get(key)
-	if valueBytes == nil {
-		return []sdk.AccAddress{}
+	iter := s.pairKV(ctx, pair).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		oracles = append(oracles, iter.Key())
 	}
 
-	oraclesMarshaler := &types.OraclesMarshaler{}
-	s.cdc.MustUnmarshal(
-		/*bytes=*/ valueBytes,
-		/*codec.ProtoMarshaler=*/ oraclesMarshaler)
-
-	return oraclesMarshaler.Oracles
-}
-
-func (s OraclesState) Set(
-	ctx sdk.Context, pair common.AssetPair, oracles []sdk.AccAddress,
-) {
-	key := []byte(pair.String())
-	kvStore := s.getKV(ctx)
-	oraclesMarshaler := &types.OraclesMarshaler{Oracles: oracles}
-	kvStore.Set(key, s.cdc.MustMarshal(oraclesMarshaler))
+	return oracles
 }
 
 func (s OraclesState) AddOracles(
 	ctx sdk.Context, pair common.AssetPair, oracles []sdk.AccAddress,
 ) {
-	startOracles := s.Get(ctx, pair)
-	endOracles := append(startOracles, oracles...)
-	s.Set(ctx, pair, endOracles)
-}
 
-func (s OraclesState) Iterate(
-	ctx sdk.Context,
-	do func(*types.OraclesMarshaler) (stop bool),
-) {
-	kvStore := s.getKV(ctx)
-	iter := kvStore.Iterator(nil, nil)
-	defer iter.Close()
+	kvStore := s.pairKV(ctx, pair)
 
-	for ; iter.Valid(); iter.Next() {
-		oraclesMarshaler := &types.OraclesMarshaler{}
-		s.cdc.MustUnmarshal(iter.Value(), oraclesMarshaler)
-		if !do(oraclesMarshaler) {
-			break
-		}
+	for _, oracle := range oracles {
+		kvStore.Set(oracle, []byte{})
 	}
 }
 
