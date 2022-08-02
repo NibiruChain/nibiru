@@ -119,7 +119,9 @@ func (k Keeper) ExecuteFullLiquidation(
 	positionResp, err := k.closePositionEntirely(
 		ctx,
 		/* currentPosition */ *position,
-		/* quoteAssetAmountLimit */ sdk.ZeroDec())
+		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
+		/* skipFluctuationLimitCheck */ true,
+	)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -277,11 +279,10 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	positionResp, err := k.openReversePosition(
+	positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
-		/* leverage */ sdk.OneDec(),
 		/* baseAmtLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,
 	)

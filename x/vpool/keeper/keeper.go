@@ -171,8 +171,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
-	if dir == types.Direction_REMOVE_FROM_POOL &&
-		!pool.HasEnoughQuoteReserve(quoteAssetAmount) {
+	if dir == types.Direction_REMOVE_FROM_POOL && !pool.HasEnoughQuoteReserve(quoteAssetAmount) {
 		return sdk.Dec{}, types.ErrOverTradingLimit
 	}
 
@@ -181,6 +180,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
+	// check if base asset limit is violated
 	if !baseAmountLimit.IsZero() {
 		// if going long and the base amount retrieved from the pool is less than the limit
 		if dir == types.Direction_ADD_TO_POOL && baseAssetAmount.LT(baseAmountLimit) {
@@ -268,7 +268,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 }
 
 /**
-isOverFluctuationLimit compares the updated pool's reserves with the given reserve snapshot, and errors if the fluctuation is above the bounds.
+isOverFluctuationLimit compares the updated pool's spot price with the current spot price.
 
 If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
 
