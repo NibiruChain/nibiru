@@ -10,21 +10,26 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
-func GenerateGenesis(simState *module.SimulationState) {
+// RandomizedGenState generates a random genesis for pricefeed.
+func RandomizedGenState(simState *module.SimulationState) {
 	var (
 		assetPairs         common.AssetPairs
 		twapLookbackWindow time.Duration
 	)
+
 	simState.AppParams.GetOrGenerate(simState.Cdc, AssetPairsKey, &assetPairs, simState.Rand,
 		func(r *rand.Rand) { assetPairs = genAssetPairs(r) },
 	)
+
 	simState.AppParams.GetOrGenerate(simState.Cdc, TwapLookbackWindowKey, &twapLookbackWindow, simState.Rand,
 		func(r *rand.Rand) { twapLookbackWindow = genTwapLookbackWindow(r) },
 	)
+
 	oracles := make([]string, len(simState.Accounts))
 	for i := range oracles {
 		oracles[i] = simState.Accounts[i].Address.String()
 	}
+
 	r := simState.Rand
 	postedPrices := make([]types.PostedPrice, r.Intn(maxPostedPrices))
 
@@ -39,6 +44,7 @@ func GenerateGenesis(simState *module.SimulationState) {
 			Price:  GenPrice(r),
 		}
 	}
+
 	pricefeedGenesis := types.GenesisState{
 		Params: types.Params{
 			Pairs:              assetPairs,
@@ -47,5 +53,6 @@ func GenerateGenesis(simState *module.SimulationState) {
 		PostedPrices:   postedPrices,
 		GenesisOracles: oracles,
 	}
+
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&pricefeedGenesis)
 }
