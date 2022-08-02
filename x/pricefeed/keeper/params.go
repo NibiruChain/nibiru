@@ -96,7 +96,7 @@ func (k Keeper) addOraclesForPair(
 			uniquePairOracles[oracle.String()] = true
 		}
 	}
-	k.OraclesStore().Set(ctx, pair, endingOracles)
+	k.OraclesStore().AddOracles(ctx, pair, endingOracles)
 	return endingOracles
 }
 
