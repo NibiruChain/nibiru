@@ -51,7 +51,7 @@ func TestOraclesQuery(t *testing.T) {
 		PairId: pairs[2].String()})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
-		Oracles: []string{oracleA.String(), oracleB.String()}}, response)
+		Oracles: []string{oracleB.String(), oracleA.String()}}, response)
 
 	t.Log("Query for pair 3 oracles | ETH")
 	response, err = keeper.QueryOracles(wctx, &types.QueryOraclesRequest{

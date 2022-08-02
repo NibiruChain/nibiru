@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"bytes"
+	"sort"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +15,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
+
+func sortAddresses(src []sdk.AccAddress) {
+	sort.Slice(src, func(i, j int) bool { return bytes.Compare(src[i], src[j]) < 0 })
+}
 
 func TestGetParams(t *testing.T) {
 	testCases := []struct {
@@ -99,6 +105,8 @@ func TestWhitelistOracles(t *testing.T) {
 				pk.WhitelistOracles(ctx, wantOracles)
 				gotOraclesMap = pk.GetOraclesForPairs(ctx, paramsPairs)
 				gotOracles = gotOraclesMap[paramsPairs[0]]
+
+				sortAddresses(wantOracles)
 				require.EqualValues(t, wantOracles, gotOracles)
 			},
 		},
@@ -145,6 +153,7 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 
 			t.Log("Verify that all 'pairsToSet' have the oracle set.")
 			for _, pair := range tc.pairsToSet {
+				sortAddresses(oracles)
 				assert.EqualValues(t,
 					oracles,
 					pricefeedKeeper.GetOraclesForPair(ctx, pair.String()))
@@ -154,7 +163,7 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 			for _, pair := range tc.startParams.Pairs {
 				if !tc.pairsToSet.Contains(pair) {
 					assert.EqualValues(t,
-						[]sdk.AccAddress{},
+						[]sdk.AccAddress(nil),
 						pricefeedKeeper.GetOraclesForPair(ctx, pair.String()))
 				}
 			}
