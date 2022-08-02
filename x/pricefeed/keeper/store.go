@@ -25,14 +25,14 @@ type OraclesState Keeper
 
 var oraclesNamespace = []byte("oracles")
 
-func (state OraclesState) getKV(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(state.storeKey), oraclesNamespace)
+func (s OraclesState) getKV(ctx sdk.Context) sdk.KVStore {
+	return prefix.NewStore(ctx.KVStore(s.storeKey), oraclesNamespace)
 }
 
-func (state OraclesState) Get(
+func (s OraclesState) Get(
 	ctx sdk.Context, pair common.AssetPair,
 ) (oracles []sdk.AccAddress) {
-	kvStore := state.getKV(ctx)
+	kvStore := s.getKV(ctx)
 	key := []byte(pair.String())
 	valueBytes := kvStore.Get(key)
 	if valueBytes == nil {
@@ -40,41 +40,41 @@ func (state OraclesState) Get(
 	}
 
 	oraclesMarshaler := &types.OraclesMarshaler{}
-	state.cdc.MustUnmarshal(
+	s.cdc.MustUnmarshal(
 		/*bytes=*/ valueBytes,
 		/*codec.ProtoMarshaler=*/ oraclesMarshaler)
 
 	return oraclesMarshaler.Oracles
 }
 
-func (state OraclesState) Set(
+func (s OraclesState) Set(
 	ctx sdk.Context, pair common.AssetPair, oracles []sdk.AccAddress,
 ) {
 	key := []byte(pair.String())
-	kvStore := state.getKV(ctx)
+	kvStore := s.getKV(ctx)
 	oraclesMarshaler := &types.OraclesMarshaler{Oracles: oracles}
-	kvStore.Set(key, state.cdc.MustMarshal(oraclesMarshaler))
+	kvStore.Set(key, s.cdc.MustMarshal(oraclesMarshaler))
 }
 
-func (state OraclesState) AddOracles(
+func (s OraclesState) AddOracles(
 	ctx sdk.Context, pair common.AssetPair, oracles []sdk.AccAddress,
 ) {
-	startOracles := state.Get(ctx, pair)
+	startOracles := s.Get(ctx, pair)
 	endOracles := append(startOracles, oracles...)
-	state.Set(ctx, pair, endOracles)
+	s.Set(ctx, pair, endOracles)
 }
 
-func (state OraclesState) Iterate(
+func (s OraclesState) Iterate(
 	ctx sdk.Context,
 	do func(*types.OraclesMarshaler) (stop bool),
 ) {
-	kvStore := state.getKV(ctx)
+	kvStore := s.getKV(ctx)
 	iter := kvStore.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		oraclesMarshaler := &types.OraclesMarshaler{}
-		state.cdc.MustUnmarshal(iter.Value(), oraclesMarshaler)
+		s.cdc.MustUnmarshal(iter.Value(), oraclesMarshaler)
 		if !do(oraclesMarshaler) {
 			break
 		}
