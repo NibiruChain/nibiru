@@ -19,7 +19,6 @@ func (k Keeper) ActivePairsStore() ActivePairsState {
 	return (ActivePairsState)(k)
 }
 
-//-----------------------------------------------------------------------------
 // OraclesState implements methods for updating the "oracles" sdk.KVStore
 type OraclesState Keeper
 
@@ -58,7 +57,6 @@ func (s OraclesState) AddOracles(
 	}
 }
 
-//-----------------------------------------------------------------------------
 // ActivePairsState implements methods for updating the "active pairs" sdk.KVStore
 type ActivePairsState Keeper
 
