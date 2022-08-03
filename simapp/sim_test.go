@@ -23,10 +23,11 @@ func init() {
 }
 
 func TestFullAppSimulation(tb *testing.T) {
-	config, db, dir, _, _, err := sdkSimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
-	if err != nil {
-		tb.Fatalf("simulation setup failed: %s", err.Error())
+	config, db, dir, _, skip, err := sdkSimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	if skip {
+		tb.Skip("skipping application simulation")
 	}
+	require.NoError(tb, err, "simulation setup failed")
 
 	defer func() {
 		db.Close()
