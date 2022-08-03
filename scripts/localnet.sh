@@ -43,17 +43,17 @@ MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit lia
 GENESIS_COINS=1000000000unibi,10000000000000unusd
 
 # Stop nibid if it is already running
-if pgrep -x "$BINARY" >/dev/null; then
+if pgrep -x "$BINARY" > /dev/null; then
     echo_error "Terminating $BINARY..."
     killall nibid
 fi
 
 # Remove previous data
-echo_info "Removing previous chain data from $CHAIN_HOME_DIR..."
-rm -rf $CHAIN_HOME_DIR
+echo_info "Removing previous chain data from $HOME/.nibid..."
+rm -rf $HOME/.nibid
 
 # Add directory for chain, exit if error
-if ! mkdir -p $CHAIN_HOME_DIR 2>/dev/null; then
+if ! mkdir -p $HOME/.nibid 2>/dev/null; then
   echo_error "Failed to create chain folder. Aborting..."
   exit 1
 fi
@@ -147,5 +147,5 @@ else
 fi
 
 # Start the network
-echo_info "Starting $CHAIN_ID in $CHAIN_HOME_DIR..."
+echo_info "Starting $CHAIN_ID in $HOME/.nibid..."
 $BINARY start
