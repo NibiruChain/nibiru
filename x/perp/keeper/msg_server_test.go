@@ -288,6 +288,10 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 			}
 
+			t.Log("increment block height and time for TWAP calculation")
+			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
+				WithBlockTime(time.Now().Add(time.Minute))
+
 			resp, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
 				Sender:               tc.sender,
 				TokenPair:            tc.pair,

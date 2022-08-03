@@ -18,4 +18,4 @@ jobs:
           cache: true
 
       - name: Run all tests.
-        run: go test -v ./... -cover
+        run: make test-integration
