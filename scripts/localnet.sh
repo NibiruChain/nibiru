@@ -193,6 +193,10 @@ cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.adjustme
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.price_upper_bound = "999900"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.price_upper_bound = "1000100"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.is_collateral_ratio_valid = false' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+# x/dex
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.dex.params.starting_pool_number = "1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.dex.params.pool_creation_fee[0] = {denom:"unibi",amount:"1000000000"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.dex.params.whitelisted_asset = ["uusdc","unibi","unusd"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $HOME/.nibid..."
