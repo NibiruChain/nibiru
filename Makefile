@@ -123,7 +123,10 @@ SIMAPP = ./simapp
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simapp')
 
 test-unit:
-	go test -mod=readonly $(PACKAGES_NOSIMULATION)
+	go test $(PACKAGES_NOSIMULATION) -short -cover
+
+test-integration:
+	go test -v $(PACKAGES_NOSIMULATION) -cover
 
 runsim: $(RUNSIM)
 $(RUNSIM):
