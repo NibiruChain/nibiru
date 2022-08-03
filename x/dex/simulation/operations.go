@@ -93,16 +93,31 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 		frequencyFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1"))
 
 		intensity := intensityFactor.Mul(sdk.NewDecFromInt(balanceIn)).TruncateInt()
-
+		tokenIn := sdk.NewCoin(denomIn, intensity)
 		if frequencyFactor.GTE(sdk.MustNewDecFromStr("0.33")) {
 			return simtypes.NoOpMsg(
 				types.ModuleName, msg.Type(), "No swap done"), nil, nil
 		}
 
+		// check if there are enough tokens to swap
+		pool, err := k.FetchPool(ctx, poolIdSwap)
+		if err != nil {
+			panic(err)
+		}
+		tokensOut, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut)
+		if err != nil {
+			panic(err)
+		}
+
+		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
+		if !tokensOut.IsValid() {
+			return simtypes.NoOpMsg(
+				types.ModuleName, msg.Type(), "not enough input tokens to swap"), nil, nil
+		}
 		msg = &types.MsgSwapAssets{
 			Sender:        simAccount.Address.String(),
 			PoolId:        poolIdSwap,
-			TokenIn:       sdk.NewCoin(denomIn, intensity),
+			TokenIn:       tokenIn,
 			TokenOutDenom: denomOut,
 		}
 

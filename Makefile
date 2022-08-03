@@ -117,10 +117,11 @@ localnet:
 ###                            Tests & Simulations                          ###
 ###############################################################################
 
-BINDIR ?= $(GOPATH)/bin
-BUILDDIR ?= $(CURDIR)/build
-SIMAPP = ./simapp
-PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simapp')
+BINDIR               ?= $(GOPATH)/bin
+BUILDDIR             ?= $(CURDIR)/build
+SIMAPP                = ./simapp
+PACKAGES_NOSIMULATION = $(shell go list ./... | grep -v '/simapp')
+RUNSIM                = $(BINDIR)/runsim
 
 test-unit:
 	go test $(PACKAGES_NOSIMULATION) -short -cover
@@ -131,7 +132,7 @@ test-integration:
 runsim: $(RUNSIM)
 $(RUNSIM):
 	@echo "Installing runsim..."
-	@(cd /tmp && go get github.com/cosmos/tools/cmd/runsim@v1.0.0)
+	@(cd /tmp && go install github.com/cosmos/tools/cmd/runsim@v1.0.0)
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
