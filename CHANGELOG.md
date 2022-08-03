@@ -45,11 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improvements
 
 * [#775](https://github.com/NibiruChain/nibiru/pull/775) - bump google.golang.org/protobuf from 1.28.0 to 1.28.1
-* [#768](https://github.com/NibiruChain/nibiru/pull/768/) - add simulation tests to make file
+* [#768](https://github.com/NibiruChain/nibiru/pull/768) - add simulation tests to make file
+* [#767](https://github.com/NibiruChain/nibiru/pull/767) - add fluctuation limit checks on `OpenPosition`.
 
 ### Bug Fixes
 
 * [#766](https://github.com/NibiruChain/nibiru/pull/766) Fixed margin ratio calculation for trader position.
+* [#776](https://github.com/NibiruChain/nibiru/pull/776) - Fix a bug where the user could open infinite leverage positions
+
+### Testing
+* [#782](https://github.com/NibiruChain/nibiru/pull/782) - replace github test workflows to use make commands
 
 ## [v0.11.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.11.0) - 2022-07-29
 
@@ -125,4 +130,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#695](https://github.com/NibiruChain/nibiru/pull/695) Add `OpenPosition` integration tests.
 * [#692](https://github.com/NibiruChain/nibiru/pull/692) Add test coverage for Perp MsgServer methods.
-* [#768](https://github.com/NibiruChain/nibiru/pull/768) Update simulation tests to read flags over static values
