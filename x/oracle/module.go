@@ -121,7 +121,9 @@ func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // Route returns the message routing key for the oracle module.
 func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
+	return sdk.NewRoute(types.RouterKey, func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		return nil, fmt.Errorf("not supported")
+	})
 }
 
 // QuerierRoute returns the oracle module's querier route name.
