@@ -252,7 +252,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tokensOut, err := tc.pool.tokensOutFromPoolSharesIn(tc.numSharesIn)
+			tokensOut, err := tc.pool.TokensOutFromPoolSharesIn(tc.numSharesIn)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedTokensOut, tokensOut)
 		})
@@ -298,7 +298,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := tc.pool.tokensOutFromPoolSharesIn(tc.numSharesIn)
+			_, err := tc.pool.TokensOutFromPoolSharesIn(tc.numSharesIn)
 			require.Error(t, err)
 		})
 	}

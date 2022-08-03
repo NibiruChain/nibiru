@@ -50,8 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
-* [#766](https://github.com/NibiruChain/nibiru/pull/766) Fixed margin ratio calculation for trader position.
+* [#766](https://github.com/NibiruChain/nibiru/pull/766) - Fixed margin ratio calculation for trader position.
 * [#776](https://github.com/NibiruChain/nibiru/pull/776) - Fix a bug where the user could open infinite leverage positions
+* [#779](https://github.com/NibiruChain/nibiru/pull/779) - Fix issue with released tokens being invalid in `ExitPool`
 
 ### Testing
 * [#782](https://github.com/NibiruChain/nibiru/pull/782) - replace github test workflows to use make commands
