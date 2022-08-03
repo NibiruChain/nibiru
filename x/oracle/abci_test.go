@@ -2,6 +2,7 @@ package oracle_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"math"
 	"sort"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"

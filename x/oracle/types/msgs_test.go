@@ -1,10 +1,10 @@
 package types_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"math/rand"
 	"testing"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	"github.com/stretchr/testify/require"

@@ -2,11 +2,11 @@ package keeper
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

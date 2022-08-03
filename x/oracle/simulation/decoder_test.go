@@ -2,6 +2,7 @@ package simulation_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"testing"
 
 	gogotypes "github.com/gogo/protobuf/types"
@@ -12,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	sim "github.com/NibiruChain/nibiru/x/oracle/simulation"
 	"github.com/NibiruChain/nibiru/x/oracle/types"

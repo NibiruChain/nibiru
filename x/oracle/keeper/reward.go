@@ -2,10 +2,10 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 

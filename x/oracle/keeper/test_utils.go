@@ -2,14 +2,14 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/x/oracle/core"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"testing"
 
-	customauth "github.com/NibiruChain/nibiru/custom/auth"
-	custombank "github.com/NibiruChain/nibiru/custom/bank"
-	customdistr "github.com/NibiruChain/nibiru/custom/distribution"
-	customparams "github.com/NibiruChain/nibiru/custom/params"
-	customstaking "github.com/NibiruChain/nibiru/custom/staking"
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/stretchr/testify/require"
 
@@ -47,11 +47,11 @@ const faucetAccountName = "faucet"
 
 // ModuleBasics nolint
 var ModuleBasics = module.NewBasicManager(
-	customauth.AppModuleBasic{},
-	custombank.AppModuleBasic{},
-	customdistr.AppModuleBasic{},
-	customstaking.AppModuleBasic{},
-	customparams.AppModuleBasic{},
+	auth.AppModuleBasic{},
+	bank.AppModuleBasic{},
+	distr.AppModuleBasic{},
+	staking.AppModuleBasic{},
+	params.AppModuleBasic{},
 )
 
 // MakeTestCodec nolint

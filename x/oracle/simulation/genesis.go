@@ -5,12 +5,12 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 

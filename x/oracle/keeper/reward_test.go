@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 

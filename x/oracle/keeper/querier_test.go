@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"sort"
 	"testing"
 
@@ -9,7 +10,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 

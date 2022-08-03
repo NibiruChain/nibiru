@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -13,7 +14,6 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 

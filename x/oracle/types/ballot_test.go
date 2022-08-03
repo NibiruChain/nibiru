@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"math"
 	"sort"
 	"strconv"
@@ -15,7 +16,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 

@@ -3,6 +3,7 @@ package simulation
 //DONTCOVER
 
 import (
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"math/rand"
 	"strings"
 
@@ -14,7 +15,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )

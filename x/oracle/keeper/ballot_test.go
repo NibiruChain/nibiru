@@ -1,12 +1,12 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
