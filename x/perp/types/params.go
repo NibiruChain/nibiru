@@ -79,7 +79,15 @@ func NewParams(
 
 // DefaultParams returns the default parameters for the x/perp module.
 func DefaultParams() Params {
-	return Params{}
+	return NewParams(
+		/* stopped */ false,
+		/* feePoolFeeRatio */ sdk.MustNewDecFromStr("0.001"), // 10 bps
+		/* ecosystemFundFeeRatio */ sdk.MustNewDecFromStr("0.001"), // 10 bps
+		/* liquidationFee */ sdk.MustNewDecFromStr("0.025"), // 250 bps
+		/* partialLiquidationRatio */ sdk.MustNewDecFromStr("0.25"),
+		/* epochIdentifier */ "30 min",
+		/* twapLookbackWindow */ 15*time.Minute,
+	)
 }
 
 // Validate validates the set of params
