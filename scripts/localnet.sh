@@ -146,6 +146,36 @@ else
   echo_error "Failed to collect genesis txs"
 fi
 
+echo_info "Configuring genesis params"
+# BTC:NUSD
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].pair = {token0:"ubtc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].base_asset_reserve = "50000000000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json # 50k BTC
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].quote_asset_reserve = "1000000000000000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json # 1 billion NUSD
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].trade_limit_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].fluctuation_limit_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].max_oracle_spread_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].maintenance_margin_ratio = "0.0625"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+# ETH:NUSD
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].pair = {token0:"ueth",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].base_asset_reserve = "666666000000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json # 666k ETH
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].quote_asset_reserve = "1000000000000000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json # 1 billion NUSD
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].trade_limit_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].fluctuation_limit_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].max_oracle_spread_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].maintenance_margin_ratio = "0.0625"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+# Perp market params
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.stopped = false' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.fee_pool_fee_ratio = "0.001"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.ecosystem_fund_fee_ratio = "0.001"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.liquidation_fee_ratio = "0.025"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.partial_liquidation_ratio = "0.25"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.funding_rate_interval = "30 min"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.twap_lookback_window = "900s"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+
 # Start the network
 echo_info "Starting $CHAIN_ID in $HOME/.nibid..."
 $BINARY start
