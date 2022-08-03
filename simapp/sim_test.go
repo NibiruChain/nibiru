@@ -72,10 +72,6 @@ func TestAppStateDeterminism(t *testing.T) {
 	}
 
 	config := sdkSimapp.NewConfigFromFlags()
-	config.InitialBlockHeight = 1
-	config.ExportParamsPath = ""
-	config.OnOperation = false
-	config.AllInvariants = false
 	config.ChainID = helpers.SimAppChainID
 
 	numSeeds := 3
