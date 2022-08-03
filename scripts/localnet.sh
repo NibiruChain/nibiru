@@ -164,17 +164,19 @@ cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].fluctuatio
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].max_oracle_spread_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].maintenance_margin_ratio = "0.0625"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 # Perp market params
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.stopped = false' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.fee_pool_fee_ratio = "0.001"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.ecosystem_fund_fee_ratio = "0.001"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.liquidation_fee_ratio = "0.025"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.partial_liquidation_ratio = "0.25"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.funding_rate_interval = "30 min"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.twap_lookback_window = "900s"' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]' $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json > $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.stopped = false' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.fee_pool_fee_ratio = "0.001"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.ecosystem_fund_fee_ratio = "0.001"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.liquidation_fee_ratio = "0.025"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.partial_liquidation_ratio = "0.25"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.funding_rate_interval = "30 min"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+# Pricefeed oracles
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.genesis_oracles = ["nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $HOME/.nibid..."
