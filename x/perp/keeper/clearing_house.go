@@ -129,7 +129,7 @@ func (k Keeper) afterPositionUpdate(
 		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
 	}
 
-	if !isNewPosition && !positionResp.Position.Size_.IsZero() {
+	if !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(
 			ctx,
 			*positionResp.Position,
@@ -141,7 +141,7 @@ func (k Keeper) afterPositionUpdate(
 
 		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
 		if err = requireMoreMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
-			return err
+			return types.ErrMarginRatioTooLow
 		}
 	}
 
