@@ -55,7 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#779](https://github.com/NibiruChain/nibiru/pull/779) - Fix issue with released tokens being invalid in `ExitPool`
 
 ### Testing
-* [#782](https://github.com/NibiruChain/nibiru/pull/782) - replace github test workflows to use make commands
+
+* [#782](https://github.com/NibiruChain/nibiru/pull/782) - replace GitHub test workflows to use make commands
+* [#784](https://github.com/NibiruChain/nibiru/pull/784) - fix runsim
 
 ## [v0.11.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.11.0) - 2022-07-29
 

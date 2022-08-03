@@ -121,6 +121,7 @@ BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./simapp
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simapp')
+RUNSIM = $(BINDIR)/runsim
 
 test-unit:
 	go test $(PACKAGES_NOSIMULATION) -short -cover
@@ -131,7 +132,7 @@ test-integration:
 runsim: $(RUNSIM)
 $(RUNSIM):
 	@echo "Installing runsim..."
-	@(cd /tmp && go get github.com/cosmos/tools/cmd/runsim@v1.0.0)
+	@(cd /tmp && go install github.com/cosmos/tools/cmd/runsim@v1.0.0)
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
@@ -145,15 +146,15 @@ test-sim-custom-genesis-fast:
 
 test-sim-custom-genesis-multi-seed: runsim
 	@echo "Running multi-seed custom genesis simulation..."
-	@$(BINDIR)/runsim -SimAppPkg=$(SIMAPP) -ExitOnFail 400 5 TestFullAppSimulation
+	@$(RUNSIM) -SimAppPkg=$(SIMAPP) -ExitOnFail 400 5 TestFullAppSimulation
 
 test-sim-multi-seed-long: runsim
 	@echo "Running long multi-seed application simulation. This may take awhile!"
-	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 500 50 TestFullAppSimulation
+	@$(RUNSIM) -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 500 50 TestFullAppSimulation
 
 test-sim-multi-seed-short: runsim
 	@echo "Running short multi-seed application simulation. This may take awhile!"
-	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 10 TestFullAppSimulation
+	@$(RUNSIM) -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 10 TestFullAppSimulation
 
 test-sim-benchmark-invariants:
 	@echo "Running simulation invariant benchmarks..."
