@@ -147,6 +147,7 @@ else
 fi
 
 echo_info "Configuring genesis params"
+# x/vpool
 # BTC:NUSD
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].pair = {token0:"ubtc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[0].base_asset_reserve = "50000000000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json # 50k BTC
@@ -163,7 +164,7 @@ cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].trade_limi
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].fluctuation_limit_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].max_oracle_spread_ratio = "0.1"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.vpool.vpools[1].maintenance_margin_ratio = "0.0625"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
-# Perp market params
+# x/perp
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.stopped = false' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.fee_pool_fee_ratio = "0.001"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.params.ecosystem_fund_fee_ratio = "0.001"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
@@ -175,8 +176,23 @@ cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].pair
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
-# Pricefeed oracles
+# x/pricefeed
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[0] = {token0:"unibi",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[1] = {token0:"uusdc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[2] = {token0:"ubtc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[3] = {token0:"ueth",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.genesis_oracles = ["nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+# x/stablecoin
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.coll_ratio = "1000000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.fee_ratio = "2000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.ef_fee_ratio = "500000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.bonus_rate_recoll = "2000"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.distr_epoch_identifier = "15 min"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.adjustment_step = "2500"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.price_upper_bound = "999900"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.price_upper_bound = "1000100"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.stablecoin.params.is_collateral_ratio_valid = false' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $HOME/.nibid..."
