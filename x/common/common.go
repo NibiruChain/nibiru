@@ -24,6 +24,10 @@ const (
 	PairSeparator = ":"
 )
 
+const (
+	MicroUnit = int64(1e6)
+)
+
 var (
 	PairGovStable  = AssetPair{Token0: DenomGov, Token1: DenomStable}
 	PairCollStable = AssetPair{Token0: DenomColl, Token1: DenomStable}

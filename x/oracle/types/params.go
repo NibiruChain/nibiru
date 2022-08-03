@@ -5,8 +5,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	core "github.com/NibiruChain/nibiru/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
@@ -24,10 +22,14 @@ var (
 )
 
 // Default parameter values
+// TODO(mercilex): need to adjust this based on expected genesis parameters, this assumes block times are 1s
+// DefaultVotePeriod: 10s
+// DefaultSlashWindow: 1 Week
+// DefaultRewardDistributionWindow: 1 year
 const (
-	DefaultVotePeriod               = core.BlocksPerMinute / 2 // 30 seconds
-	DefaultSlashWindow              = core.BlocksPerWeek       // window for a week
-	DefaultRewardDistributionWindow = core.BlocksPerYear       // window for a year
+	DefaultVotePeriod               = 10                      // vote every 10s
+	DefaultSlashWindow              = 604800                  // 1 week
+	DefaultRewardDistributionWindow = DefaultSlashWindow * 54 // 1 week * 54 weeks (weeks in a year)
 )
 
 // Default parameter values

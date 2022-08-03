@@ -1,11 +1,11 @@
 package oracle_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	core "github.com/NibiruChain/nibiru/types"
 	"github.com/NibiruChain/nibiru/x/oracle"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	uSDRAmt    = sdk.NewInt(1005 * core.MicroUnit)
+	uSDRAmt    = sdk.NewInt(1005 * common.MicroUnit)
 	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 
 	randomExchangeRate        = sdk.NewDec(1700)
