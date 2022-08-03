@@ -26,6 +26,7 @@ var (
 	ErrFailedRemoveMarginCanCauseBadDebt = sdkerrors.Register(ModuleName, 7, "failed to remove margin; position would have bad debt if removed")
 	ErrQuoteAmountIsZero                 = sdkerrors.Register(ModuleName, 8, "quote amount cannot be zero")
 	ErrLeverageIsZero                    = sdkerrors.Register(ModuleName, 9, "leverage cannot be zero")
+	ErrMarginRatioTooLow                 = sdkerrors.Register(ModuleName, 10, "margin ratio did not meet maintenance margin ratio")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
