@@ -129,7 +129,9 @@ func (AppModule) QuerierRoute() string { return types.QuerierRoute }
 
 // LegacyQuerierHandler returns the oracle module sdk.Querier.
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return keeper.NewLegacyQuerier(am.keeper, legacyQuerierCdc)
+	return func(_ sdk.Context, _ []string, _ abci.RequestQuery) ([]byte, error) {
+		return nil, fmt.Errorf("deprecated, use gRPC web")
+	}
 }
 
 // RegisterServices registers module services.
