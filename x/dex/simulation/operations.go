@@ -104,13 +104,13 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 		if err != nil {
 			panic(err)
 		}
-		tokensOut, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut)
+		tokenOut, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut)
 		if err != nil {
 			panic(err)
 		}
 
 		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
-		if !tokensOut.IsValid() {
+		if tokenOut.Amount.LTE(sdk.ZeroInt()) {
 			return simtypes.NoOpMsg(
 				types.ModuleName, msg.Type(), "not enough input tokens to swap"), nil, nil
 		}
