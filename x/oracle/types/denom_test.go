@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func Test_DenomList(t *testing.T) {
+func Test_PairList(t *testing.T) {
 	denoms := types.PairList{
 		types.Pair{
 			Name:     "denom1",

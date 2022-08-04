@@ -130,7 +130,7 @@ message QueryTobinTaxesResponse {
   // tobin_taxes defines a list of the tobin tax of all whitelisted denoms
   repeated Pair tobin_taxes = 1 [
     (gogoproto.moretags)     = "yaml:\"tobin_taxes\"",
-    (gogoproto.castrepeated) = "DenomList",
+    (gogoproto.castrepeated) = "PairList",
     (gogoproto.nullable)     = false
   ];
 }
