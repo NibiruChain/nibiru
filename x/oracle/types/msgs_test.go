@@ -1,7 +1,7 @@
 package types_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/oracle/core"
+	"github.com/NibiruChain/nibiru/x/common"
 	"math/rand"
 	"testing"
 
@@ -44,7 +44,7 @@ func TestMsgAggregateExchangeRatePrevote(t *testing.T) {
 		sdk.AccAddress([]byte("addr1_______________")),
 	}
 
-	exchangeRates := sdk.DecCoins{sdk.NewDecCoinFromDec(core.MicroCollDenom, sdk.OneDec()), sdk.NewDecCoinFromDec(core.MicroStableDenom, sdk.NewDecWithPrec(32121, 1))}
+	exchangeRates := sdk.DecCoins{sdk.NewDecCoinFromDec(common.MicroCollDenom, sdk.OneDec()), sdk.NewDecCoinFromDec(common.DenomStable, sdk.NewDecWithPrec(32121, 1))}
 	bz := types.GetAggregateVoteHash("1", exchangeRates.String(), sdk.ValAddress(addrs[0]))
 
 	tests := []struct {

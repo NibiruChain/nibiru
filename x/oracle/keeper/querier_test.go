@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"sort"
 	"testing"
@@ -30,7 +31,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCollDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroCollDenom, rate)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -38,7 +39,7 @@ func TestQueryExchangeRate(t *testing.T) {
 
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
-		Denom: core.MicroCollDenom,
+		Denom: common.MicroCollDenom,
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)
@@ -70,7 +71,7 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCollDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroCollDenom, rate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
@@ -78,7 +79,7 @@ func TestQueryExchangeRates(t *testing.T) {
 
 	require.Equal(t, sdk.DecCoins{
 		sdk.NewDecCoinFromDec(core.MicroUSDDenom, rate),
-		sdk.NewDecCoinFromDec(core.MicroCollDenom, rate),
+		sdk.NewDecCoinFromDec(common.MicroCollDenom, rate),
 	}, res.ExchangeRates)
 }
 
@@ -88,17 +89,17 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCollDenom, rate)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroStableDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroCollDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomStable, rate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
 
 	res, err := querier.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
 
 	targetDenoms := []string{
-		core.MicroStableDenom,
+		common.DenomStable,
 		core.MicroUSDDenom,
-		core.MicroCollDenom,
+		common.MicroCollDenom,
 	}
 
 	require.Equal(t, targetDenoms, res.Actives)
@@ -256,10 +257,10 @@ func TestQueryTobinTaxes(t *testing.T) {
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
 
 	tobinTaxes := types.DenomList{{
-		Name:     core.MicroStableDenom,
+		Name:     common.DenomStable,
 		TobinTax: sdk.OneDec(),
 	}, {
-		Name:     core.MicroCollDenom,
+		Name:     common.MicroCollDenom,
 		TobinTax: sdk.NewDecWithPrec(123, 2),
 	}}
 	for _, item := range tobinTaxes {
@@ -276,7 +277,7 @@ func TestQueryTobinTax(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	denom := types.Denom{Name: core.MicroStableDenom, TobinTax: sdk.OneDec()}
+	denom := types.Denom{Name: common.DenomStable, TobinTax: sdk.OneDec()}
 	input.OracleKeeper.SetTobinTax(input.Ctx, denom.Name, denom.TobinTax)
 
 	// empty request
@@ -284,7 +285,7 @@ func TestQueryTobinTax(t *testing.T) {
 	require.Error(t, err)
 
 	res, err := querier.TobinTax(ctx, &types.QueryTobinTaxRequest{
-		Denom: core.MicroStableDenom,
+		Denom: common.DenomStable,
 	})
 	require.NoError(t, err)
 

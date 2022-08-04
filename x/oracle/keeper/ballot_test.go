@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/oracle/core"
+	"github.com/NibiruChain/nibiru/x/common"
 	"sort"
 	"testing"
 
@@ -31,14 +31,14 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), core.MicroCollDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), core.MicroCollDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), core.MicroCollDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), common.MicroCollDenom, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), common.MicroCollDenom, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), common.MicroCollDenom, ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(1000), core.MicroStableDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(1300), core.MicroStableDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(2000), core.MicroStableDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(1000), common.DenomStable, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(1300), common.DenomStable, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(2000), common.DenomStable, ValAddrs[2], power),
 	}
 
 	for i := range sdrBallot {
@@ -71,11 +71,11 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(sdrBallot)
 	sort.Sort(krwBallot)
-	sort.Sort(ballotMap[core.MicroCollDenom])
-	sort.Sort(ballotMap[core.MicroStableDenom])
+	sort.Sort(ballotMap[common.MicroCollDenom])
+	sort.Sort(ballotMap[common.DenomStable])
 
-	require.Equal(t, sdrBallot, ballotMap[core.MicroCollDenom])
-	require.Equal(t, krwBallot, ballotMap[core.MicroStableDenom])
+	require.Equal(t, sdrBallot, ballotMap[common.MicroCollDenom])
+	require.Equal(t, krwBallot, ballotMap[common.DenomStable])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -96,14 +96,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), core.MicroCollDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), core.MicroCollDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), core.MicroCollDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), common.MicroCollDenom, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), common.MicroCollDenom, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), common.MicroCollDenom, ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(1000), core.MicroStableDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(1300), core.MicroStableDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(2000), core.MicroStableDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(1000), common.DenomStable, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(1300), common.DenomStable, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(2000), common.DenomStable, ValAddrs[2], power),
 	}
 
 	for i := range sdrBallot {

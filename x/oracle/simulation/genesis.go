@@ -5,6 +5,7 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"math/rand"
 
@@ -112,8 +113,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			RewardBand:               rewardBand,
 			RewardDistributionWindow: rewardDistributionWindow,
 			Whitelist: types.DenomList{
-				{Name: core.MicroStableDenom, TobinTax: types.DefaultTobinTax},
-				{Name: core.MicroCollDenom, TobinTax: types.DefaultTobinTax},
+				{Name: common.DenomStable, TobinTax: types.DefaultTobinTax},
+				{Name: common.MicroCollDenom, TobinTax: types.DefaultTobinTax},
 				{Name: core.MicroUSDDenom, TobinTax: types.DefaultTobinTax},
 				{Name: core.MicroMNTDenom, TobinTax: sdk.NewDecWithPrec(2, 2)}},
 			SlashFraction:     slashFraction,

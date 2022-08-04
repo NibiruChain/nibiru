@@ -202,3 +202,7 @@ func (pairs AssetPairs) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(assetPairsJSON(pairs))
 }
+
+const MicroCollDenom = DenomColl
+
+const MicroGovDenom = DenomGov

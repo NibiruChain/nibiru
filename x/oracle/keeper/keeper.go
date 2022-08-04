@@ -2,8 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
-
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/tendermint/tendermint/libs/log"
 
 	gogotypes "github.com/gogo/protobuf/types"
@@ -69,7 +68,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetLunaExchangeRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
 func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (sdk.Dec, error) {
-	if denom == core.MicroGovDenom {
+	if denom == common.MicroGovDenom {
 		return sdk.OneDec(), nil
 	}
 

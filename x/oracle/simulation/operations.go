@@ -3,6 +3,7 @@ package simulation
 //DONTCOVER
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"math/rand"
 	"strings"
@@ -29,7 +30,7 @@ const (
 )
 
 var (
-	whitelist                     = []string{core.MicroStableDenom, core.MicroUSDDenom, core.MicroCollDenom}
+	whitelist                     = []string{common.DenomStable, core.MicroUSDDenom, common.MicroCollDenom}
 	voteHashMap map[string]string = make(map[string]string)
 )
 

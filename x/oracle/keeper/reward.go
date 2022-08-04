@@ -2,8 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
-
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -21,7 +20,7 @@ func (k Keeper) RewardBallotWinners(
 ) {
 
 	rewardDenoms := make([]string, len(voteTargets)+1)
-	rewardDenoms[0] = core.MicroGovDenom
+	rewardDenoms[0] = common.MicroGovDenom
 
 	i := 1
 	for denom := range voteTargets {
