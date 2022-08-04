@@ -524,8 +524,3 @@ func (n *Network) Cleanup() {
 
 	n.T.Log("finished cleaning up test network")
 }
-
-// UpdateStartingToken allows to update the starting tokens of an existing
-func (cfg *Config) UpdateStartingToken(startingTokens sdk.Coins) {
-	cfg.StartingTokens = startingTokens
-}

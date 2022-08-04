@@ -92,11 +92,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encCfg := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
-	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
-	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
-
+	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	s.oracleMap = make(map[string]sdk.AccAddress)

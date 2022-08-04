@@ -22,6 +22,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 const (
@@ -74,30 +75,22 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 
 	s.T().Log("setting up integration test suite")
+	app.SetPrefixes(app.AccountAddressPrefix)
 
 	encodingConfig := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
-	s.cfg = testutilcli.BuildNetworkConfig(defaultAppGenesis)
+	genesisState := testapp.NewTestGenesisStateFromDefault()
 
-	// modification to pay fee with test bond denom "stake"
-	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+	// x/stablecoin genesis state
 	stableGen := stabletypes.DefaultGenesis()
-
-	// IsCollateralRatioValid behavior testted in x/stablecoin/abci_test.go
 	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(common.DenomColl, sdk.NewInt(10000000000))
+	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
 
-	stableGenJson := s.cfg.Codec.MustMarshalJSON(stableGen)
-	genesisState[stabletypes.ModuleName] = stableGenJson
+	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
 
-	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
-	genesisState[pftypes.ModuleName] = pricefeedGenJson
-
-	s.cfg.GenesisState = genesisState
+	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 }
@@ -107,40 +100,21 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-/*
-Create a new wallet and attempt to fill it with the required balance.
-Tokens are sent by the validator, 'val'.
-*/
-func (s IntegrationTestSuite) fillWalletFromValidator(
-	addr sdk.AccAddress, balance sdk.Coins, val *testutilcli.Validator,
-) sdk.AccAddress {
-	_, err := banktestutil.MsgSendExec(
-		val.ClientCtx,
-		val.Address,
-		addr,
-		balance,
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutilcli.DefaultFeeString(s.cfg.BondDenom),
-	)
-	s.Require().NoError(err)
-
-	return addr
-}
-
 func (s IntegrationTestSuite) TestMintStableCmd() {
 	val := s.network.Validators[0]
 
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
-	s.fillWalletFromValidator(
+	testutilcli.FillWalletFromValidator(
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
 			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 		),
-		val)
+		val,
+		s.cfg.BondDenom,
+	)
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -210,13 +184,14 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		"burn", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
-	s.fillWalletFromValidator(
+	testutilcli.FillWalletFromValidator(
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
+		s.cfg.BondDenom,
 	)
 
 	err = s.network.WaitForNextBlock()
@@ -226,8 +201,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf(
-			"--%s=%s", flags.FlagFees, defaultBondCoinsString),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, defaultBondCoinsString),
 	}
 
 	testCases := []struct {

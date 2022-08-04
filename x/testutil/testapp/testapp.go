@@ -121,17 +121,12 @@ func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
 	var govGenState govtypes.GenesisState
 	codec.MustUnmarshalJSON(testGenState[govtypes.ModuleName], &govGenState)
 	govGenState.VotingParams.VotingPeriod = time.Second * 20
-	govGenState.DepositParams.MinDeposit = sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomGov, 1_000_000)) // min deposit of 1 NIBI
-	bz := codec.MustMarshalJSON(&govGenState)
-	testGenState[govtypes.ModuleName] = bz
+	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(common.DenomGov, 1_000_000)) // min deposit of 1 NIBI
+	testGenState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
 	// pricefeed genesis state
-	// pfGenState := pricefeedtypes.GenesisState{}
-	// codec.MustUnmarshalJSON(testGenState[pricefeedtypes.ModuleName], &pfGenState)
 	pfGenState := PricefeedGenesis()
-	bz = codec.MustMarshalJSON(&pfGenState)
-	testGenState[pricefeedtypes.ModuleName] = bz
+	testGenState[pricefeedtypes.ModuleName] = codec.MustMarshalJSON(&pfGenState)
 
 	return testGenState
 }
