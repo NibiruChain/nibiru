@@ -112,7 +112,7 @@ func TestOracleThreshold(t *testing.T) {
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomStable, randomExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, randomExchangeRate)
 
 	// Account 1, KRW
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: common.DenomStable, Amount: randomExchangeRate}}, 0)

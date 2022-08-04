@@ -25,22 +25,22 @@ func TestExchangeRate(t *testing.T) {
 	lunaExchangeRate := sdk.NewDecWithPrec(3282384, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
 
 	// Set & get rates
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
 	rate, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroCNYDenom)
 	require.NoError(t, err)
 	require.Equal(t, cnyExchangeRate, rate)
 
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
 	rate, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroGBPDenom)
 	require.NoError(t, err)
 	require.Equal(t, gbpExchangeRate, rate)
 
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
 	rate, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomStable)
 	require.NoError(t, err)
 	require.Equal(t, krwExchangeRate, rate)
 
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
 	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomGov)
 	require.Equal(t, sdk.OneDec(), rate)
 
@@ -67,10 +67,10 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 	lunaExchangeRate := sdk.NewDecWithPrec(3282384, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
 
 	// Set & get rates
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
 
 	input.OracleKeeper.IterateLunaExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
 		switch denom {
