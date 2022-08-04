@@ -443,15 +443,16 @@ func NewNibiruApp(
 		app.PricefeedKeeper,
 	)
 
+	app.EpochsKeeper = epochskeeper.NewKeeper(
+		appCodec, keys[epochstypes.StoreKey],
+	)
+
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.PricefeedKeeper, app.VpoolKeeper, app.EpochsKeeper,
 	)
 
-	app.EpochsKeeper = epochskeeper.NewKeeper(
-		appCodec, keys[epochstypes.StoreKey],
-	)
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks(), app.PerpKeeper.Hooks()),
 	)
