@@ -74,7 +74,7 @@ $ terrad query oracle exchange-rates ukrw
 			denom := args[0]
 			res, err := queryClient.ExchangeRate(
 				context.Background(),
-				&types.QueryExchangeRateRequest{Denom: denom},
+				&types.QueryExchangeRateRequest{Pair: denom},
 			)
 			if err != nil {
 				return err

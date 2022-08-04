@@ -39,7 +39,7 @@ func TestQueryExchangeRate(t *testing.T) {
 
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
-		Denom: common.DenomColl,
+		Pair: common.DenomColl,
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)

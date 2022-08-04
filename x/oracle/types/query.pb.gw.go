@@ -42,15 +42,15 @@ func request_Query_ExchangeRate_0(ctx context.Context, marshaler runtime.Marshal
 		_   = err
 	)
 
-	val, ok = pathParams["denom"]
+	val, ok = pathParams["pair"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "denom")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pair")
 	}
 
-	protoReq.Denom, err = runtime.String(val)
+	protoReq.Pair, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "denom", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pair", err)
 	}
 
 	msg, err := client.ExchangeRate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -69,15 +69,15 @@ func local_request_Query_ExchangeRate_0(ctx context.Context, marshaler runtime.M
 		_   = err
 	)
 
-	val, ok = pathParams["denom"]
+	val, ok = pathParams["pair"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "denom")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pair")
 	}
 
-	protoReq.Denom, err = runtime.String(val)
+	protoReq.Pair, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "denom", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pair", err)
 	}
 
 	msg, err := server.ExchangeRate(ctx, &protoReq)
@@ -1052,7 +1052,7 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_ExchangeRate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "oracle", "v1beta1", "denoms", "denom", "exchange_rate"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ExchangeRate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "oracle", "v1beta1", "denoms", "pair", "exchange_rate"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_ExchangeRates_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "denoms", "exchange_rates"}, "", runtime.AssumeColonVerbOpt(false)))
 

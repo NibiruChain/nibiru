@@ -39,12 +39,12 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.Denom) == 0 {
+	if len(req.Pair) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "empty denom")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	exchangeRate, err := q.GetLunaExchangeRate(ctx, req.Denom)
+	exchangeRate, err := q.GetLunaExchangeRate(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}

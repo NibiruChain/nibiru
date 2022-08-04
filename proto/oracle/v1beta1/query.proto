@@ -12,7 +12,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 service Query {
   // ExchangeRate returns exchange rate of a pair
   rpc ExchangeRate(QueryExchangeRateRequest) returns (QueryExchangeRateResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/{denom}/exchange_rate";
+    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/{pair}/exchange_rate";
   }
 
   // ExchangeRates returns exchange rates of all pairs
@@ -82,7 +82,7 @@ message QueryExchangeRateRequest {
   option (gogoproto.goproto_getters) = false;
 
   // denom defines the denomination to query for.
-  string denom = 1;
+  string pair = 1;
 }
 
 // QueryExchangeRateResponse is response type for the
