@@ -79,7 +79,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				}
 
 				// Set the exchange rate, emit ABCI event
-				k.SetLunaExchangeRateWithEvent(ctx, denom, exchangeRate)
+				k.SetExchangeRateWithEvent(ctx, denom, exchangeRate)
 			}
 		}
 

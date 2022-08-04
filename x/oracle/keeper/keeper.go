@@ -90,13 +90,12 @@ func (k Keeper) SetExchangeRate(ctx sdk.Context, pair string, exchangeRate sdk.D
 	store.Set(types.GetExchangeRateKey(pair), bz)
 }
 
-// SetLunaExchangeRateWithEvent sets the consensus exchange rate of Luna
-// denominated in the denom asset to the store with ABCI event
-func (k Keeper) SetLunaExchangeRateWithEvent(ctx sdk.Context, denom string, exchangeRate sdk.Dec) {
-	k.SetExchangeRate(ctx, denom, exchangeRate)
+// SetExchangeRateWithEvent calls SetExchangeRate and emits an event.
+func (k Keeper) SetExchangeRateWithEvent(ctx sdk.Context, pair string, exchangeRate sdk.Dec) {
+	k.SetExchangeRate(ctx, pair, exchangeRate)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-			sdk.NewAttribute(types.AttributeKeyDenom, denom),
+			sdk.NewAttribute(types.AttributeKeyDenom, pair),
 			sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
 		),
 	)
