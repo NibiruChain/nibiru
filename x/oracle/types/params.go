@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 
 	"gopkg.in/yaml.v2"
 
@@ -34,10 +35,15 @@ const (
 
 // Default parameter values
 var (
-	DefaultVoteThreshold     = sdk.NewDecWithPrec(50, 2) // 50%
-	DefaultRewardBand        = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
-	DefaultTobinTax          = sdk.NewDecWithPrec(25, 4) // 0.25%
-	DefaultWhitelist         = DenomList{}
+	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
+	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
+	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
+	DefaultWhitelist     = DenomList{
+		{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroSDRDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroUSDDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroMNTDenom, TobinTax: DefaultTobinTax.MulInt64(8)},
+	}
 	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4) // 0.01%
 	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2) // 5%
 )

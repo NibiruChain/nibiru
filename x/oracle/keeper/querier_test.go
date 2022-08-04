@@ -77,8 +77,8 @@ func TestQueryExchangeRates(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, sdk.DecCoins{
-		sdk.NewDecCoinFromDec(core.MicroSDRDenom, rate),
 		sdk.NewDecCoinFromDec(core.MicroUSDDenom, rate),
+		sdk.NewDecCoinFromDec(core.MicroSDRDenom, rate),
 	}, res.ExchangeRates)
 }
 
@@ -97,8 +97,8 @@ func TestQueryActives(t *testing.T) {
 
 	targetDenoms := []string{
 		core.MicroKRWDenom,
-		core.MicroSDRDenom,
 		core.MicroUSDDenom,
+		core.MicroSDRDenom,
 	}
 
 	require.Equal(t, targetDenoms, res.Actives)
