@@ -25,7 +25,7 @@ func NewQuerier(keeper Keeper) types.QueryServer {
 var _ types.QueryServer = querier{}
 
 // Params queries params of distribution module
-func (q querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	var params types.Params
 	q.paramSpace.GetParamSet(ctx, &params)
@@ -52,8 +52,8 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	return &types.QueryExchangeRateResponse{ExchangeRate: exchangeRate}, nil
 }
 
-// ExchangeRates queries exchange rates of all denoms
-func (q querier) ExchangeRates(c context.Context, req *types.QueryExchangeRatesRequest) (*types.QueryExchangeRatesResponse, error) {
+// ExchangeRates queries exchange rates of all pairs
+func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesRequest) (*types.QueryExchangeRatesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates sdk.DecCoins
@@ -65,7 +65,7 @@ func (q querier) ExchangeRates(c context.Context, req *types.QueryExchangeRatesR
 	return &types.QueryExchangeRatesResponse{ExchangeRates: exchangeRates}, nil
 }
 
-// TobinTax queries tobin tax of a denom
+// TobinTax queries tobin tax of a pair
 func (q querier) TobinTax(c context.Context, req *types.QueryTobinTaxRequest) (*types.QueryTobinTaxResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -84,8 +84,8 @@ func (q querier) TobinTax(c context.Context, req *types.QueryTobinTaxRequest) (*
 	return &types.QueryTobinTaxResponse{TobinTax: tobinTax}, nil
 }
 
-// TobinTaxes queries tobin taxes of all denoms
-func (q querier) TobinTaxes(c context.Context, req *types.QueryTobinTaxesRequest) (*types.QueryTobinTaxesResponse, error) {
+// TobinTaxes queries tobin taxes of all pairs
+func (q querier) TobinTaxes(c context.Context, _ *types.QueryTobinTaxesRequest) (*types.QueryTobinTaxesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var tobinTaxes types.PairList
@@ -101,20 +101,20 @@ func (q querier) TobinTaxes(c context.Context, req *types.QueryTobinTaxesRequest
 }
 
 // Actives queries all pairs for which exchange rates exist
-func (q querier) Actives(c context.Context, req *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
+func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	denoms := []string{}
-	q.IterateExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		denoms = append(denoms, denom)
+	var pairs []string
+	q.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
+		pairs = append(pairs, pair)
 		return false
 	})
 
-	return &types.QueryActivesResponse{Actives: denoms}, nil
+	return &types.QueryActivesResponse{Actives: pairs}, nil
 }
 
 // VoteTargets queries the voting target list on current vote period
-func (q querier) VoteTargets(c context.Context, req *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
+func (q querier) VoteTargets(c context.Context, _ *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryVoteTargetsResponse{VoteTargets: q.GetVoteTargets(ctx)}, nil
 }
@@ -176,7 +176,7 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 }
 
 // AggregatePrevotes queries aggregate prevotes of all validators
-func (q querier) AggregatePrevotes(c context.Context, req *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
+func (q querier) AggregatePrevotes(c context.Context, _ *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var prevotes []types.AggregateExchangeRatePrevote
@@ -213,7 +213,7 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 }
 
 // AggregateVotes queries aggregate votes of all validators
-func (q querier) AggregateVotes(c context.Context, req *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
+func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var votes []types.AggregateExchangeRateVote
