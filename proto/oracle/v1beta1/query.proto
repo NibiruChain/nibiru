@@ -10,32 +10,32 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // ExchangeRate returns exchange rate of a denom
+  // ExchangeRate returns exchange rate of a pair
   rpc ExchangeRate(QueryExchangeRateRequest) returns (QueryExchangeRateResponse) {
     option (google.api.http).get = "/terra/oracle/v1beta1/denoms/{denom}/exchange_rate";
   }
 
-  // ExchangeRates returns exchange rates of all denoms
+  // ExchangeRates returns exchange rates of all pairs
   rpc ExchangeRates(QueryExchangeRatesRequest) returns (QueryExchangeRatesResponse) {
     option (google.api.http).get = "/terra/oracle/v1beta1/denoms/exchange_rates";
   }
 
-  // TobinTax returns tobin tax of a denom
+  // TobinTax returns tobin tax of a pair
   rpc TobinTax(QueryTobinTaxRequest) returns (QueryTobinTaxResponse) {
     option (google.api.http).get = "/terra/oracle/v1beta1/denoms/{denom}/tobin_tax";
   }
 
-  // TobinTaxes returns tobin taxes of all denoms
+  // TobinTaxes returns tobin taxes of all pairs
   rpc TobinTaxes(QueryTobinTaxesRequest) returns (QueryTobinTaxesResponse) {
     option (google.api.http).get = "/terra/oracle/v1beta1/denoms/tobin_taxes";
   }
 
-  // Actives returns all active denoms
+  // Actives returns all active pairs
   rpc Actives(QueryActivesRequest) returns (QueryActivesResponse) {
     option (google.api.http).get = "/terra/oracle/v1beta1/denoms/actives";
   }
 
-  // VoteTargets returns all vote target denoms
+  // VoteTargets returns all vote target for pairs
   rpc VoteTargets(QueryVoteTargetsRequest) returns (QueryVoteTargetsResponse) {
     option (google.api.http).get = "/terra/oracle/v1beta1/denoms/vote_targets";
   }
