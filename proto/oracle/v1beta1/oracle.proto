@@ -23,9 +23,9 @@ message Params {
     (gogoproto.nullable)   = false
   ];
   uint64         reward_distribution_window = 4 [(gogoproto.moretags) = "yaml:\"reward_distribution_window\""];
-  repeated Denom whitelist                  = 5 [
+  repeated Pair whitelist                  = 5 [
     (gogoproto.moretags)     = "yaml:\"whitelist\"",
-    (gogoproto.castrepeated) = "DenomList",
+    (gogoproto.castrepeated) = "PairList",
     (gogoproto.nullable)     = false
   ];
   string slash_fraction = 6 [
@@ -41,8 +41,8 @@ message Params {
   ];
 }
 
-// Denom - the object to hold configurations of each denom
-message Denom {
+// Pair is the object that holds configuration of each pair.
+message Pair {
   option (gogoproto.equal)            = false;
   option (gogoproto.goproto_getters)  = false;
   option (gogoproto.goproto_stringer) = false;

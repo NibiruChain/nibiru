@@ -256,7 +256,7 @@ func TestQueryTobinTaxes(t *testing.T) {
 	// clear tobin taxes
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
 
-	tobinTaxes := types.DenomList{{
+	tobinTaxes := types.PairList{{
 		Name:     common.DenomStable,
 		TobinTax: sdk.OneDec(),
 	}, {
@@ -277,7 +277,7 @@ func TestQueryTobinTax(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	denom := types.Denom{Name: common.DenomStable, TobinTax: sdk.OneDec()}
+	denom := types.Pair{Name: common.DenomStable, TobinTax: sdk.OneDec()}
 	input.OracleKeeper.SetTobinTax(input.Ctx, denom.Name, denom.TobinTax)
 
 	// empty request

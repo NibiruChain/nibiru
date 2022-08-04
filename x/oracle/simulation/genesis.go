@@ -112,7 +112,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 			VoteThreshold:            voteThreshold,
 			RewardBand:               rewardBand,
 			RewardDistributionWindow: rewardDistributionWindow,
-			Whitelist: types.DenomList{
+			Whitelist: types.PairList{
 				{Name: common.DenomStable, TobinTax: types.DefaultTobinTax},
 				{Name: common.DenomColl, TobinTax: types.DefaultTobinTax},
 				{Name: core.MicroUSDDenom, TobinTax: types.DefaultTobinTax},

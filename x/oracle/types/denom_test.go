@@ -10,16 +10,16 @@ import (
 )
 
 func Test_DenomList(t *testing.T) {
-	denoms := types.DenomList{
-		types.Denom{
+	denoms := types.PairList{
+		types.Pair{
 			Name:     "denom1",
 			TobinTax: sdk.NewDec(100),
 		},
-		types.Denom{
+		types.Pair{
 			Name:     "denom2",
 			TobinTax: sdk.NewDec(200),
 		},
-		types.Denom{
+		types.Pair{
 			Name:     "denom3",
 			TobinTax: sdk.NewDec(300),
 		},

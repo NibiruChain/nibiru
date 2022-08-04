@@ -88,9 +88,9 @@ func (q querier) TobinTax(c context.Context, req *types.QueryTobinTaxRequest) (*
 func (q querier) TobinTaxes(c context.Context, req *types.QueryTobinTaxesRequest) (*types.QueryTobinTaxesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	var tobinTaxes types.DenomList
+	var tobinTaxes types.PairList
 	q.IterateTobinTaxes(ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		tobinTaxes = append(tobinTaxes, types.Denom{
+		tobinTaxes = append(tobinTaxes, types.Pair{
 			Name:     denom,
 			TobinTax: rate,
 		})
@@ -100,7 +100,7 @@ func (q querier) TobinTaxes(c context.Context, req *types.QueryTobinTaxesRequest
 	return &types.QueryTobinTaxesResponse{TobinTaxes: tobinTaxes}, nil
 }
 
-// Actives queries all denoms for which exchange rates exist
+// Actives queries all pairs for which exchange rates exist
 func (q querier) Actives(c context.Context, req *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 

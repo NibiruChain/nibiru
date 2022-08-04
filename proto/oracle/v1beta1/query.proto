@@ -128,7 +128,7 @@ message QueryTobinTaxesRequest {}
 // Query/TobinTaxes RPC method.
 message QueryTobinTaxesResponse {
   // tobin_taxes defines a list of the tobin tax of all whitelisted denoms
-  repeated Denom tobin_taxes = 1 [
+  repeated Pair tobin_taxes = 1 [
     (gogoproto.moretags)     = "yaml:\"tobin_taxes\"",
     (gogoproto.castrepeated) = "DenomList",
     (gogoproto.nullable)     = false

@@ -39,7 +39,7 @@ var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
-	DefaultWhitelist     = DenomList{
+	DefaultWhitelist     = PairList{
 		{Name: common.DenomStable, TobinTax: DefaultTobinTax},
 		{Name: common.DenomColl, TobinTax: DefaultTobinTax},
 		{Name: core.MicroUSDDenom, TobinTax: DefaultTobinTax},
@@ -192,7 +192,7 @@ func validateRewardDistributionWindow(i interface{}) error {
 }
 
 func validateWhitelist(i interface{}) error {
-	v, ok := i.(DenomList)
+	v, ok := i.(PairList)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

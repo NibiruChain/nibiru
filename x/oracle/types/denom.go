@@ -7,21 +7,21 @@ import (
 )
 
 // String implements fmt.Stringer interface
-func (d Denom) String() string {
-	out, _ := yaml.Marshal(d)
+func (m Pair) String() string {
+	out, _ := yaml.Marshal(m)
 	return string(out)
 }
 
 // Equal implements equal interface
-func (d Denom) Equal(d1 *Denom) bool {
-	return d.Name == d1.Name && d.TobinTax.Equal(d1.TobinTax)
+func (m Pair) Equal(pair *Pair) bool {
+	return m.Name == pair.Name && m.TobinTax.Equal(pair.TobinTax)
 }
 
-// DenomList is array of Denom
-type DenomList []Denom
+// PairList is array of Pair
+type PairList []Pair
 
 // String implements fmt.Stringer interface
-func (dl DenomList) String() (out string) {
+func (dl PairList) String() (out string) {
 	for _, d := range dl {
 		out += d.String() + "\n"
 	}

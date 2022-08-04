@@ -104,26 +104,26 @@ func TestValidate(t *testing.T) {
 			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(-1, 2)))
 			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(101, 2)))
 		case bytes.Compare(types.KeyWhitelist, pair.Key) == 0:
-			require.NoError(t, pair.ValidatorFn(types.DenomList{
+			require.NoError(t, pair.ValidatorFn(types.PairList{
 				{
 					Name:     "denom",
 					TobinTax: sdk.NewDecWithPrec(10, 2),
 				},
 			}))
 			require.Error(t, pair.ValidatorFn("invalid"))
-			require.Error(t, pair.ValidatorFn(types.DenomList{
+			require.Error(t, pair.ValidatorFn(types.PairList{
 				{
 					Name:     "",
 					TobinTax: sdk.NewDecWithPrec(10, 2),
 				},
 			}))
-			require.Error(t, pair.ValidatorFn(types.DenomList{
+			require.Error(t, pair.ValidatorFn(types.PairList{
 				{
 					Name:     "denom",
 					TobinTax: sdk.NewDecWithPrec(101, 2),
 				},
 			}))
-			require.Error(t, pair.ValidatorFn(types.DenomList{
+			require.Error(t, pair.ValidatorFn(types.PairList{
 				{
 					Name:     "denom",
 					TobinTax: sdk.NewDecWithPrec(-1, 2),

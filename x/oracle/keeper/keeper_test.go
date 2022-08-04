@@ -118,7 +118,7 @@ func TestParams(t *testing.T) {
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	whitelist := types.DenomList{
+	whitelist := types.PairList{
 		{Name: common.DenomColl, TobinTax: types.DefaultTobinTax},
 		{Name: common.DenomStable, TobinTax: types.DefaultTobinTax},
 	}

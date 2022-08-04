@@ -150,12 +150,12 @@ func TestApplyWhitelist(t *testing.T) {
 	input := CreateTestInput(t)
 
 	// no update
-	input.OracleKeeper.ApplyWhitelist(input.Ctx, types.DenomList{
-		types.Denom{
+	input.OracleKeeper.ApplyWhitelist(input.Ctx, types.PairList{
+		types.Pair{
 			Name:     "uusd",
 			TobinTax: sdk.OneDec(),
 		},
-		types.Denom{
+		types.Pair{
 			Name:     "ukrw",
 			TobinTax: sdk.OneDec(),
 		},
