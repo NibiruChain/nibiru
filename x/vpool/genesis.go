@@ -20,6 +20,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			vp.FluctuationLimitRatio,
 			vp.MaxOracleSpreadRatio,
 			vp.MaintenanceMarginRatio,
+			vp.MaxLeverage,
 		)
 	}
 }

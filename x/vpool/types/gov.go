@@ -66,5 +66,13 @@ func (m *CreatePoolProposal) ValidateBasic() error {
 		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
 	}
 
+	if m.MaxLeverage.LT(sdk.OneDec()) {
+		return fmt.Errorf("Max leverage must be >= 1")
+	}
+
+	if sdk.OneDec().Quo(m.MaxLeverage).LT(m.MaintenanceMarginRatio) {
+		return fmt.Errorf("Margin ratio opened with max leverage position will be lower than Maintenance margin ratio")
+	}
+
 	return nil
 }

@@ -89,6 +89,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
@@ -262,6 +263,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
 				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))

@@ -219,6 +219,7 @@ func (s IntegrationTestSuite) TestX_CmdAddVpool() {
 				FluctuationLimitRatio:  proposal.FluctuationLimitRatio,
 				MaxOracleSpreadRatio:   proposal.MaxOracleSpreadRatio,
 				MaintenanceMarginRatio: proposal.MaintenanceMarginRatio,
+				MaxLeverage:            proposal.MaxLeverage,
 			}, pool)
 			found = true
 		}

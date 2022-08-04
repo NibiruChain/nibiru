@@ -266,6 +266,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -464,6 +465,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -530,6 +532,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 					sdk.MustNewDecFromStr("0.1"),
 					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 				)
 				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
