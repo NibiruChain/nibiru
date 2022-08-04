@@ -44,8 +44,8 @@ func TestOrganizeAggregate(t *testing.T) {
 	for i := range sdrBallot {
 		input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[i],
 			types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-				{Denom: sdrBallot[i].Denom, ExchangeRate: sdrBallot[i].ExchangeRate},
-				{Denom: krwBallot[i].Denom, ExchangeRate: krwBallot[i].ExchangeRate},
+				{Denom: sdrBallot[i].Pair, ExchangeRate: sdrBallot[i].ExchangeRate},
+				{Denom: krwBallot[i].Pair, ExchangeRate: krwBallot[i].ExchangeRate},
 			}, ValAddrs[i]))
 	}
 
@@ -115,8 +115,8 @@ func TestClearBallots(t *testing.T) {
 
 		input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[i],
 			types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-				{Denom: sdrBallot[i].Denom, ExchangeRate: sdrBallot[i].ExchangeRate},
-				{Denom: krwBallot[i].Denom, ExchangeRate: krwBallot[i].ExchangeRate},
+				{Denom: sdrBallot[i].Pair, ExchangeRate: sdrBallot[i].ExchangeRate},
+				{Denom: krwBallot[i].Pair, ExchangeRate: krwBallot[i].ExchangeRate},
 			}, ValAddrs[i]))
 	}
 

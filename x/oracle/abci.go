@@ -38,7 +38,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			}
 		}
 
-		// Denom-TobinTax map
+		// Pair-TobinTax map
 		voteTargets := make(map[string]sdk.Dec)
 		k.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) bool {
 			voteTargets[denom] = tobinTax

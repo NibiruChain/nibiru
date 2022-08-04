@@ -29,21 +29,21 @@ func TestToMap(t *testing.T) {
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Denom:        common.DenomStable,
+				Pair:         common.DenomStable,
 				ExchangeRate: sdk.NewDec(1600),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Denom:        common.DenomStable,
+				Pair:         common.DenomStable,
 				ExchangeRate: sdk.ZeroDec(),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Denom:        common.DenomStable,
+				Pair:         common.DenomStable,
 				ExchangeRate: sdk.NewDec(1500),
 				Power:        100,
 			},

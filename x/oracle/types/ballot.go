@@ -14,7 +14,7 @@ import (
 
 // VoteForTally is a convenience wrapper to reduce redundant lookup cost
 type VoteForTally struct {
-	Denom        string
+	Pair         string
 	ExchangeRate sdk.Dec
 	Voter        sdk.ValAddress
 	Power        int64
@@ -24,7 +24,7 @@ type VoteForTally struct {
 func NewVoteForTally(rate sdk.Dec, denom string, voter sdk.ValAddress, power int64) VoteForTally {
 	return VoteForTally{
 		ExchangeRate: rate,
-		Denom:        denom,
+		Pair:         denom,
 		Voter:        voter,
 		Power:        power,
 	}
