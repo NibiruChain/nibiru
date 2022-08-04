@@ -50,7 +50,7 @@ func TestExchangeRate(t *testing.T) {
 	}
 	input.OracleKeeper.IterateExchangeRates(input.Ctx, handler)
 
-	require.True(t, numExchangeRates == 3)
+	require.True(t, numExchangeRates == 2)
 }
 
 func TestIterateLunaExchangeRates(t *testing.T) {
