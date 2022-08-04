@@ -37,7 +37,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
+	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
 	require.Error(t, err)
 
 	// Case 2.
@@ -74,7 +74,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rate, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
+	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
 	require.NoError(t, err)
 	require.Equal(t, randomExchangeRate, rate)
 
@@ -105,7 +105,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
+	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
 	require.Error(t, err)
 }
 
@@ -120,7 +120,7 @@ func TestOracleDrop(t *testing.T) {
 	// Immediately swap halt after an illiquid oracle vote
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomStable)
+	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
 	require.Error(t, err)
 }
 
@@ -221,13 +221,13 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 0, int(input.Ctx.BlockHeight()))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomColl)
+	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomColl)
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomColl)
+	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomColl)
 	require.NoError(t, err)
 }
 
@@ -424,9 +424,9 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	krw, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomStable)
+	krw, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
 	require.NoError(t, err)
-	usd, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroUSDDenom)
+	usd, err := input.OracleKeeper.GetExchangeRate(input.Ctx, core.MicroUSDDenom)
 	require.NoError(t, err)
 
 	// legacy version case
@@ -667,7 +667,7 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: common.DenomStable, Amount: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomStable)
+	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
 	require.Error(t, err)
 }
 

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/tendermint/tendermint/libs/log"
 
 	gogotypes "github.com/gogo/protobuf/types"
@@ -66,16 +65,13 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 //-----------------------------------
 // ExchangeRate logic
 
-// GetLunaExchangeRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
-func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (sdk.Dec, error) {
-	if denom == common.DenomGov {
-		return sdk.OneDec(), nil
-	}
+// GetExchangeRate gets the consensus exchange rate of the given pair from the store.
+func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error) {
 
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetExchangeRateKey(denom))
+	b := store.Get(types.GetExchangeRateKey(pair))
 	if b == nil {
-		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknownDenom, denom)
+		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknownDenom, pair)
 	}
 
 	dp := sdk.DecProto{}

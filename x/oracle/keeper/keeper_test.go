@@ -26,26 +26,26 @@ func TestExchangeRate(t *testing.T) {
 
 	// Set & get rates
 	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
-	rate, err := input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroCNYDenom)
+	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, core.MicroCNYDenom)
 	require.NoError(t, err)
 	require.Equal(t, cnyExchangeRate, rate)
 
 	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
-	rate, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroGBPDenom)
+	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, core.MicroGBPDenom)
 	require.NoError(t, err)
 	require.Equal(t, gbpExchangeRate, rate)
 
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
-	rate, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomStable)
+	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
 	require.NoError(t, err)
 	require.Equal(t, krwExchangeRate, rate)
 
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
-	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomGov)
+	rate, _ = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomGov)
 	require.Equal(t, sdk.OneDec(), rate)
 
 	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.DenomStable)
-	_, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomStable)
+	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
 	require.Error(t, err)
 
 	numExchangeRates := 0
