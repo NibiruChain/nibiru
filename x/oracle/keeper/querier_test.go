@@ -285,7 +285,7 @@ func TestQueryTobinTax(t *testing.T) {
 	require.Error(t, err)
 
 	res, err := querier.TobinTax(ctx, &types.QueryTobinTaxRequest{
-		Denom: common.DenomStable,
+		Pair: common.DenomStable,
 	})
 	require.NoError(t, err)
 

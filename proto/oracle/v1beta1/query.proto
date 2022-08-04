@@ -12,32 +12,32 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 service Query {
   // ExchangeRate returns exchange rate of a pair
   rpc ExchangeRate(QueryExchangeRateRequest) returns (QueryExchangeRateResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/{pair}/exchange_rate";
+    option (google.api.http).get = "/terra/oracle/v1beta1/pairs/{pair}/exchange_rate";
   }
 
   // ExchangeRates returns exchange rates of all pairs
   rpc ExchangeRates(QueryExchangeRatesRequest) returns (QueryExchangeRatesResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/exchange_rates";
+    option (google.api.http).get = "/terra/oracle/v1beta1/pairs/exchange_rates";
   }
 
   // TobinTax returns tobin tax of a pair
   rpc TobinTax(QueryTobinTaxRequest) returns (QueryTobinTaxResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/{denom}/tobin_tax";
+    option (google.api.http).get = "/terra/oracle/v1beta1/pairs/{pair}/tobin_tax";
   }
 
   // TobinTaxes returns tobin taxes of all pairs
   rpc TobinTaxes(QueryTobinTaxesRequest) returns (QueryTobinTaxesResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/tobin_taxes";
+    option (google.api.http).get = "/terra/oracle/v1beta1/pairs/tobin_taxes";
   }
 
   // Actives returns all active pairs
   rpc Actives(QueryActivesRequest) returns (QueryActivesResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/actives";
+    option (google.api.http).get = "/terra/oracle/v1beta1/pairs/actives";
   }
 
   // VoteTargets returns all vote target for pairs
   rpc VoteTargets(QueryVoteTargetsRequest) returns (QueryVoteTargetsResponse) {
-    option (google.api.http).get = "/terra/oracle/v1beta1/denoms/vote_targets";
+    option (google.api.http).get = "/terra/oracle/v1beta1/pairs/vote_targets";
   }
 
   // FeederDelegation returns feeder delegation of a validator
@@ -81,14 +81,14 @@ message QueryExchangeRateRequest {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // denom defines the denomination to query for.
+  // pair defines the pair to query for.
   string pair = 1;
 }
 
 // QueryExchangeRateResponse is response type for the
 // Query/ExchangeRate RPC method.
 message QueryExchangeRateResponse {
-  // exchange_rate defines the exchange rate of Luna denominated in various Terra
+  // exchange_rate defines the exchange rate of assets voted by validators
   string exchange_rate = 1
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
@@ -99,7 +99,7 @@ message QueryExchangeRatesRequest {}
 // QueryExchangeRatesResponse is response type for the
 // Query/ExchangeRates RPC method.
 message QueryExchangeRatesResponse {
-  // exchange_rates defines a list of the exchange rate for all whitelisted denoms.
+  // exchange_rates defines a list of the exchange rate for all whitelisted pairs.
   repeated cosmos.base.v1beta1.DecCoin exchange_rates = 1
       [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins", (gogoproto.nullable) = false];
 }
@@ -109,14 +109,14 @@ message QueryTobinTaxRequest {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // denom defines the denomination to query for.
-  string denom = 1;
+  // pair defines the asset to query for.
+  string pair = 1;
 }
 
 // QueryTobinTaxResponse is response type for the
 // Query/TobinTax RPC method.
 message QueryTobinTaxResponse {
-  // tobin_taxe defines the tobin tax of a denom
+  // tobin_taxe defines the tobin tax of a pair
   string tobin_tax = 1
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
@@ -127,7 +127,7 @@ message QueryTobinTaxesRequest {}
 // QueryTobinTaxesResponse is response type for the
 // Query/TobinTaxes RPC method.
 message QueryTobinTaxesResponse {
-  // tobin_taxes defines a list of the tobin tax of all whitelisted denoms
+  // tobin_taxes defines a list of the tobin tax of all whitelisted pairs
   repeated Pair tobin_taxes = 1 [
     (gogoproto.moretags)     = "yaml:\"tobin_taxes\"",
     (gogoproto.castrepeated) = "PairList",
@@ -141,7 +141,7 @@ message QueryActivesRequest {}
 // QueryActivesResponse is response type for the
 // Query/Actives RPC method.
 message QueryActivesResponse {
-  // actives defines a list of the denomination which oracle prices aggreed upon.
+  // actives defines a list of the pair which oracle prices agreed upon.
   repeated string actives = 1;
 }
 
@@ -151,7 +151,7 @@ message QueryVoteTargetsRequest {}
 // QueryVoteTargetsResponse is response type for the
 // Query/VoteTargets RPC method.
 message QueryVoteTargetsResponse {
-  // vote_targets defines a list of the denomination in which everyone
+  // vote_targets defines a list of the pairs in which everyone
   // should vote in the current vote period.
   repeated string vote_targets = 1;
 }

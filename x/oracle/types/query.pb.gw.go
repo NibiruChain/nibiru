@@ -114,15 +114,15 @@ func request_Query_TobinTax_0(ctx context.Context, marshaler runtime.Marshaler, 
 		_   = err
 	)
 
-	val, ok = pathParams["denom"]
+	val, ok = pathParams["pair"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "denom")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pair")
 	}
 
-	protoReq.Denom, err = runtime.String(val)
+	protoReq.Pair, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "denom", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pair", err)
 	}
 
 	msg, err := client.TobinTax(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -141,15 +141,15 @@ func local_request_Query_TobinTax_0(ctx context.Context, marshaler runtime.Marsh
 		_   = err
 	)
 
-	val, ok = pathParams["denom"]
+	val, ok = pathParams["pair"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "denom")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "pair")
 	}
 
-	protoReq.Denom, err = runtime.String(val)
+	protoReq.Pair, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "denom", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "pair", err)
 	}
 
 	msg, err := server.TobinTax(ctx, &protoReq)
@@ -1052,17 +1052,17 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_ExchangeRate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "oracle", "v1beta1", "denoms", "pair", "exchange_rate"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ExchangeRate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "oracle", "v1beta1", "pairs", "pair", "exchange_rate"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ExchangeRates_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "denoms", "exchange_rates"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ExchangeRates_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "pairs", "exchange_rates"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TobinTax_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "oracle", "v1beta1", "denoms", "denom", "tobin_tax"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TobinTax_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "oracle", "v1beta1", "pairs", "pair", "tobin_tax"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TobinTaxes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "denoms", "tobin_taxes"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TobinTaxes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "pairs", "tobin_taxes"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Actives_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "denoms", "actives"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Actives_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "pairs", "actives"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_VoteTargets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "denoms", "vote_targets"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_VoteTargets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"terra", "oracle", "v1beta1", "pairs", "vote_targets"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_FeederDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"terra", "oracle", "v1beta1", "validators", "validator_addr", "feeder"}, "", runtime.AssumeColonVerbOpt(false)))
 

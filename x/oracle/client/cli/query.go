@@ -404,10 +404,10 @@ Or, can
 				return clientCtx.PrintProto(res)
 			}
 
-			denom := args[0]
+			pair := args[0]
 			res, err := queryClient.TobinTax(
 				context.Background(),
-				&types.QueryTobinTaxRequest{Denom: denom},
+				&types.QueryTobinTaxRequest{Pair: pair},
 			)
 			if err != nil {
 				return err

@@ -71,12 +71,12 @@ func (q querier) TobinTax(c context.Context, req *types.QueryTobinTaxRequest) (*
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.Denom) == 0 {
+	if len(req.Pair) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "empty denom")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	tobinTax, err := q.GetTobinTax(ctx, req.Denom)
+	tobinTax, err := q.GetTobinTax(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
