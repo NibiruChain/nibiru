@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DenomGov    = "unibi"
+	DenomGov    = "stake"
 	DenomColl   = "uusdc"
 	DenomStable = "unusd"
 	DenomBTC    = "ubtc"
@@ -33,7 +33,7 @@ var (
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
 )
 
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // AssetPair
 
 // NewAssetPair returns a new asset pair instance if the pair is valid.
@@ -132,7 +132,7 @@ func (pair AssetPair) Validate() error {
 	return nil
 }
 
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // AssetPairs
 
 // AssetPairs is a set of AssetPair, one per pair.

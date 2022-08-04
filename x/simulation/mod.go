@@ -6,12 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
-
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	"github.com/cosmos/cosmos-sdk/x/simulation"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -59,44 +57,52 @@ func GenAndDeliverTxWithRandFees(
 	}
 
 	// Only allow fees in common.DenomGov
-	coins = sdk.NewCoins(sdk.NewCoin(common.DenomGov, coins.AmountOf(common.DenomGov)))
+	// coins = sdk.NewCoins(sdk.NewCoin(common.DenomGov, coins.AmountOf(common.DenomGov)))
 
-	fees, err = simtypes.RandomFees(r, ctx, coins)
+	fees, err = Fees(r, coins)
 	if err != nil {
 		return simtypes.NoOpMsg(moduleName, msg.Type(), "unable to generate fees"), nil, err
 	}
-	return GenAndDeliverTx(app, txGen, msg, fees, ctx, simAccount, ak, moduleName)
+
+	txCtx := simulation.OperationInput{
+		R:               r,
+		App:             app,
+		TxGen:           txGen,
+		Cdc:             nil,
+		Msg:             msg,
+		MsgType:         msg.Type(),
+		CoinsSpentInMsg: coinsSpentInMsg,
+		Context:         ctx,
+		SimAccount:      simAccount,
+		AccountKeeper:   ak,
+		Bankkeeper:      bk,
+		ModuleName:      moduleName,
+	}
+	return GenAndDeliverTx(txCtx, fees)
 }
 
-func GenAndDeliverTx(
-	app *baseapp.BaseApp,
-	txGen client.TxConfig,
-	msg legacytx.LegacyMsg,
-	fees sdk.Coins,
-	ctx sdk.Context,
-	simAccount simtypes.Account,
-	ak stakingTypes.AccountKeeper,
-	moduleName string,
-) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-	account := ak.GetAccount(ctx, simAccount.Address)
+// GenAndDeliverTx generates a transactions and delivers it.
+func GenAndDeliverTx(txCtx simulation.OperationInput, fees sdk.Coins) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	account := txCtx.AccountKeeper.GetAccount(txCtx.Context, txCtx.SimAccount.Address)
 	tx, err := helpers.GenTx(
-		txGen,
-		[]sdk.Msg{msg},
+		txCtx.TxGen,
+		[]sdk.Msg{txCtx.Msg},
 		fees,
-		helpers.DefaultGenTxGas,
-		ctx.ChainID(),
+		Gas,
+		txCtx.Context.ChainID(),
 		[]uint64{account.GetAccountNumber()},
 		[]uint64{account.GetSequence()},
-		simAccount.PrivKey,
+		txCtx.SimAccount.PrivKey,
 	)
+
 	if err != nil {
-		return simtypes.NoOpMsg(moduleName, msg.Type(), "unable to generate mock tx"), nil, err
+		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate mock tx"), nil, err
 	}
 
-	_, _, err = app.Deliver(txGen.TxEncoder(), tx)
+	_, _, err = txCtx.App.Deliver(txCtx.TxGen.TxEncoder(), tx)
 	if err != nil {
-		return simtypes.NoOpMsg(moduleName, msg.Type(), "unable to deliver tx"), nil, err
+		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to deliver tx"), nil, err
 	}
 
-	return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
+	return simtypes.NewOperationMsg(txCtx.Msg, true, "", txCtx.Cdc), nil, nil
 }
