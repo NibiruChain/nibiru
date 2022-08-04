@@ -8,10 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
-
-	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -119,12 +115,14 @@ import (
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
+	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/vpool"
+	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -133,6 +131,8 @@ const (
 	AccountAddressPrefix = "nibi"
 	Name                 = "nibiru"
 	AppName              = "Nibiru"
+	BondDenom            = "unibi"
+	DisplayDenom         = "NIBI"
 )
 
 var (
@@ -145,12 +145,12 @@ var (
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
 		genutil.AppModuleBasic{},
-		bank.AppModuleBasic{},
+		BankModule{},
 		capability.AppModuleBasic{},
-		staking.AppModuleBasic{},
-		mint.AppModuleBasic{},
+		StakingModule{},
+		MintModule{},
 		distr.AppModuleBasic{},
-		gov.NewAppModuleBasic(
+		NewGovModuleBasic(
 			paramsclient.ProposalHandler,
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
@@ -162,7 +162,7 @@ var (
 			ibcclientclient.UpgradeProposalHandler,
 		),
 		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
+		CrisisModule{},
 		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
