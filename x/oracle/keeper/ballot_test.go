@@ -171,18 +171,4 @@ func TestApplyWhitelist(t *testing.T) {
 	price, err = input.OracleKeeper.GetTobinTax(input.Ctx, "ukrw")
 	require.NoError(t, err)
 	require.Equal(t, price, sdk.OneDec())
-
-	metadata, ok := input.BankKeeper.GetDenomMetaData(input.Ctx, "uusd")
-	require.True(t, ok)
-	require.Equal(t, metadata.Base, "uusd")
-	require.Equal(t, metadata.Display, "usd")
-	require.Equal(t, len(metadata.DenomUnits), 3)
-	require.Equal(t, metadata.Description, "The native stable token of the Terra Columbus.")
-
-	metadata, ok = input.BankKeeper.GetDenomMetaData(input.Ctx, "ukrw")
-	require.True(t, ok)
-	require.Equal(t, metadata.Base, "ukrw")
-	require.Equal(t, metadata.Display, "krw")
-	require.Equal(t, len(metadata.DenomUnits), 3)
-	require.Equal(t, metadata.Description, "The native stable token of the Terra Columbus.")
 }
