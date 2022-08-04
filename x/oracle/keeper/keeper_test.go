@@ -22,7 +22,6 @@ func TestExchangeRate(t *testing.T) {
 	cnyExchangeRate := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
 	gbpExchangeRate := sdk.NewDecWithPrec(4995, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
 	krwExchangeRate := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
-	lunaExchangeRate := sdk.NewDecWithPrec(3282384, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
 
 	// Set & get rates
 	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
@@ -39,10 +38,6 @@ func TestExchangeRate(t *testing.T) {
 	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
 	require.NoError(t, err)
 	require.Equal(t, krwExchangeRate, rate)
-
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
-	rate, _ = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomGov)
-	require.Equal(t, sdk.OneDec(), rate)
 
 	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.DenomStable)
 	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
