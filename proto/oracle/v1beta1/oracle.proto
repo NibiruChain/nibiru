@@ -57,7 +57,7 @@ message Pair {
 
 // struct for aggregate prevoting on the ExchangeRateVote.
 // The purpose of aggregate prevote is to hide vote exchange rates with hash
-// which is formatted as hex string in SHA256("{salt}:{exchange rate}{denom},...,{exchange rate}{denom}:{voter}")
+// which is formatted as hex string in SHA256("{salt}:{exchange rate}{pair},...,{exchange rate}{pair}:{voter}")
 message AggregateExchangeRatePrevote {
   option (gogoproto.equal)            = false;
   option (gogoproto.goproto_getters)  = false;
@@ -69,7 +69,7 @@ message AggregateExchangeRatePrevote {
 }
 
 // MsgAggregateExchangeRateVote - struct for voting on
-// the exchange rates of Luna denominated in various Terra assets.
+// the exchange rates different assets.
 message AggregateExchangeRateVote {
   option (gogoproto.equal)            = false;
   option (gogoproto.goproto_getters)  = false;
@@ -90,7 +90,7 @@ message ExchangeRateTuple {
   option (gogoproto.goproto_getters)  = false;
   option (gogoproto.goproto_stringer) = false;
 
-  string denom         = 1 [(gogoproto.moretags) = "yaml:\"denom\""];
+  string pair        = 1 [(gogoproto.moretags) = "yaml:\"pair\""];
   string exchange_rate = 2 [
     (gogoproto.moretags)   = "yaml:\"exchange_rate\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

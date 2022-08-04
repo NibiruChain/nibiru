@@ -33,8 +33,8 @@ func TestDecodeDistributionStore(t *testing.T) {
 
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash([]byte("12345")), valAddr, 123)
 	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Denom: common.DenomStable, ExchangeRate: sdk.NewDecWithPrec(1234, 1)},
-		{Denom: common.DenomStable, ExchangeRate: sdk.NewDecWithPrec(4321, 1)},
+		{Pair: common.DenomStable, ExchangeRate: sdk.NewDecWithPrec(1234, 1)},
+		{Pair: common.DenomStable, ExchangeRate: sdk.NewDecWithPrec(4321, 1)},
 	}, valAddr)
 
 	tobinTax := sdk.NewDecWithPrec(2, 2)

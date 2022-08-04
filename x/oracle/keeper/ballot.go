@@ -29,10 +29,10 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context, validatorClaimMap map[str
 					tmpPower = 0
 				}
 
-				votes[tuple.Denom] = append(votes[tuple.Denom],
+				votes[tuple.Pair] = append(votes[tuple.Pair],
 					types.NewVoteForTally(
 						tuple.ExchangeRate,
-						tuple.Denom,
+						tuple.Pair,
 						voterAddr,
 						tmpPower,
 					),

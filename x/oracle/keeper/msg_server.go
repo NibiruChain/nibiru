@@ -97,8 +97,8 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	// check all denoms are in the vote target
 	for _, tuple := range exchangeRateTuples {
-		if !ms.IsVoteTarget(ctx, tuple.Denom) {
-			return nil, sdkerrors.Wrap(types.ErrUnknownDenom, tuple.Denom)
+		if !ms.IsVoteTarget(ctx, tuple.Pair) {
+			return nil, sdkerrors.Wrap(types.ErrUnknownDenom, tuple.Pair)
 		}
 	}
 

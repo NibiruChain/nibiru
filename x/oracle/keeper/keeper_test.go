@@ -264,9 +264,9 @@ func TestAggregateVoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
 	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
-		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[0]))
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]), aggregateVote)
 
@@ -283,16 +283,16 @@ func TestAggregateVoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
 	aggregateVote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
-		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[0]))
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]), aggregateVote1)
 
 	aggregateVote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Denom: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Denom: "foo", ExchangeRate: sdk.NewDec(0)},
-		{Denom: "foo", ExchangeRate: sdk.NewDec(1)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(-1)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(0)},
+		{Pair: "foo", ExchangeRate: sdk.NewDec(1)},
 	}, sdk.ValAddress(Addrs[1]))
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[1]), aggregateVote2)
 
