@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	whitelist                     = []string{common.DenomStable, core.MicroUSDDenom, common.MicroCollDenom}
+	whitelist                     = []string{common.DenomStable, core.MicroUSDDenom, common.DenomColl}
 	voteHashMap map[string]string = make(map[string]string)
 )
 

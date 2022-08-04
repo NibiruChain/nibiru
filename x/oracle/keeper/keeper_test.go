@@ -91,14 +91,14 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 func TestRewardPool(t *testing.T) {
 	input := CreateTestInput(t)
 
-	fees := sdk.NewCoins(sdk.NewCoin(common.MicroCollDenom, sdk.NewInt(1000)))
+	fees := sdk.NewCoins(sdk.NewCoin(common.DenomColl, sdk.NewInt(1000)))
 	acc := input.AccountKeeper.GetModuleAccount(input.Ctx, types.ModuleName)
 	err := FundAccount(input, acc.GetAddress(), fees)
 	if err != nil {
 		panic(err) // never occurs
 	}
 
-	KFees := input.OracleKeeper.GetRewardPool(input.Ctx, common.MicroCollDenom)
+	KFees := input.OracleKeeper.GetRewardPool(input.Ctx, common.DenomColl)
 	require.Equal(t, fees[0], KFees)
 }
 
@@ -119,7 +119,7 @@ func TestParams(t *testing.T) {
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := types.DenomList{
-		{Name: common.MicroCollDenom, TobinTax: types.DefaultTobinTax},
+		{Name: common.DenomColl, TobinTax: types.DefaultTobinTax},
 		{Name: common.DenomStable, TobinTax: types.DefaultTobinTax},
 	}
 
@@ -316,10 +316,10 @@ func TestTobinTaxGetSet(t *testing.T) {
 	input := CreateTestInput(t)
 
 	tobinTaxes := map[string]sdk.Dec{
-		common.MicroCollDenom: sdk.NewDec(1),
-		core.MicroUSDDenom:    sdk.NewDecWithPrec(1, 3),
-		common.DenomStable:    sdk.NewDecWithPrec(123, 3),
-		core.MicroMNTDenom:    sdk.NewDecWithPrec(1423, 4),
+		common.DenomColl:   sdk.NewDec(1),
+		core.MicroUSDDenom: sdk.NewDecWithPrec(1, 3),
+		common.DenomStable: sdk.NewDecWithPrec(123, 3),
+		core.MicroMNTDenom: sdk.NewDecWithPrec(1423, 4),
 	}
 
 	for denom, tobinTax := range tobinTaxes {

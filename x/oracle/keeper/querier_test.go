@@ -31,7 +31,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroCollDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomColl, rate)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -39,7 +39,7 @@ func TestQueryExchangeRate(t *testing.T) {
 
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
-		Denom: common.MicroCollDenom,
+		Denom: common.DenomColl,
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)
@@ -71,7 +71,7 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroCollDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomColl, rate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
@@ -79,7 +79,7 @@ func TestQueryExchangeRates(t *testing.T) {
 
 	require.Equal(t, sdk.DecCoins{
 		sdk.NewDecCoinFromDec(core.MicroUSDDenom, rate),
-		sdk.NewDecCoinFromDec(common.MicroCollDenom, rate),
+		sdk.NewDecCoinFromDec(common.DenomColl, rate),
 	}, res.ExchangeRates)
 }
 
@@ -89,7 +89,7 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroCollDenom, rate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomColl, rate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomStable, rate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
 
@@ -99,7 +99,7 @@ func TestQueryActives(t *testing.T) {
 	targetDenoms := []string{
 		common.DenomStable,
 		core.MicroUSDDenom,
-		common.MicroCollDenom,
+		common.DenomColl,
 	}
 
 	require.Equal(t, targetDenoms, res.Actives)
@@ -260,7 +260,7 @@ func TestQueryTobinTaxes(t *testing.T) {
 		Name:     common.DenomStable,
 		TobinTax: sdk.OneDec(),
 	}, {
-		Name:     common.MicroCollDenom,
+		Name:     common.DenomColl,
 		TobinTax: sdk.NewDecWithPrec(123, 2),
 	}}
 	for _, item := range tobinTaxes {

@@ -31,9 +31,9 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), common.MicroCollDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), common.MicroCollDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), common.MicroCollDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), common.DenomColl, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), common.DenomColl, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), common.DenomColl, ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
 		types.NewVoteForTally(sdk.NewDec(1000), common.DenomStable, ValAddrs[0], power),
@@ -71,10 +71,10 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(sdrBallot)
 	sort.Sort(krwBallot)
-	sort.Sort(ballotMap[common.MicroCollDenom])
+	sort.Sort(ballotMap[common.DenomColl])
 	sort.Sort(ballotMap[common.DenomStable])
 
-	require.Equal(t, sdrBallot, ballotMap[common.MicroCollDenom])
+	require.Equal(t, sdrBallot, ballotMap[common.DenomColl])
 	require.Equal(t, krwBallot, ballotMap[common.DenomStable])
 }
 
@@ -96,9 +96,9 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), common.MicroCollDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), common.MicroCollDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), common.MicroCollDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), common.DenomColl, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), common.DenomColl, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), common.DenomColl, ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
 		types.NewVoteForTally(sdk.NewDec(1000), common.DenomStable, ValAddrs[0], power),

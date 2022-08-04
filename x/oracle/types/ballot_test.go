@@ -136,7 +136,7 @@ func TestPBPower(t *testing.T) {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
 		vote := types.NewVoteForTally(
 			sdk.ZeroDec(),
-			common.MicroCollDenom,
+			common.DenomColl,
 			valAccAddrs[i],
 			power,
 		)
@@ -155,7 +155,7 @@ func TestPBPower(t *testing.T) {
 	faceValAddr := sdk.ValAddress(pubKey.Address())
 	fakeVote := types.NewVoteForTally(
 		sdk.OneDec(),
-		common.MicroCollDenom,
+		common.DenomColl,
 		faceValAddr,
 		0,
 	)
@@ -226,7 +226,7 @@ func TestPBWeightedMedian(t *testing.T) {
 
 			vote := types.NewVoteForTally(
 				sdk.NewDec(int64(input)),
-				common.MicroCollDenom,
+				common.DenomColl,
 				valAddr,
 				power,
 			)
@@ -293,7 +293,7 @@ func TestPBStandardDeviation(t *testing.T) {
 
 			vote := types.NewVoteForTally(
 				sdk.NewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
-				common.MicroCollDenom,
+				common.DenomColl,
 				valAddr,
 				power,
 			)
@@ -312,12 +312,12 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 
 	pb := types.ExchangeRateBallot{types.NewVoteForTally(
 		sdk.ZeroDec(),
-		common.MicroCollDenom,
+		common.DenomColl,
 		valAddr,
 		2,
 	), types.NewVoteForTally(
 		exchangeRate,
-		common.MicroCollDenom,
+		common.DenomColl,
 		valAddr,
 		1,
 	)}

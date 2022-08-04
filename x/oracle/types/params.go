@@ -41,7 +41,7 @@ var (
 	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
 	DefaultWhitelist     = DenomList{
 		{Name: common.DenomStable, TobinTax: DefaultTobinTax},
-		{Name: common.MicroCollDenom, TobinTax: DefaultTobinTax},
+		{Name: common.DenomColl, TobinTax: DefaultTobinTax},
 		{Name: core.MicroUSDDenom, TobinTax: DefaultTobinTax},
 		{Name: core.MicroMNTDenom, TobinTax: DefaultTobinTax.MulInt64(8)},
 	}
