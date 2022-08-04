@@ -407,7 +407,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:          sdk.NewInt(100),
 			leverage:        sdk.NewDec(100),
 			baseLimit:       sdk.NewDec(11_000),
-			expectedErr:     types.ErrMarginRatioTooLow,
+			expectedErr:     types.ErrLeverageIsTooHigh,
 		},
 		{
 			name:            "leverage amount is too high - BUY",
@@ -415,9 +415,9 @@ func TestOpenPositionError(t *testing.T) {
 			initialPosition: nil,
 			side:            types.Side_BUY,
 			margin:          sdk.NewInt(100),
-			leverage:        sdk.NewDec(100),
+			leverage:        sdk.NewDec(16),
 			baseLimit:       sdk.NewDec(0),
-			expectedErr:     types.ErrMarginRatioTooLow,
+			expectedErr:     types.ErrLeverageIsTooHigh,
 		},
 		{
 			name:            "new long position over fluctuation limit",

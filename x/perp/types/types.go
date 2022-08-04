@@ -27,6 +27,7 @@ var (
 	ErrQuoteAmountIsZero                 = sdkerrors.Register(ModuleName, 8, "quote amount cannot be zero")
 	ErrLeverageIsZero                    = sdkerrors.Register(ModuleName, 9, "leverage cannot be zero")
 	ErrMarginRatioTooLow                 = sdkerrors.Register(ModuleName, 10, "margin ratio did not meet maintenance margin ratio")
+	ErrLeverageIsTooHigh                 = sdkerrors.Register(ModuleName, 11, "leverage cannot be higher than vpool parameter")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
