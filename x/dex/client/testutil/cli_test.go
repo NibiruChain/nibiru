@@ -487,7 +487,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutilcli.DefaultFeeString(s.cfg.BondDenom),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(s.cfg.BondDenom, 10)),
 	)
 	s.Require().NoError(err)
 }
