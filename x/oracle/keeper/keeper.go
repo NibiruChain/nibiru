@@ -101,10 +101,10 @@ func (k Keeper) SetExchangeRateWithEvent(ctx sdk.Context, pair string, exchangeR
 	)
 }
 
-// DeleteLunaExchangeRate deletes the consensus exchange rate of Luna denominated in the denom asset from the store.
-func (k Keeper) DeleteLunaExchangeRate(ctx sdk.Context, denom string) {
+// DeleteExchangeRate deletes the consensus exchange rate of the provided pair from the store.
+func (k Keeper) DeleteExchangeRate(ctx sdk.Context, pair string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetExchangeRateKey(denom))
+	store.Delete(types.GetExchangeRateKey(pair))
 }
 
 // IterateLunaExchangeRates iterates over luna rates in the store

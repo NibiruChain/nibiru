@@ -44,7 +44,7 @@ func TestExchangeRate(t *testing.T) {
 	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomGov)
 	require.Equal(t, sdk.OneDec(), rate)
 
-	input.OracleKeeper.DeleteLunaExchangeRate(input.Ctx, common.DenomStable)
+	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.DenomStable)
 	_, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomStable)
 	require.Error(t, err)
 
