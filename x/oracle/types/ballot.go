@@ -21,10 +21,10 @@ type VoteForTally struct {
 }
 
 // NewVoteForTally returns a new VoteForTally instance
-func NewVoteForTally(rate sdk.Dec, denom string, voter sdk.ValAddress, power int64) VoteForTally {
+func NewVoteForTally(rate sdk.Dec, pair string, voter sdk.ValAddress, power int64) VoteForTally {
 	return VoteForTally{
 		ExchangeRate: rate,
-		Pair:         denom,
+		Pair:         pair,
 		Voter:        voter,
 		Power:        power,
 	}
