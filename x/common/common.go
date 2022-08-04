@@ -202,5 +202,3 @@ func (pairs AssetPairs) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(assetPairsJSON(pairs))
 }
-
-const MicroGovDenom = DenomGov

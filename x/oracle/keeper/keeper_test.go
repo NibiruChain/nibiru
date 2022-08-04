@@ -40,8 +40,8 @@ func TestExchangeRate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, krwExchangeRate, rate)
 
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroGovDenom, lunaExchangeRate)
-	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.MicroGovDenom)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
+	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, common.DenomGov)
 	require.Equal(t, sdk.OneDec(), rate)
 
 	input.OracleKeeper.DeleteLunaExchangeRate(input.Ctx, common.DenomStable)
@@ -70,7 +70,7 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.MicroGovDenom, lunaExchangeRate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
 
 	input.OracleKeeper.IterateLunaExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
 		switch denom {
@@ -80,7 +80,7 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 			require.Equal(t, gbpExchangeRate, rate)
 		case common.DenomStable:
 			require.Equal(t, krwExchangeRate, rate)
-		case common.MicroGovDenom:
+		case common.DenomGov:
 			require.Equal(t, lunaExchangeRate, rate)
 		}
 		return false

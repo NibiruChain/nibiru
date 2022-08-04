@@ -241,7 +241,7 @@ func TestOracleRewardDistribution(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: common.DenomColl, Amount: randomExchangeRate}}, 1)
 
 	rewardsAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.MicroGovDenom, rewardsAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardsAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -249,9 +249,9 @@ func TestOracleRewardDistribution(t *testing.T) {
 	votePeriodsPerWindow := uint64(sdk.NewDec(int64(input.OracleKeeper.RewardDistributionWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64())
 	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).QuoInt64(int64(votePeriodsPerWindow)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 }
 
 func TestOracleRewardBand(t *testing.T) {
@@ -314,7 +314,7 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: common.DenomStable, Amount: randomExchangeRate}}, 2)
 
 	rewardAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.MicroGovDenom, rewardAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -326,11 +326,11 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	expectedRewardAmt3 := sdk.NewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
-	require.Equal(t, expectedRewardAmt3, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt3, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 }
 
 func TestOracleExchangeRate(t *testing.T) {
@@ -350,7 +350,7 @@ func TestOracleExchangeRate(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: common.DenomStable, Amount: krwRandomExchangeRate}, {Denom: common.DenomColl, Amount: randomExchangeRate}}, 2)
 
 	rewardAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.MicroGovDenom, rewardAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -359,11 +359,11 @@ func TestOracleExchangeRate(t *testing.T) {
 	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
-	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 }
 
 func TestOracleEnsureSorted(t *testing.T) {
@@ -419,7 +419,7 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, sdk.DecCoins{{Denom: common.DenomStable, Amount: krwExchangeRateWithErr}, {Denom: core.MicroUSDDenom, Amount: usdExchangeRateWithErr}}, 4)
 
 	rewardAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.MicroGovDenom, rewardAmt)))
+	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardAmt)))
 	require.NoError(t, err)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -440,15 +440,15 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards1 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt2, rewards1.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt2, rewards1.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards2 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
-	require.Equal(t, expectedRewardAmt2, rewards2.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt2, rewards2.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards3 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[3])
-	require.Equal(t, expectedRewardAmt, rewards3.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards3.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards4 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[4])
-	require.Equal(t, expectedRewardAmt, rewards4.Rewards.AmountOf(common.MicroGovDenom).TruncateInt())
+	require.Equal(t, expectedRewardAmt, rewards4.Rewards.AmountOf(common.DenomGov).TruncateInt())
 }
 
 func TestInvalidVotesSlashing(t *testing.T) {
