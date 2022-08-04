@@ -31,6 +31,20 @@ type IntegrationTestSuite struct {
 	testAccount sdk.AccAddress
 }
 
+func TestIntegrationTestSuite(t *testing.T) {
+	encodingConfig := app.MakeTestEncodingConfig()
+	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
+	cfg := testutilcli.BuildNetworkConfig(defaultAppGenesis)
+	cfg.UpdateStartingToken(
+		sdk.NewCoins(
+			sdk.NewInt64Coin(common.DenomStable, 20000),
+			sdk.NewInt64Coin(common.DenomColl, 20000),
+			sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
+		),
+	)
+	suite.Run(t, &IntegrationTestSuite{cfg: cfg})
+}
+
 func (s *IntegrationTestSuite) SetupSuite() {
 	/* 	Make test skip if -short is not used:
 	All tests: `go test ./...`
@@ -46,18 +60,24 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
-	// create a new user address
-	s.testAccount = s.NewAccount("NewAddr")
+	val := s.network.Validators[0]
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.NoError(err)
+	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
-	// fund the user
-	s.FundAccount(
-		s.testAccount,
+	// create a new user address
+	s.testAccount = user1
+
+	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.DenomStable, 20000),
 			sdk.NewInt64Coin(common.DenomColl, 20000),
 			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
 		),
+		val,
+		common.DenomGov,
 	)
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -447,20 +467,6 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 			}
 		})
 	}
-}
-
-func TestIntegrationTestSuite(t *testing.T) {
-	encodingConfig := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
-	cfg := testutilcli.BuildNetworkConfig(defaultAppGenesis)
-	cfg.UpdateStartingToken(
-		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomStable, 20000),
-			sdk.NewInt64Coin(common.DenomColl, 20000),
-			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
-		),
-	)
-	suite.Run(t, &IntegrationTestSuite{cfg: cfg})
 }
 
 /***************************** Convenience Methods ****************************/

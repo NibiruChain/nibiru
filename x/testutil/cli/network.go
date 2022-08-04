@@ -150,7 +150,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		TimeoutCommit: time.Second / 2,
 		ChainID:       "chain-" + tmrand.NewRand().Str(6),
 		NumValidators: 1,
-		BondDenom:     sdk.DefaultBondDenom, // TODO(https://github.com/NibiruChain/nibiru/issues/582): remove 'stake' denom and replace with 'unibi'
+		BondDenom:     common.DenomGov,
 		MinGasPrices:  fmt.Sprintf("0.000006%s", common.DenomGov),
 		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),

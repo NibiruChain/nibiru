@@ -137,7 +137,6 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	s.fillWalletFromValidator(
 		minterAddr,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
 			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 		),
@@ -146,7 +145,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.DenomGov, sdk.NewInt(10))).String()),
 	}
 
 	testCases := []struct {
@@ -214,7 +213,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 	s.fillWalletFromValidator(
 		minterAddr,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20000),
+			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
@@ -223,8 +222,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 	err = s.network.WaitForNextBlock()
 	s.Require().NoError(err)
 
-	defaultBondCoinsString := sdk.NewCoins(
-		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()
+	defaultBondCoinsString := sdk.NewCoins(sdk.NewCoin(common.DenomGov, sdk.NewInt(10))).String()
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
@@ -252,7 +250,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 			expectedStable:   sdk.ZeroInt(),
 			expectedColl:     sdk.NewInt(50_000_000 - 100_000), // Collateral minus 0,02% fees
-			expectedGov:      sdk.ZeroInt(),
+			expectedGov:      sdk.NewInt(19_990),
 			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 50_000)),
 			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(common.DenomColl, 50_000)),
 			expectErr:        false,
