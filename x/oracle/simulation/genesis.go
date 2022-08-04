@@ -112,8 +112,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			RewardBand:               rewardBand,
 			RewardDistributionWindow: rewardDistributionWindow,
 			Whitelist: types.DenomList{
-				{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax},
-				{Name: core.MicroSDRDenom, TobinTax: types.DefaultTobinTax},
+				{Name: core.MicroStableDenom, TobinTax: types.DefaultTobinTax},
+				{Name: core.MicroCollDenom, TobinTax: types.DefaultTobinTax},
 				{Name: core.MicroUSDDenom, TobinTax: types.DefaultTobinTax},
 				{Name: core.MicroMNTDenom, TobinTax: sdk.NewDecWithPrec(2, 2)}},
 			SlashFraction:     slashFraction,

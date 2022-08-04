@@ -39,8 +39,8 @@ var (
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
 	DefaultWhitelist     = DenomList{
-		{Name: core.MicroKRWDenom, TobinTax: DefaultTobinTax},
-		{Name: core.MicroSDRDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroStableDenom, TobinTax: DefaultTobinTax},
+		{Name: core.MicroCollDenom, TobinTax: DefaultTobinTax},
 		{Name: core.MicroUSDDenom, TobinTax: DefaultTobinTax},
 		{Name: core.MicroMNTDenom, TobinTax: DefaultTobinTax.MulInt64(8)},
 	}

@@ -31,14 +31,14 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), core.MicroSDRDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), core.MicroSDRDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), core.MicroSDRDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), core.MicroCollDenom, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), core.MicroCollDenom, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), core.MicroCollDenom, ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(1000), core.MicroKRWDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(1300), core.MicroKRWDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(2000), core.MicroKRWDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(1000), core.MicroStableDenom, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(1300), core.MicroStableDenom, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(2000), core.MicroStableDenom, ValAddrs[2], power),
 	}
 
 	for i := range sdrBallot {
@@ -71,11 +71,11 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(sdrBallot)
 	sort.Sort(krwBallot)
-	sort.Sort(ballotMap[core.MicroSDRDenom])
-	sort.Sort(ballotMap[core.MicroKRWDenom])
+	sort.Sort(ballotMap[core.MicroCollDenom])
+	sort.Sort(ballotMap[core.MicroStableDenom])
 
-	require.Equal(t, sdrBallot, ballotMap[core.MicroSDRDenom])
-	require.Equal(t, krwBallot, ballotMap[core.MicroKRWDenom])
+	require.Equal(t, sdrBallot, ballotMap[core.MicroCollDenom])
+	require.Equal(t, krwBallot, ballotMap[core.MicroStableDenom])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -96,14 +96,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), core.MicroSDRDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), core.MicroSDRDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), core.MicroSDRDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), core.MicroCollDenom, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), core.MicroCollDenom, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), core.MicroCollDenom, ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(1000), core.MicroKRWDenom, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(1300), core.MicroKRWDenom, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(2000), core.MicroKRWDenom, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(1000), core.MicroStableDenom, ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(1300), core.MicroStableDenom, ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(2000), core.MicroStableDenom, ValAddrs[2], power),
 	}
 
 	for i := range sdrBallot {

@@ -34,17 +34,17 @@ func TestExchangeRate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, gbpExchangeRate, rate)
 
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, krwExchangeRate)
-	rate, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroKRWDenom)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroStableDenom, krwExchangeRate)
+	rate, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroStableDenom)
 	require.NoError(t, err)
 	require.Equal(t, krwExchangeRate, rate)
 
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroLunaDenom, lunaExchangeRate)
-	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroLunaDenom)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGovDenom, lunaExchangeRate)
+	rate, _ = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroGovDenom)
 	require.Equal(t, sdk.OneDec(), rate)
 
-	input.OracleKeeper.DeleteLunaExchangeRate(input.Ctx, core.MicroKRWDenom)
-	_, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroKRWDenom)
+	input.OracleKeeper.DeleteLunaExchangeRate(input.Ctx, core.MicroStableDenom)
+	_, err = input.OracleKeeper.GetLunaExchangeRate(input.Ctx, core.MicroStableDenom)
 	require.Error(t, err)
 
 	numExchangeRates := 0
@@ -68,8 +68,8 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 	// Set & get rates
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
 	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroKRWDenom, krwExchangeRate)
-	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroLunaDenom, lunaExchangeRate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroStableDenom, krwExchangeRate)
+	input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroGovDenom, lunaExchangeRate)
 
 	input.OracleKeeper.IterateLunaExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
 		switch denom {
@@ -77,9 +77,9 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 			require.Equal(t, cnyExchangeRate, rate)
 		case core.MicroGBPDenom:
 			require.Equal(t, gbpExchangeRate, rate)
-		case core.MicroKRWDenom:
+		case core.MicroStableDenom:
 			require.Equal(t, krwExchangeRate, rate)
-		case core.MicroLunaDenom:
+		case core.MicroGovDenom:
 			require.Equal(t, lunaExchangeRate, rate)
 		}
 		return false
@@ -90,14 +90,14 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 func TestRewardPool(t *testing.T) {
 	input := CreateTestInput(t)
 
-	fees := sdk.NewCoins(sdk.NewCoin(core.MicroSDRDenom, sdk.NewInt(1000)))
+	fees := sdk.NewCoins(sdk.NewCoin(core.MicroCollDenom, sdk.NewInt(1000)))
 	acc := input.AccountKeeper.GetModuleAccount(input.Ctx, types.ModuleName)
 	err := FundAccount(input, acc.GetAddress(), fees)
 	if err != nil {
 		panic(err) // never occurs
 	}
 
-	KFees := input.OracleKeeper.GetRewardPool(input.Ctx, core.MicroSDRDenom)
+	KFees := input.OracleKeeper.GetRewardPool(input.Ctx, core.MicroCollDenom)
 	require.Equal(t, fees[0], KFees)
 }
 
@@ -118,8 +118,8 @@ func TestParams(t *testing.T) {
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := types.DenomList{
-		{Name: core.MicroSDRDenom, TobinTax: types.DefaultTobinTax},
-		{Name: core.MicroKRWDenom, TobinTax: types.DefaultTobinTax},
+		{Name: core.MicroCollDenom, TobinTax: types.DefaultTobinTax},
+		{Name: core.MicroStableDenom, TobinTax: types.DefaultTobinTax},
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -315,10 +315,10 @@ func TestTobinTaxGetSet(t *testing.T) {
 	input := CreateTestInput(t)
 
 	tobinTaxes := map[string]sdk.Dec{
-		core.MicroSDRDenom: sdk.NewDec(1),
-		core.MicroUSDDenom: sdk.NewDecWithPrec(1, 3),
-		core.MicroKRWDenom: sdk.NewDecWithPrec(123, 3),
-		core.MicroMNTDenom: sdk.NewDecWithPrec(1423, 4),
+		core.MicroCollDenom:   sdk.NewDec(1),
+		core.MicroUSDDenom:    sdk.NewDecWithPrec(1, 3),
+		core.MicroStableDenom: sdk.NewDecWithPrec(123, 3),
+		core.MicroMNTDenom:    sdk.NewDecWithPrec(1423, 4),
 	}
 
 	for denom, tobinTax := range tobinTaxes {

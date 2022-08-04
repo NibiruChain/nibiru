@@ -21,7 +21,7 @@ func (k Keeper) RewardBallotWinners(
 ) {
 
 	rewardDenoms := make([]string, len(voteTargets)+1)
-	rewardDenoms[0] = core.MicroLunaDenom
+	rewardDenoms[0] = core.MicroGovDenom
 
 	i := 1
 	for denom := range voteTargets {

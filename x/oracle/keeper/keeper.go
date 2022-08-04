@@ -69,7 +69,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetLunaExchangeRate gets the consensus exchange rate of Luna denominated in the denom asset from the store.
 func (k Keeper) GetLunaExchangeRate(ctx sdk.Context, denom string) (sdk.Dec, error) {
-	if denom == core.MicroLunaDenom {
+	if denom == core.MicroGovDenom {
 		return sdk.OneDec(), nil
 	}
 
