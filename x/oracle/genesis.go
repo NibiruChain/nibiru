@@ -59,7 +59,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 
 	if len(data.TobinTaxes) > 0 {
 		for _, tt := range data.TobinTaxes {
-			keeper.SetTobinTax(ctx, tt.Denom, tt.TobinTax)
+			keeper.SetTobinTax(ctx, tt.Pair, tt.TobinTax)
 		}
 	} else {
 		for _, item := range data.Params.Whitelist {
@@ -119,7 +119,7 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 
 	tobinTaxes := []types.TobinTax{}
 	keeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
-		tobinTaxes = append(tobinTaxes, types.TobinTax{Denom: denom, TobinTax: tobinTax})
+		tobinTaxes = append(tobinTaxes, types.TobinTax{Pair: denom, TobinTax: tobinTax})
 		return false
 	})
 
