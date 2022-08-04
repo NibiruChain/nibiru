@@ -46,7 +46,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		})
 
 		// Clear all exchange rates
-		k.IterateLunaExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
+		k.IterateExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
 			k.DeleteExchangeRate(ctx, denom)
 			return false
 		})

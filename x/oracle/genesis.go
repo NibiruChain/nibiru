@@ -91,7 +91,7 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	})
 
 	exchangeRates := []types.ExchangeRateTuple{}
-	keeper.IterateLunaExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
+	keeper.IterateExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: denom, ExchangeRate: rate})
 		return false
 	})

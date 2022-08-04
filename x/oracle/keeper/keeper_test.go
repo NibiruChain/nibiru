@@ -53,7 +53,7 @@ func TestExchangeRate(t *testing.T) {
 		numExchangeRates = numExchangeRates + 1
 		return false
 	}
-	input.OracleKeeper.IterateLunaExchangeRates(input.Ctx, handler)
+	input.OracleKeeper.IterateExchangeRates(input.Ctx, handler)
 
 	require.True(t, numExchangeRates == 3)
 }
@@ -72,7 +72,7 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
 
-	input.OracleKeeper.IterateLunaExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
+	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
 		switch denom {
 		case core.MicroCNYDenom:
 			require.Equal(t, cnyExchangeRate, rate)

@@ -103,16 +103,16 @@ func (k Keeper) DeleteExchangeRate(ctx sdk.Context, pair string) {
 	store.Delete(types.GetExchangeRateKey(pair))
 }
 
-// IterateLunaExchangeRates iterates over luna rates in the store
-func (k Keeper) IterateLunaExchangeRates(ctx sdk.Context, handler func(denom string, exchangeRate sdk.Dec) (stop bool)) {
+// IterateExchangeRates iterates over pair's exchange rates
+func (k Keeper) IterateExchangeRates(ctx sdk.Context, handler func(pair string, exchangeRate sdk.Dec) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.ExchangeRateKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		denom := string(iter.Key()[len(types.ExchangeRateKey):])
+		pair := string(iter.Key()[len(types.ExchangeRateKey):])
 		dp := sdk.DecProto{}
 		k.cdc.MustUnmarshal(iter.Value(), &dp)
-		if handler(denom, dp.Dec) {
+		if handler(pair, dp.Dec) {
 			break
 		}
 	}
