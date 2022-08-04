@@ -1,14 +1,10 @@
 package keeper
 
 import (
-	"fmt"
-	"sort"
-	"strings"
-
 	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // OrganizeBallotByDenom collects all oracle votes for the period, categorized by the votes' denom parameter
@@ -38,7 +34,6 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context, validatorClaimMap map[str
 					),
 				)
 			}
-
 		}
 
 		return false
@@ -94,25 +89,6 @@ func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTa
 
 		for _, item := range whitelist {
 			k.SetTobinTax(ctx, item.Name, item.TobinTax)
-
-			// Register meta data to bank module
-			if _, ok := k.bankKeeper.GetDenomMetaData(ctx, item.Name); !ok {
-				base := item.Name
-				display := base[1:]
-
-				k.bankKeeper.SetDenomMetaData(ctx, banktypes.Metadata{
-					Description: "The native stable token of the Terra Columbus.",
-					DenomUnits: []*banktypes.DenomUnit{
-						{Denom: "u" + display, Exponent: uint32(0), Aliases: []string{"micro" + display}},
-						{Denom: "m" + display, Exponent: uint32(3), Aliases: []string{"milli" + display}},
-						{Denom: display, Exponent: uint32(6), Aliases: []string{}},
-					},
-					Base:    base,
-					Display: display,
-					Name:    fmt.Sprintf("%s TERRA", strings.ToUpper(display)),
-					Symbol:  fmt.Sprintf("%sT", strings.ToUpper(display[:len(display)-1])),
-				})
-			}
 		}
 	}
 }
