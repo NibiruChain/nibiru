@@ -106,7 +106,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
-	testutilcli.FillWalletFromValidator(
+
+	_, err = testutilcli.FillWalletFromValidator(
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
@@ -115,6 +116,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		val,
 		s.cfg.BondDenom,
 	)
+	s.Require().NoError(err)
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -184,7 +186,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		"burn", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.Require().NoError(err)
 	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
-	testutilcli.FillWalletFromValidator(
+	_, err = testutilcli.FillWalletFromValidator(
 		minterAddr,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
@@ -193,6 +195,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		val,
 		s.cfg.BondDenom,
 	)
+	s.Require().NoError(err)
 
 	err = s.network.WaitForNextBlock()
 	s.Require().NoError(err)
