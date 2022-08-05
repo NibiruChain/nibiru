@@ -35,11 +35,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up lockup CLI testing suite")
 
 	app.SetPrefixes(app.AccountAddressPrefix)
-	encCfg := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
-	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
-	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
-
+	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
 	s.cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin("ATOM", 1_000_000),
 		sdk.NewInt64Coin("OSMO", 1_000_000),
