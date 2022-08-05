@@ -1,4 +1,4 @@
-package testutil
+package cli_test
 
 import (
 	"fmt"
@@ -20,6 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type IntegrationTestSuite struct {
@@ -44,20 +45,36 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	app.SetPrefixes(app.AccountAddressPrefix)
+	genesisState := testapp.NewTestGenesisStateFromDefault()
+	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
+	s.cfg.StartingTokens = sdk.NewCoins(
+		sdk.NewInt64Coin(common.DenomStable, 20000),
+		sdk.NewInt64Coin(common.DenomColl, 20000),
+		sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
+	)
+
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
+	_, err := s.network.WaitForHeight(1)
+	s.NoError(err)
+
+	val := s.network.Validators[0]
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.NoError(err)
+	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
 	// create a new user address
-	s.testAccount = s.NewAccount("NewAddr")
+	s.testAccount = user1
 
-	// fund the user
-	s.FundAccount(
-		s.testAccount,
+	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.DenomStable, 20000),
 			sdk.NewInt64Coin(common.DenomColl, 20000),
 			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
 		),
+		val,
+		common.DenomGov,
 	)
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -449,20 +466,6 @@ func (s *IntegrationTestSuite) TestESwapAssets() {
 	}
 }
 
-func TestIntegrationTestSuite(t *testing.T) {
-	encodingConfig := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
-	cfg := testutilcli.BuildNetworkConfig(defaultAppGenesis)
-	cfg.UpdateStartingToken(
-		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomStable, 20000),
-			sdk.NewInt64Coin(common.DenomColl, 20000),
-			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
-		),
-	)
-	suite.Run(t, &IntegrationTestSuite{cfg: cfg})
-}
-
 /***************************** Convenience Methods ****************************/
 
 /*
@@ -484,7 +487,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		testutilcli.DefaultFeeString(s.cfg.BondDenom),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(s.cfg.BondDenom, 10)),
 	)
 	s.Require().NoError(err)
 }
@@ -512,4 +515,8 @@ func (s *IntegrationTestSuite) NewAccount(uid string) (addr sdk.AccAddress) {
 	s.Require().NoError(err)
 
 	return sdk.AccAddress(info.GetPubKey().Address())
+}
+
+func TestIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
 }

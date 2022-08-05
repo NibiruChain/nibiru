@@ -1,4 +1,4 @@
-package testutil
+package cli_test
 
 import (
 	"fmt"
