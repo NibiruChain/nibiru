@@ -41,16 +41,16 @@ func GetQueryCmd() *cobra.Command {
 // GetCmdQueryExchangeRates implements the query rate command.
 func GetCmdQueryExchangeRates() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exchange-rates [denom]",
+		Use:   "exchange-rates [pair]",
 		Args:  cobra.RangeArgs(0, 1),
 		Short: "Query the current Luna exchange rate w.r.t an asset",
 		Long: strings.TrimSpace(`
 Query the current exchange rate of Luna with an asset. 
-You can find the current list of active denoms by running
+You can find the current list of active pairs by running
 
 $ terrad query oracle exchange-rates 
 
-Or, can filter with denom
+Or, can filter with pair
 
 $ terrad query oracle exchange-rates ukrw
 `),
@@ -70,10 +70,10 @@ $ terrad query oracle exchange-rates ukrw
 				return clientCtx.PrintProto(res)
 			}
 
-			denom := args[0]
+			pair := args[0]
 			res, err := queryClient.ExchangeRate(
 				context.Background(),
-				&types.QueryExchangeRateRequest{Pair: denom},
+				&types.QueryExchangeRateRequest{Pair: pair},
 			)
 			if err != nil {
 				return err
@@ -369,7 +369,7 @@ func GetCmdQueryVoteTargets() *cobra.Command {
 // GetCmdQueryTobinTaxes implements the query params command.
 func GetCmdQueryTobinTaxes() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "tobin-taxes [denom]",
+		Use:   "tobin-taxes [pair]",
 		Args:  cobra.RangeArgs(0, 1),
 		Short: "Query the current Oracle tobin taxes.",
 		Long: strings.TrimSpace(`
@@ -377,7 +377,7 @@ Query the current Oracle tobin taxes.
 
 $ terrad query oracle tobin-taxes
 
-Or, can filter with denom
+Or, can filter with pair
 
 $ terrad query oracle tobin-taxes ukrw
 
