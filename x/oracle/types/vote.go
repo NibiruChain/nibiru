@@ -120,6 +120,7 @@ func (tuples ExchangeRateTuples) String() string {
 func (tuples *ExchangeRateTuples) FromString(s string) error {
 	stringTuples := strings.Split(s, ExchangeRateTuplesSeparator)
 	*tuples = make([]ExchangeRateTuple, len(stringTuples))
+	duplicates := make(map[string]struct{}, len(stringTuples))
 
 	for i, stringTuple := range stringTuples {
 		exchangeRate := new(ExchangeRateTuple)
@@ -128,6 +129,13 @@ func (tuples *ExchangeRateTuples) FromString(s string) error {
 			return fmt.Errorf("invalid ExchangeRateTuple at index %d: %w", i, err)
 		}
 
+		// check duplicates
+		if _, ok := duplicates[exchangeRate.Pair]; ok {
+			return fmt.Errorf("found duplicate at index %d: %s", i, exchangeRate.Pair)
+		} else {
+			duplicates[exchangeRate.Pair] = struct{}{}
+		}
+		// insert exchange rate into the tuple
 		(*tuples)[i] = *exchangeRate
 	}
 
@@ -136,7 +144,6 @@ func (tuples *ExchangeRateTuples) FromString(s string) error {
 
 func (tuples ExchangeRateTuples) ToString() (string, error) {
 	tuplesStringSlice := make([]string, len(tuples))
-
 	for i, r := range tuples {
 		rStr, err := r.ToString()
 		if err != nil {

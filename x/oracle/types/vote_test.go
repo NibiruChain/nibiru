@@ -30,6 +30,10 @@ func TestParseExchangeRateTuples(t *testing.T) {
 
 		require.Equal(t, tuples, *parsedTuples)
 	})
+
+	t.Run("check duplicates", func(t *testing.T) {
+
+	})
 }
 
 func TestExchangeRateTuple(t *testing.T) {
