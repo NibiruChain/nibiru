@@ -43,9 +43,9 @@ var (
 	TobinTaxKey                     = []byte{0x06} // prefix for each key to a tobin tax
 )
 
-// GetExchangeRateKey - stored by *denom*
-func GetExchangeRateKey(denom string) []byte {
-	return append(ExchangeRateKey, append([]byte(denom), 0x00)...)
+// GetExchangeRateKey - stored by *pair*
+func GetExchangeRateKey(pair string) []byte {
+	return append(ExchangeRateKey, append([]byte(pair), 0x00)...)
 }
 
 // GetFeederDelegationKey - stored by *Validator* address
