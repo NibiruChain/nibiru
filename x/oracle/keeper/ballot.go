@@ -43,9 +43,9 @@ func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorClaimMap map[stri
 	k.IterateAggregateExchangeRateVotes(ctx, aggregateHandler)
 
 	// sort created ballot
-	for denom, ballot := range votes {
+	for pair, ballot := range votes {
 		sort.Sort(ballot)
-		votes[denom] = ballot
+		votes[pair] = ballot
 	}
 
 	return
