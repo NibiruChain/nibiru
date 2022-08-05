@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
-
 	"gopkg.in/yaml.v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,11 +38,23 @@ var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
-	DefaultWhitelist     = PairList{                 // TODO(mercilex): change
-		{Name: common.DenomStable, TobinTax: DefaultTobinTax},
-		{Name: common.DenomColl, TobinTax: DefaultTobinTax},
-		{Name: core.MicroUSDDenom, TobinTax: DefaultTobinTax},
-		{Name: core.MicroMNTDenom, TobinTax: DefaultTobinTax.MulInt64(8)},
+	DefaultWhitelist     = PairList{
+		{
+			Name:     common.PairBTCStable.String(),
+			TobinTax: DefaultTobinTax,
+		},
+		{
+			Name:     common.PairCollStable.String(),
+			TobinTax: DefaultTobinTax,
+		},
+		{
+			Name:     common.PairETHStable.String(),
+			TobinTax: DefaultTobinTax,
+		},
+		{
+			Name:     common.PairGovStable.String(),
+			TobinTax: DefaultTobinTax,
+		},
 	}
 	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4) // 0.01%
 	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2) // 5%
