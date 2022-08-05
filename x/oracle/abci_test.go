@@ -352,6 +352,7 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
 	require.Equal(t, expectedRewardAmt3, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 }
+*/
 
 func TestOracleExchangeRate(t *testing.T) {
 	input, h := setup(t)
@@ -364,10 +365,10 @@ func TestOracleExchangeRate(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: usdRandomExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: krwRandomExchangeRate}}, 0)
 
 	// Account 2, USD, KRW
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: core.MicroUSDDenom, ExchangeRate: usdRandomExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: krwRandomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: usdRandomExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: krwRandomExchangeRate}}, 1)
 
 	// Account 3, KRW, SDR
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairBTCStable.String(), ExchangeRate: krwRandomExchangeRate}, {Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: krwRandomExchangeRate}, {Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 	rewardAmt := sdk.NewInt(100000000)
 	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardAmt)))
@@ -385,8 +386,6 @@ func TestOracleExchangeRate(t *testing.T) {
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
 	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 }
-
-*/
 
 func TestOracleEnsureSorted(t *testing.T) {
 	input, h := setup(t)
