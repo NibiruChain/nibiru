@@ -70,7 +70,7 @@ func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetExchangeRateKey(pair))
 	if b == nil {
-		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknownDenom, pair)
+		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknownPair, pair)
 	}
 
 	dp := sdk.DecProto{}

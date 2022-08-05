@@ -22,5 +22,5 @@ var (
 	ErrNoAggregatePrevote    = sdkerrors.Register(ModuleName, 11, "no aggregate prevote")
 	ErrNoAggregateVote       = sdkerrors.Register(ModuleName, 12, "no aggregate vote")
 	ErrNoTobinTax            = sdkerrors.Register(ModuleName, 13, "no tobin tax")
-	ErrUnknownDenom          = sdkerrors.Register(ModuleName, 14, "unknown denom")
+	ErrUnknownPair           = sdkerrors.Register(ModuleName, 14, "unknown pair")
 )
