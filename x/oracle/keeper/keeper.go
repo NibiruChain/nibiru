@@ -90,7 +90,7 @@ func (k Keeper) SetExchangeRateWithEvent(ctx sdk.Context, pair string, exchangeR
 	k.SetExchangeRate(ctx, pair, exchangeRate)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-			sdk.NewAttribute(types.AttributeKeyDenom, pair),
+			sdk.NewAttribute(types.AttributeKeyPair, pair),
 			sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
 		),
 	)

@@ -9,7 +9,7 @@ const (
 	EventTypeAggregatePrevote   = "aggregate_prevote"
 	EventTypeAggregateVote      = "aggregate_vote"
 
-	AttributeKeyDenom         = "denom"
+	AttributeKeyPair          = "pair"
 	AttributeKeyVoter         = "voter"
 	AttributeKeyExchangeRate  = "exchange_rate"
 	AttributeKeyExchangeRates = "exchange_rates"
