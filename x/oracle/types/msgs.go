@@ -56,7 +56,6 @@ func (msg MsgAggregateExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic Implements sdk.Msg
 func (msg MsgAggregateExchangeRatePrevote) ValidateBasic() error {
-
 	_, err := AggregateVoteHashFromHexString(msg.Hash)
 	if err != nil {
 		return sdkerrors.Wrapf(ErrInvalidHash, "Invalid vote hash (%s)", err)
@@ -114,7 +113,6 @@ func (msg MsgAggregateExchangeRateVote) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic implements sdk.Msg
 func (msg MsgAggregateExchangeRateVote) ValidateBasic() error {
-
 	_, err := sdk.AccAddressFromBech32(msg.Feeder)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid feeder address (%s)", err)

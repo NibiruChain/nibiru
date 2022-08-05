@@ -1,9 +1,9 @@
 package oracle_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -14,11 +14,9 @@ import (
 )
 
 var (
-	uSDRAmt    = sdk.NewInt(1005 * common.MicroUnit)
 	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 
-	randomExchangeRate        = sdk.NewDec(1700)
-	anotherRandomExchangeRate = sdk.NewDecWithPrec(4882, 2) // swap rate
+	randomExchangeRate = sdk.NewDec(1700)
 )
 
 func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, types.MsgServer) {

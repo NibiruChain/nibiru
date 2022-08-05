@@ -2,8 +2,9 @@ package simulation_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/require"

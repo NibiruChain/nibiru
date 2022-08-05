@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"bytes"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"sort"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/oracle/core"
 
 	"github.com/stretchr/testify/require"
 

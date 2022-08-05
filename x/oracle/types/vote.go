@@ -2,8 +2,9 @@ package types
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"strings"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"gopkg.in/yaml.v2"
 
@@ -113,7 +114,6 @@ type ExchangeRateTuples []ExchangeRateTuple
 
 // String implements fmt.Stringer interface
 func (tuples ExchangeRateTuples) String() string {
-	panic("don't call me")
 	out, _ := yaml.Marshal(tuples)
 	return string(out)
 }

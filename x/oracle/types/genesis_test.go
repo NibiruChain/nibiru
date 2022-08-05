@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenesisValidation(t *testing.T) {

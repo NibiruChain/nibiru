@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/tendermint/tendermint/libs/log"
 
 	gogotypes "github.com/gogo/protobuf/types"
@@ -34,7 +35,6 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 	paramspace paramstypes.Subspace, accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper, distrName string) Keeper {
-
 	// ensure oracle module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
@@ -67,7 +67,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetExchangeRate gets the consensus exchange rate of the given pair from the store.
 func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error) {
-
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.GetExchangeRateKey(pair))
 	if b == nil {
@@ -142,7 +141,6 @@ func (k Keeper) SetFeederDelegation(ctx sdk.Context, operator sdk.ValAddress, de
 // IterateFeederDelegations iterates over the feed delegates and performs a callback function.
 func (k Keeper) IterateFeederDelegations(ctx sdk.Context,
 	handler func(delegator sdk.ValAddress, delegate sdk.AccAddress) (stop bool)) {
-
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.FeederDelegationKey)
 	defer iter.Close()
@@ -189,7 +187,6 @@ func (k Keeper) DeleteMissCounter(ctx sdk.Context, operator sdk.ValAddress) {
 // IterateMissCounters iterates over the miss counters and performs a callback function.
 func (k Keeper) IterateMissCounters(ctx sdk.Context,
 	handler func(operator sdk.ValAddress, missCounter uint64) (stop bool)) {
-
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.MissCounterKey)
 	defer iter.Close()

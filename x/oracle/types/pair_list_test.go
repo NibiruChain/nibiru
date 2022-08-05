@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

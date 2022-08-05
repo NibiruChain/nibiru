@@ -1,8 +1,9 @@
 package types_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 

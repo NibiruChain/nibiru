@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -18,7 +20,6 @@ func (k Keeper) RewardBallotWinners(
 	voteTargets map[string]sdk.Dec,
 	ballotWinners map[string]types.Claim,
 ) {
-
 	rewardDenoms := make([]string, len(voteTargets)+1)
 	rewardDenoms[0] = common.DenomGov
 

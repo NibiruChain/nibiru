@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/stretchr/testify/require"
 

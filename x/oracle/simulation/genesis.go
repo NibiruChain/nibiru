@@ -5,9 +5,10 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/core"
-	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -63,7 +64,6 @@ func GenMinValidPerWindow(r *rand.Rand) sdk.Dec {
 
 // RandomizedGenState generates a random GenesisState for oracle
 func RandomizedGenState(simState *module.SimulationState) {
-
 	var votePeriod uint64
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, votePeriodKey, &votePeriod, simState.Rand,

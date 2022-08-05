@@ -2,10 +2,11 @@ package oracle_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"math"
 	"sort"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/rand"
@@ -98,7 +99,7 @@ func TestOracleThreshold(t *testing.T) {
 	// Case 3.
 	// Increase voting power of absent validator, exchange rate consensus fails
 	val, _ := input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[2])
-	input.StakingKeeper.Delegate(input.Ctx.WithBlockHeight(0), keeper.Addrs[2], stakingAmt.MulRaw(3), stakingtypes.Unbonded, val, false)
+	_, _ = input.StakingKeeper.Delegate(input.Ctx.WithBlockHeight(0), keeper.Addrs[2], stakingAmt.MulRaw(3), stakingtypes.Unbonded, val, false)
 
 	salt = "1"
 	hash = types.GetAggregateVoteHash(salt, exchangeRateStr, keeper.ValAddrs[0])
@@ -149,7 +150,6 @@ func TestOracleTally(t *testing.T) {
 	input.OracleKeeper.StakingKeeper = stakingKeeper
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 	for i, rate := range rates {
-
 		decExchangeRate := sdk.NewDecWithPrec(int64(rate*math.Pow10(keeper.OracleDecPrecision)), int64(keeper.OracleDecPrecision))
 		exchangeRateStr, err := types.ExchangeRateTuples{
 			{ExchangeRate: decExchangeRate, Pair: common.PairBTCStable.String()}}.ToString()
@@ -316,7 +316,6 @@ func TestOracleRewardBand(t *testing.T) {
 	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
-
 }
 
 /* TODO(Mercilex): not appliable right now

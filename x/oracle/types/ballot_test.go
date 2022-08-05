@@ -2,10 +2,11 @@ package types_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common"
 	"math"
 	"sort"
 	"strconv"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"testing"
 
@@ -126,7 +127,6 @@ func TestSqrt(t *testing.T) {
 }
 
 func TestPBPower(t *testing.T) {
-
 	ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 	_, valAccAddrs, sk := types.GenerateRandomTestCase()
 	pb := types.ExchangeRateBallot{}

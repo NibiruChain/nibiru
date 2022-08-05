@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/core"
 

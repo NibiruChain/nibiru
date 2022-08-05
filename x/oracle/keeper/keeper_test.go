@@ -2,9 +2,10 @@ package keeper
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/core"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -80,7 +81,6 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 		}
 		return false
 	})
-
 }
 
 /* TODO(mercilex): this test is currently not valid

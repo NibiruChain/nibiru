@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	"sort"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/stretchr/testify/require"
 
