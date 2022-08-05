@@ -630,7 +630,7 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 
 	// vote targets are {KRW, SDR}
-	require.Equal(t, []string{common.PairGovStable.String(), common.PairBTCStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
+	require.Equal(t, []string{common.PairBTCStable.String(), common.PairGovStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
 
 	// tobin tax must be exists for SDR
 	sdrTobinTax, err := input.OracleKeeper.GetTobinTax(input.Ctx, common.PairBTCStable.String())
