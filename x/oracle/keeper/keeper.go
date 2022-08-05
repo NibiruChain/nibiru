@@ -292,12 +292,13 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 	}
 }
 
-// GetTobinTax return tobin tax for the denom
-func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (sdk.Dec, error) {
+// GetTobinTax return tobin tax for the pair
+// TODO(mercilex): use AssetPair
+func (k Keeper) GetTobinTax(ctx sdk.Context, pair string) (sdk.Dec, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetTobinTaxKey(denom))
+	bz := store.Get(types.GetTobinTaxKey(pair))
 	if bz == nil {
-		err := sdkerrors.Wrap(types.ErrNoTobinTax, denom)
+		err := sdkerrors.Wrap(types.ErrNoTobinTax, pair)
 		return sdk.Dec{}, err
 	}
 
@@ -307,25 +308,25 @@ func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (sdk.Dec, error) {
 	return tobinTax.Dec, nil
 }
 
-// SetTobinTax updates tobin tax for the denom
+// SetTobinTax updates tobin tax for the pair
 // TODO(mercilex): use AssetPair
-func (k Keeper) SetTobinTax(ctx sdk.Context, denom string, tobinTax sdk.Dec) {
+func (k Keeper) SetTobinTax(ctx sdk.Context, pair string, tobinTax sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})
-	store.Set(types.GetTobinTaxKey(denom), bz)
+	store.Set(types.GetTobinTaxKey(pair), bz)
 }
 
 // IterateTobinTaxes iterates rate over tobin taxes in the store
-func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(denom string, tobinTax sdk.Dec) (stop bool)) {
+func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(pair string, tobinTax sdk.Dec) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		denom := types.ExtractPairFromTobinTaxKey(iter.Key())
+		pair := types.ExtractPairFromTobinTaxKey(iter.Key())
 
 		var tobinTax sdk.DecProto
 		k.cdc.MustUnmarshal(iter.Value(), &tobinTax)
-		if handler(denom, tobinTax.Dec) {
+		if handler(pair, tobinTax.Dec) {
 			break
 		}
 	}
