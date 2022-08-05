@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// OrganizeBallotByPair collects all oracle votes for the period, categorized by the votes' denom parameter
+// OrganizeBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
 func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorClaimMap map[string]types.Claim) (votes map[string]types.ExchangeRateBallot) {
 	votes = map[string]types.ExchangeRateBallot{}
 
@@ -69,7 +69,7 @@ func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
 	})
 }
 
-// ApplyWhitelist update vote target denom list and set tobin tax with params whitelist
+// ApplyWhitelist update vote target pair list and set tobin tax with params whitelist
 func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTargets map[string]sdk.Dec) {
 	// check is there any update in whitelist params
 	updateRequired := false
