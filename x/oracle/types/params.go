@@ -131,12 +131,12 @@ func (p Params) Validate() error {
 		return fmt.Errorf("oracle parameter MinValidPerWindow must be between [0, 1]")
 	}
 
-	for _, denom := range p.Whitelist {
-		if denom.TobinTax.GT(sdk.OneDec()) || denom.TobinTax.IsNegative() {
-			return fmt.Errorf("oracle parameter Whitelist Denom must have TobinTax between [0, 1]")
+	for _, pair := range p.Whitelist {
+		if pair.TobinTax.GT(sdk.OneDec()) || pair.TobinTax.IsNegative() {
+			return fmt.Errorf("oracle parameter Whitelist Pair must have TobinTax between [0, 1]")
 		}
-		if len(denom.Name) == 0 {
-			return fmt.Errorf("oracle parameter Whitelist Denom must have name")
+		if len(pair.Name) == 0 {
+			return fmt.Errorf("oracle parameter Whitelist Pair must have name")
 		}
 	}
 	return nil
@@ -210,10 +210,10 @@ func validateWhitelist(i interface{}) error {
 
 	for _, d := range v {
 		if d.TobinTax.GT(sdk.OneDec()) || d.TobinTax.IsNegative() {
-			return fmt.Errorf("oracle parameter Whitelist Denom must have TobinTax between [0, 1]")
+			return fmt.Errorf("oracle parameter Whitelist Pair must have TobinTax between [0, 1]")
 		}
 		if len(d.Name) == 0 {
-			return fmt.Errorf("oracle parameter Whitelist Denom must have name")
+			return fmt.Errorf("oracle parameter Whitelist Pair must have name")
 		}
 	}
 
