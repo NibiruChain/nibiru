@@ -22,7 +22,7 @@ const (
 // Keys for oracle store
 // Items are stored with the following key: values
 //
-// - 0x01<denom_Bytes>: sdk.Dec
+// - 0x01<pair_Bytes>: sdk.Dec
 //
 // - 0x02<valAddress_Bytes>: accAddress
 //
@@ -32,7 +32,7 @@ const (
 //
 // - 0x05<valAddress_Bytes>: AggregateExchangeRateVote
 //
-// - 0x06<denom_Bytes>: sdk.Dec
+// - 0x06<pair_Bytes>: sdk.Dec
 var (
 	// Keys for store prefixes
 	ExchangeRateKey                 = []byte{0x01} // prefix for each key to a rate
@@ -68,12 +68,12 @@ func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
 	return append(AggregateExchangeRateVoteKey, address.MustLengthPrefix(v)...)
 }
 
-// GetTobinTaxKey - stored by *denom* bytes
+// GetTobinTaxKey - stored by *pair* bytes
 func GetTobinTaxKey(d string) []byte {
 	return append(TobinTaxKey, append([]byte(d), 0x00)...)
 }
 
-// ExtractPairFromTobinTaxKey - split denom from the tobin tax key
+// ExtractPairFromTobinTaxKey - split pair from the tobin tax key
 func ExtractPairFromTobinTaxKey(key []byte) (pair string) {
 	pair = string(key[1 : len(key)-1])
 	return
