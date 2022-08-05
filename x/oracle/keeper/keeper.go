@@ -108,7 +108,8 @@ func (k Keeper) IterateExchangeRates(ctx sdk.Context, handler func(pair string, 
 	iter := sdk.KVStorePrefixIterator(store, types.ExchangeRateKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		pair := string(iter.Key()[len(types.ExchangeRateKey):])
+		rawKey := iter.Key()
+		pair := string(rawKey[len(types.ExchangeRateKey) : len(rawKey)-1])
 		dp := sdk.DecProto{}
 		k.cdc.MustUnmarshal(iter.Value(), &dp)
 		if handler(pair, dp.Dec) {

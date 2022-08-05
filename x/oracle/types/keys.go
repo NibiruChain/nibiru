@@ -45,7 +45,7 @@ var (
 
 // GetExchangeRateKey - stored by *denom*
 func GetExchangeRateKey(denom string) []byte {
-	return append(ExchangeRateKey, []byte(denom)...)
+	return append(ExchangeRateKey, append([]byte(denom), 0x00)...)
 }
 
 // GetFeederDelegationKey - stored by *Validator* address
