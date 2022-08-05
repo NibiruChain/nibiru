@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -8,23 +9,54 @@ import (
 )
 
 func TestParseExchangeRateTuples(t *testing.T) {
-	valid := "123.0uluna,123.123ukrw"
-	_, err := types.ParseExchangeRateTuples(valid)
-	require.NoError(t, err)
+	t.Run("inverse", func(t *testing.T) {
+		tuples := types.ExchangeRateTuples{
+			{
+				Pair:         "BTC:USD",
+				ExchangeRate: sdk.MustNewDecFromStr("40000.00"),
+			},
 
-	duplicatedDenom := "100.0uluna,123.123ukrw,121233.123ukrw"
-	_, err = types.ParseExchangeRateTuples(duplicatedDenom)
-	require.Error(t, err)
+			{
+				Pair:         "ETH:USD",
+				ExchangeRate: sdk.MustNewDecFromStr("4000.00"),
+			},
+		}
 
-	invalidCoins := "123.123"
-	_, err = types.ParseExchangeRateTuples(invalidCoins)
-	require.Error(t, err)
+		tuplesStr, err := tuples.ToString()
+		require.NoError(t, err)
 
-	invalidCoinsWithValid := "123.0uluna,123.1"
-	_, err = types.ParseExchangeRateTuples(invalidCoinsWithValid)
-	require.Error(t, err)
+		parsedTuples := new(types.ExchangeRateTuples)
+		require.NoError(t, parsedTuples.FromString(tuplesStr))
 
-	abstainCoinsWithValid := "0.0uluna,123.1ukrw"
-	_, err = types.ParseExchangeRateTuples(abstainCoinsWithValid)
-	require.NoError(t, err)
+		require.Equal(t, tuples, *parsedTuples)
+	})
+}
+
+func TestExchangeRateTuple(t *testing.T) {
+	t.Run("inverse", func(t *testing.T) {
+		exchangeRate := types.ExchangeRateTuple{
+			Pair:         "BTC:USD",
+			ExchangeRate: sdk.MustNewDecFromStr("40000.00"),
+		}
+		exchangeRateStr, err := exchangeRate.ToString()
+		require.NoError(t, err)
+
+		parsedExchangeRate := new(types.ExchangeRateTuple)
+		require.NoError(t, parsedExchangeRate.FromString(exchangeRateStr))
+
+		require.Equal(t, exchangeRate, *parsedExchangeRate)
+	})
+
+	t.Run("invalid size", func(t *testing.T) {
+		// TODO(mercilex)
+	})
+
+	t.Run("invalid delimiters", func(t *testing.T) {
+		// TODO(mercilex)
+	})
+
+	t.Run("invalid format", func(t *testing.T) {
+		// TODO(mercilex)
+	})
+
 }
