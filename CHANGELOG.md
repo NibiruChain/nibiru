@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### CI
+
+* [#795](https://github.com/NibiruChain/nibiru/pull/795) Integration tests run when PR is approved
+
 ### Improvements
 
 * [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
