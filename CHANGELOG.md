@@ -42,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Features
+* [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
+
 ### Bug Fixes
 
 * [#766](https://github.com/NibiruChain/nibiru/pull/766) Fixed margin ratio calculation for trader position.
