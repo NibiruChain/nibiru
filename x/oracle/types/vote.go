@@ -113,6 +113,7 @@ type ExchangeRateTuples []ExchangeRateTuple
 
 // String implements fmt.Stringer interface
 func (tuples ExchangeRateTuples) String() string {
+	panic("don't call me")
 	out, _ := yaml.Marshal(tuples)
 	return string(out)
 }

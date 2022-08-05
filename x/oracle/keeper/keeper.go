@@ -310,6 +310,7 @@ func (k Keeper) GetTobinTax(ctx sdk.Context, denom string) (sdk.Dec, error) {
 }
 
 // SetTobinTax updates tobin tax for the denom
+// TODO(mercilex): use AssetPair
 func (k Keeper) SetTobinTax(ctx sdk.Context, denom string, tobinTax sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})

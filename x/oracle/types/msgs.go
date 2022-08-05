@@ -81,6 +81,7 @@ func (msg MsgAggregateExchangeRatePrevote) ValidateBasic() error {
 }
 
 // NewMsgAggregateExchangeRateVote returns MsgAggregateExchangeRateVote instance
+// TODO(mercilex): accept ExchangeRatesTuples
 func NewMsgAggregateExchangeRateVote(salt string, exchangeRates string, feeder sdk.AccAddress, validator sdk.ValAddress) *MsgAggregateExchangeRateVote {
 	return &MsgAggregateExchangeRateVote{
 		Salt:          salt,

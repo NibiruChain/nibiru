@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -15,12 +16,11 @@ func (k Keeper) GetOracleAccount(ctx sdk.Context) authtypes.ModuleAccountI {
 // GetRewardPool retrieves the balance of the oracle module account
 func (k Keeper) GetRewardPool(ctx sdk.Context, denom string) sdk.Coin {
 	// TODO(mercilex): this logic needs to be redefined.
-	/*
-		acc := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
-		return k.bankKeeper.GetBalance(ctx, acc.GetAddress(), denom)
-	*/
-
-	return sdk.NewCoin("zero", sdk.ZeroInt())
+	if denom != common.DenomGov {
+		return sdk.NewCoin("zero", sdk.ZeroInt())
+	}
+	acc := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
+	return k.bankKeeper.GetBalance(ctx, acc.GetAddress(), denom)
 }
 
 // GetRewardPool retrieves the balance of the oracle module account
