@@ -1,9 +1,7 @@
 package keeper
 
 import (
-	"fmt"
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -85,15 +83,70 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	input, msgServer := setup(t)
 
 	salt := "1"
-	exchangeRatesStr := fmt.Sprintf("1000.23%s,0.29%s,0.27%s", common.DenomStable, core.MicroUSDDenom, common.DenomColl)
-	otherExchangeRateStr := fmt.Sprintf("1000.12%s,0.29%s,0.27%s", common.DenomStable, core.MicroUSDDenom, core.MicroUSDDenom)
-	unintendedExchageRateStr := fmt.Sprintf("1000.23%s,0.29%s,0.27%s", common.DenomStable, core.MicroUSDDenom, core.MicroCNYDenom)
-	invalidExchangeRateStr := fmt.Sprintf("1000.23%s,0.29%s,0.27", common.DenomStable, core.MicroUSDDenom)
+	exchangeRates := types.ExchangeRateTuples{
+		{
+			Pair:         common.PairGovStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
+		},
+		{
+			Pair:         common.PairETHStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
+		},
+
+		{
+			Pair:         common.PairBTCStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
+		},
+	}
+
+	otherExchangeRate := types.ExchangeRateTuples{
+		{
+			Pair:         common.PairGovStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
+		},
+		{
+			// TODO(mercilex): here we're defining two exchange rates for the same coin? luna allowed this though.. need to go back here later
+			Pair:         common.PairETHStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
+		},
+
+		{
+			Pair:         common.PairETHStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
+		},
+	}
+
+	unintendedExchangeRateStr := types.ExchangeRateTuples{
+		{
+			Pair:         common.PairGovStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
+		},
+		{
+			Pair:         common.PairETHStable.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
+		},
+
+		{
+			Pair: common.AssetPair{
+				Token0: "BTC",
+				Token1: "CNY",
+			}.String(),
+			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
+		},
+	}
+	exchangeRatesStr, err := exchangeRates.ToString()
+	require.NoError(t, err)
+
+	otherExchangeRateStr, err := otherExchangeRate.ToString()
+	require.NoError(t, err)
+
+	unintendedExchageRateStr, err := unintendedExchangeRateStr.ToString()
+	require.NoError(t, err)
 
 	hash := types.GetAggregateVoteHash(salt, exchangeRatesStr, ValAddrs[0])
 
 	aggregateExchangeRatePrevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[0], ValAddrs[0])
-	_, err := msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
 	require.NoError(t, err)
 
 	// Unauthorized feeder
@@ -128,14 +181,8 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
-	// Invalid exchange rate with valid real period
-	input.Ctx = input.Ctx.WithBlockHeight(1)
-	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, invalidExchangeRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
-	require.Error(t, err)
-
 	// Unauthorized feeder
-	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, invalidExchangeRateStr, Addrs[1], ValAddrs[0])
+	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[1], ValAddrs[0])
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
