@@ -39,7 +39,7 @@ var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
-	DefaultWhitelist     = PairList{
+	DefaultWhitelist     = PairList{                 // TODO(mercilex): change
 		{Name: common.DenomStable, TobinTax: DefaultTobinTax},
 		{Name: common.DenomColl, TobinTax: DefaultTobinTax},
 		{Name: core.MicroUSDDenom, TobinTax: DefaultTobinTax},

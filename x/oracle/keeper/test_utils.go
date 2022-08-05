@@ -233,7 +233,25 @@ func CreateTestInput(t *testing.T) TestInput {
 		distrtypes.ModuleName,
 	)
 
-	defaults := types.DefaultParams()
+	defaults := types.DefaultParams() // TODO(mercilex): eventually move this to default params
+	defaults.Whitelist = types.PairList{
+		{
+			Name:     common.PairBTCStable.String(),
+			TobinTax: types.DefaultTobinTax,
+		},
+		{
+			Name:     common.PairCollStable.String(),
+			TobinTax: types.DefaultTobinTax,
+		},
+		{
+			Name:     common.PairETHStable.String(),
+			TobinTax: types.DefaultTobinTax,
+		},
+		{
+			Name:     common.PairGovStable.String(),
+			TobinTax: types.DefaultTobinTax,
+		},
+	}
 	keeper.SetParams(ctx, defaults)
 
 	for _, denom := range defaults.Whitelist {

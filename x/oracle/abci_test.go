@@ -19,9 +19,17 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
+var exchangeRates = types.ExchangeRateTuples{
+	{
+		Pair:         common.PairBTCStable.String(),
+		ExchangeRate: randomExchangeRate,
+	},
+}
+
 func TestOracleThreshold(t *testing.T) {
 	input, h := setup(t)
-	exchangeRateStr := randomExchangeRate.String() + common.DenomColl
+	exchangeRateStr, err := exchangeRates.ToString()
+	require.NoError(t, err)
 
 	// Case 1.
 	// Less than the threshold signs, exchange rate consensus fails
@@ -37,7 +45,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
+	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.Error(t, err)
 
 	// Case 2.
@@ -74,7 +82,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
+	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.NoError(t, err)
 	require.Equal(t, randomExchangeRate, rate)
 
@@ -105,7 +113,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), common.DenomColl)
+	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.Error(t, err)
 }
 
