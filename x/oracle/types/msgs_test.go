@@ -2,7 +2,6 @@ package types_test
 
 import (
 	"github.com/NibiruChain/nibiru/x/common"
-	"math/rand"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -71,48 +70,54 @@ func TestMsgAggregateExchangeRatePrevote(t *testing.T) {
 
 func TestMsgAggregateExchangeRateVote(t *testing.T) {
 	addrs := []sdk.AccAddress{
-		sdk.AccAddress([]byte("addr1_______________")),
+		sdk.AccAddress("addr1_______________"),
 	}
 
-	invalidExchangeRates := "a,b"
-	exchangeRates := "1.0foo,1232.132bar"
-	abstainExchangeRates := "0.0foo,1232.132bar"
-	overFlowExchangeRates := "1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0foo,1232.132bar"
+	exchangeRates := types.ExchangeRateTuples{
+		{
+			Pair:         "FOO:USD",
+			ExchangeRate: sdk.MustNewDecFromStr("1.0"),
+		},
+		{
+			Pair:         "BAR:USD",
+			ExchangeRate: sdk.MustNewDecFromStr("1232.132"),
+		},
+	}
+
+	abstainExchangeRates := types.ExchangeRateTuples{
+		{
+			Pair:         "FOO:USD",
+			ExchangeRate: sdk.ZeroDec(),
+		},
+		{
+			Pair:         "BAR:USD",
+			ExchangeRate: sdk.MustNewDecFromStr("1232.132"),
+		},
+	}
 
 	tests := []struct {
 		voter         sdk.AccAddress
 		validator     sdk.ValAddress
 		salt          string
-		exchangeRates string
+		exchangeRates types.ExchangeRateTuples
 		expectPass    bool
 	}{
 		{addrs[0], sdk.ValAddress(addrs[0]), "123", exchangeRates, true},
-		{addrs[0], sdk.ValAddress(addrs[0]), "123", invalidExchangeRates, false},
 		{addrs[0], sdk.ValAddress(addrs[0]), "123", abstainExchangeRates, true},
-		{addrs[0], sdk.ValAddress(addrs[0]), "123", overFlowExchangeRates, false},
 		{sdk.AccAddress{}, sdk.ValAddress(addrs[0]), "123", exchangeRates, false},
-		{addrs[0], sdk.ValAddress(addrs[0]), "123", "", false},
-		{addrs[0], sdk.ValAddress(addrs[0]), "", randSeq(4097), false},
+		{addrs[0], sdk.ValAddress(addrs[0]), "123", types.ExchangeRateTuples{}, false},
 		{addrs[0], sdk.ValAddress{}, "123", abstainExchangeRates, false},
 		{addrs[0], sdk.ValAddress(addrs[0]), "", abstainExchangeRates, false},
 	}
 
 	for i, tc := range tests {
-		msg := types.NewMsgAggregateExchangeRateVote(tc.salt, tc.exchangeRates, tc.voter, tc.validator)
+		exchangeRates, err := tc.exchangeRates.ToString()
+		require.NoError(t, err)
+		msg := types.NewMsgAggregateExchangeRateVote(tc.salt, exchangeRates, tc.voter, tc.validator)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", i)
 		} else {
 			require.NotNil(t, msg.ValidateBasic(), "test: %v", i)
 		}
 	}
-}
-
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-func randSeq(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
 }
