@@ -106,7 +106,7 @@ func TestValidate(t *testing.T) {
 		case bytes.Equal(types.KeyWhitelist, pair.Key):
 			require.NoError(t, pair.ValidatorFn(types.PairList{
 				{
-					Name:     "denom",
+					Name:     "BTC:USDT",
 					TobinTax: sdk.NewDecWithPrec(10, 2),
 				},
 			}))
@@ -119,13 +119,13 @@ func TestValidate(t *testing.T) {
 			}))
 			require.Error(t, pair.ValidatorFn(types.PairList{
 				{
-					Name:     "denom",
+					Name:     "BTC:USD",
 					TobinTax: sdk.NewDecWithPrec(101, 2),
 				},
 			}))
 			require.Error(t, pair.ValidatorFn(types.PairList{
 				{
-					Name:     "denom",
+					Name:     "BTC:BTC",
 					TobinTax: sdk.NewDecWithPrec(-1, 2),
 				},
 			}))
