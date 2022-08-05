@@ -21,6 +21,7 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -72,10 +73,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 	encodingConfig := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
-	s.cfg = testutilcli.BuildNetworkConfig(defaultAppGenesis)
-
-	genesisState := defaultAppGenesis
+	genesisState := testapp.NewTestGenesisStateFromDefault()
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
@@ -97,7 +95,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
 		},
 	}
-	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
+	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
@@ -115,16 +113,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
-	genesisState[perptypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(perpGenesis)
+	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	// set up pricefeed
-	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
-	genesisState[pftypes.ModuleName] = pricefeedGenJson
+	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
 
-	s.cfg.GenesisState = genesisState
+	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-
 	_, err := s.network.WaitForHeight(1)
 	s.NoError(err)
 
@@ -138,13 +134,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
 			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
-		s.cfg.BondDenom,
+		common.DenomGov,
 	)
 	s.NoError(err)
 }
