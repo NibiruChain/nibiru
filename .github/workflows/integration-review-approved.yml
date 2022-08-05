@@ -2,11 +2,12 @@ name: Integration tests on master
 
 # Runs on master merge only.
 on:
-  push:
-    branches: ["master"]
+  pull_request_review:
+    types: [ submitted ]
 
 jobs:
-  all-tests:
+  integration-tests:
+    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
