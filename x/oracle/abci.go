@@ -39,18 +39,18 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 		// Pair-TobinTax map
 		voteTargets := make(map[string]sdk.Dec)
-		k.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) bool {
-			voteTargets[denom] = tobinTax
+		k.IterateTobinTaxes(ctx, func(pair string, tobinTax sdk.Dec) bool {
+			voteTargets[pair] = tobinTax
 			return false
 		})
 
 		// Clear all exchange rates
-		k.IterateExchangeRates(ctx, func(denom string, _ sdk.Dec) (stop bool) {
-			k.DeleteExchangeRate(ctx, denom)
+		k.IterateExchangeRates(ctx, func(pair string, _ sdk.Dec) (stop bool) {
+			k.DeleteExchangeRate(ctx, pair)
 			return false
 		})
 
-		// Organize votes to ballot by denom
+		// Organize votes to ballot by pair
 		// NOTE: **Filter out inactive or jailed validators**
 		// NOTE: **Make abstain votes to have zero vote power**
 		voteMap := k.OrganizeBallotByPair(ctx, validatorClaimMap)
@@ -62,9 +62,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			exchangeRateRT := ballotRT.WeightedMedianWithAssertion()
 
 			// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-			for denom, ballot := range voteMap {
+			for pair, ballot := range voteMap {
 				// Convert ballot to cross exchange rates
-				if denom != referenceTerra {
+				if pair != referenceTerra {
 					ballot = ballot.ToCrossRateWithSort(voteMapRT)
 				}
 
@@ -72,12 +72,12 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
 
 				// Transform into the original form uluna/stablecoin
-				if denom != referenceTerra {
+				if pair != referenceTerra {
 					exchangeRate = exchangeRateRT.Quo(exchangeRate)
 				}
 
 				// Set the exchange rate, emit ABCI event
-				k.SetExchangeRateWithEvent(ctx, denom, exchangeRate)
+				k.SetExchangeRateWithEvent(ctx, pair, exchangeRate)
 			}
 		}
 

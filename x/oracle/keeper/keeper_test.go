@@ -35,13 +35,13 @@ func TestExchangeRate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, gbpExchangeRate, rate)
 
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
-	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), krwExchangeRate)
+	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())
 	require.NoError(t, err)
 	require.Equal(t, krwExchangeRate, rate)
 
-	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.DenomStable)
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.DenomStable)
+	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.PairBTCStable.String())
+	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())
 	require.Error(t, err)
 
 	numExchangeRates := 0
@@ -65,7 +65,7 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 	// Set & get rates
 	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroCNYDenom, cnyExchangeRate)
 	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroGBPDenom, gbpExchangeRate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, krwExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), krwExchangeRate)
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomGov, lunaExchangeRate)
 
 	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
@@ -74,7 +74,7 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 			require.Equal(t, cnyExchangeRate, rate)
 		case core.MicroGBPDenom:
 			require.Equal(t, gbpExchangeRate, rate)
-		case common.DenomStable:
+		case common.PairBTCStable.String():
 			require.Equal(t, krwExchangeRate, rate)
 		case common.DenomGov:
 			require.Equal(t, lunaExchangeRate, rate)
@@ -118,7 +118,7 @@ func TestParams(t *testing.T) {
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := types.PairList{
 		{Name: common.DenomColl, TobinTax: types.DefaultTobinTax},
-		{Name: common.DenomStable, TobinTax: types.DefaultTobinTax},
+		{Name: common.PairBTCStable.String(), TobinTax: types.DefaultTobinTax},
 	}
 
 	// Should really test validateParams, but skipping because obvious
