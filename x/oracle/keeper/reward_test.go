@@ -1,19 +1,7 @@
 package keeper
 
-import (
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
-	"testing"
-
-	"github.com/stretchr/testify/require"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	"github.com/NibiruChain/nibiru/x/oracle/types"
-)
-
 // Test a reward giving mechanism
+/* TODO(mercilex): currently not appliable
 func TestRewardBallotWinners(t *testing.T) {
 	// initial setup
 	input := CreateTestInput(t)
@@ -79,3 +67,4 @@ func TestRewardBallotWinners(t *testing.T) {
 	require.Equal(t, sdk.NewDecFromInt(givingAmt.AmountOf(core.MicroUSDDenom)).QuoInt64(votePeriodsPerWindow).QuoInt64(3).MulInt64(2).TruncateInt(),
 		outstandingRewards1.AmountOf(core.MicroUSDDenom))
 }
+*/
