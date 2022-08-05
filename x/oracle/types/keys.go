@@ -70,11 +70,11 @@ func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
 
 // GetTobinTaxKey - stored by *denom* bytes
 func GetTobinTaxKey(d string) []byte {
-	return append(TobinTaxKey, []byte(d)...)
+	return append(TobinTaxKey, append([]byte(d), 0x00)...)
 }
 
-// ExtractDenomFromTobinTaxKey - split denom from the tobin tax key
-func ExtractDenomFromTobinTaxKey(key []byte) (denom string) {
-	denom = string(key[1:])
+// ExtractPairFromTobinTaxKey - split denom from the tobin tax key
+func ExtractPairFromTobinTaxKey(key []byte) (denom string) {
+	denom = string(key[1 : len(key)-1])
 	return
 }
