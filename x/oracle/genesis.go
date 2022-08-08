@@ -91,8 +91,8 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	})
 
 	exchangeRates := []types.ExchangeRateTuple{}
-	keeper.IterateExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: denom, ExchangeRate: rate})
+	keeper.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
+		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: pair, ExchangeRate: rate})
 		return false
 	})
 
@@ -118,8 +118,8 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	})
 
 	tobinTaxes := []types.TobinTax{}
-	keeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
-		tobinTaxes = append(tobinTaxes, types.TobinTax{Pair: denom, TobinTax: tobinTax})
+	keeper.IterateTobinTaxes(ctx, func(pair string, tobinTax sdk.Dec) (stop bool) {
+		tobinTaxes = append(tobinTaxes, types.TobinTax{Pair: pair, TobinTax: tobinTax})
 		return false
 	})
 
