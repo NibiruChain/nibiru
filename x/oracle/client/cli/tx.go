@@ -133,6 +133,7 @@ $ nibid tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 			}
 
 			hash := types.GetAggregateVoteHash(salt, exchangeRatesStr, validator)
+
 			msg := types.NewMsgAggregateExchangeRatePrevote(hash, voter, validator)
 			if err = msg.ValidateBasic(); err != nil {
 				return err
