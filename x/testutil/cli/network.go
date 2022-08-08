@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -27,7 +26,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -128,11 +126,6 @@ type (
 	}
 )
 
-func DefaultFeeString(denom string) string {
-	feeCoins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
-	return fmt.Sprintf("--%s=%s", flags.FlagFees, feeCoins.String())
-}
-
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeTestEncodingConfig()
@@ -150,7 +143,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		TimeoutCommit: time.Second / 2,
 		ChainID:       "chain-" + tmrand.NewRand().Str(6),
 		NumValidators: 1,
-		BondDenom:     sdk.DefaultBondDenom, // TODO(https://github.com/NibiruChain/nibiru/issues/582): remove 'stake' denom and replace with 'unibi'
+		BondDenom:     common.DenomGov,
 		MinGasPrices:  fmt.Sprintf("0.000006%s", common.DenomGov),
 		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
@@ -523,9 +516,4 @@ func (n *Network) Cleanup() {
 	}
 
 	n.T.Log("finished cleaning up test network")
-}
-
-// UpdateStartingToken allows to update the starting tokens of an existing
-func (cfg *Config) UpdateStartingToken(startingTokens sdk.Coins) {
-	cfg.StartingTokens = startingTokens
 }

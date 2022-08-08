@@ -27,7 +27,7 @@ func TestGetUnderlyingPrice(t *testing.T) {
 	}{
 		{
 			name:           "correctly fetch underlying price",
-			pair:           BTCNusdPair,
+			pair:           common.PairBTCStable,
 			pricefeedPrice: sdk.NewDec(40000),
 		},
 	}
@@ -69,14 +69,14 @@ func TestGetSpotPrice(t *testing.T) {
 	}{
 		{
 			name:              "correctly fetch underlying price",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			quoteAssetReserve: sdk.NewDec(40_000),
 			baseAssetReserve:  sdk.NewDec(1),
 			expectedPrice:     sdk.NewDec(40000),
 		},
 		{
 			name:              "complex price",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			quoteAssetReserve: sdk.NewDec(2_489_723_947),
 			baseAssetReserve:  sdk.NewDec(34_597_234),
 			expectedPrice:     sdk.MustNewDecFromStr("71.963092396345904415"),
@@ -120,7 +120,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 	}{
 		{
 			name:                "zero base asset means zero price",
-			pair:                BTCNusdPair,
+			pair:                common.PairBTCStable,
 			quoteAssetReserve:   sdk.NewDec(40_000),
 			baseAssetReserve:    sdk.NewDec(10_000),
 			baseAmount:          sdk.ZeroDec(),
@@ -129,7 +129,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple add base to pool",
-			pair:                BTCNusdPair,
+			pair:                common.PairBTCStable,
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -138,7 +138,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple remove base from pool",
-			pair:                BTCNusdPair,
+			pair:                common.PairBTCStable,
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -147,7 +147,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			baseAmount:        sdk.MustNewDecFromStr("1000"),
@@ -200,7 +200,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 	}{
 		{
 			name:               "zero base asset means zero price",
-			pair:               BTCNusdPair,
+			pair:               common.PairBTCStable,
 			quoteAssetReserve:  sdk.NewDec(40_000),
 			baseAssetReserve:   sdk.NewDec(10_000),
 			quoteAmount:        sdk.ZeroDec(),
@@ -209,7 +209,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple add base to pool",
-			pair:               BTCNusdPair,
+			pair:               common.PairBTCStable,
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -218,7 +218,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple remove base from pool",
-			pair:               BTCNusdPair,
+			pair:               common.PairBTCStable,
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -227,7 +227,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			quoteAmount:       sdk.NewDec(1000),
@@ -283,7 +283,7 @@ func TestCalcTwap(t *testing.T) {
 	}{
 		{
 			name: "spot price twap calc, t=[10,30]",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(90),
@@ -312,7 +312,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "spot price twap calc, t=[11,35]",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(90),
@@ -341,7 +341,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(30),
@@ -366,7 +366,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -391,7 +391,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "base asset swap twap calc, add to pool, t=[10,30]",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -416,7 +416,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "base asset swap twap calc, remove from pool, t=[10,30]",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -504,19 +504,19 @@ func TestGetTWAP(t *testing.T) {
 	}{
 		{
 			name:               "Add quote to position",
-			pair:               BTCNusdPair,
+			pair:               common.PairBTCStable,
 			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(5_000), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
 			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("40006.667083333333333336")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("40010.000625000000000004")},
 		}, {
 			name:               "Remove quote from position",
-			pair:               BTCNusdPair,
+			pair:               common.PairBTCStable,
 			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(4_000), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
 			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("39994.666933333333333333")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("39992.000400000000000000")},
 		}, {
 			name: "Add and remove to/from quote position to return to initial TWAP",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			positionUpdates: []positionUpdate{
 				{quoteAsset: sdk.NewDec(700), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
 				{quoteAsset: sdk.NewDec(1_234), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
@@ -531,20 +531,20 @@ func TestGetTWAP(t *testing.T) {
 			},
 		}, {
 			name:               "Add base to position",
-			pair:               BTCNusdPair,
+			pair:               common.PairBTCStable,
 			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(50), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
 			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("37520.786092214663643235")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("36281.179138321995464853")}},
 		{
 			name:               "Remove base from position",
-			pair:               BTCNusdPair,
+			pair:               common.PairBTCStable,
 			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(40), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
 			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("42268.518518518518518519")},
 			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("43402.777777777777777778")},
 		},
 		{
 			name: "Add and remove to/from base position to return to initial TWAP",
-			pair: BTCNusdPair,
+			pair: common.PairBTCStable,
 			positionUpdates: []positionUpdate{
 				{baseAsset: sdk.NewDec(7), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
 				{baseAsset: sdk.MustNewDecFromStr("1.234"), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
@@ -573,7 +573,7 @@ func TestGetTWAP(t *testing.T) {
 			// Creation of the pool does NOT trigger a markPriceChanged event
 			keeper.CreatePool(
 				ctx,
-				BTCNusdPair,
+				common.PairBTCStable,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				/*quoteAssetReserve=*/ sdk.NewDec(40_000_000),
 				/*baseAssetReserve=*/ sdk.NewDec(1_000),
@@ -581,10 +581,10 @@ func TestGetTWAP(t *testing.T) {
 				/*maxSpread=*/ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
-			err := keeper.UpdateTWAP(ctx, BTCNusdPair.String())
+			err := keeper.UpdateTWAP(ctx, common.PairBTCStable.String())
 			require.NoError(t, err)
 			// Make sure price gets initialized correctly when the pool gets created
-			pair := BTCNusdPair
+			pair := common.PairBTCStable
 			twap, err := keeper.GetCurrentTWAP(ctx, pair)
 			require.NoError(t, err)
 			require.EqualValues(t, initialTWAP, twap.Price)
@@ -592,14 +592,14 @@ func TestGetTWAP(t *testing.T) {
 				// update the position and trigger TWAP recalculation
 				ctx = ctx.WithBlockHeader(tmproto.Header{Time: p.blockTs})
 				if p.baseAsset.IsNil() {
-					_, err = keeper.SwapQuoteForBase(ctx, BTCNusdPair, p.direction, p.quoteAsset, sdk.NewDec(0), true)
+					_, err = keeper.SwapQuoteForBase(ctx, common.PairBTCStable, p.direction, p.quoteAsset, sdk.NewDec(0), true)
 				} else {
-					_, err = keeper.SwapBaseForQuote(ctx, BTCNusdPair, p.direction, p.baseAsset, sdk.NewDec(0), true)
+					_, err = keeper.SwapBaseForQuote(ctx, common.PairBTCStable, p.direction, p.baseAsset, sdk.NewDec(0), true)
 				}
 				require.NoError(t, err)
 				markPriceEvt := getMarkPriceEvent(tc.expectedMarkPrices[i], ctx.BlockHeader().Time)
 				testutilevents.RequireContainsTypedEvent(t, ctx, markPriceEvt)
-				err = keeper.UpdateTWAP(ctx, BTCNusdPair.String())
+				err = keeper.UpdateTWAP(ctx, common.PairBTCStable.String())
 				require.NoError(t, err)
 				twap, err := keeper.GetCurrentTWAP(ctx, pair)
 				require.NoError(t, err)
@@ -611,7 +611,7 @@ func TestGetTWAP(t *testing.T) {
 
 func getMarkPriceEvent(price sdk.Dec, ts time.Time) proto.Message {
 	return &types.MarkPriceChanged{
-		Pair:      BTCNusdPair.String(),
+		Pair:      common.PairBTCStable.String(),
 		Price:     price,
 		Timestamp: ts,
 	}

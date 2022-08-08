@@ -40,15 +40,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+### CI
+
+* [#795](https://github.com/NibiruChain/nibiru/pull/795) Integration tests run when PR is approved
+
+### Improvements
+
+* [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
+* [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
+* [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
+
+## [v0.12.1](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1) - 2022-08-04
+
+* [#796](https://github.com/NibiruChain/nibiru/pull/796) - fix bug that caused that epochKeeper was nil when running epoch hook from Perp module
+
+## [v0.12.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.0) - 2022-08-03
 
 ### Improvements
 
 * [#775](https://github.com/NibiruChain/nibiru/pull/775) - bump google.golang.org/protobuf from 1.28.0 to 1.28.1
 * [#768](https://github.com/NibiruChain/nibiru/pull/768) - add simulation tests to make file
 * [#767](https://github.com/NibiruChain/nibiru/pull/767) - add fluctuation limit checks on `OpenPosition`.
-* [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
-
+* [#786](https://github.com/NibiruChain/nibiru/pull/786) - add genesis params in localnet script.
+ 
 ### Bug Fixes
 
 * [#766](https://github.com/NibiruChain/nibiru/pull/766) - Fixed margin ratio calculation for trader position.
@@ -80,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#741](https://github.com/NibiruChain/nibiru/pull/741) - remove unused code and refactored variable names.
 * [#742](https://github.com/NibiruChain/nibiru/pull/742) - Vpools are not tradeable if they have invalid oracle prices.
 * [#739](https://github.com/NibiruChain/nibiru/pull/739) - Bump github.com/spf13/viper from 1.11.0 to 1.12.0
- 
+
 ### API Breaking
 
 * [#721](https://github.com/NibiruChain/nibiru/pull/721) - Updated proto property names to adhere to standard snake_casing and added Unlock REST endpoint
