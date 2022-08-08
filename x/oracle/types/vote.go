@@ -78,35 +78,37 @@ func (m ExchangeRateTuple) ToString() (string, error) {
 	), nil
 }
 
-// FromString populates ExchangeRateTuple from a string, fails if the string is of invalid format.
-func (m *ExchangeRateTuple) FromString(s string) error {
+// NewExchangeRateTupleFromString populates ExchangeRateTuple from a string, fails if the string is of invalid format.
+func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 	// strip parentheses
 	if len(s) <= 2 {
-		return fmt.Errorf("invalid string length")
+		return ExchangeRateTuple{}, fmt.Errorf("invalid string length")
 	}
+
 	if s[0] != ExchangeRateTupleStringPrefix || s[len(s)-1] != ExchangeRateTupleStringSuffix {
-		return fmt.Errorf("invalid ExchangeRateTuple delimiters, start is expected with '(', end with ')', got: %s", s)
+		return ExchangeRateTuple{}, fmt.Errorf("invalid ExchangeRateTuple delimiters, start is expected with '(', end with ')', got: %s", s)
 	}
+
 	stripParentheses := s[1 : len(s)-1]
 	split := strings.Split(stripParentheses, ExchangeRateTuplePairRateSeparator)
 	if len(split) != 2 {
-		return fmt.Errorf("invalid ExchangeRateTuple format")
+		return ExchangeRateTuple{}, fmt.Errorf("invalid ExchangeRateTuple format")
 	}
 
 	_, err := common.NewAssetPair(split[0])
 	if err != nil {
-		return fmt.Errorf("invalid pair definition %s: %w", split[0], err)
+		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}
 
 	dec, err := sdk.NewDecFromStr(split[1])
 	if err != nil {
-		return fmt.Errorf("invalid decimal %s: %w", split[1], err)
+		return ExchangeRateTuple{}, fmt.Errorf("invalid decimal %s: %w", split[1], err)
 	}
 
-	m.Pair = split[0]
-	m.ExchangeRate = dec
-
-	return nil
+	return ExchangeRateTuple{
+		Pair:         split[0],
+		ExchangeRate: dec,
+	}, nil
 }
 
 // ExchangeRateTuples - array of ExchangeRateTuple
@@ -118,29 +120,31 @@ func (tuples ExchangeRateTuples) String() string {
 	return string(out)
 }
 
-func (tuples *ExchangeRateTuples) FromString(s string) error {
+func NewExchangeRateTuplesFromString(s string) (ExchangeRateTuples, error) {
 	stringTuples := strings.Split(s, ExchangeRateTuplesSeparator)
-	*tuples = make([]ExchangeRateTuple, len(stringTuples))
+
+	tuples := make(ExchangeRateTuples, len(stringTuples))
+
 	duplicates := make(map[string]struct{}, len(stringTuples))
 
 	for i, stringTuple := range stringTuples {
-		exchangeRate := new(ExchangeRateTuple)
-		err := exchangeRate.FromString(stringTuple)
+		exchangeRate, err := NewExchangeRateTupleFromString(stringTuple)
 		if err != nil {
-			return fmt.Errorf("invalid ExchangeRateTuple at index %d: %w", i, err)
+			return []ExchangeRateTuple{}, fmt.Errorf("invalid ExchangeRateTuple at index %d: %w", i, err)
 		}
 
 		// check duplicates
 		if _, ok := duplicates[exchangeRate.Pair]; ok {
-			return fmt.Errorf("found duplicate at index %d: %s", i, exchangeRate.Pair)
+			return []ExchangeRateTuple{}, fmt.Errorf("found duplicate at index %d: %s", i, exchangeRate.Pair)
 		} else {
 			duplicates[exchangeRate.Pair] = struct{}{}
 		}
+
 		// insert exchange rate into the tuple
-		(*tuples)[i] = *exchangeRate
+		tuples[i] = exchangeRate
 	}
 
-	return nil
+	return tuples, nil
 }
 
 func (tuples ExchangeRateTuples) ToString() (string, error) {
@@ -159,10 +163,10 @@ func (tuples ExchangeRateTuples) ToString() (string, error) {
 
 // ParseExchangeRateTuples ExchangeRateTuple parser
 func ParseExchangeRateTuples(tuplesStr string) (ExchangeRateTuples, error) {
-	t := new(ExchangeRateTuples)
-	if err := t.FromString(tuplesStr); err != nil {
+	tuples, err := NewExchangeRateTuplesFromString(tuplesStr)
+	if err != nil {
 		return nil, err
 	}
 
-	return *t, nil
+	return tuples, nil
 }

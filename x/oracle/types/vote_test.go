@@ -27,10 +27,10 @@ func TestParseExchangeRateTuples(t *testing.T) {
 		tuplesStr, err := tuples.ToString()
 		require.NoError(t, err)
 
-		parsedTuples := new(types.ExchangeRateTuples)
-		require.NoError(t, parsedTuples.FromString(tuplesStr))
+		parsedTuples, err := types.NewExchangeRateTuplesFromString(tuplesStr)
+		require.NoError(t, err)
 
-		require.Equal(t, tuples, *parsedTuples)
+		require.Equal(t, tuples, parsedTuples)
 	})
 
 	t.Run("check duplicates", func(t *testing.T) {
@@ -47,10 +47,10 @@ func TestExchangeRateTuple(t *testing.T) {
 		exchangeRateStr, err := exchangeRate.ToString()
 		require.NoError(t, err)
 
-		parsedExchangeRate := new(types.ExchangeRateTuple)
-		require.NoError(t, parsedExchangeRate.FromString(exchangeRateStr))
+		parsedExchangeRate, err := types.NewExchangeRateTupleFromString(exchangeRateStr)
+		require.NoError(t, err)
 
-		require.Equal(t, exchangeRate, *parsedExchangeRate)
+		require.Equal(t, exchangeRate, parsedExchangeRate)
 	})
 
 	t.Run("invalid size", func(t *testing.T) {
