@@ -30,21 +30,21 @@ func TestToMap(t *testing.T) {
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         common.DenomStable,
+				Pair:         common.PairBTCStable.String(),
 				ExchangeRate: sdk.NewDec(1600),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         common.DenomStable,
+				Pair:         common.PairBTCStable.String(),
 				ExchangeRate: sdk.ZeroDec(),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         common.DenomStable,
+				Pair:         common.PairBTCStable.String(),
 				ExchangeRate: sdk.NewDec(1500),
 				Power:        100,
 			},
@@ -94,15 +94,15 @@ func TestToCrossRate(t *testing.T) {
 	for _, data := range data {
 		valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 		if !data.base.IsZero() {
-			pbBase = append(pbBase, types.NewVoteForTally(data.base, common.DenomStable, valAddr, 100))
+			pbBase = append(pbBase, types.NewVoteForTally(data.base, common.PairBTCStable.String(), valAddr, 100))
 		}
 
-		pbQuote = append(pbQuote, types.NewVoteForTally(data.quote, common.DenomStable, valAddr, 100))
+		pbQuote = append(pbQuote, types.NewVoteForTally(data.quote, common.PairBTCStable.String(), valAddr, 100))
 
 		if !data.base.IsZero() && !data.quote.IsZero() {
-			cb = append(cb, types.NewVoteForTally(data.base.Quo(data.quote), common.DenomStable, valAddr, 100))
+			cb = append(cb, types.NewVoteForTally(data.base.Quo(data.quote), common.PairBTCStable.String(), valAddr, 100))
 		} else {
-			cb = append(cb, types.NewVoteForTally(sdk.ZeroDec(), common.DenomStable, valAddr, 0))
+			cb = append(cb, types.NewVoteForTally(sdk.ZeroDec(), common.PairBTCStable.String(), valAddr, 0))
 		}
 	}
 
@@ -136,7 +136,7 @@ func TestPBPower(t *testing.T) {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
 		vote := types.NewVoteForTally(
 			sdk.ZeroDec(),
-			common.DenomColl,
+			common.PairETHStable.String(),
 			valAccAddrs[i],
 			power,
 		)
@@ -155,7 +155,7 @@ func TestPBPower(t *testing.T) {
 	faceValAddr := sdk.ValAddress(pubKey.Address())
 	fakeVote := types.NewVoteForTally(
 		sdk.OneDec(),
-		common.DenomColl,
+		common.PairETHStable.String(),
 		faceValAddr,
 		0,
 	)
@@ -226,7 +226,7 @@ func TestPBWeightedMedian(t *testing.T) {
 
 			vote := types.NewVoteForTally(
 				sdk.NewDec(int64(input)),
-				common.DenomColl,
+				common.PairETHStable.String(),
 				valAddr,
 				power,
 			)
@@ -293,7 +293,7 @@ func TestPBStandardDeviation(t *testing.T) {
 
 			vote := types.NewVoteForTally(
 				sdk.NewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
-				common.DenomColl,
+				common.PairETHStable.String(),
 				valAddr,
 				power,
 			)
@@ -312,12 +312,12 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 
 	pb := types.ExchangeRateBallot{types.NewVoteForTally(
 		sdk.ZeroDec(),
-		common.DenomColl,
+		common.PairETHStable.String(),
 		valAddr,
 		2,
 	), types.NewVoteForTally(
 		exchangeRate,
-		common.DenomColl,
+		common.PairETHStable.String(),
 		valAddr,
 		1,
 	)}

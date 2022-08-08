@@ -32,14 +32,14 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), common.DenomColl, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), common.DenomColl, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), common.DenomColl, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), common.PairBTCStable.String(), ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), common.PairBTCStable.String(), ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), common.PairBTCStable.String(), ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(1000), common.DenomStable, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(1300), common.DenomStable, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(2000), common.DenomStable, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(1000), common.PairETHStable.String(), ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(1300), common.PairETHStable.String(), ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(2000), common.PairETHStable.String(), ValAddrs[2], power),
 	}
 
 	for i := range sdrBallot {
@@ -72,11 +72,11 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(sdrBallot)
 	sort.Sort(krwBallot)
-	sort.Sort(ballotMap[common.DenomColl])
-	sort.Sort(ballotMap[common.DenomStable])
+	sort.Sort(ballotMap[common.PairBTCStable.String()])
+	sort.Sort(ballotMap[common.PairETHStable.String()])
 
-	require.Equal(t, sdrBallot, ballotMap[common.DenomColl])
-	require.Equal(t, krwBallot, ballotMap[common.DenomStable])
+	require.Equal(t, sdrBallot, ballotMap[common.PairBTCStable.String()])
+	require.Equal(t, krwBallot, ballotMap[common.PairETHStable.String()])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -97,14 +97,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	sdrBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(17), common.DenomColl, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(10), common.DenomColl, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(6), common.DenomColl, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(17), common.PairBTCStable.String(), ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(10), common.PairBTCStable.String(), ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(6), common.PairBTCStable.String(), ValAddrs[2], power),
 	}
 	krwBallot := types.ExchangeRateBallot{
-		types.NewVoteForTally(sdk.NewDec(1000), common.DenomStable, ValAddrs[0], power),
-		types.NewVoteForTally(sdk.NewDec(1300), common.DenomStable, ValAddrs[1], power),
-		types.NewVoteForTally(sdk.NewDec(2000), common.DenomStable, ValAddrs[2], power),
+		types.NewVoteForTally(sdk.NewDec(1000), common.PairETHStable.String(), ValAddrs[0], power),
+		types.NewVoteForTally(sdk.NewDec(1300), common.PairETHStable.String(), ValAddrs[1], power),
+		types.NewVoteForTally(sdk.NewDec(2000), common.PairETHStable.String(), ValAddrs[2], power),
 	}
 
 	for i := range sdrBallot {
