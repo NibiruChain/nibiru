@@ -17,16 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-var BTCNusdPair = common.AssetPair{
-	Token0: "BTC",
-	Token1: "NUSD",
-}
-
-var ETHNusdPair = common.AssetPair{
-	Token0: "ETH",
-	Token1: "NUSD",
-}
-
 func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 	vpoolKeeper Keeper, ctx sdk.Context,
 ) {
@@ -53,7 +43,7 @@ func getSamplePool() *types.Pool {
 	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
 
 	pool := types.NewPool(
-		BTCNusdPair,
+		common.PairBTCStable,
 		ratioLimit,
 		sdk.NewDec(10_000_000),
 		sdk.NewDec(5_000_000),
