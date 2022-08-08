@@ -53,11 +53,11 @@ func PickReferenceTerra(ctx sdk.Context, k keeper.Keeper, voteTargets map[string
 	voteThreshold := k.VoteThreshold(ctx)
 	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
 
-	for denom, ballot := range voteMap {
-		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
+	for pair, ballot := range voteMap {
+		// If pair is not in the voteTargets, or the ballot for it has failed, then skip
 		// and remove it from voteMap for iteration efficiency
-		if _, exists := voteTargets[denom]; !exists {
-			delete(voteMap, denom)
+		if _, exists := voteTargets[pair]; !exists {
+			delete(voteMap, pair)
 			continue
 		}
 
@@ -68,16 +68,16 @@ func PickReferenceTerra(ctx sdk.Context, k keeper.Keeper, voteTargets map[string
 		if power, ok := ballotIsPassing(ballot, thresholdVotes); ok {
 			ballotPower = power.Int64()
 		} else {
-			delete(voteTargets, denom)
-			delete(voteMap, denom)
+			delete(voteTargets, pair)
+			delete(voteMap, pair)
 			continue
 		}
 
 		if ballotPower > largestBallotPower || largestBallotPower == 0 {
-			referenceTerra = denom
+			referenceTerra = pair
 			largestBallotPower = ballotPower
-		} else if largestBallotPower == ballotPower && referenceTerra > denom {
-			referenceTerra = denom
+		} else if largestBallotPower == ballotPower && referenceTerra > pair {
+			referenceTerra = pair
 		}
 	}
 
