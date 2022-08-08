@@ -33,14 +33,14 @@ func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.
 	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-// ExchangeRate queries exchange rate of a denom
+// ExchangeRate queries exchange rate of a pair
 func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateRequest) (*types.QueryExchangeRateResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
 	if len(req.Pair) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty denom")
+		return nil, status.Error(codes.InvalidArgument, "empty pair")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -57,8 +57,8 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates sdk.DecCoins
-	q.IterateExchangeRates(ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		exchangeRates = append(exchangeRates, sdk.NewDecCoinFromDec(denom, rate))
+	q.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
+		exchangeRates = append(exchangeRates, sdk.NewDecCoinFromDec(pair, rate))
 		return false
 	})
 
@@ -72,7 +72,7 @@ func (q querier) TobinTax(c context.Context, req *types.QueryTobinTaxRequest) (*
 	}
 
 	if len(req.Pair) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty denom")
+		return nil, status.Error(codes.InvalidArgument, "empty pair")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -89,9 +89,9 @@ func (q querier) TobinTaxes(c context.Context, _ *types.QueryTobinTaxesRequest) 
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var tobinTaxes types.PairList
-	q.IterateTobinTaxes(ctx, func(denom string, rate sdk.Dec) (stop bool) {
+	q.IterateTobinTaxes(ctx, func(pair string, rate sdk.Dec) (stop bool) {
 		tobinTaxes = append(tobinTaxes, types.Pair{
-			Name:     denom,
+			Name:     pair,
 			TobinTax: rate,
 		})
 		return false
