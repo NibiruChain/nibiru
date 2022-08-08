@@ -117,10 +117,10 @@ $ nibid tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 			}
 
 			// Get from address
-			voter := clientCtx.GetFromAddress()
+			feeder := clientCtx.GetFromAddress()
 
-			// By default, the voter is voting on behalf of itself
-			validator := sdk.ValAddress(voter)
+			// By default, the feeder is voting on behalf of itself
+			validator := sdk.ValAddress(feeder)
 
 			// Override validator if validator is given
 			if len(args) == 3 {
@@ -134,7 +134,7 @@ $ nibid tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 
 			hash := types.GetAggregateVoteHash(salt, exchangeRatesStr, validator)
 
-			msg := types.NewMsgAggregateExchangeRatePrevote(hash, voter, validator)
+			msg := types.NewMsgAggregateExchangeRatePrevote(hash, feeder, validator)
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
