@@ -17,12 +17,12 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-var common.PairBTCSTable = common.AssetPair{
+var common.PairBTCStable = common.AssetPair{
 	Token0: "BTC",
 	Token1: "NUSD",
 }
 
-var ETHNusdPair = common.AssetPair{
+var common.PairETHStable = common.AssetPair{
 	Token0: "ETH",
 	Token1: "NUSD",
 }
@@ -53,7 +53,7 @@ func getSamplePool() *types.Pool {
 	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
 
 	pool := types.NewPool(
-		common.PairBTCSTable,
+		common.PairBTCStable,
 		ratioLimit,
 		sdk.NewDec(10_000_000),
 		sdk.NewDec(5_000_000),

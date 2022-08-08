@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -21,7 +22,7 @@ func TestQueryReserveAssets(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pool := types.NewPool(
-		/* pair */ common.PairBTCSTable,
+		/* pair */ common.PairBTCStable,
 		/* tradeLimitRatio */ sdk.ZeroDec(),
 		/* quoteAmount */ sdk.NewDec(1_000_000),
 		/* baseAmount */ sdk.NewDec(1000),
