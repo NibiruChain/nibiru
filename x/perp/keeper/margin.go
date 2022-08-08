@@ -10,7 +10,9 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-/* AddMargin deleverages an existing position by adding margin (collateral)
+/*
+	AddMargin deleverages an existing position by adding margin (collateral)
+
 to it. Adding margin increases the margin ratio of the corresponding position.
 */
 func (k Keeper) AddMargin(
@@ -88,7 +90,9 @@ func (k Keeper) AddMargin(
 	}, nil
 }
 
-/* RemoveMargin further leverages an existing position by directly removing
+/*
+	RemoveMargin further leverages an existing position by directly removing
+
 the margin (collateral) that backs it from the vault. This also decreases the
 margin ratio of the position.
 
@@ -249,11 +253,12 @@ backing a position is above or below the 'baseMarginRatio'.
 If 'largerThanOrEqualTo' is true, 'marginRatio' must be >= 'baseMarginRatio'.
 
 Args:
-  marginRatio: Ratio of the value of the margin and corresponding position(s).
-    marginRatio is defined as (margin + unrealizedPnL) / notional
-  baseMarginRatio: Specifies the threshold value that 'marginRatio' must meet.
-  largerThanOrEqualTo: Specifies whether 'marginRatio' should be larger or
-    smaller than 'baseMarginRatio'.
+
+	marginRatio: Ratio of the value of the margin and corresponding position(s).
+	  marginRatio is defined as (margin + unrealizedPnL) / notional
+	baseMarginRatio: Specifies the threshold value that 'marginRatio' must meet.
+	largerThanOrEqualTo: Specifies whether 'marginRatio' should be larger or
+	  smaller than 'baseMarginRatio'.
 */
 func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEqualTo bool) error {
 	if largerThanOrEqualTo {
@@ -280,8 +285,8 @@ args:
 Returns:
   - positionNotional: the position's notional value as sdk.Dec (signed)
   - unrealizedPnl: the position's unrealized profits and losses (PnL) as sdk.Dec (signed)
-		For LONG positions, this is positionNotional - openNotional
-		For SHORT positions, this is openNotional - positionNotional
+    For LONG positions, this is positionNotional - openNotional
+    For SHORT positions, this is openNotional - positionNotional
 */
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
@@ -375,8 +380,8 @@ args:
 Returns:
   - positionNotional: the position's notional value as sdk.Dec (signed)
   - unrealizedPnl: the position's unrealized profits and losses (PnL) as sdk.Dec (signed)
-		For LONG positions, this is positionNotional - openNotional
-		For SHORT positions, this is openNotional - positionNotional
+    For LONG positions, this is positionNotional - openNotional
+    For SHORT positions, this is openNotional - positionNotional
 */
 func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,

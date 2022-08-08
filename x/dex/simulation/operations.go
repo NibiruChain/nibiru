@@ -66,8 +66,8 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 }
 
 /*
-	SimulateMsgSwap generates a MsgSwap with random values
-	This function has a 33% chance of swapping a random fraction of the balance of a random token
+SimulateMsgSwap generates a MsgSwap with random values
+This function has a 33% chance of swapping a random fraction of the balance of a random token
 */
 func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
@@ -122,8 +122,8 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 }
 
 /*
-	SimulateJoinPool generates a MsgJoinPool with random values
-	This function has a 33% chance of swapping a random fraction of the balance of a random token
+SimulateJoinPool generates a MsgJoinPool with random values
+This function has a 33% chance of swapping a random fraction of the balance of a random token
 */
 func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
@@ -188,8 +188,8 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 }
 
 /*
-	SimulateExitPool generates a MsgExitPool with random values
-	This function has a 33% chance of swapping a random fraction of the balance of a random token
+SimulateExitPool generates a MsgExitPool with random values
+This function has a 33% chance of swapping a random fraction of the balance of a random token
 */
 func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(

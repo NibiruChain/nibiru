@@ -6,10 +6,13 @@ import (
 
 // Computes the amount of NIBI needed to mint NUSD given some COLL amount.
 // Args:
-//   collAmt sdk.Int: Amount of COLL given.
+//
+//	collAmt sdk.Int: Amount of COLL given.
+//
 // Returns:
-//   neededGovAmt sdk.Int: Amount of NIBI needed.
-//   mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
+//
+//	neededGovAmt sdk.Int: Amount of NIBI needed.
+//	mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededGovAmtGivenColl(
 	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededGovAmt sdk.Int, mintableStableAmt sdk.Int) {
@@ -23,10 +26,13 @@ func NeededGovAmtGivenColl(
 
 // Computes the amount of COLL needed to mint NUSD given some NIBI amount.
 // Args:
-//   govAmt sdk.Int: Amount of  NIBI given.
+//
+//	govAmt sdk.Int: Amount of  NIBI given.
+//
 // Returns:
-//   neededCollAmt sdk.Int: Amount of COLL needed.
-//   mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
+//
+//	neededCollAmt sdk.Int: Amount of COLL needed.
+//	mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededCollAmtGivenGov(
 	govAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededCollAmt sdk.Int, mintableStableAmt sdk.Int) {

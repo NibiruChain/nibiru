@@ -12,7 +12,8 @@ import (
 
 // RewardBallotWinners implements
 // at the end of every VotePeriod, give out a portion of spread fees collected in the oracle reward pool
-//  to the oracle voters that voted faithfully.
+//
+//	to the oracle voters that voted faithfully.
 func (k Keeper) RewardBallotWinners(
 	ctx sdk.Context,
 	votePeriod int64,
