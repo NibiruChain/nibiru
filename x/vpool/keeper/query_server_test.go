@@ -21,7 +21,7 @@ func TestQueryReserveAssets(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pool := types.NewPool(
-		/* pair */ BTCNusdPair,
+		/* pair */ common.PairBTCSTable,
 		/* tradeLimitRatio */ sdk.ZeroDec(),
 		/* quoteAmount */ sdk.NewDec(1_000_000),
 		/* baseAmount */ sdk.NewDec(1000),
