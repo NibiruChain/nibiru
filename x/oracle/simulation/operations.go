@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -31,7 +30,7 @@ const (
 )
 
 var (
-	whitelist                     = []string{common.DenomStable, core.MicroUSDDenom, common.DenomColl}
+	whitelist                     = []string{common.PairBTCStable.String(), common.PairETHStable.String(), common.PairGovStable.String()}
 	voteHashMap map[string]string = make(map[string]string)
 )
 

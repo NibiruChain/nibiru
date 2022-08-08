@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
 
 	"github.com/stretchr/testify/require"
 
@@ -72,15 +71,15 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomColl, rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
 
-	require.Equal(t, sdk.DecCoins{
-		sdk.NewDecCoinFromDec(core.MicroUSDDenom, rate),
-		sdk.NewDecCoinFromDec(common.DenomColl, rate),
+	require.Equal(t, types.ExchangeRateTuples{
+		{Pair: common.PairBTCStable.String(), ExchangeRate: rate},
+		{Pair: common.PairETHStable.String(), ExchangeRate: rate},
 	}, res.ExchangeRates)
 }
 
@@ -90,17 +89,17 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomColl, rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomStable, rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, core.MicroUSDDenom, rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairGovStable.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
 
 	res, err := querier.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
 
 	targetDenoms := []string{
-		common.DenomStable,
-		core.MicroUSDDenom,
-		common.DenomColl,
+		common.PairBTCStable.String(),
+		common.PairETHStable.String(),
+		common.PairGovStable.String(),
 	}
 
 	require.Equal(t, targetDenoms, res.Actives)

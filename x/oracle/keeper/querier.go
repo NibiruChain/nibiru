@@ -56,9 +56,12 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesRequest) (*types.QueryExchangeRatesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	var exchangeRates sdk.DecCoins
+	var exchangeRates types.ExchangeRateTuples
 	q.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
-		exchangeRates = append(exchangeRates, sdk.NewDecCoinFromDec(pair, rate))
+		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
+			Pair:         pair,
+			ExchangeRate: rate,
+		})
 		return false
 	})
 

@@ -100,8 +100,10 @@ message QueryExchangeRatesRequest {}
 // Query/ExchangeRates RPC method.
 message QueryExchangeRatesResponse {
   // exchange_rates defines a list of the exchange rate for all whitelisted pairs.
-  repeated cosmos.base.v1beta1.DecCoin exchange_rates = 1
-      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins", (gogoproto.nullable) = false];
+  repeated ExchangeRateTuple exchange_rates = 1 [
+    (gogoproto.castrepeated) = "ExchangeRateTuples",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryTobinTaxRequest is the request type for the Query/TobinTax RPC method.

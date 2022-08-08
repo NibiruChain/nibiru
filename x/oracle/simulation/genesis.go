@@ -8,7 +8,6 @@ import (
 	"math/rand"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle/core"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -113,10 +112,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 			RewardBand:               rewardBand,
 			RewardDistributionWindow: rewardDistributionWindow,
 			Whitelist: types.PairList{
-				{Name: common.DenomStable, TobinTax: types.DefaultTobinTax},
-				{Name: common.DenomColl, TobinTax: types.DefaultTobinTax},
-				{Name: core.MicroUSDDenom, TobinTax: types.DefaultTobinTax},
-				{Name: core.MicroMNTDenom, TobinTax: sdk.NewDecWithPrec(2, 2)}},
+				{Name: common.PairETHStable.String(), TobinTax: types.DefaultTobinTax},
+				{Name: common.PairCollStable.String(), TobinTax: types.DefaultTobinTax},
+				{Name: common.PairBTCStable.String(), TobinTax: types.DefaultTobinTax},
+				{Name: common.PairGovStable.String(), TobinTax: sdk.NewDecWithPrec(2, 2)}},
 			SlashFraction:     slashFraction,
 			SlashWindow:       slashWindow,
 			MinValidPerWindow: minValidPerWindow,
