@@ -157,14 +157,14 @@ func GetCmdAggregateExchangeRateVote() *cobra.Command {
 		Long: strings.TrimSpace(`
 Submit an aggregate vote for the exchange_rates of the proposed pairs. Companion to a prevote submitted in the previous vote period. 
 
-$ terrad tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
+$ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 
 where "BTC:USD, NIBI:USD" is the pairs, and "40000.0,1.243" is the exchange rates as decimal string.
 
 "salt" should match the salt used to generate the SHA256 hex in the aggregated pre-vote. 
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terrad tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) terravaloper1....
+$ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibivaloper1....
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
