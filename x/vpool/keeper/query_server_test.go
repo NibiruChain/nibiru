@@ -36,7 +36,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	resp, err := queryServer.ReserveAssets(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryReserveAssetsRequest{
-			Pair: "BTC:NUSD",
+			Pair: common.PairBTCStable.String(),
 		},
 	)
 
