@@ -89,19 +89,19 @@ func GetCmdAggregateExchangeRatePrevote() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aggregate-prevote [salt] [exchange-rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Submit an oracle aggregate prevote for the exchange rates of Luna",
+		Short: "Submit an oracle aggregate prevote for the exchange rates of Nibiru",
 		Long: strings.TrimSpace(`
 Submit an oracle aggregate prevote for the exchange rates of a pair.
 The purpose of aggregate prevote is to hide aggregate exchange rate vote with hash which is formatted 
 as hex string in SHA256("{salt}:({exchange_rate},{pair})|...|({exchange_rate},{pair}):{voter}")
 
 # Aggregate Prevote
-$ terrad tx oracle aggregate-prevote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
+$ nibid tx oracle aggregate-prevote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 
 where "BTC:USD,NIBI:USD" is the pair, and "40000.0, 1.243" is the exchange rates expressed in decimal value.
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terrad tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) terravaloper1...
+$ nibid tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibivaloper1...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -119,7 +119,7 @@ $ terrad tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD
 			// Get from address
 			voter := clientCtx.GetFromAddress()
 
-			// By default the voter is voting on behalf of itself
+			// By default, the voter is voting on behalf of itself
 			validator := sdk.ValAddress(voter)
 
 			// Override validator if validator is given
@@ -128,6 +128,7 @@ $ terrad tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD
 				if err != nil {
 					return errors.Wrap(err, "validator address is invalid")
 				}
+
 				validator = parsedVal
 			}
 
