@@ -127,6 +127,7 @@ type TestInput struct {
 }
 
 // CreateTestInput nolint
+// Creates a base app, with 5 accounts,
 func CreateTestInput(t *testing.T) TestInput {
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)

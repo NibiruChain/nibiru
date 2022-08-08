@@ -337,7 +337,7 @@ func TestValidateFeeder(t *testing.T) {
 	sh := staking.NewHandler(input.StakingKeeper)
 	ctx := input.Ctx
 
-	// Validator created
+	// Create 2 validators.
 	_, err := sh(ctx, NewTestMsgCreateValidator(addr, val, amt))
 	require.NoError(t, err)
 	_, err = sh(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
@@ -359,14 +359,14 @@ func TestValidateFeeder(t *testing.T) {
 	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr1)))
 
 	// delegate works
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, sdk.ValAddress(addr), sdk.AccAddress(addr1))
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr)))
-	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(Addrs[2]), sdk.ValAddress(addr)))
+	input.OracleKeeper.SetFeederDelegation(input.Ctx, addr, sdk.AccAddress(addr1))
+	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
+	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, Addrs[2], addr))
 
 	// only active validators can do oracle votes
-	validator, found := input.StakingKeeper.GetValidator(input.Ctx, sdk.ValAddress(addr))
+	validator, found := input.StakingKeeper.GetValidator(input.Ctx, addr)
 	require.True(t, found)
 	validator.Status = stakingtypes.Unbonded
 	input.StakingKeeper.SetValidator(input.Ctx, validator)
-	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr)))
+	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
 }

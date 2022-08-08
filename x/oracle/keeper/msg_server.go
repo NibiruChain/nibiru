@@ -20,7 +20,10 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-func (ms msgServer) AggregateExchangeRatePrevote(goCtx context.Context, msg *types.MsgAggregateExchangeRatePrevote) (*types.MsgAggregateExchangeRatePrevoteResponse, error) {
+func (ms msgServer) AggregateExchangeRatePrevote(
+	goCtx context.Context,
+	msg *types.MsgAggregateExchangeRatePrevote,
+) (*types.MsgAggregateExchangeRatePrevoteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	valAddr, err := sdk.ValAddressFromBech32(msg.Validator)
