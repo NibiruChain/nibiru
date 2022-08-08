@@ -3,8 +3,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"gopkg.in/yaml.v2"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"

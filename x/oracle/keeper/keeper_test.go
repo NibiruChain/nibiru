@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
