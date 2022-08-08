@@ -141,7 +141,7 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 			},
 			expectErr: true,
 		},
-		"max leverage < 1": {
+		"max leverage < 0": {
 			m: &CreatePoolProposal{
 				Title:                  "add proposal",
 				Description:            "some weird description",
@@ -152,7 +152,7 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
-				MaxLeverage:            sdk.MustNewDecFromStr("0.10"),
+				MaxLeverage:            sdk.MustNewDecFromStr("-0.10"),
 			},
 			expectErr: true,
 		},
