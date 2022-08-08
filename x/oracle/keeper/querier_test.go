@@ -31,7 +31,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.DenomColl, rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -39,7 +39,7 @@ func TestQueryExchangeRate(t *testing.T) {
 
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
-		Pair: common.DenomColl,
+		Pair: common.PairETHStable.String(),
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)
@@ -257,10 +257,10 @@ func TestQueryTobinTaxes(t *testing.T) {
 	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
 
 	tobinTaxes := types.PairList{{
-		Name:     common.DenomStable,
+		Name:     common.PairBTCStable.String(),
 		TobinTax: sdk.OneDec(),
 	}, {
-		Name:     common.DenomColl,
+		Name:     common.PairETHStable.String(),
 		TobinTax: sdk.NewDecWithPrec(123, 2),
 	}}
 	for _, item := range tobinTaxes {
@@ -277,7 +277,7 @@ func TestQueryTobinTax(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	denom := types.Pair{Name: common.DenomStable, TobinTax: sdk.OneDec()}
+	denom := types.Pair{Name: common.PairBTCStable.String(), TobinTax: sdk.OneDec()}
 	input.OracleKeeper.SetTobinTax(input.Ctx, denom.Name, denom.TobinTax)
 
 	// empty request
@@ -285,7 +285,7 @@ func TestQueryTobinTax(t *testing.T) {
 	require.Error(t, err)
 
 	res, err := querier.TobinTax(ctx, &types.QueryTobinTaxRequest{
-		Pair: common.DenomStable,
+		Pair: common.PairBTCStable.String(),
 	})
 	require.NoError(t, err)
 
