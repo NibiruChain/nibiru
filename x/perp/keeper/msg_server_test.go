@@ -279,14 +279,14 @@ func TestMsgServerOpenPosition(t *testing.T) {
 
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
-				ctx,
-				common.PairBTCStable,
-				sdk.OneDec(),
-				sdk.NewDec(1_000_000),
-				sdk.NewDec(1_000_000),
-				sdk.OneDec(),
-				sdk.OneDec(),
-				sdk.MustNewDecFromStr("0.0625"),
+				/* ctx */ ctx,
+				/* pair */ common.PairBTCStable,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
+				/* baseAssetReserve */ sdk.NewDec(1_000_000),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
@@ -461,14 +461,14 @@ func TestMsgServerLiquidate(t *testing.T) {
 
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
-				ctx,
-				common.PairBTCStable,
-				sdk.OneDec(),
-				sdk.NewDec(1_000_000),
-				sdk.NewDec(1_000_000),
-				sdk.OneDec(),
-				sdk.OneDec(),
-				sdk.MustNewDecFromStr("0.0625"),
+				/* ctx */ ctx,
+				/* pair */ common.PairBTCStable,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
+				/* baseAssetReserve */ sdk.NewDec(1_000_000),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
