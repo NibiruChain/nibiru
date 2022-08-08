@@ -19,7 +19,7 @@ func TestCreatePool(t *testing.T) {
 
 	vpoolKeeper.CreatePool(
 		ctx,
-		BTCNusdPair,
+		common.PairBTCStable,
 		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 		sdk.NewDec(10_000_000),       // 10 tokens
 		sdk.NewDec(5_000_000),        // 5 tokens
@@ -29,7 +29,7 @@ func TestCreatePool(t *testing.T) {
 		sdk.MustNewDecFromStr("15"),
 	)
 
-	exists := vpoolKeeper.ExistsPool(ctx, BTCNusdPair)
+	exists := vpoolKeeper.ExistsPool(ctx, common.PairBTCStable)
 	require.True(t, exists)
 
 	notExist := vpoolKeeper.ExistsPool(ctx, common.AssetPair{
