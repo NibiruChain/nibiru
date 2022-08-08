@@ -43,13 +43,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encCfg := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
-	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
-	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
+	genesisState := testapp.NewTestGenesisStateFromDefault()
+	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 

@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -124,6 +123,22 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedMarginToVault:    sdk.MustNewDecFromStr("1000.0001099999989"),
 		},
 		{
+			name:                     "new long position just under fluctuation limit",
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
+			initialPosition:          nil,
+			side:                     types.Side_BUY,
+			margin:                   sdk.NewInt(47_619_047_619),
+			leverage:                 sdk.OneDec(),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.NewDec(47_619_047_619),
+			expectedOpenNotional:     sdk.NewDec(47_619_047_619),
+			expectedSize:             sdk.MustNewDecFromStr("45454545454.502066115702477367"),
+			expectedPositionNotional: sdk.NewDec(47_619_047_619),
+			expectedUnrealizedPnl:    sdk.ZeroDec(),
+			expectedRealizedPnl:      sdk.ZeroDec(),
+			expectedMarginToVault:    sdk.NewDec(47_619_047_619),
+		},
+		{
 			name:                     "new short position",
 			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
 			initialPosition:          nil,
@@ -208,6 +223,22 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.000100000001"),
 			expectedMarginToVault:    sdk.MustNewDecFromStr("1000.0000900000009"),
 		},
+		{
+			name:                     "new short position just under fluctuation limit",
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
+			initialPosition:          nil,
+			side:                     types.Side_SELL,
+			margin:                   sdk.NewInt(47_619_047_619),
+			leverage:                 sdk.OneDec(),
+			baseLimit:                sdk.ZeroDec(),
+			expectedMargin:           sdk.NewDec(47_619_047_619),
+			expectedOpenNotional:     sdk.NewDec(47_619_047_619),
+			expectedSize:             sdk.MustNewDecFromStr("-49999999999.947500000000002625"),
+			expectedPositionNotional: sdk.NewDec(47_619_047_619),
+			expectedUnrealizedPnl:    sdk.ZeroDec(),
+			expectedRealizedPnl:      sdk.ZeroDec(),
+			expectedMarginToVault:    sdk.NewDec(47_619_047_619),
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -232,7 +263,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.NewDec(1_000_000_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
-				/* fluctuationLimit */ sdk.OneDec(),
+				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)
@@ -315,7 +346,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
 			initialPosition: &types.Position{
 				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(1),
+				Size_:                               sdk.OneDec(),
 				Margin:                              sdk.NewDec(1000),
 				OpenNotional:                        sdk.NewDec(10_000),
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
@@ -323,9 +354,9 @@ func TestOpenPositionError(t *testing.T) {
 			},
 			side:        types.Side_BUY,
 			margin:      sdk.NewInt(1),
-			leverage:    sdk.NewDec(1),
+			leverage:    sdk.OneDec(),
 			baseLimit:   sdk.ZeroDec(),
-			expectedErr: fmt.Errorf("margin ratio did not meet criteria"),
+			expectedErr: types.ErrMarginRatioTooLow,
 		},
 		{
 			name:            "new long position not over base limit",
@@ -367,6 +398,46 @@ func TestOpenPositionError(t *testing.T) {
 			baseLimit:       sdk.NewDec(10_000),
 			expectedErr:     types.ErrLeverageIsZero,
 		},
+		{
+			name:            "leverage amount is too high - SELL",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition: nil,
+			side:            types.Side_SELL,
+			margin:          sdk.NewInt(100),
+			leverage:        sdk.NewDec(100),
+			baseLimit:       sdk.NewDec(11_000),
+			expectedErr:     types.ErrMarginRatioTooLow,
+		},
+		{
+			name:            "leverage amount is too high - BUY",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			initialPosition: nil,
+			side:            types.Side_BUY,
+			margin:          sdk.NewInt(100),
+			leverage:        sdk.NewDec(100),
+			baseLimit:       sdk.NewDec(0),
+			expectedErr:     types.ErrMarginRatioTooLow,
+		},
+		{
+			name:            "new long position over fluctuation limit",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
+			initialPosition: nil,
+			side:            types.Side_BUY,
+			margin:          sdk.NewInt(100_000_000_000),
+			leverage:        sdk.OneDec(),
+			baseLimit:       sdk.ZeroDec(),
+			expectedErr:     vpooltypes.ErrOverFluctuationLimit,
+		},
+		{
+			name:            "new short position over fluctuation limit",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
+			initialPosition: nil,
+			side:            types.Side_SELL,
+			margin:          sdk.NewInt(100_000_000_000),
+			leverage:        sdk.OneDec(),
+			baseLimit:       sdk.ZeroDec(),
+			expectedErr:     vpooltypes.ErrOverFluctuationLimit,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -390,7 +461,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.NewDec(1_000_000_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
-				/* fluctuationLimit */ sdk.OneDec(),
+				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 			)

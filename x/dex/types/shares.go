@@ -87,7 +87,7 @@ ret:
   - tokensOut: the tokens withdrawn from the pool
   - err: error if any
 */
-func (pool Pool) tokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
+func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 	tokensOut sdk.Coins, err error,
 ) {
 	if numSharesIn.IsZero() {
