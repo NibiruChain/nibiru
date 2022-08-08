@@ -776,9 +776,8 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 
 func TestGetMaxLeverage(t *testing.T) {
 	tests := []struct {
-		name     string
-		pool     *types.Pool
-		snapshot types.ReserveSnapshot
+		name string
+		pool *types.Pool
 
 		expectedMaxLeverage sdk.Dec
 	}{
@@ -793,12 +792,6 @@ func TestGetMaxLeverage(t *testing.T) {
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			expectedMaxLeverage: sdk.MustNewDecFromStr("15"),
 		},
