@@ -17,16 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-var common.PairBTCStable = common.AssetPair{
-	Token0: "BTC",
-	Token1: "NUSD",
-}
-
-var common.PairETHStable = common.AssetPair{
-	Token0: "ETH",
-	Token1: "NUSD",
-}
-
 func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 	vpoolKeeper Keeper, ctx sdk.Context,
 ) {
