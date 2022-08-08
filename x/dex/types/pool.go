@@ -2,7 +2,7 @@ package types
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -135,9 +135,13 @@ func (pool *Pool) ExitPool(exitingShares sdk.Int) (
 		return sdk.Coins{}, errors.New("too many shares out")
 	}
 
-	exitedCoins, err = pool.tokensOutFromPoolSharesIn(exitingShares)
+	exitedCoins, err = pool.TokensOutFromPoolSharesIn(exitingShares)
 	if err != nil {
 		return sdk.Coins{}, err
+	}
+
+	if !exitedCoins.IsValid() {
+		return sdk.Coins{}, errors.New("not enough pool shares to withdraw")
 	}
 
 	// update the pool's balances
