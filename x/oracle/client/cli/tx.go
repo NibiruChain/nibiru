@@ -46,9 +46,9 @@ Delegate the permission to submit exchange rate votes for the oracle to an addre
 
 Delegation can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terrad tx oracle set-feeder terra1...
+$ nibid tx oracle set-feeder nibi1...
 
-where "terra1..." is the address you want to delegate your voting rights to.
+where "nibi1..." is the address you want to delegate your voting rights to.
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -68,14 +68,12 @@ where "terra1..." is the address you want to delegate your voting rights to.
 				return err
 			}
 
-			msgs := []sdk.Msg{types.NewMsgDelegateFeedConsent(validator, feeder)}
-			for _, msg := range msgs {
-				if err := msg.ValidateBasic(); err != nil {
-					return err
-				}
+			msg := types.NewMsgDelegateFeedConsent(validator, feeder)
+			if err = msg.ValidateBasic(); err != nil {
+				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msgs...)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -153,18 +151,18 @@ func GetCmdAggregateExchangeRateVote() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aggregate-vote [salt] [exchange-rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Submit an oracle aggregate vote for the exchange_rates of Luna",
+		Short: "Submit an oracle aggregate vote for the exchange_rates of Nibiru",
 		Long: strings.TrimSpace(`
 Submit an aggregate vote for the exchange_rates of the proposed pairs. Companion to a prevote submitted in the previous vote period. 
 
-$ terrad tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
+$ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 
 where "BTC:USD, NIBI:USD" is the pairs, and "40000.0,1.243" is the exchange rates as decimal string.
 
 "salt" should match the salt used to generate the SHA256 hex in the aggregated pre-vote. 
 
 If voting from a voting delegate, set "validator" to the address of the validator to vote on behalf of:
-$ terrad tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) terravaloper1....
+$ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibivaloper1....
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -180,10 +178,10 @@ $ terrad tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) terrav
 			}
 
 			// Get from address
-			voter := clientCtx.GetFromAddress()
+			feeder := clientCtx.GetFromAddress()
 
-			// By default the voter is voting on behalf of itself
-			validator := sdk.ValAddress(voter)
+			// By default, the feeder is voting on behalf of itself
+			validator := sdk.ValAddress(feeder)
 
 			// Override validator if validator is given
 			if len(args) == 3 {
@@ -194,14 +192,12 @@ $ terrad tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) terrav
 				validator = parsedVal
 			}
 
-			msgs := []sdk.Msg{types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, voter, validator)}
-			for _, msg := range msgs {
-				if err := msg.ValidateBasic(); err != nil {
-					return err
-				}
+			msg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, feeder, validator)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msgs...)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 

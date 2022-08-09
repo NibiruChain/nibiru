@@ -105,7 +105,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 		}
 	}
 
-	// Verify a exchange rate with aggregate prevote hash
+	// Verify an exchange rate with aggregate prevote hash
 	hash := types.GetAggregateVoteHash(msg.Salt, msg.ExchangeRates, valAddr)
 	if aggregatePrevote.Hash != hash.String() {
 		return nil, sdkerrors.Wrapf(types.ErrVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash)
