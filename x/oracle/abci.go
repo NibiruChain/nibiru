@@ -38,9 +38,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		}
 
 		// Pair-TobinTax map
-		voteTargets := make(map[string]sdk.Dec)
+		pairTobinTaxMap := make(map[string]sdk.Dec)
 		k.IterateTobinTaxes(ctx, func(pair string, tobinTax sdk.Dec) bool {
-			voteTargets[pair] = tobinTax
+			pairTobinTaxMap[pair] = tobinTax
 			return false
 		})
 
@@ -53,27 +53,27 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// Organize votes to ballot by pair
 		// NOTE: **Filter out inactive or jailed validators**
 		// NOTE: **Make abstain votes to have zero vote power**
-		voteMap := k.OrganizeBallotByPair(ctx, validatorClaimMap)
+		pairBallotMap := k.OrganizeBallotByPair(ctx, validatorClaimMap)
 
-		if referenceTerra := PickReferenceTerra(ctx, k, voteTargets, voteMap); referenceTerra != "" {
+		if referencePair := PickReferencePair(ctx, k, pairTobinTaxMap, pairBallotMap); referencePair != "" {
 			// make voteMap of Reference Terra to calculate cross exchange rates
-			ballotRT := voteMap[referenceTerra]
-			voteMapRT := ballotRT.ToMap()
-			exchangeRateRT := ballotRT.WeightedMedianWithAssertion()
+			referenceBallot := pairBallotMap[referencePair]
+			referenceValidatorExchangeRateMap := referenceBallot.ToMap()
+			referenceExchangeRate := referenceBallot.WeightedMedianWithAssertion()
 
 			// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-			for pair, ballot := range voteMap {
+			for pair, ballot := range pairBallotMap {
 				// Convert ballot to cross exchange rates
-				if pair != referenceTerra {
-					ballot = ballot.ToCrossRateWithSort(voteMapRT)
+				if pair != referencePair {
+					ballot = ballot.ToCrossRateWithSort(referenceValidatorExchangeRateMap)
 				}
 
 				// Get weighted median of cross exchange rates
 				exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
 
 				// Transform into the original form uluna/stablecoin
-				if pair != referenceTerra {
-					exchangeRate = exchangeRateRT.Quo(exchangeRate)
+				if pair != referencePair {
+					exchangeRate = referenceExchangeRate.Quo(exchangeRate)
 				}
 
 				// Set the exchange rate, emit ABCI event
@@ -83,7 +83,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 		//---------------------------
 		// Do miss counting & slashing
-		voteTargetsLen := len(voteTargets)
+		voteTargetsLen := len(pairTobinTaxMap)
 		for _, claim := range validatorClaimMap {
 			// Skip abstain & valid voters
 			if int(claim.WinCount) == voteTargetsLen {
@@ -99,7 +99,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			ctx,
 			(int64)(params.VotePeriod),
 			(int64)(params.RewardDistributionWindow),
-			voteTargets,
+			pairTobinTaxMap,
 			validatorClaimMap,
 		)
 
@@ -107,7 +107,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.ClearBallots(ctx, params.VotePeriod)
 
 		// Update vote targets and tobin tax
-		k.ApplyWhitelist(ctx, params.Whitelist, voteTargets)
+		k.ApplyWhitelist(ctx, params.Whitelist, pairTobinTaxMap)
 	}
 
 	// Do slash who did miss voting over threshold and
