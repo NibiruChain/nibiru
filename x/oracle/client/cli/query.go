@@ -52,7 +52,7 @@ $ terrad query oracle exchange-rates
 
 Or, can filter with pair
 
-$ terrad query oracle exchange-rates ukrw
+$ terrad query oracle exchange-rates nibi:usd
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

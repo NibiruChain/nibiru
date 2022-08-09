@@ -19,19 +19,19 @@ import (
 func TestExchangeRate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	cnyExchangeRate := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(int64(6))
-	krwExchangeRate := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
+	pairCollRate := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(int64(6))
+	btcStableRate := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
 
 	// Set & get rates
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairCollStable.String(), cnyExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairCollStable.String(), pairCollRate)
 	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairCollStable.String())
 	require.NoError(t, err)
-	require.Equal(t, cnyExchangeRate, rate)
+	require.Equal(t, pairCollRate, rate)
 
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), krwExchangeRate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), btcStableRate)
 	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())
 	require.NoError(t, err)
-	require.Equal(t, krwExchangeRate, rate)
+	require.Equal(t, btcStableRate, rate)
 
 	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.PairBTCStable.String())
 	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())

@@ -21,6 +21,7 @@ type AggregateVoteHash []byte
 
 // GetAggregateVoteHash computes hash value of ExchangeRateVote
 // to avoid redundant DecCoins stringify operation, use string argument
+// TODO(mercilex): use ExchangeRateTuples
 func GetAggregateVoteHash(salt string, exchangeRatesStr string, voter sdk.ValAddress) AggregateVoteHash {
 	hash := tmhash.NewTruncated()
 	sourceStr := fmt.Sprintf("%s:%s:%s", salt, exchangeRatesStr, voter.String())
