@@ -289,14 +289,22 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 	testCases := []struct {
 		name string
 
-		expectedPricePairs []pricefeedtypes.CurrentPriceResponse
-		respType           proto.Message
+		expectedPrices []pricefeedtypes.CurrentPriceResponse
+		respType       proto.Message
 	}{
 		{
 			name: "Get current prices",
-			expectedPricePairs: []pricefeedtypes.CurrentPriceResponse{
-				pricefeedtypes.NewCurrentPriceResponse(common.PairGovStable.String(), sdk.NewDec(10)),
-				pricefeedtypes.NewCurrentPriceResponse(common.PairCollStable.String(), sdk.NewDec(1)),
+			expectedPrices: []pricefeedtypes.CurrentPriceResponse{
+				{
+					PairID: common.PairGovStable.String(),
+					Price:  sdk.NewDec(10),
+					Twap:   sdk.ZeroDec(),
+				},
+				{
+					PairID: common.PairCollStable.String(),
+					Price:  sdk.NewDec(1),
+					Twap:   sdk.ZeroDec(),
+				},
 			},
 			respType: &pricefeedtypes.QueryPricesResponse{},
 		},
@@ -316,10 +324,10 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 			txResp := tc.respType.(*pricefeedtypes.QueryPricesResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
 			s.Require().NoError(err)
-			s.Assert().Equal(len(tc.expectedPricePairs), len(txResp.Prices))
+			s.Assert().Equal(len(tc.expectedPrices), len(txResp.Prices))
 
 			for _, priceResponse := range txResp.Prices {
-				s.Assert().Contains(tc.expectedPricePairs, priceResponse, tc.expectedPricePairs)
+				s.Assert().Contains(tc.expectedPrices, priceResponse, tc.expectedPrices)
 			}
 		})
 	}
