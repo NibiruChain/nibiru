@@ -17,24 +17,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-var exchangeRates = types.ExchangeRateTuples{
-	{
-		Pair:         common.PairBTCStable.String(), // common.PairBTCStable.String()
-		ExchangeRate: randomExchangeRate,
-	},
-
-	/*
-		{
-			Pair: common.PairGovStable.String(), // DenomStable
-		},
-
-		{
-			Pair: common.PairETHStable.String(), // MicroUSDDenom
-		},
-	*/
-}
-
 func TestOracleThreshold(t *testing.T) {
+	exchangeRates := types.ExchangeRateTuples{
+		{
+			Pair:         common.PairBTCStable.String(),
+			ExchangeRate: randomExchangeRate,
+		},
+	}
 	input, h := setup(t)
 	exchangeRateStr, err := exchangeRates.ToString()
 	require.NoError(t, err)
