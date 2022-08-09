@@ -32,7 +32,7 @@ An `int64` representing the number of `VotePeriods` that validator `operator` mi
 
 ```go
 // AggregateVoteHash is hash value to hide vote exchange rates
-// which is formatted as hex string in SHA256("{salt}:({exchange rate},{pair})|...|({exchange rate},{pair}):{voter}")
+// which is formatted as hex string in SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
 type AggregateVoteHash []byte
 
 type AggregateExchangeRatePrevote struct {
