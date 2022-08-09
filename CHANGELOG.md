@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#768](https://github.com/NibiruChain/nibiru/pull/768) - add simulation tests to make file
 * [#767](https://github.com/NibiruChain/nibiru/pull/767) - add fluctuation limit checks on `OpenPosition`.
 * [#786](https://github.com/NibiruChain/nibiru/pull/786) - add genesis params in localnet script.
+* [#770](https://github.com/NibiruChain/nibiru/pull/770) - Return err in case of zero time elapsed and zero snapshots on `GetCurrentTWAP` func. If zero time has elapsed, and snapshots exists, return the instantaneous average.
  
 ### Bug Fixes
 

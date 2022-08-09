@@ -254,15 +254,16 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
 Note the open-ended right bracket.
 
-args:
-  - ctx: cosmos-sdk context
-  - pair: the token pair
+Args:
+- ctx: cosmos-sdk context
+- pair: the token pair
 
-ret:
-  - price: TWAP as sdk.Dec
-  - err: error
+Returns:
+- twap: TWAP as sdk.Dec
+- err: error
 */
-func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (price sdk.Dec, err error) {
+func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
+) (twap sdk.Dec, err error) {
 	// Ensure we still have valid prices
 	_, err = k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {
@@ -270,6 +271,9 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (p
 	}
 
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	if err := assetPair.Validate(); err != nil {
+		return sdk.Dec{}, err
+	}
 	givenIsActive := k.IsActivePair(ctx, assetPair.String())
 	inverseIsActive := k.IsActivePair(ctx, assetPair.Inverse().String())
 	if !givenIsActive && inverseIsActive {
@@ -283,33 +287,58 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (p
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
 
-	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
 	// traverse snapshots in reverse order
-	k.IteratePriceSnapshotsFrom(ctx, startKey, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
-		var timeElapsedMs int64
-		if ps.TimestampMs <= lowerLimitTimestampMs {
-			// current snapshot is below the lower limit
-			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
-		} else {
-			timeElapsedMs = prevTimestampMs - ps.TimestampMs
-		}
-		cumulativePrice = cumulativePrice.Add(ps.Price.MulInt64(timeElapsedMs))
-		cumulativePeriodMs += timeElapsedMs
+	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
+	var numShapshots int64 = 0
+	var snapshotPriceBuffer []sdk.Dec // contains snapshots at time 0
+	k.IteratePriceSnapshotsFrom(
+		/*ctx=*/ ctx,
+		/*start=*/ startKey,
+		/*end=*/ nil,
+		/*reverse=*/ true,
+		/*do=*/ func(ps *types.PriceSnapshot) (stop bool) {
+			numShapshots += 1
+			var timeElapsedMs int64
+			if ps.TimestampMs <= lowerLimitTimestampMs {
+				// current snapshot is below the lower limit
+				timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
+			} else {
+				timeElapsedMs = prevTimestampMs - ps.TimestampMs
+			}
+			cumulativePrice = cumulativePrice.Add(ps.Price.MulInt64(timeElapsedMs))
+			cumulativePeriodMs += timeElapsedMs
 
-		// end early if we're already beyond the lower limit timestamp
-		if ps.TimestampMs <= lowerLimitTimestampMs {
-			return true
-		}
-		prevTimestampMs = ps.TimestampMs
-		return false
-	})
+			if cumulativePeriodMs <= 0 {
+				snapshotPriceBuffer = append(snapshotPriceBuffer, ps.Price)
+			}
 
-	// TODO: Should we return 0 or an error??
-	if cumulativePeriodMs == 0 {
-		return sdk.ZeroDec(), nil
+			// end early if we're already beyond the lower limit timestamp
+			if ps.TimestampMs <= lowerLimitTimestampMs {
+				return true
+			}
+			prevTimestampMs = ps.TimestampMs
+			return false
+		})
+
+	switch {
+	case cumulativePeriodMs < 0:
+		return sdk.Dec{}, fmt.Errorf("cumulativePeriodMs, %v, should never be negative", cumulativePeriodMs)
+	case (cumulativePeriodMs == 0) && (numShapshots > 0):
+		sum := sdk.ZeroDec()
+		for _, price := range snapshotPriceBuffer {
+			sum = sum.Add(price)
+		}
+		return sum.QuoInt64(numShapshots), nil
+	case (cumulativePeriodMs == 0) && (numShapshots == 0):
+		return sdk.Dec{}, fmt.Errorf(`
+			failed to calculate twap, no time passed and no snapshots have been taken since
+			ctx.BlockTime: %v, 
+			ctx.BlockHeight: %v,
+			assetPair: %s, 
+		`, prevTimestampMs, ctx.BlockHeight(), assetPair)
 	}
 
-	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
+	twap = cumulativePrice.QuoInt64(cumulativePeriodMs)
 
 	if !twap.IsZero() && inverseIsActive {
 		return sdk.OneDec().Quo(twap), nil
