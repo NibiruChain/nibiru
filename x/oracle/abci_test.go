@@ -240,10 +240,10 @@ func TestOracleTallyTiming(t *testing.T) {
 func TestOracleRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
-	// Account 1, SDR
+	// Account 1, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 0)
 
-	// Account 2, SDR
+	// Account 2, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 1)
 
 	rewardsAmt := sdk.NewInt(100000000)
@@ -344,16 +344,16 @@ func TestOracleExchangeRate(t *testing.T) {
 	input, h := setup(t)
 
 	govStableExchangeRate := sdk.NewDec(1000000000)
-	usdRandomExchangeRate := sdk.NewDec(1000000)
+	ethStableExchangeRate := sdk.NewDec(1000000)
 
 	// govstable has been chosen as referenceTerra by highest voting power
-	// Account 1, USD, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: usdRandomExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableExchangeRate}}, 0)
+	// Account 1, ethstable, govstable
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: ethStableExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableExchangeRate}}, 0)
 
-	// Account 2, USD, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: usdRandomExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableExchangeRate}}, 1)
+	// Account 2, ethstable, govstable
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: ethStableExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableExchangeRate}}, 1)
 
-	// Account 3, govstable, SDR
+	// Account 3, govstable, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableExchangeRate}, {Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 	rewardAmt := sdk.NewInt(100000000)
@@ -378,22 +378,22 @@ func TestOracleEnsureSorted(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		govStableRate1 := sdk.NewDec(int64(rand.Uint64() % 100000000))
-		usdExchangeRate1 := sdk.NewDec(int64(rand.Uint64() % 100000000))
+		ethStableRate1 := sdk.NewDec(int64(rand.Uint64() % 100000000))
 
 		govStableRate2 := sdk.NewDec(int64(rand.Uint64() % 100000000))
-		usdExchangeRate2 := sdk.NewDec(int64(rand.Uint64() % 100000000))
+		ethStableRate2 := sdk.NewDec(int64(rand.Uint64() % 100000000))
 
 		govStableRate3 := sdk.NewDec(int64(rand.Uint64() % 100000000))
-		usdExchangeRate3 := sdk.NewDec(int64(rand.Uint64() % 100000000))
+		ethStableRate3 := sdk.NewDec(int64(rand.Uint64() % 100000000))
 
-		// Account 1, USD, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: usdExchangeRate1}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}}, 0)
+		// Account 1, ethstable, govstable
+		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate1}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}}, 0)
 
-		// Account 2, USD, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: usdExchangeRate2}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableRate2}}, 1)
+		// Account 2, ethstable, govstable
+		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate2}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableRate2}}, 1)
 
-		// Account 3, USD, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: govStableRate3}, {Pair: common.PairGovStable.String(), ExchangeRate: usdExchangeRate3}}, 2)
+		// Account 3, ethstable, govstable
+		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: govStableRate3}, {Pair: common.PairGovStable.String(), ExchangeRate: ethStableRate3}}, 2)
 
 		require.NotPanics(t, func() {
 			oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -406,12 +406,12 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 
 	govStableRate := sdk.NewDec(505000)
 	govStableRateErr := sdk.NewDec(500000)
-	usdExchangeRate := sdk.NewDec(505)
-	usdExchangeRateWithErr := sdk.NewDec(500)
+	ethStableRate := sdk.NewDec(505)
+	ethStableRateErr := sdk.NewDec(500)
 
-	// govstable has been chosen as referenceTerra by highest voting power
-	// Account 1, govstable, USD
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}, {Pair: common.PairETHStable.String(), ExchangeRate: usdExchangeRate}}, 0)
+	// govstable has been chosen as reference pair by highest voting power
+	// Account 1, govstable, ethstable
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate}}, 0)
 
 	// Account 2, govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}}, 1)
@@ -419,11 +419,11 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	// Account 3, govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}}, 2)
 
-	// Account 4, govstable, USD
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: usdExchangeRateWithErr}}, 3)
+	// Account 4, govstable, ethstable
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRateErr}}, 3)
 
-	// Account 5, govstable, USD
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: usdExchangeRateWithErr}}, 4)
+	// Account 5, govstable, ethstable
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRateErr}}, 4)
 
 	rewardAmt := sdk.NewInt(100000000)
 	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardAmt)))
@@ -433,15 +433,15 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 
 	gotGovStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairGovStable.String())
 	require.NoError(t, err)
-	usd, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairETHStable.String())
+	gotEthStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairETHStable.String())
 	require.NoError(t, err)
 
 	// legacy version case
-	require.NotEqual(t, usdExchangeRateWithErr, usd)
+	require.NotEqual(t, ethStableRateErr, gotEthStableRate)
 
 	// new version case
 	require.Equal(t, govStableRate, gotGovStableRate)
-	require.Equal(t, usdExchangeRate, usd)
+	require.Equal(t, ethStableRate, gotEthStableRate)
 
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
 	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
@@ -615,15 +615,15 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 
-	// vote targets are {govstable, SDR}
+	// vote targets are {govstable, btcstable}
 	require.Equal(t, []string{common.PairBTCStable.String(), common.PairGovStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
 
-	// tobin tax must be exists for SDR
-	sdrTobinTax, err := input.OracleKeeper.GetTobinTax(input.Ctx, common.PairBTCStable.String())
+	// tobin tax must be exists for btcstable
+	btcStableTax, err := input.OracleKeeper.GetTobinTax(input.Ctx, common.PairBTCStable.String())
 	require.NoError(t, err)
-	require.Equal(t, types.DefaultTobinTax, sdrTobinTax)
+	require.Equal(t, types.DefaultTobinTax, btcStableTax)
 
-	// delete SDR
+	// delete btcstable
 	params.Whitelist = types.PairList{{Name: common.PairGovStable.String(), TobinTax: types.DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
@@ -638,7 +638,7 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
 	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 
-	// SDR must be deleted
+	// btcstable must be deleted
 	require.Equal(t, []string{common.PairGovStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
 
 	_, err = input.OracleKeeper.GetTobinTax(input.Ctx, common.PairBTCStable.String())
@@ -679,7 +679,6 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 }
 
 func makeAggregatePrevoteAndVote(t *testing.T, input keeper.TestInput, h types.MsgServer, height int64, rates types.ExchangeRateTuples, idx int) {
-	// Account 1, SDR
 	salt := "1"
 	ratesStr, err := rates.ToString()
 	require.NoError(t, err)
