@@ -147,10 +147,11 @@ commands, then builds the rosetta root command given a protocol buffers
 serializer/deserializer.
 
 Args:
-  rootCmd: The root command called once in the 'main.go' of 'nibid'.
-  encodingConfig: EncodingConfig specifies the concrete encoding types to use
-    for a given app. This is provided for compatibility between protobuf and
-    amino implementations.
+
+	rootCmd: The root command called once in the 'main.go' of 'nibid'.
+	encodingConfig: EncodingConfig specifies the concrete encoding types to use
+	  for a given app. This is provided for compatibility between protobuf and
+	  amino implementations.
 */
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	cfg := sdk.GetConfig()
