@@ -24,7 +24,7 @@ func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing
 	err := vpoolKeeper.updateSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 
-	_, _, err = vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)
+	_, _, err = vpoolKeeper.getLatestReserveSnapshot(ctx, common.PairBTCStable)
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 }
 
@@ -47,7 +47,7 @@ func TestSaveSnapshot(t *testing.T) {
 	vpoolKeeper.saveSnapshot(ctx, pool.Pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
 
-	snapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, BTCNusdPair)
+	snapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, common.PairBTCStable)
 	require.NoError(t, err)
 	require.Equal(t, expectedSnapshot, snapshot)
 	require.Equal(t, uint64(0), counter)
@@ -122,7 +122,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 	}{
 		{
 			name:              "spot price calc",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			quoteAssetReserve: sdk.NewDec(40_000),
 			baseAssetReserve:  sdk.NewDec(2),
 			twapCalcOption:    types.TwapCalcOption_SPOT,
@@ -130,7 +130,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "quote asset swap add to pool calc",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_QUOTE_ASSET_SWAP,
@@ -140,7 +140,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "quote asset swap remove from pool calc",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_QUOTE_ASSET_SWAP,
@@ -150,7 +150,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "base asset swap add to pool calc",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_BASE_ASSET_SWAP,
@@ -160,7 +160,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "base asset swap remove from pool calc",
-			pair:              BTCNusdPair,
+			pair:              common.PairBTCStable,
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_BASE_ASSET_SWAP,

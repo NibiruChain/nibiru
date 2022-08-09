@@ -92,11 +92,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encCfg := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
-	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
-	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
-
+	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	s.oracleMap = make(map[string]sdk.AccAddress)
@@ -414,7 +410,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.DenomGov, sdk.NewInt(10))).String()),
 	}
 	testCases := []struct {
 		name string
