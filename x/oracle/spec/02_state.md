@@ -4,38 +4,6 @@ order: 2
 
 # State
 
-## ExchangeRatePrevote
-
-`ExchangeRatePrevote` containing validator voter's prevote for a given pair for the current `VotePeriod`.
-
-- ExchangeRatePrevote: `0x01<pair_Bytes><valAddress_Bytes> -> amino(ExchangeRatePrevote)`
-
-```go
-type ValAddress []byte
-type VoteHash []byte
-
-type ExchangeRatePrevote struct {
- Hash        VoteHash       // Vote hex hash to protect centralize data source problem
- Pair       string         // Ticker name of target fiat currency
- Voter       sdk.ValAddress // Voter val address
- SubmitBlock int64
-}
-```
-
-## ExchangeRateVote
-
-`ExchangeRateVote` containing validator voter's vote for a given pair for the current `VotePeriod`.
-
-- ExchangeRateVote: `0x02<pair_Bytes><valAddress_Bytes> -> amino(ExchangeRateVote)`
-
-```go
-type ExchangeRateVote struct {
- ExchangeRate sdk.Dec        // ExchangeRate of pair
- Pair        string         // Ticker name of target fiat currency
- Voter        sdk.ValAddress // voter val address of validator
-}
-```
-
 ## ExchangeRate
 
 An `sdk.Dec` that stores the current exchange rate against a given pair.
