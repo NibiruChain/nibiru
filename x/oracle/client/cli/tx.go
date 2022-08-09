@@ -180,10 +180,10 @@ $ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibival
 			}
 
 			// Get from address
-			voter := clientCtx.GetFromAddress()
+			feeder := clientCtx.GetFromAddress()
 
-			// By default the voter is voting on behalf of itself
-			validator := sdk.ValAddress(voter)
+			// By default, the feeder is voting on behalf of itself
+			validator := sdk.ValAddress(feeder)
 
 			// Override validator if validator is given
 			if len(args) == 3 {
@@ -194,14 +194,12 @@ $ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibival
 				validator = parsedVal
 			}
 
-			msgs := []sdk.Msg{types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, voter, validator)}
-			for _, msg := range msgs {
-				if err := msg.ValidateBasic(); err != nil {
-					return err
-				}
+			msg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, feeder, validator)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msgs...)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
