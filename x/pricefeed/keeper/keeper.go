@@ -80,27 +80,25 @@ func (k Keeper) PostRawPrice(
 	}
 
 	if !k.IsWhitelistedOracle(ctx, pair.String(), oracle) {
-		return types.PostedPrice{}, fmt.Errorf(
-			"oracle %s cannot post on pair %v", oracle, pair.String())
+		return types.PostedPrice{}, fmt.Errorf("oracle %s cannot post on pair %v", oracle, pair.String())
 	}
 
-	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
-
 	// Emit an event containing the oracle's new price
-
-	err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
 		PairId:    pair.String(),
 		Oracle:    oracle.String(),
 		PairPrice: price,
 		Expiry:    expiry,
-	})
-	if err != nil {
+	}); err != nil {
 		panic(err)
 	}
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(pair.String(), oracle), k.cdc.MustMarshal(&newPostedPrice))
+	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
+	ctx.KVStore(k.storeKey).Set(
+		types.RawPriceKey(pair.String(), oracle),
+		k.cdc.MustMarshal(&newPostedPrice),
+	)
 	return newPostedPrice, nil
 }
 
@@ -129,19 +127,15 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 		validPrevPrice = false
 	}
 
-	postedPrices := k.GetRawPrices(ctx, pairID)
-
-	var notExpiredPrices []types.CurrentPrice
+	var unexpiredPrices []types.CurrentPrice
 	// filter out expired prices
-	for _, post := range postedPrices {
-		if post.Expiry.After(ctx.BlockTime()) {
-			notExpiredPrices = append(
-				notExpiredPrices,
-				types.NewCurrentPrice(token0, token1, post.Price))
+	for _, rawPrice := range k.GetRawPrices(ctx, pairID) {
+		if rawPrice.Expiry.After(ctx.BlockTime()) {
+			unexpiredPrices = append(unexpiredPrices, types.NewCurrentPrice(token0, token1, rawPrice.Price))
 		}
 	}
 
-	if len(notExpiredPrices) == 0 {
+	if len(unexpiredPrices) == 0 {
 		// NOTE: The current price stored will continue storing the most recent (expired)
 		// price if this is not set.
 		// This zero's out the current price stored value for that market and ensures
@@ -150,7 +144,7 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 		return types.ErrNoValidPrice
 	}
 
-	medianPrice := k.CalculateMedianPrice(notExpiredPrices)
+	medianPrice := k.CalculateMedianPrice(unexpiredPrices)
 
 	// check case that market price was not set in genesis
 	if validPrevPrice && !medianPrice.Equal(prevPrice.Price) {
@@ -274,13 +268,16 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	if err := assetPair.Validate(); err != nil {
 		return sdk.Dec{}, err
 	}
-	givenIsActive := k.IsActivePair(ctx, assetPair.String())
-	inverseIsActive := k.IsActivePair(ctx, assetPair.Inverse().String())
-	if !givenIsActive && inverseIsActive {
+
+	// invert the asset pair if the given is not existent
+	inverseIsActive := false
+	if !k.IsActivePair(ctx, assetPair.String()) && k.IsActivePair(ctx, assetPair.Inverse().String()) {
 		assetPair = assetPair.Inverse()
+		inverseIsActive = true
 	}
-	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
+
 	// earliest timestamp we'll look back until
+	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackWindow).UnixMilli()
 
 	var cumulativePrice sdk.Dec = sdk.ZeroDec()
@@ -289,7 +286,7 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 
 	// traverse snapshots in reverse order
 	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
-	var numShapshots int64 = 0
+	var numSnapshots int64 = 0
 	var snapshotPriceBuffer []sdk.Dec // contains snapshots at time 0
 	k.IteratePriceSnapshotsFrom(
 		/*ctx=*/ ctx,
@@ -297,7 +294,7 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 		/*end=*/ nil,
 		/*reverse=*/ true,
 		/*do=*/ func(ps *types.PriceSnapshot) (stop bool) {
-			numShapshots += 1
+			numSnapshots += 1
 			var timeElapsedMs int64
 			if ps.TimestampMs <= lowerLimitTimestampMs {
 				// current snapshot is below the lower limit
@@ -323,13 +320,13 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	switch {
 	case cumulativePeriodMs < 0:
 		return sdk.Dec{}, fmt.Errorf("cumulativePeriodMs, %v, should never be negative", cumulativePeriodMs)
-	case (cumulativePeriodMs == 0) && (numShapshots > 0):
+	case (cumulativePeriodMs == 0) && (numSnapshots > 0):
 		sum := sdk.ZeroDec()
 		for _, price := range snapshotPriceBuffer {
 			sum = sum.Add(price)
 		}
-		return sum.QuoInt64(numShapshots), nil
-	case (cumulativePeriodMs == 0) && (numShapshots == 0):
+		return sum.QuoInt64(numSnapshots), nil
+	case (cumulativePeriodMs == 0) && (numSnapshots == 0):
 		return sdk.Dec{}, fmt.Errorf(`
 			failed to calculate twap, no time passed and no snapshots have been taken since
 			ctx.BlockTime: %v, 

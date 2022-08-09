@@ -193,28 +193,17 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45)).WithBlockHeight(1)
 
 	// Set current price
-	err = keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
+	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
+
+	// Get current currentPrice
+	currentPrice, err := keeper.GetCurrentPrice(ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), currentPrice.Price)
 
-	// Get current price
-	price, err := keeper.GetCurrentPrice(ctx, pair.Token0, pair.Token1)
-	require.NoError(t, err)
-
-	expCurPrice := sdk.MustNewDecFromStr("0.34")
-	require.Truef(
-		t,
-		price.Price.Equal(expCurPrice),
-		"expected current price to equal %s, actual %s",
-		expCurPrice, price.Price,
-	)
-
-	// Allow some time to pass
-	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Minute))
 	// Check TWAP Price
 	twap, err := keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
-	expectedTwap := sdk.MustNewDecFromStr("0.34")
 	require.NoError(t, err)
-	assert.Equal(t, expectedTwap, twap, "expected twap price to be: %s, got: %s", expectedTwap, twap)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), twap)
 
 	// fast forward block height as twap snapshots are indexed by blockHeight
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
@@ -222,26 +211,21 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	// Even number of oracles
 	_, err = keeper.PostRawPrice(ctx, addrs[4], pair.String(), sdk.MustNewDecFromStr("0.36"), time.Now().Add(time.Hour))
 	require.NoError(t, err)
+	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
 
-	err = keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
-	require.NoError(t, err)
-
-	price, err = keeper.GetCurrentPrice(ctx, pair.Token0, pair.Token1)
+	currentPrice, err = keeper.GetCurrentPrice(ctx, pair.Token0, pair.Token1)
 	require.Nil(t, err)
-
-	exp := sdk.MustNewDecFromStr("0.345")
-	require.Truef(t, price.Price.Equal(exp), "current price %s should be %s", price.Price.String(), exp.String())
+	require.Equal(t, sdk.MustNewDecFromStr("0.345"), currentPrice.Price)
 
 	prices := keeper.GetCurrentPrices(ctx)
 	require.Equal(t, 1, len(prices))
-	require.Equal(t, price, prices[0])
+	require.Equal(t, currentPrice, prices[0])
 
-	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 	// Check TWAP Price
+	ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 	twap, err = keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
-	expectedTwap = sdk.MustNewDecFromStr("0.340625")
 	require.NoError(t, err)
-	require.Equalf(t, expectedTwap, twap, "expected twap price to be: %s, got: %s", expectedTwap, twap)
+	require.Equal(t, sdk.MustNewDecFromStr("0.3425"), twap)
 }
 
 func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {
