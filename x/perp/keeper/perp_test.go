@@ -161,6 +161,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 			/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.1"),
 			/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+			/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)

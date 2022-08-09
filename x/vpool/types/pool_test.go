@@ -20,6 +20,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.0625"),
+		sdk.MustNewDecFromStr("15"),
 	)
 
 	// less that max ratio
@@ -32,7 +33,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	require.False(t, pool.HasEnoughQuoteReserve(sdk.NewDec(9_000_001)))
 }
 
-func TestSetMarginRatio(t *testing.T) {
+func TestSetMarginRatioAndLeverage(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
 	pool := NewPool(
@@ -43,10 +44,11 @@ func TestSetMarginRatio(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.1"),
 		/*maintenanceMarginRatio*/ sdk.MustNewDecFromStr("0.42"),
+		/*maxLeverage*/ sdk.MustNewDecFromStr("15"),
 	)
 
-	// less that max ratio
 	require.Equal(t, pool.MaintenanceMarginRatio, sdk.MustNewDecFromStr("0.42"))
+	require.Equal(t, pool.MaxLeverage, sdk.MustNewDecFromStr("15"))
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
@@ -106,6 +108,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
 				/*maxOracleSpreadRatio=*/ sdk.MustNewDecFromStr("0.1"),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
@@ -179,6 +182,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				/*maxOracleSpreadRatio=*/ sdk.OneDec(),
 				/*maintenanceMarginRatio=*/ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
@@ -206,6 +210,7 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 		/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.01"),
 		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 	)
 
 	t.Log("decrease quote asset reserve")
