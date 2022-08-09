@@ -91,7 +91,7 @@ func GetCmdAggregateExchangeRatePrevote() *cobra.Command {
 		Long: strings.TrimSpace(`
 Submit an oracle aggregate prevote for the exchange rates of a pair.
 The purpose of aggregate prevote is to hide aggregate exchange rate vote with hash which is formatted 
-as hex string in SHA256("{salt}:({exchange_rate},{pair})|...|({exchange_rate},{pair}):{voter}")
+as hex string in SHA256("{salt}:({exchange rate},{pair})|...|({exchange rate},{pair}):{voter}")
 
 # Aggregate Prevote
 $ nibid tx oracle aggregate-prevote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
