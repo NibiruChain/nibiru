@@ -106,7 +106,6 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			// TODO(mercilex): here we're defining two exchange rates for the same coin? luna allowed this though.. need to go back here later
 			Pair:         common.PairETHStable.String(),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},

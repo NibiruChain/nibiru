@@ -16,7 +16,7 @@ func (k Keeper) GetOracleAccount(ctx sdk.Context) authtypes.ModuleAccountI {
 
 // GetRewardPool retrieves the balance of the oracle module account
 func (k Keeper) GetRewardPool(ctx sdk.Context, denom string) sdk.Coin {
-	// TODO(mercilex): this logic needs to be redefined.
+	// TODO(mercilex): this logic needs to be redefined. https://github.com/NibiruChain/nibiru/issues/805
 	if denom != common.DenomGov {
 		return sdk.NewCoin("zero", sdk.ZeroInt())
 	}

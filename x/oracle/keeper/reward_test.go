@@ -1,7 +1,7 @@
 package keeper
 
 // Test a reward giving mechanism
-/* TODO(mercilex): currently not appliable
+/* TODO(mercilex): currently not appliable https://github.com/NibiruChain/nibiru/issues/805
 func TestRewardBallotWinners(t *testing.T) {
 	// initial setup
 	input := CreateTestInput(t)

@@ -72,7 +72,7 @@ func TestIterateLunaExchangeRates(t *testing.T) {
 	})
 }
 
-/* TODO(mercilex): this test is currently not valid
+/* TODO(mercilex): this test is currently not valid. https://github.com/NibiruChain/nibiru/issues/805
 func TestRewardPool(t *testing.T) {
 	input := CreateTestInput(t)
 

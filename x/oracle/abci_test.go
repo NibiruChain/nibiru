@@ -305,7 +305,7 @@ func TestOracleRewardBand(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
 }
 
-/* TODO(Mercilex): not appliable right now
+/* TODO(Mercilex): not appliable right now: https://github.com/NibiruChain/nibiru/issues/805
 func TestOracleMultiRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
