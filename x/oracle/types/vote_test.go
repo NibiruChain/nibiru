@@ -34,7 +34,23 @@ func TestParseExchangeRateTuples(t *testing.T) {
 	})
 
 	t.Run("check duplicates", func(t *testing.T) {
+		tuples := types.ExchangeRateTuples{
+			{
+				Pair:         "BTC:USD",
+				ExchangeRate: sdk.MustNewDecFromStr("40000.00"),
+			},
 
+			{
+				Pair:         "BTC:USD",
+				ExchangeRate: sdk.MustNewDecFromStr("4000.00"),
+			},
+		}
+
+		tuplesStr, err := tuples.ToString()
+		require.NoError(t, err)
+
+		_, err = types.NewExchangeRateTuplesFromString(tuplesStr)
+		require.ErrorContains(t, err, "found duplicate")
 	})
 }
 
@@ -54,14 +70,17 @@ func TestExchangeRateTuple(t *testing.T) {
 	})
 
 	t.Run("invalid size", func(t *testing.T) {
-		// TODO(mercilex)
+		_, err := types.NewExchangeRateTupleFromString("00")
+		require.ErrorContains(t, err, "invalid string length")
 	})
 
 	t.Run("invalid delimiters", func(t *testing.T) {
-		// TODO(mercilex)
+		_, err := types.NewExchangeRateTupleFromString("|1000.0,nibi:usd|")
+		require.ErrorContains(t, err, "invalid ExchangeRateTuple delimiters")
 	})
 
 	t.Run("invalid format", func(t *testing.T) {
-		// TODO(mercilex)
+		_, err := types.NewExchangeRateTupleFromString("(1000.0,nibi:usd,1000.0)")
+		require.ErrorContains(t, err, "invalid ExchangeRateTuple format")
 	})
 }
