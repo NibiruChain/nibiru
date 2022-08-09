@@ -19,8 +19,8 @@ import (
 func TestExchangeRate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	cnyExchangeRate := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
-	krwExchangeRate := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
+	cnyExchangeRate := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(int64(6))
+	krwExchangeRate := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
 
 	// Set & get rates
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairCollStable.String(), cnyExchangeRate)
@@ -50,9 +50,9 @@ func TestExchangeRate(t *testing.T) {
 func TestIterateLunaExchangeRates(t *testing.T) {
 	input := CreateTestInput(t)
 
-	collStablePrice := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
-	ethStablePrice := sdk.NewDecWithPrec(4995, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
-	btcStablePrice := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(common.MicroUnit)
+	collStablePrice := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(int64(6))
+	ethStablePrice := sdk.NewDecWithPrec(4995, int64(OracleDecPrecision)).MulInt64(int64(6))
+	btcStablePrice := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
 
 	// Set & get rates
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairCollStable.String(), collStablePrice)
