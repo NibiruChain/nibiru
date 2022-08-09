@@ -46,9 +46,9 @@ Delegate the permission to submit exchange rate votes for the oracle to an addre
 
 Delegation can keep your validator operator key offline and use a separate replaceable key online.
 
-$ terrad tx oracle set-feeder terra1...
+$ nibid tx oracle set-feeder nibi1...
 
-where "terra1..." is the address you want to delegate your voting rights to.
+where "nibi1..." is the address you want to delegate your voting rights to.
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -68,14 +68,12 @@ where "terra1..." is the address you want to delegate your voting rights to.
 				return err
 			}
 
-			msgs := []sdk.Msg{types.NewMsgDelegateFeedConsent(validator, feeder)}
-			for _, msg := range msgs {
-				if err := msg.ValidateBasic(); err != nil {
-					return err
-				}
+			msg := types.NewMsgDelegateFeedConsent(validator, feeder)
+			if err = msg.ValidateBasic(); err != nil {
+				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msgs...)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
