@@ -9,7 +9,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-/**
+/*
+*
 updateSnapshot updates the snapshot of the current vpool.
 It creates a new one if the current block height is greater than the previous snapshot's block height.
 Otherwise, it updates the latest snapshot in state.
@@ -143,7 +144,7 @@ type snapshotPriceOptions struct {
 Pure function that returns a price from a snapshot.
 
 Can choose from three types of calc options: SPOT, QUOTE_ASSET_SWAP, and BASE_ASSET_SWAP.
-QUOTE_ASSET_SWAP and BASE_ASSET_SWAP require the `direction`` and `assetAmount`` args.
+QUOTE_ASSET_SWAP and BASE_ASSET_SWAP require the `direction“ and `assetAmount“ args.
 SPOT does not require `direction` and `assetAmount`.
 
 args:

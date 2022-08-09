@@ -50,7 +50,7 @@ args:
 
 ret:
   - baseAmountOut: the amount of base assets required to make this hypothetical swap
-				   always an absolute value
+    always an absolute value
   - err: error
 */
 func (p *Pool) GetBaseAmountByQuoteAmount(
@@ -90,7 +90,7 @@ args:
 
 ret:
   - quoteAmountOut: the amount of quote assets required to make this hypothetical swap
-					always an absolute value
+    always an absolute value
   - err: error
 */
 func (p *Pool) GetQuoteAmountByBaseAmount(
@@ -145,11 +145,14 @@ func (p *Pool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
 NewCurrentTWAP returns an instance of CurrentTWAP
 
 Args:
-  token0 (string):
-  token1 (string):
-  price (sdk.Dec): Price in units of token1 / token0
+
+	token0 (string):
+	token1 (string):
+	price (sdk.Dec): Price in units of token1 / token0
+
 Returns:
-  (CurrentTWAP): Current TWAP price for the asset pair.
+
+	(CurrentTWAP): Current TWAP price for the asset pair.
 */
 func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Dec, price sdk.Dec) CurrentTWAP {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}

@@ -31,14 +31,16 @@ type (
 Creates a new keeper for the dex module.
 
 args
-  cdc: a codec
-  storeKey: the key-value store key that this keeper uses
-  ps: the param subspace for this keeper
-  accountKeeper: the auth module\'s keeper for accounts
-  bankKeeper: the bank module\'s keeper for bank transfers
+
+	cdc: a codec
+	storeKey: the key-value store key that this keeper uses
+	ps: the param subspace for this keeper
+	accountKeeper: the auth module\'s keeper for accounts
+	bankKeeper: the bank module\'s keeper for bank transfers
 
 ret
-  Keeper: a keeper for the dex module
+
+	Keeper: a keeper for the dex module
 */
 func NewKeeper(
 	cdc codec.BinaryCodec,
@@ -72,8 +74,9 @@ Sets the next pool id that should be chosen when a new pool is created.
 This function changes the state.
 
 args
-  ctx: the cosmos-sdk context
-  poolNumber: the numeric id of the next pool number to use
+
+	ctx: the cosmos-sdk context
+	poolNumber: the numeric id of the next pool number to use
 */
 func (k Keeper) SetNextPoolNumber(ctx sdk.Context, poolNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
@@ -86,10 +89,12 @@ Retrieves the next pool id number to use when creating a new pool.
 This function is idempotent (does not change state).
 
 args
-  ctx: the cosmos-sdk context
+
+	ctx: the cosmos-sdk context
 
 ret
-  uint64: a pool id number
+
+	uint64: a pool id number
 */
 func (k Keeper) GetNextPoolNumber(ctx sdk.Context) (poolNumber uint64) {
 	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
@@ -106,10 +111,12 @@ Returns the next pool id number, and increments the state's next pool id number 
 so that the next pool creation uses an autoincremented id number.
 
 args
-  ctx: the cosmos-sdk context
+
+	ctx: the cosmos-sdk context
 
 ret
-  uint64: a pool id number
+
+	uint64: a pool id number
 */
 func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
 	poolNumber := k.GetNextPoolNumber(ctx)
@@ -123,11 +130,13 @@ Does not modify state.
 Panics if the bytes could not be unmarshalled to a Pool proto object.
 
 args
-  ctx: the cosmos-sdk context
-  poolId: the pool id number
+
+	ctx: the cosmos-sdk context
+	poolId: the pool id number
 
 ret
-  pool: a Pool proto object
+
+	pool: a Pool proto object
 */
 func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err error) {
 	store := ctx.KVStore(k.storeKey)
@@ -218,13 +227,15 @@ func (k Keeper) SetPoolIdByDenom(ctx sdk.Context, pool types.Pool) {
 Mints new pool share tokens and sends them to an account.
 
 args:
-  ctx: the cosmos-sdk context
-  poolId: the pool id number
-  recipientAddr: the address of the recipient
-  amountPoolShares: the amount of pool shares to mint to the recipient
+
+	ctx: the cosmos-sdk context
+	poolId: the pool id number
+	recipientAddr: the address of the recipient
+	amountPoolShares: the amount of pool shares to mint to the recipient
 
 ret:
-  err: returns an error if something errored out
+
+	err: returns an error if something errored out
 */
 func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
 	newCoins := sdk.Coins{
@@ -249,13 +260,15 @@ Burns takes an amount of pool shares from an account and burns them.
 It's the inverse of mintPoolShareToAccount.
 
 args:
-  ctx: the cosmos-sdk context
-  poolId: the pool id number
-  recipientAddr: the address of the recipient
-  amountPoolShares: the amount of pool shares to mint to the recipient
+
+	ctx: the cosmos-sdk context
+	poolId: the pool id number
+	recipientAddr: the address of the recipient
+	amountPoolShares: the amount of pool shares to mint to the recipient
 
 ret:
-  err: returns an error if something errored out
+
+	err: returns an error if something errored out
 */
 func (k Keeper) burnPoolShareFromAccount(
 	ctx sdk.Context,
@@ -286,14 +299,16 @@ func (k Keeper) burnPoolShareFromAccount(
 Creates a brand new pool and writes it to the state.
 
 args
-  ctx: the cosmos-sdk context
-  sender: the pool creator's address
-  poolParams: parameters of the pool, represented by a PoolParams proto object
-  poolAssets: initial assets in the pool, represented by a PoolAssets proto object array
+
+	ctx: the cosmos-sdk context
+	sender: the pool creator's address
+	poolParams: parameters of the pool, represented by a PoolParams proto object
+	poolAssets: initial assets in the pool, represented by a PoolAssets proto object array
 
 ret
-  poolId: the pool id number
-  err: an error if any occurred
+
+	poolId: the pool id number
+	err: an error if any occurred
 */
 func (k Keeper) NewPool(
 	ctx sdk.Context,
