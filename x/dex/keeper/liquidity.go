@@ -13,11 +13,13 @@ import (
 Fetches the liquidity for a specific coin denom.
 
 args:
-  ctx: the cosmos-sdk context
-  denom: the coin denom
+
+	ctx: the cosmos-sdk context
+	denom: the coin denom
 
 ret:
-  amount: the amount of liquidity for the provided coin. Returns 0 if not found.
+
+	amount: the amount of liquidity for the provided coin. Returns 0 if not found.
 */
 func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
@@ -37,9 +39,10 @@ func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdk.Int
 Sets the liquidity for a specific coin denom.
 
 args:
-  ctx: the cosmos-sdk context
-  denom: the coin denom
-  amount: the amount of liquidity for the coin
+
+	ctx: the cosmos-sdk context
+	denom: the coin denom
+	amount: the amount of liquidity for the coin
 */
 func (k Keeper) SetDenomLiquidity(ctx sdk.Context, denom string, amount sdk.Int) {
 	store := ctx.KVStore(k.storeKey)
@@ -54,10 +57,12 @@ func (k Keeper) SetDenomLiquidity(ctx sdk.Context, denom string, amount sdk.Int)
 Fetches the liquidity for all tokens in the dex.
 
 args:
-  ctx: the cosmos-sdk context
+
+	ctx: the cosmos-sdk context
 
 ret:
-  coins: an array of liquidities in the dex
+
+	coins: an array of liquidities in the dex
 */
 func (k Keeper) GetTotalLiquidity(ctx sdk.Context) (coins sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
@@ -79,8 +84,9 @@ func (k Keeper) GetTotalLiquidity(ctx sdk.Context) (coins sdk.Coins) {
 Sets the total liquidity for each coin.
 
 args:
-  ctx: the cosmos-sdk context
-  coins: the array of liquidities to update with
+
+	ctx: the cosmos-sdk context
+	coins: the array of liquidities to update with
 */
 func (k Keeper) SetTotalLiquidity(ctx sdk.Context, coins sdk.Coins) {
 	for _, coin := range coins {
@@ -92,8 +98,9 @@ func (k Keeper) SetTotalLiquidity(ctx sdk.Context, coins sdk.Coins) {
 Increases the total liquidity of the provided coins by the coin amount.
 
 args:
-  ctx: the cosmos-sdk context
-  coins: the coins added to the dex
+
+	ctx: the cosmos-sdk context
+	coins: the coins added to the dex
 */
 func (k Keeper) RecordTotalLiquidityIncrease(ctx sdk.Context, coins sdk.Coins) {
 	for _, coin := range coins {
@@ -107,8 +114,9 @@ func (k Keeper) RecordTotalLiquidityIncrease(ctx sdk.Context, coins sdk.Coins) {
 Increases the total liquidity of the provided coins by the coin amount.
 
 args:
-  ctx: the cosmos-sdk context
-  coins: the coins removed from the dex
+
+	ctx: the cosmos-sdk context
+	coins: the coins removed from the dex
 */
 func (k Keeper) RecordTotalLiquidityDecrease(ctx sdk.Context, coins sdk.Coins) {
 	for _, coin := range coins {

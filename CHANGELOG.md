@@ -52,6 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
 
+### Features
+* [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
+
 ## [v0.12.1](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1) - 2022-08-04
 
 * [#796](https://github.com/NibiruChain/nibiru/pull/796) - fix bug that caused that epochKeeper was nil when running epoch hook from Perp module

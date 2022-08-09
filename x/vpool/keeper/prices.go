@@ -68,7 +68,6 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (sdk.
 }
 
 /*
-
 So how much stablecoin you would get if you sold baseAssetAmount amount of perpetual contracts.
 
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction.

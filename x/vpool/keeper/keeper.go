@@ -230,7 +230,8 @@ func (k Keeper) SwapQuoteForBase(
 	})
 }
 
-/**
+/*
+*
 Check's that a pool that we're about to save to state does not violate the fluctuation limit.
 Always tries to check against a snapshot from a previous block. If one doesn't exist, then it just uses the current snapshot.
 This should run prior to updating the snapshot, otherwise it will compare the currently updated vpool to itself.
@@ -267,7 +268,8 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 	return nil
 }
 
-/**
+/*
+*
 isOverFluctuationLimit compares the updated pool's spot price with the current spot price.
 
 If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
@@ -297,7 +299,8 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 	return false
 }
 
-/**
+/*
+*
 IsOverSpreadLimit compares the current spot price of the vpool (given by pair) to the underlying's index price (given by an oracle).
 It panics if you provide it with a pair that doesn't exist in the state.
 
@@ -327,7 +330,8 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
 
-/**
+/*
+*
 GetMaintenanceMarginRatio returns the maintenance margin ratio for the pool from the asset pair.
 
 args:

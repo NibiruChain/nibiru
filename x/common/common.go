@@ -76,7 +76,9 @@ func (pair AssetPair) SortedName() string {
 	return SortedPairNameFromDenoms([]string{pair.Token0, pair.Token1})
 }
 
-/* String returns the string representation of the asset pair.
+/*
+	String returns the string representation of the asset pair.
+
 Note that this differs from the output of the proto-generated 'String' method.
 */
 func (pair AssetPair) String() string {

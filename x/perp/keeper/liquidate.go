@@ -8,7 +8,9 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-/* Liquidate allows to liquidate the trader position if the margin is below the
+/*
+	Liquidate allows to liquidate the trader position if the margin is below the
+
 required margin maintenance ratio.
 
 args:

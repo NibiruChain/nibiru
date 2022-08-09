@@ -24,12 +24,14 @@ var _ types.MsgServer = msgServer{}
 Handler for the MsgCreatePool transaction.
 
 args
-  ctx: the cosmos-sdk context
-  msg: a MsgCreatePool proto object
+
+	ctx: the cosmos-sdk context
+	msg: a MsgCreatePool proto object
 
 ret
-  MsgCreatePoolResponse: the MsgCreatePoolResponse proto object response, containing the pool id number
-  error: an error if any occurred
+
+	MsgCreatePoolResponse: the MsgCreatePoolResponse proto object response, containing the pool id number
+	error: an error if any occurred
 */
 func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (*types.MsgCreatePoolResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -53,12 +55,14 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 Handler for the MsgJoinPool transaction.
 
 args
-  ctx: the cosmos-sdk context
-  msg: a MsgJoinPool proto object
+
+	ctx: the cosmos-sdk context
+	msg: a MsgJoinPool proto object
 
 ret
-  MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
-  error: an error if any occurred
+
+	MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
+	error: an error if any occurred
 */
 func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types.MsgJoinPoolResponse, error) {
 	sdkContext := sdk.UnwrapSDKContext(ctx)
@@ -89,12 +93,14 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 Handler for the MsgExitPool transaction.
 
 args
-  ctx: the cosmos-sdk context
-  msg: a MsgExitPool proto object
+
+	ctx: the cosmos-sdk context
+	msg: a MsgExitPool proto object
 
 ret
-  MsgExitPoolResponse: the MsgExitPoolResponse proto object response, containing the amount of tokens returned to the user
-  error: an error if any occurred
+
+	MsgExitPoolResponse: the MsgExitPoolResponse proto object response, containing the amount of tokens returned to the user
+	error: an error if any occurred
 */
 func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types.MsgExitPoolResponse, error) {
 	sdkContext := sdk.UnwrapSDKContext(ctx)
@@ -123,12 +129,14 @@ func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types
 Handler for the MsgJoinPool transaction.
 
 args
-  ctx: the cosmos-sdk context
-  msg: a MsgJoinPool proto object
+
+	ctx: the cosmos-sdk context
+	msg: a MsgJoinPool proto object
 
 ret
-  MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
-  error: an error if any occurred
+
+	MsgJoinPoolResponse: the MsgJoinPoolResponse proto object response, containing the pool id number
+	error: an error if any occurred
 */
 func (k msgServer) SwapAssets(ctx context.Context, msg *types.MsgSwapAssets) (
 	*types.MsgSwapAssetsResponse, error,

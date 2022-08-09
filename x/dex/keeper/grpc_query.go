@@ -28,12 +28,14 @@ var _ types.QueryServer = queryServer{}
 Handler for the QueryParamsRequest query.
 
 args
-  ctx: the cosmos-sdk context
-  req: a QueryParamsRequest proto object
+
+	ctx: the cosmos-sdk context
+	req: a QueryParamsRequest proto object
 
 ret
-  QueryParamsResponse: the QueryParamsResponse proto object response, containing the params
-  error: an error if any occurred
+
+	QueryParamsResponse: the QueryParamsResponse proto object response, containing the params
+	error: an error if any occurred
 */
 func (k queryServer) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
@@ -48,12 +50,14 @@ func (k queryServer) Params(c context.Context, req *types.QueryParamsRequest) (*
 Handler for the QueryPoolRequest query.
 
 args
-  ctx: the cosmos-sdk context
-  req: a QueryPoolRequest proto object
+
+	ctx: the cosmos-sdk context
+	req: a QueryPoolRequest proto object
 
 ret
-  QueryPoolResponse: the QueryPoolResponse proto object response, containing the pool
-  error: an error if any occurred
+
+	QueryPoolResponse: the QueryPoolResponse proto object response, containing the pool
+	error: an error if any occurred
 */
 func (k queryServer) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*types.QueryPoolResponse, error) {
 	if req == nil {
@@ -74,12 +78,14 @@ func (k queryServer) Pool(goCtx context.Context, req *types.QueryPoolRequest) (*
 Handler for the QueryPoolNumberRequest query.
 
 args
-  ctx: the cosmos-sdk context
-  req: a QueryPoolNumberRequest proto object
+
+	ctx: the cosmos-sdk context
+	req: a QueryPoolNumberRequest proto object
 
 ret
-  QueryPoolNumberResponse: the QueryPoolNumberResponse proto object response, containing the next pool id number
-  error: an error if any occurred
+
+	QueryPoolNumberResponse: the QueryPoolNumberResponse proto object response, containing the next pool id number
+	error: an error if any occurred
 */
 func (k queryServer) PoolNumber(goCtx context.Context, req *types.QueryPoolNumberRequest) (*types.QueryPoolNumberResponse, error) {
 	if req == nil {

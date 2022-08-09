@@ -27,8 +27,6 @@ func (poolAsset PoolAsset) Validate() error {
 /*
 Subtracts an amount of coins from a pool's assets.
 Throws an error if the final amount is less than zero.
-
-
 */
 func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (err error) {
 	if subAmt.LT(sdk.ZeroInt()) {

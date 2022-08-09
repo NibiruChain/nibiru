@@ -23,8 +23,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
-/* SetupTestingApp returns the TestingApp and default genesis state used to
-   initialize the testing app. */
+/*
+SetupTestingApp returns the TestingApp and default genesis state used to
+
+	initialize the testing app.
+*/
 func SetupNibiruTestingApp() (
 	testingApp ibctesting.TestingApp,
 	defaultGenesis map[string]json.RawMessage,
@@ -86,11 +89,13 @@ func TestIBCTestSuite(t *testing.T) {
 	suite.Run(t, new(IBCTestSuite))
 }
 
-/* NewIBCTestingTransferPath returns a "path" for testing.
-   A path contains two endpoints, 'EndpointA' and 'EndpointB' that correspond
-   to the order of the chains passed into the ibctesting.NewPath function.
-   A path is a pointer, and its values will be filled in as necessary during
-   the setup portion of testing.
+/*
+NewIBCTestingTransferPath returns a "path" for testing.
+
+	A path contains two endpoints, 'EndpointA' and 'EndpointB' that correspond
+	to the order of the chains passed into the ibctesting.NewPath function.
+	A path is a pointer, and its values will be filled in as necessary during
+	the setup portion of testing.
 */
 func NewIBCTestingTransferPath(
 	chainA, chainB *ibctesting.TestChain,

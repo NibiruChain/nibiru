@@ -13,7 +13,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
-/* AddOracleProposalRESTHandler defines a REST handler an 'AddOracleProposal'.
+/*
+	AddOracleProposalRESTHandler defines a REST handler an 'AddOracleProposal'.
+
 The sub-route is mounted on the governance REST handler.
 */
 func AddOracleProposalRESTHandler(clientCtx client.Context) govclientrest.ProposalRESTHandler {

@@ -94,7 +94,6 @@ func (k Keeper) OpenPosition(
 // - Checks that the VPool exists.
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
-//
 func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.AssetPair, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
 	if err := k.requireVpool(ctx, pair); err != nil {
 		return err
