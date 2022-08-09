@@ -133,6 +133,6 @@ func TestFuzz_PickReferenceTerra(t *testing.T) {
 	f.Fuzz(&voteMap)
 
 	require.NotPanics(t, func() {
-		oracle.PickReferenceTerra(input.Ctx, input.OracleKeeper, voteTargets, voteMap)
+		oracle.PickReferencePair(input.Ctx, input.OracleKeeper, voteTargets, voteMap)
 	})
 }
