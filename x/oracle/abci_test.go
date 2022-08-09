@@ -354,8 +354,8 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 func TestOracleExchangeRate(t *testing.T) {
 	input, h := setup(t)
 
-	krwRandomExchangeRate := sdk.NewDecWithPrec(1000000000, int64(6)).MulInt64(int64(6))
-	usdRandomExchangeRate := sdk.NewDecWithPrec(1000000, int64(6)).MulInt64(int64(6))
+	krwRandomExchangeRate := sdk.NewDec(1000000000)
+	usdRandomExchangeRate := sdk.NewDec(1000000)
 
 	// KRW has been chosen as referenceTerra by highest voting power
 	// Account 1, USD, KRW
@@ -388,14 +388,14 @@ func TestOracleEnsureSorted(t *testing.T) {
 	input, h := setup(t)
 
 	for i := 0; i < 100; i++ {
-		krwExchangeRate1 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(int64(6))
-		usdExchangeRate1 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(int64(6))
+		krwExchangeRate1 := sdk.NewDec(int64(rand.Uint64() % 100000000))
+		usdExchangeRate1 := sdk.NewDec(int64(rand.Uint64() % 100000000))
 
-		krwExchangeRate2 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(int64(6))
-		usdExchangeRate2 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(int64(6))
+		krwExchangeRate2 := sdk.NewDec(int64(rand.Uint64() % 100000000))
+		usdExchangeRate2 := sdk.NewDec(int64(rand.Uint64() % 100000000))
 
-		krwExchangeRate3 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(int64(6))
-		usdExchangeRate3 := sdk.NewDecWithPrec(int64(rand.Uint64()%100000000), 6).MulInt64(int64(6))
+		krwExchangeRate3 := sdk.NewDec(int64(rand.Uint64() % 100000000))
+		usdExchangeRate3 := sdk.NewDec(int64(rand.Uint64() % 100000000))
 
 		// Account 1, USD, KRW
 		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: usdExchangeRate1}, {Pair: common.PairGovStable.String(), ExchangeRate: krwExchangeRate1}}, 0)
@@ -415,10 +415,10 @@ func TestOracleEnsureSorted(t *testing.T) {
 func TestOracleExchangeRateVal5(t *testing.T) {
 	input, h := setupVal5(t)
 
-	krwExchangeRate := sdk.NewDecWithPrec(505000, int64(6)).MulInt64(int64(6))
-	krwExchangeRateWithErr := sdk.NewDecWithPrec(500000, int64(6)).MulInt64(int64(6))
-	usdExchangeRate := sdk.NewDecWithPrec(505, int64(6)).MulInt64(int64(6))
-	usdExchangeRateWithErr := sdk.NewDecWithPrec(500, int64(6)).MulInt64(int64(6))
+	krwExchangeRate := sdk.NewDec(505000)
+	krwExchangeRateWithErr := sdk.NewDec(500000)
+	usdExchangeRate := sdk.NewDec(505)
+	usdExchangeRateWithErr := sdk.NewDec(500)
 
 	// KRW has been chosen as referenceTerra by highest voting power
 	// Account 1, KRW, USD
