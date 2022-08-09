@@ -66,6 +66,7 @@ func (q queryServer) QueryTraderPosition(
 		UnrealizedPnl:    unrealizedPnl,
 		MarginRatioMark:  marginRatioMark,
 		MarginRatioIndex: marginRatioIndex,
+		BlockNumber:      ctx.BlockHeight(),
 	}, nil
 }
 

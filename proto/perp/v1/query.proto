@@ -66,6 +66,9 @@ message QueryTraderPositionResponse {
   string margin_ratio_index = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+
+  // BlockNumber is current block number at the time of query.
+  int64 block_number = 7;
 }
 
 // ---------------------------------------- OtherQuery
