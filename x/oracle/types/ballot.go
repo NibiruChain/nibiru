@@ -12,17 +12,17 @@ import (
 // NOTE: we don't need to implement proto interface on this file
 //       these are not used in store or rpc response
 
-// VoteForTally is a convenience wrapper to reduce redundant lookup cost
-type VoteForTally struct {
+// BallotVoteForTally is a convenience wrapper to reduce redundant lookup cost
+type BallotVoteForTally struct {
 	Pair         string
 	ExchangeRate sdk.Dec
 	Voter        sdk.ValAddress
 	Power        int64
 }
 
-// NewVoteForTally returns a new VoteForTally instance
-func NewVoteForTally(rate sdk.Dec, pair string, voter sdk.ValAddress, power int64) VoteForTally {
-	return VoteForTally{
+// NewBallotVoteForTally returns a new VoteForTally instance
+func NewBallotVoteForTally(rate sdk.Dec, pair string, voter sdk.ValAddress, power int64) BallotVoteForTally {
+	return BallotVoteForTally{
 		ExchangeRate: rate,
 		Pair:         pair,
 		Voter:        voter,
@@ -31,7 +31,7 @@ func NewVoteForTally(rate sdk.Dec, pair string, voter sdk.ValAddress, power int6
 }
 
 // ExchangeRateBallot is a convenience wrapper around a ExchangeRateVote slice
-type ExchangeRateBallot []VoteForTally
+type ExchangeRateBallot []BallotVoteForTally
 
 // ToMap return organized exchange rate map by validator
 func (pb ExchangeRateBallot) ToMap() map[string]sdk.Dec {

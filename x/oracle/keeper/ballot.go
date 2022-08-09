@@ -9,29 +9,26 @@ import (
 )
 
 // OrganizeBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
-func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorClaimMap map[string]types.Claim) (votes map[string]types.ExchangeRateBallot) {
-	votes = map[string]types.ExchangeRateBallot{}
+func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorClaimMap map[string]types.Claim) (ballots map[string]types.ExchangeRateBallot) {
+	ballots = map[string]types.ExchangeRateBallot{}
 
 	// Organize aggregate votes
 	aggregateHandler := func(voterAddr sdk.ValAddress, vote types.AggregateExchangeRateVote) (stop bool) {
 		// organize ballot only for the active validators
-		claim, ok := validatorClaimMap[vote.Voter]
-
-		if ok {
-			power := claim.Power
+		if claim, ok := validatorClaimMap[vote.Voter]; ok {
 			for _, tuple := range vote.ExchangeRateTuples {
-				tmpPower := power
+				power := claim.Power
 				if !tuple.ExchangeRate.IsPositive() {
 					// Make the power of abstain vote zero
-					tmpPower = 0
+					power = 0
 				}
 
-				votes[tuple.Pair] = append(votes[tuple.Pair],
-					types.NewVoteForTally(
+				ballots[tuple.Pair] = append(ballots[tuple.Pair],
+					types.NewBallotVoteForTally(
 						tuple.ExchangeRate,
 						tuple.Pair,
 						voterAddr,
-						tmpPower,
+						power,
 					),
 				)
 			}
@@ -43,9 +40,9 @@ func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorClaimMap map[stri
 	k.IterateAggregateExchangeRateVotes(ctx, aggregateHandler)
 
 	// sort created ballot
-	for pair, ballot := range votes {
+	for pair, ballot := range ballots {
 		sort.Sort(ballot)
-		votes[pair] = ballot
+		ballots[pair] = ballot
 	}
 
 	return

@@ -157,7 +157,7 @@ func TestOracleTally(t *testing.T) {
 			power = int64(0)
 		}
 
-		vote := types.NewVoteForTally(
+		vote := types.NewBallotVoteForTally(
 			decExchangeRate, common.PairBTCStable.String(), valAddrs[i], power)
 		ballot = append(ballot, vote)
 
