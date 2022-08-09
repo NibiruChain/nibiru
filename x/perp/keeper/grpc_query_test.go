@@ -103,6 +103,7 @@ func TestQueryPosition(t *testing.T) {
 				/* fluctuationLimitRatio */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,

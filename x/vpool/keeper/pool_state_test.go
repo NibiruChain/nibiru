@@ -26,6 +26,7 @@ func TestCreatePool(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 		sdk.MustNewDecFromStr("0.0625"),
+		sdk.MustNewDecFromStr("15"),
 	)
 
 	exists := vpoolKeeper.ExistsPool(ctx, common.PairBTCStable)
@@ -52,6 +53,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		{
 			Pair:                   common.MustNewAssetPair("ETH:NUSD"),
@@ -61,6 +63,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	}
 

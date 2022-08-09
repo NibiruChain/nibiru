@@ -141,6 +141,36 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 			},
 			expectErr: true,
 		},
+		"max leverage < 0": {
+			m: &CreatePoolProposal{
+				Title:                  "add proposal",
+				Description:            "some weird description",
+				Pair:                   "valid:pair",
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:      sdk.NewDec(1_000_000),
+				BaseAssetReserve:       sdk.NewDec(1_000_000),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
+				MaxLeverage:            sdk.MustNewDecFromStr("-0.10"),
+			},
+			expectErr: true,
+		},
+		"max leverage too high for margin ratio": {
+			m: &CreatePoolProposal{
+				Title:                  "add proposal",
+				Description:            "some weird description",
+				Pair:                   "valid:pair",
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:      sdk.NewDec(1_000_000),
+				BaseAssetReserve:       sdk.NewDec(1_000_000),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"), // Equivalent to 10 leverage
+				MaxLeverage:            sdk.MustNewDecFromStr("11"),
+			},
+			expectErr: true,
+		},
 
 		"success": {
 			m: &CreatePoolProposal{
@@ -153,6 +183,7 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			expectErr: false,
 		},

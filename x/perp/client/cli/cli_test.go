@@ -79,20 +79,24 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []*vpooltypes.Pool{
 		{
-			Pair:                  common.PairBTCStable,
-			BaseAssetReserve:      sdk.NewDec(10_000_000),
-			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
-			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+			Pair:                   common.PairBTCStable,
+			BaseAssetReserve:       sdk.NewDec(10_000_000),
+			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		{
-			Pair:                  common.PairETHStable,
-			BaseAssetReserve:      sdk.NewDec(10_000_000),
-			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
-			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+			Pair:                   common.PairETHStable,
+			BaseAssetReserve:       sdk.NewDec(10_000_000),
+			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	}
 	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
