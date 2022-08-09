@@ -153,7 +153,7 @@ func GetCmdAggregateExchangeRateVote() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aggregate-vote [salt] [exchange-rates] [validator]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Submit an oracle aggregate vote for the exchange_rates of Luna",
+		Short: "Submit an oracle aggregate vote for the exchange_rates of Nibiru",
 		Long: strings.TrimSpace(`
 Submit an aggregate vote for the exchange_rates of the proposed pairs. Companion to a prevote submitted in the previous vote period. 
 
