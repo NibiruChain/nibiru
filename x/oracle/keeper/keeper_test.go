@@ -207,7 +207,7 @@ func TestIterateMissCounters(t *testing.T) {
 func TestAggregatePrevoteAddDelete(t *testing.T) {
 	input := CreateTestInput(t)
 
-	hash := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[0]))
+	hash := types.GetAggregateVoteHash("salt", "(1000.0,nibi:usd)|(1000.0,btc:usd)", sdk.ValAddress(Addrs[0]))
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(hash, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]), aggregatePrevote)
 
@@ -223,11 +223,11 @@ func TestAggregatePrevoteAddDelete(t *testing.T) {
 func TestAggregatePrevoteIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	hash := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[0]))
+	hash := types.GetAggregateVoteHash("salt", "(1000.0,nibi:usd)|(1000.0,btc:usd)", sdk.ValAddress(Addrs[0]))
 	aggregatePrevote1 := types.NewAggregateExchangeRatePrevote(hash, sdk.ValAddress(Addrs[0]), 0)
 	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[0]), aggregatePrevote1)
 
-	hash2 := types.GetAggregateVoteHash("salt", "100ukrw,1000uusd", sdk.ValAddress(Addrs[1]))
+	hash2 := types.GetAggregateVoteHash("salt", "(1000.0,nibi:usd)|(1000.0,btc:usd)", sdk.ValAddress(Addrs[1]))
 	aggregatePrevote2 := types.NewAggregateExchangeRatePrevote(hash2, sdk.ValAddress(Addrs[1]), 0)
 	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, sdk.ValAddress(Addrs[1]), aggregatePrevote2)
 

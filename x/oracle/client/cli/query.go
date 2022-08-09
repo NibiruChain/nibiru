@@ -379,7 +379,7 @@ $ terrad query oracle tobin-taxes
 
 Or, can filter with pair
 
-$ terrad query oracle tobin-taxes ukrw
+$ nibid query oracle tobin-taxes nibi:usd
 
 Or, can 
 `),

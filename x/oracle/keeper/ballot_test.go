@@ -31,22 +31,22 @@ func TestOrganizeAggregate(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
-	sdrBallot := types.ExchangeRateBallot{
+	btcBallot := types.ExchangeRateBallot{
 		types.NewVoteForTally(sdk.NewDec(17), common.PairBTCStable.String(), ValAddrs[0], power),
 		types.NewVoteForTally(sdk.NewDec(10), common.PairBTCStable.String(), ValAddrs[1], power),
 		types.NewVoteForTally(sdk.NewDec(6), common.PairBTCStable.String(), ValAddrs[2], power),
 	}
-	krwBallot := types.ExchangeRateBallot{
+	ethBallot := types.ExchangeRateBallot{
 		types.NewVoteForTally(sdk.NewDec(1000), common.PairETHStable.String(), ValAddrs[0], power),
 		types.NewVoteForTally(sdk.NewDec(1300), common.PairETHStable.String(), ValAddrs[1], power),
 		types.NewVoteForTally(sdk.NewDec(2000), common.PairETHStable.String(), ValAddrs[2], power),
 	}
 
-	for i := range sdrBallot {
+	for i := range btcBallot {
 		input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[i],
 			types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-				{Pair: sdrBallot[i].Pair, ExchangeRate: sdrBallot[i].ExchangeRate},
-				{Pair: krwBallot[i].Pair, ExchangeRate: krwBallot[i].ExchangeRate},
+				{Pair: btcBallot[i].Pair, ExchangeRate: btcBallot[i].ExchangeRate},
+				{Pair: ethBallot[i].Pair, ExchangeRate: ethBallot[i].ExchangeRate},
 			}, ValAddrs[i]))
 	}
 
@@ -70,13 +70,13 @@ func TestOrganizeAggregate(t *testing.T) {
 	})
 
 	// sort each ballot for comparison
-	sort.Sort(sdrBallot)
-	sort.Sort(krwBallot)
+	sort.Sort(btcBallot)
+	sort.Sort(ethBallot)
 	sort.Sort(ballotMap[common.PairBTCStable.String()])
 	sort.Sort(ballotMap[common.PairETHStable.String()])
 
-	require.Equal(t, sdrBallot, ballotMap[common.PairBTCStable.String()])
-	require.Equal(t, krwBallot, ballotMap[common.PairETHStable.String()])
+	require.Equal(t, btcBallot, ballotMap[common.PairBTCStable.String()])
+	require.Equal(t, ethBallot, ballotMap[common.PairETHStable.String()])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -96,18 +96,18 @@ func TestClearBallots(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
-	sdrBallot := types.ExchangeRateBallot{
+	btcBallot := types.ExchangeRateBallot{
 		types.NewVoteForTally(sdk.NewDec(17), common.PairBTCStable.String(), ValAddrs[0], power),
 		types.NewVoteForTally(sdk.NewDec(10), common.PairBTCStable.String(), ValAddrs[1], power),
 		types.NewVoteForTally(sdk.NewDec(6), common.PairBTCStable.String(), ValAddrs[2], power),
 	}
-	krwBallot := types.ExchangeRateBallot{
+	ethBallot := types.ExchangeRateBallot{
 		types.NewVoteForTally(sdk.NewDec(1000), common.PairETHStable.String(), ValAddrs[0], power),
 		types.NewVoteForTally(sdk.NewDec(1300), common.PairETHStable.String(), ValAddrs[1], power),
 		types.NewVoteForTally(sdk.NewDec(2000), common.PairETHStable.String(), ValAddrs[2], power),
 	}
 
-	for i := range sdrBallot {
+	for i := range btcBallot {
 		input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[i], types.AggregateExchangeRatePrevote{
 			Hash:        "",
 			Voter:       ValAddrs[i].String(),
@@ -116,8 +116,8 @@ func TestClearBallots(t *testing.T) {
 
 		input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[i],
 			types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-				{Pair: sdrBallot[i].Pair, ExchangeRate: sdrBallot[i].ExchangeRate},
-				{Pair: krwBallot[i].Pair, ExchangeRate: krwBallot[i].ExchangeRate},
+				{Pair: btcBallot[i].Pair, ExchangeRate: btcBallot[i].ExchangeRate},
+				{Pair: ethBallot[i].Pair, ExchangeRate: ethBallot[i].ExchangeRate},
 			}, ValAddrs[i]))
 	}
 
@@ -153,23 +153,23 @@ func TestApplyWhitelist(t *testing.T) {
 	// no update
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, types.PairList{
 		types.Pair{
-			Name:     "uusd",
+			Name:     "nibi:usd",
 			TobinTax: sdk.OneDec(),
 		},
 		types.Pair{
-			Name:     "ukrw",
+			Name:     "btc:usd",
 			TobinTax: sdk.OneDec(),
 		},
 	}, map[string]sdk.Dec{
-		"uusd": sdk.ZeroDec(),
-		"ukrw": sdk.ZeroDec(),
+		"nibi:usd": sdk.ZeroDec(),
+		"btc:usd":  sdk.ZeroDec(),
 	})
 
-	price, err := input.OracleKeeper.GetTobinTax(input.Ctx, "uusd")
+	price, err := input.OracleKeeper.GetTobinTax(input.Ctx, "nibi:usd")
 	require.NoError(t, err)
 	require.Equal(t, price, sdk.OneDec())
 
-	price, err = input.OracleKeeper.GetTobinTax(input.Ctx, "ukrw")
+	price, err = input.OracleKeeper.GetTobinTax(input.Ctx, "btc:usd")
 	require.NoError(t, err)
 	require.Equal(t, price, sdk.OneDec())
 }

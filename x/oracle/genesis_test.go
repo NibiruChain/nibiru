@@ -103,7 +103,7 @@ func TestInitGenesis(t *testing.T) {
 		{
 			ExchangeRateTuples: []types.ExchangeRateTuple{
 				{
-					Pair:         "ukrw",
+					Pair:         "nibi:usd",
 					ExchangeRate: sdk.NewDec(10),
 				},
 			},
@@ -119,7 +119,7 @@ func TestInitGenesis(t *testing.T) {
 		{
 			ExchangeRateTuples: []types.ExchangeRateTuple{
 				{
-					Pair:         "ukrw",
+					Pair:         "nibi:usd",
 					ExchangeRate: sdk.NewDec(10),
 				},
 			},
