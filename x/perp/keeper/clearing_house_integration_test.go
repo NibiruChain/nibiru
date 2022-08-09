@@ -266,6 +266,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -406,7 +407,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:          sdk.NewInt(100),
 			leverage:        sdk.NewDec(100),
 			baseLimit:       sdk.NewDec(11_000),
-			expectedErr:     types.ErrMarginRatioTooLow,
+			expectedErr:     types.ErrLeverageIsTooHigh,
 		},
 		{
 			name:            "leverage amount is too high - BUY",
@@ -414,9 +415,9 @@ func TestOpenPositionError(t *testing.T) {
 			initialPosition: nil,
 			side:            types.Side_BUY,
 			margin:          sdk.NewInt(100),
-			leverage:        sdk.NewDec(100),
+			leverage:        sdk.NewDec(16),
 			baseLimit:       sdk.NewDec(0),
-			expectedErr:     types.ErrMarginRatioTooLow,
+			expectedErr:     types.ErrLeverageIsTooHigh,
 		},
 		{
 			name:            "new long position over fluctuation limit",
@@ -464,6 +465,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair:                       common.PairBTCStable,
@@ -530,6 +532,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
 					sdk.MustNewDecFromStr("0.1"),
 					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 				)
 				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 

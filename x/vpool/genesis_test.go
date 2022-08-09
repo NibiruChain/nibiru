@@ -23,6 +23,7 @@ func TestGenesis(t *testing.T) {
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		{
 			Pair:                   common.MustNewAssetPair("ETH:NUSD"),
@@ -32,6 +33,7 @@ func TestGenesis(t *testing.T) {
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	}
 

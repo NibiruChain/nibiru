@@ -98,6 +98,7 @@ func TestGetSpotPrice(t *testing.T) {
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				sdk.OneDec(),
 				sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			price, err := vpoolKeeper.GetSpotPrice(ctx, tc.pair)
@@ -171,6 +172,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				sdk.OneDec(),
 				sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
@@ -251,6 +253,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				sdk.OneDec(),
 				sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
@@ -458,6 +461,7 @@ func TestCalcTwap(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 				sdk.OneDec(),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			for i, snapshot := range tc.reserveSnapshots {
@@ -580,6 +584,7 @@ func TestGetTWAP(t *testing.T) {
 				/*fluctuationLimitratio=*/ sdk.OneDec(),
 				/*maxSpread=*/ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			err := keeper.UpdateTWAP(ctx, common.PairBTCStable.String())
 			require.NoError(t, err)

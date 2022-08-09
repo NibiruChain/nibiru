@@ -84,14 +84,16 @@ func (s IntegrationTestSuite) TestX_CmdAddVpool() {
 
 	s.T().Log("load example json as bytes")
 	proposal := &vpooltypes.CreatePoolProposal{
-		Title:                 "Create ETH:USD pool",
-		Description:           "Creates an ETH:USD pool",
-		Pair:                  "ETH:USD",
-		TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
-		QuoteAssetReserve:     sdk.NewDec(1_000_000),
-		BaseAssetReserve:      sdk.NewDec(1_000_000),
-		FluctuationLimitRatio: sdk.MustNewDecFromStr("0.05"),
-		MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.05"),
+		Title:                  "Create ETH:USD pool",
+		Description:            "Creates an ETH:USD pool",
+		Pair:                   "ETH:USD",
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1_000_000),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.05"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.MustNewDecFromStr("15"),
 	}
 	proposalJSONString := val.ClientCtx.Codec.MustMarshalJSON(proposal)
 	proposalJSON := sdktestutil.WriteToNewTempFile(
@@ -216,6 +218,7 @@ func (s IntegrationTestSuite) TestX_CmdAddVpool() {
 				FluctuationLimitRatio:  proposal.FluctuationLimitRatio,
 				MaxOracleSpreadRatio:   proposal.MaxOracleSpreadRatio,
 				MaintenanceMarginRatio: proposal.MaintenanceMarginRatio,
+				MaxLeverage:            proposal.MaxLeverage,
 			}, pool)
 			found = true
 		}
