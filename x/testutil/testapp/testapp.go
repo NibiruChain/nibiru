@@ -93,9 +93,12 @@ const (
 	GenOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
 )
 
-/* NewTestGenesisStateFromDefault returns 'NewGenesisState' using the default
+/*
+	NewTestGenesisStateFromDefault returns 'NewGenesisState' using the default
+
 genesis as input. The blockchain genesis state is represented as a map from module
-identifier strings to raw json messages. */
+identifier strings to raw json messages.
+*/
 func NewTestGenesisStateFromDefault() app.GenesisState {
 	encodingConfig := app.MakeTestEncodingConfig()
 	codec := encodingConfig.Marshaler
@@ -134,8 +137,11 @@ func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
 // ----------------------------------------------------------------------------
 // Module types.GenesisState functions
 
-/* PricefeedGenesis returns an x/pricefeed GenesisState with additional
-configuration for convenience during integration tests. */
+/*
+	PricefeedGenesis returns an x/pricefeed GenesisState with additional
+
+configuration for convenience during integration tests.
+*/
 func PricefeedGenesis() pricefeedtypes.GenesisState {
 	oracle := sdk.MustAccAddressFromBech32(GenOracleAddress)
 	oracleStrings := []string{oracle.String()}

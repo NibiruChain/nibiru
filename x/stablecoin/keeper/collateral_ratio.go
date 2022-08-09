@@ -156,16 +156,18 @@ the protocol is below the required amount defined by the current collateral rati
 Nibiru's NUSD stablecoin is taken to be the dollar that determines USD value.
 
 Args:
-  msg (MsgRecollateralize) {
-    Creator (string): Caller of 'Recollateralize'
-	Coll (sdk.Coin): Input collateral that will be sold to the protocol.
-  }
+
+	  msg (MsgRecollateralize) {
+	    Creator (string): Caller of 'Recollateralize'
+		Coll (sdk.Coin): Input collateral that will be sold to the protocol.
+	  }
 
 Returns:
-  response (MsgRecollateralizeResponse) {
-    Gov (sdk.Coin): Governance received as a reward for recollateralizing Nibiru.
-  }
-  err: Error condition for if the function succeeds or fails.
+
+	response (MsgRecollateralizeResponse) {
+	  Gov (sdk.Coin): Governance received as a reward for recollateralizing Nibiru.
+	}
+	err: Error condition for if the function succeeds or fails.
 */
 func (k Keeper) Recollateralize(
 	goCtx context.Context, msg *types.MsgRecollateralize,
@@ -277,10 +279,13 @@ GovAmtFromRecollateralize computes the GOV token given as a reward for calling
 recollateralize.
 
 Args:
-  ctx (sdk.Context): Carries information about the current state of the application.
-  inUSD (sdk.Dec): Value in NUSD stablecoin to be used for recollateralization.
+
+	ctx (sdk.Context): Carries information about the current state of the application.
+	inUSD (sdk.Dec): Value in NUSD stablecoin to be used for recollateralization.
+
 Returns:
-  govOut (sdk.Int): Amount of GOV token rewarded for 'Recollateralize'.
+
+	govOut (sdk.Int): Amount of GOV token rewarded for 'Recollateralize'.
 */
 func (k *Keeper) GovAmtFromRecollateralize(
 	ctx sdk.Context, inUSD sdk.Dec,
@@ -317,11 +322,14 @@ BuybackGovAmtForTargetCollRatio returns the governance tokens that the protocol 
 buyback in order to have the optimal collateral ration.
 
 Args:
-  ctx (sdk.Context): Carries information about the current state of the application.
+
+	ctx (sdk.Context): Carries information about the current state of the application.
+
 Returns:
-  neededGovAmt (sdk.Int): The needed Governance amount that the protocol can buyback in order to
-  achieve the optimal collateral ratio.
-  err (error): The error containing information if something went wrong.
+
+	neededGovAmt (sdk.Int): The needed Governance amount that the protocol can buyback in order to
+	achieve the optimal collateral ratio.
+	err (error): The error containing information if something went wrong.
 */
 func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 	ctx sdk.Context,
@@ -454,10 +462,13 @@ CollAmtFromBuyback computes the COLL (collateral) given as a reward for calling
 buyback.
 
 Args:
-  ctx (sdk.Context): Carries information about the current state of the application.
-  valUSD (sdk.Dec): Value in NUSD stablecoin to be used for buyback.
+
+	ctx (sdk.Context): Carries information about the current state of the application.
+	valUSD (sdk.Dec): Value in NUSD stablecoin to be used for buyback.
+
 Returns:
-  collAmt (sdk.Int): Amount of COLL token rewarded for 'Buyback'.
+
+	collAmt (sdk.Int): Amount of COLL token rewarded for 'Buyback'.
 */
 func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,

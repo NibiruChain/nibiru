@@ -40,11 +40,14 @@ func NewQueryMarketsResponse(pair common.AssetPair, oracles []sdk.AccAddress, ac
 NewCurrentPrice returns an instance of CurrentPrice
 
 Args:
-  token0 (string):
-  token1 (string):
-  price (sdk.Dec): Price in units of token1 / token0
+
+	token0 (string):
+	token1 (string):
+	price (sdk.Dec): Price in units of token1 / token0
+
 Returns:
-  (CurrentPrice): Price for the asset pair.
+
+	(CurrentPrice): Price for the asset pair.
 */
 func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
@@ -55,11 +58,14 @@ func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
 NewCurrentTWAP returns an instance of CurrentTWAP
 
 Args:
-  token0 (string):
-  token1 (string):
-  price (sdk.Dec): Price in units of token1 / token0
+
+	token0 (string):
+	token1 (string):
+	price (sdk.Dec): Price in units of token1 / token0
+
 Returns:
-  (CurrentTWAP): Current TWAP price for the asset pair.
+
+	(CurrentTWAP): Current TWAP price for the asset pair.
 */
 func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Dec, price sdk.Dec) CurrentTWAP {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
