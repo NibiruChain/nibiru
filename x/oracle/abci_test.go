@@ -309,7 +309,7 @@ func TestOracleRewardBand(t *testing.T) {
 func TestOracleMultiRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
-	// SDR and KRW have the same voting power, but KRW has been chosen as referenceTerra by alphabetical order.
+	// SDR and KRW have the same voting power, but KRW has been chosen as referencepair by alphabetical order.
 	// Account 1, SDR, KRW
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 0)
 

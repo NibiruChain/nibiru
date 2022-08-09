@@ -56,7 +56,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		pairBallotMap := k.OrganizeBallotByPair(ctx, validatorClaimMap)
 
 		if referencePair := PickReferencePair(ctx, k, pairTobinTaxMap, pairBallotMap); referencePair != "" {
-			// make voteMap of Reference Terra to calculate cross exchange rates
+			// make voteMap of reference pair to calculate cross exchange rates
 			referenceBallot := pairBallotMap[referencePair]
 			referenceValidatorExchangeRateMap := referenceBallot.ToMap()
 			referenceExchangeRate := referenceBallot.WeightedMedianWithAssertion()

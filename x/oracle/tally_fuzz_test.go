@@ -71,7 +71,7 @@ func TestFuzz_Tally(t *testing.T) {
 	})
 }
 
-func TestFuzz_PickReferenceTerra(t *testing.T) {
+func TestFuzz_PickReferencePair(t *testing.T) {
 	var denoms []string
 
 	f := fuzz.New().NilChance(0).Funcs(

@@ -48,11 +48,11 @@ func GetCmdQueryExchangeRates() *cobra.Command {
 Query the current exchange rate of Luna with an asset. 
 You can find the current list of active pairs by running
 
-$ terrad query oracle exchange-rates 
+$ nibid query oracle exchange-rates 
 
 Or, can filter with pair
 
-$ terrad query oracle exchange-rates nibi:usd
+$ nibid query oracle exchange-rates nibi:usd
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -92,11 +92,11 @@ func GetCmdQueryActives() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "actives",
 		Args:  cobra.NoArgs,
-		Short: "Query the active list of Terra assets recognized by the oracle",
+		Short: "Query the active list of pairs recognized by the oracle",
 		Long: strings.TrimSpace(`
-Query the active list of Terra assets recognized by the types.
+Query the active list of pairs recognized by the oracles.
 
-$ terrad query oracle actives
+$ nibid query oracle actives
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -153,7 +153,7 @@ func GetCmdQueryFeederDelegation() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the account the validator's oracle voting right is delegated to.
 
-$ terrad query oracle feeder terravaloper...
+$ nibid query oracle feeder nibivaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -194,7 +194,7 @@ func GetCmdQueryMissCounter() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the # of vote periods missed in this oracle slash window.
 
-$ terrad query oracle miss terravaloper...
+$ nibid query oracle miss nibivaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -234,11 +234,11 @@ func GetCmdQueryAggregatePrevote() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query outstanding oracle aggregate prevotes.
 
-$ terrad query oracle aggregate-prevotes
+$ nibid query oracle aggregate-prevotes
 
 Or, can filter with voter address
 
-$ terrad query oracle aggregate-prevotes terravaloper...
+$ nibid query oracle aggregate-prevotes nibivaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -290,11 +290,11 @@ func GetCmdQueryAggregateVote() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query outstanding oracle aggregate vote.
 
-$ terrad query oracle aggregate-votes 
+$ nibid query oracle aggregate-votes 
 
 Or, can filter with voter address
 
-$ terrad query oracle aggregate-votes terravaloper...
+$ nibid query oracle aggregate-votes nibivaloper...
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -375,7 +375,7 @@ func GetCmdQueryTobinTaxes() *cobra.Command {
 		Long: strings.TrimSpace(`
 Query the current Oracle tobin taxes.
 
-$ terrad query oracle tobin-taxes
+$ nibid query oracle tobin-taxes
 
 Or, can filter with pair
 
