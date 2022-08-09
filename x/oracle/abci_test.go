@@ -346,7 +346,7 @@ func TestOracleExchangeRate(t *testing.T) {
 	govStableExchangeRate := sdk.NewDec(1000000000)
 	ethStableExchangeRate := sdk.NewDec(1000000)
 
-	// govstable has been chosen as referenceTerra by highest voting power
+	// govstable has been chosen as referenceExchangeRate by highest voting power
 	// Account 1, ethstable, govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairETHStable.String(), ExchangeRate: ethStableExchangeRate}, {Pair: common.PairGovStable.String(), ExchangeRate: govStableExchangeRate}}, 0)
 

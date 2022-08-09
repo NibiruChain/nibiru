@@ -1,4 +1,4 @@
-## Abstract
+# Abstract
 
 The Oracle module provides the Terra blockchain with an up-to-date and accurate price feed of exchange rates of Luna against various Terra pegs so that the [Market](../../market/spec/README.md) may provide fair exchanges between Terra<>Terra currency pairs, as well as Terra<>Luna.
 

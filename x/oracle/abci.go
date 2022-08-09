@@ -71,7 +71,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				// Get weighted median of cross exchange rates
 				exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
 
-				// Transform into the original form uluna/stablecoin
+				// Transform into the original exchange rate
 				if pair != referencePair {
 					exchangeRate = referenceExchangeRate.Quo(exchangeRate)
 				}

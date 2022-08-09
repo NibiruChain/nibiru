@@ -10,12 +10,11 @@ order: 4
 
 `Denom` is the denomination of the currency for which the vote is being cast. For example, if the voter wishes to submit a prevote for the usd, then the correct `Denom` is `uusd`.
 
-The exchange rate used in the hash must be the open market exchange rate of Luna, with respect to the denomination matching `Denom`. For example, if `Denom` is `uusd` and the going exchange rate for Luna is 1 USD, then "1" must be used as the exchange rate, as `1 uluna = 1 uusd`.
+The exchange rate used in the hash must be the open market exchange rate of Luna, with respect to the denomination matching `Denom`. For example, if `Denom` is `uusd` and the going exchange rate for Luna is 1 USD, then "1" must be used as the exchange rate, as `1 unibi = 1 uusd`.
 
 `Feeder` (`terra-` address) is used if the validator wishes to delegate oracle vote signing to a separate key (who "feeds" the price in lieu of the operator) to de-risk exposing their validator signing key.
 
 `Validator` is the validator address (`terravaloper-` address) of the original validator.
-
 
 ```go
 // Deprecated: normal prevote and vote will be deprecated after columbus-4
@@ -23,10 +22,10 @@ The exchange rate used in the hash must be the open market exchange rate of Luna
 // The purpose of prevote is to hide vote exchange rate with hash
 // which is formatted as hex string in SHA256("{salt}:{exchange_rate}:{denom}:{voter}")
 type MsgExchangeRatePrevote struct {
-	Hash      VoteHash
-	Denom     string
-	Feeder    sdk.AccAddress
-	Validator sdk.ValAddress
+ Hash      VoteHash
+ Denom     string
+ Feeder    sdk.AccAddress
+ Validator sdk.ValAddress
 }
 ```
 
@@ -40,11 +39,11 @@ The `MsgExchangeRateVote` contains the actual exchange rate vote. The `Salt` par
 // For example, if the validator believes that the effective exchange rate of Luna in USD is 10.39, that's
 // what the exchange rate field would be, and if 1213.34 for KRW, same.
 type MsgExchangeRateVote struct {
-	ExchangeRate sdk.Dec        // the effective rate of Luna in {Denom}
-	Salt         string
-	Denom        string
-	Feeder       sdk.AccAddress
-	Validator    sdk.ValAddress
+ ExchangeRate sdk.Dec        // the effective rate of Luna in {Denom}
+ Salt         string
+ Denom        string
+ Feeder       sdk.AccAddress
+ Validator    sdk.ValAddress
 }
 ```
 
@@ -59,8 +58,8 @@ The `Operator` field contains the operator address of the validator (prefixed `t
 ```go
 // MsgDelegateFeedConsent - struct for delegating oracle voting rights to another address.
 type MsgDelegateFeedConsent struct {
-	Operator sdk.ValAddress 
-	Delegate sdk.AccAddress 
+ Operator sdk.ValAddress 
+ Delegate sdk.AccAddress 
 }
 ```
 
@@ -73,9 +72,9 @@ type MsgDelegateFeedConsent struct {
 // The purpose of aggregate prevote is to hide vote exchange rates with hash
 // which is formatted as hex string in SHA256("{salt}:{exchange rate}{denom},...,{exchange rate}{denom}:{voter}")
 type MsgAggregateExchangeRatePrevote struct {
-	Hash      AggregateVoteHash 
-	Feeder    sdk.AccAddress    
-	Validator sdk.ValAddress    
+ Hash      AggregateVoteHash 
+ Feeder    sdk.AccAddress    
+ Validator sdk.ValAddress    
 }
 ```
 
@@ -86,9 +85,9 @@ The `MsgAggregateExchangeRateVote` contains the actual exchange rates vote. The 
 ```go
 // MsgAggregateExchangeRateVote - struct for voting on the exchange rates of Luna denominated in various Terra assets.
 type MsgAggregateExchangeRateVote struct {
-	Salt          string
-	ExchangeRates string
-	Feeder        sdk.AccAddress 
-	Validator     sdk.ValAddress 
+ Salt          string
+ ExchangeRates string
+ Feeder        sdk.AccAddress 
+ Validator     sdk.ValAddress 
 }
 ```

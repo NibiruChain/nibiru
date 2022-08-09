@@ -43,9 +43,9 @@ func GetCmdQueryExchangeRates() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "exchange-rates [pair]",
 		Args:  cobra.RangeArgs(0, 1),
-		Short: "Query the current Luna exchange rate w.r.t an asset",
+		Short: "Query the current exchange rate w.r.t a pair",
 		Long: strings.TrimSpace(`
-Query the current exchange rate of Luna with an asset. 
+Query the current exchange rate of a pair. 
 You can find the current list of active pairs by running
 
 $ nibid query oracle exchange-rates 

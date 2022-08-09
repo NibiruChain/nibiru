@@ -47,7 +47,7 @@ func TestExchangeRate(t *testing.T) {
 	require.True(t, numExchangeRates == 1)
 }
 
-func TestIterateLunaExchangeRates(t *testing.T) {
+func TestIterateExchangeRates(t *testing.T) {
 	input := CreateTestInput(t)
 
 	collStablePrice := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(int64(6))
