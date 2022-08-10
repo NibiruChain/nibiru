@@ -5,6 +5,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	types3 "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,9 +36,9 @@ func (ad DecoratorWithInfiniteGasMeterCheck) AnteHandle(ctx sdk.Context, tx sdk.
 	return next(ctx, tx, simulate)
 }
 
-type FakeTx struct{}
+type TxWithPostPriceMsg struct{}
 
-func (tx FakeTx) GetMsgs() []sdk.Msg {
+func (tx TxWithPostPriceMsg) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{
 		&types.MsgPostPrice{
 			Oracle: oracleAddr.String(),
@@ -47,25 +48,86 @@ func (tx FakeTx) GetMsgs() []sdk.Msg {
 	}
 }
 
-func (tx FakeTx) ValidateBasic() error {
+func (tx TxWithPostPriceMsg) ValidateBasic() error {
 	return nil
 }
 
-func TestGaslessDecorator(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(10000000))
+type TxWithoutPostPriceMsg struct{}
 
-	// Whitelist an oracle address.
-	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracleAddr})
+func (tx TxWithoutPostPriceMsg) GetMsgs() []sdk.Msg {
+	return []sdk.Msg{
+		&types3.MsgSend{},
+	}
+}
 
-	anteDecorators := []sdk.AnteDecorator{
-		DecoratorWithNormalGasMeterCheck{t},
-		gaslessante.NewGaslessDecorator(app.PricefeedKeeper),
-		DecoratorWithInfiniteGasMeterCheck{t},
+func (tx TxWithoutPostPriceMsg) ValidateBasic() error {
+	return nil
+}
+
+func TestGaslessDecorator_Whitelisted(t *testing.T) {
+	tests := []struct {
+		name              string
+		isWhitelisted     bool
+		shouldChangeMeter bool
+		tx                sdk.Tx
+	}{
+		{
+			"whitelisted address",
+			true,
+			true,
+			TxWithPostPriceMsg{},
+		},
+		{
+			"whitelisted address but tx without price feed message",
+			true,
+			false,
+			TxWithoutPostPriceMsg{},
+		},
+		{
+			"not whitelisted address with post price tx",
+			false,
+			false,
+			TxWithPostPriceMsg{},
+		},
+		{
+			"not whitelisted address without post price tx",
+			false,
+			false,
+			TxWithoutPostPriceMsg{},
+		},
 	}
 
-	chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewNibiruAppAndContext(true)
+			ctx = ctx.WithGasMeter(sdk.NewGasMeter(10000000))
 
-	_, err := chainedHandler(ctx, FakeTx{}, false)
-	require.NoError(t, err)
+			if tc.isWhitelisted {
+				// If we whitelist, the gas meter changes.
+				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracleAddr})
+			}
+
+			var anteDecorators []sdk.AnteDecorator
+			if tc.shouldChangeMeter {
+				anteDecorators = []sdk.AnteDecorator{
+					DecoratorWithNormalGasMeterCheck{t},
+					gaslessante.NewGaslessDecorator(app.PricefeedKeeper),
+					DecoratorWithInfiniteGasMeterCheck{t},
+				}
+			} else {
+				anteDecorators = []sdk.AnteDecorator{
+					DecoratorWithNormalGasMeterCheck{t},
+					gaslessante.NewGaslessDecorator(app.PricefeedKeeper),
+					DecoratorWithNormalGasMeterCheck{t},
+				}
+			}
+
+			chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)
+
+			_, err := chainedHandler(ctx, tc.tx, false)
+			require.NoError(t, err)
+		})
+	}
+
 }
