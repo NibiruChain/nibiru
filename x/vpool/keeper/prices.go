@@ -271,8 +271,11 @@ func (k Keeper) calcTwap(
 	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
 }
 
-// GetCurrentTWAP fetches the current median price of all oracles for a specific market
-func (k Keeper) GetCurrentTWAP(ctx sdk.Context, pair common.AssetPair) (types.CurrentTWAP, error) {
+// GetCurrentTWAP fetches the instantaneous time-weighted average (mark) price
+// for the given asset pair.
+func (k Keeper) GetCurrentTWAP(
+	ctx sdk.Context, pair common.AssetPair,
+) (types.CurrentTWAP, error) {
 	// Ensure we still have valid prices
 	_, err := k.GetSpotPrice(ctx, pair)
 	if err != nil {
