@@ -21,7 +21,7 @@ func NewQuerier(k Keeper) queryServer {
 
 var _ types.QueryServer = queryServer{}
 
-func (q queryServer) TraderPosition(
+func (q queryServer) QueryTraderPosition(
 	goCtx context.Context, req *types.QueryTraderPositionRequest,
 ) (*types.QueryTraderPositionResponse, error) {
 	if req == nil {
@@ -49,16 +49,24 @@ func (q queryServer) TraderPosition(
 		return nil, err
 	}
 
-	marginRatio, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatioMark, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
+	}
+	marginRatioIndex, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_INDEX)
+	if err != nil {
+		// The index portion of the query fails silently as not to distrupt all
+		// position queries when oracles aren't posting prices.
+		q.Keeper.Logger(ctx).Error(err.Error())
 	}
 
 	return &types.QueryTraderPositionResponse{
 		Position:         position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
-		MarginRatio:      marginRatio,
+		MarginRatioMark:  marginRatioMark,
+		MarginRatioIndex: marginRatioIndex,
+		BlockNumber:      ctx.BlockHeight(),
 	}, nil
 }
 

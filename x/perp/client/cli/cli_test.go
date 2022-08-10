@@ -153,6 +153,8 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
+// TODO test: Include checks for queryResp.MarginRatioIndex
+// https://github.com/NibiruChain/nibiru/issues/809
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 
@@ -200,7 +202,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{
@@ -226,7 +228,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000938"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000938"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatioMark)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
 	args = []string{
@@ -260,7 +262,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999999506"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000494"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatioMark)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	args = []string{
@@ -288,7 +290,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("1000099.999999999999999651"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000843"), queryResp.UnrealizedPnl)
 	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
-	s.InDelta(1, queryResp.MarginRatio.MustFloat64(), 0.001)
+	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.001)
 
 	s.T().Log("F. Close position")
 	args = []string{
