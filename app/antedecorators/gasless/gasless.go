@@ -1,8 +1,6 @@
 package gasless
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	types "github.com/NibiruChain/nibiru/app/antedecorators/types"
@@ -67,6 +65,5 @@ func pricefeedPostPriceIsGasless(msg *pricefeedtypes.MsgPostPrice, ctx sdk.Conte
 	}
 
 	pair := common.AssetPair{Token0: msg.Token0, Token1: msg.Token1}
-	fmt.Println(msg.Oracle, keeper.IsWhitelistedOracle(ctx, pair.String(), valAddr))
 	return keeper.IsWhitelistedOracle(ctx, pair.String(), valAddr)
 }
