@@ -3,7 +3,6 @@ package nibiru.pricefeed.v1;
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "common/common.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -14,7 +13,10 @@ option (gogoproto.equal_all)         = true;
 message Params {
   // Pairs is the list of valid trading pairs for the module. 
   // Add new trading pairs 
-  repeated common.AssetPair pairs = 1 [(gogoproto.nullable) = false]; 
+  repeated string pairs = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair"
+  ];
 
   // amount of time to look back for TWAP calculations
   google.protobuf.Duration twap_lookback_window = 2 [

@@ -6,7 +6,6 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/duration.proto";
-import "common/common.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
@@ -87,7 +86,8 @@ message Position {
   string trader_address = 1;
 
   // pair identifies the pair associated with this position
-  common.AssetPair pair = 2 [
+  string pair = 2 [
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
     (gogoproto.nullable) = false
   ];
 
@@ -214,7 +214,8 @@ enum MarginCalculationPriceOption {
 }
 
 message PairMetadata {
-  common.AssetPair pair = 1 [
+  string pair = 1 [
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
     (gogoproto.nullable) = false
   ];
 

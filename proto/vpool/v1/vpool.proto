@@ -6,7 +6,6 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "common/common.proto";
 
 enum Direction {
   DIRECTION_UNSPECIFIED = 0;
@@ -49,7 +48,8 @@ message ReserveSnapshot {
 // No real liquidity exists in this pool.
 message Pool {
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
-  common.AssetPair pair = 1 [
+  string pair = 1 [
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
     (gogoproto.nullable) = false
   ];
 
