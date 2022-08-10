@@ -755,7 +755,6 @@ func NewNibiruApp(
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
 		PricefeedKeeper: &app.PricefeedKeeper,
-		PerpKeeper:      &app.PerpKeeper,
 		IBCKeeper:       app.IBCKeeper,
 	})
 

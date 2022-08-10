@@ -9,7 +9,6 @@ import (
 
 	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 )
 
@@ -49,7 +48,7 @@ func (tx FakeTx) ValidateBasic() error {
 func TestGaslessDecorator(t *testing.T) {
 	anteDecorators := []sdk.AnteDecorator{
 		FakeAnteDecoratorOne{},
-		gaslessante.NewGaslessDecorator([]sdk.AnteDecorator{FakeAnteDecoratorTwo{}}, pricefeedkeeper.Keeper{}, perpkeeper.Keeper{}),
+		gaslessante.NewGaslessDecorator([]sdk.AnteDecorator{FakeAnteDecoratorTwo{}}, pricefeedkeeper.Keeper{}),
 		FakeAnteDecoratorThree{},
 	}
 	chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)

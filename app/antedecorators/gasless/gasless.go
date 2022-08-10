@@ -7,7 +7,6 @@ import (
 
 	types "github.com/NibiruChain/nibiru/app/antedecorators/types"
 	"github.com/NibiruChain/nibiru/x/common"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
@@ -15,15 +14,14 @@ import (
 type GaslessDecorator struct {
 	wrapped         []sdk.AnteDecorator
 	pricefeedKeeper pricefeedkeeper.Keeper
-	perpKeeper      perpkeeper.Keeper
 }
 
-func NewGaslessDecorator(wrapped []sdk.AnteDecorator, pricefeedKeeper pricefeedkeeper.Keeper, perpKeeper perpkeeper.Keeper) GaslessDecorator {
-	return GaslessDecorator{wrapped: wrapped, pricefeedKeeper: pricefeedKeeper, perpKeeper: perpKeeper}
+func NewGaslessDecorator(wrapped []sdk.AnteDecorator, pricefeedKeeper pricefeedkeeper.Keeper) GaslessDecorator {
+	return GaslessDecorator{wrapped: wrapped, pricefeedKeeper: pricefeedKeeper}
 }
 
 func (gd GaslessDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if simulate || !isTxGasless(tx, ctx, gd.pricefeedKeeper, gd.perpKeeper) {
+	if simulate || !isTxGasless(tx, ctx, gd.pricefeedKeeper) {
 		// if not gasless, then we use the wrappers
 
 		// AnteHandle always takes a `next` so we need a no-op to execute only one handler at a time
@@ -42,7 +40,7 @@ func (gd GaslessDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	return next(ctx.WithGasMeter(gaslessMeter), tx, simulate)
 }
 
-func isTxGasless(tx sdk.Tx, ctx sdk.Context, pricefeedKeeper pricefeedkeeper.Keeper, perpKeeper perpkeeper.Keeper) bool {
+func isTxGasless(tx sdk.Tx, ctx sdk.Context, pricefeedKeeper pricefeedkeeper.Keeper) bool {
 	if len(tx.GetMsgs()) == 0 {
 		// empty TX shouldn't be gasless
 		return false
