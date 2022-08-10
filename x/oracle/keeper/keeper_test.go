@@ -299,7 +299,7 @@ func TestAggregateVoteIterate(t *testing.T) {
 	})
 }
 
-func TestTobinTaxGetSet(t *testing.T) {
+func TestPairGetSetIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
 	pairs := []string{

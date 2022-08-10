@@ -38,9 +38,9 @@ var (
 	ExchangeRateKey                 = []byte{0x01} // prefix for each key to a rate
 	FeederDelegationKey             = []byte{0x02} // prefix for each key to a feeder delegation
 	MissCounterKey                  = []byte{0x03} // prefix for each key to a miss counter
-	AggregateExchangeRatePrevoteKey = []byte{0x04} // prefix for each key to a aggregate prevote
-	AggregateExchangeRateVoteKey    = []byte{0x05} // prefix for each key to a aggregate vote
-	PairsKey                        = []byte{0x06} // prefix for each key to a tobin tax
+	AggregateExchangeRatePrevoteKey = []byte{0x04} // prefix for each key to an aggregate prevote
+	AggregateExchangeRateVoteKey    = []byte{0x05} // prefix for each key to an aggregate vote
+	PairsKey                        = []byte{0x06} // prefix for each key to a pair
 )
 
 // GetExchangeRateKey - stored by *pair*
@@ -73,7 +73,7 @@ func GetPairKey(d string) []byte {
 	return append(PairsKey, append([]byte(d), 0x00)...)
 }
 
-// ExtractPairFromPairKey - split pair from the tobin tax key
+// ExtractPairFromPairKey - split pair from the pair key
 func ExtractPairFromPairKey(key []byte) (pair string) {
 	pair = string(key[1 : len(key)-1])
 	return

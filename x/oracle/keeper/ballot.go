@@ -66,7 +66,8 @@ func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
 	})
 }
 
-// ApplyWhitelist update vote target pair list and set tobin tax with params whitelist
+// ApplyWhitelist updates the whitelist by detecting possible changes between
+// the current vote targets and the current updated whitelist.
 func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTargets map[string]struct{}) {
 
 	// check is there any update in whitelist params

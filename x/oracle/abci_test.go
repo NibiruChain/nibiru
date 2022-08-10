@@ -266,7 +266,7 @@ func TestOracleRewardBand(t *testing.T) {
 	params.Whitelist = types.PairList{{Name: common.PairGovStable.String()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
-	// clear tobin tax to reset vote targets
+	// clear pairs to reset vote targets
 	input.OracleKeeper.ClearPairs(input.Ctx)
 	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String())
 

@@ -57,17 +57,6 @@ func TestParamsEqual(t *testing.T) {
 	err = p7.Validate()
 	require.Error(t, err)
 
-	// non-positive tobin tax
-	p8 := types.DefaultParams()
-	p8.Whitelist[0].Name = ""
-	err = p8.Validate()
-	require.Error(t, err)
-
-	// invalid name tobin tax
-	p9 := types.DefaultParams()
-	err = p9.Validate()
-	require.Error(t, err)
-
 	// empty name
 	p10 := types.DefaultParams()
 	p10.Whitelist[0].Name = ""

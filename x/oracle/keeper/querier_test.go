@@ -235,7 +235,7 @@ func TestQueryVoteTargets(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	// clear tobin taxes
+	// clear pairs
 	input.OracleKeeper.ClearPairs(input.Ctx)
 
 	voteTargets := []string{"denom", "denom2", "denom3"}

@@ -117,9 +117,9 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		return false
 	})
 
-	tobinTaxes := []types.Pair{}
+	pairs := []types.Pair{}
 	keeper.IteratePairs(ctx, func(pair string) (stop bool) {
-		tobinTaxes = append(tobinTaxes, types.Pair{Name: pair})
+		pairs = append(pairs, types.Pair{Name: pair})
 		return false
 	})
 
@@ -129,5 +129,5 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		missCounters,
 		aggregateExchangeRatePrevotes,
 		aggregateExchangeRateVotes,
-		tobinTaxes)
+		pairs)
 }
