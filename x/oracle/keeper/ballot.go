@@ -69,23 +69,12 @@ func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
 // ApplyWhitelist update vote target pair list and set tobin tax with params whitelist
 func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTargets map[string]sdk.Dec) {
 	// check is there any update in whitelist params
-	updateRequired := false
+
 	if len(voteTargets) != len(whitelist) {
-		updateRequired = true
-	} else {
-		for _, item := range whitelist {
-			if tobinTax, ok := voteTargets[item.Name]; !ok || !tobinTax.Equal(item.TobinTax) {
-				updateRequired = true
-				break
-			}
-		}
-	}
-
-	if updateRequired {
-		k.ClearTobinTaxes(ctx)
+		k.ClearPairs(ctx)
 
 		for _, item := range whitelist {
-			k.SetTobinTax(ctx, item.Name, item.TobinTax)
+			k.SetPair(ctx, item.Name, sdk.ZeroDec())
 		}
 	}
 }

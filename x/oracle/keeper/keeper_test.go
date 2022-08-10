@@ -310,18 +310,18 @@ func TestTobinTaxGetSet(t *testing.T) {
 	}
 
 	for denom, tobinTax := range tobinTaxes {
-		input.OracleKeeper.SetTobinTax(input.Ctx, denom, tobinTax)
+		input.OracleKeeper.SetPair(input.Ctx, denom, tobinTax)
 		factor, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
 		require.NoError(t, err)
 		require.Equal(t, tobinTaxes[denom], factor)
 	}
 
-	input.OracleKeeper.IterateTobinTaxes(input.Ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
+	input.OracleKeeper.IteratePairs(input.Ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
 		require.Equal(t, tobinTaxes[denom], tobinTax)
 		return false
 	})
 
-	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
+	input.OracleKeeper.ClearPairs(input.Ctx)
 	for denom := range tobinTaxes {
 		_, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
 		require.Error(t, err)

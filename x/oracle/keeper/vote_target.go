@@ -10,7 +10,7 @@ func (k Keeper) IsVoteTarget(ctx sdk.Context, pair string) bool {
 
 // GetVoteTargets returns the voting target list on current vote period
 func (k Keeper) GetVoteTargets(ctx sdk.Context) (voteTargets []string) {
-	k.IterateTobinTaxes(ctx, func(pair string, _ sdk.Dec) bool {
+	k.IteratePairs(ctx, func(pair string, _ sdk.Dec) bool {
 		voteTargets = append(voteTargets, pair)
 		return false
 	})

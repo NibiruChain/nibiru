@@ -47,7 +47,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 			{Key: types.MissCounterKey, Value: cdc.MustMarshal(&gogotypes.UInt64Value{Value: missCounter})},
 			{Key: types.AggregateExchangeRatePrevoteKey, Value: cdc.MustMarshal(&aggregatePrevote)},
 			{Key: types.AggregateExchangeRateVoteKey, Value: cdc.MustMarshal(&aggregateVote)},
-			{Key: types.TobinTaxKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})},
+			{Key: types.PairsKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
 	}

@@ -39,7 +39,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 		// Pair-TobinTax map
 		pairTobinTaxMap := make(map[string]sdk.Dec)
-		k.IterateTobinTaxes(ctx, func(pair string, tobinTax sdk.Dec) bool {
+		k.IteratePairs(ctx, func(pair string, tobinTax sdk.Dec) bool {
 			pairTobinTaxMap[pair] = tobinTax
 			return false
 		})

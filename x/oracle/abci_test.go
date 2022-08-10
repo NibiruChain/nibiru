@@ -267,8 +267,8 @@ func TestOracleRewardBand(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
-	input.OracleKeeper.SetTobinTax(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
+	input.OracleKeeper.ClearPairs(input.Ctx)
+	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
 
 	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
@@ -463,7 +463,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types.PairList{{Name: common.PairGovStable.String(), TobinTax: types.DefaultTobinTax}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetTobinTax(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
+	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
 
 	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -546,8 +546,8 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
-	input.OracleKeeper.SetTobinTax(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
+	input.OracleKeeper.ClearPairs(input.Ctx)
+	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
 
 	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
@@ -567,8 +567,8 @@ func TestAbstainSlashing(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
-	input.OracleKeeper.SetTobinTax(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
+	input.OracleKeeper.ClearPairs(input.Ctx)
+	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
 
 	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
@@ -600,8 +600,8 @@ func TestVoteTargets(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
-	input.OracleKeeper.SetTobinTax(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
+	input.OracleKeeper.ClearPairs(input.Ctx)
+	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
 
 	// govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -669,8 +669,8 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	input, h := setupWithSmallVotingPower(t)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
-	input.OracleKeeper.SetTobinTax(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
+	input.OracleKeeper.ClearPairs(input.Ctx)
+	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String(), types.DefaultTobinTax)
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)

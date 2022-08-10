@@ -296,7 +296,7 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 // TODO(mercilex): use AssetPair
 func (k Keeper) GetTobinTax(ctx sdk.Context, pair string) (sdk.Dec, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetTobinTaxKey(pair))
+	bz := store.Get(types.GetPairKey(pair))
 	if bz == nil {
 		err := sdkerrors.Wrap(types.ErrNoTobinTax, pair)
 		return sdk.Dec{}, err
@@ -308,34 +308,30 @@ func (k Keeper) GetTobinTax(ctx sdk.Context, pair string) (sdk.Dec, error) {
 	return tobinTax.Dec, nil
 }
 
-// SetTobinTax updates tobin tax for the pair
+// SetPair updates tobin tax for the pair
 // TODO(mercilex): use AssetPair
-func (k Keeper) SetTobinTax(ctx sdk.Context, pair string, tobinTax sdk.Dec) {
+func (k Keeper) SetPair(ctx sdk.Context, pair string) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})
-	store.Set(types.GetTobinTaxKey(pair), bz)
+	store.Set(types.GetPairKey(pair), []byte{})
 }
 
-// IterateTobinTaxes iterates rate over tobin taxes in the store
-func (k Keeper) IterateTobinTaxes(ctx sdk.Context, handler func(pair string, tobinTax sdk.Dec) (stop bool)) {
+// IteratePairs iterates rate over tobin taxes in the store
+func (k Keeper) IteratePairs(ctx sdk.Context, handler func(pair string) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
+	iter := sdk.KVStorePrefixIterator(store, types.PairsKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		pair := types.ExtractPairFromTobinTaxKey(iter.Key())
-
-		var tobinTax sdk.DecProto
-		k.cdc.MustUnmarshal(iter.Value(), &tobinTax)
-		if handler(pair, tobinTax.Dec) {
+		pair := types.ExtractPairFromPairKey(iter.Key())
+		if handler(pair) {
 			break
 		}
 	}
 }
 
-// ClearTobinTaxes clears tobin taxes
-func (k Keeper) ClearTobinTaxes(ctx sdk.Context) {
+// ClearPairs clears tobin taxes
+func (k Keeper) ClearPairs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.TobinTaxKey)
+	iter := sdk.KVStorePrefixIterator(store, types.PairsKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		store.Delete(iter.Key())
