@@ -114,16 +114,6 @@ func TestValidate(t *testing.T) {
 					Name: "",
 				},
 			}))
-			require.Error(t, pair.ValidatorFn(types.PairList{
-				{
-					Name: "BTC:USD",
-				},
-			}))
-			require.Error(t, pair.ValidatorFn(types.PairList{
-				{
-					Name: "BTC:BTC",
-				},
-			}))
 		}
 	}
 }
