@@ -54,7 +54,7 @@ func SetupNibiruTestingApp() (
 		return nil, defaultGenesis
 	}
 
-	err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
+	err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0(), pair.Token1())
 	if err != nil {
 		return nil, defaultGenesis
 	}
