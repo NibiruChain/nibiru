@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -45,4 +47,43 @@ func TestQueryReserveAssets(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, pool.QuoteAssetReserve, resp.QuoteAssetReserve)
 	assert.EqualValues(t, pool.BaseAssetReserve, resp.BaseAssetReserve)
+}
+
+func TestQueryAllPools(t *testing.T) {
+	t.Log("initialize vpoolkeeper")
+	vpoolKeeper, mocks, ctx := getKeeper(t)
+	queryServer := NewQuerier(vpoolKeeper)
+
+	t.Log("initialize vpool")
+	pair := common.MustNewAssetPair("foo:bar")
+	pool := types.NewPool(
+		/* pair */ pair,
+		/* tradeLimitRatio */ sdk.ZeroDec(),
+		/* quoteAmount */ sdk.NewDec(1_000_000),
+		/* baseAmount */ sdk.NewDec(1000),
+		/* fluctuationLimitRatio */ sdk.ZeroDec(),
+		/* maxOracleSpreadRatio */ sdk.ZeroDec(),
+		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+	)
+	vpoolKeeper.savePool(ctx, pool)
+
+	t.Log("query reserve assets")
+	pfModuleAcc := sample.AccAddress()
+	mocks.mockPricefeedKeeper.EXPECT().
+		GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom()).
+		Return(
+			pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: sdk.NewDec(25_000)},
+			nil)
+	mocks.mockAccountKeeper.EXPECT().
+		GetModuleAddress(pricefeedtypes.ModuleName).
+		Return(pfModuleAcc)
+	resp, err := queryServer.AllPools(
+		sdk.WrapSDKContext(ctx),
+		&types.QueryAllPoolsRequest{},
+	)
+
+	t.Log("assert reserve assets")
+	require.NoError(t, err)
+	assert.EqualValues(t, pool.Pair, resp.Pools[0].Pair)
 }

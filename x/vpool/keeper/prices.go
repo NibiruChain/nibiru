@@ -55,6 +55,8 @@ ret:
   - err: error
 */
 func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
+	fmt.Printf("\nDEBUG called.GetCurrentPrice")
+	fmt.Printf("DEBUG pair: %v", pair.String())
 	currentPrice, err := k.pricefeedKeeper.GetCurrentPrice(
 		ctx,
 		/* token0 */ pair.BaseDenom(),
