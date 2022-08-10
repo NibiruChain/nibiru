@@ -297,11 +297,7 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 func (k Keeper) PairExists(ctx sdk.Context, pair string) bool {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetPairKey(pair))
-	if bz == nil {
-		return false
-	}
-
-	return true
+	return bz != nil
 }
 
 // SetPair updates tobin tax for the pair
