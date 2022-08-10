@@ -55,12 +55,12 @@ func TestAssetPair_InverseAndSort(t *testing.T) {
 	}{
 		{
 			name:   "proper and improper order pairs are inverses-1",
-			pair:   common.AssetPair{Token0: "atom", Token1: "osmo"},
+			pair:   common.MustNewAssetPairFromTokens("atom", "osmo"),
 			proper: true,
 		},
 		{
 			name:   "proper and improper order pairs are inverses-2",
-			pair:   common.AssetPair{Token0: "osmo", Token1: "atom"},
+			pair:   common.MustNewAssetPairFromTokens("osmo", "atom"),
 			proper: false,
 		},
 	}
@@ -143,27 +143,6 @@ func TestAssetPair_Marshaling(t *testing.T) {
 		name string
 		test func()
 	}{
-		{
-			name: "verbose equal suite",
-			test: func() {
-				pair := common.MustNewAssetPair("abc:xyz")
-				matchingOther := common.MustNewAssetPair("abc:xyz")
-				mismatchToken1 := common.MustNewAssetPair("abc:abc")
-				inversePair := common.MustNewAssetPair("xyz:abc")
-
-				require.NoError(t, (&pair).VerboseEqual(&matchingOther))
-				require.True(t, (&pair).Equal(&matchingOther))
-
-				require.Error(t, (&pair).VerboseEqual(&inversePair))
-				require.False(t, (&pair).Equal(&inversePair))
-
-				require.Error(t, (&pair).VerboseEqual(&mismatchToken1))
-				require.True(t, !(&pair).Equal(&mismatchToken1))
-
-				require.Error(t, (&pair).VerboseEqual(pair.String()))
-				require.False(t, (&pair).Equal(&mismatchToken1))
-			},
-		},
 		{
 			name: "panics suite",
 			test: func() {
