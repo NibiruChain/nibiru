@@ -20,21 +20,6 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 		test func()
 	}{
 		{
-			name: "invalid token pair - error",
-			test: func() {
-				k, _, ctx := getKeeper(t)
-				alice := sample.AccAddress()
-				pos := types.ZeroPosition(ctx, common.AssetPair{
-					Token0: "",
-					Token1: "",
-				}, alice)
-				_, err := k.calcFreeCollateral(ctx, *pos)
-
-				require.Error(t, err)
-				require.ErrorIs(t, err, common.ErrInvalidTokenPair)
-			},
-		},
-		{
 			name: "token pair not found - error",
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
