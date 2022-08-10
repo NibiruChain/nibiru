@@ -8,7 +8,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 
 	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
-	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 )
 
@@ -44,7 +43,7 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "pricefeed keeper is required for ante builder")
 	}
 
-	memPoolDecorator := ante.NewMempoolFeeDecorator()
+	// memPoolDecorator := ante.NewMempoolFeeDecorator()
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
 		ante.NewRejectExtensionOptionsDecorator(),
@@ -53,7 +52,7 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		gaslessante.NewGaslessDecorator([]sdk.AnteDecorator{&memPoolDecorator}, *options.PricefeedKeeper),
+		//gaslessante.NewGaslessDecorator(*options.PricefeedKeeper),
 		feeante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),

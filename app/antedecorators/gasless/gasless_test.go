@@ -1,44 +1,50 @@
 package gasless_test
 
 import (
-	"fmt"
+	types2 "github.com/NibiruChain/nibiru/app/antedecorators/types"
+	"github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
-
-	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 )
 
-var output = ""
+var oracleAddr = sample.AccAddress()
 
-type FakeAnteDecoratorOne struct{}
+type PreDecoratorWithBasicMeter struct {
+	t *testing.T
+}
 
-func (ad FakeAnteDecoratorOne) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	output = fmt.Sprintf("%sone", output)
+func (ad PreDecoratorWithBasicMeter) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	require.IsType(ad.t, sdk.NewGasMeter(111), ctx.GasMeter())
+
 	return next(ctx, tx, simulate)
 }
 
-type FakeAnteDecoratorTwo struct{}
-
-func (ad FakeAnteDecoratorTwo) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	output = fmt.Sprintf("%stwo", output)
-	return next(ctx, tx, simulate)
+type PostDecoratorWithInifiniteMeter struct {
+	t *testing.T
 }
 
-type FakeAnteDecoratorThree struct{}
+func (ad PostDecoratorWithInifiniteMeter) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	require.IsType(ad.t, types2.NewInfiniteGasMeter(), ctx.GasMeter())
 
-func (ad FakeAnteDecoratorThree) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	output = fmt.Sprintf("%sthree", output)
 	return next(ctx, tx, simulate)
 }
 
 type FakeTx struct{}
 
 func (tx FakeTx) GetMsgs() []sdk.Msg {
-	return []sdk.Msg{}
+	return []sdk.Msg{
+		&types.MsgPostPrice{
+			Oracle: oracleAddr.String(),
+			Token0: "unibi",
+			Token1: "unusd",
+		},
+	}
 }
 
 func (tx FakeTx) ValidateBasic() error {
@@ -46,13 +52,20 @@ func (tx FakeTx) ValidateBasic() error {
 }
 
 func TestGaslessDecorator(t *testing.T) {
+	app, ctx := testapp.NewNibiruAppAndContext(true)
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(10000000))
+
+	// Whitelist an oracle address.
+	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracleAddr})
+
 	anteDecorators := []sdk.AnteDecorator{
-		FakeAnteDecoratorOne{},
-		gaslessante.NewGaslessDecorator([]sdk.AnteDecorator{FakeAnteDecoratorTwo{}}, pricefeedkeeper.Keeper{}),
-		FakeAnteDecoratorThree{},
+		PreDecoratorWithBasicMeter{t},
+		gaslessante.NewGaslessDecorator(app.PricefeedKeeper),
+		PostDecoratorWithInifiniteMeter{t},
 	}
+
 	chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)
-	_, err := chainedHandler(sdk.Context{}, FakeTx{}, false)
+
+	_, err := chainedHandler(ctx, FakeTx{}, false)
 	require.NoError(t, err)
-	require.Equal(t, "onetwothree", output)
 }

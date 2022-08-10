@@ -10,31 +10,19 @@ import (
 )
 
 type GaslessDecorator struct {
-	wrapped         []sdk.AnteDecorator
 	pricefeedKeeper pricefeedkeeper.Keeper
 }
 
-func NewGaslessDecorator(wrapped []sdk.AnteDecorator, pricefeedKeeper pricefeedkeeper.Keeper) GaslessDecorator {
-	return GaslessDecorator{wrapped: wrapped, pricefeedKeeper: pricefeedKeeper}
+func NewGaslessDecorator(pricefeedKeeper pricefeedkeeper.Keeper) GaslessDecorator {
+	return GaslessDecorator{pricefeedKeeper: pricefeedKeeper}
 }
 
 func (gd GaslessDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	if simulate || !isTxGasless(tx, ctx, gd.pricefeedKeeper) {
-		// if not gasless, then we use the wrappers
-
-		// AnteHandle always takes a `next` so we need a no-op to execute only one handler at a time
-		terminatorHandler := func(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) {
-			return ctx, nil
-		}
-		// iterating instead of recursing the handler for readability
-		// we use blank here because we shouldn't handle the error
-		for _, handler := range gd.wrapped {
-			ctx, _ = handler.AnteHandle(ctx, tx, simulate, terminatorHandler)
-		}
 		return next(ctx, tx, simulate)
 	}
-	gaslessMeter := types.NewInfiniteGasMeter()
 
+	gaslessMeter := types.NewInfiniteGasMeter()
 	return next(ctx.WithGasMeter(gaslessMeter), tx, simulate)
 }
 
