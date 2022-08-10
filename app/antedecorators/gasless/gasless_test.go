@@ -31,7 +31,7 @@ type DecoratorWithInfiniteGasMeterCheck struct {
 }
 
 func (ad DecoratorWithInfiniteGasMeterCheck) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	require.IsType(ad.t, types2.NewInfiniteGasMeter(), ctx.GasMeter())
+	require.IsType(ad.t, types2.GasLessMeter(), ctx.GasMeter())
 
 	return next(ctx, tx, simulate)
 }

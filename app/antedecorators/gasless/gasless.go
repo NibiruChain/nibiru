@@ -22,7 +22,7 @@ func (gd GaslessDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		return next(ctx, tx, simulate)
 	}
 
-	gaslessMeter := types.NewInfiniteGasMeter()
+	gaslessMeter := types.GasLessMeter()
 	return next(ctx.WithGasMeter(gaslessMeter), tx, simulate)
 }
 

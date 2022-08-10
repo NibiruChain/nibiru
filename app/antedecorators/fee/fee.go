@@ -13,12 +13,12 @@ import (
 // Call next AnteHandler if fees successfully deducted
 // CONTRACT: Tx must implement FeeTx interface to use DeductFeeDecorator
 type DeductFeeDecorator struct {
-	ak             AccountKeeper
+	ak             ante.AccountKeeper
 	bankKeeper     types.BankKeeper
-	feegrantKeeper FeegrantKeeper
+	feegrantKeeper ante.FeegrantKeeper
 }
 
-func NewDeductFeeDecorator(ak AccountKeeper, bk types.BankKeeper, fk FeegrantKeeper) DeductFeeDecorator {
+func NewDeductFeeDecorator(ak ante.AccountKeeper, bk types.BankKeeper, fk ante.FeegrantKeeper) DeductFeeDecorator {
 	return DeductFeeDecorator{
 		ak:             ak,
 		bankKeeper:     bk,
