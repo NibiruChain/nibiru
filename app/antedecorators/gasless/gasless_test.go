@@ -15,21 +15,21 @@ import (
 
 var oracleAddr = sample.AccAddress()
 
-type PreDecoratorWithBasicMeter struct {
+type DecoratorWithNormalGasMeterCheck struct {
 	t *testing.T
 }
 
-func (ad PreDecoratorWithBasicMeter) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+func (ad DecoratorWithNormalGasMeterCheck) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	require.IsType(ad.t, sdk.NewGasMeter(111), ctx.GasMeter())
 
 	return next(ctx, tx, simulate)
 }
 
-type PostDecoratorWithInifiniteMeter struct {
+type DecoratorWithInfiniteGasMeterCheck struct {
 	t *testing.T
 }
 
-func (ad PostDecoratorWithInifiniteMeter) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+func (ad DecoratorWithInfiniteGasMeterCheck) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	require.IsType(ad.t, types2.NewInfiniteGasMeter(), ctx.GasMeter())
 
 	return next(ctx, tx, simulate)
@@ -59,9 +59,9 @@ func TestGaslessDecorator(t *testing.T) {
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracleAddr})
 
 	anteDecorators := []sdk.AnteDecorator{
-		PreDecoratorWithBasicMeter{t},
+		DecoratorWithNormalGasMeterCheck{t},
 		gaslessante.NewGaslessDecorator(app.PricefeedKeeper),
-		PostDecoratorWithInifiniteMeter{t},
+		DecoratorWithInfiniteGasMeterCheck{t},
 	}
 
 	chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)

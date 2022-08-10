@@ -124,10 +124,10 @@ PACKAGES_NOSIMULATION = $(shell go list ./... | grep -v '/simapp')
 RUNSIM                = $(BINDIR)/runsim
 
 test-unit:
-	go test $(PACKAGES_NOSIMULATION) -short -cover
+	@go test $(PACKAGES_NOSIMULATION) -short -cover
 
 test-integration:
-	go test -v $(PACKAGES_NOSIMULATION) -cover
+	@go test -v $(PACKAGES_NOSIMULATION) -cover
 
 runsim: $(RUNSIM)
 $(RUNSIM):
