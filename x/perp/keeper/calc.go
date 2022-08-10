@@ -87,10 +87,6 @@ position without making it go underwater.
 func (k Keeper) calcFreeCollateral(
 	ctx sdk.Context, pos types.Position,
 ) (freeCollateral sdk.Dec, err error) {
-	if err = pos.Pair.Validate(); err != nil {
-		return sdk.Dec{}, err
-	}
-
 	if err = k.requireVpool(ctx, pos.Pair); err != nil {
 		return sdk.Dec{}, err
 	}
@@ -106,7 +102,7 @@ func (k Keeper) calcFreeCollateral(
 	}
 	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
 
-	maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pos.GetPair())
+	maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pos.Pair)
 	maintenanceMarginRequirement := positionNotional.Mul(maintenanceMarginRatio)
 
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
