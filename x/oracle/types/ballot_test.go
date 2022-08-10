@@ -22,11 +22,11 @@ import (
 
 func TestToMap(t *testing.T) {
 	tests := struct {
-		votes   []types.VoteForTally
+		votes   []types.BallotVoteForTally
 		isValid []bool
 	}{
 
-		[]types.VoteForTally{
+		[]types.BallotVoteForTally{
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
@@ -94,15 +94,15 @@ func TestToCrossRate(t *testing.T) {
 	for _, data := range data {
 		valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 		if !data.base.IsZero() {
-			pbBase = append(pbBase, types.NewVoteForTally(data.base, common.PairBTCStable.String(), valAddr, 100))
+			pbBase = append(pbBase, types.NewBallotVoteForTally(data.base, common.PairBTCStable.String(), valAddr, 100))
 		}
 
-		pbQuote = append(pbQuote, types.NewVoteForTally(data.quote, common.PairBTCStable.String(), valAddr, 100))
+		pbQuote = append(pbQuote, types.NewBallotVoteForTally(data.quote, common.PairBTCStable.String(), valAddr, 100))
 
 		if !data.base.IsZero() && !data.quote.IsZero() {
-			cb = append(cb, types.NewVoteForTally(data.base.Quo(data.quote), common.PairBTCStable.String(), valAddr, 100))
+			cb = append(cb, types.NewBallotVoteForTally(data.base.Quo(data.quote), common.PairBTCStable.String(), valAddr, 100))
 		} else {
-			cb = append(cb, types.NewVoteForTally(sdk.ZeroDec(), common.PairBTCStable.String(), valAddr, 0))
+			cb = append(cb, types.NewBallotVoteForTally(sdk.ZeroDec(), common.PairBTCStable.String(), valAddr, 0))
 		}
 	}
 
@@ -134,7 +134,7 @@ func TestPBPower(t *testing.T) {
 
 	for i := 0; i < len(sk.Validators()); i++ {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
-		vote := types.NewVoteForTally(
+		vote := types.NewBallotVoteForTally(
 			sdk.ZeroDec(),
 			common.PairETHStable.String(),
 			valAccAddrs[i],
@@ -153,7 +153,7 @@ func TestPBPower(t *testing.T) {
 	// Mix in a fake validator, the total power should not have changed.
 	pubKey := secp256k1.GenPrivKey().PubKey()
 	faceValAddr := sdk.ValAddress(pubKey.Address())
-	fakeVote := types.NewVoteForTally(
+	fakeVote := types.NewBallotVoteForTally(
 		sdk.OneDec(),
 		common.PairETHStable.String(),
 		faceValAddr,
@@ -224,7 +224,7 @@ func TestPBWeightedMedian(t *testing.T) {
 				power = 0
 			}
 
-			vote := types.NewVoteForTally(
+			vote := types.NewBallotVoteForTally(
 				sdk.NewDec(int64(input)),
 				common.PairETHStable.String(),
 				valAddr,
@@ -291,7 +291,7 @@ func TestPBStandardDeviation(t *testing.T) {
 				power = 0
 			}
 
-			vote := types.NewVoteForTally(
+			vote := types.NewBallotVoteForTally(
 				sdk.NewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
 				common.PairETHStable.String(),
 				valAddr,
@@ -310,12 +310,12 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 	exchangeRate, err := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
 	require.NoError(t, err)
 
-	pb := types.ExchangeRateBallot{types.NewVoteForTally(
+	pb := types.ExchangeRateBallot{types.NewBallotVoteForTally(
 		sdk.ZeroDec(),
 		common.PairETHStable.String(),
 		valAddr,
 		2,
-	), types.NewVoteForTally(
+	), types.NewBallotVoteForTally(
 		exchangeRate,
 		common.PairETHStable.String(),
 		valAddr,

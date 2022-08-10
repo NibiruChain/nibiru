@@ -1,8 +1,8 @@
 # Abstract
 
-The Oracle module provides the Terra blockchain with an up-to-date and accurate price feed of exchange rates of Luna against various Terra pegs so that the [Market](../../market/spec/README.md) may provide fair exchanges between Terra<>Terra currency pairs, as well as Terra<>Luna.
+The Oracle module provides the Nibiru blockchain with an up-to-date and accurate price feed of exchange rates of trading pairs.
 
-As price information is extrinsic to the blockchain, the Terra network relies on validators to periodically vote on the current Luna exchange rate, with the protocol tallying up the results once per `VotePeriod` and updating the on-chain exchange rate as the weighted median of the ballot.
+As price information is extrinsic to the blockchain, the Nibiru network relies on validators to periodically vote on the current exchange rates, with the protocol tallying up the results once per `VotePeriod` and updating the on-chain exchange rate as the weighted median of the ballot.
 
 > Since the Oracle service is powered by validators, you may find it interesting to look at the [Staking](https://github.com/cosmos/cosmos-sdk/tree/master/x/staking/spec/README.md) module, which covers the logic for staking and validators.
 

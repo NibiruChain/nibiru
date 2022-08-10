@@ -464,6 +464,20 @@ func (mr *MockVpoolKeeperMockRecorder) GetMaintenanceMarginRatio(arg0, arg1 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaintenanceMarginRatio", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaintenanceMarginRatio), arg0, arg1)
 }
 
+// GetMaxLeverage mocks base method.
+func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types2.Context, arg1 common.AssetPair) types2.Dec {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMaxLeverage", arg0, arg1)
+	ret0, _ := ret[0].(types2.Dec)
+	return ret0
+}
+
+// GetMaxLeverage indicates an expected call of GetMaxLeverage.
+func (mr *MockVpoolKeeperMockRecorder) GetMaxLeverage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxLeverage", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaxLeverage), arg0, arg1)
+}
+
 // GetQuoteAssetPrice mocks base method.
 func (m *MockVpoolKeeper) GetQuoteAssetPrice(arg0 types2.Context, arg1 common.AssetPair, arg2 types1.Direction, arg3 types2.Dec) (types2.Dec, error) {
 	m.ctrl.T.Helper()

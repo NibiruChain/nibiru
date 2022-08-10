@@ -16,7 +16,7 @@ import (
 var _ yaml.Marshaler = AggregateVoteHash{}
 
 // AggregateVoteHash is hash value to hide vote exchange rates
-// which is formatted as hex string in SHA256("{salt}:({exchange rate},{pair})|...|({exchange rate},{pair}):{voter}")
+// which is formatted as hex string in SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
 type AggregateVoteHash []byte
 
 // GetAggregateVoteHash computes hash value of ExchangeRateVote

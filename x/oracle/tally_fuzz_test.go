@@ -43,7 +43,7 @@ func TestFuzz_Tally(t *testing.T) {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
 
-				ballot = append(ballot, types.NewVoteForTally(rate, c.RandString(), addr, power))
+				ballot = append(ballot, types.NewBallotVoteForTally(rate, c.RandString(), addr, power))
 			}
 
 			sort.Sort(ballot)
@@ -112,7 +112,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 					var rate sdk.Dec
 					c.Fuzz(&rate)
 
-					ballot = append(ballot, types.NewVoteForTally(rate, denom, addr, power))
+					ballot = append(ballot, types.NewBallotVoteForTally(rate, denom, addr, power))
 				}
 
 				sort.Sort(ballot)

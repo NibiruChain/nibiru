@@ -349,3 +349,22 @@ func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair
 
 	return pool.MaintenanceMarginRatio
 }
+
+/**
+GetMaxLeverage returns the maximum leverage required to open a position in the pool.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the asset pair
+
+ret:
+  - sdk.Dec: The maintenance margin ratio for the pool
+*/
+func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+
+	return pool.MaxLeverage
+}

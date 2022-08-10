@@ -10,7 +10,7 @@ The oracle module emits the following events:
 
 | Type                 | Attribute Key | Attribute Value |
 |----------------------|---------------|-----------------|
-| exchange_rate_update | denom         | {denom}         |
+| exchange_rate_update | pair          | {pair}          |
 | exchange_rate_update | exchange_rate | {exchangeRate}  |  
 
 ## Handlers
@@ -19,7 +19,7 @@ The oracle module emits the following events:
 
 | Type    | Attribute Key | Attribute Value     |
 |---------|---------------|---------------------|
-| prevote | denom         | {denom}             |
+| prevote | pair          | {pair}              |
 | prevote | voter         | {validatorAddress}  |
 | prevote | feeder        | {feederAddress}     |
 | message | module        | oracle              |
@@ -30,14 +30,13 @@ The oracle module emits the following events:
 
 | Type    | Attribute Key | Attribute Value    |
 |---------|---------------|--------------------|
-| vote    | denom         | {denom}            |
+| vote    | pair          | {pair}             |
 | vote    | voter         | {validatorAddress} |
 | vote    | exchange_rate | {exchangeRate}     |
 | vote    | feeder        | {feederAddress}    |
 | message | module        | oracle             |
 | message | action        | exchangeratevote   |
 | message | sender        | {senderAddress}    |
-
 
 ### MsgDelegateFeedConsent
 
