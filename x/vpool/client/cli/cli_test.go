@@ -41,13 +41,10 @@ func (s *VpoolCLISuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encCfg := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
-	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
-	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
+	genesisState := testapp.NewTestGenesisStateFromDefault()
+	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 
@@ -73,14 +70,16 @@ func (s VpoolCLISuite) TestX_CmdAddVpool() {
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
 	proposal := &vpooltypes.CreatePoolProposal{
-		Title:                 "Create ETH:USD pool",
-		Description:           "Creates an ETH:USD pool",
-		Pair:                  "ETH:USD",
-		TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
-		QuoteAssetReserve:     sdk.NewDec(1_000_000),
-		BaseAssetReserve:      sdk.NewDec(1_000_000),
-		FluctuationLimitRatio: sdk.MustNewDecFromStr("0.05"),
-		MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.05"),
+		Title:                  "Create ETH:USD pool",
+		Description:            "Creates an ETH:USD pool",
+		Pair:                   "ETH:USD",
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1_000_000),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.05"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.MustNewDecFromStr("15"),
 	}
 	proposalJSONString := val.ClientCtx.Codec.MustMarshalJSON(proposal)
 	proposalJSON := sdktestutil.WriteToNewTempFile(
@@ -216,6 +215,7 @@ func (s VpoolCLISuite) TestX_CmdAddVpool() {
 				FluctuationLimitRatio:  proposal.FluctuationLimitRatio,
 				MaxOracleSpreadRatio:   proposal.MaxOracleSpreadRatio,
 				MaintenanceMarginRatio: proposal.MaintenanceMarginRatio,
+				MaxLeverage:            proposal.MaxLeverage,
 			}, pool)
 			found = true
 		}

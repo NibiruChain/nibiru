@@ -284,10 +284,10 @@ func (mr *MockPricefeedKeeperMockRecorder) GetCurrentPrices(arg0 interface{}) *g
 }
 
 // GetCurrentTWAP mocks base method.
-func (m *MockPricefeedKeeper) GetCurrentTWAP(arg0 types2.Context, arg1, arg2 string) (types0.CurrentTWAP, error) {
+func (m *MockPricefeedKeeper) GetCurrentTWAP(arg0 types2.Context, arg1, arg2 string) (types2.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCurrentTWAP", arg0, arg1, arg2)
-	ret0, _ := ret[0].(types0.CurrentTWAP)
+	ret0, _ := ret[0].(types2.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -462,6 +462,20 @@ func (m *MockVpoolKeeper) GetMaintenanceMarginRatio(arg0 types2.Context, arg1 co
 func (mr *MockVpoolKeeperMockRecorder) GetMaintenanceMarginRatio(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaintenanceMarginRatio", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaintenanceMarginRatio), arg0, arg1)
+}
+
+// GetMaxLeverage mocks base method.
+func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types2.Context, arg1 common.AssetPair) types2.Dec {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMaxLeverage", arg0, arg1)
+	ret0, _ := ret[0].(types2.Dec)
+	return ret0
+}
+
+// GetMaxLeverage indicates an expected call of GetMaxLeverage.
+func (mr *MockVpoolKeeperMockRecorder) GetMaxLeverage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxLeverage", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaxLeverage), arg0, arg1)
 }
 
 // GetQuoteAssetPrice mocks base method.

@@ -17,7 +17,6 @@ import (
 // TODO(https://github.com/NibiruChain/nibiru/issues/141): Currently always calculates the invariant assuming constant weight (xy=k).
 // Once we figure out the floating point arithmetic conversions for exponentiation, we can
 // add unequal weights.
-//
 func SolveConstantProductInvariant(
 	xPrior,
 	xAfter,

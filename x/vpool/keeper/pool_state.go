@@ -19,6 +19,7 @@ func (k Keeper) CreatePool(
 	fluctuationLimitRatio sdk.Dec,
 	maxOracleSpreadRatio sdk.Dec,
 	maintenanceMarginRatio sdk.Dec,
+	maxLeverage sdk.Dec,
 ) {
 	pool := types.NewPool(
 		pair,
@@ -28,6 +29,7 @@ func (k Keeper) CreatePool(
 		fluctuationLimitRatio,
 		maxOracleSpreadRatio,
 		maintenanceMarginRatio,
+		maxLeverage,
 	)
 
 	k.savePool(ctx, pool)
@@ -115,4 +117,25 @@ func (k Keeper) GetAllPools(ctx sdk.Context) []*types.Pool {
 	}
 
 	return pools
+}
+
+// GetPoolPrices returns the mark price, twap (mark) price, and index price for a vpool.
+func (k Keeper) GetPoolPrices(ctx sdk.Context, pool types.Pool) types.PoolPrices {
+	indexPrice, err := k.GetUnderlyingPrice(ctx, pool.Pair)
+	if err != nil {
+		// fail gracefully so that vpool queries run even if the oracle price feeds stop
+		k.Logger(ctx).Error(err.Error())
+	}
+	twapMark, err := k.GetCurrentTWAP(ctx, pool.Pair)
+	if err != nil {
+		// fail gracefully so that vpool queries run even if the TWAP is undefined.
+		k.Logger(ctx).Error(err.Error())
+	}
+	return types.PoolPrices{
+		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
+		IndexPrice:    indexPrice,
+		TwapMark:      twapMark.Price,
+		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
+		BlockNumber:   ctx.BlockHeight(),
+	}
 }

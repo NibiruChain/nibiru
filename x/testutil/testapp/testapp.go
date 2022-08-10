@@ -93,9 +93,12 @@ const (
 	GenOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
 )
 
-/* NewTestGenesisStateFromDefault returns 'NewGenesisState' using the default
+/*
+	NewTestGenesisStateFromDefault returns 'NewGenesisState' using the default
+
 genesis as input. The blockchain genesis state is represented as a map from module
-identifier strings to raw json messages. */
+identifier strings to raw json messages.
+*/
 func NewTestGenesisStateFromDefault() app.GenesisState {
 	encodingConfig := app.MakeTestEncodingConfig()
 	codec := encodingConfig.Marshaler
@@ -121,17 +124,12 @@ func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
 	var govGenState govtypes.GenesisState
 	codec.MustUnmarshalJSON(testGenState[govtypes.ModuleName], &govGenState)
 	govGenState.VotingParams.VotingPeriod = time.Second * 20
-	govGenState.DepositParams.MinDeposit = sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomGov, 1_000_000)) // min deposit of 1 NIBI
-	bz := codec.MustMarshalJSON(&govGenState)
-	testGenState[govtypes.ModuleName] = bz
+	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(common.DenomGov, 1_000_000)) // min deposit of 1 NIBI
+	testGenState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
 	// pricefeed genesis state
-	// pfGenState := pricefeedtypes.GenesisState{}
-	// codec.MustUnmarshalJSON(testGenState[pricefeedtypes.ModuleName], &pfGenState)
 	pfGenState := PricefeedGenesis()
-	bz = codec.MustMarshalJSON(&pfGenState)
-	testGenState[pricefeedtypes.ModuleName] = bz
+	testGenState[pricefeedtypes.ModuleName] = codec.MustMarshalJSON(&pfGenState)
 
 	return testGenState
 }
@@ -139,8 +137,11 @@ func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
 // ----------------------------------------------------------------------------
 // Module types.GenesisState functions
 
-/* PricefeedGenesis returns an x/pricefeed GenesisState with additional
-configuration for convenience during integration tests. */
+/*
+	PricefeedGenesis returns an x/pricefeed GenesisState with additional
+
+configuration for convenience during integration tests.
+*/
 func PricefeedGenesis() pricefeedtypes.GenesisState {
 	oracle := sdk.MustAccAddressFromBech32(GenOracleAddress)
 	oracleStrings := []string{oracle.String()}
@@ -148,6 +149,7 @@ func PricefeedGenesis() pricefeedtypes.GenesisState {
 	var gen pricefeedtypes.GenesisState
 	pairs := pricefeedtypes.DefaultPairs
 	gen.Params.Pairs = pairs
+	gen.Params.TwapLookbackWindow = 15 * time.Minute
 	gen.PostedPrices = []pricefeedtypes.PostedPrice{
 		{
 			PairID: pairs[0].String(), // PairGovStable

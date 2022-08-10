@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -36,8 +37,9 @@ func TestQueryPosition(t *testing.T) {
 				BlockNumber:                         1,
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteAssetReserve:        sdk.NewDec(1_000_000),
-			baseAssetReserve:         sdk.NewDec(500_000),
+			quoteAssetReserve: sdk.NewDec(1_000_000),
+			baseAssetReserve:  sdk.NewDec(500_000),
+
 			expectedPositionNotional: sdk.MustNewDecFromStr("19.999600007999840003"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("9.999600007999840003"),
 			expectedMarginRatio:      sdk.MustNewDecFromStr("0.549991"),
@@ -52,8 +54,9 @@ func TestQueryPosition(t *testing.T) {
 				BlockNumber:                         1,
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteAssetReserve:        sdk.NewDec(1_000_000),
-			baseAssetReserve:         sdk.NewDec(1_000_000),
+			quoteAssetReserve: sdk.NewDec(1_000_000),
+			baseAssetReserve:  sdk.NewDec(1_000_000),
+
 			expectedPositionNotional: sdk.MustNewDecFromStr("9.99990000099999"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00009999900001"),
 			expectedMarginRatio:      sdk.MustNewDecFromStr("0.099991"),
@@ -68,8 +71,9 @@ func TestQueryPosition(t *testing.T) {
 				BlockNumber:                         1,
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteAssetReserve:        sdk.NewDec(500_000),
-			baseAssetReserve:         sdk.NewDec(1_000_000),
+			quoteAssetReserve: sdk.NewDec(500_000),
+			baseAssetReserve:  sdk.NewDec(1_000_000),
+
 			expectedPositionNotional: sdk.MustNewDecFromStr("4.999950000499995"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-5.000049999500005"),
 			expectedMarginRatio:      sdk.MustNewDecFromStr("-0.800018"),
@@ -99,6 +103,7 @@ func TestQueryPosition(t *testing.T) {
 				/* fluctuationLimitRatio */ sdk.OneDec(),
 				/* maxOracleSpreadRatio */ sdk.OneDec(),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,
@@ -111,7 +116,8 @@ func TestQueryPosition(t *testing.T) {
 			perpKeeper.PositionsState(ctx).Set(tc.initialPosition)
 
 			t.Log("query position")
-			resp, err := queryServer.TraderPosition(
+			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
+			resp, err := queryServer.QueryTraderPosition(
 				sdk.WrapSDKContext(ctx),
 				&types.QueryTraderPositionRequest{
 					Trader:    traderAddr.String(),
@@ -125,7 +131,9 @@ func TestQueryPosition(t *testing.T) {
 
 			assert.Equal(t, tc.expectedPositionNotional, resp.PositionNotional)
 			assert.Equal(t, tc.expectedUnrealizedPnl, resp.UnrealizedPnl)
-			assert.Equal(t, tc.expectedMarginRatio, resp.MarginRatio)
+			assert.Equal(t, tc.expectedMarginRatio, resp.MarginRatioMark)
+			// assert.Equal(t, tc.expectedMarginRatioIndex, resp.MarginRatioIndex)
+			// TODO https://github.com/NibiruChain/nibiru/issues/809
 		})
 	}
 }

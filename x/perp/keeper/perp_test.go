@@ -161,6 +161,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 			/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.1"),
 			/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+			/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
@@ -176,6 +177,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		)
 
 		t.Log("open position for alice - long")
+		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 		alice := sample.AccAddress()
 		err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
@@ -206,6 +208,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		bobQuote := sdk.NewInt(60)
 		bobLeverage := sdk.NewDec(10)
 		bobBaseLimit := sdk.NewDec(150)
+
 		_, err = nibiruApp.PerpKeeper.OpenPosition(
 			ctx, pair, bobSide, bob, bobQuote, bobLeverage, bobBaseLimit)
 		require.NoError(t, err)

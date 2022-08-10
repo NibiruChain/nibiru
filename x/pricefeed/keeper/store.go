@@ -19,7 +19,7 @@ func (k Keeper) ActivePairsStore() ActivePairsState {
 	return (ActivePairsState)(k)
 }
 
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // OraclesState implements methods for updating the "oracles" sdk.KVStore
 type OraclesState Keeper
 
@@ -81,7 +81,7 @@ func (state OraclesState) Iterate(
 	}
 }
 
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // ActivePairsState implements methods for updating the "active pairs" sdk.KVStore
 type ActivePairsState Keeper
 
@@ -113,8 +113,11 @@ func (state ActivePairsState) Get(
 	return isActive
 }
 
-/* ActivePairsState.Set either sets a pair to active or deletes it from the
-key-value store (i.e., pairs default to inactive if they don't exist). */
+/*
+	ActivePairsState.Set either sets a pair to active or deletes it from the
+
+key-value store (i.e., pairs default to inactive if they don't exist).
+*/
 func (state ActivePairsState) Set(
 	ctx sdk.Context, pair common.AssetPair, active bool,
 ) {

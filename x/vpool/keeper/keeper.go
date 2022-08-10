@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
@@ -26,6 +27,10 @@ type Keeper struct {
 	codec           codec.BinaryCodec
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
+}
+
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 /*
@@ -171,8 +176,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
-	if dir == types.Direction_REMOVE_FROM_POOL &&
-		!pool.HasEnoughQuoteReserve(quoteAssetAmount) {
+	if dir == types.Direction_REMOVE_FROM_POOL && !pool.HasEnoughQuoteReserve(quoteAssetAmount) {
 		return sdk.Dec{}, types.ErrOverTradingLimit
 	}
 
@@ -181,6 +185,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
+	// check if base asset limit is violated
 	if !baseAmountLimit.IsZero() {
 		// if going long and the base amount retrieved from the pool is less than the limit
 		if dir == types.Direction_ADD_TO_POOL && baseAssetAmount.LT(baseAmountLimit) {
@@ -230,7 +235,8 @@ func (k Keeper) SwapQuoteForBase(
 	})
 }
 
-/**
+/*
+*
 Check's that a pool that we're about to save to state does not violate the fluctuation limit.
 Always tries to check against a snapshot from a previous block. If one doesn't exist, then it just uses the current snapshot.
 This should run prior to updating the snapshot, otherwise it will compare the currently updated vpool to itself.
@@ -267,8 +273,9 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) er
 	return nil
 }
 
-/**
-isOverFluctuationLimit compares the updated pool's reserves with the given reserve snapshot, and errors if the fluctuation is above the bounds.
+/*
+*
+isOverFluctuationLimit compares the updated pool's spot price with the current spot price.
 
 If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
 
@@ -297,7 +304,8 @@ func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bo
 	return false
 }
 
-/**
+/*
+*
 IsOverSpreadLimit compares the current spot price of the vpool (given by pair) to the underlying's index price (given by an oracle).
 It panics if you provide it with a pair that doesn't exist in the state.
 
@@ -327,7 +335,8 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
 
-/**
+/*
+*
 GetMaintenanceMarginRatio returns the maintenance margin ratio for the pool from the asset pair.
 
 args:
@@ -344,4 +353,23 @@ func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair
 	}
 
 	return pool.MaintenanceMarginRatio
+}
+
+/**
+GetMaxLeverage returns the maximum leverage required to open a position in the pool.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pair: the asset pair
+
+ret:
+  - sdk.Dec: The maintenance margin ratio for the pool
+*/
+func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+	pool, err := k.getPool(ctx, pair)
+	if err != nil {
+		panic(err)
+	}
+
+	return pool.MaxLeverage
 }

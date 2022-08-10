@@ -74,6 +74,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	now := time.Now()
 
 	examplePairs := common.NewAssetPairs("xrp:bnb")
+	twapLookbackWindow := 15 * time.Minute
 	for _, tc := range []struct {
 		desc     string
 		genState *types.GenesisState
@@ -94,6 +95,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: types.NewGenesisState(
 				types.NewParams(
 					/*pairs=*/ examplePairs,
+					/*twapLookbackWindow=*/ twapLookbackWindow,
 				),
 				[]types.PostedPrice{
 					types.NewPostedPrice(examplePairs[0], addr, sdk.OneDec(), now)},
@@ -105,6 +107,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: types.NewGenesisState(
 				types.NewParams(
 					/*pairs=*/ common.AssetPairs{},
+					/*twapLookbackWindow=*/ twapLookbackWindow,
 				),
 				[]types.PostedPrice{
 					types.NewPostedPrice(examplePairs[0], addr, sdk.OneDec(), now)},
@@ -116,6 +119,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: types.NewGenesisState(
 				types.NewParams(
 					/*pairs=*/ common.AssetPairs{},
+					/*twapLookbackWindow=*/ twapLookbackWindow,
 				),
 				[]types.PostedPrice{
 					types.NewPostedPrice(examplePairs[0], addr, sdk.OneDec(), now),
@@ -123,6 +127,17 @@ func TestGenesisState_Validate(t *testing.T) {
 				},
 			),
 			err: fmt.Errorf("duplicated posted price"),
+		},
+		{
+			desc: "negative twap lookback window - invalid",
+			genState: types.NewGenesisState(
+				types.NewParams(
+					/*pairs=*/ common.AssetPairs{},
+					/*twapLookbackWindow=*/ -10*time.Second,
+				),
+				[]types.PostedPrice{},
+			),
+			err: fmt.Errorf("invalid twapLookbackWindow, negative value is not allowed: -10s"),
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {

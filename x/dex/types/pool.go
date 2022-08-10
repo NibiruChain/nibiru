@@ -2,7 +2,7 @@ package types
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -11,10 +11,12 @@ import (
 Returns the *base* denomination of a pool share token for a given poolId.
 
 args:
-  poolId: the pool id number
+
+	poolId: the pool id number
 
 ret:
-  poolDenom: the pool denomination name of the poolId
+
+	poolDenom: the pool denomination name of the poolId
 */
 func GetPoolShareBaseDenom(poolId uint64) (poolDenom string) {
 	return fmt.Sprintf("nibiru/pool/%d", poolId)
@@ -28,10 +30,12 @@ e.g. 1 atom is the display denom, but 10^6 uatom is the base denom.
 In Nibiru, a display denom is 10^18 base denoms.
 
 args:
-  poolId: the pool id number
+
+	poolId: the pool id number
 
 ret:
-  poolDenom: the pool denomination name of the poolId
+
+	poolDenom: the pool denomination name of the poolId
 */
 func GetPoolShareDisplayDenom(poolId uint64) (poolDenom string) {
 	return fmt.Sprintf("NIBIRU-POOL-%d", poolId)
@@ -41,14 +45,16 @@ func GetPoolShareDisplayDenom(poolId uint64) (poolDenom string) {
 Creates a new pool and sets the initial assets.
 
 args:
-  poolId: the pool numeric id
-  poolAccountAddr: the pool's account address for holding funds
-  poolParams: pool configuration options
-  poolAssets: the initial pool assets and weights
+
+	poolId: the pool numeric id
+	poolAccountAddr: the pool's account address for holding funds
+	poolParams: pool configuration options
+	poolAssets: the initial pool assets and weights
 
 ret:
-  pool: a new pool
-  err: error if any
+
+	pool: a new pool
+	err: error if any
 */
 func NewPool(
 	poolId uint64,
@@ -129,9 +135,13 @@ func (pool *Pool) ExitPool(exitingShares sdk.Int) (
 		return sdk.Coins{}, errors.New("too many shares out")
 	}
 
-	exitedCoins, err = pool.tokensOutFromPoolSharesIn(exitingShares)
+	exitedCoins, err = pool.TokensOutFromPoolSharesIn(exitingShares)
 	if err != nil {
 		return sdk.Coins{}, err
+	}
+
+	if !exitedCoins.IsValid() {
+		return sdk.Coins{}, errors.New("not enough pool shares to withdraw")
 	}
 
 	// update the pool's balances
@@ -154,7 +164,6 @@ args:
 
 ret:
   - err: error if any
-
 */
 func (pool *Pool) updatePoolAssetBalances(tokens sdk.Coins) (err error) {
 	// Ensures that there are no duplicate denoms, all denom's are valid,

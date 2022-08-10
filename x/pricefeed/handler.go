@@ -31,8 +31,11 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	}
 }
 
-/* NewPricefeedPropsalHandler defines a function that handles a proposal after it has
-passed the governance process */
+/*
+	NewPricefeedPropsalHandler defines a function that handles a proposal after it has
+
+passed the governance process
+*/
 func NewPricefeedProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch contentType := content.(type) {

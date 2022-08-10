@@ -21,6 +21,7 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -72,32 +73,33 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 	encodingConfig := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.NewDefaultGenesisState(encodingConfig.Marshaler)
-	s.cfg = testutilcli.BuildNetworkConfig(defaultAppGenesis)
-
-	genesisState := defaultAppGenesis
+	genesisState := testapp.NewTestGenesisStateFromDefault()
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []*vpooltypes.Pool{
 		{
-			Pair:                  common.PairBTCStable,
-			BaseAssetReserve:      sdk.NewDec(10_000_000),
-			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
-			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+			Pair:                   common.PairBTCStable,
+			BaseAssetReserve:       sdk.NewDec(10_000_000),
+			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		{
-			Pair:                  common.PairETHStable,
-			BaseAssetReserve:      sdk.NewDec(10_000_000),
-			QuoteAssetReserve:     sdk.NewDec(60_000_000_000),
-			TradeLimitRatio:       sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio: sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:  sdk.MustNewDecFromStr("0.2"),
+			Pair:                   common.PairETHStable,
+			BaseAssetReserve:       sdk.NewDec(10_000_000),
+			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	}
-	genesisState[vpooltypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(vpoolGenesis)
+	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
@@ -115,16 +117,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
-	genesisState[perptypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(perpGenesis)
+	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	// set up pricefeed
-	pricefeedGenJson := s.cfg.Codec.MustMarshalJSON(NewPricefeedGen())
-	genesisState[pftypes.ModuleName] = pricefeedGenJson
+	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
 
-	s.cfg.GenesisState = genesisState
+	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-
 	_, err := s.network.WaitForHeight(1)
 	s.NoError(err)
 
@@ -138,13 +138,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
 			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
 			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
-		s.cfg.BondDenom,
+		common.DenomGov,
 	)
 	s.NoError(err)
 }
@@ -154,6 +153,8 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
+// TODO test: Include checks for queryResp.MarginRatioIndex
+// https://github.com/NibiruChain/nibiru/issues/809
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 
@@ -201,7 +202,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{
@@ -227,7 +228,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000938"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000938"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatioMark)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
 	args = []string{
@@ -261,7 +262,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999999506"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000494"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatioMark)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	args = []string{
@@ -288,7 +289,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
 	s.EqualValues(sdk.MustNewDecFromStr("1000099.999999999999999651"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000843"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
+	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
+	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.001)
 
 	s.T().Log("F. Close position")
 	args = []string{

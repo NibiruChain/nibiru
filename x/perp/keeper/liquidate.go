@@ -8,7 +8,9 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-/* Liquidate allows to liquidate the trader position if the margin is below the
+/*
+	Liquidate allows to liquidate the trader position if the margin is below the
+
 required margin maintenance ratio.
 
 args:
@@ -119,7 +121,9 @@ func (k Keeper) ExecuteFullLiquidation(
 	positionResp, err := k.closePositionEntirely(
 		ctx,
 		/* currentPosition */ *position,
-		/* quoteAssetAmountLimit */ sdk.ZeroDec())
+		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
+		/* skipFluctuationLimitCheck */ true,
+	)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -277,11 +281,10 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	positionResp, err := k.openReversePosition(
+	positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
-		/* leverage */ sdk.OneDec(),
 		/* baseAmtLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,
 	)
