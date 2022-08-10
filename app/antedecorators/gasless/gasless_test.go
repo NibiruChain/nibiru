@@ -3,17 +3,15 @@ package gasless_test
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	types3 "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/require"
 
+	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 	types2 "github.com/NibiruChain/nibiru/app/antedecorators/types"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
-	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 )
 
 var oracleAddr = sample.AccAddress()
