@@ -410,7 +410,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 	expireInOneHour := strconv.Itoa(int(now.Add(1 * time.Hour).Unix()))
 	expiredTS := strconv.Itoa(int(now.Add(-1 * time.Hour).Unix()))
 
-	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1))
+	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1000))
 	for _, oracleName := range []string{"genOracle", "wrongOracle"} {
 		_, err = testutilcli.FillWalletFromValidator(
 			/*addr=*/ s.oracleMap[oracleName],
@@ -463,7 +463,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			args: []string{
 				col.Token0, col.Token1, "0.5", expireInOneHour,
 			},
-			expectedFeePaid: sdk.NewInt(0),
+			expectedFeePaid: sdk.NewInt(10), // Pay fee since this oracle is not whitelisted
 			respType:        &sdk.TxResponse{},
 			expectedCode:    6,
 			fromOracle:      "wrongOracle",
@@ -473,7 +473,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			args: []string{
 				"invalid", "pair", "123", expireInOneHour,
 			},
-			expectedFeePaid: sdk.NewInt(0),
+			expectedFeePaid: sdk.NewInt(10), // Invalid pair means that oracle is not whitelisted for this, needs to pay fees
 			expectedCode:    6,
 			respType:        &sdk.TxResponse{},
 			fromOracle:      "genOracle",
@@ -511,7 +511,8 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 			s.Require().EqualValues(
 				tc.expectedFeePaid.Int64(),
-				bankBalanceEnd.Balances.AmountOf(common.DenomGov).Sub(bankBalanceStart.Balances.AmountOf(common.DenomGov)).Int64(),
+				bankBalanceStart.Balances.AmountOf(common.DenomGov).
+					Sub(bankBalanceEnd.Balances.AmountOf(common.DenomGov)).Int64(),
 			)
 
 			txResp := tc.respType.(*sdk.TxResponse)
