@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
 * [#804](https://github.com/NibiruChain/nibiru/pull/804) - bump ibc-go to v3.1.1
+* [#817](https://github.com/NibiruChain/nibiru/pull/817) - Make post prices transactions gasless for whitelisted oracles
 
 ### Features
 
@@ -105,7 +106,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#741](https://github.com/NibiruChain/nibiru/pull/741) - remove unused code and refactored variable names.
 * [#742](https://github.com/NibiruChain/nibiru/pull/742) - Vpools are not tradeable if they have invalid oracle prices.
 * [#739](https://github.com/NibiruChain/nibiru/pull/739) - Bump github.com/spf13/viper from 1.11.0 to 1.12.0
-* [#738](https://github.com/NibiruChain/nibiru/pull/738) - Make post prices transactions gasless for whitelisted oracles
 
 ### API Breaking
 
