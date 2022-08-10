@@ -122,4 +122,7 @@ message PoolPrices {
     (gogoproto.moretags) = "yaml:\"swap_invariant\"",
     (gogoproto.nullable) = false
   ];
+
+  // The block number corresponding to each price
+  int64 block_number = 14;
 }

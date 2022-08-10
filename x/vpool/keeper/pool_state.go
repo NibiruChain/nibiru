@@ -136,5 +136,6 @@ func (k Keeper) GetPoolPrices(ctx sdk.Context, pool types.Pool) types.PoolPrices
 		IndexPrice:    indexPrice,
 		TwapMark:      twapMark.Price,
 		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
+		BlockNumber:   ctx.BlockHeight(),
 	}
 }
