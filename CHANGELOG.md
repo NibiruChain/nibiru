@@ -51,8 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
+* [#804](https://github.com/NibiruChain/nibiru/pull/804) - bump ibc-go to v3.1.1
 
 ### Features
+
 * [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
 
 ## [v0.12.1](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1) - 2022-08-04
@@ -69,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#767](https://github.com/NibiruChain/nibiru/pull/767) - add fluctuation limit checks on `OpenPosition`.
 * [#786](https://github.com/NibiruChain/nibiru/pull/786) - add genesis params in localnet script.
 * [#770](https://github.com/NibiruChain/nibiru/pull/770) - Return err in case of zero time elapsed and zero snapshots on `GetCurrentTWAP` func. If zero time has elapsed, and snapshots exists, return the instantaneous average.
- 
+
 ### Bug Fixes
 
 * [#766](https://github.com/NibiruChain/nibiru/pull/766) - Fixed margin ratio calculation for trader position.
