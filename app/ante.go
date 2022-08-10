@@ -7,7 +7,8 @@ import (
 	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 
-	"github.com/NibiruChain/nibiru/app/antedecorators"
+	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
+	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 )
@@ -50,13 +51,13 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
 		ante.NewRejectExtensionOptionsDecorator(),
-		antedecorators.NewGaslessDecorator([]sdk.AnteDecorator{&memPoolDecorator}, *options.PricefeedKeeper, *options.PerpKeeper),
 		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
+		gaslessante.NewGaslessDecorator([]sdk.AnteDecorator{&memPoolDecorator}, *options.PricefeedKeeper, *options.PerpKeeper),
+		feeante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),

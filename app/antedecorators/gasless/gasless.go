@@ -1,13 +1,13 @@
-package antedecorators
+package gasless
 
 import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	types "github.com/NibiruChain/nibiru/app/antedecorators/types"
 	"github.com/NibiruChain/nibiru/x/common"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
@@ -23,7 +23,7 @@ func NewGaslessDecorator(wrapped []sdk.AnteDecorator, pricefeedKeeper pricefeedk
 }
 
 func (gd GaslessDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if !isTxGasless(tx, ctx, gd.pricefeedKeeper, gd.perpKeeper) {
+	if simulate || !isTxGasless(tx, ctx, gd.pricefeedKeeper, gd.perpKeeper) {
 		// if not gasless, then we use the wrappers
 
 		// AnteHandle always takes a `next` so we need a no-op to execute only one handler at a time
@@ -37,7 +37,7 @@ func (gd GaslessDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		}
 		return next(ctx, tx, simulate)
 	}
-	gaslessMeter := sdk.NewInfiniteGasMeter()
+	gaslessMeter := types.NewInfiniteGasMeter()
 
 	return next(ctx.WithGasMeter(gaslessMeter), tx, simulate)
 }
@@ -54,11 +54,6 @@ func isTxGasless(tx sdk.Tx, ctx sdk.Context, pricefeedKeeper pricefeedkeeper.Kee
 				continue
 			}
 			return false
-		case *perptypes.MsgLiquidate:
-			if liquidateIsGasless(m, ctx, perpKeeper) {
-				continue
-			}
-			return false
 		default:
 			return false
 		}
@@ -66,6 +61,7 @@ func isTxGasless(tx sdk.Tx, ctx sdk.Context, pricefeedKeeper pricefeedkeeper.Kee
 	return true
 }
 
+// Check if the sender is a whitelisted oracle
 func pricefeedPostPriceIsGasless(msg *pricefeedtypes.MsgPostPrice, ctx sdk.Context, keeper pricefeedkeeper.Keeper) bool {
 	valAddr, err := sdk.AccAddressFromBech32(msg.Oracle)
 	if err != nil {
@@ -75,9 +71,4 @@ func pricefeedPostPriceIsGasless(msg *pricefeedtypes.MsgPostPrice, ctx sdk.Conte
 	pair := common.AssetPair{Token0: msg.Token0, Token1: msg.Token1}
 	fmt.Println(msg.Oracle, keeper.IsWhitelistedOracle(ctx, pair.String(), valAddr))
 	return keeper.IsWhitelistedOracle(ctx, pair.String(), valAddr)
-}
-
-func liquidateIsGasless(msg *perptypes.MsgLiquidate, ctx sdk.Context, keeper perpkeeper.Keeper) bool {
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
-	return err == nil // TODO: check if within whitelist for liquidators
 }

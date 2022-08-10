@@ -1,4 +1,4 @@
-package antedecorators_test
+package gasless_test
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app/antedecorators"
+	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
@@ -49,7 +49,7 @@ func (tx FakeTx) ValidateBasic() error {
 func TestGaslessDecorator(t *testing.T) {
 	anteDecorators := []sdk.AnteDecorator{
 		FakeAnteDecoratorOne{},
-		antedecorators.NewGaslessDecorator([]sdk.AnteDecorator{FakeAnteDecoratorTwo{}}, pricefeedkeeper.Keeper{}, perpkeeper.Keeper{}),
+		gaslessante.NewGaslessDecorator([]sdk.AnteDecorator{FakeAnteDecoratorTwo{}}, pricefeedkeeper.Keeper{}, perpkeeper.Keeper{}),
 		FakeAnteDecoratorThree{},
 	}
 	chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)
