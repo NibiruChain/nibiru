@@ -1,11 +1,9 @@
 package fee_test
 
 import (
-	"errors"
-	"fmt"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"testing"
-
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -13,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -33,7 +30,7 @@ type TestAccount struct {
 type AnteTestSuite struct {
 	suite.Suite
 
-	app         *simapp.SimApp
+	app         *app.NibiruApp
 	anteHandler sdk.AnteHandler
 	ctx         sdk.Context
 	clientCtx   client.Context
@@ -41,8 +38,8 @@ type AnteTestSuite struct {
 }
 
 // returns context and app with params set on account keeper
-func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
-	app := simapp.Setup(isCheckTx)
+func createTestApp(isCheckTx bool) (*app.NibiruApp, sdk.Context) {
+	app := testapp.NewNibiruApp(true)
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
 
@@ -55,7 +52,7 @@ func (suite *AnteTestSuite) SetupTest(isCheckTx bool) {
 	suite.ctx = suite.ctx.WithBlockHeight(1)
 
 	// Set up TxConfig.
-	encodingConfig := simapp.MakeTestEncodingConfig()
+	encodingConfig := app.MakeTestEncodingConfig()
 	// We're using TestMsg encoding in some tests, so register it here.
 	encodingConfig.Amino.RegisterConcrete(&testdata.TestMsg{}, "testdata.TestMsg", nil)
 	testdata.RegisterInterfaces(encodingConfig.InterfaceRegistry)
@@ -75,32 +72,6 @@ func (suite *AnteTestSuite) SetupTest(isCheckTx bool) {
 
 	suite.Require().NoError(err)
 	suite.anteHandler = anteHandler
-}
-
-// CreateTestAccounts creates `numAccs` accounts, and return all relevant
-// information about them including their private keys.
-func (suite *AnteTestSuite) CreateTestAccounts(numAccs int) []TestAccount {
-	var accounts []TestAccount
-
-	for i := 0; i < numAccs; i++ {
-		priv, _, addr := testdata.KeyTestPubAddr()
-		acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr)
-		err := acc.SetAccountNumber(uint64(i))
-		suite.Require().NoError(err)
-		suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
-		someCoins := sdk.Coins{
-			sdk.NewInt64Coin("atom", 10000000),
-		}
-		err = suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, someCoins)
-		suite.Require().NoError(err)
-
-		err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr, someCoins)
-		suite.Require().NoError(err)
-
-		accounts = append(accounts, TestAccount{acc, priv})
-	}
-
-	return accounts
 }
 
 // CreateTestTx is a helper function to create a tx given multiple inputs.
@@ -148,50 +119,6 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 	}
 
 	return suite.txBuilder.GetTx(), nil
-}
-
-// TestCase represents a test case used in test tables.
-type TestCase struct {
-	desc     string
-	simulate bool
-	expPass  bool
-	expErr   error
-}
-
-// CreateTestTx is a helper function to create a tx given multiple inputs.
-func (suite *AnteTestSuite) RunTestCase(privs []cryptotypes.PrivKey, msgs []sdk.Msg, feeAmount sdk.Coins, gasLimit uint64, accNums, accSeqs []uint64, chainID string, tc TestCase) {
-	suite.Run(fmt.Sprintf("Case %s", tc.desc), func() {
-		suite.Require().NoError(suite.txBuilder.SetMsgs(msgs...))
-		suite.txBuilder.SetFeeAmount(feeAmount)
-		suite.txBuilder.SetGasLimit(gasLimit)
-
-		// Theoretically speaking, ante handler unit tests should only test
-		// ante handlers, but here we sometimes also test the tx creation
-		// process.
-		tx, txErr := suite.CreateTestTx(privs, accNums, accSeqs, chainID)
-		newCtx, anteErr := suite.anteHandler(suite.ctx, tx, tc.simulate)
-
-		if tc.expPass {
-			suite.Require().NoError(txErr)
-			suite.Require().NoError(anteErr)
-			suite.Require().NotNil(newCtx)
-
-			suite.ctx = newCtx
-		} else {
-			switch {
-			case txErr != nil:
-				suite.Require().Error(txErr)
-				suite.Require().True(errors.Is(txErr, tc.expErr))
-
-			case anteErr != nil:
-				suite.Require().Error(anteErr)
-				suite.Require().True(errors.Is(anteErr, tc.expErr))
-
-			default:
-				suite.Fail("expected one of txErr,anteErr to be an error")
-			}
-		}
-	})
 }
 
 func TestAnteTestSuite(t *testing.T) {
