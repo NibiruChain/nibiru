@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 * [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
+- [#811](https://github.com/NibiruChain/nibiru/pull/811) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query 
 
 ## [v0.12.1](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1) - 2022-08-04
 
