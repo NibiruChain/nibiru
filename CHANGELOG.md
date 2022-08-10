@@ -51,11 +51,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
+* [#804](https://github.com/NibiruChain/nibiru/pull/804) - bump ibc-go to v3.1.1
+* [#818](https://github.com/NibiruChain/nibiru/pull/818) - fix(localnet.sh): add max leverage to vpools in genesis to fix open-position
 
 ### Features
 
 * [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
 * [#811](https://github.com/NibiruChain/nibiru/pull/811) Return the index twap in `QueryPrice` cmd
+* [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query 
+* [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
 
 ## [v0.12.1](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1) - 2022-08-04
 
