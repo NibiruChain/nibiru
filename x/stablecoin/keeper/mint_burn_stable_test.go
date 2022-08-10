@@ -124,8 +124,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := &nibiruApp.PricefeedKeeper
 			pairs := common.AssetPairs{
-				{Token0: common.DenomGov, Token1: common.DenomStable},
-				{Token0: common.DenomColl, Token1: common.DenomStable},
+				common.PairGovStable,
+				common.PairCollStable,
 			}
 			pfParams := pricefeedTypes.Params{Pairs: pairs}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -166,7 +166,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0(), pair.Token1())
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -348,7 +348,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0(), pair.Token1())
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -496,8 +496,8 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PricefeedKeeper
 			pairs := common.AssetPairs{
-				{Token1: common.DenomStable, Token0: common.DenomGov},
-				{Token1: common.DenomStable, Token0: common.DenomColl},
+				common.PairGovStable,
+				common.PairCollStable,
 			}
 			pfParams := pricefeedTypes.Params{Pairs: pairs}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -520,7 +520,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0(), pair.Token1())
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 
@@ -651,8 +651,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			// Set up pairs for the pricefeed keeper.
 			priceKeeper := nibiruApp.PricefeedKeeper
 			pairs := common.AssetPairs{
-				{Token0: common.DenomGov, Token1: common.DenomStable},
-				{Token0: common.DenomColl, Token1: common.DenomStable},
+				common.PairGovStable,
+				common.PairCollStable,
 			}
 			pfParams := pricefeedTypes.Params{Pairs: pairs}
 			priceKeeper.SetParams(ctx, pfParams)
@@ -671,7 +671,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
+				err = priceKeeper.GatherRawPrices(ctx, pair.Token0(), pair.Token1())
 				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
 			}
 

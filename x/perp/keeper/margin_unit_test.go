@@ -188,11 +188,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				traderAddr := sample.AccAddress()
-				pair := common.AssetPair{
-					Token0: "osmo",
-					Token1: "nusd",
-				}
-
+				pair := common.MustNewAssetPairFromTokens("osmo", "nusd")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 				mocks.mockPricefeedKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 
@@ -451,10 +447,7 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := sample.AccAddress()
-				pair := common.AssetPair{
-					Token0: "uosmo",
-					Token1: "unusd",
-				}
+				pair := common.MustNewAssetPairFromTokens("uosmo", "unusd")
 				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")

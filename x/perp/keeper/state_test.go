@@ -104,10 +104,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 			name: "uninitialized vpool has no metadata | fail",
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
-				vpool := common.AssetPair{
-					Token0: "xxx",
-					Token1: "yyy",
-				}
+				vpool := common.MustNewAssetPairFromTokens("xxx", "yyy")
 				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
 					ctx, vpool)
 				require.Error(t, err)

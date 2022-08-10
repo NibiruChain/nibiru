@@ -36,7 +36,10 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
 		return nil, err
 	}
 
-	pair := common.AssetPair{Token0: msg.Token0, Token1: msg.Token1}
+	pair, err := common.NewAssetPairFromTokens(msg.Token0, msg.Token1)
+	if err != nil {
+		return nil, err
+	}
 
 	isWhitelisted := k.IsWhitelistedOracle(ctx, pair.String(), from)
 	isWhitelistedForInverse := k.IsWhitelistedOracle(

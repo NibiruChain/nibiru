@@ -31,10 +31,7 @@ func TestCreatePool(t *testing.T) {
 	exists := vpoolKeeper.ExistsPool(ctx, common.PairBTCStable)
 	require.True(t, exists)
 
-	notExist := vpoolKeeper.ExistsPool(ctx, common.AssetPair{
-		Token0: "BTC",
-		Token1: "OTHER",
-	})
+	notExist := vpoolKeeper.ExistsPool(ctx, common.MustNewAssetPairFromTokens("BTC", "OTHER"))
 	require.False(t, notExist)
 }
 

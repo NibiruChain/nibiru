@@ -127,10 +127,7 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 		},
 
 		{
-			Pair: common.AssetPair{
-				Token0: "BTC",
-				Token1: "CNY",
-			}.String(),
+			Pair:         common.MustNewAssetPairFromTokens("btc", "cny").String(),
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}

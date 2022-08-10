@@ -166,7 +166,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "tst", "usd"
-	pair := common.AssetPair{Token0: token0, Token1: token1}
+	pair := common.MustNewAssetPairFromTokens(token0, token1)
 	params := types.Params{
 		Pairs:              common.AssetPairs{pair},
 		TwapLookbackWindow: 15 * time.Minute,
@@ -279,7 +279,7 @@ func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "usd", "tst"
-	pair := common.AssetPair{Token0: token0, Token1: token1}
+	pair := common.MustNewAssetPairFromTokens(token0, token1)
 	params := types.Params{
 		Pairs: common.AssetPairs{pair},
 	}

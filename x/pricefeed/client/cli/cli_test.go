@@ -424,7 +424,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		{
 			name: "Set the price of the governance token",
 			args: []string{
-				gov.Token0, gov.Token1, "100", expireInOneHour,
+				gov.Token0(), gov.Token1(), "100", expireInOneHour,
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
 				gov.String(): sdk.NewDec(100)},
@@ -434,7 +434,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		{
 			name: "Set the price of the collateral token",
 			args: []string{
-				col.Token0, col.Token1, "0.85", expireInOneHour,
+				col.Token0(), col.Token1(), "0.85", expireInOneHour,
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
 				col.String(): sdk.MustNewDecFromStr("0.85")},
@@ -444,7 +444,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		{
 			name: "Use invalid oracle",
 			args: []string{
-				col.Token0, col.Token1, "0.5", expireInOneHour,
+				col.Token0(), col.Token1(), "0.5", expireInOneHour,
 			},
 			respType:     &sdk.TxResponse{},
 			expectedCode: 6,
@@ -462,7 +462,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		{
 			name: "Set expired pair returns an error",
 			args: []string{
-				col.Token0, col.Token1, "100", expiredTS,
+				col.Token0(), col.Token1(), "100", expiredTS,
 			},
 			expectedCode: 3,
 			respType:     &sdk.TxResponse{},

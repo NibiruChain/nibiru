@@ -21,10 +21,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	var ctx sdk.Context
 
 	oracle := sample.AccAddress()
-	pair := common.AssetPair{
-		Token0: common.DenomColl,
-		Token1: common.DenomStable,
-	}
+	pair := common.PairCollStable
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.
@@ -72,7 +69,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
 	nibiruApp.PricefeedKeeper.SetParams(ctx, params)
 	price, err := nibiruApp.PricefeedKeeper.GetCurrentTWAP(
-		ctx, pair.Token0, pair.Token1)
+		ctx, pair.Token0(), pair.Token1())
 	require.NoError(t, err)
 	priceFloat, err := price.Float64()
 	require.NoError(t, err)
@@ -93,7 +90,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	*/
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
 	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
-		ctx, pair.Token0, pair.Token1)
+		ctx, pair.Token0(), pair.Token1())
 	require.NoError(t, err)
 	priceFloat, err = price.Float64()
 	require.NoError(t, err)
@@ -114,7 +111,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	runBlock(time.Hour * 5000)
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
 	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
-		ctx, pair.Token0, pair.Token1)
+		ctx, pair.Token0(), pair.Token1())
 
 	require.NoError(t, err)
 	priceFloat, err = price.Float64()
@@ -133,7 +130,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 	*/
 	setLookbackWindow(ctx, nibiruApp.PricefeedKeeper, 7_000*time.Hour)
 	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
-		ctx, pair.Token0, pair.Token1)
+		ctx, pair.Token0(), pair.Token1())
 
 	require.NoError(t, err)
 	priceFloat, err = price.Float64()

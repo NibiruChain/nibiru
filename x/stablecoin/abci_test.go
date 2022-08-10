@@ -128,7 +128,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
 			require.NoError(t, err)
 
-			err = app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1)
+			err = app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0(), pairs[0].Token1())
 			require.NoError(t, err)
 
 			err = app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio)
@@ -157,9 +157,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 	oracle := sample.AccAddress()
-	pairs := common.AssetPairs{
-		{Token0: common.DenomColl, Token1: common.DenomStable},
-	}
+	pairs := []common.AssetPair{common.PairCollStable}
 	twapLookbackWindow := 15 * time.Minute
 	params := ptypes.NewParams(pairs, twapLookbackWindow)
 	app.PricefeedKeeper.SetParams(ctx, params)
@@ -169,7 +167,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	_, err := app.PricefeedKeeper.PostRawPrice(
 		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
 	require.NoError(t, err)
-	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1))
+	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0(), pairs[0].Token1()))
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
 
 	// Mint block #2

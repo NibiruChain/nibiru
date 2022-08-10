@@ -68,16 +68,10 @@ func (p Params) Validate() error {
 }
 
 func validateParamPairs(i interface{}) error {
-	pairs, ok := i.([]common.AssetPair)
+	_, ok := i.([]common.AssetPair)
 	if !ok {
 		return fmt.Errorf("invalid parameter type for pairs: %T", i)
 	}
-	for _, pair := range pairs {
-		if err := pair.Validate(); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

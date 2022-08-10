@@ -15,9 +15,6 @@ import (
 type Markets []Market
 
 func NewMarket(pair common.AssetPair, oracles []sdk.AccAddress, active bool) Market {
-	if err := pair.Validate(); err != nil {
-		panic(err)
-	}
 	var strOracles []string
 	for _, oracle := range oracles {
 		strOracles = append(strOracles, oracle.String())
@@ -50,7 +47,7 @@ Returns:
 	(CurrentPrice): Price for the asset pair.
 */
 func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
-	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	assetPair := common.MustNewAssetPairFromTokens(token0, token1)
 	return CurrentPrice{PairID: assetPair.String(), Price: price}
 }
 
@@ -68,7 +65,7 @@ Returns:
 	(CurrentTWAP): Current TWAP price for the asset pair.
 */
 func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Dec, price sdk.Dec) CurrentTWAP {
-	assetPair := common.AssetPair{Token0: token0, Token1: token1}
+	assetPair := common.MustNewAssetPairFromTokens(token0, token1)
 	return CurrentTWAP{PairID: assetPair.String(), Numerator: numerator, Denominator: denominator, Price: price}
 }
 

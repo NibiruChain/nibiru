@@ -66,7 +66,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "pair not supported",
-			pair:                      common.AssetPair{Token0: "abc", Token1: "xyz"},
+			pair:                      common.MustNewAssetPairFromTokens("abc", "xyz"),
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(10),
 			baseLimit:                 sdk.NewDec(10),
@@ -252,7 +252,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "pair not supported",
-			pair:                      common.AssetPair{Token0: "abc", Token1: "xyz"},
+			pair:                      common.MustNewAssetPairFromTokens("abc", "xyz"),
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.NewDec(10),
 			quoteLimit:                sdk.NewDec(10),
