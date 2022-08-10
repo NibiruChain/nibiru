@@ -159,23 +159,22 @@ func TestApplyWhitelist(t *testing.T) {
 	// no update
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, types.PairList{
 		types.Pair{
-			Name:     "nibi:usd",
-			TobinTax: sdk.OneDec(),
+			Name: "nibi:usd",
 		},
 		types.Pair{
-			Name:     "btc:usd",
-			TobinTax: sdk.OneDec(),
+			Name: "btc:usd",
 		},
-	}, map[string]sdk.Dec{
-		"nibi:usd": sdk.ZeroDec(),
-		"btc:usd":  sdk.ZeroDec(),
+		types.Pair{
+			Name: "adsiaj",
+		},
+	}, map[string]struct{}{
+		"nibi:usd": {},
+		"btc:usd":  {},
 	})
 
-	price, err := input.OracleKeeper.GetTobinTax(input.Ctx, "nibi:usd")
-	require.NoError(t, err)
-	require.Equal(t, price, sdk.OneDec())
+	exists := input.OracleKeeper.PairExists(input.Ctx, "nibi:usd")
+	require.True(t, exists)
 
-	price, err = input.OracleKeeper.GetTobinTax(input.Ctx, "btc:usd")
-	require.NoError(t, err)
-	require.Equal(t, price, sdk.OneDec())
+	exists = input.OracleKeeper.PairExists(input.Ctx, "btc:usd")
+	require.True(t, exists)
 }

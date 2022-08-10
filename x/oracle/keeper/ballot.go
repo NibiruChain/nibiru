@@ -70,11 +70,25 @@ func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
 func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTargets map[string]struct{}) {
 
 	// check is there any update in whitelist params
+	updateRequired := false
+	// fast path
 	if len(voteTargets) != len(whitelist) {
-		k.ClearPairs(ctx)
+		updateRequired = true
+		// slow path, we need to check differences
+	} else {
+		for _, pair := range whitelist {
+			_, exists := voteTargets[pair.Name]
+			if !exists {
+				updateRequired = true
+				break
+			}
+		}
+	}
 
-		for _, item := range whitelist {
-			k.SetPair(ctx, item.Name)
+	if updateRequired {
+		k.ClearPairs(ctx)
+		for _, pair := range whitelist {
+			k.SetPair(ctx, pair.Name)
 		}
 	}
 }

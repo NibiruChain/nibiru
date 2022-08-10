@@ -4,8 +4,7 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 
 // IsVoteTarget returns existence of a pair in the voting target list
 func (k Keeper) IsVoteTarget(ctx sdk.Context, pair string) bool {
-	_, err := k.GetTobinTax(ctx, pair)
-	return err == nil
+	return k.PairExists(ctx, pair)
 }
 
 // GetVoteTargets returns the voting target list on current vote period

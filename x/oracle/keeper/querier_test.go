@@ -240,54 +240,10 @@ func TestQueryVoteTargets(t *testing.T) {
 
 	voteTargets := []string{"denom", "denom2", "denom3"}
 	for _, target := range voteTargets {
-		input.OracleKeeper.SetPair(input.Ctx, target, sdk.OneDec())
+		input.OracleKeeper.SetPair(input.Ctx, target)
 	}
 
 	res, err := querier.VoteTargets(ctx, &types.QueryVoteTargetsRequest{})
 	require.NoError(t, err)
 	require.Equal(t, voteTargets, res.VoteTargets)
-}
-
-func TestQueryTobinTaxes(t *testing.T) {
-	input := CreateTestInput(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
-
-	// clear tobin taxes
-	input.OracleKeeper.ClearPairs(input.Ctx)
-
-	tobinTaxes := types.PairList{{
-		Name:     common.PairBTCStable.String(),
-		TobinTax: sdk.OneDec(),
-	}, {
-		Name:     common.PairETHStable.String(),
-		TobinTax: sdk.NewDecWithPrec(123, 2),
-	}}
-	for _, item := range tobinTaxes {
-		input.OracleKeeper.SetPair(input.Ctx, item.Name, item.TobinTax)
-	}
-
-	res, err := querier.TobinTaxes(ctx, &types.QueryTobinTaxesRequest{})
-	require.NoError(t, err)
-	require.Equal(t, tobinTaxes, res.TobinTaxes)
-}
-
-func TestQueryTobinTax(t *testing.T) {
-	input := CreateTestInput(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
-
-	denom := types.Pair{Name: common.PairBTCStable.String(), TobinTax: sdk.OneDec()}
-	input.OracleKeeper.SetPair(input.Ctx, denom.Name, denom.TobinTax)
-
-	// empty request
-	_, err := querier.TobinTax(ctx, nil)
-	require.Error(t, err)
-
-	res, err := querier.TobinTax(ctx, &types.QueryTobinTaxRequest{
-		Pair: common.PairBTCStable.String(),
-	})
-	require.NoError(t, err)
-
-	require.Equal(t, denom.TobinTax, res.TobinTax)
 }

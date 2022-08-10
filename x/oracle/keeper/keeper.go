@@ -292,20 +292,16 @@ func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(
 	}
 }
 
-// GetTobinTax return tobin tax for the pair
+// PairExists return tobin tax for the pair
 // TODO(mercilex): use AssetPair
-func (k Keeper) GetTobinTax(ctx sdk.Context, pair string) (sdk.Dec, error) {
+func (k Keeper) PairExists(ctx sdk.Context, pair string) bool {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetPairKey(pair))
 	if bz == nil {
-		err := sdkerrors.Wrap(types.ErrNoTobinTax, pair)
-		return sdk.Dec{}, err
+		return false
 	}
 
-	tobinTax := sdk.DecProto{}
-	k.cdc.MustUnmarshal(bz, &tobinTax)
-
-	return tobinTax.Dec, nil
+	return true
 }
 
 // SetPair updates tobin tax for the pair
