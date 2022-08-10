@@ -55,6 +55,9 @@ message QueryAllPoolsRequest {
 
 message QueryAllPoolsResponse {
   repeated Pool pools = 1;
+  repeated PoolPrices prices = 2 [
+    (gogoproto.nullable) = false
+  ];
 }
 
 // ---------------------------------------- BaseAssetPrice
