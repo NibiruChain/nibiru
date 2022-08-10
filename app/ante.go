@@ -1,12 +1,13 @@
 package app
 
 import (
-	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+
+	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 
 	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"

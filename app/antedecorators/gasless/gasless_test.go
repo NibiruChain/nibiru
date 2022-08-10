@@ -1,12 +1,14 @@
 package gasless_test
 
 import (
+	"testing"
+
+	types3 "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	types2 "github.com/NibiruChain/nibiru/app/antedecorators/types"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
-	types3 "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -129,5 +131,4 @@ func TestGaslessDecorator_Whitelisted(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-
 }
