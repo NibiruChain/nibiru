@@ -45,7 +45,6 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "pricefeed keeper is required for ante builder")
 	}
 
-	// memPoolDecorator := ante.NewMempoolFeeDecorator()
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
 		ante.NewRejectExtensionOptionsDecorator(),
