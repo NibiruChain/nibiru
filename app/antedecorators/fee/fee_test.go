@@ -1,12 +1,13 @@
 package fee_test
 
 import (
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/antedecorators/fee"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/antedecorators/fee"
 )
 
 func (suite *AnteTestSuite) TestDeductFees() {

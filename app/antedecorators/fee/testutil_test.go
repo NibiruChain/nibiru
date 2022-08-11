@@ -1,12 +1,7 @@
 package fee_test
 
 import (
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"testing"
-
-	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -16,15 +11,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-)
+	"github.com/stretchr/testify/suite"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-// TestAccount represents an account used in the tests in x/auth/ante.
-type TestAccount struct {
-	acc  types.AccountI
-	priv cryptotypes.PrivKey
-}
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+)
 
 // AnteTestSuite is a test suite to be used with ante handler tests.
 type AnteTestSuite struct {
