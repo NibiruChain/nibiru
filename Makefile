@@ -162,6 +162,13 @@ test-sim-benchmark-invariants:
 	-Enabled=true -NumBlocks=1000 -BlockSize=200 \
 	-Period=1 -Commit=true -Seed=57 -v -timeout 24h
 
+###############################################################################
+###                            Lint                                         ###
+###############################################################################
+
+lint:
+	docker run -v $(CURDIR):/code -w /code golangci/golangci-lint:v1.47.3-alpine golangci-lint run
+
 .PHONY: \
 test-sim-nondeterminism \
 test-sim-custom-genesis-fast \
