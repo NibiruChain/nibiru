@@ -58,6 +58,7 @@ func (q queryServer) QueryTraderPosition(
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.
 		q.Keeper.Logger(ctx).Error(err.Error())
+		marginRatioIndex = sdk.Dec{}
 	}
 
 	return &types.QueryTraderPositionResponse{
