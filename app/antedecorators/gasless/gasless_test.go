@@ -70,30 +70,42 @@ func TestGaslessDecorator_Whitelisted(t *testing.T) {
 		isWhitelisted     bool
 		shouldChangeMeter bool
 		tx                sdk.Tx
+		simulate          bool
 	}{
 		{
-			"whitelisted address",
-			true,
-			true,
-			TxWithPostPriceMsg{},
+			/* name */ "whitelisted address",
+			/* isWhitelisted */ true,
+			/* shouldChangeMeter */ true,
+			/* tx */ TxWithPostPriceMsg{},
+			/* simulate */ false,
 		},
 		{
-			"whitelisted address but tx without price feed message",
-			true,
-			false,
-			TxWithoutPostPriceMsg{},
+			/* name */ "whitelisted address, simulation",
+			/* isWhitelisted */ true,
+			/* shouldChangeMeter */ false,
+			/* tx */ TxWithPostPriceMsg{},
+			/* simulate */ true,
 		},
 		{
-			"not whitelisted address with post price tx",
-			false,
-			false,
-			TxWithPostPriceMsg{},
+			/* name */ "whitelisted address but tx without price feed message",
+			/* isWhitelisted */ true,
+			/* shouldChangeMeter */ false,
+			/* tx */ TxWithoutPostPriceMsg{},
+			/* simulate */ false,
 		},
 		{
-			"not whitelisted address without post price tx",
-			false,
-			false,
-			TxWithoutPostPriceMsg{},
+			/* name */ "not whitelisted address with post price tx",
+			/* isWhitelisted */ false,
+			/* shouldChangeMeter */ false,
+			/* tx */ TxWithPostPriceMsg{},
+			/* simulate */ false,
+		},
+		{
+			/* name */ "not whitelisted address without post price tx",
+			/* isWhitelisted */ false,
+			/* shouldChangeMeter */ false,
+			/* tx */ TxWithoutPostPriceMsg{},
+			/* simulate */ false,
 		},
 	}
 
@@ -125,7 +137,7 @@ func TestGaslessDecorator_Whitelisted(t *testing.T) {
 
 			chainedHandler := sdk.ChainAnteDecorators(anteDecorators...)
 
-			_, err := chainedHandler(ctx, tc.tx, false)
+			_, err := chainedHandler(ctx, tc.tx, tc.simulate)
 			require.NoError(t, err)
 		})
 	}
