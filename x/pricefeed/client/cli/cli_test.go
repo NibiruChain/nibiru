@@ -337,7 +337,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		args []string
 
 		expectedOracles []string
-		expectErr       bool
+		expectPass      bool
 		respType        proto.Message
 	}{
 		{
@@ -361,7 +361,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			args: []string{
 				"invalid:pair",
 			},
-			expectErr:       false,
+			expectPass:      false,
 			expectedOracles: []string{},
 			respType:        &pricefeedtypes.QueryOraclesResponse{},
 		},
@@ -375,8 +375,8 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
-			s.Require().NoError(err)
-			if tc.expectErr {
+
+			if tc.expectPass {
 				s.Require().Error(err, out.String())
 			} else {
 				s.Require().NoError(err, out.String())
