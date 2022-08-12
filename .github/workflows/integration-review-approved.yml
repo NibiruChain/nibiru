@@ -4,7 +4,6 @@ name: Integration tests on master
 on:
   pull_request_review:
     types: [ submitted ]
-  pull_request_comment:
   issue_comment:
 
 jobs:
