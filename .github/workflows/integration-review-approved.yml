@@ -2,10 +2,21 @@ name: Integration tests on master
 
 # Runs on master merge only.
 on:
+  issue_comment:
+    types: [ created ]
   pull_request_review:
     types: [ submitted ]
 
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: khan/pull-request-comment-trigger@v1.1.0
+        id: check
+        with:
+          trigger: '@deploy'
+      - run: 'echo Found it!'
+        if: steps.check.outputs.triggered == 'true'
   integration-tests:
     if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
