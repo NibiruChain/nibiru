@@ -17,7 +17,7 @@ type AnteHandlerOptions struct {
 	ante.HandlerOptions
 	IBCKeeper *ibckeeper.Keeper
 
-	PricefeedKeeper *pricefeedkeeper.Keeper
+	PricefeedKeeper pricefeedkeeper.Keeper
 }
 
 /*
@@ -41,9 +41,6 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	if options.IBCKeeper == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "ibc keeper is required for AnteHandler")
 	}
-	if options.PricefeedKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "pricefeed keeper is required for ante builder")
-	}
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
@@ -53,7 +50,7 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		gaslessante.NewGaslessDecorator(*options.PricefeedKeeper),
+		gaslessante.NewGaslessDecorator(options.PricefeedKeeper),
 		feeante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
