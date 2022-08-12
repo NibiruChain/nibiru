@@ -22,9 +22,5 @@ nibid query perp --help
 
 The implementation for this module's portion of the `nibid` CLI is contained within the `/perp/client/cli` directory.
 
-## Perp Ecosystem Fund (PerpEF) 
 <!-- TODO Complete section and move a "Module Accounts" section inside concepts. -->
-
-The PerpEF is a module account on Nibiru Protocol. All of its interactions can be encapsulated in two keeper methods.
-- `WithdrawFromPerpEF()`
-- `DepositToPerpEF()`
+<!-- TODO document queries and add to client file. -->

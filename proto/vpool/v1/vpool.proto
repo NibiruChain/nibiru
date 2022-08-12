@@ -87,11 +87,42 @@ message Pool {
   string maintenance_margin_ratio = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-    ];
+  ];
 
   // max_leverage
   string max_leverage = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-    ];    
+  ];    
+}
+
+message PoolPrices {
+  // MarkPrice is the instantaneous price of the perp. 
+  // Equivalent to quoteAssetReserve / baseAssetReserve.
+  string mark_price = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false
+  ];
+
+  // IndexPrice is the price of the "underlying" for the perp
+  string index_price = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false
+  ];
+
+  // TwapMark is the time-weighted average (mark) price.
+  string twap_mark = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.nullable) = false
+  ];
+
+  // SwapInvariant is the product of the reserves, commonly referred to as "k".
+  string swap_invariant = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"swap_invariant\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // The block number corresponding to each price
+  int64 block_number = 14;
 }
