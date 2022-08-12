@@ -8,13 +8,13 @@ on:
     types: [ submitted ]
 
 jobs:
-  deploy:
+  run-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: khan/pull-request-comment-trigger@v1.1.0
         id: check
         with:
-          trigger: '@deploy'
+          trigger: 'integration-test'
       - run: 'echo Found it!'
         if: steps.check.outputs.triggered == 'true'
   integration-tests:
