@@ -4,8 +4,16 @@ name: Integration tests on master
 on:
   pull_request_review:
     types: [ submitted ]
+  pull_request_comment:
+  issue_comment:
 
 jobs:
+  dump_contexts_to_log:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub event context
+        id: github_event
+        run: echo '${{ toJSON(github.event) }}'
   integration-tests:
     if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
