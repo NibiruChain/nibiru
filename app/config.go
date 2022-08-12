@@ -2,8 +2,10 @@ package app
 
 import (
 	"flag"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/tendermint/tendermint/config"
 )
 
 // List of available flags for the simulator
@@ -72,4 +74,12 @@ func NewConfigFromFlags() simulation.Config {
 		OnOperation:        FlagOnOperationValue,
 		AllInvariants:      FlagAllInvariantsValue,
 	}
+}
+
+func SetTendermintConfigs(config *config.Config) {
+	// Consensus Configs
+	config.Consensus.TimeoutPropose = 100 * time.Millisecond
+	config.Consensus.TimeoutPrevote = 100 * time.Millisecond
+	config.Consensus.TimeoutPrecommit = 100 * time.Millisecond
+	config.Consensus.TimeoutCommit = 1 * time.Second
 }
