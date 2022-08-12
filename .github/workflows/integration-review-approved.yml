@@ -5,6 +5,7 @@ on:
   pull_request_review:
     types: [ submitted ]
   issue_comment:
+    types: [created, edited, deleted]
 
 jobs:
   dump_contexts_to_log:
