@@ -48,7 +48,6 @@ func (k Keeper) IterateEpochInfo(ctx sdk.Context, fn func(index int64, epochInfo
 	defer func(iterator sdk.Iterator) {
 		err := iterator.Close()
 		if err != nil {
-			fmt.Println(err)
 			panic(err)
 		}
 	}(iterator)

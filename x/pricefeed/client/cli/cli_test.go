@@ -8,6 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -339,7 +343,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		args []string
 
 		expectedOracles []string
-		expectErr       bool
+		expectPass      bool
 		respType        proto.Message
 	}{
 		{
@@ -363,7 +367,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			args: []string{
 				"invalid:pair",
 			},
-			expectErr:       false,
+			expectPass:      false,
 			expectedOracles: []string{},
 			respType:        &pricefeedtypes.QueryOraclesResponse{},
 		},
@@ -377,7 +381,8 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
-			if tc.expectErr {
+
+			if tc.expectPass {
 				s.Require().Error(err, out.String())
 			} else {
 				s.Require().NoError(err, out.String())
@@ -391,6 +396,15 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		})
 	}
 }
+
+func queryBankBalance(ctx client.Context, s IntegrationTestSuite, account sdk.AccAddress) (finalBalance banktypes.QueryAllBalancesResponse) {
+	resp, err := banktestutil.QueryBalancesExec(ctx, account)
+	s.Require().NoError(err)
+	s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
+
+	return
+}
+
 func (s IntegrationTestSuite) TestSetPriceCmd() {
 	err := s.network.WaitForNextBlock()
 	s.Require().NoError(err)
@@ -402,11 +416,11 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 	expireInOneHour := strconv.Itoa(int(now.Add(1 * time.Hour).Unix()))
 	expiredTS := strconv.Itoa(int(now.Add(-1 * time.Hour).Unix()))
 
-	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1_000_000))
+	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1000))
 	for _, oracleName := range []string{"genOracle", "wrongOracle"} {
 		_, err = testutilcli.FillWalletFromValidator(
 			/*addr=*/ s.oracleMap[oracleName],
-			/*balanece=*/ gasFeeToken,
+			/*balance=*/ gasFeeToken,
 			/*Validator=*/ val,
 			/*feesDenom=*/ s.cfg.BondDenom)
 		s.Require().NoError(err)
@@ -423,6 +437,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		args []string
 
 		expectedPriceForPair map[string]sdk.Dec
+		expectedFeePaid      sdk.Int
 		respType             proto.Message
 		expectedCode         uint32
 		fromOracle           string
@@ -434,8 +449,9 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
 				gov.String(): sdk.NewDec(100)},
-			respType:   &sdk.TxResponse{},
-			fromOracle: "genOracle",
+			expectedFeePaid: sdk.NewInt(0),
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 		{
 			name: "Set the price of the collateral token",
@@ -444,35 +460,39 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			},
 			expectedPriceForPair: map[string]sdk.Dec{
 				col.String(): sdk.MustNewDecFromStr("0.85")},
-			respType:   &sdk.TxResponse{},
-			fromOracle: "genOracle",
+			expectedFeePaid: sdk.NewInt(0),
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 		{
 			name: "Use invalid oracle",
 			args: []string{
 				col.Token0, col.Token1, "0.5", expireInOneHour,
 			},
-			respType:     &sdk.TxResponse{},
-			expectedCode: 6,
-			fromOracle:   "wrongOracle",
+			expectedFeePaid: sdk.NewInt(10), // Pay fee since this oracle is not whitelisted
+			respType:        &sdk.TxResponse{},
+			expectedCode:    6,
+			fromOracle:      "wrongOracle",
 		},
 		{
 			name: "Set invalid pair returns an error",
 			args: []string{
 				"invalid", "pair", "123", expireInOneHour,
 			},
-			expectedCode: 6,
-			respType:     &sdk.TxResponse{},
-			fromOracle:   "genOracle",
+			expectedFeePaid: sdk.NewInt(10), // Invalid pair means that oracle is not whitelisted for this, needs to pay fees
+			expectedCode:    6,
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 		{
 			name: "Set expired pair returns an error",
 			args: []string{
 				col.Token0, col.Token1, "100", expiredTS,
 			},
-			expectedCode: 3,
-			respType:     &sdk.TxResponse{},
-			fromOracle:   "genOracle",
+			expectedCode:    3,
+			expectedFeePaid: sdk.NewInt(0),
+			respType:        &sdk.TxResponse{},
+			fromOracle:      "genOracle",
 		},
 	}
 
@@ -484,10 +504,22 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 			clientCtx := val.ClientCtx
 
 			commonArgs = append(commonArgs,
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]))
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.oracleMap[tc.fromOracle]),
+			)
+
+			bankBalanceStart := queryBankBalance(clientCtx, s, s.oracleMap[tc.fromOracle])
+
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, append(tc.args, commonArgs...))
+			bankBalanceEnd := queryBankBalance(clientCtx, s, s.oracleMap[tc.fromOracle])
+
 			s.Require().NoError(err)
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType))
+
+			s.Require().EqualValues(
+				tc.expectedFeePaid.Int64(),
+				bankBalanceStart.Balances.AmountOf(common.DenomGov).
+					Sub(bankBalanceEnd.Balances.AmountOf(common.DenomGov)).Int64(),
+			)
 
 			txResp := tc.respType.(*sdk.TxResponse)
 			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
@@ -570,7 +602,9 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	_, err = testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom)
 	s.Require().NoError(err)
 
-	s.T().Log("load example json as bytes")
+	// ----------------------------------------------------------------------
+	s.T().Log("load example proposal json as bytes")
+	// ----------------------------------------------------------------------
 	proposal := &pricefeedtypes.AddOracleProposal{
 		Title:       "Cataclysm-004",
 		Description: "Whitelists Delphi to post prices for OHM and BTC",
@@ -593,14 +627,19 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	contents, err := ioutil.ReadFile(proposalJSON.Name())
 	s.Assert().NoError(err)
 
+	// ----------------------------------------------------------------------
 	s.T().Log("Unmarshal json bytes into proposal object; check validity")
+	// ----------------------------------------------------------------------
 	encodingConfig := simappparams.MakeTestEncodingConfig()
 	proposal = &pricefeedtypes.AddOracleProposal{}
 	err = encodingConfig.Marshaler.UnmarshalJSON(contents, proposal)
 	s.Assert().NoError(err)
 	s.Require().NoError(proposal.Validate())
 
-	s.T().Log("Submit proposal and unmarshal tx response")
+	// ----------------------------------------------------------------------
+	s.T().Log(`Submit proposal and unmarshal tx response
+	$ nibid tx gov submit-proposal add-oracle [proposal-json] --deposit=[deposit] [flags]`)
+	// ----------------------------------------------------------------------
 	args := []string{
 		proposalJSON.Name(),
 		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
@@ -622,8 +661,11 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(0, txResp.Code, out.String())
 
+	// ----------------------------------------------------------------------
 	s.T().Log(`Check that proposal was correctly submitted with gov client
-			$ nibid query gov proposal 1`)
+	$ nibid query gov proposal 1
+	`)
+	// ----------------------------------------------------------------------
 	// the proposal tx won't be included until next block
 	s.Assert().NoError(s.network.WaitForNextBlock())
 	govQueryClient := govtypes.NewQueryClient(clientCtx)
@@ -643,8 +685,10 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 		proposalsQueryResponse.Proposals[0].TotalDeposit,
 	)
 
+	// ----------------------------------------------------------------------
 	s.T().Log(`Move proposal to vote status by meeting min deposit
-			$ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
+	$ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
+	// ----------------------------------------------------------------------
 	govDepositParams, err := govQueryClient.Params(
 		context.Background(), &govtypes.QueryParamsRequest{ParamsType: govtypes.ParamDeposit})
 	s.Assert().NoError(err)
@@ -668,9 +712,11 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 		proposalsQueryResponse.Proposals[0].Status,
 		"proposal should be in voting period since min deposit has been met")
 
+	// ----------------------------------------------------------------------
 	s.T().Log(`Vote on the proposal.
-			$ nibid tx gov vote [proposal-id] [option] [flags]
-			e.g. $ nibid tx gov vote 1 yes`)
+	$ nibid tx gov vote [proposal-id] [option] [flags]
+	For example, $ nibid tx gov vote 1 yes`)
+	// ----------------------------------------------------------------------
 	args = []string{
 		/*proposal-id=*/ "1",
 		/*option=*/ "yes",
@@ -694,7 +740,9 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	}, 20*time.Second, 2*time.Second,
 		"proposal should pass after voting period")
 
+	// ----------------------------------------------------------------------
 	s.T().Log("verify that the new proposed pairs have been added to the params")
+	// ----------------------------------------------------------------------
 	cmd = cli.CmdQueryParams()
 	args = []string{}
 	queryResp := &pricefeedtypes.QueryParamsResponse{}
@@ -703,7 +751,9 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	expectedPairs := append(pricefeedtypes.DefaultPairs, proposalPairs...)
 	s.Assert().EqualValues(expectedPairs, queryResp.Params.Pairs)
 
+	// ----------------------------------------------------------------------
 	s.T().Log("verify that the oracle was whitelisted with a query")
+	// ----------------------------------------------------------------------
 	cmd = cli.CmdQueryOracles()
 	for _, pair := range proposalPairs {
 		args = []string{pair.String()}

@@ -754,7 +754,8 @@ func NewNibiruApp(
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
-		IBCKeeper: app.IBCKeeper,
+		PricefeedKeeper: app.PricefeedKeeper,
+		IBCKeeper:       app.IBCKeeper,
 	})
 
 	if err != nil {

@@ -324,9 +324,6 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				var finalBalance banktypes.QueryAllBalancesResponse
 				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
 
-				fmt.Println("Final balance:")
-				fmt.Println(finalBalance)
-
 				s.Require().Equal(
 					originalBalance.Balances.AmountOf("uusdc").Add(tc.expectedOtherToken),
 					finalBalance.Balances.AmountOf("uusdc"),

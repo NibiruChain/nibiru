@@ -6,11 +6,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+
+	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
+
+	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
+	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 )
 
 type AnteHandlerOptions struct {
 	ante.HandlerOptions
 	IBCKeeper *ibckeeper.Keeper
+
+	PricefeedKeeper pricefeedkeeper.Keeper
 }
 
 /*
@@ -43,7 +50,8 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
+		gaslessante.NewGaslessDecorator(options.PricefeedKeeper),
+		feeante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
