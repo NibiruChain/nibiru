@@ -21,7 +21,7 @@ As price information is extrinsic to the blockchain, the Nibiru network relies o
     - [MissCounter](02_state.md#MissCounter)
     - [AggregateExchangeRatePrevote](02_state.md#AggregateExchangeRatePrevote)
     - [AggregateExchangeRateVote](02_state.md#AggregateExchangeRateVote)
-    - [TobinTax](02_state.md#TobinTax)
+    - [Pair](02_state.md#Pair)
 3. **[EndBlock](03_end_block.md)**
     - [Tally Exchange Rate Votes](03_end_block.md#Tally-Exchange-Rate-Votes)
 4. **[Messages](04_messages.md)**

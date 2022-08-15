@@ -112,10 +112,11 @@ func RandomizedGenState(simState *module.SimulationState) {
 			RewardBand:               rewardBand,
 			RewardDistributionWindow: rewardDistributionWindow,
 			Whitelist: types.PairList{
-				{Name: common.PairETHStable.String(), TobinTax: types.DefaultTobinTax},
-				{Name: common.PairCollStable.String(), TobinTax: types.DefaultTobinTax},
-				{Name: common.PairBTCStable.String(), TobinTax: types.DefaultTobinTax},
-				{Name: common.PairGovStable.String(), TobinTax: sdk.NewDecWithPrec(2, 2)}},
+				{Name: common.PairETHStable.String()},
+				{Name: common.PairCollStable.String()},
+				{Name: common.PairBTCStable.String()},
+				{Name: common.PairGovStable.String()},
+			},
 			SlashFraction:     slashFraction,
 			SlashWindow:       slashWindow,
 			MinValidPerWindow: minValidPerWindow,
@@ -125,7 +126,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		[]types.MissCounter{},
 		[]types.AggregateExchangeRatePrevote{},
 		[]types.AggregateExchangeRateVote{},
-		[]types.TobinTax{},
+		[]types.Pair{},
 	)
 
 	bz, err := json.MarshalIndent(&oracleGenesis.Params, "", " ")

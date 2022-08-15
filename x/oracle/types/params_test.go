@@ -57,18 +57,6 @@ func TestParamsEqual(t *testing.T) {
 	err = p7.Validate()
 	require.Error(t, err)
 
-	// non-positive tobin tax
-	p8 := types.DefaultParams()
-	p8.Whitelist[0].Name = ""
-	err = p8.Validate()
-	require.Error(t, err)
-
-	// invalid name tobin tax
-	p9 := types.DefaultParams()
-	p9.Whitelist[0].TobinTax = sdk.NewDec(-1)
-	err = p9.Validate()
-	require.Error(t, err)
-
 	// empty name
 	p10 := types.DefaultParams()
 	p10.Whitelist[0].Name = ""
@@ -106,27 +94,13 @@ func TestValidate(t *testing.T) {
 		case bytes.Equal(types.KeyWhitelist, pair.Key):
 			require.NoError(t, pair.ValidatorFn(types.PairList{
 				{
-					Name:     "BTC:USDT",
-					TobinTax: sdk.NewDecWithPrec(10, 2),
+					Name: "BTC:USDT",
 				},
 			}))
 			require.Error(t, pair.ValidatorFn("invalid"))
 			require.Error(t, pair.ValidatorFn(types.PairList{
 				{
-					Name:     "",
-					TobinTax: sdk.NewDecWithPrec(10, 2),
-				},
-			}))
-			require.Error(t, pair.ValidatorFn(types.PairList{
-				{
-					Name:     "BTC:USD",
-					TobinTax: sdk.NewDecWithPrec(101, 2),
-				},
-			}))
-			require.Error(t, pair.ValidatorFn(types.PairList{
-				{
-					Name:     "BTC:BTC",
-					TobinTax: sdk.NewDecWithPrec(-1, 2),
+					Name: "",
 				},
 			}))
 		}

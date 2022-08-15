@@ -38,9 +38,9 @@ var (
 	ExchangeRateKey                 = []byte{0x01} // prefix for each key to a rate
 	FeederDelegationKey             = []byte{0x02} // prefix for each key to a feeder delegation
 	MissCounterKey                  = []byte{0x03} // prefix for each key to a miss counter
-	AggregateExchangeRatePrevoteKey = []byte{0x04} // prefix for each key to a aggregate prevote
-	AggregateExchangeRateVoteKey    = []byte{0x05} // prefix for each key to a aggregate vote
-	TobinTaxKey                     = []byte{0x06} // prefix for each key to a tobin tax
+	AggregateExchangeRatePrevoteKey = []byte{0x04} // prefix for each key to an aggregate prevote
+	AggregateExchangeRateVoteKey    = []byte{0x05} // prefix for each key to an aggregate vote
+	PairsKey                        = []byte{0x06} // prefix for each key to a pair
 )
 
 // GetExchangeRateKey - stored by *pair*
@@ -68,13 +68,13 @@ func GetAggregateExchangeRateVoteKey(v sdk.ValAddress) []byte {
 	return append(AggregateExchangeRateVoteKey, address.MustLengthPrefix(v)...)
 }
 
-// GetTobinTaxKey - stored by *pair* bytes
-func GetTobinTaxKey(d string) []byte {
-	return append(TobinTaxKey, append([]byte(d), 0x00)...)
+// GetPairKey - stored by *pair* bytes
+func GetPairKey(d string) []byte {
+	return append(PairsKey, append([]byte(d), 0x00)...)
 }
 
-// ExtractPairFromTobinTaxKey - split pair from the tobin tax key
-func ExtractPairFromTobinTaxKey(key []byte) (pair string) {
+// ExtractPairFromPairKey - split pair from the pair key
+func ExtractPairFromPairKey(key []byte) (pair string) {
 	pair = string(key[1 : len(key)-1])
 	return
 }

@@ -44,7 +44,7 @@ func TestRewardBallotWinners(t *testing.T) {
 	require.NoError(t, err)
 
 	voteTargets := make(map[string]sdk.Dec)
-	input.OracleKeeper.IterateTobinTaxes(ctx, func(denom string, tobinTax sdk.Dec) bool {
+	input.OracleKeeper.IteratePairs(ctx, func(denom string, tobinTax sdk.Dec) bool {
 		voteTargets[denom] = tobinTax
 		return false
 	})

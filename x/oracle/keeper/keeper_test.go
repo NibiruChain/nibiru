@@ -106,8 +106,8 @@ func TestParams(t *testing.T) {
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := types.PairList{
-		{Name: common.PairETHStable.String(), TobinTax: types.DefaultTobinTax},
-		{Name: common.PairBTCStable.String(), TobinTax: types.DefaultTobinTax},
+		{Name: common.PairETHStable.String()},
+		{Name: common.PairBTCStable.String()},
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -299,32 +299,31 @@ func TestAggregateVoteIterate(t *testing.T) {
 	})
 }
 
-func TestTobinTaxGetSet(t *testing.T) {
+func TestPairGetSetIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
-	tobinTaxes := map[string]sdk.Dec{
-		common.PairBTCStable.String():  sdk.NewDec(1),
-		common.PairGovStable.String():  sdk.NewDecWithPrec(123, 3),
-		common.PairCollStable.String(): sdk.NewDecWithPrec(1423, 4),
-		common.PairETHStable.String():  sdk.NewDecWithPrec(15956, 5),
+	pairs := []string{
+		common.PairBTCStable.String(),
+		common.PairGovStable.String(),
+		common.PairCollStable.String(),
+		common.PairETHStable.String(),
 	}
 
-	for denom, tobinTax := range tobinTaxes {
-		input.OracleKeeper.SetTobinTax(input.Ctx, denom, tobinTax)
-		factor, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
-		require.NoError(t, err)
-		require.Equal(t, tobinTaxes[denom], factor)
+	for _, pair := range pairs {
+		input.OracleKeeper.SetPair(input.Ctx, pair)
+		exists := input.OracleKeeper.PairExists(input.Ctx, pair)
+		require.True(t, exists)
 	}
 
-	input.OracleKeeper.IterateTobinTaxes(input.Ctx, func(denom string, tobinTax sdk.Dec) (stop bool) {
-		require.Equal(t, tobinTaxes[denom], tobinTax)
+	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
+		require.Contains(t, pairs, pair)
 		return false
 	})
 
-	input.OracleKeeper.ClearTobinTaxes(input.Ctx)
-	for denom := range tobinTaxes {
-		_, err := input.OracleKeeper.GetTobinTax(input.Ctx, denom)
-		require.Error(t, err)
+	input.OracleKeeper.ClearPairs(input.Ctx)
+	for _, pair := range pairs {
+		exists := input.OracleKeeper.PairExists(input.Ctx, pair)
+		require.False(t, exists)
 	}
 }
 

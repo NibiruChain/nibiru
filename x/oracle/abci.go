@@ -37,10 +37,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			}
 		}
 
-		// Pair-TobinTax map
-		pairTobinTaxMap := make(map[string]sdk.Dec)
-		k.IterateTobinTaxes(ctx, func(pair string, tobinTax sdk.Dec) bool {
-			pairTobinTaxMap[pair] = tobinTax
+		pairsMap := make(map[string]struct{})
+		k.IteratePairs(ctx, func(pair string) bool {
+			pairsMap[pair] = struct{}{}
 			return false
 		})
 
@@ -55,7 +54,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// NOTE: **Make abstain votes to have zero vote power**
 		pairBallotMap := k.OrganizeBallotByPair(ctx, validatorClaimMap)
 
-		if referencePair := PickReferencePair(ctx, k, pairTobinTaxMap, pairBallotMap); referencePair != "" {
+		if referencePair := PickReferencePair(ctx, k, pairsMap, pairBallotMap); referencePair != "" {
 			// make voteMap of reference pair to calculate cross exchange rates
 			referenceBallot := pairBallotMap[referencePair]
 			referenceValidatorExchangeRateMap := referenceBallot.ToMap()
@@ -83,7 +82,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 		//---------------------------
 		// Do miss counting & slashing
-		voteTargetsLen := len(pairTobinTaxMap)
+		voteTargetsLen := len(pairsMap)
 		for _, claim := range validatorClaimMap {
 			// Skip abstain & valid voters
 			if int(claim.WinCount) == voteTargetsLen {
@@ -99,7 +98,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			ctx,
 			(int64)(params.VotePeriod),
 			(int64)(params.RewardDistributionWindow),
-			pairTobinTaxMap,
+			pairsMap,
 			validatorClaimMap,
 		)
 
@@ -107,7 +106,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.ClearBallots(ctx, params.VotePeriod)
 
 		// Update vote targets and tobin tax
-		k.ApplyWhitelist(ctx, params.Whitelist, pairTobinTaxMap)
+		k.ApplyWhitelist(ctx, params.Whitelist, pairsMap)
 	}
 
 	// Do slash who did miss voting over threshold and

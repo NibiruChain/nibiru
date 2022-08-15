@@ -32,7 +32,6 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryAggregatePrevote(),
 		GetCmdQueryAggregateVote(),
 		GetCmdQueryVoteTargets(),
-		GetCmdQueryTobinTaxes(),
 	)
 
 	return oracleQueryCmd
@@ -353,59 +352,6 @@ func GetCmdQueryVoteTargets() *cobra.Command {
 			res, err := queryClient.VoteTargets(
 				context.Background(),
 				&types.QueryVoteTargetsRequest{},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-// GetCmdQueryTobinTaxes implements the query params command.
-func GetCmdQueryTobinTaxes() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "tobin-taxes [pair]",
-		Args:  cobra.RangeArgs(0, 1),
-		Short: "Query the current Oracle tobin taxes.",
-		Long: strings.TrimSpace(`
-Query the current Oracle tobin taxes.
-
-$ nibid query oracle tobin-taxes
-
-Or, can filter with pair
-
-$ nibid query oracle tobin-taxes nibi:usd
-
-Or, can 
-`),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-
-			if len(args) == 0 {
-				res, err := queryClient.TobinTaxes(
-					context.Background(),
-					&types.QueryTobinTaxesRequest{},
-				)
-				if err != nil {
-					return err
-				}
-
-				return clientCtx.PrintProto(res)
-			}
-
-			pair := args[0]
-			res, err := queryClient.TobinTax(
-				context.Background(),
-				&types.QueryTobinTaxRequest{Pair: pair},
 			)
 			if err != nil {
 				return err

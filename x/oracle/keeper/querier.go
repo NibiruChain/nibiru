@@ -68,41 +68,6 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 	return &types.QueryExchangeRatesResponse{ExchangeRates: exchangeRates}, nil
 }
 
-// TobinTax queries tobin tax of a pair
-func (q querier) TobinTax(c context.Context, req *types.QueryTobinTaxRequest) (*types.QueryTobinTaxResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	if len(req.Pair) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty pair")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	tobinTax, err := q.GetTobinTax(ctx, req.Pair)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.QueryTobinTaxResponse{TobinTax: tobinTax}, nil
-}
-
-// TobinTaxes queries tobin taxes of all pairs
-func (q querier) TobinTaxes(c context.Context, _ *types.QueryTobinTaxesRequest) (*types.QueryTobinTaxesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var tobinTaxes types.PairList
-	q.IterateTobinTaxes(ctx, func(pair string, rate sdk.Dec) (stop bool) {
-		tobinTaxes = append(tobinTaxes, types.Pair{
-			Name:     pair,
-			TobinTax: rate,
-		})
-		return false
-	})
-
-	return &types.QueryTobinTaxesResponse{TobinTaxes: tobinTaxes}, nil
-}
-
 // Actives queries all pairs for which exchange rates exist
 func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)

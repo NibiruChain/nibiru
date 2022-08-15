@@ -14,7 +14,7 @@ func (m Pair) String() string {
 
 // Equal implements equal interface
 func (m Pair) Equal(pair *Pair) bool {
-	return m.Name == pair.Name && m.TobinTax.Equal(pair.TobinTax)
+	return m.Name == pair.Name
 }
 
 // PairList is array of Pair
