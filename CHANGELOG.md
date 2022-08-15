@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CI
 
 * [#795](https://github.com/NibiruChain/nibiru/pull/795) Integration tests run when PR is approved
+* [#826](https://github.com/NibiruChain/nibiru/pull/826) - create and push docker image on release
+
 
 ### Improvements
 
@@ -52,13 +54,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
 * [#804](https://github.com/NibiruChain/nibiru/pull/804) - bump ibc-go to v3.1.1
+* [#817](https://github.com/NibiruChain/nibiru/pull/817) - Make post prices transactions gasless for whitelisted oracles
 * [#818](https://github.com/NibiruChain/nibiru/pull/818) - fix(localnet.sh): add max leverage to vpools in genesis to fix open-position
 * [#819](https://github.com/NibiruChain/nibiru/pull/819) - add golangci-linter using docker in Makefile
 
 ### Features
 
 * [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
-- [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query 
+* [#811](https://github.com/NibiruChain/nibiru/pull/811) Return the index twap in `QueryPrice` cmd
+* [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query 
+* [#816](https://github.com/NibiruChain/nibiru/pull/816) - Remove tobin tax from x/oracle
 * [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
 
 ### Documentation

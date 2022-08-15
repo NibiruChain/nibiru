@@ -355,7 +355,8 @@ func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair
 	return pool.MaintenanceMarginRatio
 }
 
-/**
+/*
+*
 GetMaxLeverage returns the maximum leverage required to open a position in the pool.
 
 args:

@@ -38,23 +38,18 @@ const (
 var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
-	DefaultTobinTax      = sdk.NewDecWithPrec(25, 4) // 0.25%
 	DefaultWhitelist     = PairList{
 		{
-			Name:     common.PairBTCStable.String(),
-			TobinTax: DefaultTobinTax,
+			Name: common.PairBTCStable.String(),
 		},
 		{
-			Name:     common.PairCollStable.String(),
-			TobinTax: DefaultTobinTax,
+			Name: common.PairCollStable.String(),
 		},
 		{
-			Name:     common.PairETHStable.String(),
-			TobinTax: DefaultTobinTax,
+			Name: common.PairETHStable.String(),
 		},
 		{
-			Name:     common.PairGovStable.String(),
-			TobinTax: DefaultTobinTax,
+			Name: common.PairGovStable.String(),
 		},
 	}
 	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4) // 0.01%
@@ -133,11 +128,8 @@ func (p Params) Validate() error {
 	}
 
 	for _, pair := range p.Whitelist {
-		if pair.TobinTax.GT(sdk.OneDec()) || pair.TobinTax.IsNegative() {
-			return fmt.Errorf("oracle parameter Whitelist Pair must have TobinTax between [0, 1]")
-		}
-		if len(pair.Name) == 0 {
-			return fmt.Errorf("oracle parameter Whitelist Pair must have name")
+		if _, err := common.NewAssetPair(pair.Name); err != nil {
+			return fmt.Errorf("oracle parameter Whitelist Pair invalid format: %w", err)
 		}
 	}
 	return nil
@@ -210,11 +202,8 @@ func validateWhitelist(i interface{}) error {
 	}
 
 	for _, d := range v {
-		if d.TobinTax.GT(sdk.OneDec()) || d.TobinTax.IsNegative() {
-			return fmt.Errorf("oracle parameter Whitelist Pair must have TobinTax between [0, 1]")
-		}
-		if len(d.Name) == 0 {
-			return fmt.Errorf("oracle parameter Whitelist Pair must have name")
+		if _, err := common.NewAssetPair(d.Name); err != nil {
+			return fmt.Errorf("oracle parameter Whitelist Pair invalid format: %w", err)
 		}
 	}
 

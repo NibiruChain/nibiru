@@ -126,7 +126,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 
 	input, _ := setup(t)
 
-	voteTargets := map[string]sdk.Dec{}
+	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
 
 	voteMap := map[string]types.ExchangeRateBallot{}

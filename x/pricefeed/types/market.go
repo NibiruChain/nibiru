@@ -75,11 +75,6 @@ func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator
 // CurrentPrices is a slice of CurrentPrice
 type CurrentPrices []CurrentPrice
 
-// NewCurrentPriceResponse returns an instance of CurrentPriceResponse
-func NewCurrentPriceResponse(pairID string, price sdk.Dec) CurrentPriceResponse {
-	return CurrentPriceResponse{PairID: pairID, Price: price}
-}
-
 // CurrentPriceResponses is a slice of CurrentPriceResponse
 type CurrentPriceResponses []CurrentPriceResponse
 
