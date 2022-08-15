@@ -66,6 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#816](https://github.com/NibiruChain/nibiru/pull/816) - Remove tobin tax from x/oracle
 * [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
 
+### Documentation
+
+* [#814](https://github.com/NibiruChain/nibiru/pull/814) - docs(perp): Added events specification for the perp module.
+
 ## [v0.12.1](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1) - 2022-08-04
 
 * [#796](https://github.com/NibiruChain/nibiru/pull/796) - fix bug that caused that epochKeeper was nil when running epoch hook from Perp module

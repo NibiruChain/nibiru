@@ -59,7 +59,8 @@ message PositionChangedEvent {
       (gogoproto.nullable) = false
     ];
   
-    // Amount of bad debt cleared by the PerpEF during the change. Bad debt is negative net margin past the liquidation point of a position.
+    // Amount of bad debt cleared by the PerpEF during the change. 
+    // Bad debt is negative net margin past the liquidation point of a position.
     cosmos.base.v1beta1.Coin bad_debt = 10 [(gogoproto.nullable) = false];
   
     // amt of margin (y) lost due to liquidation
@@ -68,7 +69,8 @@ message PositionChangedEvent {
       (gogoproto.nullable) = false
     ];
 
-    // vPrice defined as yRes / xRes for a vpool, where yRes is the quote reserves and xRes is the base reserves.
+    // Spot price, synonymous with mark price in this context, is the quotient of 
+    // the quote reserves and base reserves 
     string spot_price = 12 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
