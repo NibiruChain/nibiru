@@ -34,11 +34,11 @@ func TestDecodeDistributionStore(t *testing.T) {
 
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash([]byte("12345")), valAddr, 123)
 	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Pair: common.DenomStable, ExchangeRate: sdk.NewDecWithPrec(1234, 1)},
-		{Pair: common.DenomStable, ExchangeRate: sdk.NewDecWithPrec(4321, 1)},
+		{Pair: common.PairGovStable.String(), ExchangeRate: sdk.NewDecWithPrec(1234, 1)},
+		{Pair: common.PairETHStable.String(), ExchangeRate: sdk.NewDecWithPrec(4321, 1)},
 	}, valAddr)
 
-	tobinTax := sdk.NewDecWithPrec(2, 2)
+	pair := "btc:usd"
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
@@ -47,7 +47,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 			{Key: types.MissCounterKey, Value: cdc.MustMarshal(&gogotypes.UInt64Value{Value: missCounter})},
 			{Key: types.AggregateExchangeRatePrevoteKey, Value: cdc.MustMarshal(&aggregatePrevote)},
 			{Key: types.AggregateExchangeRateVoteKey, Value: cdc.MustMarshal(&aggregateVote)},
-			{Key: types.TobinTaxKey, Value: cdc.MustMarshal(&sdk.DecProto{Dec: tobinTax})},
+			{Key: types.GetPairKey(pair), Value: []byte{}},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
 	}
@@ -61,7 +61,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 		{"MissCounter", fmt.Sprintf("%v\n%v", missCounter, missCounter)},
 		{"AggregatePrevote", fmt.Sprintf("%v\n%v", aggregatePrevote, aggregatePrevote)},
 		{"AggregateVote", fmt.Sprintf("%v\n%v", aggregateVote, aggregateVote)},
-		{"TobinTax", fmt.Sprintf("%v\n%v", tobinTax, tobinTax)},
+		{"Pairs", fmt.Sprintf("%s\n%s", pair, pair)},
 		{"other", ""},
 	}
 
