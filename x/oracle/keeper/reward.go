@@ -18,7 +18,7 @@ func (k Keeper) RewardBallotWinners(
 	ctx sdk.Context,
 	votePeriod int64,
 	rewardDistributionWindow int64,
-	voteTargets map[string]sdk.Dec,
+	voteTargets map[string]struct{},
 	ballotWinners map[string]types.Claim,
 ) {
 	rewardDenoms := make([]string, len(voteTargets)+1)
