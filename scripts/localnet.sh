@@ -1,5 +1,5 @@
 #!/bin/sh
-#set -e
+set -e
 
 # Console log text colour
 red=`tput setaf 9`
