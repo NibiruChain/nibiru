@@ -57,13 +57,13 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 		keeper.SetAggregateExchangeRateVote(ctx, valAddr, av)
 	}
 
-	if len(data.TobinTaxes) > 0 {
-		for _, tt := range data.TobinTaxes {
-			keeper.SetTobinTax(ctx, tt.Pair, tt.TobinTax)
+	if len(data.Pairs) > 0 {
+		for _, tt := range data.Pairs {
+			keeper.SetPair(ctx, tt.Name)
 		}
 	} else {
 		for _, item := range data.Params.Whitelist {
-			keeper.SetTobinTax(ctx, item.Name, item.TobinTax)
+			keeper.SetPair(ctx, item.Name)
 		}
 	}
 
@@ -117,9 +117,9 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		return false
 	})
 
-	tobinTaxes := []types.TobinTax{}
-	keeper.IterateTobinTaxes(ctx, func(pair string, tobinTax sdk.Dec) (stop bool) {
-		tobinTaxes = append(tobinTaxes, types.TobinTax{Pair: pair, TobinTax: tobinTax})
+	pairs := []types.Pair{}
+	keeper.IteratePairs(ctx, func(pair string) (stop bool) {
+		pairs = append(pairs, types.Pair{Name: pair})
 		return false
 	})
 
@@ -129,5 +129,5 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		missCounters,
 		aggregateExchangeRatePrevotes,
 		aggregateExchangeRateVotes,
-		tobinTaxes)
+		pairs)
 }
