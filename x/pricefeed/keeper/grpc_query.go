@@ -33,13 +33,22 @@ func (k Keeper) QueryPrice(goCtx context.Context, req *types.QueryPriceRequest) 
 
 	tokens := common.DenomsFromPoolName(req.PairId)
 	token0, token1 := tokens[0], tokens[1]
-	currentPrice, sdkErr := k.GetCurrentPrice(ctx, token0, token1)
-	if sdkErr != nil {
-		return nil, sdkErr
+	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
+	if err != nil {
+		return nil, err
+	}
+
+	twap, err := k.GetCurrentTWAP(ctx, token0, token1)
+	if err != nil {
+		return nil, err
 	}
 
 	return &types.QueryPriceResponse{
-		Price: types.CurrentPriceResponse{PairID: req.PairId, Price: currentPrice.Price},
+		Price: types.CurrentPriceResponse{
+			PairID: req.PairId,
+			Price:  currentPrice.Price,
+			Twap:   twap,
+		},
 	}, nil
 }
 
@@ -81,7 +90,10 @@ func (k Keeper) QueryPrices(goCtx context.Context, req *types.QueryPricesRequest
 	var currentPrices types.CurrentPriceResponses
 	for _, currentPrice := range k.GetCurrentPrices(ctx) {
 		if currentPrice.PairID != "" {
-			currentPrices = append(currentPrices, types.CurrentPriceResponse(currentPrice))
+			currentPrices = append(currentPrices, types.CurrentPriceResponse{
+				PairID: currentPrice.PairID,
+				Price:  currentPrice.Price,
+			})
 		}
 	}
 
