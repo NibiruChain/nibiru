@@ -159,118 +159,73 @@ func TestKeeper_PostRawPriceWrongOracles(t *testing.T) {
 	}
 }
 
-// TestKeeper_GetSetCurrentPrice Test Setting the median price of an Asset
+// Test Setting the current price of an Asset
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
 	app, ctx := testapp.NewNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
-	token0, token1 := "tst", "usd"
-	pair := common.AssetPair{Token0: token0, Token1: token1}
-	params := types.Params{
+	pair := common.PairBTCStable
+	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
+	keeper.SetParams(ctx, types.Params{
 		Pairs:              common.AssetPairs{pair},
 		TwapLookbackWindow: 15 * time.Minute,
-	}
-	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
-	keeper.SetParams(ctx, params)
+	})
 
-	_, err := keeper.PostRawPrice(
-		ctx, addrs[0], pair.String(),
-		sdk.MustNewDecFromStr("0.33"),
-		time.Now().Add(time.Hour*1))
+	_, err := keeper.PostRawPrice(ctx, addrs[0], pair.String(), sdk.MustNewDecFromStr("0.33"), time.Now().Add(time.Hour))
 	require.NoError(t, err)
 
-	_, err = keeper.PostRawPrice(
-		ctx, addrs[1], pair.String(),
-		sdk.MustNewDecFromStr("0.35"),
-		time.Now().Add(time.Hour*1))
+	_, err = keeper.PostRawPrice(ctx, addrs[1], pair.String(), sdk.MustNewDecFromStr("0.35"), time.Now().Add(time.Hour))
 	require.NoError(t, err)
 
-	_, err = keeper.PostRawPrice(
-		ctx, addrs[2], pair.String(),
-		sdk.MustNewDecFromStr("0.34"),
-		time.Now().Add(time.Hour*1))
+	_, err = keeper.PostRawPrice(ctx, addrs[2], pair.String(), sdk.MustNewDecFromStr("0.34"), time.Now().Add(time.Hour))
 	require.NoError(t, err)
 
 	t.Log("Add an expired one which should fail")
-	_, err = keeper.PostRawPrice(
-		ctx, addrs[3], pair.String(),
-		sdk.MustNewDecFromStr("0.9"),
-		ctx.BlockTime().Add(-time.Hour*1))
+	_, err = keeper.PostRawPrice(ctx, addrs[3], pair.String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(-time.Hour))
 	require.Error(t, err)
 
 	t.Log("Add a non-expired price, but will not be counted when BlockTime is changed")
-	_, err = keeper.PostRawPrice(
-		ctx, addrs[3], pair.String(),
-		sdk.MustNewDecFromStr("0.9"),
-		time.Now().Add(time.Minute*30))
+	_, err = keeper.PostRawPrice(ctx, addrs[3], pair.String(), sdk.MustNewDecFromStr("0.9"), time.Now().Add(time.Minute*30))
 	require.NoError(t, err)
 
 	// Update block time such that first 3 prices valid but last one is expired
 	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45)).WithBlockHeight(1)
 
 	// Set current price
-	err = keeper.GatherRawPrices(ctx, token0, token1)
+	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
+
+	// Get current currentPrice
+	currentPrice, err := keeper.GetCurrentPrice(ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), currentPrice.Price)
 
-	// Get current price
-	price, err := keeper.GetCurrentPrice(ctx, token0, token1)
-	require.NoError(t, err)
-
-	expCurPrice := sdk.MustNewDecFromStr("0.34")
-	require.Truef(
-		t,
-		price.Price.Equal(expCurPrice),
-		"expected current price to equal %s, actual %s",
-		expCurPrice, price.Price,
-	)
-
-	// Allow some time to pass
-	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(1 * time.Minute))
 	// Check TWAP Price
-	twap, err := keeper.GetCurrentTWAP(ctx, token0, token1)
-	expectedTwap := sdk.MustNewDecFromStr("0.34")
+	twap, err := keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
-	assert.Equal(t, expectedTwap, twap, "expected twap price to be: %s, got: %s", expectedTwap, twap)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), twap)
 
 	// fast forward block height as twap snapshots are indexed by blockHeight
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 
 	// Even number of oracles
-	_, err = keeper.PostRawPrice(
-		ctx, addrs[4], pair.String(),
-		sdk.MustNewDecFromStr("0.36"),
-		time.Now().Add(time.Hour*1))
+	_, err = keeper.PostRawPrice(ctx, addrs[4], pair.String(), sdk.MustNewDecFromStr("0.36"), time.Now().Add(time.Hour))
 	require.NoError(t, err)
+	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
 
-	err = keeper.GatherRawPrices(ctx, token0, token1)
-	require.NoError(t, err)
-
-	price, err = keeper.GetCurrentPrice(ctx, "tst", "usd")
+	currentPrice, err = keeper.GetCurrentPrice(ctx, pair.Token0, pair.Token1)
 	require.Nil(t, err)
-
-	exp := sdk.MustNewDecFromStr("0.345")
-	require.Truef(t, price.Price.Equal(exp),
-		"current price %s should be %s",
-		price.Price.String(),
-		exp.String(),
-	)
+	require.Equal(t, sdk.MustNewDecFromStr("0.345"), currentPrice.Price)
 
 	prices := keeper.GetCurrentPrices(ctx)
 	require.Equal(t, 1, len(prices))
-	require.Equal(t, price, prices[0])
+	require.Equal(t, currentPrice, prices[0])
 
-	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 	// Check TWAP Price
-	twap, err = keeper.GetCurrentTWAP(ctx, token0, token1)
-	expectedTwap = sdk.MustNewDecFromStr("0.340625")
+	ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+	twap, err = keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
-	require.Truef(
-		t,
-		twap.Equal(expectedTwap),
-		"expected twap price to be: %s, got: %s",
-		expectedTwap, twap,
-	)
+	require.Equal(t, sdk.MustNewDecFromStr("0.3425"), twap)
 }
 
 func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {

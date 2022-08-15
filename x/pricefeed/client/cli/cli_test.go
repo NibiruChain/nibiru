@@ -37,17 +37,15 @@ const (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg        testutilcli.Config
-	network    *testutilcli.Network
-	oracleUIDs []string
-	oracleMap  map[string]sdk.AccAddress
+	cfg       testutilcli.Config
+	network   *testutilcli.Network
+	oracleMap map[string]sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) setupOraclesForKeyring() {
 	val := s.network.Validators[0]
-	s.oracleUIDs = []string{"oracle", "wrongOracle"}
 
-	for _, oracleUID := range s.oracleUIDs {
+	for _, oracleUID := range []string{"oracle", "wrongOracle"} {
 		info, _, err := val.ClientCtx.Keyring.NewMnemonic(
 			/* uid */ oracleUID,
 			/* language */ keyring.English,
@@ -234,6 +232,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		})
 	}
 }
+
 func expireWithinHours(t time.Time, hours time.Duration) bool {
 	now := time.Now()
 	return t.After(now) && t.Before(now.Add(hours*time.Hour))
@@ -283,20 +282,29 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 		})
 	}
 }
+
 func (s IntegrationTestSuite) TestPricesCmd() {
 	val := s.network.Validators[0]
 
 	testCases := []struct {
 		name string
 
-		expectedPricePairs []pricefeedtypes.CurrentPriceResponse
-		respType           proto.Message
+		expectedPrices []pricefeedtypes.CurrentPriceResponse
+		respType       proto.Message
 	}{
 		{
 			name: "Get current prices",
-			expectedPricePairs: []pricefeedtypes.CurrentPriceResponse{
-				pricefeedtypes.NewCurrentPriceResponse(common.PairGovStable.String(), sdk.NewDec(10)),
-				pricefeedtypes.NewCurrentPriceResponse(common.PairCollStable.String(), sdk.NewDec(1)),
+			expectedPrices: []pricefeedtypes.CurrentPriceResponse{
+				{
+					PairID: common.PairGovStable.String(),
+					Price:  sdk.NewDec(10),
+					Twap:   sdk.ZeroDec(),
+				},
+				{
+					PairID: common.PairCollStable.String(),
+					Price:  sdk.NewDec(1),
+					Twap:   sdk.ZeroDec(),
+				},
 			},
 			respType: &pricefeedtypes.QueryPricesResponse{},
 		},
@@ -311,15 +319,13 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 
 			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
 			s.Require().NoError(err, out.String())
-			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 			txResp := tc.respType.(*pricefeedtypes.QueryPricesResponse)
-			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
-			s.Require().NoError(err)
-			s.Assert().Equal(len(tc.expectedPricePairs), len(txResp.Prices))
+			s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp), out.String())
+			s.Assert().Equal(len(tc.expectedPrices), len(txResp.Prices))
 
 			for _, priceResponse := range txResp.Prices {
-				s.Assert().Contains(tc.expectedPricePairs, priceResponse, tc.expectedPricePairs)
+				s.Assert().Contains(tc.expectedPrices, priceResponse, tc.expectedPrices)
 			}
 		})
 	}
@@ -531,16 +537,14 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdQueryParams()
 			clientCtx := val.ClientCtx.WithOutputFormat("json")
 
-			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cmd, nil)
+			out, err := sdktestutilcli.ExecTestCLICmd(clientCtx, cli.CmdQueryParams(), nil)
 			s.Require().NoError(err, out.String())
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 			txResp := tc.respType.(*pricefeedtypes.QueryParamsResponse)
-			err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
-			s.Require().NoError(err)
+			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp))
 			s.Assert().Equal(tc.expectedParams, txResp.Params)
 		})
 	}
@@ -579,7 +583,7 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 			"description": "%v",
 			"oracles": ["%v"],
 			"pairs": ["%v", "%v"]
-		}	
+		}
 		`, proposal.Title, proposal.Description, proposal.Oracles[0],
 		proposal.Pairs[0], proposal.Pairs[1],
 	)

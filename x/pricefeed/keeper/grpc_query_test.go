@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -106,4 +107,43 @@ func TestMarketsQuery(t *testing.T) {
 	for idx, wantMarket := range wantQueryResponse.Markets {
 		assert.EqualValues(t, wantMarket, queryResp.Markets[idx])
 	}
+}
+
+func TestQueryPrice(t *testing.T) {
+	pair := common.MustNewAssetPair("ubtc:uusd")
+	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
+	keeper.SetParams(ctx, types.Params{
+		Pairs:              common.AssetPairs{pair},
+		TwapLookbackWindow: time.Minute * 15,
+	})
+
+	oracle := sample.AccAddress()
+	keeper.WhitelistOraclesForPairs(ctx, []sdk.AccAddress{oracle}, []common.AssetPair{pair})
+
+	// first block
+	_, err := keeper.PostRawPrice(ctx, oracle, pair.String(), sdk.NewDec(20_000), time.Now().Add(time.Hour))
+	require.NoError(t, err)
+	err = keeper.GatherRawPrices(ctx, "ubtc", "uusd")
+	require.NoError(t, err)
+
+	// second block
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(1)
+	_, err = keeper.PostRawPrice(ctx, oracle, "ubtc:uusd", sdk.NewDec(30_000), time.Now().Add(time.Hour))
+	require.NoError(t, err)
+	err = keeper.GatherRawPrices(ctx, "ubtc", "uusd")
+	require.NoError(t, err)
+
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(2)
+	resp, err := keeper.QueryPrice(sdk.WrapSDKContext(ctx), &types.QueryPriceRequest{
+		PairId: "ubtc:uusd",
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, types.QueryPriceResponse{
+		Price: types.CurrentPriceResponse{
+			PairID: "ubtc:uusd",
+			Price:  sdk.NewDec(30_000),
+			Twap:   sdk.NewDec(25_000),
+		},
+	}, *resp)
 }
