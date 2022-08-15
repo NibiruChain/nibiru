@@ -20,39 +20,7 @@ nibid tx perp --help
 nibid query perp --help
 ```
 
-CLI code is contained in the `/perp/client/cli` directory.
+The implementation for this module's portion of the `nibid` CLI is contained within the `/perp/client/cli` directory.
 
-## Perp Ecosystem Fund (PerpEF) 
 <!-- TODO Complete section and move a "Module Accounts" section inside concepts. -->
-
-The PerpEF is a module account on Nibiru Protocol. All of its interactions can be encapsulated in two keeper methods.
-- `WithdrawFromPerpEF()`
-- `DepositToPerpEF()`
-
-
-## Queries
 <!-- TODO document queries and add to client file. -->
-
-
-#### QueryPositionInfo
-
-Given the `vpool` and `trader`, one could query the 
-`QueryPositionInfo(vpool string, trader sdk.AccAddress) -> PositionInfo`
-
-```go
-// A single trader's position information on a given Vpool.
-type PositionInfo struct {
-  MarginRatio sdk.Dec
-  Position perptypes.Position
-}
-```
-
-#### QueryAllVpools
-
-`QueryAllVpools() -> []string`: Returns a list of all of the pool names.
-
-#### QueryVpoolPrices
-
-`QueryVpoolPrices() -> map[string]sdk.Dec`: Returns ech virtual pool and its corresponding price.
-
-
