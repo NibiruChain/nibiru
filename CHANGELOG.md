@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CI
 
 * [#795](https://github.com/NibiruChain/nibiru/pull/795) Integration tests run when PR is approved
+* [#826](https://github.com/NibiruChain/nibiru/pull/826) - create and push docker image on release
+
 
 ### Improvements
 
