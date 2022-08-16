@@ -81,6 +81,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 
 	return k, mockedDependencies{
 		mockPricefeedKeeper: mockedPricefeedKeeper,
+		mockAccountKeeper:   mockedAccountKeeper,
 	}, ctx
 }
 
