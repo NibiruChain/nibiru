@@ -85,8 +85,7 @@ func NewTestNibiruAppWithGenesis(gen app.GenesisState) *NibiruTestApp {
 // ----------------------------------------------------------------------------
 
 const (
-	GenOracleAddress  = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
-	GenOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
+	GenOracleAddress = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
 )
 
 /*
