@@ -1,4 +1,4 @@
-package app
+package simapp
 
 import (
 	"encoding/json"
@@ -98,6 +98,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	nibiapp "github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex"
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
@@ -128,11 +129,9 @@ import (
 )
 
 const (
-	AccountAddressPrefix = "nibi"
-	Name                 = "nibiru"
-	AppName              = "Nibiru"
-	BondDenom            = "unibi"
-	DisplayDenom         = "NIBI"
+	Name      = "nibiru"
+	AppName   = "Nibiru"
+	BondDenom = "unibi"
 )
 
 var (
@@ -145,12 +144,12 @@ var (
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
 		genutil.AppModuleBasic{},
-		BankModule{},
+		nibiapp.BankModule{},
 		capability.AppModuleBasic{},
-		StakingModule{},
-		MintModule{},
+		nibiapp.StakingModule{},
+		nibiapp.MintModule{},
 		distr.AppModuleBasic{},
-		NewGovModuleBasic(
+		nibiapp.NewGovModuleBasic(
 			paramsclient.ProposalHandler,
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
@@ -162,16 +161,18 @@ var (
 			ibcclientclient.UpgradeProposalHandler,
 		),
 		params.AppModuleBasic{},
-		CrisisModule{},
+		nibiapp.CrisisModule{},
 		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+
 		// ibc 'AppModuleBasic's
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
+
 		// native x/
 		dex.AppModuleBasic{},
 		pricefeed.AppModuleBasic{},
@@ -206,15 +207,15 @@ var (
 )
 
 var (
-	_ simapp.App              = (*NibiruApp)(nil)
-	_ servertypes.Application = (*NibiruApp)(nil)
-	_ ibctesting.TestingApp   = (*NibiruApp)(nil)
+	_ simapp.App              = (*NibiruTestApp)(nil)
+	_ servertypes.Application = (*NibiruTestApp)(nil)
+	_ ibctesting.TestingApp   = (*NibiruTestApp)(nil)
 )
 
-// NibiruApp extends an ABCI application, but with most of its parameters exported.
+// NibiruTestApp extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
-type NibiruApp struct {
+type NibiruTestApp struct {
 	*baseapp.BaseApp
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
@@ -256,7 +257,7 @@ type NibiruApp struct {
 	   the IBC light client misbehavior evidence route. */
 	EvidenceKeeper evidencekeeper.Keeper
 	/* IBCKeeper defines each ICS keeper for IBC. IBCKeeper must be a pointer in
-	   the app, so we can SetRouter on it correctly. */
+	   the nibiapp, so we can SetRouter on it correctly. */
 	IBCKeeper *ibckeeper.Keeper
 	/* TransferKeeper is for cross-chain fungible token transfers. */
 	TransferKeeper ibctransferkeeper.Keeper
@@ -296,13 +297,13 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
-// NewNibiruApp returns a reference to an initialized NibiruApp.
+// NewNibiruApp returns a reference to an initialized NibiruTestApp.
 func NewNibiruApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
-) *NibiruApp {
+) *NibiruTestApp {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -348,7 +349,7 @@ func NewNibiruApp(
 		stablecointypes.MemStoreKey, pricefeedtypes.MemStoreKey,
 	)
 
-	app := &NibiruApp{
+	app := &NibiruTestApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
@@ -691,7 +692,7 @@ func NewNibiruApp(
 	)
 
 	// Uncomment if you want to set a custom migration order here.
-	// app.mm.SetOrderMigrations(custom order)
+	// nibiapp.mm.SetOrderMigrations(custom order)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
@@ -746,7 +747,7 @@ func NewNibiruApp(
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	anteHandler, err := NewAnteHandler(AnteHandlerOptions{
+	anteHandler, err := nibiapp.NewAnteHandler(nibiapp.AnteHandlerOptions{
 		HandlerOptions: ante.HandlerOptions{
 			AccountKeeper:   app.AccountKeeper,
 			BankKeeper:      app.BankKeeper,
@@ -775,12 +776,12 @@ func NewNibiruApp(
 		`CapabilityKeeper.ScopeToModule`.
 
 
-		Calling 'app.CapabilityKeeper.Seal()' initializes and seals the capability
+		Calling 'nibiapp.CapabilityKeeper.Seal()' initializes and seals the capability
 		keeper such that all persistent capabilities are loaded in-memory and prevent
 		any further modules from creating scoped sub-keepers.
 
 		NOTE: This must be done during creation of baseapp rather than in InitChain so
-		that in-memory capabilities get regenerated on app restart.
+		that in-memory capabilities get regenerated on nibiapp restart.
 		Note that since this reads from the store, we can only perform the seal
 		when `loadLatest` is set to true.
 		*/
@@ -791,21 +792,21 @@ func NewNibiruApp(
 }
 
 // Name returns the name of the App
-func (app *NibiruApp) Name() string { return app.BaseApp.Name() }
+func (app *NibiruTestApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *NibiruApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *NibiruTestApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
-func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *NibiruTestApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
 // InitChainer application update at chain initialization
-func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	var genesisState GenesisState
+func (app *NibiruTestApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState nibiapp.GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
@@ -814,12 +815,12 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 }
 
 // LoadHeight loads a particular height
-func (app *NibiruApp) LoadHeight(height int64) error {
+func (app *NibiruTestApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
-// ModuleAccountAddrs returns all the app's module account addresses.
-func (app *NibiruApp) ModuleAccountAddrs() map[string]bool {
+// ModuleAccountAddrs returns all the nibiapp's module account addresses.
+func (app *NibiruTestApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
@@ -832,60 +833,60 @@ func (app *NibiruApp) ModuleAccountAddrs() map[string]bool {
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *NibiruApp) LegacyAmino() *codec.LegacyAmino {
+func (app *NibiruTestApp) LegacyAmino() *codec.LegacyAmino {
 	return app.legacyAmino
 }
 
-// AppCodec returns SimApp's app codec.
+// AppCodec returns SimApp's nibiapp codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *NibiruApp) AppCodec() codec.Codec {
+func (app *NibiruTestApp) AppCodec() codec.Codec {
 	return app.appCodec
 }
 
 // InterfaceRegistry returns App's InterfaceRegistry
-func (app *NibiruApp) InterfaceRegistry() codectypes.InterfaceRegistry {
+func (app *NibiruTestApp) InterfaceRegistry() codectypes.InterfaceRegistry {
 	return app.interfaceRegistry
 }
 
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *NibiruApp) GetKey(storeKey string) *storetypes.KVStoreKey {
+func (app *NibiruTestApp) GetKey(storeKey string) *storetypes.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *NibiruApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
+func (app *NibiruTestApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
+func (app *NibiruTestApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *NibiruApp) GetSubspace(moduleName string) paramstypes.Subspace {
+func (app *NibiruTestApp) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
 	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *NibiruApp) SimulationManager() *module.SimulationManager {
+func (app *NibiruTestApp) SimulationManager() *module.SimulationManager {
 	return app.sm
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+func (app *NibiruTestApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 	// Register legacy tx routes.
@@ -906,14 +907,14 @@ func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
-func (app *NibiruApp) RegisterTxService(clientCtx client.Context) {
+func (app *NibiruTestApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(
 		app.BaseApp.GRPCQueryRouter(), clientCtx,
 		app.BaseApp.Simulate, app.interfaceRegistry)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
-func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
+func (app *NibiruTestApp) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
 }
 
@@ -925,27 +926,27 @@ func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
    of the implementation of the TestingApp interface
 */
 
-func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
+func (app *NibiruTestApp) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
 
-func (app *NibiruApp) GetStakingKeeper() stakingkeeper.Keeper {
+func (app *NibiruTestApp) GetStakingKeeper() stakingkeeper.Keeper {
 	return app.StakingKeeper
 }
 
-func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {
+func (app *NibiruTestApp) GetIBCKeeper() *ibckeeper.Keeper {
 	return app.IBCKeeper
 }
 
-func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
+func (app *NibiruTestApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 	return app.ScopedIBCKeeper
 }
 
-/* EncodingConfig specifies the concrete encoding types to use for a given app.
+/* EncodingConfig specifies the concrete encoding types to use for a given nibiapp.
    This is provided for compatibility between protobuf and amino implementations. */
 
-func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return MakeTestEncodingConfig().TxConfig
+func (app *NibiruTestApp) GetTxConfig() client.TxConfig {
+	return nibiapp.MakeTestEncodingConfig().TxConfig
 }
 
 // ------------------------------------------------------------------------
