@@ -153,8 +153,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-// TODO test: Include checks for queryResp.MarginRatioIndex
-// https://github.com/NibiruChain/nibiru/issues/809
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 
