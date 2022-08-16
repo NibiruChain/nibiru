@@ -24,7 +24,7 @@ type IntegrationTestSuite struct {
 func (s *IntegrationTestSuite) SetupTest() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
-	s.cfg.NumValidators = 3
+	s.cfg.NumValidators = 1
 	s.cfg.GenesisState[oracletypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := oracletypes.DefaultGenesisState()
 		gs.Params.Whitelist = oracletypes.PairList{
@@ -109,7 +109,7 @@ func (s *IntegrationTestSuite) waitRevealVotePeriod() {
 	height, err := s.network.LatestHeight()
 	require.NoError(s.T(), err)
 
-	waitBlock := uint64(height)/votePeriod + votePeriod
+	waitBlock := (uint64(height)/votePeriod)*votePeriod + votePeriod
 
 	_, err = s.network.WaitForHeight(int64(waitBlock + 1))
 	require.NoError(s.T(), err)

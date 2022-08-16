@@ -3,13 +3,12 @@ package cli
 import (
 	"context"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/stretchr/testify/require"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -111,12 +110,17 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1))))
 	txBuilder.SetGasLimit(1000000)
 
+	acc, err := cfg.AccountRetriever.GetAccount(n.Validators[0].ClientCtx, addr)
+	require.NoError(n.T, err)
+
 	txFactory := tx.Factory{}
 	txFactory = txFactory.
 		WithChainID(cfg.ChainID).
 		WithKeybase(kb).
 		WithTxConfig(cfg.TxConfig).
-		WithAccountRetriever(cfg.AccountRetriever)
+		WithAccountRetriever(cfg.AccountRetriever).
+		WithAccountNumber(acc.GetAccountNumber()).
+		WithSequence(acc.GetSequence())
 
 	err = tx.Sign(txFactory, info.GetName(), txBuilder, true)
 	require.NoError(n.T, err)
@@ -128,7 +132,7 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 	require.NoError(n.T, err)
 
 	require.Truef(n.T, respRaw.CheckTx.IsOK(), "tx failed: %s", respRaw.CheckTx.Log)
-	require.Truef(n.T, respRaw.DeliverTx.IsOK(), "tx failed: %s", respRaw.CheckTx.Log)
+	require.Truef(n.T, respRaw.DeliverTx.IsOK(), "tx failed: %s", respRaw.DeliverTx.Log)
 
 	return sdk.NewResponseFormatBroadcastTxCommit(respRaw), nil
 }
