@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/NibiruChain/nibiru/simapp"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -160,13 +159,13 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	}
 }
 
-// New creates a new Network for integration tests.
+// NewNetwork creates a new Network for integration tests.
 func NewNetwork(t *testing.T, cfg Config) *Network {
 	// only one caller/test can create and use a network at a time
 	t.Log("acquiring test network lock")
 	lock.Lock()
 
-	baseDir, err := ioutil.TempDir(t.TempDir(), cfg.ChainID)
+	baseDir, err := os.MkdirTemp(t.TempDir(), cfg.ChainID)
 	require.NoError(t, err)
 	t.Logf("created temporary directory: %s", baseDir)
 

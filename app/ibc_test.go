@@ -2,7 +2,6 @@ package app_test
 
 import (
 	"encoding/json"
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -17,11 +16,16 @@ import (
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
+
+// init changes the value of 'DefaultTestingAppInit' to use custom initialization.
+func init() {
+	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+}
 
 /*
 SetupTestingApp returns the TestingApp and default genesis state used to
@@ -60,15 +64,10 @@ func SetupNibiruTestingApp() (
 	}
 
 	// Create genesis state
-	encCdc := app.MakeTestEncodingConfig()
-	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
+	encCdc := simapp.MakeTestEncodingConfig()
+	genesisState := simapp.NewDefaultGenesisState(encCdc.Marshaler)
 
 	return nibiruApp, genesisState
-}
-
-// init changes the value of 'DefaultTestingAppInit' to use custom initialization.
-func init() {
-	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.
