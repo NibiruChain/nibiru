@@ -28,12 +28,12 @@ func TestExpectedKeepers(t *testing.T) {
 			appKeeper:      nibiruApp.PricefeedKeeper,
 		},
 		{
-			name:           "BankKeeper from the cosmos-sdk",
+			name:           "bankKeeper from the cosmos-sdk",
 			expectedKeeper: (*sctypes.BankKeeper)(nil),
 			appKeeper:      nibiruApp.BankKeeper,
 		},
 		{
-			name:           "AccountKeeper from the cosmos-sdk",
+			name:           "accountKeeper from the cosmos-sdk",
 			expectedKeeper: (*sctypes.AccountKeeper)(nil),
 			appKeeper:      nibiruApp.AccountKeeper,
 		},

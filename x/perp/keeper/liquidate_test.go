@@ -126,7 +126,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				ctx, tokenPair, tc.positionSide, traderAddr, tc.quoteAmount, tc.leverage, tc.baseAssetLimit)
 			require.NoError(t, err)
 
-			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
+			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
 				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -303,7 +303,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				ctx, tokenPair, tc.side, traderAddr, tc.quote, tc.leverage, tc.baseLimit)
 			require.NoError(t, err)
 
-			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
+			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
 				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(
