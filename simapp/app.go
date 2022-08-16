@@ -297,8 +297,8 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
-// NewNibiruApp returns a reference to an initialized NibiruTestApp.
-func NewNibiruApp(
+// NewNibiruTestApp returns a reference to an initialized NibiruTestApp.
+func NewNibiruTestApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,

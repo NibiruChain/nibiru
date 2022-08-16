@@ -55,7 +55,7 @@ func NewTestNibiruAppWithGenesis(gen app.GenesisState) *NibiruTestApp {
 
 	encoding := app.MakeTestEncodingConfig()
 
-	nibiruApp := NewNibiruApp(
+	nibiruApp := NewNibiruTestApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
