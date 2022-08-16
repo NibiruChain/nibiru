@@ -3,6 +3,8 @@ package gasless_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types3 "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
@@ -11,7 +13,6 @@ import (
 	types2 "github.com/NibiruChain/nibiru/app/antedecorators/types"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 var oracleAddr = sample.AccAddress()
@@ -112,7 +113,7 @@ func TestGaslessDecorator_Whitelisted(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruAppAndContext(true)
+			app, ctx := simapp.NewTestNibiruAppAndContext(true)
 			ctx = ctx.WithGasMeter(sdk.NewGasMeter(10000000))
 
 			if tc.isWhitelisted {

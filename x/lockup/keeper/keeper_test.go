@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -12,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestCreateLock(t *testing.T) {
@@ -45,7 +46,7 @@ func TestCreateLock(t *testing.T) {
 	for _, testcase := range tests {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruAppAndContext(true)
+			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.ownerAddr, tc.accountInitialFunds))
 
 			lock, err := app.LockupKeeper.LockTokens(ctx, tc.ownerAddr, tc.coins, tc.duration)
@@ -68,7 +69,7 @@ func TestCreateLock(t *testing.T) {
 
 func TestLockupKeeper_InitiateUnlocking(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(false)
+		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		addr := sample.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
@@ -90,12 +91,12 @@ func TestLockupKeeper_InitiateUnlocking(t *testing.T) {
 		require.Equal(t, updatedLock.EndTime, ctx.BlockTime().Add(lock.Duration))
 	})
 	t.Run("err lock does not exist", func(t *testing.T) {
-		app, ctx := testapp.NewNibiruAppAndContext(false)
+		app, ctx := simapp2.NewTestNibiruAppAndContext(false)
 		_, err := app.LockupKeeper.InitiateUnlocking(ctx, 0)
 		require.ErrorIs(t, err, types.ErrLockupNotFound)
 	})
 	t.Run("err already unlocking", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(false)
+		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		addr := sample.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
@@ -119,7 +120,7 @@ func TestLockupKeeper_InitiateUnlocking(t *testing.T) {
 
 func TestLockupKeeper_UnlockTokens(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(true)
+		app, _ := simapp2.NewTestNibiruAppAndContext(true)
 		addr := sample.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
@@ -146,14 +147,14 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 	})
 
 	t.Run("lock not found", func(t *testing.T) {
-		app, ctx := testapp.NewNibiruAppAndContext(true)
+		app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 		_, err := app.LockupKeeper.UnlockTokens(ctx, 1)
 		require.ErrorIs(t, err, types.ErrLockupNotFound)
 	})
 
 	t.Run("lock not matured", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(true)
+		app, _ := simapp2.NewTestNibiruAppAndContext(true)
 		addr := sample.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
@@ -171,7 +172,7 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 
 func TestLockupKeeper_AccountLockedCoins(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(true)
+		app, _ := simapp2.NewTestNibiruAppAndContext(true)
 		addr := sample.AccAddress()
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -197,7 +198,7 @@ func TestLockupKeeper_AccountLockedCoins(t *testing.T) {
 
 func TestLockupKeeper_AccountUnlockedCoins(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(false)
+		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		addr := sample.AccAddress()
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -227,7 +228,7 @@ func TestLockupKeeper_AccountUnlockedCoins(t *testing.T) {
 
 func TestLockupKeeper_LockedCoins(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(false)
+		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 		addr := sample.AccAddress()
@@ -258,7 +259,7 @@ func TestLockupKeeper_LockedCoins(t *testing.T) {
 
 func TestLockupKeeper_UnlockAvailableCoins(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(false)
+		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 		addr := sample.AccAddress()
@@ -290,7 +291,7 @@ func TestLockupKeeper_UnlockAvailableCoins(t *testing.T) {
 
 func TestLockupKeeper_LocksByDenomUnlockingAfter(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, _ := testapp.NewNibiruAppAndContext(false)
+		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now().UTC()})
 
 		addr := sample.AccAddress()

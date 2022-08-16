@@ -4,26 +4,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
 
-	app         *app.NibiruApp
+	app         *simapp.NibiruTestApp
 	ctx         sdk.Context
 	queryClient types.QueryClient
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	suite.app = nibiruApp
 	suite.ctx = ctx
 

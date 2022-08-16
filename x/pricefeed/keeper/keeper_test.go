@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,11 +13,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestKeeper_SetGetPair(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	pairs := common.AssetPairs{
 		common.MustNewAssetPair("tst:usd"),
@@ -43,7 +44,7 @@ func TestKeeper_SetGetPair(t *testing.T) {
 }
 
 func TestKeeper_GetPostRawPrice(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	_, addrs := sample.PrivKeyAddressPairs(2)
@@ -97,7 +98,7 @@ Test case where two oracles try to set prices for a market and only one of the
 oracles is valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_PostRawPriceWrongOracle(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 	pair := common.MustNewAssetPair("tst:usd")
 
@@ -129,7 +130,7 @@ Test case where several oracles try to set prices for a market
 and "k" (int) of the oracles are valid (i.e. registered with keeper.SetParams).
 */
 func TestKeeper_PostRawPriceWrongOracles(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	pair := common.MustNewAssetPair("tst:usd")
@@ -162,7 +163,7 @@ func TestKeeper_PostRawPriceWrongOracles(t *testing.T) {
 // Test Setting the current price of an Asset
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	_, addrs := sample.PrivKeyAddressPairs(5)
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	pair := common.PairBTCStable
@@ -230,7 +231,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {
 	_, oracles := sample.PrivKeyAddressPairs(5)
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
 	token0, token1 := "usd", "tst"
