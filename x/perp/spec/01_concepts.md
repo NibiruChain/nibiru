@@ -46,11 +46,11 @@ position_size = baseReserves - baseReservesAfterSwap
 The notional value of the position, or **position notional**, is the total value a position controls  in units of the quote asset. Notional value expresses the value a derivatives contract theoretically controls. On Nibiru, it is defined more concretely by
 
 ```go
-positionNotional = abs(quoteReserves - k/(baseReserves + position_size))
+positionNotional = abs(quoteReserves - k / (baseReserves + position_size))
 leverage = positionNotional / margin.
 ```
 
-Let's say that the mark price of ether is $3000 in our previous example. This implies that the trader with a long position of size 5 has a position notional of $15,000. And if the trader has 10x **leverage**, for example, she must have put down $1500 as margin (collateral backing the position). 
+Let's say that the mark price of ether is \$3000 in our previous example. This implies that the trader with a long position of size 5 has a position notional of \$15,000. And if the trader has 10x **leverage**, for example, she must have put down \$1500 as margin (collateral backing the position). 
 
 ## Margin and Margin Ratio
 
@@ -66,7 +66,7 @@ Here, `unrealizedPnL` is computed using either the mark price or the 15 minute T
 
 When the virtual price is not within the spread tolerance to the index price, the margin ratio used is the highest value between a calculation with the index price (oracle based on underlying) and the mark price (derivative price).
 
-Another good way to think about margin ratio is as the inverse of a position's effective leverage. I.e. if a trader puts down $100 as margin with 5x leverage, the notional is $500 and the margin ratio is 20%, which is equivalent ot `1 / leverage`.
+Another good way to think about margin ratio is as the inverse of a position's effective leverage. I.e. if a trader puts down $100 as margin with 5x leverage, the notional is \$500 and the margin ratio is 20%, which is equivalent ot `1 / leverage`.
 
 #### Cross Margin versus Isolated Margin
 
@@ -91,17 +91,16 @@ Perpetual contracts rely on a scheduled payment between longs and shorts known a
 
 Longs and shorts are paid with the exact funding rate formula [used by FTX](https://help.ftx.com/hc/en-us/articles/360027946571-Funding). Realized and unrealized funding payments are updated every block directly on each position. Global funding calculations are recorded in a time-weighted fashion, where the **funding rate** is the difference between the mark TWAP and index TWAP divided by the number of funding payments per day:
 
-```python
-funding_rate 
-=  (mark_TWAP - index_TWAP) / funding_payments_per_day
+```go
+fundingRate = (markTWAP - indexTWAP) / fundingPaymentsPerDay
 ```
 
 In the initial version of Nibi-Perps, these payments will occur every half-hour, implying a `funding_payments_per_day` value of 48. This setup is analogous to a traditional future that expires once a day. If a perp trades consistently at 2% above its underlying index price, the funding payments would amount to 2% of the position size after a full day.   
 
 If the funding rate is positive, mark price > index price and longs pay shorts. Nibi-Perps automatically deducts the funding payment amount from the margin of the long positions. 
 
-```python
-funding_payment = position_size * funding_rate
+```go
+fundingPayment = positionSize * fundingRate
 ```
 
 Here, position size refers to amount of base asset represented by the derivative. I.e., a BTC:USD perp with 7 BTC of exposure would have a position size of 7.

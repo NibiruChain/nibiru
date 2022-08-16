@@ -136,7 +136,12 @@ message PostedPriceResponse {
 // module.
 message CurrentPriceResponse {
   string pair_id = 1 [(gogoproto.customname) = "PairID"];
+
+  // most current price of the trading pair
   string price = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  
+  // twap of the trading pair
+  string twap = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 
 // Market defines an asset in the pricefeed.
