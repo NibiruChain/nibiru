@@ -53,7 +53,7 @@ func NewTestNibiruAppWithGenesis(gen app.GenesisState) *NibiruTestApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	encoding := app.MakeTestEncodingConfig()
+	encoding := MakeTestEncodingConfig()
 
 	nibiruApp := NewNibiruTestApp(
 		logger,
