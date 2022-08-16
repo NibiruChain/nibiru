@@ -126,7 +126,7 @@ type (
 )
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
-func BuildNetworkConfig(appGenesis app.GenesisState) Config {
+func BuildNetworkConfig(appGenesis simapp.GenesisState) Config {
 	encCfg := app.MakeTestEncodingConfig()
 
 	return Config{

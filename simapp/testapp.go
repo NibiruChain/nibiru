@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -23,10 +22,10 @@ import (
 // database ('tmdb.MemDB') and disabled logging. It either uses the application's
 // default genesis state or a blank one.
 func NewTestNibiruApp(shouldUseDefaultGenesis bool) *NibiruTestApp {
-	encoding := app.MakeTestEncodingConfig()
-	var appGenesis app.GenesisState
+	encoding := simapp.MakeTestEncodingConfig()
+	var appGenesis GenesisState
 	if shouldUseDefaultGenesis {
-		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
+		appGenesis = NewDefaultGenesisState(encoding.Marshaler)
 	}
 	return NewTestNibiruAppWithGenesis(appGenesis)
 }
@@ -43,7 +42,7 @@ func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, s
 // NewTestNibiruAppWithGenesis initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewTestNibiruAppWithGenesis(gen app.GenesisState) *NibiruTestApp {
+func NewTestNibiruAppWithGenesis(gen GenesisState) *NibiruTestApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -94,10 +93,10 @@ const (
 genesis as input. The blockchain genesis state is represented as a map from module
 identifier strings to raw json messages.
 */
-func NewTestGenesisStateFromDefault() app.GenesisState {
-	encodingConfig := app.MakeTestEncodingConfig()
+func NewTestGenesisStateFromDefault() GenesisState {
+	encodingConfig := MakeTestEncodingConfig()
 	codec := encodingConfig.Marshaler
-	genState := app.NewDefaultGenesisState(codec)
+	genState := NewDefaultGenesisState(codec)
 	return NewTestGenesisState(codec, genState)
 }
 
@@ -111,8 +110,8 @@ Args:
 - codec: Serializer for the module genesis state proto.Messages
 - inGenState: Input genesis state before the custom test setup is applied
 */
-func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
-) (testGenState app.GenesisState) {
+func NewTestGenesisState(codec codec.Codec, inGenState GenesisState,
+) (testGenState GenesisState) {
 	testGenState = inGenState
 
 	// Set short voting period to allow fast gov proposals in tests

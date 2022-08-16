@@ -1,13 +1,13 @@
 package epochs_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
