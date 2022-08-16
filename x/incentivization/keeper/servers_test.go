@@ -4,15 +4,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	"github.com/cosmos/cosmos-sdk/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
@@ -20,7 +21,7 @@ import (
 
 func TestMsgServer_CreateIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testapp.NewNibiruApp(false)
+		app := simapp2.NewTestNibiruApp(false)
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -55,7 +56,7 @@ func TestMsgServer_CreateIncentivizationProgram(t *testing.T) {
 
 func TestMsgServer_FundIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testapp.NewNibiruApp(false)
+		app := simapp2.NewTestNibiruApp(false)
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -94,7 +95,7 @@ func TestMsgServer_FundIncentivizationProgram(t *testing.T) {
 }
 
 func TestQueryServer_IncentivizationProgram(t *testing.T) {
-	app := testapp.NewNibiruApp(false)
+	app := simapp2.NewTestNibiruApp(false)
 	q := keeper.NewQueryServer(app.IncentivizationKeeper)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
@@ -108,7 +109,7 @@ func TestQueryServer_IncentivizationProgram(t *testing.T) {
 }
 
 func TestQueryServer_IncentivizationPrograms(t *testing.T) {
-	app := testapp.NewNibiruApp(false)
+	app := simapp2.NewTestNibiruApp(false)
 	q := keeper.NewQueryServer(app.IncentivizationKeeper)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 

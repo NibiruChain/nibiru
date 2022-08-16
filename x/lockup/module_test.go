@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -12,11 +14,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/lockup"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestAppModule_ExportGenesis_ImportGenesis(t *testing.T) {
-	app := testapp.NewNibiruApp(false)
+	app := simapp2.NewTestNibiruApp(false)
 	am := lockup.NewAppModule(app.AppCodec(), app.LockupKeeper, app.AccountKeeper, app.BankKeeper)
 
 	ctxUncached := app.NewContext(false, tmproto.Header{Time: time.Now()})

@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGetParams(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	stableKeeper := &nibiruApp.StablecoinKeeper
 
 	params := types.DefaultParams()

@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestExecuteFullLiquidation(t *testing.T) {
@@ -75,7 +76,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	for name, testCase := range testCases {
 		tc := testCase
 		t.Run(name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			t.Log("create vpool")
@@ -125,7 +126,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				ctx, tokenPair, tc.positionSide, traderAddr, tc.quoteAmount, tc.leverage, tc.baseAssetLimit)
 			require.NoError(t, err)
 
-			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
+			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
 				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -250,7 +251,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -302,7 +303,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				ctx, tokenPair, tc.side, traderAddr, tc.quote, tc.leverage, tc.baseLimit)
 			require.NoError(t, err)
 
-			t.Log("Artificially populate Vault and PerpEF to prevent BankKeeper errors")
+			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
 				tokenPair.QuoteDenom(), 1_000_000))
 			assert.NoError(t, simapp.FundModuleAccount(

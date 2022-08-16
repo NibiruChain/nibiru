@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -12,11 +14,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
@@ -28,7 +29,7 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 	// Write a pool number
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
@@ -43,7 +44,7 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 	pool := types.Pool{
 		Id: 150,
@@ -150,7 +151,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruAppAndContext(true)
+			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			app.DexKeeper.SetPool(ctx, types.Pool{
 				Id: 1,
@@ -208,7 +209,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 	poolCreationFeeCoin := sdk.NewInt64Coin(common.DenomGov, 1000_000_000)
 	app.DexKeeper.SetParams(ctx, types.NewParams(
@@ -275,7 +276,7 @@ func TestNewPool(t *testing.T) {
 }
 
 func TestNewPoolNotEnoughFunds(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
@@ -315,7 +316,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -335,7 +336,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 }
 
 func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -359,7 +360,7 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 }
 
 func TestNewPoolTooManyAssets(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
 	require.NoError(t, err)
 
@@ -514,7 +515,7 @@ func TestJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruAppAndContext(true)
+			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -626,7 +627,7 @@ func TestExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruAppAndContext(true)
+			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			poolAddr := sample.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

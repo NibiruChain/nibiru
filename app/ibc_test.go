@@ -16,12 +16,16 @@ import (
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
+
+// init changes the value of 'DefaultTestingAppInit' to use custom initialization.
+func init() {
+	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+}
 
 /*
 SetupTestingApp returns the TestingApp and default genesis state used to
@@ -33,7 +37,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	// Whitelist a pair and oracle
 	pair, err := common.NewAssetPair("uatom:unibi")
@@ -60,15 +64,10 @@ func SetupNibiruTestingApp() (
 	}
 
 	// Create genesis state
-	encCdc := app.MakeTestEncodingConfig()
-	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
+	encCdc := simapp.MakeTestEncodingConfig()
+	genesisState := simapp.NewDefaultGenesisState(encCdc.Marshaler)
 
 	return nibiruApp, genesisState
-}
-
-// init changes the value of 'DefaultTestingAppInit' to use custom initialization.
-func init() {
-	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.

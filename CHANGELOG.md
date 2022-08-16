@@ -40,11 +40,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+[Unreleased]
+
+### State Machine Breaking
+
+* [#831](https://github.com/NibiruChain/nibiru/pull/831) - remove modules that are not used in testnet
+
 ## [v0.12.1-alpha](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1-alpha) - 2022-08-11
 
 ### CI
 
-* [#795](https://github.com/NibiruChain/nibiru/pull/795) Integration tests run when PR is approved
+* [#795](https://github.com/NibiruChain/nibiru/pull/795) - integration tests run when PR is approved
 * [#826](https://github.com/NibiruChain/nibiru/pull/826) - create and push docker image on release
 
 

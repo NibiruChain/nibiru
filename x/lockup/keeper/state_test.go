@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -12,11 +14,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestLockState(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 	addr := sample.AccAddress()
 	lock := &types.Lock{
 		LockId:   0,
@@ -62,7 +63,7 @@ func Test_LocksState_232(t *testing.T) {
 	addr1 := sdk.AccAddress{197, 74, 130, 194, 229, 233, 119, 113, 119, 172, 13, 56, 95, 110, 234, 199, 255, 102, 24, 142}
 	addr2 := sdk.AccAddress{198, 74, 130, 194, 229, 233, 119, 113, 119, 172, 13, 56, 95, 110, 234, 199, 255, 102, 24, 143}
 
-	app, _ := testapp.NewNibiruAppAndContext(false)
+	app, _ := simapp2.NewTestNibiruAppAndContext(false)
 	ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	// we create two locks for each addr one expired the other one not

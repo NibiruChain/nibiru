@@ -3,14 +3,15 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGetParams(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)

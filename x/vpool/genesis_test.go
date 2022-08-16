@@ -3,11 +3,12 @@ package vpool_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -39,7 +40,7 @@ func TestGenesis(t *testing.T) {
 
 	genesisState := types.GenesisState{Vpools: vpools}
 
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	k := nibiruApp.VpoolKeeper
 	vpool.InitGenesis(ctx, k, genesisState)
 

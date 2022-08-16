@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -11,7 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGetParams(t *testing.T) {
@@ -22,7 +23,7 @@ func TestGetParams(t *testing.T) {
 		{
 			name: "calling GetParams without setting returns default",
 			test: func() {
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				k := nibiruApp.PricefeedKeeper
 				require.EqualValues(t, types.DefaultParams(), k.GetParams(ctx))
 			},
@@ -30,7 +31,7 @@ func TestGetParams(t *testing.T) {
 		{
 			name: "params match after manual set and include default",
 			test: func() {
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				k := nibiruApp.PricefeedKeeper
 				params := types.Params{
 					Pairs: common.NewAssetPairs("btc:usd", "xrp:usd"),
@@ -61,7 +62,7 @@ func TestWhitelistOracles(t *testing.T) {
 		{
 			name: "genesis - no oracle provided",
 			test: func() {
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				pk := &nibiruApp.PricefeedKeeper
 
 				oracle := sample.AccAddress()
@@ -77,7 +78,7 @@ func TestWhitelistOracles(t *testing.T) {
 		{
 			name: "multiple oracles whitelisted at different times ",
 			test: func() {
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				pk := &nibiruApp.PricefeedKeeper
 
 				paramsPairs := pk.GetParams(ctx).Pairs
@@ -132,7 +133,7 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 			pricefeedKeeper := &nibiruApp.PricefeedKeeper
 			pricefeedKeeper.SetParams(ctx, tc.startParams)
 

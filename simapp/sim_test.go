@@ -14,8 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
-
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func init() {
@@ -37,7 +35,7 @@ func TestFullAppSimulation(tb *testing.T) {
 		}
 	}()
 
-	nibiru := testapp.NewNibiruApp( /*shouldUseDefaultGenesis*/ true)
+	nibiru := NewTestNibiruApp( /*shouldUseDefaultGenesis*/ true)
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -87,7 +85,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			db := dbm.NewMemDB()
-			app := testapp.NewNibiruApp( /*shouldUseDefaultGenesis*/ true)
+			app := NewTestNibiruApp( /*shouldUseDefaultGenesis*/ true)
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
