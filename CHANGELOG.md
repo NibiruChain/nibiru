@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#830](https://github.com/NibiruChain/nibiru/pull/830) - test(vpool): Make missing fields nullable for 'query vpool all-prices'. Improve test coverage of functions used in the query server.
 * [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
