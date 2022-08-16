@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/testutil/cli"
@@ -95,4 +98,37 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 	}
 
 	return resp, nil
+}
+
+func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
+	cfg := n.Config
+	kb := n.Validators[0].ClientCtx.Keyring
+	info, err := kb.KeyByAddress(addr)
+	require.NoError(n.T, err)
+	rpc := n.Validators[0].RPCClient
+	txBuilder := cfg.TxConfig.NewTxBuilder()
+	require.NoError(n.T, txBuilder.SetMsgs(msgs...))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1))))
+	txBuilder.SetGasLimit(1000000)
+
+	txFactory := tx.Factory{}
+	txFactory = txFactory.
+		WithChainID(cfg.ChainID).
+		WithKeybase(kb).
+		WithTxConfig(cfg.TxConfig).
+		WithAccountRetriever(cfg.AccountRetriever)
+
+	err = tx.Sign(txFactory, info.GetName(), txBuilder, true)
+	require.NoError(n.T, err)
+
+	txBytes, err := cfg.TxConfig.TxEncoder()(txBuilder.GetTx())
+	require.NoError(n.T, err)
+
+	respRaw, err := rpc.BroadcastTxCommit(context.Background(), txBytes)
+	require.NoError(n.T, err)
+
+	require.Truef(n.T, respRaw.CheckTx.IsOK(), "tx failed: %s", respRaw.CheckTx.Log)
+	require.Truef(n.T, respRaw.DeliverTx.IsOK(), "tx failed: %s", respRaw.CheckTx.Log)
+
+	return sdk.NewResponseFormatBroadcastTxCommit(respRaw), nil
 }
