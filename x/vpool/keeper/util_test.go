@@ -69,7 +69,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 
 	mockedAccountKeeper.
 		EXPECT().GetModuleAddress(types.ModuleName).
-		Return(authtypes.NewModuleAddress(types.ModuleName))
+		Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
 
 	k := NewKeeper(
 		protoCodec,

@@ -43,7 +43,7 @@ func (k Keeper) getPool(ctx sdk.Context, pair common.AssetPair) (
 ) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
 	if bz == nil {
-		return nil, fmt.Errorf("Could not find vpool for pair %s", pair.String())
+		return nil, fmt.Errorf("could not find vpool for pair %s", pair.String())
 	}
 
 	var pool types.Pool
@@ -120,22 +120,50 @@ func (k Keeper) GetAllPools(ctx sdk.Context) []*types.Pool {
 }
 
 // GetPoolPrices returns the mark price, twap (mark) price, and index price for a vpool.
-func (k Keeper) GetPoolPrices(ctx sdk.Context, pool types.Pool) types.PoolPrices {
-	indexPrice, err := k.GetUnderlyingPrice(ctx, pool.Pair)
+// An error is returned if
+func (k Keeper) GetPoolPrices(
+	ctx sdk.Context, pool types.Pool,
+) (prices types.PoolPrices, err error) {
+	// Validation - guarantees no panics in GetUnderlyingPrice or GetCurrentTWAP
+	if err := pool.Pair.Validate(); err != nil {
+		return prices, err
+	}
+	if !k.ExistsPool(ctx, pool.Pair) {
+		return prices, types.ErrPairNotSupported.Wrap(pool.Pair.String())
+	}
+	if err := pool.ValidateReserves(); err != nil {
+		return prices, err
+	}
+
+	markPrice := new(sdk.Dec)
+	indexPrice := new(sdk.Dec)
+	twapMark := new(sdk.Dec)
+	swapInvariant := new(sdk.Int)
+
+	indexPriceVal, err := k.GetUnderlyingPrice(ctx, pool.Pair)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the oracle price feeds stop
 		k.Logger(ctx).Error(err.Error())
+	} else {
+		*indexPrice = indexPriceVal
 	}
-	twapMark, err := k.GetCurrentTWAP(ctx, pool.Pair)
+	twapMarkVal, err := k.GetCurrentTWAP(ctx, pool.Pair)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the TWAP is undefined.
 		k.Logger(ctx).Error(err.Error())
+	} else {
+		*twapMark = twapMarkVal.Price
 	}
+
+	*markPrice = pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve)
+	*swapInvariant = pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt()
+
 	return types.PoolPrices{
-		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
+		Pair:          pool.Pair.String(),
+		MarkPrice:     markPrice,
 		IndexPrice:    indexPrice,
-		TwapMark:      twapMark.Price,
-		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
+		TwapMark:      twapMark,
+		SwapInvariant: swapInvariant,
 		BlockNumber:   ctx.BlockHeight(),
-	}
+	}, nil
 }

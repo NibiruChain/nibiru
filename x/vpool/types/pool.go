@@ -161,3 +161,33 @@ func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator
 	}
 	return CurrentTWAP{PairID: assetPair.String(), Numerator: numerator, Denominator: denominator, Price: price}
 }
+
+func (p *Pool) ValidateReserves() error {
+	if !p.QuoteAssetReserve.IsPositive() || !p.BaseAssetReserve.IsPositive() {
+		return ErrNonPositiveReserves.Wrap("pool: " + p.String())
+	} else {
+		return nil
+	}
+}
+
+type PoolPriceValues struct {
+	Pair          string
+	MarkPrice     sdk.Dec
+	IndexPrice    sdk.Dec
+	TwapMark      sdk.Dec
+	SwapInvariant sdk.Int
+}
+
+// Utility function for converting regular types to pointer types for the PoolPrices
+// data structure. The fields need to be pointers in order to remain empty with
+// are missing rather than defaulting to zero.
+func (values PoolPriceValues) GetPoolPrices() PoolPrices {
+	toSdkPointer := common.ToSdkPointer
+	return PoolPrices{
+		Pair:          values.Pair,
+		MarkPrice:     toSdkPointer(values.MarkPrice).(*sdk.Dec),
+		IndexPrice:    toSdkPointer(values.IndexPrice).(*sdk.Dec),
+		TwapMark:      toSdkPointer(values.TwapMark).(*sdk.Dec),
+		SwapInvariant: toSdkPointer(values.SwapInvariant).(*sdk.Int),
+	}
+}

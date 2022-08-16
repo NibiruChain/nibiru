@@ -11,7 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -59,8 +58,8 @@ func TestQueryAllPools(t *testing.T) {
 	pool := types.NewPool(
 		/* pair */ pair,
 		/* tradeLimitRatio */ sdk.ZeroDec(),
-		/* quoteAmount */ sdk.NewDec(1_000_000),
-		/* baseAmount */ sdk.NewDec(1000),
+		/* quoteAmount */ sdk.NewDec(1_000_000), // 1e6
+		/* baseAmount */ sdk.NewDec(1000), // 1e3
 		/* fluctuationLimitRatio */ sdk.ZeroDec(),
 		/* maxOracleSpreadRatio */ sdk.ZeroDec(),
 		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
@@ -68,22 +67,27 @@ func TestQueryAllPools(t *testing.T) {
 	)
 	vpoolKeeper.savePool(ctx, pool)
 
-	t.Log("query reserve assets")
-	pfModuleAcc := sample.AccAddress()
+	t.Log("query reserve assets and prices for the pair")
+	indexPrice := sdk.NewDec(25_000)
 	mocks.mockPricefeedKeeper.EXPECT().
 		GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom()).
 		Return(
-			pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: sdk.NewDec(25_000)},
+			pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: indexPrice},
 			nil)
-	mocks.mockAccountKeeper.EXPECT().
-		GetModuleAddress(pricefeedtypes.ModuleName).
-		Return(pfModuleAcc)
 	resp, err := queryServer.AllPools(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryAllPoolsRequest{},
 	)
 
-	t.Log("assert reserve assets")
+	t.Log("check if query response is accurate")
+	expectedPoolPrices := types.PoolPriceValues{
+		Pair:          pool.Pair.String(),
+		MarkPrice:     sdk.NewDec(1_000), // 1e6 / 1e3
+		IndexPrice:    indexPrice,
+		TwapMark:      sdk.Dec{},
+		SwapInvariant: sdk.NewInt(1_000_000_000), // 1e6 * 1e3
+	}.GetPoolPrices()
 	require.NoError(t, err)
 	assert.EqualValues(t, pool.Pair, resp.Pools[0].Pair)
+	assert.EqualValues(t, expectedPoolPrices, resp.Prices[0])
 }
