@@ -1,9 +1,10 @@
 package incentivization_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 

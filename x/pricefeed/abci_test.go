@@ -1,9 +1,10 @@
 package pricefeed_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

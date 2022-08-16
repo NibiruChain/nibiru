@@ -1,8 +1,9 @@
 package fee_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"

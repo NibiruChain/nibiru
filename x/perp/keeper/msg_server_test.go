@@ -2,9 +2,10 @@ package keeper_test
 
 import (
 	"fmt"
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"

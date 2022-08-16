@@ -2,9 +2,10 @@ package pricefeed_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	tmtypes "github.com/tendermint/tendermint/types"
 

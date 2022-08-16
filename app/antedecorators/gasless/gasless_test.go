@@ -1,8 +1,9 @@
 package gasless_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types3 "github.com/cosmos/cosmos-sdk/x/bank/types"

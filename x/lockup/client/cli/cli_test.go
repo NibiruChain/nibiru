@@ -1,9 +1,10 @@
 package cli_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 

@@ -2,18 +2,20 @@ package keeper_test
 
 import (
 	"fmt"
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSetCollRatio_Input(t *testing.T) {

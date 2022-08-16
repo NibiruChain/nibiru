@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,6 +14,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 // NewTestNibiruApp creates an application instance ('app.NibiruApp') with an in-memory

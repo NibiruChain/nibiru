@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/NibiruChain/nibiru/simapp"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"

@@ -1,9 +1,10 @@
 package epochs_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/stretchr/testify/require"
 

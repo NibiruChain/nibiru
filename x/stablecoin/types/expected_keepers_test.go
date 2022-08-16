@@ -1,12 +1,14 @@
 package types_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"reflect"
 	"testing"
 
-	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/stretchr/testify/assert"
+
+	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 // Verifies that the expected keepers (e.g. 'KeeperName') in x/stablecoin are

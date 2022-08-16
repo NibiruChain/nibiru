@@ -2,8 +2,9 @@ package cli_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"

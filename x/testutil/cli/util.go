@@ -3,9 +3,10 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/simapp"
 	"path/filepath"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	tmtypes "github.com/tendermint/tendermint/abci/types"

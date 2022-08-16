@@ -1,20 +1,22 @@
 package keeper_test
 
 import (
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedTypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 // ------------------------------------------------------------------

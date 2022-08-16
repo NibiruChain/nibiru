@@ -3,10 +3,11 @@ package cli_test
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/simapp"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"

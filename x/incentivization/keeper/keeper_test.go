@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 

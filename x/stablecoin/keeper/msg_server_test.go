@@ -1,11 +1,13 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 
-	sckeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/stretchr/testify/require"
+
+	sckeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 )
 
 func TestNewMsgServerImpl(t *testing.T) {

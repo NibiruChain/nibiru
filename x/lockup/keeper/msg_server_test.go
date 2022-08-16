@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 

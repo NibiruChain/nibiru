@@ -1,9 +1,10 @@
 package types_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"reflect"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/stretchr/testify/assert"
 

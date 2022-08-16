@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

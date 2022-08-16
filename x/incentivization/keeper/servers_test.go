@@ -1,17 +1,19 @@
 package keeper_test
 
 import (
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"

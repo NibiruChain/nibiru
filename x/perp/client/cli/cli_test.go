@@ -2,9 +2,10 @@ package cli_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

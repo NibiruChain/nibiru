@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
+
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 
@@ -11,9 +12,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetAndSetPosition(t *testing.T) {
