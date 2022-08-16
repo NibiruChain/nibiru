@@ -3,6 +3,7 @@ package cli_test
 import (
 	"context"
 	"fmt"
+	"github.com/NibiruChain/nibiru/simapp"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -41,7 +41,7 @@ func (s *VpoolCLISuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	genesisState := testapp.NewTestGenesisStateFromDefault()
+	genesisState := simapp.NewTestGenesisStateFromDefault()
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)

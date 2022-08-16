@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestExecuteFullLiquidation(t *testing.T) {
@@ -75,7 +75,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	for name, testCase := range testCases {
 		tc := testCase
 		t.Run(name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			t.Log("create vpool")
@@ -250,7 +250,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper

@@ -3,6 +3,7 @@ package cli_test
 import (
 	"context"
 	"fmt"
+	"github.com/NibiruChain/nibiru/simapp"
 	"io/ioutil"
 	"strconv"
 	"testing"
@@ -30,7 +31,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 const (
@@ -94,7 +94,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
+	s.cfg = testutilcli.BuildNetworkConfig(simapp.NewTestGenesisStateFromDefault())
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	s.oracleMap = make(map[string]sdk.AccAddress)

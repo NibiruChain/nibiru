@@ -1,6 +1,7 @@
 package dex_test
 
 import (
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,7 +9,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGenesis(t *testing.T) {
@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	dex.InitGenesis(ctx, app.DexKeeper, genesisState)
 	got := dex.ExportGenesis(ctx, app.DexKeeper)
 	require.NotNil(t, got)

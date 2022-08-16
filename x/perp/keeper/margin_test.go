@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestAddMarginSuccess(t *testing.T) {
@@ -48,7 +48,7 @@ func TestAddMarginSuccess(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
 			t.Log("add trader funds")
@@ -113,7 +113,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				removeAmt := sdk.NewInt(5)
 
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
@@ -126,7 +126,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "pool exists but trader doesn't have position - fail",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
@@ -156,7 +156,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "remove margin from healthy position",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				traderAddr := sample.AccAddress()
 				pair := common.MustNewAssetPair("xxx:yyy")
 

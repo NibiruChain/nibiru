@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestQueryPosition(t *testing.T) {
@@ -88,7 +88,7 @@ func TestQueryPosition(t *testing.T) {
 			tc.initialPosition.TraderAddress = traderAddr.String()
 
 			t.Log("initialize app and keeper")
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 			perpKeeper := &nibiruApp.PerpKeeper
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			queryServer := keeper.NewQuerier(*perpKeeper)

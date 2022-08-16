@@ -1,17 +1,17 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestParamsQuery(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := &nibiruApp.StablecoinKeeper
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()

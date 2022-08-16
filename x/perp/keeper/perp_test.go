@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -12,8 +13,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +25,7 @@ func TestGetAndSetPosition(t *testing.T) {
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
 				trader := sample.AccAddress()
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
@@ -40,7 +39,7 @@ func TestGetAndSetPosition(t *testing.T) {
 				vpoolPair := common.MustNewAssetPair("osmo:nusd")
 
 				traderAddr := sample.AccAddress()
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
 				require.Error(t, err)
@@ -81,7 +80,7 @@ func TestDeletePosition(t *testing.T) {
 				traders := []sdk.AccAddress{
 					sample.AccAddress(), sample.AccAddress(),
 				}
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 				t.Log("vpool contains no positions to start")
 				for _, trader := range traders {
@@ -147,7 +146,7 @@ func TestKeeperClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
-		nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+		nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 		pair := common.MustNewAssetPair("xxx:yyy")
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")

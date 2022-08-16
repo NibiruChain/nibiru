@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"encoding/json"
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 /*
@@ -33,7 +33,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	// Whitelist a pair and oracle
 	pair, err := common.NewAssetPair("uatom:unibi")

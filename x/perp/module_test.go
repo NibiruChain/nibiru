@@ -1,18 +1,18 @@
 package perp_test
 
 import (
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 // TestModuleAccounts verifies that all x/perp module accounts are connected
 // to the base application
 func TestModuleAccounts(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	perpAcc := nibiruApp.PerpKeeper.AccountKeeper.GetModuleAccount(
 		ctx, types.ModuleName)

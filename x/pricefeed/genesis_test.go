@@ -2,6 +2,7 @@ package pricefeed_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/nullify"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGenesis_DefaultGenesis(t *testing.T) {
@@ -45,10 +45,10 @@ func TestGenesis_DefaultGenesis(t *testing.T) {
 
 func TestGenesis_TestGenesis(t *testing.T) {
 	app.SetPrefixes(app.AccountAddressPrefix)
-	appGenesis := testapp.NewTestGenesisStateFromDefault()
-	pfGenesisState := testapp.PricefeedGenesis()
+	appGenesis := simapp.NewTestGenesisStateFromDefault()
+	pfGenesisState := simapp.PricefeedGenesis()
 
-	nibiruApp := testapp.NewNibiruAppWithGenesis(appGenesis)
+	nibiruApp := simapp.NewTestNibiruAppWithGenesis(appGenesis)
 	ctx := nibiruApp.NewContext(false, tmproto.Header{})
 	k := nibiruApp.PricefeedKeeper
 	pricefeed.InitGenesis(ctx, k, pfGenesisState)

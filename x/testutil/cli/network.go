@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/NibiruChain/nibiru/simapp"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -44,7 +45,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -137,7 +137,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return testapp.NewNibiruAppWithGenesis(appGenesis)
+			return simapp.NewTestNibiruAppWithGenesis(appGenesis)
 		},
 		GenesisState:  appGenesis,
 		TimeoutCommit: time.Second / 2,

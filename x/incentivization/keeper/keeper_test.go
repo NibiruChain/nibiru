@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -15,12 +16,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, ctx := testapp.NewNibiruAppAndContext(false)
+		app, ctx := simapp2.NewTestNibiruAppAndContext(false)
 
 		createdProgram, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "denom", 48*time.Hour, ctx.BlockTime(), 1000)
 		require.NoError(t, err)
@@ -33,7 +33,7 @@ func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 		require.Equal(t, authtypes.NewModuleAddress(keeper.NewEscrowAccountName(0)).String(), createdProgram.EscrowAddress)
 	})
 	t.Run("min lockup duration too low", func(t *testing.T) {
-		app, ctx := testapp.NewNibiruAppAndContext(false)
+		app, ctx := simapp2.NewTestNibiruAppAndContext(false)
 
 		_, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "denom", 1*time.Second, ctx.BlockTime(), keeper.MinEpochs)
 
@@ -41,7 +41,7 @@ func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 	})
 
 	t.Run("epochs lower than minimum", func(t *testing.T) {
-		app, ctx := testapp.NewNibiruAppAndContext(false)
+		app, ctx := simapp2.NewTestNibiruAppAndContext(false)
 
 		_, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "denom", 48*time.Hour, ctx.BlockTime(), keeper.MinEpochs-1)
 
@@ -49,7 +49,7 @@ func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 	})
 
 	t.Run("start time before block time", func(t *testing.T) {
-		app := testapp.NewNibiruApp(false)
+		app := simapp2.NewTestNibiruApp(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 		_, err := app.IncentivizationKeeper.CreateIncentivizationProgram(ctx, "denom", 48*time.Hour, ctx.BlockTime().Add(-1*time.Second), keeper.MinEpochs+1)
 
@@ -59,7 +59,7 @@ func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 
 func TestKeeper_FundIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app, ctx := testapp.NewNibiruAppAndContext(false)
+		app, ctx := simapp2.NewTestNibiruAppAndContext(false)
 		addr := sample.AccAddress()
 		fundingAmount := sdk.NewCoins(sdk.NewInt64Coin("test", 100))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, fundingAmount))

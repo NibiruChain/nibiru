@@ -1,53 +1,49 @@
-package testapp
+package simapp
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-
 	"time"
-
-	"github.com/cosmos/cosmos-sdk/simapp"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmdb "github.com/tendermint/tm-db"
 )
 
-// NewTestApp creates an application instance ('app.NibiruApp') with an in-memory
+// NewTestNibiruApp creates an application instance ('app.NibiruApp') with an in-memory
 // database ('tmdb.MemDB') and disabled logging. It either uses the application's
 // default genesis state or a blank one.
-func NewNibiruApp(shouldUseDefaultGenesis bool) *app.NibiruApp {
+func NewTestNibiruApp(shouldUseDefaultGenesis bool) *NibiruTestApp {
 	encoding := app.MakeTestEncodingConfig()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
 		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
-	return NewNibiruAppWithGenesis(appGenesis)
+	return NewTestNibiruAppWithGenesis(appGenesis)
 }
 
-// NewNibiruApp creates an 'app.NibiruApp' instance with an in-memory
+// NewTestNibiruAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
-func NewNibiruAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
-	newNibiruApp := NewNibiruApp(shouldUseDefaultGenesis)
+func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, sdk.Context) {
+	newNibiruApp := NewTestNibiruApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
 	return newNibiruApp, ctx
 }
 
-// NewTestAppWithGenesis initializes a chain with the given genesis state to
+// NewTestNibiruAppWithGenesis initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewNibiruAppWithGenesis(gen app.GenesisState) *app.NibiruApp {
+func NewTestNibiruAppWithGenesis(gen app.GenesisState) *NibiruTestApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -59,7 +55,7 @@ func NewNibiruAppWithGenesis(gen app.GenesisState) *app.NibiruApp {
 
 	encoding := app.MakeTestEncodingConfig()
 
-	nibiruApp := app.NewNibiruApp(
+	nibiruApp := NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,

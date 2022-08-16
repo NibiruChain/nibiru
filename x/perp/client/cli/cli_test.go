@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -21,7 +22,6 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -73,7 +73,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := testapp.NewTestGenesisStateFromDefault()
+	genesisState := simapp.NewTestGenesisStateFromDefault()
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()

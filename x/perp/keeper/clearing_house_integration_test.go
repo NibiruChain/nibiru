@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -245,7 +245,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			traderAddr := sample.AccAddress()
 			oracle := sample.AccAddress()
 			exchangedSize := tc.expectedSize
@@ -445,7 +445,7 @@ func TestOpenPositionError(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			traderAddr := sample.AccAddress()
 			oracle := sample.AccAddress()
 
@@ -498,7 +498,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			name: "open pos - uninitialized pool raised pair not supported error",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				pair := common.MustNewAssetPair("xxx:yyy")
 
 				trader := sample.AccAddress()
@@ -518,7 +518,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			name: "open pos - vpool not set on the perp PairMetadata ",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				pair := common.MustNewAssetPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")

@@ -2,6 +2,7 @@ package perp_test
 
 import (
 	"fmt"
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -14,12 +15,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGenesis(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testapp.NewNibiruApp(false)
+		app := simapp2.NewTestNibiruApp(false)
 		ctxUncached := app.NewContext(false, tmproto.Header{})
 		ctx, _ := ctxUncached.CacheContext()
 		// fund module accounts

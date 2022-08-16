@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
@@ -11,11 +12,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin/mock"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestKeeper_GetStableMarketCap(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(false)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
 	k := nibiruApp.StablecoinKeeper
 
 	// We set some supply
@@ -31,7 +31,7 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(false)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()
@@ -67,7 +67,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(false)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := sample.AccAddress()

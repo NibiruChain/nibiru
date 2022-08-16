@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -12,7 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestSwapExactAmountIn(t *testing.T) {
@@ -177,7 +177,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruAppAndContext(true)
+			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			// fund pool account
 			poolAddr := sample.AccAddress()

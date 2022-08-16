@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 const (
@@ -78,7 +78,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := testapp.NewTestGenesisStateFromDefault()
+	genesisState := simapp.NewTestGenesisStateFromDefault()
 
 	// x/stablecoin genesis state
 	stableGen := stabletypes.DefaultGenesis()

@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -20,7 +21,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type IntegrationTestSuite struct {
@@ -45,7 +45,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := testapp.NewTestGenesisStateFromDefault()
+	genesisState := simapp.NewTestGenesisStateFromDefault()
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin(common.DenomStable, 20000),

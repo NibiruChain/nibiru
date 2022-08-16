@@ -1,19 +1,18 @@
 package stablecoin_test
 
 import (
+	"github.com/NibiruChain/nibiru/simapp"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type test struct {
@@ -25,7 +24,7 @@ type test struct {
 }
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *app.NibiruApp
+	var app *simapp.NibiruTestApp
 	var ctx sdk.Context
 
 	tests := []test{
@@ -108,7 +107,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			app, ctx = testapp.NewNibiruAppAndContext(true)
+			app, ctx = simapp.NewTestNibiruAppAndContext(true)
 
 			ctx = ctx.WithBlockHeight(1)
 
@@ -143,7 +142,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochInfoChangesCollateralValidity(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
