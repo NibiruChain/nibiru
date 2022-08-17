@@ -3,14 +3,14 @@ package simapp
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/oracle"
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -100,6 +100,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
+
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
 	nibiapp "github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"

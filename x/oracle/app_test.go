@@ -2,15 +2,17 @@ package oracle_test
 
 import (
 	"context"
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -121,7 +123,6 @@ func (s *IntegrationTestSuite) sendVotes(rates []string) {
 }
 
 func (s *IntegrationTestSuite) waitVoteRevealBlock() {
-
 	params, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &oracletypes.QueryParamsRequest{})
 	require.NoError(s.T(), err)
 
