@@ -101,9 +101,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	cfg := n.Config
-	kb := n.Validators[0].ClientCtx.Keyring
-	info, err := kb.KeyByAddress(addr)
-	require.NoError(n.T, err)
+	kb, info := n.keyBaseAndInfoForAddr(addr)
 	rpc := n.Validators[0].RPCClient
 	txBuilder := cfg.TxConfig.NewTxBuilder()
 	require.NoError(n.T, txBuilder.SetMsgs(msgs...))
