@@ -3,9 +3,9 @@ package oracle_test
 import (
 	"context"
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupTest() {
 	app.SetPrefixes(app.AccountAddressPrefix)
-	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
+	s.cfg = testutilcli.BuildNetworkConfig(simapp.NewTestGenesisStateFromDefault())
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[oracletypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := oracletypes.DefaultGenesisState()
