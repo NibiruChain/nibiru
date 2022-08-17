@@ -23,11 +23,12 @@ type IntegrationTestSuite struct {
 func (s *IntegrationTestSuite) SetupTest() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
-	s.cfg.NumValidators = 1
+	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[oracletypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := oracletypes.DefaultGenesisState()
 		gs.Params.Whitelist = oracletypes.PairList{
-			oracletypes.Pair{Name: "unibi:usdc"},
+			oracletypes.Pair{Name: "nibi:usdc"},
+			oracletypes.Pair{Name: "btc:usdc"},
 		}
 
 		return gs
@@ -39,15 +40,30 @@ func (s *IntegrationTestSuite) SetupTest() {
 }
 
 func (s *IntegrationTestSuite) TestSuccessfulVoting() {
+	// assuming validators have equal power
+	// we use the weighted median.
+	// what happens is that prices are ordered
+	// based on exchange rate, from lowest to highest.
+	// then the median is picked, based on consensus power
+	// so obviously, in this case, since validators have the same power
+	// once weight (based on power) >= total power (sum of weights)
+	// then the number picked is the one in the middle always.
 	prices := []map[string]sdk.Dec{
 		{
-			"unibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"btc:usdc":  sdk.MustNewDecFromStr("100203.0"),
 		},
 		{
-			"unibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"btc:usdc":  sdk.MustNewDecFromStr("100150.5"),
 		},
 		{
-			"unibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
+		},
+		{
+			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"btc:usdc":  sdk.MustNewDecFromStr("100300.9"),
 		},
 	}
 	votes := s.sendPrevotes(prices)
@@ -59,7 +75,13 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	s.waitPriceUpdateBlock()
 
 	gotPrices := s.currentPrices()
-	require.Equal(s.T(), map[string]sdk.Dec{"unibi:usdc": sdk.MustNewDecFromStr("1")}, gotPrices)
+	require.Equal(s.T(),
+		map[string]sdk.Dec{
+			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
+		},
+		gotPrices,
+	)
 }
 
 func (s *IntegrationTestSuite) sendPrevotes(prices []map[string]sdk.Dec) []string {
