@@ -56,12 +56,7 @@ func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 		return false
 	})
 
-	// Clear all exchange rates
-	k.IterateExchangeRates(ctx, func(pair string, _ sdk.Dec) (stop bool) {
-		k.DeleteExchangeRate(ctx, pair)
-		return false
-	})
-
+	k.ClearExchangeRates(ctx)
 	// Organize votes to ballot by pair
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**

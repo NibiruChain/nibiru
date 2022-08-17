@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -115,6 +116,25 @@ func (k Keeper) IterateExchangeRates(ctx sdk.Context, handler func(pair string, 
 		if handler(pair, dp.Dec) {
 			break
 		}
+	}
+}
+
+// ClearExchangeRates iterates over all exchange rates and clears them.
+func (k Keeper) ClearExchangeRates(ctx sdk.Context) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ExchangeRateKey)
+
+	iter := store.Iterator(nil, nil)
+
+	var pairs [][]byte
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()
+		pairs = append(pairs, key)
+	}
+
+	_ = iter.Close()
+
+	for _, pair := range pairs {
+		store.Delete(pair)
 	}
 }
 
