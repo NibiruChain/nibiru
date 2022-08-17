@@ -137,19 +137,9 @@ func (s *IntegrationTestSuite) waitVoteRevealBlock() {
 	require.NoError(s.T(), err)
 }
 
+// it's an alias, but it exists to give better understanding of what we're doing in test cases scenarios
 func (s *IntegrationTestSuite) waitPriceUpdateBlock() {
-	params, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &oracletypes.QueryParamsRequest{})
-	require.NoError(s.T(), err)
-
-	votePeriod := params.Params.VotePeriod
-
-	height, err := s.network.LatestHeight()
-	require.NoError(s.T(), err)
-
-	waitBlock := (uint64(height)/votePeriod)*votePeriod + votePeriod
-
-	_, err = s.network.WaitForHeight(int64(waitBlock + 1))
-	require.NoError(s.T(), err)
+	s.waitVoteRevealBlock()
 }
 
 func (s *IntegrationTestSuite) currentPrices() map[string]sdk.Dec {
