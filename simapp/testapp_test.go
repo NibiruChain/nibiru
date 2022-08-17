@@ -1,8 +1,10 @@
-package testapp_test
+package simapp_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -11,7 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type TestappSuite struct {
@@ -24,14 +25,14 @@ type TestappSuite struct {
 
 func (s *TestappSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
-	s.genOracle = sdk.MustAccAddressFromBech32(testapp.GenOracleAddress)
+	s.genOracle = sdk.MustAccAddressFromBech32(simapp.GenOracleAddress)
 	s.pairs = pricefeedtypes.DefaultPairs
 	s.twapLookbackWindow = pricefeedtypes.DefaultLookbackWindow
 }
 
 // TestPricefeedGenesis verifies that the expected pricefeed state for integration tests
 func (s *TestappSuite) TestPricefeedGenesis() {
-	genPf := testapp.PricefeedGenesis()
+	genPf := simapp.PricefeedGenesis()
 	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
 	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
 	s.Assert().EqualValues(s.pairs[0].String(), genPf.PostedPrices[0].PairID)
@@ -47,7 +48,7 @@ func (s *TestappSuite) TestNewTestGenesisState() {
 	codec := encodingConfig.Marshaler
 
 	defaultGenState := app.NewDefaultGenesisState(codec)
-	testGenState := testapp.NewTestGenesisStateFromDefault()
+	testGenState := simapp.NewTestGenesisStateFromDefault()
 
 	var testGenPfState pricefeedtypes.GenesisState
 	testGenPfStateJSON := testGenState[pricefeedtypes.ModuleName]
@@ -74,13 +75,13 @@ func (s *TestappSuite) TestNewTestGenesisState() {
 
 func (s *TestappSuite) TestPricefeedGenesis_PostedPrices() {
 	s.T().Log("no prices posted for default genesis")
-	nibiruApp := testapp.NewNibiruApp(true)
+	nibiruApp := simapp.NewTestNibiruApp(true)
 	ctx := nibiruApp.NewContext(false, tmproto.Header{})
 	currentPrices := nibiruApp.PricefeedKeeper.GetCurrentPrices(ctx)
 	s.Assert().Len(currentPrices, 0)
 
 	s.T().Log("prices posted for testing genesis")
-	nibiruApp = testapp.NewNibiruAppWithGenesis(testapp.NewTestGenesisStateFromDefault())
+	nibiruApp = simapp.NewTestNibiruAppWithGenesis(simapp.NewTestGenesisStateFromDefault())
 	ctx = nibiruApp.NewContext(false, tmproto.Header{})
 	oracles := []sdk.AccAddress{s.genOracle}
 	oracleMap := nibiruApp.PricefeedKeeper.GetOraclesForPairs(ctx, s.pairs)
