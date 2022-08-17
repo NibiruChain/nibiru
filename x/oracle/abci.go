@@ -30,7 +30,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	k.Logger(ctx).Info("processing validator price votes")
 	// Build claim map over all validators in active set
-	validatorClaimMap := make(map[string]types.Claim)
+	validatorClaimMap := make(map[string]types.ValidatorPerformance)
 
 	maxValidators := k.StakingKeeper.MaxValidators(ctx)
 	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
@@ -98,8 +98,8 @@ func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 		}
 
 		// Increase miss counter
-		k.SetMissCounter(ctx, claim.Recipient, k.GetMissCounter(ctx, claim.Recipient)+1)
-		k.Logger(ctx).Info("vote miss", "validator", claim.Recipient.String())
+		k.SetMissCounter(ctx, claim.ValAddress, k.GetMissCounter(ctx, claim.ValAddress)+1)
+		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
 	}
 
 	// Distribute rewards to ballot winners

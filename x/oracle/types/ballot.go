@@ -175,20 +175,20 @@ func (pb ExchangeRateBallot) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
 }
 
-// Claim is an interface that directs its rewards to an attached bank account.
-type Claim struct {
-	Power     int64
-	Weight    int64
-	WinCount  int64
-	Recipient sdk.ValAddress
+// ValidatorPerformance keeps track of a validator performance in the voting period.
+type ValidatorPerformance struct {
+	Power      int64
+	Weight     int64
+	WinCount   int64
+	ValAddress sdk.ValAddress
 }
 
-// NewClaim generates a Claim instance.
-func NewClaim(power, weight, winCount int64, recipient sdk.ValAddress) Claim {
-	return Claim{
-		Power:     power,
-		Weight:    weight,
-		WinCount:  winCount,
-		Recipient: recipient,
+// NewClaim generates a ValidatorPerformance instance.
+func NewClaim(power, weight, winCount int64, recipient sdk.ValAddress) ValidatorPerformance {
+	return ValidatorPerformance{
+		Power:      power,
+		Weight:     weight,
+		WinCount:   winCount,
+		ValAddress: recipient,
 	}
 }

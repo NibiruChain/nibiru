@@ -167,13 +167,13 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	validatorClaimMap := make(map[string]types.Claim)
+	validatorClaimMap := make(map[string]types.ValidatorPerformance)
 	for _, valAddr := range valAddrs {
-		validatorClaimMap[valAddr.String()] = types.Claim{
-			Power:     stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			Weight:    int64(0),
-			WinCount:  int64(0),
-			Recipient: valAddr,
+		validatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
+			Power:      stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			Weight:     int64(0),
+			WinCount:   int64(0),
+			ValAddress: valAddr,
 		}
 	}
 	sort.Sort(ballot)
@@ -185,13 +185,13 @@ func TestOracleTally(t *testing.T) {
 		maxSpread = standardDeviation
 	}
 
-	expectedValidatorClaimMap := make(map[string]types.Claim)
+	expectedValidatorClaimMap := make(map[string]types.ValidatorPerformance)
 	for _, valAddr := range valAddrs {
-		expectedValidatorClaimMap[valAddr.String()] = types.Claim{
-			Power:     stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			Weight:    int64(0),
-			WinCount:  int64(0),
-			Recipient: valAddr,
+		expectedValidatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
+			Power:      stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			Weight:     int64(0),
+			WinCount:   int64(0),
+			ValAddress: valAddr,
 		}
 	}
 
