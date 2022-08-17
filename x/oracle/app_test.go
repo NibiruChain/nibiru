@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"log"
 	"testing"
 )
 
@@ -53,19 +52,19 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	}
 	votes := s.sendPrevotes(prices)
 
-	s.waitRevealVotePeriod()
+	s.waitVoteRevealBlock()
 
 	s.sendVotes(votes)
 
-	gotPrices := s.prices()
+	s.waitPriceUpdateBlock()
 
-	require.Equal(s.T(), prices, gotPrices)
+	gotPrices := s.currentPrices()
+	require.Equal(s.T(), map[string]sdk.Dec{"unibi:usdc": sdk.MustNewDecFromStr("1")}, gotPrices)
 }
 
 func (s *IntegrationTestSuite) sendPrevotes(prices []map[string]sdk.Dec) []string {
 	strVotes := make([]string, len(prices))
 	for i, val := range s.network.Validators {
-		log.Printf("%s", val.Address.String())
 		raw := prices[i]
 		votes := make(oracletypes.ExchangeRateTuples, 0, len(raw))
 		for pair, price := range raw {
@@ -99,7 +98,7 @@ func (s *IntegrationTestSuite) sendVotes(rates []string) {
 	}
 }
 
-func (s *IntegrationTestSuite) waitRevealVotePeriod() {
+func (s *IntegrationTestSuite) waitVoteRevealBlock() {
 
 	params, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &oracletypes.QueryParamsRequest{})
 	require.NoError(s.T(), err)
@@ -115,7 +114,22 @@ func (s *IntegrationTestSuite) waitRevealVotePeriod() {
 	require.NoError(s.T(), err)
 }
 
-func (s *IntegrationTestSuite) prices() map[string]sdk.Dec {
+func (s *IntegrationTestSuite) waitPriceUpdateBlock() {
+	params, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &oracletypes.QueryParamsRequest{})
+	require.NoError(s.T(), err)
+
+	votePeriod := params.Params.VotePeriod
+
+	height, err := s.network.LatestHeight()
+	require.NoError(s.T(), err)
+
+	waitBlock := (uint64(height)/votePeriod)*votePeriod + votePeriod
+
+	_, err = s.network.WaitForHeight(int64(waitBlock + 1))
+	require.NoError(s.T(), err)
+}
+
+func (s *IntegrationTestSuite) currentPrices() map[string]sdk.Dec {
 	rawRates, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &oracletypes.QueryExchangeRatesRequest{})
 	require.NoError(s.T(), err)
 
