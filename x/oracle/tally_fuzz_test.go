@@ -32,7 +32,7 @@ func TestFuzz_Tally(t *testing.T) {
 			for validator, power := range validators {
 				addr, err := sdk.ValAddressFromBech32(validator)
 				require.NoError(t, err)
-				(*e)[validator] = types.NewClaim(power, 0, 0, addr)
+				(*e)[validator] = types.NewValidatorPerformance(power, 0, 0, addr)
 			}
 		},
 		func(e *types.ExchangeRateBallot, c fuzz.Continue) {

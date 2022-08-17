@@ -330,7 +330,7 @@ func TestNewClaim(t *testing.T) {
 	weight := int64(11)
 	winCount := int64(1)
 	addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
-	claim := types.NewClaim(power, weight, winCount, addr)
+	claim := types.NewValidatorPerformance(power, weight, winCount, addr)
 	require.Equal(t, types.ValidatorPerformance{
 		Power:      power,
 		Weight:     weight,

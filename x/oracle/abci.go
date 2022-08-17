@@ -30,7 +30,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	k.Logger(ctx).Info("processing validator price votes")
 	// Build claim map over all validators in active set
-	validatorClaimMap := make(map[string]types.ValidatorPerformance)
+	validatorPerformanceMap := make(map[string]types.ValidatorPerformance)
 
 	maxValidators := k.StakingKeeper.MaxValidators(ctx)
 	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
@@ -45,7 +45,7 @@ func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 		// Exclude not bonded validator
 		if validator.IsBonded() {
 			valAddr := validator.GetOperator()
-			validatorClaimMap[valAddr.String()] = types.NewClaim(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
+			validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
 			i++
 		}
 	}
@@ -60,7 +60,7 @@ func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 	// Organize votes to ballot by pair
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
-	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorClaimMap)
+	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorPerformanceMap)
 
 	if referencePair := PickReferencePair(ctx, k, pairsMap, pairBallotMap); referencePair != "" {
 		// make voteMap of reference pair to calculate cross exchange rates
@@ -76,7 +76,7 @@ func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 			}
 
 			// Get weighted median of cross exchange rates
-			exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorClaimMap)
+			exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
 
 			// Transform into the original exchange rate
 			if pair != referencePair {
@@ -91,7 +91,7 @@ func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 	//---------------------------
 	// Do miss counting & slashing
 	voteTargetsLen := len(pairsMap)
-	for _, claim := range validatorClaimMap {
+	for _, claim := range validatorPerformanceMap {
 		// Skip abstain & valid voters
 		if int(claim.WinCount) == voteTargetsLen {
 			continue
@@ -108,7 +108,7 @@ func UpdateExchangeRates(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 		(int64)(params.VotePeriod),
 		(int64)(params.RewardDistributionWindow),
 		pairsMap,
-		validatorClaimMap,
+		validatorPerformanceMap,
 	)
 
 	// Clear the ballot

@@ -183,8 +183,8 @@ type ValidatorPerformance struct {
 	ValAddress sdk.ValAddress
 }
 
-// NewClaim generates a ValidatorPerformance instance.
-func NewClaim(power, weight, winCount int64, recipient sdk.ValAddress) ValidatorPerformance {
+// NewValidatorPerformance generates a ValidatorPerformance instance.
+func NewValidatorPerformance(power, weight, winCount int64, recipient sdk.ValAddress) ValidatorPerformance {
 	return ValidatorPerformance{
 		Power:      power,
 		Weight:     weight,
