@@ -11,13 +11,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 var (
+	FlagPair                   = "pair"
 	FlagBaseAssetReserve       = "base-asset-reserve"
 	FlagQuoteAssetReserve      = "quote-asset-reserve"
 	FlagTradeLimitRatio        = "trade-limit-ratio"
@@ -30,10 +30,12 @@ var (
 // AddVPoolGenesisCmd returns add-vpool-genesis
 func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-genesis-vpool [pair]",
+		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]", FlagPair, FlagBaseAssetReserve,
+			FlagQuoteAssetReserve, FlagTradeLimitRatio, FlagFluctuationLimitRatio, FlagMaxOracleSpreadRatio,
+			FlagMaintenanceMarginRatio, FlagMaxLeverage),
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(8),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			serverCtx := server.GetServerContextFromCmd(cmd)
@@ -47,7 +49,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			vPool, err := parseVpoolParams(args[0], cmd.Flags())
+			vPool, err := parseVpoolParams(args)
 			if err != nil {
 				return err
 			}
@@ -73,78 +75,42 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	}
 
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
-	cmd.Flags().String(FlagBaseAssetReserve, "", "Base Asset Reserve")
-	cmd.Flags().String(FlagQuoteAssetReserve, "", "Quote Asset Reserve")
-	cmd.Flags().String(FlagTradeLimitRatio, "", "Trade limit ratio")
-	cmd.Flags().String(FlagFluctuationLimitRatio, "", "Fluctuation limit ratio")
-	cmd.Flags().String(FlagMaxOracleSpreadRatio, "", "Max Oracle Spread ratio")
-	cmd.Flags().String(FlagMaintenanceMarginRatio, "", "Maintenance Margin Ratio")
-	cmd.Flags().String(FlagMaxLeverage, "", "Max Leverage")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
 
-func parseVpoolParams(pair string, flags *pflag.FlagSet) (*types.Pool, error) {
-	vPair, err := common.NewAssetPair(pair)
+func parseVpoolParams(args []string) (*types.Pool, error) {
+	vPair, err := common.NewAssetPair(args[0])
 	if err != nil {
 		return nil, err
 	}
 
-	baseAssetStr, err := flags.GetString(FlagBaseAssetReserve)
+	baseAsset, err := sdk.NewDecFromStr(args[1])
 	if err != nil {
 		return nil, err
 	}
-	quoteAssetStr, err := flags.GetString(FlagQuoteAssetReserve)
+	quoteAsset, err := sdk.NewDecFromStr(args[2])
 	if err != nil {
 		return nil, err
 	}
-	tradeLimitStr, err := flags.GetString(FlagTradeLimitRatio)
+	tradeLimit, err := sdk.NewDecFromStr(args[3])
 	if err != nil {
 		return nil, err
 	}
-	fluctuationLimitRatioStr, err := flags.GetString(FlagFluctuationLimitRatio)
+	fluctuationLimitRatio, err := sdk.NewDecFromStr(args[4])
 	if err != nil {
 		return nil, err
 	}
-	maxOracleSpreadStr, err := flags.GetString(FlagMaxOracleSpreadRatio)
+	maxOracleSpread, err := sdk.NewDecFromStr(args[5])
 	if err != nil {
 		return nil, err
 	}
-	maintenanceMarginRatioStr, err := flags.GetString(FlagMaintenanceMarginRatio)
+	maintenanceMarginRatio, err := sdk.NewDecFromStr(args[6])
 	if err != nil {
 		return nil, err
 	}
-	maxLeverageStr, err := flags.GetString(FlagMaxLeverage)
-	if err != nil {
-		return nil, err
-	}
-
-	baseAsset, err := sdk.NewDecFromStr(baseAssetStr)
-	if err != nil {
-		return nil, err
-	}
-	quoteAsset, err := sdk.NewDecFromStr(quoteAssetStr)
-	if err != nil {
-		return nil, err
-	}
-	tradeLimit, err := sdk.NewDecFromStr(tradeLimitStr)
-	if err != nil {
-		return nil, err
-	}
-	fluctuationLimitRatio, err := sdk.NewDecFromStr(fluctuationLimitRatioStr)
-	if err != nil {
-		return nil, err
-	}
-	maxOracleSpread, err := sdk.NewDecFromStr(maxOracleSpreadStr)
-	if err != nil {
-		return nil, err
-	}
-	maintenanceMarginRatio, err := sdk.NewDecFromStr(maintenanceMarginRatioStr)
-	if err != nil {
-		return nil, err
-	}
-	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
+	maxLeverage, err := sdk.NewDecFromStr(args[7])
 	if err != nil {
 		return nil, err
 	}

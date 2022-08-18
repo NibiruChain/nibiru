@@ -59,13 +59,13 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			cmd := cli.AddVPoolGenesisCmd("home")
 			cmd.SetArgs([]string{
 				tc.pairName,
-				fmt.Sprintf("--%s=%s", cli.FlagBaseAssetReserve, tc.baseAsset),
-				fmt.Sprintf("--%s=%s", cli.FlagMaxOracleSpreadRatio, tc.maxOracle),
-				fmt.Sprintf("--%s=%s", cli.FlagMaxLeverage, tc.maxLeverage),
-				fmt.Sprintf("--%s=%s", cli.FlagTradeLimitRatio, tc.tradeLimit),
-				fmt.Sprintf("--%s=%s", cli.FlagMaintenanceMarginRatio, tc.maintainRatio),
-				fmt.Sprintf("--%s=%s", cli.FlagFluctuationLimitRatio, tc.flucLimit),
-				fmt.Sprintf("--%s=%s", cli.FlagQuoteAssetReserve, tc.quoteAsset),
+				tc.baseAsset,
+				tc.maxOracle,
+				tc.maxLeverage,
+				tc.tradeLimit,
+				tc.maintainRatio,
+				tc.flucLimit,
+				tc.quoteAsset,
 				fmt.Sprintf("--%s=home", flags.FlagHome)})
 
 			if tc.expectError {
