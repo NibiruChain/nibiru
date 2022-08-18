@@ -1,4 +1,4 @@
-package oracle_test
+package integration_test_test
 
 import (
 	"context"
