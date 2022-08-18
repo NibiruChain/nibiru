@@ -3,6 +3,8 @@ package fee_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -16,14 +18,13 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 // AnteTestSuite is a test suite to be used with ante handler tests.
 type AnteTestSuite struct {
 	suite.Suite
 
-	app         *app.NibiruApp
+	app         *simapp.NibiruTestApp
 	anteHandler sdk.AnteHandler
 	ctx         sdk.Context
 	clientCtx   client.Context
@@ -31,8 +32,8 @@ type AnteTestSuite struct {
 }
 
 // returns context and app with params set on account keeper
-func createTestApp(isCheckTx bool) (*app.NibiruApp, sdk.Context) {
-	app := testapp.NewNibiruApp(true)
+func createTestApp(isCheckTx bool) (*simapp.NibiruTestApp, sdk.Context) {
+	app := simapp.NewTestNibiruApp(true)
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
 

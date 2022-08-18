@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -44,7 +45,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -127,7 +127,7 @@ type (
 )
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
-func BuildNetworkConfig(appGenesis app.GenesisState) Config {
+func BuildNetworkConfig(appGenesis simapp.GenesisState) Config {
 	encCfg := app.MakeTestEncodingConfig()
 
 	return Config{
@@ -137,7 +137,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return testapp.NewNibiruAppWithGenesis(appGenesis)
+			return simapp.NewTestNibiruAppWithGenesis(appGenesis)
 		},
 		GenesisState:  appGenesis,
 		TimeoutCommit: time.Second / 2,
@@ -160,13 +160,13 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	}
 }
 
-// New creates a new Network for integration tests.
+// NewNetwork creates a new Network for integration tests.
 func NewNetwork(t *testing.T, cfg Config) *Network {
 	// only one caller/test can create and use a network at a time
 	t.Log("acquiring test network lock")
 	lock.Lock()
 
-	baseDir, err := ioutil.TempDir(t.TempDir(), cfg.ChainID)
+	baseDir, err := os.MkdirTemp(t.TempDir(), cfg.ChainID)
 	require.NoError(t, err)
 	t.Logf("created temporary directory: %s", baseDir)
 

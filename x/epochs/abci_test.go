@@ -7,14 +7,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *app.NibiruApp
+	var app *simapp.NibiruTestApp
 	var ctx sdk.Context
 
 	now := time.Now()
@@ -97,7 +96,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		app, ctx = testapp.NewNibiruAppAndContext(true)
+		app, ctx = simapp.NewTestNibiruAppAndContext(true)
 
 		// On init genesis, default epochs information is set
 		// To check init genesis again, should make it fresh status
@@ -138,7 +137,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
@@ -210,7 +209,7 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	}
 
 	now := time.Now()
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

@@ -4,15 +4,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	chainStartTime := ctx.BlockTime()
 	chainStartHeight := ctx.BlockHeight()
@@ -54,7 +55,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
