@@ -91,44 +91,73 @@ func parseVpoolParams(pair string, flags *pflag.FlagSet) (*vpooltypes.Pool, erro
 		return nil, err
 	}
 
-	baseAsset, err := flags.GetString(FlagBaseAssetReserve)
+	baseAssetStr, err := flags.GetString(FlagBaseAssetReserve)
 	if err != nil {
 		return nil, err
 	}
-	quoteAsset, err := flags.GetString(FlagQuoteAssetReserve)
+	quoteAssetStr, err := flags.GetString(FlagQuoteAssetReserve)
 	if err != nil {
 		return nil, err
 	}
-	tradeLimit, err := flags.GetString(FlagTradeLimitRatio)
+	tradeLimitStr, err := flags.GetString(FlagTradeLimitRatio)
 	if err != nil {
 		return nil, err
 	}
-	fluctuationLimitRatio, err := flags.GetString(FlagFluctuationLimitRatio)
+	fluctuationLimitRatioStr, err := flags.GetString(FlagFluctuationLimitRatio)
 	if err != nil {
 		return nil, err
 	}
-	maxOracleSpread, err := flags.GetString(FlagMaxOracleSpreadRatio)
+	maxOracleSpreadStr, err := flags.GetString(FlagMaxOracleSpreadRatio)
 	if err != nil {
 		return nil, err
 	}
-	maintenanceMarginRatio, err := flags.GetString(FlagMaintenanceMarginRatio)
+	maintenanceMarginRatioStr, err := flags.GetString(FlagMaintenanceMarginRatio)
 	if err != nil {
 		return nil, err
 	}
-	maxLeverage, err := flags.GetString(FlagMaxLeverage)
+	maxLeverageStr, err := flags.GetString(FlagMaxLeverage)
+	if err != nil {
+		return nil, err
+	}
+
+	baseAsset, err := sdk.NewDecFromStr(baseAssetStr)
+	if err != nil {
+		return nil, err
+	}
+	quoteAsset, err := sdk.NewDecFromStr(quoteAssetStr)
+	if err != nil {
+		return nil, err
+	}
+	tradeLimit, err := sdk.NewDecFromStr(tradeLimitStr)
+	if err != nil {
+		return nil, err
+	}
+	fluctuationLimitRatio, err := sdk.NewDecFromStr(fluctuationLimitRatioStr)
+	if err != nil {
+		return nil, err
+	}
+	maxOracleSpread, err := sdk.NewDecFromStr(maxOracleSpreadStr)
+	if err != nil {
+		return nil, err
+	}
+	maintenanceMarginRatio, err := sdk.NewDecFromStr(maintenanceMarginRatioStr)
+	if err != nil {
+		return nil, err
+	}
+	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
 	if err != nil {
 		return nil, err
 	}
 
 	vPool := vpooltypes.NewPool(
 		vPair,
-		sdk.MustNewDecFromStr(tradeLimit),
-		sdk.MustNewDecFromStr(baseAsset),
-		sdk.MustNewDecFromStr(quoteAsset),
-		sdk.MustNewDecFromStr(fluctuationLimitRatio),
-		sdk.MustNewDecFromStr(maxOracleSpread),
-		sdk.MustNewDecFromStr(maintenanceMarginRatio),
-		sdk.MustNewDecFromStr(maxLeverage),
+		tradeLimit,
+		quoteAsset,
+		baseAsset,
+		fluctuationLimitRatio,
+		maxOracleSpread,
+		maintenanceMarginRatio,
+		maxLeverage,
 	)
 
 	return vPool, nil
