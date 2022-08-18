@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]
 
+## Features
+
+* [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add vpool at genesis
+
 ### State Machine Breaking
 
 * [#831](https://github.com/NibiruChain/nibiru/pull/831) - remove modules that are not used in testnet
@@ -71,7 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query 
 * [#816](https://github.com/NibiruChain/nibiru/pull/816) - Remove tobin tax from x/oracle
 * [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
-* [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add vpool at genesis
 
 ### Documentation
 
