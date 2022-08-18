@@ -43,6 +43,10 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 
 			genFile := config.GenesisFile()
 			appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
+			if err != nil {
+				return err
+			}
+
 			vPool, err := parseVpoolParams(args[0], cmd.Flags())
 			if err != nil {
 				return err
