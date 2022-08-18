@@ -207,7 +207,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian := oracle.Tally(input.Ctx, ballot, input.OracleKeeper.RewardBand(input.Ctx), validatorClaimMap)
+	tallyMedian := keeper.Tally(input.Ctx, ballot, input.OracleKeeper.RewardBand(input.Ctx), validatorClaimMap)
 
 	require.Equal(t, validatorClaimMap, expectedValidatorClaimMap)
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())

@@ -1,9 +1,8 @@
-package oracle
+package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -45,7 +44,7 @@ func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) (s
 // PickReferencePair choose Reference pair with the highest voter turnout
 // If the voting power of the two denominations is the same,
 // select reference pair in alphabetical order.
-func PickReferencePair(ctx sdk.Context, k keeper.Keeper, voteTargets map[string]struct{}, voteMap map[string]types.ExchangeRateBallot) string {
+func PickReferencePair(ctx sdk.Context, k Keeper, voteTargets map[string]struct{}, voteMap map[string]types.ExchangeRateBallot) string {
 	largestBallotPower := int64(0)
 	referencePair := ""
 
