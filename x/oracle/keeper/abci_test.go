@@ -1,7 +1,9 @@
-package oracle_test
+package keeper_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/oracle/keeper"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"math"
 	"sort"
 	"testing"
@@ -13,7 +15,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -681,4 +682,49 @@ func makeAggregatePrevoteAndVote(t *testing.T, input keeper.TestInput, h types.M
 	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, ratesStr, keeper.Addrs[idx], keeper.ValAddrs[idx])
 	_, err = h.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
 	require.NoError(t, err)
+}
+
+func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, types.MsgServer) {
+	input := keeper.CreateTestInput(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.VotePeriod = 1
+	params.SlashWindow = 100
+	params.RewardDistributionWindow = 100
+	input.OracleKeeper.SetParams(input.Ctx, params)
+	h := keeper.NewMsgServerImpl(input.OracleKeeper)
+
+	sh := staking.NewHandler(input.StakingKeeper)
+	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)))
+	require.NoError(t, err)
+
+	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
+	return input, h
+}
+
+func setupVal5(t *testing.T) (keeper.TestInput, types.MsgServer) {
+	input := keeper.CreateTestInput(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.VotePeriod = 1
+	params.SlashWindow = 100
+	params.RewardDistributionWindow = 100
+	input.OracleKeeper.SetParams(input.Ctx, params)
+	h := keeper.NewMsgServerImpl(input.OracleKeeper)
+
+	sh := staking.NewHandler(input.StakingKeeper)
+
+	// Validator created
+	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[3], keeper.ValPubKeys[3], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[4], keeper.ValPubKeys[4], stakingAmt))
+	require.NoError(t, err)
+	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
+	return input, h
 }

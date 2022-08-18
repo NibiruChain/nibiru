@@ -355,7 +355,7 @@ func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, valid
 	if !feederAddr.Equals(validatorAddr) {
 		delegate := k.GetFeederDelegation(ctx, validatorAddr)
 		if !delegate.Equals(feederAddr) {
-			return sdkerrors.Wrap(types.ErrNoVotingPermission, feederAddr.String())
+			return sdkerrors.Wrapf(types.ErrNoVotingPermission, "wanted: %s, got: %s", delegate.String(), feederAddr.String())
 		}
 	}
 
