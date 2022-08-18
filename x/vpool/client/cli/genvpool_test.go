@@ -1,4 +1,4 @@
-package cmd_test
+package cli_test
 
 import (
 	"context"
@@ -9,15 +9,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 
-	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
+	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
 )
 
-// Tests "add-genesis-vpool", a command that adds a genesis account to genesis.json
+var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
+
+// Tests "add-genesis-vpool", a command that adds a vpool to genesis.json
 func TestAddGenesisVpoolCmd(t *testing.T) {
 	type TestCase struct {
 		name          string
@@ -52,16 +56,16 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := nibid.AddVPoolGenesisCmd(home)
+			cmd := cli.AddVPoolGenesisCmd()
 			cmd.SetArgs([]string{
 				tc.pairName,
-				fmt.Sprintf("--%s=%s", nibid.FlagBaseAssetReserve, tc.baseAsset),
-				fmt.Sprintf("--%s=%s", nibid.FlagMaxOracleSpreadRatio, tc.maxOracle),
-				fmt.Sprintf("--%s=%s", nibid.FlagMaxLeverage, tc.maxLeverage),
-				fmt.Sprintf("--%s=%s", nibid.FlagTradeLimitRatio, tc.tradeLimit),
-				fmt.Sprintf("--%s=%s", nibid.FlagMaintenanceMarginRatio, tc.maintainRatio),
-				fmt.Sprintf("--%s=%s", nibid.FlagFluctuationLimitRatio, tc.flucLimit),
-				fmt.Sprintf("--%s=%s", nibid.FlagQuoteAssetReserve, tc.quoteAsset),
+				fmt.Sprintf("--%s=%s", cli.FlagBaseAssetReserve, tc.baseAsset),
+				fmt.Sprintf("--%s=%s", cli.FlagMaxOracleSpreadRatio, tc.maxOracle),
+				fmt.Sprintf("--%s=%s", cli.FlagMaxLeverage, tc.maxLeverage),
+				fmt.Sprintf("--%s=%s", cli.FlagTradeLimitRatio, tc.tradeLimit),
+				fmt.Sprintf("--%s=%s", cli.FlagMaintenanceMarginRatio, tc.maintainRatio),
+				fmt.Sprintf("--%s=%s", cli.FlagFluctuationLimitRatio, tc.flucLimit),
+				fmt.Sprintf("--%s=%s", cli.FlagQuoteAssetReserve, tc.quoteAsset),
 				fmt.Sprintf("--%s=home", flags.FlagHome)})
 
 			if tc.expectError {

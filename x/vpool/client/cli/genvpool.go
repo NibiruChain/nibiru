@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 var (
@@ -28,9 +28,9 @@ var (
 )
 
 // AddVPoolGenesisCmd returns add-vpool-genesis
-func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
+func AddVPoolGenesisCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-genesis-vpool [pair] [flag]",
+		Use:   "add-genesis-vpool [pair]",
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
 		Args:  cobra.ExactArgs(1),
@@ -52,7 +52,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			vPoolGenState := vpooltypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+			vPoolGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 			vPoolGenState.Vpools = append(vPoolGenState.Vpools, vPool)
 
 			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
@@ -60,7 +60,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return fmt.Errorf("failed to marshal bank genesis state: %w", err)
 			}
 
-			appState[vpooltypes.ModuleName] = vPoolGenStateBz
+			appState[types.ModuleName] = vPoolGenStateBz
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
@@ -72,7 +72,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
+	cmd.Flags().String(flags.FlagHome, "", "The application home directory")
 	cmd.Flags().String(FlagBaseAssetReserve, "", "Base Asset Reserve")
 	cmd.Flags().String(FlagQuoteAssetReserve, "", "Quote Asset Reserve")
 	cmd.Flags().String(FlagTradeLimitRatio, "", "Trade limit ratio")
@@ -85,7 +85,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func parseVpoolParams(pair string, flags *pflag.FlagSet) (*vpooltypes.Pool, error) {
+func parseVpoolParams(pair string, flags *pflag.FlagSet) (*types.Pool, error) {
 	vPair, err := common.NewAssetPair(pair)
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func parseVpoolParams(pair string, flags *pflag.FlagSet) (*vpooltypes.Pool, erro
 		return nil, err
 	}
 
-	vPool := vpooltypes.NewPool(
+	vPool := types.NewPool(
 		vPair,
 		tradeLimit,
 		quoteAsset,
