@@ -1,10 +1,12 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	"sort"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/x/staking"
+
+	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"

@@ -2,11 +2,13 @@ package keeper_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	"math"
 	"sort"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/x/staking"
+
+	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"

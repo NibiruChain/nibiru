@@ -1,15 +1,17 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/oracle"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	types3 "github.com/NibiruChain/nibiru/x/oracle/types"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/oracle"
+	"github.com/NibiruChain/nibiru/x/oracle/keeper"
+	types3 "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func TestSlashAndResetMissCounters(t *testing.T) {
