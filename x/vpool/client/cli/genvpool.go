@@ -28,7 +28,7 @@ var (
 )
 
 // AddVPoolGenesisCmd returns add-vpool-genesis
-func AddVPoolGenesisCmd() *cobra.Command {
+func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-genesis-vpool [pair]",
 		Short: "Add vPools to genesis.json",
@@ -72,7 +72,7 @@ func AddVPoolGenesisCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(flags.FlagHome, "", "The application home directory")
+	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	cmd.Flags().String(FlagBaseAssetReserve, "", "Base Asset Reserve")
 	cmd.Flags().String(FlagQuoteAssetReserve, "", "Quote Asset Reserve")
 	cmd.Flags().String(FlagTradeLimitRatio, "", "Trade limit ratio")
