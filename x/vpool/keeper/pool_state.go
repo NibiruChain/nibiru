@@ -135,35 +135,29 @@ func (k Keeper) GetPoolPrices(
 		return prices, err
 	}
 
-	markPrice := new(sdk.Dec)
-	indexPrice := new(sdk.Dec)
-	twapMark := new(sdk.Dec)
-	swapInvariant := new(sdk.Int)
-
-	indexPriceVal, err := k.GetUnderlyingPrice(ctx, pool.Pair)
+	indexPriceStr := ""
+	indexPrice, err := k.GetUnderlyingPrice(ctx, pool.Pair)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the oracle price feeds stop
 		k.Logger(ctx).Error(err.Error())
 	} else {
-		*indexPrice = indexPriceVal
+		indexPriceStr = indexPrice.String()
 	}
-	twapMarkVal, err := k.GetCurrentTWAP(ctx, pool.Pair)
+	twapMarkStr := ""
+	twapMark, err := k.GetCurrentTWAP(ctx, pool.Pair)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the TWAP is undefined.
 		k.Logger(ctx).Error(err.Error())
 	} else {
-		*twapMark = twapMarkVal.Price
+		twapMarkStr = twapMark.Price.String()
 	}
-
-	*markPrice = pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve)
-	*swapInvariant = pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt()
 
 	return types.PoolPrices{
 		Pair:          pool.Pair.String(),
-		MarkPrice:     markPrice,
-		IndexPrice:    indexPrice,
-		TwapMark:      twapMark,
-		SwapInvariant: swapInvariant,
+		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
+		IndexPrice:    indexPriceStr,
+		TwapMark:      twapMarkStr,
+		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
 		BlockNumber:   ctx.BlockHeight(),
 	}, nil
 }

@@ -98,9 +98,8 @@ message Pool {
 
 
 // PoolPrices is a simple structure that displays a snapshot of the mark and index
-// prices for an asset.
-// NOTE: The fields of PoolPrices should be pointers (nullable) so that we can 
-// tell whether a field (e.g. the index price) is missing.
+// prices for an asset. Empty strings for the indexPrice or twapMark fields 
+// indicate that the price is currently unavailable. 
 message PoolPrices {
   // Pair identifier for the two assets. Always in format 'base:quote'
   string pair = 9;
@@ -109,26 +108,20 @@ message PoolPrices {
   // Equivalent to quoteAssetReserve / baseAssetReserve.
   string mark_price = 10 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = true
+    (gogoproto.nullable) = false
   ];
 
   // IndexPrice is the price of the "underlying" for the perp
-  string index_price = 11 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = true
-  ];
+  string index_price = 11;
 
   // TwapMark is the time-weighted average (mark) price.
-  string twap_mark = 12 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = true
-  ];
+  string twap_mark = 12;
 
   // SwapInvariant is the product of the reserves, commonly referred to as "k".
   string swap_invariant = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.moretags) = "yaml:\"swap_invariant\"",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable) = false
   ];
 
   // The block number corresponding to each price

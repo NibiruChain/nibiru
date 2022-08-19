@@ -285,17 +285,35 @@ func (k Keeper) GetCurrentTWAP(
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.CurrentTWAPKey(pair))
 
-	if bz == nil {
-		return types.CurrentTWAP{}, types.ErrNoValidTWAP
+	var twap types.CurrentTWAP
+	if bz != nil {
+		k.codec.MustUnmarshal(bz, &twap)
+		if twap.Price.IsPositive() {
+			return twap, nil
+		}
+	}
+	return types.CurrentTWAP{}, types.ErrNoValidTWAP
+}
+
+// spotPriceAsTwap returns a CurrentTWAP as defined by the instantaneous spot price.
+// TODO Have discussion over whether to switch to be the default TWAP definition.
+func (k Keeper) SpotPriceAsTWAP(
+	ctx sdk.Context, spotPrice sdk.Dec, pair common.AssetPair,
+) (twap types.CurrentTWAP, err error) {
+	k.Logger(ctx).Info(
+		fmt.Sprintf("no TWAP available in block %v. Used current spot price instead.",
+			ctx.BlockHeight()))
+	reserveSnapshot, _, err := k.getLatestReserveSnapshot(ctx, pair)
+	if err != nil {
+		return twap, err
 	}
 
-	var price types.CurrentTWAP
-	k.codec.MustUnmarshal(bz, &price)
-	if price.Price.IsZero() {
-		return types.CurrentTWAP{}, types.ErrNoValidPrice
-	}
-
-	return price, nil
+	return types.CurrentTWAP{
+		PairID:      pair.String(),
+		Numerator:   reserveSnapshot.QuoteAssetReserve,
+		Denominator: reserveSnapshot.BaseAssetReserve,
+		Price:       spotPrice,
+	}, err
 }
 
 /*

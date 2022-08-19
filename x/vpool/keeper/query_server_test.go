@@ -65,7 +65,8 @@ func TestQueryAllPools(t *testing.T) {
 		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 	)
-	vpoolKeeper.savePool(ctx, pool)
+	vpoolKeeper.CreatePool(
+		ctx, pair, pool.TradeLimitRatio, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.FluctuationLimitRatio, pool.MaxOracleSpreadRatio, pool.MaintenanceMarginRatio, pool.MaxLeverage)
 
 	t.Log("query reserve assets and prices for the pair")
 	indexPrice := sdk.NewDec(25_000)
@@ -80,14 +81,15 @@ func TestQueryAllPools(t *testing.T) {
 	)
 
 	t.Log("check if query response is accurate")
-	expectedPoolPrices := types.PoolPriceValues{
+	markPriceWanted := sdk.NewDec(1_000) // 1e6 / 1e3
+	poolPricesWanted := types.PoolPrices{
 		Pair:          pool.Pair.String(),
-		MarkPrice:     sdk.NewDec(1_000), // 1e6 / 1e3
-		IndexPrice:    indexPrice,
-		TwapMark:      sdk.Dec{},
+		MarkPrice:     markPriceWanted,
+		IndexPrice:    indexPrice.String(),
+		TwapMark:      "",
 		SwapInvariant: sdk.NewInt(1_000_000_000), // 1e6 * 1e3
-	}.GetPoolPrices()
+	}
 	require.NoError(t, err)
 	assert.EqualValues(t, pool.Pair, resp.Pools[0].Pair)
-	assert.EqualValues(t, expectedPoolPrices, resp.Prices[0])
+	assert.EqualValues(t, poolPricesWanted, resp.Prices[0])
 }

@@ -160,8 +160,6 @@ func TestGetPoolPrices(t *testing.T) {
 	var ErrPriceFeedGetCurrentPrice error = fmt.Errorf(
 		"mock error on k.pricefeedKeeper.GetCurrentPrice")
 
-	toSdkPointer := common.ToSdkPointer
-
 	testCases := []struct {
 		name          string           // test case name
 		vpool         types.Pool       // vpool passed to GetPoolPrices
@@ -182,10 +180,10 @@ func TestGetPoolPrices(t *testing.T) {
 			loggedErrs:    nil,
 			output: types.PoolPrices{
 				Pair:          validVpools.ethstable.Pair.String(),
-				MarkPrice:     toSdkPointer(sdk.NewDec(3_000)).(*sdk.Dec),
-				IndexPrice:    toSdkPointer(sdk.NewDec(99)).(*sdk.Dec),
-				TwapMark:      toSdkPointer(sdk.NewDec(99)).(*sdk.Dec),
-				SwapInvariant: toSdkPointer(sdk.NewInt(3_000_000_000)).(*sdk.Int), // 1e3 * 3e6 = 3e9
+				MarkPrice:     sdk.NewDec(3_000),
+				IndexPrice:    sdk.NewDec(99).String(),
+				TwapMark:      sdk.NewDec(99).String(),
+				SwapInvariant: sdk.NewInt(3_000_000_000), // 1e3 * 3e6 = 3e9
 			},
 		},
 		{
@@ -198,10 +196,10 @@ func TestGetPoolPrices(t *testing.T) {
 			loggedErrs:    []error{ErrPriceFeedGetCurrentPrice, types.ErrNoValidTWAP},
 			output: types.PoolPrices{
 				Pair:          validVpools.fooBar.Pair.String(),
-				MarkPrice:     toSdkPointer(sdk.NewDec(2)).(*sdk.Dec),
-				IndexPrice:    toSdkPointer(sdk.Dec{}).(*sdk.Dec),
-				TwapMark:      toSdkPointer(sdk.Dec{}).(*sdk.Dec),
-				SwapInvariant: toSdkPointer(sdk.NewInt(2)).(*sdk.Int), // 1e3 * 3e6 = 3e9
+				MarkPrice:     sdk.NewDec(2),
+				IndexPrice:    "",
+				TwapMark:      "",
+				SwapInvariant: sdk.NewInt(2), // 1e3 * 3e6 = 3e9
 			},
 		},
 		{
@@ -213,10 +211,10 @@ func TestGetPoolPrices(t *testing.T) {
 			loggedErrs:   []error{ErrPriceFeedGetCurrentPrice},
 			output: types.PoolPrices{
 				Pair:          validVpools.xxxyyy.Pair.String(),
-				MarkPrice:     toSdkPointer(sdk.MustNewDecFromStr("0.5")).(*sdk.Dec),
-				IndexPrice:    toSdkPointer(sdk.Dec{}).(*sdk.Dec),
-				TwapMark:      toSdkPointer(sdk.NewDec(99)).(*sdk.Dec),
-				SwapInvariant: toSdkPointer(sdk.NewInt(2)).(*sdk.Int), // 1e3 * 3e6 = 3e9
+				MarkPrice:     sdk.MustNewDecFromStr("0.5"),
+				IndexPrice:    "",
+				TwapMark:      sdk.NewDec(99).String(),
+				SwapInvariant: sdk.NewInt(2), // 1e3 * 3e6 = 3e9
 			},
 		},
 		{
@@ -228,10 +226,10 @@ func TestGetPoolPrices(t *testing.T) {
 			loggedErrs:    []error{types.ErrNoValidTWAP},
 			output: types.PoolPrices{
 				Pair:          validVpools.xxxyyy.Pair.String(),
-				MarkPrice:     toSdkPointer(sdk.MustNewDecFromStr("0.5")).(*sdk.Dec),
-				IndexPrice:    toSdkPointer(sdk.NewDec(99)).(*sdk.Dec),
-				TwapMark:      toSdkPointer(sdk.Dec{}).(*sdk.Dec),
-				SwapInvariant: toSdkPointer(sdk.NewInt(2)).(*sdk.Int), // 1e3 * 3e6 = 3e9
+				MarkPrice:     sdk.MustNewDecFromStr("0.5"),
+				IndexPrice:    sdk.NewDec(99).String(),
+				TwapMark:      "",
+				SwapInvariant: sdk.NewInt(2), // 1e3 * 3e6 = 3e9
 			},
 		},
 		{
@@ -248,11 +246,9 @@ func TestGetPoolPrices(t *testing.T) {
 			vpoolKeeper, mocks, ctx := getKeeper(t)
 			ctx, mockLogger := testutilmock.AppendCtxWithMockLogger(t, ctx)
 
-			pair := tc.vpool.Pair
 			if tc.vpoolInStore {
-				vpoolPointer := new(types.Pool)
-				*vpoolPointer = tc.vpool
-				vpoolKeeper.savePool(ctx, vpoolPointer)
+				vpoolKeeper.CreatePool(
+					ctx, tc.vpool.Pair, tc.vpool.TradeLimitRatio, tc.vpool.QuoteAssetReserve, tc.vpool.BaseAssetReserve, tc.vpool.FluctuationLimitRatio, tc.vpool.MaxOracleSpreadRatio, tc.vpool.MaintenanceMarginRatio, tc.vpool.MaxLeverage)
 			} else {
 				// sanity check to make sure the test case vpool is not a genesis vpool
 				prices, err := vpoolKeeper.GetPoolPrices(ctx, tc.vpool)
@@ -261,6 +257,7 @@ func TestGetPoolPrices(t *testing.T) {
 			}
 
 			// TODO indexPriceVal mock with pf keeper ?
+			pair := tc.vpool.Pair
 			currPrice := pftypes.CurrentPrice{
 				PairID: pair.String(),
 				Price:  sdk.Dec{}}
