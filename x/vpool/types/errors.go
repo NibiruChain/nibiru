@@ -12,4 +12,6 @@ var (
 	ErrAssetFailsUserLimit  = sdkerrors.Register(ModuleName, 7, "amount of assets traded does not meet user-defined limit")
 	ErrNoValidPrice         = sdkerrors.Register(ModuleName, 8, "no valid prices available")
 	ErrNoValidTWAP          = sdkerrors.Register(ModuleName, 9, "TWAP price not found")
+	// Could replace ErrBaseReserveAtZero and ErrQUoteReserveAtZero if wrapped
+	ErrNonPositiveReserves = sdkerrors.Register(ModuleName, 10, "base and quote reserves must always be positive")
 )
