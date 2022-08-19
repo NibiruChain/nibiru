@@ -42,9 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]
 
-## Features
+### Improvements
 
-* [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add vpool at genesis
+* [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module cration and usage of new command to add vpool at genesis
+
+### Features
+
+* [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis
 
 ### State Machine Breaking
 
