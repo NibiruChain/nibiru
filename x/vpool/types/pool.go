@@ -161,3 +161,11 @@ func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator
 	}
 	return CurrentTWAP{PairID: assetPair.String(), Numerator: numerator, Denominator: denominator, Price: price}
 }
+
+func (p *Pool) ValidateReserves() error {
+	if !p.QuoteAssetReserve.IsPositive() || !p.BaseAssetReserve.IsPositive() {
+		return ErrNonPositiveReserves.Wrap("pool: " + p.String())
+	} else {
+		return nil
+	}
+}

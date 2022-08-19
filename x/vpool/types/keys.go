@@ -47,6 +47,7 @@ func GetSnapshotKey(pair common.AssetPair, counter uint64) []byte {
 }
 
 // CurrentTWAPKey returns the prefix for the current TWAP price
-func CurrentTWAPKey(twapPairID string) []byte {
+func CurrentTWAPKey(pair common.AssetPair) []byte {
+	twapPairID := "twap-" + pair.String()
 	return append(TWAPPrefix, []byte(twapPairID)...)
 }
