@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -22,7 +24,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 const (
@@ -78,7 +79,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := testapp.NewTestGenesisStateFromDefault()
+	genesisState := simapp.NewTestGenesisStateFromDefault()
 
 	// x/stablecoin genesis state
 	stableGen := stabletypes.DefaultGenesis()

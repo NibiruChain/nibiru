@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -20,7 +22,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type IntegrationTestSuite struct {
@@ -45,7 +46,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := testapp.NewTestGenesisStateFromDefault()
+	genesisState := simapp.NewTestGenesisStateFromDefault()
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin(common.DenomStable, 20000),
@@ -323,9 +324,6 @@ func (s IntegrationTestSuite) TestCNewExitPoolCmd() {
 				s.Require().NoError(err)
 				var finalBalance banktypes.QueryAllBalancesResponse
 				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
-
-				fmt.Println("Final balance:")
-				fmt.Println(finalBalance)
 
 				s.Require().Equal(
 					originalBalance.Balances.AmountOf("uusdc").Add(tc.expectedOtherToken),

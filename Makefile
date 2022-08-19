@@ -124,10 +124,10 @@ PACKAGES_NOSIMULATION = $(shell go list ./... | grep -v '/simapp')
 RUNSIM                = $(BINDIR)/runsim
 
 test-unit:
-	go test $(PACKAGES_NOSIMULATION) -short -cover
+	@go test $(PACKAGES_NOSIMULATION) -short -cover
 
 test-integration:
-	go test -v $(PACKAGES_NOSIMULATION) -cover
+	@go test -v $(PACKAGES_NOSIMULATION) -cover
 
 runsim: $(RUNSIM)
 $(RUNSIM):
@@ -161,6 +161,13 @@ test-sim-benchmark-invariants:
 	@go test -mod=readonly $(SIMAPP) -benchmem -bench=BenchmarkInvariants -run=^$ \
 	-Enabled=true -NumBlocks=1000 -BlockSize=200 \
 	-Period=1 -Commit=true -Seed=57 -v -timeout 24h
+
+###############################################################################
+###                            Lint                                         ###
+###############################################################################
+
+lint:
+	docker run -v $(CURDIR):/code -w /code golangci/golangci-lint:v1.47.3-alpine golangci-lint run
 
 .PHONY: \
 test-sim-nondeterminism \
