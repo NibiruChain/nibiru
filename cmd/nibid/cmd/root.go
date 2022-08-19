@@ -32,6 +32,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
+	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 )
 
@@ -166,6 +167,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		vpoolcli.AddVPoolGenesisCmd(app.DefaultNodeHome),
+		pricefeedcli.AddWhitelistGenesisOracle(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
