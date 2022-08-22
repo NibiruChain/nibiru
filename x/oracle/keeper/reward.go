@@ -2,13 +2,101 @@ package keeper
 
 import (
 	"fmt"
-
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
+
+func (k Keeper) AllocateRewards(ctx sdk.Context, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
+	// check if pair exists
+	if !k.PairExists(ctx, pair) {
+		return types.ErrUnknownPair.Wrap(pair)
+	}
+
+	k.CreatePairReward(ctx, &types.PairReward{
+		Pair:        pair,
+		VotePeriods: votePeriods,
+		Coins:       totalCoins,
+	})
+
+	return nil
+}
+
+func (k Keeper) CreatePairReward(ctx sdk.Context, rewards *types.PairReward) {
+	rewards.Id = k.NextPairRewardKey(ctx)
+	k.SetPairReward(ctx, rewards)
+}
+
+func (k Keeper) DeletePairReward(ctx sdk.Context, pair string, id uint64) error {
+	pk := types.GetPairRewardsKey(pair, id)
+	store := ctx.KVStore(k.storeKey)
+	if !store.Has(pk) {
+		return fmt.Errorf("unknown pair rewards key: %s %d", pair, id)
+	}
+
+	store.Delete(pk)
+	return nil
+}
+
+func (k Keeper) IteratePairRewards(ctx sdk.Context, pair string, do func(rewards *types.PairReward) (stop bool)) {
+	pfx := types.GetPairRewardsPrefixKey(pair)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), pfx)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		rewards := new(types.PairReward)
+		k.cdc.MustUnmarshal(iter.Value(), rewards)
+		if do(rewards) {
+			break
+		}
+	}
+}
+
+func (k Keeper) IterateAllPairRewards(ctx sdk.Context, do func(rewards *types.PairReward) (stop bool)) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PairRewardsKey)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		rewards := new(types.PairReward)
+		k.cdc.MustUnmarshal(iter.Value(), rewards)
+		if do(rewards) {
+			break
+		}
+	}
+}
+
+func (k Keeper) GetPairReward(ctx sdk.Context, pair string, id uint64) (*types.PairReward, error) {
+	pk := types.GetPairRewardsKey(pair, id)
+	v := ctx.KVStore(k.storeKey).Get(pk)
+	if v == nil {
+		return nil, fmt.Errorf("not found")
+	}
+	r := new(types.PairReward)
+	k.cdc.MustUnmarshal(v, r)
+	return r, nil
+}
+
+func (k Keeper) SetPairReward(ctx sdk.Context, rewards *types.PairReward) {
+	pk := types.GetPairRewardsKey(rewards.Pair, rewards.Id)
+	ctx.KVStore(k.storeKey).Set(pk, k.cdc.MustMarshal(rewards))
+}
+
+func (k Keeper) NextPairRewardKey(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	if v := store.Get(types.PairRewardsCounterKey); v != nil {
+		id := sdk.BigEndianToUint64(v)
+		store.Set(types.PairRewardsCounterKey, sdk.Uint64ToBigEndian(id+1))
+		return id
+	} else {
+		store.Set(types.PairRewardsCounterKey, sdk.Uint64ToBigEndian(1))
+		return 0
+	}
+}
 
 // RewardBallotWinners implements at the end of every VotePeriod,
 // give out a portion of spread fees collected in the oracle reward pool

@@ -41,6 +41,8 @@ var (
 	AggregateExchangeRatePrevoteKey = []byte{0x04} // prefix for each key to an aggregate prevote
 	AggregateExchangeRateVoteKey    = []byte{0x05} // prefix for each key to an aggregate vote
 	PairsKey                        = []byte{0x06} // prefix for each key to a pair
+	PairRewardsKey                  = []byte{0x07} // prefix for each key to a pair's rewards
+	PairRewardsCounterKey           = []byte{0x08} // prefix for the singleton of pair rewards ID.
 )
 
 // GetExchangeRateKey - stored by *pair*
@@ -77,4 +79,21 @@ func GetPairKey(d string) []byte {
 func ExtractPairFromPairKey(key []byte) (pair string) {
 	pair = string(key[1 : len(key)-1])
 	return
+}
+
+// GetPairRewardsKey returns the primary key for the PairRewards object.
+func GetPairRewardsKey(pair string, id uint64) []byte {
+	// TODO(mercilex): precompute key size
+	key := append(PairRewardsKey, []byte(pair)...)
+	key = append(key, 0x00)
+	key = append(key, sdk.Uint64ToBigEndian(id)...)
+	return key
+}
+
+// GetPairRewardsPrefixKey returns the primary key prefix
+// to iterate over the PairRewards instances of the pair.
+func GetPairRewardsPrefixKey(pair string) []byte {
+	key := append(PairRewardsKey, []byte(pair)...)
+	key = append(key, 0x00)
+	return key
 }

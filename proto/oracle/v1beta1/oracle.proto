@@ -92,13 +92,15 @@ message ExchangeRateTuple {
   ];
 }
 
-// PairRewards defines a credit object towards validators
+// PairReward defines a credit object towards validators
 // which provide prices faithfully for different pairs.
-message PairRewards {
+message PairReward {
   // pair defines the pair for which we incentivize validator to provide prices for.
   string pair = 1;
+  // id uniquely identifies the rewards instance of the pair
+  uint64 id = 2;
   // vote_periods defines the vote periods in which rewards will be distributed.
-  uint64 vote_periods = 2;
+  uint64 vote_periods = 3;
   // coins defines the amount of coins to distribute in a single vote period.
-  repeated cosmos.base.v1beta1.Coin coins = 3;
+  repeated cosmos.base.v1beta1.Coin coins = 4 [(gogoproto.nullable) = false];
 }
