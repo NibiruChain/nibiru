@@ -83,7 +83,7 @@ func TestRewardPool(t *testing.T) {
 		panic(err) // never occurs
 	}
 
-	KFees := input.OracleKeeper.GetRewardPool(input.Ctx, common.DenomColl)
+	KFees := input.OracleKeeper.GetRewardsForPair(input.Ctx, common.DenomColl)
 	require.Equal(t, fees[0], KFees)
 }
 

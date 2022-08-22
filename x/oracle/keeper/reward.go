@@ -46,7 +46,7 @@ func (k Keeper) RewardBallotWinners(
 
 	var periodRewards sdk.DecCoins
 	for _, denom := range rewardDenoms {
-		rewardPool := k.GetRewardPool(ctx, denom)
+		rewardPool := k.GetRewardsForPair(ctx, denom)
 
 		// return if there's no rewards to give out
 		if rewardPool.IsZero() {
