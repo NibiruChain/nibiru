@@ -91,3 +91,14 @@ message ExchangeRateTuple {
     (gogoproto.nullable)   = false
   ];
 }
+
+// PairRewards defines a credit object towards validators
+// which provide prices faithfully for different pairs.
+message PairRewards {
+  // pair defines the pair for which we incentivize validator to provide prices for.
+  string pair = 1;
+  // vote_periods defines the vote periods in which rewards will be distributed.
+  uint64 vote_periods = 2;
+  // coins defines the amount of coins to distribute in a single vote period.
+  repeated cosmos.base.v1beta1.Coin coins = 3;
+}
