@@ -83,16 +83,11 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	}
 
 	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(
-		ctx,
-		(int64)(params.VotePeriod),
-		pairsMap,
-		validatorPerformanceMap,
-	)
+	k.RewardBallotWinners(ctx, pairsMap, validatorPerformanceMap)
 
 	// Clear the ballot
 	k.ClearBallots(ctx, params.VotePeriod)
 
-	// Update vote targets and tobin tax
+	// Update vote targets
 	k.ApplyWhitelist(ctx, params.Whitelist, pairsMap)
 }

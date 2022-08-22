@@ -16,7 +16,6 @@ import (
 //	to the oracle voters that voted faithfully.
 func (k Keeper) RewardBallotWinners(
 	ctx sdk.Context,
-	votePeriod int64,
 	voteTargets map[string]struct{},
 	ballotWinners map[string]types.ValidatorPerformance,
 ) {
@@ -40,22 +39,16 @@ func (k Keeper) RewardBallotWinners(
 		return
 	}
 
-	// The Reward distributionRatio = votePeriod/rewardDistributionWindow
-	distributionRatio := sdk.NewDec(votePeriod)
-
 	var periodRewards sdk.DecCoins
 	for _, denom := range rewardDenoms {
-		rewardPool := k.GetRewardsForPair(ctx, denom)
+		rewardsForPair := k.GetRewardsForPair(ctx, denom)
 
 		// return if there's no rewards to give out
-		if rewardPool.IsZero() {
+		if rewardsForPair.IsZero() {
 			continue
 		}
 
-		periodRewards = periodRewards.Add(sdk.NewDecCoinFromDec(
-			denom,
-			sdk.NewDecFromInt(rewardPool.Amount).Mul(distributionRatio),
-		))
+		periodRewards = periodRewards.Add(sdk.NewDecCoinsFromCoins(rewardsForPair)...)
 	}
 
 	// Dole out rewards
