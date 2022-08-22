@@ -86,7 +86,6 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.RewardBallotWinners(
 		ctx,
 		(int64)(params.VotePeriod),
-		(int64)(params.RewardDistributionWindow),
 		pairsMap,
 		validatorPerformanceMap,
 	)

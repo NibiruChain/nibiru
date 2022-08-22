@@ -17,7 +17,6 @@ import (
 func (k Keeper) RewardBallotWinners(
 	ctx sdk.Context,
 	votePeriod int64,
-	rewardDistributionWindow int64,
 	voteTargets map[string]struct{},
 	ballotWinners map[string]types.ValidatorPerformance,
 ) {
@@ -42,7 +41,7 @@ func (k Keeper) RewardBallotWinners(
 	}
 
 	// The Reward distributionRatio = votePeriod/rewardDistributionWindow
-	distributionRatio := sdk.NewDec(votePeriod).QuoInt64(rewardDistributionWindow)
+	distributionRatio := sdk.NewDec(votePeriod)
 
 	var periodRewards sdk.DecCoins
 	for _, denom := range rewardDenoms {

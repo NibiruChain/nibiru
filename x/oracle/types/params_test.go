@@ -51,12 +51,6 @@ func TestParamsEqual(t *testing.T) {
 	err = p6.Validate()
 	require.Error(t, err)
 
-	// small distribution window
-	p7 := types.DefaultParams()
-	p7.RewardDistributionWindow = 0
-	err = p7.Validate()
-	require.Error(t, err)
-
 	// empty name
 	p10 := types.DefaultParams()
 	p10.Whitelist[0].Name = ""
@@ -74,7 +68,6 @@ func TestValidate(t *testing.T) {
 	for _, pair := range pairs {
 		switch {
 		case bytes.Equal(types.KeyVotePeriod, pair.Key) ||
-			bytes.Equal(types.KeyRewardDistributionWindow, pair.Key) ||
 			bytes.Equal(types.KeySlashWindow, pair.Key):
 			require.NoError(t, pair.ValidatorFn(uint64(1)))
 			require.Error(t, pair.ValidatorFn("invalid"))

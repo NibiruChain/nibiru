@@ -255,8 +255,7 @@ func TestOracleRewardDistribution(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	votePeriodsPerWindow := uint64(sdk.NewDec(int64(input.OracleKeeper.RewardDistributionWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64())
-	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).QuoInt64(int64(votePeriodsPerWindow)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equalf(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt(), "%s<=>%s", expectedRewardAmt.String(), rewards.String())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -365,9 +364,8 @@ func TestOracleExchangeRate(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(2)).TruncateInt()
+	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(1)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -446,9 +444,8 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	require.Equal(t, govStableRate, gotGovStableRate)
 	require.Equal(t, ethStableRate, gotEthStableRate)
 
-	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(2)).TruncateInt()
+	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(1)).TruncateInt()
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
 	rewards1 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
@@ -556,7 +553,6 @@ func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, types.MsgServer)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	params.RewardDistributionWindow = 100
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
@@ -574,7 +570,6 @@ func setupVal5(t *testing.T) (keeper.TestInput, types.MsgServer) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	params.RewardDistributionWindow = 100
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
