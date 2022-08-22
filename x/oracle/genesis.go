@@ -67,6 +67,8 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 		}
 	}
 
+	panic("impl rewards genesis import")
+
 	keeper.SetParams(ctx, data.Params)
 
 	// check if the module account exists
@@ -122,6 +124,8 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		pairs = append(pairs, types.Pair{Name: pair})
 		return false
 	})
+
+	panic("impl genesis rewards export")
 
 	return types.NewGenesisState(params,
 		exchangeRates,
