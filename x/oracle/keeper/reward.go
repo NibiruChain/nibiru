@@ -10,19 +10,25 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func (k Keeper) AllocateRewards(ctx sdk.Context, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
+func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
 	// check if pair exists
 	if !k.PairExists(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
 	}
 
+	votePeriodCoins := make(sdk.Coins, len(totalCoins))
+	for i, coin := range totalCoins {
+		newCoin := sdk.NewCoin(coin.Denom, coin.Amount.QuoRaw(int64(votePeriods)))
+		votePeriodCoins[i] = newCoin
+	}
+
 	k.CreatePairReward(ctx, &types.PairReward{
 		Pair:        pair,
 		VotePeriods: votePeriods,
-		Coins:       totalCoins,
+		Coins:       votePeriodCoins,
 	})
 
-	return nil
+	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, funderModule, types.ModuleName, totalCoins)
 }
 
 func (k Keeper) CreatePairReward(ctx sdk.Context, rewards *types.PairReward) {
@@ -135,7 +141,7 @@ func (k Keeper) RewardBallotWinners(
 			continue
 		}
 
-		periodRewards = periodRewards.Add(sdk.NewDecCoinsFromCoins(rewardsForPair)...)
+		periodRewards = periodRewards.Add(sdk.NewDecCoinsFromCoins(rewardsForPair...)...)
 	}
 
 	// Dole out rewards
@@ -160,12 +166,34 @@ func (k Keeper) RewardBallotWinners(
 	}
 }
 
-// GetRewardsForPair retrieves the balance of the oracle module account
-func (k Keeper) GetRewardsForPair(ctx sdk.Context, denom string) sdk.Coin {
-	// TODO(mercilex): this logic needs to be redefined. https://github.com/NibiruChain/nibiru/issues/805
-	if denom != common.DenomGov {
-		return sdk.NewCoin("zero", sdk.ZeroInt())
+// GetRewardsForPair retrieves the vote period rewards for the provided pair.
+// And decreases the distribution period count of each pair reward instance.
+// If the distribution period count drops to 0: the reward instance is removed.
+// TODO(mercilex): change API name as it does not suggest modifications of state are happening here.
+func (k Keeper) GetRewardsForPair(ctx sdk.Context, pair string) sdk.Coins {
+	var pairRewards []*types.PairReward
+	k.IteratePairRewards(ctx, pair, func(rewards *types.PairReward) (stop bool) {
+		pairRewards = append(pairRewards, rewards)
+		return false
+	})
+
+	coins := sdk.NewCoins()
+	// iterate over
+	for _, r := range pairRewards {
+		// add coin rewards
+		coins = coins.Add(r.Coins...)
+		// update pair reward distribution count
+		// if vote period == 0, then delete
+		r.VotePeriods -= 1
+		if r.VotePeriods == 0 {
+			err := k.DeletePairReward(ctx, r.Pair, r.Id)
+			if err == nil {
+				panic(err)
+			}
+		} else {
+			k.SetPairReward(ctx, r)
+		}
 	}
-	acc := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
-	return k.bankKeeper.GetBalance(ctx, acc.GetAddress(), denom)
+
+	return coins
 }
