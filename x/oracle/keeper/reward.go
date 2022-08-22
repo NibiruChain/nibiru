@@ -10,10 +10,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-// RewardBallotWinners implements
-// at the end of every VotePeriod, give out a portion of spread fees collected in the oracle reward pool
-//
-//	to the oracle voters that voted faithfully.
+// RewardBallotWinners implements at the end of every VotePeriod,
+// give out a portion of spread fees collected in the oracle reward pool
+// to the oracle voters that voted faithfully.
 func (k Keeper) RewardBallotWinners(
 	ctx sdk.Context,
 	voteTargets map[string]struct{},
