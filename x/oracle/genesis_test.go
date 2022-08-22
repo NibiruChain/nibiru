@@ -22,6 +22,9 @@ func TestExportInitGenesis(t *testing.T) {
 	input.OracleKeeper.SetPair(input.Ctx, "pair1:pair1")
 	input.OracleKeeper.SetPair(input.Ctx, "pair2:pair2")
 	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], 10)
+	input.OracleKeeper.SetPairReward(input.Ctx, &types.PairReward{
+		Pair: "pair1:pair2",
+	})
 	genesis := oracle.ExportGenesis(input.Ctx, input.OracleKeeper)
 
 	newInput := keeper.CreateTestInput(t)
