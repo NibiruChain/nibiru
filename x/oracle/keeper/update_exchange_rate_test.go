@@ -241,6 +241,8 @@ func TestOracleTallyTiming(t *testing.T) {
 }
 
 func TestOracleRewardDistribution(t *testing.T) {
+	// the following test scenario simulates that two validators, out of three, are voting for one common pair.
+	// they have the same voting power, and the reward allocation lasts for 1 voting period.
 	input, h := setup(t)
 
 	// Account 1, btcstable
