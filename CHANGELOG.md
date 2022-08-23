@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module creation and usage of new command to add vpool at genesis
 * [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readability
 * [#842](https://github.com/NibiruChain/nibiru/pull/842) - use self-hosted runner
+* [#843](https://github.com/NibiruChain/nibiru/pull/843) - add timeout to github actions integration tests
 
 ### Features
 
