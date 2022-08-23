@@ -37,7 +37,7 @@ func AddWhitelistGenesisOracle(defaultNodeHome string) *cobra.Command {
 			}
 
 			priceFeedOracle := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
-			genesisOracles, err := parseOracleStr(args[0])
+			genesisOracles, err := parseAndVerifyOracles(args[0], priceFeedOracle.GenesisOracles)
 			if err != nil {
 				return err
 			}
@@ -65,7 +65,7 @@ func AddWhitelistGenesisOracle(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func parseOracleStr(oraclesStr string) ([]string, error) {
+func parseAndVerifyOracles(oraclesStr string, genOracles []string) ([]string, error) {
 	oracles := strings.TrimSpace(oraclesStr)
 	if len(oracles) == 0 {
 		return nil, fmt.Errorf("no oracle addresses found")
@@ -86,6 +86,12 @@ func parseOracleStr(oraclesStr string) ([]string, error) {
 
 		oracleAddresses[i] = oracleAddress
 		exists[oracleAddress] = true
+	}
+
+	for _, genOracle := range genOracles {
+		if _, found := exists[genOracle]; found {
+			return nil, fmt.Errorf("oracle address %s already exists", genOracle)
+		}
 	}
 
 	return oracleAddresses, nil
