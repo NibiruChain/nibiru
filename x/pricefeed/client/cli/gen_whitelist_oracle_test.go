@@ -3,7 +3,6 @@ package cli_test
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -71,13 +70,18 @@ func TestAddGenesisWhitelistOracleCmd(t *testing.T) {
 	testCases := []TestCase{
 		{
 			name:        "add single oracle",
-			oracles:     strings.Join([]string{sample.AccAddress().String()}, ","),
+			oracles:     sample.AccAddress().String(),
 			expectError: false,
 		},
 		{
 			name:        "add multiple oracles",
-			oracles:     strings.Join([]string{sample.AccAddress().String(), sample.AccAddress().String()}, ","),
+			oracles:     fmt.Sprintf("%s,%s", sample.AccAddress().String(), sample.AccAddress().String()),
 			expectError: false,
+		},
+		{
+			name:        "repeated oracle addresses",
+			oracles:     fmt.Sprintf("%[1]s,%[1]s", sample.AccAddress().String()),
+			expectError: true,
 		},
 		{
 			name:        "empty oracle address",

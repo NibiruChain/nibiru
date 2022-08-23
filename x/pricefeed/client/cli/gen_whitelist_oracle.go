@@ -72,12 +72,20 @@ func parseOracleStr(oraclesStr string) ([]string, error) {
 	}
 
 	oracleAddresses := strings.Split(oracles, ",")
+	exists := make(map[string]bool)
 	for i, oracleAddress := range oracleAddresses {
 		addr, err := sdk.AccAddressFromBech32(oracleAddress)
 		if err != nil {
 			return nil, err
 		}
-		oracleAddresses[i] = addr.String()
+
+		oracleAddress = addr.String()
+		if _, found := exists[oracleAddress]; found {
+			return nil, fmt.Errorf("oracle address %s repeated", oracleAddress)
+		}
+
+		oracleAddresses[i] = oracleAddress
+		exists[oracleAddress] = true
 	}
 
 	return oracleAddresses, nil
