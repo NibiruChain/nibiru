@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improvements
 
 * [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module cration and usage of new command to add vpool at genesis
+* [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readbility
 
 ### Features
 
