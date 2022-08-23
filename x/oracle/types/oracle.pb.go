@@ -251,7 +251,7 @@ type PairReward struct {
 	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
 	// id uniquely identifies the rewards instance of the pair
 	Id uint64 `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
-	// vote_periods defines the vote periods in which rewards will be distributed.
+	// vote_periods defines the vote periods left in which rewards will be distributed.
 	VotePeriods uint64 `protobuf:"varint,3,opt,name=vote_periods,json=votePeriods,proto3" json:"vote_periods,omitempty"`
 	// coins defines the amount of coins to distribute in a single vote period.
 	Coins []types.Coin `protobuf:"bytes,4,rep,name=coins,proto3" json:"coins"`

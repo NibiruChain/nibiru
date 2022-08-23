@@ -187,7 +187,7 @@ func (k Keeper) GetRewardsForPair(ctx sdk.Context, pair string) sdk.Coins {
 		r.VotePeriods -= 1
 		if r.VotePeriods == 0 {
 			err := k.DeletePairReward(ctx, r.Pair, r.Id)
-			if err == nil {
+			if err != nil {
 				panic(err)
 			}
 		} else {
