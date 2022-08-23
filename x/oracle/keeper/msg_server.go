@@ -90,7 +90,10 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	// Check a msg is submitted proper period
 	if (uint64(ctx.BlockHeight())/params.VotePeriod)-(aggregatePrevote.SubmitBlock/params.VotePeriod) != 1 {
-		return nil, types.ErrRevealPeriodMissMatch
+		return nil, types.ErrRevealPeriodMissMatch.Wrapf(
+			"aggregate prevote block: %d, current block: %d, vote period: %d",
+			aggregatePrevote.SubmitBlock, ctx.BlockHeight(), params.VotePeriod,
+		)
 	}
 
 	exchangeRateTuples, err := types.ParseExchangeRateTuples(msg.ExchangeRates)
