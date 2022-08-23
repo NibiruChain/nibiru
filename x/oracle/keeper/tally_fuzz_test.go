@@ -83,7 +83,7 @@ func TestFuzz_Tally(t *testing.T) {
 		},
 	)
 
-	// set random denoms and validators
+	// set random pairs and validators
 	f.Fuzz(&validators)
 
 	input, _ := setup(t)
@@ -103,13 +103,13 @@ func TestFuzz_Tally(t *testing.T) {
 }
 
 func TestFuzz_PickReferencePair(t *testing.T) {
-	var denoms []string
+	var pairs []string
 
 	f := fuzz.New().NilChance(0).Funcs(
 		func(e *[]string, c fuzz.Continue) {
-			numDenoms := c.Intn(100) + 5
+			numPairs := c.Intn(100) + 5
 
-			for i := 0; i < numDenoms; i++ {
+			for i := 0; i < numPairs; i++ {
 				*e = append(*e, c.RandString())
 			}
 		},
@@ -117,11 +117,11 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 			*e = sdk.NewDec(c.Int63())
 		},
 		func(e *map[string]sdk.Dec, c fuzz.Continue) {
-			for _, denom := range denoms {
+			for _, pair := range pairs {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
 
-				(*e)[denom] = rate
+				(*e)[pair] = rate
 			}
 		},
 		func(e *map[string]int64, c fuzz.Continue) {
@@ -134,7 +134,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 			validators := map[string]int64{}
 			c.Fuzz(&validators)
 
-			for _, denom := range denoms {
+			for _, pair := range pairs {
 				ballot := types.ExchangeRateBallot{}
 
 				for addr, power := range validators {
@@ -143,17 +143,17 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 					var rate sdk.Dec
 					c.Fuzz(&rate)
 
-					ballot = append(ballot, types.NewBallotVoteForTally(rate, denom, addr, power))
+					ballot = append(ballot, types.NewBallotVoteForTally(rate, pair, addr, power))
 				}
 
 				sort.Sort(ballot)
-				(*e)[denom] = ballot
+				(*e)[pair] = ballot
 			}
 		},
 	)
 
-	// set random denoms
-	f.Fuzz(&denoms)
+	// set random pairs
+	f.Fuzz(&pairs)
 
 	input, _ := setup(t)
 
