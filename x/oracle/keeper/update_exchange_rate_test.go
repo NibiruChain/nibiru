@@ -249,17 +249,16 @@ func TestOracleRewardDistribution(t *testing.T) {
 	// Account 2, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 1)
 
-	rewardsAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardsAmt)))
-	require.NoError(t, err)
+	rewardsAmt := sdk.NewCoins(sdk.NewCoin("reward", sdk.NewInt(1_000_000)))
+	keeper.AllocateRewards(t, input, common.PairBTCStable.String(), rewardsAmt, 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).TruncateInt()
+	expectedRewardAmt := sdk.NewDecCoinsFromCoins(rewardsAmt...).QuoDec(sdk.NewDec(2))
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equalf(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt(), "%s<=>%s", expectedRewardAmt.String(), rewards.String())
+	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s<=>%s", expectedRewardAmt.String(), rewards.String())
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt(), "%s %s", expectedRewardAmt.String(), rewards.Rewards.AmountOf(common.DenomGov).TruncateInt().String())
+	require.Equal(t, expectedRewardAmt, rewards.Rewards, "%s %s", expectedRewardAmt.String(), rewards.Rewards.AmountOf(common.DenomGov).TruncateInt().String())
 }
 
 func TestOracleRewardBand(t *testing.T) {
