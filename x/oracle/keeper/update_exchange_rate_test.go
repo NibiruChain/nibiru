@@ -251,16 +251,16 @@ func TestOracleRewardDistribution(t *testing.T) {
 	// Account 2, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 1)
 
-	rewardsAmt := sdk.NewCoins(sdk.NewCoin("reward", sdk.NewInt(1_000_000)))
-	keeper.AllocateRewards(t, input, common.PairBTCStable.String(), rewardsAmt, 1)
+	rewardAllocation := sdk.NewCoins(sdk.NewCoin("reward", sdk.NewInt(1_000_000)))
+	keeper.AllocateRewards(t, input, common.PairBTCStable.String(), rewardAllocation, 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	expectedRewardAmt := sdk.NewDecCoinsFromCoins(rewardsAmt...).QuoDec(sdk.NewDec(2))
-	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s<=>%s", expectedRewardAmt.String(), rewards.String())
-	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards, "%s %s", expectedRewardAmt.String(), rewards.Rewards.AmountOf(common.DenomGov).TruncateInt().String())
+	expectedRewardOneVal := sdk.NewDecCoinsFromCoins(rewardAllocation...).QuoDec(sdk.NewDec(2))
+	distributionRewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
+	require.Equalf(t, expectedRewardOneVal, distributionRewards.Rewards, "%s<=>%s", expectedRewardOneVal.String(), distributionRewards.String())
+	distributionRewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
+	require.Equal(t, expectedRewardOneVal, distributionRewards.Rewards, "%s %s", expectedRewardOneVal.String(), distributionRewards.Rewards.AmountOf(common.DenomGov).TruncateInt().String())
 }
 
 func TestOracleRewardBand(t *testing.T) {
