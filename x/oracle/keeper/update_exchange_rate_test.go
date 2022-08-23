@@ -418,26 +418,26 @@ func TestOracleEnsureSorted(t *testing.T) {
 func TestOracleExchangeRateVal5(t *testing.T) {
 	input, h := setupVal5(t)
 
-	govStableRate := sdk.NewDec(505000)
-	govStableRateErr := sdk.NewDec(500000)
-	ethStableRate := sdk.NewDec(505)
-	ethStableRateErr := sdk.NewDec(500)
+	govStableRate1 := sdk.NewDec(505000)
+	govStableRate2 := sdk.NewDec(500000)
+	ethStableRate1 := sdk.NewDec(505)
+	ethStableRate2 := sdk.NewDec(500)
 
 	// govstable has been chosen as reference pair by highest voting power
 	// Account 1, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate1}}, 0)
 
 	// Account 2, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}}, 1)
 
 	// Account 3, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}}, 2)
 
 	// Account 4, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRateErr}}, 3)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate2}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate2}}, 3)
 
 	// Account 5, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRateErr}}, 4)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate2}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate2}}, 4)
 
 	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1_000_000)
 	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1_000_000)
@@ -452,15 +452,18 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	gotEthStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairETHStable.String())
 	require.NoError(t, err)
 
-	// legacy version case
-	require.NotEqual(t, ethStableRateErr, gotEthStableRate)
+	require.Equal(t, govStableRate1, gotGovStableRate)
+	require.Equal(t, ethStableRate1, gotEthStableRate)
 
-	// new version case
-	require.Equal(t, govStableRate, gotGovStableRate)
-	require.Equal(t, ethStableRate, gotEthStableRate)
-
-	expectedRewardAmt := sdk.NewDecCoins()
-	expectedRewardAmt2 := sdk.NewDecCoins()
+	// votes are 8 in total
+	// 2 wins by val1,4,5
+	// 1 win by val2,3
+	expectedRewardAmt := sdk.NewDecCoinsFromCoins(ethStableRewards, govStableRewards).
+		QuoDec(sdk.NewDec(8)). // total votes
+		MulDec(sdk.NewDec(2))  // wins
+	expectedRewardAmt2 := sdk.NewDecCoinsFromCoins(ethStableRewards, govStableRewards).
+		QuoDec(sdk.NewDec(8)). // total votes
+		MulDec(sdk.NewDec(1))  // wins
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
 	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 	rewards1 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
