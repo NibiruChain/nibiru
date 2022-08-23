@@ -517,3 +517,15 @@ func (n *Network) Cleanup() {
 
 	n.T.Log("finished cleaning up test network")
 }
+
+func (n *Network) keyBaseAndInfoForAddr(addr sdk.AccAddress) (keyring.Keyring, keyring.Info) {
+	for _, v := range n.Validators {
+		info, err := v.ClientCtx.Keyring.KeyByAddress(addr)
+		if err == nil {
+			return v.ClientCtx.Keyring, info
+		}
+	}
+
+	n.T.Fatalf("address not found in any of the known validators keyrings: %s", addr.String())
+	return nil, nil
+}

@@ -16,6 +16,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	params := k.GetParams(ctx)
 	if types.IsPeriodLastBlock(ctx, params.VotePeriod) {
+		k.Logger(ctx).Info("processing validator price votes")
 		// Build claim map over all validators in active set
 		validatorClaimMap := make(map[string]types.Claim)
 
@@ -91,6 +92,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 			// Increase miss counter
 			k.SetMissCounter(ctx, claim.Recipient, k.GetMissCounter(ctx, claim.Recipient)+1)
+			k.Logger(ctx).Info("vote miss", "validator", claim.Recipient.String())
 		}
 
 		// Distribute rewards to ballot winners

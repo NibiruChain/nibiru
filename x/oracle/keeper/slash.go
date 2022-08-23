@@ -38,6 +38,7 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 					ctx, consAddr,
 					distributionHeight, validator.GetConsensusPower(powerReduction), slashFraction,
 				)
+				k.Logger(ctx).Info("slash", "validator", consAddr.String(), "fraction", slashFraction.String())
 				k.StakingKeeper.Jail(ctx, consAddr)
 			}
 		}

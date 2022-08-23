@@ -8,6 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -98,6 +101,8 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+
 	nibiapp "github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex"
@@ -174,6 +179,7 @@ var (
 		ibctransfer.AppModuleBasic{},
 
 		// native x/
+		oracle.AppModuleBasic{},
 		dex.AppModuleBasic{},
 		pricefeed.AppModuleBasic{},
 		epochs.AppModuleBasic{},
@@ -201,6 +207,7 @@ var (
 		perptypes.FeePoolModuleAccount:        {},
 		epochstypes.ModuleName:                {},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		oracletypes.ModuleName:                nil,
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		common.TreasuryPoolModuleAccount:      {},
 	}
@@ -269,6 +276,7 @@ type NibiruTestApp struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
+	OracleKeeper          oraclekeeper.Keeper
 	DexKeeper             dexkeeper.Keeper
 	StablecoinKeeper      stablecoinkeeper.Keeper
 	PerpKeeper            perpkeeper.Keeper
@@ -332,6 +340,7 @@ func NewNibiruTestApp(
 		ibchost.StoreKey,
 		ibctransfertypes.StoreKey,
 		// nibiru x/ keys
+		oracletypes.StoreKey,
 		dextypes.StoreKey,
 		pricefeedtypes.StoreKey,
 		stablecointypes.StoreKey,
@@ -422,6 +431,14 @@ func NewNibiruTestApp(
 	app.AuthzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.BaseApp.MsgServiceRouter())
 
 	// ---------------------------------- Nibiru Chain x/ keepers
+
+	app.OracleKeeper = oraclekeeper.NewKeeper(
+		appCodec,
+		keys[oracletypes.StoreKey],
+		app.GetSubspace(oracletypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, &stakingKeeper,
+		distrtypes.ModuleName,
+	)
 
 	app.DexKeeper = dexkeeper.NewKeeper(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
@@ -534,6 +551,9 @@ func NewNibiruTestApp(
 	var skipGenesisInvariants = cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
+	oracleModule := oracle.NewAppModule(
+		appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper)
+
 	dexModule := dex.NewAppModule(
 		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
 	pricefeedModule := pricefeed.NewAppModule(
@@ -575,6 +595,7 @@ func NewNibiruTestApp(
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// native x/
+		oracleModule,
 		dexModule,
 		pricefeedModule,
 		stablecoinModule,
@@ -620,6 +641,7 @@ func NewNibiruTestApp(
 		perptypes.ModuleName,
 		lockuptypes.ModuleName,
 		incentivizationtypes.ModuleName,
+		oracletypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -627,6 +649,7 @@ func NewNibiruTestApp(
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
+		oracletypes.ModuleName,
 		stakingtypes.ModuleName,
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
@@ -678,6 +701,7 @@ func NewNibiruTestApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		// native x/
+		oracletypes.ModuleName,
 		dextypes.ModuleName,
 		pricefeedtypes.ModuleName,
 		epochstypes.ModuleName,
@@ -992,6 +1016,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(pricefeedtypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
+	paramsKeeper.Subspace(oracletypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
