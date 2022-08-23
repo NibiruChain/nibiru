@@ -159,10 +159,10 @@ fi
 # ------------------------------------------------------------------------
 
 # add_genesis_params runs a jq command to edit fields of the genesis.json .
-# 
-# Args: 
+#
+# Args:
 #   $1 : the jq input that gets mapped to the json.
-add_genesis_param() { 
+add_genesis_param() {
   echo "jq input $1"
   # copy param ($1) to tmp_genesis.json
   cat $CHAIN_DIR/config/genesis.json | jq "$1" > $CHAIN_DIR/config/tmp_genesis.json
@@ -173,61 +173,33 @@ add_genesis_param() {
 echo_info "Configuring genesis params"
 
 # x/vpool
+# nibid add-genesis-vpool [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage]
 # BTC:NUSD
-add_genesis_param '.app_state.vpool.vpools[0].pair = {token0:"ubtc",token1:"unusd"}' 
-add_genesis_param '.app_state.vpool.vpools[0].base_asset_reserve = "50000000000"'  # 50k BTC
-add_genesis_param '.app_state.vpool.vpools[0].quote_asset_reserve = "1000000000000000"'  # 1 billion NUSD
-add_genesis_param '.app_state.vpool.vpools[0].trade_limit_ratio = "0.1"' 
-add_genesis_param '.app_state.vpool.vpools[0].fluctuation_limit_ratio = "0.1"' 
-add_genesis_param '.app_state.vpool.vpools[0].max_oracle_spread_ratio = "0.1"' 
-add_genesis_param '.app_state.vpool.vpools[0].maintenance_margin_ratio = "0.0625"' 
-add_genesis_param '.app_state.vpool.vpools[0].max_leverage = "12"' 
+nibid add-genesis-vpool ubtc:unusd 50000000000 1000000000000000 0.1 0.1 0.1 0.0625 12
+
 # ETH:NUSD
-add_genesis_param '.app_state.vpool.vpools[1].pair = {token0:"ueth",token1:"unusd"}' 
-add_genesis_param '.app_state.vpool.vpools[1].base_asset_reserve = "666666000000"'  # 666k ETH
-add_genesis_param '.app_state.vpool.vpools[1].quote_asset_reserve = "1000000000000000"'  # 1 billion NUSD
-add_genesis_param '.app_state.vpool.vpools[1].trade_limit_ratio = "0.1"' 
-add_genesis_param '.app_state.vpool.vpools[1].fluctuation_limit_ratio = "0.1"' 
-add_genesis_param '.app_state.vpool.vpools[1].max_oracle_spread_ratio = "0.1"' 
-add_genesis_param '.app_state.vpool.vpools[1].maintenance_margin_ratio = "0.0625"' 
-add_genesis_param '.app_state.vpool.vpools[1].max_leverage = "10"' 
+nibid add-genesis-vpool ueth:unusd 666666000000 1000000000000000 0.1 0.1 0.1 0.0625 10
 
 # x/perp
-add_genesis_param '.app_state.perp.params.stopped = false' 
-add_genesis_param '.app_state.perp.params.fee_pool_fee_ratio = "0.001"' 
-add_genesis_param '.app_state.perp.params.ecosystem_fund_fee_ratio = "0.001"' 
-add_genesis_param '.app_state.perp.params.liquidation_fee_ratio = "0.025"' 
-add_genesis_param '.app_state.perp.params.partial_liquidation_ratio = "0.25"' 
-add_genesis_param '.app_state.perp.params.funding_rate_interval = "30 min"' 
-add_genesis_param '.app_state.perp.params.twap_lookback_window = "900s"' 
-add_genesis_param '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}' 
-add_genesis_param '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]' 
-add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}' 
-add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]' 
+add_genesis_param '.app_state.perp.params.stopped = false'
+add_genesis_param '.app_state.perp.params.fee_pool_fee_ratio = "0.001"'
+add_genesis_param '.app_state.perp.params.ecosystem_fund_fee_ratio = "0.001"'
+add_genesis_param '.app_state.perp.params.liquidation_fee_ratio = "0.025"'
+add_genesis_param '.app_state.perp.params.partial_liquidation_ratio = "0.25"'
+add_genesis_param '.app_state.perp.params.funding_rate_interval = "30 min"'
+add_genesis_param '.app_state.perp.params.twap_lookback_window = "900s"'
+add_genesis_param '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}'
+add_genesis_param '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]'
+add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}'
+add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]'
 
 # x/pricefeed
-add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"unibi",token1:"unusd"}' 
-add_genesis_param '.app_state.pricefeed.params.pairs[1] = {token0:"uusdc",token1:"unusd"}' 
-add_genesis_param '.app_state.pricefeed.params.pairs[2] = {token0:"ubtc",token1:"unusd"}' 
-add_genesis_param '.app_state.pricefeed.params.pairs[3] = {token0:"ueth",token1:"unusd"}' 
-add_genesis_param '.app_state.pricefeed.params.twap_lookback_window = "900s"' 
-add_genesis_param '.app_state.pricefeed.genesis_oracles = ["nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"]' 
-
-# x/stablecoin
-add_genesis_param '.app_state.stablecoin.params.coll_ratio = "1000000"' 
-add_genesis_param '.app_state.stablecoin.params.fee_ratio = "2000"' 
-add_genesis_param '.app_state.stablecoin.params.ef_fee_ratio = "500000"' 
-add_genesis_param '.app_state.stablecoin.params.bonus_rate_recoll = "2000"' 
-add_genesis_param '.app_state.stablecoin.params.distr_epoch_identifier = "15 min"' 
-add_genesis_param '.app_state.stablecoin.params.adjustment_step = "2500"' 
-add_genesis_param '.app_state.stablecoin.params.price_upper_bound = "999900"' 
-add_genesis_param '.app_state.stablecoin.params.price_upper_bound = "1000100"' 
-add_genesis_param '.app_state.stablecoin.params.is_collateral_ratio_valid = false' 
-
-# x/dex
-add_genesis_param '.app_state.dex.params.starting_pool_number = "1"' 
-add_genesis_param '.app_state.dex.params.pool_creation_fee[0] = {denom:"unibi",amount:"1000000000"}' 
-add_genesis_param '.app_state.dex.params.whitelisted_asset = ["uusdc","unibi","unusd"]' 
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[0] = {token0:"unibi",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[1] = {token0:"uusdc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[2] = {token0:"ubtc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[3] = {token0:"ueth",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.genesis_oracles = ["nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"]' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
