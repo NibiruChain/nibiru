@@ -1,6 +1,7 @@
 name: "Check changelog update"
 on:
   pull_request:
+
 jobs:
   changelog:
     runs-on: self-hosted
