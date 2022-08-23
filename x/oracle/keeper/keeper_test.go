@@ -59,8 +59,8 @@ func TestIterateExchangeRates(t *testing.T) {
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), ethStablePrice)
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), btcStablePrice)
 
-	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		switch denom {
+	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(pair string, rate sdk.Dec) (stop bool) {
+		switch pair {
 		case common.PairCollStable.String():
 			require.Equal(t, collStablePrice, rate)
 		case common.PairETHStable.String():

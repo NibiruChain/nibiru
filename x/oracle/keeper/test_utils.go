@@ -237,8 +237,8 @@ func CreateTestInput(t *testing.T) TestInput {
 	defaults := types.DefaultParams()
 	keeper.SetParams(ctx, defaults)
 
-	for _, denom := range defaults.Whitelist {
-		keeper.SetPair(ctx, denom.Name)
+	for _, pair := range defaults.Whitelist {
+		keeper.SetPair(ctx, pair.Name)
 	}
 
 	return TestInput{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}
