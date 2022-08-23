@@ -28,8 +28,7 @@ Types of changes (Stanzas):
 "Bug Fixes" for any bug fixes.
 "Client Breaking" for breaking CLI commands and REST routes used by end-users.
 "API Breaking" for breaking exported APIs used by developers building on SDK.
-"State Machine Breaking" for any changes that result in a different AppState 
-given same genesisState and txList.
+"State Machine Breaking" for any changes that result in a different AppState given same genesisState and txList.
 Ref: https://keepachangelog.com/en/1.0.0/
 -->
 
@@ -44,8 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
-* [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module cration and usage of new command to add vpool at genesis
-* [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readbility
+* [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module creation and usage of new command to add vpool at genesis
+* [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readability
+* [#842](https://github.com/NibiruChain/nibiru/pull/842) - use self-hosted runner
 
 ### Features
 
@@ -62,12 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#795](https://github.com/NibiruChain/nibiru/pull/795) - integration tests run when PR is approved
 * [#826](https://github.com/NibiruChain/nibiru/pull/826) - create and push docker image on release
 
-
 ### Improvements
 
-* [#830](https://github.com/NibiruChain/nibiru/pull/830) - test(vpool): Make missing fields for 'query vpool all-pools' display as empty strings. 
-  - Improve test coverage of functions used in the query server.
-  - Added 'pair' field to the `all-pools` to make the prices array easier to digest
+* [#830](https://github.com/NibiruChain/nibiru/pull/830) - test(vpool): Make missing fields for 'query vpool all-pools' display as empty strings.
+  * Improve test coverage of functions used in the query server.
+  * Added 'pair' field to the `all-pools` to make the prices array easier to digest
 * [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
@@ -80,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
 * [#811](https://github.com/NibiruChain/nibiru/pull/811) Return the index twap in `QueryPrice` cmd
-* [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query 
+* [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query
 * [#816](https://github.com/NibiruChain/nibiru/pull/816) - Remove tobin tax from x/oracle
 * [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
 * [#832](https://github.com/NibiruChain/nibiru/pull/832) - x/oracle app wiring

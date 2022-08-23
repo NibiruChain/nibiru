@@ -1,13 +1,11 @@
 name: Unit Tests
 
-# Runs on PRs only, not on master.
 on:
   pull_request:
-    branches: ["**"]
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
 
