@@ -5,8 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -112,12 +110,11 @@ func (k Keeper) RewardBallotWinners(
 	voteTargets map[string]struct{},
 	ballotWinners map[string]types.ValidatorPerformance,
 ) {
-	rewardDenoms := make([]string, len(voteTargets)+1)
-	rewardDenoms[0] = common.DenomGov
+	rewardPair := make([]string, len(voteTargets))
 
-	i := 1
-	for denom := range voteTargets {
-		rewardDenoms[i] = denom
+	i := 0
+	for pair := range voteTargets {
+		rewardPair[i] = pair
 		i++
 	}
 
@@ -133,8 +130,8 @@ func (k Keeper) RewardBallotWinners(
 	}
 
 	var periodRewards sdk.DecCoins
-	for _, denom := range rewardDenoms {
-		rewardsForPair := k.GetRewardsForPair(ctx, denom)
+	for _, pair := range rewardPair {
+		rewardsForPair := k.GetRewardsForPair(ctx, pair)
 
 		// return if there's no rewards to give out
 		if rewardsForPair.IsZero() {
