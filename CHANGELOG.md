@@ -47,10 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readability
 * [#842](https://github.com/NibiruChain/nibiru/pull/842) - use self-hosted runner
 * [#843](https://github.com/NibiruChain/nibiru/pull/843) - add timeout to github actions integration tests
+* [#847](https://github.com/NibiruChain/nibiru/pull/847) - add command in localnet to whitelist oracle
+* [#848](https://github.com/NibiruChain/nibiru/pull/848) - add check max leverage on add vpool in genesis command
 
 ### Features
 
 * [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis
+* [#838](https://github.com/NibiruChain/nibiru/pull/838) - feat(genesis): add cli command to whitelist oracles at genesis
 
 ### State Machine Breaking
 
@@ -84,7 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query
 * [#816](https://github.com/NibiruChain/nibiru/pull/816) - Remove tobin tax from x/oracle
 * [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
-* [#832](https://github.com/NibiruChain/nibiru/pull/832) - x/oracle app wiring
 
 ### Documentation
 
