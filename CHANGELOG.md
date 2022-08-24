@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#842](https://github.com/NibiruChain/nibiru/pull/842) - use self-hosted runner
 * [#843](https://github.com/NibiruChain/nibiru/pull/843) - add timeout to github actions integration tests
 
-## Features
+### Features
 
 * [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis
 * [#838](https://github.com/NibiruChain/nibiru/pull/838) - feat(genesis): add cli command to whitelist oracles at genesis
