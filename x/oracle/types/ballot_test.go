@@ -110,8 +110,6 @@ func TestToCrossRate(t *testing.T) {
 	require.Equal(t, cb, pbQuote.ToCrossRate(baseMapBallot))
 
 	sort.Sort(cb)
-
-	require.Equal(t, cb, pbQuote.ToCrossRateWithSort(baseMapBallot))
 }
 
 func TestSqrt(t *testing.T) {
