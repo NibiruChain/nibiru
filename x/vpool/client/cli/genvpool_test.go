@@ -134,10 +134,10 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 				tc.pairName,
 				tc.baseAsset,
 				tc.quoteAsset,
-				tc.maxOracle,
 				tc.tradeLimit,
-				tc.maintainRatio,
 				tc.flucLimit,
+				tc.maxOracle,
+				tc.maintainRatio,
 				tc.maxLeverage,
 				fmt.Sprintf("--%s=home", flags.FlagHome)})
 
