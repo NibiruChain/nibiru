@@ -131,7 +131,7 @@ func (k Keeper) RewardBallotWinners(
 
 	var periodRewards sdk.DecCoins
 	for _, pair := range rewardPair {
-		rewardsForPair := k.GetRewardsForPair(ctx, pair)
+		rewardsForPair := k.AccrueVotePeriodPairRewards(ctx, pair)
 
 		// return if there's no rewards to give out
 		if rewardsForPair.IsZero() {
@@ -163,11 +163,11 @@ func (k Keeper) RewardBallotWinners(
 	}
 }
 
-// GetRewardsForPair retrieves the vote period rewards for the provided pair.
+// AccrueVotePeriodPairRewards retrieves the vote period rewards for the provided pair.
 // And decreases the distribution period count of each pair reward instance.
 // If the distribution period count drops to 0: the reward instance is removed.
-// TODO(mercilex): change API name as it does not suggest modifications of state are happening here.
-func (k Keeper) GetRewardsForPair(ctx sdk.Context, pair string) sdk.Coins {
+// TODO(mercilex): don't like API name
+func (k Keeper) AccrueVotePeriodPairRewards(ctx sdk.Context, pair string) sdk.Coins {
 	var pairRewards []*types.PairReward
 	k.IteratePairRewards(ctx, pair, func(rewards *types.PairReward) (stop bool) {
 		pairRewards = append(pairRewards, rewards)

@@ -135,7 +135,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	}
 
 	// assert there are no rewards for pair
-	require.True(t, input.OracleKeeper.GetRewardsForPair(input.Ctx, common.PairGovStable.String()).IsZero())
+	require.True(t, input.OracleKeeper.AccrueVotePeriodPairRewards(input.Ctx, common.PairGovStable.String()).IsZero())
 
 	// assert that there are no rewards instances
 	found := false
