@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readability
 * [#842](https://github.com/NibiruChain/nibiru/pull/842) - use self-hosted runner
 * [#843](https://github.com/NibiruChain/nibiru/pull/843) - add timeout to github actions integration tests
+* [#847](https://github.com/NibiruChain/nibiru/pull/847) - add command in localnet to whitelist oracle
 * [#848](https://github.com/NibiruChain/nibiru/pull/848) - add check max leverage on add vpool in genesis command
 
 ### Features
