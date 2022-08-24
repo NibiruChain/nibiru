@@ -1,9 +1,11 @@
 package types
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
