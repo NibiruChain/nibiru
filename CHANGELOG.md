@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]
 
+## v0.14.0
+
 ### Improvements
 
 * [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module creation and usage of new command to add vpool at genesis
@@ -51,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#848](https://github.com/NibiruChain/nibiru/pull/848) - add check max leverage on add vpool in genesis command
 
 ### Fixes
+
 * [850](https://github.com/NibiruChain/nibiru/pull/850) - x/vpool - properly validate vpools at genesis
 
 ### Features
@@ -58,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis
 * [#838](https://github.com/NibiruChain/nibiru/pull/838) - feat(genesis): add cli command to whitelist oracles at genesis
 
-### State Machine Breaking
+## v0.13.0
 
 * [#831](https://github.com/NibiruChain/nibiru/pull/831) - remove modules that are not used in testnet
 
