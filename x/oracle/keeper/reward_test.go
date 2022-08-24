@@ -1,13 +1,15 @@
 package keeper_test
 
 import (
+	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestKeeper_PairRewards(t *testing.T) {
@@ -90,7 +92,6 @@ func TestKeeper_PairRewards(t *testing.T) {
 			return false
 		})
 		require.Equal(t, expected, got)
-
 	})
 }
 
