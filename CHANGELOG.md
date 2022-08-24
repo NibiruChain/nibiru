@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readability
 * [#842](https://github.com/NibiruChain/nibiru/pull/842) - use self-hosted runner
 * [#843](https://github.com/NibiruChain/nibiru/pull/843) - add timeout to github actions integration tests
+* [#847](https://github.com/NibiruChain/nibiru/pull/847) - add command in localnet to whitelist oracle
 * [#848](https://github.com/NibiruChain/nibiru/pull/848) - add check max leverage on add vpool in genesis command
 
 ### Fixes
@@ -80,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#817](https://github.com/NibiruChain/nibiru/pull/817) - Make post prices transactions gasless for whitelisted oracles
 * [#818](https://github.com/NibiruChain/nibiru/pull/818) - fix(localnet.sh): add max leverage to vpools in genesis to fix open-position
 * [#819](https://github.com/NibiruChain/nibiru/pull/819) - add golangci-linter using docker in Makefile
+* [#835](https://github.com/NibiruChain/nibiru/pull/835) - x/oracle cleanup code
 
 ### Features
 
