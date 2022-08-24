@@ -49,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#843](https://github.com/NibiruChain/nibiru/pull/843) - add timeout to github actions integration tests
 * [#848](https://github.com/NibiruChain/nibiru/pull/848) - add check max leverage on add vpool in genesis command
 
+### Fixes
+* [850](https://github.com/NibiruChain/nibiru/pull/850) - x/vpool - properly validate vpools at genesis
+
 ### Features
 
 * [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis

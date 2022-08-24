@@ -231,7 +231,6 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 }
 
 func TestPool_Validate(t *testing.T) {
-
 	type test struct {
 		m         *Pool
 		expectErr bool
