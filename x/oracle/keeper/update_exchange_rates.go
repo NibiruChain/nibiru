@@ -42,18 +42,17 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
 	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorPerformanceMap)
+	// remove ballots which are not passing
+	RemoveInvalidBallots(ctx, k, pairsMap, pairBallotMap)
+	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+	for pair, ballot := range pairBallotMap {
+		sort.Sort(ballot)
 
-	if _ = PickReferencePair(ctx, k, pairsMap, pairBallotMap); true {
-		// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-		for pair, ballot := range pairBallotMap {
-			sort.Sort(ballot)
+		// Get weighted median of cross exchange rates
+		exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
 
-			// Get weighted median of cross exchange rates
-			exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
-
-			// Set the exchange rate, emit ABCI event
-			k.SetExchangeRateWithEvent(ctx, pair, exchangeRate)
-		}
+		// Set the exchange rate, emit ABCI event
+		k.SetExchangeRateWithEvent(ctx, pair, exchangeRate)
 	}
 
 	//---------------------------
