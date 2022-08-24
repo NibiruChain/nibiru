@@ -98,21 +98,29 @@ func parseVpoolParams(args []string) (*types.Pool, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	fluctuationLimitRatio, err := sdk.NewDecFromStr(args[4])
 	if err != nil {
 		return nil, err
 	}
+
 	maxOracleSpread, err := sdk.NewDecFromStr(args[5])
 	if err != nil {
 		return nil, err
 	}
+
 	maintenanceMarginRatio, err := sdk.NewDecFromStr(args[6])
 	if err != nil {
 		return nil, err
 	}
+
 	maxLeverage, err := sdk.NewDecFromStr(args[7])
 	if err != nil {
 		return nil, err
+	}
+
+	if !maxLeverage.GT(sdk.ZeroDec()) {
+		return nil, fmt.Errorf("invalid max leverage value")
 	}
 
 	vPool := types.NewPool(
