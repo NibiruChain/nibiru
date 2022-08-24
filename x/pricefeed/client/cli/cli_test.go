@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -30,7 +32,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 const (
@@ -94,7 +95,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	s.cfg = testutilcli.BuildNetworkConfig(testapp.NewTestGenesisStateFromDefault())
+	s.cfg = testutilcli.BuildNetworkConfig(simapp.NewTestGenesisStateFromDefault())
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 
 	s.oracleMap = make(map[string]sdk.AccAddress)

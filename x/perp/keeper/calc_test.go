@@ -3,13 +3,14 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
@@ -20,7 +21,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 		{
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
@@ -35,7 +36,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			name: "signedRemainMargin negative bc of marginDelta",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
@@ -88,7 +89,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			name: "large fPayment lowers pos value by half",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 

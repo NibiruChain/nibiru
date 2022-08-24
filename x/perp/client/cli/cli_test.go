@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -21,7 +23,6 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -73,7 +74,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := testapp.NewTestGenesisStateFromDefault()
+	genesisState := simapp.NewTestGenesisStateFromDefault()
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
@@ -153,8 +154,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-// TODO test: Include checks for queryResp.MarginRatioIndex
-// https://github.com/NibiruChain/nibiru/issues/809
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 
@@ -203,6 +202,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
+	s.EqualValues(sdk.NewDec(0), queryResp.MarginRatioIndex)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{

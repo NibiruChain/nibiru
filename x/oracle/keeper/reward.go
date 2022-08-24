@@ -19,7 +19,7 @@ func (k Keeper) RewardBallotWinners(
 	votePeriod int64,
 	rewardDistributionWindow int64,
 	voteTargets map[string]struct{},
-	ballotWinners map[string]types.Claim,
+	ballotWinners map[string]types.ValidatorPerformance,
 ) {
 	rewardDenoms := make([]string, len(voteTargets)+1)
 	rewardDenoms[0] = common.DenomGov
@@ -62,7 +62,7 @@ func (k Keeper) RewardBallotWinners(
 	// Dole out rewards
 	var distributedReward sdk.Coins
 	for _, winner := range ballotWinners {
-		receiverVal := k.StakingKeeper.Validator(ctx, winner.Recipient)
+		receiverVal := k.StakingKeeper.Validator(ctx, winner.ValAddress)
 
 		// Reflects contribution
 		rewardCoins, _ := periodRewards.MulDec(sdk.NewDec(winner.Weight).QuoInt64(ballotPowerSum)).TruncateDecimal()
