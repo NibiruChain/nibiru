@@ -522,7 +522,7 @@ func TestVoteTargets(t *testing.T) {
 	exists := input.OracleKeeper.PairExists(input.Ctx, common.PairBTCStable.String())
 	require.False(t, exists)
 
-	// change govstable tobin tax
+	// change govstable
 	params.Whitelist = types.PairList{{Name: common.PairGovStable.String()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
