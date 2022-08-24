@@ -119,8 +119,6 @@ func parseVpoolParams(args []string) (*types.Pool, error) {
 		return nil, err
 	}
 
-	fmt.Printf("%s", maxLeverage)
-
 	if !maxLeverage.GT(sdk.ZeroDec()) {
 		return nil, fmt.Errorf("invalid max leverage value")
 	}
