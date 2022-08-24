@@ -89,6 +89,23 @@ func TestRewardPool(t *testing.T) {
 
 */
 
+func TestKeeper_ClearExchangeRates(t *testing.T) {
+	i := CreateTestInput(t)
+	i.OracleKeeper.SetExchangeRate(i.Ctx, "nibi:usd", sdk.MustNewDecFromStr("1.5"))
+	i.OracleKeeper.SetExchangeRate(i.Ctx, "btc:usd", sdk.MustNewDecFromStr("100000.5"))
+	i.OracleKeeper.SetExchangeRate(i.Ctx, "eth:usd", sdk.MustNewDecFromStr("10000.5"))
+
+	i.OracleKeeper.ClearExchangeRates(i.Ctx)
+
+	found := false
+	i.OracleKeeper.IterateExchangeRates(i.Ctx, func(_ string, _ sdk.Dec) (stop bool) {
+		found = true
+		return
+	})
+
+	require.False(t, found)
+}
+
 func TestParams(t *testing.T) {
 	input := CreateTestInput(t)
 

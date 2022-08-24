@@ -1,16 +1,15 @@
-package oracle
+package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
 // CONTRACT: pb must be sorted
-func Tally(_ sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.Claim) (weightedMedian sdk.Dec) {
+func Tally(_ sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.ValidatorPerformance) (weightedMedian sdk.Dec) {
 	weightedMedian = pb.WeightedMedianWithAssertion()
 
 	standardDeviation := pb.StandardDeviation(weightedMedian)
@@ -45,7 +44,7 @@ func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) (s
 // PickReferencePair choose Reference pair with the highest voter turnout
 // If the voting power of the two denominations is the same,
 // select reference pair in alphabetical order.
-func PickReferencePair(ctx sdk.Context, k keeper.Keeper, voteTargets map[string]struct{}, voteMap map[string]types.ExchangeRateBallot) string {
+func PickReferencePair(ctx sdk.Context, k Keeper, voteTargets map[string]struct{}, voteMap map[string]types.ExchangeRateBallot) string {
 	largestBallotPower := int64(0)
 	referencePair := ""
 

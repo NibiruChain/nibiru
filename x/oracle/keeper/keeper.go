@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+
 	"github.com/tendermint/tendermint/libs/log"
 
 	gogotypes "github.com/gogo/protobuf/types"
@@ -115,6 +117,25 @@ func (k Keeper) IterateExchangeRates(ctx sdk.Context, handler func(pair string, 
 		if handler(pair, dp.Dec) {
 			break
 		}
+	}
+}
+
+// ClearExchangeRates iterates over all exchange rates and clears them.
+func (k Keeper) ClearExchangeRates(ctx sdk.Context) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ExchangeRateKey)
+
+	iter := store.Iterator(nil, nil)
+
+	var pairs [][]byte
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()
+		pairs = append(pairs, key)
+	}
+
+	_ = iter.Close()
+
+	for _, pair := range pairs {
+		store.Delete(pair)
 	}
 }
 
@@ -335,7 +356,7 @@ func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, valid
 	if !feederAddr.Equals(validatorAddr) {
 		delegate := k.GetFeederDelegation(ctx, validatorAddr)
 		if !delegate.Equals(feederAddr) {
-			return sdkerrors.Wrap(types.ErrNoVotingPermission, feederAddr.String())
+			return sdkerrors.Wrapf(types.ErrNoVotingPermission, "wanted: %s, got: %s", delegate.String(), feederAddr.String())
 		}
 	}
 

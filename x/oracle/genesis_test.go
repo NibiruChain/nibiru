@@ -13,7 +13,7 @@ import (
 )
 
 func TestExportInitGenesis(t *testing.T) {
-	input, _ := setup(t)
+	input := keeper.CreateTestInput(t)
 
 	input.OracleKeeper.SetFeederDelegation(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
 	input.OracleKeeper.SetExchangeRate(input.Ctx, "denom", sdk.NewDec(123))
@@ -32,7 +32,7 @@ func TestExportInitGenesis(t *testing.T) {
 }
 
 func TestInitGenesis(t *testing.T) {
-	input, _ := setup(t)
+	input := keeper.CreateTestInput(t)
 	genesis := types.DefaultGenesisState()
 	require.NotPanics(t, func() {
 		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)

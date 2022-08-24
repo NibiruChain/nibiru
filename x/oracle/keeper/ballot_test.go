@@ -57,21 +57,21 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	// organize votes by denom
-	ballotMap := input.OracleKeeper.OrganizeBallotByPair(input.Ctx, map[string]types.Claim{
+	ballotMap := input.OracleKeeper.OrganizeBallotByPair(input.Ctx, map[string]types.ValidatorPerformance{
 		ValAddrs[0].String(): {
-			Power:     power,
-			WinCount:  0,
-			Recipient: ValAddrs[0],
+			Power:      power,
+			WinCount:   0,
+			ValAddress: ValAddrs[0],
 		},
 		ValAddrs[1].String(): {
-			Power:     power,
-			WinCount:  0,
-			Recipient: ValAddrs[1],
+			Power:      power,
+			WinCount:   0,
+			ValAddress: ValAddrs[1],
 		},
 		ValAddrs[2].String(): {
-			Power:     power,
-			WinCount:  0,
-			Recipient: ValAddrs[2],
+			Power:      power,
+			WinCount:   0,
+			ValAddress: ValAddrs[2],
 		},
 	})
 
