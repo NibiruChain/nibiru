@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+* [#839](https://github.com/NibiruChain/nibiru/pull/839) - x/oracle rewarding
 * [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
 * [#811](https://github.com/NibiruChain/nibiru/pull/811) Return the index twap in `QueryPrice` cmd
 * [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query 
