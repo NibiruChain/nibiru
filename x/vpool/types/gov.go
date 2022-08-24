@@ -1,9 +1,6 @@
 package types
 
 import (
-	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -33,46 +30,20 @@ func (m *CreatePoolProposal) ValidateBasic() error {
 		return err
 	}
 
-	if _, err := common.NewAssetPair(m.Pair); err != nil {
+	assetPair, err := common.NewAssetPair(m.Pair)
+	if err != nil {
 		return err
 	}
-
-	// trade limit ratio always between 0 and 1
-	if m.TradeLimitRatio.LT(sdk.ZeroDec()) || m.TradeLimitRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")
+	pool := &Pool{
+		Pair:                   assetPair,
+		BaseAssetReserve:       m.BaseAssetReserve,
+		QuoteAssetReserve:      m.QuoteAssetReserve,
+		TradeLimitRatio:        m.TradeLimitRatio,
+		FluctuationLimitRatio:  m.FluctuationLimitRatio,
+		MaxOracleSpreadRatio:   m.MaxOracleSpreadRatio,
+		MaintenanceMarginRatio: m.MaintenanceMarginRatio,
+		MaxLeverage:            m.MaxLeverage,
 	}
 
-	// quote asset reserve always > 0
-	if !m.QuoteAssetReserve.IsPositive() {
-		return fmt.Errorf("quote asset reserve must be > 0")
-	}
-
-	// base asset reserve always > 0
-	if !m.BaseAssetReserve.IsPositive() {
-		return fmt.Errorf("base asset reserve must be > 0")
-	}
-
-	// fluctuation limit ratio between 0 and 1
-	if m.FluctuationLimitRatio.LT(sdk.ZeroDec()) || m.FluctuationLimitRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1")
-	}
-
-	// max oracle spread ratio between 0 and 1
-	if m.MaxOracleSpreadRatio.LT(sdk.ZeroDec()) || m.MaxOracleSpreadRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("max oracle spread ratio must be 0 <= ratio <= 1")
-	}
-
-	if m.MaintenanceMarginRatio.LT(sdk.ZeroDec()) || m.MaintenanceMarginRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
-	}
-
-	if m.MaxLeverage.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("Max leverage must be >= 0")
-	}
-
-	if sdk.OneDec().Quo(m.MaxLeverage).LT(m.MaintenanceMarginRatio) {
-		return fmt.Errorf("Margin ratio opened with max leverage position will be lower than Maintenance margin ratio")
-	}
-
-	return nil
+	return pool.Validate()
 }
