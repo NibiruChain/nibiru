@@ -9,13 +9,13 @@ import (
 )
 
 // OrganizeBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
-func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorClaimMap map[string]types.Claim) (ballots map[string]types.ExchangeRateBallot) {
+func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorsPerformance map[string]types.ValidatorPerformance) (ballots map[string]types.ExchangeRateBallot) {
 	ballots = map[string]types.ExchangeRateBallot{}
 
 	// Organize aggregate votes
 	aggregateHandler := func(voterAddr sdk.ValAddress, vote types.AggregateExchangeRateVote) (stop bool) {
 		// organize ballot only for the active validators
-		if claim, ok := validatorClaimMap[vote.Voter]; ok {
+		if claim, ok := validatorsPerformance[vote.Voter]; ok {
 			for _, tuple := range vote.ExchangeRateTuples {
 				power := claim.Power
 				if !tuple.ExchangeRate.IsPositive() {
