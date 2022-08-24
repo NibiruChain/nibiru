@@ -453,7 +453,7 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, govStableRate1, gotGovStableRate)
-	require.Equal(t, ethStableRate1, gotEthStableRate)
+	require.Equal(t, ethStableRate2, gotEthStableRate)
 
 	// votes are 8 in total
 	// 2 wins by val1,4,5
