@@ -64,7 +64,9 @@ func (pb ExchangeRateBallot) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeR
 	return
 }
 
-// ToCrossRateWithSort return cross_rate(base/exchange_rate) ballot
+// ToCrossRateWithSort returns the ballot in the form of []{validator_exchange_rate/validator_reference_exchange_rate}.
+// In case a validator did vote on the reference exchange rate, but didn't vote in the current pair's rate, then
+// the missing vote is converted to an abstained vote with zero power.
 func (pb ExchangeRateBallot) ToCrossRateWithSort(referenceExchangeRates map[string]sdk.Dec) (cb ExchangeRateBallot) {
 	for _, vote := range pb {
 		if referenceExchangeRate, ok := referenceExchangeRates[string(vote.Voter)]; ok && vote.ExchangeRate.IsPositive() {
@@ -175,20 +177,20 @@ func (pb ExchangeRateBallot) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
 }
 
-// Claim is an interface that directs its rewards to an attached bank account.
-type Claim struct {
-	Power     int64
-	Weight    int64
-	WinCount  int64
-	Recipient sdk.ValAddress
+// ValidatorPerformance keeps track of a validator performance in the voting period.
+type ValidatorPerformance struct {
+	Power      int64
+	Weight     int64
+	WinCount   int64
+	ValAddress sdk.ValAddress
 }
 
-// NewClaim generates a Claim instance.
-func NewClaim(power, weight, winCount int64, recipient sdk.ValAddress) Claim {
-	return Claim{
-		Power:     power,
-		Weight:    weight,
-		WinCount:  winCount,
-		Recipient: recipient,
+// NewValidatorPerformance generates a ValidatorPerformance instance.
+func NewValidatorPerformance(power, weight, winCount int64, recipient sdk.ValAddress) ValidatorPerformance {
+	return ValidatorPerformance{
+		Power:      power,
+		Weight:     weight,
+		WinCount:   winCount,
+		ValAddress: recipient,
 	}
 }

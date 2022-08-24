@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#817](https://github.com/NibiruChain/nibiru/pull/817) - Make post prices transactions gasless for whitelisted oracles
 * [#818](https://github.com/NibiruChain/nibiru/pull/818) - fix(localnet.sh): add max leverage to vpools in genesis to fix open-position
 * [#819](https://github.com/NibiruChain/nibiru/pull/819) - add golangci-linter using docker in Makefile
+* [#835](https://github.com/NibiruChain/nibiru/pull/835) - x/oracle cleanup code
 
 ### Features
 
