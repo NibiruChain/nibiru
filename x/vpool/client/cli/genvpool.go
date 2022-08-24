@@ -59,7 +59,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 
 			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
 			if err != nil {
-				return fmt.Errorf("failed to marshal bank genesis state: %w", err)
+				return fmt.Errorf("failed to marshal vpool genesis state: %w", err)
 			}
 
 			appState[types.ModuleName] = vPoolGenStateBz
