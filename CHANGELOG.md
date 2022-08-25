@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#850](https://github.com/NibiruChain/nibiru/pull/850) - x/vpool - properly validate vpools at genesis
 * [#854](https://github.com/NibiruChain/nibiru/pull/854) - add buildx to the docker release workflow
+* [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper genesis validation checks
 
 ### Features
 
