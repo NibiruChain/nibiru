@@ -237,9 +237,13 @@ func TestPool_Validate(t *testing.T) {
 	}
 
 	cases := map[string]test{
-		"invalid pair": {&Pool{
-			Pair: common.AssetPair{},
-		}, true},
+		"invalid pair": {
+			m: &Pool{
+				Pair: common.AssetPair{},
+			},
+			expectErr: true,
+		},
+
 		"invalid trade limit ratio < 0": {
 			m: &Pool{
 				Pair:            common.MustNewAssetPair("btc:usd"),
@@ -308,6 +312,7 @@ func TestPool_Validate(t *testing.T) {
 			},
 			expectErr: true,
 		},
+
 		"max oracle spread ratio > 1": {
 			m: &Pool{
 				Pair:                  common.MustNewAssetPair("btc:usd"),
@@ -319,6 +324,7 @@ func TestPool_Validate(t *testing.T) {
 			},
 			expectErr: true,
 		},
+
 		"maintenance ratio < 0": {
 			m: &Pool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
@@ -331,6 +337,7 @@ func TestPool_Validate(t *testing.T) {
 			},
 			expectErr: true,
 		},
+
 		"maintenance ratio > 1": {
 			m: &Pool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
@@ -343,6 +350,7 @@ func TestPool_Validate(t *testing.T) {
 			},
 			expectErr: true,
 		},
+
 		"max leverage < 0": {
 			m: &Pool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
@@ -356,7 +364,8 @@ func TestPool_Validate(t *testing.T) {
 			},
 			expectErr: true,
 		},
-		"max leverage too high for margin ratio": {
+
+		"max leverage too high for maintenance margin ratio": {
 			m: &Pool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
