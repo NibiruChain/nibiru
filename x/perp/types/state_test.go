@@ -137,3 +137,20 @@ func TestPairMetadata_Validate(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkPosition_Validate(b *testing.B) {
+	t := &Position{
+		TraderAddress:                       sample.AccAddress().String(),
+		Pair:                                common.MustNewAssetPair("valid:pair"),
+		Size_:                               sdk.MustNewDecFromStr("1000"),
+		Margin:                              sdk.MustNewDecFromStr("1000"),
+		OpenNotional:                        sdk.MustNewDecFromStr("1000"),
+		LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("1"),
+		BlockNumber:                         0,
+	}
+
+	for i := 0; i < b.N; i++ {
+		err := t.Validate()
+		_ = err
+	}
+}
