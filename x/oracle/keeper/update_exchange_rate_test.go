@@ -241,6 +241,8 @@ func TestOracleTallyTiming(t *testing.T) {
 }
 
 func TestOracleRewardDistribution(t *testing.T) {
+	// the following test scenario simulates that two validators, out of three, are voting for one common pair.
+	// they have the same voting power, and the reward allocation lasts for 1 voting period.
 	input, h := setup(t)
 
 	// Account 1, btcstable
@@ -249,18 +251,16 @@ func TestOracleRewardDistribution(t *testing.T) {
 	// Account 2, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 1)
 
-	rewardsAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardsAmt)))
-	require.NoError(t, err)
+	rewardAllocation := sdk.NewCoins(sdk.NewCoin("reward", sdk.NewInt(1_000_000)))
+	keeper.AllocateRewards(t, input, common.PairBTCStable.String(), rewardAllocation, 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	votePeriodsPerWindow := uint64(sdk.NewDec(int64(input.OracleKeeper.RewardDistributionWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64())
-	expectedRewardAmt := sdk.NewDecFromInt(rewardsAmt.QuoRaw(2)).QuoInt64(int64(votePeriodsPerWindow)).TruncateInt()
-	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equalf(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt(), "%s<=>%s", expectedRewardAmt.String(), rewards.String())
-	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	expectedRewardOneVal := sdk.NewDecCoinsFromCoins(rewardAllocation...).QuoDec(sdk.NewDec(2))
+	distributionRewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
+	require.Equalf(t, expectedRewardOneVal, distributionRewards.Rewards, "%s<=>%s", expectedRewardOneVal.String(), distributionRewards.String())
+	distributionRewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
+	require.Equal(t, expectedRewardOneVal, distributionRewards.Rewards, "%s %s", expectedRewardOneVal.String(), distributionRewards.Rewards.AmountOf(common.DenomGov).TruncateInt().String())
 }
 
 func TestOracleRewardBand(t *testing.T) {
@@ -344,6 +344,8 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 */
 
 func TestOracleExchangeRate(t *testing.T) {
+	// the following scenario tests three validators providing prices for two assets
+	// one of them provides bad prices on one asset.
 	input, h := setup(t)
 
 	govStableExchangeRate := sdk.NewDec(1000000000)
@@ -359,21 +361,30 @@ func TestOracleExchangeRate(t *testing.T) {
 	// Account 3, govstable, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableExchangeRate}, {Pair: common.PairBTCStable.String(), ExchangeRate: randomExchangeRate}}, 2)
 
-	rewardAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardAmt)))
-	require.NoError(t, err)
+	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1_000_000)
+	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1_000_000)
+
+	keeper.AllocateRewards(t, input, common.PairETHStable.String(), sdk.NewCoins(ethStableRewards), 1)
+	keeper.AllocateRewards(t, input, common.PairGovStable.String(), sdk.NewCoins(govStableRewards), 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(5).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	// total reward pool for the current vote period is 1_000_000ETHSTABLE, 1_000_000GOVSTABLE
+	// val 1,2 won on 2 pairs
+	// val 3 won on 1 pair
+	// so total votes are 2 * 2 + 1 = 5
+	expectedRewardAmt := sdk.NewDecCoinsFromCoins(ethStableRewards, govStableRewards).
+		QuoDec(sdk.NewDec(5)). // total votes
+		MulDec(sdk.NewDec(2))  // votes won by val1 and val2
+	expectedRewardAmt2 := sdk.NewDecCoinsFromCoins(ethStableRewards, govStableRewards).
+		QuoDec(sdk.NewDec(5)). // total votes
+		MulDec(sdk.NewDec(1))  // votes won by val3
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
-	require.Equal(t, expectedRewardAmt2, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt2, rewards.Rewards, "%s <-> %s", expectedRewardAmt2, rewards.Rewards)
 }
 
 func TestOracleEnsureSorted(t *testing.T) {
@@ -407,30 +418,32 @@ func TestOracleEnsureSorted(t *testing.T) {
 func TestOracleExchangeRateVal5(t *testing.T) {
 	input, h := setupVal5(t)
 
-	govStableRate := sdk.NewDec(505000)
-	govStableRateErr := sdk.NewDec(500000)
-	ethStableRate := sdk.NewDec(505)
-	ethStableRateErr := sdk.NewDec(500)
+	govStableRate1 := sdk.NewDec(505000)
+	govStableRate2 := sdk.NewDec(500000)
+	ethStableRate1 := sdk.NewDec(505)
+	ethStableRate2 := sdk.NewDec(500)
 
 	// govstable has been chosen as reference pair by highest voting power
 	// Account 1, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate1}}, 0)
 
 	// Account 2, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}}, 1)
 
 	// Account 3, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate1}}, 2)
 
 	// Account 4, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRateErr}}, 3)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate2}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate2}}, 3)
 
 	// Account 5, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRateErr}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRateErr}}, 4)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: govStableRate2}, {Pair: common.PairETHStable.String(), ExchangeRate: ethStableRate2}}, 4)
 
-	rewardAmt := sdk.NewInt(100000000)
-	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(common.DenomGov, rewardAmt)))
-	require.NoError(t, err)
+	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1_000_000)
+	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1_000_000)
+
+	keeper.AllocateRewards(t, input, common.PairETHStable.String(), sdk.NewCoins(ethStableRewards), 1)
+	keeper.AllocateRewards(t, input, common.PairGovStable.String(), sdk.NewCoins(govStableRewards), 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
@@ -439,26 +452,28 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	gotEthStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairETHStable.String())
 	require.NoError(t, err)
 
-	// legacy version case
-	require.NotEqual(t, ethStableRateErr, gotEthStableRate)
+	require.Equal(t, govStableRate1, gotGovStableRate)
+	require.Equal(t, ethStableRate1, gotEthStableRate)
 
-	// new version case
-	require.Equal(t, govStableRate, gotGovStableRate)
-	require.Equal(t, ethStableRate, gotEthStableRate)
-
-	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
-	expectedRewardAmt2 := sdk.NewDecFromInt(rewardAmt.QuoRaw(8).MulRaw(1)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	// votes are 8 in total
+	// 2 wins by val1,4,5
+	// 1 win by val2,3
+	expectedRewardAmt := sdk.NewDecCoinsFromCoins(ethStableRewards, govStableRewards).
+		QuoDec(sdk.NewDec(8)). // total votes
+		MulDec(sdk.NewDec(2))  // wins
+	expectedRewardAmt2 := sdk.NewDecCoinsFromCoins(ethStableRewards, govStableRewards).
+		QuoDec(sdk.NewDec(8)). // total votes
+		MulDec(sdk.NewDec(1))  // wins
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 	rewards1 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equal(t, expectedRewardAmt2, rewards1.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt2, rewards1.Rewards, "%s <-> %s", expectedRewardAmt2, rewards1)
 	rewards2 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
-	require.Equal(t, expectedRewardAmt2, rewards2.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt2, rewards2.Rewards, "%s <-> %s", expectedRewardAmt2, rewards2)
 	rewards3 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[3])
-	require.Equal(t, expectedRewardAmt, rewards3.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt, rewards3.Rewards, "%s <-> %s", expectedRewardAmt, rewards3)
 	rewards4 := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[4])
-	require.Equal(t, expectedRewardAmt, rewards4.Rewards.AmountOf(common.DenomGov).TruncateInt())
+	require.Equalf(t, expectedRewardAmt, rewards4.Rewards, "%s <->", expectedRewardAmt, rewards4)
 }
 
 func TestVoteTargets(t *testing.T) {
@@ -507,7 +522,7 @@ func TestVoteTargets(t *testing.T) {
 	exists := input.OracleKeeper.PairExists(input.Ctx, common.PairBTCStable.String())
 	require.False(t, exists)
 
-	// change govstable tobin tax
+	// change govstable
 	params.Whitelist = types.PairList{{Name: common.PairGovStable.String()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
@@ -556,7 +571,6 @@ func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, types.MsgServer)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	params.RewardDistributionWindow = 100
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
@@ -574,7 +588,6 @@ func setupVal5(t *testing.T) (keeper.TestInput, types.MsgServer) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	params.RewardDistributionWindow = 100
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 

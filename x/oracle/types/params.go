@@ -13,25 +13,22 @@ import (
 
 // Parameter keys
 var (
-	KeyVotePeriod               = []byte("VotePeriod")
-	KeyVoteThreshold            = []byte("VoteThreshold")
-	KeyRewardBand               = []byte("RewardBand")
-	KeyRewardDistributionWindow = []byte("RewardDistributionWindow")
-	KeyWhitelist                = []byte("Whitelist")
-	KeySlashFraction            = []byte("SlashFraction")
-	KeySlashWindow              = []byte("SlashWindow")
-	KeyMinValidPerWindow        = []byte("MinValidPerWindow")
+	KeyVotePeriod        = []byte("VotePeriod")
+	KeyVoteThreshold     = []byte("VoteThreshold")
+	KeyRewardBand        = []byte("RewardBand")
+	KeyWhitelist         = []byte("Whitelist")
+	KeySlashFraction     = []byte("SlashFraction")
+	KeySlashWindow       = []byte("SlashWindow")
+	KeyMinValidPerWindow = []byte("MinValidPerWindow")
 )
 
 // Default parameter values
 // TODO(mercilex): need to adjust this based on expected genesis parameters, this assumes block times are 1s
 // DefaultVotePeriod: 10s
 // DefaultSlashWindow: 1 Week
-// DefaultRewardDistributionWindow: 1 year
 const (
-	DefaultVotePeriod               = 10                      // vote every 10s
-	DefaultSlashWindow              = 604800                  // 1 week
-	DefaultRewardDistributionWindow = DefaultSlashWindow * 54 // 1 week * 54 weeks (weeks in a year)
+	DefaultVotePeriod  = 10     // vote every 10s
+	DefaultSlashWindow = 604800 // 1 week
 )
 
 // Default parameter values
@@ -61,14 +58,13 @@ var _ paramstypes.ParamSet = &Params{}
 // DefaultParams creates default oracle module parameters
 func DefaultParams() Params {
 	return Params{
-		VotePeriod:               DefaultVotePeriod,
-		VoteThreshold:            DefaultVoteThreshold,
-		RewardBand:               DefaultRewardBand,
-		RewardDistributionWindow: DefaultRewardDistributionWindow,
-		Whitelist:                DefaultWhitelist,
-		SlashFraction:            DefaultSlashFraction,
-		SlashWindow:              DefaultSlashWindow,
-		MinValidPerWindow:        DefaultMinValidPerWindow,
+		VotePeriod:        DefaultVotePeriod,
+		VoteThreshold:     DefaultVoteThreshold,
+		RewardBand:        DefaultRewardBand,
+		Whitelist:         DefaultWhitelist,
+		SlashFraction:     DefaultSlashFraction,
+		SlashWindow:       DefaultSlashWindow,
+		MinValidPerWindow: DefaultMinValidPerWindow,
 	}
 }
 
@@ -84,7 +80,6 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 		paramstypes.NewParamSetPair(KeyVotePeriod, &p.VotePeriod, validateVotePeriod),
 		paramstypes.NewParamSetPair(KeyVoteThreshold, &p.VoteThreshold, validateVoteThreshold),
 		paramstypes.NewParamSetPair(KeyRewardBand, &p.RewardBand, validateRewardBand),
-		paramstypes.NewParamSetPair(KeyRewardDistributionWindow, &p.RewardDistributionWindow, validateRewardDistributionWindow),
 		paramstypes.NewParamSetPair(KeyWhitelist, &p.Whitelist, validateWhitelist),
 		paramstypes.NewParamSetPair(KeySlashFraction, &p.SlashFraction, validateSlashFraction),
 		paramstypes.NewParamSetPair(KeySlashWindow, &p.SlashWindow, validateSlashWindow),
@@ -109,10 +104,6 @@ func (p Params) Validate() error {
 
 	if p.RewardBand.GT(sdk.OneDec()) || p.RewardBand.IsNegative() {
 		return fmt.Errorf("oracle parameter RewardBand must be between [0, 1]")
-	}
-
-	if p.RewardDistributionWindow < p.VotePeriod {
-		return fmt.Errorf("oracle parameter RewardDistributionWindow must be greater than or equal with VotePeriod")
 	}
 
 	if p.SlashFraction.GT(sdk.OneDec()) || p.SlashFraction.IsNegative() {
@@ -177,19 +168,6 @@ func validateRewardBand(i interface{}) error {
 
 	if v.GT(sdk.OneDec()) {
 		return fmt.Errorf("reward band is too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateRewardDistributionWindow(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v == 0 {
-		return fmt.Errorf("reward distribution window must be positive: %d", v)
 	}
 
 	return nil

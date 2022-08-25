@@ -22,19 +22,18 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  uint64         reward_distribution_window = 4 [(gogoproto.moretags) = "yaml:\"reward_distribution_window\""];
-  repeated Pair whitelist                  = 5 [
+  repeated Pair whitelist                  = 4 [
     (gogoproto.moretags)     = "yaml:\"whitelist\"",
     (gogoproto.castrepeated) = "PairList",
     (gogoproto.nullable)     = false
   ];
-  string slash_fraction = 6 [
+  string slash_fraction = 5 [
     (gogoproto.moretags)   = "yaml:\"slash_fraction\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  uint64 slash_window         = 7 [(gogoproto.moretags) = "yaml:\"slash_window\""];
-  string min_valid_per_window = 8 [
+  uint64 slash_window         = 6 [(gogoproto.moretags) = "yaml:\"slash_window\""];
+  string min_valid_per_window = 7 [
     (gogoproto.moretags)   = "yaml:\"min_valid_per_window\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
@@ -91,4 +90,17 @@ message ExchangeRateTuple {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
+}
+
+// PairReward defines a credit object towards validators
+// which provide prices faithfully for different pairs.
+message PairReward {
+  // pair defines the pair for which we incentivize validator to provide prices for.
+  string pair = 1;
+  // id uniquely identifies the rewards instance of the pair
+  uint64 id = 2;
+  // vote_periods defines the vote periods left in which rewards will be distributed.
+  uint64 vote_periods = 3;
+  // coins defines the amount of coins to distribute in a single vote period.
+  repeated cosmos.base.v1beta1.Coin coins = 4 [(gogoproto.nullable) = false];
 }

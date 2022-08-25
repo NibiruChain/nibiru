@@ -48,11 +48,13 @@ type PositionChangedEvent struct {
 	RealizedPnl github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
 	// unrealized profits and losses after the change
 	UnrealizedPnlAfter github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=unrealized_pnl_after,json=unrealizedPnlAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"unrealized_pnl_after"`
-	// Amount of bad debt cleared by the PerpEF during the change. Bad debt is negative net margin past the liquidation point of a position.
+	// Amount of bad debt cleared by the PerpEF during the change.
+	// Bad debt is negative net margin past the liquidation point of a position.
 	BadDebt types.Coin `protobuf:"bytes,10,opt,name=bad_debt,json=badDebt,proto3" json:"bad_debt"`
 	// amt of margin (y) lost due to liquidation
 	LiquidationPenalty github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=liquidation_penalty,json=liquidationPenalty,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"liquidation_penalty"`
-	// vPrice defined as yRes / xRes for a vpool, where yRes is the quote reserves and xRes is the base reserves.
+	// Spot price, synonymous with mark price in this context, is the quotient of
+	// the quote reserves and base reserves
 	SpotPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,12,opt,name=spot_price,json=spotPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"spot_price"`
 	// A funding payment made or received by the trader on the current position.
 	// 'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'

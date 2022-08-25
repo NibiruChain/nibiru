@@ -96,9 +96,9 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		}
 
 		exchangeRatesStr := ""
-		for _, denom := range whitelist {
+		for _, pair := range whitelist {
 			price := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10000)), int64(1))
-			exchangeRatesStr += price.String() + denom + ","
+			exchangeRatesStr += price.String() + pair + ","
 		}
 
 		exchangeRatesStr = strings.TrimRight(exchangeRatesStr, ",")

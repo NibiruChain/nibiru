@@ -17,13 +17,12 @@ import (
 
 // Simulation parameter constants
 const (
-	votePeriodKey               = "vote_period"
-	voteThresholdKey            = "vote_threshold"
-	rewardBandKey               = "reward_band"
-	rewardDistributionWindowKey = "reward_distribution_window"
-	slashFractionKey            = "slash_fraction"
-	slashWindowKey              = "slash_window"
-	minValidPerWindowKey        = "min_valid_per_window"
+	votePeriodKey        = "vote_period"
+	voteThresholdKey     = "vote_threshold"
+	rewardBandKey        = "reward_band"
+	slashFractionKey     = "slash_fraction"
+	slashWindowKey       = "slash_window"
+	minValidPerWindowKey = "min_valid_per_window"
 )
 
 // GenVotePeriod randomized VotePeriod
@@ -81,12 +80,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { rewardBand = GenRewardBand(r) },
 	)
 
-	var rewardDistributionWindow uint64
-	simState.AppParams.GetOrGenerate(
-		simState.Cdc, rewardDistributionWindowKey, &rewardDistributionWindow, simState.Rand,
-		func(r *rand.Rand) { rewardDistributionWindow = GenRewardDistributionWindow(r) },
-	)
-
 	var slashFraction sdk.Dec
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, slashFractionKey, &slashFraction, simState.Rand,
@@ -107,10 +100,9 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	oracleGenesis := types.NewGenesisState(
 		types.Params{
-			VotePeriod:               votePeriod,
-			VoteThreshold:            voteThreshold,
-			RewardBand:               rewardBand,
-			RewardDistributionWindow: rewardDistributionWindow,
+			VotePeriod:    votePeriod,
+			VoteThreshold: voteThreshold,
+			RewardBand:    rewardBand,
 			Whitelist: types.PairList{
 				{Name: common.PairETHStable.String()},
 				{Name: common.PairCollStable.String()},
@@ -127,6 +119,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		[]types.AggregateExchangeRatePrevote{},
 		[]types.AggregateExchangeRateVote{},
 		[]types.Pair{},
+		[]*types.PairReward{},
 	)
 
 	bz, err := json.MarshalIndent(&oracleGenesis.Params, "", " ")
