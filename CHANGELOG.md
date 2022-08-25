@@ -43,6 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.14.0
 
+### API Breaking
+
+* [#830](https://github.com/NibiruChain/nibiru/pull/830) - test(vpool): Make missing fields for 'query vpool all-pools' display as empty strings.
+  * Improve test coverage of functions used in the query server.
+  * Added 'pair' field to the `all-pools` to make the prices array easier to digest
+
 ### Improvements
 
 * [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module creation and usage of new command to add vpool at genesis
@@ -54,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
-* [850](https://github.com/NibiruChain/nibiru/pull/850) - x/vpool - properly validate vpools at genesis
+* [#850](https://github.com/NibiruChain/nibiru/pull/850) - x/vpool - properly validate vpools at genesis
+* [#854](https://github.com/NibiruChain/nibiru/pull/854) - add buildx to the docker release workflow
 
 ### Features
 
@@ -75,9 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
-* [#830](https://github.com/NibiruChain/nibiru/pull/830) - test(vpool): Make missing fields for 'query vpool all-pools' display as empty strings.
-  * Improve test coverage of functions used in the query server.
-  * Added 'pair' field to the `all-pools` to make the prices array easier to digest
 * [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
@@ -89,11 +93,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+* [#839](https://github.com/NibiruChain/nibiru/pull/839) - x/oracle rewarding
 * [#791](https://github.com/NibiruChain/nibiru/pull/791) Add the x/oracle module
 * [#811](https://github.com/NibiruChain/nibiru/pull/811) Return the index twap in `QueryPrice` cmd
 * [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query
 * [#816](https://github.com/NibiruChain/nibiru/pull/816) - Remove tobin tax from x/oracle
 * [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
+* [#832](https://github.com/NibiruChain/nibiru/pull/832) - x/oracle app wiring
 
 ### Documentation
 

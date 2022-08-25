@@ -17,6 +17,7 @@ message GenesisState {
   repeated AggregateExchangeRatePrevote aggregate_exchange_rate_prevotes = 5 [(gogoproto.nullable) = false];
   repeated AggregateExchangeRateVote    aggregate_exchange_rate_votes    = 6 [(gogoproto.nullable) = false];
   repeated Pair                         pairs                            = 7 [(gogoproto.nullable) = false];
+  repeated PairReward                  pair_rewards                     = 8;
 }
 
 // FeederDelegation is the address for where oracle feeder authority are
