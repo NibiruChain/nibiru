@@ -169,7 +169,7 @@ func (k Keeper) SwapQuoteForBase(
 	quoteAssetAmount sdk.Dec,
 	baseAmountLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (baseAssetAmount sdk.Dec, err error) {
+) (baseAmt sdk.Dec, err error) {
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Dec{}, types.ErrPairNotSupported
 	}
@@ -193,12 +193,12 @@ func (k Keeper) SwapQuoteForBase(
 			"quote amount %s is over trading limit", quoteAssetAmount)
 	}
 
-	baseAssetAmount, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
+	baseAmt, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	if !pool.HasEnoughBaseReserve(baseAssetAmount) {
+	if !pool.HasEnoughBaseReserve(baseAmt) {
 		// in reality, this if statement should never run because a perturbation in base reserve assets
 		// greater than trading limit ratio would have happened when checking for a perturbation in
 		// quote assets, due to x*y=k
@@ -206,33 +206,33 @@ func (k Keeper) SwapQuoteForBase(
 		// e.g. a 10% change in base asset reserves would have triggered a >10% change in
 		// quote asset reserves
 		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"base amount %s is over trading limit", baseAssetAmount)
+			"base amount %s is over trading limit", baseAmt)
 	}
 
 	// check if base asset limit is violated
 	if !baseAmountLimit.IsZero() {
 		// if going long and the base amount retrieved from the pool is less than the limit
-		if dir == types.Direction_ADD_TO_POOL && baseAssetAmount.LT(baseAmountLimit) {
+		if dir == types.Direction_ADD_TO_POOL && baseAmt.LT(baseAmountLimit) {
 			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
 				"base amount (%s) is less than selected limit (%s)",
-				baseAssetAmount.String(),
+				baseAmt.String(),
 				baseAmountLimit.String(),
 			)
 			// if going short and the base amount retrieved from the pool is greater than the limit
-		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAssetAmount.GT(baseAmountLimit) {
+		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAmt.GT(baseAmountLimit) {
 			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
 				"base amount (%s) is greater than selected limit (%s)",
-				baseAssetAmount.String(),
+				baseAmt.String(),
 				baseAmountLimit.String(),
 			)
 		}
 	}
 
 	if dir == types.Direction_ADD_TO_POOL {
-		pool.DecreaseBaseAssetReserve(baseAssetAmount)
+		pool.DecreaseBaseAssetReserve(baseAmt)
 		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
 	} else if dir == types.Direction_REMOVE_FROM_POOL {
-		pool.IncreaseBaseAssetReserve(baseAssetAmount)
+		pool.IncreaseBaseAssetReserve(baseAmt)
 		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
 	}
 
@@ -252,10 +252,10 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
-	return baseAssetAmount, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
+	return baseAmt, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
 		Pair:        pair.String(),
 		QuoteAmount: quoteAssetAmount,
-		BaseAmount:  baseAssetAmount,
+		BaseAmount:  baseAmt,
 	})
 }
 
