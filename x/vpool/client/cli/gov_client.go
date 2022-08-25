@@ -6,19 +6,17 @@ import (
 	"net/http"
 	"strings"
 
-	govclientrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
-
-	"github.com/NibiruChain/nibiru/x/vpool/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
+	govclientrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 var (

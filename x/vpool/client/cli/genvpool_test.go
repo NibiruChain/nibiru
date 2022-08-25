@@ -60,7 +60,7 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			expectError:   true,
 		},
 		{
-			name:          "invalid flag input",
+			name:          "invalid trade limit input",
 			pairName:      "token0:token1",
 			baseAsset:     "1",
 			quoteAsset:    "1",
@@ -72,7 +72,7 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			expectError:   true,
 		},
 		{
-			name:          "empty vpool fields",
+			name:          "empty base asset input",
 			pairName:      "token0:token1",
 			baseAsset:     "",
 			quoteAsset:    "1",
