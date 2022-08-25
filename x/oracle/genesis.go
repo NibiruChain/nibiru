@@ -68,7 +68,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	}
 
 	for _, pr := range data.PairRewards {
-		keeper.SetPairReward(ctx, pr)
+		keeper.SetPairReward(ctx, &pr)
 	}
 
 	keeper.SetParams(ctx, data.Params)
@@ -127,9 +127,9 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		return false
 	})
 
-	pairRewards := []*types.PairReward{}
+	pairRewards := []types.PairReward{}
 	keeper.IterateAllPairRewards(ctx, func(rewards *types.PairReward) (stop bool) {
-		pairRewards = append(pairRewards, rewards)
+		pairRewards = append(pairRewards, *rewards)
 		return false
 	})
 
