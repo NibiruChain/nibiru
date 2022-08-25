@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -44,7 +45,6 @@ func (gs GenesisState) Validate() error {
 		if err := m.Validate(); err != nil {
 			return fmt.Errorf("malformed prepaid bad debt %s at index %d: %w", m, i, err)
 		}
-
 	}
 
 	return gs.Params.Validate()

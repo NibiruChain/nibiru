@@ -1,10 +1,12 @@
 package types
 
 import (
+	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"testing"
 )
 
 func TestPosition_Validate(t *testing.T) {
