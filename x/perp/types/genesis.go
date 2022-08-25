@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -21,5 +22,10 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
+	for i, pos := range gs.Positions {
+		if err := pos.Validate(); err != nil {
+			return fmt.Errorf("malformed genesis position %s at index %d: %w", pos, i, err)
+		}
+	}
 	return gs.Params.Validate()
 }
