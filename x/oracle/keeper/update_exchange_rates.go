@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -41,31 +43,17 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
 	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorPerformanceMap)
+	// remove ballots which are not passing
+	RemoveInvalidBallots(ctx, k, pairsMap, pairBallotMap)
+	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+	for pair, ballot := range pairBallotMap {
+		sort.Sort(ballot)
 
-	if referencePair := PickReferencePair(ctx, k, pairsMap, pairBallotMap); referencePair != "" {
-		// make voteMap of reference pair to calculate cross exchange rates
-		referenceBallot := pairBallotMap[referencePair]
-		referenceValidatorExchangeRateMap := referenceBallot.ToMap()
-		referenceExchangeRate := referenceBallot.WeightedMedianWithAssertion()
+		// Get weighted median of cross exchange rates
+		exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
 
-		// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-		for pair, ballot := range pairBallotMap {
-			// Convert ballot to cross exchange rates
-			if pair != referencePair {
-				ballot = ballot.ToCrossRateWithSort(referenceValidatorExchangeRateMap)
-			}
-
-			// Get weighted median of cross exchange rates
-			exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
-
-			// Transform into the original exchange rate
-			if pair != referencePair {
-				exchangeRate = referenceExchangeRate.Quo(exchangeRate)
-			}
-
-			// Set the exchange rate, emit ABCI event
-			k.SetExchangeRateWithEvent(ctx, pair, exchangeRate)
-		}
+		// Set the exchange rate, emit ABCI event
+		k.SetExchangeRateWithEvent(ctx, pair, exchangeRate)
 	}
 
 	//---------------------------

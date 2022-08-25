@@ -13,7 +13,7 @@ func NewGenesisState(
 	aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote,
 	aggregateExchangeRateVotes []AggregateExchangeRateVote,
 	pairs []Pair,
-	pairRewards []*PairReward,
+	pairRewards []PairReward,
 ) *GenesisState {
 	return &GenesisState{
 		Params:                        params,
@@ -29,14 +29,15 @@ func NewGenesisState(
 
 // DefaultGenesisState - default GenesisState
 func DefaultGenesisState() *GenesisState {
-	return NewGenesisState(DefaultParams(),
+	return NewGenesisState(
+		DefaultParams(),
 		[]ExchangeRateTuple{},
 		[]FeederDelegation{},
 		[]MissCounter{},
 		[]AggregateExchangeRatePrevote{},
 		[]AggregateExchangeRateVote{},
 		[]Pair{},
-		[]*PairReward{})
+		[]PairReward{})
 }
 
 // ValidateGenesis validates the oracle genesis state

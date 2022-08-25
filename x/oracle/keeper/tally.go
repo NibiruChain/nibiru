@@ -36,18 +36,15 @@ func Tally(_ sdk.Context, pb types.ExchangeRateBallot, rewardBand sdk.Dec, valid
 }
 
 // ballot for the asset is passing the threshold amount of voting power
-func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) (sdk.Int, bool) {
+func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) bool {
 	ballotPower := sdk.NewInt(ballot.Power())
-	return ballotPower, !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
+	return !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
 }
 
-// PickReferencePair choose Reference pair with the highest voter turnout
-// If the voting power of the two denominations is the same,
-// select reference pair in alphabetical order.
-func PickReferencePair(ctx sdk.Context, k Keeper, voteTargets map[string]struct{}, voteMap map[string]types.ExchangeRateBallot) string {
-	largestBallotPower := int64(0)
-	referencePair := ""
-
+// RemoveInvalidBallots removes the ballots which have not reached the vote threshold
+// or which are not part of the vote targets anymore: example when params change during a vote period
+// but some votes were already made.
+func RemoveInvalidBallots(ctx sdk.Context, k Keeper, voteTargets map[string]struct{}, voteMap map[string]types.ExchangeRateBallot) {
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
 	voteThreshold := k.VoteThreshold(ctx)
 	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
@@ -60,25 +57,12 @@ func PickReferencePair(ctx sdk.Context, k Keeper, voteTargets map[string]struct{
 			continue
 		}
 
-		ballotPower := int64(0)
-
 		// If the ballot is not passed, remove it from the voteTargets array
 		// to prevent slashing validators who did valid vote.
-		if power, ok := ballotIsPassing(ballot, thresholdVotes); ok {
-			ballotPower = power.Int64()
-		} else {
+		if !ballotIsPassing(ballot, thresholdVotes) {
 			delete(voteTargets, pair)
 			delete(voteMap, pair)
 			continue
 		}
-
-		if ballotPower > largestBallotPower || largestBallotPower == 0 {
-			referencePair = pair
-			largestBallotPower = ballotPower
-		} else if largestBallotPower == ballotPower && referencePair > pair {
-			referencePair = pair
-		}
 	}
-
-	return referencePair
 }
