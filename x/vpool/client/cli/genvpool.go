@@ -17,22 +17,29 @@ import (
 )
 
 var (
-	FlagPair                   = "pair"
-	FlagBaseAssetReserve       = "base-asset-reserve"
-	FlagQuoteAssetReserve      = "quote-asset-reserve"
-	FlagTradeLimitRatio        = "trade-limit-ratio"
-	FlagFluctuationLimitRatio  = "fluctuation-limit-ratio"
-	FlagMaxOracleSpreadRatio   = "maxOracle-spread-ratio"
-	FlagMaintenanceMarginRatio = "maintenance-margin-ratio"
-	FlagMaxLeverage            = "max-leverage"
+	ParamPair                   = "pair"
+	ParamBaseAssetReserve       = "base-asset-reserve"
+	ParamQuoteAssetReserve      = "quote-asset-reserve"
+	ParamTradeLimitRatio        = "trade-limit-ratio"
+	ParamFluctuationLimitRatio  = "fluctuation-limit-ratio"
+	ParamMaxOracleSpreadRatio   = "maxOracle-spread-ratio"
+	ParamMaintenanceMarginRatio = "maintenance-margin-ratio"
+	ParamMaxLeverage            = "max-leverage"
 )
 
 // AddVPoolGenesisCmd returns add-vpool-genesis
 func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]", FlagPair, FlagBaseAssetReserve,
-			FlagQuoteAssetReserve, FlagTradeLimitRatio, FlagFluctuationLimitRatio, FlagMaxOracleSpreadRatio,
-			FlagMaintenanceMarginRatio, FlagMaxLeverage),
+		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]",
+			ParamPair,
+			ParamBaseAssetReserve,
+			ParamQuoteAssetReserve,
+			ParamTradeLimitRatio,
+			ParamFluctuationLimitRatio,
+			ParamMaxOracleSpreadRatio,
+			ParamMaintenanceMarginRatio,
+			ParamMaxLeverage,
+		),
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
 		Args:  cobra.ExactArgs(8),
@@ -129,10 +136,6 @@ func parseVpoolParams(args []string) (*types.Pool, error) {
 		maintenanceMarginRatio,
 		maxLeverage,
 	)
-
-	if err := vPool.Validate(); err != nil {
-		return nil, err
-	}
 
 	return vPool, vPool.Validate()
 }
