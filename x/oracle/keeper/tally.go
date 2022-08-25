@@ -65,6 +65,4 @@ func RemoveInvalidBallots(ctx sdk.Context, k Keeper, voteTargets map[string]stru
 			continue
 		}
 	}
-
-	return
 }
