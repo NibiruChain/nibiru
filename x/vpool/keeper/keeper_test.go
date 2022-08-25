@@ -125,6 +125,26 @@ func TestSwapQuoteForBase(t *testing.T) {
 			expectedErr: types.ErrOverFluctuationLimit,
 		},
 		{
+			name:                      "over trading limit when removing quote",
+			pair:                      common.PairBTCStable,
+			direction:                 types.Direction_REMOVE_FROM_POOL,
+			quoteAmount:               sdk.NewDec(9_000_001),
+			baseLimit:                 sdk.ZeroDec(),
+			skipFluctuationLimitCheck: false,
+
+			expectedErr: types.ErrOverTradingLimit,
+		},
+		{
+			name:                      "over trading limit when adding quote",
+			pair:                      common.PairBTCStable,
+			direction:                 types.Direction_ADD_TO_POOL,
+			quoteAmount:               sdk.NewDec(9_000_001),
+			baseLimit:                 sdk.ZeroDec(),
+			skipFluctuationLimitCheck: false,
+
+			expectedErr: types.ErrOverTradingLimit,
+		},
+		{
 			name:                      "over fluctuation limit allowed on add",
 			pair:                      common.PairBTCStable,
 			direction:                 types.Direction_ADD_TO_POOL,
