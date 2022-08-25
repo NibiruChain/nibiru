@@ -28,8 +28,7 @@ Types of changes (Stanzas):
 "Bug Fixes" for any bug fixes.
 "Client Breaking" for breaking CLI commands and REST routes used by end-users.
 "API Breaking" for breaking exported APIs used by developers building on SDK.
-"State Machine Breaking" for any changes that result in a different AppState 
-given same genesisState and txList.
+"State Machine Breaking" for any changes that result in a different AppState given same genesisState and txList.
 Ref: https://keepachangelog.com/en/1.0.0/
 -->
 
@@ -44,7 +43,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.13.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.13.0) - 2022-08-16
 
-### State Machine Breaking
+## v0.14.0
+
+### Improvements
+
+* [#837](https://github.com/NibiruChain/nibiru/pull/837) - simplify makefile, removing unused module creation and usage of new command to add vpool at genesis
+* [#836](https://github.com/NibiruChain/nibiru/pull/836) - refactor(genesis): DRY improvements and functions added to localnet.sh for readability
+* [#842](https://github.com/NibiruChain/nibiru/pull/842) - use self-hosted runner
+* [#843](https://github.com/NibiruChain/nibiru/pull/843) - add timeout to github actions integration tests
+* [#847](https://github.com/NibiruChain/nibiru/pull/847) - add command in localnet to whitelist oracle
+* [#848](https://github.com/NibiruChain/nibiru/pull/848) - add check max leverage on add vpool in genesis command
+
+### Fixes
+
+* [#850](https://github.com/NibiruChain/nibiru/pull/850) - x/vpool - properly validate vpools at genesis
+* [#854](https://github.com/NibiruChain/nibiru/pull/854) - add buildx to the docker release workflow
+
+### Features
+
+* [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis
+* [#838](https://github.com/NibiruChain/nibiru/pull/838) - feat(genesis): add cli command to whitelist oracles at genesis
+
+## v0.13.0
 
 * [#831](https://github.com/NibiruChain/nibiru/pull/831) - remove modules that are not used in testnet
 
@@ -57,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#830](https://github.com/NibiruChain/nibiru/pull/830) - test(vpool): Make missing fields for 'query vpool all-pools' display as empty strings.
+  * Improve test coverage of functions used in the query server.
+  * Added 'pair' field to the `all-pools` to make the prices array easier to digest
 * [#798](https://github.com/NibiruChain/nibiru/pull/798) - fix integration tests caused by PR #786
 * [#801](https://github.com/NibiruChain/nibiru/pull/801) - remove unused pair constants
 * [#788](https://github.com/NibiruChain/nibiru/pull/788) - add --overwrite flag to the nibid init call of localnet.sh
@@ -64,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#817](https://github.com/NibiruChain/nibiru/pull/817) - Make post prices transactions gasless for whitelisted oracles
 * [#818](https://github.com/NibiruChain/nibiru/pull/818) - fix(localnet.sh): add max leverage to vpools in genesis to fix open-position
 * [#819](https://github.com/NibiruChain/nibiru/pull/819) - add golangci-linter using docker in Makefile
+* [#835](https://github.com/NibiruChain/nibiru/pull/835) - x/oracle cleanup code
 
 ### Features
 
