@@ -38,7 +38,7 @@ func TestExchangeRate(t *testing.T) {
 	require.Error(t, err)
 
 	numExchangeRates := 0
-	handler := func(denom string, exchangeRate sdk.Dec) (stop bool) {
+	handler := func(_ string, exchangeRate sdk.Dec) (stop bool) {
 		numExchangeRates = numExchangeRates + 1
 		return false
 	}
@@ -59,8 +59,8 @@ func TestIterateExchangeRates(t *testing.T) {
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), ethStablePrice)
 	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), btcStablePrice)
 
-	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(denom string, rate sdk.Dec) (stop bool) {
-		switch denom {
+	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(pair string, rate sdk.Dec) (stop bool) {
+		switch pair {
 		case common.PairCollStable.String():
 			require.Equal(t, collStablePrice, rate)
 		case common.PairETHStable.String():
@@ -83,7 +83,7 @@ func TestRewardPool(t *testing.T) {
 		panic(err) // never occurs
 	}
 
-	KFees := input.OracleKeeper.GetRewardPool(input.Ctx, common.DenomColl)
+	KFees := input.OracleKeeper.AccrueVotePeriodPairRewards(input.Ctx, common.DenomColl)
 	require.Equal(t, fees[0], KFees)
 }
 
@@ -118,7 +118,6 @@ func TestParams(t *testing.T) {
 	votePeriod := uint64(10)
 	voteThreshold := sdk.NewDecWithPrec(33, 2)
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
-	rewardDistributionWindow := uint64(10000000000000)
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
@@ -129,14 +128,13 @@ func TestParams(t *testing.T) {
 
 	// Should really test validateParams, but skipping because obvious
 	newParams := types.Params{
-		VotePeriod:               votePeriod,
-		VoteThreshold:            voteThreshold,
-		RewardBand:               oracleRewardBand,
-		RewardDistributionWindow: rewardDistributionWindow,
-		Whitelist:                whitelist,
-		SlashFraction:            slashFraction,
-		SlashWindow:              slashWindow,
-		MinValidPerWindow:        minValidPerWindow,
+		VotePeriod:        votePeriod,
+		VoteThreshold:     voteThreshold,
+		RewardBand:        oracleRewardBand,
+		Whitelist:         whitelist,
+		SlashFraction:     slashFraction,
+		SlashWindow:       slashWindow,
+		MinValidPerWindow: minValidPerWindow,
 	}
 	input.OracleKeeper.SetParams(input.Ctx, newParams)
 

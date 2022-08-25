@@ -185,7 +185,7 @@ func (m *Pool) Validate() error {
 	}
 
 	if m.MaxLeverage.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("Max leverage must be >= 0")
+		return fmt.Errorf("Max leverage must be > 0")
 	}
 
 	if sdk.OneDec().Quo(m.MaxLeverage).LT(m.MaintenanceMarginRatio) {
