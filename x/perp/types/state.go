@@ -32,3 +32,17 @@ func (m *Position) Validate() error {
 
 	return nil
 }
+
+func (m *PairMetadata) Validate() error {
+	if err := m.Pair.Validate(); err != nil {
+		return err
+	}
+
+	for i, pf := range m.CumulativePremiumFractions {
+		if pf.IsNil() {
+			return fmt.Errorf("invalid cumulative premium fraction at index: %d", i)
+		}
+	}
+
+	return nil
+}

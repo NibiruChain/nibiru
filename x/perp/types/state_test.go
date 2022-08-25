@@ -94,3 +94,44 @@ func TestPosition_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestPairMetadata_Validate(t *testing.T) {
+	type test struct {
+		p       *PairMetadata
+		wantErr bool
+	}
+
+	cases := map[string]test{
+		"success": {
+			p: &PairMetadata{
+				Pair:                       common.MustNewAssetPair("pair1:pair2"),
+				CumulativePremiumFractions: []sdk.Dec{sdk.MustNewDecFromStr("0.1")},
+			},
+		},
+
+		"invalid pair": {
+			p:       &PairMetadata{},
+			wantErr: true,
+		},
+
+		"invalid cumulative premium fraction": {
+			p: &PairMetadata{
+				Pair:                       common.MustNewAssetPair("pair1:pair2"),
+				CumulativePremiumFractions: []sdk.Dec{sdk.Dec{}},
+			},
+			wantErr: true,
+		},
+	}
+
+	for name, tc := range cases {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			err := tc.p.Validate()
+			if tc.wantErr && err == nil {
+				t.Fatal("expected an error")
+			} else if !tc.wantErr && err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+		})
+	}
+}

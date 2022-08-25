@@ -27,5 +27,18 @@ func (gs GenesisState) Validate() error {
 			return fmt.Errorf("malformed genesis position %s at index %d: %w", pos, i, err)
 		}
 	}
+
+	for i, addr := range gs.WhitelistedAddresses {
+		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
+			return fmt.Errorf("malformed whitelisted address %s at index %d: %w", addr, i, err)
+		}
+	}
+
+	for i, m := range gs.PairMetadata {
+		if err := m.Validate(); err != nil {
+			return fmt.Errorf("malformed pair metadata %s at index %d: %w", m, i, err)
+		}
+	}
+
 	return gs.Params.Validate()
 }
