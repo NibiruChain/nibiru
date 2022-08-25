@@ -137,9 +137,5 @@ func parseVpoolParams(args []string) (*types.Pool, error) {
 		maxLeverage,
 	)
 
-	if err := vPool.Validate(); err != nil {
-		return nil, err
-	}
-
 	return vPool, vPool.Validate()
 }
