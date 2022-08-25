@@ -187,7 +187,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
-	if dir == types.Direction_ADD_TO_POOL && !pool.HasEnoughBaseReserve(baseAssetAmount) {
+	if !pool.HasEnoughBaseReserve(baseAssetAmount) {
 		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
 			"quote amount %s is over trading limit", quoteAssetAmount)
 	}
