@@ -46,3 +46,7 @@ func (m *PairMetadata) Validate() error {
 
 	return nil
 }
+
+func (m *PrepaidBadDebt) Validate() error {
+	return sdk.NewCoin(m.Denom, m.Amount).Validate()
+}

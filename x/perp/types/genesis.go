@@ -40,5 +40,12 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	for i, m := range gs.PrepaidBadDebts {
+		if err := m.Validate(); err != nil {
+			return fmt.Errorf("malformed prepaid bad debt %s at index %d: %w", m, i, err)
+		}
+
+	}
+
 	return gs.Params.Validate()
 }
