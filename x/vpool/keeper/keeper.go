@@ -75,7 +75,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, err
 	}
 
-	if dir == types.Direction_REMOVE_FROM_POOL && !pool.HasEnoughBaseReserve(baseAssetAmount) {
+	if !pool.HasEnoughBaseReserve(baseAssetAmount) {
 		return sdk.Dec{}, types.ErrOverTradingLimit
 	}
 
