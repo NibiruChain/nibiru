@@ -84,6 +84,17 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, err
 	}
 
+	if !pool.HasEnoughQuoteReserve(quoteAssetAmount) {
+		// in reality, this if statement should never run because a perturbation in quote reserve assets
+		// greater than trading limit ratio would have happened when checking for a perturbation in
+		// base assets, due to x*y=k
+		//
+		// e.g. a 10% change in quote asset reserves would have triggered a >10% change in
+		// base asset reserves
+		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
+			"quote amount %s is over trading limit", quoteAssetAmount)
+	}
+
 	if !quoteAmountLimit.IsZero() {
 		// if going long and the base amount retrieved from the pool is less than the limit
 		if dir == types.Direction_ADD_TO_POOL && quoteAssetAmount.LT(quoteAmountLimit) {
