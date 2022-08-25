@@ -206,7 +206,7 @@ func (k Keeper) SwapQuoteForBase(
 		// e.g. a 10% change in base asset reserves would have triggered a >10% change in
 		// quote asset reserves
 		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"quote amount %s is over trading limit", quoteAssetAmount)
+			"base amount %s is over trading limit", baseAssetAmount)
 	}
 
 	// check if base asset limit is violated
