@@ -166,7 +166,7 @@ func (k Keeper) SwapQuoteForBase(
 	ctx sdk.Context,
 	pair common.AssetPair,
 	dir types.Direction,
-	quoteAssetAmount sdk.Dec,
+	quoteAmt sdk.Dec,
 	baseAmountLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
 ) (baseAmt sdk.Dec, err error) {
@@ -178,7 +178,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
-	if quoteAssetAmount.IsZero() {
+	if quoteAmt.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
@@ -188,12 +188,12 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	// check trade limit ratio on quote in either direction
-	if !pool.HasEnoughQuoteReserve(quoteAssetAmount) {
+	if !pool.HasEnoughQuoteReserve(quoteAmt) {
 		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"quote amount %s is over trading limit", quoteAssetAmount)
+			"quote amount %s is over trading limit", quoteAmt)
 	}
 
-	baseAmt, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAssetAmount)
+	baseAmt, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAmt)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
@@ -230,10 +230,10 @@ func (k Keeper) SwapQuoteForBase(
 
 	if dir == types.Direction_ADD_TO_POOL {
 		pool.DecreaseBaseAssetReserve(baseAmt)
-		pool.IncreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.IncreaseQuoteAssetReserve(quoteAmt)
 	} else if dir == types.Direction_REMOVE_FROM_POOL {
 		pool.IncreaseBaseAssetReserve(baseAmt)
-		pool.DecreaseQuoteAssetReserve(quoteAssetAmount)
+		pool.DecreaseQuoteAssetReserve(quoteAmt)
 	}
 
 	if err = k.updatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
@@ -254,7 +254,7 @@ func (k Keeper) SwapQuoteForBase(
 
 	return baseAmt, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
 		Pair:        pair.String(),
-		QuoteAmount: quoteAssetAmount,
+		QuoteAmount: quoteAmt,
 		BaseAmount:  baseAmt,
 	})
 }
