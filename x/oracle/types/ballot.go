@@ -64,26 +64,6 @@ func (pb ExchangeRateBallot) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeR
 	return
 }
 
-// ToCrossRateWithSort returns the ballot in the form of []{validator_exchange_rate/validator_reference_exchange_rate}.
-// In case a validator did vote on the reference exchange rate, but didn't vote in the current pair's rate, then
-// the missing vote is converted to an abstained vote with zero power.
-func (pb ExchangeRateBallot) ToCrossRateWithSort(referenceExchangeRates map[string]sdk.Dec) (cb ExchangeRateBallot) {
-	for _, vote := range pb {
-		if referenceExchangeRate, ok := referenceExchangeRates[string(vote.Voter)]; ok && vote.ExchangeRate.IsPositive() {
-			vote.ExchangeRate = referenceExchangeRate.Quo(vote.ExchangeRate)
-		} else {
-			// If we can't get reference pair exchange rate, we just convert the vote as abstain vote
-			vote.ExchangeRate = sdk.ZeroDec()
-			vote.Power = 0
-		}
-
-		cb = append(cb, vote)
-	}
-
-	sort.Sort(cb)
-	return
-}
-
 // Power returns the total amount of voting power in the ballot
 func (pb ExchangeRateBallot) Power() int64 {
 	totalPower := int64(0)
