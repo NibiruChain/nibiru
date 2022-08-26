@@ -39,7 +39,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-[Unreleased]
+## Unreleased
 
 ## v0.14.0
 
@@ -68,11 +68,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis
 * [#838](https://github.com/NibiruChain/nibiru/pull/838) - feat(genesis): add cli command to whitelist oracles at genesis
 * [#846](https://github.com/NibiruChain/nibiru/pull/846) - x/oracle remove reference pair
-## v0.13.0
+
+## [v0.13.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.13.0) - 2022-08-16
+
+## API Breaking
 
 * [#831](https://github.com/NibiruChain/nibiru/pull/831) - remove modules that are not used in testnet
-
-## [v0.12.1-alpha](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1-alpha) - 2022-08-11
 
 ### CI
 
