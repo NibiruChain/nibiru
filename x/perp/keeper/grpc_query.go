@@ -81,3 +81,37 @@ func (q queryServer) Params(
 
 	return &types.QueryParamsResponse{Params: q.Keeper.GetParams(ctx)}, nil
 }
+
+func (q queryServer) FundingPayments(
+	goCtx context.Context, req *types.QueryFundingPaymentsRequest,
+) (*types.QueryFundingPaymentsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	assetPair, err := common.NewAssetPair(req.Pair)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid pair: %s", req.Pair)
+	}
+
+	pairMetadata, err := q.Keeper.PairMetadataState(ctx).Get(assetPair)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
+	}
+
+	var result []sdk.Dec
+
+	// truncate to most recent 48 funding payments
+	// given 30 minute funding rate calculations, this should give the last 24 hours of funding payments
+	numFundingPayments := len(pairMetadata.CumulativePremiumFractions)
+	if numFundingPayments >= 48 {
+		result = pairMetadata.CumulativePremiumFractions[numFundingPayments-48 : numFundingPayments]
+	} else {
+		result = pairMetadata.CumulativePremiumFractions
+	}
+
+	return &types.QueryFundingPaymentsResponse{
+		CumulativeFundingPayments: result,
+	}, nil
+}

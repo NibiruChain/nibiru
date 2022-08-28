@@ -138,3 +138,82 @@ func TestQueryPosition(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryFundingPayments(t *testing.T) {
+	tests := []struct {
+		name                string
+		initialPairMetadata *types.PairMetadata
+
+		query *types.QueryFundingPaymentsRequest
+
+		expectErr               bool
+		expectedFundingPayments []sdk.Dec
+	}{
+		{
+			name: "empty string pair",
+			initialPairMetadata: &types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			},
+			query: &types.QueryFundingPaymentsRequest{
+				Pair: "",
+			},
+			expectErr: true,
+		},
+		{
+			name: "pair metadata not found",
+			initialPairMetadata: &types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			},
+			query: &types.QueryFundingPaymentsRequest{
+				Pair: "foo:bar",
+			},
+			expectErr: true,
+		},
+		{
+			name: "returns single funding payment",
+			initialPairMetadata: &types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			},
+			query: &types.QueryFundingPaymentsRequest{
+				Pair: common.PairBTCStable.String(),
+			},
+			expectErr: false,
+			expectedFundingPayments: []sdk.Dec{
+				sdk.ZeroDec(),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Log("initialize app and keeper")
+			nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+			queryServer := keeper.NewQuerier(nibiruApp.PerpKeeper)
+
+			t.Log("initialize pair metadata")
+			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(tc.initialPairMetadata)
+
+			t.Log("query funding payments")
+			resp, err := queryServer.FundingPayments(sdk.WrapSDKContext(ctx), tc.query)
+
+			if tc.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+
+				t.Log("assert response")
+				assert.EqualValues(t, tc.expectedFundingPayments, resp.CumulativeFundingPayments)
+			}
+		})
+	}
+}
