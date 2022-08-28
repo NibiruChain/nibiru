@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
+* [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
 
 ## v0.14.0
 

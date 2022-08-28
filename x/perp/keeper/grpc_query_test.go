@@ -138,3 +138,193 @@ func TestQueryPosition(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryFundingRates(t *testing.T) {
+	tests := []struct {
+		name                string
+		initialPairMetadata *types.PairMetadata
+
+		query *types.QueryFundingRatesRequest
+
+		expectErr            bool
+		expectedFundingRates []sdk.Dec
+	}{
+		{
+			name: "empty string pair",
+			initialPairMetadata: &types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			},
+			query: &types.QueryFundingRatesRequest{
+				Pair: "",
+			},
+			expectErr: true,
+		},
+		{
+			name: "pair metadata not found",
+			initialPairMetadata: &types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			},
+			query: &types.QueryFundingRatesRequest{
+				Pair: "foo:bar",
+			},
+			expectErr: true,
+		},
+		{
+			name: "returns single funding payment",
+			initialPairMetadata: &types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			},
+			query: &types.QueryFundingRatesRequest{
+				Pair: common.PairBTCStable.String(),
+			},
+			expectErr: false,
+			expectedFundingRates: []sdk.Dec{
+				sdk.ZeroDec(),
+			},
+		},
+		{
+			name: "truncates to 48 funding payments",
+			initialPairMetadata: &types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+					sdk.NewDec(1),
+					sdk.NewDec(2),
+					sdk.NewDec(3),
+					sdk.NewDec(4),
+					sdk.NewDec(5),
+					sdk.NewDec(6),
+					sdk.NewDec(7),
+					sdk.NewDec(8),
+					sdk.NewDec(9),
+					sdk.NewDec(10),
+					sdk.NewDec(11),
+					sdk.NewDec(12),
+					sdk.NewDec(13),
+					sdk.NewDec(14),
+					sdk.NewDec(15),
+					sdk.NewDec(16),
+					sdk.NewDec(17),
+					sdk.NewDec(18),
+					sdk.NewDec(19),
+					sdk.NewDec(20),
+					sdk.NewDec(21),
+					sdk.NewDec(22),
+					sdk.NewDec(23),
+					sdk.NewDec(24),
+					sdk.NewDec(25),
+					sdk.NewDec(26),
+					sdk.NewDec(27),
+					sdk.NewDec(28),
+					sdk.NewDec(29),
+					sdk.NewDec(30),
+					sdk.NewDec(31),
+					sdk.NewDec(32),
+					sdk.NewDec(33),
+					sdk.NewDec(34),
+					sdk.NewDec(35),
+					sdk.NewDec(36),
+					sdk.NewDec(37),
+					sdk.NewDec(38),
+					sdk.NewDec(39),
+					sdk.NewDec(40),
+					sdk.NewDec(41),
+					sdk.NewDec(42),
+					sdk.NewDec(43),
+					sdk.NewDec(44),
+					sdk.NewDec(45),
+					sdk.NewDec(46),
+					sdk.NewDec(47),
+					sdk.NewDec(48),
+				},
+			},
+			query: &types.QueryFundingRatesRequest{
+				Pair: common.PairBTCStable.String(),
+			},
+			expectErr: false,
+			expectedFundingRates: []sdk.Dec{
+				sdk.NewDec(1),
+				sdk.NewDec(2),
+				sdk.NewDec(3),
+				sdk.NewDec(4),
+				sdk.NewDec(5),
+				sdk.NewDec(6),
+				sdk.NewDec(7),
+				sdk.NewDec(8),
+				sdk.NewDec(9),
+				sdk.NewDec(10),
+				sdk.NewDec(11),
+				sdk.NewDec(12),
+				sdk.NewDec(13),
+				sdk.NewDec(14),
+				sdk.NewDec(15),
+				sdk.NewDec(16),
+				sdk.NewDec(17),
+				sdk.NewDec(18),
+				sdk.NewDec(19),
+				sdk.NewDec(20),
+				sdk.NewDec(21),
+				sdk.NewDec(22),
+				sdk.NewDec(23),
+				sdk.NewDec(24),
+				sdk.NewDec(25),
+				sdk.NewDec(26),
+				sdk.NewDec(27),
+				sdk.NewDec(28),
+				sdk.NewDec(29),
+				sdk.NewDec(30),
+				sdk.NewDec(31),
+				sdk.NewDec(32),
+				sdk.NewDec(33),
+				sdk.NewDec(34),
+				sdk.NewDec(35),
+				sdk.NewDec(36),
+				sdk.NewDec(37),
+				sdk.NewDec(38),
+				sdk.NewDec(39),
+				sdk.NewDec(40),
+				sdk.NewDec(41),
+				sdk.NewDec(42),
+				sdk.NewDec(43),
+				sdk.NewDec(44),
+				sdk.NewDec(45),
+				sdk.NewDec(46),
+				sdk.NewDec(47),
+				sdk.NewDec(48),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Log("initialize app and keeper")
+			nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+			queryServer := keeper.NewQuerier(nibiruApp.PerpKeeper)
+
+			t.Log("initialize pair metadata")
+			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(tc.initialPairMetadata)
+
+			t.Log("query funding payments")
+			resp, err := queryServer.FundingRates(sdk.WrapSDKContext(ctx), tc.query)
+
+			if tc.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+
+				t.Log("assert response")
+				assert.EqualValues(t, tc.expectedFundingRates, resp.CumulativeFundingRates)
+			}
+		})
+	}
+}
