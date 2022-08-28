@@ -195,7 +195,6 @@ add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_premium_fractions
 
 # x/pricefeed
 nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
-nibid add-genesis-pricefeed-pairs unibi:unusd,uusdc:unusd,ubtc:unusd,ueth:unusd
 
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
