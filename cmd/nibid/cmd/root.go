@@ -168,6 +168,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		vpoolcli.AddVPoolGenesisCmd(app.DefaultNodeHome),
 		pricefeedcli.AddWhitelistGenesisOracle(app.DefaultNodeHome),
+		pricefeedcli.AddPriceFeedParamPairs(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
