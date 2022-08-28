@@ -137,7 +137,7 @@ func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.A
 func QueryFundingPayments(ctx client.Context, pair common.AssetPair) (perptypes.QueryFundingPaymentsResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
-		perpcli.CmdQueryPosition(),
+		perpcli.CmdQueryFundingPayments(),
 		[]string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {

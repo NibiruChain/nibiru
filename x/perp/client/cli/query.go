@@ -106,3 +106,36 @@ func CmdQueryPosition() *cobra.Command {
 
 	return cmd
 }
+
+// sample token-pair: btc:nusd
+func CmdQueryFundingPayments() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "funding-payments [token-pair]",
+		Short: "the cumulative funding payments for a market, up to 48 most recent payments",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.FundingPayments(
+				cmd.Context(),
+				&types.QueryFundingPaymentsRequest{
+					Pair: args[0],
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
