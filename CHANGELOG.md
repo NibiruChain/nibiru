@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## Features
+
+* [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
+
 ## v0.14.0
 
 ### API Breaking
