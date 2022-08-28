@@ -348,13 +348,13 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	s.NoError(err)
 }
 
-func (s *IntegrationTestSuite) TestQueryCumulativeFundingPayments() {
+func (s *IntegrationTestSuite) TestQueryCumulativeFundingRates() {
 	val := s.network.Validators[0]
 
 	s.T().Log("get cumulative funding payments")
-	fundingPayments, err := testutilcli.QueryFundingPayments(val.ClientCtx, common.PairBTCStable)
+	queryResp, err := testutilcli.QueryFundingRates(val.ClientCtx, common.PairBTCStable)
 	s.NoError(err)
-	s.EqualValues([]sdk.Dec{sdk.ZeroDec(), sdk.OneDec(), sdk.NewDec(2)}, fundingPayments.CumulativeFundingPayments)
+	s.EqualValues([]sdk.Dec{sdk.ZeroDec(), sdk.OneDec(), sdk.NewDec(2)}, queryResp.CumulativeFundingRates)
 }
 
 func (s *IntegrationTestSuite) TestRemoveMargin() {

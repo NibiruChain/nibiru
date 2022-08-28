@@ -108,7 +108,7 @@ func CmdQueryPosition() *cobra.Command {
 }
 
 // sample token-pair: btc:nusd
-func CmdQueryFundingPayments() *cobra.Command {
+func CmdQueryFundingRates() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "funding-payments [token-pair]",
 		Short: "the cumulative funding payments for a market, up to 48 most recent payments",
@@ -121,9 +121,9 @@ func CmdQueryFundingPayments() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.FundingPayments(
+			res, err := queryClient.FundingRates(
 				cmd.Context(),
-				&types.QueryFundingPaymentsRequest{
+				&types.QueryFundingRatesRequest{
 					Pair: args[0],
 				},
 			)

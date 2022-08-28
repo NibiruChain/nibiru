@@ -20,9 +20,9 @@ service Query {
     option (google.api.http).get = "/nibiru/perp/trader_position";
   }
 
-  rpc FundingPayments(QueryFundingPaymentsRequest)
-      returns (QueryFundingPaymentsResponse) {
-    option (google.api.http).get = "/nibiru/perp/funding_payments";
+  rpc FundingRates(QueryFundingRatesRequest)
+      returns (QueryFundingRatesResponse) {
+    option (google.api.http).get = "/nibiru/perp/funding_rates";
   }
 }
 
@@ -86,15 +86,15 @@ message QueryTraderPositionResponse {
 
 // ---------------------------------------- FundingPayments
 
-message QueryFundingPaymentsRequest {
+message QueryFundingRatesRequest {
   // the pair to query for
   string pair = 1;
 }
 
-message QueryFundingPaymentsResponse {
-  // a historical list of cumulative funding payments, with the most recent one
+message QueryFundingRatesResponse {
+  // a historical list of cumulative funding rates, with the most recent one
   // last
-  repeated string cumulative_funding_payments = 1 [
+  repeated string cumulative_funding_rates = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];

@@ -139,15 +139,15 @@ func TestQueryPosition(t *testing.T) {
 	}
 }
 
-func TestQueryFundingPayments(t *testing.T) {
+func TestQueryFundingRates(t *testing.T) {
 	tests := []struct {
 		name                string
 		initialPairMetadata *types.PairMetadata
 
-		query *types.QueryFundingPaymentsRequest
+		query *types.QueryFundingRatesRequest
 
-		expectErr               bool
-		expectedFundingPayments []sdk.Dec
+		expectErr            bool
+		expectedFundingRates []sdk.Dec
 	}{
 		{
 			name: "empty string pair",
@@ -157,7 +157,7 @@ func TestQueryFundingPayments(t *testing.T) {
 					sdk.ZeroDec(),
 				},
 			},
-			query: &types.QueryFundingPaymentsRequest{
+			query: &types.QueryFundingRatesRequest{
 				Pair: "",
 			},
 			expectErr: true,
@@ -170,7 +170,7 @@ func TestQueryFundingPayments(t *testing.T) {
 					sdk.ZeroDec(),
 				},
 			},
-			query: &types.QueryFundingPaymentsRequest{
+			query: &types.QueryFundingRatesRequest{
 				Pair: "foo:bar",
 			},
 			expectErr: true,
@@ -183,11 +183,11 @@ func TestQueryFundingPayments(t *testing.T) {
 					sdk.ZeroDec(),
 				},
 			},
-			query: &types.QueryFundingPaymentsRequest{
+			query: &types.QueryFundingRatesRequest{
 				Pair: common.PairBTCStable.String(),
 			},
 			expectErr: false,
-			expectedFundingPayments: []sdk.Dec{
+			expectedFundingRates: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
 		},
@@ -247,11 +247,11 @@ func TestQueryFundingPayments(t *testing.T) {
 					sdk.NewDec(48),
 				},
 			},
-			query: &types.QueryFundingPaymentsRequest{
+			query: &types.QueryFundingRatesRequest{
 				Pair: common.PairBTCStable.String(),
 			},
 			expectErr: false,
-			expectedFundingPayments: []sdk.Dec{
+			expectedFundingRates: []sdk.Dec{
 				sdk.NewDec(1),
 				sdk.NewDec(2),
 				sdk.NewDec(3),
@@ -315,7 +315,7 @@ func TestQueryFundingPayments(t *testing.T) {
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(tc.initialPairMetadata)
 
 			t.Log("query funding payments")
-			resp, err := queryServer.FundingPayments(sdk.WrapSDKContext(ctx), tc.query)
+			resp, err := queryServer.FundingRates(sdk.WrapSDKContext(ctx), tc.query)
 
 			if tc.expectErr {
 				require.Error(t, err)
@@ -323,7 +323,7 @@ func TestQueryFundingPayments(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Log("assert response")
-				assert.EqualValues(t, tc.expectedFundingPayments, resp.CumulativeFundingPayments)
+				assert.EqualValues(t, tc.expectedFundingRates, resp.CumulativeFundingRates)
 			}
 		})
 	}

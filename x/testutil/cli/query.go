@@ -134,20 +134,20 @@ func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.A
 	return queryResp, nil
 }
 
-func QueryFundingPayments(ctx client.Context, pair common.AssetPair) (perptypes.QueryFundingPaymentsResponse, error) {
+func QueryFundingRates(ctx client.Context, pair common.AssetPair) (perptypes.QueryFundingRatesResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
-		perpcli.CmdQueryFundingPayments(),
+		perpcli.CmdQueryFundingRates(),
 		[]string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
-		return perptypes.QueryFundingPaymentsResponse{}, err
+		return perptypes.QueryFundingRatesResponse{}, err
 	}
 
-	var queryResp perptypes.QueryFundingPaymentsResponse
+	var queryResp perptypes.QueryFundingRatesResponse
 	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
 	if err != nil {
-		return perptypes.QueryFundingPaymentsResponse{}, err
+		return perptypes.QueryFundingRatesResponse{}, err
 	}
 
 	return queryResp, nil
