@@ -23,6 +23,10 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
+	if err := gs.Params.Validate(); err != nil {
+		return err
+	}
+
 	for i, pos := range gs.Positions {
 		if err := pos.Validate(); err != nil {
 			return fmt.Errorf("malformed genesis position %s at index %d: %w", pos, i, err)
@@ -47,5 +51,5 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	return gs.Params.Validate()
+	return nil
 }
