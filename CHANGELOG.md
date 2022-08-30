@@ -41,9 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### API Breaking
+### Improvements
 
 * [#858](https://github.com/NibiruChain/nibiru/pull/858) - fix trading limit ratio check; checks in both directions on both quote and base assets
+
+### Features
+
+* [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
+* [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
 
 ## v0.14.0
 
@@ -71,12 +76,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#827](https://github.com/NibiruChain/nibiru/pull/827) - feat(genesis): add cli command to add vpool at genesis
 * [#838](https://github.com/NibiruChain/nibiru/pull/838) - feat(genesis): add cli command to whitelist oracles at genesis
+* [#846](https://github.com/NibiruChain/nibiru/pull/846) - x/oracle remove reference pair
 
-## v0.13.0
+## [v0.13.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.13.0) - 2022-08-16
+
+## API Breaking
 
 * [#831](https://github.com/NibiruChain/nibiru/pull/831) - remove modules that are not used in testnet
-
-## [v0.12.1-alpha](https://github.com/NibiruChain/nibiru/releases/tag/v0.12.1-alpha) - 2022-08-11
 
 ### CI
 

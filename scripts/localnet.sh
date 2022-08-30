@@ -195,10 +195,7 @@ add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_premium_fractions
 
 # x/pricefeed
 nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[0] = {token0:"unibi",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[1] = {token0:"uusdc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[2] = {token0:"ubtc",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.pairs[3] = {token0:"ueth",token1:"unusd"}' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
 # Start the network
