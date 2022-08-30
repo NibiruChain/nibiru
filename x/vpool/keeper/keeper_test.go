@@ -95,11 +95,21 @@ func TestSwapQuoteForBase(t *testing.T) {
 			expectedErr: types.ErrAssetFailsUserLimit,
 		},
 		{
-			name:                      "quote input bigger than trade limit ratio",
+			name:                      "over trading limit when removing quote",
 			pair:                      common.PairBTCStable,
 			direction:                 types.Direction_REMOVE_FROM_POOL,
-			quoteAmount:               sdk.NewDec(10_000_000),
-			baseLimit:                 sdk.NewDec(10),
+			quoteAmount:               sdk.NewDec(9_000_001),
+			baseLimit:                 sdk.ZeroDec(),
+			skipFluctuationLimitCheck: false,
+
+			expectedErr: types.ErrOverTradingLimit,
+		},
+		{
+			name:                      "over trading limit when adding quote",
+			pair:                      common.PairBTCStable,
+			direction:                 types.Direction_ADD_TO_POOL,
+			quoteAmount:               sdk.NewDec(9_000_001),
+			baseLimit:                 sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
 
 			expectedErr: types.ErrOverTradingLimit,
@@ -282,11 +292,21 @@ func TestSwapBaseForQuote(t *testing.T) {
 			expectedErr: types.ErrAssetFailsUserLimit,
 		},
 		{
-			name:                      "base input bigger than trade limit ratio",
+			name:                      "over trading limit when removing base",
 			pair:                      common.PairBTCStable,
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			baseAmt:                   sdk.NewDec(4_500_001),
-			quoteLimit:                sdk.NewDec(10),
+			quoteLimit:                sdk.ZeroDec(),
+			skipFluctuationLimitCheck: false,
+
+			expectedErr: types.ErrOverTradingLimit,
+		},
+		{
+			name:                      "over trading limit when adding base",
+			pair:                      common.PairBTCStable,
+			direction:                 types.Direction_ADD_TO_POOL,
+			baseAmt:                   sdk.NewDec(4_500_001),
+			quoteLimit:                sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
 
 			expectedErr: types.ErrOverTradingLimit,
