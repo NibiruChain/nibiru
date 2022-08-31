@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
-// Required for gogoproto.castrepeated = "Markets"
+// Markets defines the markets
 type Markets []Market
 
 func NewMarket(pair common.AssetPair, oracles []sdk.AccAddress, active bool) Market {
@@ -29,47 +29,16 @@ func NewMarket(pair common.AssetPair, oracles []sdk.AccAddress, active bool) Mar
 	}
 }
 
-// NewQueryMarketsResponse returns a new QueryMarketsResponse
-func NewQueryMarketsResponse(pair common.AssetPair, oracles []sdk.AccAddress, active bool) QueryMarketsResponse {
-	return QueryMarketsResponse{
-		Markets: []Market{NewMarket(pair, oracles, active)},
-	}
-}
-
-/*
-NewCurrentPrice returns an instance of CurrentPrice
-
-Args:
-
-	token0 (string):
-	token1 (string):
-	price (sdk.Dec): Price in units of token1 / token0
-
-Returns:
-
-	(CurrentPrice): Price for the asset pair.
-*/
+// NewCurrentPrice returns an instance of CurrentPrice
+// Args:
+//		token0 (string):
+//		token1 (string):
+//		price (sdk.Dec): Price in units of token1 / token0
+// Returns:
+// 		CurrentPrice: Price for the asset pair.
 func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	return CurrentPrice{PairID: assetPair.String(), Price: price}
-}
-
-/*
-NewCurrentTWAP returns an instance of CurrentTWAP
-
-Args:
-
-	token0 (string):
-	token1 (string):
-	price (sdk.Dec): Price in units of token1 / token0
-
-Returns:
-
-	(CurrentTWAP): Current TWAP price for the asset pair.
-*/
-func NewCurrentTWAP(token0 string, token1 string, numerator sdk.Dec, denominator sdk.Dec, price sdk.Dec) CurrentTWAP {
-	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	return CurrentTWAP{PairID: assetPair.String(), Numerator: numerator, Denominator: denominator, Price: price}
 }
 
 // CurrentPrices is a slice of CurrentPrice
@@ -131,18 +100,6 @@ func (pps PostedPrices) Validate() error {
 	}
 
 	return nil
-}
-
-// NewPostedPrice returns a new PostedPrice
-func NewPostedPriceResponse(
-	pairID string, oracle sdk.AccAddress, price sdk.Dec, expiry time.Time,
-) PostedPriceResponse {
-	return PostedPriceResponse{
-		PairID:        pairID,
-		OracleAddress: oracle.String(),
-		Price:         price,
-		Expiry:        expiry,
-	}
 }
 
 // PostedPriceResponses is a slice of PostedPriceResponse
