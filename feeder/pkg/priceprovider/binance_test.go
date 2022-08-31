@@ -1,10 +1,11 @@
 package priceprovider
 
 import (
-	"github.com/stretchr/testify/require"
 	"log"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewBinance(t *testing.T) {

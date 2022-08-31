@@ -2,9 +2,10 @@ package websocket
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"sync/atomic"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 var (

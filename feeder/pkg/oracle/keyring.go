@@ -3,6 +3,7 @@ package oracle
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -57,7 +58,6 @@ func (p PrivKeyKeyring) KeyByAddress(address sdk.Address) (keyring.Info, error) 
 		pubKey: p.pubKey,
 		addr:   p.addr,
 	}, nil
-
 }
 
 func (p PrivKeyKeyring) Delete(uid string) error {

@@ -4,8 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"log"
+	"math/big"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,8 +18,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc"
-	"log"
-	"math/big"
+
+	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 var (

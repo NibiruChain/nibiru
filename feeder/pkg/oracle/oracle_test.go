@@ -2,16 +2,18 @@ package oracle
 
 import (
 	"context"
+	"net/url"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"google.golang.org/grpc"
-	"net/url"
-	"testing"
-	"time"
 )
 
 type IntegrationTestSuite struct {
@@ -42,6 +44,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	u.Path = "/websocket"
 
 	s.eventsClient, err = NewEventsClient(u.String(), grpcEndpoint)
+	require.NoError(s.T(), err)
+
 	s.writeClient, err = NewTxClient(grpcEndpoint, val.ValAddress, val.Address, &MemPrevoteCache{}, val.ClientCtx.Keyring)
 	require.NoError(s.T(), err)
 

@@ -2,9 +2,10 @@ package priceprovider
 
 import (
 	"fmt"
-	"github.com/adshao/go-binance/v2"
 	"strconv"
 	"sync"
+
+	"github.com/adshao/go-binance/v2"
 )
 
 type Binance struct {
