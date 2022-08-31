@@ -113,8 +113,8 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryTraderPositionRequest is the request type for the position of the
-// x/perp module account.
+// QueryTraderPositionRequest is the request type for the position of the x/perp
+// module account.
 type QueryTraderPositionRequest struct {
 	TokenPair string `protobuf:"bytes,1,opt,name=token_pair,json=tokenPair,proto3" json:"token_pair,omitempty"`
 	Trader    string `protobuf:"bytes,2,opt,name=trader,proto3" json:"trader,omitempty"`
@@ -170,16 +170,18 @@ func (m *QueryTraderPositionRequest) GetTrader() string {
 type QueryTraderPositionResponse struct {
 	// The position as it exists in the blockchain state
 	Position *Position `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
-	// The position's current notional value, if it were to be entirely closed (in margin units).
+	// The position's current notional value, if it were to be entirely closed (in
+	// margin units).
 	PositionNotional github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
 	// The position's unrealized PnL.
 	UnrealizedPnl github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=unrealized_pnl,json=unrealizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"unrealized_pnl"`
 	// margin ratio of the position based on the mark price, mark TWAP. The higher
 	// value of the possible margin ratios (TWAP and instantaneous) is taken to be
-	// 'marginRatioMark'. Calculated from margin, unrealized PnL, and position notional.
+	// 'marginRatioMark'. Calculated from margin, unrealized PnL, and position
+	// notional.
 	MarginRatioMark github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=margin_ratio_mark,json=marginRatioMark,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin_ratio_mark"`
-	// margin ratio of the position based on the index price. Calculated from margin,
-	// unrealized PnL, and position notional.
+	// margin ratio of the position based on the index price. Calculated from
+	// margin, unrealized PnL, and position notional.
 	MarginRatioIndex github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=margin_ratio_index,json=marginRatioIndex,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin_ratio_index"`
 	// BlockNumber is current block number at the time of query.
 	BlockNumber int64 `protobuf:"varint,7,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
@@ -232,51 +234,143 @@ func (m *QueryTraderPositionResponse) GetBlockNumber() int64 {
 	return 0
 }
 
+type QueryFundingRatesRequest struct {
+	// the pair to query for
+	Pair string `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
+}
+
+func (m *QueryFundingRatesRequest) Reset()         { *m = QueryFundingRatesRequest{} }
+func (m *QueryFundingRatesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFundingRatesRequest) ProtoMessage()    {}
+func (*QueryFundingRatesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{4}
+}
+func (m *QueryFundingRatesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFundingRatesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFundingRatesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFundingRatesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFundingRatesRequest.Merge(m, src)
+}
+func (m *QueryFundingRatesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFundingRatesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFundingRatesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFundingRatesRequest proto.InternalMessageInfo
+
+func (m *QueryFundingRatesRequest) GetPair() string {
+	if m != nil {
+		return m.Pair
+	}
+	return ""
+}
+
+type QueryFundingRatesResponse struct {
+	// a historical list of cumulative funding rates, with the most recent one
+	// last
+	CumulativeFundingRates []github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,rep,name=cumulative_funding_rates,json=cumulativeFundingRates,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"cumulative_funding_rates"`
+}
+
+func (m *QueryFundingRatesResponse) Reset()         { *m = QueryFundingRatesResponse{} }
+func (m *QueryFundingRatesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFundingRatesResponse) ProtoMessage()    {}
+func (*QueryFundingRatesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8212d8958be09421, []int{5}
+}
+func (m *QueryFundingRatesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFundingRatesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFundingRatesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFundingRatesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFundingRatesResponse.Merge(m, src)
+}
+func (m *QueryFundingRatesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFundingRatesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFundingRatesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFundingRatesResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "nibiru.perp.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "nibiru.perp.v1.QueryParamsResponse")
 	proto.RegisterType((*QueryTraderPositionRequest)(nil), "nibiru.perp.v1.QueryTraderPositionRequest")
 	proto.RegisterType((*QueryTraderPositionResponse)(nil), "nibiru.perp.v1.QueryTraderPositionResponse")
+	proto.RegisterType((*QueryFundingRatesRequest)(nil), "nibiru.perp.v1.QueryFundingRatesRequest")
+	proto.RegisterType((*QueryFundingRatesResponse)(nil), "nibiru.perp.v1.QueryFundingRatesResponse")
 }
 
 func init() { proto.RegisterFile("perp/v1/query.proto", fileDescriptor_8212d8958be09421) }
 
 var fileDescriptor_8212d8958be09421 = []byte{
-	// 536 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0x4f, 0x6f, 0xd3, 0x30,
-	0x18, 0xc6, 0x9b, 0x76, 0x2b, 0xcc, 0x83, 0xc1, 0xdc, 0x31, 0x45, 0xdd, 0xc8, 0x46, 0x40, 0x68,
-	0x1a, 0x22, 0xd1, 0x06, 0x9f, 0xa0, 0xec, 0x82, 0x10, 0x55, 0x09, 0x70, 0x19, 0x48, 0x91, 0xdb,
-	0x5a, 0x99, 0xd5, 0xc4, 0xce, 0x6c, 0x67, 0xda, 0x38, 0xf2, 0x01, 0x10, 0x12, 0x7c, 0xa8, 0x1d,
-	0x27, 0x71, 0x41, 0x1c, 0x26, 0xd4, 0xee, 0x83, 0x20, 0xff, 0x69, 0x59, 0x58, 0x85, 0xa6, 0x9e,
-	0xec, 0xbe, 0xef, 0xe3, 0x9f, 0x9f, 0xe6, 0x7d, 0x0c, 0x1a, 0x39, 0xe6, 0x79, 0x78, 0xb4, 0x13,
-	0x1e, 0x16, 0x98, 0x9f, 0x04, 0x39, 0x67, 0x92, 0xc1, 0x25, 0x4a, 0xba, 0x84, 0x17, 0x81, 0xea,
-	0x05, 0x47, 0x3b, 0xcd, 0x95, 0x84, 0x25, 0x4c, 0xb7, 0x42, 0xb5, 0x33, 0xaa, 0xe6, 0x7a, 0xc2,
-	0x58, 0x92, 0xe2, 0x10, 0xe5, 0x24, 0x44, 0x94, 0x32, 0x89, 0x24, 0x61, 0x54, 0xd8, 0xee, 0x04,
-	0x2c, 0x24, 0x92, 0xd8, 0x14, 0xfd, 0x15, 0x00, 0xdf, 0xa8, 0x7b, 0x3a, 0x88, 0xa3, 0x4c, 0x44,
-	0xf8, 0xb0, 0xc0, 0x42, 0xfa, 0xaf, 0x40, 0xa3, 0x54, 0x15, 0x39, 0xa3, 0x02, 0xc3, 0xe7, 0xa0,
-	0x9e, 0xeb, 0x8a, 0xeb, 0x6c, 0x3a, 0x5b, 0x8b, 0xbb, 0xab, 0x41, 0xd9, 0x56, 0x60, 0xf4, 0xad,
-	0xb9, 0xd3, 0xf3, 0x8d, 0x4a, 0x64, 0xb5, 0xfe, 0x5b, 0xd0, 0xd4, 0xb0, 0x77, 0x1c, 0xf5, 0x31,
-	0xef, 0x30, 0x41, 0x94, 0x2b, 0x7b, 0x15, 0xbc, 0x0f, 0x80, 0x64, 0x03, 0x4c, 0xe3, 0x1c, 0x11,
-	0xae, 0xb9, 0x0b, 0xd1, 0x82, 0xae, 0x74, 0x10, 0xe1, 0x70, 0x15, 0xd4, 0xa5, 0x3e, 0xe7, 0x56,
-	0x75, 0xcb, 0xfe, 0xf2, 0x2f, 0x6a, 0x60, 0x6d, 0x2a, 0x75, 0x62, 0xf5, 0x66, 0x6e, 0x6b, 0xd6,
-	0xac, 0x7b, 0xc5, 0xec, 0xf8, 0xcc, 0x44, 0x09, 0x3f, 0x80, 0xe5, 0xf1, 0x3e, 0xa6, 0x4c, 0x2d,
-	0x28, 0x35, 0x17, 0xb7, 0x02, 0xf5, 0x9f, 0x7e, 0x9d, 0x6f, 0x3c, 0x4e, 0x88, 0x3c, 0x28, 0xba,
-	0x41, 0x8f, 0x65, 0x61, 0x8f, 0x89, 0x8c, 0x09, 0xbb, 0x3c, 0x15, 0xfd, 0x41, 0x28, 0x4f, 0x72,
-	0x2c, 0x82, 0x3d, 0xdc, 0x8b, 0xee, 0x8e, 0x41, 0x6d, 0xcb, 0x81, 0xef, 0xc1, 0x52, 0x41, 0x39,
-	0x46, 0x29, 0xf9, 0x84, 0xfb, 0x71, 0x4e, 0x53, 0xb7, 0x36, 0x13, 0xf9, 0xf6, 0x5f, 0x4a, 0x87,
-	0xa6, 0x70, 0x1f, 0x2c, 0x67, 0x88, 0x27, 0x84, 0xc6, 0x5c, 0x8d, 0x3b, 0xce, 0x10, 0x1f, 0xb8,
-	0x73, 0x33, 0x91, 0xef, 0x18, 0x50, 0xa4, 0x38, 0xaf, 0x11, 0x1f, 0xc0, 0x8f, 0x00, 0x96, 0xd8,
-	0x84, 0xf6, 0xf1, 0xb1, 0x3b, 0x3f, 0xdb, 0x07, 0xb9, 0x04, 0x7f, 0xa9, 0x38, 0xf0, 0x01, 0xb8,
-	0xd5, 0x4d, 0x59, 0x6f, 0x10, 0xd3, 0x22, 0xeb, 0x62, 0xee, 0xde, 0xd8, 0x74, 0xb6, 0x6a, 0xd1,
-	0xa2, 0xae, 0xb5, 0x75, 0x69, 0xf7, 0x4b, 0x15, 0xcc, 0xeb, 0x31, 0x43, 0x0a, 0xea, 0x26, 0x5d,
-	0xd0, 0xff, 0x77, 0x90, 0x57, 0x03, 0xdc, 0x7c, 0xf8, 0x5f, 0x8d, 0xc9, 0x88, 0xbf, 0xf6, 0xf9,
-	0xc7, 0xc5, 0xb7, 0xea, 0x3d, 0xd8, 0x08, 0x8d, 0x38, 0xd4, 0x0f, 0xc4, 0xa4, 0x16, 0x7e, 0x77,
-	0xec, 0x1b, 0x28, 0x07, 0x0c, 0x6e, 0x4f, 0x25, 0x4f, 0xcd, 0x76, 0xf3, 0xc9, 0xb5, 0xb4, 0xd6,
-	0xcd, 0x23, 0xed, 0xc6, 0x83, 0xeb, 0x25, 0x37, 0x26, 0xee, 0xf1, 0x38, 0x4c, 0xad, 0xbd, 0xd3,
-	0xa1, 0xe7, 0x9c, 0x0d, 0x3d, 0xe7, 0xf7, 0xd0, 0x73, 0xbe, 0x8e, 0xbc, 0xca, 0xd9, 0xc8, 0xab,
-	0xfc, 0x1c, 0x79, 0x95, 0xfd, 0xed, 0x4b, 0x73, 0x68, 0x6b, 0xc2, 0x8b, 0x03, 0x44, 0xe8, 0x98,
-	0x76, 0x6c, 0x79, 0x6a, 0x1e, 0xdd, 0xba, 0x7e, 0xfc, 0xcf, 0xfe, 0x04, 0x00, 0x00, 0xff, 0xff,
-	0x83, 0xa0, 0xeb, 0xc3, 0x6c, 0x04, 0x00, 0x00,
+	// 625 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0x41, 0x6f, 0xd3, 0x30,
+	0x14, 0x6e, 0xd6, 0xad, 0x30, 0x6f, 0x0c, 0xe6, 0x8d, 0x29, 0x64, 0x23, 0x1b, 0x01, 0xa1, 0x31,
+	0x44, 0xa2, 0x0d, 0x7e, 0xc1, 0x98, 0x90, 0x10, 0xa2, 0x2a, 0x01, 0x2e, 0x03, 0x29, 0x72, 0x5b,
+	0x93, 0x5a, 0x4d, 0xec, 0xcc, 0x71, 0xaa, 0x8d, 0x23, 0x12, 0xe2, 0x8a, 0x04, 0x07, 0x7e, 0xd2,
+	0x8e, 0x93, 0xb8, 0x20, 0x0e, 0x13, 0x6a, 0xf7, 0x43, 0x90, 0x1d, 0xb7, 0x6b, 0x58, 0x84, 0xa6,
+	0x9e, 0xe2, 0x3e, 0x7f, 0xef, 0x7b, 0xdf, 0xf3, 0x7b, 0x5f, 0xc1, 0x52, 0x82, 0x79, 0xe2, 0xf5,
+	0xb6, 0xbd, 0x83, 0x0c, 0xf3, 0x23, 0x37, 0xe1, 0x4c, 0x30, 0xb8, 0x40, 0x49, 0x93, 0xf0, 0xcc,
+	0x95, 0x77, 0x6e, 0x6f, 0xdb, 0x5a, 0x0e, 0x59, 0xc8, 0xd4, 0x95, 0x27, 0x4f, 0x39, 0xca, 0x5a,
+	0x0b, 0x19, 0x0b, 0x23, 0xec, 0xa1, 0x84, 0x78, 0x88, 0x52, 0x26, 0x90, 0x20, 0x8c, 0xa6, 0xfa,
+	0x76, 0x44, 0x9c, 0x0a, 0x24, 0x70, 0x1e, 0x74, 0x96, 0x01, 0x7c, 0x25, 0xeb, 0x34, 0x10, 0x47,
+	0x71, 0xea, 0xe3, 0x83, 0x0c, 0xa7, 0xc2, 0x79, 0x01, 0x96, 0x0a, 0xd1, 0x34, 0x61, 0x34, 0xc5,
+	0xf0, 0x09, 0xa8, 0x25, 0x2a, 0x62, 0x1a, 0x1b, 0xc6, 0xe6, 0xdc, 0xce, 0x8a, 0x5b, 0x94, 0xe5,
+	0xe6, 0xf8, 0xdd, 0xe9, 0xe3, 0xd3, 0xf5, 0x8a, 0xaf, 0xb1, 0xce, 0x6b, 0x60, 0x29, 0xb2, 0x37,
+	0x1c, 0xb5, 0x31, 0x6f, 0xb0, 0x94, 0x48, 0x55, 0xba, 0x14, 0xbc, 0x0d, 0x80, 0x60, 0x5d, 0x4c,
+	0x83, 0x04, 0x11, 0xae, 0x78, 0x67, 0xfd, 0x59, 0x15, 0x69, 0x20, 0xc2, 0xe1, 0x0a, 0xa8, 0x09,
+	0x95, 0x67, 0x4e, 0xa9, 0x2b, 0xfd, 0xcb, 0x39, 0xab, 0x82, 0xd5, 0x52, 0xd6, 0x91, 0xd4, 0xab,
+	0x89, 0x8e, 0x69, 0xb1, 0xe6, 0x05, 0xb1, 0xc3, 0x9c, 0x11, 0x12, 0xbe, 0x03, 0x8b, 0xc3, 0x73,
+	0x40, 0x99, 0xfc, 0xa0, 0x28, 0x2f, 0xbc, 0xeb, 0xca, 0x9e, 0x7e, 0x9f, 0xae, 0xdf, 0x0f, 0x89,
+	0xe8, 0x64, 0x4d, 0xb7, 0xc5, 0x62, 0xaf, 0xc5, 0xd2, 0x98, 0xa5, 0xfa, 0xf3, 0x28, 0x6d, 0x77,
+	0x3d, 0x71, 0x94, 0xe0, 0xd4, 0xdd, 0xc3, 0x2d, 0xff, 0xc6, 0x90, 0xa8, 0xae, 0x79, 0xe0, 0x5b,
+	0xb0, 0x90, 0x51, 0x8e, 0x51, 0x44, 0x3e, 0xe2, 0x76, 0x90, 0xd0, 0xc8, 0xac, 0x4e, 0xc4, 0x7c,
+	0xed, 0x9c, 0xa5, 0x41, 0x23, 0xb8, 0x0f, 0x16, 0x63, 0xc4, 0x43, 0x42, 0x03, 0x2e, 0xc7, 0x1d,
+	0xc4, 0x88, 0x77, 0xcd, 0xe9, 0x89, 0x98, 0xaf, 0xe7, 0x44, 0xbe, 0xe4, 0x79, 0x89, 0x78, 0x17,
+	0xbe, 0x07, 0xb0, 0xc0, 0x4d, 0x68, 0x1b, 0x1f, 0x9a, 0x33, 0x93, 0x3d, 0xc8, 0x18, 0xf9, 0x73,
+	0xc9, 0x03, 0xef, 0x80, 0xf9, 0x66, 0xc4, 0x5a, 0xdd, 0x80, 0x66, 0x71, 0x13, 0x73, 0xf3, 0xca,
+	0x86, 0xb1, 0x59, 0xf5, 0xe7, 0x54, 0xac, 0xae, 0x42, 0x8e, 0x0b, 0x4c, 0x35, 0xe5, 0x67, 0x19,
+	0x6d, 0x13, 0x1a, 0xfa, 0x48, 0xe0, 0xe1, 0x92, 0x42, 0x08, 0xa6, 0xc7, 0x76, 0x46, 0x9d, 0x9d,
+	0xcf, 0x06, 0xb8, 0x55, 0x92, 0xa0, 0x97, 0xa2, 0x03, 0xcc, 0x56, 0x16, 0x67, 0x11, 0x12, 0xa4,
+	0x87, 0x83, 0x0f, 0x39, 0x44, 0xb6, 0x86, 0xe5, 0x46, 0x57, 0x27, 0x68, 0x6a, 0xe5, 0x9c, 0x6f,
+	0xbc, 0xe2, 0xce, 0x8f, 0x2a, 0x98, 0x51, 0x3a, 0x20, 0x05, 0xb5, 0xdc, 0x15, 0xd0, 0xf9, 0x77,
+	0x01, 0x2f, 0x1a, 0xcf, 0xba, 0xfb, 0x5f, 0x4c, 0xde, 0x86, 0xb3, 0xfa, 0xe9, 0xe7, 0xd9, 0xb7,
+	0xa9, 0x9b, 0x70, 0xc9, 0xcb, 0xc1, 0x9e, 0x32, 0x76, 0xee, 0x36, 0xf8, 0xdd, 0xd0, 0xde, 0x2d,
+	0x1a, 0x03, 0x6e, 0x95, 0x32, 0x97, 0x7a, 0xd2, 0x7a, 0x78, 0x29, 0xac, 0x56, 0x73, 0x4f, 0xa9,
+	0xb1, 0xe1, 0x5a, 0x41, 0x4d, 0x6e, 0xd3, 0x60, 0xe4, 0xac, 0x2f, 0x06, 0x98, 0x1f, 0x7f, 0x21,
+	0xb8, 0x59, 0x5a, 0xa3, 0x64, 0xce, 0xd6, 0x83, 0x4b, 0x20, 0xb5, 0x16, 0x47, 0x69, 0x59, 0x83,
+	0x56, 0x41, 0x4b, 0x61, 0xd0, 0xbb, 0x7b, 0xc7, 0x7d, 0xdb, 0x38, 0xe9, 0xdb, 0xc6, 0x9f, 0xbe,
+	0x6d, 0x7c, 0x1d, 0xd8, 0x95, 0x93, 0x81, 0x5d, 0xf9, 0x35, 0xb0, 0x2b, 0xfb, 0x5b, 0x63, 0x43,
+	0xaf, 0xab, 0xfc, 0xa7, 0x1d, 0x44, 0xe8, 0x90, 0xeb, 0x50, 0x77, 0x26, 0x87, 0xdf, 0xac, 0xa9,
+	0xbf, 0xcf, 0xc7, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0xf3, 0x55, 0x27, 0x94, 0xae, 0x05, 0x00,
+	0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -294,6 +388,7 @@ type QueryClient interface {
 	// Parameters queries the parameters of the x/perp module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	QueryTraderPosition(ctx context.Context, in *QueryTraderPositionRequest, opts ...grpc.CallOption) (*QueryTraderPositionResponse, error)
+	FundingRates(ctx context.Context, in *QueryFundingRatesRequest, opts ...grpc.CallOption) (*QueryFundingRatesResponse, error)
 }
 
 type queryClient struct {
@@ -322,11 +417,21 @@ func (c *queryClient) QueryTraderPosition(ctx context.Context, in *QueryTraderPo
 	return out, nil
 }
 
+func (c *queryClient) FundingRates(ctx context.Context, in *QueryFundingRatesRequest, opts ...grpc.CallOption) (*QueryFundingRatesResponse, error) {
+	out := new(QueryFundingRatesResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v1.Query/FundingRates", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Parameters queries the parameters of the x/perp module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	QueryTraderPosition(context.Context, *QueryTraderPositionRequest) (*QueryTraderPositionResponse, error)
+	FundingRates(context.Context, *QueryFundingRatesRequest) (*QueryFundingRatesResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -338,6 +443,9 @@ func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsReq
 }
 func (*UnimplementedQueryServer) QueryTraderPosition(ctx context.Context, req *QueryTraderPositionRequest) (*QueryTraderPositionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryTraderPosition not implemented")
+}
+func (*UnimplementedQueryServer) FundingRates(ctx context.Context, req *QueryFundingRatesRequest) (*QueryFundingRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FundingRates not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -380,6 +488,24 @@ func _Query_QueryTraderPosition_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_FundingRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFundingRatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).FundingRates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.perp.v1.Query/FundingRates",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).FundingRates(ctx, req.(*QueryFundingRatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "nibiru.perp.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -391,6 +517,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryTraderPosition",
 			Handler:    _Query_QueryTraderPosition_Handler,
+		},
+		{
+			MethodName: "FundingRates",
+			Handler:    _Query_FundingRates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -570,6 +700,73 @@ func (m *QueryTraderPositionResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryFundingRatesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFundingRatesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFundingRatesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Pair) > 0 {
+		i -= len(m.Pair)
+		copy(dAtA[i:], m.Pair)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Pair)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFundingRatesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFundingRatesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFundingRatesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.CumulativeFundingRates) > 0 {
+		for iNdEx := len(m.CumulativeFundingRates) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.CumulativeFundingRates[iNdEx].Size()
+				i -= size
+				if _, err := m.CumulativeFundingRates[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -638,6 +835,34 @@ func (m *QueryTraderPositionResponse) Size() (n int) {
 	n += 1 + l + sovQuery(uint64(l))
 	if m.BlockNumber != 0 {
 		n += 1 + sovQuery(uint64(m.BlockNumber))
+	}
+	return n
+}
+
+func (m *QueryFundingRatesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Pair)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryFundingRatesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.CumulativeFundingRates) > 0 {
+		for _, e := range m.CumulativeFundingRates {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
 	}
 	return n
 }
@@ -1115,6 +1340,174 @@ func (m *QueryTraderPositionResponse) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFundingRatesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFundingRatesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFundingRatesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pair", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Pair = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFundingRatesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFundingRatesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFundingRatesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CumulativeFundingRates", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Dec
+			m.CumulativeFundingRates = append(m.CumulativeFundingRates, v)
+			if err := m.CumulativeFundingRates[len(m.CumulativeFundingRates)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
