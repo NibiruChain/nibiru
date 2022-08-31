@@ -18,6 +18,7 @@ type IntegrationTestSuite struct {
 	network *testutilcli.Network
 
 	eventsClient EventsClient
+	writeClient  *TxClient
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -36,17 +37,26 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	u.Path = "/websocket"
 
 	s.eventsClient, err = NewEventsClient(u.String(), grpcEndpoint)
+	s.writeClient, err = NewTxClient(grpcEndpoint, val.ValAddress, val.Address, &MemPrevoteCache{}, val.ClientCtx.Keyring)
+	require.NoError(s.T(), err)
 
 	require.NoError(s.T(), err)
 }
 
-func (s *IntegrationTestSuite) TestVotingPeriod() {
+func (s *IntegrationTestSuite) TestVotingPeriodAndTargets() {
+	select {
+	case <-time.Tick(1 * time.Minute):
+		s.T().Fatal("no vote targets")
+	case targets := <-s.eventsClient.SymbolsUpdate():
+		s.T().Log(targets)
+	}
 	select {
 	case <-time.Tick(1 * time.Minute):
 		s.T().Fatal("no voting period detected")
 	case <-s.eventsClient.NewVotingPeriod():
 	}
 }
+
 func TestEventsClientSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }

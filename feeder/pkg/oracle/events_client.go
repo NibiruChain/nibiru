@@ -25,7 +25,7 @@ func NewEventsClient(tendermintEndpoint string, grpcEndpoint string) (EventsClie
 	ec := &eventsClient{
 		tm:              tendermintEndpoint,
 		grpc:            grpcEndpoint,
-		symbolsUpdate:   make(chan []string),
+		symbolsUpdate:   make(chan []string, 1), // it has one as buffer for the initial vote targets
 		newVotingPeriod: make(chan uint64),
 	}
 
@@ -95,8 +95,7 @@ func (c *eventsClient) NewVotingPeriod() <-chan uint64 {
 }
 
 func (c *eventsClient) SymbolsUpdate() (newSymbols <-chan []string) {
-	//TODO implement me
-	panic("implement me")
+	return c.symbolsUpdate
 }
 
 func (c *eventsClient) Close() {
@@ -137,5 +136,12 @@ func (c *eventsClient) updateParams() error {
 	}
 
 	c.votingPeriod = p.Params.VotePeriod
+
+	targets, err := oracle.VoteTargets(ctx, &types.QueryVoteTargetsRequest{})
+	if err != nil {
+		return err
+	}
+
+	c.symbolsUpdate <- targets.VoteTargets
 	return nil
 }
