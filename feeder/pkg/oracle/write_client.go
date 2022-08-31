@@ -15,13 +15,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txservice "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	tmtypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc"
 	"log"
 	"math/big"
 )
 
 var (
-	MaxSaltNumber = big.NewInt(100_000)
+	MaxSaltNumber = big.NewInt(9999) // NOTE(mercilex): max salt length is 4
 )
 
 type PrevotesCache interface {
@@ -88,25 +89,31 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 
 func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) error {
 	// generate prevotes
-	prevoteMsg := c.prevotesMsg(symbolPrices)
+	prevoteMsg, salt, votesStr := c.prevotesMsg(symbolPrices)
 	voteMsg := c.voteMsg()
 
 	msgs := []sdk.Msg{prevoteMsg}
 	if voteMsg != nil {
-		msgs = append(msgs, voteMsg)
+		msgs = []sdk.Msg{voteMsg, prevoteMsg} // NOTE(mercilex): if you... change the order ... it won't work because the prevote will override the old one
 	}
 
 	for {
+		// TODO(mercilex): backoff strategy
 		log.Printf("sending prevote and vote:\n\t%s,\n\t %s", prevoteMsg, voteMsg)
 		err := c.sendTx(msgs...)
 		if err != nil {
 			log.Printf("failed sending tx: %s", err)
-
+			continue
 		}
+		break
 	}
+
+	c.prevotes.SetPrevote(salt, votesStr, c.feeder.String())
+
+	return nil
 }
 
-func (c *TxClient) prevotesMsg(prices []SymbolPrice) *types.MsgAggregateExchangeRatePrevote {
+func (c *TxClient) prevotesMsg(prices []SymbolPrice) (msg *types.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
 	tuple := make(types.ExchangeRateTuples, len(prices))
 	for i, price := range prices {
 		tuple[i] = types.ExchangeRateTuple{
@@ -115,7 +122,7 @@ func (c *TxClient) prevotesMsg(prices []SymbolPrice) *types.MsgAggregateExchange
 		}
 	}
 
-	strTuple, err := tuple.ToString()
+	votesStr, err := tuple.ToString()
 	if err != nil {
 		panic(err)
 	}
@@ -124,9 +131,11 @@ func (c *TxClient) prevotesMsg(prices []SymbolPrice) *types.MsgAggregateExchange
 	if err != nil {
 		panic(err)
 	}
+	salt = nBig.String()
 
-	hash := types.GetAggregateVoteHash(nBig.String(), strTuple, c.validator)
-	return types.NewMsgAggregateExchangeRatePrevote(hash, c.feeder, c.validator)
+	hash := types.GetAggregateVoteHash(salt, votesStr, c.validator)
+
+	return types.NewMsgAggregateExchangeRatePrevote(hash, c.feeder, c.validator), salt, votesStr
 }
 
 func (c *TxClient) voteMsg() *types.MsgAggregateExchangeRateVote {
@@ -189,6 +198,24 @@ func (c *TxClient) sendTx(msgs ...sdk.Msg) error {
 	err = tx.Sign(txFactory, keyInfo.GetName(), txBuilder, true)
 	if err != nil {
 		panic(err)
+	}
+
+	txBytes, err := c.txConfig.TxEncoder()(txBuilder.GetTx())
+	if err != nil {
+		panic(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+	defer cancel()
+	resp, err := c.txClient.BroadcastTx(ctx, &txservice.BroadcastTxRequest{
+		TxBytes: txBytes,
+		Mode:    txservice.BroadcastMode_BROADCAST_MODE_BLOCK,
+	})
+	if err != nil {
+		return err
+	}
+	if resp.TxResponse.Code != tmtypes.CodeTypeOK {
+		return fmt.Errorf("tx failed: %s", resp.TxResponse.RawLog)
 	}
 
 	return nil

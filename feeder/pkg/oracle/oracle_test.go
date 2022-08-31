@@ -52,23 +52,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 func (s *IntegrationTestSuite) TestVoting() {
 	targets := s.targetsUpdate()
-	s.waitVotePeriod()
-
-	prices := make([]SymbolPrice, len(targets))
-	for i, target := range targets {
-		prices[i] = SymbolPrice{
-			Symbol: target,
-			Price:  1_000_000.1059459549,
-		}
-	}
-
-	err := s.writeClient.SendPrices(prices)
-	require.NoError(s.T(), err)
-
-	s.waitVotePeriod()
-
+	s.waitVotePeriod()                  // wait: VP 1
+	pricesSent := s.sendPrices(targets) // VP 1: Only prevote
+	s.waitVotePeriod()                  // wait VP 2
+	s.sendPrices(targets)               // VP 2: Prevote VP 2 and Vote reveal VP 1
+	s.waitVotePeriod()                  // VP 3: VP 1 Vote Consensus, VP 2 Vote Reveal, VP 3 Prevote
 	gotPrices := s.getPrices()
 
+	_ = pricesSent
 	s.T().Logf("%#v", gotPrices)
 }
 
@@ -96,6 +87,21 @@ func (s *IntegrationTestSuite) getPrices() oracletypes.ExchangeRateTuples {
 	require.NoError(s.T(), err)
 
 	return prices.ExchangeRates
+}
+
+func (s *IntegrationTestSuite) sendPrices(targets []string) []SymbolPrice {
+	prices := make([]SymbolPrice, len(targets))
+	for i, target := range targets {
+		prices[i] = SymbolPrice{
+			Symbol: target,
+			Price:  1_000_000.1059459549,
+		}
+	}
+
+	err := s.writeClient.SendPrices(prices)
+	require.NoError(s.T(), err)
+
+	return prices
 }
 
 func TestEventsClientSuite(t *testing.T) {
