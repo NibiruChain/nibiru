@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	reflectionv2 "github.com/cosmos/cosmos-sdk/server/grpc/reflection/v2alpha1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	txservice "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc"
 	"log"
@@ -34,6 +35,7 @@ type TxClient struct {
 	prevotes  PrevotesCache
 
 	authClient   authtypes.QueryClient
+	txClient     txservice.ServiceClient
 	chainID      string
 	keyBase      keyring.Keyring
 	txConfig     client.TxConfig
@@ -73,6 +75,7 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 		validator:    validator,
 		prevotes:     cache,
 		authClient:   authtypes.NewQueryClient(conn),
+		txClient:     txservice.NewServiceClient(conn),
 		chainID:      chain.Chain.Id,
 		keyBase:      keyRing,
 		txConfig:     encConf.TxConfig,
@@ -88,9 +91,14 @@ func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) error {
 	prevoteMsg := c.prevotesMsg(symbolPrices)
 	voteMsg := c.voteMsg()
 
+	msgs := []sdk.Msg{prevoteMsg}
+	if voteMsg != nil {
+		msgs = append(msgs, voteMsg)
+	}
+
 	for {
 		log.Printf("sending prevote and vote:\n\t%s,\n\t %s", prevoteMsg, voteMsg)
-		err := c.sendTx(prevoteMsg, voteMsg)
+		err := c.sendTx(msgs...)
 		if err != nil {
 			log.Printf("failed sending tx: %s", err)
 
