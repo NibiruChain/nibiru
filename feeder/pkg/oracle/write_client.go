@@ -70,6 +70,10 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 	encConf := simapp.MakeTestEncodingConfig()
 
 	// assert no errors in keybase
+	_, err = keyRing.KeyByAddress(feeder)
+	if err != nil {
+		return nil, err
+	}
 
 	return &TxClient{
 		feeder:       feeder,
