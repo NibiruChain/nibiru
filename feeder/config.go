@@ -18,26 +18,37 @@ const (
 	BinanceExchangeName = "binance"
 )
 
+type CacheType string
+
 const (
-	MemCacheName  = "mem"
-	FileCacheName = "file"
+	MemCacheName  CacheType = "mem"
+	FileCacheName CacheType = "file"
 )
 
 const (
 	RawConfigEnv = `FEEDER_CONFIG`
 )
 
-type rawConfig struct {
-	GRPCEndpoint                string                       `yaml:"grpc_endpoint"`
-	TendermintWebsocketEndpoint string                       `yaml:"tendermint_websocket_endpoint"`
-	Validator                   string                       `yaml:"validator"`
-	Feeder                      string                       `yaml:"feeder"`
-	Cache                       string                       `yaml:"cache"`
-	PrivateKeyHex               string                       `yaml:"key_ring"`
-	ChainToExchangeSymbols      map[string]map[string]string `yaml:"chain_to_exchange_symbols"`
+// RawConfig defines a raw configuration of the Feeder.
+type RawConfig struct {
+	// GRPCEndpoint is the GRPC endpoint of the node.
+	GRPCEndpoint string `yaml:"grpc_endpoint"`
+	// TendermintWebsocketEndpoint is the tendermint websocket endpoint (ex: wss://rpc.something.io/websocket)
+	TendermintWebsocketEndpoint string `yaml:"tendermint_websocket_endpoint"`
+	// Validator is the validator address as string.
+	Validator string `yaml:"validator"`
+	// Feeder is the feeder address as string.
+	Feeder string `yaml:"feeder"`
+	// Cache is the cache type
+	Cache CacheType `yaml:"cache"`
+	// PrivateKeyHex is the hex encoding of the private key of the feeder.
+	PrivateKeyHex string `yaml:"key_ring"`
+	// ChainToExchangeSymbols is a map of exchange names to a map of
+	ChainToExchangeSymbols map[string]map[string]string `yaml:"chain_to_exchange_symbols"`
 }
 
-func (r rawConfig) toConfig() (*Config, error) {
+// ToConfig attempts to convert a raw configuration to a Config object.
+func (r RawConfig) ToConfig() (*Config, error) {
 	if r.GRPCEndpoint == "" {
 		return nil, fmt.Errorf("no GRPC endpoint")
 	}
@@ -88,13 +99,13 @@ func (r rawConfig) toConfig() (*Config, error) {
 	}, nil
 }
 
-func getRawConfig() (*rawConfig, error) {
+func getRawConfig() (*RawConfig, error) {
 	confYaml, ok := os.LookupEnv(RawConfigEnv)
 	if !ok {
 		return nil, fmt.Errorf("yaml config not found in env variable: %s", RawConfigEnv)
 	}
 
-	conf := new(rawConfig)
+	conf := new(RawConfig)
 	err := yaml.Unmarshal([]byte(confYaml), conf)
 	if err != nil {
 		return nil, err
@@ -108,7 +119,7 @@ func GetConfig() Config {
 	if err != nil {
 		panic(err)
 	}
-	conf, err := raw.toConfig()
+	conf, err := raw.ToConfig()
 	if err != nil {
 		panic(err)
 	}

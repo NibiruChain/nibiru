@@ -47,7 +47,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	privKeyDecrypted, _, err := crypto.UnarmorDecryptPrivKey(privKeyEncrypted, "hello")
 	require.NoError(s.T(), err)
 
-	rawConf := rawConfig{
+	rawConf := RawConfig{
 		GRPCEndpoint:                grpcEndpoint,
 		TendermintWebsocketEndpoint: tmEndpoint,
 		Validator:                   val.ValAddress.String(),
@@ -63,7 +63,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 	}
 
-	conf, err := rawConf.toConfig()
+	conf, err := rawConf.ToConfig()
 	require.NoError(s.T(), err)
 	s.feeder, err = Dial(*conf)
 	require.NoError(s.T(), err)
