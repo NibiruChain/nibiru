@@ -3,13 +3,13 @@ package oracle
 import (
 	"context"
 	"encoding/json"
+	"github.com/NibiruChain/nibiru/feeder/websocket"
 	"log"
 	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
 
-	"github.com/NibiruChain/nibiru/feeder/pkg/websocket"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
