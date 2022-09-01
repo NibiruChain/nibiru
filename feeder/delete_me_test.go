@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/stretchr/testify/require"
@@ -80,7 +81,7 @@ func (s *IntegrationTestSuite) TestVoting() {
 	go func() {
 		s.feeder.Run()
 	}()
-	select {}
+	<-time.After(2 * time.Minute)
 }
 
 func (s *IntegrationTestSuite) getPrices() oracletypes.ExchangeRateTuples {
