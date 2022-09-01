@@ -25,7 +25,8 @@ func NewJSON[T any, U any](endpoint string, initMsg U, handler func(T), errHandl
 			x := new(T)
 			err := json.Unmarshal(rawMsg, x)
 			if err != nil {
-				panic(err)
+				errHandler(err) // TODO(mercilex): assert it does not dead-lock
+				return
 			}
 			handler(*x)
 		},

@@ -1,7 +1,7 @@
 package priceprovider
 
 import (
-	"log"
+	"github.com/rs/zerolog/log"
 	"strconv"
 	"sync"
 
@@ -79,16 +79,20 @@ func (b *Binance) onError(err error) {
 	b.rw.Lock()
 	defer b.rw.Unlock()
 
-	log.Printf("binance connection interrupted: %s", err)
+	log.Error().Err(err).
+		Msg("binance connection interrupted")
 	for {
 		err := b.connect()
 		if err != nil {
-			log.Printf("binance reconnection failed: %s", err)
+			log.
+				Error().
+				Err(err).
+				Msg("binance reconnection failed")
 			continue // TODO(mercilex): backoff strategy?
 		}
 		break
 	}
-	log.Printf("reconnected to binance")
+	log.Info().Msg("successful reconnection")
 }
 
 func (b *Binance) Close() {

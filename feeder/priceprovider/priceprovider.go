@@ -1,6 +1,6 @@
 package priceprovider
 
-import "log"
+import "github.com/rs/zerolog/log"
 
 // PriceResponse defines the response given by
 // PriceProvider implementers when asked for prices.
@@ -55,7 +55,10 @@ type ExchangeToChainSymbolPriceProvider struct {
 func (e ExchangeToChainSymbolPriceProvider) GetPrice(chainSymbol string) PriceResponse {
 	exchangeSymbol, ok := e.chainToExchange[chainSymbol]
 	if !ok {
-		log.Printf("chain to exchange symbol not found for '%s'", chainSymbol)
+		log.
+			Warn().
+			Str("chain-symbol", chainSymbol).
+			Msg("chain to exchange symbol not found")
 		return PriceResponse{
 			Symbol: chainSymbol,
 			Price:  0,

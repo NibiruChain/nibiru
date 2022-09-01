@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"log"
+	"github.com/rs/zerolog/log"
 	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -103,17 +103,20 @@ func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) {
 		msgs = []sdk.Msg{voteMsg, prevoteMsg} // NOTE(mercilex): if you... change the order ... it won't work because the prevote will override the old one
 	}
 
+	log.Info().Interface("prevote", prevoteMsg).Interface("vote", voteMsg).Msg("sending vote and prevote")
 	for {
 		// TODO(mercilex): backoff strategy
-		log.Printf("sending prevote and vote:\n\t%s,\n\t %s", prevoteMsg, voteMsg)
 		err := c.sendTx(msgs...)
 		if err != nil {
-			log.Printf("failed sending tx: %s", err)
+			log.Error().Err(err).Msg("failed to send transaction")
+			log.Info().Msg("retrying to send transaction")
 			continue
 		}
+		log.Debug().Msg("transaction sent")
 		break
 	}
 
+	log.Debug().Msg("saving prevote in cache")
 	c.prevotes.SetPrevote(salt, votesStr, c.feeder.String())
 }
 

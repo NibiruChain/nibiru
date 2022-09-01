@@ -3,7 +3,7 @@ package feeder
 import (
 	"github.com/NibiruChain/nibiru/feeder/oracle"
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 func Dial(c Config) (*Feeder, error) {
@@ -50,16 +50,16 @@ func (f *Feeder) Run() {
 		case <-f.stop:
 			return
 		case newSymbols := <-f.events.SymbolsUpdate():
-			log.Printf("received new symbols update: %#v", newSymbols)
+			log.Info().Strs("symbols", newSymbols).Msg("received new symbols update")
 			f.symbols = newSymbols
 		case height := <-f.events.NewVotingPeriod():
-			log.Printf("new voting period for height: %d", height)
+			log.Info().Uint64("voting period", height).Msg("new voting period started")
 
 			prices := make([]oracle.SymbolPrice, len(f.symbols))
 			for i, symbol := range f.symbols {
 				price := f.pp.GetPrice(symbol)
 				if !price.Valid {
-					log.Printf("no valid prices for: %s", symbol)
+					log.Warn().Str("symbol", symbol).Msg("no valid prices for symbol")
 				}
 
 				if price.Symbol == "" {
@@ -71,7 +71,7 @@ func (f *Feeder) Run() {
 					Price:  price.Price,
 				}
 			}
-			log.Printf("posting prices: %#v", prices)
+			log.Info().Interface("prices", prices).Msg("posting prices")
 			f.tx.SendPrices(prices) // TODO(mercilex): add a give up strategy which does not block us for too much time znd does not make us miss multiple voting periods
 		}
 	}

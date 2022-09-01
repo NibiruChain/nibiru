@@ -70,7 +70,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 }
 
 func (s *IntegrationTestSuite) TestVoting() {
-	s.feeder.Run()
+	go func() {
+		s.feeder.Run()
+	}()
+	select {}
 }
 
 func (s *IntegrationTestSuite) getPrices() oracletypes.ExchangeRateTuples {

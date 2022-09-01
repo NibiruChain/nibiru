@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/NibiruChain/nibiru/feeder/websocket"
-	"log"
+	"github.com/rs/zerolog/log"
 	"strconv"
 	"time"
 
@@ -80,16 +80,17 @@ func (c *eventsClient) onNewBlock(msg newBlockJSON) {
 }
 
 func (c *eventsClient) onWsError(err error) {
-	log.Printf("error received from websocket: %s", err)
-	log.Printf("attempting reconnection")
+	log.Error().Err(err).Msg("events client websocket error")
+	log.Info().Msg("attempting events client reconnection")
 	for {
 		err := c.connectWebsocket()
 		if err == nil {
 			break
 		}
-		log.Printf("error whilst attempting to reconnect: %s", err)
+		log.Error().Err(err).Msg("events client reconnection error")
 		time.Sleep(5 * time.Second) // TODO(mercilex): custom reconnect strategy?
 	}
+	log.Info().Msg("events client reconnected")
 }
 
 func (c *eventsClient) NewVotingPeriod() <-chan uint64 {
