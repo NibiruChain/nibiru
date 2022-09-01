@@ -17,11 +17,18 @@ var (
 	Timeout = websocket.Timeout
 )
 
+type ParamsUpdate struct {
+	// Symbols indicates the symbols oracles need to provide prices for.
+	Symbols []string
+	// VotePeriodBlocks indicates the number of blocks between each voting period.
+	VotePeriodBlocks uint64
+}
+
 func NewEventsClient(tendermintEndpoint string, grpcEndpoint string) (*EventsClient, error) {
 	ec := &EventsClient{
 		tm:              tendermintEndpoint,
 		grpc:            grpcEndpoint,
-		symbolsUpdate:   make(chan []string, 1), // it has one as buffer for the initial vote targets
+		paramsUpdate:    make(chan ParamsUpdate, 1), // it has one as buffer for the initial params
 		newVotingPeriod: make(chan uint64),
 	}
 
@@ -34,7 +41,7 @@ type EventsClient struct {
 
 	votingPeriod uint64
 
-	symbolsUpdate   chan []string
+	paramsUpdate    chan ParamsUpdate
 	newVotingPeriod chan uint64
 }
 
@@ -87,8 +94,8 @@ func (c *EventsClient) NewVotingPeriod() <-chan uint64 {
 	return c.newVotingPeriod
 }
 
-func (c *EventsClient) SymbolsUpdate() (newSymbols <-chan []string) {
-	return c.symbolsUpdate
+func (c *EventsClient) ParamsUpdate() (newSymbols <-chan ParamsUpdate) {
+	return c.paramsUpdate
 }
 
 func (c *EventsClient) Close() {
@@ -135,6 +142,9 @@ func (c *EventsClient) updateParams() error {
 		return err
 	}
 
-	c.symbolsUpdate <- targets.VoteTargets
+	c.paramsUpdate <- ParamsUpdate{
+		Symbols:          targets.VoteTargets,
+		VotePeriodBlocks: p.Params.VotePeriod,
+	}
 	return nil
 }

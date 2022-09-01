@@ -23,12 +23,12 @@ func Dial(c Config) (*Feeder, error) {
 	}
 
 	return &Feeder{
-		stop:    make(chan struct{}),
-		done:    make(chan struct{}),
-		symbols: nil,
-		tx:      tx,
-		events:  events,
-		pp:      pp,
+		stop:   make(chan struct{}),
+		done:   make(chan struct{}),
+		params: oracle.ParamsUpdate{},
+		tx:     tx,
+		events: events,
+		pp:     pp,
 	}, nil
 }
 
@@ -36,7 +36,7 @@ type Feeder struct {
 	stop chan struct{}
 	done chan struct{}
 
-	symbols []string
+	params oracle.ParamsUpdate
 
 	tx     *oracle.TxClient
 	events *oracle.EventsClient
@@ -49,14 +49,17 @@ func (f *Feeder) Run() {
 		select {
 		case <-f.stop:
 			return
-		case newSymbols := <-f.events.SymbolsUpdate():
-			log.Info().Strs("symbols", newSymbols).Msg("received new symbols update")
-			f.symbols = newSymbols
+		case params := <-f.events.ParamsUpdate():
+			log.Info().Interface("params update", params).Msg("received new params update")
+			f.params = params
 		case height := <-f.events.NewVotingPeriod():
-			log.Info().Uint64("voting period", height).Msg("new voting period started")
+			log.Info().
+				Uint64("voting period", height/f.params.VotePeriodBlocks).
+				Uint64("voting period start block", height).
+				Msg("new voting period started")
 
-			prices := make([]oracle.SymbolPrice, len(f.symbols))
-			for i, symbol := range f.symbols {
+			prices := make([]oracle.SymbolPrice, len(f.params.Symbols))
+			for i, symbol := range f.params.Symbols {
 				price := f.pp.GetPrice(symbol)
 				if !price.Valid {
 					log.Warn().Str("symbol", symbol).Msg("no valid prices for symbol")

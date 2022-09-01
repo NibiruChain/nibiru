@@ -78,9 +78,9 @@ func (s *IntegrationTestSuite) waitVotePeriod() {
 func (s *IntegrationTestSuite) targetsUpdate() []string {
 	select {
 	case <-time.Tick(1 * time.Minute):
-		s.T().Fatal("no vote targets")
-	case targets := <-s.eventsClient.SymbolsUpdate():
-		return targets
+		s.T().Fatal("no params update")
+	case params := <-s.eventsClient.ParamsUpdate():
+		return params.Symbols
 	}
 	// unreachable
 	return nil
