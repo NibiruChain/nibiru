@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 	"os"
 )
@@ -84,6 +85,7 @@ func (r RawConfig) ToConfig() (*Config, error) {
 	switch r.Cache {
 	case MemCacheName:
 		cache = &oracle.MemPrevoteCache{}
+		log.Warn().Msg("using MemPrevoteCache means in case the oracle feeder is closed and reactivated then the last prevote will not be forwarded and will lead to slash")
 	default:
 		return nil, fmt.Errorf("unknown prevotes cache type: %s", r.Cache)
 	}

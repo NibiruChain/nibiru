@@ -35,6 +35,8 @@ func NewEventsClient(tendermintEndpoint string, grpcEndpoint string) (*EventsCli
 	return ec, ec.init()
 }
 
+// EventsClient is a client that keeps track, asynchronously,
+// of chain updates using the tendermint websocket.
 type EventsClient struct {
 	tm   string
 	grpc string
@@ -45,6 +47,9 @@ type EventsClient struct {
 	newVotingPeriod chan uint64
 }
 
+// init initializes the client by getting
+// the initial oracle parameters and connecting
+// to the tendermint websocket.
 func (c *EventsClient) init() error {
 	err := c.updateParams()
 	if err != nil {
@@ -57,6 +62,8 @@ func (c *EventsClient) init() error {
 
 	return nil
 }
+
+// connectWebsocket connects to the tendermint websocket.
 func (c *EventsClient) connectWebsocket() error {
 	const message = `{"jsonrpc":"2.0","method":"subscribe","id":0,"params":{"query":"tm.event='NewBlock'"}}`
 	_, _, err := websocket.NewJSON(c.tm, json.RawMessage(message), c.onNewBlock, c.onWsError) // TODO(mercilex): stop strategy
@@ -67,6 +74,7 @@ func (c *EventsClient) connectWebsocket() error {
 	return nil
 }
 
+// onNewBlock handles the logic of handling new block events.
 func (c *EventsClient) onNewBlock(msg newBlockJSON) {
 	// init msg
 	if msg.Result.Data.Value.Block.Header.Height == "" {
@@ -76,6 +84,7 @@ func (c *EventsClient) onNewBlock(msg newBlockJSON) {
 	c.signalNewVoting(msg.Result.Data.Value.Block.Header.Height)
 }
 
+// onWsError is the error handler and it attempts to reconnect to the tendermint websocket.
 func (c *EventsClient) onWsError(err error) {
 	log.Error().Err(err).Msg("events client websocket error")
 	log.Info().Msg("attempting events client reconnection")
