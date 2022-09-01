@@ -40,7 +40,7 @@ func (b *Binance) GetPrice(symbol string) PriceResponse {
 }
 
 func (b *Binance) connect() error {
-	stop, done, err := binance.WsAllMiniMarketsStatServe(b.onUpdate, b.onError)
+	done, stop, err := binance.WsAllMiniMarketsStatServe(b.onUpdate, b.onError)
 
 	if err != nil {
 		return err
@@ -98,5 +98,6 @@ func (b *Binance) onError(err error) {
 }
 
 func (b *Binance) Close() {
-	panic("implement me") // TODO(mercilex)
+	close(b.stop)
+	<-b.done
 }
