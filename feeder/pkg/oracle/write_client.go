@@ -93,7 +93,7 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 	}, nil
 }
 
-func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) error {
+func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) {
 	// generate prevotes
 	prevoteMsg, salt, votesStr := c.prevotesMsg(symbolPrices)
 	voteMsg := c.voteMsg()
@@ -115,8 +115,6 @@ func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) error {
 	}
 
 	c.prevotes.SetPrevote(salt, votesStr, c.feeder.String())
-
-	return nil
 }
 
 func (c *TxClient) prevotesMsg(prices []SymbolPrice) (msg *types.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
