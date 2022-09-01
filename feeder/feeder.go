@@ -1,18 +1,18 @@
 package feeder
 
 import (
-	oracle2 "github.com/NibiruChain/nibiru/feeder/oracle"
+	"github.com/NibiruChain/nibiru/feeder/oracle"
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
 	"log"
 )
 
 func Dial(c Config) (*Feeder, error) {
-	tx, err := oracle2.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing)
+	tx, err := oracle.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing)
 	if err != nil {
 		return nil, err
 	}
 
-	events, err := oracle2.NewEventsClient(c.TendermintWebsocketEndpoint, c.GRPCEndpoint)
+	events, err := oracle.NewEventsClient(c.TendermintWebsocketEndpoint, c.GRPCEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +38,8 @@ type Feeder struct {
 
 	symbols []string
 
-	tx     *oracle2.TxClient
-	events oracle2.EventsClient
+	tx     *oracle.TxClient
+	events oracle.EventsClient
 	pp     priceprovider.PriceProvider
 }
 
@@ -55,7 +55,7 @@ func (f *Feeder) Run() {
 		case height := <-f.events.NewVotingPeriod():
 			log.Printf("new voting period for height: %d", height)
 
-			prices := make([]oracle2.SymbolPrice, len(f.symbols))
+			prices := make([]oracle.SymbolPrice, len(f.symbols))
 			for i, symbol := range f.symbols {
 				price := f.pp.GetPrice(symbol)
 				if !price.Valid {
@@ -66,7 +66,7 @@ func (f *Feeder) Run() {
 					panic("bad implementation of price provider interface")
 				}
 
-				prices[i] = oracle2.SymbolPrice{
+				prices[i] = oracle.SymbolPrice{
 					Symbol: symbol,
 					Price:  price.Price,
 				}

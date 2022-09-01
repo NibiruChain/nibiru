@@ -2,8 +2,8 @@ package feeder
 
 import (
 	"fmt"
-	oracle2 "github.com/NibiruChain/nibiru/feeder/oracle"
-	priceprovider2 "github.com/NibiruChain/nibiru/feeder/priceprovider"
+	"github.com/NibiruChain/nibiru/feeder/oracle"
+	"github.com/NibiruChain/nibiru/feeder/priceprovider"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"gopkg.in/yaml.v2"
@@ -60,7 +60,7 @@ func (r rawConfig) toConfig() (*Config, error) {
 		return nil, fmt.Errorf("no private key provided")
 	}
 
-	kr := oracle2.NewPrivKeyKeyring(r.PrivateKeyHex)
+	kr := oracle.NewPrivKeyKeyring(r.PrivateKeyHex)
 	if _, _, err := kr.Sign("", []byte("test message to ensure all works")); err != nil {
 		return nil, fmt.Errorf("invalid private key: %w", err)
 	}
@@ -69,10 +69,10 @@ func (r rawConfig) toConfig() (*Config, error) {
 		return nil, fmt.Errorf("no chain to exchange symbols provided")
 	}
 
-	var cache oracle2.PrevotesCache
+	var cache oracle.PrevotesCache
 	switch r.Cache {
 	case MemCacheName:
-		cache = &oracle2.MemPrevoteCache{}
+		cache = &oracle.MemPrevoteCache{}
 	default:
 		return nil, fmt.Errorf("unknown prevotes cache type: %s", r.Cache)
 	}
@@ -121,26 +121,26 @@ type Config struct {
 	TendermintWebsocketEndpoint string
 	Validator                   sdk.ValAddress
 	Feeder                      sdk.AccAddress
-	Cache                       oracle2.PrevotesCache
+	Cache                       oracle.PrevotesCache
 	KeyRing                     keyring.Keyring
 	ChainToExchangeSymbols      map[string]map[string]string
 }
 
-func PriceProviderFromChainToExchangeSymbols(symbols map[string]map[string]string) (priceprovider2.PriceProvider, error) {
-	pps := make([]priceprovider2.PriceProvider, 0, len(symbols))
+func PriceProviderFromChainToExchangeSymbols(symbols map[string]map[string]string) (priceprovider.PriceProvider, error) {
+	pps := make([]priceprovider.PriceProvider, 0, len(symbols))
 	for exchange, chainToExchangeSymbols := range symbols {
 		switch exchange {
 		case BinanceExchangeName:
-			pp, err := priceprovider2.DialBinance()
+			pp, err := priceprovider.DialBinance()
 			if err != nil {
 				return nil, fmt.Errorf("unable to dial %s: %w", exchange, err)
 			}
-			pp = priceprovider2.NewExchangeToChainSymbolPriceProvider(pp, chainToExchangeSymbols)
+			pp = priceprovider.NewExchangeToChainSymbolPriceProvider(pp, chainToExchangeSymbols)
 			pps = append(pps, pp)
 		default:
 			return nil, fmt.Errorf("unsupported exchange: %s", exchange)
 		}
 	}
 
-	return priceprovider2.NewAggregatePriceProvider(pps), nil
+	return priceprovider.NewAggregatePriceProvider(pps), nil
 }
