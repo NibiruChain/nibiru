@@ -17,14 +17,8 @@ var (
 	Timeout = websocket.Timeout
 )
 
-type EventsClient interface {
-	SymbolsUpdate() (newSymbols <-chan []string)
-	NewVotingPeriod() (height <-chan uint64)
-	Close()
-}
-
-func NewEventsClient(tendermintEndpoint string, grpcEndpoint string) (EventsClient, error) {
-	ec := &eventsClient{
+func NewEventsClient(tendermintEndpoint string, grpcEndpoint string) (*EventsClient, error) {
+	ec := &EventsClient{
 		tm:              tendermintEndpoint,
 		grpc:            grpcEndpoint,
 		symbolsUpdate:   make(chan []string, 1), // it has one as buffer for the initial vote targets
@@ -34,11 +28,7 @@ func NewEventsClient(tendermintEndpoint string, grpcEndpoint string) (EventsClie
 	return ec, ec.init()
 }
 
-var (
-	_ EventsClient = (*eventsClient)(nil)
-)
-
-type eventsClient struct {
+type EventsClient struct {
 	tm   string
 	grpc string
 
@@ -48,7 +38,7 @@ type eventsClient struct {
 	newVotingPeriod chan uint64
 }
 
-func (c *eventsClient) init() error {
+func (c *EventsClient) init() error {
 	err := c.updateParams()
 	if err != nil {
 		return err
@@ -60,7 +50,7 @@ func (c *eventsClient) init() error {
 
 	return nil
 }
-func (c *eventsClient) connectWebsocket() error {
+func (c *EventsClient) connectWebsocket() error {
 	const message = `{"jsonrpc":"2.0","method":"subscribe","id":0,"params":{"query":"tm.event='NewBlock'"}}`
 	_, _, err := websocket.NewJSON(c.tm, json.RawMessage(message), c.onNewBlock, c.onWsError) // TODO(mercilex): stop strategy
 	if err != nil {
@@ -70,7 +60,7 @@ func (c *eventsClient) connectWebsocket() error {
 	return nil
 }
 
-func (c *eventsClient) onNewBlock(msg newBlockJSON) {
+func (c *EventsClient) onNewBlock(msg newBlockJSON) {
 	// init msg
 	if msg.Result.Data.Value.Block.Header.Height == "" {
 		return
@@ -79,7 +69,7 @@ func (c *eventsClient) onNewBlock(msg newBlockJSON) {
 	c.signalNewVoting(msg.Result.Data.Value.Block.Header.Height)
 }
 
-func (c *eventsClient) onWsError(err error) {
+func (c *EventsClient) onWsError(err error) {
 	log.Error().Err(err).Msg("events client websocket error")
 	log.Info().Msg("attempting events client reconnection")
 	for {
@@ -93,15 +83,15 @@ func (c *eventsClient) onWsError(err error) {
 	log.Info().Msg("events client reconnected")
 }
 
-func (c *eventsClient) NewVotingPeriod() <-chan uint64 {
+func (c *EventsClient) NewVotingPeriod() <-chan uint64 {
 	return c.newVotingPeriod
 }
 
-func (c *eventsClient) SymbolsUpdate() (newSymbols <-chan []string) {
+func (c *EventsClient) SymbolsUpdate() (newSymbols <-chan []string) {
 	return c.symbolsUpdate
 }
 
-func (c *eventsClient) Close() {
+func (c *EventsClient) Close() {
 	//TODO implement me
 	panic("implement me")
 }
@@ -109,7 +99,7 @@ func (c *eventsClient) Close() {
 // signalNewVoting signals a new voting period in case
 // the provided heightStr matches the last block of the
 // current voting period.
-func (c *eventsClient) signalNewVoting(heightStr string) {
+func (c *EventsClient) signalNewVoting(heightStr string) {
 	height, err := strconv.ParseUint(heightStr, 10, 64)
 	if err != nil {
 		panic(err)
@@ -123,7 +113,7 @@ func (c *eventsClient) signalNewVoting(heightStr string) {
 	}
 }
 
-func (c *eventsClient) updateParams() error {
+func (c *EventsClient) updateParams() error {
 	conn, err := grpc.Dial(c.grpc, grpc.WithInsecure())
 	if err != nil {
 		return err

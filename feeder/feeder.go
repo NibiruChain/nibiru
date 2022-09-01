@@ -39,7 +39,7 @@ type Feeder struct {
 	symbols []string
 
 	tx     *oracle.TxClient
-	events oracle.EventsClient
+	events *oracle.EventsClient
 	pp     priceprovider.PriceProvider
 }
 

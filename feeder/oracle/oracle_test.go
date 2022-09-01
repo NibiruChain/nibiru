@@ -22,7 +22,7 @@ type IntegrationTestSuite struct {
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 
-	eventsClient EventsClient
+	eventsClient *EventsClient
 	writeClient  *TxClient
 
 	oracle oracletypes.QueryClient
