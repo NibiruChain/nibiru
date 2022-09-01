@@ -2,13 +2,15 @@ package feeder
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/feeder/oracle"
-	"github.com/NibiruChain/nibiru/feeder/priceprovider"
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
-	"os"
+
+	"github.com/NibiruChain/nibiru/feeder/oracle"
+	"github.com/NibiruChain/nibiru/feeder/priceprovider"
 )
 
 func init() {
@@ -16,7 +18,8 @@ func init() {
 }
 
 const (
-	BinanceExchangeName = "binance"
+	BinanceExchangeName  = "binance"
+	BitfinexExchangeName = "bitfinex"
 )
 
 type CacheType string
@@ -145,6 +148,18 @@ func PriceProviderFromChainToExchangeSymbols(symbols map[string]map[string]strin
 		switch exchange {
 		case BinanceExchangeName:
 			pp, err := priceprovider.DialBinance()
+			if err != nil {
+				return nil, fmt.Errorf("unable to dial %s: %w", exchange, err)
+			}
+			pp = priceprovider.NewExchangeToChainSymbolPriceProvider(pp, chainToExchangeSymbols)
+			pps = append(pps, pp)
+
+		case BitfinexExchangeName:
+			symbols := make([]string, 0, len(chainToExchangeSymbols))
+			for _, s := range chainToExchangeSymbols {
+				symbols = append(symbols, s)
+			}
+			pp, err := priceprovider.DialBitfinex(symbols)
 			if err != nil {
 				return nil, fmt.Errorf("unable to dial %s: %w", exchange, err)
 			}

@@ -3,15 +3,17 @@ package feeder
 import (
 	"context"
 	"encoding/hex"
+	"net/url"
+	"testing"
+
+	"github.com/cosmos/cosmos-sdk/crypto"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"net/url"
-	"testing"
 )
 
 type IntegrationTestSuite struct {
@@ -55,10 +57,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		Cache:                       MemCacheName,
 		PrivateKeyHex:               hex.EncodeToString(privKeyDecrypted.Bytes()),
 		ChainToExchangeSymbols: map[string]map[string]string{
-			"binance": {
+			BinanceExchangeName: {
 				"ubtc:unusd":  "BTCUSDT",
 				"ueth:unusd":  "ETHUSDT",
 				"uusdc:unusd": "USDCUSDT",
+			},
+			BitfinexExchangeName: {
+				"ubtc:unusd": "tBTCUSD",
+				"ueth:unusd": "tETHUSD",
+				"uusd:unusd": "tUSTUSD",
 			},
 		},
 	}

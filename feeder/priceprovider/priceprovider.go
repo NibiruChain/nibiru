@@ -13,9 +13,11 @@ type PriceResponse struct {
 	Price float64
 	// Valid defines if the price can be used or not.
 	Valid bool
+	// Source defines the source of the price, optional.
+	Source string
 }
 
-// PriceProvider defines a price provider's behaviour.
+// PriceProvider defines a price provider's behavior.
 type PriceProvider interface {
 	// GetPrice returns the PriceResponse
 	// for the given symbol. PriceResponse.Symbol

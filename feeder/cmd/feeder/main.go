@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/NibiruChain/nibiru/feeder"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/NibiruChain/nibiru/feeder"
 )
 
 func main() {

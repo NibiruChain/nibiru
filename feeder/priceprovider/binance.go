@@ -1,9 +1,10 @@
 package priceprovider
 
 import (
-	"github.com/rs/zerolog/log"
 	"strconv"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/adshao/go-binance/v2"
 )
@@ -34,6 +35,7 @@ func (b *Binance) GetPrice(symbol string) PriceResponse {
 		Symbol: symbol,
 		Price:  price,
 		Valid:  ok,
+		Source: "binance",
 	}
 }
 

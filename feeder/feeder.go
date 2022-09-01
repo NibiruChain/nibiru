@@ -1,9 +1,12 @@
 package feeder
 
 import (
+	"time"
+
+	"github.com/rs/zerolog/log"
+
 	"github.com/NibiruChain/nibiru/feeder/oracle"
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
-	"github.com/rs/zerolog/log"
 )
 
 func Dial(c Config) (*Feeder, error) {
@@ -45,6 +48,14 @@ type Feeder struct {
 
 func (f *Feeder) Run() {
 	defer close(f.done)
+
+	select {
+	case params := <-f.events.ParamsUpdate():
+		f.params = params
+	case <-time.After(15 * time.Second):
+		panic("timeout whilst fetching initial params")
+	}
+
 	for {
 		select {
 		case <-f.stop:
@@ -72,6 +83,7 @@ func (f *Feeder) Run() {
 				prices[i] = oracle.SymbolPrice{
 					Symbol: symbol,
 					Price:  price.Price,
+					Source: price.Source,
 				}
 			}
 			log.Info().Interface("prices", prices).Msg("posting prices")

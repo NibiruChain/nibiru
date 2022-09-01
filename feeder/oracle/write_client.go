@@ -4,8 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"math/big"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -53,6 +54,7 @@ type TxClient struct {
 type SymbolPrice struct {
 	Symbol string
 	Price  float64
+	Source string
 }
 
 func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAddress, cache PrevotesCache, keyRing keyring.Keyring) (*TxClient, error) {
