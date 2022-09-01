@@ -5,6 +5,7 @@ import "log"
 // PriceResponse defines the response given by
 // PriceProvider implementers when asked for prices.
 // Symbol must always be not-empty.
+// TODO(mercilex): maybe add last update time here
 type PriceResponse struct {
 	// Symbol defines the symbol.
 	Symbol string
@@ -29,7 +30,7 @@ var _ PriceProvider = (*ExchangeToChainSymbolPriceProvider)(nil)
 
 // NewExchangeToChainSymbolPriceProvider returns a new ExchangeToChainSymbolPriceProvider instance
 // given a price provider and the chain to exchange symbols map.
-func NewExchangeToChainSymbolPriceProvider(pp PriceProvider, chainToExchangeSymbolsMap map[string]string) ExchangeToChainSymbolPriceProvider {
+func NewExchangeToChainSymbolPriceProvider(pp PriceProvider, chainToExchangeSymbolsMap map[string]string) PriceProvider {
 	return ExchangeToChainSymbolPriceProvider{
 		pp:              pp,
 		chainToExchange: chainToExchangeSymbolsMap,
@@ -75,7 +76,7 @@ var _ PriceProvider = (*AggregatePriceProvider)(nil)
 
 // NewAggregatePriceProvider instantiates a new AggregatePriceProvider instance
 // given multiple PriceProvider.
-func NewAggregatePriceProvider(pps []PriceProvider) AggregatePriceProvider {
+func NewAggregatePriceProvider(pps []PriceProvider) PriceProvider {
 	a := AggregatePriceProvider{make(map[int]PriceProvider, len(pps))}
 	for i, pp := range pps {
 		a.pps[i] = pp
