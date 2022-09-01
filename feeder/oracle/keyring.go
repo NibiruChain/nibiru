@@ -37,14 +37,6 @@ func NewPrivKeyKeyring(hexKey string) *PrivKeyKeyring {
 	}
 }
 
-func (p PrivKeyKeyring) List() ([]keyring.Info, error) {
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) SupportedAlgorithms() (keyring.SigningAlgoList, keyring.SigningAlgoList) {
-	panic("implement me")
-}
-
 func (p PrivKeyKeyring) Key(uid string) (keyring.Info, error) {
 	return p.KeyByAddress(p.addr)
 }
@@ -58,39 +50,6 @@ func (p PrivKeyKeyring) KeyByAddress(address sdk.Address) (keyring.Info, error) 
 		pubKey: p.pubKey,
 		addr:   p.addr,
 	}, nil
-}
-
-func (p PrivKeyKeyring) Delete(uid string) error {
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) DeleteByAddress(address sdk.Address) error {
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) NewMnemonic(uid string, language keyring.Language, hdPath, bip39Passphrase string, algo keyring.SignatureAlgo) (keyring.Info, string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo keyring.SignatureAlgo) (keyring.Info, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) SaveLedgerKey(uid string, algo keyring.SignatureAlgo, hrp string, coinType, account, index uint32) (keyring.Info, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) SavePubKey(uid string, pubkey cryptotypes.PubKey, algo hd.PubKeyType) (keyring.Info, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) SaveMultisig(uid string, pubkey cryptotypes.PubKey) (keyring.Info, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (p PrivKeyKeyring) Sign(uid string, msg []byte) ([]byte, cryptotypes.PubKey, error) {
@@ -108,36 +67,6 @@ func (p PrivKeyKeyring) SignByAddress(address sdk.Address, msg []byte) ([]byte, 
 	}
 
 	return signed, p.pubKey, nil
-}
-
-func (p PrivKeyKeyring) ImportPrivKey(uid, armor, passphrase string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) ImportPubKey(uid string, armor string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) ExportPubKeyArmor(uid string) (string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) ExportPubKeyArmorByAddress(address sdk.Address) (string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) ExportPrivKeyArmor(uid, encryptPassphrase string) (armor string, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PrivKeyKeyring) ExportPrivKeyArmorByAddress(address sdk.Address, encryptPassphrase string) (armor string, err error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 var _ keyring.Info = (*info)(nil)
@@ -163,10 +92,72 @@ func (i info) GetAddress() sdk.AccAddress {
 	return i.addr
 }
 
+// implementations that must never be called
+
+func (p PrivKeyKeyring) List() ([]keyring.Info, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) SupportedAlgorithms() (keyring.SigningAlgoList, keyring.SigningAlgoList) {
+	panic("must never be called")
+}
+
 func (i info) GetPath() (*hd.BIP44Params, error) {
-	panic("implement me")
+	panic("must never be called")
 }
 
 func (i info) GetAlgo() hd.PubKeyType {
-	panic("implement me")
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) Delete(uid string) error {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) DeleteByAddress(address sdk.Address) error {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) NewMnemonic(uid string, language keyring.Language, hdPath, bip39Passphrase string, algo keyring.SignatureAlgo) (keyring.Info, string, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo keyring.SignatureAlgo) (keyring.Info, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) SaveLedgerKey(uid string, algo keyring.SignatureAlgo, hrp string, coinType, account, index uint32) (keyring.Info, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) SavePubKey(uid string, pubkey cryptotypes.PubKey, algo hd.PubKeyType) (keyring.Info, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) SaveMultisig(uid string, pubkey cryptotypes.PubKey) (keyring.Info, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) ImportPrivKey(uid, armor, passphrase string) error {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) ImportPubKey(uid string, armor string) error {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) ExportPubKeyArmor(uid string) (string, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) ExportPubKeyArmorByAddress(address sdk.Address) (string, error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) ExportPrivKeyArmor(uid, encryptPassphrase string) (armor string, err error) {
+	panic("must never be called")
+}
+
+func (p PrivKeyKeyring) ExportPrivKeyArmorByAddress(address sdk.Address, encryptPassphrase string) (armor string, err error) {
+	panic("must never be called")
 }
