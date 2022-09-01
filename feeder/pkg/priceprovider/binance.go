@@ -20,7 +20,7 @@ type Binance struct {
 	prices map[string]float64 // TODO(mercilex): make it a struct which contains the last update time --- over a certain time (ex: 30s) of no updates price is expired
 }
 
-func DialBinance() (*Binance, error) {
+func DialBinance() (PriceProvider, error) {
 	b := &Binance{rw: sync.RWMutex{}, prices: map[string]float64{}}
 	return b, b.connect()
 }

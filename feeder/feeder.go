@@ -3,19 +3,8 @@ package feeder
 import (
 	"github.com/NibiruChain/nibiru/feeder/pkg/oracle"
 	"github.com/NibiruChain/nibiru/feeder/pkg/priceprovider"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"log"
 )
-
-type Config struct {
-	GRPCEndpoint                string
-	TendermintWebsocketEndpoint string
-	Validator                   sdk.ValAddress
-	Feeder                      sdk.AccAddress
-	Cache                       oracle.PrevotesCache
-	KeyRing                     keyring.Keyring
-}
 
 func Dial(c Config) (*Feeder, error) {
 	tx, err := oracle.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing)
@@ -28,13 +17,18 @@ func Dial(c Config) (*Feeder, error) {
 		return nil, err
 	}
 
+	pp, err := PriceProviderFromChainToExchangeSymbols(c.ChainToExchangeSymbols)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Feeder{
 		stop:    make(chan struct{}),
 		done:    make(chan struct{}),
 		symbols: nil,
 		tx:      tx,
 		events:  events,
-		pp:      nil,
+		pp:      pp,
 	}, nil
 }
 
@@ -77,7 +71,7 @@ func (f *Feeder) Run() {
 					Price:  price.Price,
 				}
 			}
-
+			log.Printf("posting prices: %#v", prices)
 			f.tx.SendPrices(prices) // TODO(mercilex): add a give up strategy which does not block us for too much time znd does not make us miss multiple voting periods
 		}
 	}

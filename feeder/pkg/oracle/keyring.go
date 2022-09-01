@@ -46,11 +46,11 @@ func (p PrivKeyKeyring) SupportedAlgorithms() (keyring.SigningAlgoList, keyring.
 }
 
 func (p PrivKeyKeyring) Key(uid string) (keyring.Info, error) {
-	panic("implement me")
+	return p.KeyByAddress(p.addr)
 }
 
 func (p PrivKeyKeyring) KeyByAddress(address sdk.Address) (keyring.Info, error) {
-	if address.Equals(p.addr) {
+	if !address.Equals(p.addr) {
 		return nil, fmt.Errorf("key not found")
 	}
 
@@ -94,8 +94,7 @@ func (p PrivKeyKeyring) SaveMultisig(uid string, pubkey cryptotypes.PubKey) (key
 }
 
 func (p PrivKeyKeyring) Sign(uid string, msg []byte) ([]byte, cryptotypes.PubKey, error) {
-	//TODO implement me
-	panic("implement me")
+	return p.SignByAddress(p.addr, msg)
 }
 
 func (p PrivKeyKeyring) SignByAddress(address sdk.Address, msg []byte) ([]byte, cryptotypes.PubKey, error) {

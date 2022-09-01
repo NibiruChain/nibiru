@@ -102,8 +102,7 @@ func (s *IntegrationTestSuite) sendPrices(targets []string) []SymbolPrice {
 		}
 	}
 
-	err := s.writeClient.SendPrices(prices)
-	require.NoError(s.T(), err)
+	s.writeClient.SendPrices(prices)
 
 	return prices
 }
