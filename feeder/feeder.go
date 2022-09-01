@@ -49,9 +49,11 @@ type Feeder struct {
 func (f *Feeder) Run() {
 	defer close(f.done)
 
+	log.Debug().Msg("waiting initial parameters")
 	select {
 	case params := <-f.events.ParamsUpdate():
 		f.params = params
+		log.Debug().Interface("initial params", params).Msg("got initial params")
 	case <-time.After(15 * time.Second):
 		panic("timeout whilst fetching initial params")
 	}
