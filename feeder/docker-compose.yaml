@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  node:
+    build:
+      context: "../"
+      dockerfile: "Dockerfile"
+    ports:
+      - "26656-26657:26656-26657"
+      - "9090:9090"
+      - "1317:1317"
+    volumes:
+      - ./data/.nibid:/root/.nibid
+    entrypoint: ["nibid", "start"]
+
+  oracle:
+    image: feeder:master
+    environment:
+      FEEDER_CONFIG: "{grpc_endpoint: '0.0.0.0:57281', tendermint_websocket_endpoint: 'ws://0.0.0.0:57280/websocket', validator: nibivaloper1dt2upkwy4druakap7qjwdny83yv6stgnacz9dq, feeder: nibi1dt2upkwy4druakap7qjwdny83yv6stgn5rv7ea, cache: mem, key_ring: c9716559a5fd0aa046763009e5748ef763a7dca9746b50a9851344353b310d23, chain_to_exchange_symbols: {binance: {'ubtc:unusd': BTCUSDT, 'ueth:unusd': ETHUSDT, 'uusdc:unusd': USDCUSDT}, bitfinex: {'ubtc:unusd': tBTCUSD, 'ueth:unusd': tETHUSD, 'uusd:unusd': tUSTUSD}}}"

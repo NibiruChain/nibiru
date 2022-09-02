@@ -28,6 +28,9 @@ var (
 	MaxSaltNumber = big.NewInt(9999) // NOTE(mercilex): max salt length is 4
 )
 
+// TODO(mercilex): maybe prevote cache does not make any sense to exist
+// considering that in case of oracle => stop/start then what's going
+// to happen most likely is that the voting period will be over already
 type PrevotesCache interface {
 	SetPrevote(salt string, exchangeRatesStr, feeder string)
 	GetPrevote() (salt, exchangeRatesStr, feeder string, ok bool)
