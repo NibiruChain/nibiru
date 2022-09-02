@@ -80,10 +80,11 @@ func newWs(rpc string, initMsg []byte, handler func(msg []byte), errHandler func
 		for {
 			_, msg, err := c.ReadMessage()
 			if err != nil {
-				silent := atomic.CompareAndSwapInt32(&silent, 0, 0)
+				silent := atomic.CompareAndSwapInt32(&silent, 1, 1)
 				if !silent {
 					errHandler(err)
 				}
+				return
 			}
 			handler(msg)
 		}
@@ -93,7 +94,7 @@ func newWs(rpc string, initMsg []byte, handler func(msg []byte), errHandler func
 	go func() {
 		select {
 		case <-stop:
-			atomic.CompareAndSwapInt32(&silent, 0, 1)
+			atomic.SwapInt32(&silent, 1)
 		case <-done:
 		}
 		_ = c.Close()

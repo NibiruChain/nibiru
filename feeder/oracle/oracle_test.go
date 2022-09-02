@@ -54,6 +54,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.oracle = oracletypes.NewQueryClient(conn)
 }
 
+func (s *IntegrationTestSuite) TearDownSuite() {
+	s.eventsClient.Close()
+	s.writeClient.Close()
+	s.network.Cleanup()
+}
+
 func (s *IntegrationTestSuite) TestVoting() {
 	targets := s.targetsUpdate()
 	s.waitVotePeriod()                  // wait: VP 1
