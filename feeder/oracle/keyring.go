@@ -15,6 +15,12 @@ var (
 	_ keyring.Keyring = (*PrivKeyKeyring)(nil)
 )
 
+// PrivKeyKeyring partially implements the keyring.Keyring
+// interface, the functionality which is implemented covers
+// only the usage of keyring.Keyring in the client.Context
+// and tx.Factory in transaction signing operations.
+// Other calls which are out of the scope of Tx signing
+// yield to panics.
 type PrivKeyKeyring struct {
 	addr    sdk.AccAddress
 	pubKey  cryptotypes.PubKey

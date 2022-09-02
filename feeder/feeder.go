@@ -89,7 +89,7 @@ func (f *Feeder) Run() {
 				}
 			}
 			log.Info().Interface("prices", prices).Msg("posting prices")
-			f.tx.SendPrices(prices) // TODO(mercilex): add a give up strategy which does not block us for too much time znd does not make us miss multiple voting periods
+			f.tx.SendPrices(prices) // TODO(mercilex): add a give up strategy which does not block us for too much time and does not make us miss multiple voting periods
 		}
 	}
 }
