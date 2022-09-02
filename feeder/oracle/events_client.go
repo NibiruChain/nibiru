@@ -107,7 +107,7 @@ func (c *EventsClient) onWsError(err error) {
 			break
 		}
 		log.Error().Err(err).Msg("events client reconnection error")
-		time.Sleep(5 * time.Second) // TODO(mercilex): custom reconnect strategy?
+		time.Sleep(5 * time.Second) // TODO(mercilex): backoff
 	}
 	log.Info().Msg("events client reconnected")
 }

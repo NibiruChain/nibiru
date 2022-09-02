@@ -77,6 +77,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	require.NoError(s.T(), err)
 }
 
+func (s *IntegrationTestSuite) TearDownSuite() {
+	s.feeder.Close()
+	s.network.Cleanup()
+}
+
 func (s *IntegrationTestSuite) TestVoting() {
 	go func() {
 		s.feeder.Run()
