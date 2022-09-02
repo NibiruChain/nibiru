@@ -47,6 +47,9 @@ type EventsClient struct {
 
 	paramsUpdate    chan ParamsUpdate
 	newVotingPeriod chan uint64
+
+	done chan struct{}
+	stop chan struct{}
 }
 
 // init initializes the client by getting
@@ -68,10 +71,13 @@ func (c *EventsClient) init() error {
 // connectWebsocket connects to the tendermint websocket.
 func (c *EventsClient) connectWebsocket() error {
 	const message = `{"jsonrpc":"2.0","method":"subscribe","id":0,"params":{"query":"tm.event='NewBlock'"}}`
-	_, _, err := websocket.NewJSON(c.tm, json.RawMessage(message), c.onNewBlock, c.onWsError) // TODO(mercilex): stop strategy
+	done, stop, err := websocket.NewJSON(c.tm, json.RawMessage(message), c.onNewBlock, c.onWsError)
 	if err != nil {
 		return err
 	}
+
+	c.done = done
+	c.stop = stop
 
 	return nil
 }
@@ -110,8 +116,8 @@ func (c *EventsClient) ParamsUpdate() (newSymbols <-chan ParamsUpdate) {
 }
 
 func (c *EventsClient) Close() {
-	//TODO implement me
-	panic("implement me")
+	close(c.stop)
+	<-c.done
 }
 
 // signalNewVoting signals a new voting period in case
