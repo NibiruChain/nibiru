@@ -97,6 +97,11 @@ func (c *EventsClient) onWsError(err error) {
 	log.Error().Err(err).Msg("events client websocket error")
 	log.Info().Msg("attempting events client reconnection")
 	for {
+		select {
+		case <-c.done:
+			return
+		default:
+		}
 		err := c.connectWebsocket()
 		if err == nil {
 			break
