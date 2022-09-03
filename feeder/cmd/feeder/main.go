@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -8,6 +9,7 @@ import (
 )
 
 func main() {
+	app.SetPrefixes(app.AccountAddressPrefix)
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Debug().Msg("fetching configuration")

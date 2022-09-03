@@ -10,7 +10,7 @@ import (
 )
 
 func Dial(c Config) (*Feeder, error) {
-	tx, err := oracle.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing)
+	tx, err := oracle.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing, c.ChainID)
 	if err != nil {
 		return nil, err
 	}

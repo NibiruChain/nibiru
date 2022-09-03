@@ -46,7 +46,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.eventsClient, err = NewEventsClient(u.String(), grpcEndpoint)
 	require.NoError(s.T(), err)
 
-	s.writeClient, err = NewTxClient(grpcEndpoint, val.ValAddress, val.Address, &MemPrevoteCache{}, val.ClientCtx.Keyring)
+	s.writeClient, err = NewTxClient(grpcEndpoint, val.ValAddress, val.Address, &MemPrevoteCache{}, val.ClientCtx.Keyring, s.cfg.ChainID)
 	require.NoError(s.T(), err)
 
 	conn, err := grpc.Dial(grpcEndpoint, grpc.WithInsecure())

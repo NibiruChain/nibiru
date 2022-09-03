@@ -51,6 +51,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	require.NoError(s.T(), err)
 
 	rawConf := RawConfig{
+		ChainID:                     s.cfg.ChainID,
 		GRPCEndpoint:                grpcEndpoint,
 		TendermintWebsocketEndpoint: tmEndpoint,
 		Validator:                   val.ValAddress.String(),

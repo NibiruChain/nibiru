@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	reflectionv2 "github.com/cosmos/cosmos-sdk/server/grpc/reflection/v2alpha1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txservice "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -60,15 +59,9 @@ type SymbolPrice struct {
 	Source string
 }
 
-func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAddress, cache PrevotesCache, keyRing keyring.Keyring) (*TxClient, error) {
+func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAddress, cache PrevotesCache, keyRing keyring.Keyring, chainID string) (*TxClient, error) {
 	// dial grpc
 	conn, err := grpc.Dial(grpcEndpoint, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-
-	rc := reflectionv2.NewReflectionServiceClient(conn)
-	chain, err := rc.GetChainDescriptor(context.Background(), &reflectionv2.GetChainDescriptorRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +81,7 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 		prevotes:     cache,
 		authClient:   authtypes.NewQueryClient(conn),
 		txClient:     txservice.NewServiceClient(conn),
-		chainID:      chain.Chain.Id,
+		chainID:      chainID,
 		keyBase:      keyRing,
 		txConfig:     encConf.TxConfig,
 		newTxBuilder: encConf.TxConfig.NewTxBuilder,
@@ -237,8 +230,9 @@ func (c *TxClient) getAccount() (uint64, uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
 	defer cancel()
 	accRaw, err := c.authClient.Account(ctx, &authtypes.QueryAccountRequest{Address: c.feeder.String()})
+	// TODO(mercilex): need to investigate account not found error.
 	if err != nil {
-		panic(err)
+		return 0, 0, err
 	}
 
 	var acc authtypes.AccountI

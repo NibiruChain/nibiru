@@ -1,18 +1,11 @@
-FROM golang:1.19-alpine3.16 AS build
+FROM alpine:3.16.2
+WORKDIR /root/
 
-WORKDIR /build
+COPY ./build/nibid /usr/local/bin/nibid
+COPY ./feeder/build/feeder /usr/local/bin/feeder
 
-COPY ./ ./
-
-WORKDIR /build/feeder
-RUN CGO_ENABLED=0 go build -o feeder ./cmd/feeder/.
-
-FROM alpine:3.16
+COPY ./feeder/scripts/. /app/.
+RUN chmod +x /app/node.sh
+RUN chmod +x /app/oracle.sh
 
 WORKDIR /app
-
-COPY --from=build /build/feeder/feeder ./feeder
-
-RUN chmod +x feeder
-
-CMD ["./feeder"]

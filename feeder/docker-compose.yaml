@@ -1,19 +1,22 @@
-version: '3'
+version: '3.4'
 
 services:
   node:
-    build:
-      context: "../"
-      dockerfile: "Dockerfile"
+    image: feeder:master
+    logging:
+      driver: none
     ports:
       - "26656-26657:26656-26657"
       - "9090:9090"
       - "1317:1317"
-    volumes:
-      - ./data/.nibid:/root/.nibid
-    entrypoint: ["nibid", "start"]
+    expose:
+      - "26657:26657"
+      - "9090:9090"
+      - "1317:1317"
+    entrypoint: ["sh", "./node.sh"]
 
   oracle:
     image: feeder:master
     environment:
-      FEEDER_CONFIG: "{grpc_endpoint: '0.0.0.0:57281', tendermint_websocket_endpoint: 'ws://0.0.0.0:57280/websocket', validator: nibivaloper1dt2upkwy4druakap7qjwdny83yv6stgnacz9dq, feeder: nibi1dt2upkwy4druakap7qjwdny83yv6stgn5rv7ea, cache: mem, key_ring: c9716559a5fd0aa046763009e5748ef763a7dca9746b50a9851344353b310d23, chain_to_exchange_symbols: {binance: {'ubtc:unusd': BTCUSDT, 'ueth:unusd': ETHUSDT, 'uusdc:unusd': USDCUSDT}, bitfinex: {'ubtc:unusd': tBTCUSD, 'ueth:unusd': tETHUSD, 'uusd:unusd': tUSTUSD}}}"
+      FEEDER_CONFIG: "{chain_id: 'testing', grpc_endpoint: 'node:9090', tendermint_websocket_endpoint: 'ws://node:26657/websocket', validator: nibivaloper1hrdy4frcgp6xhdcedu66unzvrx2v6yg80a5e9c, feeder: nibi1hrdy4frcgp6xhdcedu66unzvrx2v6yg8xx6z39, cache: mem, key_ring: 8567b2363d290b8604dade49409ecd5a14e91eb08d16489796513b76c02628aa, chain_to_exchange_symbols: {binance: {'ubtc:unusd': BTCUSDT, 'ueth:unusd': ETHUSDT, 'uusdc:unusd': USDCUSDT}, bitfinex: {'ubtc:unusd': tBTCUSD, 'ueth:unusd': tETHUSD, 'uusd:unusd': tUSTUSD}}}"
+    entrypoint: ["sh", "./oracle.sh"]

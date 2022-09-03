@@ -1,3 +1,10 @@
 docker:
-	# note: there's a replace directive in feeder so we need to include the root nibid go files
-	cd ..; docker build -t feeder:master -f ./feeder/Dockerfile .
+	cd ..; GOOS="linux" GOARCH="arm64" make build
+	GOOS="linux" GOARCH="arm64" go build -o build/feeder ./cmd/feeder/.
+	cd ..; docker build --progress plain -t feeder:master -f ./feeder/Dockerfile .
+	rm -rf ../build/nibid
+	rm -rf ./build/feeder
+
+docker-compose: docker
+	docker-compose down --volumes --rmi all
+	docker-compose up

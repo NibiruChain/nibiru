@@ -2,6 +2,7 @@ package feeder
 
 import (
 	"fmt"
+	"github.com/rs/zerolog"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -32,7 +33,7 @@ const (
 // RawConfig defines a raw configuration of the Feeder.
 type RawConfig struct {
 	// ChainID is the chain's ID.
-	ChainID string
+	ChainID string `yaml:"chain_id"`
 	// GRPCEndpoint is the GRPC endpoint of the node.
 	GRPCEndpoint string `yaml:"grpc_endpoint"`
 	// TendermintWebsocketEndpoint is the tendermint websocket endpoint (ex: wss://rpc.something.io/websocket)
@@ -47,6 +48,8 @@ type RawConfig struct {
 	PrivateKeyHex string `yaml:"key_ring"`
 	// ChainToExchangeSymbols is a map of exchange names to a map of
 	ChainToExchangeSymbols map[string]map[string]string `yaml:"chain_to_exchange_symbols"`
+	// Tracing defines the tracing level
+	Tracing zerolog.Level `yaml:"tracing"`
 }
 
 // ToConfig attempts to convert a raw configuration to a Config object.
