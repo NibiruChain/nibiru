@@ -13,10 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
 )
 
-func init() {
-	// app.SetPrefixes(app.AccountAddressPrefix)
-}
-
 const (
 	BinanceExchangeName  = "binance"
 	BitfinexExchangeName = "bitfinex"
@@ -35,6 +31,8 @@ const (
 
 // RawConfig defines a raw configuration of the Feeder.
 type RawConfig struct {
+	// ChainID is the chain's ID.
+	ChainID string
 	// GRPCEndpoint is the GRPC endpoint of the node.
 	GRPCEndpoint string `yaml:"grpc_endpoint"`
 	// TendermintWebsocketEndpoint is the tendermint websocket endpoint (ex: wss://rpc.something.io/websocket)
@@ -53,6 +51,9 @@ type RawConfig struct {
 
 // ToConfig attempts to convert a raw configuration to a Config object.
 func (r RawConfig) ToConfig() (*Config, error) {
+	if r.ChainID == "" {
+		return nil, fmt.Errorf("missing chain ID")
+	}
 	if r.GRPCEndpoint == "" {
 		return nil, fmt.Errorf("no GRPC endpoint")
 	}
@@ -94,6 +95,7 @@ func (r RawConfig) ToConfig() (*Config, error) {
 	}
 
 	return &Config{
+		ChainID:                     r.ChainID,
 		GRPCEndpoint:                r.GRPCEndpoint,
 		TendermintWebsocketEndpoint: r.TendermintWebsocketEndpoint,
 		Validator:                   valAddr,
@@ -133,6 +135,7 @@ func GetConfig() Config {
 }
 
 type Config struct {
+	ChainID                     string
 	GRPCEndpoint                string
 	TendermintWebsocketEndpoint string
 	Validator                   sdk.ValAddress
