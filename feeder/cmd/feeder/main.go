@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/NibiruChain/nibiru/feeder"
 )

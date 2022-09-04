@@ -1,8 +1,9 @@
 package websocket
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_genericJSONHandler(t *testing.T) {

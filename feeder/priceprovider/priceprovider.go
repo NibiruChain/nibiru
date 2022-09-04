@@ -2,6 +2,7 @@ package priceprovider
 
 import (
 	"fmt"
+
 	"github.com/rs/zerolog/log"
 )
 

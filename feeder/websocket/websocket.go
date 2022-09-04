@@ -104,28 +104,31 @@ func newWs(rpc string, initMsg []byte, handler func(msg []byte), errHandler func
 }
 
 func wsKeepAlive(c *websocket.Conn, timeout time.Duration) {
+	// TODO(mercilex): make optional
+	/*
+		ticker := time.NewTicker(timeout)
+
+		lastResponse := time.Now()
+		c.SetPongHandler(func(msg string) error {
+			lastResponse = time.Now()
+			return nil
+		})
+
+		go func() {
+			defer ticker.Stop()
+			for {
+				deadline := time.Now().Add(10 * time.Second)
+				err := c.WriteControl(websocket.PingMessage, []byte{}, deadline)
+				if err != nil {
+					return
+				}
+				<-ticker.C
+				if time.Since(lastResponse) > timeout {
+					_ = c.Close()
+					return
+				}
+			}
+		}()
+	*/
 	return
-	ticker := time.NewTicker(timeout)
-
-	lastResponse := time.Now()
-	c.SetPongHandler(func(msg string) error {
-		lastResponse = time.Now()
-		return nil
-	})
-
-	go func() {
-		defer ticker.Stop()
-		for {
-			deadline := time.Now().Add(10 * time.Second)
-			err := c.WriteControl(websocket.PingMessage, []byte{}, deadline)
-			if err != nil {
-				return
-			}
-			<-ticker.C
-			if time.Since(lastResponse) > timeout {
-				_ = c.Close()
-				return
-			}
-		}
-	}()
 }
