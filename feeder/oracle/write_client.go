@@ -82,6 +82,7 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 		validator:    validator,
 		prevotes:     cache,
 		authClient:   authtypes.NewQueryClient(conn),
+		oracleClient: oracletypes.NewQueryClient(conn),
 		txClient:     txservice.NewServiceClient(conn),
 		chainID:      chainID,
 		keyBase:      keyRing,
