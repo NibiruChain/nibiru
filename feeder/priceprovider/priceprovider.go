@@ -1,6 +1,9 @@
 package priceprovider
 
-import "github.com/rs/zerolog/log"
+import (
+	"fmt"
+	"github.com/rs/zerolog/log"
+)
 
 // PriceResponse defines the response given by
 // PriceProvider implementers when asked for prices.
@@ -34,6 +37,7 @@ var _ PriceProvider = (*ExchangeToChainSymbolPriceProvider)(nil)
 // given a price provider and the chain to exchange symbols map.
 func NewExchangeToChainSymbolPriceProvider(pp PriceProvider, chainToExchangeSymbolsMap map[string]string) PriceProvider {
 	return ExchangeToChainSymbolPriceProvider{
+		kind:            fmt.Sprintf("%T", pp),
 		pp:              pp,
 		chainToExchange: chainToExchangeSymbolsMap,
 	}
@@ -47,6 +51,7 @@ func NewExchangeToChainSymbolPriceProvider(pp PriceProvider, chainToExchangeSymb
 type ExchangeToChainSymbolPriceProvider struct {
 	pp              PriceProvider     // the original price provider
 	chainToExchange map[string]string // maps chain to exchange symbols
+	kind            string
 }
 
 // GetPrice converts the chain symbol to exchange symbol and queries
@@ -59,7 +64,8 @@ func (e ExchangeToChainSymbolPriceProvider) GetPrice(chainSymbol string) PriceRe
 	if !ok {
 		log.
 			Warn().
-			Str("chain-symbol", chainSymbol).
+			Str("price provider", e.kind).
+			Str("chain symbol", chainSymbol).
 			Msg("chain to exchange symbol not found")
 		return PriceResponse{
 			Symbol: chainSymbol,
