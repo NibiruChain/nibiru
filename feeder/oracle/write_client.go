@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 
@@ -20,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 var (
@@ -41,6 +42,7 @@ type TxClient struct {
 	prevotes  PrevotesCache
 
 	authClient   authtypes.QueryClient
+	oracleClient oracletypes.QueryClient
 	txClient     txservice.ServiceClient
 	chainID      string
 	keyBase      keyring.Keyring
@@ -94,7 +96,7 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) {
 	// generate prevotes
 	prevoteMsg, salt, votesStr := c.prevotesMsg(symbolPrices)
-	voteMsg := c.voteMsg()
+	voteMsg, err := c.voteMsg()
 
 	msgs := []sdk.Msg{prevoteMsg}
 	if voteMsg != nil {
@@ -118,10 +120,10 @@ func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) {
 	c.prevotes.SetPrevote(salt, votesStr, c.feeder.String())
 }
 
-func (c *TxClient) prevotesMsg(prices []SymbolPrice) (msg *types.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
-	tuple := make(types.ExchangeRateTuples, len(prices))
+func (c *TxClient) prevotesMsg(prices []SymbolPrice) (msg *oracletypes.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
+	tuple := make(oracletypes.ExchangeRateTuples, len(prices))
 	for i, price := range prices {
-		tuple[i] = types.ExchangeRateTuple{
+		tuple[i] = oracletypes.ExchangeRateTuple{
 			Pair:         price.Symbol,
 			ExchangeRate: float64ToDec(price.Price),
 		}
@@ -138,29 +140,53 @@ func (c *TxClient) prevotesMsg(prices []SymbolPrice) (msg *types.MsgAggregateExc
 	}
 	salt = nBig.String()
 
-	hash := types.GetAggregateVoteHash(salt, votesStr, c.validator)
+	hash := oracletypes.GetAggregateVoteHash(salt, votesStr, c.validator)
 
-	return types.NewMsgAggregateExchangeRatePrevote(hash, c.feeder, c.validator), salt, votesStr
+	return oracletypes.NewMsgAggregateExchangeRatePrevote(hash, c.feeder, c.validator), salt, votesStr
 }
 
-func (c *TxClient) voteMsg() *types.MsgAggregateExchangeRateVote {
+func (c *TxClient) voteMsg() (*oracletypes.MsgAggregateExchangeRateVote, error) {
+	// there might be cases where due to downtimes the prevote
+	// has expired. So we check if a prevote exists in the chain, if it does not
+	// then we simply return.
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+	defer cancel()
+	resp, err := c.oracleClient.AggregatePrevote(ctx, &oracletypes.QueryAggregatePrevoteRequest{
+		ValidatorAddr: c.validator.String(),
+	})
+	if err != nil {
+		// TODO(mercilex): a better way?
+		if strings.Contains(err.Error(), oracletypes.ErrNoAggregatePrevote.Error()) {
+			log.Warn().Msg("no aggregate prevote found for this voting period")
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
 	salt, exchangeRatesStr, feeder, ok := c.prevotes.GetPrevote()
 	if !ok {
-		return nil
+		return nil, nil
+	}
+
+	// assert equality between feeder's prevote and chain's prevote
+	if localHash := oracletypes.GetAggregateVoteHash(salt, exchangeRatesStr, c.validator).String(); localHash != resp.AggregatePrevote.Hash {
+		log.Warn().Str("chain hash", resp.AggregatePrevote.Hash).Str("local hash", localHash).Msg("chain and local prevote do not match")
+		return nil, nil
 	}
 
 	// case where there's a feeder change there's nothing we can do
 	// TODO(mercilex): we could support multi priv key feeders...
 	if feeder != c.feeder.String() {
-		return nil
+		return nil, nil
 	}
 
-	return &types.MsgAggregateExchangeRateVote{
+	return &oracletypes.MsgAggregateExchangeRateVote{
 		Salt:          salt,
 		ExchangeRates: exchangeRatesStr,
 		Feeder:        feeder,
 		Validator:     c.validator.String(),
-	}
+	}, nil
 }
 
 func (c *TxClient) sendTx(msgs ...sdk.Msg) error {

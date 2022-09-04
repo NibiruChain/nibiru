@@ -104,6 +104,7 @@ func newWs(rpc string, initMsg []byte, handler func(msg []byte), errHandler func
 }
 
 func wsKeepAlive(c *websocket.Conn, timeout time.Duration) {
+	return
 	ticker := time.NewTicker(timeout)
 
 	lastResponse := time.Now()
