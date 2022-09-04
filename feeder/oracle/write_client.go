@@ -96,17 +96,20 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) {
 	// generate prevotes
 	prevoteMsg, salt, votesStr := c.prevotesMsg(symbolPrices)
-	voteMsg, err := c.voteMsg()
 
-	msgs := []sdk.Msg{prevoteMsg}
-	if voteMsg != nil {
-		msgs = []sdk.Msg{voteMsg, prevoteMsg} // NOTE(mercilex): if you... change the order ... it won't work because the prevote will override the old one
-	}
-
-	log.Info().Interface("prevote", prevoteMsg).Interface("vote", voteMsg).Msg("sending vote and prevote")
 	for {
 		// TODO(mercilex): backoff strategy
-		err := c.sendTx(msgs...)
+		voteMsg, err := c.voteMsg()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to compute vote information")
+			continue
+		}
+		msgs := []sdk.Msg{prevoteMsg}
+		if voteMsg != nil {
+			msgs = []sdk.Msg{voteMsg, prevoteMsg} // NOTE(mercilex): if you... change the order ... it won't work because the prevote will override the old one
+		}
+		log.Info().Interface("vote", voteMsg).Interface("prevote", prevoteMsg).Msg("sending votes and prevotes")
+		err = c.sendTx(msgs...)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to send transaction")
 			log.Info().Msg("retrying to send transaction")
