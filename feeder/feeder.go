@@ -71,6 +71,7 @@ func (f *Feeder) Run() {
 				Uint64("voting period start block", height).
 				Msg("new voting period started")
 
+			log.Debug().Msg("fetching prices")
 			prices := make([]oracle.SymbolPrice, len(f.params.Symbols))
 			for i, symbol := range f.params.Symbols {
 				price := f.pp.GetPrice(symbol)
