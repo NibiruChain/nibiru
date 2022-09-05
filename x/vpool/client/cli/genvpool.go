@@ -17,22 +17,29 @@ import (
 )
 
 var (
-	FlagPair                   = "pair"
-	FlagBaseAssetReserve       = "base-asset-reserve"
-	FlagQuoteAssetReserve      = "quote-asset-reserve"
-	FlagTradeLimitRatio        = "trade-limit-ratio"
-	FlagFluctuationLimitRatio  = "fluctuation-limit-ratio"
-	FlagMaxOracleSpreadRatio   = "maxOracle-spread-ratio"
-	FlagMaintenanceMarginRatio = "maintenance-margin-ratio"
-	FlagMaxLeverage            = "max-leverage"
+	ParamPair                   = "pair"
+	ParamBaseAssetReserve       = "base-asset-reserve"
+	ParamQuoteAssetReserve      = "quote-asset-reserve"
+	ParamTradeLimitRatio        = "trade-limit-ratio"
+	ParamFluctuationLimitRatio  = "fluctuation-limit-ratio"
+	ParamMaxOracleSpreadRatio   = "maxOracle-spread-ratio"
+	ParamMaintenanceMarginRatio = "maintenance-margin-ratio"
+	ParamMaxLeverage            = "max-leverage"
 )
 
 // AddVPoolGenesisCmd returns add-vpool-genesis
 func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]", FlagPair, FlagBaseAssetReserve,
-			FlagQuoteAssetReserve, FlagTradeLimitRatio, FlagFluctuationLimitRatio, FlagMaxOracleSpreadRatio,
-			FlagMaintenanceMarginRatio, FlagMaxLeverage),
+		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]",
+			ParamPair,
+			ParamBaseAssetReserve,
+			ParamQuoteAssetReserve,
+			ParamTradeLimitRatio,
+			ParamFluctuationLimitRatio,
+			ParamMaxOracleSpreadRatio,
+			ParamMaintenanceMarginRatio,
+			ParamMaxLeverage,
+		),
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
 		Args:  cobra.ExactArgs(8),
@@ -59,7 +66,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 
 			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
 			if err != nil {
-				return fmt.Errorf("failed to marshal bank genesis state: %w", err)
+				return fmt.Errorf("failed to marshal vpool genesis state: %w", err)
 			}
 
 			appState[types.ModuleName] = vPoolGenStateBz
@@ -98,18 +105,22 @@ func parseVpoolParams(args []string) (*types.Pool, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	fluctuationLimitRatio, err := sdk.NewDecFromStr(args[4])
 	if err != nil {
 		return nil, err
 	}
+
 	maxOracleSpread, err := sdk.NewDecFromStr(args[5])
 	if err != nil {
 		return nil, err
 	}
+
 	maintenanceMarginRatio, err := sdk.NewDecFromStr(args[6])
 	if err != nil {
 		return nil, err
 	}
+
 	maxLeverage, err := sdk.NewDecFromStr(args[7])
 	if err != nil {
 		return nil, err
@@ -126,5 +137,5 @@ func parseVpoolParams(args []string) (*types.Pool, error) {
 		maxLeverage,
 	)
 
-	return vPool, nil
+	return vPool, vPool.Validate()
 }

@@ -10,11 +10,10 @@ import (
 	"github.com/spf13/cobra"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/types"
-	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-
 	"github.com/NibiruChain/nibiru/x/common"
+	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -116,20 +115,39 @@ func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction st
 	return queryResp, nil
 }
 
-func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (types.QueryTraderPositionResponse, error) {
+func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (perptypes.QueryTraderPositionResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
-		cli.CmdQueryPosition(),
+		perpcli.CmdQueryPosition(),
 		[]string{trader.String(), pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
-		return types.QueryTraderPositionResponse{}, err
+		return perptypes.QueryTraderPositionResponse{}, err
 	}
 
-	var queryResp types.QueryTraderPositionResponse
+	var queryResp perptypes.QueryTraderPositionResponse
 	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
 	if err != nil {
-		return types.QueryTraderPositionResponse{}, err
+		return perptypes.QueryTraderPositionResponse{}, err
+	}
+
+	return queryResp, nil
+}
+
+func QueryFundingRates(ctx client.Context, pair common.AssetPair) (perptypes.QueryFundingRatesResponse, error) {
+	out, err := clitestutil.ExecTestCLICmd(
+		ctx,
+		perpcli.CmdQueryFundingRates(),
+		[]string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+	)
+	if err != nil {
+		return perptypes.QueryFundingRatesResponse{}, err
+	}
+
+	var queryResp perptypes.QueryFundingRatesResponse
+	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
+	if err != nil {
+		return perptypes.QueryFundingRatesResponse{}, err
 	}
 
 	return queryResp, nil

@@ -109,10 +109,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			Pair: common.PairBTCStable,
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
+				sdk.OneDec(),
+				sdk.NewDec(2),
 			},
 		},
 		{
-			Pair: common.MustNewAssetPair("eth:unibi"),
+			Pair: common.PairETHStable,
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
@@ -340,10 +342,19 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("check prices")
-	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.PairETHStable, "1", "100")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.PairETHStable, "add", "100")
 	s.T().Logf("priceInfo: %+v", priceInfo)
 	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestQueryCumulativeFundingRates() {
+	val := s.network.Validators[0]
+
+	s.T().Log("get cumulative funding payments")
+	queryResp, err := testutilcli.QueryFundingRates(val.ClientCtx, common.PairBTCStable)
+	s.NoError(err)
+	s.EqualValues([]sdk.Dec{sdk.ZeroDec(), sdk.OneDec(), sdk.NewDec(2)}, queryResp.CumulativeFundingRates)
 }
 
 func (s *IntegrationTestSuite) TestRemoveMargin() {
