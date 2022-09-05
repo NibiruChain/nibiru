@@ -342,7 +342,7 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("check prices")
-	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.PairETHStable, "1", "100")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.PairETHStable, "add", "100")
 	s.T().Logf("priceInfo: %+v", priceInfo)
 	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
 	s.NoError(err)
