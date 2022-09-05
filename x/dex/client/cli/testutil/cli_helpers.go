@@ -1,8 +1,13 @@
-package cli_test
+package testutil
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -11,7 +16,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
 )
 
 // commonArgs is args for CLI test commands.
@@ -51,7 +55,7 @@ func ExecMsgCreatePool(
 	)
 
 	args = append(args,
-		fmt.Sprintf("--%s=%s", dexcli.FlagPoolFile, jsonFile.Name()),
+		fmt.Sprintf("--%s=%s", cli.FlagPoolFile, jsonFile.Name()),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, owner.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
 	)
@@ -59,7 +63,7 @@ func ExecMsgCreatePool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdCreatePool(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdCreatePool(), args)
 }
 
 // ExecMsgJoinPool broadcast a join pool message.
@@ -72,8 +76,8 @@ func ExecMsgJoinPool(
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{
-		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
-		fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, tokensIn),
+		fmt.Sprintf("--%s=%d", cli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", cli.FlagTokensIn, tokensIn),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
 	}
@@ -81,7 +85,7 @@ func ExecMsgJoinPool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdJoinPool(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdJoinPool(), args)
 }
 
 // ExecMsgExitPool broadcast an exit pool message.
@@ -94,8 +98,8 @@ func ExecMsgExitPool(
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{
-		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
-		fmt.Sprintf("--%s=%s", dexcli.FlagPoolSharesOut, poolSharesOut),
+		fmt.Sprintf("--%s=%d", cli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", cli.FlagPoolSharesOut, poolSharesOut),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
 	}
@@ -103,7 +107,7 @@ func ExecMsgExitPool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdExitPool(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdExitPool(), args)
 }
 
 // ExecMsgSwapAssets broadcast a swap assets message.
@@ -117,9 +121,9 @@ func ExecMsgSwapAssets(
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{
-		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
-		fmt.Sprintf("--%s=%s", dexcli.FlagTokenIn, tokenIn),
-		fmt.Sprintf("--%s=%s", dexcli.FlagTokenOutDenom, tokenOutDenom),
+		fmt.Sprintf("--%s=%d", cli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", cli.FlagTokenIn, tokenIn),
+		fmt.Sprintf("--%s=%s", cli.FlagTokenOutDenom, tokenOutDenom),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300_000),
 	}
@@ -127,5 +131,21 @@ func ExecMsgSwapAssets(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdSwapAssets(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdSwapAssets(), args)
+}
+
+// WhitelistGenesisAssets given a simapp.GenesisState includes the whitelisted assets into Dex Whitelisted assets.
+func WhitelistGenesisAssets(state simapp.GenesisState, assets []string) simapp.GenesisState {
+	encConfig := app.MakeTestEncodingConfig()
+
+	jsonState := state[types.ModuleName]
+
+	var genesis types.GenesisState
+	encConfig.Marshaler.MustUnmarshalJSON(jsonState, &genesis)
+	genesis.Params.WhitelistedAsset = assets
+
+	json, _ := encConfig.Marshaler.MarshalJSON(&genesis)
+	state[types.ModuleName] = json
+
+	return state
 }
