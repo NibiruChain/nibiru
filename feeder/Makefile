@@ -6,5 +6,5 @@ docker:
 	rm -rf ./build/feeder
 
 docker-compose: docker
-	docker-compose down --volumes --rmi all
+	docker-compose down
 	docker-compose up
