@@ -1,10 +1,12 @@
 package testutil
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
@@ -148,4 +150,36 @@ func WhitelistGenesisAssets(state simapp.GenesisState, assets []string) simapp.G
 	state[types.ModuleName] = json
 
 	return state
+}
+
+// ExtractPoolIDFromCreatePoolResponse extracts the created PoolID from a MsgCreatePool command.
+func ExtractPoolIDFromCreatePoolResponse(codec codec.Codec, out testutil.BufferWriter) (uint64, error) {
+	resp := &sdk.TxResponse{}
+	err := codec.UnmarshalJSON(out.Bytes(), resp)
+	if err != nil {
+		return 0, err
+	}
+
+	decodedResult, err := hex.DecodeString(resp.Data)
+	if err != nil {
+		return 0, err
+	}
+
+	respData := sdk.TxMsgData{}
+	err = codec.Unmarshal(decodedResult, &respData)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(respData.Data) < 1 {
+		return 0, fmt.Errorf("invalid response")
+	}
+
+	var createPoolResponse types.MsgCreatePoolResponse
+	err = codec.Unmarshal(respData.Data[0].Data, &createPoolResponse)
+	if err != nil {
+		return 0, err
+	}
+
+	return createPoolResponse.PoolId, nil
 }

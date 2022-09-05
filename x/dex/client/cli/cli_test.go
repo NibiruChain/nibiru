@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -44,7 +45,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 
-	whitelistedAssets := []string{common.DenomGov, common.DenomStable, common.DenomColl, "coin-1", "coin-2"}
+	whitelistedAssets := []string{common.DenomGov, common.DenomStable, common.DenomColl, "coin-1", "coin-2", "coin-3"}
 	genesisState = testutil.WhitelistGenesisAssets(
 		genesisState,
 		whitelistedAssets,
@@ -52,10 +53,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.StartingTokens = sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomStable, 20000),
-		sdk.NewInt64Coin(common.DenomColl, 20000),
-		sdk.NewInt64Coin("coin-1", 20000),
-		sdk.NewInt64Coin("coin-2", 20000),
+		sdk.NewInt64Coin(common.DenomStable, 40000),
+		sdk.NewInt64Coin(common.DenomColl, 40000),
+		sdk.NewInt64Coin("coin-1", 40000),
+		sdk.NewInt64Coin("coin-2", 40000),
+		sdk.NewInt64Coin("coin-3", 40000),
 		sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
 	)
 
@@ -75,6 +77,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.DenomStable, 20000),
 			sdk.NewInt64Coin(common.DenomColl, 20000),
+			sdk.NewInt64Coin("coin-1", 20000),
+			sdk.NewInt64Coin("coin-2", 20000),
+			sdk.NewInt64Coin("coin-3", 20000),
 			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
 		),
 		val,
@@ -180,67 +185,70 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 	}
 }
 
-//func (s *IntegrationTestSuite) TestBNewJoinPoolCmd() {
-//	val := s.network.Validators[0]
-//
-//	// create a new pool
-//	_, err := testutil.ExecMsgCreatePool(
-//		s.T(),
-//		val.ClientCtx,
-//		/*owner-*/ val.Address,
-//		/*tokenWeights=*/ "5unibi,5uusdc",
-//		/*initialDeposit=*/ "100unibi,100uusdc",
-//		/*swapFee=*/ "0.01",
-//		/*exitFee=*/ "0.01",
-//	)
-//	s.Require().NoError(err)
-//
-//	testCases := []struct {
-//		name         string
-//		poolId       uint64
-//		tokensIn     string
-//		expectErr    bool
-//		respType     proto.Message
-//		expectedCode uint32
-//	}{
-//		{
-//			name:         "join pool with insufficient balance",
-//			poolId:       1,
-//			tokensIn:     "1000000000unibi,10000000000uusdc",
-//			expectErr:    false,
-//			respType:     &sdk.TxResponse{},
-//			expectedCode: 5, // bankKeeper code for insufficient funds
-//		},
-//		{
-//			name:         "join pool with sufficient balance",
-//			poolId:       1,
-//			tokensIn:     "100unibi,100uusdc",
-//			expectErr:    false,
-//			respType:     &sdk.TxResponse{},
-//			expectedCode: 0,
-//		},
-//	}
-//
-//	for _, tc := range testCases {
-//		tc := tc
-//
-//		s.Run(tc.name, func() {
-//			ctx := val.ClientCtx
-//
-//			out, err := testutil.ExecMsgJoinPool(s.T(), ctx, tc.poolId, s.testAccount, tc.tokensIn)
-//			if tc.expectErr {
-//				s.Require().Error(err)
-//			} else {
-//				s.Require().NoError(err, out.String())
-//				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
-//
-//				txResp := tc.respType.(*sdk.TxResponse)
-//				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
-//			}
-//		})
-//	}
-//}
-//
+func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
+	val := s.network.Validators[0]
+
+	// create a new pool
+	out, err := testutil.ExecMsgCreatePool(
+		s.T(),
+		val.ClientCtx,
+		/*owner-*/ val.Address,
+		/*tokenWeights=*/ fmt.Sprintf("5%s,5%s", "coin-2", "coin-3"),
+		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-2", "coin-3"),
+		/*swapFee=*/ "0.01",
+		/*exitFee=*/ "0.01",
+	)
+	s.Require().NoError(err)
+
+	poolID, err := testutil.ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	s.Require().NoError(err, out.String())
+
+	testCases := []struct {
+		name         string
+		poolId       uint64
+		tokensIn     string
+		expectErr    bool
+		respType     proto.Message
+		expectedCode uint32
+	}{
+		{
+			name:         "join pool with insufficient balance",
+			poolId:       poolID,
+			tokensIn:     fmt.Sprintf("1000000000%s,10000000000%s", "coin-2", "coin-3"),
+			expectErr:    false,
+			respType:     &sdk.TxResponse{},
+			expectedCode: 5, // bankKeeper code for insufficient funds
+		},
+		{
+			name:         "join pool with sufficient balance",
+			poolId:       poolID,
+			tokensIn:     fmt.Sprintf("100%s,100%s", "coin-2", "coin-3"),
+			expectErr:    false,
+			respType:     &sdk.TxResponse{},
+			expectedCode: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			ctx := val.ClientCtx
+
+			out, err := testutil.ExecMsgJoinPool(s.T(), ctx, tc.poolId, s.testAccount, tc.tokensIn)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
+
 //func (s *IntegrationTestSuite) TestCNewExitPoolCmd() {
 //	val := s.network.Validators[0]
 //
