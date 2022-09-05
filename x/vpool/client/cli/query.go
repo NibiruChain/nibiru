@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -109,7 +110,7 @@ func CmdGetVpools() *cobra.Command {
 func CmdGetBaseAssetPrice() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prices [pair] [direction] [base-asset-amount]",
-		Short: "calls the GetBaseAssetPrice function, direction is 1 (ADD_TO_POOL) or 2 (REMOVE_FROM_POOL)",
+		Short: "calls the GetBaseAssetPrice function, direction is add (ADD_TO_POOL) or remove (REMOVE_FROM_POOL)",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -122,15 +123,19 @@ func CmdGetBaseAssetPrice() *cobra.Command {
 				return err
 			}
 
-			arg1, err := strconv.ParseInt(args[1], 10, 32)
-			direction := types.Direction(arg1)
-			if err != nil {
-				return err
-			}
-
 			baseAssetAmount, err := sdk.NewDecFromStr(args[2])
 			if err != nil {
 				return fmt.Errorf("invalid base asset amount %s", args[2])
+			}
+
+			var direction types.Direction
+			switch strings.TrimSpace(args[1]) {
+			case "add":
+				direction = types.Direction_ADD_TO_POOL
+			case "remove":
+				direction = types.Direction_REMOVE_FROM_POOL
+			default:
+				return fmt.Errorf("invalid direction %s", args[1])
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
