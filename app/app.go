@@ -653,7 +653,6 @@ func NewNibiruApp(
 		params.NewAppModule(app.paramsKeeper),
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.bankKeeper, app.interfaceRegistry),
 		// native x/
-		pricefeedModule,
 		epochsModule,
 		// ibc
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
