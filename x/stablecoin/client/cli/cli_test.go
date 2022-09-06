@@ -101,7 +101,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s IntegrationTestSuite) TestMintStableCmd() {
+func (s *IntegrationTestSuite) TestMintStableCmd() {
 	val := s.network.Validators[0]
 
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
@@ -180,7 +180,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	}
 }
 
-func (s IntegrationTestSuite) TestBurnStableCmd() {
+func (s *IntegrationTestSuite) TestBurnStableCmd() {
 	val := s.network.Validators[0]
 
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic(

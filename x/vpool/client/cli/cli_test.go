@@ -62,7 +62,7 @@ func (s *VpoolCLISuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s VpoolCLISuite) TestX_CmdAddVpool() {
+func (s *VpoolCLISuite) TestX_CmdAddVpool() {
 	s.T().SkipNow()
 	s.Require().Len(s.network.Validators, 1)
 	val := s.network.Validators[0]

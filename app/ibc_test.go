@@ -125,7 +125,7 @@ func (suite *IBCTestSuite) SetupTest() {
 	suite.T().Log("clientID, connectionID, channelID filled")
 }
 
-func (suite IBCTestSuite) TestClientAndConnectionSetup() {
+func (suite *IBCTestSuite) TestClientAndConnectionSetup() {
 	suite.T().Log("initializes 2 test chains")
 	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 2)
 	suite.chainA = suite.coordinator.GetChain(ibctesting.GetChainID(1))
@@ -155,7 +155,7 @@ func (suite IBCTestSuite) TestClientAndConnectionSetup() {
 	suite.T().Log("clientID, connectionID, channelID filled")
 }
 
-func (suite IBCTestSuite) TestInitialization() {
+func (suite *IBCTestSuite) TestInitialization() {
 	suite.SetupTest()
 
 	var err error = suite.coordinator.ConnOpenInitOnBothChains(suite.path)
@@ -165,7 +165,7 @@ func (suite IBCTestSuite) TestInitialization() {
 	suite.Require().NoError(err)
 }
 
-func (suite IBCTestSuite) TestClient_BeginBlocker() {
+func (suite *IBCTestSuite) TestClient_BeginBlocker() {
 	// set localhost client
 	setLocalHostClient := func() {
 		revision := ibcclienttypes.ParseChainID(suite.chainA.GetContext().ChainID())
@@ -219,7 +219,7 @@ func NewPacket(
 	return packet
 }
 
-func (suite IBCTestSuite) TestSendPacketRecvPacket() {
+func (suite *IBCTestSuite) TestSendPacketRecvPacket() {
 	t := suite.T()
 	suite.SetupTest()
 
@@ -251,6 +251,6 @@ func (suite IBCTestSuite) TestSendPacketRecvPacket() {
 	suite.Assert().NoError(err)
 }
 
-func (suite IBCTestSuite) TestConsensusAfterClientUpgrade() {
+func (suite *IBCTestSuite) TestConsensusAfterClientUpgrade() {
 	// TODO test: https://github.com/NibiruChain/nibiru/issues/581
 }
