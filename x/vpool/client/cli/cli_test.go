@@ -62,9 +62,10 @@ func (s *VpoolCLISuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s *VpoolCLISuite) TestX_CmdAddVpool() {
-	s.T().SkipNow()
+func (s *VpoolCLISuite) Test_CmdAddVpool() {
+	s.T().Skip("this test does not work on sdk v0.45.8 github.com/NibiruChain/nibiru/issues/871")
 	s.Require().Len(s.network.Validators, 1)
+
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
 
