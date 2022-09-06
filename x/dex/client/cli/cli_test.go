@@ -44,25 +44,36 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
+	coinsFromGenesis := []string{
+		common.DenomGov,
+		common.DenomStable,
+		common.DenomColl,
+		"coin-1",
+		"coin-2",
+		"coin-3",
+		"coin-4",
+		"coin-5",
+	}
+
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 
-	whitelistedAssets := []string{common.DenomGov, common.DenomStable, common.DenomColl, "coin-1", "coin-2", "coin-3", "coin-4"}
 	genesisState = testutil.WhitelistGenesisAssets(
 		genesisState,
-		whitelistedAssets,
+		coinsFromGenesis,
 	)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.StartingTokens = sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomStable, 40000),
-		sdk.NewInt64Coin(common.DenomColl, 40000),
-		sdk.NewInt64Coin("coin-1", 40000),
-		sdk.NewInt64Coin("coin-2", 40000),
-		sdk.NewInt64Coin("coin-3", 40000),
-		sdk.NewInt64Coin("coin-4", 40000),
 		sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
 	)
+	coinsToSendToUser := sdk.NewCoins(
+		sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
+	)
+	for _, coin := range coinsFromGenesis {
+		s.cfg.StartingTokens = s.cfg.StartingTokens.Add(sdk.NewInt64Coin(coin, 40000))
+		coinsToSendToUser = coinsToSendToUser.Add(sdk.NewInt64Coin(coin, 20000))
+	}
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
@@ -77,15 +88,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.testAccount = user1
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomStable, 20000),
-			sdk.NewInt64Coin(common.DenomColl, 20000),
-			sdk.NewInt64Coin("coin-1", 20000),
-			sdk.NewInt64Coin("coin-2", 20000),
-			sdk.NewInt64Coin("coin-3", 20000),
-			sdk.NewInt64Coin("coin-4", 20000),
-			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
-		),
+		coinsToSendToUser,
 		val,
 		common.DenomGov,
 	)
@@ -401,95 +404,110 @@ func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
 	}
 }
 
-//func (s *IntegrationTestSuite) TestESwapAssets() {
-//	val := s.network.Validators[0]
-//
-//	testCases := []struct {
-//		name          string
-//		poolId        uint64
-//		tokenIn       string
-//		tokenOutDenom string
-//		respType      proto.Message
-//		expectedCode  uint32
-//		expectErr     bool
-//	}{
-//		{
-//			name:          "zero pool id",
-//			poolId:        0,
-//			tokenIn:       "50unibi",
-//			tokenOutDenom: "uusdc",
-//			expectErr:     true,
-//		},
-//		{
-//			name:          "invalid token in",
-//			poolId:        1,
-//			tokenIn:       "0unibi",
-//			tokenOutDenom: "uusdc",
-//			expectErr:     true,
-//		},
-//		{
-//			name:          "invalid token out denom",
-//			poolId:        1,
-//			tokenIn:       "50unibi",
-//			tokenOutDenom: "",
-//			expectErr:     true,
-//		},
-//		{
-//			name:          "pool not found",
-//			poolId:        1000000,
-//			tokenIn:       "50unibi",
-//			tokenOutDenom: "uusdc",
-//			respType:      &sdk.TxResponse{},
-//			expectedCode:  types.ErrPoolNotFound.ABCICode(),
-//			expectErr:     false,
-//		},
-//		{
-//			name:          "token in denom not found",
-//			poolId:        1,
-//			tokenIn:       "50foo",
-//			tokenOutDenom: "uusdc",
-//			respType:      &sdk.TxResponse{},
-//			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
-//			expectErr:     false,
-//		},
-//		{
-//			name:          "token out denom not found",
-//			poolId:        1,
-//			tokenIn:       "50unibi",
-//			tokenOutDenom: "foo",
-//			respType:      &sdk.TxResponse{},
-//			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
-//			expectErr:     false,
-//		},
-//		{
-//			name:          "successful swap",
-//			poolId:        1,
-//			tokenIn:       "50unibi",
-//			tokenOutDenom: "uusdc",
-//			respType:      &sdk.TxResponse{},
-//			expectedCode:  0,
-//			expectErr:     false,
-//		},
-//	}
-//
-//	for _, tc := range testCases {
-//		tc := tc
-//		ctx := val.ClientCtx
-//
-//		s.Run(tc.name, func() {
-//			out, err := testutil.ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
-//			if tc.expectErr {
-//				s.Require().Error(err)
-//			} else {
-//				s.Require().NoError(err, out.String())
-//				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
-//
-//				txResp := tc.respType.(*sdk.TxResponse)
-//				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
-//			}
-//		})
-//	}
-//}
+func (s *IntegrationTestSuite) TestESwapAssets() {
+	val := s.network.Validators[0]
+
+	// create a new pool
+	out, err := testutil.ExecMsgCreatePool(
+		s.T(),
+		val.ClientCtx,
+		/*owner-*/ val.Address,
+		/*tokenWeights=*/ fmt.Sprintf("1%s,1%s", "coin-4", "coin-5"),
+		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-4", "coin-5"),
+		/*swapFee=*/ "0.01",
+		/*exitFee=*/ "0.01",
+	)
+	s.Require().NoError(err)
+
+	poolID, err := testutil.ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	s.Require().NoError(err, out.String())
+
+	testCases := []struct {
+		name          string
+		poolId        uint64
+		tokenIn       string
+		tokenOutDenom string
+		respType      proto.Message
+		expectedCode  uint32
+		expectErr     bool
+	}{
+		{
+			name:          "zero pool id",
+			poolId:        0,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uusdc",
+			expectErr:     true,
+		},
+		{
+			name:          "invalid token in",
+			poolId:        poolID,
+			tokenIn:       "0coin-4",
+			tokenOutDenom: "uusdc",
+			expectErr:     true,
+		},
+		{
+			name:          "invalid token out denom",
+			poolId:        poolID,
+			tokenIn:       "50coin-4",
+			tokenOutDenom: "",
+			expectErr:     true,
+		},
+		{
+			name:          "pool not found",
+			poolId:        1000000,
+			tokenIn:       "50unibi",
+			tokenOutDenom: "uusdc",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrPoolNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "token in denom not found",
+			poolId:        poolID,
+			tokenIn:       "50foo",
+			tokenOutDenom: "coin-5",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "token out denom not found",
+			poolId:        poolID,
+			tokenIn:       "50coin-4",
+			tokenOutDenom: "foo",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
+			expectErr:     false,
+		},
+		{
+			name:          "successful swap",
+			poolId:        poolID,
+			tokenIn:       "50coin-4",
+			tokenOutDenom: "coin-5",
+			respType:      &sdk.TxResponse{},
+			expectedCode:  0,
+			expectErr:     false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		ctx := val.ClientCtx
+
+		s.Run(tc.name, func() {
+			out, err := testutil.ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
 
 /***************************** Convenience Methods ****************************/
 
