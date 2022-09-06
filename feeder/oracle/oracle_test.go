@@ -22,7 +22,7 @@ type IntegrationTestSuite struct {
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 
-	eventsClient *EventsClient
+	eventsClient *Stream
 	writeClient  *TxClient
 
 	oracle oracletypes.QueryClient
@@ -43,7 +43,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	u.Scheme = "ws"
 	u.Path = "/websocket"
 
-	s.eventsClient, err = NewEventsClient(u.String(), grpcEndpoint)
+	s.eventsClient, err = NewStream(u.String(), grpcEndpoint)
 	require.NoError(s.T(), err)
 
 	s.writeClient, err = NewTxClient(grpcEndpoint, val.ValAddress, val.Address, &MemPrevoteCache{}, val.ClientCtx.Keyring, s.cfg.ChainID)

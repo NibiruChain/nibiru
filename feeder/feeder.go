@@ -1,6 +1,7 @@
 package feeder
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -9,13 +10,46 @@ import (
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
 )
 
-func Dial(c Config) (*Feeder, error) {
-	tx, err := oracle.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing, c.ChainID)
-	if err != nil {
-		return nil, err
-	}
+// Params is the x/oracle specific subset of parameters required for price feeding.
+type Params struct {
+	// Symbols are the symbols we need to provide prices for.
+	Symbols []string
+	// VotePeriodBlocks is how
+	VotePeriodBlocks uint64
+}
 
-	events, err := oracle.NewEventsClient(c.TendermintWebsocketEndpoint, c.GRPCEndpoint)
+// VotingPeriod contains information
+// concerning the current voting period.
+type VotingPeriod struct {
+	// Height is the height of the voting period.
+	Height uint64
+}
+
+// ValidatorSetChanges contains
+// the validator set updates.
+type ValidatorSetChanges struct {
+	// In contains validators which joined the active set.
+	In []sdk.ValAddress
+	// Out contains validators which exited the active set.
+	Out []sdk.ValAddress
+}
+
+// EventsStream defines an interface which emits a stream
+// of events from the chain with the x/oracle module.
+type EventsStream interface {
+	// ParamsUpdate signals a new Params update.
+	ParamsUpdate() <-chan Params
+	// NewVotingPeriod signals when a new voting period starts.
+	NewVotingPeriod() <-chan VotingPeriod
+	// ValidatorSetChanges signals when changes happen in
+	// the validator set.
+	ValidatorSetChanges() <-chan ValidatorSetChanges
+	// Close shuts down the EventsStream.
+	Close()
+}
+
+func Dial(c Config, es EventsStream) (*Feeder, error) {
+	tx, err := oracle.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing, c.ChainID)
 	if err != nil {
 		return nil, err
 	}
@@ -28,9 +62,9 @@ func Dial(c Config) (*Feeder, error) {
 	return &Feeder{
 		stop:   make(chan struct{}),
 		done:   make(chan struct{}),
-		params: oracle.ParamsUpdate{},
+		params: Params{},
 		tx:     tx,
-		events: events,
+		events: es,
 		pp:     pp,
 	}, nil
 }
@@ -39,10 +73,10 @@ type Feeder struct {
 	stop chan struct{}
 	done chan struct{}
 
-	params oracle.ParamsUpdate
+	params Params
 
 	tx     *oracle.TxClient
-	events *oracle.EventsClient
+	events EventsStream
 	pp     priceprovider.PriceProvider
 }
 
@@ -65,10 +99,10 @@ func (f *Feeder) Run() {
 		case params := <-f.events.ParamsUpdate():
 			log.Info().Interface("params update", params).Msg("received new params update")
 			f.params = params
-		case height := <-f.events.NewVotingPeriod():
+		case votePeriod := <-f.events.NewVotingPeriod():
 			log.Info().
-				Uint64("voting period", height/f.params.VotePeriodBlocks).
-				Uint64("voting period start block", height).
+				Uint64("voting period", votePeriod.Height/f.params.VotePeriodBlocks).
+				Uint64("voting period start block", votePeriod.Height).
 				Msg("new voting period started")
 
 			log.Debug().Msg("fetching prices")
