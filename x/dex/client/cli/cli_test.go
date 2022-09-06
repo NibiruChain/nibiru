@@ -369,7 +369,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
+func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
 	val := s.network.Validators[0]
 
 	testCases := []struct {
@@ -405,7 +405,7 @@ func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestESwapAssets() {
+func (s *IntegrationTestSuite) TestSwapAssets() {
 	val := s.network.Validators[0]
 
 	// create a new pool
