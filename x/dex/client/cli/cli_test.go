@@ -2,10 +2,18 @@ package cli_test
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"testing"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
@@ -14,13 +22,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/client/cli/testutil"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
-	"github.com/stretchr/testify/suite"
 )
 
 type IntegrationTestSuite struct {
