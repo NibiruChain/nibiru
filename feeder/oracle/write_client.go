@@ -25,6 +25,9 @@ import (
 )
 
 var (
+	// MaxSaltNumber is the maximum salt number we can use for randomness.
+	// NOTE: max length of the salt is 4.
+	// TODO(mercilex): if we used digits + alphanumerics it's more randomized
 	MaxSaltNumber = big.NewInt(9999) // NOTE(mercilex): max salt length is 4
 )
 
@@ -137,7 +140,6 @@ func (c *TxClient) prevotesMsg(prices []SymbolPrice) (msg *oracletypes.MsgAggreg
 	if err != nil {
 		panic(err)
 	}
-
 	nBig, err := rand.Int(rand.Reader, MaxSaltNumber)
 	if err != nil {
 		panic(err)
