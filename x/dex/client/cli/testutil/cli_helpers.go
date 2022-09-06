@@ -3,11 +3,13 @@ package testutil
 import (
 	"encoding/hex"
 	"fmt"
+	"testing"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"testing"
 
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 

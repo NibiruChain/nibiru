@@ -2,7 +2,9 @@ package cli_test
 
 import (
 	"fmt"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -45,7 +47,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 
-	whitelistedAssets := []string{common.DenomGov, common.DenomStable, common.DenomColl, "coin-1", "coin-2", "coin-3"}
+	whitelistedAssets := []string{common.DenomGov, common.DenomStable, common.DenomColl, "coin-1", "coin-2", "coin-3", "coin-4"}
 	genesisState = testutil.WhitelistGenesisAssets(
 		genesisState,
 		whitelistedAssets,
@@ -58,6 +60,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		sdk.NewInt64Coin("coin-1", 40000),
 		sdk.NewInt64Coin("coin-2", 40000),
 		sdk.NewInt64Coin("coin-3", 40000),
+		sdk.NewInt64Coin("coin-4", 40000),
 		sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
 	)
 
@@ -80,6 +83,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			sdk.NewInt64Coin("coin-1", 20000),
 			sdk.NewInt64Coin("coin-2", 20000),
 			sdk.NewInt64Coin("coin-3", 20000),
+			sdk.NewInt64Coin("coin-4", 20000),
 			sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
 		),
 		val,
@@ -249,138 +253,154 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 	}
 }
 
-//func (s *IntegrationTestSuite) TestCNewExitPoolCmd() {
-//	val := s.network.Validators[0]
-//
-//	testCases := []struct {
-//		name               string
-//		poolId             uint64
-//		poolSharesOut      string
-//		expectErr          bool
-//		respType           proto.Message
-//		expectedCode       uint32
-//		expectedunibi      sdk.Int
-//		expectedOtherToken sdk.Int
-//	}{
-//		{
-//			name:               "exit pool from invalid pool",
-//			poolId:             2,
-//			poolSharesOut:      "100nibiru/pool/1",
-//			expectErr:          false,
-//			respType:           &sdk.TxResponse{},
-//			expectedCode:       1, // dex.types.ErrNonExistingPool
-//			expectedunibi:      sdk.NewInt(-10),
-//			expectedOtherToken: sdk.NewInt(0),
-//		},
-//		{
-//			name:               "exit pool for too many shares",
-//			poolId:             1,
-//			poolSharesOut:      "1001000000000000000000nibiru/pool/1",
-//			expectErr:          false,
-//			respType:           &sdk.TxResponse{},
-//			expectedCode:       1,
-//			expectedunibi:      sdk.NewInt(-10),
-//			expectedOtherToken: sdk.NewInt(0),
-//		},
-//		{
-//			name:               "exit pool for zero shares",
-//			poolId:             1,
-//			poolSharesOut:      "0nibiru/pool/1",
-//			expectErr:          false,
-//			respType:           &sdk.TxResponse{},
-//			expectedCode:       1,
-//			expectedunibi:      sdk.NewInt(-10),
-//			expectedOtherToken: sdk.NewInt(0),
-//		},
-//		{
-//			name:               "exit pool with sufficient balance",
-//			poolId:             1,
-//			poolSharesOut:      "101000000000000000000nibiru/pool/1",
-//			expectErr:          false,
-//			respType:           &sdk.TxResponse{},
-//			expectedCode:       0,
-//			expectedunibi:      sdk.NewInt(100 - 10 - 1), // Received unibi minus 10unibi tx fee minus 1 exit pool fee
-//			expectedOtherToken: sdk.NewInt(100 - 1),      // Received uusdc minus 1 exit pool fee
-//		},
-//	}
-//
-//	for _, tc := range testCases {
-//		tc := tc
-//		ctx := val.ClientCtx
-//
-//		s.Run(tc.name, func() {
-//			// Get original balance
-//			resp, err := banktestutil.QueryBalancesExec(ctx, s.testAccount)
-//			s.Require().NoError(err)
-//			var originalBalance banktypes.QueryAllBalancesResponse
-//			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
-//
-//			out, err := testutil.ExecMsgExitPool(s.T(), ctx, tc.poolId, s.testAccount, tc.poolSharesOut)
-//
-//			if tc.expectErr {
-//				s.Require().Error(err)
-//			} else {
-//				s.Require().NoError(err, out.String())
-//				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
-//
-//				txResp := tc.respType.(*sdk.TxResponse)
-//				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
-//
-//				// Ensure balance is ok
-//				resp, err := banktestutil.QueryBalancesExec(ctx, s.testAccount)
-//				s.Require().NoError(err)
-//				var finalBalance banktypes.QueryAllBalancesResponse
-//				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
-//
-//				s.Require().Equal(
-//					originalBalance.Balances.AmountOf("uusdc").Add(tc.expectedOtherToken),
-//					finalBalance.Balances.AmountOf("uusdc"),
-//				)
-//				s.Require().Equal(
-//					originalBalance.Balances.AmountOf("unibi").Add(tc.expectedunibi),
-//					finalBalance.Balances.AmountOf("unibi"),
-//				)
-//			}
-//		})
-//	}
-//}
-//
-//func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
-//	val := s.network.Validators[0]
-//
-//	testCases := []struct {
-//		name      string
-//		args      []string
-//		expectErr bool
-//	}{
-//		{
-//			"query total liquidity", // nibid query dex total-liquidity
-//			[]string{
-//				fmt.Sprintf("--%s=%s", tmcli.OutputFlag, "json"),
-//			},
-//			false,
-//		},
-//	}
-//
-//	for _, tc := range testCases {
-//		tc := tc
-//
-//		s.Run(tc.name, func() {
-//			cmd := cli.CmdTotalLiquidity()
-//			clientCtx := val.ClientCtx
-//
-//			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
-//			if tc.expectErr {
-//				s.Require().Error(err)
-//			} else {
-//				resp := types.QueryTotalLiquidityResponse{}
-//				s.Require().NoError(err, out.String())
-//				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
-//			}
-//		})
-//	}
-//}
-//
+func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
+	s.T().Skip("this test looks like it has a bug https://github.com/NibiruChain/nibiru/issues/869")
+	val := s.network.Validators[0]
+
+	// create a new pool
+	out, err := testutil.ExecMsgCreatePool(
+		s.T(),
+		val.ClientCtx,
+		/*owner-*/ val.Address,
+		/*tokenWeights=*/ fmt.Sprintf("1%s,1%s", "coin-3", "coin-4"),
+		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-4"),
+		/*swapFee=*/ "0.01",
+		/*exitFee=*/ "0.01",
+	)
+	s.Require().NoError(err)
+
+	poolID, err := testutil.ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	s.Require().NoError(err, out.String())
+
+	testCases := []struct {
+		name               string
+		poolId             uint64
+		poolSharesOut      string
+		expectErr          bool
+		respType           proto.Message
+		expectedCode       uint32
+		expectedunibi      sdk.Int
+		expectedOtherToken sdk.Int
+	}{
+		{
+			name:               "exit pool from invalid pool",
+			poolId:             100,
+			poolSharesOut:      "100nibiru/pool/100",
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       1, // dex.types.ErrNonExistingPool
+			expectedunibi:      sdk.NewInt(-10),
+			expectedOtherToken: sdk.NewInt(0),
+		},
+		{
+			name:               "exit pool for too many shares",
+			poolId:             poolID,
+			poolSharesOut:      fmt.Sprintf("1001000000000000000000nibiru/pool/%d", poolID),
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       1,
+			expectedunibi:      sdk.NewInt(-10),
+			expectedOtherToken: sdk.NewInt(0),
+		},
+		{
+			name:               "exit pool for zero shares",
+			poolId:             poolID,
+			poolSharesOut:      fmt.Sprintf("0nibiru/pool/%d", poolID),
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       1,
+			expectedunibi:      sdk.NewInt(-10),
+			expectedOtherToken: sdk.NewInt(0),
+		},
+		{ // Looks with a bug
+			name:               "exit pool with sufficient balance",
+			poolId:             poolID,
+			poolSharesOut:      fmt.Sprintf("100000000000000000000nibiru/pool/%d", poolID),
+			expectErr:          false,
+			respType:           &sdk.TxResponse{},
+			expectedCode:       0,
+			expectedunibi:      sdk.NewInt(100 - 10 - 1), // Received unibi minus 10unibi tx fee minus 1 exit pool fee
+			expectedOtherToken: sdk.NewInt(100 - 1),      // Received uusdc minus 1 exit pool fee
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		ctx := val.ClientCtx
+
+		s.Run(tc.name, func() {
+			// Get original balance
+			resp, err := banktestutil.QueryBalancesExec(ctx, s.testAccount)
+			s.Require().NoError(err)
+			var originalBalance banktypes.QueryAllBalancesResponse
+			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
+
+			out, err := testutil.ExecMsgExitPool(s.T(), ctx, tc.poolId, s.testAccount, tc.poolSharesOut)
+
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+
+				// Ensure balance is ok
+				resp, err := banktestutil.QueryBalancesExec(ctx, s.testAccount)
+				s.Require().NoError(err)
+				var finalBalance banktypes.QueryAllBalancesResponse
+				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
+
+				s.Require().Equal(
+					originalBalance.Balances.AmountOf("uusdc").Add(tc.expectedOtherToken),
+					finalBalance.Balances.AmountOf("uusdc"),
+				)
+				s.Require().Equal(
+					originalBalance.Balances.AmountOf("unibi").Add(tc.expectedunibi),
+					finalBalance.Balances.AmountOf("unibi"),
+				)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestDGetCmdTotalLiquidity() {
+	val := s.network.Validators[0]
+
+	testCases := []struct {
+		name      string
+		args      []string
+		expectErr bool
+	}{
+		{
+			"query total liquidity", // nibid query dex total-liquidity
+			[]string{
+				fmt.Sprintf("--%s=%s", tmcli.OutputFlag, "json"),
+			},
+			false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := cli.CmdTotalLiquidity()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				resp := types.QueryTotalLiquidityResponse{}
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+			}
+		})
+	}
+}
+
 //func (s *IntegrationTestSuite) TestESwapAssets() {
 //	val := s.network.Validators[0]
 //
