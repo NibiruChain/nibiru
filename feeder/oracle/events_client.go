@@ -121,6 +121,7 @@ func (c *EventsClient) ParamsUpdate() (newSymbols <-chan ParamsUpdate) {
 }
 
 func (c *EventsClient) Close() {
+	// TODO(mercilex): this might cause a race condition in case we're reconnecting and close is called as reconnection is happening
 	close(c.stop)
 	<-c.done
 }
