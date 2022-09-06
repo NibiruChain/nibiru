@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"github.com/NibiruChain/nibiru/feeder"
 	"math/big"
 	"strings"
 
@@ -31,6 +32,10 @@ var (
 	MaxSaltNumber = big.NewInt(9999) // NOTE(mercilex): max salt length is 4
 )
 
+var (
+	_ feeder.TxClient = (*TxClient)(nil)
+)
+
 // TODO(mercilex): maybe prevote cache does not make any sense to exist
 // considering that in case of oracle => stop/start then what's going
 // to happen most likely is that the voting period will be over already
@@ -56,12 +61,6 @@ type TxClient struct {
 
 	// for cleanup
 	conn *grpc.ClientConn
-}
-
-type SymbolPrice struct {
-	Symbol string
-	Price  float64
-	Source string
 }
 
 func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAddress, cache PrevotesCache, keyRing keyring.Keyring, chainID string) (*TxClient, error) {
@@ -97,7 +96,7 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 	}, nil
 }
 
-func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) {
+func (c *TxClient) SendPrices(symbolPrices []feeder.SymbolPrice) {
 	// generate prevotes
 	prevoteMsg, salt, votesStr := c.prevotesMsg(symbolPrices)
 
@@ -127,7 +126,7 @@ func (c *TxClient) SendPrices(symbolPrices []SymbolPrice) {
 	c.prevotes.SetPrevote(salt, votesStr, c.feeder.String())
 }
 
-func (c *TxClient) prevotesMsg(prices []SymbolPrice) (msg *oracletypes.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
+func (c *TxClient) prevotesMsg(prices []feeder.SymbolPrice) (msg *oracletypes.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
 	tuple := make(oracletypes.ExchangeRateTuples, len(prices))
 	for i, price := range prices {
 		tuple[i] = oracletypes.ExchangeRateTuple{

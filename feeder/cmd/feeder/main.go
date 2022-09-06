@@ -1,12 +1,11 @@
 package main
 
 import (
+	"github.com/NibiruChain/nibiru/feeder/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/NibiruChain/nibiru/app"
-
-	"github.com/NibiruChain/nibiru/feeder"
 )
 
 func main() {
@@ -15,10 +14,10 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Debug().Msg("fetching configuration")
 
-	config := feeder.GetConfig()
+	conf := config.Get()
 
 	log.Debug().Msg("connecting the feeder")
-	f, err := feeder.Dial(config)
+	f, err := conf.DialFeeder()
 	if err != nil {
 		panic(err)
 	}

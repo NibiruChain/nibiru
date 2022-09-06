@@ -1,18 +1,15 @@
-package feeder
+package config
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/rs/zerolog"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v2"
-
+	"github.com/NibiruChain/nibiru/feeder"
 	"github.com/NibiruChain/nibiru/feeder/oracle"
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
+	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
+	"os"
 )
 
 const (
@@ -31,8 +28,24 @@ const (
 	RawConfigEnv = `FEEDER_CONFIG`
 )
 
-// RawConfig defines a raw configuration of the Feeder.
-type RawConfig struct {
+func Get() *Config {
+	// TODO
+	s, ok := os.LookupEnv(RawConfigEnv)
+	if !ok {
+		panic("no conf")
+	}
+
+	x := new(Config)
+	err := yaml.Unmarshal([]byte(s), x)
+	if err != nil {
+		panic(err)
+	}
+
+	return x
+}
+
+// Config defines the raw configurations.
+type Config struct {
 	// ChainID is the chain's ID.
 	ChainID string `yaml:"chain_id"`
 	// GRPCEndpoint is the GRPC endpoint of the node.
@@ -53,8 +66,8 @@ type RawConfig struct {
 	Tracing zerolog.Level `yaml:"tracing"`
 }
 
-// ToConfig attempts to convert a raw configuration to a Config object.
-func (r RawConfig) ToConfig() (*Config, error) {
+// DialFeeder generates a new feeder.Feeder instance.
+func (r Config) DialFeeder() (*feeder.Feeder, error) {
 	if r.ChainID == "" {
 		return nil, fmt.Errorf("missing chain ID")
 	}
@@ -66,12 +79,12 @@ func (r RawConfig) ToConfig() (*Config, error) {
 		return nil, fmt.Errorf("no tendermint endpoint")
 	}
 
-	valAddr, err := sdk.ValAddressFromBech32(r.Validator)
+	valAddr, err := types.ValAddressFromBech32(r.Validator)
 	if err != nil {
 		return nil, err
 	}
 
-	feeder, err := sdk.AccAddressFromBech32(r.Feeder)
+	feederAddr, err := types.AccAddressFromBech32(r.Feeder)
 	if err != nil {
 		return nil, err
 	}
@@ -98,55 +111,25 @@ func (r RawConfig) ToConfig() (*Config, error) {
 		return nil, fmt.Errorf("unknown prevotes cache type: %s", r.Cache)
 	}
 
-	return &Config{
-		ChainID:                     r.ChainID,
-		GRPCEndpoint:                r.GRPCEndpoint,
-		TendermintWebsocketEndpoint: r.TendermintWebsocketEndpoint,
-		Validator:                   valAddr,
-		Feeder:                      feeder,
-		Cache:                       cache,
-		KeyRing:                     kr,
-		ChainToExchangeSymbols:      r.ChainToExchangeSymbols,
-	}, nil
-}
-
-func getRawConfig() (*RawConfig, error) {
-	confYaml, ok := os.LookupEnv(RawConfigEnv)
-	if !ok {
-		return nil, fmt.Errorf("yaml config not found in env variable: %s", RawConfigEnv)
-	}
-
-	conf := new(RawConfig)
-	err := yaml.Unmarshal([]byte(confYaml), conf)
+	// prepare events client
+	es, err := oracle.NewStream(r.TendermintWebsocketEndpoint, r.GRPCEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	return conf, nil
-}
-
-func GetConfig() Config {
-	raw, err := getRawConfig()
+	// prepare tx client
+	tx, err := oracle.NewTxClient(r.GRPCEndpoint, valAddr, feederAddr, cache, kr, r.ChainID)
 	if err != nil {
-		panic(err)
-	}
-	conf, err := raw.ToConfig()
-	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return *conf
-}
+	// prepare pricefeeder
+	pp, err := PriceProviderFromChainToExchangeSymbols(r.ChainToExchangeSymbols)
+	if err != nil {
+		return nil, err
+	}
 
-type Config struct {
-	ChainID                     string
-	GRPCEndpoint                string
-	TendermintWebsocketEndpoint string
-	Validator                   sdk.ValAddress
-	Feeder                      sdk.AccAddress
-	Cache                       oracle.PrevotesCache
-	KeyRing                     keyring.Keyring
-	ChainToExchangeSymbols      map[string]map[string]string
+	return feeder.Dial(tx, es, pp)
 }
 
 func PriceProviderFromChainToExchangeSymbols(symbols map[string]map[string]string) (priceprovider.PriceProvider, error) {

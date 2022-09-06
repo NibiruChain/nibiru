@@ -1,8 +1,10 @@
-package feeder
+package feeder_test
 
 import (
 	"context"
 	"encoding/hex"
+	"github.com/NibiruChain/nibiru/feeder"
+	"github.com/NibiruChain/nibiru/feeder/config"
 	"net/url"
 	"testing"
 	"time"
@@ -23,7 +25,7 @@ type IntegrationTestSuite struct {
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 
-	feeder *Feeder
+	feeder *feeder.Feeder
 
 	oracle oracletypes.QueryClient
 }
@@ -50,21 +52,21 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	privKeyDecrypted, _, err := crypto.UnarmorDecryptPrivKey(privKeyEncrypted, "hello")
 	require.NoError(s.T(), err)
 
-	rawConf := RawConfig{
+	rawConf := config.Config{
 		ChainID:                     s.cfg.ChainID,
 		GRPCEndpoint:                grpcEndpoint,
 		TendermintWebsocketEndpoint: tmEndpoint,
 		Validator:                   val.ValAddress.String(),
 		Feeder:                      val.Address.String(),
-		Cache:                       MemCacheName,
+		Cache:                       config.MemCacheName,
 		PrivateKeyHex:               hex.EncodeToString(privKeyDecrypted.Bytes()),
 		ChainToExchangeSymbols: map[string]map[string]string{
-			BinanceExchangeName: {
+			config.BinanceExchangeName: {
 				"ubtc:unusd":  "BTCUSDT",
 				"ueth:unusd":  "ETHUSDT",
 				"uusdc:unusd": "USDCUSDT",
 			},
-			BitfinexExchangeName: {
+			config.BitfinexExchangeName: {
 				"ubtc:unusd": "tBTCUSD",
 				"ueth:unusd": "tETHUSD",
 				"uusd:unusd": "tUSTUSD",
@@ -72,9 +74,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 	}
 
-	conf, err := rawConf.ToConfig()
-	require.NoError(s.T(), err)
-	s.feeder, err = Dial(*conf)
+	s.feeder, err = rawConf.DialFeeder()
 	require.NoError(s.T(), err)
 }
 

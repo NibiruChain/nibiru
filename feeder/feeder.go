@@ -6,7 +6,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/NibiruChain/nibiru/feeder/oracle"
 	"github.com/NibiruChain/nibiru/feeder/priceprovider"
 )
 
@@ -48,17 +47,18 @@ type EventsStream interface {
 	Close()
 }
 
-func Dial(c Config, es EventsStream) (*Feeder, error) {
-	tx, err := oracle.NewTxClient(c.GRPCEndpoint, c.Validator, c.Feeder, c.Cache, c.KeyRing, c.ChainID)
-	if err != nil {
-		return nil, err
-	}
+type SymbolPrice struct {
+	Symbol string
+	Price  float64
+	Source string
+}
 
-	pp, err := PriceProviderFromChainToExchangeSymbols(c.ChainToExchangeSymbols)
-	if err != nil {
-		return nil, err
-	}
+type TxClient interface {
+	SendPrices(prices []SymbolPrice)
+	Close()
+}
 
+func Dial(tx TxClient, es EventsStream, pp priceprovider.PriceProvider) (*Feeder, error) {
 	return &Feeder{
 		stop:   make(chan struct{}),
 		done:   make(chan struct{}),
@@ -75,7 +75,7 @@ type Feeder struct {
 
 	params Params
 
-	tx     *oracle.TxClient
+	tx     TxClient
 	events EventsStream
 	pp     priceprovider.PriceProvider
 }
@@ -106,7 +106,7 @@ func (f *Feeder) Run() {
 				Msg("new voting period started")
 
 			log.Debug().Msg("fetching prices")
-			prices := make([]oracle.SymbolPrice, len(f.params.Symbols))
+			prices := make([]SymbolPrice, len(f.params.Symbols))
 			for i, symbol := range f.params.Symbols {
 				price := f.pp.GetPrice(symbol)
 				if !price.Valid {
@@ -117,7 +117,7 @@ func (f *Feeder) Run() {
 					panic("bad implementation of price provider interface")
 				}
 
-				prices[i] = oracle.SymbolPrice{
+				prices[i] = SymbolPrice{
 					Symbol: symbol,
 					Price:  price.Price,
 					Source: price.Source,
