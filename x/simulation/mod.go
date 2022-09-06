@@ -65,21 +65,13 @@ func GenAndDeliverTxWithRandFees(
 	if err != nil {
 		return simtypes.NoOpMsg(moduleName, msg.Type(), "unable to generate fees"), nil, err
 	}
-	return GenAndDeliverTx(app, txGen, msg, fees, ctx, simAccount, ak, moduleName)
+	return GenAndDeliverTx(r, app, txGen, msg, fees, ctx, simAccount, ak, moduleName)
 }
 
-func GenAndDeliverTx(
-	app *baseapp.BaseApp,
-	txGen client.TxConfig,
-	msg legacytx.LegacyMsg,
-	fees sdk.Coins,
-	ctx sdk.Context,
-	simAccount simtypes.Account,
-	ak stakingTypes.AccountKeeper,
-	moduleName string,
-) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+func GenAndDeliverTx(r *rand.Rand, app *baseapp.BaseApp, txGen client.TxConfig, msg legacytx.LegacyMsg, fees sdk.Coins, ctx sdk.Context, simAccount simtypes.Account, ak stakingTypes.AccountKeeper, moduleName string) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 	account := ak.GetAccount(ctx, simAccount.Address)
 	tx, err := helpers.GenTx(
+		r,
 		txGen,
 		[]sdk.Msg{msg},
 		fees,
