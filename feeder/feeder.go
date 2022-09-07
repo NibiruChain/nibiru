@@ -1,6 +1,7 @@
 package feeder
 
 import (
+	"context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
 
@@ -58,7 +59,7 @@ type SymbolPrice struct {
 // TxClient defines an oracle specific tx client.
 //go:generate mockgen --destination ./mocks/feeder/tx_client.go . TxClient
 type TxClient interface {
-	SendPrices(prices []SymbolPrice)
+	SendPrices(ctx context.Context, prices []SymbolPrice)
 	Close()
 }
 
@@ -128,7 +129,7 @@ func (f *Feeder) Run() {
 				}
 			}
 			log.Info().Interface("prices", prices).Msg("posting prices")
-			f.tx.SendPrices(prices) // TODO(mercilex): add a give up strategy which does not block us for too much time and does not make us miss multiple voting periods
+			f.tx.SendPrices(context.Background(), prices) // TODO(mercilex): add a give up strategy which does not block us for too much time and does not make us miss multiple voting periods
 		}
 	}
 }

@@ -27,10 +27,11 @@ var (
 // NewStream instantiates a new *Stream instance.
 func NewStream(tendermintEndpoint string, grpcEndpoint string) (*Stream, error) {
 	ec := &Stream{
-		tm:              tendermintEndpoint,
-		grpc:            grpcEndpoint,
-		paramsUpdate:    make(chan feeder.Params, 1), // it has one as buffer for the initial params
-		newVotingPeriod: make(chan feeder.VotingPeriod),
+		tm:                  tendermintEndpoint,
+		grpc:                grpcEndpoint,
+		paramsUpdate:        make(chan feeder.Params, 1), // it has one as buffer for the initial params
+		newVotingPeriod:     make(chan feeder.VotingPeriod),
+		validatorSetChanges: make(chan feeder.ValidatorSetChanges, 1), // it has one as buffer for the initial params
 	}
 
 	return ec, ec.init()
@@ -44,16 +45,16 @@ type Stream struct {
 
 	votingPeriod uint64
 
-	paramsUpdate    chan feeder.Params
-	newVotingPeriod chan feeder.VotingPeriod
+	paramsUpdate        chan feeder.Params
+	newVotingPeriod     chan feeder.VotingPeriod
+	validatorSetChanges chan feeder.ValidatorSetChanges
 
 	done chan struct{}
 	stop chan struct{}
 }
 
 func (c *Stream) ValidatorSetChanges() <-chan feeder.ValidatorSetChanges {
-	//TODO implement me
-	panic("implement me")
+	return c.validatorSetChanges
 }
 
 // init initializes the client by getting

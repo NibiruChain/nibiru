@@ -96,37 +96,56 @@ func NewTxClient(grpcEndpoint string, validator sdk.ValAddress, feeder sdk.AccAd
 	}, nil
 }
 
-func (c *TxClient) SendPrices(symbolPrices []feeder.SymbolPrice) {
-	// generate prevotes
-	prevoteMsg, salt, votesStr := c.prevotesMsg(symbolPrices)
+func (c *TxClient) SendPrices(ctx context.Context, symbolPrices []feeder.SymbolPrice) {
+	// preparing the prevotes gets the new prices ready for the current voting period.
+	prevoteMsg, salt, votesStr := c.preparePrevote(symbolPrices)
 
+	// prepare to unveil votes of the last voting period.
+	var voteMsg *oracletypes.MsgAggregateExchangeRateVote
 	for {
-		// TODO(mercilex): backoff strategy
-		voteMsg, err := c.voteMsg()
+		if ctxDone(ctx) {
+			log.Error().Msg("context cancelled, exiting")
+			break
+		}
+
+		votes, err := c.voteMsg(ctx)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to compute vote information")
+			log.Error().Err(err).Msg("failed to prepare votes")
 			continue
 		}
-		msgs := []sdk.Msg{prevoteMsg}
-		if voteMsg != nil {
-			msgs = []sdk.Msg{voteMsg, prevoteMsg} // NOTE(mercilex): if you... change the order ... it won't work because the prevote will override the old one
-		}
-		log.Info().Interface("vote", voteMsg).Interface("prevote", prevoteMsg).Msg("sending votes and prevotes")
-		err = c.sendTx(msgs...)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to send transaction")
-			log.Info().Msg("retrying to send transaction")
-			continue
-		}
-		log.Debug().Msg("transaction sent")
+
+		voteMsg = votes
 		break
 	}
 
-	log.Debug().Msg("saving prevote in cache")
+	var msgs []sdk.Msg
+	if voteMsg != nil {
+		// if order is inverted then current voting period prevotes will over-write the older ones.
+		msgs = []sdk.Msg{voteMsg, prevoteMsg}
+	} else {
+		msgs = []sdk.Msg{prevoteMsg}
+	}
+
+	log.Info().Interface("prevote", prevoteMsg).Interface("vote", voteMsg).Msg("sending votes and prevotes")
+
+	// attempt to send tx
+	for {
+		if ctxDone(ctx) {
+
+		}
+
+		err := c.sendTx(ctx, msgs...)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to send tx")
+			continue
+		}
+		break
+	}
+
 	c.prevotes.SetPrevote(salt, votesStr, c.feeder.String())
 }
 
-func (c *TxClient) prevotesMsg(prices []feeder.SymbolPrice) (msg *oracletypes.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
+func (c *TxClient) preparePrevote(prices []feeder.SymbolPrice) (msg *oracletypes.MsgAggregateExchangeRatePrevote, salt, votesStr string) {
 	tuple := make(oracletypes.ExchangeRateTuples, len(prices))
 	for i, price := range prices {
 		tuple[i] = oracletypes.ExchangeRateTuple{
@@ -150,11 +169,11 @@ func (c *TxClient) prevotesMsg(prices []feeder.SymbolPrice) (msg *oracletypes.Ms
 	return oracletypes.NewMsgAggregateExchangeRatePrevote(hash, c.feeder, c.validator), salt, votesStr
 }
 
-func (c *TxClient) voteMsg() (*oracletypes.MsgAggregateExchangeRateVote, error) {
+func (c *TxClient) voteMsg(ctx context.Context) (*oracletypes.MsgAggregateExchangeRateVote, error) {
 	// there might be cases where due to downtimes the prevote
 	// has expired. So we check if a prevote exists in the chain, if it does not
 	// then we simply return.
-	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+	ctx, cancel := context.WithTimeout(ctx, Timeout)
 	defer cancel()
 	resp, err := c.oracleClient.AggregatePrevote(ctx, &oracletypes.QueryAggregatePrevoteRequest{
 		ValidatorAddr: c.validator.String(),
@@ -194,7 +213,7 @@ func (c *TxClient) voteMsg() (*oracletypes.MsgAggregateExchangeRateVote, error) 
 	}, nil
 }
 
-func (c *TxClient) sendTx(msgs ...sdk.Msg) error {
+func (c *TxClient) sendTx(ctx context.Context, msgs ...sdk.Msg) error {
 	// get key from keybase, can't fail
 	keyInfo, err := c.keyBase.KeyByAddress(c.feeder)
 	if err != nil {
@@ -241,7 +260,7 @@ func (c *TxClient) sendTx(msgs ...sdk.Msg) error {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+	ctx, cancel := context.WithTimeout(ctx, Timeout)
 	defer cancel()
 	resp, err := c.txClient.BroadcastTx(ctx, &txservice.BroadcastTxRequest{
 		TxBytes: txBytes,
@@ -286,4 +305,13 @@ func (c *TxClient) Close() {
 func float64ToDec(price float64) sdk.Dec {
 	// TODO(mercilex): precision for numbers with a lot of decimal digits
 	return sdk.MustNewDecFromStr(fmt.Sprintf("%f", price))
+}
+
+func ctxDone(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
 }
