@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### API Breaking
+
+* [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
+
 ### Improvements
 
 * [#858](https://github.com/NibiruChain/nibiru/pull/858) - fix trading limit ratio check; checks in both directions on both quote and base assets
@@ -54,7 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks
-* [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
 
 ## v0.14.0
 
