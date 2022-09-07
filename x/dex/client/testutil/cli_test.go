@@ -1,13 +1,15 @@
 package testutil
 
 import (
+	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 func TestIntegrationTestSuite(t *testing.T) {

@@ -3,18 +3,20 @@ package testutil
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex/client/cli"
-	"github.com/NibiruChain/nibiru/x/dex/types"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
 // commonArgs is args for CLI test commands.

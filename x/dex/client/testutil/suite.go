@@ -2,9 +2,8 @@ package testutil
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/dex/client/cli"
-	"github.com/NibiruChain/nibiru/x/dex/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -15,7 +14,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {
