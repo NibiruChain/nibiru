@@ -35,6 +35,7 @@ type ValidatorSetChanges struct {
 
 // EventsStream defines an interface which emits a stream
 // of events from the chain with the x/oracle module.
+//go:generate mockgen --destination ./mocks/feeder/events_stream.go . EventsStream
 type EventsStream interface {
 	// ParamsUpdate signals a new Params update.
 	ParamsUpdate() <-chan Params
@@ -54,6 +55,8 @@ type SymbolPrice struct {
 	Source string
 }
 
+// TxClient defines an oracle specific tx client.
+//go:generate mockgen --destination ./mocks/feeder/tx_client.go . TxClient
 type TxClient interface {
 	SendPrices(prices []SymbolPrice)
 	Close()

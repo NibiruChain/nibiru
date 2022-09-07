@@ -33,6 +33,7 @@ type PriceResponse struct {
 // PriceProvider defines a price provider's behavior.
 // Multiple PriceProvider implementations are defined here,
 // they should be chained to provide additive functionality.
+//go:generate mockgen --destination ../mocks/priceprovider/priceprovider.go . PriceProvider
 type PriceProvider interface {
 	// GetPrice returns the PriceResponse
 	// for the given symbol. PriceResponse.Symbol

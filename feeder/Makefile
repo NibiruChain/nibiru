@@ -8,3 +8,6 @@ docker:
 docker-compose: docker
 	docker-compose down
 	docker-compose up
+
+generate:
+	go generate ./...
