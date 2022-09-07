@@ -22,7 +22,7 @@ func DialBitfinex(symbols []string) (PriceProvider, error) {
 		stop:         make(chan struct{}),
 		done:         make(chan struct{}),
 		rw:           sync.RWMutex{},
-		prices:       map[string]float64{},
+		prices:       map[string]priceUpdate{},
 		pollTime:     1500 * time.Millisecond,
 	}
 
@@ -39,7 +39,7 @@ type Bitfinex struct {
 	pollTime time.Duration
 
 	rw     sync.RWMutex
-	prices map[string]float64
+	prices map[string]priceUpdate
 }
 
 func (c *Bitfinex) Close() {
@@ -98,7 +98,7 @@ func (c *Bitfinex) updateSymbols() (err error) {
 		tickerName := ticker[symbolNameIndex].(string)
 		lastPrice := ticker[lastPriceIndex].(float64)
 
-		c.prices[tickerName] = lastPrice
+		c.prices[tickerName] = priceUpdate{price: lastPrice, time: time.Now()}
 	}
 
 	return nil
@@ -110,9 +110,10 @@ func (c *Bitfinex) GetPrice(symbol string) PriceResponse {
 
 	price, ok := c.prices[symbol]
 	return PriceResponse{
-		Symbol: symbol,
-		Price:  price,
-		Valid:  ok,
-		Source: "bitfinex",
+		Symbol:         symbol,
+		Price:          price.price,
+		Valid:          ok,
+		Source:         "bitfinex",
+		LastUpdateTime: price.time,
 	}
 }

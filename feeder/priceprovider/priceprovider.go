@@ -2,14 +2,21 @@ package priceprovider
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
+// priceUpdate is used only privately to keep
+// track of lastUpdateTime and the raw price.
+type priceUpdate struct {
+	price float64
+	time  time.Time
+}
+
 // PriceResponse defines the response given by
 // PriceProvider implementers when asked for prices.
 // Symbol must always be not-empty.
-// TODO(mercilex): maybe add last update time here
 type PriceResponse struct {
 	// Symbol defines the symbol.
 	Symbol string
@@ -19,6 +26,8 @@ type PriceResponse struct {
 	Valid bool
 	// Source defines the source of the price, optional.
 	Source string
+	// LastUpdateTime defines the time in which the price was last updated.
+	LastUpdateTime time.Time
 }
 
 // PriceProvider defines a price provider's behavior.
@@ -29,6 +38,7 @@ type PriceProvider interface {
 	// If there are some errors PriceResponse.Valid must be set to false,
 	// and must be true in case everything went fine.
 	GetPrice(symbol string) PriceResponse
+	// Close closes the instance of PriceProvider
 	Close()
 }
 

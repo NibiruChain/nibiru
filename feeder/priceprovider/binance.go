@@ -19,11 +19,11 @@ type Binance struct {
 	stop chan struct{}
 
 	rw     sync.RWMutex
-	prices map[string]float64 // TODO(mercilex): make it a struct which contains the last update time --- over a certain time (ex: 30s) of no updates price is expired
+	prices map[string]priceUpdate
 }
 
 func DialBinance() (PriceProvider, error) {
-	b := &Binance{rw: sync.RWMutex{}, prices: map[string]float64{}}
+	b := &Binance{rw: sync.RWMutex{}, prices: map[string]priceUpdate{}}
 	return b, b.connect()
 }
 
@@ -33,10 +33,11 @@ func (b *Binance) GetPrice(symbol string) PriceResponse {
 
 	price, ok := b.prices[symbol]
 	return PriceResponse{
-		Symbol: symbol,
-		Price:  price,
-		Valid:  ok,
-		Source: "binance",
+		Symbol:         symbol,
+		Price:          price.price,
+		Valid:          ok,
+		Source:         "binance",
+		LastUpdateTime: price.time,
 	}
 }
 
@@ -66,9 +67,13 @@ func (b *Binance) onUpdate(events binance.WsAllMiniMarketsStatEvent) {
 	}
 
 	// insert blocking
+	now := time.Now()
 	b.rw.Lock()
 	for i, e := range events {
-		b.prices[e.Symbol] = prices[i]
+		b.prices[e.Symbol] = priceUpdate{
+			price: prices[i],
+			time:  now,
+		}
 	}
 	b.rw.Unlock()
 }

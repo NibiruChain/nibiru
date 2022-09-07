@@ -47,6 +47,7 @@ type EventsStream interface {
 	Close()
 }
 
+// SymbolPrice defines the symbol of a price
 type SymbolPrice struct {
 	Symbol string
 	Price  float64
