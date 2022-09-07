@@ -3,20 +3,18 @@ package testutil
 import (
 	"encoding/hex"
 	"fmt"
-	"testing"
-
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex/client/cli"
-	"github.com/NibiruChain/nibiru/x/dex/types"
+	"testing"
 )
 
 // commonArgs is args for CLI test commands.
@@ -69,7 +67,6 @@ func ExecMsgCreatePool(
 
 // ExecMsgJoinPool broadcast a join pool message.
 func ExecMsgJoinPool(
-	t *testing.T,
 	clientCtx client.Context,
 	poolId uint64,
 	sender fmt.Stringer,
@@ -91,7 +88,6 @@ func ExecMsgJoinPool(
 
 // ExecMsgExitPool broadcast an exit pool message.
 func ExecMsgExitPool(
-	t *testing.T,
 	clientCtx client.Context,
 	poolId uint64,
 	sender fmt.Stringer,
@@ -113,7 +109,6 @@ func ExecMsgExitPool(
 
 // ExecMsgSwapAssets broadcast a swap assets message.
 func ExecMsgSwapAssets(
-	t *testing.T,
 	clientCtx client.Context,
 	poolId uint64,
 	sender fmt.Stringer,

@@ -2,8 +2,9 @@ package testutil
 
 import (
 	"fmt"
-	"testing"
-
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -14,10 +15,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
-
-	"github.com/NibiruChain/nibiru/x/dex/client/cli"
-	"github.com/NibiruChain/nibiru/x/dex/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"testing"
 )
 
 type IntegrationTestSuite struct {
@@ -195,7 +193,7 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 		s.Run(tc.name, func() {
 			ctx := val.ClientCtx
 
-			out, err := ExecMsgJoinPool(s.T(), ctx, tc.poolId, val.Address, tc.tokensIn)
+			out, err := ExecMsgJoinPool(ctx, tc.poolId, val.Address, tc.tokensIn)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -291,7 +289,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 			var originalBalance banktypes.QueryAllBalancesResponse
 			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
 
-			out, err := ExecMsgExitPool(s.T(), ctx, tc.poolId, val.Address, tc.poolSharesOut)
+			out, err := ExecMsgExitPool(ctx, tc.poolId, val.Address, tc.poolSharesOut)
 
 			if tc.expectErr {
 				s.Require().Error(err)
@@ -448,7 +446,7 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		ctx := val.ClientCtx
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgSwapAssets(s.T(), ctx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
+			out, err := ExecMsgSwapAssets(ctx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
