@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
@@ -26,8 +25,6 @@ type IntegrationTestSuite struct {
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
-
-	testAccount sdk.AccAddress
 }
 
 func NewIntegrationTestSuite(cfg testutilcli.Config) *IntegrationTestSuite {
@@ -49,29 +46,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
 	s.NoError(err)
-
-	val := s.network.Validators[0]
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.NoError(err)
-	user1 := sdk.AccAddress(info.GetPubKey().Address())
-
-	// create a new user address
-	s.testAccount = user1
-
-	coinsToSendToUser := sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
-	)
-	for _, coin := range s.cfg.StartingTokens {
-		coinsToSendToUser = coinsToSendToUser.Add(sdk.NewInt64Coin(coin.Denom, 20000))
-	}
-
-	_, err = testutilcli.FillWalletFromValidator(
-		user1,
-		coinsToSendToUser,
-		val,
-		common.DenomGov,
-	)
-	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -118,7 +92,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, s.testAccount, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
 			if tc.expectedErr != nil {
 				s.Require().ErrorIs(err, tc.expectedErr)
 			} else {
@@ -152,7 +126,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, s.testAccount, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
 			s.Require().NoError(err, out.String())
 
 			resp := &sdk.TxResponse{}
@@ -221,7 +195,7 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 		s.Run(tc.name, func() {
 			ctx := val.ClientCtx
 
-			out, err := ExecMsgJoinPool(s.T(), ctx, tc.poolId, s.testAccount, tc.tokensIn)
+			out, err := ExecMsgJoinPool(s.T(), ctx, tc.poolId, val.Address, tc.tokensIn)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -312,12 +286,12 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 
 		s.Run(tc.name, func() {
 			// Get original balance
-			resp, err := banktestutil.QueryBalancesExec(ctx, s.testAccount)
+			resp, err := banktestutil.QueryBalancesExec(ctx, val.Address)
 			s.Require().NoError(err)
 			var originalBalance banktypes.QueryAllBalancesResponse
 			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
 
-			out, err := ExecMsgExitPool(s.T(), ctx, tc.poolId, s.testAccount, tc.poolSharesOut)
+			out, err := ExecMsgExitPool(s.T(), ctx, tc.poolId, val.Address, tc.poolSharesOut)
 
 			if tc.expectErr {
 				s.Require().Error(err)
@@ -329,7 +303,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				// Ensure balance is ok
-				resp, err := banktestutil.QueryBalancesExec(ctx, s.testAccount)
+				resp, err := banktestutil.QueryBalancesExec(ctx, val.Address)
 				s.Require().NoError(err)
 				var finalBalance banktypes.QueryAllBalancesResponse
 				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
@@ -474,7 +448,7 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		ctx := val.ClientCtx
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
+			out, err := ExecMsgSwapAssets(s.T(), ctx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
