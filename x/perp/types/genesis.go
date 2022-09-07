@@ -10,9 +10,6 @@ import (
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:               DefaultParams(),
-		VaultBalance:         []sdk.Coin(nil),
-		PerpEfBalance:        []sdk.Coin(nil),
-		FeePoolBalance:       []sdk.Coin(nil),
 		PairMetadata:         []*PairMetadata(nil),
 		Positions:            []*Position(nil),
 		PrepaidBadDebts:      []*PrepaidBadDebt(nil),

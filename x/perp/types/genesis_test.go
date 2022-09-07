@@ -18,10 +18,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			g: &GenesisState{
-				Params:         DefaultParams(),
-				VaultBalance:   sdk.NewCoins(),
-				PerpEfBalance:  sdk.NewCoins(),
-				FeePoolBalance: sdk.NewCoins(),
+				Params: DefaultParams(),
 				PairMetadata: []*PairMetadata{
 					{
 						Pair:                       common.MustNewAssetPair("pair1:pair2"),

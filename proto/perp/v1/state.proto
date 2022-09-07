@@ -56,28 +56,13 @@ message Params {
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
 
-  repeated cosmos.base.v1beta1.Coin vault_balance = 2 [
-    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
-    (gogoproto.nullable) = false
-  ];
+  repeated PairMetadata pair_metadata = 2;
 
-  repeated cosmos.base.v1beta1.Coin perp_ef_balance = 3 [
-    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
-    (gogoproto.nullable) = false
-  ];
+  repeated Position positions = 3;
 
-  repeated cosmos.base.v1beta1.Coin fee_pool_balance = 4 [
-    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
-    (gogoproto.nullable) = false
-  ];
+  repeated PrepaidBadDebt prepaid_bad_debts = 4;
 
-  repeated PairMetadata pair_metadata = 5;
-
-  repeated Position positions = 6;
-
-  repeated PrepaidBadDebt prepaid_bad_debts = 7;
-
-  repeated string whitelisted_addresses = 8;
+  repeated string whitelisted_addresses = 5;
 }
 
 // Position identifies and records information on a user's position on one of
