@@ -529,6 +529,7 @@ func (k Keeper) ExitPool(
 				poolSharesOut.Denom,
 			)
 	}
+
 	if poolSharesOut.Amount.GT(pool.TotalShares.Amount) ||
 		poolSharesOut.Amount.LTE(sdk.ZeroInt()) {
 		return sdk.Coins{}, errors.New("invalid number of pool shares")
