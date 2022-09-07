@@ -1,17 +1,22 @@
-package cli_test
+package testutil
 
 import (
+	"encoding/hex"
 	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
-	dexcli "github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/client/cli"
+	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
 // commonArgs is args for CLI test commands.
@@ -51,7 +56,7 @@ func ExecMsgCreatePool(
 	)
 
 	args = append(args,
-		fmt.Sprintf("--%s=%s", dexcli.FlagPoolFile, jsonFile.Name()),
+		fmt.Sprintf("--%s=%s", cli.FlagPoolFile, jsonFile.Name()),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, owner.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
 	)
@@ -59,12 +64,11 @@ func ExecMsgCreatePool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdCreatePool(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdCreatePool(), args)
 }
 
 // ExecMsgJoinPool broadcast a join pool message.
 func ExecMsgJoinPool(
-	t *testing.T,
 	clientCtx client.Context,
 	poolId uint64,
 	sender fmt.Stringer,
@@ -72,8 +76,8 @@ func ExecMsgJoinPool(
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{
-		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
-		fmt.Sprintf("--%s=%s", dexcli.FlagTokensIn, tokensIn),
+		fmt.Sprintf("--%s=%d", cli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", cli.FlagTokensIn, tokensIn),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
 	}
@@ -81,12 +85,11 @@ func ExecMsgJoinPool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdJoinPool(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdJoinPool(), args)
 }
 
 // ExecMsgExitPool broadcast an exit pool message.
 func ExecMsgExitPool(
-	t *testing.T,
 	clientCtx client.Context,
 	poolId uint64,
 	sender fmt.Stringer,
@@ -94,8 +97,8 @@ func ExecMsgExitPool(
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{
-		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
-		fmt.Sprintf("--%s=%s", dexcli.FlagPoolSharesOut, poolSharesOut),
+		fmt.Sprintf("--%s=%d", cli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", cli.FlagPoolSharesOut, poolSharesOut),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
 	}
@@ -103,12 +106,11 @@ func ExecMsgExitPool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdExitPool(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdExitPool(), args)
 }
 
 // ExecMsgSwapAssets broadcast a swap assets message.
 func ExecMsgSwapAssets(
-	t *testing.T,
 	clientCtx client.Context,
 	poolId uint64,
 	sender fmt.Stringer,
@@ -117,9 +119,9 @@ func ExecMsgSwapAssets(
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{
-		fmt.Sprintf("--%s=%d", dexcli.FlagPoolId, poolId),
-		fmt.Sprintf("--%s=%s", dexcli.FlagTokenIn, tokenIn),
-		fmt.Sprintf("--%s=%s", dexcli.FlagTokenOutDenom, tokenOutDenom),
+		fmt.Sprintf("--%s=%d", cli.FlagPoolId, poolId),
+		fmt.Sprintf("--%s=%s", cli.FlagTokenIn, tokenIn),
+		fmt.Sprintf("--%s=%s", cli.FlagTokenOutDenom, tokenOutDenom),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300_000),
 	}
@@ -127,5 +129,53 @@ func ExecMsgSwapAssets(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, dexcli.CmdSwapAssets(), args)
+	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdSwapAssets(), args)
+}
+
+// WhitelistGenesisAssets given a simapp.GenesisState includes the whitelisted assets into Dex Whitelisted assets.
+func WhitelistGenesisAssets(state simapp.GenesisState, assets []string) simapp.GenesisState {
+	encConfig := app.MakeTestEncodingConfig()
+
+	jsonState := state[types.ModuleName]
+
+	var genesis types.GenesisState
+	encConfig.Marshaler.MustUnmarshalJSON(jsonState, &genesis)
+	genesis.Params.WhitelistedAsset = assets
+
+	json, _ := encConfig.Marshaler.MarshalJSON(&genesis)
+	state[types.ModuleName] = json
+
+	return state
+}
+
+// ExtractPoolIDFromCreatePoolResponse extracts the created PoolID from a MsgCreatePool command.
+func ExtractPoolIDFromCreatePoolResponse(codec codec.Codec, out testutil.BufferWriter) (uint64, error) {
+	resp := &sdk.TxResponse{}
+	err := codec.UnmarshalJSON(out.Bytes(), resp)
+	if err != nil {
+		return 0, err
+	}
+
+	decodedResult, err := hex.DecodeString(resp.Data)
+	if err != nil {
+		return 0, err
+	}
+
+	respData := sdk.TxMsgData{}
+	err = codec.Unmarshal(decodedResult, &respData)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(respData.Data) < 1 {
+		return 0, fmt.Errorf("invalid response")
+	}
+
+	var createPoolResponse types.MsgCreatePoolResponse
+	err = codec.Unmarshal(respData.Data[0].Data, &createPoolResponse)
+	if err != nil {
+		return 0, err
+	}
+
+	return createPoolResponse.PoolId, nil
 }

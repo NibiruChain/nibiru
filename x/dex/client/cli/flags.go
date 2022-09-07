@@ -5,22 +5,22 @@ import (
 )
 
 const (
-	// Will be parsed to string.
+	// FlagPoolFile Will be parsed to string.
 	FlagPoolFile = "pool-file"
 
-	// Will be parsed to uint64.
+	// FlagPoolId Will be parsed to uint64.
 	FlagPoolId = "pool-id"
 
-	// Will be parsed to []sdk.Coin.
+	// FlagTokensIn Will be parsed to []sdk.Coin.
 	FlagTokensIn = "tokens-in"
 
-	// Will be parsed to sdk.Coin.
+	// FlagPoolSharesOut Will be parsed to sdk.Coin.
 	FlagPoolSharesOut = "pool-shares-out"
 
-	// Will be parsed to sdk.Coin.
+	// FlagTokenIn Will be parsed to sdk.Coin.
 	FlagTokenIn = "token-in"
 
-	// Will be parsed to string.
+	// FlagTokenOutDenom Will be parsed to string.
 	FlagTokenOutDenom = "token-out-denom"
 )
 
