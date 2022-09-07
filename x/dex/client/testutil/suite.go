@@ -1,4 +1,4 @@
-package cli_test
+package testutil
 
 import (
 	"fmt"
@@ -15,11 +15,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
-	"github.com/NibiruChain/nibiru/x/dex/client/cli/testutil"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
@@ -31,6 +28,10 @@ type IntegrationTestSuite struct {
 	network *testutilcli.Network
 
 	testAccount sdk.AccAddress
+}
+
+func NewIntegrationTestSuite(cfg testutilcli.Config) *IntegrationTestSuite {
+	return &IntegrationTestSuite{cfg: cfg}
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -45,37 +46,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	coinsFromGenesis := []string{
-		common.DenomGov,
-		common.DenomStable,
-		common.DenomColl,
-		"coin-1",
-		"coin-2",
-		"coin-3",
-		"coin-4",
-		"coin-5",
-	}
-
-	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := simapp.NewTestGenesisStateFromDefault()
-
-	genesisState = testutil.WhitelistGenesisAssets(
-		genesisState,
-		coinsFromGenesis,
-	)
-
-	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
-	s.cfg.StartingTokens = sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
-	)
-	coinsToSendToUser := sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
-	)
-	for _, coin := range coinsFromGenesis {
-		s.cfg.StartingTokens = s.cfg.StartingTokens.Add(sdk.NewInt64Coin(coin, 40000))
-		coinsToSendToUser = coinsToSendToUser.Add(sdk.NewInt64Coin(coin, 20000))
-	}
-
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
 	s.NoError(err)
@@ -88,7 +58,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	// create a new user address
 	s.testAccount = user1
 
-	_, err = testutilcli.FillWalletFromValidator(user1,
+	coinsToSendToUser := sdk.NewCoins(
+		sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
+	)
+	for _, coin := range s.cfg.StartingTokens {
+		coinsToSendToUser = coinsToSendToUser.Add(sdk.NewInt64Coin(coin.Denom, 20000))
+	}
+
+	_, err = testutilcli.FillWalletFromValidator(
+		user1,
 		coinsToSendToUser,
 		val,
 		common.DenomGov,
@@ -140,7 +118,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := testutil.ExecMsgCreatePool(s.T(), val.ClientCtx, s.testAccount, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, s.testAccount, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
 			if tc.expectedErr != nil {
 				s.Require().ErrorIs(err, tc.expectedErr)
 			} else {
@@ -174,7 +152,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := testutil.ExecMsgCreatePool(s.T(), val.ClientCtx, s.testAccount, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, s.testAccount, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
 			s.Require().NoError(err, out.String())
 
 			resp := &sdk.TxResponse{}
@@ -197,7 +175,7 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 	val := s.network.Validators[0]
 
 	// create a new pool
-	out, err := testutil.ExecMsgCreatePool(
+	out, err := ExecMsgCreatePool(
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
@@ -208,7 +186,7 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 	)
 	s.Require().NoError(err)
 
-	poolID, err := testutil.ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
 	s.Require().NoError(err, out.String())
 
 	testCases := []struct {
@@ -243,7 +221,7 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 		s.Run(tc.name, func() {
 			ctx := val.ClientCtx
 
-			out, err := testutil.ExecMsgJoinPool(s.T(), ctx, tc.poolId, s.testAccount, tc.tokensIn)
+			out, err := ExecMsgJoinPool(s.T(), ctx, tc.poolId, s.testAccount, tc.tokensIn)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -262,7 +240,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 	val := s.network.Validators[0]
 
 	// create a new pool
-	out, err := testutil.ExecMsgCreatePool(
+	out, err := ExecMsgCreatePool(
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
@@ -273,7 +251,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 	)
 	s.Require().NoError(err)
 
-	poolID, err := testutil.ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
 	s.Require().NoError(err, out.String())
 
 	testCases := []struct {
@@ -339,7 +317,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 			var originalBalance banktypes.QueryAllBalancesResponse
 			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
 
-			out, err := testutil.ExecMsgExitPool(s.T(), ctx, tc.poolId, s.testAccount, tc.poolSharesOut)
+			out, err := ExecMsgExitPool(s.T(), ctx, tc.poolId, s.testAccount, tc.poolSharesOut)
 
 			if tc.expectErr {
 				s.Require().Error(err)
@@ -409,7 +387,7 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 	val := s.network.Validators[0]
 
 	// create a new pool
-	out, err := testutil.ExecMsgCreatePool(
+	out, err := ExecMsgCreatePool(
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
@@ -420,7 +398,7 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 	)
 	s.Require().NoError(err)
 
-	poolID, err := testutil.ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
 	s.Require().NoError(err, out.String())
 
 	testCases := []struct {
@@ -496,7 +474,7 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		ctx := val.ClientCtx
 
 		s.Run(tc.name, func() {
-			out, err := testutil.ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
+			out, err := ExecMsgSwapAssets(s.T(), ctx, tc.poolId, s.testAccount, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -559,8 +537,4 @@ func (s *IntegrationTestSuite) NewAccount(uid string) (addr sdk.AccAddress) {
 	s.Require().NoError(err)
 
 	return sdk.AccAddress(info.GetPubKey().Address())
-}
-
-func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
 }
