@@ -34,12 +34,10 @@ func TestIntegrationTestSuite(t *testing.T) {
 	cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
 	)
-	coinsToSendToUser := sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomGov, 2e9), // for pool creation fee and more for tx fees
-	)
+
 	for _, coin := range coinsFromGenesis {
 		cfg.StartingTokens = cfg.StartingTokens.Add(sdk.NewInt64Coin(coin, 40000))
-		coinsToSendToUser = coinsToSendToUser.Add(sdk.NewInt64Coin(coin, 20000))
 	}
+
 	suite.Run(t, NewIntegrationTestSuite(cfg))
 }
