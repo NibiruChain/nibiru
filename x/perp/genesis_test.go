@@ -7,7 +7,6 @@ import (
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -23,13 +22,6 @@ func TestGenesis(t *testing.T) {
 		app := simapp2.NewTestNibiruApp(false)
 		ctxUncached := app.NewContext(false, tmproto.Header{})
 		ctx, _ := ctxUncached.CacheContext()
-		// fund module accounts
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
 
 		// create some params
 		app.PerpKeeper.SetParams(ctx, types.Params{
@@ -40,6 +32,7 @@ func TestGenesis(t *testing.T) {
 			PartialLiquidationRatio: sdk.MustNewDecFromStr("0.00001"),
 			TwapLookbackWindow:      15 * time.Minute,
 		})
+
 		// create some positions
 		for i := int64(0); i < 100; i++ {
 			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
@@ -68,14 +61,6 @@ func TestGenesis(t *testing.T) {
 
 		// create new context and init genesis
 		ctx, _ = ctxUncached.CacheContext()
-		// simulate bank genesis
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-
 		perp.InitGenesis(ctx, app.PerpKeeper, *genState)
 
 		// export again to ensure they match
