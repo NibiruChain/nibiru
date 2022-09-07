@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### State Machine Breaking
+
+* [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
+
 ### Improvements
 
 * [#858](https://github.com/NibiruChain/nibiru/pull/858) - fix trading limit ratio check; checks in both directions on both quote and base assets
