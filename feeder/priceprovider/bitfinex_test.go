@@ -11,7 +11,7 @@ func TestBitfinex(t *testing.T) {
 	bfx, err := DialBitfinex([]string{"tBTCUSD", "tETHUSD"})
 	require.NoError(t, err)
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 	p1, p2 := bfx.GetPrice("tBTCUSD"), bfx.GetPrice("tETHUSD")
 
 	require.True(t, p1.Valid)
