@@ -31,6 +31,8 @@ type PriceResponse struct {
 }
 
 // PriceProvider defines a price provider's behavior.
+// Multiple PriceProvider implementations are defined here,
+// they should be chained to provide additive functionality.
 type PriceProvider interface {
 	// GetPrice returns the PriceResponse
 	// for the given symbol. PriceResponse.Symbol
@@ -137,4 +139,52 @@ func (a AggregatePriceProvider) Close() {
 	for _, pp := range a.pps {
 		pp.Close()
 	}
+}
+
+var (
+	_ PriceProvider = (*ExpiringPriceProvider)(nil)
+)
+
+// NewExpiringPriceProvider instantiates a new instance of ExpiringPriceProvider as PriceProvider.
+func NewExpiringPriceProvider(pp PriceProvider, expiration time.Duration) PriceProvider {
+	if expiration < 0 {
+		panic("invalid negative durations")
+	}
+	return ExpiringPriceProvider{
+		expiration: expiration,
+		pp:         pp,
+	}
+}
+
+// ExpiringPriceProvider wraps a PriceProvider
+// and if the provided PriceResponse.LastUpdateTime
+// is expired then an invalid price is returned.
+type ExpiringPriceProvider struct {
+	expiration time.Duration
+	pp         PriceProvider
+}
+
+func (e ExpiringPriceProvider) GetPrice(symbol string) PriceResponse {
+	p := e.pp.GetPrice(symbol)
+	// if it's already invalid we don't care about attempting to invalidate it
+	// by checking its expiration.
+	if !p.Valid {
+		return p
+	}
+
+	if p.LastUpdateTime == (time.Time{}) {
+		panic("invalid implementation of PriceProvider")
+	}
+
+	// if current time is after last update + expiration then we invalidate the price
+	if time.Now().After(p.LastUpdateTime.Add(e.expiration)) {
+		log.Warn().Msg("expired price") // TODO(mercilex): add clarity to msg
+		p.Valid = false
+	}
+
+	return p
+}
+
+func (e ExpiringPriceProvider) Close() {
+	e.pp.Close()
 }
