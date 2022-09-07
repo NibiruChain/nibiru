@@ -12,41 +12,6 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	// check fee pool balance
-	feePoolAcc := k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
-	if feePoolAcc == nil {
-		panic(fmt.Errorf("%s account was not created", types.FeePoolModuleAccount))
-	}
-	if balance := k.BankKeeper.GetAllBalances(ctx, feePoolAcc.GetAddress()); !balance.IsEqual(genState.FeePoolBalance) {
-		panic(
-			fmt.Errorf(
-				"%s registered balance does not match bank balance: %s <-> %s",
-				types.FeePoolModuleAccount, genState.FeePoolBalance, balance))
-	}
-
-	// check vault balance
-	vaultAcc := k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
-	if vaultAcc == nil {
-		panic(fmt.Errorf("%s account was not created", types.VaultModuleAccount))
-	}
-	if balance := k.BankKeeper.GetAllBalances(ctx, vaultAcc.GetAddress()); !balance.IsEqual(genState.VaultBalance) {
-		panic(
-			fmt.Errorf(
-				"%s registered balance does not match bank balance: %s <-> %s",
-				types.VaultModuleAccount, genState.VaultBalance, balance))
-	}
-	// check perp ef balance
-	perpEFAccount := k.AccountKeeper.GetModuleAccount(ctx, types.PerpEFModuleAccount)
-	if perpEFAccount == nil {
-		panic(fmt.Errorf("%s account was not created", types.PerpEFModuleAccount))
-	}
-	if balance := k.BankKeeper.GetAllBalances(ctx, perpEFAccount.GetAddress()); !balance.IsEqual(genState.PerpEfBalance) {
-		panic(
-			fmt.Errorf(
-				"%s registered balance does not match bank balance: %s <-> %s",
-				types.PerpEFModuleAccount, genState.PerpEfBalance, balance))
-	}
-
 	// set pair metadata
 	for _, p := range genState.PairMetadata {
 		k.PairMetadataState(ctx).Set(p)
@@ -83,27 +48,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := new(types.GenesisState)
 
 	genesis.Params = k.GetParams(ctx)
-	// perp ef balance
-	perpEFAccount := k.AccountKeeper.GetModuleAccount(ctx, types.PerpEFModuleAccount)
-	if perpEFAccount == nil {
-		panic(fmt.Errorf("%s module account does not exist", types.PerpEFModuleAccount))
-	}
-	perpEFBalance := k.BankKeeper.GetAllBalances(ctx, perpEFAccount.GetAddress())
-	genesis.PerpEfBalance = perpEFBalance
-	// fee pool balance
-	feePoolAccount := k.AccountKeeper.GetModuleAccount(ctx, types.FeePoolModuleAccount)
-	if feePoolAccount == nil {
-		panic(fmt.Errorf("%s module account does not exist", types.FeePoolModuleAccount))
-	}
-	feePoolBalance := k.BankKeeper.GetAllBalances(ctx, feePoolAccount.GetAddress())
-	genesis.FeePoolBalance = feePoolBalance
-	// vault balance
-	vaultAccount := k.AccountKeeper.GetModuleAccount(ctx, types.VaultModuleAccount)
-	if vaultAccount == nil {
-		panic(fmt.Errorf("%s module account does not exist", types.VaultModuleAccount))
-	}
-	vaultAccountBalance := k.BankKeeper.GetAllBalances(ctx, vaultAccount.GetAddress())
-	genesis.VaultBalance = vaultAccountBalance
 
 	// export positions
 	k.PositionsState(ctx).Iterate(func(position *types.Position) (stop bool) {
