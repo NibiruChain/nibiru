@@ -5,6 +5,9 @@ issues:
   max-issues-per-linter: 0 # infinite
   max-same-issues: 0 # infinite
   fix: true
+  exclude:
+  # see https://github.com/stretchr/testify/issues/1199#issuecomment-1215592618, testify shows vet problem
+    - 'github.com\/stretchr\/testify\/suite\.Suite contains sync\.RWMutex'
 linters:
   enable:
     - whitespace
@@ -19,3 +22,4 @@ linters-settings:
     local-prefixes: github.com/NibiruChain/nibiru
 severity:
   default-severity: error
+
