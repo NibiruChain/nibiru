@@ -517,3 +517,121 @@ func TestMsgServerLiquidate(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgServerMultiLiquidate(t *testing.T) {
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+	pair := common.PairBTCStable
+	liquidator := sample.AccAddress()
+
+	atRiskTrader1 := sample.AccAddress()
+	notAtRiskTrader := sample.AccAddress()
+	atRiskTrader2 := sample.AccAddress()
+
+	t.Log("create vpool")
+	app.VpoolKeeper.CreatePool(
+		/* ctx */ ctx,
+		/* pair */ common.PairBTCStable,
+		/* tradeLimitRatio */ sdk.OneDec(),
+		/* quoteAssetReserve */ sdk.NewDec(1_000_000),
+		/* baseAssetReserve */ sdk.NewDec(1_000_000),
+		/* fluctuationLimitRatio */ sdk.OneDec(),
+		/* maxOracleSpreadRatio */ sdk.OneDec(),
+		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+	)
+	app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+		Pair:                       common.PairBTCStable,
+		CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+	})
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+
+	t.Log("set pricefeed oracle price")
+	oracle := sample.AccAddress()
+	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
+	_, err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+	require.NoError(t, err)
+	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+
+	t.Log("create positions")
+	atRiskPosition1 := &types.Position{
+		TraderAddress:                       atRiskTrader1.String(),
+		Pair:                                pair,
+		Size_:                               sdk.OneDec(),
+		Margin:                              sdk.OneDec(),
+		OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
+		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+		BlockNumber:                         1,
+	}
+	atRiskPosition2 := &types.Position{
+		TraderAddress:                       atRiskTrader2.String(),
+		Pair:                                pair,
+		Size_:                               sdk.OneDec(),
+		Margin:                              sdk.OneDec(),
+		OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
+		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+		BlockNumber:                         1,
+	}
+	notAtRiskPosition := &types.Position{
+		TraderAddress:                       notAtRiskTrader.String(),
+		Pair:                                pair,
+		Size_:                               sdk.OneDec(),
+		Margin:                              sdk.OneDec(),
+		OpenNotional:                        sdk.MustNewDecFromStr("0.1"), // open price is lower than current price so no way trader gets liquidated
+		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+		BlockNumber:                         1,
+	}
+	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(atRiskPosition1))
+	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(notAtRiskPosition))
+	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(atRiskPosition2))
+
+	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+
+	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
+		Sender: liquidator.String(),
+		Liquidations: []*types.MsgMultiLiquidate_MultiLiquidation{
+			{
+				TokenPair: pair.String(),
+				Trader:    atRiskTrader1.String(),
+			},
+			{
+				TokenPair: pair.String(),
+				Trader:    notAtRiskTrader.String(),
+			},
+			{
+				TokenPair: pair.String(),
+				Trader:    atRiskTrader2.String(),
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	_, successLiq := resp.LiquidationResponses[0].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation)
+	require.True(t, successLiq)
+
+	_, unsuccessfulLiq := resp.LiquidationResponses[1].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error)
+	require.True(t, unsuccessfulLiq)
+
+	_, successLiq = resp.LiquidationResponses[2].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation)
+	require.True(t, successLiq)
+
+	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
+	// what we care about is that the first and third liquidations made some modifications at state
+	// and events levels, whilst the second (which failed) didn't.
+
+	assertNotLiquidated := func(old *types.Position) {
+		position, err := app.PerpKeeper.PositionsState(ctx).Get(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress))
+		require.NoError(t, err)
+		require.Equal(t, old, position)
+	}
+
+	assertLiquidated := func(old *types.Position) {
+		_, err := app.PerpKeeper.PositionsState(ctx).Get(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress))
+		require.ErrorIs(t, err, types.ErrPositionNotFound)
+		// NOTE(mercilex): does not cover partial liquidation
+	}
+	assertNotLiquidated(notAtRiskPosition)
+	assertLiquidated(atRiskPosition1)
+	assertLiquidated(atRiskPosition2)
+}
