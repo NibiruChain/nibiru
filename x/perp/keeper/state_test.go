@@ -50,13 +50,13 @@ func TestPairMetadata_GetAll(t *testing.T) {
 	pairMetadatas := []*types.PairMetadata{
 		{
 			Pair: common.MustNewAssetPair("ubtc:unibi"),
-			CumulativePremiumFractions: []sdk.Dec{
+			CumulativeFundingRates: []sdk.Dec{
 				sdk.MustNewDecFromStr("1"),
 			},
 		},
 		{
-			Pair:                       common.MustNewAssetPair("ueth:unibi"),
-			CumulativePremiumFractions: nil,
+			Pair:                   common.MustNewAssetPair("ueth:unibi"),
+			CumulativeFundingRates: nil,
 		},
 	}
 
@@ -86,7 +86,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 
 				metadata := &types.PairMetadata{
 					Pair: common.PairGovStable,
-					CumulativePremiumFractions: []sdk.Dec{
+					CumulativeFundingRates: []sdk.Dec{
 						sdk.NewDec(1),
 						sdk.NewDec(2), // returns the latest from the list
 					},

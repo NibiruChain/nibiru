@@ -31,12 +31,12 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "positive PnL",
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(10),
-				OpenNotional:                        sdk.NewDec(10),
-				Margin:                              sdk.NewDec(1),
-				BlockNumber:                         1,
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(10),
+				OpenNotional:                   sdk.NewDec(10),
+				Margin:                         sdk.NewDec(1),
+				BlockNumber:                    1,
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(1_000_000),
 			baseAssetReserve:  sdk.NewDec(500_000),
@@ -48,12 +48,12 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "negative PnL, positive margin ratio",
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(10),
-				OpenNotional:                        sdk.NewDec(10),
-				Margin:                              sdk.NewDec(1),
-				BlockNumber:                         1,
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(10),
+				OpenNotional:                   sdk.NewDec(10),
+				Margin:                         sdk.NewDec(1),
+				BlockNumber:                    1,
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(1_000_000),
 			baseAssetReserve:  sdk.NewDec(1_000_000),
@@ -65,12 +65,12 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "negative PnL, negative margin ratio",
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(10),
-				OpenNotional:                        sdk.NewDec(10),
-				Margin:                              sdk.NewDec(1),
-				BlockNumber:                         1,
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(10),
+				OpenNotional:                   sdk.NewDec(10),
+				Margin:                         sdk.NewDec(1),
+				BlockNumber:                    1,
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(500_000),
 			baseAssetReserve:  sdk.NewDec(1_000_000),
@@ -108,7 +108,7 @@ func TestQueryPosition(t *testing.T) {
 			)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -153,7 +153,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "empty string pair",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			},
@@ -166,7 +166,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "pair metadata not found",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			},
@@ -179,7 +179,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "returns single funding payment",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			},
@@ -195,7 +195,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "truncates to 48 funding payments",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.NewDec(1),
 					sdk.NewDec(2),

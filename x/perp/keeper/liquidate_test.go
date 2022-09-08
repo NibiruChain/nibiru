@@ -107,8 +107,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       tokenPair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+				Pair:                   tokenPair,
+				CumulativeFundingRates: []sdk.Dec{sdk.OneDec()},
 			})
 
 			t.Log("Fund trader account with sufficient quote")
@@ -284,8 +284,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			))
 
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       tokenPair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+				Pair:                   tokenPair,
+				CumulativeFundingRates: []sdk.Dec{sdk.OneDec()},
 			})
 
 			t.Log("Fund trader account with sufficient quote")
