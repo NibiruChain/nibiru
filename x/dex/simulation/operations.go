@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -85,8 +86,10 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 		denomIn, denomOut, poolIdSwap, balanceIn := findRandomPoolWithDenom(ctx, r, simCoins, k)
 
 		if denomIn == "" {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "No pool existing yet for account tokens"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool existing yet for account tokens"), nil, nil
+		}
+		if balanceIn.IsZero() {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No tokens to swap in"), nil, nil
 		}
 
 		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.01")).Add(sdk.MustNewDecFromStr("0.05"))
@@ -106,11 +109,12 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 		}
 		tokensOut, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut)
 		if err != nil {
-			panic(err)
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), err.Error()), nil, nil
 		}
+		fmt.Printf("\n\ntokenIn: %s, tokensOut: %s, pool: %s\n\n", tokenIn.String(), tokensOut.String(), pool.String())
 
 		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
-		if !tokensOut.IsValid() {
+		if !tokensOut.IsValid() || tokensOut.IsZero() {
 			return simtypes.NoOpMsg(
 				types.ModuleName, msg.Type(), "not enough input tokens to swap"), nil, nil
 		}
@@ -402,18 +406,4 @@ func findRandomPoolWithDenomPair(ctx sdk.Context, r *rand.Rand, simCoins sdk.Coi
 		}
 	}
 	return types.Pool{}, types.ErrPoolNotFound.Wrapf("could not find pool compatible with any pair of assets"), 0, 0
-}
-
-func Min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-func Max(x, y int) int {
-	if x > y {
-		return x
-	}
-	return y
 }
