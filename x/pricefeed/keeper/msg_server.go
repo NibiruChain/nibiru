@@ -55,8 +55,7 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
 		postedPrice = msg.Price
 	}
 
-	_, err = k.PostRawPrice(ctx, from, pair.String(), postedPrice, msg.Expiry)
-	if err != nil {
+	if err = k.PostRawPrice(ctx, from, pair.String(), postedPrice, msg.Expiry); err != nil {
 		return nil, err
 	}
 
