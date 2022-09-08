@@ -45,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
 
+### API Breaking
+
+* [#880](https://github.com/NibiruChain/nibiru/pull/880) - refactor `PostRawPrice` return values
+
 ### Improvements
 
 * [#858](https://github.com/NibiruChain/nibiru/pull/858) - fix trading limit ratio check; checks in both directions on both quote and base assets
