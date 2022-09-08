@@ -127,56 +127,20 @@ func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 }
 
 func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiquidate) (*types.MsgMultiLiquidateResponse, error) {
-	liquidatorAddr, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		panic(err)
+	positions := make([]MultiLiquidationRequest, len(req.Liquidations))
+	for i, pos := range req.Liquidations {
+		positions[i] = MultiLiquidationRequest{
+			pair:   common.MustNewAssetPair(pos.TokenPair),
+			trader: sdk.MustAccAddressFromBech32(pos.Trader),
+		}
 	}
 
-	liquidate := func(ctx sdk.Context, liquidator sdk.AccAddress, tokenPair string, trader string) (*types.MsgLiquidateResponse, error) {
-		traderAddr, err := sdk.AccAddressFromBech32(trader)
-		if err != nil {
-			return nil, err
-		}
+	resp := m.k.MultiLiquidate(sdk.UnwrapSDKContext(goCtx), sdk.MustAccAddressFromBech32(req.Sender), positions)
 
-		pair, err := common.NewAssetPair(tokenPair)
-		if err != nil {
-			return nil, err
-		}
-
-		feeToLiquidator, feeToFund, err := m.k.Liquidate(ctx, liquidatorAddr, pair, traderAddr)
-		if err != nil {
-			return nil, err
-		}
-
-		return &types.MsgLiquidateResponse{
-			FeeToLiquidator:        feeToLiquidator,
-			FeeToPerpEcosystemFund: feeToFund,
-		}, nil
+	liqResp := make([]*types.MsgMultiLiquidateResponse_MultiLiquidateResponse, len(resp))
+	for i, r := range resp {
+		liqResp[i] = r.IntoMultiLiquidateResponse()
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	resp := make([]*types.MsgMultiLiquidateResponse_MultiLiquidateResponse, len(req.Liquidations))
-	for i, liquidation := range req.Liquidations {
-		cachedCtx, commit := ctx.CacheContext()
-		liq, err := liquidate(cachedCtx, liquidatorAddr, liquidation.TokenPair, liquidation.Trader)
-		// in case of error, add error to liquidation responses, and skip commit
-		if err != nil {
-			resp[i] = &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{
-				Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error{Error: err.Error()},
-			}
-			// since there was an error we skip
-			continue
-		}
-
-		// this is not skipped in case there are no errors
-		resp[i] = &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{
-			Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation{Liquidation: liq},
-		}
-		// tragically the sdk's CacheContext.Write function does not commit events,
-		// so we have to manually do it. yikes.
-		ctx.EventManager().EmitEvents(cachedCtx.EventManager().Events())
-		commit()
-	}
-
-	return &types.MsgMultiLiquidateResponse{LiquidationResponses: resp}, nil
+	return &types.MsgMultiLiquidateResponse{LiquidationResponses: liqResp}, nil
 }
