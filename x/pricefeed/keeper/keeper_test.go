@@ -229,6 +229,54 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.Equal(t, sdk.MustNewDecFromStr("0.3425"), twap)
 }
 
+func TestGetCurrentTWAP(t *testing.T) {
+	_, addrs := sample.PrivKeyAddressPairs(5)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
+	keeper := app.PricefeedKeeper
+
+	pair := common.MustNewAssetPair("ubtc:unusd")
+	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
+	keeper.SetParams(ctx, types.Params{
+		Pairs:              common.AssetPairs{pair},
+		TwapLookbackWindow: 15 * time.Minute,
+	})
+
+	_, err := keeper.PostRawPrice(ctx, addrs[0], pair.String(), sdk.MustNewDecFromStr("0.33"), time.Now().Add(time.Hour))
+	require.NoError(t, err)
+
+	_, err = keeper.PostRawPrice(ctx, addrs[1], pair.String(), sdk.MustNewDecFromStr("0.34"), time.Now().Add(time.Hour))
+	require.NoError(t, err)
+
+	_, err = keeper.PostRawPrice(ctx, addrs[2], pair.String(), sdk.MustNewDecFromStr("0.35"), time.Now().Add(time.Hour))
+	require.NoError(t, err)
+
+	// Update block time such that first 3 prices valid but last one is expired
+	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45)).WithBlockHeight(1)
+
+	// Set current price
+	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
+
+	// Check TWAP Price
+	twap, err := keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), twap)
+
+	// fast forward block height as twap snapshots are indexed by blockHeight
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+
+	// Even number of oracles
+	_, err = keeper.PostRawPrice(ctx, addrs[4], pair.String(), sdk.MustNewDecFromStr("0.36"), time.Now().Add(time.Hour))
+	require.NoError(t, err)
+	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
+
+	// Check TWAP Price
+	ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+
+	twap, err = keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.3425"), twap)
+}
+
 func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {
 	_, oracles := sample.PrivKeyAddressPairs(5)
 	app, ctx := simapp.NewTestNibiruAppAndContext(true)
