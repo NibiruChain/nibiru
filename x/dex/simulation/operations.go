@@ -1,7 +1,6 @@
 package simulation
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -111,7 +110,6 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), err.Error()), nil, nil
 		}
-		fmt.Printf("\n\ntokenIn: %s, tokensOut: %s, pool: %s\n\n", tokenIn.String(), tokensOut.String(), pool.String())
 
 		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
 		if !tokensOut.IsValid() || tokensOut.IsZero() {
