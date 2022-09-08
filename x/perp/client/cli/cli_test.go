@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -17,6 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
@@ -24,6 +24,11 @@ import (
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+)
+
+const (
+	genOracleAddress  = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
+	genOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
 )
 
 var commonArgs = []string{
@@ -42,22 +47,23 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	const oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+	const oracleAddress = genOracleAddress
 	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
 
 	pairs := common.AssetPairs{common.PairBTCStable}
-	return &pftypes.GenesisState{
-		Params: pftypes.Params{Pairs: pairs},
-		PostedPrices: []pftypes.PostedPrice{
-			{
-				PairID: common.PairBTCStable.String(),
-				Oracle: oracle.String(),
-				Price:  sdk.OneDec(),
-				Expiry: time.Now().Add(1 * time.Hour),
-			},
+	defaultGenesis := simapp.PricefeedGenesis()
+	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
+	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
+		{
+			PairID: common.PairBTCStable.String(),
+			Oracle: oracle.String(),
+			Price:  sdk.NewDec(int64(1000)),
+			Expiry: time.Now().Add(40 * time.Minute),
 		},
-		GenesisOracles: []string{oracle.String()},
-	}
+	}...)
+	defaultGenesis.GenesisOracles = append(defaultGenesis.GenesisOracles, oracle.String())
+
+	return &defaultGenesis
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -124,7 +130,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// set up pricefeed
 	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
-
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
@@ -137,13 +142,34 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
-	s.users = []sdk.AccAddress{user1}
+	info, err = val.ClientCtx.Keyring.NewAccount(
+		/* uid */ "genOracle",
+		/* mnemonic */ genOracleMnemonic,
+		/* bip39Passphrase */ "",
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* algo */ hd.Secp256k1,
+	)
+	s.NoError(err)
+	oracle := sdk.AccAddress(info.GetPubKey().Address())
+
+	s.users = []sdk.AccAddress{user1, oracle}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomGov, 100_000_000),
-			sdk.NewInt64Coin(common.DenomColl, 100_000_000),
-			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
+			sdk.NewInt64Coin(common.DenomGov, 100_000),
+			sdk.NewInt64Coin(common.DenomColl, 100_000),
+			sdk.NewInt64Coin(common.DenomStable, 500_000),
+		),
+		val,
+		common.DenomGov,
+	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(oracle,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(common.DenomGov, 100),
+			sdk.NewInt64Coin(common.DenomColl, 100),
+			sdk.NewInt64Coin(common.DenomStable, 90000000),
 		),
 		val,
 		common.DenomGov,
@@ -162,6 +188,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	user := s.users[0]
 
 	s.T().Log("A. check vpool balances")
+
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.PairBTCStable)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
@@ -391,6 +418,74 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	}
 
 	s.Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+}
+
+func (s *IntegrationTestSuite) TestLiquidate() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+
+	args := []string{
+		"--from",
+		s.users[0].String(),
+		common.PairBTCStable.String(),
+		s.users[0].String(),
+	}
+
+	// liquidate a position that does not exist
+	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	s.Contains(out.String(), "no position found")
+	if err != nil {
+		s.T().Logf("user liquidate error: %+v", err)
+	}
+
+	positionArgs := []string{
+		"--from",
+		s.users[0].String(),
+		"buy",
+		common.PairBTCStable.String(),
+		"15",     // Leverage
+		"400000", // Quote asset amount
+		"0",
+	}
+
+	s.T().Log("opening a position with user 1....")
+	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(positionArgs, commonArgs...))
+	s.NoError(err)
+
+	// error : margin is higher than required maintenance margin ratio"
+	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	s.Contains(out.String(), "margin is higher than required maintenance margin ratio")
+	if err != nil {
+		s.T().Logf("user liquidate error: %+v", err)
+	}
+
+	positionArgs = []string{
+		"--from",
+		s.users[1].String(),
+		"sell",
+		common.PairBTCStable.String(),
+		"15",       // Leverage
+		"80000000", // Quote asset amount
+		"0",
+	}
+
+	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(positionArgs, commonArgs...))
+	s.NoError(err)
+
+	_, err = s.network.WaitForHeight(40)
+	s.NoError(err)
+
+	// liquidate
+	args = []string{
+		"--from",
+		s.users[0].String(),
+		common.PairBTCStable.String(),
+		s.users[0].String(),
+	}
+
+	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	s.NotContains(out.String(), "fail")
+	s.NoError(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

@@ -122,10 +122,6 @@ func NewTestGenesisState(codec codec.Codec, inGenState GenesisState,
 	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(common.DenomGov, 1_000_000)) // min deposit of 1 NIBI
 	testGenState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
-	// pricefeed genesis state
-	pfGenState := PricefeedGenesis()
-	testGenState[pricefeedtypes.ModuleName] = codec.MustMarshalJSON(&pfGenState)
-
 	return testGenState
 }
 
