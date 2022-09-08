@@ -102,7 +102,12 @@ message MsgLiquidateResponse {
 }
 
 message MsgMultiLiquidate {
-  repeated MsgLiquidate liquidations = 1;
+  message MultiLiquidation {
+    string token_pair = 2;
+    string trader = 3;
+  }
+  string sender = 1;
+  repeated MultiLiquidation liquidations = 2;
 }
 
 message MsgMultiLiquidateResponse {
