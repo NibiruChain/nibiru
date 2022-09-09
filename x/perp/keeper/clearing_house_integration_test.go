@@ -4,14 +4,13 @@ import (
 	"testing"
 	"time"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -246,7 +245,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			traderAddr := sample.AccAddress()
 			oracle := sample.AccAddress()
 			exchangedSize := tc.expectedSize
@@ -324,8 +323,12 @@ func TestOpenPositionError(t *testing.T) {
 		name        string
 		traderFunds sdk.Coins
 
+		// vpool params
+		poolTradeLimitRatio sdk.Dec
+
 		initialPosition *types.Position
 
+		// position arguments
 		side      types.Side
 		margin    sdk.Int
 		leverage  sdk.Dec
@@ -334,18 +337,20 @@ func TestOpenPositionError(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:            "not enough trader funds",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
-			initialPosition: nil,
-			side:            types.Side_BUY,
-			margin:          sdk.NewInt(1000),
-			leverage:        sdk.NewDec(10),
-			baseLimit:       sdk.ZeroDec(),
-			expectedErr:     sdkerrors.ErrInsufficientFunds,
+			name:                "not enough trader funds",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_BUY,
+			margin:              sdk.NewInt(1000),
+			leverage:            sdk.NewDec(10),
+			baseLimit:           sdk.ZeroDec(),
+			expectedErr:         sdkerrors.ErrInsufficientFunds,
 		},
 		{
-			name:        "position has bad debt",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
+			name:                "position has bad debt",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
+			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition: &types.Position{
 				Pair:                                common.PairBTCStable,
 				Size_:                               sdk.OneDec(),
@@ -361,84 +366,114 @@ func TestOpenPositionError(t *testing.T) {
 			expectedErr: types.ErrMarginRatioTooLow,
 		},
 		{
-			name:            "new long position not over base limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition: nil,
-			side:            types.Side_BUY,
-			margin:          sdk.NewInt(1000),
-			leverage:        sdk.NewDec(10),
-			baseLimit:       sdk.NewDec(10_000),
-			expectedErr:     vpooltypes.ErrAssetFailsUserLimit,
+			name:                "new long position not over base limit",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_BUY,
+			margin:              sdk.NewInt(1000),
+			leverage:            sdk.NewDec(10),
+			baseLimit:           sdk.NewDec(10_000),
+			expectedErr:         vpooltypes.ErrAssetFailsUserLimit,
 		},
 		{
-			name:            "new short position not under base limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition: nil,
-			side:            types.Side_SELL,
-			margin:          sdk.NewInt(1000),
-			leverage:        sdk.NewDec(10),
-			baseLimit:       sdk.NewDec(10_000),
-			expectedErr:     vpooltypes.ErrAssetFailsUserLimit,
+			name:                "new short position not under base limit",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_SELL,
+			margin:              sdk.NewInt(1000),
+			leverage:            sdk.NewDec(10),
+			baseLimit:           sdk.NewDec(10_000),
+			expectedErr:         vpooltypes.ErrAssetFailsUserLimit,
 		},
 		{
-			name:            "quote asset amount is zero",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition: nil,
-			side:            types.Side_SELL,
-			margin:          sdk.NewInt(0),
-			leverage:        sdk.NewDec(10),
-			baseLimit:       sdk.NewDec(10_000),
-			expectedErr:     types.ErrQuoteAmountIsZero,
+			name:                "quote asset amount is zero",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_SELL,
+			margin:              sdk.NewInt(0),
+			leverage:            sdk.NewDec(10),
+			baseLimit:           sdk.NewDec(10_000),
+			expectedErr:         types.ErrQuoteAmountIsZero,
 		},
 		{
-			name:            "leverage amount is zero",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition: nil,
-			side:            types.Side_SELL,
-			margin:          sdk.NewInt(1000),
-			leverage:        sdk.NewDec(0),
-			baseLimit:       sdk.NewDec(10_000),
-			expectedErr:     types.ErrLeverageIsZero,
+			name:                "leverage amount is zero",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_SELL,
+			margin:              sdk.NewInt(1000),
+			leverage:            sdk.NewDec(0),
+			baseLimit:           sdk.NewDec(10_000),
+			expectedErr:         types.ErrLeverageIsZero,
 		},
 		{
-			name:            "leverage amount is too high - SELL",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition: nil,
-			side:            types.Side_SELL,
-			margin:          sdk.NewInt(100),
-			leverage:        sdk.NewDec(100),
-			baseLimit:       sdk.NewDec(11_000),
-			expectedErr:     types.ErrLeverageIsTooHigh,
+			name:                "leverage amount is too high - SELL",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_SELL,
+			margin:              sdk.NewInt(100),
+			leverage:            sdk.NewDec(100),
+			baseLimit:           sdk.NewDec(11_000),
+			expectedErr:         types.ErrLeverageIsTooHigh,
 		},
 		{
-			name:            "leverage amount is too high - BUY",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			initialPosition: nil,
-			side:            types.Side_BUY,
-			margin:          sdk.NewInt(100),
-			leverage:        sdk.NewDec(16),
-			baseLimit:       sdk.NewDec(0),
-			expectedErr:     types.ErrLeverageIsTooHigh,
+			name:                "leverage amount is too high - BUY",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_BUY,
+			margin:              sdk.NewInt(100),
+			leverage:            sdk.NewDec(16),
+			baseLimit:           sdk.NewDec(0),
+			expectedErr:         types.ErrLeverageIsTooHigh,
 		},
 		{
-			name:            "new long position over fluctuation limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
-			initialPosition: nil,
-			side:            types.Side_BUY,
-			margin:          sdk.NewInt(100_000_000_000),
-			leverage:        sdk.OneDec(),
-			baseLimit:       sdk.ZeroDec(),
-			expectedErr:     vpooltypes.ErrOverFluctuationLimit,
+			name:                "new long position over fluctuation limit",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_BUY,
+			margin:              sdk.NewInt(100_000_000_000),
+			leverage:            sdk.OneDec(),
+			baseLimit:           sdk.ZeroDec(),
+			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
 		},
 		{
-			name:            "new short position over fluctuation limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
-			initialPosition: nil,
-			side:            types.Side_SELL,
-			margin:          sdk.NewInt(100_000_000_000),
-			leverage:        sdk.OneDec(),
-			baseLimit:       sdk.ZeroDec(),
-			expectedErr:     vpooltypes.ErrOverFluctuationLimit,
+			name:                "new short position over fluctuation limit",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1_000_000_000_000)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			initialPosition:     nil,
+			side:                types.Side_SELL,
+			margin:              sdk.NewInt(100_000_000_000),
+			leverage:            sdk.OneDec(),
+			baseLimit:           sdk.ZeroDec(),
+			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
+		},
+		{
+			name:                "new long position over trade limit",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 10_000_000_000)),
+			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
+			initialPosition:     nil,
+			side:                types.Side_BUY,
+			margin:              sdk.NewInt(100_000_000_000),
+			leverage:            sdk.OneDec(),
+			baseLimit:           sdk.ZeroDec(),
+			expectedErr:         vpooltypes.ErrOverTradingLimit,
+		},
+		{
+			name:                "new short position over trade limit",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 10_000_000_000)),
+			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
+			initialPosition:     nil,
+			side:                types.Side_SELL,
+			margin:              sdk.NewInt(100_000_000_000),
+			leverage:            sdk.OneDec(),
+			baseLimit:           sdk.ZeroDec(),
+			expectedErr:         vpooltypes.ErrOverTradingLimit,
 		},
 	}
 
@@ -446,7 +481,7 @@ func TestOpenPositionError(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			traderAddr := sample.AccAddress()
 			oracle := sample.AccAddress()
 
@@ -460,7 +495,7 @@ func TestOpenPositionError(t *testing.T) {
 			nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
 				common.PairBTCStable,
-				/* tradeLimitRatio */ sdk.OneDec(),
+				/* tradeLimitRatio */ tc.poolTradeLimitRatio,
 				/* quoteReserve */ sdk.NewDec(1_000_000_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
 				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
@@ -499,7 +534,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			name: "open pos - uninitialized pool raised pair not supported error",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 				pair := common.MustNewAssetPair("xxx:yyy")
 
 				trader := sample.AccAddress()
@@ -519,7 +554,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			name: "open pos - vpool not set on the perp PairMetadata ",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 				pair := common.MustNewAssetPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
