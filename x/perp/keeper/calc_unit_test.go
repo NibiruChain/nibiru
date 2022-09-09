@@ -148,13 +148,13 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 			k, mocks, ctx := getKeeper(t)
 
 			pos := types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PairBTCStable,
-				Size_:                               tc.positionSize,
-				Margin:                              sdk.NewDec(100),
-				OpenNotional:                        sdk.NewDec(1000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				TraderAddress:                  sample.AccAddress().String(),
+				Pair:                           common.PairBTCStable,
+				Size_:                          tc.positionSize,
+				Margin:                         sdk.NewDec(100),
+				OpenNotional:                   sdk.NewDec(1000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			}
 
 			t.Log("mock vpool keeper")

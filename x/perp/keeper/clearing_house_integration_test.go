@@ -57,12 +57,12 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing long position, go more long",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(10_000),
-				Margin:                              sdk.NewDec(1000),
-				OpenNotional:                        sdk.NewDec(10_000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(10_000),
+				Margin:                         sdk.NewDec(1000),
+				OpenNotional:                   sdk.NewDec(10_000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			side:                     types.Side_BUY,
 			margin:                   sdk.NewInt(1000),
@@ -80,12 +80,12 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing long position, decrease a bit",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 10)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(10_000),
-				Margin:                              sdk.NewDec(1000),
-				OpenNotional:                        sdk.NewDec(10_000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(10_000),
+				Margin:                         sdk.NewDec(1000),
+				OpenNotional:                   sdk.NewDec(10_000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			side:                     types.Side_SELL,
 			margin:                   sdk.NewInt(500),
@@ -103,12 +103,12 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing long position, decrease a lot",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1060)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(10_000),
-				Margin:                              sdk.NewDec(1000),
-				OpenNotional:                        sdk.NewDec(10_000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(10_000),
+				Margin:                         sdk.NewDec(1000),
+				OpenNotional:                   sdk.NewDec(10_000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			side:                     types.Side_SELL,
 			margin:                   sdk.NewInt(3000),
@@ -158,12 +158,12 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing short position, go more short",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(-10_000),
-				Margin:                              sdk.NewDec(1000),
-				OpenNotional:                        sdk.NewDec(10_000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(-10_000),
+				Margin:                         sdk.NewDec(1000),
+				OpenNotional:                   sdk.NewDec(10_000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			side:                     types.Side_SELL,
 			margin:                   sdk.NewInt(1000),
@@ -181,12 +181,12 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing short position, decrease a bit",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 10)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(-10_000),
-				Margin:                              sdk.NewDec(1000),
-				OpenNotional:                        sdk.NewDec(10_000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(-10_000),
+				Margin:                         sdk.NewDec(1000),
+				OpenNotional:                   sdk.NewDec(10_000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			side:                     types.Side_BUY,
 			margin:                   sdk.NewInt(500),
@@ -204,12 +204,12 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing short position, decrease a lot",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1060)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(-10_000),
-				Margin:                              sdk.NewDec(1000),
-				OpenNotional:                        sdk.NewDec(10_000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(-10_000),
+				Margin:                         sdk.NewDec(1000),
+				OpenNotional:                   sdk.NewDec(10_000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			side:                     types.Side_BUY,
 			margin:                   sdk.NewInt(3000),
@@ -269,8 +269,8 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.PairBTCStable,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("initialize trader funds")
@@ -294,7 +294,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.expectedOpenNotional, resp.Position.OpenNotional, "open notional")
 			assert.EqualValues(t, tc.expectedSize, resp.Position.Size_, "position size")
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
-			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
 			assert.EqualValues(t, tc.leverage.MulInt(tc.margin), resp.ExchangedNotionalValue)
 			assert.EqualValues(t, exchangedSize, resp.ExchangedPositionSize)
 			assert.EqualValues(t, sdk.ZeroDec(), resp.BadDebt)
@@ -313,7 +313,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.expectedOpenNotional, position.OpenNotional, "open notional")
 			assert.EqualValues(t, tc.expectedSize, position.Size_, "position size")
 			assert.EqualValues(t, ctx.BlockHeight(), position.BlockNumber)
-			assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
+			assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativeFundingPayment)
 		})
 	}
 }
@@ -352,12 +352,12 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.NewDec(1000),
-				OpenNotional:                        sdk.NewDec(10_000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.NewDec(1000),
+				OpenNotional:                   sdk.NewDec(10_000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			side:        types.Side_BUY,
 			margin:      sdk.NewInt(1),
@@ -504,8 +504,8 @@ func TestOpenPositionError(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.PairBTCStable,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("initialize trader funds")
