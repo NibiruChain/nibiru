@@ -36,13 +36,13 @@ func TestGenesis(t *testing.T) {
 		// create some positions
 		for i := int64(0); i < 100; i++ {
 			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PairGovStable,
-				Size_:                               sdk.NewDec(i + 1),
-				Margin:                              sdk.NewDec(i * 2),
-				OpenNotional:                        sdk.NewDec(i * 100),
-				LastUpdateCumulativePremiumFraction: sdk.NewDec(5 * 100),
-				BlockNumber:                         i,
+				TraderAddress:                  sample.AccAddress().String(),
+				Pair:                           common.PairGovStable,
+				Size_:                          sdk.NewDec(i + 1),
+				Margin:                         sdk.NewDec(i * 2),
+				OpenNotional:                   sdk.NewDec(i * 100),
+				LatestCumulativeFundingPayment: sdk.NewDec(5 * 100),
+				BlockNumber:                    i,
 			}))
 		}
 

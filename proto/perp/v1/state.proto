@@ -26,15 +26,16 @@ message Params {
     (gogoproto.nullable) = false
   ];
 
-  // LiquidationFeeRatio is the percentage of liquidated position that will be given
-  // to out as a reward. Half of the liquidation fee is given to the liquidator,
-  // and the other half is given to the ecosystem fund.
+  // LiquidationFeeRatio is the percentage of liquidated position that will be
+  // given to out as a reward. Half of the liquidation fee is given to the
+  // liquidator, and the other half is given to the ecosystem fund.
   string liquidation_fee_ratio = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // PartialLiquidationRatio is the share we try to liquidate if the margin is higher than liquidation fee
+  // PartialLiquidationRatio is the share we try to liquidate if the margin is
+  // higher than liquidation fee
   string partial_liquidation_ratio = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -54,7 +55,7 @@ message Params {
 
 // GenesisState defines the perp module's genesis state.
 message GenesisState {
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 
   repeated PairMetadata pair_metadata = 2;
 
@@ -72,98 +73,113 @@ message Position {
   string trader_address = 1;
 
   // pair identifies the pair associated with this position
-  common.AssetPair pair = 2 [
-    (gogoproto.nullable) = false
-  ];
+  common.AssetPair pair = 2 [ (gogoproto.nullable) = false ];
 
   // Position size.
   string size = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false]; // signed int
-  
+    (gogoproto.nullable) = false
+  ]; // signed int
+
   // Amount of margin remaining in the position.
   string margin = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false]; 
+    (gogoproto.nullable) = false
+  ];
 
   // OpenNotional is the quote denom value of the position when opening.
   // Used to calculate PnL.
   string open_notional = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false]; 
+    (gogoproto.nullable) = false
+  ];
 
-  // The last cumulative funding payment this position has applied.
-  // Used to calculate the next funding payment. 
-  string last_update_cumulative_premium_fraction = 6 [
+  // The most recent cumulative funding payment this position has applied.
+  // Used to calculate the next funding payment.
+  string latest_cumulative_funding_payment = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false]; // int
+    (gogoproto.nullable) = false
+  ];
 
-  // BlockNumber is the last block number when this position changed.
+  // BlockNumber is the last block number when this position was updated.
   int64 block_number = 7;
 }
 
 message PositionResp {
-    Position position = 1;
+  Position position = 1;
 
-    // The amount of quote assets exchanged.
-    string exchanged_notional_value = 2 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The amount of quote assets exchanged.
+  string exchanged_notional_value = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The amount of base assets exchanged. 
-    string exchanged_position_size = 3 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The amount of base assets exchanged.
+  string exchanged_position_size = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The amount of bad debt accrued during this position change.
-    // Measured in absolute value of quote units.
-    // If greater than zero, then the position change event will likely fail.
-    string bad_debt = 4 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The amount of bad debt accrued during this position change.
+  // Measured in absolute value of quote units.
+  // If greater than zero, then the position change event will likely fail.
+  string bad_debt = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The funding payment applied on this position change.
-    string funding_payment = 5 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The funding payment applied on this position change.
+  string funding_payment = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The amount of PnL realized on this position changed, measured in quote units.
-    string realized_pnl = 6 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The amount of PnL realized on this position changed, measured in quote
+  // units.
+  string realized_pnl = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The unrealized PnL in the position after the position change.
-    string unrealized_pnl_after = 7 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The unrealized PnL in the position after the position change.
+  string unrealized_pnl_after = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The amount of margin the trader has to give to the vault.
-    // A negative value means the vault pays the trader.
-    string margin_to_vault = 8 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The amount of margin the trader has to give to the vault.
+  // A negative value means the vault pays the trader.
+  string margin_to_vault = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The position's notional value after the position change, measured in quote units.
-    string position_notional = 9 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+  // The position's notional value after the position change, measured in quote
+  // units.
+  string position_notional = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message LiquidateResp {
   // Amount of bad debt created by the liquidation event
   string bad_debt = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // Fee paid to the liquidator
   string fee_to_liquidator = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // Fee paid to the Perp EF fund
   string fee_to_perp_ecosystem_fund = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // Address of the liquidator
   string liquidator = 4;
@@ -199,13 +215,14 @@ enum MarginCalculationPriceOption {
 }
 
 message PairMetadata {
-  common.AssetPair pair = 1 [
+  common.AssetPair pair = 1 [ (gogoproto.nullable) = false ];
+
+  // The historical list of cumulative funding rates for a given pair.
+  // Calculated once per epoch.
+  repeated string cumulative_funding_rates = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-
-  repeated string cumulative_premium_fractions = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
 }
 
 message PrepaidBadDebt {
@@ -213,5 +230,6 @@ message PrepaidBadDebt {
 
   string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 }
