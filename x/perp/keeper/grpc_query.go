@@ -104,11 +104,11 @@ func (q queryServer) FundingRates(
 
 	// truncate to most recent 48 funding payments
 	// given 30 minute funding rate calculations, this should give the last 24 hours of funding payments
-	numFundingRates := len(pairMetadata.CumulativePremiumFractions)
+	numFundingRates := len(pairMetadata.CumulativeFundingRates)
 	if numFundingRates >= 48 {
-		fundingRates = pairMetadata.CumulativePremiumFractions[numFundingRates-48 : numFundingRates]
+		fundingRates = pairMetadata.CumulativeFundingRates[numFundingRates-48 : numFundingRates]
 	} else {
-		fundingRates = pairMetadata.CumulativePremiumFractions
+		fundingRates = pairMetadata.CumulativeFundingRates
 	}
 
 	return &types.QueryFundingRatesResponse{

@@ -32,13 +32,13 @@ func TestAddMarginSuccess(t *testing.T) {
 			marginToAdd:                     sdk.NewInt64Coin(common.DenomStable, 100),
 			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(1_000),
-				Margin:                              sdk.NewDec(100),
-				OpenNotional:                        sdk.NewDec(500),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				TraderAddress:                  sample.AccAddress().String(),
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(1_000),
+				Margin:                         sdk.NewDec(100),
+				OpenNotional:                   sdk.NewDec(500),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 
 			expectedMargin:         sdk.NewDec(199),
@@ -80,7 +80,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			perpKeeper.PairMetadataState(ctx).Set(
 				&types.PairMetadata{
 					Pair: common.PairBTCStable,
-					CumulativePremiumFractions: []sdk.Dec{
+					CumulativeFundingRates: []sdk.Dec{
 						tc.latestCumulativePremiumFraction,
 					},
 				},
@@ -97,7 +97,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
 			assert.EqualValues(t, common.PairBTCStable, resp.Position.Pair)
-			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LastUpdateCumulativePremiumFraction)
+			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LatestCumulativeFundingPayment)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
 	}
@@ -183,8 +183,8 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+					Pair:                   pair,
+					CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 				})
 
 				t.Log("increment block height and time for twap calculation")
@@ -218,7 +218,7 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(300), position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("299.910026991902429271"), position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
-				assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativeFundingPayment)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,

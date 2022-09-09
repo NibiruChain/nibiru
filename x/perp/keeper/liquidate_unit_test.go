@@ -102,7 +102,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			t.Log("set pair metadata")
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -187,7 +187,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPositionSize, newPosition.Size_)
 			assert.EqualValues(t, tc.expectedPositionMargin, newPosition.Margin)
 			assert.EqualValues(t, tc.expectedPositionOpenNotional, newPosition.OpenNotional)
-			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
+			assert.True(t, newPosition.LatestCumulativeFundingPayment.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
@@ -275,7 +275,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			t.Log("set pair metadata")
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -444,7 +444,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			t.Log("set pair metadata")
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -921,7 +921,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, newParams)
 			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 				Pair: common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case
 				},
 			})
@@ -951,13 +951,13 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("create and set the initial position")
 			position := types.Position{
-				TraderAddress:                       traderAddr.String(),
-				Pair:                                common.PairBTCStable,
-				Size_:                               tc.initialPositionSize,
-				Margin:                              tc.initialMargin,
-				OpenNotional:                        tc.initialOpenNotional,
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         ctx.BlockHeight(),
+				TraderAddress:                  traderAddr.String(),
+				Pair:                           common.PairBTCStable,
+				Size_:                          tc.initialPositionSize,
+				Margin:                         tc.initialMargin,
+				OpenNotional:                   tc.initialOpenNotional,
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    ctx.BlockHeight(),
 			}
 			perpKeeper.PositionsState(ctx).Set(&position)
 
@@ -994,7 +994,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			assert.True(t, newPosition.Size_.IsZero())        // always zero
 			assert.True(t, newPosition.Margin.IsZero())       // always zero
 			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero
-			assert.True(t, newPosition.LastUpdateCumulativePremiumFraction.IsZero())
+			assert.True(t, newPosition.LatestCumulativeFundingPayment.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{

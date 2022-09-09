@@ -110,7 +110,7 @@ func CmdQueryPosition() *cobra.Command {
 // sample token-pair: btc:nusd
 func CmdQueryFundingRates() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "funding-payments [token-pair]",
+		Use:   "funding-rates [token-pair]",
 		Short: "the cumulative funding payments for a market, up to 48 most recent payments",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

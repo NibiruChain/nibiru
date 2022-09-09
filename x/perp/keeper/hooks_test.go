@@ -107,7 +107,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			t.Log("assert PairMetadataState")
 			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.PairBTCStable)
 			require.NoError(t, err)
-			assert.Equal(t, tc.expectedCumulativeFundingRates, pair.CumulativePremiumFractions)
+			assert.Equal(t, tc.expectedCumulativeFundingRates, pair.CumulativeFundingRates)
 
 			if tc.expectedFundingRateChangedEvent != nil {
 				t.Log("assert FundingRateChangedEvent")
@@ -130,7 +130,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 	k.PairMetadataState(ctx).Set(&types.PairMetadata{
 		Pair: common.PairBTCStable,
 		// start with one entry to ensure we append
-		CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+		CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 	})
 }
 

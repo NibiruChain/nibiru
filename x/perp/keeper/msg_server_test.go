@@ -33,12 +33,12 @@ func TestMsgServerAddMargin(t *testing.T) {
 			name:        "trader not enough funds",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			margin:      sdk.NewInt64Coin(common.DenomStable, 1000),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
@@ -54,12 +54,12 @@ func TestMsgServerAddMargin(t *testing.T) {
 			name:        "success",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			margin:      sdk.NewInt64Coin(common.DenomStable, 1000),
 			expectedErr: nil,
@@ -86,8 +86,8 @@ func TestMsgServerAddMargin(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.PairBTCStable,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("fund trader")
@@ -118,7 +118,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 				assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
 				assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
 			}
 		})
 	}
@@ -138,12 +138,12 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			name:       "position not enough margin",
 			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
 			expectedErr:    types.ErrFailedRemoveMarginCanCauseBadDebt,
@@ -159,12 +159,12 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			name:       "vault insufficient funds",
 			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.NewDec(1_000_000),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.NewDec(1_000_000),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
 			expectedErr:    sdkerrors.ErrInsufficientFunds,
@@ -173,12 +173,12 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			name:       "success",
 			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.NewDec(1_000_000),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.NewDec(1_000_000),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
 			expectedErr:    nil,
@@ -205,8 +205,8 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.PairBTCStable,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("fund vault")
@@ -240,7 +240,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
 				assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
 			}
 		})
 	}
@@ -291,8 +291,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.PairBTCStable,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
@@ -326,7 +326,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(1000), resp.Position.Margin)
 				assert.EqualValues(t, sdk.NewDec(10_000), resp.Position.OpenNotional)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
 				assert.EqualValues(t, sdk.NewDec(10_000), resp.ExchangedNotionalValue)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.ExchangedPositionSize)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
@@ -376,19 +376,19 @@ func TestMsgServerClosePosition(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.PairBTCStable,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("create position")
 			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-				TraderAddress:                       tc.traderAddr.String(),
-				Pair:                                tc.pair,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				TraderAddress:                  tc.traderAddr.String(),
+				Pair:                           tc.pair,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			}))
 			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
@@ -473,8 +473,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.PairBTCStable,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
@@ -490,13 +490,13 @@ func TestMsgServerLiquidate(t *testing.T) {
 
 				t.Log("create position")
 				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-					TraderAddress:                       traderAddr.String(),
-					Pair:                                pair,
-					Size_:                               sdk.OneDec(),
-					Margin:                              sdk.OneDec(),
-					OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         1,
+					TraderAddress:                  traderAddr.String(),
+					Pair:                           pair,
+					Size_:                          sdk.OneDec(),
+					Margin:                         sdk.OneDec(),
+					OpenNotional:                   sdk.NewDec(2), // new spot price is 1, so position can be liquidated
+					LatestCumulativeFundingPayment: sdk.ZeroDec(),
+					BlockNumber:                    1,
 				}))
 				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 1))))
 			}

@@ -280,13 +280,13 @@ func (k Keeper) increasePosition(
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.BadDebt = remaining.BadDebt
 	positionResp.Position = &types.Position{
-		TraderAddress:                       currentPosition.TraderAddress,
-		Pair:                                currentPosition.Pair,
-		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                              remaining.Margin,
-		OpenNotional:                        currentPosition.OpenNotional.Add(increasedNotional),
-		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		BlockNumber:                         ctx.BlockHeight(),
+		TraderAddress:                  currentPosition.TraderAddress,
+		Pair:                           currentPosition.Pair,
+		Size_:                          currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
+		Margin:                         remaining.Margin,
+		OpenNotional:                   currentPosition.OpenNotional.Add(increasedNotional),
+		LatestCumulativeFundingPayment: remaining.LatestCumulativePremiumFraction,
+		BlockNumber:                    ctx.BlockHeight(),
 	}
 
 	return positionResp, nil
@@ -433,13 +433,13 @@ func (k Keeper) decreasePosition(
 	}
 
 	positionResp.Position = &types.Position{
-		TraderAddress:                       currentPosition.TraderAddress,
-		Pair:                                currentPosition.Pair,
-		Size_:                               currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                              remaining.Margin,
-		OpenNotional:                        remainOpenNotional,
-		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		BlockNumber:                         ctx.BlockHeight(),
+		TraderAddress:                  currentPosition.TraderAddress,
+		Pair:                           currentPosition.Pair,
+		Size_:                          currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
+		Margin:                         remaining.Margin,
+		OpenNotional:                   remainOpenNotional,
+		LatestCumulativeFundingPayment: remaining.LatestCumulativePremiumFraction,
+		BlockNumber:                    ctx.BlockHeight(),
 	}
 
 	return positionResp, nil
@@ -632,13 +632,13 @@ func (k Keeper) closePositionEntirely(
 
 	positionResp.ExchangedNotionalValue = ExchangedNotionalValue
 	positionResp.Position = &types.Position{
-		TraderAddress:                       currentPosition.TraderAddress,
-		Pair:                                currentPosition.Pair,
-		Size_:                               sdk.ZeroDec(),
-		Margin:                              sdk.ZeroDec(),
-		OpenNotional:                        sdk.ZeroDec(),
-		LastUpdateCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
-		BlockNumber:                         ctx.BlockHeight(),
+		TraderAddress:                  currentPosition.TraderAddress,
+		Pair:                           currentPosition.Pair,
+		Size_:                          sdk.ZeroDec(),
+		Margin:                         sdk.ZeroDec(),
+		OpenNotional:                   sdk.ZeroDec(),
+		LatestCumulativeFundingPayment: remaining.LatestCumulativePremiumFraction,
+		BlockNumber:                    ctx.BlockHeight(),
 	}
 
 	if err = k.PositionsState(ctx).Delete(

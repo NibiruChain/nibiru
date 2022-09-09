@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### State Machine Breaking
 
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
+* [#878](https://github.com/NibiruChain/nibiru/pull/878) - rename `PremiumFraction` to `FundingRate`
 
 ### Improvements
 
@@ -68,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#830](https://github.com/NibiruChain/nibiru/pull/830) - test(vpool): Make missing fields for 'query vpool all-pools' display as empty strings.
   * Improve test coverage of functions used in the query server.
   * Added 'pair' field to the `all-pools` to make the prices array easier to digest
+* [#878](https://github.com/NibiruChain/nibiru/pull/878) - rename `funding-payments` query to `funding-rate`
 
 ### Improvements
 

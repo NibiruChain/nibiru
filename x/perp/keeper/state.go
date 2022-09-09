@@ -176,7 +176,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 		return sdk.Dec{}, err
 	}
 	// this should never fail
-	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
+	return pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1], nil
 }
 
 var whitelistNamespace = []byte{0x3}

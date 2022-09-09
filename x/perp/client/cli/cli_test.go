@@ -107,7 +107,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
 		{
 			Pair: common.PairBTCStable,
-			CumulativePremiumFractions: []sdk.Dec{
+			CumulativeFundingRates: []sdk.Dec{
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 				sdk.NewDec(2),
@@ -115,7 +115,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 		{
 			Pair: common.PairETHStable,
-			CumulativePremiumFractions: []sdk.Dec{
+			CumulativeFundingRates: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
 		},
