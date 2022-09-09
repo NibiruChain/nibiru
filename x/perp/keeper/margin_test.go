@@ -77,13 +77,12 @@ func TestAddMarginSuccess(t *testing.T) {
 
 			t.Log("set pair metadata")
 			perpKeeper := &nibiruApp.PerpKeeper
-			perpKeeper.PairMetadataState(ctx).Set(
-				&types.PairMetadata{
-					Pair: common.PairBTCStable,
-					CumulativePremiumFractions: []sdk.Dec{
-						tc.latestCumulativePremiumFraction,
-					},
+			perpKeeper.PairMetadata.Insert(ctx, common.PairBTCStable, types.PairMetadata{
+				Pair: common.PairBTCStable,
+				CumulativePremiumFractions: []sdk.Dec{
+					tc.latestCumulativePremiumFraction,
 				},
+			},
 			)
 
 			t.Log("establish initial position")
@@ -182,7 +181,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair:                       pair,
 					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 				})

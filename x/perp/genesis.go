@@ -14,7 +14,7 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// set pair metadata
 	for _, p := range genState.PairMetadata {
-		k.PairMetadataState(ctx).Set(p)
+		k.PairMetadata.Insert(ctx, p.Pair, *p)
 	}
 
 	// create positions
@@ -71,8 +71,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	})
 
 	// export pairMetadata
-	metadata := k.PairMetadataState(ctx).GetAll()
-	genesis.PairMetadata = metadata
+	metadata := k.PairMetadata.GetAll(ctx)
+	genesis.PairMetadata = make([]*types.PairMetadata, len(metadata))
+	for i, m := range metadata {
+		genesis.PairMetadata[i] = &m
+	}
 
 	return genesis
 }

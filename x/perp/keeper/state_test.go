@@ -47,7 +47,7 @@ func TestPrepaidBadDebtState(t *testing.T) {
 }
 
 func TestPairMetadata_GetAll(t *testing.T) {
-	pairMetadatas := []*types.PairMetadata{
+	pairMetadatas := []types.PairMetadata{
 		{
 			Pair: common.MustNewAssetPair("ubtc:unibi"),
 			CumulativePremiumFractions: []sdk.Dec{
@@ -63,10 +63,10 @@ func TestPairMetadata_GetAll(t *testing.T) {
 	perpKeeper, _, ctx := getKeeper(t)
 
 	for _, m := range pairMetadatas {
-		perpKeeper.PairMetadataState(ctx).Set(m)
+		perpKeeper.PairMetadata.Insert(ctx, m.Pair, m)
 	}
 
-	savedMetadata := perpKeeper.PairMetadataState(ctx).GetAll()
+	savedMetadata := perpKeeper.PairMetadata.GetAll(ctx)
 	require.Len(t, savedMetadata, 2)
 
 	for _, sm := range savedMetadata {
@@ -91,7 +91,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 						sdk.NewDec(2), // returns the latest from the list
 					},
 				}
-				keeper.PairMetadataState(ctx).Set(metadata)
+				keeper.PairMetadata.Insert(ctx, metadata.Pair, *metadata)
 
 				latestCumulativePremiumFraction, err := keeper.
 					getLatestCumulativePremiumFraction(ctx, common.PairGovStable)

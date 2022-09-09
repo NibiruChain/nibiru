@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 	"strings"
 
@@ -132,6 +133,22 @@ func (pair AssetPair) Validate() error {
 		return ErrInvalidTokenPair.Wrapf("invalid token0 asset: %s", err)
 	}
 	return nil
+}
+
+var (
+	_ collections.Key = AssetPair{}
+)
+
+func (m AssetPair) PrimaryKey() []byte {
+	return collections.StringKey(m.String()).PrimaryKey()
+}
+
+func (m AssetPair) SecondaryKey() []byte {
+	return collections.StringKey(m.String()).SecondaryKey()
+}
+
+func (m AssetPair) FromPrimaryKeyBytes(b []byte) collections.Key {
+	return collections.StringKey("").FromPrimaryKeyBytes(b)
 }
 
 //-----------------------------------------------------------------------------

@@ -269,7 +269,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			nibiruApp.PerpKeeper.PairMetadata.Insert(ctx, common.PairBTCStable, types.PairMetadata{
 				Pair:                       common.PairBTCStable,
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -468,7 +468,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			nibiruApp.PerpKeeper.PairMetadata.Insert(ctx, common.PairBTCStable, types.PairMetadata{
 				Pair:                       common.PairBTCStable,
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			})

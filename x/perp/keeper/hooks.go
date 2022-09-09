@@ -18,7 +18,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		return
 	}
 
-	for _, pairMetadata := range k.PairMetadataState(ctx).GetAll() {
+	for _, pairMetadata := range k.PairMetadata.GetAll(ctx) {
 		if !k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
@@ -55,7 +55,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		}
 
 		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, cumulativeFundingRate)
-		k.PairMetadataState(ctx).Set(pairMetadata)
+		k.PairMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                  pairMetadata.Pair.String(),

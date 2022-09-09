@@ -106,7 +106,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				"hour",
 				15*time.Minute,
 			))
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			perpKeeper.PairMetadata.Insert(ctx, tokenPair, types.PairMetadata{
 				Pair:                       tokenPair,
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
@@ -283,7 +283,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			perpKeeper.PairMetadata.Insert(ctx, tokenPair, types.PairMetadata{
 				Pair:                       tokenPair,
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})

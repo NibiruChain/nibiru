@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,6 +23,8 @@ type Keeper struct {
 	PricefeedKeeper types.PricefeedKeeper
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
+
+	PairMetadata collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -46,15 +50,15 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		ParamSubspace: paramSubspace,
-
-		AccountKeeper:   accountKeeper,
+		cdc:             cdc,
+		storeKey:        storeKey,
+		ParamSubspace:   paramSubspace,
 		BankKeeper:      bankKeeper,
+		AccountKeeper:   accountKeeper,
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
+		PairMetadata:    collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 0),
 	}
 }
 

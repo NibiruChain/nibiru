@@ -162,7 +162,7 @@ func TestGetMarginRatio(t *testing.T) {
 				).
 				Return(tc.newPrice, nil)
 
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			perpKeeper.PairMetadata.Insert(ctx, common.PairBTCStable, types.PairMetadata{
 				Pair:                       common.PairBTCStable,
 				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
@@ -197,7 +197,7 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockPricefeedKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair: pair,
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -265,7 +265,7 @@ func TestRemoveMargin(t *testing.T) {
 				).Return(sdk.NewInt64Coin(pair.QuoteDenom(), 0))
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair: pair,
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -327,7 +327,7 @@ func TestRemoveMargin(t *testing.T) {
 				).Return(nil)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair: pair,
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -400,7 +400,7 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair: pair,
 					CumulativePremiumFractions: []sdk.Dec{
 						sdk.OneDec(),
@@ -458,7 +458,7 @@ func TestAddMargin(t *testing.T) {
 				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair:                       pair,
 					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 				})
@@ -500,7 +500,7 @@ func TestAddMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair:                       pair,
 					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 				})
@@ -571,7 +571,7 @@ func TestAddMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				perpKeeper.PairMetadata.Insert(ctx, pair, types.PairMetadata{
 					Pair:                       pair,
 					CumulativePremiumFractions: []sdk.Dec{sdk.MustNewDecFromStr("0.001")},
 				})
