@@ -2,6 +2,11 @@ package collections_test
 
 import (
 	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections/keys/bound"
+	"github.com/NibiruChain/nibiru/x/common"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/mock"
@@ -23,9 +28,9 @@ func deps() (sdk.StoreKey, sdk.Context, codec.BinaryCodec) {
 
 func TestMap(t *testing.T) {
 	sk, ctx, cdc := deps()
-	m := collections.NewMap[collections.StringKey, stakingtypes.MsgBeginRedelegate, *stakingtypes.MsgBeginRedelegate](cdc, sk, 0)
+	m := collections.NewMap[keys.String, stakingtypes.MsgBeginRedelegate, *stakingtypes.MsgBeginRedelegate](cdc, sk, 0)
 
-	key := collections.StringKey("hi")
+	key := keys.String("hi")
 	expected := stakingtypes.MsgBeginRedelegate{
 		DelegatorAddress:    "me",
 		ValidatorSrcAddress: "you",
@@ -48,4 +53,18 @@ func TestMap(t *testing.T) {
 	// test delete errors not exist
 	err = m.Delete(ctx, key)
 	require.ErrorIs(t, err, collections.ErrNotFound)
+}
+
+func TestMap2(t *testing.T) {
+	sk, ctx, cdc := deps()
+	m := collections.NewMap[keys.Two[common.AssetPair, keys.String], perptypes.Position](cdc, sk, 0)
+
+	p := perptypes.Position{
+		TraderAddress: sample.AccAddress().String(),
+		Pair:          common.PairBTCStable,
+	}
+
+	m.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), p)
+	prefix := m.Prefix(ctx, keys.SubPrefix[common.AssetPair, keys.String](p.Pair))
+	prefix.Iterate(bound.None, bound.None, collections.OrderAscending)
 }

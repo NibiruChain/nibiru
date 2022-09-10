@@ -2,6 +2,8 @@ package collections
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections/keys/bound"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +20,7 @@ type Object interface {
 	codec.ProtoMarshaler
 }
 
-func NewMap[K Key, V any, PV interface {
+func NewMap[K keys.Key, V any, PV interface {
 	*V
 	Object
 }](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8) Map[K, V, PV] {
@@ -29,7 +31,8 @@ func NewMap[K Key, V any, PV interface {
 	}
 }
 
-type Map[K Key, V any, PV interface {
+// Map defines a collection which simply does mappings between primary keys and objects.
+type Map[K keys.Key, V any, PV interface {
 	*V
 	Object
 }] struct {
@@ -74,10 +77,10 @@ func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	return nil
 }
 
-func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start Bound, end Bound, order Order) Iterator[K, V, PV] {
+func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start bound.Bound, end bound.Bound, order Order) Iterator[K, V, PV] {
 	store := m.getStore(ctx)
-	startBytes := start.bytes()
-	endBytes := end.bytes()
+	startBytes := start.Bytes()
+	endBytes := end.Bytes()
 	switch order {
 	case OrderAscending:
 		return Iterator[K, V, PV]{
@@ -94,8 +97,17 @@ func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start Bound, end Bound, order Or
 	}
 }
 
+// Prefix returns a Prefix instance over a key.
+func (m Map[K, V, PV]) Prefix(ctx sdk.Context, p K) Prefix[K, V, PV] {
+	bytes := p.PrimaryKey()
+	return Prefix[K, V, PV]{
+		cdc:    m.cdc,
+		prefix: prefix.NewStore(m.getStore(ctx), bytes),
+	}
+}
+
 func (m Map[K, V, PV]) GetAll(ctx sdk.Context) []V {
-	iter := m.Iterate(ctx, Unbounded(), Unbounded(), OrderAscending)
+	iter := m.Iterate(ctx, bound.None, bound.None, OrderAscending)
 	defer iter.Close()
 
 	var list []V
@@ -106,7 +118,7 @@ func (m Map[K, V, PV]) GetAll(ctx sdk.Context) []V {
 	return list
 }
 
-type Iterator[K Key, V any, PV interface {
+type Iterator[K keys.Key, V any, PV interface {
 	*V
 	Object
 }] struct {
@@ -135,4 +147,34 @@ func (i Iterator[K, V, PV]) Value() V {
 func (i Iterator[K, V, PV]) Key() K {
 	var k K
 	return k.FromPrimaryKeyBytes(i.iter.Key()).(K) // TODO implement this better
+}
+
+type Prefix[K keys.Key, V any, PV interface {
+	*V
+	Object
+}] struct {
+	_      K
+	_      V
+	_      PV
+	cdc    codec.BinaryCodec
+	prefix sdk.KVStore
+}
+
+func (p Prefix[K, V, PV]) Iterate(start, end bound.Bound, order Order) Iterator[K, V, PV] {
+	startBytes := start.Bytes()
+	endBytes := end.Bytes()
+	switch order {
+	case OrderAscending:
+		return Iterator[K, V, PV]{
+			cdc:  p.cdc,
+			iter: p.prefix.Iterator(startBytes, endBytes),
+		}
+	case OrderDescending:
+		return Iterator[K, V, PV]{
+			cdc:  p.cdc,
+			iter: p.prefix.ReverseIterator(startBytes, endBytes),
+		}
+	default:
+		panic(fmt.Errorf("unrecognized order"))
+	}
 }
