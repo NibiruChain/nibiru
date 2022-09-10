@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -25,6 +26,7 @@ type Keeper struct {
 	EpochKeeper     types.EpochKeeper
 
 	PairMetadata collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
+	Positions    collections.Map[keys.Two[common.AssetPair, keys.String], types.Position, *types.Position]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -59,6 +61,7 @@ func NewKeeper(
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
 		PairMetadata:    collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 0),
+		Positions:       collections.NewMap[keys.Two[common.AssetPair, keys.String], types.Position](cdc, storeKey, 1),
 	}
 }
 
