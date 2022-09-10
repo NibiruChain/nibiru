@@ -121,17 +121,13 @@ func TestQueryPrice(t *testing.T) {
 	keeper.WhitelistOraclesForPairs(ctx, []sdk.AccAddress{oracle}, []common.AssetPair{pair})
 
 	// first block
-	_, err := keeper.PostRawPrice(ctx, oracle, pair.String(), sdk.NewDec(20_000), time.Now().Add(time.Hour))
-	require.NoError(t, err)
-	err = keeper.GatherRawPrices(ctx, "ubtc", "uusd")
-	require.NoError(t, err)
+	require.NoError(t, keeper.PostRawPrice(ctx, oracle, pair.String(), sdk.NewDec(20_000), time.Now().Add(time.Hour)))
+	require.NoError(t, keeper.GatherRawPrices(ctx, "ubtc", "uusd"))
 
 	// second block
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(1)
-	_, err = keeper.PostRawPrice(ctx, oracle, "ubtc:uusd", sdk.NewDec(30_000), time.Now().Add(time.Hour))
-	require.NoError(t, err)
-	err = keeper.GatherRawPrices(ctx, "ubtc", "uusd")
-	require.NoError(t, err)
+	require.NoError(t, keeper.PostRawPrice(ctx, oracle, "ubtc:uusd", sdk.NewDec(30_000), time.Now().Add(time.Hour)))
+	require.NoError(t, keeper.GatherRawPrices(ctx, "ubtc", "uusd"))
 
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(2)
 	resp, err := keeper.QueryPrice(sdk.WrapSDKContext(ctx), &types.QueryPriceRequest{

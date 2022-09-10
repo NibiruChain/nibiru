@@ -31,11 +31,14 @@ func NewMarket(pair common.AssetPair, oracles []sdk.AccAddress, active bool) Mar
 
 // NewCurrentPrice returns an instance of CurrentPrice
 // Args:
-//		token0 (string):
-//		token1 (string):
-//		price (sdk.Dec): Price in units of token1 / token0
+//
+//	token0 (string):
+//	token1 (string):
+//	price (sdk.Dec): Price in units of token1 / token0
+//
 // Returns:
-// 		CurrentPrice: Price for the asset pair.
+//
+//	CurrentPrice: Price for the asset pair.
 func NewCurrentPrice(token0 string, token1 string, price sdk.Dec) CurrentPrice {
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
 	return CurrentPrice{PairID: assetPair.String(), Price: price}

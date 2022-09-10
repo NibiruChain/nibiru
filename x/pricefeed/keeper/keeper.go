@@ -51,26 +51,38 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// PostRawPrice updates the posted price for a specific oracle
+/*
+PostRawPrice updates the posted price for a specific oracle
+
+args:
+  - ctx: the sdk context
+  - oracle: the address of the oracle posting the raw price
+  - pairStr: the string of the asset pair
+  - price: the price
+  - expiry: when the raw price should expire
+
+ret:
+  - err: error if any
+*/
 func (k Keeper) PostRawPrice(
 	ctx sdk.Context,
 	oracle sdk.AccAddress,
 	pairStr string,
 	price sdk.Dec,
 	expiry time.Time,
-) (postedPrice types.PostedPrice, err error) {
+) (err error) {
 	// If the posted price expires before the current block, it is invalid.
 	if expiry.Before(ctx.BlockTime()) {
-		return postedPrice, types.ErrExpired
+		return types.ErrExpired
 	}
 
 	if !price.IsPositive() {
-		return postedPrice, fmt.Errorf("price must be positive, not: %s", price)
+		return fmt.Errorf("price must be positive, not: %s", price)
 	}
 
 	pair, err := common.NewAssetPair(pairStr)
 	if err != nil {
-		return postedPrice, err
+		return err
 	}
 
 	// Set inverse price if the oracle gives the wrong string
@@ -80,7 +92,7 @@ func (k Keeper) PostRawPrice(
 	}
 
 	if !k.IsWhitelistedOracle(ctx, pair.String(), oracle) {
-		return types.PostedPrice{}, fmt.Errorf("oracle %s cannot post on pair %v", oracle, pair.String())
+		return fmt.Errorf("oracle %s cannot post on pair %v", oracle, pair.String())
 	}
 
 	// Emit an event containing the oracle's new price
@@ -99,7 +111,7 @@ func (k Keeper) PostRawPrice(
 		types.RawPriceKey(pair.String(), oracle),
 		k.cdc.MustMarshal(&newPostedPrice),
 	)
-	return newPostedPrice, nil
+	return nil
 }
 
 /*
