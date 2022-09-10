@@ -172,7 +172,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		perpKeeper.PairMetadataState(ctx).Set(
 			&types.PairMetadata{
 				Pair: pair,
-				CumulativePremiumFractions: []sdk.Dec{
+				CumulativeFundingRates: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.2")},
 			},
 		)
@@ -197,7 +197,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		// force funding payments
 		perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 			Pair: pair,
-			CumulativePremiumFractions: []sdk.Dec{
+			CumulativeFundingRates: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},
 		})
 		bob := sample.AccAddress()
