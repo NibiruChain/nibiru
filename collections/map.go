@@ -2,7 +2,6 @@ package collections
 
 import (
 	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,10 +16,6 @@ const (
 	OrderAscending Order = iota
 	OrderDescending
 )
-
-type Object interface {
-	codec.ProtoMarshaler
-}
 
 func NewMap[K keys.Key, V any, PV interface {
 	*V
@@ -79,24 +74,9 @@ func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	return nil
 }
 
-func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start bound.Bound, end bound.Bound, order Order) Iterator[K, V, PV] {
+func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start bound.Bound, end bound.Bound, order Order) MapIterator[K, V, PV] {
 	store := m.getStore(ctx)
-	startBytes := start.Bytes()
-	endBytes := end.Bytes()
-	switch order {
-	case OrderAscending:
-		return Iterator[K, V, PV]{
-			cdc:  m.cdc,
-			iter: store.Iterator(startBytes, endBytes),
-		}
-	case OrderDescending:
-		return Iterator[K, V, PV]{
-			cdc:  m.cdc,
-			iter: store.ReverseIterator(startBytes, endBytes),
-		}
-	default:
-		panic(fmt.Errorf("unrecognized order"))
-	}
+	return newMapIterator[K, V, PV](m.cdc, store, start, end, order)
 }
 
 // Prefix returns a Prefix instance over a key.
@@ -120,7 +100,29 @@ func (m Map[K, V, PV]) GetAll(ctx sdk.Context) []V {
 	return list
 }
 
-type Iterator[K keys.Key, V any, PV interface {
+func newMapIterator[K keys.Key, V any, PV interface {
+	*V
+	Object
+}](cdc codec.BinaryCodec, store sdk.KVStore, start, end bound.Bound, order Order) MapIterator[K, V, PV] {
+	startBytes := start.Bytes()
+	endBytes := end.Bytes()
+	switch order {
+	case OrderAscending:
+		return MapIterator[K, V, PV]{
+			cdc:  cdc,
+			iter: store.Iterator(startBytes, endBytes),
+		}
+	case OrderDescending:
+		return MapIterator[K, V, PV]{
+			cdc:  cdc,
+			iter: store.ReverseIterator(startBytes, endBytes),
+		}
+	default:
+		panic(fmt.Errorf("unrecognized order"))
+	}
+}
+
+type MapIterator[K keys.Key, V any, PV interface {
 	*V
 	Object
 }] struct {
@@ -128,25 +130,25 @@ type Iterator[K keys.Key, V any, PV interface {
 	iter sdk.Iterator
 }
 
-func (i Iterator[K, V, PV]) Close() {
+func (i MapIterator[K, V, PV]) Close() {
 	_ = i.iter.Close()
 }
 
-func (i Iterator[K, V, PV]) Next() {
+func (i MapIterator[K, V, PV]) Next() {
 	i.iter.Next()
 }
 
-func (i Iterator[K, V, PV]) Valid() bool {
+func (i MapIterator[K, V, PV]) Valid() bool {
 	return i.iter.Valid()
 }
 
-func (i Iterator[K, V, PV]) Value() V {
+func (i MapIterator[K, V, PV]) Value() V {
 	x := PV(new(V))
 	i.cdc.MustUnmarshal(i.iter.Value(), x)
 	return *x
 }
 
-func (i Iterator[K, V, PV]) Key() K {
+func (i MapIterator[K, V, PV]) Key() K {
 	var k K
 	return k.FromPrimaryKeyBytes(i.iter.Key()).(K) // TODO implement this better
 }
@@ -162,17 +164,17 @@ type Prefix[K keys.Key, V any, PV interface {
 	prefix sdk.KVStore
 }
 
-func (p Prefix[K, V, PV]) Iterate(start, end bound.Bound, order Order) Iterator[K, V, PV] {
+func (p Prefix[K, V, PV]) Iterate(start, end bound.Bound, order Order) MapIterator[K, V, PV] {
 	startBytes := start.Bytes()
 	endBytes := end.Bytes()
 	switch order {
 	case OrderAscending:
-		return Iterator[K, V, PV]{
+		return MapIterator[K, V, PV]{
 			cdc:  p.cdc,
 			iter: p.prefix.Iterator(startBytes, endBytes),
 		}
 	case OrderDescending:
-		return Iterator[K, V, PV]{
+		return MapIterator[K, V, PV]{
 			cdc:  p.cdc,
 			iter: p.prefix.ReverseIterator(startBytes, endBytes),
 		}

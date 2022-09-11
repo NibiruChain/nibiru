@@ -30,7 +30,7 @@ func deps() (sdk.StoreKey, sdk.Context, codec.BinaryCodec) {
 
 func TestMap(t *testing.T) {
 	sk, ctx, cdc := deps()
-	m := collections.NewMap[keys.String, stakingtypes.MsgBeginRedelegate, *stakingtypes.MsgBeginRedelegate](cdc, sk, 0)
+	m := collections.NewMap[keys.StringKey, stakingtypes.MsgBeginRedelegate, *stakingtypes.MsgBeginRedelegate](cdc, sk, 0)
 
 	key := keys.String("hi")
 	expected := stakingtypes.MsgBeginRedelegate{
@@ -59,7 +59,7 @@ func TestMap(t *testing.T) {
 
 func TestMap2(t *testing.T) {
 	sk, ctx, cdc := deps()
-	m := collections.NewMap[keys.Two[common.AssetPair, keys.String], perptypes.Position](cdc, sk, 0)
+	m := collections.NewMap[keys.Two[common.AssetPair, keys.StringKey], perptypes.Position](cdc, sk, 0)
 
 	p := perptypes.Position{
 		TraderAddress: sample.AccAddress().String(),
@@ -67,6 +67,6 @@ func TestMap2(t *testing.T) {
 	}
 
 	m.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), p)
-	prefix := m.Prefix(ctx, keys.SubPrefix[common.AssetPair, keys.String](p.Pair))
+	prefix := m.Prefix(ctx, keys.SubPrefix[common.AssetPair, keys.StringKey](p.Pair))
 	prefix.Iterate(bound.None, bound.None, collections.OrderAscending)
 }

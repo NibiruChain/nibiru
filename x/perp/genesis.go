@@ -35,7 +35,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if err != nil {
 			panic(err)
 		}
-		k.WhitelistState(ctx).Add(addr)
+		k.Whitelist.Insert(ctx, keys.String(addr.String()))
 	}
 }
 
@@ -63,10 +63,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	})
 
 	// export whitelist
-	k.WhitelistState(ctx).Iterate(func(addr sdk.AccAddress) (stop bool) {
-		genesis.WhitelistedAddresses = append(genesis.WhitelistedAddresses, addr.String())
-		return false
-	})
+	whitelist := k.Whitelist.GetAll(ctx)
+	genesis.WhitelistedAddresses = make([]string, len(whitelist))
+	for i, addr := range whitelist {
+		addr := addr
+		genesis.WhitelistedAddresses[i] = addr.String()
+	}
 
 	// export pairMetadata
 	metadata := k.PairMetadata.GetAll(ctx)

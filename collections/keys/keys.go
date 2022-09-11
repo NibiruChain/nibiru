@@ -26,6 +26,10 @@ func (s StringKey) FromPrimaryKeyBytes(b []byte) Key {
 	return StringKey(b)
 }
 
+func (s StringKey) String() string {
+	return string(s)
+}
+
 type Uint8 uint8
 
 type Uint32 uint32

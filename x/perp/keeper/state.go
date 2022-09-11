@@ -9,10 +9,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-func (k Keeper) WhitelistState(ctx sdk.Context) WhitelistState {
-	return newWhitelist(ctx, k.storeKey, k.cdc)
-}
-
 func (k Keeper) PrepaidBadDebtState(ctx sdk.Context) PrepaidBadDebtState {
 	return newPrepaidBadDebtState(ctx, k.storeKey, k.cdc)
 }
@@ -33,39 +29,6 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 	}
 	// this should never fail
 	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
-}
-
-var whitelistNamespace = []byte{0x3}
-
-type WhitelistState struct {
-	whitelists sdk.KVStore
-	cdc        codec.BinaryCodec
-}
-
-func newWhitelist(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) WhitelistState {
-	return WhitelistState{
-		whitelists: prefix.NewStore(ctx.KVStore(key), whitelistNamespace),
-		cdc:        cdc,
-	}
-}
-
-func (w WhitelistState) IsWhitelisted(address sdk.AccAddress) bool {
-	return w.whitelists.Has(address)
-}
-
-func (w WhitelistState) Add(address sdk.AccAddress) {
-	w.whitelists.Set(address, []byte{})
-}
-
-func (w WhitelistState) Iterate(do func(addr sdk.AccAddress) (stop bool)) {
-	iter := w.whitelists.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		if !do(iter.Key()) {
-			break
-		}
-	}
 }
 
 var prepaidBadDebtNamespace = []byte{0x4}

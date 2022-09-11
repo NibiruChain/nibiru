@@ -28,6 +28,7 @@ type Keeper struct {
 
 	PairMetadata collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
 	Positions    collections.Map[keys.Two[common.AssetPair, keys.StringKey], types.Position, *types.Position]
+	Whitelist    collections.Set[keys.StringKey]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -63,6 +64,7 @@ func NewKeeper(
 		EpochKeeper:     epochKeeper,
 		PairMetadata:    collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 0),
 		Positions:       collections.NewMap[keys.Two[common.AssetPair, keys.StringKey], types.Position](cdc, storeKey, 1),
+		Whitelist:       collections.NewSet[keys.StringKey](cdc, storeKey, 2),
 	}
 }
 
