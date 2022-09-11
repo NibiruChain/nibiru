@@ -1,20 +1,18 @@
-package bound
-
-import "github.com/NibiruChain/nibiru/collections/keys"
+package keys
 
 // None is used when there is no Bound
 // in the key used for iteration.
-var None = Bound{
-	isNone: true,
+func None[K Key](...K) Bound[K] {
+	return Bound[K]{isNone: true}
 }
 
-type Bound struct {
+type Bound[k Key] struct {
 	some      []byte
 	inclusive bool
 	isNone    bool
 }
 
-func (b Bound) Bytes() []byte {
+func (b Bound[K]) Bytes() []byte {
 	if b.isNone {
 		return nil
 	} else if b.inclusive {
@@ -25,8 +23,8 @@ func (b Bound) Bytes() []byte {
 }
 
 // Inclusive creates a key Bound which is inclusive.
-func Inclusive[K keys.Key](k K) Bound {
-	return Bound{
+func Inclusive[K Key](k K) Bound[K] {
+	return Bound[K]{
 		some:      k.PrimaryKey(),
 		inclusive: true,
 		isNone:    false,
@@ -34,8 +32,8 @@ func Inclusive[K keys.Key](k K) Bound {
 }
 
 // Exclusive creates a key Bound which is exclusive.
-func Exclusive[K keys.Key](k K) Bound {
-	return Bound{
+func Exclusive[K Key](k K) Bound[K] {
+	return Bound[K]{
 		some:      k.PrimaryKey(),
 		inclusive: false,
 		isNone:    false,

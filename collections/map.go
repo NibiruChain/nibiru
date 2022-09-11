@@ -7,14 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
-	"github.com/NibiruChain/nibiru/collections/keys/bound"
-)
-
-type Order uint8
-
-const (
-	OrderAscending Order = iota
-	OrderDescending
 )
 
 func NewMap[K keys.Key, V any, PV interface {
@@ -83,7 +75,7 @@ func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	return nil
 }
 
-func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start bound.Bound, end bound.Bound, order Order) MapIterator[K, V, PV] {
+func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start keys.Bound[K], end keys.Bound[K], order keys.Order) MapIterator[K, V, PV] {
 	store := m.getStore(ctx)
 	return newMapIterator[K, V, PV](m.cdc, store, start, end, order)
 }
@@ -98,7 +90,7 @@ func (m Map[K, V, PV]) Prefix(ctx sdk.Context, p K) Prefix[K, V, PV] {
 }
 
 func (m Map[K, V, PV]) GetAll(ctx sdk.Context) []V {
-	iter := m.Iterate(ctx, bound.None, bound.None, OrderAscending)
+	iter := m.Iterate(ctx, keys.None[K](), keys.None[K](), keys.OrderAscending)
 	defer iter.Close()
 
 	var list []V
@@ -112,16 +104,16 @@ func (m Map[K, V, PV]) GetAll(ctx sdk.Context) []V {
 func newMapIterator[K keys.Key, V any, PV interface {
 	*V
 	Object
-}](cdc codec.BinaryCodec, store sdk.KVStore, start, end bound.Bound, order Order) MapIterator[K, V, PV] {
+}](cdc codec.BinaryCodec, store sdk.KVStore, start, end keys.Bound[K], order keys.Order) MapIterator[K, V, PV] {
 	startBytes := start.Bytes()
 	endBytes := end.Bytes()
 	switch order {
-	case OrderAscending:
+	case keys.OrderAscending:
 		return MapIterator[K, V, PV]{
 			cdc:  cdc,
 			iter: store.Iterator(startBytes, endBytes),
 		}
-	case OrderDescending:
+	case keys.OrderDescending:
 		return MapIterator[K, V, PV]{
 			cdc:  cdc,
 			iter: store.ReverseIterator(startBytes, endBytes),
@@ -173,16 +165,16 @@ type Prefix[K keys.Key, V any, PV interface {
 	prefix sdk.KVStore
 }
 
-func (p Prefix[K, V, PV]) Iterate(start, end bound.Bound, order Order) MapIterator[K, V, PV] {
+func (p Prefix[K, V, PV]) Iterate(start, end keys.Bound[K], order keys.Order) MapIterator[K, V, PV] {
 	startBytes := start.Bytes()
 	endBytes := end.Bytes()
 	switch order {
-	case OrderAscending:
+	case keys.OrderAscending:
 		return MapIterator[K, V, PV]{
 			cdc:  p.cdc,
 			iter: p.prefix.Iterator(startBytes, endBytes),
 		}
-	case OrderDescending:
+	case keys.OrderDescending:
 		return MapIterator[K, V, PV]{
 			cdc:  p.cdc,
 			iter: p.prefix.ReverseIterator(startBytes, endBytes),

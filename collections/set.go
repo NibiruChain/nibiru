@@ -2,7 +2,6 @@ package collections
 
 import (
 	"github.com/NibiruChain/nibiru/collections/keys"
-	"github.com/NibiruChain/nibiru/collections/keys/bound"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,7 +30,11 @@ func (s Set[K]) Insert(ctx sdk.Context, k K) {
 	s.getStore(ctx).Set(k.PrimaryKey(), []byte{})
 }
 
-func (s Set[K]) Iterate(ctx sdk.Context, start, end bound.Bound, order Order) SetIterator[K] {
+func (s Set[K]) Delete(ctx sdk.Context, k K) {
+	s.getStore(ctx).Delete(k.PrimaryKey())
+}
+
+func (s Set[K]) Iterate(ctx sdk.Context, start, end keys.Bound[K], order keys.Order) SetIterator[K] {
 	store := s.getStore(ctx)
 	return SetIterator[K]{
 		iter: newMapIterator[K, noOpObject](s.cdc, store, start, end, order),
@@ -39,7 +42,7 @@ func (s Set[K]) Iterate(ctx sdk.Context, start, end bound.Bound, order Order) Se
 }
 
 func (s Set[K]) GetAll(ctx sdk.Context) []K {
-	iter := s.Iterate(ctx, bound.None, bound.None, OrderAscending)
+	iter := s.Iterate(ctx, keys.None[K](), keys.None[K](), keys.OrderAscending)
 	defer iter.Close()
 
 	var k []K

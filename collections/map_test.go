@@ -14,7 +14,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
-	"github.com/NibiruChain/nibiru/collections/keys/bound"
 	"github.com/NibiruChain/nibiru/x/common"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -68,5 +67,5 @@ func TestMap2(t *testing.T) {
 
 	m.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), p)
 	prefix := m.Prefix(ctx, keys.SubPrefix[common.AssetPair, keys.StringKey](p.Pair))
-	prefix.Iterate(bound.None, bound.None, collections.OrderAscending)
+	prefix.Iterate(keys.None[common.AssetPair](), keys.None(), keys.OrderAscending)
 }

@@ -37,3 +37,10 @@ type Uint32 uint32
 type Uint64 uint64
 
 type Int64 int64
+
+type Order uint8
+
+const (
+	OrderAscending Order = iota
+	OrderDescending
+)
