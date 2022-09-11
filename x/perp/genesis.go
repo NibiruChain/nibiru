@@ -26,7 +26,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set prepaid debt position
 	for _, pbd := range genState.PrepaidBadDebts {
-		k.PrepaidBadDebtState(ctx).Set(pbd.Denom, pbd.Amount)
+		k.PrepaidBadDebt.Insert(ctx, keys.String(pbd.Denom), types.PrepaidBadDebt{
+			Denom:  pbd.Denom,
+			Amount: pbd.Amount,
+		})
 	}
 
 	// set whitelist
@@ -54,13 +57,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// export prepaid bad debt
-	k.PrepaidBadDebtState(ctx).Iterate(func(denom string, amount sdk.Int) (stop bool) {
-		genesis.PrepaidBadDebts = append(genesis.PrepaidBadDebts, &types.PrepaidBadDebt{
-			Denom:  denom,
-			Amount: amount,
-		})
-		return false
-	})
+	pbd := k.PrepaidBadDebt.GetAll(ctx)
+	genesis.PrepaidBadDebts = make([]*types.PrepaidBadDebt, len(pbd))
+	for i, p := range pbd {
+		p := p
+		genesis.PrepaidBadDebts[i] = &p
+	}
 
 	// export whitelist
 	whitelist := k.Whitelist.GetAll(ctx)

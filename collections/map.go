@@ -63,6 +63,15 @@ func (m Map[K, V, PV]) Get(ctx sdk.Context, key K) (V, error) {
 	return *x, nil
 }
 
+func (m Map[K, V, PV]) GetOr(ctx sdk.Context, key K, def V) V {
+	got, err := m.Get(ctx, key)
+	if err != nil {
+		return def
+	}
+
+	return got
+}
+
 func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	store := m.getStore(ctx)
 	pk := key.PrimaryKey()
