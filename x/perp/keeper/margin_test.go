@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -86,7 +88,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			)
 
 			t.Log("establish initial position")
-			nibiruApp.PerpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
+			nibiruApp.PerpKeeper.Positions.Insert(ctx, keys.Join(tc.initialPosition.Pair, keys.String(tc.initialPosition.TraderAddress)), tc.initialPosition)
 
 			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, common.PairBTCStable, traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
@@ -149,7 +151,7 @@ func TestRemoveMargin(t *testing.T) {
 				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
 
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
+				require.ErrorContains(t, err, collections.ErrNotFound.Error())
 			},
 		},
 		{

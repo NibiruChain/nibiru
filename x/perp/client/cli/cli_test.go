@@ -329,7 +329,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		common.PairETHStable.String(),
 	}
 	out, _ := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), "no position found")
+	s.Contains(out.String(), "not found")
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {

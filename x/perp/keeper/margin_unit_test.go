@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/golang/mock/gomock"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -205,7 +207,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
+				p := types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -213,7 +215,8 @@ func TestRemoveMargin(t *testing.T) {
 					Margin:                              sdk.NewDec(500),
 					LastUpdateCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 					BlockNumber:                         ctx.BlockHeight(),
-				})
+				}
+				perpKeeper.Positions.Insert(ctx, keys.Join(p.Pair, keys.String(traderAddr.String())), p)
 
 				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.NewCoin(pair.QuoteDenom(), sdk.NewInt(600)))
 
@@ -273,7 +276,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
+				perpKeeper.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -335,7 +338,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
+				perpKeeper.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -380,7 +383,7 @@ func TestRemoveMargin(t *testing.T) {
 					},
 				)
 
-				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
+				pos, err := perpKeeper.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
@@ -408,7 +411,7 @@ func TestRemoveMargin(t *testing.T) {
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
+				perpKeeper.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(500),
@@ -423,7 +426,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				require.ErrorIs(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt)
 
-				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
+				pos, err := perpKeeper.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Size_.String())
@@ -465,7 +468,7 @@ func TestAddMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("set a position")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
+				perpKeeper.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -506,7 +509,7 @@ func TestAddMargin(t *testing.T) {
 				})
 
 				t.Log("set position")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
+				perpKeeper.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),
@@ -577,7 +580,7 @@ func TestAddMargin(t *testing.T) {
 				})
 
 				t.Log("set position")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
+				perpKeeper.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.NewDec(1_000),

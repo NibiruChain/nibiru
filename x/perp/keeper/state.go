@@ -1,9 +1,6 @@
 package keeper
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,105 +9,12 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-func (k Keeper) PositionsState(ctx sdk.Context) PositionsState {
-	return newPositions(ctx, k.storeKey, k.cdc)
-}
-
 func (k Keeper) WhitelistState(ctx sdk.Context) WhitelistState {
 	return newWhitelist(ctx, k.storeKey, k.cdc)
 }
 
 func (k Keeper) PrepaidBadDebtState(ctx sdk.Context) PrepaidBadDebtState {
 	return newPrepaidBadDebtState(ctx, k.storeKey, k.cdc)
-}
-
-var positionsNamespace = []byte{0x1}
-
-type PositionsState struct {
-	positions sdk.KVStore
-	cdc       codec.BinaryCodec
-}
-
-func newPositions(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) PositionsState {
-	return PositionsState{
-		positions: prefix.NewStore(ctx.KVStore(key), positionsNamespace),
-		cdc:       cdc,
-	}
-}
-
-func (p PositionsState) keyFromType(position *types.Position) []byte {
-	return p.keyFromRaw(position.Pair, position.TraderAddress)
-}
-
-func (p PositionsState) keyFromRaw(pair common.AssetPair, address string) []byte {
-	buf := bytes.NewBufferString(pair.String())
-	buf.WriteByte(0xff) // required in case we have two pairs such as BTCUSD and BTCUSDT to avoid prefix overlaps.
-	buf.WriteString(address)
-	buf.WriteByte(0xff) // this might be not required, if bechified addresses are constant size.
-	return buf.Bytes()
-}
-
-func (p PositionsState) Create(position *types.Position) error {
-	key := p.keyFromType(position)
-	if p.positions.Has(key) {
-		return fmt.Errorf("already exists")
-	}
-
-	p.positions.Set(key, p.cdc.MustMarshal(position))
-	return nil
-}
-
-func (p PositionsState) Get(pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
-	key := p.keyFromRaw(pair, traderAddr.String())
-	valueBytes := p.positions.Get(key)
-	if valueBytes == nil {
-		return nil, types.ErrPositionNotFound
-	}
-
-	position := new(types.Position)
-	p.cdc.MustUnmarshal(valueBytes, position)
-
-	return position, nil
-}
-
-func (p PositionsState) Update(position *types.Position) error {
-	key := p.keyFromType(position)
-
-	if !p.positions.Has(key) {
-		return types.ErrPositionNotFound
-	}
-
-	p.positions.Set(key, p.cdc.MustMarshal(position))
-	return nil
-}
-
-func (p PositionsState) Set(position *types.Position) {
-	positionID := p.keyFromRaw(position.Pair, position.TraderAddress)
-	p.positions.Set(positionID, p.cdc.MustMarshal(position))
-}
-
-func (p PositionsState) Iterate(do func(position *types.Position) (stop bool)) {
-	iter := p.positions.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		position := new(types.Position)
-		p.cdc.MustUnmarshal(iter.Value(), position)
-		if !do(position) {
-			break
-		}
-	}
-}
-
-func (p PositionsState) Delete(pair common.AssetPair, addr sdk.AccAddress) error {
-	primaryKey := p.keyFromRaw(pair, addr.String())
-
-	if !p.positions.Has(primaryKey) {
-		return types.ErrPositionNotFound.Wrapf("in pair %s", pair)
-	}
-	p.positions.Delete(primaryKey)
-
-	return nil
 }
 
 // getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the

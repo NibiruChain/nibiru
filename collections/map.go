@@ -2,11 +2,13 @@ package collections
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections/keys"
-	"github.com/NibiruChain/nibiru/collections/keys/bound"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections/keys/bound"
 )
 
 type Order uint8

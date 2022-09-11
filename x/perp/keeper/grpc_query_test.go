@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -114,7 +115,7 @@ func TestQueryPosition(t *testing.T) {
 			})
 
 			t.Log("initialize position")
-			perpKeeper.PositionsState(ctx).Set(tc.initialPosition)
+			nibiruApp.PerpKeeper.Positions.Insert(ctx, keys.Join(tc.initialPosition.Pair, keys.String(tc.initialPosition.TraderAddress)), *tc.initialPosition)
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))

@@ -2,6 +2,8 @@ package keeper_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -48,7 +50,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
 			initialPosition: nil,
 			margin:          sdk.NewInt64Coin(common.DenomStable, 1000),
-			expectedErr:     types.ErrPositionNotFound,
+			expectedErr:     collections.ErrNotFound,
 		},
 		{
 			name:        "success",
@@ -96,7 +98,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(tc.initialPosition))
+				app.PerpKeeper.Positions.Insert(ctx, keys.Join(tc.initialPosition.Pair, keys.String(tc.initialPosition.TraderAddress)), *tc.initialPosition)
 			}
 
 			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
@@ -153,7 +155,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 0)),
 			initialPosition: nil,
 			marginToRemove:  sdk.NewInt64Coin(common.DenomStable, 1000),
-			expectedErr:     types.ErrPositionNotFound,
+			expectedErr:     collections.ErrNotFound,
 		},
 		{
 			name:       "vault insufficient funds",
@@ -215,7 +217,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(tc.initialPosition))
+				app.PerpKeeper.Positions.Insert(ctx, keys.Join(tc.initialPosition.Pair, keys.String(tc.initialPosition.TraderAddress)), *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(ctx.BlockHeight() + 1)
@@ -381,7 +383,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			})
 
 			t.Log("create position")
-			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+			p := types.Position{
 				TraderAddress:                       tc.traderAddr.String(),
 				Pair:                                tc.pair,
 				Size_:                               sdk.OneDec(),
@@ -389,7 +391,9 @@ func TestMsgServerClosePosition(t *testing.T) {
 				OpenNotional:                        sdk.OneDec(),
 				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                         1,
-			}))
+			}
+			app.PerpKeeper.Positions.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), p)
+
 			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
@@ -489,7 +493,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 				t.Log("create position")
-				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+				p := types.Position{
 					TraderAddress:                       traderAddr.String(),
 					Pair:                                pair,
 					Size_:                               sdk.OneDec(),
@@ -497,7 +501,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 					OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
 					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                         1,
-				}))
+				}
+				app.PerpKeeper.Positions.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), p)
 				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 1))))
 			}
 
@@ -555,7 +560,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 	t.Log("create positions")
-	atRiskPosition1 := &types.Position{
+	atRiskPosition1 := types.Position{
 		TraderAddress:                       atRiskTrader1.String(),
 		Pair:                                pair,
 		Size_:                               sdk.OneDec(),
@@ -564,7 +569,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 		BlockNumber:                         1,
 	}
-	atRiskPosition2 := &types.Position{
+	atRiskPosition2 := types.Position{
 		TraderAddress:                       atRiskTrader2.String(),
 		Pair:                                pair,
 		Size_:                               sdk.OneDec(),
@@ -573,7 +578,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 		BlockNumber:                         1,
 	}
-	notAtRiskPosition := &types.Position{
+	notAtRiskPosition := types.Position{
 		TraderAddress:                       notAtRiskTrader.String(),
 		Pair:                                pair,
 		Size_:                               sdk.OneDec(),
@@ -582,9 +587,9 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
 		BlockNumber:                         1,
 	}
-	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(atRiskPosition1))
-	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(notAtRiskPosition))
-	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(atRiskPosition2))
+	app.PerpKeeper.Positions.Insert(ctx, keys.Join(atRiskPosition1.Pair, keys.String(atRiskPosition1.TraderAddress)), atRiskPosition1)
+	app.PerpKeeper.Positions.Insert(ctx, keys.Join(atRiskPosition2.Pair, keys.String(atRiskPosition2.TraderAddress)), atRiskPosition2)
+	app.PerpKeeper.Positions.Insert(ctx, keys.Join(notAtRiskPosition.Pair, keys.String(notAtRiskPosition.TraderAddress)), notAtRiskPosition)
 
 	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
@@ -620,15 +625,15 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	// what we care about is that the first and third liquidations made some modifications at state
 	// and events levels, whilst the second (which failed) didn't.
 
-	assertNotLiquidated := func(old *types.Position) {
-		position, err := app.PerpKeeper.PositionsState(ctx).Get(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress))
+	assertNotLiquidated := func(old types.Position) {
+		position, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
 		require.NoError(t, err)
 		require.Equal(t, old, position)
 	}
 
-	assertLiquidated := func(old *types.Position) {
-		_, err := app.PerpKeeper.PositionsState(ctx).Get(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress))
-		require.ErrorIs(t, err, types.ErrPositionNotFound)
+	assertLiquidated := func(old types.Position) {
+		_, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
+		require.ErrorIs(t, err, collections.ErrNotFound)
 		// NOTE(mercilex): does not cover partial liquidation
 	}
 	assertNotLiquidated(notAtRiskPosition)

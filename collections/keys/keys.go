@@ -6,17 +6,24 @@ type Key interface {
 	FromPrimaryKeyBytes(b []byte) Key
 }
 
-type String string
-
-func (s String) PrimaryKey() []byte {
-	return []byte(s)
-}
-func (s String) SecondaryKey() []byte {
-	return []byte(s)
+// String converts any member of the string typeset into a StringKey
+// NOTE(mercilex): this exists to avoid type errors in which bytes are being
+// converted to a StringKey which is not correct behaviour.
+func String[T ~string](v T) StringKey {
+	return StringKey(v)
 }
 
-func (s String) FromPrimaryKeyBytes(b []byte) Key {
-	return String(b)
+type StringKey string
+
+func (s StringKey) PrimaryKey() []byte {
+	return []byte(s)
+}
+func (s StringKey) SecondaryKey() []byte {
+	return []byte(s)
+}
+
+func (s StringKey) FromPrimaryKeyBytes(b []byte) Key {
+	return StringKey(b)
 }
 
 type Uint8 uint8

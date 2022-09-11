@@ -3,9 +3,10 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"sort"
 	"strings"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

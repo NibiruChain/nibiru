@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -280,7 +281,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
+				nibiruApp.PerpKeeper.Positions.Insert(ctx, keys.Join(tc.initialPosition.Pair, keys.String(tc.initialPosition.TraderAddress)), *tc.initialPosition)
 				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
@@ -306,7 +307,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPositionNotional, resp.PositionNotional)
 
 			t.Log("assert position in state")
-			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(common.PairBTCStable, traderAddr)
+			position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(common.PairBTCStable, keys.String(traderAddr.String())))
 			require.NoError(t, err)
 			assert.EqualValues(t, common.PairBTCStable, position.Pair)
 			assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
@@ -479,7 +480,7 @@ func TestOpenPositionError(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
+				nibiruApp.PerpKeeper.Positions.Insert(ctx, keys.Join(tc.initialPosition.Pair, keys.String(tc.initialPosition.TraderAddress)), *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))

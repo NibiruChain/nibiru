@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,7 +37,7 @@ func TestGenesis(t *testing.T) {
 
 		// create some positions
 		for i := int64(0); i < 100; i++ {
-			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+			p := types.Position{
 				TraderAddress:                       sample.AccAddress().String(),
 				Pair:                                common.PairGovStable,
 				Size_:                               sdk.NewDec(i + 1),
@@ -43,7 +45,8 @@ func TestGenesis(t *testing.T) {
 				OpenNotional:                        sdk.NewDec(i * 100),
 				LastUpdateCumulativePremiumFraction: sdk.NewDec(5 * 100),
 				BlockNumber:                         i,
-			}))
+			}
+			app.PerpKeeper.Positions.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), p)
 		}
 
 		// create some prepaid bad debt
@@ -58,7 +61,6 @@ func TestGenesis(t *testing.T) {
 
 		// export genesis
 		genState := perp.ExportGenesis(ctx, app.PerpKeeper)
-
 		// create new context and init genesis
 		ctx, _ = ctxUncached.CacheContext()
 		perp.InitGenesis(ctx, app.PerpKeeper, *genState)

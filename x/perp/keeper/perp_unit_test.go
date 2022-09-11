@@ -3,6 +3,8 @@ package keeper
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -37,8 +39,7 @@ func TestSettlePosition(t *testing.T) {
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
 		}
-		err := k.PositionsState(ctx).Create(&pos)
-		require.NoError(t, err)
+		k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
 
 		coins, err := k.SettlePosition(ctx, pos)
 		require.NoError(t, err)
@@ -80,8 +81,7 @@ func TestSettlePosition(t *testing.T) {
 			Margin:        sdk.NewDec(100),
 			OpenNotional:  sdk.NewDec(1000),
 		}
-		err := k.PositionsState(ctx).Create(&pos)
-		require.NoError(t, err)
+		k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
 
 		coins, err := k.SettlePosition(ctx, pos)
 		require.NoError(t, err)
@@ -99,8 +99,7 @@ func TestSettlePosition(t *testing.T) {
 			Pair:          pair,
 			Size_:         sdk.ZeroDec(),
 		}
-		err := k.PositionsState(ctx).Create(&pos)
-		require.NoError(t, err)
+		k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
 
 		coins, err := k.SettlePosition(ctx, pos)
 		require.NoError(t, err)

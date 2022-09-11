@@ -1,12 +1,8 @@
 package collections_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
-	"github.com/NibiruChain/nibiru/collections/keys/bound"
-	"github.com/NibiruChain/nibiru/x/common"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/mock"
@@ -15,7 +11,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	db "github.com/tendermint/tm-db"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections/keys/bound"
+	"github.com/NibiruChain/nibiru/x/common"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func deps() (sdk.StoreKey, sdk.Context, codec.BinaryCodec) {

@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -140,9 +142,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
-			require.ErrorIs(t, err, types.ErrPositionNotFound)
-			require.Nil(t, newPosition)
+			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(tokenPair, keys.String(traderAddr.String())))
+			require.ErrorIs(t, err, collections.ErrNotFound)
+			require.Empty(t, newPosition)
 
 			t.Log("Check correctness of liquidation fee distributions")
 			liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
@@ -317,7 +319,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
+			newPosition, _ := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(tokenPair, keys.String(traderAddr.String())))
 			assert.Equal(t, tc.expectedPositionSize, newPosition.Size_)
 			assert.Equal(t, tc.expectedMarginRemaining, newPosition.Margin)
 
