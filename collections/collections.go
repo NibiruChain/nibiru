@@ -6,38 +6,39 @@ type Object interface {
 	codec.ProtoMarshaler
 }
 
-type noOpObject struct{}
+// panicObject is used when no object functionality must ever be called.
+type panicObject struct{}
 
-func (n noOpObject) Reset() {
+func (n panicObject) Reset() {
 	panic("must never be called")
 }
 
-func (n noOpObject) String() string {
+func (n panicObject) String() string {
 	panic("must never be called")
 }
 
-func (n noOpObject) ProtoMessage() {
+func (n panicObject) ProtoMessage() {
 	panic("must never be called")
 }
 
-func (n noOpObject) Marshal() ([]byte, error) {
+func (n panicObject) Marshal() ([]byte, error) {
 	panic("must never be called")
 }
 
-func (n noOpObject) MarshalTo(_ []byte) (_ int, _ error) {
+func (n panicObject) MarshalTo(_ []byte) (_ int, _ error) {
 	panic("must never be called")
 }
 
-func (n noOpObject) MarshalToSizedBuffer(_ []byte) (int, error) {
+func (n panicObject) MarshalToSizedBuffer(_ []byte) (int, error) {
 	panic("must never be called")
 }
 
-func (n noOpObject) Size() int {
+func (n panicObject) Size() int {
 	panic("must never be called")
 }
 
-func (n noOpObject) Unmarshal(data []byte) error {
+func (n panicObject) Unmarshal(data []byte) error {
 	panic("must never be called")
 }
 
-var _ Object = (*noOpObject)(nil)
+var _ Object = (*panicObject)(nil)

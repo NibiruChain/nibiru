@@ -38,7 +38,7 @@ func (s Set[K]) Delete(ctx sdk.Context, k K) {
 func (s Set[K]) Iterate(ctx sdk.Context, start, end keys.Bound[K], order keys.Order) SetIterator[K] {
 	store := s.getStore(ctx)
 	return SetIterator[K]{
-		iter: newMapIterator[K, noOpObject](s.cdc, store, start, end, order),
+		iter: newMapIterator[K, panicObject](s.cdc, store, start, end, order),
 	}
 }
 
@@ -47,7 +47,7 @@ func (s Set[K]) getStore(ctx sdk.Context) sdk.KVStore {
 }
 
 type SetIterator[K keys.Key] struct {
-	iter MapIterator[K, noOpObject, *noOpObject]
+	iter MapIterator[K, panicObject, *panicObject]
 }
 
 func (s SetIterator[K]) Close() {
