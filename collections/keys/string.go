@@ -14,10 +14,10 @@ func String[T ~string](v T) StringKey {
 type StringKey string
 
 func (s StringKey) KeyBytes() []byte {
-	if err := noNullTermination(s); err != nil {
+	if err := validString(s); err != nil {
 		panic(fmt.Errorf("invalid StringKey: %w", err))
 	}
-	return append([]byte(s), 0x00) // null terminate it for safe prefixing
+	return append([]byte(s), 0) // null terminate it for safe prefixing
 }
 
 func (s StringKey) FromKeyBytes(b []byte) (int, Key) {

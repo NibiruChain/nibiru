@@ -12,14 +12,13 @@ const (
 	OrderDescending
 )
 
-// Key defines a type which can be converted to and from bytes
-// in a bijective way.
+// Key defines a type which can be converted to and from bytes.
 // Constraints:
 // - It's ordered, meaning, for example:
 //		StringKey("a").KeyBytes() < StringKey("b").KeyBytes().
 //      Int64Key(100).KeyBytes() > Int64Key(-100).KeyBytes()
 // - Going back and forth using KeyBytes and FromKeyBytes produces the same results.
-// - It's prefix safe, meaning that bytes.Contains(StringKey("a").KeyBytes(), StringKey("aa").KeyBytes()) yields false.
+// - It's prefix safe, meaning that bytes.Contains(StringKey("a").KeyBytes(), StringKey("aa").KeyBytes()) = false.
 type Key interface {
 	// KeyBytes returns the key as bytes.
 	KeyBytes() []byte
@@ -39,7 +38,7 @@ type Uint64 uint64
 
 type Int64 int64
 
-func noNullTermination[T ~string](s T) error {
+func validString[T ~string](s T) error {
 	for i, c := range s {
 		if c == 0 {
 			return fmt.Errorf("invalid null character at index %d: %s", i, s)
