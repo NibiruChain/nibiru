@@ -32,13 +32,13 @@ var (
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
-		TraderAddress:                       traderAddr.String(),
-		Pair:                                tokenPair,
-		Size_:                               sdk.ZeroDec(),
-		Margin:                              sdk.ZeroDec(),
-		OpenNotional:                        sdk.ZeroDec(),
-		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		BlockNumber:                         ctx.BlockHeight(),
+		TraderAddress:                  traderAddr.String(),
+		Pair:                           tokenPair,
+		Size_:                          sdk.ZeroDec(),
+		Margin:                         sdk.ZeroDec(),
+		OpenNotional:                   sdk.ZeroDec(),
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
+		BlockNumber:                    ctx.BlockHeight(),
 	}
 }
 
