@@ -34,7 +34,7 @@ func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
 // RegisterStoreDecoder registers a decoder
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
-// WeightedOperations returns the all the gov module operations with their respective weights.
-func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	return simulation.WeightedOperations(simState.AppParams, simState.Cdc, am.accountKeeper, am.bankKeeper, am.keeper)
+// WeightedOperations returns the all the dex module operations with their respective weights.
+func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.WeightedOperations(am.accountKeeper, am.bankKeeper, am.keeper)
 }

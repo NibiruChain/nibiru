@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -21,8 +20,6 @@ const defaultWeight = 100
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simtypes.AppParams,
-	cdc codec.JSONCodec,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper) simulation.WeightedOperations {
@@ -46,22 +43,23 @@ func WeightedOperations(
 	}
 }
 
-// SimulateMsgCreateBalancerPool generates a MsgCreatePool with random values.
+// SimulateMsgCreatePool generates a MsgCreatePool with random values.
 func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
+		params := k.GetParams(ctx)
+
 		fundAccountWithTokens(ctx, simAccount.Address, bk)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
+		whitelistedAssets := params.GetWhitelistedAssetsAsMap()
 
-		poolAssets := genPoolAssets(r, simAccount, spendableCoins, whitelistedAssets)
+		poolAssets := genPoolAssets(r, spendableCoins, whitelistedAssets)
 		poolParams := genBalancerPoolParams(r, ctx.BlockTime(), poolAssets)
 
 		// set the pool params to set the pool creation fee to dust amount of denom
-		params := k.GetParams(ctx)
 		params.PoolCreationFee = sdk.Coins{sdk.NewInt64Coin(spendableCoins[0].Denom, 1)}
 		k.SetParams(ctx, params)
 
@@ -164,9 +162,9 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		fundAccountWithTokens(ctx, simAccount.Address, bk)
-		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		pool, err, index1, index2 := findRandomPoolWithDenomPair(ctx, r, simCoins, k)
+		pool, err, index1, index2 := findRandomPoolWithDenomPair(ctx, r, spendableCoins, k)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool existing yet for tokens in account"), nil, nil
 		}
@@ -177,10 +175,10 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		tokensIn := sdk.NewCoins(
 			sdk.NewCoin(
 				pool.PoolAssets[0].Token.Denom,
-				intensityFactorToken0.Mul(sdk.NewDecFromInt(simCoins[index1].Amount)).TruncateInt()),
+				intensityFactorToken0.Mul(sdk.NewDecFromInt(spendableCoins[index1].Amount)).TruncateInt()),
 			sdk.NewCoin(
 				pool.PoolAssets[1].Token.Denom,
-				intensityFactorToken1.Mul(sdk.NewDecFromInt(simCoins[index2].Amount)).TruncateInt()),
+				intensityFactorToken1.Mul(sdk.NewDecFromInt(spendableCoins[index2].Amount)).TruncateInt()),
 		)
 
 		msg = &types.MsgJoinPool{
@@ -313,12 +311,11 @@ func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.Poo
 // genPoolAssets creates a pool asset object based on current balance of the account
 func genPoolAssets(
 	r *rand.Rand,
-	acct simtypes.Account,
 	coins sdk.Coins,
 	whitelistedAssets map[string]bool,
 ) []types.PoolAsset {
 	denomIndices := r.Perm(coins.Len())
-	assets := []types.PoolAsset{}
+	var assets []types.PoolAsset
 
 	for _, denomIndex := range denomIndices {
 		denom := coins[denomIndex].Denom
