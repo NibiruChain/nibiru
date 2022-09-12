@@ -38,6 +38,17 @@ func kv(o string) collections.KeyValue[keys.StringKey, wellknown.BytesValue, *we
 	}
 }
 
+func TestUpstreamIterAssertions(t *testing.T) {
+	// ugly but asserts upstream behaviour
+	sk, ctx, _ := deps()
+	kv := ctx.KVStore(sk)
+	kv.Set([]byte("hi"), []byte{})
+	i := kv.Iterator(nil, nil)
+	err := i.Close()
+	require.NoError(t, err)
+	require.NoError(t, i.Close())
+}
+
 func TestMap(t *testing.T) {
 	sk, ctx, cdc := deps()
 	m := collections.NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
@@ -74,14 +85,14 @@ func TestMap_Iterate(t *testing.T) {
 	m.Insert(ctx, "bb", obj("bb"))
 
 	// test iteration ascending
-	iter := m.Iterate(ctx, keys.None[keys.StringKey](), keys.None[keys.StringKey](), keys.OrderAscending)
+	iter := m.Iterate(ctx, keys.Unbounded[keys.StringKey](), keys.Unbounded[keys.StringKey](), keys.OrderAscending)
 	defer iter.Close()
 	for i, o := range iter.All() {
 		require.Equal(t, objs[i], o)
 	}
 
 	// test iteration descending
-	dIter := m.Iterate(ctx, keys.None[keys.StringKey](), keys.None[keys.StringKey](), keys.OrderDescending)
+	dIter := m.Iterate(ctx, keys.Unbounded[keys.StringKey](), keys.Unbounded[keys.StringKey](), keys.OrderDescending)
 	defer dIter.Close()
 	for i, o := range iter.All() {
 		require.Equal(t, objs[len(objs)-1-i], o)

@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +20,13 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		return
 	}
 
-	for _, pairMetadata := range k.PairMetadata.GetAll(ctx) {
+	pairMetadatas := k.PairMetadata.Iterate(
+		ctx,
+		keys.Unbounded[common.AssetPair](),
+		keys.Unbounded[common.AssetPair](),
+		keys.OrderAscending,
+	).Values()
+	for _, pairMetadata := range pairMetadatas {
 		if !k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue

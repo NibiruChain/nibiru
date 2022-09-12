@@ -1,8 +1,8 @@
 package keys
 
-// None is used when there is no Bound
+// Unbounded is used when there is no Bound
 // in the key used for iteration.
-func None[K Key](...K) Bound[K] {
+func Unbounded[K Key](...K) Bound[K] {
 	return Bound[K]{isNone: true}
 }
 

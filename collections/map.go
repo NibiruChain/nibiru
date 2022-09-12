@@ -81,18 +81,6 @@ func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start keys.Bound[K], end keys.Bo
 	return newMapIterator[K, V, PV](m.cdc, store, start, end, order)
 }
 
-func (m Map[K, V, PV]) GetAll(ctx sdk.Context) []V {
-	iter := m.Iterate(ctx, keys.None[K](), keys.None[K](), keys.OrderAscending)
-	defer iter.Close()
-
-	var list []V
-	for ; iter.Valid(); iter.Next() {
-		list = append(list, iter.Value())
-	}
-
-	return list
-}
-
 func newMapIterator[K keys.Key, V any, PV interface {
 	*V
 	Object
@@ -148,7 +136,10 @@ func (i MapIterator[K, V, PV]) Key() K {
 	return c.(K)
 }
 
+// TODO doc
 func (i MapIterator[K, V, PV]) Values() []V {
+	defer i.Close()
+
 	var values []V
 	for ; i.iter.Valid(); i.iter.Next() {
 		values = append(values, i.Value())
@@ -156,7 +147,10 @@ func (i MapIterator[K, V, PV]) Values() []V {
 	return values
 }
 
+// TODO doc
 func (i MapIterator[K, V, PV]) Keys() []K {
+	defer i.Close()
+
 	var keys []K
 	for ; i.iter.Valid(); i.iter.Next() {
 		keys = append(keys, i.Key())
@@ -164,15 +158,10 @@ func (i MapIterator[K, V, PV]) Keys() []K {
 	return keys
 }
 
-type KeyValue[K keys.Key, V any, PV interface {
-	*V
-	Object
-}] struct {
-	Key   K
-	Value V
-}
-
+// todo doc
 func (i MapIterator[K, V, PV]) All() []KeyValue[K, V, PV] {
+	defer i.Close()
+
 	var kvs []KeyValue[K, V, PV]
 	for ; i.iter.Valid(); i.iter.Next() {
 		kvs = append(kvs, KeyValue[K, V, PV]{
@@ -182,4 +171,12 @@ func (i MapIterator[K, V, PV]) All() []KeyValue[K, V, PV] {
 	}
 
 	return kvs
+}
+
+type KeyValue[K keys.Key, V any, PV interface {
+	*V
+	Object
+}] struct {
+	Key   K
+	Value V
 }

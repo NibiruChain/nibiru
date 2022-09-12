@@ -43,7 +43,7 @@ func (s Set[K]) Iterate(ctx sdk.Context, start, end keys.Bound[K], order keys.Or
 }
 
 func (s Set[K]) GetAll(ctx sdk.Context) []K {
-	iter := s.Iterate(ctx, keys.None[K](), keys.None[K](), keys.OrderAscending)
+	iter := s.Iterate(ctx, keys.Unbounded[K](), keys.Unbounded[K](), keys.OrderAscending)
 	defer iter.Close()
 
 	var k []K

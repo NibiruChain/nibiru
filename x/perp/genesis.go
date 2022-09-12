@@ -1,6 +1,7 @@
 package perp
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
@@ -49,7 +50,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 
 	// export positions
-	positions := k.Positions.GetAll(ctx)
+	positions := k.Positions.Iterate(
+		ctx,
+		keys.Unbounded[keys.Pair[common.AssetPair, keys.StringKey]](),
+		keys.Unbounded[keys.Pair[common.AssetPair, keys.StringKey]](),
+		keys.OrderAscending,
+	).Values()
 	genesis.Positions = make([]*types.Position, len(positions))
 	for i, position := range positions {
 		p := position
@@ -57,7 +63,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// export prepaid bad debt
-	pbd := k.PrepaidBadDebt.GetAll(ctx)
+	pbd := k.PrepaidBadDebt.Iterate(
+		ctx,
+		keys.Unbounded[keys.StringKey](),
+		keys.Unbounded[keys.StringKey](),
+		keys.OrderAscending,
+	).Values()
 	genesis.PrepaidBadDebts = make([]*types.PrepaidBadDebt, len(pbd))
 	for i, p := range pbd {
 		p := p
@@ -73,7 +84,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// export pairMetadata
-	metadata := k.PairMetadata.GetAll(ctx)
+	metadata := k.PairMetadata.Iterate(
+		ctx,
+		keys.Unbounded[common.AssetPair](),
+		keys.Unbounded[common.AssetPair](),
+		keys.OrderAscending,
+	).Values()
 	genesis.PairMetadata = make([]*types.PairMetadata, len(metadata))
 	for i, m := range metadata {
 		genesis.PairMetadata[i] = &m
