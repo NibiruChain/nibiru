@@ -42,17 +42,6 @@ func (s Set[K]) Iterate(ctx sdk.Context, start, end keys.Bound[K], order keys.Or
 	}
 }
 
-func (s Set[K]) GetAll(ctx sdk.Context) []K {
-	iter := s.Iterate(ctx, keys.Unbounded[K](), keys.Unbounded[K](), keys.OrderAscending)
-	defer iter.Close()
-
-	var k []K
-	for ; iter.Valid(); iter.Next() {
-		k = append(k, iter.Key())
-	}
-	return k
-}
-
 func (s Set[K]) getStore(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(s.sk), s.prefix)
 }

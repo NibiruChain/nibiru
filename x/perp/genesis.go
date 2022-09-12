@@ -76,7 +76,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// export whitelist
-	whitelist := k.Whitelist.GetAll(ctx)
+	whitelist := k.Whitelist.Iterate(
+		ctx,
+		keys.Unbounded[keys.StringKey](),
+		keys.Unbounded[keys.StringKey](),
+		keys.OrderDescending,
+	).Keys()
 	genesis.WhitelistedAddresses = make([]string, len(whitelist))
 	for i, addr := range whitelist {
 		addr := addr
