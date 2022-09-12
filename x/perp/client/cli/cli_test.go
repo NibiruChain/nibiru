@@ -41,12 +41,18 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	pairs := common.AssetPairs{common.PairBTCStable}
+	pairs := common.AssetPairs{common.PairBTCStable, common.PairETHStable}
 	defaultGenesis := simapp.PricefeedGenesis()
 	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
 	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
 		{
 			PairID: common.PairBTCStable.String(),
+			Oracle: simapp.GenOracleAddress,
+			Price:  sdk.OneDec(),
+			Expiry: time.Now().Add(1 * time.Hour),
+		},
+		{
+			PairID: common.PairETHStable.String(),
 			Oracle: simapp.GenOracleAddress,
 			Price:  sdk.OneDec(),
 			Expiry: time.Now().Add(1 * time.Hour),
@@ -137,8 +143,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(err)
 	user2 := sdk.AccAddress(info.GetPubKey().Address())
 
-	s.T().Log(user1.String(), user2.String())
-	s.users = []sdk.AccAddress{user1, user2}
+	info, _, err = val.ClientCtx.Keyring.
+		NewMnemonic("user3", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.NoError(err)
+	user3 := sdk.AccAddress(info.GetPubKey().Address())
+
+	s.users = []sdk.AccAddress{user1, user2, user3}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
@@ -156,6 +166,17 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			sdk.NewInt64Coin(common.DenomGov, 1000),
 			sdk.NewInt64Coin(common.DenomColl, 1000),
 			sdk.NewInt64Coin(common.DenomStable, 100000),
+		),
+		val,
+		common.DenomGov,
+	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(user3,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(common.DenomGov, 1000),
+			sdk.NewInt64Coin(common.DenomColl, 1000),
+			sdk.NewInt64Coin(common.DenomStable, 49_000_000),
 		),
 		val,
 		common.DenomGov,
@@ -217,7 +238,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
-	s.EqualValues(sdk.NewDec(0), queryResp.MarginRatioIndex)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioIndex)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{
@@ -413,7 +434,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	args := []string{
 		"--from",
 		s.users[1].String(),
-		common.PairBTCStable.String(),
+		common.PairETHStable.String(),
 		s.users[1].String(),
 	}
 
@@ -428,7 +449,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 		"--from",
 		s.users[1].String(),
 		"buy",
-		common.PairBTCStable.String(),
+		common.PairETHStable.String(),
 		"15",    // Leverage
 		"90000", // Quote asset amount
 		"0",
@@ -447,26 +468,29 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	positionArgs = []string{
 		"--from",
-		s.users[0].String(),
+		s.users[2].String(),
 		"sell",
-		common.PairBTCStable.String(),
+		common.PairETHStable.String(),
 		"15",       // Leverage
 		"45000000", // Quote asset amount
 		"0",
 	}
 
-	s.T().Log("opening a position with user 1....")
+	s.T().Log("opening a position with user 3....")
 	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(positionArgs, commonArgs...))
 	s.NoError(err)
 
-	_, err = s.network.WaitForHeight(40)
-	s.NoError(err)
+	height, err := s.network.LatestHeight()
+	s.Require().NoError(err)
+
+	_, err = s.network.WaitForHeight(height + 10)
+	s.Require().NoError(err)
 
 	// liquidate
 	args = []string{
 		"--from",
 		s.users[1].String(),
-		common.PairBTCStable.String(),
+		common.PairETHStable.String(),
 		s.users[1].String(),
 	}
 
