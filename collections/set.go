@@ -24,15 +24,15 @@ func NewSet[K keys.Key](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8) Se
 }
 
 func (s Set[K]) Has(ctx sdk.Context, k K) bool {
-	return s.getStore(ctx).Has(k.PrimaryKey())
+	return s.getStore(ctx).Has(k.KeyBytes())
 }
 
 func (s Set[K]) Insert(ctx sdk.Context, k K) {
-	s.getStore(ctx).Set(k.PrimaryKey(), []byte{})
+	s.getStore(ctx).Set(k.KeyBytes(), []byte{})
 }
 
 func (s Set[K]) Delete(ctx sdk.Context, k K) {
-	s.getStore(ctx).Delete(k.PrimaryKey())
+	s.getStore(ctx).Delete(k.KeyBytes())
 }
 
 func (s Set[K]) Iterate(ctx sdk.Context, start, end keys.Bound[K], order keys.Order) SetIterator[K] {

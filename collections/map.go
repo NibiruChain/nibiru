@@ -39,12 +39,12 @@ func (m Map[K, V, PV]) getStore(ctx sdk.Context) sdk.KVStore {
 
 func (m Map[K, V, PV]) Insert(ctx sdk.Context, key K, object V) {
 	store := m.getStore(ctx)
-	store.Set(key.PrimaryKey(), m.cdc.MustMarshal(PV(&object)))
+	store.Set(key.KeyBytes(), m.cdc.MustMarshal(PV(&object)))
 }
 
 func (m Map[K, V, PV]) Get(ctx sdk.Context, key K) (V, error) {
 	store := m.getStore(ctx)
-	pk := key.PrimaryKey()
+	pk := key.KeyBytes()
 	bytes := store.Get(pk)
 	if bytes == nil {
 		var x V
@@ -67,7 +67,7 @@ func (m Map[K, V, PV]) GetOr(ctx sdk.Context, key K, def V) V {
 
 func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	store := m.getStore(ctx)
-	pk := key.PrimaryKey()
+	pk := key.KeyBytes()
 	if !store.Has(pk) {
 		return ErrNotFound
 	}
@@ -143,7 +143,9 @@ func (i MapIterator[K, V, PV]) Value() V {
 
 func (i MapIterator[K, V, PV]) Key() K {
 	var k K
-	return k.FromPrimaryKeyBytes(i.iter.Key()).(K) // TODO implement this better
+	rawKey := i.iter.Key()
+	_, c := k.FromKeyBytes(rawKey) // todo(mercilex): can we assert safety here?
+	return c.(K)
 }
 
 func (i MapIterator[K, V, PV]) Values() []V {

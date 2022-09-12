@@ -140,16 +140,12 @@ var (
 	_ keys.Key = AssetPair{}
 )
 
-func (m AssetPair) PrimaryKey() []byte {
-	return keys.String(m.String()).PrimaryKey()
+func (m AssetPair) KeyBytes() []byte {
+	return keys.String(m.String()).KeyBytes()
 }
 
-func (m AssetPair) SecondaryKey() []byte {
-	return keys.String(m.String()).SecondaryKey()
-}
-
-func (m AssetPair) FromPrimaryKeyBytes(b []byte) keys.Key {
-	return keys.String("").FromPrimaryKeyBytes(b)
+func (m AssetPair) FromKeyBytes(b []byte) (int, keys.Key) {
+	return keys.String("").FromKeyBytes(b)
 }
 
 //-----------------------------------------------------------------------------

@@ -25,7 +25,7 @@ func (b Bound[K]) Bytes() []byte {
 // Inclusive creates a key Bound which is inclusive.
 func Inclusive[K Key](k K) Bound[K] {
 	return Bound[K]{
-		some:      k.PrimaryKey(),
+		some:      k.KeyBytes(),
 		inclusive: true,
 		isNone:    false,
 	}
@@ -34,7 +34,7 @@ func Inclusive[K Key](k K) Bound[K] {
 // Exclusive creates a key Bound which is exclusive.
 func Exclusive[K Key](k K) Bound[K] {
 	return Bound[K]{
-		some:      k.PrimaryKey(),
+		some:      k.KeyBytes(),
 		inclusive: false,
 		isNone:    false,
 	}
