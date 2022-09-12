@@ -156,24 +156,20 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 
 			// Post prices to each pair with the oracle.
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.PostRawPrice(
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
-			)
-			require.NoError(t, err)
-			_, err = priceKeeper.PostRawPrice(
+			))
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
-			)
-			require.NoError(t, err)
+			))
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
+				require.NoError(t, priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1), "Error posting price for pair: %d", pair.String())
 			}
 
 			// Fund account
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
-			require.NoError(t, err)
+			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -338,24 +334,20 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.PostRawPrice(
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
-			)
-			require.NoError(t, err)
-			_, err = priceKeeper.PostRawPrice(
+			))
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
-			)
-			require.NoError(t, err)
+			))
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
+				require.NoError(t, priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1), "Error posting price for pair: %d", pair.String())
 			}
 
 			// Fund account
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
-			require.NoError(t, err)
+			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -510,29 +502,21 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.PostRawPrice(
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
-			)
-			require.NoError(t, err)
-			_, err = priceKeeper.PostRawPrice(
+			))
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
-			)
-			require.NoError(t, err)
+			))
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
+				require.NoError(t, priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1), "Error posting price for pair: %d", pair.String())
 			}
 
 			// Add collaterals to the module
-			err = nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds)
-			if err != nil {
-				panic(err)
-			}
-
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
-			require.NoError(t, err)
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))
+			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -661,29 +645,21 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			t.Log("Post prices to each pair with the oracle.")
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
-			_, err := priceKeeper.PostRawPrice(
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairGovStable.String(), tc.govPrice, priceExpiry,
-			)
-			require.NoError(t, err)
-			_, err = priceKeeper.PostRawPrice(
+			))
+			require.NoError(t, priceKeeper.PostRawPrice(
 				ctx, oracle, common.PairCollStable.String(), tc.collPrice, priceExpiry,
-			)
-			require.NoError(t, err)
+			))
 
 			// Update the 'CurrentPrice' posted by the oracles.
 			for _, pair := range pfParams.Pairs {
-				err = priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
-				require.NoError(t, err, "Error posting price for pair: %d", pair.String())
+				require.NoError(t, priceKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1), "Error posting price for pair: %d", pair.String())
 			}
 
 			// Add collaterals to the module
-			err = nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds)
-			if err != nil {
-				panic(err)
-			}
-
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds)
-			require.NoError(t, err)
+			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))
+			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)

@@ -50,11 +50,11 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 
 		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
 		cumulativeFundingRate := fundingRate
-		if len(pairMetadata.CumulativePremiumFractions) > 0 {
-			cumulativeFundingRate = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(fundingRate)
+		if len(pairMetadata.CumulativeFundingRates) > 0 {
+			cumulativeFundingRate = pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1].Add(fundingRate)
 		}
 
-		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, cumulativeFundingRate)
+		pairMetadata.CumulativeFundingRates = append(pairMetadata.CumulativeFundingRates, cumulativeFundingRate)
 		k.PairMetadataState(ctx).Set(pairMetadata)
 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
