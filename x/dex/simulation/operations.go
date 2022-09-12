@@ -9,59 +9,82 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/simulation"
 )
 
-// SimulateMsgCreateBalancerPool generates a MsgCreatePool with random values.
+const defaultWeight = 100
+
+// WeightedOperations returns all the operations from the module with their respective weights
+func WeightedOperations(
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	k keeper.Keeper) simulation.WeightedOperations {
+	return simulation.WeightedOperations{
+		simulation.NewWeightedOperation(
+			defaultWeight,
+			SimulateMsgCreatePool(ak, bk, k),
+		),
+		simulation.NewWeightedOperation(
+			defaultWeight,
+			SimulateMsgSwap(ak, bk, k),
+		),
+		simulation.NewWeightedOperation(
+			defaultWeight,
+			SimulateJoinPool(ak, bk, k),
+		),
+		simulation.NewWeightedOperation(
+			defaultWeight,
+			SimulateExitPool(ak, bk, k),
+		),
+	}
+}
+
+// SimulateMsgCreatePool generates a MsgCreatePool with random values.
 func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
+		params := k.GetParams(ctx)
+
 		fundAccountWithTokens(ctx, simAccount.Address, bk)
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
+		whitelistedAssets := params.GetWhitelistedAssetsAsMap()
 
-		msg := &types.MsgCreatePool{
-			Creator: simAccount.Address.String(),
-		}
-
-		whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
-
-		poolAssets := genPoolAssets(r, simAccount, simCoins, whitelistedAssets)
+		poolAssets := genPoolAssets(r, spendableCoins, whitelistedAssets)
 		poolParams := genBalancerPoolParams(r, ctx.BlockTime(), poolAssets)
 
-		balances := bk.GetAllBalances(ctx, simAccount.Address)
-		denoms := make([]string, len(balances))
-		for i := range balances {
-			denoms[i] = balances[i].Denom
-		}
-
 		// set the pool params to set the pool creation fee to dust amount of denom
-		params := k.GetParams(ctx)
-		params.PoolCreationFee = sdk.Coins{sdk.NewInt64Coin(denoms[0], 1)}
+		params.PoolCreationFee = sdk.Coins{sdk.NewInt64Coin(spendableCoins[0].Denom, 1)}
 		k.SetParams(ctx, params)
 
-		msg.PoolParams = &poolParams
-		msg.PoolAssets = poolAssets
-		spentCoins := PoolAssetsCoins(poolAssets)
+		msg := &types.MsgCreatePool{
+			Creator:    simAccount.Address.String(),
+			PoolParams: &poolParams,
+			PoolAssets: poolAssets,
+		}
 
-		txGen := simapp.MakeTestEncodingConfig().TxConfig
 		return simulation.GenAndDeliverTxWithRandFees(
-			/*r*/ r,
-			/*app*/ app,
-			/*txGen*/ txGen,
-			/*msg*/ msg,
-			/*coinsSpentInMsg*/ spentCoins,
-			/*ctx*/ ctx,
-			/*simAccount*/ simAccount,
-			/*ak*/ ak,
-			/*bk*/ bk,
-			/*moduleName*/ types.ModuleName)
+			simulation.OperationInput{
+				R:               r,
+				App:             app,
+				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				Cdc:             nil,
+				Msg:             msg,
+				MsgType:         msg.Type(),
+				Context:         ctx,
+				SimAccount:      simAccount,
+				AccountKeeper:   ak,
+				Bankkeeper:      bk,
+				ModuleName:      types.ModuleName,
+				CoinsSpentInMsg: PoolAssetsCoins(poolAssets),
+			},
+		)
 	}
 }
 
@@ -73,66 +96,53 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		simAccount, _ := simtypes.RandomAcc(r, accs)
-		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
-
-		if simCoins.Len() <= 1 {
-			fundAccountWithTokens(ctx, simAccount.Address, bk)
-			simCoins = bk.SpendableCoins(ctx, simAccount.Address)
-		}
 		msg := &types.MsgSwapAssets{}
 
-		denomIn, denomOut, poolIdSwap, balanceIn := findRandomPoolWithDenom(ctx, r, simCoins, k)
+		// only run 1/3 of the time
+		if simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1")).GTE(sdk.MustNewDecFromStr("0.33")) {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No swap done"), nil, nil
+		}
+
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		fundAccountWithTokens(ctx, simAccount.Address, bk)
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
+
+		denomIn, denomOut, poolId, balanceIn := findRandomPoolWithDenom(ctx, r, spendableCoins, k)
 
 		if denomIn == "" {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "No pool existing yet for account tokens"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool existing yet for account tokens"), nil, nil
+		}
+		if balanceIn.IsZero() {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No tokens to swap in"), nil, nil
 		}
 
-		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.01")).Add(sdk.MustNewDecFromStr("0.05"))
-		frequencyFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1"))
+		// choose some random amount of balanceIn to swap
+		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.05")).Add(sdk.MustNewDecFromStr("0.1"))
+		tokenIn := sdk.NewCoin(denomIn, intensityFactor.MulInt(balanceIn).TruncateInt())
 
-		intensity := intensityFactor.Mul(sdk.NewDecFromInt(balanceIn)).TruncateInt()
-		tokenIn := sdk.NewCoin(denomIn, intensity)
-		if frequencyFactor.GTE(sdk.MustNewDecFromStr("0.33")) {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "No swap done"), nil, nil
-		}
-
-		// check if there are enough tokens to swap
-		pool, err := k.FetchPool(ctx, poolIdSwap)
-		if err != nil {
-			panic(err)
-		}
-		tokensOut, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut)
-		if err != nil {
-			panic(err)
-		}
-
-		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
-		if !tokensOut.IsValid() {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "not enough input tokens to swap"), nil, nil
-		}
 		msg = &types.MsgSwapAssets{
 			Sender:        simAccount.Address.String(),
-			PoolId:        poolIdSwap,
+			PoolId:        poolId,
 			TokenIn:       tokenIn,
 			TokenOutDenom: denomOut,
 		}
 
-		txGen := simapp.MakeTestEncodingConfig().TxConfig
 		return simulation.GenAndDeliverTxWithRandFees(
-			/*r*/ r,
-			/*app*/ app,
-			/*txGen*/ txGen,
-			/*msg*/ msg,
-			/*coinsSpentInMsg*/ sdk.NewCoins(sdk.NewCoin(denomIn, intensity)),
-			/*ctx*/ ctx,
-			/*simAccount*/ simAccount,
-			/*ak*/ ak,
-			/*bk*/ bk,
-			/*moduleName*/ types.ModuleName)
+			simulation.OperationInput{
+				R:               r,
+				App:             app,
+				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				Cdc:             nil,
+				Msg:             msg,
+				MsgType:         msg.Type(),
+				Context:         ctx,
+				SimAccount:      simAccount,
+				AccountKeeper:   ak,
+				Bankkeeper:      bk,
+				ModuleName:      types.ModuleName,
+				CoinsSpentInMsg: sdk.NewCoins(tokenIn),
+			},
+		)
 	}
 }
 
@@ -144,24 +154,20 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		msg := &types.MsgJoinPool{}
+		// run only 1/3 of the time
+		if simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1")).GTE(sdk.MustNewDecFromStr("0.33")) {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No join pool done"), nil, nil
+		}
+
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
+		fundAccountWithTokens(ctx, simAccount.Address, bk)
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		if simCoins.Len() <= 1 {
-			fundAccountWithTokens(ctx, simAccount.Address, bk)
-			simCoins = bk.SpendableCoins(ctx, simAccount.Address)
-		}
-
-		msg := &types.MsgJoinPool{
-			Sender: simAccount.Address.String(),
-		}
-		pool, err, index1, index2 := findRandomPoolWithDenomPair(ctx, r, simCoins, k)
+		pool, err, index1, index2 := findRandomPoolWithDenomPair(ctx, r, spendableCoins, k)
 		if err != nil {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "No pool existing yet for tokens in account"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool existing yet for tokens in account"), nil, nil
 		}
-
-		frequencyFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1"))
 
 		intensityFactorToken0 := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
 		intensityFactorToken1 := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
@@ -169,36 +175,34 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		tokensIn := sdk.NewCoins(
 			sdk.NewCoin(
 				pool.PoolAssets[0].Token.Denom,
-				intensityFactorToken0.Mul(sdk.NewDecFromInt(simCoins[index1].Amount)).TruncateInt()),
-
+				intensityFactorToken0.Mul(sdk.NewDecFromInt(spendableCoins[index1].Amount)).TruncateInt()),
 			sdk.NewCoin(
 				pool.PoolAssets[1].Token.Denom,
-				intensityFactorToken1.Mul(sdk.NewDecFromInt(simCoins[index2].Amount)).TruncateInt()),
+				intensityFactorToken1.Mul(sdk.NewDecFromInt(spendableCoins[index2].Amount)).TruncateInt()),
 		)
-
-		if frequencyFactor.GTE(sdk.MustNewDecFromStr("0.33")) {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "No join pool done"), nil, nil
-		}
 
 		msg = &types.MsgJoinPool{
 			Sender:   simAccount.Address.String(),
 			PoolId:   pool.Id,
-			TokensIn: tokensIn}
-
-		txGen := simapp.MakeTestEncodingConfig().TxConfig
+			TokensIn: tokensIn,
+		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
-			/*r*/ r,
-			/*app*/ app,
-			/*txGen*/ txGen,
-			/*msg*/ msg,
-			/*coinsSpentInMsg*/ tokensIn,
-			/*ctx*/ ctx,
-			/*simAccount*/ simAccount,
-			/*ak*/ ak,
-			/*bk*/ bk,
-			/*moduleName*/ types.ModuleName)
+			simulation.OperationInput{
+				R:               r,
+				App:             app,
+				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				Cdc:             nil,
+				Msg:             msg,
+				MsgType:         msg.Type(),
+				Context:         ctx,
+				SimAccount:      simAccount,
+				AccountKeeper:   ak,
+				Bankkeeper:      bk,
+				ModuleName:      types.ModuleName,
+				CoinsSpentInMsg: tokensIn,
+			},
+		)
 	}
 }
 
@@ -211,70 +215,71 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		// Search for pool in sim coins
-		randomIndices := r.Perm(simCoins.Len())
-		var shareTokenOut sdk.Coin
+		// Search for LP tokens in sim coins
+		randomIndices := r.Perm(spendableCoins.Len())
+		var shareTokens sdk.Coin
 
 		for _, index := range randomIndices {
-			coin := simCoins[index]
+			coin := spendableCoins[index]
 			if strings.Contains(coin.Denom, "nibiru/pool/") {
-				shareTokenOut = coin
+				shareTokens = coin
 				break
 			}
 		}
 		msg := &types.MsgExitPool{}
 
-		if shareTokenOut.Denom == "" {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "No pool share token found in wallet"), nil, nil
+		if shareTokens.Denom == "" {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool share token found in wallet"), nil, nil
 		}
 
 		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
-
-		tokenOut := sdk.NewCoin(
-			shareTokenOut.Denom,
-			intensityFactor.Mul(sdk.NewDecFromInt(shareTokenOut.Amount)).TruncateInt(),
+		shareTokensIn := sdk.NewCoin(
+			shareTokens.Denom,
+			intensityFactor.MulInt(shareTokens.Amount).TruncateInt(),
 		)
 
 		// Ugly but does the job
-		poolId := uint64(sdk.MustNewDecFromStr(strings.Replace(tokenOut.Denom, "nibiru/pool/", "", 1)).TruncateInt().Int64())
+		poolId := sdk.MustNewDecFromStr(strings.Replace(shareTokensIn.Denom, "nibiru/pool/", "", 1)).TruncateInt().Uint64()
 
 		// check if there are enough tokens to withdraw
 		pool, err := k.FetchPool(ctx, poolId)
 		if err != nil {
 			panic(err)
 		}
-		tokensOut, err := pool.TokensOutFromPoolSharesIn(tokenOut.Amount)
+		tokensOut, err := pool.TokensOutFromPoolSharesIn(shareTokensIn.Amount)
 		if err != nil {
 			panic(err)
 		}
 
 		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
 		if !tokensOut.IsValid() {
-			return simtypes.NoOpMsg(
-				types.ModuleName, msg.Type(), "not enough pool tokens to exit pool"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "not enough pool tokens to exit pool"), nil, nil
 		}
 
 		msg = &types.MsgExitPool{
 			Sender:     simAccount.Address.String(),
 			PoolId:     poolId,
-			PoolShares: tokenOut}
-
-		txGen := simapp.MakeTestEncodingConfig().TxConfig
+			PoolShares: shareTokensIn,
+		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
-			/*r*/ r,
-			/*app*/ app,
-			/*txGen*/ txGen,
-			/*msg*/ msg,
-			/*coinsSpentInMsg*/ sdk.NewCoins(tokenOut),
-			/*ctx*/ ctx,
-			/*simAccount*/ simAccount,
-			/*ak*/ ak,
-			/*bk*/ bk,
-			/*moduleName*/ types.ModuleName)
+			simulation.OperationInput{
+				R:               r,
+				App:             app,
+				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				Cdc:             nil,
+				Msg:             msg,
+				MsgType:         msg.Type(),
+				Context:         ctx,
+				SimAccount:      simAccount,
+				AccountKeeper:   ak,
+				Bankkeeper:      bk,
+				ModuleName:      types.ModuleName,
+				CoinsSpentInMsg: sdk.NewCoins(shareTokensIn),
+			},
+		)
 	}
 }
 
@@ -306,12 +311,11 @@ func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.Poo
 // genPoolAssets creates a pool asset object based on current balance of the account
 func genPoolAssets(
 	r *rand.Rand,
-	acct simtypes.Account,
 	coins sdk.Coins,
 	whitelistedAssets map[string]bool,
 ) []types.PoolAsset {
 	denomIndices := r.Perm(coins.Len())
-	assets := []types.PoolAsset{}
+	var assets []types.PoolAsset
 
 	for _, denomIndex := range denomIndices {
 		denom := coins[denomIndex].Denom
@@ -323,12 +327,12 @@ func genPoolAssets(
 			assets = append(assets, types.PoolAsset{Token: reserveAmt, Weight: weight})
 
 			if len(assets) == 2 {
-				break
+				return assets
 			}
 		}
 	}
 
-	return assets
+	panic("amm pool must have 2 assets")
 }
 
 // fundAccountWithTokens fund the account with some gov, coll and stable denom.
@@ -357,25 +361,26 @@ func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.Ban
 }
 
 // findRandomPoolWithDenom search possible pool available to swap from a set of coins
-func findRandomPoolWithDenom(ctx sdk.Context, r *rand.Rand, simCoins sdk.Coins, k keeper.Keeper) (
+func findRandomPoolWithDenom(ctx sdk.Context, r *rand.Rand, spendableCoins sdk.Coins, k keeper.Keeper) (
 	denomIn string, denomOut string, poolId uint64, balanceIn sdk.Int) {
-	randomIndices := r.Perm(simCoins.Len())
+	randomIndices := r.Perm(spendableCoins.Len())
 	whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
 
 	pools := k.FetchAllPools(ctx)
 	for _, index := range randomIndices {
-		coin := simCoins[index]
+		coin := spendableCoins[index]
 		if _, ok := whitelistedAssets[coin.Denom]; ok {
 			for _, pool := range pools {
 				if pool.PoolAssets[0].Token.Denom == coin.Denom {
-					return coin.Denom, pool.PoolAssets[1].Token.Denom, pool.Id, simCoins[index].Amount
+					return coin.Denom, pool.PoolAssets[1].Token.Denom, pool.Id, spendableCoins[index].Amount
 				} else if pool.PoolAssets[1].Token.Denom == coin.Denom {
-					return coin.Denom, pool.PoolAssets[0].Token.Denom, pool.Id, simCoins[index].Amount
+					return coin.Denom, pool.PoolAssets[0].Token.Denom, pool.Id, spendableCoins[index].Amount
 				}
 			}
 		}
 	}
-	return "", "", 0, sdk.NewInt(0)
+
+	return "", "", 0, sdk.ZeroInt()
 }
 
 // findRandomPoolWithDenomPair search one pool available from a pair of coins of simCoins
@@ -402,18 +407,4 @@ func findRandomPoolWithDenomPair(ctx sdk.Context, r *rand.Rand, simCoins sdk.Coi
 		}
 	}
 	return types.Pool{}, types.ErrPoolNotFound.Wrapf("could not find pool compatible with any pair of assets"), 0, 0
-}
-
-func Min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-func Max(x, y int) int {
-	if x > y {
-		return x
-	}
-	return y
 }
