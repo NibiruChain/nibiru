@@ -121,10 +121,14 @@ func validatePercentageRatio(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
+	if ratio.IsNil() {
+		return fmt.Errorf("invalid nil decimal")
+	}
+
 	if ratio.GT(sdk.OneDec()) {
-		return fmt.Errorf("Ratio is above max value(1.00): %s", ratio.String())
+		return fmt.Errorf("ratio is above max value(1.00): %s", ratio.String())
 	} else if ratio.IsNegative() {
-		return fmt.Errorf("Ratio is negative: %s", ratio.String())
+		return fmt.Errorf("ratio is negative: %s", ratio.String())
 	}
 
 	return nil

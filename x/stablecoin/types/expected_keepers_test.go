@@ -4,10 +4,11 @@ import (
 	"reflect"
 	"testing"
 
-	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/stretchr/testify/assert"
+
+	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
 // Verifies that the expected keepers (e.g. 'KeeperName') in x/stablecoin are
@@ -19,7 +20,7 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	nibiruApp, _ := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
 	testCases := []TestCase{
 		{
 			name:           "PricefeedKeeper from x/pricefeed",
@@ -27,12 +28,12 @@ func TestExpectedKeepers(t *testing.T) {
 			appKeeper:      nibiruApp.PricefeedKeeper,
 		},
 		{
-			name:           "BankKeeper from the cosmos-sdk",
+			name:           "bankKeeper from the cosmos-sdk",
 			expectedKeeper: (*sctypes.BankKeeper)(nil),
 			appKeeper:      nibiruApp.BankKeeper,
 		},
 		{
-			name:           "AccountKeeper from the cosmos-sdk",
+			name:           "accountKeeper from the cosmos-sdk",
 			expectedKeeper: (*sctypes.AccountKeeper)(nil),
 			appKeeper:      nibiruApp.AccountKeeper,
 		},

@@ -5,7 +5,6 @@ on:
   push:
     branches: ["master"]
   pull_request:
-    branches: ["**"]
 
 permissions:
   contents: read
@@ -13,7 +12,7 @@ permissions:
 jobs:
   golangci:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/setup-go@v3
         with:
@@ -25,7 +24,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: latest
+          version: v1.47.3
 
           # Optional: working directory, useful for monorepos
           # working-directory: somedir

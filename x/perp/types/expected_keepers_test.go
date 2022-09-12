@@ -4,18 +4,21 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
-/* TestExpectedKeepers verifies that the expected keeper interfaces in x/perp
-   (see interfaces.go) are implemented on the corresponding app keeper,
-   'NibiruApp.KeeperName'
+/*
+TestExpectedKeepers verifies that the expected keeper interfaces in x/perp
+
+	(see interfaces.go) are implemented on the corresponding app keeper,
+	'NibiruApp.KeeperName'
 */
 func TestExpectedKeepers(t *testing.T) {
-	nibiruApp, _ := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
 	testCases := []struct {
 		name           string
 		expectedKeeper interface{}
@@ -27,12 +30,12 @@ func TestExpectedKeepers(t *testing.T) {
 			appKeeper:      nibiruApp.PricefeedKeeper,
 		},
 		{
-			name:           "BankKeeper from the cosmos-sdk",
+			name:           "bankKeeper from the cosmos-sdk",
 			expectedKeeper: (*types.BankKeeper)(nil),
 			appKeeper:      nibiruApp.BankKeeper,
 		},
 		{
-			name:           "AccountKeeper from the cosmos-sdk",
+			name:           "accountKeeper from the cosmos-sdk",
 			expectedKeeper: (*types.AccountKeeper)(nil),
 			appKeeper:      nibiruApp.AccountKeeper,
 		},

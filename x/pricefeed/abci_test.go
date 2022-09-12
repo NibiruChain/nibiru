@@ -4,20 +4,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestTWAPriceUpdates(t *testing.T) {
-	var nibiruApp *app.NibiruApp
+	var nibiruApp *simapp.NibiruTestApp
 	var ctx sdk.Context
 
 	oracle := sample.AccAddress()
@@ -33,13 +33,12 @@ func TestTWAPriceUpdates(t *testing.T) {
 		pricefeed.BeginBlocker(ctx, nibiruApp.PricefeedKeeper)
 	}
 	setPrice := func(price string) {
-		_, err := nibiruApp.PricefeedKeeper.PostRawPrice(
+		require.NoError(t, nibiruApp.PricefeedKeeper.PostRawPrice(
 			ctx, oracle, pair.String(),
-			sdk.MustNewDecFromStr(price), ctx.BlockTime().Add(time.Hour*5000*4))
-		require.NoError(t, err)
+			sdk.MustNewDecFromStr(price), ctx.BlockTime().Add(time.Hour*5000*4)))
 	}
 
-	nibiruApp, ctx = testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx = simapp.NewTestNibiruAppAndContext(true)
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC))
 

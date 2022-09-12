@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
-
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -183,7 +183,7 @@ func initGenFiles(
 	bankGenState.Balances = append(bankGenState.Balances, genBalances...)
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
-	cfg.GenesisState = testapp.NewTestGenesisState(cfg.Codec, cfg.GenesisState)
+	cfg.GenesisState = simapp.NewTestGenesisState(cfg.Codec, cfg.GenesisState)
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
 		return cfg, err
@@ -234,7 +234,7 @@ func FillWalletFromValidator(
 		balance,
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		DefaultFeeString(feesDenom),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(feesDenom, 10)),
 	)
 	if err != nil {
 		return nil, err

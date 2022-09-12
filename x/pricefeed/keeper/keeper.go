@@ -51,26 +51,38 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// PostRawPrice updates the posted price for a specific oracle
+/*
+PostRawPrice updates the posted price for a specific oracle
+
+args:
+  - ctx: the sdk context
+  - oracle: the address of the oracle posting the raw price
+  - pairStr: the string of the asset pair
+  - price: the price
+  - expiry: when the raw price should expire
+
+ret:
+  - err: error if any
+*/
 func (k Keeper) PostRawPrice(
 	ctx sdk.Context,
 	oracle sdk.AccAddress,
 	pairStr string,
 	price sdk.Dec,
 	expiry time.Time,
-) (postedPrice types.PostedPrice, err error) {
+) (err error) {
 	// If the posted price expires before the current block, it is invalid.
 	if expiry.Before(ctx.BlockTime()) {
-		return postedPrice, types.ErrExpired
+		return types.ErrExpired
 	}
 
 	if !price.IsPositive() {
-		return postedPrice, fmt.Errorf("price must be positive, not: %s", price)
+		return fmt.Errorf("price must be positive, not: %s", price)
 	}
 
 	pair, err := common.NewAssetPair(pairStr)
 	if err != nil {
-		return postedPrice, err
+		return err
 	}
 
 	// Set inverse price if the oracle gives the wrong string
@@ -80,28 +92,26 @@ func (k Keeper) PostRawPrice(
 	}
 
 	if !k.IsWhitelistedOracle(ctx, pair.String(), oracle) {
-		return types.PostedPrice{}, fmt.Errorf(
-			"oracle %s cannot post on pair %v", oracle, pair.String())
+		return fmt.Errorf("oracle %s cannot post on pair %v", oracle, pair.String())
 	}
 
-	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
-
 	// Emit an event containing the oracle's new price
-
-	err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventOracleUpdatePrice{
 		PairId:    pair.String(),
 		Oracle:    oracle.String(),
 		PairPrice: price,
 		Expiry:    expiry,
-	})
-	if err != nil {
+	}); err != nil {
 		panic(err)
 	}
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.RawPriceKey(pair.String(), oracle), k.cdc.MustMarshal(&newPostedPrice))
-	return newPostedPrice, nil
+	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
+	ctx.KVStore(k.storeKey).Set(
+		types.RawPriceKey(pair.String(), oracle),
+		k.cdc.MustMarshal(&newPostedPrice),
+	)
+	return nil
 }
 
 /*
@@ -129,19 +139,15 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 		validPrevPrice = false
 	}
 
-	postedPrices := k.GetRawPrices(ctx, pairID)
-
-	var notExpiredPrices []types.CurrentPrice
+	var unexpiredPrices []types.CurrentPrice
 	// filter out expired prices
-	for _, post := range postedPrices {
-		if post.Expiry.After(ctx.BlockTime()) {
-			notExpiredPrices = append(
-				notExpiredPrices,
-				types.NewCurrentPrice(token0, token1, post.Price))
+	for _, rawPrice := range k.GetRawPrices(ctx, pairID) {
+		if rawPrice.Expiry.After(ctx.BlockTime()) {
+			unexpiredPrices = append(unexpiredPrices, types.NewCurrentPrice(token0, token1, rawPrice.Price))
 		}
 	}
 
-	if len(notExpiredPrices) == 0 {
+	if len(unexpiredPrices) == 0 {
 		// NOTE: The current price stored will continue storing the most recent (expired)
 		// price if this is not set.
 		// This zero's out the current price stored value for that market and ensures
@@ -150,7 +156,7 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 		return types.ErrNoValidPrice
 	}
 
-	medianPrice := k.CalculateMedianPrice(notExpiredPrices)
+	medianPrice := k.CalculateMedianPrice(unexpiredPrices)
 
 	// check case that market price was not set in genesis
 	if validPrevPrice && !medianPrice.Equal(prevPrice.Price) {
@@ -254,15 +260,16 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
 Note the open-ended right bracket.
 
-args:
-  - ctx: cosmos-sdk context
-  - pair: the token pair
+Args:
+- ctx: cosmos-sdk context
+- pair: the token pair
 
-ret:
-  - price: TWAP as sdk.Dec
-  - err: error
+Returns:
+- twap: TWAP as sdk.Dec
+- err: error
 */
-func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (price sdk.Dec, err error) {
+func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
+) (twap sdk.Dec, err error) {
 	// Ensure we still have valid prices
 	_, err = k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {
@@ -270,46 +277,77 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (p
 	}
 
 	assetPair := common.AssetPair{Token0: token0, Token1: token1}
-	givenIsActive := k.IsActivePair(ctx, assetPair.String())
-	inverseIsActive := k.IsActivePair(ctx, assetPair.Inverse().String())
-	if !givenIsActive && inverseIsActive {
-		assetPair = assetPair.Inverse()
+	if err := assetPair.Validate(); err != nil {
+		return sdk.Dec{}, err
 	}
-	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
+
+	// invert the asset pair if the given is not existent
+	inverseIsActive := false
+	if !k.IsActivePair(ctx, assetPair.String()) && k.IsActivePair(ctx, assetPair.Inverse().String()) {
+		assetPair = assetPair.Inverse()
+		inverseIsActive = true
+	}
+
 	// earliest timestamp we'll look back until
+	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackWindow).UnixMilli()
 
 	var cumulativePrice sdk.Dec = sdk.ZeroDec()
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
 
-	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
 	// traverse snapshots in reverse order
-	k.IteratePriceSnapshotsFrom(ctx, startKey, nil, true, func(ps *types.PriceSnapshot) (stop bool) {
-		var timeElapsedMs int64
-		if ps.TimestampMs <= lowerLimitTimestampMs {
-			// current snapshot is below the lower limit
-			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
-		} else {
-			timeElapsedMs = prevTimestampMs - ps.TimestampMs
-		}
-		cumulativePrice = cumulativePrice.Add(ps.Price.MulInt64(timeElapsedMs))
-		cumulativePeriodMs += timeElapsedMs
+	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
+	var numSnapshots int64 = 0
+	var snapshotPriceBuffer []sdk.Dec // contains snapshots at time 0
+	k.IteratePriceSnapshotsFrom(
+		/*ctx=*/ ctx,
+		/*start=*/ startKey,
+		/*end=*/ nil,
+		/*reverse=*/ true,
+		/*do=*/ func(ps *types.PriceSnapshot) (stop bool) {
+			numSnapshots += 1
+			var timeElapsedMs int64
+			if ps.TimestampMs <= lowerLimitTimestampMs {
+				// current snapshot is below the lower limit
+				timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
+			} else {
+				timeElapsedMs = prevTimestampMs - ps.TimestampMs
+			}
+			cumulativePrice = cumulativePrice.Add(ps.Price.MulInt64(timeElapsedMs))
+			cumulativePeriodMs += timeElapsedMs
 
-		// end early if we're already beyond the lower limit timestamp
-		if ps.TimestampMs <= lowerLimitTimestampMs {
-			return true
-		}
-		prevTimestampMs = ps.TimestampMs
-		return false
-	})
+			if cumulativePeriodMs <= 0 {
+				snapshotPriceBuffer = append(snapshotPriceBuffer, ps.Price)
+			}
 
-	// TODO: Should we return 0 or an error??
-	if cumulativePeriodMs == 0 {
-		return sdk.ZeroDec(), nil
+			// end early if we're already beyond the lower limit timestamp
+			if ps.TimestampMs <= lowerLimitTimestampMs {
+				return true
+			}
+			prevTimestampMs = ps.TimestampMs
+			return false
+		})
+
+	switch {
+	case cumulativePeriodMs < 0:
+		return sdk.Dec{}, fmt.Errorf("cumulativePeriodMs, %v, should never be negative", cumulativePeriodMs)
+	case (cumulativePeriodMs == 0) && (numSnapshots > 0):
+		sum := sdk.ZeroDec()
+		for _, price := range snapshotPriceBuffer {
+			sum = sum.Add(price)
+		}
+		return sum.QuoInt64(numSnapshots), nil
+	case (cumulativePeriodMs == 0) && (numSnapshots == 0):
+		return sdk.Dec{}, fmt.Errorf(`
+			failed to calculate twap, no time passed and no snapshots have been taken since
+			ctx.BlockTime: %v, 
+			ctx.BlockHeight: %v,
+			assetPair: %s, 
+		`, prevTimestampMs, ctx.BlockHeight(), assetPair)
 	}
 
-	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
+	twap = cumulativePrice.QuoInt64(cumulativePeriodMs)
 
 	if !twap.IsZero() && inverseIsActive {
 		return sdk.OneDec().Quo(twap), nil

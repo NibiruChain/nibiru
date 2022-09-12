@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -15,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/lockup/client/cli"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type IntegrationTestSuite struct {
@@ -35,11 +36,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up lockup CLI testing suite")
 
 	app.SetPrefixes(app.AccountAddressPrefix)
-	encCfg := app.MakeTestEncodingConfig()
-	defaultAppGenesis := app.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
-	testAppGenesis := testapp.NewTestGenesisState(encCfg.Marshaler, defaultAppGenesis)
-	s.cfg = testutilcli.BuildNetworkConfig(testAppGenesis)
-
+	s.cfg = testutilcli.BuildNetworkConfig(simapp.NewTestGenesisStateFromDefault())
 	s.cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin("ATOM", 1_000_000),
 		sdk.NewInt64Coin("OSMO", 1_000_000),

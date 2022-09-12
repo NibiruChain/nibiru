@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,8 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -27,7 +27,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,7 +45,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -66,7 +64,7 @@ type Config struct {
 	TxConfig         client.TxConfig
 	AccountRetriever client.AccountRetriever
 	AppConstructor   AppConstructor             // the ABCI application constructor
-	GenesisState     map[string]json.RawMessage // custom gensis state to provide
+	GenesisState     map[string]json.RawMessage // custom genesis state to provide
 	TimeoutCommit    time.Duration              // the consensus commitment timeout
 	ChainID          string                     // the network chain-id
 	NumValidators    int                        // the total number of validators to create and bond
@@ -128,13 +126,8 @@ type (
 	}
 )
 
-func DefaultFeeString(denom string) string {
-	feeCoins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
-	return fmt.Sprintf("--%s=%s", flags.FlagFees, feeCoins.String())
-}
-
 // BuildNetworkConfig returns a configuration for a local in-testing network
-func BuildNetworkConfig(appGenesis app.GenesisState) Config {
+func BuildNetworkConfig(appGenesis simapp.GenesisState) Config {
 	encCfg := app.MakeTestEncodingConfig()
 
 	return Config{
@@ -144,13 +137,13 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return testapp.NewNibiruAppWithGenesis(appGenesis)
+			return simapp.NewTestNibiruAppWithGenesis(appGenesis)
 		},
 		GenesisState:  appGenesis,
 		TimeoutCommit: time.Second / 2,
 		ChainID:       "chain-" + tmrand.NewRand().Str(6),
 		NumValidators: 1,
-		BondDenom:     sdk.DefaultBondDenom, // TODO(https://github.com/NibiruChain/nibiru/issues/582): remove 'stake' denom and replace with 'unibi'
+		BondDenom:     common.DenomGov,
 		MinGasPrices:  fmt.Sprintf("0.000006%s", common.DenomGov),
 		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
@@ -167,13 +160,13 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	}
 }
 
-// New creates a new Network for integration tests.
+// NewNetwork creates a new Network for integration tests.
 func NewNetwork(t *testing.T, cfg Config) *Network {
 	// only one caller/test can create and use a network at a time
 	t.Log("acquiring test network lock")
 	lock.Lock()
 
-	baseDir, err := ioutil.TempDir(t.TempDir(), cfg.ChainID)
+	baseDir, err := os.MkdirTemp(t.TempDir(), cfg.ChainID)
 	require.NoError(t, err)
 	t.Logf("created temporary directory: %s", baseDir)
 
@@ -525,7 +518,14 @@ func (n *Network) Cleanup() {
 	n.T.Log("finished cleaning up test network")
 }
 
-// UpdateStartingToken allows to update the starting tokens of an existing
-func (cfg *Config) UpdateStartingToken(startingTokens sdk.Coins) {
-	cfg.StartingTokens = startingTokens
+func (n *Network) keyBaseAndInfoForAddr(addr sdk.AccAddress) (keyring.Keyring, keyring.Info) {
+	for _, v := range n.Validators {
+		info, err := v.ClientCtx.Keyring.KeyByAddress(addr)
+		if err == nil {
+			return v.ClientCtx.Keyring, info
+		}
+	}
+
+	n.T.Fatalf("address not found in any of the known validators keyrings: %s", addr.String())
+	return nil, nil
 }

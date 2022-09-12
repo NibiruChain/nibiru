@@ -32,6 +32,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
+	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
+	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -147,10 +149,11 @@ commands, then builds the rosetta root command given a protocol buffers
 serializer/deserializer.
 
 Args:
-  rootCmd: The root command called once in the 'main.go' of 'nibid'.
-  encodingConfig: EncodingConfig specifies the concrete encoding types to use
-    for a given app. This is provided for compatibility between protobuf and
-    amino implementations.
+
+	rootCmd: The root command called once in the 'main.go' of 'nibid'.
+	encodingConfig: EncodingConfig specifies the concrete encoding types to use
+	  for a given app. This is provided for compatibility between protobuf and
+	  amino implementations.
 */
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	cfg := sdk.GetConfig()
@@ -163,6 +166,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
+		vpoolcli.AddVPoolGenesisCmd(app.DefaultNodeHome),
+		pricefeedcli.AddWhitelistGenesisOracle(app.DefaultNodeHome),
+		pricefeedcli.AddPriceFeedParamPairs(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),

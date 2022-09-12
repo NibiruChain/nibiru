@@ -16,21 +16,28 @@ import (
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
-/* SetupTestingApp returns the TestingApp and default genesis state used to
-   initialize the testing app. */
+// init changes the value of 'DefaultTestingAppInit' to use custom initialization.
+func init() {
+	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+}
+
+/*
+SetupTestingApp returns the TestingApp and default genesis state used to
+
+	initialize the testing app.
+*/
 func SetupNibiruTestingApp() (
 	testingApp ibctesting.TestingApp,
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	// Whitelist a pair and oracle
 	pair, err := common.NewAssetPair("uatom:unibi")
@@ -43,11 +50,10 @@ func SetupNibiruTestingApp() (
 	})
 	nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
-	_, err = nibiruApp.PricefeedKeeper.PostRawPrice(
+	if err := nibiruApp.PricefeedKeeper.PostRawPrice(
 		ctx, oracle, pair.String(), sdk.OneDec(),
 		ctx.BlockTime().Add(time.Hour),
-	)
-	if err != nil {
+	); err != nil {
 		return nil, defaultGenesis
 	}
 
@@ -57,15 +63,10 @@ func SetupNibiruTestingApp() (
 	}
 
 	// Create genesis state
-	encCdc := app.MakeTestEncodingConfig()
-	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
+	encCdc := simapp.MakeTestEncodingConfig()
+	genesisState := simapp.NewDefaultGenesisState(encCdc.Marshaler)
 
 	return nibiruApp, genesisState
-}
-
-// init changes the value of 'DefaultTestingAppInit' to use custom initialization.
-func init() {
-	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.
@@ -86,11 +87,13 @@ func TestIBCTestSuite(t *testing.T) {
 	suite.Run(t, new(IBCTestSuite))
 }
 
-/* NewIBCTestingTransferPath returns a "path" for testing.
-   A path contains two endpoints, 'EndpointA' and 'EndpointB' that correspond
-   to the order of the chains passed into the ibctesting.NewPath function.
-   A path is a pointer, and its values will be filled in as necessary during
-   the setup portion of testing.
+/*
+NewIBCTestingTransferPath returns a "path" for testing.
+
+	A path contains two endpoints, 'EndpointA' and 'EndpointB' that correspond
+	to the order of the chains passed into the ibctesting.NewPath function.
+	A path is a pointer, and its values will be filled in as necessary during
+	the setup portion of testing.
 */
 func NewIBCTestingTransferPath(
 	chainA, chainB *ibctesting.TestChain,

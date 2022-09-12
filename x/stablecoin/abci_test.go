@@ -4,16 +4,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 type test struct {
@@ -25,7 +25,7 @@ type test struct {
 }
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *app.NibiruApp
+	var app *simapp.NibiruTestApp
 	var ctx sdk.Context
 
 	tests := []test{
@@ -108,7 +108,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			app, ctx = testapp.NewNibiruAppAndContext(true)
+			app, ctx = simapp.NewTestNibiruAppAndContext(true)
 
 			ctx = ctx.WithBlockHeight(1)
 
@@ -120,19 +120,15 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			app.PricefeedKeeper.SetParams(ctx, params)
 			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
-			_, err := app.PricefeedKeeper.PostRawPrice(
+			require.NoError(t, app.PricefeedKeeper.PostRawPrice(
 				ctx,
 				oracle,
 				pairs[0].String(),
 				/* price */ tc.price,
-				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1))
-			require.NoError(t, err)
+				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1)))
 
-			err = app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1)
-			require.NoError(t, err)
-
-			err = app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio)
-			require.NoError(t, err)
+			require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1))
+			require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio))
 
 			tc.fn()
 
@@ -143,7 +139,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochInfoChangesCollateralValidity(t *testing.T) {
-	app, ctx := testapp.NewNibiruAppAndContext(true)
+	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
@@ -166,9 +162,8 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
 	// Sim set price set the price for one hour
-	_, err := app.PricefeedKeeper.PostRawPrice(
-		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour))
-	require.NoError(t, err)
+	require.NoError(t, app.PricefeedKeeper.PostRawPrice(
+		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour)))
 	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1))
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
 
@@ -181,9 +176,8 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	_, err = app.PricefeedKeeper.PostRawPrice(
-		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour))
-	require.NoError(t, err)
+	require.NoError(t, app.PricefeedKeeper.PostRawPrice(
+		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour)))
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block
 	runBlock(time.Second) // Collateral ratio is set to valid at the beginning of this block

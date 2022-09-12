@@ -27,17 +27,18 @@ var (
 	ErrQuoteAmountIsZero                 = sdkerrors.Register(ModuleName, 8, "quote amount cannot be zero")
 	ErrLeverageIsZero                    = sdkerrors.Register(ModuleName, 9, "leverage cannot be zero")
 	ErrMarginRatioTooLow                 = sdkerrors.Register(ModuleName, 10, "margin ratio did not meet maintenance margin ratio")
+	ErrLeverageIsTooHigh                 = sdkerrors.Register(ModuleName, 11, "leverage cannot be higher than vpool parameter")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
 	return &Position{
-		TraderAddress:                       traderAddr.String(),
-		Pair:                                tokenPair,
-		Size_:                               sdk.ZeroDec(),
-		Margin:                              sdk.ZeroDec(),
-		OpenNotional:                        sdk.ZeroDec(),
-		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		BlockNumber:                         ctx.BlockHeight(),
+		TraderAddress:                  traderAddr.String(),
+		Pair:                           tokenPair,
+		Size_:                          sdk.ZeroDec(),
+		Margin:                         sdk.ZeroDec(),
+		OpenNotional:                   sdk.ZeroDec(),
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
+		BlockNumber:                    ctx.BlockHeight(),
 	}
 }
 

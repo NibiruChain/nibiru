@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestAddMarginSuccess(t *testing.T) {
@@ -31,13 +32,13 @@ func TestAddMarginSuccess(t *testing.T) {
 			marginToAdd:                     sdk.NewInt64Coin(common.DenomStable, 100),
 			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.NewDec(1_000),
-				Margin:                              sdk.NewDec(100),
-				OpenNotional:                        sdk.NewDec(500),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				TraderAddress:                  sample.AccAddress().String(),
+				Pair:                           common.PairBTCStable,
+				Size_:                          sdk.NewDec(1_000),
+				Margin:                         sdk.NewDec(100),
+				OpenNotional:                   sdk.NewDec(500),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
 
 			expectedMargin:         sdk.NewDec(199),
@@ -48,7 +49,7 @@ func TestAddMarginSuccess(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
 			t.Log("add trader funds")
@@ -70,6 +71,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
 				/* maxOracleSpreadRatio */ sdk.OneDec(), // 100%
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, common.PairBTCStable))
 
@@ -78,7 +80,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			perpKeeper.PairMetadataState(ctx).Set(
 				&types.PairMetadata{
 					Pair: common.PairBTCStable,
-					CumulativePremiumFractions: []sdk.Dec{
+					CumulativeFundingRates: []sdk.Dec{
 						tc.latestCumulativePremiumFraction,
 					},
 				},
@@ -95,7 +97,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
 			assert.EqualValues(t, common.PairBTCStable, resp.Position.Pair)
-			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LastUpdateCumulativePremiumFraction)
+			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LatestCumulativeFundingPayment)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
 	}
@@ -112,7 +114,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				removeAmt := sdk.NewInt(5)
 
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
@@ -125,7 +127,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "pool exists but trader doesn't have position - fail",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := sample.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
@@ -141,6 +143,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
 					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
 					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 				)
 
 				removeAmt := sdk.NewInt(5)
@@ -154,7 +157,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "remove margin from healthy position",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				traderAddr := sample.AccAddress()
 				pair := common.MustNewAssetPair("xxx:yyy")
 
@@ -171,6 +174,7 @@ func TestRemoveMargin(t *testing.T) {
 					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
 					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.4"), // 0.9 ratio
 					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
@@ -179,8 +183,8 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+					Pair:                   pair,
+					CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 				})
 
 				t.Log("increment block height and time for twap calculation")
@@ -214,7 +218,7 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(300), position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("299.910026991902429271"), position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
-				assert.EqualValues(t, sdk.ZeroDec(), position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativeFundingPayment)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,

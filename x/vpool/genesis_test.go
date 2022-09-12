@@ -3,11 +3,12 @@ package vpool_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -23,6 +24,7 @@ func TestGenesis(t *testing.T) {
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		{
 			Pair:                   common.MustNewAssetPair("ETH:NUSD"),
@@ -32,12 +34,13 @@ func TestGenesis(t *testing.T) {
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	}
 
 	genesisState := types.GenesisState{Vpools: vpools}
 
-	nibiruApp, ctx := testapp.NewNibiruAppAndContext(true)
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	k := nibiruApp.VpoolKeeper
 	vpool.InitGenesis(ctx, k, genesisState)
 

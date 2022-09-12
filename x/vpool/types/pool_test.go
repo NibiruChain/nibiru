@@ -20,6 +20,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.0625"),
+		sdk.MustNewDecFromStr("15"),
 	)
 
 	// less that max ratio
@@ -32,7 +33,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	require.False(t, pool.HasEnoughQuoteReserve(sdk.NewDec(9_000_001)))
 }
 
-func TestSetMarginRatio(t *testing.T) {
+func TestSetMarginRatioAndLeverage(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
 	pool := NewPool(
@@ -43,10 +44,11 @@ func TestSetMarginRatio(t *testing.T) {
 		sdk.MustNewDecFromStr("0.1"),
 		sdk.MustNewDecFromStr("0.1"),
 		/*maintenanceMarginRatio*/ sdk.MustNewDecFromStr("0.42"),
+		/*maxLeverage*/ sdk.MustNewDecFromStr("15"),
 	)
 
-	// less that max ratio
 	require.Equal(t, pool.MaintenanceMarginRatio, sdk.MustNewDecFromStr("0.42"))
+	require.Equal(t, pool.MaxLeverage, sdk.MustNewDecFromStr("15"))
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
@@ -106,6 +108,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
 				/*maxOracleSpreadRatio=*/ sdk.MustNewDecFromStr("0.1"),
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
@@ -179,6 +182,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				/*fluctuationLimitRatio=*/ sdk.OneDec(),
 				/*maxOracleSpreadRatio=*/ sdk.OneDec(),
 				/*maintenanceMarginRatio=*/ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
 			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
@@ -206,6 +210,7 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
 		/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.01"),
 		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 	)
 
 	t.Log("decrease quote asset reserve")
@@ -223,4 +228,181 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 	t.Log("incrase base asset reserve")
 	pool.IncreaseBaseAssetReserve(sdk.NewDec(100))
 	require.Equal(t, sdk.NewDec(1_000_000), pool.BaseAssetReserve)
+}
+
+func TestPool_Validate(t *testing.T) {
+	type test struct {
+		m         *Pool
+		expectErr bool
+	}
+
+	cases := map[string]test{
+		"invalid pair": {
+			m: &Pool{
+				Pair: common.AssetPair{},
+			},
+			expectErr: true,
+		},
+
+		"invalid trade limit ratio < 0": {
+			m: &Pool{
+				Pair:            common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio: sdk.NewDec(-1),
+			},
+			expectErr: true,
+		},
+
+		"invalid trade limit ratio > 1": {
+			m: &Pool{
+				Pair:            common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio: sdk.NewDec(2),
+			},
+			expectErr: true,
+		},
+
+		"quote asset reserve 0": {
+			m: &Pool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:   sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve: sdk.ZeroDec(),
+			},
+			expectErr: true,
+		},
+
+		"base asset reserve 0": {
+			m: &Pool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:   sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.ZeroDec(),
+			},
+			expectErr: true,
+		},
+
+		"fluctuation < 0": {
+			m: &Pool{
+				Pair:                  common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:     sdk.NewDec(1_000_000),
+				BaseAssetReserve:      sdk.NewDec(1_000_000),
+				FluctuationLimitRatio: sdk.NewDec(-1),
+			},
+			expectErr: true,
+		},
+
+		"fluctuation > 1": {
+			m: &Pool{
+				Pair:                  common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:     sdk.NewDec(1_000_000),
+				BaseAssetReserve:      sdk.NewDec(1_000_000),
+				FluctuationLimitRatio: sdk.NewDec(2),
+			},
+			expectErr: true,
+		},
+
+		"max oracle spread ratio < 0": {
+			m: &Pool{
+				Pair:                  common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:     sdk.NewDec(1_000_000),
+				BaseAssetReserve:      sdk.NewDec(1_000_000),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:  sdk.NewDec(-1),
+			},
+			expectErr: true,
+		},
+
+		"max oracle spread ratio > 1": {
+			m: &Pool{
+				Pair:                  common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:     sdk.NewDec(1_000_000),
+				BaseAssetReserve:      sdk.NewDec(1_000_000),
+				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:  sdk.NewDec(2),
+			},
+			expectErr: true,
+		},
+
+		"maintenance ratio < 0": {
+			m: &Pool{
+				Pair:                   common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:      sdk.NewDec(1_000_000),
+				BaseAssetReserve:       sdk.NewDec(1_000_000),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+				MaintenanceMarginRatio: sdk.NewDec(-1),
+			},
+			expectErr: true,
+		},
+
+		"maintenance ratio > 1": {
+			m: &Pool{
+				Pair:                   common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:      sdk.NewDec(1_000_000),
+				BaseAssetReserve:       sdk.NewDec(1_000_000),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+				MaintenanceMarginRatio: sdk.NewDec(2),
+			},
+			expectErr: true,
+		},
+
+		"max leverage < 0": {
+			m: &Pool{
+				Pair:                   common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:      sdk.NewDec(1_000_000),
+				BaseAssetReserve:       sdk.NewDec(1_000_000),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
+				MaxLeverage:            sdk.MustNewDecFromStr("-0.10"),
+			},
+			expectErr: true,
+		},
+
+		"max leverage too high for maintenance margin ratio": {
+			m: &Pool{
+				Pair:                   common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:      sdk.NewDec(1_000_000),
+				BaseAssetReserve:       sdk.NewDec(1_000_000),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"), // Equivalent to 10 leverage
+				MaxLeverage:            sdk.MustNewDecFromStr("11"),
+			},
+			expectErr: true,
+		},
+
+		"success": {
+			m: &Pool{
+				Pair:                   common.MustNewAssetPair("btc:usd"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				QuoteAssetReserve:      sdk.NewDec(1_000_000),
+				BaseAssetReserve:       sdk.NewDec(1_000_000),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+			expectErr: false,
+		},
+	}
+
+	for name, tc := range cases {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			err := tc.m.Validate()
+			if err == nil && tc.expectErr {
+				t.Fatal("error expected")
+			} else if err != nil && !tc.expectErr {
+				t.Fatal("unexpected error")
+			}
+		})
+	}
 }

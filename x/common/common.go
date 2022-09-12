@@ -76,7 +76,9 @@ func (pair AssetPair) SortedName() string {
 	return SortedPairNameFromDenoms([]string{pair.Token0, pair.Token1})
 }
 
-/* String returns the string representation of the asset pair.
+/*
+	String returns the string representation of the asset pair.
+
 Note that this differs from the output of the proto-generated 'String' method.
 */
 func (pair AssetPair) String() string {
@@ -197,4 +199,20 @@ func (pairs AssetPairs) MarshalJSON() ([]byte, error) {
 		return json.Marshal(assetPairsJSON(AssetPairs{}))
 	}
 	return json.Marshal(assetPairsJSON(pairs))
+}
+
+func ToSdkPointer(num interface{}) interface{} {
+	switch sdkType := num.(type) {
+	case sdk.Int:
+		pointer := new(sdk.Int)
+		*pointer = num.(sdk.Int)
+		return pointer
+	case sdk.Dec:
+		pointer := new(sdk.Dec)
+		*pointer = num.(sdk.Dec)
+		return pointer
+	default:
+		errMsg := fmt.Errorf("type passed must be sdk.Int or sdk.Dec, not %s", sdkType)
+		panic(errMsg)
+	}
 }

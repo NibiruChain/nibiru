@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -14,21 +15,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestGenesis(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := testapp.NewNibiruApp(false)
+		app := simapp2.NewTestNibiruApp(false)
 		ctxUncached := app.NewContext(false, tmproto.Header{})
 		ctx, _ := ctxUncached.CacheContext()
-		// fund module accounts
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
 
 		// create some params
 		app.PerpKeeper.SetParams(ctx, types.Params{
@@ -39,16 +32,17 @@ func TestGenesis(t *testing.T) {
 			PartialLiquidationRatio: sdk.MustNewDecFromStr("0.00001"),
 			TwapLookbackWindow:      15 * time.Minute,
 		})
+
 		// create some positions
 		for i := int64(0); i < 100; i++ {
 			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PairGovStable,
-				Size_:                               sdk.NewDec(i + 1),
-				Margin:                              sdk.NewDec(i * 2),
-				OpenNotional:                        sdk.NewDec(i * 100),
-				LastUpdateCumulativePremiumFraction: sdk.NewDec(5 * 100),
-				BlockNumber:                         i,
+				TraderAddress:                  sample.AccAddress().String(),
+				Pair:                           common.PairGovStable,
+				Size_:                          sdk.NewDec(i + 1),
+				Margin:                         sdk.NewDec(i * 2),
+				OpenNotional:                   sdk.NewDec(i * 100),
+				LatestCumulativeFundingPayment: sdk.NewDec(5 * 100),
+				BlockNumber:                    i,
 			}))
 		}
 
@@ -67,14 +61,6 @@ func TestGenesis(t *testing.T) {
 
 		// create new context and init genesis
 		ctx, _ = ctxUncached.CacheContext()
-		// simulate bank genesis
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-		require.NoError(t, simapp.FundModuleAccount(
-			app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin("test", 1000))))
-
 		perp.InitGenesis(ctx, app.PerpKeeper, *genState)
 
 		// export again to ensure they match

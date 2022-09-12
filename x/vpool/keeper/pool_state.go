@@ -19,6 +19,7 @@ func (k Keeper) CreatePool(
 	fluctuationLimitRatio sdk.Dec,
 	maxOracleSpreadRatio sdk.Dec,
 	maintenanceMarginRatio sdk.Dec,
+	maxLeverage sdk.Dec,
 ) {
 	pool := types.NewPool(
 		pair,
@@ -28,6 +29,7 @@ func (k Keeper) CreatePool(
 		fluctuationLimitRatio,
 		maxOracleSpreadRatio,
 		maintenanceMarginRatio,
+		maxLeverage,
 	)
 
 	k.savePool(ctx, pool)
@@ -41,7 +43,7 @@ func (k Keeper) getPool(ctx sdk.Context, pair common.AssetPair) (
 ) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
 	if bz == nil {
-		return nil, fmt.Errorf("Could not find vpool for pair %s", pair.String())
+		return nil, fmt.Errorf("could not find vpool for pair %s", pair.String())
 	}
 
 	var pool types.Pool
@@ -115,4 +117,47 @@ func (k Keeper) GetAllPools(ctx sdk.Context) []*types.Pool {
 	}
 
 	return pools
+}
+
+// GetPoolPrices returns the mark price, twap (mark) price, and index price for a vpool.
+// An error is returned if
+func (k Keeper) GetPoolPrices(
+	ctx sdk.Context, pool types.Pool,
+) (prices types.PoolPrices, err error) {
+	// Validation - guarantees no panics in GetUnderlyingPrice or GetCurrentTWAP
+	if err := pool.Pair.Validate(); err != nil {
+		return prices, err
+	}
+	if !k.ExistsPool(ctx, pool.Pair) {
+		return prices, types.ErrPairNotSupported.Wrap(pool.Pair.String())
+	}
+	if err := pool.ValidateReserves(); err != nil {
+		return prices, err
+	}
+
+	indexPriceStr := ""
+	indexPrice, err := k.GetUnderlyingPrice(ctx, pool.Pair)
+	if err != nil {
+		// fail gracefully so that vpool queries run even if the oracle price feeds stop
+		k.Logger(ctx).Error(err.Error())
+	} else {
+		indexPriceStr = indexPrice.String()
+	}
+	twapMarkStr := ""
+	twapMark, err := k.GetCurrentTWAP(ctx, pool.Pair)
+	if err != nil {
+		// fail gracefully so that vpool queries run even if the TWAP is undefined.
+		k.Logger(ctx).Error(err.Error())
+	} else {
+		twapMarkStr = twapMark.Price.String()
+	}
+
+	return types.PoolPrices{
+		Pair:          pool.Pair.String(),
+		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
+		IndexPrice:    indexPriceStr,
+		TwapMark:      twapMarkStr,
+		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
+		BlockNumber:   ctx.BlockHeight(),
+	}, nil
 }
