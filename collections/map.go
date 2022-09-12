@@ -2,6 +2,7 @@ package collections
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,7 +69,7 @@ func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	store := m.getStore(ctx)
 	pk := key.PrimaryKey()
 	if !store.Has(pk) {
-		return fmt.Errorf("not found")
+		return ErrNotFound
 	}
 
 	store.Delete(pk)
@@ -78,15 +79,6 @@ func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start keys.Bound[K], end keys.Bound[K], order keys.Order) MapIterator[K, V, PV] {
 	store := m.getStore(ctx)
 	return newMapIterator[K, V, PV](m.cdc, store, start, end, order)
-}
-
-// Prefix returns a Prefix instance over a key.
-func (m Map[K, V, PV]) Prefix(ctx sdk.Context, p K) Prefix[K, V, PV] {
-	bytes := p.PrimaryKey()
-	return Prefix[K, V, PV]{
-		cdc:    m.cdc,
-		prefix: prefix.NewStore(m.getStore(ctx), bytes),
-	}
 }
 
 func (m Map[K, V, PV]) GetAll(ctx sdk.Context) []V {
@@ -154,32 +146,38 @@ func (i MapIterator[K, V, PV]) Key() K {
 	return k.FromPrimaryKeyBytes(i.iter.Key()).(K) // TODO implement this better
 }
 
-type Prefix[K keys.Key, V any, PV interface {
+func (i MapIterator[K, V, PV]) Values() []V {
+	var values []V
+	for ; i.iter.Valid(); i.iter.Next() {
+		values = append(values, i.Value())
+	}
+	return values
+}
+
+func (i MapIterator[K, V, PV]) Keys() []K {
+	var keys []K
+	for ; i.iter.Valid(); i.iter.Next() {
+		keys = append(keys, i.Key())
+	}
+	return keys
+}
+
+type KeyValue[K keys.Key, V any, PV interface {
 	*V
 	Object
 }] struct {
-	_      K
-	_      V
-	_      PV
-	cdc    codec.BinaryCodec
-	prefix sdk.KVStore
+	Key   K
+	Value V
 }
 
-func (p Prefix[K, V, PV]) Iterate(start, end keys.Bound[K], order keys.Order) MapIterator[K, V, PV] {
-	startBytes := start.Bytes()
-	endBytes := end.Bytes()
-	switch order {
-	case keys.OrderAscending:
-		return MapIterator[K, V, PV]{
-			cdc:  p.cdc,
-			iter: p.prefix.Iterator(startBytes, endBytes),
-		}
-	case keys.OrderDescending:
-		return MapIterator[K, V, PV]{
-			cdc:  p.cdc,
-			iter: p.prefix.ReverseIterator(startBytes, endBytes),
-		}
-	default:
-		panic(fmt.Errorf("unrecognized order"))
+func (i MapIterator[K, V, PV]) All() []KeyValue[K, V, PV] {
+	var kvs []KeyValue[K, V, PV]
+	for ; i.iter.Valid(); i.iter.Next() {
+		kvs = append(kvs, KeyValue[K, V, PV]{
+			Key:   i.Key(),
+			Value: i.Value(),
+		})
 	}
+
+	return kvs
 }

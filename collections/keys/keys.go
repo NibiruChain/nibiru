@@ -1,14 +1,21 @@
 package keys
 
+import "fmt"
+
 type Key interface {
+	PrimaryKey
+	// Stringer is implemented to allow human-readable formats, especially important in errors.
+	fmt.Stringer
+}
+
+type PrimaryKey interface {
 	PrimaryKey() []byte
-	SecondaryKey() []byte
 	FromPrimaryKeyBytes(b []byte) Key
 }
 
 // String converts any member of the string typeset into a StringKey
 // NOTE(mercilex): this exists to avoid type errors in which bytes are being
-// converted to a StringKey which is not correct behaviour.
+// converted to a StringKey which is not correct behavior.
 func String[T ~string](v T) StringKey {
 	return StringKey(v)
 }
@@ -16,9 +23,6 @@ func String[T ~string](v T) StringKey {
 type StringKey string
 
 func (s StringKey) PrimaryKey() []byte {
-	return []byte(s)
-}
-func (s StringKey) SecondaryKey() []byte {
 	return []byte(s)
 }
 
