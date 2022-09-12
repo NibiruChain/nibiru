@@ -8,9 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NibiruChain/nibiru/x/oracle"
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -101,8 +98,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-
 	nibiapp "github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex"
@@ -117,6 +112,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/lockup"
 	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
 	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
+	"github.com/NibiruChain/nibiru/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
