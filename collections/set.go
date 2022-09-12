@@ -76,3 +76,7 @@ func (s SetIterator[K]) Valid() bool {
 func (s SetIterator[K]) Key() K {
 	return s.iter.Key()
 }
+
+func (s SetIterator[K]) Keys() []K {
+	return s.iter.Keys()
+}
