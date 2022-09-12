@@ -110,11 +110,6 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
 		denomIn, denomOut, poolId, balanceIn := findRandomPoolWithDenom(ctx, r, spendableCoins, k)
-		// get the pool (it should always exist)
-		// pool, err := k.FetchPool(ctx, poolId)
-		// if err != nil {
-		// 	panic(err)
-		// }
 
 		if denomIn == "" {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool existing yet for account tokens"), nil, nil
@@ -126,16 +121,6 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 		// choose some random amount of balanceIn to swap
 		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.05")).Add(sdk.MustNewDecFromStr("0.1"))
 		tokenIn := sdk.NewCoin(denomIn, intensityFactor.MulInt(balanceIn).TruncateInt())
-
-		// tokensOut, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut)
-		// if err != nil {
-		// 	return simtypes.NoOpMsg(types.ModuleName, msg.Type(), err.Error()), nil, nil
-		// }
-
-		// // this is necessary, as invalid tokens will be considered as wrong inputs in simulations
-		// if !tokensOut.IsValid() || tokensOut.IsZero() {
-		// 	return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "not enough input tokens to swap"), nil, nil
-		// }
 
 		msg = &types.MsgSwapAssets{
 			Sender:        simAccount.Address.String(),
@@ -171,13 +156,16 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		msg := &types.MsgJoinPool{}
+		// run only 1/3 of the time
+		if simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1")).GTE(sdk.MustNewDecFromStr("0.33")) {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No join pool done"), nil, nil
+		}
+
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		fundAccountWithTokens(ctx, simAccount.Address, bk)
 		simCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		msg := &types.MsgJoinPool{
-			Sender: simAccount.Address.String(),
-		}
 		pool, err, index1, index2 := findRandomPoolWithDenomPair(ctx, r, simCoins, k)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool existing yet for tokens in account"), nil, nil
@@ -190,21 +178,16 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			sdk.NewCoin(
 				pool.PoolAssets[0].Token.Denom,
 				intensityFactorToken0.Mul(sdk.NewDecFromInt(simCoins[index1].Amount)).TruncateInt()),
-
 			sdk.NewCoin(
 				pool.PoolAssets[1].Token.Denom,
 				intensityFactorToken1.Mul(sdk.NewDecFromInt(simCoins[index2].Amount)).TruncateInt()),
 		)
 
-		frequencyFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1"))
-		if frequencyFactor.GTE(sdk.MustNewDecFromStr("0.33")) {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No join pool done"), nil, nil
-		}
-
 		msg = &types.MsgJoinPool{
 			Sender:   simAccount.Address.String(),
 			PoolId:   pool.Id,
-			TokensIn: tokensIn}
+			TokensIn: tokensIn,
+		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{
