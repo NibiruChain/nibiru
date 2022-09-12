@@ -50,6 +50,11 @@ MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit lia
 GENESIS_COINS="1000000000unibi,10000000000000unusd"
 CHAIN_DIR="$HOME/.nibid"
 
+SEDOPTION=
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SEDOPTION="''"
+fi
+
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" > /dev/null; then
     echo_error "Terminating $BINARY..."
@@ -110,7 +115,7 @@ fi
 
 # Enable API Server
 echo_info "Enabling API server"
-if sed -i '' '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
+if sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
   echo_success "Successfully enabled API server"
 else
   echo_error "Failed to enable API server"
@@ -118,7 +123,7 @@ fi
 
 # Enable Swagger Docs
 echo_info "Enabling Swagger Docs"
-if sed -i '' 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
+if sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
   echo_success "Successfully enabled Swagger Docs"
 else
   echo_error "Failed to enable Swagger Docs"
@@ -126,7 +131,7 @@ fi
 
 # Enable CORS for localnet
 echo_info "Enabling CORS"
-if sed -i '' 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
+if sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
   echo_success "Successfully enabled CORS"
 else
   echo_error "Failed to enable CORS"
