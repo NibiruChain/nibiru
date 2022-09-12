@@ -15,20 +15,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-)
-
-const (
-	genOracleAddress  = "nibi1zuxt7fvuxgj69mjxu3auca96zemqef5u2yemly"
-	genOracleMnemonic = "kit soon capital dry sadness balance rival embark behind coast online struggle deer crush hospital during man monkey prison action custom wink utility arrive"
 )
 
 var commonArgs = []string{
@@ -47,21 +41,17 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	const oracleAddress = genOracleAddress
-	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
-
 	pairs := common.AssetPairs{common.PairBTCStable}
 	defaultGenesis := simapp.PricefeedGenesis()
 	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
 	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
 		{
 			PairID: common.PairBTCStable.String(),
-			Oracle: oracle.String(),
-			Price:  sdk.NewDec(int64(1000)),
-			Expiry: time.Now().Add(40 * time.Minute),
+			Oracle: simapp.GenOracleAddress,
+			Price:  sdk.OneDec(),
+			Expiry: time.Now().Add(1 * time.Hour),
 		},
 	}...)
-	defaultGenesis.GenesisOracles = append(defaultGenesis.GenesisOracles, oracle.String())
 
 	return &defaultGenesis
 }
@@ -142,39 +132,35 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
-	info, err = val.ClientCtx.Keyring.NewAccount(
-		/* uid */ "genOracle",
-		/* mnemonic */ genOracleMnemonic,
-		/* bip39Passphrase */ "",
-		/* hdPath */ sdk.FullFundraiserPath,
-		/* algo */ hd.Secp256k1,
-	)
+	info, _, err = val.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
 	s.NoError(err)
-	oracle := sdk.AccAddress(info.GetPubKey().Address())
+	user2 := sdk.AccAddress(info.GetPubKey().Address())
 
-	s.users = []sdk.AccAddress{user1, oracle}
+	s.T().Log(user1.String(), user2.String())
+	s.users = []sdk.AccAddress{user1, user2}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomGov, 100_000),
-			sdk.NewInt64Coin(common.DenomColl, 100_000),
-			sdk.NewInt64Coin(common.DenomStable, 500_000),
+			sdk.NewInt64Coin(common.DenomGov, 100_000_00),
+			sdk.NewInt64Coin(common.DenomColl, 100_000_00),
+			sdk.NewInt64Coin(common.DenomStable, 50_000_000),
 		),
 		val,
 		common.DenomGov,
 	)
 	s.Require().NoError(err)
 
-	_, err = testutilcli.FillWalletFromValidator(oracle,
+	_, err = testutilcli.FillWalletFromValidator(user2,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomGov, 100),
-			sdk.NewInt64Coin(common.DenomColl, 100),
-			sdk.NewInt64Coin(common.DenomStable, 90000000),
+			sdk.NewInt64Coin(common.DenomGov, 1000),
+			sdk.NewInt64Coin(common.DenomColl, 1000),
+			sdk.NewInt64Coin(common.DenomStable, 100000),
 		),
 		val,
 		common.DenomGov,
 	)
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -426,9 +412,9 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	args := []string{
 		"--from",
-		s.users[0].String(),
+		s.users[1].String(),
 		common.PairBTCStable.String(),
-		s.users[0].String(),
+		s.users[1].String(),
 	}
 
 	// liquidate a position that does not exist
@@ -440,15 +426,15 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	positionArgs := []string{
 		"--from",
-		s.users[0].String(),
+		s.users[1].String(),
 		"buy",
 		common.PairBTCStable.String(),
-		"15",     // Leverage
-		"400000", // Quote asset amount
+		"15",    // Leverage
+		"90000", // Quote asset amount
 		"0",
 	}
 
-	s.T().Log("opening a position with user 1....")
+	s.T().Log("opening a position with user 2....")
 	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(positionArgs, commonArgs...))
 	s.NoError(err)
 
@@ -461,14 +447,15 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	positionArgs = []string{
 		"--from",
-		s.users[1].String(),
+		s.users[0].String(),
 		"sell",
 		common.PairBTCStable.String(),
 		"15",       // Leverage
-		"80000000", // Quote asset amount
+		"45000000", // Quote asset amount
 		"0",
 	}
 
+	s.T().Log("opening a position with user 1....")
 	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(positionArgs, commonArgs...))
 	s.NoError(err)
 
@@ -478,11 +465,12 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	// liquidate
 	args = []string{
 		"--from",
-		s.users[0].String(),
+		s.users[1].String(),
 		common.PairBTCStable.String(),
-		s.users[0].String(),
+		s.users[1].String(),
 	}
 
+	s.T().Log("liquidating user 2....")
 	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
 	s.NotContains(out.String(), "fail")
 	s.NoError(err)
