@@ -47,7 +47,7 @@ func (s KeySet[K]) Delete(ctx sdk.Context, k K) {
 
 // Iterate returns a KeySetIterator over the provided keys.Range of keys.
 func (s KeySet[K]) Iterate(ctx sdk.Context, r keys.Range[K]) KeySetIterator[K] {
-	mi := newMapIterator[K, setObject](s.cdc, ctx.KVStore(s.sk), r)
+	mi := (Map[K, setObject, *setObject])(s).Iterate(ctx, r)
 	return (KeySetIterator[K])(mi)
 }
 
