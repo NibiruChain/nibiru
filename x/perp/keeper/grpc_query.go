@@ -12,11 +12,11 @@ import (
 )
 
 type queryServer struct {
-	Keeper
+	k Keeper
 }
 
-func NewQuerier(k Keeper) queryServer {
-	return queryServer{Keeper: k}
+func NewQuerier(k Keeper) types.QueryServer {
+	return queryServer{k: k}
 }
 
 var _ types.QueryServer = queryServer{}
@@ -39,25 +39,25 @@ func (q queryServer) QueryTraderPosition(
 		return nil, err
 	}
 
-	position, err := q.Keeper.PositionsState(ctx).Get(pair, trader)
+	position, err := q.k.PositionsState(ctx).Get(pair, trader)
 	if err != nil {
 		return nil, err
 	}
 
-	positionNotional, unrealizedPnl, err := q.Keeper.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	marginRatioMark, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatioMark, err := q.k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
 	}
-	marginRatioIndex, err := q.Keeper.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_INDEX)
+	marginRatioIndex, err := q.k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_INDEX)
 	if err != nil {
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.
-		q.Keeper.Logger(ctx).Error(err.Error())
+		q.k.Logger(ctx).Error(err.Error())
 		marginRatioIndex = sdk.Dec{}
 	}
 
@@ -79,7 +79,7 @@ func (q queryServer) Params(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	return &types.QueryParamsResponse{Params: q.Keeper.GetParams(ctx)}, nil
+	return &types.QueryParamsResponse{Params: q.k.GetParams(ctx)}, nil
 }
 
 func (q queryServer) FundingRates(
@@ -95,7 +95,7 @@ func (q queryServer) FundingRates(
 		return nil, status.Errorf(codes.InvalidArgument, "invalid pair: %s", req.Pair)
 	}
 
-	pairMetadata, err := q.Keeper.PairMetadataState(ctx).Get(assetPair)
+	pairMetadata, err := q.k.PairMetadataState(ctx).Get(assetPair)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
