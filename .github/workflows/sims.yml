@@ -4,21 +4,6 @@ on:
   pull_request:
 
 jobs:
-  build:
-    runs-on: self-hosted
-    if: "!contains(github.event.head_commit.message, 'skip-sims')"
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
-      - uses: actions/cache@v3
-        id: cache-build
-        with:
-          path: data
-          key: ${{ runner.os }}-go-build-binary
-      - run: make build
-
   install-runsim:
     runs-on: self-hosted
     needs: build
