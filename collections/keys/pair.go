@@ -12,6 +12,8 @@ func Join[K1 Key, K2 Key](k1 K1, k2 K2) Pair[K1, K2] {
 	}
 }
 
+// PairPrefix is used to provide only the K1 part of the Pair.
+// Usually used in Range.Prefix where Key is Pair.
 func PairPrefix[K1 Key, K2 Key](k1 K1) Pair[K1, K2] {
 	return Pair[K1, K2]{
 		p1: &k1,
@@ -19,6 +21,8 @@ func PairPrefix[K1 Key, K2 Key](k1 K1) Pair[K1, K2] {
 	}
 }
 
+// PairSuffix is used to provide only the K2 part of the Pair.
+// Usually used in Range.Start or Range.End where Key is Pair.
 func PairSuffix[K1 Key, K2 Key](k2 K2) Pair[K1, K2] {
 	return Pair[K1, K2]{
 		p1: nil,
@@ -35,7 +39,6 @@ type Pair[K1 Key, K2 Key] struct {
 	p2 *K2
 }
 
-// fkb1 returns
 func (t Pair[K1, K2]) fkb1(b []byte) (int, K1) {
 	var k1 K1
 	i, p1 := k1.FromKeyBytes(b)
