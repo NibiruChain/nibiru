@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"sort"
 	"time"
 
@@ -23,6 +25,8 @@ type (
 		storeKey   storetypes.StoreKey
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
+
+		CurrentPrices collections.Map[common.AssetPair, types.CurrentPrice, *types.CurrentPrice]
 	}
 )
 
@@ -39,11 +43,12 @@ func NewKeeper(
 	}
 
 	return Keeper{
-
 		cdc:        cdc,
 		storeKey:   storeKey,
 		memKey:     memKey,
 		paramstore: ps,
+
+		CurrentPrices: collections.NewMap[common.AssetPair, types.CurrentPrice](cdc, storeKey, 0),
 	}
 }
 
@@ -140,7 +145,7 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 		// price if this is not set.
 		// This zero's out the current price stored value for that market and ensures
 		// that CDP methods that GetCurrentPrice will return error.
-		k.setCurrentPrice(ctx, pairID, types.CurrentPrice{})
+		k.CurrentPrices.Insert(ctx, assetPair, types.CurrentPrice{})
 		return types.ErrNoValidPrice
 	}
 
@@ -159,17 +164,12 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 	}
 
 	currentPrice := types.NewCurrentPrice(token0, token1, medianPrice)
-	k.setCurrentPrice(ctx, pairID, currentPrice)
+	k.CurrentPrices.Insert(ctx, assetPair, currentPrice)
 
 	// Update the TWA prices
 	k.saveOrUpdateSnapshot(ctx, pairID, currentPrice.Price)
 
 	return nil
-}
-
-func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice types.CurrentPrice) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
 }
 
 // CalculateMedianPrice calculates the median prices for the input prices.
@@ -221,13 +221,10 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	}
 
 	// Retrieve current price from the KV store
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentPriceKey(pair.String()))
-	if bz == nil {
+	price, err := k.CurrentPrices.Get(ctx, pair)
+	if err != nil {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
-	var price types.CurrentPrice
-	k.cdc.MustUnmarshal(bz, &price)
 	if price.Price.Equal(sdk.ZeroDec()) {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
@@ -343,27 +340,9 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	return twap, nil
 }
 
-// IterateCurrentPrices iterates over all current price objects in the store and performs a callback function
-func (k Keeper) IterateCurrentPrices(ctx sdk.Context, cb func(cp types.CurrentPrice) (stop bool)) {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.CurrentPricePrefix)
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var cp types.CurrentPrice
-		k.cdc.MustUnmarshal(iterator.Value(), &cp)
-		if cb(cp) {
-			break
-		}
-	}
-}
-
 // GetCurrentPrices returns all current price objects from the store
 func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
-	var cps types.CurrentPrices
-	k.IterateCurrentPrices(ctx, func(cp types.CurrentPrice) (stop bool) {
-		cps = append(cps, cp)
-		return false
-	})
-	return cps
+	return k.CurrentPrices.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
 }
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
