@@ -295,27 +295,6 @@ func (k Keeper) GetCurrentTWAP(
 	return types.CurrentTWAP{}, types.ErrNoValidTWAP
 }
 
-// spotPriceAsTwap returns a CurrentTWAP as defined by the instantaneous spot price.
-// TODO Have discussion over whether to switch to be the default TWAP definition.
-func (k Keeper) SpotPriceAsTWAP(
-	ctx sdk.Context, spotPrice sdk.Dec, pair common.AssetPair,
-) (twap types.CurrentTWAP, err error) {
-	k.Logger(ctx).Info(
-		fmt.Sprintf("no TWAP available in block %v. Used current spot price instead.",
-			ctx.BlockHeight()))
-	reserveSnapshot, _, err := k.getLatestReserveSnapshot(ctx, pair)
-	if err != nil {
-		return twap, err
-	}
-
-	return types.CurrentTWAP{
-		PairID:      pair.String(),
-		Numerator:   reserveSnapshot.QuoteAssetReserve,
-		Denominator: reserveSnapshot.BaseAssetReserve,
-		Price:       spotPrice,
-	}, err
-}
-
 /*
 updateTWAP updates the twap price for a token0, token1 pair
 We use the blocktime to update the twap price.
