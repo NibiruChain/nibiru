@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: "!contains(github.event.head_commit.message, 'skip-sims')"
     steps:
       - uses: actions/checkout@v3
@@ -17,7 +17,7 @@ jobs:
       - run: make build
 
   install-runsim:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     steps:
       - uses: actions/setup-go@v3
@@ -33,7 +33,7 @@ jobs:
         run: go install github.com/cosmos/tools/cmd/runsim@v1.0.0
 
   test-sim-nondeterminism:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build, install-runsim]
     steps:
       - uses: actions/checkout@v3
