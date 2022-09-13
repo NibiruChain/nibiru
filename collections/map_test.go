@@ -3,28 +3,10 @@ package collections
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	wellknown "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/require"
-	db "github.com/tendermint/tm-db"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
 )
-
-func deps() (sdk.StoreKey, sdk.Context, codec.BinaryCodec) {
-	sk := sdk.NewKVStoreKey("mock")
-	dbm := db.NewMemDB()
-	ms := store.NewCommitMultiStore(dbm)
-	ms.MountStoreWithDB(sk, types.StoreTypeIAVL, dbm)
-	if err := ms.LoadLatestVersion(); err != nil {
-		panic(err)
-	}
-	return sk, sdk.Context{}.WithMultiStore(ms).WithGasMeter(sdk.NewGasMeter(1_000_000_000)), codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-}
 
 func obj(o string) wellknown.BytesValue {
 	return wellknown.BytesValue{Value: []byte(o)}

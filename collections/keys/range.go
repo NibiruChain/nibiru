@@ -50,31 +50,45 @@ func (r Range[K]) Compile() (prefix []byte, start []byte, end []byte, order Orde
 		prefix = (*r.prefix).KeyBytes()
 	}
 	if r.start != nil {
-		start = r.start.Bytes()
+		start = r.compileStart()
 	}
 	if r.end != nil {
-		end = r.end.Bytes()
+		end = r.compileEnd()
 	}
 	return
 }
 
-type Bound[K Key] struct {
-	some      []byte
-	exclusive bool
+func (r Range[K]) compileStart() []byte {
+	bytes := r.start.value.KeyBytes()
+	// iterator start is inclusive by default
+	if !r.start.exclusive {
+		return bytes
+	} else {
+		// TODO(mercilex): exclusive case needs to be handled, consists of decreasing key by 1
+		panic("implement me")
+	}
 }
 
-func (b Bound[K]) Bytes() []byte {
-	if b.exclusive {
-		return b.some
+func (r Range[K]) compileEnd() []byte {
+	bytes := r.end.value.KeyBytes()
+	// iterator end is exclusive by default
+	if r.end.exclusive {
+		return bytes
 	} else {
-		panic("not impl")
+		// TODO(mercilex): inclusive case needs to be handled, consists of increasing key by 1
+		panic("implement me")
 	}
+}
+
+type Bound[K Key] struct {
+	value     K
+	exclusive bool
 }
 
 // Inclusive creates a key Bound which is inclusive.
 func Inclusive[K Key](k K) Bound[K] {
 	return Bound[K]{
-		some:      k.KeyBytes(),
+		value:     k,
 		exclusive: true,
 	}
 }
@@ -82,7 +96,7 @@ func Inclusive[K Key](k K) Bound[K] {
 // Exclusive creates a key Bound which is exclusive.
 func Exclusive[K Key](k K) Bound[K] {
 	return Bound[K]{
-		some:      k.KeyBytes(),
+		value:     k,
 		exclusive: false,
 	}
 }

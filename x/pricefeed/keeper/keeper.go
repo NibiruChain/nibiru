@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
+	"os"
 	"sort"
 	"time"
 
@@ -290,6 +291,7 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 		/*end=*/ nil,
 		/*reverse=*/ true,
 		/*do=*/ func(ps *types.PriceSnapshot) (stop bool) {
+			fmt.Fprintf(os.Stderr, "%s\n", ps)
 			numSnapshots += 1
 			var timeElapsedMs int64
 			if ps.TimestampMs <= lowerLimitTimestampMs {

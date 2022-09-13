@@ -111,6 +111,7 @@ func TestMarketsQuery(t *testing.T) {
 
 func TestQueryPrice(t *testing.T) {
 	pair := common.MustNewAssetPair("ubtc:uusd")
+	pair2 := common.MustNewAssetPair("ueth:uusd")
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
 	keeper.SetParams(ctx, types.Params{
 		Pairs:              common.AssetPairs{pair},
@@ -118,12 +119,14 @@ func TestQueryPrice(t *testing.T) {
 	})
 
 	oracle := sample.AccAddress()
-	keeper.WhitelistOraclesForPairs(ctx, []sdk.AccAddress{oracle}, []common.AssetPair{pair})
+	keeper.WhitelistOraclesForPairs(ctx, []sdk.AccAddress{oracle}, []common.AssetPair{pair, pair2})
 
 	// first block
 	_, err := keeper.PostRawPrice(ctx, oracle, pair.String(), sdk.NewDec(20_000), time.Now().Add(time.Hour))
+	_, err = keeper.PostRawPrice(ctx, oracle, pair2.String(), sdk.NewDec(10_000), time.Now().Add(time.Hour))
 	require.NoError(t, err)
 	err = keeper.GatherRawPrices(ctx, "ubtc", "uusd")
+	err = keeper.GatherRawPrices(ctx, "ueth", "uusd")
 	require.NoError(t, err)
 
 	// second block

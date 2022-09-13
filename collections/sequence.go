@@ -6,6 +6,9 @@ import (
 	wellknown "github.com/gogo/protobuf/types"
 )
 
+// DefaultSequenceStart is the initial starting number of the Sequence.
+const DefaultSequenceStart uint64 = 1
+
 // Sequence defines a collection item which contains an always increasing number.
 // Useful for those flows which require ever raising unique ids.
 type Sequence struct {
@@ -32,7 +35,7 @@ func (s Sequence) Next(ctx sdk.Context) uint64 {
 
 // Peek gets the next available sequence number without increasing it.
 func (s Sequence) Peek(ctx sdk.Context) uint64 {
-	return s.sequence.GetOr(ctx, wellknown.UInt64Value{Value: 1}).Value
+	return s.sequence.GetOr(ctx, wellknown.UInt64Value{Value: DefaultSequenceStart}).Value
 }
 
 // Set hard resets the sequence to the provided number.
