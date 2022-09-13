@@ -5,16 +5,11 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -275,8 +270,8 @@ func TestCalcTwap(t *testing.T) {
 		name               string
 		pair               common.AssetPair
 		reserveSnapshots   []types.ReserveSnapshot
-		currentBlocktime   time.Time
-		currentBlockheight int64
+		currentBlockTime   time.Time
+		currentBlockHeight int64
 		lookbackInterval   time.Duration
 		twapCalcOption     types.TwapCalcOption
 		direction          types.Direction
@@ -307,8 +302,8 @@ func TestCalcTwap(t *testing.T) {
 					BlockNumber:       3,
 				},
 			},
-			currentBlocktime:   time.UnixMilli(30),
-			currentBlockheight: 3,
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_SPOT,
 			expectedPrice:      sdk.MustNewDecFromStr("8.75"),
@@ -336,8 +331,8 @@ func TestCalcTwap(t *testing.T) {
 					BlockNumber:       3,
 				},
 			},
-			currentBlocktime:   time.UnixMilli(35),
-			currentBlockheight: 4,
+			currentBlockTime:   time.UnixMilli(35),
+			currentBlockHeight: 4,
 			lookbackInterval:   24 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_SPOT,
 			expectedPrice:      sdk.MustNewDecFromStr("8.895833333333333333"),
@@ -359,8 +354,8 @@ func TestCalcTwap(t *testing.T) {
 					BlockNumber:       2,
 				},
 			},
-			currentBlocktime:   time.UnixMilli(30),
-			currentBlockheight: 3,
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_ADD_TO_POOL,
@@ -384,8 +379,8 @@ func TestCalcTwap(t *testing.T) {
 					BlockNumber:       2,
 				},
 			},
-			currentBlocktime:   time.UnixMilli(30),
-			currentBlockheight: 3,
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_REMOVE_FROM_POOL,
@@ -409,8 +404,8 @@ func TestCalcTwap(t *testing.T) {
 					BlockNumber:       2,
 				},
 			},
-			currentBlocktime:   time.UnixMilli(30),
-			currentBlockheight: 3,
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_ADD_TO_POOL,
@@ -434,8 +429,8 @@ func TestCalcTwap(t *testing.T) {
 					BlockNumber:       2,
 				},
 			},
-			currentBlocktime:   time.UnixMilli(30),
-			currentBlockheight: 3,
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_REMOVE_FROM_POOL,
@@ -451,7 +446,7 @@ func TestCalcTwap(t *testing.T) {
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
 			ctx = ctx.WithBlockTime(time.UnixMilli(0)).WithBlockHeight(0)
 
-			t.Log("Create an empty pool for the first block, it's snapshot won't be used")
+			t.Log("Create an empty pool for the first block")
 			vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
@@ -461,22 +456,19 @@ func TestCalcTwap(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 				sdk.OneDec(),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				/* maxLeverage */ sdk.NewDec(15),
 			)
 
-			for i, snapshot := range tc.reserveSnapshots {
+			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockHeight(snapshot.BlockNumber).WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
-				vpoolKeeper.saveSnapshot(
+				vpoolKeeper.SaveSnapshot(
 					ctx,
 					tc.pair,
-					uint64(i+1),
 					snapshot.QuoteAssetReserve,
 					snapshot.BaseAssetReserve,
 				)
 			}
-			vpoolKeeper.saveSnapshotCounter(ctx, tc.pair, uint64(len(tc.reserveSnapshots)))
-			ctx = ctx.WithBlockTime(tc.currentBlocktime).WithBlockHeight(tc.currentBlockheight)
-
+			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
 			price, err := vpoolKeeper.calcTwap(ctx,
 				tc.pair,
 				tc.twapCalcOption,
@@ -488,136 +480,5 @@ func TestCalcTwap(t *testing.T) {
 			require.EqualValuesf(t, tc.expectedPrice, price,
 				"expected %s, got %s", tc.expectedPrice.String(), price.String())
 		})
-	}
-}
-
-func TestGetTWAP(t *testing.T) {
-	type positionUpdate struct {
-		quoteAsset sdk.Dec
-		baseAsset  sdk.Dec
-		blockTs    time.Time
-		direction  types.Direction
-	}
-	tests := []struct {
-		name            string
-		pair            common.AssetPair
-		positionUpdates []positionUpdate
-
-		expectedTWAPs      []sdk.Dec
-		expectedMarkPrices []sdk.Dec
-	}{
-		{
-			name:               "Add quote to position",
-			pair:               common.PairBTCStable,
-			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(5_000), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("40006.667083333333333336")},
-			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("40010.000625000000000004")},
-		}, {
-			name:               "Remove quote from position",
-			pair:               common.PairBTCStable,
-			positionUpdates:    []positionUpdate{{quoteAsset: sdk.NewDec(4_000), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("39994.666933333333333333")},
-			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("39992.000400000000000000")},
-		}, {
-			name: "Add and remove to/from quote position to return to initial TWAP",
-			pair: common.PairBTCStable,
-			positionUpdates: []positionUpdate{
-				{quoteAsset: sdk.NewDec(700), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
-				{quoteAsset: sdk.NewDec(1_234), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
-			},
-			expectedTWAPs: []sdk.Dec{
-				sdk.MustNewDecFromStr("40001.120009799999999993"),
-				sdk.MustNewDecFromStr("39999.843674908525000000"),
-			},
-			expectedMarkPrices: []sdk.Dec{
-				sdk.MustNewDecFromStr("40001.400012249999999991"),
-				sdk.MustNewDecFromStr("39998.932007128900000006"),
-			},
-		}, {
-			name:               "Add base to position",
-			pair:               common.PairBTCStable,
-			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(50), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("37520.786092214663643235")},
-			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("36281.179138321995464853")}},
-		{
-			name:               "Remove base from position",
-			pair:               common.PairBTCStable,
-			positionUpdates:    []positionUpdate{{baseAsset: sdk.NewDec(40), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(2, 0)}},
-			expectedTWAPs:      []sdk.Dec{sdk.MustNewDecFromStr("42268.518518518518518519")},
-			expectedMarkPrices: []sdk.Dec{sdk.MustNewDecFromStr("43402.777777777777777778")},
-		},
-		{
-			name: "Add and remove to/from base position to return to initial TWAP",
-			pair: common.PairBTCStable,
-			positionUpdates: []positionUpdate{
-				{baseAsset: sdk.NewDec(7), direction: types.Direction_ADD_TO_POOL, blockTs: time.Unix(4, 0)},
-				{baseAsset: sdk.MustNewDecFromStr("1.234"), direction: types.Direction_REMOVE_FROM_POOL, blockTs: time.Unix(7, 0)},
-			},
-			expectedTWAPs: []sdk.Dec{
-				sdk.MustNewDecFromStr("39556.660476959200196440"),
-				sdk.MustNewDecFromStr("39548.504707649598914130"),
-			},
-			expectedMarkPrices: []sdk.Dec{
-				sdk.MustNewDecFromStr("39445.825596199000245550"),
-				sdk.MustNewDecFromStr("39542.679158142740855338"),
-			},
-		},
-	}
-
-	initialTWAP := sdk.NewDec(40_000)
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			pfKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
-			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
-
-			keeper, ctx := VpoolKeeper(t, pfKeeper)
-
-			ctx = ctx.WithBlockHeader(tmproto.Header{Time: time.Unix(1, 0)})
-			// Creation of the pool does NOT trigger a markPriceChanged event
-			keeper.CreatePool(
-				ctx,
-				common.PairBTCStable,
-				/*tradeLimitRatio=*/ sdk.OneDec(),
-				/*quoteAssetReserve=*/ sdk.NewDec(40_000_000),
-				/*baseAssetReserve=*/ sdk.NewDec(1_000),
-				/*fluctuationLimitratio=*/ sdk.OneDec(),
-				/*maxSpread=*/ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-			)
-			err := keeper.UpdateTWAP(ctx, common.PairBTCStable.String())
-			require.NoError(t, err)
-			// Make sure price gets initialized correctly when the pool gets created
-			pair := common.PairBTCStable
-			twap, err := keeper.GetCurrentTWAP(ctx, pair)
-			require.NoError(t, err)
-			require.EqualValues(t, initialTWAP, twap.Price)
-			for i, p := range tc.positionUpdates {
-				// update the position and trigger TWAP recalculation
-				ctx = ctx.WithBlockHeader(tmproto.Header{Time: p.blockTs})
-				if p.baseAsset.IsNil() {
-					_, err = keeper.SwapQuoteForBase(ctx, common.PairBTCStable, p.direction, p.quoteAsset, sdk.NewDec(0), true)
-				} else {
-					_, err = keeper.SwapBaseForQuote(ctx, common.PairBTCStable, p.direction, p.baseAsset, sdk.NewDec(0), true)
-				}
-				require.NoError(t, err)
-				markPriceEvt := getMarkPriceEvent(tc.expectedMarkPrices[i], ctx.BlockHeader().Time)
-				testutilevents.RequireContainsTypedEvent(t, ctx, markPriceEvt)
-				err = keeper.UpdateTWAP(ctx, common.PairBTCStable.String())
-				require.NoError(t, err)
-				twap, err := keeper.GetCurrentTWAP(ctx, pair)
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedTWAPs[i], twap.Price)
-			}
-		})
-	}
-}
-
-func getMarkPriceEvent(price sdk.Dec, ts time.Time) proto.Message {
-	return &types.MarkPriceChanged{
-		Pair:      common.PairBTCStable.String(),
-		Price:     price,
-		Timestamp: ts,
 	}
 }

@@ -265,9 +265,6 @@ type VpoolKeeper interface {
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
-
-	// GetCurrentTWAP fetches the TWAP for the specified token pair / pool
-	GetCurrentTWAP(ctx sdk.Context, pair common.AssetPair) (vpooltypes.CurrentTWAP, error)
 }
 
 type EpochKeeper interface {

@@ -200,12 +200,6 @@ func TestSwapQuoteForBase(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve, "pool quote asset reserve mismatch")
 				assert.EqualValuesf(t, tc.expectedBaseReserve, pool.BaseAssetReserve, "pool base asset reserve mismatch")
-
-				t.Log("assert snapshot")
-				snapshot, _, err := vpoolKeeper.getLatestReserveSnapshot(ctx, common.PairBTCStable)
-				require.NoError(t, err)
-				assert.EqualValuesf(t, tc.expectedQuoteReserve, snapshot.QuoteAssetReserve, "snapshot quote asset reserve mismatch")
-				assert.EqualValuesf(t, tc.expectedBaseReserve, snapshot.BaseAssetReserve, "snapshot base asset reserve mismatch")
 			}
 		})
 	}
@@ -398,12 +392,6 @@ func TestSwapBaseForQuote(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 				assert.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
-
-				t.Log("assert snapshot")
-				snapshot, _, err := vpoolKeeper.getLatestReserveSnapshot(ctx, common.PairBTCStable)
-				require.NoError(t, err)
-				assert.EqualValues(t, tc.expectedQuoteReserve, snapshot.QuoteAssetReserve)
-				assert.EqualValues(t, tc.expectedBaseReserve, snapshot.BaseAssetReserve)
 			}
 		})
 	}
@@ -619,7 +607,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			expectedErr:    nil,
 		},
 		{
-			name: "uses previous snapshot snapshot - results in error",
+			name: "uses previous snapshot - results in error",
 			pool: &types.Pool{
 				Pair:                   common.PairBTCStable,
 				QuoteAssetReserve:      sdk.NewDec(1002),
@@ -636,12 +624,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				TimestampMs:       0,
 				BlockNumber:       0,
 			},
-			latestSnapshot: &types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1002),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       1,
-				BlockNumber:       1,
-			},
+			latestSnapshot: nil,
 			ctxBlockHeight: 1,
 			expectedErr:    types.ErrOverFluctuationLimit,
 		},
@@ -664,7 +647,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				BlockNumber:       0,
 			},
 			latestSnapshot: nil,
-			ctxBlockHeight: 0,
+			ctxBlockHeight: 1,
 			expectedErr:    nil,
 		},
 		{
@@ -707,14 +690,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 
 			t.Log("save snapshot 0")
 			ctx = ctx.WithBlockHeight(tc.prevSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
-			vpoolKeeper.saveSnapshot(ctx, common.PairBTCStable, 0, tc.prevSnapshot.QuoteAssetReserve, tc.prevSnapshot.BaseAssetReserve)
-			vpoolKeeper.saveSnapshotCounter(ctx, common.PairBTCStable, 0)
+			vpoolKeeper.SaveSnapshot(ctx, common.PairBTCStable, tc.prevSnapshot.QuoteAssetReserve, tc.prevSnapshot.BaseAssetReserve)
 
 			if tc.latestSnapshot != nil {
 				t.Log("save snapshot 1")
 				ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
-				vpoolKeeper.saveSnapshot(ctx, common.PairBTCStable, 1, tc.latestSnapshot.QuoteAssetReserve, tc.latestSnapshot.BaseAssetReserve)
-				vpoolKeeper.saveSnapshotCounter(ctx, common.PairBTCStable, 1)
+				vpoolKeeper.SaveSnapshot(ctx, common.PairBTCStable, tc.latestSnapshot.QuoteAssetReserve, tc.latestSnapshot.BaseAssetReserve)
 			}
 
 			t.Log("check fluctuation limit")

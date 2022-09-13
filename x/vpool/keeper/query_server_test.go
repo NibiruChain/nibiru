@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -51,6 +52,7 @@ func TestQueryReserveAssets(t *testing.T) {
 func TestQueryAllPools(t *testing.T) {
 	t.Log("initialize vpoolkeeper")
 	vpoolKeeper, mocks, ctx := getKeeper(t)
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
@@ -69,12 +71,11 @@ func TestQueryAllPools(t *testing.T) {
 		ctx, pair, pool.TradeLimitRatio, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.FluctuationLimitRatio, pool.MaxOracleSpreadRatio, pool.MaintenanceMarginRatio, pool.MaxLeverage)
 
 	t.Log("query reserve assets and prices for the pair")
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
 	indexPrice := sdk.NewDec(25_000)
 	mocks.mockPricefeedKeeper.EXPECT().
 		GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom()).
-		Return(
-			pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: indexPrice},
-			nil)
+		Return(pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: indexPrice}, nil)
 	resp, err := queryServer.AllPools(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryAllPoolsRequest{},
@@ -86,8 +87,9 @@ func TestQueryAllPools(t *testing.T) {
 		Pair:          pool.Pair.String(),
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
-		TwapMark:      "",
+		TwapMark:      markPriceWanted.String(),
 		SwapInvariant: sdk.NewInt(1_000_000_000), // 1e6 * 1e3
+		BlockNumber:   2,
 	}
 	require.NoError(t, err)
 	assert.EqualValues(t, pool.Pair, resp.Pools[0].Pair)

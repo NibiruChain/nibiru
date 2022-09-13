@@ -1,10 +1,9 @@
 package keeper
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -61,7 +60,7 @@ func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (sdk.
 		/* token1 */ pair.QuoteDenom(),
 	)
 	if err != nil {
-		return sdk.ZeroDec(), err
+		return sdk.OneDec().Neg(), err
 	}
 
 	return currentPrice.Price, nil
@@ -218,23 +217,21 @@ func (k Keeper) calcTwap(
 	// earliest timestamp we'll look back until
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
 
-	// start from latest snapshot
-	latestSnapshotCounter, found := k.getSnapshotCounter(ctx, pair)
-	if !found {
-		return sdk.Dec{}, fmt.Errorf("Could not find snapshot counter for pair %s", pair.String())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	if !iter.Valid() {
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
 
 	var cumulativePrice sdk.Dec = sdk.ZeroDec()
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
+	var currentSnapshot types.ReserveSnapshot
 
-	// essentially a reverse linked list traversal
-	for c := int64(latestSnapshotCounter); c >= 0; c-- {
-		// need to convert to int64 since uint64(0)-- = 2^64 - 1
-		currentSnapshot, err := k.getSnapshot(ctx, pair, uint64(c))
-		if err != nil {
-			return sdk.Dec{}, err
-		}
+	for ; iter.Valid(); iter.Next() {
+		k.codec.MustUnmarshal(iter.Value(), &currentSnapshot)
 
 		currentPrice, err := getPriceWithSnapshot(
 			currentSnapshot,
@@ -269,104 +266,4 @@ func (k Keeper) calcTwap(
 
 	// definition of TWAP
 	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
-}
-
-// GetCurrentTWAP fetches the instantaneous time-weighted average (mark) price
-// for the given asset pair.
-func (k Keeper) GetCurrentTWAP(
-	ctx sdk.Context, pair common.AssetPair,
-) (types.CurrentTWAP, error) {
-	// Ensure we still have valid prices
-	_, err := k.GetSpotPrice(ctx, pair)
-	if err != nil {
-		return types.CurrentTWAP{}, types.ErrNoValidPrice
-	}
-
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentTWAPKey(pair))
-
-	var twap types.CurrentTWAP
-	if bz != nil {
-		k.codec.MustUnmarshal(bz, &twap)
-		if twap.Price.IsPositive() {
-			return twap, nil
-		}
-	}
-	return types.CurrentTWAP{}, types.ErrNoValidTWAP
-}
-
-// spotPriceAsTwap returns a CurrentTWAP as defined by the instantaneous spot price.
-// TODO Have discussion over whether to switch to be the default TWAP definition.
-func (k Keeper) SpotPriceAsTWAP(
-	ctx sdk.Context, spotPrice sdk.Dec, pair common.AssetPair,
-) (twap types.CurrentTWAP, err error) {
-	k.Logger(ctx).Info(
-		fmt.Sprintf("no TWAP available in block %v. Used current spot price instead.",
-			ctx.BlockHeight()))
-	reserveSnapshot, _, err := k.getLatestReserveSnapshot(ctx, pair)
-	if err != nil {
-		return twap, err
-	}
-
-	return types.CurrentTWAP{
-		PairID:      pair.String(),
-		Numerator:   reserveSnapshot.QuoteAssetReserve,
-		Denominator: reserveSnapshot.BaseAssetReserve,
-		Price:       spotPrice,
-	}, err
-}
-
-/*
-updateTWAP updates the twap price for a token0, token1 pair
-We use the blocktime to update the twap price.
-
-Calculation is done as follow:
-	$$P_{TWAP} = \frac {\sum {P_j \times Bh_j }}{\sum{Bh_j}} $$
-With
-	P_j: current posted price for the pair of tokens
-	Bh_j: current block timestamp
-
-*/
-
-func (k Keeper) UpdateTWAP(ctx sdk.Context, pairID string) error {
-	pair, err := common.NewAssetPair(pairID)
-	if err != nil {
-		return err
-	}
-
-	currentPrice, err := k.GetSpotPrice(ctx, pair)
-	if err != nil {
-		return err
-	}
-
-	currentTWAP, err := k.GetCurrentTWAP(ctx, pair)
-	// Err there means no twap price have been set yet for this pair
-	if errors.Is(err, types.ErrNoValidTWAP) {
-		currentTWAP = types.CurrentTWAP{
-			PairID:      pairID,
-			Numerator:   sdk.ZeroDec(),
-			Denominator: sdk.ZeroDec(),
-			Price:       sdk.ZeroDec(),
-		}
-	}
-
-	blockUnixTime := sdk.NewInt(ctx.BlockTime().Unix())
-
-	newDenominator := currentTWAP.Denominator.Add(sdk.NewDecFromInt(blockUnixTime))
-	newNumerator := currentTWAP.Numerator.Add(currentPrice.Mul(sdk.NewDecFromInt(blockUnixTime)))
-
-	price := sdk.NewDec(0)
-	if !newDenominator.IsZero() {
-		price = newNumerator.Quo(newDenominator)
-	}
-
-	newTWAP := types.CurrentTWAP{
-		PairID:      pairID,
-		Numerator:   newNumerator,
-		Denominator: newDenominator,
-		Price:       price,
-	}
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentTWAPKey(pair), k.codec.MustMarshal(&newTWAP))
-	return nil
 }
