@@ -7,13 +7,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 )
 
-// Called every block to automatically unlock matured locks.
+// Called every block to store a snapshot of the vpool.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	for _, pool := range k.GetAllPools(ctx) {
-		assetPair := pool.Pair.String()
-		if err := k.UpdateTWAP(ctx, assetPair); err != nil {
-			ctx.Logger().Error("failed to update TWAP", "assetPair", assetPair, "error", err)
-		}
+		k.SaveSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 	}
 	return []abci.ValidatorUpdate{}
 }

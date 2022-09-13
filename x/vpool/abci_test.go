@@ -11,9 +11,10 @@ import (
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestTWAPriceUpdates(t *testing.T) {
+func TestSnapshotUpdates(t *testing.T) {
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	vpoolKeeper := nibiruApp.VpoolKeeper
 
@@ -30,17 +31,46 @@ func TestTWAPriceUpdates(t *testing.T) {
 		ctx,
 		common.PairBTCStable,
 		sdk.OneDec(),
-		sdk.OneDec(),
-		sdk.OneDec(),
-		sdk.OneDec(),
+		sdk.NewDec(10),
+		sdk.NewDec(10),
+		sdk.NewDec(3),
 		sdk.OneDec(),
 		sdk.OneDec(),
 		sdk.NewDec(10),
 	)
+	expectedSnapshot := types.ReserveSnapshot{
+		BaseAssetReserve:  sdk.NewDec(10),
+		QuoteAssetReserve: sdk.NewDec(10),
+		TimestampMs:       ctx.BlockTime().UnixMilli(),
+		BlockNumber:       ctx.BlockHeight(),
+	}
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	twap, err := vpoolKeeper.GetCurrentTWAP(ctx, common.PairBTCStable)
+	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.PairBTCStable, uint64(ctx.BlockHeight()-1))
 	require.NoError(t, err)
-	assert.EqualValues(t, sdk.OneDec(), twap.Price)
+	assert.EqualValues(t, expectedSnapshot, snapshot)
+
+	t.Log("affect mark price")
+	_, err = vpoolKeeper.SwapQuoteForBase(
+		ctx,
+		common.PairBTCStable,
+		types.Direction_ADD_TO_POOL,
+		sdk.NewDec(10),
+		sdk.ZeroDec(),
+		false,
+	)
+	require.NoError(t, err)
+	expectedSnapshot = types.ReserveSnapshot{
+		QuoteAssetReserve: sdk.NewDec(20),
+		BaseAssetReserve:  sdk.NewDec(5),
+		TimestampMs:       ctx.BlockTime().UnixMilli(),
+		BlockNumber:       ctx.BlockHeight(),
+	}
+
+	t.Log("run one block of 5 seconds")
+	runBlock(5 * time.Second)
+	snapshot, err = vpoolKeeper.GetSnapshot(ctx, common.PairBTCStable, uint64(ctx.BlockHeight()-1))
+	require.NoError(t, err)
+	assert.EqualValues(t, expectedSnapshot, snapshot)
 }

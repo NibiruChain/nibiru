@@ -7,106 +7,84 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestKeeper_saveOrGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
+func TestGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 
-	pool := getSamplePool()
-
-	err := vpoolKeeper.updateSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
-	require.Error(t, err, types.ErrNoLastSnapshotSaved)
-
-	_, _, err = vpoolKeeper.getLatestReserveSnapshot(ctx, common.PairBTCStable)
+	_, err := vpoolKeeper.GetLatestReserveSnapshot(ctx, common.PairBTCStable)
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 }
 
 func TestSaveSnapshot(t *testing.T) {
-	expectedTime := tmtime.Now()
-	expectedBlockHeight := int64(123)
-	pool := getSamplePool()
-
-	expectedSnapshot := types.ReserveSnapshot{
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		QuoteAssetReserve: pool.QuoteAssetReserve,
-		TimestampMs:       expectedTime.UnixMilli(),
-		BlockNumber:       expectedBlockHeight,
-	}
-
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
-	ctx = ctx.WithBlockHeight(expectedBlockHeight).WithBlockTime(expectedTime)
-	vpoolKeeper.saveSnapshot(ctx, pool.Pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve)
-	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 
-	snapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, common.PairBTCStable)
+	vpoolKeeper.SaveSnapshot(ctx, common.PairBTCStable, sdk.OneDec(), sdk.OneDec())
+
+	snapshot, err := vpoolKeeper.GetLatestReserveSnapshot(ctx, common.PairBTCStable)
 	require.NoError(t, err)
-	require.Equal(t, expectedSnapshot, snapshot)
-	require.Equal(t, uint64(0), counter)
+	require.Equal(t,
+		types.ReserveSnapshot{
+			BaseAssetReserve:  sdk.OneDec(),
+			QuoteAssetReserve: sdk.OneDec(),
+			TimestampMs:       ctx.BlockTime().UnixMilli(),
+			BlockNumber:       1,
+		},
+		snapshot,
+	)
 }
 
 func TestGetSnapshot(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
-	expectedHeight := int64(123)
-	expectedTime := tmtime.Now()
 
-	ctx = ctx.WithBlockHeight(expectedHeight).WithBlockTime(expectedTime)
-
-	pool := getSamplePool()
-
-	firstSnapshot := types.ReserveSnapshot{
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		QuoteAssetReserve: pool.QuoteAssetReserve,
-		TimestampMs:       expectedTime.UnixMilli(),
-		BlockNumber:       expectedHeight,
-	}
-
-	t.Log("Save snapshot 0")
-	vpoolKeeper.saveSnapshot(
+	t.Log("Save snapshot 1")
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
+	vpoolKeeper.SaveSnapshot(
 		ctx,
-		pool.Pair,
-		0,
-		pool.QuoteAssetReserve,
-		pool.BaseAssetReserve,
-	)
-	vpoolKeeper.saveSnapshotCounter(ctx, pool.Pair, 0)
-
-	t.Log("Check snapshot 0")
-	oldSnapshot, counter, err := vpoolKeeper.getLatestReserveSnapshot(ctx, pool.Pair)
-	require.NoError(t, err)
-	require.Equal(t, firstSnapshot, oldSnapshot)
-	require.Equal(t, uint64(0), counter)
-
-	t.Log("We save another different snapshot")
-	differentSnapshot := firstSnapshot
-	differentSnapshot.BaseAssetReserve = sdk.NewDec(12_341_234)
-	differentSnapshot.BlockNumber = expectedHeight + 1
-	differentSnapshot.TimestampMs = expectedTime.Add(time.Second).UnixMilli()
-	pool.BaseAssetReserve = differentSnapshot.BaseAssetReserve
-	ctx = ctx.WithBlockHeight(expectedHeight + 1).WithBlockTime(expectedTime.Add(time.Second))
-	vpoolKeeper.saveSnapshot(
-		ctx,
-		pool.Pair,
-		1,
-		pool.QuoteAssetReserve,
-		pool.BaseAssetReserve,
+		common.PairBTCStable,
+		sdk.OneDec(),
+		sdk.OneDec(),
 	)
 
-	t.Log("Fetch snapshot 1")
-	newSnapshot, err := vpoolKeeper.getSnapshot(ctx, pool.Pair, 1)
+	t.Log("Check snapshot 1")
+	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.PairBTCStable, 1)
 	require.NoError(t, err)
-	require.Equal(t, differentSnapshot, newSnapshot)
-	require.NotEqual(t, differentSnapshot, oldSnapshot)
+	require.Equal(t, types.ReserveSnapshot{
+		BaseAssetReserve:  sdk.OneDec(),
+		QuoteAssetReserve: sdk.OneDec(),
+		TimestampMs:       ctx.BlockTime().UnixMilli(),
+		BlockNumber:       1,
+	}, snapshot)
+
+	t.Log("Save snapshot 2")
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
+	vpoolKeeper.SaveSnapshot(
+		ctx,
+		common.PairBTCStable,
+		sdk.NewDec(2),
+		sdk.NewDec(2),
+	)
+
+	t.Log("Fetch snapshot 2")
+	snapshot, err = vpoolKeeper.GetSnapshot(ctx, common.PairBTCStable, 2)
+	require.NoError(t, err)
+	require.Equal(t, types.ReserveSnapshot{
+		BaseAssetReserve:  sdk.NewDec(2),
+		QuoteAssetReserve: sdk.NewDec(2),
+		TimestampMs:       ctx.BlockTime().UnixMilli(),
+		BlockNumber:       2,
+	}, snapshot)
 }
 
 func TestGetSnapshotPrice(t *testing.T) {

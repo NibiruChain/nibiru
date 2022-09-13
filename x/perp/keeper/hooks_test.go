@@ -13,7 +13,6 @@ import (
 	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestEndOfEpochTwapCalculation(t *testing.T) {
@@ -145,9 +144,6 @@ func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec
 		GetCurrentTWAP(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1).Return(indexPrice, nil).MaxTimes(1)
 
 	mocks.mockVpoolKeeper.EXPECT().
-		GetCurrentTWAP(ctx, common.PairBTCStable).
-		Return(vpooltypes.CurrentTWAP{
-			PairID: common.PairBTCStable.String(),
-			Price:  markPrice,
-		}, nil).MaxTimes(1)
+		GetSpotPrice(ctx, common.PairBTCStable).
+		Return(markPrice, nil).MaxTimes(1)
 }
