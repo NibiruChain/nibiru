@@ -45,10 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
 * [#878](https://github.com/NibiruChain/nibiru/pull/878) - rename `PremiumFraction` to `FundingRate`
+* [#900](https://github.com/NibiruChain/nibiru/pull/900) - refactor x/vpool snapshot state management
 
 ### API Breaking
 
 * [#880](https://github.com/NibiruChain/nibiru/pull/880) - refactor `PostRawPrice` return values
+* [#900](https://github.com/NibiruChain/nibiru/pull/900) - fix x/vpool twap calculation to be bounded in time
 
 ### Improvements
 

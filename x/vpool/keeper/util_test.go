@@ -15,9 +15,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
-
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -83,25 +81,4 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		mockPricefeedKeeper: mockedPricefeedKeeper,
 		mockAccountKeeper:   mockedAccountKeeper,
 	}, ctx
-}
-
-func getSamplePool() *types.Pool {
-	ratioLimit, _ := sdk.NewDecFromStr("0.9")
-	fluctuationLimit, _ := sdk.NewDecFromStr("0.1")
-	maxOracleSpreadRatio := sdk.MustNewDecFromStr("0.1")
-	maintenanceMarginRatio := sdk.MustNewDecFromStr("0.0625")
-	maxLeverage := sdk.MustNewDecFromStr("15")
-
-	pool := types.NewPool(
-		common.PairBTCStable,
-		ratioLimit,
-		sdk.NewDec(10_000_000),
-		sdk.NewDec(5_000_000),
-		fluctuationLimit,
-		maxOracleSpreadRatio,
-		maintenanceMarginRatio,
-		maxLeverage,
-	)
-
-	return pool
 }
