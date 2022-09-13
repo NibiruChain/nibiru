@@ -19,7 +19,7 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	/* 	Make test skip if -short is not used:
-	All tests: `go test ./...`
+	KeyValues tests: `go test ./...`
 	Unit tests only: `go test ./... -short`
 	Integration tests only: `go test ./... -run Integration`
 	https://stackoverflow.com/a/41407042/13305627 */

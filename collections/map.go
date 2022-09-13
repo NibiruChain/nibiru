@@ -168,7 +168,7 @@ func (i MapIterator[K, V, PV]) Keys() []K {
 }
 
 // todo doc
-func (i MapIterator[K, V, PV]) All() []KeyValue[K, V, PV] {
+func (i MapIterator[K, V, PV]) KeyValues() []KeyValue[K, V, PV] {
 	defer i.Close()
 
 	var kvs []KeyValue[K, V, PV]

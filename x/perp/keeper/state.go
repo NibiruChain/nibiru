@@ -16,7 +16,7 @@ func (k Keeper) AllPairPositions(ctx sdk.Context, symbol common.AssetPair) []col
 		ctx,
 		keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]().
 			Prefix(prefix),
-	).All()
+	).KeyValues()
 
 }
 

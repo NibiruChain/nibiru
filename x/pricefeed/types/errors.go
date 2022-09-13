@@ -14,7 +14,7 @@ var (
 	// ErrExpired error for posted price messages with expired price
 	ErrExpired = sdkerrors.Register(ModuleName, 3, "Price is expired")
 	// ErrNoValidPrice error for posted price messages with expired price
-	ErrNoValidPrice = sdkerrors.Register(ModuleName, 4, "All input prices are expired")
+	ErrNoValidPrice = sdkerrors.Register(ModuleName, 4, "KeyValues input prices are expired")
 	// ErrInvalidPair error for posted price messages for invalid markets
 	ErrInvalidPair = sdkerrors.Register(ModuleName, 5, "Pair does not exist")
 	// ErrInvalidOracle error for posted price messages for invalid oracles

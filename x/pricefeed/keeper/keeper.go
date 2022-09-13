@@ -27,8 +27,9 @@ type (
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
-		CurrentPrices collections.Map[common.AssetPair, types.CurrentPrice, *types.CurrentPrice]
-		RawPrices     collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice, *types.PostedPrice]
+		CurrentPrices  collections.Map[common.AssetPair, types.CurrentPrice, *types.CurrentPrice]
+		RawPrices      collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice, *types.PostedPrice]
+		PriceSnapshots collections.Map[keys.Pair[common.AssetPair, keys.Uint64Key], types.PriceSnapshot, *types.PriceSnapshot]
 	}
 )
 

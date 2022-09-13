@@ -68,14 +68,14 @@ func TestMap_Iterate(t *testing.T) {
 	// test iteration ascending
 	iter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
 	defer iter.Close()
-	for i, o := range iter.All() {
+	for i, o := range iter.KeyValues() {
 		require.Equal(t, objs[i], o)
 	}
 
 	// test iteration descending
 	dIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
 	defer dIter.Close()
-	for i, o := range iter.All() {
+	for i, o := range iter.KeyValues() {
 		require.Equal(t, objs[len(objs)-1-i], o)
 	}
 
