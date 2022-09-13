@@ -12,6 +12,13 @@ func Join[K1 Key, K2 Key](k1 K1, k2 K2) Pair[K1, K2] {
 	}
 }
 
+func PairPrefix[K1 Key, K2 Key](k1 K1) Pair[K1, K2] {
+	return Pair[K1, K2]{
+		p1: &k1,
+		p2: nil,
+	}
+}
+
 // Pair represents a multipart key composed of
 // two Key of different or equal types.
 type Pair[K1 Key, K2 Key] struct {

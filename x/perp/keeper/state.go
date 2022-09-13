@@ -1,11 +1,24 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
+
+// NOTE(mercilex): just to showcase easiness of implementing complex queries
+func (k Keeper) AllPairPositions(ctx sdk.Context, symbol common.AssetPair) []collections.KeyValue[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position] {
+	prefix := keys.PairPrefix[common.AssetPair, keys.StringKey](symbol)
+	return k.Positions.Iterate(
+		ctx,
+		keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]().
+			Prefix(prefix),
+	).All()
+
+}
 
 // getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
 // specific pair.

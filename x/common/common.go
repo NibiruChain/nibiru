@@ -145,7 +145,8 @@ func (m AssetPair) KeyBytes() []byte {
 }
 
 func (m AssetPair) FromKeyBytes(b []byte) (int, keys.Key) {
-	return keys.String("").FromKeyBytes(b)
+	i, c := keys.String("").FromKeyBytes(b)
+	return i, MustNewAssetPair(string(c.(keys.StringKey)))
 }
 
 //-----------------------------------------------------------------------------
