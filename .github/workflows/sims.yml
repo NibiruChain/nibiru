@@ -22,7 +22,7 @@ jobs:
 
   test-sim-nondeterminism:
     runs-on: self-hosted
-    needs: [build, install-runsim]
+    needs: [install-runsim]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
