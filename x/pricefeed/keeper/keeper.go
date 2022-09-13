@@ -27,6 +27,7 @@ type (
 		paramstore paramtypes.Subspace
 
 		CurrentPrices collections.Map[common.AssetPair, types.CurrentPrice, *types.CurrentPrice]
+		RawPrices     collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice, *types.PostedPrice]
 	}
 )
 
@@ -49,6 +50,7 @@ func NewKeeper(
 		paramstore: ps,
 
 		CurrentPrices: collections.NewMap[common.AssetPair, types.CurrentPrice](cdc, storeKey, 0),
+		RawPrices:     collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice](cdc, storeKey, 1),
 	}
 }
 
@@ -100,10 +102,7 @@ func (k Keeper) PostRawPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
-	ctx.KVStore(k.storeKey).Set(
-		types.RawPriceKey(pair.String(), oracle),
-		k.cdc.MustMarshal(&newPostedPrice),
-	)
+	k.RawPrices.Insert(ctx, keys.Join(pair, keys.String(oracle.String())), newPostedPrice)
 	return newPostedPrice, nil
 }
 
@@ -347,30 +346,15 @@ func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
 func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices {
-	inversePair := common.MustNewAssetPair(pairStr).Inverse()
-	if k.IsActivePair(ctx, inversePair.String()) {
+	assetPair := common.MustNewAssetPair(pairStr)
+	if k.IsActivePair(ctx, assetPair.Inverse().String()) {
 		panic(fmt.Errorf(
 			`cannot fetch posted prices using inverse pair, %v ;
-			Use pair, %v, instead`, inversePair.String(), pairStr))
+			Use pair, %v, instead`, assetPair.Inverse().String(), pairStr))
 	}
 
-	var pps types.PostedPrices
-	k.IterateRawPricesByPair(ctx, pairStr, func(pp types.PostedPrice) (stop bool) {
-		pps = append(pps, pp)
-		return false
-	})
-	return pps
-}
-
-// IterateRawPrices iterates over all raw prices in the store and performs a callback function
-func (k Keeper) IterateRawPricesByPair(ctx sdk.Context, marketId string, cb func(record types.PostedPrice) (stop bool)) {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.RawPriceIteratorKey((marketId)))
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var record types.PostedPrice
-		k.cdc.MustUnmarshal(iterator.Value(), &record)
-		if cb(record) {
-			break
-		}
-	}
+	prefix := keys.PairPrefix[common.AssetPair, keys.StringKey](assetPair)
+	return k.RawPrices.
+		Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]().Prefix(prefix)).
+		Values()
 }
