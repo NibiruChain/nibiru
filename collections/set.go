@@ -25,7 +25,7 @@ func NewKeySet[K keys.Key](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8)
 	}
 }
 
-// Has reports wether the key K is present or not in the set.
+// Has reports whether the key K is present or not in the set.
 func (s KeySet[K]) Has(ctx sdk.Context, k K) bool {
 	_, err := (Map[K, setObject, *setObject])(s).Get(ctx, k)
 	if err != nil {
