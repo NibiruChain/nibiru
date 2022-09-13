@@ -22,16 +22,9 @@ const (
 )
 
 var (
-	// CurrentPricePrefix prefix for the current price of an asset
-	CurrentPricePrefix = []byte{0x00}
 	// Snapshot prefix for the median oracle price at a specific point in time
 	PriceSnapshotPrefix = []byte{0x03}
 )
-
-// CurrentPriceKey returns the prefix for the current price
-func CurrentPriceKey(pairID string) []byte {
-	return append(CurrentPricePrefix, []byte(pairID)...)
-}
 
 func PriceSnapshotKey(pairId string, blockHeight int64) []byte {
 	return append(
