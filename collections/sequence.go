@@ -35,3 +35,8 @@ func (s Sequence) Next(ctx sdk.Context) uint64 {
 func (s Sequence) Peek(ctx sdk.Context) uint64 {
 	return s.sequence.GetOr(ctx, wellknown.UInt64Value{Value: 0}).Value
 }
+
+// Set hard resets the sequence to the provided number.
+func (s Sequence) Set(ctx sdk.Context, u uint64) {
+	s.sequence.Set(ctx, wellknown.UInt64Value{Value: u})
+}
