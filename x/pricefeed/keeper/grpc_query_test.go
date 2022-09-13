@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	keeper2 "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
@@ -16,17 +17,19 @@ import (
 
 func TestParamsQuery(t *testing.T) {
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
+	querier := keeper2.NewQuerier(keeper)
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.Params{Pairs: common.NewAssetPairs("btc:usd", "xrp:usd")}
 	keeper.SetParams(ctx, params)
 
-	response, err := keeper.QueryParams(wctx, &types.QueryParamsRequest{})
+	response, err := querier.QueryParams(wctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
 }
 
 func TestOraclesQuery(t *testing.T) {
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
+	querier := keeper2.NewQuerier(keeper)
 	wctx := sdk.WrapSDKContext(ctx)
 	pairs := common.NewAssetPairs("usd:btc", "usd:xrp", "usd:ada", "usd:eth")
 	params := types.Params{Pairs: pairs}
@@ -48,14 +51,14 @@ func TestOraclesQuery(t *testing.T) {
 		/*pairs=*/ []common.AssetPair{pairs[3]})
 
 	t.Log("Query for pair 2 oracles | ADA")
-	response, err := keeper.QueryOracles(wctx, &types.QueryOraclesRequest{
+	response, err := querier.QueryOracles(wctx, &types.QueryOraclesRequest{
 		PairId: pairs[2].String()})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
 		Oracles: []string{oracleA.String(), oracleB.String()}}, response)
 
 	t.Log("Query for pair 3 oracles | ETH")
-	response, err = keeper.QueryOracles(wctx, &types.QueryOraclesRequest{
+	response, err = querier.QueryOracles(wctx, &types.QueryOraclesRequest{
 		PairId: pairs[3].String()})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryOraclesResponse{
@@ -64,6 +67,7 @@ func TestOraclesQuery(t *testing.T) {
 
 func TestMarketsQuery(t *testing.T) {
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
+	querier := keeper2.NewQuerier(keeper)
 	wctx := sdk.WrapSDKContext(ctx)
 	pairs := common.NewAssetPairs("btc:usd", "xrp:usd", "ada:usd", "eth:usd")
 	params := types.Params{Pairs: pairs}
@@ -78,7 +82,7 @@ func TestMarketsQuery(t *testing.T) {
 	keeper.ActivePairsStore().SetMany(ctx, pairs[:3], true)
 	keeper.ActivePairsStore().SetMany(ctx, common.AssetPairs{pairs[3]}, false)
 
-	queryResp, err := keeper.QueryMarkets(wctx, &types.QueryMarketsRequest{})
+	queryResp, err := querier.QueryMarkets(wctx, &types.QueryMarketsRequest{})
 	require.NoError(t, err)
 	wantQueryResponse := &types.QueryMarketsResponse{
 		Markets: []types.Market{
@@ -112,6 +116,7 @@ func TestMarketsQuery(t *testing.T) {
 func TestQueryPrice(t *testing.T) {
 	pair := common.MustNewAssetPair("ubtc:uusd")
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
+	querier := keeper2.NewQuerier(keeper)
 	keeper.SetParams(ctx, types.Params{
 		Pairs:              common.AssetPairs{pair},
 		TwapLookbackWindow: time.Minute * 15,
@@ -130,7 +135,7 @@ func TestQueryPrice(t *testing.T) {
 	require.NoError(t, keeper.GatherRawPrices(ctx, "ubtc", "uusd"))
 
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(2)
-	resp, err := keeper.QueryPrice(sdk.WrapSDKContext(ctx), &types.QueryPriceRequest{
+	resp, err := querier.QueryPrice(sdk.WrapSDKContext(ctx), &types.QueryPriceRequest{
 		PairId: "ubtc:uusd",
 	})
 

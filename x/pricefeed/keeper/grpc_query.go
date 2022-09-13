@@ -11,9 +11,17 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
-var _ types.QueryServer = Keeper{}
+type queryServer struct {
+	k Keeper
+}
 
-func (k Keeper) QueryPrice(goCtx context.Context, req *types.QueryPriceRequest) (*types.QueryPriceResponse, error) {
+func NewQuerier(k Keeper) types.QueryServer {
+	return queryServer{k: k}
+}
+
+var _ types.QueryServer = queryServer{}
+
+func (q queryServer) QueryPrice(goCtx context.Context, req *types.QueryPriceRequest) (*types.QueryPriceResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -24,21 +32,21 @@ func (k Keeper) QueryPrice(goCtx context.Context, req *types.QueryPriceRequest) 
 	if err != nil {
 		return nil, err
 	}
-	if !k.GetPairs(ctx).Contains(pair) {
+	if !q.k.GetPairs(ctx).Contains(pair) {
 		return nil, status.Error(codes.NotFound, "pair not in module params")
 	}
-	if !k.ActivePairsStore().getKV(ctx).Has([]byte(pair.String())) {
+	if !q.k.ActivePairsStore().getKV(ctx).Has([]byte(pair.String())) {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
 
 	tokens := common.DenomsFromPoolName(req.PairId)
 	token0, token1 := tokens[0], tokens[1]
-	currentPrice, err := k.GetCurrentPrice(ctx, token0, token1)
+	currentPrice, err := q.k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {
 		return nil, err
 	}
 
-	twap, err := k.GetCurrentTWAP(ctx, token0, token1)
+	twap, err := q.k.GetCurrentTWAP(ctx, token0, token1)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +60,7 @@ func (k Keeper) QueryPrice(goCtx context.Context, req *types.QueryPriceRequest) 
 	}, nil
 }
 
-func (k Keeper) QueryRawPrices(
+func (q queryServer) QueryRawPrices(
 	goCtx context.Context, req *types.QueryRawPricesRequest,
 ) (*types.QueryRawPricesResponse, error) {
 	if req == nil {
@@ -61,12 +69,12 @@ func (k Keeper) QueryRawPrices(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if !k.IsActivePair(ctx, req.PairId) {
+	if !q.k.IsActivePair(ctx, req.PairId) {
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
 
 	var prices types.PostedPriceResponses
-	for _, rp := range k.GetRawPrices(ctx, req.PairId) {
+	for _, rp := range q.k.GetRawPrices(ctx, req.PairId) {
 		prices = append(prices, types.PostedPriceResponse{
 			PairID:        rp.PairID,
 			OracleAddress: rp.Oracle,
@@ -80,7 +88,7 @@ func (k Keeper) QueryRawPrices(
 	}, nil
 }
 
-func (k Keeper) QueryPrices(goCtx context.Context, req *types.QueryPricesRequest) (*types.QueryPricesResponse, error) {
+func (q queryServer) QueryPrices(goCtx context.Context, req *types.QueryPricesRequest) (*types.QueryPricesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -88,7 +96,7 @@ func (k Keeper) QueryPrices(goCtx context.Context, req *types.QueryPricesRequest
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var currentPrices types.CurrentPriceResponses
-	for _, currentPrice := range k.GetCurrentPrices(ctx) {
+	for _, currentPrice := range q.k.GetCurrentPrices(ctx) {
 		if currentPrice.PairID != "" {
 			currentPrices = append(currentPrices, types.CurrentPriceResponse{
 				PairID: currentPrice.PairID,
@@ -102,7 +110,7 @@ func (k Keeper) QueryPrices(goCtx context.Context, req *types.QueryPricesRequest
 	}, nil
 }
 
-func (k Keeper) QueryOracles(goCtx context.Context, req *types.QueryOraclesRequest) (*types.QueryOraclesResponse, error) {
+func (q queryServer) QueryOracles(goCtx context.Context, req *types.QueryOraclesRequest) (*types.QueryOraclesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -114,7 +122,7 @@ func (k Keeper) QueryOracles(goCtx context.Context, req *types.QueryOraclesReque
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
 
-	oracles := k.GetOraclesForPair(ctx, req.PairId)
+	oracles := q.k.GetOraclesForPair(ctx, req.PairId)
 	if len(oracles) == 0 {
 		return &types.QueryOraclesResponse{}, nil
 	}
@@ -129,17 +137,17 @@ func (k Keeper) QueryOracles(goCtx context.Context, req *types.QueryOraclesReque
 	}, nil
 }
 
-func (k Keeper) QueryParams(c context.Context, req *types.QueryParamsRequest,
+func (q queryServer) QueryParams(c context.Context, req *types.QueryParamsRequest,
 ) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+	return &types.QueryParamsResponse{Params: q.k.GetParams(ctx)}, nil
 }
 
-func (k Keeper) QueryMarkets(goCtx context.Context, req *types.QueryMarketsRequest,
+func (q queryServer) QueryMarkets(goCtx context.Context, req *types.QueryMarketsRequest,
 ) (*types.QueryMarketsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -148,16 +156,16 @@ func (k Keeper) QueryMarkets(goCtx context.Context, req *types.QueryMarketsReque
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var markets types.Markets
-	for _, pair := range k.GetParams(ctx).Pairs {
+	for _, pair := range q.k.GetParams(ctx).Pairs {
 		var oracleStrings []string
-		for _, oracle := range k.OraclesStore().Get(ctx, pair) {
+		for _, oracle := range q.k.OraclesStore().Get(ctx, pair) {
 			oracleStrings = append(oracleStrings, oracle.String())
 		}
 
 		markets = append(markets, types.Market{
 			PairID:  pair.String(),
 			Oracles: oracleStrings,
-			Active:  k.IsActivePair(ctx, pair.String()),
+			Active:  q.k.IsActivePair(ctx, pair.String()),
 		})
 	}
 
