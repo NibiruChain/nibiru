@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
 	"math"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 

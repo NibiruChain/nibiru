@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

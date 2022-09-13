@@ -56,5 +56,4 @@ func TestStringKey(t *testing.T) {
 			require.Equal(t, expected, got)
 		}
 	})
-
 }

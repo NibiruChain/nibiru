@@ -76,27 +76,31 @@ func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	return nil
 }
 
-func (m Map[K, V, PV]) Iterate(ctx sdk.Context, start keys.Bound[K], end keys.Bound[K], order keys.Order) MapIterator[K, V, PV] {
+func (m Map[K, V, PV]) Iterate(ctx sdk.Context, r keys.Range[K]) MapIterator[K, V, PV] {
 	store := m.getStore(ctx)
-	return newMapIterator[K, V, PV](m.cdc, store, start, end, order)
+	return newMapIterator[K, V, PV](m.cdc, store, r)
 }
 
 func newMapIterator[K keys.Key, V any, PV interface {
 	*V
 	Object
-}](cdc codec.BinaryCodec, store sdk.KVStore, start, end keys.Bound[K], order keys.Order) MapIterator[K, V, PV] {
-	startBytes := start.Bytes()
-	endBytes := end.Bytes()
+}](cdc codec.BinaryCodec, store sdk.KVStore, r keys.Range[K]) MapIterator[K, V, PV] {
+	pfx, start, end, order := r.Compile()
+
+	// if prefix is not nil then we replace the current store with a prefixed one
+	if pfx != nil {
+		store = prefix.NewStore(store, pfx)
+	}
 	switch order {
 	case keys.OrderAscending:
 		return MapIterator[K, V, PV]{
 			cdc:  cdc,
-			iter: store.Iterator(startBytes, endBytes),
+			iter: store.Iterator(start, end),
 		}
 	case keys.OrderDescending:
 		return MapIterator[K, V, PV]{
 			cdc:  cdc,
-			iter: store.ReverseIterator(startBytes, endBytes),
+			iter: store.ReverseIterator(start, end),
 		}
 	default:
 		panic(fmt.Errorf("unrecognized order"))

@@ -1,8 +1,9 @@
 package perp
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
@@ -52,9 +53,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	// export positions
 	positions := k.Positions.Iterate(
 		ctx,
-		keys.Unbounded[keys.Pair[common.AssetPair, keys.StringKey]](),
-		keys.Unbounded[keys.Pair[common.AssetPair, keys.StringKey]](),
-		keys.OrderAscending,
+		keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]](),
 	).Values()
 	genesis.Positions = make([]*types.Position, len(positions))
 	for i, position := range positions {
@@ -64,10 +63,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	// export prepaid bad debt
 	pbd := k.PrepaidBadDebt.Iterate(
-		ctx,
-		keys.Unbounded[keys.StringKey](),
-		keys.Unbounded[keys.StringKey](),
-		keys.OrderAscending,
+		ctx, keys.NewRange[keys.StringKey](),
 	).Values()
 	genesis.PrepaidBadDebts = make([]*types.PrepaidBadDebt, len(pbd))
 	for i, p := range pbd {
@@ -77,10 +73,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	// export whitelist
 	whitelist := k.Whitelist.Iterate(
-		ctx,
-		keys.Unbounded[keys.StringKey](),
-		keys.Unbounded[keys.StringKey](),
-		keys.OrderDescending,
+		ctx, keys.NewRange[keys.StringKey](),
 	).Keys()
 	genesis.WhitelistedAddresses = make([]string, len(whitelist))
 	for i, addr := range whitelist {
@@ -91,9 +84,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	// export pairMetadata
 	metadata := k.PairMetadata.Iterate(
 		ctx,
-		keys.Unbounded[common.AssetPair](),
-		keys.Unbounded[common.AssetPair](),
-		keys.OrderAscending,
+		keys.NewRange[common.AssetPair](),
 	).Values()
 	genesis.PairMetadata = make([]*types.PairMetadata, len(metadata))
 	for i, m := range metadata {

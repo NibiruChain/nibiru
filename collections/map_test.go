@@ -1,4 +1,4 @@
-package collections_test
+package collections
 
 import (
 	"testing"
@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	db "github.com/tendermint/tm-db"
 
-	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
 )
 
@@ -31,15 +30,15 @@ func obj(o string) wellknown.BytesValue {
 	return wellknown.BytesValue{Value: []byte(o)}
 }
 
-func kv(o string) collections.KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue] {
-	return collections.KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{
+func kv(o string) KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue] {
+	return KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{
 		Key:   keys.StringKey(o),
 		Value: wellknown.BytesValue{Value: []byte(o)},
 	}
 }
 
 func TestUpstreamIterAssertions(t *testing.T) {
-	// ugly but asserts upstream behaviour
+	// ugly but asserts upstream behavior
 	sk, ctx, _ := deps()
 	kv := ctx.KVStore(sk)
 	kv.Set([]byte("hi"), []byte{})
@@ -51,7 +50,7 @@ func TestUpstreamIterAssertions(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	sk, ctx, cdc := deps()
-	m := collections.NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
+	m := NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
 
 	key := keys.String("id")
 	expected := obj("test")
@@ -66,18 +65,18 @@ func TestMap(t *testing.T) {
 	err = m.Delete(ctx, key)
 	require.NoError(t, err)
 	_, err = m.Get(ctx, key)
-	require.ErrorIs(t, err, collections.ErrNotFound)
+	require.ErrorIs(t, err, ErrNotFound)
 
 	// test delete errors not exist
 	err = m.Delete(ctx, key)
-	require.ErrorIs(t, err, collections.ErrNotFound)
+	require.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestMap_Iterate(t *testing.T) {
 	sk, ctx, cdc := deps()
-	m := collections.NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
+	m := NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
 
-	objs := []collections.KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{kv("a"), kv("aa"), kv("b"), kv("bb")}
+	objs := []KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{kv("a"), kv("aa"), kv("b"), kv("bb")}
 
 	m.Insert(ctx, "a", obj("a"))
 	m.Insert(ctx, "aa", obj("aa"))
@@ -85,14 +84,14 @@ func TestMap_Iterate(t *testing.T) {
 	m.Insert(ctx, "bb", obj("bb"))
 
 	// test iteration ascending
-	iter := m.Iterate(ctx, keys.Unbounded[keys.StringKey](), keys.Unbounded[keys.StringKey](), keys.OrderAscending)
+	iter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
 	defer iter.Close()
 	for i, o := range iter.All() {
 		require.Equal(t, objs[i], o)
 	}
 
 	// test iteration descending
-	dIter := m.Iterate(ctx, keys.Unbounded[keys.StringKey](), keys.Unbounded[keys.StringKey](), keys.OrderDescending)
+	dIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
 	defer dIter.Close()
 	for i, o := range iter.All() {
 		require.Equal(t, objs[len(objs)-1-i], o)

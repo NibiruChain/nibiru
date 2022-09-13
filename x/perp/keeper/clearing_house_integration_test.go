@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 

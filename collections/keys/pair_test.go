@@ -1,8 +1,9 @@
 package keys
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPair(t *testing.T) {

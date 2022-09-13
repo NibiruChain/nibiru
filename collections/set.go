@@ -35,10 +35,10 @@ func (s Set[K]) Delete(ctx sdk.Context, k K) {
 	s.getStore(ctx).Delete(k.KeyBytes())
 }
 
-func (s Set[K]) Iterate(ctx sdk.Context, start, end keys.Bound[K], order keys.Order) SetIterator[K] {
+func (s Set[K]) Iterate(ctx sdk.Context, r keys.Range[K]) SetIterator[K] {
 	store := s.getStore(ctx)
 	return SetIterator[K]{
-		iter: newMapIterator[K, panicObject](s.cdc, store, start, end, order),
+		iter: newMapIterator[K, panicObject](s.cdc, store, r),
 	}
 }
 
