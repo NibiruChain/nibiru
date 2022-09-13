@@ -12,13 +12,13 @@ import (
 )
 
 type msgServer struct {
-	Keeper
+	k Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
+	return &msgServer{k: keeper}
 }
 
 var _ types.MsgServer = msgServer{}
@@ -27,7 +27,7 @@ var _ types.MsgServer = msgServer{}
 // PostPrice
 // ---------------------------------------------------------------
 
-func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
+func (ms msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
 ) (*types.MsgPostPriceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -38,8 +38,8 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
 
 	pair := common.AssetPair{Token0: msg.Token0, Token1: msg.Token1}
 
-	isWhitelisted := k.IsWhitelistedOracle(ctx, pair.String(), from)
-	isWhitelistedForInverse := k.IsWhitelistedOracle(
+	isWhitelisted := ms.k.IsWhitelistedOracle(ctx, pair.String(), from)
+	isWhitelistedForInverse := ms.k.IsWhitelistedOracle(
 		ctx, pair.Inverse().String(), from)
 	if !(isWhitelisted || isWhitelistedForInverse) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidOracle,
@@ -55,7 +55,7 @@ func (k msgServer) PostPrice(goCtx context.Context, msg *types.MsgPostPrice,
 		postedPrice = msg.Price
 	}
 
-	if err = k.PostRawPrice(ctx, from, pair.String(), postedPrice, msg.Expiry); err != nil {
+	if err = ms.k.PostRawPrice(ctx, from, pair.String(), postedPrice, msg.Expiry); err != nil {
 		return nil, err
 	}
 
