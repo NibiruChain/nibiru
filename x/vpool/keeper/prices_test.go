@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -481,13 +480,5 @@ func TestCalcTwap(t *testing.T) {
 			require.EqualValuesf(t, tc.expectedPrice, price,
 				"expected %s, got %s", tc.expectedPrice.String(), price.String())
 		})
-	}
-}
-
-func getMarkPriceEvent(price sdk.Dec, ts time.Time) proto.Message {
-	return &types.MarkPriceChanged{
-		Pair:      common.PairBTCStable.String(),
-		Price:     price,
-		Timestamp: ts,
 	}
 }
