@@ -21,10 +21,6 @@ const (
 	MemStoreKey = "mem_pricefeed"
 )
 
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}
-
 var (
 	// CurrentPricePrefix prefix for the current price of an asset
 	CurrentPricePrefix = []byte{0x00}
