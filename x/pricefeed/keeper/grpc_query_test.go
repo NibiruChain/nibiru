@@ -138,8 +138,8 @@ func TestQueryPrice(t *testing.T) {
 		PairId: "ubtc:uusd",
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, types.QueryPriceResponse{
+	require.NoError(t, err)
+	require.Equal(t, types.QueryPriceResponse{
 		Price: types.CurrentPriceResponse{
 			PairID: "ubtc:uusd",
 			Price:  sdk.NewDec(30_000),
