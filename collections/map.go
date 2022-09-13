@@ -15,9 +15,10 @@ func NewMap[K keys.Key, V any, PV interface {
 	Object
 }](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8) Map[K, V, PV] {
 	return Map[K, V, PV]{
-		cdc:    cdc,
-		sk:     sk,
-		prefix: []byte{prefix},
+		cdc:      cdc,
+		sk:       sk,
+		prefix:   []byte{prefix},
+		typeName: typeName(PV(new(V))),
 	}
 }
 
@@ -26,11 +27,12 @@ type Map[K keys.Key, V any, PV interface {
 	*V
 	Object
 }] struct {
-	cdc    codec.BinaryCodec
-	sk     sdk.StoreKey
-	prefix []byte
-	_      K
-	_      V
+	cdc      codec.BinaryCodec
+	sk       sdk.StoreKey
+	prefix   []byte
+	_        K
+	_        V
+	typeName string
 }
 
 func (m Map[K, V, PV]) getStore(ctx sdk.Context) sdk.KVStore {
@@ -48,7 +50,7 @@ func (m Map[K, V, PV]) Get(ctx sdk.Context, key K) (V, error) {
 	bytes := store.Get(pk)
 	if bytes == nil {
 		var x V
-		return x, ErrNotFound
+		return x, notFoundError(m.typeName, key.String())
 	}
 
 	x := new(V)
@@ -69,7 +71,7 @@ func (m Map[K, V, PV]) Delete(ctx sdk.Context, key K) error {
 	store := m.getStore(ctx)
 	pk := key.KeyBytes()
 	if !store.Has(pk) {
-		return ErrNotFound
+		return notFoundError(m.typeName, key.String())
 	}
 
 	store.Delete(pk)

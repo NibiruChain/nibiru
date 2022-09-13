@@ -1,44 +1,63 @@
 package collections
 
-import "github.com/cosmos/cosmos-sdk/codec"
+import (
+	"bytes"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/gogo/protobuf/proto"
+)
 
 type Object interface {
 	codec.ProtoMarshaler
 }
 
-// panicObject is used when no object functionality must ever be called.
-type panicObject struct{}
+// setObject is used when no object functionality is needed.
+type setObject struct{}
 
-func (n panicObject) Reset() {
+func (n setObject) Reset() {
 	panic("must never be called")
 }
 
-func (n panicObject) String() string {
+func (n setObject) String() string {
 	panic("must never be called")
 }
 
-func (n panicObject) ProtoMessage() {
+func (n setObject) ProtoMessage() {
 	panic("must never be called")
 }
 
-func (n panicObject) Marshal() ([]byte, error) {
+func (n setObject) Marshal() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (n setObject) MarshalTo(_ []byte) (_ int, _ error) {
 	panic("must never be called")
 }
 
-func (n panicObject) MarshalTo(_ []byte) (_ int, _ error) {
+func (n setObject) MarshalToSizedBuffer(_ []byte) (int, error) {
 	panic("must never be called")
 }
 
-func (n panicObject) MarshalToSizedBuffer(_ []byte) (int, error) {
+func (n setObject) Size() int {
 	panic("must never be called")
 }
 
-func (n panicObject) Size() int {
-	panic("must never be called")
+func (n setObject) Unmarshal(b []byte) error {
+	if !bytes.Equal(b, []byte{}) {
+		panic("bad usage")
+	}
+	return nil
 }
 
-func (n panicObject) Unmarshal(data []byte) error {
-	panic("must never be called")
-}
+var _ Object = (*setObject)(nil)
 
-var _ Object = (*panicObject)(nil)
+func typeName(o Object) string {
+	switch o.(type) {
+	case *setObject, setObject:
+		return "no-op-object"
+	}
+	n := proto.MessageName(o)
+	if n == "" {
+		panic("invalid Object implementation")
+	}
+	return n
+}

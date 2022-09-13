@@ -2,70 +2,78 @@ package collections
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 )
 
-type Set[K keys.Key] struct {
-	cdc    codec.BinaryCodec
-	sk     sdk.StoreKey
-	prefix []byte
-	_      K
-}
+// KeySet wraps the default Map, but is used only for
+// keys.Key presence and ranging functionalities.
+type KeySet[K keys.Key] Map[K, setObject, *setObject]
 
-func NewSet[K keys.Key](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8) Set[K] {
-	return Set[K]{
-		cdc:    cdc,
-		sk:     sk,
-		prefix: []byte{prefix},
+// KeySetIterator wraps the default MapIterator, but is used only
+// for keys.Key ranging.
+type KeySetIterator[K keys.Key] MapIterator[K, setObject, *setObject]
+
+// NewKeySet instantiates a new KeySet.
+func NewKeySet[K keys.Key](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8) KeySet[K] {
+	return KeySet[K]{
+		cdc:      cdc,
+		sk:       sk,
+		prefix:   []byte{prefix},
+		typeName: typeName(new(setObject)),
 	}
 }
 
-func (s Set[K]) Has(ctx sdk.Context, k K) bool {
-	return s.getStore(ctx).Has(k.KeyBytes())
-}
-
-func (s Set[K]) Insert(ctx sdk.Context, k K) {
-	s.getStore(ctx).Set(k.KeyBytes(), []byte{})
-}
-
-func (s Set[K]) Delete(ctx sdk.Context, k K) {
-	s.getStore(ctx).Delete(k.KeyBytes())
-}
-
-func (s Set[K]) Iterate(ctx sdk.Context, r keys.Range[K]) SetIterator[K] {
-	store := s.getStore(ctx)
-	return SetIterator[K]{
-		iter: newMapIterator[K, panicObject](s.cdc, store, r),
+// Has reports wether the key K is present or not in the set.
+func (s KeySet[K]) Has(ctx sdk.Context, k K) bool {
+	_, err := (Map[K, setObject, *setObject])(s).Get(ctx, k)
+	if err != nil {
+		return false
 	}
+	return true
 }
 
-func (s Set[K]) getStore(ctx sdk.Context) sdk.KVStore {
-	return prefix.NewStore(ctx.KVStore(s.sk), s.prefix)
+// Insert inserts the key K in the set.
+func (s KeySet[K]) Insert(ctx sdk.Context, k K) {
+	(Map[K, setObject, *setObject])(s).Insert(ctx, k, setObject{})
 }
 
-type SetIterator[K keys.Key] struct {
-	iter MapIterator[K, panicObject, *panicObject]
+// Delete deletes the key from the set.
+// Does not check if the key exists or not.
+func (s KeySet[K]) Delete(ctx sdk.Context, k K) {
+	_ = (Map[K, setObject, *setObject])(s).Delete(ctx, k)
 }
 
-func (s SetIterator[K]) Close() {
-	s.iter.Close()
+// Iterate returns a KeySetIterator over the provided keys.Range of keys.
+func (s KeySet[K]) Iterate(ctx sdk.Context, r keys.Range[K]) KeySetIterator[K] {
+	mi := newMapIterator[K, setObject](s.cdc, ctx.KVStore(s.sk), r)
+	return (KeySetIterator[K])(mi)
 }
 
-func (s SetIterator[K]) Next() {
-	s.iter.Next()
+// Close closes the KeySetIterator.
+// No other operation is valid.
+func (s KeySetIterator[K]) Close() {
+	(MapIterator[K, setObject, *setObject])(s).Close()
 }
 
-func (s SetIterator[K]) Valid() bool {
-	return s.iter.Valid()
+// Next moves the iterator onto the next key.
+func (s KeySetIterator[K]) Next() {
+	(MapIterator[K, setObject, *setObject])(s).Next()
 }
 
-func (s SetIterator[K]) Key() K {
-	return s.iter.Key()
+// Valid checks if the iterator is still valid.
+func (s KeySetIterator[K]) Valid() bool {
+	return (MapIterator[K, setObject, *setObject])(s).Valid()
 }
 
-func (s SetIterator[K]) Keys() []K {
-	return s.iter.Keys()
+// Key returns the current iterator key.
+func (s KeySetIterator[K]) Key() K {
+	return (MapIterator[K, setObject, *setObject])(s).Key()
+}
+
+// Keys consumes the iterator fully and returns all the available keys.
+// The KeySetIterator is closed after this operation.
+func (s KeySetIterator[K]) Keys() []K {
+	return (MapIterator[K, setObject, *setObject])(s).Keys()
 }
