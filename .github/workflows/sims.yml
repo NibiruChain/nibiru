@@ -5,7 +5,7 @@ on:
 
 jobs:
   install-runsim:
-    runs-on: ubuntu-18.04
+    runs-on: self-hosted
     steps:
       - uses: actions/setup-go@v3
         with:
@@ -19,7 +19,7 @@ jobs:
         run: go install github.com/cosmos/tools/cmd/runsim@v1.0.0
 
   test-sim-nondeterminism:
-    runs-on: ubuntu-18.04
+    runs-on: self-hosted
     needs: [install-runsim]
     steps:
       - uses: actions/checkout@v3
