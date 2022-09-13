@@ -16,33 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
-func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
-
-	// Write to store
-	app.DexKeeper.SetNextPoolNumber(ctx, 150)
-
-	// Read from store
-	poolNumber := app.DexKeeper.GetNextPoolNumber(ctx)
-
-	require.EqualValues(t, poolNumber, 150)
-}
-
-func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
-
-	// Write a pool number
-	app.DexKeeper.SetNextPoolNumber(ctx, 200)
-
-	// Get next and increment should return the current pool number
-	poolNumber := app.DexKeeper.GetNextPoolNumberAndIncrement(ctx)
-	require.EqualValues(t, poolNumber, 200)
-
-	// Check that the previous call incremented the number
-	poolNumber = app.DexKeeper.GetNextPoolNumber(ctx)
-	require.EqualValues(t, poolNumber, 201)
-}
-
 func TestSetAndFetchPool(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 

@@ -170,9 +170,9 @@ func (k queryServer) NumPools(ctx context.Context, _ *types.QueryNumPoolsRequest
 	*types.QueryNumPoolsResponse, error,
 ) {
 	return &types.QueryNumPoolsResponse{
-		// next pool number is the id of the next pool,
-		// so we have one less than that in number of pools (id starts at 1)
-		NumPools: k.GetNextPoolNumber(sdk.UnwrapSDKContext(ctx)) - 1,
+		// peek returns the next available sequence number
+		// since it starts by 1, we remove 1.
+		NumPools: k.PoolID.Peek(sdk.UnwrapSDKContext(ctx)) - 1,
 	}, nil
 }
 

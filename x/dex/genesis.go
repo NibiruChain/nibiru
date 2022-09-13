@@ -10,7 +10,7 @@ import (
 // InitGenesis initializes the dex module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
-	k.SetNextPoolNumber(ctx, uint64(genState.Params.StartingPoolNumber))
+	k.PoolID.Set(ctx, genState.Params.StartingPoolNumber)
 }
 
 // ExportGenesis returns the dex module's exported genesis.

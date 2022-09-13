@@ -3,29 +3,28 @@ package keeper
 import (
 	"errors"
 	"fmt"
-
+	"github.com/NibiruChain/nibiru/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
-type (
-	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
-		paramstore paramtypes.Subspace
+type Keeper struct {
+	cdc        codec.BinaryCodec
+	storeKey   sdk.StoreKey
+	paramstore paramtypes.Subspace
 
-		accountKeeper types.AccountKeeper
-		bankKeeper    types.BankKeeper
-		distrKeeper   types.DistrKeeper
-	}
-)
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
+	distrKeeper   types.DistrKeeper
+
+	PoolID collections.Sequence
+}
 
 /*
 Creates a new keeper for the dex module.
@@ -62,6 +61,7 @@ func NewKeeper(
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		distrKeeper:   distrKeeper,
+		PoolID:        collections.NewSequence(cdc, storeKey, 0),
 	}
 }
 
@@ -69,63 +69,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-/*
-Sets the next pool id that should be chosen when a new pool is created.
-This function changes the state.
-
-args
-
-	ctx: the cosmos-sdk context
-	poolNumber: the numeric id of the next pool number to use
-*/
-func (k Keeper) SetNextPoolNumber(ctx sdk.Context, poolNumber uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.KeyNextGlobalPoolNumber,
-		k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: poolNumber}))
-}
-
-/*
-Retrieves the next pool id number to use when creating a new pool.
-This function is idempotent (does not change state).
-
-args
-
-	ctx: the cosmos-sdk context
-
-ret
-
-	uint64: a pool id number
-*/
-func (k Keeper) GetNextPoolNumber(ctx sdk.Context) (poolNumber uint64) {
-	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
-	if bz == nil {
-		panic(fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis"))
-	}
-	val := gogotypes.UInt64Value{}
-	k.cdc.MustUnmarshal(bz, &val)
-	return val.GetValue()
-}
-
-/*
-Returns the next pool id number, and increments the state's next pool id number by one
-so that the next pool creation uses an autoincremented id number.
-
-args
-
-	ctx: the cosmos-sdk context
-
-ret
-
-	uint64: a pool id number
-*/
-func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
-	poolNumber := k.GetNextPoolNumber(ctx)
-	k.SetNextPoolNumber(ctx, poolNumber+1)
-	return poolNumber
-}
-
-/*
-Fetches a pool by id number.
+/*Fetches a pool by id number.
 Does not modify state.
 Panics if the bytes could not be unmarshalled to a Pool proto object.
 
@@ -335,7 +279,7 @@ func (k Keeper) NewPool(
 		return uint64(0), err
 	}
 
-	poolId = k.GetNextPoolNumberAndIncrement(ctx)
+	poolId = k.PoolID.Next(ctx)
 	poolName := fmt.Sprintf("nibiru-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
