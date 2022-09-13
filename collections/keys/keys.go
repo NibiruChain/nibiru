@@ -25,6 +25,11 @@ type Key interface {
 	// FromKeyBytes parses the Key from bytes.
 	// returns i which is the index of the end of the key.
 	// Constraint: Key == Self (aka the interface implementer).
+	// NOTE(mercilex): we in theory should return Key[T any] and constrain
+	// in the collections.Map, collections.IndexedMap, collections.Set
+	// that T is in fact the Key itself.
+	// We don't do it otherwise all our APIs would get messy
+	// due to golang's compiler type inference.
 	FromKeyBytes(b []byte) (i int, k Key)
 	// Stringer is implemented to allow human-readable formats, especially important in errors.
 	fmt.Stringer

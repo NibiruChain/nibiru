@@ -94,13 +94,15 @@ func newMapIterator[K keys.Key, V any, PV interface {
 	switch order {
 	case keys.OrderAscending:
 		return MapIterator[K, V, PV]{
-			cdc:  cdc,
-			iter: store.Iterator(start, end),
+			prefix: pfx,
+			cdc:    cdc,
+			iter:   store.Iterator(start, end),
 		}
 	case keys.OrderDescending:
 		return MapIterator[K, V, PV]{
-			cdc:  cdc,
-			iter: store.ReverseIterator(start, end),
+			prefix: pfx,
+			cdc:    cdc,
+			iter:   store.ReverseIterator(start, end),
 		}
 	default:
 		panic(fmt.Errorf("unrecognized order"))
@@ -111,8 +113,9 @@ type MapIterator[K keys.Key, V any, PV interface {
 	*V
 	Object
 }] struct {
-	cdc  codec.BinaryCodec
-	iter sdk.Iterator
+	prefix []byte
+	cdc    codec.BinaryCodec
+	iter   sdk.Iterator
 }
 
 func (i MapIterator[K, V, PV]) Close() {
@@ -135,7 +138,7 @@ func (i MapIterator[K, V, PV]) Value() V {
 
 func (i MapIterator[K, V, PV]) Key() K {
 	var k K
-	rawKey := i.iter.Key()
+	rawKey := append(i.prefix, i.iter.Key()...)
 	_, c := k.FromKeyBytes(rawKey) // todo(mercilex): can we assert safety here?
 	return c.(K)
 }
