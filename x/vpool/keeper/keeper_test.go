@@ -624,13 +624,8 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				TimestampMs:       0,
 				BlockNumber:       0,
 			},
-			latestSnapshot: &types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1002),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       1,
-				BlockNumber:       1,
-			},
-			ctxBlockHeight: 2,
+			latestSnapshot: nil,
+			ctxBlockHeight: 1,
 			expectedErr:    types.ErrOverFluctuationLimit,
 		},
 		{
