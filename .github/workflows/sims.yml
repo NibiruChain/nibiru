@@ -6,7 +6,6 @@ on:
 jobs:
   install-runsim:
     runs-on: self-hosted
-    needs: build
     steps:
       - uses: actions/setup-go@v3
         with:
