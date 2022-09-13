@@ -32,3 +32,9 @@ jobs:
       - name: test-sim-nondeterminism
         run: |
           make test-sim-nondeterminism
+      - name: test-sim-custom-genesis-fast
+        run: |
+          make test-sim-custom-genesis-fast
+      - name: test-sim-multi-seed-short
+        run: |
+          make test-sim-multi-seed-short
