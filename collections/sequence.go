@@ -31,9 +31,8 @@ func (s Sequence) Next(ctx sdk.Context) uint64 {
 }
 
 // Peek gets the next available sequence number without increasing it.
-// NOTE: returning 0 means no sequence number has been used yet.
 func (s Sequence) Peek(ctx sdk.Context) uint64 {
-	return s.sequence.GetOr(ctx, wellknown.UInt64Value{Value: 0}).Value
+	return s.sequence.GetOr(ctx, wellknown.UInt64Value{Value: 1}).Value
 }
 
 // Set hard resets the sequence to the provided number.
