@@ -10,6 +10,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.18
+          cache: true
       - uses: actions/cache@v3
         with:
           path: ~/go/bin
@@ -22,19 +23,31 @@ jobs:
     needs: [install-runsim]
     steps:
       - uses: actions/checkout@v3
+      - uses: technote-space/get-diff-action@v4
+        with:
+          SUFFIX_FILTER: |
+            **/**.go
+            go.mod
+            go.sum
       - uses: actions/setup-go@v3
         with:
           go-version: 1.18
+          cache: true
+        if: env.GIT_DIFF
       - uses: actions/cache@v3
         with:
           path: ~/go/bin
           key: ${{ runner.os }}-go-runsim-binary
+        if: env.GIT_DIFF
       - name: test-sim-nondeterminism
         run: |
           make test-sim-nondeterminism
+        if: env.GIT_DIFF
       - name: test-sim-custom-genesis-fast
         run: |
           make test-sim-custom-genesis-fast
+        if: env.GIT_DIFF
       - name: test-sim-multi-seed-short
         run: |
           make test-sim-multi-seed-short
+        if: env.GIT_DIFF
