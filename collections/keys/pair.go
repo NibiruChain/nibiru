@@ -19,6 +19,13 @@ func PairPrefix[K1 Key, K2 Key](k1 K1) Pair[K1, K2] {
 	}
 }
 
+func PairSuffix[K1 Key, K2 Key](k2 K2) Pair[K1, K2] {
+	return Pair[K1, K2]{
+		p1: nil,
+		p2: &k2,
+	}
+}
+
 // Pair represents a multipart key composed of
 // two Key of different or equal types.
 type Pair[K1 Key, K2 Key] struct {
@@ -54,11 +61,14 @@ func (t Pair[K1, K2]) FromKeyBytes(b []byte) (int, Key) {
 }
 
 func (t Pair[K1, K2]) KeyBytes() []byte {
-	p1 := (*t.p1).KeyBytes()
-	if t.p2 == nil {
-		return p1
+	if t.p1 != nil && t.p2 != nil {
+		return append((*t.p1).KeyBytes(), (*t.p2).KeyBytes()...)
+	} else if t.p1 != nil && t.p2 == nil {
+		return (*t.p1).KeyBytes()
+	} else if t.p1 == nil && t.p2 != nil {
+		return (*t.p2).KeyBytes()
 	} else {
-		return append(p1, (*t.p2).KeyBytes()...)
+		panic("empty Pair key")
 	}
 }
 

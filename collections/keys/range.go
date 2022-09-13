@@ -38,6 +38,12 @@ func (r Range[K]) End(bound Bound[K]) Range[K] {
 	return r
 }
 
+// Descending sets the key range to be inverse.
+func (r Range[K]) Descending() Range[K] {
+	r.order = OrderDescending
+	return r
+}
+
 func (r Range[K]) Compile() (prefix []byte, start []byte, end []byte, order Order) {
 	order = r.order
 	if r.prefix != nil {
