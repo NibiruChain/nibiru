@@ -25,9 +25,9 @@ func TestPair(t *testing.T) {
 	})
 
 	t.Run("pair suffix", func(t *testing.T) {
-		k1 := Uint64Key(10)
-		suffix := PairSuffix[StringKey, Uint64Key](k1)
-		require.Equal(t, k1.KeyBytes(), suffix.KeyBytes())
+		k2 := Uint64Key(10)
+		suffix := PairSuffix[StringKey, Uint64Key](k2)
+		require.Equal(t, k2.KeyBytes(), suffix.KeyBytes())
 	})
 
 	t.Run("empty", func(t *testing.T) {
