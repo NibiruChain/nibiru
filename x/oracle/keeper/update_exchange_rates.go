@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,7 +39,12 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		return false
 	})
 
-	k.ClearExchangeRates(ctx)
+	for _, pair := range k.ExchangeRates.Iterate(ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		err := k.ExchangeRates.Delete(ctx, pair)
+		if err != nil {
+			panic(err)
+		}
+	}
 	// Organize votes to ballot by pair
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**

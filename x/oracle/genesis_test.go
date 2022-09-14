@@ -16,7 +16,7 @@ func TestExportInitGenesis(t *testing.T) {
 	input := keeper.CreateTestInput(t)
 
 	input.OracleKeeper.SetFeederDelegation(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
-	input.OracleKeeper.SetExchangeRate(input.Ctx, "pair1:pair2", sdk.NewDec(123))
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, "pair1:pair2", sdk.DecProto{Dec: sdk.NewDec(123)})
 	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{123}, keeper.ValAddrs[0], uint64(2)))
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "foo", ExchangeRate: sdk.NewDec(123)}}, keeper.ValAddrs[0]))
 	input.OracleKeeper.SetPair(input.Ctx, "pair1:pair1")

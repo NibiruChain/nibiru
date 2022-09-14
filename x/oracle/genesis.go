@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -27,7 +28,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	}
 
 	for _, ex := range data.ExchangeRates {
-		keeper.SetExchangeRate(ctx, ex.Pair, ex.ExchangeRate)
+		keeper.ExchangeRates.Insert(ctx, keys.String(ex.Pair), sdk.DecProto{Dec: ex.ExchangeRate})
 	}
 
 	for _, mc := range data.MissCounters {
@@ -95,10 +96,12 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	})
 
 	exchangeRates := []types.ExchangeRateTuple{}
-	keeper.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
-		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: pair, ExchangeRate: rate})
-		return false
-	})
+	for _, v := range keeper.ExchangeRates.Iterate(ctx, keys.NewRange[keys.StringKey]()).KeyValues() {
+		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
+			Pair:         string(v.Key),
+			ExchangeRate: v.Value.Dec,
+		})
+	}
 
 	missCounters := []types.MissCounter{}
 	keeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter uint64) (stop bool) {

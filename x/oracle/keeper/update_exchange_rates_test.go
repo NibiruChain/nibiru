@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"math"
 	"sort"
 	"testing"
@@ -45,7 +46,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), keys.String(exchangeRates[0].Pair))
 	require.Error(t, err)
 
 	// Case 2.
@@ -82,9 +83,9 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	rate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), keys.String(exchangeRates[0].Pair))
 	require.NoError(t, err)
-	require.Equal(t, randomExchangeRate, rate)
+	require.Equal(t, randomExchangeRate, rate.Dec)
 
 	// Case 3.
 	// Increase voting power of absent validator, exchange rate consensus fails
@@ -113,14 +114,14 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), keys.String(exchangeRates[0].Pair))
 	require.Error(t, err)
 }
 
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairGovStable.String(), randomExchangeRate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairGovStable.String()), sdk.DecProto{randomExchangeRate})
 
 	// Account 1, pair gov stable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -128,7 +129,7 @@ func TestOracleDrop(t *testing.T) {
 	// Immediately swap halt after an illiquid oracle vote
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairGovStable.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, keys.String(common.PairGovStable.String()))
 	require.Error(t, err)
 }
 
@@ -230,13 +231,13 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 0, int(input.Ctx.BlockHeight()))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, keys.String(common.PairBTCStable.String()))
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, keys.String(common.PairBTCStable.String()))
 	require.NoError(t, err)
 }
 
@@ -447,13 +448,13 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	gotGovStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairGovStable.String())
+	gotGovStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, keys.String(common.PairGovStable.String()))
 	require.NoError(t, err)
-	gotEthStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairETHStable.String())
+	gotEthStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, keys.String(common.PairETHStable.String()))
 	require.NoError(t, err)
 
-	require.Equal(t, govStableRate1, gotGovStableRate)
-	require.Equal(t, ethStableRate2, gotEthStableRate)
+	require.Equal(t, govStableRate1, gotGovStableRate.Dec)
+	require.Equal(t, ethStableRate2, gotEthStableRate.Dec)
 
 	// votes are 8 in total
 	// 2 wins by val1,4,5
@@ -547,7 +548,7 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairGovStable.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, keys.String(common.PairGovStable.String()))
 	require.Error(t, err)
 }
 

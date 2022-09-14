@@ -18,7 +18,7 @@ import (
 func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
-		case bytes.Equal(kvA.Key[:1], types.ExchangeRateKey):
+		case bytes.Equal(kvA.Key[:1], []byte("todo")):
 			var exchangeRateA, exchangeRateB sdk.DecProto
 			cdc.MustUnmarshal(kvA.Value, &exchangeRateA)
 			cdc.MustUnmarshal(kvB.Value, &exchangeRateB)

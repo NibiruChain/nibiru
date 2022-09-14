@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"sort"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairETHStable.String()), sdk.DecProto{Dec: rate})
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -71,8 +72,8 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairBTCStable.String()), sdk.DecProto{Dec: rate})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairETHStable.String()), sdk.DecProto{Dec: rate})
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
@@ -89,9 +90,9 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairGovStable.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairBTCStable.String()), sdk.DecProto{Dec: rate})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairGovStable.String()), sdk.DecProto{Dec: rate})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairETHStable.String()), sdk.DecProto{Dec: rate})
 
 	res, err := querier.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)

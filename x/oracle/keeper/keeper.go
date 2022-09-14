@@ -3,8 +3,7 @@ package keeper
 import (
 	"fmt"
 	"github.com/NibiruChain/nibiru/collections"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -32,6 +31,7 @@ type Keeper struct {
 	distrName     string
 
 	PairRewardsID collections.Sequence
+	ExchangeRates collections.Map[keys.StringKey, sdk.DecProto, *sdk.DecProto]
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -59,6 +59,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		StakingKeeper: stakingKeeper,
 		distrName:     distrName,
 		PairRewardsID: collections.NewSequence(cdc, storeKey, 0),
+		ExchangeRates: collections.NewMap[keys.StringKey, sdk.DecProto](cdc, storeKey, 1),
 	}
 }
 
@@ -70,76 +71,15 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 //-----------------------------------
 // ExchangeRate logic
 
-// GetExchangeRate gets the consensus exchange rate of the given pair from the store.
-func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error) {
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetExchangeRateKey(pair))
-	if b == nil {
-		return sdk.ZeroDec(), sdkerrors.Wrap(types.ErrUnknownPair, pair)
-	}
-
-	dp := sdk.DecProto{}
-	k.cdc.MustUnmarshal(b, &dp)
-	return dp.Dec, nil
-}
-
-// SetExchangeRate sets the consensus exchange rate of the given pair.
-func (k Keeper) SetExchangeRate(ctx sdk.Context, pair string, exchangeRate sdk.Dec) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&sdk.DecProto{Dec: exchangeRate})
-	store.Set(types.GetExchangeRateKey(pair), bz)
-}
-
 // SetExchangeRateWithEvent calls SetExchangeRate and emits an event.
 func (k Keeper) SetExchangeRateWithEvent(ctx sdk.Context, pair string, exchangeRate sdk.Dec) {
-	k.SetExchangeRate(ctx, pair, exchangeRate)
+	k.ExchangeRates.Insert(ctx, keys.String(pair), sdk.DecProto{Dec: exchangeRate})
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(types.EventTypeExchangeRateUpdate,
 			sdk.NewAttribute(types.AttributeKeyPair, pair),
 			sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
 		),
 	)
-}
-
-// DeleteExchangeRate deletes the consensus exchange rate of the provided pair from the store.
-func (k Keeper) DeleteExchangeRate(ctx sdk.Context, pair string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetExchangeRateKey(pair))
-}
-
-// IterateExchangeRates iterates over pair's exchange rates
-func (k Keeper) IterateExchangeRates(ctx sdk.Context, handler func(pair string, exchangeRate sdk.Dec) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.ExchangeRateKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		rawKey := iter.Key()
-		pair := string(rawKey[len(types.ExchangeRateKey) : len(rawKey)-1])
-		dp := sdk.DecProto{}
-		k.cdc.MustUnmarshal(iter.Value(), &dp)
-		if handler(pair, dp.Dec) {
-			break
-		}
-	}
-}
-
-// ClearExchangeRates iterates over all exchange rates and clears them.
-func (k Keeper) ClearExchangeRates(ctx sdk.Context) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ExchangeRateKey)
-
-	iter := store.Iterator(nil, nil)
-
-	var pairs [][]byte
-	for ; iter.Valid(); iter.Next() {
-		key := iter.Key()
-		pairs = append(pairs, key)
-	}
-
-	_ = iter.Close()
-
-	for _, pair := range pairs {
-		store.Delete(pair)
-	}
 }
 
 //-----------------------------------
