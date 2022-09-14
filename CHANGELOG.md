@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### CI
+
+* [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
+
 ### State Machine Breaking
 
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
