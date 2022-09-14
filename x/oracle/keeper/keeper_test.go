@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"github.com/NibiruChain/nibiru/collections/keys"
 	gogotypes "github.com/gogo/protobuf/types"
 	"testing"
@@ -13,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -53,58 +51,6 @@ func TestParams(t *testing.T) {
 	storedParams := input.OracleKeeper.GetParams(input.Ctx)
 	require.NotNil(t, storedParams)
 	require.Equal(t, storedParams, newParams)
-}
-
-func TestAggregateVoteAddDelete(t *testing.T) {
-	input := CreateTestInput(t)
-
-	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Pair: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Pair: "foo", ExchangeRate: sdk.NewDec(0)},
-		{Pair: "foo", ExchangeRate: sdk.NewDec(1)},
-	}, sdk.ValAddress(Addrs[0]))
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]), aggregateVote)
-
-	KVote, err := input.OracleKeeper.GetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]))
-	require.NoError(t, err)
-	require.Equal(t, aggregateVote, KVote)
-
-	input.OracleKeeper.DeleteAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]))
-	_, err = input.OracleKeeper.GetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]))
-	require.Error(t, err)
-}
-
-func TestAggregateVoteIterate(t *testing.T) {
-	input := CreateTestInput(t)
-
-	aggregateVote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Pair: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Pair: "foo", ExchangeRate: sdk.NewDec(0)},
-		{Pair: "foo", ExchangeRate: sdk.NewDec(1)},
-	}, sdk.ValAddress(Addrs[0]))
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[0]), aggregateVote1)
-
-	aggregateVote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Pair: "foo", ExchangeRate: sdk.NewDec(-1)},
-		{Pair: "foo", ExchangeRate: sdk.NewDec(0)},
-		{Pair: "foo", ExchangeRate: sdk.NewDec(1)},
-	}, sdk.ValAddress(Addrs[1]))
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, sdk.ValAddress(Addrs[1]), aggregateVote2)
-
-	i := 0
-	bigger := bytes.Compare(address.MustLengthPrefix(Addrs[0]), address.MustLengthPrefix(Addrs[1]))
-	input.OracleKeeper.IterateAggregateExchangeRateVotes(input.Ctx, func(voter sdk.ValAddress, p types.AggregateExchangeRateVote) (stop bool) {
-		if (i == 0 && bigger == -1) || (i == 1 && bigger == 1) {
-			require.Equal(t, aggregateVote1, p)
-			require.Equal(t, voter.String(), p.Voter)
-		} else {
-			require.Equal(t, aggregateVote2, p)
-			require.Equal(t, voter.String(), p.Voter)
-		}
-
-		i++
-		return false
-	})
 }
 
 func TestPairGetSetIterate(t *testing.T) {

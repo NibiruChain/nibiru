@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"github.com/NibiruChain/nibiru/collections/keys"
 	gogotypes "github.com/gogo/protobuf/types"
 	"sort"
@@ -169,9 +168,7 @@ func TestQueryAggregatePrevotes(t *testing.T) {
 
 	expectedPrevotes := []types.AggregateExchangeRatePrevote{prevote1, prevote2, prevote3}
 	sort.SliceStable(expectedPrevotes, func(i, j int) bool {
-		addr1, _ := sdk.ValAddressFromBech32(expectedPrevotes[i].Voter)
-		addr2, _ := sdk.ValAddressFromBech32(expectedPrevotes[j].Voter)
-		return bytes.Compare(addr1, addr2) == -1
+		return expectedPrevotes[i].Voter < expectedPrevotes[j].Voter
 	})
 
 	res, err := querier.AggregatePrevotes(ctx, &types.QueryAggregatePrevotesRequest{})
@@ -185,9 +182,9 @@ func TestQueryAggregateVote(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[0])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[0], vote1)
+	input.OracleKeeper.Votes.Insert(input.Ctx, keys.String(ValAddrs[0].String()), vote1)
 	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[1])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[1], vote2)
+	input.OracleKeeper.Votes.Insert(input.Ctx, keys.String(ValAddrs[1].String()), vote2)
 
 	// empty request
 	_, err := querier.AggregateVote(ctx, nil)
@@ -214,17 +211,15 @@ func TestQueryAggregateVotes(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[0])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[0], vote1)
+	input.OracleKeeper.Votes.Insert(input.Ctx, keys.String(ValAddrs[0].String()), vote1)
 	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[1])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[1], vote2)
+	input.OracleKeeper.Votes.Insert(input.Ctx, keys.String(ValAddrs[1].String()), vote2)
 	vote3 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[2])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[2], vote3)
+	input.OracleKeeper.Votes.Insert(input.Ctx, keys.String(ValAddrs[2].String()), vote3)
 
 	expectedVotes := []types.AggregateExchangeRateVote{vote1, vote2, vote3}
 	sort.SliceStable(expectedVotes, func(i, j int) bool {
-		addr1, _ := sdk.ValAddressFromBech32(expectedVotes[i].Voter)
-		addr2, _ := sdk.ValAddressFromBech32(expectedVotes[j].Voter)
-		return bytes.Compare(addr1, addr2) == -1
+		return expectedVotes[i].Voter < expectedVotes[j].Voter
 	})
 
 	res, err := querier.AggregateVotes(ctx, &types.QueryAggregateVotesRequest{})

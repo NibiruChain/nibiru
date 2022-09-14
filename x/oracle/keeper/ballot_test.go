@@ -44,9 +44,9 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	for i := range btcBallot {
-		input.OracleKeeper.SetAggregateExchangeRateVote(
+		input.OracleKeeper.Votes.Insert(
 			input.Ctx,
-			ValAddrs[i],
+			keys.String(ValAddrs[i].String()),
 			types.NewAggregateExchangeRateVote(
 				types.ExchangeRateTuples{
 					{Pair: btcBallot[i].Pair, ExchangeRate: btcBallot[i].ExchangeRate},
@@ -121,7 +121,7 @@ func TestClearBallots(t *testing.T) {
 			SubmitBlock: uint64(input.Ctx.BlockHeight()),
 		})
 
-		input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[i],
+		input.OracleKeeper.Votes.Insert(input.Ctx, keys.String(ValAddrs[i].String()),
 			types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
 				{Pair: btcBallot[i].Pair, ExchangeRate: btcBallot[i].ExchangeRate},
 				{Pair: ethBallot[i].Pair, ExchangeRate: ethBallot[i].ExchangeRate},
@@ -131,11 +131,7 @@ func TestClearBallots(t *testing.T) {
 	input.OracleKeeper.ClearBallots(input.Ctx, 5)
 
 	prevoteCounter := len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys())
-	voteCounter := 0
-	input.OracleKeeper.IterateAggregateExchangeRateVotes(input.Ctx, func(_ sdk.ValAddress, _ types.AggregateExchangeRateVote) bool {
-		voteCounter++
-		return false
-	})
+	voteCounter := len(input.OracleKeeper.Votes.Iterate(ctx, keys.NewRange[keys.StringKey]()).Keys())
 
 	require.Equal(t, prevoteCounter, 3)
 	require.Equal(t, voteCounter, 0)

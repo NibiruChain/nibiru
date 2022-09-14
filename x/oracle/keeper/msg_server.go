@@ -117,7 +117,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 	}
 
 	// Move aggregate prevote to aggregate vote with given exchange rates
-	ms.SetAggregateExchangeRateVote(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
+	ms.Keeper.Votes.Insert(ctx, keys.String(valAddr.String()), types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
 	err = ms.Prevotes.Delete(ctx, keys.String(valAddr.String()))
 	if err != nil {
 		return nil, err

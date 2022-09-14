@@ -156,13 +156,13 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	valAddr, err := sdk.ValAddressFromBech32(req.ValidatorAddr)
+	_, err := sdk.ValAddressFromBech32(req.ValidatorAddr)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	vote, err := q.GetAggregateExchangeRateVote(ctx, valAddr)
+	vote, err := q.Votes.Get(ctx, keys.String(req.ValidatorAddr))
 	if err != nil {
 		return nil, err
 	}
@@ -174,15 +174,8 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 
 // AggregateVotes queries aggregate votes of all validators
 func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var votes []types.AggregateExchangeRateVote
-	q.IterateAggregateExchangeRateVotes(ctx, func(_ sdk.ValAddress, vote types.AggregateExchangeRateVote) bool {
-		votes = append(votes, vote)
-		return false
-	})
 
 	return &types.QueryAggregateVotesResponse{
-		AggregateVotes: votes,
+		AggregateVotes: q.Keeper.Votes.Iterate(sdk.UnwrapSDKContext(c), keys.NewRange[keys.StringKey]()).Values(),
 	}, nil
 }
