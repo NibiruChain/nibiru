@@ -13,7 +13,7 @@ func TestStringKey(t *testing.T) {
 		x := StringKey("test")
 		i, b := x.FromKeyBytes(x.KeyBytes())
 		require.Equal(t, x, b)
-		require.Equal(t, 4, i)
+		require.Equal(t, 5, i)
 	})
 
 	t.Run("panics", func(t *testing.T) {

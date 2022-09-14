@@ -15,7 +15,7 @@ func TestPair(t *testing.T) {
 		bytes := p.KeyBytes()
 		idx, result := p.FromKeyBytes(bytes)
 		require.Equalf(t, p, result, "%s <-> %s", p.String(), result.String())
-		require.Equal(t, len(bytes)-1, idx)
+		require.Equal(t, len(bytes), idx)
 	})
 
 	t.Run("pair prefix", func(t *testing.T) {
