@@ -44,11 +44,3 @@ jobs:
         run: |
           make test-sim-nondeterminism
         if: env.GIT_DIFF
-      - name: test-sim-custom-genesis-fast
-        run: |
-          make test-sim-custom-genesis-fast
-        if: env.GIT_DIFF
-      - name: test-sim-multi-seed-short
-        run: |
-          make test-sim-multi-seed-short
-        if: env.GIT_DIFF
