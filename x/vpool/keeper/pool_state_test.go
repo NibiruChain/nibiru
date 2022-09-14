@@ -19,7 +19,7 @@ func TestCreatePool(t *testing.T) {
 
 	vpoolKeeper.CreatePool(
 		ctx,
-		common.PairBTCStable,
+		common.Pair_BTC_NUSD,
 		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 		sdk.NewDec(10_000_000),       // 10 tokens
 		sdk.NewDec(5_000_000),        // 5 tokens
@@ -29,7 +29,7 @@ func TestCreatePool(t *testing.T) {
 		sdk.MustNewDecFromStr("15"),
 	)
 
-	exists := vpoolKeeper.ExistsPool(ctx, common.PairBTCStable)
+	exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
 	require.True(t, exists)
 
 	notExist := vpoolKeeper.ExistsPool(ctx, common.AssetPair{
@@ -44,7 +44,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 
 	var vpools = []*types.Pool{
 		{
-			Pair:                   common.PairBTCStable,
+			Pair:                   common.Pair_BTC_NUSD,
 			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1
 			QuoteAssetReserve:      sdk.NewDec(30_000_000_000), // 30,000
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
@@ -54,7 +54,7 @@ func TestKeeper_GetAllPools(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		{
-			Pair:                   common.PairETHStable,
+			Pair:                   common.Pair_ETH_NUSD,
 			BaseAssetReserve:       sdk.NewDec(2_000_000),      // 1
 			QuoteAssetReserve:      sdk.NewDec(60_000_000_000), // 30,000
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
@@ -135,7 +135,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - vpool + pricefeed active",
 			vpool: types.Pool{
-				Pair:                   common.PairETHStable,
+				Pair:                   common.Pair_ETH_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(3_000_000), // 3e6
 				BaseAssetReserve:       sdk.NewDec(1_000),     // 1e3
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
@@ -146,7 +146,7 @@ func TestGetPoolPrices(t *testing.T) {
 			shouldCreateVpool: true,
 			mockIndexPrice:    sdk.NewDec(99),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.PairETHStable.String(),
+				Pair:          common.Pair_ETH_NUSD.String(),
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.NewDec(99).String(),
@@ -157,7 +157,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - vpool active, but no index price",
 			vpool: types.Pool{
-				Pair:                   common.PairETHStable,
+				Pair:                   common.Pair_ETH_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(3_000_000), // 3e6
 				BaseAssetReserve:       sdk.NewDec(1_000),     // 1e3
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
@@ -169,7 +169,7 @@ func TestGetPoolPrices(t *testing.T) {
 			mockIndexPrice:     sdk.Dec{},
 			pricefeedKeeperErr: fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.PairETHStable.String(),
+				Pair:          common.Pair_ETH_NUSD.String(),
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.OneDec().Neg().String(),
@@ -180,7 +180,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "vpool doesn't exist",
 			vpool: types.Pool{
-				Pair:                   common.PairETHStable,
+				Pair:                   common.Pair_ETH_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(3_000_000), // 3e6
 				BaseAssetReserve:       sdk.NewDec(1_000),     // 1e3
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),

@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	whitelist                     = []string{common.PairBTCStable.String(), common.PairETHStable.String(), common.PairGovStable.String()}
+	whitelist                     = []string{common.Pair_BTC_NUSD.String(), common.Pair_ETH_NUSD.String(), common.Pair_NIBI_NUSD.String()}
 	voteHashMap map[string]string = make(map[string]string)
 )
 

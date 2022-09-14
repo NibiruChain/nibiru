@@ -32,14 +32,14 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(17), common.PairBTCStable.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(10), common.PairBTCStable.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(6), common.PairBTCStable.String(), ValAddrs[2], power),
+		types.NewBallotVoteForTally(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
+		types.NewBallotVoteForTally(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
+		types.NewBallotVoteForTally(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(1000), common.PairETHStable.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(1300), common.PairETHStable.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(2000), common.PairETHStable.String(), ValAddrs[2], power),
+		types.NewBallotVoteForTally(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
+		types.NewBallotVoteForTally(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
+		types.NewBallotVoteForTally(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -78,11 +78,11 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(btcBallot)
 	sort.Sort(ethBallot)
-	sort.Sort(ballotMap[common.PairBTCStable.String()])
-	sort.Sort(ballotMap[common.PairETHStable.String()])
+	sort.Sort(ballotMap[common.Pair_BTC_NUSD.String()])
+	sort.Sort(ballotMap[common.Pair_ETH_NUSD.String()])
 
-	require.Equal(t, btcBallot, ballotMap[common.PairBTCStable.String()])
-	require.Equal(t, ethBallot, ballotMap[common.PairETHStable.String()])
+	require.Equal(t, btcBallot, ballotMap[common.Pair_BTC_NUSD.String()])
+	require.Equal(t, ethBallot, ballotMap[common.Pair_ETH_NUSD.String()])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -103,14 +103,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(17), common.PairBTCStable.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(10), common.PairBTCStable.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(6), common.PairBTCStable.String(), ValAddrs[2], power),
+		types.NewBallotVoteForTally(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
+		types.NewBallotVoteForTally(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
+		types.NewBallotVoteForTally(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(1000), common.PairETHStable.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(1300), common.PairETHStable.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(2000), common.PairETHStable.String(), ValAddrs[2], power),
+		types.NewBallotVoteForTally(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
+		types.NewBallotVoteForTally(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
+		types.NewBallotVoteForTally(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {

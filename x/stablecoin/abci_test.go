@@ -114,7 +114,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			oracle := sample.AccAddress()
 			pairs := common.AssetPairs{
-				common.PairCollStable,
+				common.Pair_USDC_NUSD,
 			}
 			params := ptypes.NewParams(pairs, 15*time.Minute)
 			app.PricefeedKeeper.SetParams(ctx, params)
@@ -154,7 +154,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 
 	oracle := sample.AccAddress()
 	pairs := common.AssetPairs{
-		{Token0: common.DenomColl, Token1: common.DenomStable},
+		{Token0: common.DenomUSDC, Token1: common.DenomNUSD},
 	}
 	twapLookbackWindow := 15 * time.Minute
 	params := ptypes.NewParams(pairs, twapLookbackWindow)
