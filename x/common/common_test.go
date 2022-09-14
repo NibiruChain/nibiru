@@ -91,23 +91,23 @@ func TestNewAssetPair_Constructor(t *testing.T) {
 	}{
 		{
 			"only one token",
-			common.DenomGov,
+			common.DenomNIBI,
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s%s%s%s%s", common.DenomGov, common.PairSeparator, common.DenomStable,
-				common.PairSeparator, common.DenomColl),
+			fmt.Sprintf("%s%s%s%s%s", common.DenomNIBI, common.PairSeparator, common.DenomNUSD,
+				common.PairSeparator, common.DenomUSDC),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
-			fmt.Sprintf("%s%s%s", common.DenomGov, "%", common.DenomStable),
+			fmt.Sprintf("%s%s%s", common.DenomNIBI, "%", common.DenomNUSD),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s%s%s", common.DenomGov, common.PairSeparator, common.DenomStable),
+			fmt.Sprintf("%s%s%s", common.DenomNIBI, common.PairSeparator, common.DenomNUSD),
 			nil,
 		},
 		{
@@ -184,10 +184,10 @@ func TestAssetPair_Marshaling(t *testing.T) {
 
 func TestAssetPairs_Contains(t *testing.T) {
 	pairs := common.AssetPairs{
-		common.PairBTCStable, common.PairETHStable,
+		common.Pair_BTC_NUSD, common.Pair_ETH_NUSD,
 	}
 
-	pair := common.PairGovStable
+	pair := common.Pair_NIBI_NUSD
 	isContained, atIdx := pairs.ContainsAtIndex(pair)
 	assert.False(t, isContained)
 	assert.Equal(t, -1, atIdx)

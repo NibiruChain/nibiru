@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	DenomGov    = "unibi"
-	DenomColl   = "uusdc"
-	DenomStable = "unusd"
-	DenomBTC    = "ubtc"
-	DenomETH    = "ueth"
+	DenomNIBI = "unibi"
+	DenomUSDC = "uusdc"
+	DenomNUSD = "unusd"
+	DenomBTC  = "ubtc"
+	DenomETH  = "ueth"
 
 	ModuleName = "common"
 
@@ -25,10 +25,10 @@ const (
 )
 
 var (
-	PairGovStable  = AssetPair{Token0: DenomGov, Token1: DenomStable}
-	PairCollStable = AssetPair{Token0: DenomColl, Token1: DenomStable}
-	PairBTCStable  = AssetPair{Token0: DenomBTC, Token1: DenomStable}
-	PairETHStable  = AssetPair{Token0: DenomETH, Token1: DenomStable}
+	Pair_NIBI_NUSD = AssetPair{Token0: DenomNIBI, Token1: DenomNUSD}
+	Pair_USDC_NUSD = AssetPair{Token0: DenomUSDC, Token1: DenomNUSD}
+	Pair_BTC_NUSD  = AssetPair{Token0: DenomBTC, Token1: DenomNUSD}
+	Pair_ETH_NUSD  = AssetPair{Token0: DenomETH, Token1: DenomNUSD}
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
 )
