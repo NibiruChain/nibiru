@@ -66,7 +66,7 @@ func TestCreatePool(t *testing.T) {
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin(common.DenomUsdc, 1),
+					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1),
 					Weight: sdk.OneInt(),
 				},
 				{
@@ -85,7 +85,7 @@ func TestCreatePool(t *testing.T) {
 					Weight: sdk.OneInt(),
 				},
 				{
-					Token:  sdk.NewInt64Coin(common.DenomUsdc, 1),
+					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1),
 					Weight: sdk.OneInt(),
 				},
 			},
@@ -96,7 +96,7 @@ func TestCreatePool(t *testing.T) {
 			poolParams: types.PoolParams{},
 			poolAssets: []types.PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin(common.DenomUsdc, 1),
+					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1),
 					Weight: sdk.OneInt(),
 				},
 				{
@@ -120,7 +120,7 @@ func TestCreatePool(t *testing.T) {
 					Weight: sdk.OneInt(),
 				},
 				{
-					Token:  sdk.NewInt64Coin(common.DenomUsdc, 1),
+					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1),
 					Weight: sdk.OneInt(),
 				},
 			},
@@ -138,14 +138,14 @@ func TestCreatePool(t *testing.T) {
 					Weight: sdk.OneInt(),
 				},
 				{
-					Token:  sdk.NewInt64Coin(common.DenomUsdc, 1),
+					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1),
 					Weight: sdk.OneInt(),
 				},
 			},
 			senderInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(common.DenomNIBI, 1e9),
 				sdk.NewInt64Coin(common.DenomNUSD, 1),
-				sdk.NewInt64Coin(common.DenomUsdc, 1),
+				sdk.NewInt64Coin(common.DenomUSDC, 1),
 			),
 			expectedErr: nil,
 		},
