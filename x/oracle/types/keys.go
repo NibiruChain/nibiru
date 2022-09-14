@@ -35,17 +35,11 @@ const (
 // - 0x06<pair_Bytes>: sdk.Dec
 var (
 	// Keys for store prefixes
-	MissCounterKey                  = []byte{0x03} // prefix for each key to a miss counter
 	AggregateExchangeRatePrevoteKey = []byte{0x04} // prefix for each key to an aggregate prevote
 	AggregateExchangeRateVoteKey    = []byte{0x05} // prefix for each key to an aggregate vote
 	PairsKey                        = []byte{0x06} // prefix for each key to a pair
 	PairRewardsKey                  = []byte{0x07} // prefix for each key to a pair's rewards
 )
-
-// GetMissCounterKey - stored by *Validator* address
-func GetMissCounterKey(v sdk.ValAddress) []byte {
-	return append(MissCounterKey, address.MustLengthPrefix(v)...)
-}
 
 // GetAggregateExchangeRatePrevoteKey - stored by *Validator* address
 func GetAggregateExchangeRatePrevoteKey(v sdk.ValAddress) []byte {

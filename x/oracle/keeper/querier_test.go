@@ -53,7 +53,7 @@ func TestQueryMissCounter(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	missCounter := uint64(1)
-	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[0], missCounter)
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keys.String(ValAddrs[0].String()), gogotypes.UInt64Value{Value: missCounter})
 
 	// empty request
 	_, err := querier.MissCounter(ctx, nil)

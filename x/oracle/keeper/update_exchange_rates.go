@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -72,7 +73,14 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		}
 
 		// Increase miss counter
-		k.SetMissCounter(ctx, claim.ValAddress, k.GetMissCounter(ctx, claim.ValAddress)+1)
+		valAddrKey := keys.String(claim.ValAddress.String())
+		k.MissCounters.Insert(ctx,
+			keys.String(valAddrKey),
+			gogotypes.UInt64Value{
+				// get from store, if it does not exist use 0 as default, and increase the result.
+				Value: k.MissCounters.GetOr(ctx, keys.String(valAddrKey), gogotypes.UInt64Value{Value: 0}).Value + 1,
+			},
+		)
 		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
 	}
 

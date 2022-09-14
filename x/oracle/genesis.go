@@ -38,7 +38,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.SetMissCounter(ctx, operator, mc.MissCounter)
+		keeper.MissCounters.Insert(ctx, keys.String(operator.String()), gogotypes.UInt64Value{Value: mc.MissCounter})
 	}
 
 	for _, ap := range data.AggregateExchangeRatePrevotes {
@@ -104,13 +104,12 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	}
 
 	missCounters := []types.MissCounter{}
-	keeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter uint64) (stop bool) {
+	for _, v := range keeper.MissCounters.Iterate(ctx, keys.NewRange[keys.StringKey]()).KeyValues() {
 		missCounters = append(missCounters, types.MissCounter{
-			ValidatorAddress: operator.String(),
-			MissCounter:      missCounter,
+			ValidatorAddress: string(v.Key),
+			MissCounter:      v.Value.Value,
 		})
-		return false
-	})
+	}
 
 	aggregateExchangeRatePrevotes := []types.AggregateExchangeRatePrevote{}
 	keeper.IterateAggregateExchangeRatePrevotes(ctx, func(_ sdk.ValAddress, aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool) {

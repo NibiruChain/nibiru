@@ -110,14 +110,14 @@ func (q querier) MissCounter(c context.Context, req *types.QueryMissCounterReque
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	valAddr, err := sdk.ValAddressFromBech32(req.ValidatorAddr)
+	_, err := sdk.ValAddressFromBech32(req.ValidatorAddr)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryMissCounterResponse{
-		MissCounter: q.GetMissCounter(ctx, valAddr),
+		MissCounter: q.MissCounters.GetOr(ctx, keys.String(req.ValidatorAddr), gogotypes.UInt64Value{Value: 0}).Value,
 	}, nil
 }
 

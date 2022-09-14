@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 	"math"
 	"sort"
 	"testing"
@@ -288,9 +289,9 @@ func TestOracleRewardBand(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 
 	// Account 1 will miss the vote due to raward band condition
 	// Account 1, govstable
@@ -304,9 +305,9 @@ func TestOracleRewardBand(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 }
 
 /* TODO(Mercilex): not appliable right now: https://github.com/NibiruChain/nibiru/issues/805
@@ -495,9 +496,9 @@ func TestVoteTargets(t *testing.T) {
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
 	// no missing current
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 
 	// vote targets are {govstable, btcstable}
 	require.Equal(t, []string{common.PairBTCStable.String(), common.PairGovStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
@@ -513,9 +514,9 @@ func TestVoteTargets(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 
 	// btcstable must be deleted
 	require.Equal(t, []string{common.PairGovStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
@@ -534,9 +535,9 @@ func TestVoteTargets(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 }
 
 func TestAbstainWithSmallStakingPower(t *testing.T) {

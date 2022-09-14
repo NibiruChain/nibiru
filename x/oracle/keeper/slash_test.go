@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/types"
@@ -45,7 +47,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidVotes := input.OracleKeeper.MinValidPerWindow(input.Ctx).MulInt64(votePeriodsPerWindow).TruncateInt64()
 	// Case 1, no slash
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{Value: uint64(votePeriodsPerWindow - minValidVotes)})
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
@@ -53,7 +55,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	require.Equal(t, amt, validator.GetBondedTokens())
 
 	// Case 2, slash
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{Value: uint64(votePeriodsPerWindow - minValidVotes + 1)})
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, amt.Sub(slashFraction.MulInt(amt).TruncateInt()), validator.GetBondedTokens())
@@ -66,7 +68,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Tokens = amt
 	input.StakingKeeper.SetValidator(input.Ctx, validator)
 
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{Value: uint64(votePeriodsPerWindow - minValidVotes + 1)})
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, amt, validator.Tokens)
@@ -79,7 +81,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Tokens = amt
 	input.StakingKeeper.SetValidator(input.Ctx, validator)
 
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{Value: uint64(votePeriodsPerWindow - minValidVotes + 1)})
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, amt, validator.Tokens)
@@ -109,7 +111,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-		require.Equal(t, i+1, input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
 	}
 
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[1])
@@ -147,7 +149,7 @@ func TestWhitelistSlashing(t *testing.T) {
 		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-		require.Equal(t, i+1, input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{}).Value)
 	}
 
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
@@ -182,9 +184,9 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 }
 
 func TestAbstainSlashing(t *testing.T) {
@@ -213,7 +215,7 @@ func TestAbstainSlashing(t *testing.T) {
 		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-		require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+		require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[1].String()), gogotypes.UInt64Value{}).Value)
 	}
 
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[1])
