@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
@@ -28,8 +29,9 @@ type Keeper struct {
 	bankKeeper    types.BankKeeper
 	distrKeeper   types.DistributionKeeper
 	StakingKeeper types.StakingKeeper
+	distrName     string
 
-	distrName string
+	PairRewardsID collections.Sequence
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -56,6 +58,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		distrKeeper:   distrKeeper,
 		StakingKeeper: stakingKeeper,
 		distrName:     distrName,
+		PairRewardsID: collections.NewSequence(cdc, storeKey, 0),
 	}
 }
 

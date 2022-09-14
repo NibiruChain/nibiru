@@ -38,13 +38,6 @@ func TestKeeper_PairRewards(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("next key", func(t *testing.T) {
-		key := k.NextPairRewardKey(ctx)
-		require.Equal(t, key, uint64(0))
-		key = k.NextPairRewardKey(ctx)
-		require.Equal(t, key, uint64(1))
-	})
-
 	t.Run("iterations", func(t *testing.T) {
 		reward1 := &types.PairReward{
 			Pair:        "BTC:USD",

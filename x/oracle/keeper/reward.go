@@ -31,7 +31,7 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair s
 }
 
 func (k Keeper) CreatePairReward(ctx sdk.Context, rewards *types.PairReward) {
-	rewards.Id = k.NextPairRewardKey(ctx)
+	rewards.Id = k.PairRewardsID.Next(ctx)
 	k.SetPairReward(ctx, rewards)
 }
 
@@ -89,18 +89,6 @@ func (k Keeper) GetPairReward(ctx sdk.Context, pair string, id uint64) (*types.P
 func (k Keeper) SetPairReward(ctx sdk.Context, rewards *types.PairReward) {
 	pk := types.GetPairRewardsKey(rewards.Pair, rewards.Id)
 	ctx.KVStore(k.storeKey).Set(pk, k.cdc.MustMarshal(rewards))
-}
-
-func (k Keeper) NextPairRewardKey(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	if v := store.Get(types.PairRewardsCounterKey); v != nil {
-		id := sdk.BigEndianToUint64(v)
-		store.Set(types.PairRewardsCounterKey, sdk.Uint64ToBigEndian(id+1))
-		return id
-	} else {
-		store.Set(types.PairRewardsCounterKey, sdk.Uint64ToBigEndian(1))
-		return 0
-	}
 }
 
 // RewardBallotWinners implements at the end of every VotePeriod,

@@ -42,7 +42,6 @@ var (
 	AggregateExchangeRateVoteKey    = []byte{0x05} // prefix for each key to an aggregate vote
 	PairsKey                        = []byte{0x06} // prefix for each key to a pair
 	PairRewardsKey                  = []byte{0x07} // prefix for each key to a pair's rewards
-	PairRewardsCounterKey           = []byte{0x08} // prefix for the singleton of pair rewards ID.
 )
 
 // GetExchangeRateKey - stored by *pair*
