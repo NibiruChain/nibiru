@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
-func NewPool(
+func NewVPool(
 	pair common.AssetPair,
 	tradeLimitRatio sdk.Dec,
 	quoteAssetReserve sdk.Dec,
@@ -17,8 +17,8 @@ func NewPool(
 	maxOracleSpreadRatio sdk.Dec,
 	maintenanceMarginRatio sdk.Dec,
 	maxLeverage sdk.Dec,
-) *Pool {
-	return &Pool{
+) *VPool {
+	return &VPool{
 		Pair:                   pair,
 		BaseAssetReserve:       baseAssetReserve,
 		QuoteAssetReserve:      quoteAssetReserve,
@@ -32,13 +32,13 @@ func NewPool(
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
-func (p *Pool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
+func (p *VPool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
 	return p.QuoteAssetReserve.Mul(p.TradeLimitRatio).GTE(quoteAmount)
 }
 
 // HasEnoughBaseReserve returns true if there is enough base reserve based on
 // baseReserve * tradeLimitRatio
-func (p *Pool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
+func (p *VPool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
 	return p.BaseAssetReserve.Mul(p.TradeLimitRatio).GTE(baseAmount)
 }
 
@@ -55,7 +55,7 @@ ret:
     always an absolute value
   - err: error
 */
-func (p *Pool) GetBaseAmountByQuoteAmount(
+func (p *VPool) GetBaseAmountByQuoteAmount(
 	dir Direction,
 	quoteAmount sdk.Dec,
 ) (baseAmount sdk.Dec, err error) {
@@ -95,7 +95,7 @@ ret:
     always an absolute value
   - err: error
 */
-func (p *Pool) GetQuoteAmountByBaseAmount(
+func (p *VPool) GetQuoteAmountByBaseAmount(
 	dir Direction, baseAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
 	if baseAmount.IsZero() {
@@ -125,25 +125,25 @@ func (p *Pool) GetQuoteAmountByBaseAmount(
 }
 
 // IncreaseBaseAssetReserve increases the quote reserve by amount
-func (p *Pool) IncreaseBaseAssetReserve(amount sdk.Dec) {
+func (p *VPool) IncreaseBaseAssetReserve(amount sdk.Dec) {
 	p.BaseAssetReserve = p.BaseAssetReserve.Add(amount)
 }
 
 // DecreaseBaseAssetReserve descreases the quote asset reserve by amount
-func (p *Pool) DecreaseBaseAssetReserve(amount sdk.Dec) {
+func (p *VPool) DecreaseBaseAssetReserve(amount sdk.Dec) {
 	p.BaseAssetReserve = p.BaseAssetReserve.Sub(amount)
 }
 
-func (p *Pool) IncreaseQuoteAssetReserve(amount sdk.Dec) {
+func (p *VPool) IncreaseQuoteAssetReserve(amount sdk.Dec) {
 	p.QuoteAssetReserve = p.QuoteAssetReserve.Add(amount)
 }
 
 // DecreaseQuoteAssetReserve decreases the base reserve by amount
-func (p *Pool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
+func (p *VPool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
 	p.QuoteAssetReserve = p.QuoteAssetReserve.Sub(amount)
 }
 
-func (p *Pool) ValidateReserves() error {
+func (p *VPool) ValidateReserves() error {
 	if !p.QuoteAssetReserve.IsPositive() || !p.BaseAssetReserve.IsPositive() {
 		return ErrNonPositiveReserves.Wrap("pool: " + p.String())
 	} else {
@@ -151,7 +151,7 @@ func (p *Pool) ValidateReserves() error {
 	}
 }
 
-func (m *Pool) Validate() error {
+func (m *VPool) Validate() error {
 	if err := m.Pair.Validate(); err != nil {
 		return fmt.Errorf("invalid asset pair: %w", err)
 	}

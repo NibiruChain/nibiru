@@ -429,7 +429,7 @@ func TestGetVpools(t *testing.T) {
 
 	require.EqualValues(t, 2, len(pools))
 
-	require.EqualValues(t, *pools[0], types.Pool{
+	require.EqualValues(t, *pools[0], types.VPool{
 		Pair:                   common.Pair_BTC_NUSD,
 		BaseAssetReserve:       sdk.NewDec(5_000_000),
 		QuoteAssetReserve:      sdk.NewDec(10_000_000),
@@ -439,7 +439,7 @@ func TestGetVpools(t *testing.T) {
 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
 	})
-	require.EqualValues(t, *pools[1], types.Pool{
+	require.EqualValues(t, *pools[1], types.VPool{
 		Pair:                   common.Pair_ETH_NUSD,
 		BaseAssetReserve:       sdk.NewDec(10_000_000),
 		QuoteAssetReserve:      sdk.NewDec(5_000_000),
@@ -454,14 +454,14 @@ func TestGetVpools(t *testing.T) {
 func TestIsOverFluctuationLimit(t *testing.T) {
 	tests := []struct {
 		name     string
-		pool     types.Pool
+		pool     types.VPool
 		snapshot types.ReserveSnapshot
 
 		isOverLimit bool
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: types.Pool{
+			pool: types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.OneDec(),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -481,7 +481,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "lower limit of fluctuation limit",
-			pool: types.Pool{
+			pool: types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(999),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -501,7 +501,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "upper limit of fluctuation limit",
-			pool: types.Pool{
+			pool: types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(1001),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -521,7 +521,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "under fluctuation limit",
-			pool: types.Pool{
+			pool: types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(998),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -541,7 +541,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "over fluctuation limit",
-			pool: types.Pool{
+			pool: types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(1002),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -572,7 +572,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 func TestCheckFluctuationLimitRatio(t *testing.T) {
 	tests := []struct {
 		name           string
-		pool           *types.Pool
+		pool           *types.VPool
 		prevSnapshot   *types.ReserveSnapshot
 		latestSnapshot *types.ReserveSnapshot
 		ctxBlockHeight int64
@@ -581,7 +581,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 	}{
 		{
 			name: "uses latest snapshot - does not result in error",
-			pool: &types.Pool{
+			pool: &types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(1002),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -608,7 +608,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "uses previous snapshot - results in error",
-			pool: &types.Pool{
+			pool: &types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(1002),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -630,7 +630,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "only one snapshot - no error",
-			pool: &types.Pool{
+			pool: &types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(1000),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -652,7 +652,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "zero fluctuation limit - no error",
-			pool: &types.Pool{
+			pool: &types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.NewDec(2000),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -715,14 +715,14 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 func TestGetMaintenanceMarginRatio(t *testing.T) {
 	tests := []struct {
 		name     string
-		pool     *types.Pool
+		pool     *types.VPool
 		snapshot types.ReserveSnapshot
 
 		expectedMaintenanceMarginRatio sdk.Dec
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: &types.Pool{
+			pool: &types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.OneDec(),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -742,7 +742,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 		},
 		{
 			name: "zero fluctuation limit ratio",
-			pool: &types.Pool{
+			pool: &types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.OneDec(),
 				BaseAssetReserve:       sdk.OneDec(),
@@ -778,13 +778,13 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 func TestGetMaxLeverage(t *testing.T) {
 	tests := []struct {
 		name string
-		pool *types.Pool
+		pool *types.VPool
 
 		expectedMaxLeverage sdk.Dec
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: &types.Pool{
+			pool: &types.VPool{
 				Pair:                   common.Pair_BTC_NUSD,
 				QuoteAssetReserve:      sdk.OneDec(),
 				BaseAssetReserve:       sdk.OneDec(),

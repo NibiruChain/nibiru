@@ -106,7 +106,7 @@ func getPriceWithSnapshot(
 		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve), nil
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
-		pool := types.NewPool(
+		pool := types.NewVPool(
 			snapshotPriceOpts.pair,
 			sdk.OneDec(),
 			snapshot.QuoteAssetReserve,
@@ -119,7 +119,7 @@ func getPriceWithSnapshot(
 		return pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
-		pool := types.NewPool(
+		pool := types.NewVPool(
 			snapshotPriceOpts.pair,
 			sdk.OneDec(),
 			snapshot.QuoteAssetReserve,

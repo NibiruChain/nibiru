@@ -17,7 +17,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			genesis: &GenesisState{
-				Vpools: []*Pool{
+				Vpools: []*VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -45,7 +45,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		"invalid vpool": {
 			genesis: &GenesisState{
-				Vpools: []*Pool{
+				Vpools: []*VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -73,7 +73,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		"duplicate vpool": {
 			genesis: &GenesisState{
-				Vpools: []*Pool{
+				Vpools: []*VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),

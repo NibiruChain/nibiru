@@ -15,7 +15,7 @@ import (
 
 // TODO: https://github.com/NibiruChain/nibiru/issues/475
 func TestGenesis(t *testing.T) {
-	vpools := []*types.Pool{
+	vpools := []*types.VPool{
 		{
 			Pair:                   common.MustNewAssetPair("BTC:NUSD"),
 			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1

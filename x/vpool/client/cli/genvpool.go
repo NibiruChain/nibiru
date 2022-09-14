@@ -87,7 +87,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func parseVpoolParams(args []string) (*types.Pool, error) {
+func parseVpoolParams(args []string) (*types.VPool, error) {
 	vPair, err := common.NewAssetPair(args[0])
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func parseVpoolParams(args []string) (*types.Pool, error) {
 		return nil, err
 	}
 
-	vPool := types.NewPool(
+	vPool := types.NewVPool(
 		vPair,
 		tradeLimit,
 		quoteAsset,

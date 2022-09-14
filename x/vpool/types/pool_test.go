@@ -12,7 +12,7 @@ import (
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
-	pool := NewPool(
+	pool := NewVPool(
 		pair,
 		sdk.MustNewDecFromStr("0.9"), // 0.9
 		sdk.NewDec(10_000_000),       // 10
@@ -36,7 +36,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 func TestSetMarginRatioAndLeverage(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
-	pool := NewPool(
+	pool := NewVPool(
 		pair,
 		sdk.MustNewDecFromStr("0.9"), // 0.9
 		sdk.NewDec(10_000_000),       // 10
@@ -100,7 +100,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := NewPool(
+			pool := NewVPool(
 				/*pair=*/ pair,
 				/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
 				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
@@ -174,7 +174,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := NewPool(
+			pool := NewVPool(
 				/*pair=*/ pair,
 				/*tradeLimitRatio=*/ sdk.OneDec(),
 				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
@@ -202,7 +202,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 func TestIncreaseDecreaseReserves(t *testing.T) {
 	pair := common.MustNewAssetPair("ATOM:NUSD")
 
-	pool := NewPool(
+	pool := NewVPool(
 		pair,
 		/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
 		/*quoteAssetReserve=*/ sdk.NewDec(1_000_000),
@@ -232,20 +232,20 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 
 func TestPool_Validate(t *testing.T) {
 	type test struct {
-		m         *Pool
+		m         *VPool
 		expectErr bool
 	}
 
 	cases := map[string]test{
 		"invalid pair": {
-			m: &Pool{
+			m: &VPool{
 				Pair: common.AssetPair{},
 			},
 			expectErr: true,
 		},
 
 		"invalid trade limit ratio < 0": {
-			m: &Pool{
+			m: &VPool{
 				Pair:            common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio: sdk.NewDec(-1),
 			},
@@ -253,7 +253,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"invalid trade limit ratio > 1": {
-			m: &Pool{
+			m: &VPool{
 				Pair:            common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio: sdk.NewDec(2),
 			},
@@ -261,7 +261,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"quote asset reserve 0": {
-			m: &Pool{
+			m: &VPool{
 				Pair:              common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:   sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve: sdk.ZeroDec(),
@@ -270,7 +270,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"base asset reserve 0": {
-			m: &Pool{
+			m: &VPool{
 				Pair:              common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:   sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve: sdk.NewDec(1_000_000),
@@ -280,7 +280,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"fluctuation < 0": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                  common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:     sdk.NewDec(1_000_000),
@@ -291,7 +291,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"fluctuation > 1": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                  common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:     sdk.NewDec(1_000_000),
@@ -302,7 +302,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max oracle spread ratio < 0": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                  common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:     sdk.NewDec(1_000_000),
@@ -314,7 +314,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max oracle spread ratio > 1": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                  common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:     sdk.NewDec(1_000_000),
@@ -326,7 +326,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"maintenance ratio < 0": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:      sdk.NewDec(1_000_000),
@@ -339,7 +339,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"maintenance ratio > 1": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:      sdk.NewDec(1_000_000),
@@ -352,7 +352,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max leverage < 0": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:      sdk.NewDec(1_000_000),
@@ -366,7 +366,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max leverage too high for maintenance margin ratio": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:      sdk.NewDec(1_000_000),
@@ -380,7 +380,7 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"success": {
-			m: &Pool{
+			m: &VPool{
 				Pair:                   common.MustNewAssetPair("btc:usd"),
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve:      sdk.NewDec(1_000_000),
