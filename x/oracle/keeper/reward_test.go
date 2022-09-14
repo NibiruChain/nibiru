@@ -111,7 +111,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
 		QuoDec(sdk.NewDec(int64(periods))).
 		QuoDec(sdk.NewDec(int64(validators)))
-	keeper.AllocateRewards(t, input, common.PairGovStable.String(), sdk.NewCoins(rewards), periods)
+	keeper.AllocateRewards(t, input, common.Pair_NIBI_NUSD.String(), sdk.NewCoins(rewards), periods)
 
 	for i := uint64(1); i <= periods; i++ {
 		for valIndex := 0; valIndex < validators; valIndex++ {
@@ -119,7 +119,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 			// passes the current context block height for pre vote
 			// then changes the height to current height + vote period for the vote
 			makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{
-				Pair:         common.PairGovStable.String(),
+				Pair:         common.Pair_NIBI_NUSD.String(),
 				ExchangeRate: randomExchangeRate,
 			}}, valIndex)
 		}
@@ -136,11 +136,11 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	}
 
 	// assert there are no rewards for pair
-	require.True(t, input.OracleKeeper.AccrueVotePeriodPairRewards(input.Ctx, common.PairGovStable.String()).IsZero())
+	require.True(t, input.OracleKeeper.AccrueVotePeriodPairRewards(input.Ctx, common.Pair_NIBI_NUSD.String()).IsZero())
 
 	// assert that there are no rewards instances
 	found := false
-	input.OracleKeeper.IteratePairRewards(input.Ctx, common.PairGovStable.String(), func(rewards *types.PairReward) (stop bool) {
+	input.OracleKeeper.IteratePairRewards(input.Ctx, common.Pair_NIBI_NUSD.String(), func(rewards *types.PairReward) (stop bool) {
 		found = true
 		return true
 	})

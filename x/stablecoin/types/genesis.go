@@ -13,7 +13,7 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:               DefaultParams(),
-		ModuleAccountBalance: sdk.NewCoin(common.DenomColl, sdk.ZeroInt()),
+		ModuleAccountBalance: sdk.NewCoin(common.DenomUSDC, sdk.ZeroInt()),
 	}
 }
 
