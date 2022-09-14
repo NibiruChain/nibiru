@@ -30,8 +30,9 @@ type Keeper struct {
 	StakingKeeper types.StakingKeeper
 	distrName     string
 
-	PairRewardsID collections.Sequence
-	ExchangeRates collections.Map[keys.StringKey, sdk.DecProto, *sdk.DecProto]
+	PairRewardsID     collections.Sequence
+	ExchangeRates     collections.Map[keys.StringKey, sdk.DecProto, *sdk.DecProto]
+	FeederDelegations collections.Map[keys.StringKey, gogotypes.BytesValue, *gogotypes.BytesValue]
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -50,16 +51,17 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 	}
 
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		paramSpace:    paramspace,
-		accountKeeper: accountKeeper,
-		bankKeeper:    bankKeeper,
-		distrKeeper:   distrKeeper,
-		StakingKeeper: stakingKeeper,
-		distrName:     distrName,
-		PairRewardsID: collections.NewSequence(cdc, storeKey, 0),
-		ExchangeRates: collections.NewMap[keys.StringKey, sdk.DecProto](cdc, storeKey, 1),
+		cdc:               cdc,
+		storeKey:          storeKey,
+		paramSpace:        paramspace,
+		accountKeeper:     accountKeeper,
+		bankKeeper:        bankKeeper,
+		distrKeeper:       distrKeeper,
+		StakingKeeper:     stakingKeeper,
+		distrName:         distrName,
+		PairRewardsID:     collections.NewSequence(cdc, storeKey, 0),
+		ExchangeRates:     collections.NewMap[keys.StringKey, sdk.DecProto](cdc, storeKey, 1),
+		FeederDelegations: collections.NewMap[keys.StringKey, gogotypes.BytesValue](cdc, storeKey, 2),
 	}
 }
 
@@ -80,43 +82,6 @@ func (k Keeper) SetExchangeRateWithEvent(ctx sdk.Context, pair string, exchangeR
 			sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
 		),
 	)
-}
-
-//-----------------------------------
-// Oracle delegation logic
-
-// GetFeederDelegation gets the account address that the validator operator delegated oracle vote rights to
-func (k Keeper) GetFeederDelegation(ctx sdk.Context, operator sdk.ValAddress) sdk.AccAddress {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetFeederDelegationKey(operator))
-	if bz == nil {
-		// By default the right is delegated to the validator itself
-		return sdk.AccAddress(operator)
-	}
-
-	return sdk.AccAddress(bz)
-}
-
-// SetFeederDelegation sets the account address that the validator operator delegated oracle vote rights to
-func (k Keeper) SetFeederDelegation(ctx sdk.Context, operator sdk.ValAddress, delegatedFeeder sdk.AccAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetFeederDelegationKey(operator), delegatedFeeder.Bytes())
-}
-
-// IterateFeederDelegations iterates over the feed delegates and performs a callback function.
-func (k Keeper) IterateFeederDelegations(ctx sdk.Context,
-	handler func(delegator sdk.ValAddress, delegate sdk.AccAddress) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.FeederDelegationKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		delegator := sdk.ValAddress(iter.Key()[2:])
-		delegate := sdk.AccAddress(iter.Value())
-
-		if handler(delegator, delegate) {
-			break
-		}
-	}
 }
 
 //-----------------------------------
@@ -297,7 +262,8 @@ func (k Keeper) ClearPairs(ctx sdk.Context) {
 // ValidateFeeder return the given feeder is allowed to feed the message or not
 func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
 	if !feederAddr.Equals(validatorAddr) {
-		delegate := k.GetFeederDelegation(ctx, validatorAddr)
+		// delegation by default is the one of the validator acc address
+		delegate := sdk.AccAddress(k.FeederDelegations.GetOr(ctx, keys.String(validatorAddr.String()), gogotypes.BytesValue{Value: validatorAddr}).Value)
 		if !delegate.Equals(feederAddr) {
 			return sdkerrors.Wrapf(types.ErrNoVotingPermission, "wanted: %s, got: %s", delegate.String(), feederAddr.String())
 		}

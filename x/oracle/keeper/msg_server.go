@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"context"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -154,7 +156,7 @@ func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDel
 	}
 
 	// Set the delegation
-	ms.SetFeederDelegation(ctx, operatorAddr, delegateAddr)
+	ms.FeederDelegations.Insert(ctx, keys.String(msg.Operator), gogotypes.BytesValue{Value: delegateAddr})
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

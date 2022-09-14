@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -51,41 +53,6 @@ func TestParams(t *testing.T) {
 	storedParams := input.OracleKeeper.GetParams(input.Ctx)
 	require.NotNil(t, storedParams)
 	require.Equal(t, storedParams, newParams)
-}
-
-func TestFeederDelegation(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// Test default getters and setters
-	delegate := input.OracleKeeper.GetFeederDelegation(input.Ctx, ValAddrs[0])
-	require.Equal(t, Addrs[0], delegate)
-
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, ValAddrs[0], Addrs[1])
-	delegate = input.OracleKeeper.GetFeederDelegation(input.Ctx, ValAddrs[0])
-	require.Equal(t, Addrs[1], delegate)
-}
-
-func TestIterateFeederDelegations(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// Test default getters and setters
-	delegate := input.OracleKeeper.GetFeederDelegation(input.Ctx, ValAddrs[0])
-	require.Equal(t, Addrs[0], delegate)
-
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, ValAddrs[0], Addrs[1])
-
-	var delegators []sdk.ValAddress
-	var delegates []sdk.AccAddress
-	input.OracleKeeper.IterateFeederDelegations(input.Ctx, func(delegator sdk.ValAddress, delegate sdk.AccAddress) (stop bool) {
-		delegators = append(delegators, delegator)
-		delegates = append(delegates, delegate)
-		return false
-	})
-
-	require.Equal(t, 1, len(delegators))
-	require.Equal(t, 1, len(delegates))
-	require.Equal(t, ValAddrs[0], delegators[0])
-	require.Equal(t, Addrs[1], delegates[0])
 }
 
 func TestMissCounter(t *testing.T) {
@@ -283,7 +250,7 @@ func TestValidateFeeder(t *testing.T) {
 	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr1)))
 
 	// delegate works
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, addr, sdk.AccAddress(addr1))
+	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, keys.String(addr.String()), gogotypes.BytesValue{Value: addr1})
 	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
 	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, Addrs[2], addr))
 

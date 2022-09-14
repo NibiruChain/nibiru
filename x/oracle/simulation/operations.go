@@ -3,6 +3,8 @@ package simulation
 //DONTCOVER
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 	"math/rand"
 	"strings"
 
@@ -104,7 +106,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		exchangeRatesStr = strings.TrimRight(exchangeRatesStr, ",")
 		voteHash := types.GetAggregateVoteHash(salt, exchangeRatesStr, address)
 
-		feederAddr := k.GetFeederDelegation(ctx, address)
+		feederAddr := sdk.AccAddress(k.FeederDelegations.GetOr(ctx, keys.String(address.String()), gogotypes.BytesValue{Value: address}).Value)
 		feederSimAccount, _ := simtypes.FindAccount(accs, feederAddr)
 
 		feederAccount := ak.GetAccount(ctx, feederAddr)
@@ -175,7 +177,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "reveal period of submitted vote do not match with registered prevote"), nil, nil
 		}
 
-		feederAddr := k.GetFeederDelegation(ctx, address)
+		feederAddr := sdk.AccAddress(k.FeederDelegations.GetOr(ctx, keys.String(address.String()), gogotypes.BytesValue{Value: address}).Value)
 		feederSimAccount, _ := simtypes.FindAccount(accs, feederAddr)
 		feederAccount := ak.GetAccount(ctx, feederAddr)
 		spendableCoins := bk.SpendableCoins(ctx, feederAddr)

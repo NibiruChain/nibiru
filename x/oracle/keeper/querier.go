@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -99,7 +100,7 @@ func (q querier) FeederDelegation(c context.Context, req *types.QueryFeederDeleg
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryFeederDelegationResponse{
-		FeederAddr: q.GetFeederDelegation(ctx, valAddr).String(),
+		FeederAddr: sdk.AccAddress(q.FeederDelegations.GetOr(ctx, keys.String(req.ValidatorAddr), gogotypes.BytesValue{Value: valAddr}).Value).String(),
 	}, nil
 }
 

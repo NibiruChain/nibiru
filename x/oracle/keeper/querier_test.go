@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 	"sort"
 	"testing"
 
@@ -111,7 +112,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, ValAddrs[0], Addrs[1])
+	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, keys.String(ValAddrs[0].String()), gogotypes.BytesValue{Value: Addrs[1]})
 
 	// empty request
 	_, err := querier.FeederDelegation(ctx, nil)

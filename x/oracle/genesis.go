@@ -3,6 +3,7 @@ package oracle
 import (
 	"fmt"
 	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -24,7 +25,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.SetFeederDelegation(ctx, voter, feeder)
+		keeper.FeederDelegations.Insert(ctx, keys.String(voter.String()), gogotypes.BytesValue{Value: feeder})
 	}
 
 	for _, ex := range data.ExchangeRates {
@@ -87,13 +88,12 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	params := keeper.GetParams(ctx)
 	feederDelegations := []types.FeederDelegation{}
-	keeper.IterateFeederDelegations(ctx, func(valAddr sdk.ValAddress, feederAddr sdk.AccAddress) (stop bool) {
+	for _, v := range keeper.FeederDelegations.Iterate(ctx, keys.NewRange[keys.StringKey]()).KeyValues() {
 		feederDelegations = append(feederDelegations, types.FeederDelegation{
-			FeederAddress:    feederAddr.String(),
-			ValidatorAddress: valAddr.String(),
+			FeederAddress:    sdk.AccAddress(v.Value.Value).String(),
+			ValidatorAddress: string(v.Key),
 		})
-		return false
-	})
+	}
 
 	exchangeRates := []types.ExchangeRateTuple{}
 	for _, v := range keeper.ExchangeRates.Iterate(ctx, keys.NewRange[keys.StringKey]()).KeyValues() {
