@@ -47,7 +47,7 @@ message ReserveSnapshot {
 
 // A virtual pool used only for price discovery of perpetual futures contracts.
 // No real liquidity exists in this pool.
-message Pool {
+message VPool {
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
   common.AssetPair pair = 1 [
     (gogoproto.nullable) = false
