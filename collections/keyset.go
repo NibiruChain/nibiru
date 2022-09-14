@@ -18,7 +18,7 @@ type KeySetIterator[K keys.Key] MapIterator[K, setObject, *setObject]
 // NewKeySet instantiates a new KeySet.
 func NewKeySet[K keys.Key](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8) KeySet[K] {
 	return KeySet[K]{
-		cdc:      cdc,
+		cdc:      newStoreCodec(cdc),
 		sk:       sk,
 		prefix:   []byte{prefix},
 		typeName: typeName(new(setObject)),

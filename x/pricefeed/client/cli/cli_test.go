@@ -106,7 +106,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	res, err := testutilcli.QueryPrice(
 		s.network.Validators[0].ClientCtx,
-		common.PairGovStable.String(),
+		common.Pair_NIBI_NUSD.String(),
 	)
 	s.Require().NoError(err)
 	s.Assert().Equal(sdk.NewDec(10), res.Price.Price)
@@ -129,7 +129,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.PairCollStable.String(),
+				common.Pair_USDC_NUSD.String(),
 			},
 			expectedPrice: sdk.NewDec(1),
 			respType:      &pricefeedtypes.QueryPriceResponse{},
@@ -137,7 +137,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.PairGovStable.String(),
+				common.Pair_NIBI_NUSD.String(),
 			},
 			expectedPrice: sdk.NewDec(10),
 			respType:      &pricefeedtypes.QueryPriceResponse{},
@@ -188,7 +188,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		{
 			name: "Get default price of collateral token",
 			args: []string{
-				common.PairCollStable.String(),
+				common.Pair_USDC_NUSD.String(),
 			},
 			expectedPrice: sdk.NewDec(1),
 			respType:      &pricefeedtypes.QueryRawPricesResponse{},
@@ -196,7 +196,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 		{
 			name: "Get default price of governance token",
 			args: []string{
-				common.PairGovStable.String(),
+				common.Pair_NIBI_NUSD.String(),
 			},
 			expectedPrice: sdk.NewDec(10),
 			respType:      &pricefeedtypes.QueryRawPricesResponse{},
@@ -256,10 +256,10 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 		{
 			name: "Get current pairs",
 			expectedMarkets: []pricefeedtypes.Market{
-				pricefeedtypes.NewMarket(common.PairGovStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewMarket(common.PairCollStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewMarket(common.PairBTCStable, []sdk.AccAddress{oracle}, true),
-				pricefeedtypes.NewMarket(common.PairETHStable, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.Pair_NIBI_NUSD, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.Pair_USDC_NUSD, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.Pair_BTC_NUSD, []sdk.AccAddress{oracle}, true),
+				pricefeedtypes.NewMarket(common.Pair_ETH_NUSD, []sdk.AccAddress{oracle}, true),
 			},
 			respType: &pricefeedtypes.QueryMarketsResponse{},
 		},
@@ -301,12 +301,12 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 			name: "Get current prices",
 			expectedPrices: []pricefeedtypes.CurrentPriceResponse{
 				{
-					PairID: common.PairGovStable.String(),
+					PairID: common.Pair_NIBI_NUSD.String(),
 					Price:  sdk.NewDec(10),
 					Twap:   sdk.ZeroDec(),
 				},
 				{
-					PairID: common.PairCollStable.String(),
+					PairID: common.Pair_USDC_NUSD.String(),
 					Price:  sdk.NewDec(1),
 					Twap:   sdk.ZeroDec(),
 				},
@@ -350,7 +350,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		{
 			name: "Get the collateral oracles",
 			args: []string{
-				common.PairCollStable.String(),
+				common.Pair_USDC_NUSD.String(),
 			},
 			expectedOracles: []string{genOracleAddress},
 			respType:        &pricefeedtypes.QueryOraclesResponse{},
@@ -358,7 +358,7 @@ func (s IntegrationTestSuite) TestOraclesCmd() {
 		{
 			name: "Get the governance oracles",
 			args: []string{
-				common.PairGovStable.String(),
+				common.Pair_NIBI_NUSD.String(),
 			},
 			expectedOracles: []string{genOracleAddress},
 			respType:        &pricefeedtypes.QueryOraclesResponse{},
@@ -412,7 +412,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 	val := s.network.Validators[0]
 
-	gov, col := common.PairGovStable, common.PairCollStable
+	gov, col := common.Pair_NIBI_NUSD, common.Pair_USDC_NUSD
 	now := time.Now()
 	expireInOneHour := strconv.Itoa(int(now.Add(1 * time.Hour).Unix()))
 	expiredTS := strconv.Itoa(int(now.Add(-1 * time.Hour).Unix()))
@@ -431,7 +431,7 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.DenomGov, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10))).String()),
 	}
 	testCases := []struct {
 		name string
@@ -518,8 +518,8 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 			s.Require().EqualValues(
 				tc.expectedFeePaid.Int64(),
-				bankBalanceStart.Balances.AmountOf(common.DenomGov).
-					Sub(bankBalanceEnd.Balances.AmountOf(common.DenomGov)).Int64(),
+				bankBalanceStart.Balances.AmountOf(common.DenomNIBI).
+					Sub(bankBalanceEnd.Balances.AmountOf(common.DenomNIBI)).Int64(),
 			)
 
 			txResp := tc.respType.(*sdk.TxResponse)

@@ -17,7 +17,7 @@ func NewItem[V any, PV interface {
 	return Item[V, PV]{
 		prefix:   []byte{prefix},
 		sk:       sk,
-		cdc:      cdc,
+		cdc:      newStoreCodec(cdc),
 		typeName: typeName(PV(new(V))),
 	}
 }
@@ -25,9 +25,9 @@ func NewItem[V any, PV interface {
 // Item represents a state object which will always have one instance
 // of itself saved in the namespace.
 // Examples are:
-// 	- config
-// 	- parameters
-// 	- a sequence
+//   - config
+//   - parameters
+//   - a sequence
 type Item[V any, PV interface {
 	*V
 	Object
@@ -35,7 +35,7 @@ type Item[V any, PV interface {
 	_        V
 	prefix   []byte
 	sk       sdk.StoreKey
-	cdc      codec.BinaryCodec
+	cdc      storeCodec
 	typeName string
 }
 
@@ -53,7 +53,7 @@ func (i Item[V, PV]) Get(ctx sdk.Context) (V, error) {
 	}
 
 	var v V
-	i.cdc.MustUnmarshal(bytes, PV(&v))
+	i.cdc.unmarshal(bytes, PV(&v))
 	return v, nil
 }
 
@@ -69,5 +69,5 @@ func (i Item[V, PV]) GetOr(ctx sdk.Context, def V) V {
 
 // Set sets the item value to v.
 func (i Item[V, PV]) Set(ctx sdk.Context, v V) {
-	i.getStore(ctx).Set(itemKey, i.cdc.MustMarshal(PV(&v)))
+	i.getStore(ctx).Set(itemKey, i.cdc.marshal(PV(&v)))
 }

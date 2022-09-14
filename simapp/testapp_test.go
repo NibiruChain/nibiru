@@ -90,8 +90,8 @@ func (s *TestappSuite) TestPricefeedGenesis_PostedPrices() {
 	}
 	currentPrices = nibiruApp.PricefeedKeeper.GetCurrentPrices(ctx)
 	s.Assert().Len(currentPrices, 2)
-	s.Assert().Equal(common.PairGovStable.String(), currentPrices[0].PairID)
-	s.Assert().Equal(common.PairCollStable.String(), currentPrices[1].PairID)
+	s.Assert().Equal(common.Pair_NIBI_NUSD.String(), currentPrices[0].PairID)
+	s.Assert().Equal(common.Pair_USDC_NUSD.String(), currentPrices[1].PairID)
 }
 
 func TestTestappSuite(t *testing.T) {

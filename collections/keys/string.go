@@ -27,7 +27,7 @@ func (s StringKey) FromKeyBytes(b []byte) (int, Key) {
 	}
 	for i, c := range b {
 		if c == 0 {
-			return i, StringKey(b[:i])
+			return i + 1, StringKey(b[:i])
 		}
 	}
 	panic(fmt.Errorf("StringKey is not null terminated: %s", s))
@@ -35,4 +35,15 @@ func (s StringKey) FromKeyBytes(b []byte) (int, Key) {
 
 func (s StringKey) String() string {
 	return string(s)
+}
+
+// permit strings to be used as collections.Object
+
+func (s StringKey) Marshal() ([]byte, error) {
+	return []byte(s), nil
+}
+
+func (s *StringKey) Unmarshal(b []byte) error {
+	*s = StringKey(b)
+	return validString(*s)
 }
