@@ -23,8 +23,8 @@ func TestQueryReserveAssets(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pool := types.NewPool(
-		/* pair */ common.PairBTCStable,
+	pool := types.NewVPool(
+		/* pair */ common.Pair_BTC_NUSD,
 		/* tradeLimitRatio */ sdk.ZeroDec(),
 		/* quoteAmount */ sdk.NewDec(1_000_000),
 		/* baseAmount */ sdk.NewDec(1000),
@@ -39,7 +39,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	resp, err := queryServer.ReserveAssets(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryReserveAssetsRequest{
-			Pair: common.PairBTCStable.String(),
+			Pair: common.Pair_BTC_NUSD.String(),
 		},
 	)
 
@@ -57,7 +57,7 @@ func TestQueryAllPools(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pair := common.MustNewAssetPair("foo:bar")
-	pool := types.NewPool(
+	pool := types.NewVPool(
 		/* pair */ pair,
 		/* tradeLimitRatio */ sdk.ZeroDec(),
 		/* quoteAmount */ sdk.NewDec(1_000_000), // 1e6

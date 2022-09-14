@@ -273,7 +273,7 @@ args:
 ret:
   - err: error if any
 */
-func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
+func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.VPool) error {
 	if pool.FluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
 		return nil
@@ -304,7 +304,7 @@ args:
 ret:
   - bool: true if the fluctuation limit is violated. false otherwise
 */
-func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
+func isOverFluctuationLimit(pool *types.VPool, snapshot types.ReserveSnapshot) bool {
 	if pool.FluctuationLimitRatio.IsZero() {
 		return false
 	}
