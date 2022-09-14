@@ -55,9 +55,8 @@ func (t Pair[K1, K2]) FromKeyBytes(b []byte) (int, Key) {
 	// NOTE(mercilex): is it always safe to assume that when we get a part
 	// of the key it's going to always contain the full key and not only a part?
 	i1, k1 := t.fkb1(b)
-	i2, k2 := t.fkb2(b[i1+1:]) // add one to not pass last index
-	// add one back as the indexes reported back will start from the last index + 1
-	return i1 + i2 + 1, Pair[K1, K2]{
+	i2, k2 := t.fkb2(b[i1:])
+	return i1 + i2, Pair[K1, K2]{
 		p1: &k1,
 		p2: &k2,
 	}

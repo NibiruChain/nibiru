@@ -61,24 +61,20 @@ func (r Range[K]) Compile() (prefix []byte, start []byte, end []byte, order Orde
 func (r Range[K]) compileStart() []byte {
 	bytes := r.start.value.KeyBytes()
 	// iterator start is inclusive by default
-	if r.start.bound == boundInclusive {
+	if r.start.inclusive {
 		return bytes
-	} else if r.start.bound == boundExclusive {
-		return extendOneByte(bytes)
 	} else {
-		panic("unreachable")
+		return extendOneByte(bytes)
 	}
 }
 
 func (r Range[K]) compileEnd() []byte {
 	bytes := r.end.value.KeyBytes()
 	// iterator end is exclusive by default
-	if r.end.bound == boundExclusive {
+	if !r.end.inclusive {
 		return bytes
-	} else if r.end.bound == boundInclusive {
-		return extendOneByte(bytes)
 	} else {
-		panic("unreachable")
+		return extendOneByte(bytes)
 	}
 }
 
@@ -86,30 +82,23 @@ func extendOneByte(b []byte) []byte {
 	return append(b, 0)
 }
 
-type bound = uint8
-
-const (
-	boundInclusive = iota
-	boundExclusive
-)
-
 type Bound[K Key] struct {
-	value K
-	bound bound
+	value     K
+	inclusive bool
 }
 
 // Inclusive creates a key Bound which is inclusive.
 func Inclusive[K Key](k K) Bound[K] {
 	return Bound[K]{
-		value: k,
-		bound: boundInclusive,
+		value:     k,
+		inclusive: true,
 	}
 }
 
 // Exclusive creates a key Bound which is exclusive.
 func Exclusive[K Key](k K) Bound[K] {
 	return Bound[K]{
-		value: k,
-		bound: boundExclusive,
+		value:     k,
+		inclusive: false,
 	}
 }
