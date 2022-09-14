@@ -1,8 +1,8 @@
 package keys_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -10,7 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	db "github.com/tendermint/tm-db"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 )
 
 // deps is repeated but, don't want to create cross pkg dependencies
