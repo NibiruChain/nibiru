@@ -49,7 +49,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 	}
 
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight()))
-	ms.SetAggregateExchangeRatePrevote(ctx, valAddr, aggregatePrevote)
+	ms.Prevotes.Insert(ctx, keys.StringKey(valAddr.String()), aggregatePrevote)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -85,7 +85,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	params := ms.GetParams(ctx)
 
-	aggregatePrevote, err := ms.GetAggregateExchangeRatePrevote(ctx, valAddr)
+	aggregatePrevote, err := ms.Prevotes.Get(ctx, keys.String(valAddr.String()))
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
 	}
@@ -118,7 +118,10 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	// Move aggregate prevote to aggregate vote with given exchange rates
 	ms.SetAggregateExchangeRateVote(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
-	ms.DeleteAggregateExchangeRatePrevote(ctx, valAddr)
+	err = ms.Prevotes.Delete(ctx, keys.String(valAddr.String()))
+	if err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

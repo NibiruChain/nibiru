@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"sort"
 	"testing"
 
@@ -114,7 +115,7 @@ func TestClearBallots(t *testing.T) {
 	}
 
 	for i := range btcBallot {
-		input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[i], types.AggregateExchangeRatePrevote{
+		input.OracleKeeper.Prevotes.Insert(input.Ctx, keys.String(ValAddrs[i].String()), types.AggregateExchangeRatePrevote{
 			Hash:        "",
 			Voter:       ValAddrs[i].String(),
 			SubmitBlock: uint64(input.Ctx.BlockHeight()),
@@ -129,12 +130,8 @@ func TestClearBallots(t *testing.T) {
 
 	input.OracleKeeper.ClearBallots(input.Ctx, 5)
 
-	prevoteCounter := 0
+	prevoteCounter := len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys())
 	voteCounter := 0
-	input.OracleKeeper.IterateAggregateExchangeRatePrevotes(input.Ctx, func(_ sdk.ValAddress, _ types.AggregateExchangeRatePrevote) bool {
-		prevoteCounter++
-		return false
-	})
 	input.OracleKeeper.IterateAggregateExchangeRateVotes(input.Ctx, func(_ sdk.ValAddress, _ types.AggregateExchangeRateVote) bool {
 		voteCounter++
 		return false
@@ -145,11 +142,7 @@ func TestClearBallots(t *testing.T) {
 
 	input.OracleKeeper.ClearBallots(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
 
-	prevoteCounter = 0
-	input.OracleKeeper.IterateAggregateExchangeRatePrevotes(input.Ctx, func(_ sdk.ValAddress, _ types.AggregateExchangeRatePrevote) bool {
-		prevoteCounter++
-		return false
-	})
+	prevoteCounter = len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys())
 	require.Equal(t, prevoteCounter, 0)
 }
 

@@ -1,6 +1,8 @@
 package oracle_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
+	gogotypes "github.com/gogo/protobuf/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,13 +17,13 @@ import (
 func TestExportInitGenesis(t *testing.T) {
 	input := keeper.CreateTestInput(t)
 
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
+	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.BytesValue{Value: keeper.Addrs[0].Bytes()})
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, "pair1:pair2", sdk.DecProto{Dec: sdk.NewDec(123)})
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{123}, keeper.ValAddrs[0], uint64(2)))
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{123}, keeper.ValAddrs[0], uint64(2)))
 	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "foo", ExchangeRate: sdk.NewDec(123)}}, keeper.ValAddrs[0]))
 	input.OracleKeeper.SetPair(input.Ctx, "pair1:pair1")
 	input.OracleKeeper.SetPair(input.Ctx, "pair2:pair2")
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], 10)
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{Value: 10})
 	input.OracleKeeper.SetPairReward(input.Ctx, &types.PairReward{
 		Pair: "pair1:pair2",
 	})

@@ -167,7 +167,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 		}
 
 		// get prevote
-		prevote, err := k.GetAggregateExchangeRatePrevote(ctx, address)
+		prevote, err := k.Prevotes.Get(ctx, keys.String(address.String()))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "prevote not found"), nil, nil
 		}

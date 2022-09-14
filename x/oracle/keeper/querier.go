@@ -133,7 +133,7 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	prevote, err := q.GetAggregateExchangeRatePrevote(ctx, valAddr)
+	prevote, err := q.Keeper.Prevotes.Get(ctx, keys.String(valAddr.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -144,17 +144,9 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 }
 
 // AggregatePrevotes queries aggregate prevotes of all validators
-func (q querier) AggregatePrevotes(c context.Context, _ *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var prevotes []types.AggregateExchangeRatePrevote
-	q.IterateAggregateExchangeRatePrevotes(ctx, func(_ sdk.ValAddress, prevote types.AggregateExchangeRatePrevote) bool {
-		prevotes = append(prevotes, prevote)
-		return false
-	})
-
+func (q querier) AggregatePrevotes(goCtx context.Context, _ *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
 	return &types.QueryAggregatePrevotesResponse{
-		AggregatePrevotes: prevotes,
+		AggregatePrevotes: q.Keeper.Prevotes.Iterate(sdk.UnwrapSDKContext(goCtx), keys.NewRange[keys.StringKey]()).Values(),
 	}, nil
 }
 
