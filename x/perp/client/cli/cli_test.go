@@ -5,18 +5,18 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
@@ -40,7 +40,7 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	pairs := common.AssetPairs{common.PairBTCStable, common.PairETHStable}
+	pairs := common.AssetPairs{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD}
 	defaultGenesis := simapp.PricefeedGenesis()
 	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
 	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
@@ -152,8 +152,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomNIBI, 100_000_000),
-			sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
+			sdk.NewInt64Coin(common.DenomNIBI, 100_000_00),
+			sdk.NewInt64Coin(common.DenomUSDC, 100_000_00),
 			sdk.NewInt64Coin(common.DenomNUSD, 50_000_000),
 		),
 		val,
@@ -168,7 +168,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			sdk.NewInt64Coin(common.DenomNUSD, 100000),
 		),
 		val,
-		common.DenomGov,
+		common.DenomNIBI,
 	)
 	s.Require().NoError(err)
 
@@ -237,7 +237,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
-	s.EqualValues(sdk.NewDec(0), queryResp.MarginRatioIndex)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioIndex)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{
@@ -325,7 +325,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("1000099.999999999999999651"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000843"), queryResp.UnrealizedPnl)
 	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
-	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.001)
+	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.008)
 
 	s.T().Log("F. Close position")
 	args = []string{
