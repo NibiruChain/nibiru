@@ -23,18 +23,18 @@ func TestExchangeRate(t *testing.T) {
 	btcStableRate := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
 
 	// Set & get rates
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairCollStable.String(), pairCollRate)
-	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairCollStable.String())
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_USDC_NUSD.String(), pairCollRate)
+	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_USDC_NUSD.String())
 	require.NoError(t, err)
 	require.Equal(t, pairCollRate, rate)
 
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), btcStableRate)
-	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), btcStableRate)
+	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.NoError(t, err)
 	require.Equal(t, btcStableRate, rate)
 
-	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.PairBTCStable.String())
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.PairBTCStable.String())
+	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
+	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.Error(t, err)
 
 	numExchangeRates := 0
@@ -55,17 +55,17 @@ func TestIterateExchangeRates(t *testing.T) {
 	btcStablePrice := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
 
 	// Set & get rates
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairCollStable.String(), collStablePrice)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), ethStablePrice)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), btcStablePrice)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_USDC_NUSD.String(), collStablePrice)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), ethStablePrice)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), btcStablePrice)
 
 	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(pair string, rate sdk.Dec) (stop bool) {
 		switch pair {
-		case common.PairCollStable.String():
+		case common.Pair_USDC_NUSD.String():
 			require.Equal(t, collStablePrice, rate)
-		case common.PairETHStable.String():
+		case common.Pair_ETH_NUSD.String():
 			require.Equal(t, ethStablePrice, rate)
-		case common.PairBTCStable.String():
+		case common.Pair_BTC_NUSD.String():
 			require.Equal(t, btcStablePrice, rate)
 		}
 		return false
@@ -122,8 +122,8 @@ func TestParams(t *testing.T) {
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := types.PairList{
-		{Name: common.PairETHStable.String()},
-		{Name: common.PairBTCStable.String()},
+		{Name: common.Pair_ETH_NUSD.String()},
+		{Name: common.Pair_BTC_NUSD.String()},
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -318,10 +318,10 @@ func TestPairGetSetIterate(t *testing.T) {
 	input := CreateTestInput(t)
 
 	pairs := []string{
-		common.PairBTCStable.String(),
-		common.PairGovStable.String(),
-		common.PairCollStable.String(),
-		common.PairETHStable.String(),
+		common.Pair_BTC_NUSD.String(),
+		common.Pair_NIBI_NUSD.String(),
+		common.Pair_USDC_NUSD.String(),
+		common.Pair_ETH_NUSD.String(),
 	}
 
 	for _, pair := range pairs {

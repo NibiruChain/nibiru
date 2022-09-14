@@ -37,16 +37,16 @@ var (
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultWhitelist     = PairList{
 		{
-			Name: common.PairBTCStable.String(),
+			Name: common.Pair_BTC_NUSD.String(),
 		},
 		{
-			Name: common.PairCollStable.String(),
+			Name: common.Pair_USDC_NUSD.String(),
 		},
 		{
-			Name: common.PairETHStable.String(),
+			Name: common.Pair_ETH_NUSD.String(),
 		},
 		{
-			Name: common.PairGovStable.String(),
+			Name: common.Pair_NIBI_NUSD.String(),
 		},
 	}
 	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4) // 0.01%

@@ -164,7 +164,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
-	pair := common.PairBTCStable
+	pair := common.Pair_BTC_NUSD
 	keeper.OraclesStore().AddOracles(ctx, pair, addrs)
 	keeper.SetParams(ctx, types.Params{
 		Pairs:              common.AssetPairs{pair},

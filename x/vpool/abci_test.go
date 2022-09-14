@@ -29,7 +29,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	vpoolKeeper.CreatePool(
 		ctx,
-		common.PairBTCStable,
+		common.Pair_BTC_NUSD,
 		sdk.OneDec(),
 		sdk.NewDec(10),
 		sdk.NewDec(10),
@@ -47,14 +47,14 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.PairBTCStable, uint64(ctx.BlockHeight()-1))
+	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, uint64(ctx.BlockHeight()-1))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
 	_, err = vpoolKeeper.SwapQuoteForBase(
 		ctx,
-		common.PairBTCStable,
+		common.Pair_BTC_NUSD,
 		types.Direction_ADD_TO_POOL,
 		sdk.NewDec(10),
 		sdk.ZeroDec(),
@@ -70,7 +70,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err = vpoolKeeper.GetSnapshot(ctx, common.PairBTCStable, uint64(ctx.BlockHeight()-1))
+	snapshot, err = vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, uint64(ctx.BlockHeight()-1))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 }

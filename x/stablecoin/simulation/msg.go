@@ -23,7 +23,7 @@ func SimulateMsgMintStable(
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAcc, _ := simtypes.RandomAcc(r, accs)
 		// How much stable should get minted?
-		simStable := sdk.NewCoin(common.DenomStable, sdk.NewInt(100))
+		simStable := sdk.NewCoin(common.DenomNUSD, sdk.NewInt(100))
 		msg := &types.MsgMintStable{
 			Creator: simAcc.Address.String(),
 			Stable:  simStable,

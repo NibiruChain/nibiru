@@ -50,7 +50,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			markPrice:                      sdk.NewDec(10),
 			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.ZeroDec()},
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                  common.PairBTCStable.String(),
+				Pair:                  common.Pair_BTC_NUSD.String(),
 				MarkPrice:             sdk.NewDec(10),
 				IndexPrice:            sdk.NewDec(10),
 				LatestFundingRate:     sdk.ZeroDec(),
@@ -65,7 +65,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			indexPrice:                     sdk.NewDec(462),
 			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("-18.458333333333333333")},
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                  common.PairBTCStable.String(),
+				Pair:                  common.Pair_BTC_NUSD.String(),
 				MarkPrice:             sdk.NewDec(19),
 				IndexPrice:            sdk.NewDec(462),
 				LatestFundingRate:     sdk.MustNewDecFromStr("-18.458333333333333333"),
@@ -80,7 +80,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			indexPrice:                     sdk.NewDec(64),
 			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("28.375")},
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                  common.PairBTCStable.String(),
+				Pair:                  common.Pair_BTC_NUSD.String(),
 				MarkPrice:             sdk.NewDec(745),
 				IndexPrice:            sdk.NewDec(64),
 				LatestFundingRate:     sdk.MustNewDecFromStr("28.375"),
@@ -104,7 +104,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			perpKeeper.AfterEpochEnd(ctx, "30 min", 1)
 
 			t.Log("assert PairMetadataState")
-			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.PairBTCStable)
+			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.Pair_BTC_NUSD)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedCumulativeFundingRates, pair.CumulativeFundingRates)
 
@@ -127,23 +127,23 @@ func initParams(ctx sdk.Context, k Keeper) {
 		TwapLookbackWindow:      15 * time.Minute,
 	})
 	k.PairMetadataState(ctx).Set(&types.PairMetadata{
-		Pair: common.PairBTCStable,
+		Pair: common.Pair_BTC_NUSD,
 		// start with one entry to ensure we append
 		CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 	})
 }
 
 func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec, markPrice sdk.Dec) {
-	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true)
+	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
 
 	mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "30 min").Return(
 		epochtypes.EpochInfo{Duration: time.Hour},
 	).MaxTimes(1)
 
 	mocks.mockPricefeedKeeper.EXPECT().
-		GetCurrentTWAP(ctx, common.PairBTCStable.Token0, common.PairBTCStable.Token1).Return(indexPrice, nil).MaxTimes(1)
+		GetCurrentTWAP(ctx, common.Pair_BTC_NUSD.Token0, common.Pair_BTC_NUSD.Token1).Return(indexPrice, nil).MaxTimes(1)
 
 	mocks.mockVpoolKeeper.EXPECT().
-		GetSpotPrice(ctx, common.PairBTCStable).
+		GetSpotPrice(ctx, common.Pair_BTC_NUSD).
 		Return(markPrice, nil).MaxTimes(1)
 }

@@ -41,21 +41,21 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:          sdk.NewInt64Coin("unibi", 100),
-			tokenOutDenom:    common.DenomStable,
-			expectedTokenOut: sdk.NewInt64Coin(common.DenomStable, 50),
+			tokenOutDenom:    common.DenomNUSD,
+			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 50),
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomStable, 50),
+				sdk.NewInt64Coin(common.DenomNUSD, 50),
 			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 200),
-					sdk.NewInt64Coin(common.DenomStable, 50),
+					sdk.NewInt64Coin(common.DenomNUSD, 50),
 				),
 				/*shares=*/ 100,
 			),
@@ -70,12 +70,12 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:       sdk.NewInt64Coin("unibi", 100),
-			tokenOutDenom: common.DenomStable,
+			tokenOutDenom: common.DenomNUSD,
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1),
 			),
@@ -83,7 +83,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -98,12 +98,12 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:       sdk.NewInt64Coin("foo", 100),
-			tokenOutDenom: common.DenomStable,
+			tokenOutDenom: common.DenomNUSD,
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
@@ -111,7 +111,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -126,7 +126,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -139,7 +139,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -154,7 +154,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -167,7 +167,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomStable, 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),

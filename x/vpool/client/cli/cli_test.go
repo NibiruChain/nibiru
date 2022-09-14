@@ -51,7 +51,7 @@ func (s *VpoolCLISuite) SetupSuite() {
 
 	res, err := testutilcli.QueryPrice(
 		s.network.Validators[0].ClientCtx,
-		common.PairGovStable.String(),
+		common.Pair_NIBI_NUSD.String(),
 	)
 	s.Require().NoError(err)
 	s.Assert().Equal(sdk.NewDec(10), res.Price.Price)

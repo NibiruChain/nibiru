@@ -17,7 +17,7 @@ import (
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params:               types.DefaultParams(),
-		ModuleAccountBalance: sdk.NewCoin(common.DenomColl, sdk.ZeroInt()),
+		ModuleAccountBalance: sdk.NewCoin(common.DenomUSDC, sdk.ZeroInt()),
 	}
 
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)

@@ -29,11 +29,11 @@ func TestCheckBalances(t *testing.T) {
 			name: "has enough funds",
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin(common.DenomStable, 100),
+				sdk.NewInt64Coin(common.DenomNUSD, 100),
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin(common.DenomStable, 100),
+				sdk.NewInt64Coin(common.DenomNUSD, 100),
 			),
 			expectedError: nil,
 		},
@@ -44,7 +44,7 @@ func TestCheckBalances(t *testing.T) {
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin(common.DenomStable, 100),
+				sdk.NewInt64Coin(common.DenomNUSD, 100),
 			),
 			expectedError: sdkerrors.ErrInsufficientFunds,
 		},

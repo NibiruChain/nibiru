@@ -58,7 +58,7 @@ func TestSetAndFetchPool(t *testing.T) {
 				Weight: sdk.NewInt(1),
 			},
 			{
-				Token:  sdk.NewCoin(common.DenomStable, sdk.NewInt(1000)),
+				Token:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
 		},
@@ -211,7 +211,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 func TestNewPool(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
-	poolCreationFeeCoin := sdk.NewInt64Coin(common.DenomGov, 1000_000_000)
+	poolCreationFeeCoin := sdk.NewInt64Coin(common.DenomNIBI, 1000_000_000)
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(poolCreationFeeCoin),
@@ -280,7 +280,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
-		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.DenomGov, 1000_000_000)),
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000_000_000)),
 		/*whitelistedAssets*/ []string{},
 	))
 

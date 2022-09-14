@@ -85,7 +85,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 				keeper, _, ctx := getKeeper(t)
 
 				metadata := &types.PairMetadata{
-					Pair: common.PairGovStable,
+					Pair: common.Pair_NIBI_NUSD,
 					CumulativeFundingRates: []sdk.Dec{
 						sdk.NewDec(1),
 						sdk.NewDec(2), // returns the latest from the list
@@ -94,7 +94,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 				keeper.PairMetadataState(ctx).Set(metadata)
 
 				latestCumulativePremiumFraction, err := keeper.
-					getLatestCumulativePremiumFraction(ctx, common.PairGovStable)
+					getLatestCumulativePremiumFraction(ctx, common.Pair_NIBI_NUSD)
 
 				require.NoError(t, err)
 				assert.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
