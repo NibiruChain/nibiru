@@ -205,8 +205,8 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 	pool := &VPool{
 		Pair:                   pair,
 		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
-		QuoteAssetReserve:      sdk.NewDec(10_000_000),
-		BaseAssetReserve:       sdk.NewDec(10_000_000),
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1_000_000),
 		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
