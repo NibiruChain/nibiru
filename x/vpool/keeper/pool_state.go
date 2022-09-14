@@ -22,7 +22,7 @@ func (k Keeper) CreatePool(
 	maintenanceMarginRatio sdk.Dec,
 	maxLeverage sdk.Dec,
 ) {
-	pool := types.NewPool(
+	k.savePool(ctx, types.NewPool(
 		pair,
 		tradeLimitRatio,
 		quoteAssetReserve,
@@ -31,10 +31,8 @@ func (k Keeper) CreatePool(
 		maxOracleSpreadRatio,
 		maintenanceMarginRatio,
 		maxLeverage,
-	)
-
-	k.savePool(ctx, pool)
-	k.SaveSnapshot(ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
+	))
+	k.SaveSnapshot(ctx, pair, quoteAssetReserve, baseAssetReserve)
 }
 
 // getPool returns the pool from database

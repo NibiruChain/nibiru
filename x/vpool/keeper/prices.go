@@ -229,11 +229,12 @@ func (k Keeper) calcTwap(
 	var cumulativePeriodMs int64 = 0
 	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
 	var currentSnapshot types.ReserveSnapshot
+	var currentPrice sdk.Dec = sdk.ZeroDec()
 
 	for ; iter.Valid(); iter.Next() {
 		k.codec.MustUnmarshal(iter.Value(), &currentSnapshot)
 
-		currentPrice, err := getPriceWithSnapshot(
+		currentPrice, err = getPriceWithSnapshot(
 			currentSnapshot,
 			snapshotPriceOptions{
 				pair:           pair,
@@ -262,6 +263,10 @@ func (k Keeper) calcTwap(
 		}
 
 		prevTimestampMs = currentSnapshot.TimestampMs
+	}
+
+	if cumulativePeriodMs <= 0 {
+		return currentPrice, nil
 	}
 
 	// definition of TWAP
