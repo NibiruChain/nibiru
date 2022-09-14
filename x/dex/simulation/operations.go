@@ -98,11 +98,6 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msg := &types.MsgSwapAssets{}
 
-		// only run 1/3 of the time
-		if simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1")).GTE(sdk.MustNewDecFromStr("0.33")) {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No swap done"), nil, nil
-		}
-
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		fundAccountWithTokens(ctx, simAccount.Address, bk)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
@@ -116,10 +111,7 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No tokens to swap in"), nil, nil
 		}
 
-		// choose some random amount of balanceIn to swap
-		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.05")).Add(sdk.MustNewDecFromStr("0.1"))
-		tokenIn := sdk.NewCoin(denomIn, intensityFactor.MulInt(balanceIn).TruncateInt())
-
+		tokenIn := sdk.NewCoin(denomIn, balanceIn)
 		msg = &types.MsgSwapAssets{
 			Sender:        simAccount.Address.String(),
 			PoolId:        poolId,
