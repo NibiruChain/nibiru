@@ -290,18 +290,26 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	}
 
 	// traverse snapshots of the pair in reverse order from currentTime - TWAPLookBackWindow => now
-	pair := keys.PairPrefix[common.AssetPair, keys.Uint64Key](assetPair)                                  // only current AssetPair
-	fromTime := ctx.BlockTime().Add(-1 * k.GetParams(ctx).TwapLookbackWindow)                             // earliest timestamp aka current time - TWAPLookBackWindow
-	toTime := ctx.BlockTime().UnixMilli()                                                                 // current time
-	start := keys.PairSuffix[common.AssetPair, keys.Uint64Key](keys.Uint64(uint64(fromTime.UnixMilli()))) // this turns it into a suffix
-	end := keys.PairSuffix[common.AssetPair, keys.Uint64Key](keys.Uint64(uint64(toTime)))
+	pair := keys.PairPrefix[common.AssetPair, keys.Uint64Key](assetPair)                  // only current AssetPair
+	fromTime := ctx.BlockTime().Add(-1 * k.GetParams(ctx).TwapLookbackWindow).UnixMilli() // earliest timestamp aka current time - TWAPLookBackWindow
+	toTime := ctx.BlockTime().UnixMilli()                                                 // current time
+	start := keys.PairSuffix[common.AssetPair](keys.Uint64(uint64(fromTime)))             // this turns it into a suffix
+	end := keys.PairSuffix[common.AssetPair](keys.Uint64(uint64(toTime)))
 	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
 		Prefix(pair).
 		Start(keys.Inclusive(start)).
 		End(keys.Inclusive(end))
 
 	snapshots := k.PriceSnapshots.Iterate(ctx, rng).Values()
-	twap, err = calcTWAP(snapshots)
+	if len(snapshots) == 0 {
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
+	}
+	if len(snapshots) == 1 {
+		// if there's one snapshot, there's no TWAP so we just return the current price
+		return snapshots[0].Price, nil
+	}
+
+	twap, err = calcTWAP(ctx, snapshots)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
@@ -311,19 +319,20 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	return twap, nil
 }
 
-func calcTWAP(ss []types.PriceSnapshot) (sdk.Dec, error) {
-	if len(ss) < 2 {
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
-	}
-	lowerTime := ss[0].TimestampMs
-	endTime := ss[len(ss)-1].TimestampMs
-	cumulativeTime := endTime - lowerTime
+func calcTWAP(ctx sdk.Context, snapshots []types.PriceSnapshot) (sdk.Dec, error) {
+	cumulativeTime := ctx.BlockTime().UnixMilli() - snapshots[0].TimestampMs
 	cumulativePrice := sdk.ZeroDec()
-	lastTimeMeasurement := lowerTime
-	for _, s := range ss {
-		price := s.Price.MulInt64(s.TimestampMs - lastTimeMeasurement)
+
+	for i, s := range snapshots {
+		var nextTimestampMs int64
+		if i == len(snapshots)-1 {
+			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
+			nextTimestampMs = ctx.BlockTime().UnixMilli()
+		} else {
+			nextTimestampMs = snapshots[i+1].TimestampMs
+		}
+		price := s.Price.MulInt64(nextTimestampMs - s.TimestampMs)
 		cumulativePrice = cumulativePrice.Add(price)
-		lastTimeMeasurement = s.TimestampMs
 	}
 	return cumulativePrice.QuoInt64(cumulativeTime), nil
 }
