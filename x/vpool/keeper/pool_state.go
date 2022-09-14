@@ -150,7 +150,7 @@ func (k Keeper) GetPoolPrices(
 		Pair:          pool.Pair.String(),
 		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
 		TwapMark:      twapMark.String(),
-		IndexPrice:    indexPrice.String(),
+		IndexPrice:    indexPrice.Price.String(),
 		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
 		BlockNumber:   ctx.BlockHeight(),
 	}, nil
