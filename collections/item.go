@@ -25,9 +25,9 @@ func NewItem[V any, PV interface {
 // Item represents a state object which will always have one instance
 // of itself saved in the namespace.
 // Examples are:
-// 	- config
-// 	- parameters
-// 	- a sequence
+//   - config
+//   - parameters
+//   - a sequence
 type Item[V any, PV interface {
 	*V
 	Object
