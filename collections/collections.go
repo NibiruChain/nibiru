@@ -66,6 +66,7 @@ func (n setObject) Unmarshal(b []byte) error {
 
 var _ Object = (*setObject)(nil)
 
+// TODO(mercilex): improve typeName api
 func typeName(o Object) string {
 	switch o.(type) {
 	case *setObject, setObject:
