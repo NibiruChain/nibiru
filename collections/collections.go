@@ -4,42 +4,56 @@ import (
 	"bytes"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/gogo/protobuf/proto"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
+// Object defines an object which can marshal and unmarshal itself to and from bytes.
 type Object interface {
-	codec.ProtoMarshaler
+	// Marshal marshals the object into bytes.
+	Marshal() (b []byte, err error)
+	// Unmarshal populates the object from bytes.
+	Unmarshal(b []byte) error
+}
+
+// storeCodec implements only the subset of functionalities
+// required for the ser/de at state layer.
+// It respects cosmos-sdk guarantees around interface unpacking.
+type storeCodec struct {
+	ir codectypes.InterfaceRegistry
+}
+
+func newStoreCodec(cdc codec.BinaryCodec) storeCodec {
+	return storeCodec{ir: cdc.(*codec.ProtoCodec).InterfaceRegistry()}
+}
+
+func (c storeCodec) marshal(o Object) []byte {
+	bytes, err := o.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	return bytes
+}
+
+func (c storeCodec) unmarshal(bytes []byte, o Object) {
+	err := o.Unmarshal(bytes)
+	if err != nil {
+		panic(err)
+	}
+	err = codectypes.UnpackInterfaces(o, c.ir)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // setObject is used when no object functionality is needed.
 type setObject struct{}
 
-func (n setObject) Reset() {
-	panic("must never be called")
-}
-
 func (n setObject) String() string {
-	panic("must never be called")
-}
-
-func (n setObject) ProtoMessage() {
 	panic("must never be called")
 }
 
 func (n setObject) Marshal() ([]byte, error) {
 	return []byte{}, nil
-}
-
-func (n setObject) MarshalTo(_ []byte) (_ int, _ error) {
-	panic("must never be called")
-}
-
-func (n setObject) MarshalToSizedBuffer(_ []byte) (int, error) {
-	panic("must never be called")
-}
-
-func (n setObject) Size() int {
-	panic("must never be called")
 }
 
 func (n setObject) Unmarshal(b []byte) error {
@@ -56,9 +70,11 @@ func typeName(o Object) string {
 	case *setObject, setObject:
 		return "no-op-object"
 	}
-	n := proto.MessageName(o)
-	if n == "" {
-		panic("invalid Object implementation")
+	type xname interface {
+		XXX_MessageName() string
 	}
-	return n
+	if m, ok := o.(xname); ok {
+		return m.XXX_MessageName()
+	}
+	panic("invalid proto message")
 }

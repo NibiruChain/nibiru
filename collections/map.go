@@ -15,7 +15,7 @@ func NewMap[K keys.Key, V any, PV interface {
 	Object
 }](cdc codec.BinaryCodec, sk sdk.StoreKey, prefix uint8) Map[K, V, PV] {
 	return Map[K, V, PV]{
-		cdc:      cdc,
+		cdc:      newStoreCodec(cdc),
 		sk:       sk,
 		prefix:   []byte{prefix},
 		typeName: typeName(PV(new(V))),
@@ -27,7 +27,7 @@ type Map[K keys.Key, V any, PV interface {
 	*V
 	Object
 }] struct {
-	cdc      codec.BinaryCodec
+	cdc      storeCodec
 	sk       sdk.StoreKey
 	prefix   []byte
 	_        K
@@ -41,7 +41,7 @@ func (m Map[K, V, PV]) getStore(ctx sdk.Context) sdk.KVStore {
 
 func (m Map[K, V, PV]) Insert(ctx sdk.Context, key K, object V) {
 	store := m.getStore(ctx)
-	store.Set(key.KeyBytes(), m.cdc.MustMarshal(PV(&object)))
+	store.Set(key.KeyBytes(), m.cdc.marshal(PV(&object)))
 }
 
 func (m Map[K, V, PV]) Get(ctx sdk.Context, key K) (V, error) {
@@ -54,7 +54,7 @@ func (m Map[K, V, PV]) Get(ctx sdk.Context, key K) (V, error) {
 	}
 
 	x := new(V)
-	m.cdc.MustUnmarshal(bytes, PV(x))
+	m.cdc.unmarshal(bytes, PV(x))
 	return *x, nil
 }
 
@@ -86,7 +86,7 @@ func (m Map[K, V, PV]) Iterate(ctx sdk.Context, r keys.Range[K]) MapIterator[K, 
 func newMapIterator[K keys.Key, V any, PV interface {
 	*V
 	Object
-}](cdc codec.BinaryCodec, store sdk.KVStore, r keys.Range[K]) MapIterator[K, V, PV] {
+}](cdc storeCodec, store sdk.KVStore, r keys.Range[K]) MapIterator[K, V, PV] {
 	pfx, start, end, order := r.Compile()
 
 	// if prefix is not nil then we replace the current store with a prefixed one
@@ -116,7 +116,7 @@ type MapIterator[K keys.Key, V any, PV interface {
 	Object
 }] struct {
 	prefix []byte
-	cdc    codec.BinaryCodec
+	cdc    storeCodec
 	iter   sdk.Iterator
 }
 
@@ -134,7 +134,7 @@ func (i MapIterator[K, V, PV]) Valid() bool {
 
 func (i MapIterator[K, V, PV]) Value() V {
 	x := PV(new(V))
-	i.cdc.MustUnmarshal(i.iter.Value(), x)
+	i.cdc.unmarshal(i.iter.Value(), x)
 	return *x
 }
 
