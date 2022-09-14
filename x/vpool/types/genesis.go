@@ -11,7 +11,7 @@ import (
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params: DefaultParams(),
-		Vpools: []*Pool{},
+		Vpools: []*VPool{},
 	}
 }
 
