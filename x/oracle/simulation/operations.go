@@ -3,10 +3,12 @@ package simulation
 //DONTCOVER
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
-	gogotypes "github.com/gogo/protobuf/types"
 	"math/rand"
 	"strings"
+
+	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/NibiruChain/nibiru/x/common"
 

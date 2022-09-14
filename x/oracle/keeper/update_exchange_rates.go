@@ -1,9 +1,11 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
-	gogotypes "github.com/gogo/protobuf/types"
 	"sort"
+
+	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -35,10 +37,9 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	}
 
 	pairsMap := make(map[string]struct{})
-	k.IteratePairs(ctx, func(pair string) bool {
-		pairsMap[pair] = struct{}{}
-		return false
-	})
+	for _, pair := range k.Pairs.Iterate(ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		pairsMap[string(pair)] = struct{}{}
+	}
 
 	for _, pair := range k.ExchangeRates.Iterate(ctx, keys.NewRange[keys.StringKey]()).Keys() {
 		err := k.ExchangeRates.Delete(ctx, pair)

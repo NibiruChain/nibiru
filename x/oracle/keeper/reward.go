@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -11,7 +13,7 @@ import (
 
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
 	// check if pair exists
-	if !k.PairExists(ctx, pair) {
+	if !k.Pairs.Has(ctx, keys.String(pair)) {
 		return types.ErrUnknownPair.Wrap(pair)
 	}
 

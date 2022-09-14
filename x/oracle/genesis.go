@@ -2,8 +2,10 @@ package oracle
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections/keys"
+
 	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -60,11 +62,11 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 
 	if len(data.Pairs) > 0 {
 		for _, tt := range data.Pairs {
-			keeper.SetPair(ctx, tt.Name)
+			keeper.Pairs.Insert(ctx, keys.String(tt.Name))
 		}
 	} else {
 		for _, item := range data.Params.Whitelist {
-			keeper.SetPair(ctx, item.Name)
+			keeper.Pairs.Insert(ctx, keys.String(item.Name))
 		}
 	}
 
@@ -115,10 +117,9 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	aggregateExchangeRateVotes := keeper.Votes.Iterate(ctx, keys.NewRange[keys.StringKey]()).Values()
 
 	pairs := []types.Pair{}
-	keeper.IteratePairs(ctx, func(pair string) (stop bool) {
-		pairs = append(pairs, types.Pair{Name: pair})
-		return false
-	})
+	for _, pair := range keeper.Pairs.Iterate(ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		pairs = append(pairs, types.Pair{Name: string(pair)})
+	}
 
 	pairRewards := []types.PairReward{}
 	keeper.IterateAllPairRewards(ctx, func(rewards *types.PairReward) (stop bool) {

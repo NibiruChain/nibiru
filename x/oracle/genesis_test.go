@@ -1,9 +1,11 @@
 package oracle_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
-	gogotypes "github.com/gogo/protobuf/types"
 	"testing"
+
+	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/stretchr/testify/require"
 
@@ -21,8 +23,8 @@ func TestExportInitGenesis(t *testing.T) {
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, "pair1:pair2", sdk.DecProto{Dec: sdk.NewDec(123)})
 	input.OracleKeeper.Prevotes.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{123}, keeper.ValAddrs[0], uint64(2)))
 	input.OracleKeeper.Votes.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "foo", ExchangeRate: sdk.NewDec(123)}}, keeper.ValAddrs[0]))
-	input.OracleKeeper.SetPair(input.Ctx, "pair1:pair1")
-	input.OracleKeeper.SetPair(input.Ctx, "pair2:pair2")
+	input.OracleKeeper.Pairs.Insert(input.Ctx, "pair1:pair1")
+	input.OracleKeeper.Pairs.Insert(input.Ctx, "pair2:pair2")
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, keys.String(keeper.ValAddrs[0].String()), gogotypes.UInt64Value{Value: 10})
 	input.OracleKeeper.SetPairReward(input.Ctx, &types.PairReward{
 		Pair: "pair1:pair2",

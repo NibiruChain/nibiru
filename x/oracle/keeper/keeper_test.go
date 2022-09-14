@@ -1,9 +1,11 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
-	gogotypes "github.com/gogo/protobuf/types"
 	"testing"
+
+	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/stretchr/testify/require"
 
@@ -51,34 +53,6 @@ func TestParams(t *testing.T) {
 	storedParams := input.OracleKeeper.GetParams(input.Ctx)
 	require.NotNil(t, storedParams)
 	require.Equal(t, storedParams, newParams)
-}
-
-func TestPairGetSetIterate(t *testing.T) {
-	input := CreateTestInput(t)
-
-	pairs := []string{
-		common.PairBTCStable.String(),
-		common.PairGovStable.String(),
-		common.PairCollStable.String(),
-		common.PairETHStable.String(),
-	}
-
-	for _, pair := range pairs {
-		input.OracleKeeper.SetPair(input.Ctx, pair)
-		exists := input.OracleKeeper.PairExists(input.Ctx, pair)
-		require.True(t, exists)
-	}
-
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		require.Contains(t, pairs, pair)
-		return false
-	})
-
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	for _, pair := range pairs {
-		exists := input.OracleKeeper.PairExists(input.Ctx, pair)
-		require.False(t, exists)
-	}
 }
 
 func TestValidateFeeder(t *testing.T) {

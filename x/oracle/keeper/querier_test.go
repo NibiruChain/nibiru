@@ -1,10 +1,12 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
-	gogotypes "github.com/gogo/protobuf/types"
 	"sort"
 	"testing"
+
+	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -233,11 +235,13 @@ func TestQueryVoteTargets(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	// clear pairs
-	input.OracleKeeper.ClearPairs(input.Ctx)
+	for _, key := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, key)
+	}
 
 	voteTargets := []string{"denom", "denom2", "denom3"}
 	for _, target := range voteTargets {
-		input.OracleKeeper.SetPair(input.Ctx, target)
+		input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(target))
 	}
 
 	res, err := querier.VoteTargets(ctx, &types.QueryVoteTargetsRequest{})

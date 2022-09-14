@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
-	gogotypes "github.com/gogo/protobuf/types"
 	"testing"
+
+	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -92,7 +94,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types3.PairList{{Name: common.PairGovStable.String()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String())
+	input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(common.PairGovStable.String()))
 
 	votePeriodsPerWindow := types.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -175,8 +177,10 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String())
+	for _, k := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, k)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(common.PairGovStable.String()))
 
 	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
@@ -196,8 +200,10 @@ func TestAbstainSlashing(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String())
+	for _, k := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, k)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(common.PairGovStable.String()))
 
 	votePeriodsPerWindow := types.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)

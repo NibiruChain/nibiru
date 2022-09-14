@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
 
@@ -35,6 +36,7 @@ type Keeper struct {
 	ExchangeRates     collections.Map[keys.StringKey, sdk.DecProto, *sdk.DecProto] // TODO: KEY is AssetPair, after AssetPair refactor.
 	FeederDelegations collections.Map[keys.StringKey, gogotypes.BytesValue, *gogotypes.BytesValue]
 	MissCounters      collections.Map[keys.StringKey, gogotypes.UInt64Value, *gogotypes.UInt64Value]
+	Pairs             collections.KeySet[keys.StringKey]
 	PairRewardsID     collections.Sequence
 }
 
@@ -64,9 +66,10 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		distrName:         distrName,
 		Prevotes:          collections.NewMap[keys.StringKey, types.AggregateExchangeRatePrevote](cdc, storeKey, 0),
 		Votes:             collections.NewMap[keys.StringKey, types.AggregateExchangeRateVote](cdc, storeKey, 1),
-		ExchangeRates:     collections.NewMap[keys.StringKey, sdk.DecProto](cdc, storeKey, 2),
-		FeederDelegations: collections.NewMap[keys.StringKey, gogotypes.BytesValue](cdc, storeKey, 3),
-		MissCounters:      collections.NewMap[keys.StringKey, gogotypes.UInt64Value](cdc, storeKey, 4),
+		Pairs:             collections.NewKeySet[keys.StringKey](cdc, storeKey, 2),
+		ExchangeRates:     collections.NewMap[keys.StringKey, sdk.DecProto](cdc, storeKey, 3),
+		FeederDelegations: collections.NewMap[keys.StringKey, gogotypes.BytesValue](cdc, storeKey, 4),
+		MissCounters:      collections.NewMap[keys.StringKey, gogotypes.UInt64Value](cdc, storeKey, 5),
 		PairRewardsID:     collections.NewSequence(cdc, storeKey, 6),
 	}
 }
@@ -88,44 +91,6 @@ func (k Keeper) SetExchangeRateWithEvent(ctx sdk.Context, pair string, exchangeR
 			sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
 		),
 	)
-}
-
-// PairExists return tobin tax for the pair
-// TODO(mercilex): use AssetPair
-func (k Keeper) PairExists(ctx sdk.Context, pair string) bool {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetPairKey(pair))
-	return bz != nil
-}
-
-// SetPair updates tobin tax for the pair
-// TODO(mercilex): use AssetPair
-func (k Keeper) SetPair(ctx sdk.Context, pair string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetPairKey(pair), []byte{})
-}
-
-// IteratePairs iterates rate over tobin taxes in the store
-func (k Keeper) IteratePairs(ctx sdk.Context, handler func(pair string) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PairsKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		pair := types.ExtractPairFromPairKey(iter.Key())
-		if handler(pair) {
-			break
-		}
-	}
-}
-
-// ClearPairs clears tobin taxes
-func (k Keeper) ClearPairs(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PairsKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
-	}
 }
 
 // ValidateFeeder return the given feeder is allowed to feed the message or not

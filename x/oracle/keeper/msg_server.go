@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
-	"github.com/NibiruChain/nibiru/collections/keys"
+
 	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -105,7 +107,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	// check all pairs are in the vote target
 	for _, tuple := range exchangeRateTuples {
-		if !ms.IsVoteTarget(ctx, tuple.Pair) {
+		if !ms.Pairs.Has(ctx, keys.String(tuple.Pair)) {
 			return nil, sdkerrors.Wrap(types.ErrUnknownPair, tuple.Pair)
 		}
 	}

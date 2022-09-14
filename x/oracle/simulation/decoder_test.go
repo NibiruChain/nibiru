@@ -2,16 +2,14 @@ package simulation_test
 
 import (
 	"testing"
-
-	"github.com/tendermint/tendermint/crypto/ed25519"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
+/*
 	delPk      = ed25519.GenPrivKey().PubKey()
 	feederAddr = sdk.AccAddress(delPk.Address())
 	valAddr    = sdk.ValAddress(delPk.Address())
+*/
 )
 
 func TestDecodeDistributionStore(t *testing.T) {

@@ -2,6 +2,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -238,7 +239,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	keeper.SetParams(ctx, defaults)
 
 	for _, pair := range defaults.Whitelist {
-		keeper.SetPair(ctx, pair.Name)
+		keeper.Pairs.Insert(ctx, keys.String(pair.Name))
 	}
 
 	return TestInput{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}

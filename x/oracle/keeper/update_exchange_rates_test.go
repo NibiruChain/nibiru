@@ -2,11 +2,13 @@ package keeper_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections/keys"
-	gogotypes "github.com/gogo/protobuf/types"
 	"math"
 	"sort"
 	"testing"
+
+	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -122,7 +124,7 @@ func TestOracleThreshold(t *testing.T) {
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairGovStable.String()), sdk.DecProto{randomExchangeRate})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, keys.String(common.PairGovStable.String()), sdk.DecProto{Dec: randomExchangeRate})
 
 	// Account 1, pair gov stable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -272,8 +274,10 @@ func TestOracleRewardBand(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear pairs to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(common.PairGovStable.String()))
 
 	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
@@ -485,8 +489,10 @@ func TestVoteTargets(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(common.PairGovStable.String()))
 
 	// govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -501,7 +507,10 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 
 	// vote targets are {govstable, btcstable}
-	require.Equal(t, []string{common.PairBTCStable.String(), common.PairGovStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
+	require.Equal(t,
+		[]keys.StringKey{keys.String(common.PairBTCStable.String()), keys.String(common.PairGovStable.String())},
+		input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys(),
+	)
 
 	// delete btcstable
 	params.Whitelist = types.PairList{{Name: common.PairGovStable.String()}}
@@ -519,9 +528,13 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keys.String(keeper.ValAddrs[2].String()), gogotypes.UInt64Value{}).Value)
 
 	// btcstable must be deleted
-	require.Equal(t, []string{common.PairGovStable.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
+	require.Equal(
+		t,
+		[]keys.StringKey{keys.String(common.PairGovStable.String())},
+		input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys(),
+	)
 
-	exists := input.OracleKeeper.PairExists(input.Ctx, common.PairBTCStable.String())
+	exists := input.OracleKeeper.Pairs.Has(input.Ctx, keys.String(common.PairBTCStable.String()))
 	require.False(t, exists)
 
 	// change govstable
@@ -544,8 +557,10 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	input, h := setupWithSmallVotingPower(t)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.PairGovStable.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(common.PairGovStable.String()))
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.PairGovStable.String(), ExchangeRate: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)

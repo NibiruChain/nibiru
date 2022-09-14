@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"sort"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
@@ -92,9 +93,12 @@ func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTa
 	}
 
 	if updateRequired {
-		k.ClearPairs(ctx)
+		// clear all pairs
+		for _, pair := range k.Pairs.Iterate(ctx, keys.NewRange[keys.StringKey]()).Keys() {
+			k.Pairs.Delete(ctx, pair)
+		}
 		for _, pair := range whitelist {
-			k.SetPair(ctx, pair.Name)
+			k.Pairs.Insert(ctx, keys.String(pair.Name))
 		}
 	}
 }

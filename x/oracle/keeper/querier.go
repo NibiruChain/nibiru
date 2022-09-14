@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
-	"github.com/NibiruChain/nibiru/collections/keys"
+
 	gogotypes "github.com/gogo/protobuf/types"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -84,7 +86,12 @@ func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*type
 // VoteTargets queries the voting target list on current vote period
 func (q querier) VoteTargets(c context.Context, _ *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	return &types.QueryVoteTargetsResponse{VoteTargets: q.GetVoteTargets(ctx)}, nil
+	pairs := q.Pairs.Iterate(ctx, keys.NewRange[keys.StringKey]()).Keys()
+	targets := make([]string, len(pairs))
+	for i, p := range pairs {
+		targets[i] = string(p)
+	}
+	return &types.QueryVoteTargetsResponse{VoteTargets: targets}, nil
 }
 
 // FeederDelegation queries the account address that the validator operator delegated oracle vote rights to
@@ -174,7 +181,6 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 
 // AggregateVotes queries aggregate votes of all validators
 func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
-
 	return &types.QueryAggregateVotesResponse{
 		AggregateVotes: q.Keeper.Votes.Iterate(sdk.UnwrapSDKContext(c), keys.NewRange[keys.StringKey]()).Values(),
 	}, nil

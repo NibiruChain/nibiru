@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"sort"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -155,9 +156,11 @@ func TestApplyWhitelist(t *testing.T) {
 	}
 
 	// prepare test by resetting the genesis pairs
-	input.OracleKeeper.ClearPairs(input.Ctx)
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
 	for _, p := range whitelist {
-		input.OracleKeeper.SetPair(input.Ctx, p.Name)
+		input.OracleKeeper.Pairs.Insert(input.Ctx, keys.String(p.Name))
 	}
 
 	voteTargets := map[string]struct{}{
@@ -169,10 +172,9 @@ func TestApplyWhitelist(t *testing.T) {
 
 	gotPairs := types.PairList{}
 
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		gotPairs = append(gotPairs, types.Pair{Name: pair})
-		return false
-	})
+	for _, k := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		gotPairs = append(gotPairs, types.Pair{Name: string(k)})
+	}
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i].Name < whitelist[j].Name
@@ -185,10 +187,9 @@ func TestApplyWhitelist(t *testing.T) {
 
 	gotPairs = types.PairList{}
 
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		gotPairs = append(gotPairs, types.Pair{Name: pair})
-		return false
-	})
+	for _, k := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		gotPairs = append(gotPairs, types.Pair{Name: string(k)})
+	}
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i].Name < whitelist[j].Name
@@ -202,10 +203,9 @@ func TestApplyWhitelist(t *testing.T) {
 
 	gotPairs = types.PairList{}
 
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		gotPairs = append(gotPairs, types.Pair{Name: pair})
-		return false
-	})
+	for _, k := range input.OracleKeeper.Pairs.Iterate(input.Ctx, keys.NewRange[keys.StringKey]()).Keys() {
+		gotPairs = append(gotPairs, types.Pair{Name: string(k)})
+	}
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i].Name < whitelist[j].Name
