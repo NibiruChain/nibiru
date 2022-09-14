@@ -116,6 +116,7 @@ func TestMarketsQuery(t *testing.T) {
 func TestQueryPrice(t *testing.T) {
 	pair := common.MustNewAssetPair("ubtc:uusd")
 	keeper, ctx := testutilkeeper.PricefeedKeeper(t)
+	ctx = ctx.WithBlockTime(time.Now())
 	querier := keeper2.NewQuerier(keeper)
 	keeper.SetParams(ctx, types.Params{
 		Pairs:              common.AssetPairs{pair},
@@ -131,10 +132,15 @@ func TestQueryPrice(t *testing.T) {
 
 	// second block
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(1)
+	require.NoError(t, keeper.PostRawPrice(ctx, oracle, "ubtc:uusd", sdk.NewDec(20_000), time.Now().Add(time.Hour)))
+	require.NoError(t, keeper.GatherRawPrices(ctx, "ubtc", "uusd"))
+
+	// second block
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(2)
 	require.NoError(t, keeper.PostRawPrice(ctx, oracle, "ubtc:uusd", sdk.NewDec(30_000), time.Now().Add(time.Hour)))
 	require.NoError(t, keeper.GatherRawPrices(ctx, "ubtc", "uusd"))
 
-	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(2)
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(3)
 	resp, err := querier.QueryPrice(sdk.WrapSDKContext(ctx), &types.QueryPriceRequest{
 		PairId: "ubtc:uusd",
 	})
