@@ -23,14 +23,14 @@ func TestGetSpotPrice(t *testing.T) {
 	}{
 		{
 			name:              "correctly fetch underlying price",
-			pair:              common.PairBTCStable,
+			pair:              common.Pair_BTC_NUSD,
 			quoteAssetReserve: sdk.NewDec(40_000),
 			baseAssetReserve:  sdk.NewDec(1),
 			expectedPrice:     sdk.NewDec(40000),
 		},
 		{
 			name:              "complex price",
-			pair:              common.PairBTCStable,
+			pair:              common.Pair_BTC_NUSD,
 			quoteAssetReserve: sdk.NewDec(2_489_723_947),
 			baseAssetReserve:  sdk.NewDec(34_597_234),
 			expectedPrice:     sdk.MustNewDecFromStr("71.963092396345904415"),
@@ -75,7 +75,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 	}{
 		{
 			name:                "zero base asset means zero price",
-			pair:                common.PairBTCStable,
+			pair:                common.Pair_BTC_NUSD,
 			quoteAssetReserve:   sdk.NewDec(40_000),
 			baseAssetReserve:    sdk.NewDec(10_000),
 			baseAmount:          sdk.ZeroDec(),
@@ -84,7 +84,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple add base to pool",
-			pair:                common.PairBTCStable,
+			pair:                common.Pair_BTC_NUSD,
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -93,7 +93,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple remove base from pool",
-			pair:                common.PairBTCStable,
+			pair:                common.Pair_BTC_NUSD,
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -102,7 +102,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              common.PairBTCStable,
+			pair:              common.Pair_BTC_NUSD,
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			baseAmount:        sdk.MustNewDecFromStr("1000"),
@@ -156,7 +156,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 	}{
 		{
 			name:               "zero base asset means zero price",
-			pair:               common.PairBTCStable,
+			pair:               common.Pair_BTC_NUSD,
 			quoteAssetReserve:  sdk.NewDec(40_000),
 			baseAssetReserve:   sdk.NewDec(10_000),
 			quoteAmount:        sdk.ZeroDec(),
@@ -165,7 +165,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple add base to pool",
-			pair:               common.PairBTCStable,
+			pair:               common.Pair_BTC_NUSD,
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -174,7 +174,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple remove base from pool",
-			pair:               common.PairBTCStable,
+			pair:               common.Pair_BTC_NUSD,
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -183,7 +183,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              common.PairBTCStable,
+			pair:              common.Pair_BTC_NUSD,
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			quoteAmount:       sdk.NewDec(1000),
@@ -240,7 +240,7 @@ func TestCalcTwap(t *testing.T) {
 	}{
 		{
 			name: "spot price twap calc, t=[10,30]",
-			pair: common.PairBTCStable,
+			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(90),
@@ -269,7 +269,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "spot price twap calc, t=[11,35]",
-			pair: common.PairBTCStable,
+			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(90),
@@ -298,7 +298,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
-			pair: common.PairBTCStable,
+			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(30),
@@ -323,7 +323,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
-			pair: common.PairBTCStable,
+			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -348,7 +348,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "base asset swap twap calc, add to pool, t=[10,30]",
-			pair: common.PairBTCStable,
+			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),
@@ -373,7 +373,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "base asset swap twap calc, remove from pool, t=[10,30]",
-			pair: common.PairBTCStable,
+			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(60),

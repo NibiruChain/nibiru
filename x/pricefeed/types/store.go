@@ -12,10 +12,10 @@ import (
 // Parameter keys
 var (
 	DefaultPairs = common.AssetPairs{
-		common.PairGovStable,
-		common.PairCollStable,
-		common.PairBTCStable,
-		common.PairETHStable,
+		common.Pair_NIBI_NUSD,
+		common.Pair_USDC_NUSD,
+		common.Pair_BTC_NUSD,
+		common.Pair_ETH_NUSD,
 	}
 	DefaultLookbackWindow = 15 * time.Minute
 )

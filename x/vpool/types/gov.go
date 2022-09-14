@@ -34,7 +34,7 @@ func (m *CreatePoolProposal) ValidateBasic() error {
 	if err != nil {
 		return err
 	}
-	pool := &Pool{
+	pool := &VPool{
 		Pair:                   assetPair,
 		BaseAssetReserve:       m.BaseAssetReserve,
 		QuoteAssetReserve:      m.QuoteAssetReserve,

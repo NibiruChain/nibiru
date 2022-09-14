@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -39,7 +40,7 @@ func (q queryServer) QueryPrice(goCtx context.Context, req *types.QueryPriceRequ
 		return nil, status.Error(codes.NotFound, "invalid market ID")
 	}
 
-	tokens := common.DenomsFromPoolName(req.PairId)
+	tokens := strings.Split(req.PairId, common.PairSeparator)
 	token0, token1 := tokens[0], tokens[1]
 	currentPrice, err := q.k.GetCurrentPrice(ctx, token0, token1)
 	if err != nil {

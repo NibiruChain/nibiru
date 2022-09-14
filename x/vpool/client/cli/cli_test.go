@@ -51,7 +51,7 @@ func (s *VpoolCLISuite) SetupSuite() {
 
 	res, err := testutilcli.QueryPrice(
 		s.network.Validators[0].ClientCtx,
-		common.PairGovStable.String(),
+		common.Pair_NIBI_NUSD.String(),
 	)
 	s.Require().NoError(err)
 	s.Assert().Equal(sdk.NewDec(10), res.Price.Price)
@@ -208,7 +208,7 @@ func (s VpoolCLISuite) TestX_CmdAddVpool() {
 	found := false
 	for _, pool := range queryResp.Pools {
 		if pool.Pair.String() == proposal.Pair {
-			require.Equal(s.T(), &vpooltypes.Pool{
+			require.Equal(s.T(), &vpooltypes.VPool{
 				Pair:                   common.MustNewAssetPair(proposal.Pair),
 				BaseAssetReserve:       proposal.BaseAssetReserve,
 				QuoteAssetReserve:      proposal.QuoteAssetReserve,

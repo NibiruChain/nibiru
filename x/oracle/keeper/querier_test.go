@@ -31,7 +31,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -39,7 +39,7 @@ func TestQueryExchangeRate(t *testing.T) {
 
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
-		Pair: common.PairETHStable.String(),
+		Pair: common.Pair_ETH_NUSD.String(),
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)
@@ -71,15 +71,15 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
 
 	require.Equal(t, types.ExchangeRateTuples{
-		{Pair: common.PairBTCStable.String(), ExchangeRate: rate},
-		{Pair: common.PairETHStable.String(), ExchangeRate: rate},
+		{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: rate},
+		{Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: rate},
 	}, res.ExchangeRates)
 }
 
@@ -89,17 +89,17 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairBTCStable.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairGovStable.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.PairETHStable.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String(), rate)
+	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	res, err := querier.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
 
 	targetDenoms := []string{
-		common.PairBTCStable.String(),
-		common.PairETHStable.String(),
-		common.PairGovStable.String(),
+		common.Pair_BTC_NUSD.String(),
+		common.Pair_ETH_NUSD.String(),
+		common.Pair_NIBI_NUSD.String(),
 	}
 
 	require.Equal(t, targetDenoms, res.Actives)
