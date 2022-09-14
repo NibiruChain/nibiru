@@ -4,31 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
-
-func NewVPool(
-	pair common.AssetPair,
-	tradeLimitRatio sdk.Dec,
-	quoteAssetReserve sdk.Dec,
-	baseAssetReserve sdk.Dec,
-	fluctuationLimitRatio sdk.Dec,
-	maxOracleSpreadRatio sdk.Dec,
-	maintenanceMarginRatio sdk.Dec,
-	maxLeverage sdk.Dec,
-) *VPool {
-	return &VPool{
-		Pair:                   pair,
-		BaseAssetReserve:       baseAssetReserve,
-		QuoteAssetReserve:      quoteAssetReserve,
-		TradeLimitRatio:        tradeLimitRatio,
-		FluctuationLimitRatio:  fluctuationLimitRatio,
-		MaxOracleSpreadRatio:   maxOracleSpreadRatio,
-		MaintenanceMarginRatio: maintenanceMarginRatio,
-		MaxLeverage:            maxLeverage,
-	}
-}
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
