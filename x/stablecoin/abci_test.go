@@ -32,7 +32,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Collateral price higher than stable, wait for correct amount of time",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("0.9"),
+			price:             sdk.MustNewDecFromStr("1.1"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -58,7 +58,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Price higher than peg, but we don't wait for enough time, coll ratio should be the same",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("0.9"),
+			price:             sdk.MustNewDecFromStr("1.1"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -74,7 +74,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Collateral price higher than stable, and we wait for 2 updates, coll ratio should be updated twice",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("0.9"),
+			price:             sdk.MustNewDecFromStr("1.1"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.795"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -90,7 +90,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Collateral price higher than stable, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("0.9"),
+			price:             sdk.MustNewDecFromStr("1.1"),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -116,7 +116,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			pairs := common.AssetPairs{
 				common.Pair_USDC_NUSD,
 			}
-			params := ptypes.NewParams(pairs, 15*time.Minute)
+			params := ptypes.NewParams(pairs, 2*time.Hour)
 			app.PricefeedKeeper.SetParams(ctx, params)
 			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
