@@ -261,6 +261,10 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
 Note the open-ended right bracket.
 
+If there's only one snapshot, then this function returns the price from that single snapshot.
+
+Returns -1 if there's no price.
+
 Args:
 - ctx: cosmos-sdk context
 - pair: the token pair
@@ -298,10 +302,11 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
 		Prefix(pair).
 		Start(keys.Inclusive(start)).
-		End(keys.Exclusive(end))
+		End(keys.Exclusive(end)) // current block shouldn't have a snapshot until EndBlock is run
 
 	snapshots := k.PriceSnapshots.Iterate(ctx, rng).Values()
 	if len(snapshots) == 0 {
+		// if there are no snapshots, return -1 for the price
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
 	if len(snapshots) == 1 {
@@ -309,7 +314,7 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 		return snapshots[0].Price, nil
 	}
 
-	twap, err = calcTWAP(ctx, snapshots)
+	twap, err = calcTwap(ctx, snapshots)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
@@ -319,7 +324,12 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	return twap, nil
 }
 
-func calcTWAP(ctx sdk.Context, snapshots []types.PriceSnapshot) (sdk.Dec, error) {
+/*
+calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
+
+Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
+*/
+func calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (sdk.Dec, error) {
 	cumulativeTime := ctx.BlockTime().UnixMilli() - snapshots[0].TimestampMs
 	cumulativePrice := sdk.ZeroDec()
 
