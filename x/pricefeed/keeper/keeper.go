@@ -298,7 +298,7 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
 		Prefix(pair).
 		Start(keys.Inclusive(start)).
-		End(keys.Inclusive(end))
+		End(keys.Exclusive(end))
 
 	snapshots := k.PriceSnapshots.Iterate(ctx, rng).Values()
 	if len(snapshots) == 0 {
