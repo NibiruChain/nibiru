@@ -435,21 +435,6 @@ func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetTWAP(arg0, arg1, arg2, arg3, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseAssetTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetBaseAssetTWAP), arg0, arg1, arg2, arg3, arg4)
 }
 
-// GetCurrentTWAP mocks base method.
-func (m *MockVpoolKeeper) GetCurrentTWAP(arg0 types2.Context, arg1 common.AssetPair) (types1.CurrentTWAP, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCurrentTWAP", arg0, arg1)
-	ret0, _ := ret[0].(types1.CurrentTWAP)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCurrentTWAP indicates an expected call of GetCurrentTWAP.
-func (mr *MockVpoolKeeperMockRecorder) GetCurrentTWAP(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetCurrentTWAP), arg0, arg1)
-}
-
 // GetMaintenanceMarginRatio mocks base method.
 func (m *MockVpoolKeeper) GetMaintenanceMarginRatio(arg0 types2.Context, arg1 common.AssetPair) types2.Dec {
 	m.ctrl.T.Helper()
@@ -536,21 +521,6 @@ func (m *MockVpoolKeeper) GetSpotPrice(arg0 types2.Context, arg1 common.AssetPai
 func (mr *MockVpoolKeeperMockRecorder) GetSpotPrice(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpotPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetSpotPrice), arg0, arg1)
-}
-
-// GetUnderlyingPrice mocks base method.
-func (m *MockVpoolKeeper) GetUnderlyingPrice(arg0 types2.Context, arg1 common.AssetPair) (types2.Dec, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUnderlyingPrice", arg0, arg1)
-	ret0, _ := ret[0].(types2.Dec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUnderlyingPrice indicates an expected call of GetUnderlyingPrice.
-func (mr *MockVpoolKeeperMockRecorder) GetUnderlyingPrice(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnderlyingPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetUnderlyingPrice), arg0, arg1)
 }
 
 // IsOverSpreadLimit mocks base method.

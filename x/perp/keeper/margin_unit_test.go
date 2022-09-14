@@ -750,10 +750,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.PairBTCStable,
+						common.PairBTCStable.Token0,
+						common.PairBTCStable.Token1,
 					).
 					Return(sdk.NewDec(2), nil)
 			},
@@ -771,10 +772,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.PairBTCStable,
+						common.PairBTCStable.Token0,
+						common.PairBTCStable.Token1,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
@@ -886,10 +888,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.PairBTCStable,
+						common.PairBTCStable.Token0,
+						common.PairBTCStable.Token1,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
@@ -907,10 +910,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.PairBTCStable,
+						common.PairBTCStable.Token0,
+						common.PairBTCStable.Token1,
 					).
 					Return(sdk.NewDec(2), nil)
 			},
