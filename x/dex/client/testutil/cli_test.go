@@ -14,9 +14,9 @@ import (
 
 func TestIntegrationTestSuite(t *testing.T) {
 	coinsFromGenesis := []string{
-		common.DenomGov,
-		common.DenomStable,
-		common.DenomColl,
+		common.DenomNIBI,
+		common.DenomNUSD,
+		common.DenomUSDC,
 		"coin-1",
 		"coin-2",
 		"coin-3",
@@ -34,7 +34,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 
 	cfg := testutilcli.BuildNetworkConfig(genesisState)
 	cfg.StartingTokens = sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomGov, 2e12), // for pool creation fee and more for tx fees
+		sdk.NewInt64Coin(common.DenomNIBI, 2e12), // for pool creation fee and more for tx fees
 	)
 
 	for _, coin := range coinsFromGenesis {

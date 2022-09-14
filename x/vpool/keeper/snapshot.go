@@ -3,58 +3,21 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-/*
-*
-updateSnapshot updates the snapshot of the current vpool.
-It creates a new one if the current block height is greater than the previous snapshot's block height.
-Otherwise, it updates the latest snapshot in state.
-
-args:
-  - ctx: the cosmos-sdk context
-  - pair: the asset pair
-  - quoteReserve: the amount of quote assets in the vpool
-  - baseReserve: the amount of base assets in the vpool
-*/
-func (k Keeper) updateSnapshot(
-	ctx sdk.Context,
-	pair common.AssetPair,
-	quoteReserve sdk.Dec,
-	baseReserve sdk.Dec,
-) error {
-	lastSnapshot, lastCounter, err := k.getLatestReserveSnapshot(ctx, pair)
-	if err != nil {
-		return err
-	}
-
-	if ctx.BlockHeight() == lastSnapshot.BlockNumber {
-		k.saveSnapshot(ctx, pair, lastCounter, quoteReserve, baseReserve)
-	} else {
-		newCounter := lastCounter + 1
-		k.saveSnapshot(ctx, pair, newCounter, quoteReserve, baseReserve)
-		k.saveSnapshotCounter(ctx, pair, newCounter)
-	}
-
-	return ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
-		Pair:         pair.String(),
-		QuoteReserve: quoteReserve,
-		BaseReserve:  baseReserve,
-	})
-}
-
-// getSnapshot returns the snapshot saved by counter num
-func (k Keeper) getSnapshot(ctx sdk.Context, pair common.AssetPair, counter uint64) (
+// GetSnapshot returns the snapshot saved by counter num
+func (k Keeper) GetSnapshot(ctx sdk.Context, pair common.AssetPair, blockHeight uint64) (
 	snapshot types.ReserveSnapshot, err error,
 ) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, counter))
+	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, blockHeight))
 	if bz == nil {
 		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
-			Wrap(fmt.Sprintf("snapshot with counter %d was not found", counter))
+			Wrap(fmt.Sprintf("snapshot at blockHeight %d was not found", blockHeight))
 	}
 
 	k.codec.MustUnmarshal(bz, &snapshot)
@@ -62,10 +25,9 @@ func (k Keeper) getSnapshot(ctx sdk.Context, pair common.AssetPair, counter uint
 	return snapshot, nil
 }
 
-func (k Keeper) saveSnapshot(
+func (k Keeper) SaveSnapshot(
 	ctx sdk.Context,
 	pair common.AssetPair,
-	counter uint64,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 ) {
@@ -77,49 +39,26 @@ func (k Keeper) saveSnapshot(
 	}
 
 	ctx.KVStore(k.storeKey).Set(
-		types.GetSnapshotKey(pair, counter),
+		types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())),
 		k.codec.MustMarshal(snapshot),
 	)
 }
 
-// getSnapshotCounter returns the counter and if it has been found or not.
-func (k Keeper) getSnapshotCounter(ctx sdk.Context, pair common.AssetPair) (
-	snapshotCounter uint64, found bool,
+// GetLatestReserveSnapshot returns the last snapshot that was saved
+func (k Keeper) GetLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair) (
+	snapshot types.ReserveSnapshot, err error,
 ) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotCounterKey(pair))
-	if bz == nil {
-		return uint64(0), false
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
+	iter := store.ReverseIterator(nil, nil)
+
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		k.codec.MustUnmarshal(iter.Value(), &snapshot)
+		return snapshot, nil
 	}
 
-	return sdk.BigEndianToUint64(bz), true
-}
-
-func (k Keeper) saveSnapshotCounter(
-	ctx sdk.Context,
-	pair common.AssetPair,
-	counter uint64,
-) {
-	ctx.KVStore(k.storeKey).Set(
-		types.GetSnapshotCounterKey(pair),
-		sdk.Uint64ToBigEndian(counter),
-	)
-}
-
-// getLatestReserveSnapshot returns the last snapshot that was saved
-func (k Keeper) getLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair) (
-	snapshot types.ReserveSnapshot, counter uint64, err error,
-) {
-	counter, found := k.getSnapshotCounter(ctx, pair)
-	if !found {
-		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
-	}
-
-	snapshot, err = k.getSnapshot(ctx, pair, counter)
-	if err != nil {
-		return types.ReserveSnapshot{}, counter, types.ErrNoLastSnapshotSaved
-	}
-
-	return snapshot, counter, nil
+	return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved
 }
 
 /*

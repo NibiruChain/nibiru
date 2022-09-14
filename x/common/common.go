@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,11 +10,11 @@ import (
 )
 
 const (
-	DenomGov    = "unibi"
-	DenomColl   = "uusdc"
-	DenomStable = "unusd"
-	DenomBTC    = "ubtc"
-	DenomETH    = "ueth"
+	DenomNIBI = "unibi"
+	DenomUSDC = "uusdc"
+	DenomNUSD = "unusd"
+	DenomBTC  = "ubtc"
+	DenomETH  = "ueth"
 
 	ModuleName = "common"
 
@@ -25,10 +24,10 @@ const (
 )
 
 var (
-	PairGovStable  = AssetPair{Token0: DenomGov, Token1: DenomStable}
-	PairCollStable = AssetPair{Token0: DenomColl, Token1: DenomStable}
-	PairBTCStable  = AssetPair{Token0: DenomBTC, Token1: DenomStable}
-	PairETHStable  = AssetPair{Token0: DenomETH, Token1: DenomStable}
+	Pair_NIBI_NUSD = AssetPair{Token0: DenomNIBI, Token1: DenomNUSD}
+	Pair_USDC_NUSD = AssetPair{Token0: DenomUSDC, Token1: DenomNUSD}
+	Pair_BTC_NUSD  = AssetPair{Token0: DenomBTC, Token1: DenomNUSD}
+	Pair_ETH_NUSD  = AssetPair{Token0: DenomETH, Token1: DenomNUSD}
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
 )
@@ -71,22 +70,13 @@ func MustNewAssetPair(pair string) AssetPair {
 	return assetPair
 }
 
-// SortedName is the string representation of the pair with sorted assets.
-func (pair AssetPair) SortedName() string {
-	return SortedPairNameFromDenoms([]string{pair.Token0, pair.Token1})
-}
-
 /*
-	String returns the string representation of the asset pair.
+String returns the string representation of the asset pair.
 
 Note that this differs from the output of the proto-generated 'String' method.
 */
 func (pair AssetPair) String() string {
 	return fmt.Sprintf("%s%s%s", pair.Token0, PairSeparator, pair.Token1)
-}
-
-func (pair AssetPair) IsSortedOrder() bool {
-	return pair.SortedName() == pair.String()
 }
 
 func (pair AssetPair) Inverse() AssetPair {
@@ -99,28 +89,6 @@ func (pair AssetPair) BaseDenom() string {
 
 func (pair AssetPair) QuoteDenom() string {
 	return pair.Token1
-}
-
-func DenomsFromPoolName(pool string) (denoms []string) {
-	return strings.Split(pool, ":")
-}
-
-// SortedPairNameFromDenoms returns a sorted string representing a pool of assets
-func SortedPairNameFromDenoms(denoms []string) string {
-	sort.Strings(denoms) // alphabetically sort in-place
-	return PairNameFromDenoms(denoms)
-}
-
-// PairNameFromDenoms returns a string representing a pool of assets in the
-// exact order the denoms were given as args
-func PairNameFromDenoms(denoms []string) string {
-	poolName := denoms[0]
-	for idx, denom := range denoms {
-		if idx != 0 {
-			poolName += fmt.Sprintf("%s%s", PairSeparator, denom)
-		}
-	}
-	return poolName
 }
 
 // Validate performs a basic validation of the market params
@@ -150,9 +118,13 @@ func NewAssetPairs(pairStrings ...string) (pairs AssetPairs) {
 }
 
 // Contains checks if a token pair is contained within 'Pairs'
-func (pairs AssetPairs) Contains(pair AssetPair) bool {
-	isContained, _ := pairs.ContainsAtIndex(pair)
-	return isContained
+func (haystack AssetPairs) Contains(needle AssetPair) bool {
+	for _, p := range haystack {
+		if p.Equal(needle) {
+			return true
+		}
+	}
+	return false
 }
 
 func (pairs AssetPairs) Strings() []string {
@@ -176,18 +148,6 @@ func (pairs AssetPairs) Validate() error {
 		seenPairs[pairID] = true
 	}
 	return nil
-}
-
-// ContainsAtIndex checks if a token pair is contained within 'Pairs' and
-// a boolean for this condition alongside the corresponding index of 'pair' in
-// the slice of pairs.
-func (pairs AssetPairs) ContainsAtIndex(pair AssetPair) (bool, int) {
-	for idx, element := range pairs {
-		if (element.Token0 == pair.Token0) && (element.Token1 == pair.Token1) {
-			return true, idx
-		}
-	}
-	return false, -1
 }
 
 type assetPairsJSON AssetPairs

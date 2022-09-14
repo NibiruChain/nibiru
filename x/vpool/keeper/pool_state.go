@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -33,8 +34,7 @@ func (k Keeper) CreatePool(
 	)
 
 	k.savePool(ctx, pool)
-	k.saveSnapshot(ctx, pair, 0, pool.QuoteAssetReserve, pool.BaseAssetReserve)
-	k.saveSnapshotCounter(ctx, pair, 0)
+	k.SaveSnapshot(ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
 }
 
 // getPool returns the pool from database
@@ -82,15 +82,6 @@ func (k Keeper) updatePool(
 		}
 	}
 
-	if err = k.updateSnapshot(
-		ctx,
-		updatedPool.Pair,
-		updatedPool.QuoteAssetReserve,
-		updatedPool.BaseAssetReserve,
-	); err != nil {
-		return fmt.Errorf("error creating snapshot: %w", err)
-	}
-
 	k.savePool(ctx, updatedPool)
 
 	return nil
@@ -104,7 +95,7 @@ func (k Keeper) ExistsPool(ctx sdk.Context, pair common.AssetPair) bool {
 // GetAllPools returns all pools that exist.
 func (k Keeper) GetAllPools(ctx sdk.Context) []*types.Pool {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.PoolKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.PoolKeyPrefix)
 
 	var pools []*types.Pool
 	for ; iterator.Valid(); iterator.Next() {
@@ -135,28 +126,30 @@ func (k Keeper) GetPoolPrices(
 		return prices, err
 	}
 
-	indexPriceStr := ""
 	indexPrice, err := k.GetUnderlyingPrice(ctx, pool.Pair)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the oracle price feeds stop
 		k.Logger(ctx).Error(err.Error())
-	} else {
-		indexPriceStr = indexPrice.String()
 	}
-	twapMarkStr := ""
-	twapMark, err := k.GetCurrentTWAP(ctx, pool.Pair)
+
+	twapMark, err := k.calcTwap(
+		ctx,
+		pool.Pair,
+		types.TwapCalcOption_SPOT,
+		types.Direction_DIRECTION_UNSPECIFIED,
+		sdk.ZeroDec(),
+		15*time.Minute,
+	)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the TWAP is undefined.
 		k.Logger(ctx).Error(err.Error())
-	} else {
-		twapMarkStr = twapMark.Price.String()
 	}
 
 	return types.PoolPrices{
 		Pair:          pool.Pair.String(),
 		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
-		IndexPrice:    indexPriceStr,
-		TwapMark:      twapMarkStr,
+		TwapMark:      twapMark.String(),
+		IndexPrice:    indexPrice.String(),
 		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
 		BlockNumber:   ctx.BlockHeight(),
 	}, nil
