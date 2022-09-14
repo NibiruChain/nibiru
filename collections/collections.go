@@ -2,6 +2,7 @@ package collections
 
 import (
 	"bytes"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -65,16 +66,15 @@ func (n setObject) Unmarshal(b []byte) error {
 
 var _ Object = (*setObject)(nil)
 
+// TODO(mercilex): improve typeName api
 func typeName(o Object) string {
 	switch o.(type) {
 	case *setObject, setObject:
 		return "no-op-object"
 	}
-	type xname interface {
-		XXX_MessageName() string
+	pm, ok := o.(proto.Message)
+	if !ok {
+		return "unknown"
 	}
-	if m, ok := o.(xname); ok {
-		return m.XXX_MessageName()
-	}
-	panic("invalid proto message")
+	return proto.MessageName(pm)
 }
