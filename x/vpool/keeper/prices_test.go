@@ -243,18 +243,21 @@ func TestCalcTwap(t *testing.T) {
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(90),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       10,
 					BlockNumber:       1,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(85),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       20,
 					BlockNumber:       2,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(95),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       30,
@@ -272,18 +275,21 @@ func TestCalcTwap(t *testing.T) {
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(90),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       10,
 					BlockNumber:       1,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(85),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       20,
 					BlockNumber:       2,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(95),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       30,
@@ -301,12 +307,14 @@ func TestCalcTwap(t *testing.T) {
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(30),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       10,
 					BlockNumber:       1,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(40),
 					BaseAssetReserve:  sdk.MustNewDecFromStr("7.5"),
 					TimestampMs:       20,
@@ -326,12 +334,14 @@ func TestCalcTwap(t *testing.T) {
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(60),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       10,
 					BlockNumber:       1,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(50),
 					BaseAssetReserve:  sdk.NewDec(12),
 					TimestampMs:       20,
@@ -351,12 +361,14 @@ func TestCalcTwap(t *testing.T) {
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(60),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       10,
 					BlockNumber:       1,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(30),
 					BaseAssetReserve:  sdk.NewDec(20),
 					TimestampMs:       20,
@@ -376,12 +388,14 @@ func TestCalcTwap(t *testing.T) {
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(60),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       10,
 					BlockNumber:       1,
 				},
 				{
+					Pair:              common.Pair_BTC_NUSD,
 					QuoteAssetReserve: sdk.NewDec(75),
 					BaseAssetReserve:  sdk.NewDec(8),
 					TimestampMs:       20,

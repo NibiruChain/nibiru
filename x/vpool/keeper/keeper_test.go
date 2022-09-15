@@ -472,6 +472,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			snapshot: types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -492,6 +493,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			snapshot: types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -512,6 +514,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			snapshot: types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -532,6 +535,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			snapshot: types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -552,6 +556,7 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			snapshot: types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -592,12 +597,14 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
 				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
@@ -619,6 +626,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -641,6 +649,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -663,12 +672,14 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
 				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
@@ -733,6 +744,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				MaxLeverage:            sdk.OneDec(),
 			},
 			snapshot: types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -753,6 +765,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				MaxLeverage:            sdk.OneDec(),
 			},
 			snapshot: types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,

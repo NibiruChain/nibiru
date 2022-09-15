@@ -32,6 +32,7 @@ func (k Keeper) SaveSnapshot(
 	baseAssetReserve sdk.Dec,
 ) {
 	snapshot := &types.ReserveSnapshot{
+		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
 		TimestampMs:       ctx.BlockTime().UnixMilli(),
@@ -55,7 +56,9 @@ func (k Keeper) GetLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair)
 
 	for ; iter.Valid(); iter.Next() {
 		k.codec.MustUnmarshal(iter.Value(), &snapshot)
-		return snapshot, nil
+		if snapshot.Pair == pair {
+			return snapshot, nil
+		}
 	}
 
 	return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved

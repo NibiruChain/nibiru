@@ -34,6 +34,7 @@ func TestSaveSnapshot(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t,
 		types.ReserveSnapshot{
+			Pair:              common.Pair_BTC_NUSD,
 			BaseAssetReserve:  sdk.OneDec(),
 			QuoteAssetReserve: sdk.OneDec(),
 			TimestampMs:       ctx.BlockTime().UnixMilli(),
@@ -61,6 +62,7 @@ func TestGetSnapshot(t *testing.T) {
 	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, 1)
 	require.NoError(t, err)
 	require.Equal(t, types.ReserveSnapshot{
+		Pair:              common.Pair_BTC_NUSD,
 		BaseAssetReserve:  sdk.OneDec(),
 		QuoteAssetReserve: sdk.OneDec(),
 		TimestampMs:       ctx.BlockTime().UnixMilli(),
@@ -80,6 +82,7 @@ func TestGetSnapshot(t *testing.T) {
 	snapshot, err = vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, 2)
 	require.NoError(t, err)
 	require.Equal(t, types.ReserveSnapshot{
+		Pair:              common.Pair_BTC_NUSD,
 		BaseAssetReserve:  sdk.NewDec(2),
 		QuoteAssetReserve: sdk.NewDec(2),
 		TimestampMs:       ctx.BlockTime().UnixMilli(),
@@ -152,6 +155,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			snapshot := types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: tc.quoteAssetReserve,
 				BaseAssetReserve:  tc.baseAssetReserve,
 			}
