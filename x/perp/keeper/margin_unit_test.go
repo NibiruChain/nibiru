@@ -6,16 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -750,12 +749,16 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						common.Pair_BTC_NUSD.Token0,
+						common.Pair_BTC_NUSD.Token1,
 					).
-					Return(sdk.NewDec(2), nil)
+					Return(pricefeedtypes.CurrentPrice{
+						PairID: common.Pair_BTC_NUSD.String(),
+						Price:  sdk.NewDec(2),
+					}, nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(20),
@@ -771,12 +774,16 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						common.Pair_BTC_NUSD.Token0,
+						common.Pair_BTC_NUSD.Token1,
 					).
-					Return(sdk.MustNewDecFromStr("0.5"), nil)
+					Return(pricefeedtypes.CurrentPrice{
+						PairID: common.Pair_BTC_NUSD.String(),
+						Price:  sdk.MustNewDecFromStr("0.5"),
+					}, nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(5),
@@ -886,12 +893,16 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						common.Pair_BTC_NUSD.Token0,
+						common.Pair_BTC_NUSD.Token1,
 					).
-					Return(sdk.MustNewDecFromStr("0.5"), nil)
+					Return(pricefeedtypes.CurrentPrice{
+						PairID: common.Pair_BTC_NUSD.String(),
+						Price:  sdk.MustNewDecFromStr("0.5"),
+					}, nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(5),
@@ -907,12 +918,16 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockVpoolKeeper.EXPECT().
-					GetUnderlyingPrice(
+				mocks.mockPricefeedKeeper.EXPECT().
+					GetCurrentPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						common.Pair_BTC_NUSD.Token0,
+						common.Pair_BTC_NUSD.Token1,
 					).
-					Return(sdk.NewDec(2), nil)
+					Return(pricefeedtypes.CurrentPrice{
+						PairID: common.Pair_BTC_NUSD.String(),
+						Price:  sdk.NewDec(2),
+					}, nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(20),
