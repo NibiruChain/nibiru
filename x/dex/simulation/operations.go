@@ -90,7 +90,6 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 
 /*
 SimulateMsgSwap generates a MsgSwap with random values
-This function has a 33% chance of swapping a random fraction of the balance of a random token
 */
 func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
