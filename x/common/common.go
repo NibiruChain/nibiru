@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -100,6 +102,19 @@ func (pair AssetPair) Validate() error {
 		return ErrInvalidTokenPair.Wrapf("invalid token0 asset: %s", err)
 	}
 	return nil
+}
+
+var (
+	_ keys.Key = (*AssetPair)(nil)
+)
+
+func (m AssetPair) KeyBytes() []byte {
+	return keys.String(m.String()).KeyBytes()
+}
+
+func (m AssetPair) FromKeyBytes(b []byte) (int, keys.Key) {
+	i, s := keys.String("").FromKeyBytes(b)
+	return i, MustNewAssetPair(string(s.(keys.StringKey)))
 }
 
 //-----------------------------------------------------------------------------
