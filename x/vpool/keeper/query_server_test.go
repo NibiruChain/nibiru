@@ -23,16 +23,16 @@ func TestQueryReserveAssets(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pool := types.NewVPool(
-		/* pair */ common.Pair_BTC_NUSD,
-		/* tradeLimitRatio */ sdk.ZeroDec(),
-		/* quoteAmount */ sdk.NewDec(1_000_000),
-		/* baseAmount */ sdk.NewDec(1000),
-		/* fluctuationLimitRatio */ sdk.ZeroDec(),
-		/* maxOracleSpreadRatio */ sdk.ZeroDec(),
-		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-	)
+	pool := &types.VPool{
+		Pair:                   common.Pair_BTC_NUSD,
+		TradeLimitRatio:        sdk.ZeroDec(),
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1000),
+		FluctuationLimitRatio:  sdk.ZeroDec(),
+		MaxOracleSpreadRatio:   sdk.ZeroDec(),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	}
 	vpoolKeeper.savePool(ctx, pool)
 
 	t.Log("query reserve assets")
@@ -56,17 +56,17 @@ func TestQueryAllPools(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pair := common.MustNewAssetPair("foo:bar")
-	pool := types.NewVPool(
-		/* pair */ pair,
-		/* tradeLimitRatio */ sdk.ZeroDec(),
-		/* quoteAmount */ sdk.NewDec(1_000_000), // 1e6
-		/* baseAmount */ sdk.NewDec(1000), // 1e3
-		/* fluctuationLimitRatio */ sdk.ZeroDec(),
-		/* maxOracleSpreadRatio */ sdk.ZeroDec(),
-		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-	)
+	pair := common.Pair_BTC_NUSD
+	pool := &types.VPool{
+		Pair:                   pair,
+		TradeLimitRatio:        sdk.ZeroDec(),
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1000),
+		FluctuationLimitRatio:  sdk.ZeroDec(),
+		MaxOracleSpreadRatio:   sdk.ZeroDec(),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	}
 	vpoolKeeper.CreatePool(
 		ctx, pair, pool.TradeLimitRatio, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.FluctuationLimitRatio, pool.MaxOracleSpreadRatio, pool.MaintenanceMarginRatio, pool.MaxLeverage)
 
