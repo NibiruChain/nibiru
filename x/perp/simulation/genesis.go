@@ -16,17 +16,17 @@ import (
 // RandomizedGenState generates a random GenesisState for bank
 func RandomizedGenState(simState *module.SimulationState) {
 	vpoolGenesis := vpooltypes.GenesisState{
-		Vpools: []*vpooltypes.Pool{
-			vpooltypes.NewPool(
-				common.PairBTCStable,
-				sdk.OneDec(),
-				sdk.NewDec(10e12),
-				sdk.NewDec(10e12),
-				sdk.OneDec(),
-				sdk.OneDec(),
-				sdk.MustNewDecFromStr("0.0625"),
-				sdk.NewDec(10),
-			),
+		Vpools: []*vpooltypes.VPool{
+			{
+				Pair:                   common.Pair_BTC_NUSD,
+				TradeLimitRatio:        sdk.OneDec(),
+				QuoteAssetReserve:      sdk.NewDec(10e12),
+				BaseAssetReserve:       sdk.NewDec(10e12),
+				FluctuationLimitRatio:  sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.NewDec(10),
+			},
 		},
 	}
 
@@ -50,7 +50,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		Params: types.DefaultParams(),
 		PairMetadata: []*types.PairMetadata{
 			{
-				Pair:                   common.PairBTCStable,
+				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			},
 		},

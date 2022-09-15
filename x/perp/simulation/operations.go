@@ -42,15 +42,15 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		fundAccountWithTokens(ctx, simAccount.Address, bk)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomStable))
+		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomNUSD))
 		leverage := simtypes.RandomDecAmount(r, sdk.NewDec(9)).Add(sdk.OneDec()) // between [1, 10]
 		openNotional := leverage.MulInt(quoteAmt)
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
-		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomStable, quoteAmt.Add(feesAmt)))
+		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomNUSD, quoteAmt.Add(feesAmt)))
 
 		msg := &types.MsgOpenPosition{
 			Sender:               simAccount.Address.String(),
-			TokenPair:            common.PairBTCStable.String(),
+			TokenPair:            common.Pair_BTC_NUSD.String(),
 			Side:                 types.Side_BUY,
 			QuoteAssetAmount:     quoteAmt,
 			Leverage:             leverage,
@@ -84,9 +84,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 func fundAccountWithTokens(ctx sdk.Context, receiver sdk.AccAddress, bk types.BankKeeper) {
 	newCoins := sdk.NewCoins(
-		sdk.NewCoin(common.DenomGov, sdk.NewInt(1e6)),
-		sdk.NewCoin(common.DenomColl, sdk.NewInt(1e6)),
-		sdk.NewCoin(common.DenomStable, sdk.NewInt(1e6)),
+		sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1e6)),
 	)
 
 	if err := bk.MintCoins(ctx, types.ModuleName, newCoins); err != nil {

@@ -339,7 +339,7 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "spot price twap calc, t=[10,10]",
-			pair: common.PairBTCStable,
+			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				{
 					QuoteAssetReserve: sdk.NewDec(90),
