@@ -39,7 +39,6 @@ type PricefeedKeeper interface {
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
-	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
 	IsWhitelistedOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
 	) bool
 	GetOraclesForPair(ctx sdk.Context, pairID string) (oracles []sdk.AccAddress)

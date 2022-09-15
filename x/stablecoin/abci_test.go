@@ -74,8 +74,8 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Collateral price higher than stable, and we wait for 2 updates, coll ratio should be updated twice",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.795"),
+			price:             sdk.MustNewDecFromStr("1.1"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.805"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -90,8 +90,8 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Collateral price higher than stable, and we wait for 2 updates but the last one is too close for update, coll ratio should be updated once",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("0.9"),
-			ExpectedCollRatio: sdk.MustNewDecFromStr("0.7975"),
+			price:             sdk.MustNewDecFromStr("1.1"),
+			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8025"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
@@ -116,7 +116,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			pairs := common.AssetPairs{
 				common.Pair_USDC_NUSD,
 			}
-			params := ptypes.NewParams(pairs, 15*time.Minute)
+			params := ptypes.NewParams(pairs, 2*time.Hour)
 			app.PricefeedKeeper.SetParams(ctx, params)
 			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 
@@ -148,15 +148,15 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	}
 
 	// start at t=1sec with blockheight 1
-	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Unix(1, 0))
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	pricefeed.BeginBlocker(ctx, app.PricefeedKeeper)
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 	oracle := sample.AccAddress()
 	pairs := common.AssetPairs{
-		{Token0: common.DenomUSDC, Token1: common.DenomNUSD},
+		common.Pair_USDC_NUSD,
 	}
-	twapLookbackWindow := 15 * time.Minute
+	twapLookbackWindow := 1 * time.Hour
 	params := ptypes.NewParams(pairs, twapLookbackWindow)
 	app.PricefeedKeeper.SetParams(ctx, params)
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
@@ -177,9 +177,10 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 
 	// Post price, collateral should be valid again
 	require.NoError(t, app.PricefeedKeeper.PostRawPrice(
-		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().UTC().Add(time.Hour)))
+		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour)))
+	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1))
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block
-	runBlock(time.Second) // Collateral ratio is set to valid at the beginning of this block
+	runBlock(15 * time.Minute) // Collateral ratio is set to valid at the next epoch
 	require.True(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 }
