@@ -22,19 +22,17 @@ func (k Keeper) CreatePool(
 	maintenanceMarginRatio sdk.Dec,
 	maxLeverage sdk.Dec,
 ) {
-	pool := types.NewVPool(
-		pair,
-		tradeLimitRatio,
-		quoteAssetReserve,
-		baseAssetReserve,
-		fluctuationLimitRatio,
-		maxOracleSpreadRatio,
-		maintenanceMarginRatio,
-		maxLeverage,
-	)
-
-	k.savePool(ctx, pool)
-	k.SaveSnapshot(ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
+	k.savePool(ctx, &types.VPool{
+		Pair:                   pair,
+		BaseAssetReserve:       baseAssetReserve,
+		QuoteAssetReserve:      quoteAssetReserve,
+		TradeLimitRatio:        tradeLimitRatio,
+		FluctuationLimitRatio:  fluctuationLimitRatio,
+		MaxOracleSpreadRatio:   maxOracleSpreadRatio,
+		MaintenanceMarginRatio: maintenanceMarginRatio,
+		MaxLeverage:            maxLeverage,
+	})
+	k.SaveSnapshot(ctx, pair, quoteAssetReserve, baseAssetReserve)
 }
 
 // getPool returns the pool from database

@@ -126,16 +126,16 @@ func parseVpoolParams(args []string) (*types.VPool, error) {
 		return nil, err
 	}
 
-	vPool := types.NewVPool(
-		vPair,
-		tradeLimit,
-		quoteAsset,
-		baseAsset,
-		fluctuationLimitRatio,
-		maxOracleSpread,
-		maintenanceMarginRatio,
-		maxLeverage,
-	)
+	vPool := &types.VPool{
+		Pair:                   vPair,
+		TradeLimitRatio:        tradeLimit,
+		QuoteAssetReserve:      quoteAsset,
+		BaseAssetReserve:       baseAsset,
+		FluctuationLimitRatio:  fluctuationLimitRatio,
+		MaxOracleSpreadRatio:   maxOracleSpread,
+		MaintenanceMarginRatio: maintenanceMarginRatio,
+		MaxLeverage:            maxLeverage,
+	}
 
 	return vPool, vPool.Validate()
 }
