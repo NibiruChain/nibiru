@@ -1,20 +1,22 @@
 syntax = "proto3";
 package nibiru.pricefeed.v1;
 
-import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "common/common.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/api/annotations.proto";
+import "common/common.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/pricefeed/types";
+
 option (gogoproto.equal_all)         = true;
+option (gogoproto.verbose_equal_all) = true;
 
 // Params defines the parameters for the x/pricefeed module.
 message Params {
-  // Pairs is the list of valid trading pairs for the module. 
-  // Add new trading pairs 
-  repeated common.AssetPair pairs = 1 [(gogoproto.nullable) = false]; 
+  // Pairs is the list of valid trading pairs for the module.
+  // Add new trading pairs
+  repeated common.AssetPair pairs = 1 [(gogoproto.nullable) = false];
 
   // amount of time to look back for TWAP calculations
   google.protobuf.Duration twap_lookback_window = 2 [
@@ -25,16 +27,29 @@ message Params {
   ];
 }
 
-// OraclesMarshaler is a codec.ProtoMarshaler for an oracles array in the 
-// OraclesState sdk.KVStore.  
+// a snapshot of the pricefeed oracle's median price at a given point in time
+message PriceSnapshot {
+  // the token pair
+  string pair_id = 1;
+  // the median prices of all oracles
+  string price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // milliseconds since unix epoch
+  int64 timestamp_ms = 3;
+}
+
+// OraclesMarshaler is a codec.ProtoMarshaler for an oracles array in the
+// OraclesState sdk.KVStore.
 message OraclesMarshaler {
   repeated bytes oracles = 1 [
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
   ];
 }
 
-// ActivePairMarshaler is a codec.ProtoMarshaler for the "IsActive" status of  
-// a pair in the ActivePairState sdk.KVStore.  
+// ActivePairMarshaler is a codec.ProtoMarshaler for the "IsActive" status of
+// a pair in the ActivePairState sdk.KVStore.
 message ActivePairMarshaler {
   bool is_active = 1;
 }
@@ -44,10 +59,10 @@ message PostedPrice {
   string pair_id      = 1 [(gogoproto.customname) = "PairID"];
   string oracle = 2;
   string price = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
   google.protobuf.Timestamp expiry = 4 [
-    (gogoproto.stdtime) = true, 
+    (gogoproto.stdtime) = true,
     (gogoproto.nullable) = false];
 }
 
@@ -57,7 +72,6 @@ message CurrentPrice {
   string pair_id = 1 [(gogoproto.customname) = "PairID"];
   string price = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
-
 
 // CurrentTWAP states defines the numerator and denominator for the TWAP calculation
 message CurrentTWAP {
