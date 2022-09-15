@@ -9,50 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
-
-func TestGetUnderlyingPrice(t *testing.T) {
-	tests := []struct {
-		name           string
-		pair           common.AssetPair
-		pricefeedPrice sdk.Dec
-	}{
-		{
-			name:           "correctly fetch underlying price",
-			pair:           common.Pair_BTC_NUSD,
-			pricefeedPrice: sdk.NewDec(40000),
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			mockPricefeedKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
-			vpoolKeeper, ctx := VpoolKeeper(t, mockPricefeedKeeper)
-
-			mockPricefeedKeeper.
-				EXPECT().
-				GetCurrentPrice(
-					gomock.Eq(ctx),
-					gomock.Eq(tc.pair.BaseDenom()),
-					gomock.Eq(tc.pair.QuoteDenom()),
-				).
-				Return(
-					pftypes.CurrentPrice{
-						PairID: tc.pair.String(),
-						Price:  tc.pricefeedPrice,
-					}, nil,
-				)
-
-			price, err := vpoolKeeper.GetUnderlyingPrice(ctx, tc.pair)
-			require.NoError(t, err)
-			require.EqualValues(t, tc.pricefeedPrice, price)
-		})
-	}
-}
 
 func TestGetSpotPrice(t *testing.T) {
 	tests := []struct {
