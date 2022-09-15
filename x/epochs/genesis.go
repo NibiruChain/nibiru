@@ -1,27 +1,19 @@
 package epochs
 
 import (
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
-// InitGenesis initializes the capability module's state from a provided genesis
-// state.
+// InitGenesis sets epoch info from genesis
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// set epoch info from genesis
 	for _, epoch := range genState.Epochs {
-		// Initialize empty epoch values via Cosmos SDK
-		if epoch.StartTime.Equal(time.Time{}) {
-			epoch.StartTime = ctx.BlockTime()
+		if err := k.AddEpochInfo(ctx, epoch); err != nil {
+			panic(err)
 		}
-
-		epoch.CurrentEpochStartHeight = ctx.BlockHeight()
-
-		k.SetEpochInfo(ctx, epoch)
 	}
 }
 
