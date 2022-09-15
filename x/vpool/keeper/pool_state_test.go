@@ -166,7 +166,7 @@ func TestGetPoolPrices(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			shouldCreateVpool:  true,
-			mockIndexPrice:     sdk.Dec{},
+			mockIndexPrice:     sdk.OneDec().Neg(),
 			pricefeedKeeperErr: fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
 				Pair:          common.Pair_ETH_NUSD.String(),

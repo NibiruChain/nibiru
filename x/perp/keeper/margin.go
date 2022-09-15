@@ -332,13 +332,13 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err := k.VpoolKeeper.GetUnderlyingPrice(
-			ctx, currentPosition.Pair)
+		oraclePrice, err := k.PricefeedKeeper.GetCurrentPrice(
+			ctx, currentPosition.Pair.Token0, currentPosition.Pair.Token1)
 		if err != nil {
 			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = oraclePrice.Mul(positionSizeAbs)
+		positionNotional = oraclePrice.Price.Mul(positionSizeAbs)
 	default:
 		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
 	}
