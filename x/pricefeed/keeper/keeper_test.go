@@ -171,6 +171,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 		TwapLookbackWindow: 15 * time.Minute,
 	})
 
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[0], pair.String(), sdk.MustNewDecFromStr("0.33"), time.Now().Add(time.Hour)))
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[1], pair.String(), sdk.MustNewDecFromStr("0.35"), time.Now().Add(time.Hour)))
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[2], pair.String(), sdk.MustNewDecFromStr("0.34"), time.Now().Add(time.Hour)))
@@ -192,13 +193,13 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), currentPrice.Price)
 
+	// fast forward block height as twap snapshots for the current block are excluded
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+
 	// Check TWAP Price
 	twap, err := keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), twap)
-
-	// fast forward block height as twap snapshots are indexed by blockHeight
-	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[4], pair.String(), sdk.MustNewDecFromStr("0.36"), time.Now().Add(time.Hour)))
 	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
@@ -213,6 +214,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 
 	// Check TWAP Price
 	ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+
 	twap, err = keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
 	require.Equal(t, sdk.MustNewDecFromStr("0.3425"), twap)
@@ -230,23 +232,20 @@ func TestGetCurrentTWAP(t *testing.T) {
 		TwapLookbackWindow: 15 * time.Minute,
 	})
 
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[0], pair.String(), sdk.MustNewDecFromStr("0.33"), time.Now().Add(time.Hour)))
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[1], pair.String(), sdk.MustNewDecFromStr("0.34"), time.Now().Add(time.Hour)))
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[2], pair.String(), sdk.MustNewDecFromStr("0.35"), time.Now().Add(time.Hour)))
-
-	// Update block time such that first 3 prices valid
-	ctx = ctx.WithBlockTime(time.Now().Add(time.Minute * 45)).WithBlockHeight(1)
 
 	// Set current price
 	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))
 
 	// Check TWAP Price
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
+
 	twap, err := keeper.GetCurrentTWAP(ctx, pair.Token0, pair.Token1)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.MustNewDecFromStr("0.34"), twap)
-
-	// fast forward block height as twap snapshots are indexed by blockHeight
-	ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(10 * time.Second))
 
 	require.NoError(t, keeper.PostRawPrice(ctx, addrs[4], pair.String(), sdk.MustNewDecFromStr("0.36"), time.Now().Add(time.Hour)))
 	require.NoError(t, keeper.GatherRawPrices(ctx, pair.Token0, pair.Token1))

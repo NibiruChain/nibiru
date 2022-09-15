@@ -85,7 +85,7 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	lowerBound := params.GetPriceLowerBoundAsDec()
 	upperBound := params.GetPriceUpperBoundAsDec()
 
-	// Should take TWAP price
+	// stablePrice is how much UDSC does it take to buy one NUSD
 	stablePrice, err := k.PricefeedKeeper.GetCurrentTWAP(
 		ctx, common.DenomNUSD, common.DenomUSDC)
 	if err != nil {

@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 * [#894](https://github.com/NibiruChain/nibiru/pull/894) - add the collections package!
+* [#897](https://github.com/NibiruChain/nibiru/pull/897) - x/pricefeed - use collections.
+
 ### CI
 
 * [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job

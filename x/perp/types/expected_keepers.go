@@ -63,7 +63,7 @@ type PricefeedKeeper interface {
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
-	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
+	// TODO unused
 	IsActivePair(ctx sdk.Context, pairID string) bool
 	// Returns the pairs from the x/pricefeed params
 	GetPairs(ctx sdk.Context) common.AssetPairs
