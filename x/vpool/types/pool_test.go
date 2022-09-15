@@ -12,16 +12,16 @@ import (
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
-	pool := NewVPool(
-		pair,
-		sdk.MustNewDecFromStr("0.9"), // 0.9
-		sdk.NewDec(10_000_000),       // 10
-		sdk.NewDec(10_000_000),       // 10
-		sdk.MustNewDecFromStr("0.1"),
-		sdk.MustNewDecFromStr("0.1"),
-		sdk.MustNewDecFromStr("0.0625"),
-		sdk.MustNewDecFromStr("15"),
-	)
+	pool := &VPool{
+		Pair:                   pair,
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+		QuoteAssetReserve:      sdk.NewDec(10_000_000),
+		BaseAssetReserve:       sdk.NewDec(10_000_000),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.NewDec(15),
+	}
 
 	// less that max ratio
 	require.True(t, pool.HasEnoughQuoteReserve(sdk.NewDec(8_000_000)))
@@ -36,19 +36,19 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 func TestSetMarginRatioAndLeverage(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
-	pool := NewVPool(
-		pair,
-		sdk.MustNewDecFromStr("0.9"), // 0.9
-		sdk.NewDec(10_000_000),       // 10
-		sdk.NewDec(10_000_000),       // 10
-		sdk.MustNewDecFromStr("0.1"),
-		sdk.MustNewDecFromStr("0.1"),
-		/*maintenanceMarginRatio*/ sdk.MustNewDecFromStr("0.42"),
-		/*maxLeverage*/ sdk.MustNewDecFromStr("15"),
-	)
+	pool := &VPool{
+		Pair:                   pair,
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+		QuoteAssetReserve:      sdk.NewDec(10_000_000),
+		BaseAssetReserve:       sdk.NewDec(10_000_000),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
+		MaxLeverage:            sdk.NewDec(15),
+	}
 
-	require.Equal(t, pool.MaintenanceMarginRatio, sdk.MustNewDecFromStr("0.42"))
-	require.Equal(t, pool.MaxLeverage, sdk.MustNewDecFromStr("15"))
+	require.Equal(t, sdk.MustNewDecFromStr("0.42"), pool.MaintenanceMarginRatio)
+	require.Equal(t, sdk.MustNewDecFromStr("15"), pool.MaxLeverage)
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
@@ -100,16 +100,16 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := NewVPool(
-				/*pair=*/ pair,
-				/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
-				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
-				/*baseAssetReserve=*/ tc.baseAssetReserve,
-				/*fluctuationLimitRatio=*/ sdk.MustNewDecFromStr("0.1"),
-				/*maxOracleSpreadRatio=*/ sdk.MustNewDecFromStr("0.1"),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-			)
+			pool := &VPool{
+				Pair:                   pair,
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+				QuoteAssetReserve:      tc.quoteAssetReserve,
+				BaseAssetReserve:       tc.baseAssetReserve,
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.NewDec(15),
+			}
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
 			if tc.expectedErr != nil {
@@ -174,16 +174,16 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := NewVPool(
-				/*pair=*/ pair,
-				/*tradeLimitRatio=*/ sdk.OneDec(),
-				/*quoteAssetReserve=*/ tc.quoteAssetReserve,
-				/*baseAssetReserve=*/ tc.baseAssetReserve,
-				/*fluctuationLimitRatio=*/ sdk.OneDec(),
-				/*maxOracleSpreadRatio=*/ sdk.OneDec(),
-				/*maintenanceMarginRatio=*/ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-			)
+			pool := &VPool{
+				Pair:                   pair,
+				TradeLimitRatio:        sdk.OneDec(),
+				QuoteAssetReserve:      tc.quoteAssetReserve,
+				BaseAssetReserve:       tc.baseAssetReserve,
+				FluctuationLimitRatio:  sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.NewDec(15),
+			}
 
 			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
 			if tc.expectedErr != nil {
@@ -202,16 +202,16 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 func TestIncreaseDecreaseReserves(t *testing.T) {
 	pair := common.MustNewAssetPair("ATOM:NUSD")
 
-	pool := NewVPool(
-		pair,
-		/*tradeLimitRatio=*/ sdk.MustNewDecFromStr("0.9"),
-		/*quoteAssetReserve=*/ sdk.NewDec(1_000_000),
-		/*baseAssetReserve*/ sdk.NewDec(1_000_000),
-		/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
-		/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.01"),
-		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-	)
+	pool := &VPool{
+		Pair:                   pair,
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1_000_000),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.NewDec(15),
+	}
 
 	t.Log("decrease quote asset reserve")
 	pool.DecreaseQuoteAssetReserve(sdk.NewDec(100))
@@ -225,7 +225,7 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 	pool.DecreaseBaseAssetReserve(sdk.NewDec(100))
 	require.Equal(t, sdk.NewDec(999_900), pool.BaseAssetReserve)
 
-	t.Log("incrase base asset reserve")
+	t.Log("increase base asset reserve")
 	pool.IncreaseBaseAssetReserve(sdk.NewDec(100))
 	require.Equal(t, sdk.NewDec(1_000_000), pool.BaseAssetReserve)
 }
