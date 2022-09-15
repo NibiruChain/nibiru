@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 * [#894](https://github.com/NibiruChain/nibiru/pull/894) - add the collections package!
+
 ### CI
 
 * [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
@@ -67,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#889](https://github.com/NibiruChain/nibiru/pull/889) - feat: decouple keeper from servers in pricefeed module
 * [#886](https://github.com/NibiruChain/nibiru/pull/886) - feat: decouple keeper from servers in perp module
 * [#902](https://github.com/NibiruChain/nibiru/pull/902) - refactor(common): improve usability of `common.AssetPair`
+* [#913](https://github.com/NibiruChain/nibiru/pull/13) - chore(epochs): update x/epochs module
 
 ### Features
 
