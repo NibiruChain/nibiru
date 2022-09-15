@@ -309,10 +309,6 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 		// if there are no snapshots, return -1 for the price
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
-	if len(snapshots) == 1 {
-		// if there's one snapshot, there's no TWAP so we just return the current price
-		return snapshots[0].Price, nil
-	}
 
 	twap, err = calcTwap(ctx, snapshots)
 	if err != nil {
