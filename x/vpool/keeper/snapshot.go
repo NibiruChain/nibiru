@@ -106,29 +106,29 @@ func getPriceWithSnapshot(
 		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve), nil
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
-		pool := types.NewVPool(
-			snapshotPriceOpts.pair,
-			sdk.OneDec(),
-			snapshot.QuoteAssetReserve,
-			snapshot.BaseAssetReserve,
-			sdk.OneDec(),
-			sdk.MustNewDecFromStr("0.3"),
-			sdk.MustNewDecFromStr("0.0625"),
-			sdk.MustNewDecFromStr("15"),
-		)
+		pool := &types.VPool{
+			Pair:                   snapshotPriceOpts.pair,
+			TradeLimitRatio:        sdk.ZeroDec(), // unused
+			QuoteAssetReserve:      snapshot.QuoteAssetReserve,
+			BaseAssetReserve:       snapshot.BaseAssetReserve,
+			FluctuationLimitRatio:  sdk.ZeroDec(), // unused
+			MaxOracleSpreadRatio:   sdk.ZeroDec(), // unused
+			MaintenanceMarginRatio: sdk.ZeroDec(), // unused
+			MaxLeverage:            sdk.ZeroDec(), // unused
+		}
 		return pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
-		pool := types.NewVPool(
-			snapshotPriceOpts.pair,
-			sdk.OneDec(),
-			snapshot.QuoteAssetReserve,
-			snapshot.BaseAssetReserve,
-			sdk.OneDec(),
-			sdk.MustNewDecFromStr("0.3"),
-			sdk.MustNewDecFromStr("0.0625"),
-			sdk.MustNewDecFromStr("15"),
-		)
+		pool := &types.VPool{
+			Pair:                   snapshotPriceOpts.pair,
+			TradeLimitRatio:        sdk.ZeroDec(), // unused
+			QuoteAssetReserve:      snapshot.QuoteAssetReserve,
+			BaseAssetReserve:       snapshot.BaseAssetReserve,
+			FluctuationLimitRatio:  sdk.ZeroDec(), // unused
+			MaxOracleSpreadRatio:   sdk.ZeroDec(), // unused
+			MaintenanceMarginRatio: sdk.ZeroDec(), // unused
+			MaxLeverage:            sdk.ZeroDec(), // unused
+		}
 		return pool.GetQuoteAmountByBaseAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
 	}
 

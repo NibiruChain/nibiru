@@ -63,7 +63,7 @@ type PricefeedKeeper interface {
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
-	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
+	// TODO unused
 	IsActivePair(ctx sdk.Context, pairID string) bool
 	// Returns the pairs from the x/pricefeed params
 	GetPairs(ctx sdk.Context) common.AssetPairs
@@ -239,22 +239,6 @@ type VpoolKeeper interface {
 	  - err: error
 	*/
 	GetSpotPrice(
-		ctx sdk.Context,
-		pair common.AssetPair,
-	) (price sdk.Dec, err error)
-
-	/* Retrieves the base asset's price from PricefeedKeeper (oracle).
-	The price is denominated in quote asset, so # of quote asset to buy one base asset.
-
-	args:
-	  - ctx: cosmos-sdk context
-	  - pair: token pair
-
-	ret:
-	  - price: price as sdk.Dec
-	  - err: error
-	*/
-	GetUnderlyingPrice(
 		ctx sdk.Context,
 		pair common.AssetPair,
 	) (price sdk.Dec, err error)

@@ -5,6 +5,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -23,6 +26,12 @@ type (
 		storeKey   storetypes.StoreKey
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
+
+		RawPrices     collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice, *types.PostedPrice]
+		CurrentPrices collections.Map[common.AssetPair, types.CurrentPrice, *types.CurrentPrice]
+		// PriceSnapshots maps types.PriceSnapshot to the common.AssetPair of the snapshot and the creation timestamp as keys.Uint64Key.
+		// TODO(mercilex): maybe it's worth to create a keys.Timestamp key?
+		PriceSnapshots collections.Map[keys.Pair[common.AssetPair, keys.Uint64Key], types.PriceSnapshot, *types.PriceSnapshot]
 	}
 )
 
@@ -44,6 +53,10 @@ func NewKeeper(
 		storeKey:   storeKey,
 		memKey:     memKey,
 		paramstore: ps,
+
+		CurrentPrices:  collections.NewMap[common.AssetPair, types.CurrentPrice](cdc, storeKey, 0),
+		RawPrices:      collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice](cdc, storeKey, 1),
+		PriceSnapshots: collections.NewMap[keys.Pair[common.AssetPair, keys.Uint64Key], types.PriceSnapshot](cdc, storeKey, 2),
 	}
 }
 
@@ -107,10 +120,7 @@ func (k Keeper) PostRawPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
-	ctx.KVStore(k.storeKey).Set(
-		types.RawPriceKey(pair.String(), oracle),
-		k.cdc.MustMarshal(&newPostedPrice),
-	)
+	k.RawPrices.Insert(ctx, keys.Join(pair, keys.String(oracle.String())), newPostedPrice)
 	return nil
 }
 
@@ -149,10 +159,8 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 
 	if len(unexpiredPrices) == 0 {
 		// NOTE: The current price stored will continue storing the most recent (expired)
-		// price if this is not set.
-		// This zero's out the current price stored value for that market and ensures
-		// that CDP methods that GetCurrentPrice will return error.
-		k.setCurrentPrice(ctx, pairID, types.CurrentPrice{})
+		// price if this is not deleted.
+		_ = k.CurrentPrices.Delete(ctx, assetPair)
 		return types.ErrNoValidPrice
 	}
 
@@ -171,17 +179,16 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 	}
 
 	currentPrice := types.NewCurrentPrice(token0, token1, medianPrice)
-	k.setCurrentPrice(ctx, pairID, currentPrice)
+	k.CurrentPrices.Insert(ctx, assetPair, currentPrice)
 
-	// Update the TWA prices
-	k.saveOrUpdateSnapshot(ctx, pairID, currentPrice.Price)
+	// Update the TWAP prices
+	k.PriceSnapshots.Insert(ctx, keys.Join(assetPair, keys.Uint64(uint64(ctx.BlockTime().UnixMilli()))), types.PriceSnapshot{
+		PairId:      pairID,
+		Price:       currentPrice.Price,
+		TimestampMs: ctx.BlockTime().UnixMilli(),
+	})
 
 	return nil
-}
-
-func (k Keeper) setCurrentPrice(ctx sdk.Context, pairID string, currentPrice types.CurrentPrice) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CurrentPriceKey(pairID), k.cdc.MustMarshal(&currentPrice))
 }
 
 // CalculateMedianPrice calculates the median prices for the input prices.
@@ -233,14 +240,8 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	}
 
 	// Retrieve current price from the KV store
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentPriceKey(pair.String()))
-	if bz == nil {
-		return types.CurrentPrice{}, types.ErrNoValidPrice
-	}
-	var price types.CurrentPrice
-	k.cdc.MustUnmarshal(bz, &price)
-	if price.Price.Equal(sdk.ZeroDec()) {
+	price, err := k.CurrentPrices.Get(ctx, pair)
+	if err != nil {
 		return types.CurrentPrice{}, types.ErrNoValidPrice
 	}
 
@@ -259,6 +260,10 @@ func (k Keeper) GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 /*
 Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
 Note the open-ended right bracket.
+
+If there's only one snapshot, then this function returns the price from that single snapshot.
+
+Returns -1 if there's no price.
 
 Args:
 - ctx: cosmos-sdk context
@@ -288,122 +293,74 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 		inverseIsActive = true
 	}
 
-	// earliest timestamp we'll look back until
-	lookbackWindow := k.GetParams(ctx).TwapLookbackWindow
-	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackWindow).UnixMilli()
+	// traverse snapshots of the pair in reverse order from currentTime - TWAPLookBackWindow => now
+	pair := keys.PairPrefix[common.AssetPair, keys.Uint64Key](assetPair)                  // only current AssetPair
+	fromTime := ctx.BlockTime().Add(-1 * k.GetParams(ctx).TwapLookbackWindow).UnixMilli() // earliest timestamp aka current time - TWAPLookBackWindow
+	toTime := ctx.BlockTime().UnixMilli()                                                 // current time
+	start := keys.PairSuffix[common.AssetPair](keys.Uint64(uint64(fromTime)))             // this turns it into a suffix
+	end := keys.PairSuffix[common.AssetPair](keys.Uint64(uint64(toTime)))
+	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
+		Prefix(pair).
+		Start(keys.Inclusive(start)).
+		End(keys.Exclusive(end)) // current block shouldn't have a snapshot until EndBlock is run
 
-	var cumulativePrice sdk.Dec = sdk.ZeroDec()
-	var cumulativePeriodMs int64 = 0
-	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
-
-	// traverse snapshots in reverse order
-	startKey := types.PriceSnapshotKey(assetPair.String(), ctx.BlockHeight())
-	var numSnapshots int64 = 0
-	var snapshotPriceBuffer []sdk.Dec // contains snapshots at time 0
-	k.IteratePriceSnapshotsFrom(
-		/*ctx=*/ ctx,
-		/*start=*/ startKey,
-		/*end=*/ nil,
-		/*reverse=*/ true,
-		/*do=*/ func(ps *types.PriceSnapshot) (stop bool) {
-			numSnapshots += 1
-			var timeElapsedMs int64
-			if ps.TimestampMs <= lowerLimitTimestampMs {
-				// current snapshot is below the lower limit
-				timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
-			} else {
-				timeElapsedMs = prevTimestampMs - ps.TimestampMs
-			}
-			cumulativePrice = cumulativePrice.Add(ps.Price.MulInt64(timeElapsedMs))
-			cumulativePeriodMs += timeElapsedMs
-
-			if cumulativePeriodMs <= 0 {
-				snapshotPriceBuffer = append(snapshotPriceBuffer, ps.Price)
-			}
-
-			// end early if we're already beyond the lower limit timestamp
-			if ps.TimestampMs <= lowerLimitTimestampMs {
-				return true
-			}
-			prevTimestampMs = ps.TimestampMs
-			return false
-		})
-
-	switch {
-	case cumulativePeriodMs < 0:
-		return sdk.Dec{}, fmt.Errorf("cumulativePeriodMs, %v, should never be negative", cumulativePeriodMs)
-	case (cumulativePeriodMs == 0) && (numSnapshots > 0):
-		sum := sdk.ZeroDec()
-		for _, price := range snapshotPriceBuffer {
-			sum = sum.Add(price)
-		}
-		return sum.QuoInt64(numSnapshots), nil
-	case (cumulativePeriodMs == 0) && (numSnapshots == 0):
-		return sdk.Dec{}, fmt.Errorf(`
-			failed to calculate twap, no time passed and no snapshots have been taken since
-			ctx.BlockTime: %v, 
-			ctx.BlockHeight: %v,
-			assetPair: %s, 
-		`, prevTimestampMs, ctx.BlockHeight(), assetPair)
+	snapshots := k.PriceSnapshots.Iterate(ctx, rng).Values()
+	if len(snapshots) == 0 {
+		// if there are no snapshots, return -1 for the price
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
 
-	twap = cumulativePrice.QuoInt64(cumulativePeriodMs)
-
-	if !twap.IsZero() && inverseIsActive {
+	twap, err = calcTwap(ctx, snapshots)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	if inverseIsActive {
 		return sdk.OneDec().Quo(twap), nil
 	}
 	return twap, nil
 }
 
-// IterateCurrentPrices iterates over all current price objects in the store and performs a callback function
-func (k Keeper) IterateCurrentPrices(ctx sdk.Context, cb func(cp types.CurrentPrice) (stop bool)) {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.CurrentPricePrefix)
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var cp types.CurrentPrice
-		k.cdc.MustUnmarshal(iterator.Value(), &cp)
-		if cb(cp) {
-			break
+/*
+calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
+
+Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
+*/
+func calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (sdk.Dec, error) {
+	cumulativeTime := ctx.BlockTime().UnixMilli() - snapshots[0].TimestampMs
+	cumulativePrice := sdk.ZeroDec()
+
+	for i, s := range snapshots {
+		var nextTimestampMs int64
+		if i == len(snapshots)-1 {
+			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
+			nextTimestampMs = ctx.BlockTime().UnixMilli()
+		} else {
+			nextTimestampMs = snapshots[i+1].TimestampMs
 		}
+		price := s.Price.MulInt64(nextTimestampMs - s.TimestampMs)
+		cumulativePrice = cumulativePrice.Add(price)
 	}
+	return cumulativePrice.QuoInt64(cumulativeTime), nil
 }
 
 // GetCurrentPrices returns all current price objects from the store
 func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
-	var cps types.CurrentPrices
-	k.IterateCurrentPrices(ctx, func(cp types.CurrentPrice) (stop bool) {
-		cps = append(cps, cp)
-		return false
-	})
-	return cps
+	return k.CurrentPrices.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
 }
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
 func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices {
-	inversePair := common.MustNewAssetPair(pairStr).Inverse()
-	if k.IsActivePair(ctx, inversePair.String()) {
+	pair := common.MustNewAssetPair(pairStr)
+	if k.IsActivePair(ctx, pair.Inverse().String()) {
 		panic(fmt.Errorf(
 			`cannot fetch posted prices using inverse pair, %v ;
-			Use pair, %v, instead`, inversePair.String(), pairStr))
+			Use pair, %v, instead`, pair.Inverse().String(), pairStr))
 	}
 
-	var pps types.PostedPrices
-	k.IterateRawPricesByPair(ctx, pairStr, func(pp types.PostedPrice) (stop bool) {
-		pps = append(pps, pp)
-		return false
-	})
-	return pps
-}
-
-// IterateRawPrices iterates over all raw prices in the store and performs a callback function
-func (k Keeper) IterateRawPricesByPair(ctx sdk.Context, marketId string, cb func(record types.PostedPrice) (stop bool)) {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.RawPriceIteratorKey((marketId)))
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var record types.PostedPrice
-		k.cdc.MustUnmarshal(iterator.Value(), &record)
-		if cb(record) {
-			break
-		}
-	}
+	prefix := keys.PairPrefix[common.AssetPair, keys.StringKey](pair)
+	return k.
+		RawPrices.
+		Iterate(ctx,
+			keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]().Prefix(prefix),
+		).Values()
 }

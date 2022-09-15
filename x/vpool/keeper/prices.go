@@ -42,31 +42,6 @@ func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, e
 }
 
 /*
-Retrieves the base asset's price from PricefeedKeeper (oracle).
-The price is denominated in quote asset, so # of quote asset to buy one base asset.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: token pair
-
-ret:
-  - price: price as sdk.Dec
-  - err: error
-*/
-func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
-	currentPrice, err := k.pricefeedKeeper.GetCurrentPrice(
-		ctx,
-		/* token0 */ pair.BaseDenom(),
-		/* token1 */ pair.QuoteDenom(),
-	)
-	if err != nil {
-		return sdk.OneDec().Neg(), err
-	}
-
-	return currentPrice.Price, nil
-}
-
-/*
 So how much stablecoin you would get if you sold baseAssetAmount amount of perpetual contracts.
 
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction.
