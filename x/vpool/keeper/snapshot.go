@@ -14,7 +14,10 @@ import (
 func (k Keeper) GetSnapshot(ctx sdk.Context, pair common.AssetPair, blockHeight uint64) (
 	snapshot types.ReserveSnapshot, err error,
 ) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetSnapshotKey(pair, blockHeight))
+	bz := prefix.NewStore(
+		ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix,
+	).Get(types.GetSnapshotKey(pair, blockHeight))
+
 	if bz == nil {
 		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
 			Wrap(fmt.Sprintf("snapshot at blockHeight %d was not found", blockHeight))
@@ -38,10 +41,8 @@ func (k Keeper) SaveSnapshot(
 		BlockNumber:       ctx.BlockHeight(),
 	}
 
-	ctx.KVStore(k.storeKey).Set(
-		types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())),
-		k.codec.MustMarshal(snapshot),
-	)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
+	store.Set(types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())), k.codec.MustMarshal(snapshot))
 }
 
 // GetLatestReserveSnapshot returns the last snapshot that was saved
@@ -49,7 +50,7 @@ func (k Keeper) GetLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair)
 	snapshot types.ReserveSnapshot, err error,
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	iter := store.ReverseIterator(nil, nil)
+	iter := store.ReverseIterator(types.GetSnapshotKey(pair, 0), types.GetSnapshotKey(pair, uint64(ctx.BlockHeight()+1)))
 
 	defer iter.Close()
 
