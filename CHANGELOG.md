@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#902](https://github.com/NibiruChain/nibiru/pull/902) - refactor(common): improve usability of `common.AssetPair`
 * [#913](https://github.com/NibiruChain/nibiru/pull/913) - chore(epochs): update x/epochs module
 * [#917](https://github.com/NibiruChain/nibiru/pull/917) - refactor(proto): perp module files consistency
+* [#920](https://github.com/NibiruChain/nibiru/pull/920) - refactor(proto): pricefeed module files consistency
 
 ### Features
 
