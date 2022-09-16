@@ -144,6 +144,6 @@ func setMockPrices(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec
 		GetCurrentTWAP(ctx, common.Pair_BTC_NUSD.Token0, common.Pair_BTC_NUSD.Token1).Return(indexPrice, nil).MaxTimes(1)
 
 	mocks.mockVpoolKeeper.EXPECT().
-		GetSpotPrice(ctx, common.Pair_BTC_NUSD).
+		GetSpotTWAP(ctx, common.Pair_BTC_NUSD, 15*time.Minute).
 		Return(markPrice, nil).MaxTimes(1)
 }

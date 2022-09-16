@@ -326,20 +326,6 @@ func (mr *MockPricefeedKeeperMockRecorder) GetPairs(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPairs", reflect.TypeOf((*MockPricefeedKeeper)(nil).GetPairs), arg0)
 }
 
-// GetRawPrices mocks base method.
-func (m *MockPricefeedKeeper) GetRawPrices(arg0 types2.Context, arg1 string) types0.PostedPrices {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRawPrices", arg0, arg1)
-	ret0, _ := ret[0].(types0.PostedPrices)
-	return ret0
-}
-
-// GetRawPrices indicates an expected call of GetRawPrices.
-func (mr *MockPricefeedKeeperMockRecorder) GetRawPrices(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawPrices", reflect.TypeOf((*MockPricefeedKeeper)(nil).GetRawPrices), arg0, arg1)
-}
-
 // IsActivePair mocks base method.
 func (m *MockPricefeedKeeper) IsActivePair(arg0 types2.Context, arg1 string) bool {
 	m.ctrl.T.Helper()
@@ -521,6 +507,21 @@ func (m *MockVpoolKeeper) GetSpotPrice(arg0 types2.Context, arg1 common.AssetPai
 func (mr *MockVpoolKeeperMockRecorder) GetSpotPrice(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpotPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetSpotPrice), arg0, arg1)
+}
+
+// GetSpotTWAP mocks base method.
+func (m *MockVpoolKeeper) GetSpotTWAP(arg0 types2.Context, arg1 common.AssetPair, arg2 time.Duration) (types2.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpotTWAP", arg0, arg1, arg2)
+	ret0, _ := ret[0].(types2.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpotTWAP indicates an expected call of GetSpotTWAP.
+func (mr *MockVpoolKeeperMockRecorder) GetSpotTWAP(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpotTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetSpotTWAP), arg0, arg1, arg2)
 }
 
 // IsOverSpreadLimit mocks base method.

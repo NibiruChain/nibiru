@@ -243,6 +243,25 @@ type VpoolKeeper interface {
 		pair common.AssetPair,
 	) (price sdk.Dec, err error)
 
+	/* Returns the twap of the spot price (y/x).
+
+	args:
+	  - ctx: cosmos-sdk context
+	  - pair: the token pair
+	  - direction: add or remove
+	  - baseAssetAmount: amount of base asset to add or remove
+	  - lookbackInterval: how far back to calculate TWAP
+
+	ret:
+	  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
+	  - err: error
+	*/
+	GetSpotTWAP(
+		ctx sdk.Context,
+		pair common.AssetPair,
+		lookbackInterval time.Duration,
+	) (quoteAssetAmount sdk.Dec, err error)
+
 	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec
 	GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec

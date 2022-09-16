@@ -100,6 +100,35 @@ func (k Keeper) GetQuoteAssetPrice(
 }
 
 /*
+Returns the twap of the spot price (y/x).
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair
+  - direction: add or remove
+  - baseAssetAmount: amount of base asset to add or remove
+  - lookbackInterval: how far back to calculate TWAP
+
+ret:
+  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
+  - err: error
+*/
+func (k Keeper) GetSpotTWAP(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	lookbackInterval time.Duration,
+) (quoteAssetAmount sdk.Dec, err error) {
+	return k.calcTwap(
+		ctx,
+		pair,
+		types.TwapCalcOption_SPOT,
+		types.Direction_DIRECTION_UNSPECIFIED, // unused
+		sdk.ZeroDec(),                         // unused
+		lookbackInterval,
+	)
+}
+
+/*
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction,
 based on historical snapshots.
 e.g. if removing <baseAssetAmount> base assets from the pool, returns the amount of quote assets do so.
