@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -22,23 +23,23 @@ func TestQueryReserveAssets(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pool := types.NewPool(
-		/* pair */ common.PairBTCStable,
-		/* tradeLimitRatio */ sdk.ZeroDec(),
-		/* quoteAmount */ sdk.NewDec(1_000_000),
-		/* baseAmount */ sdk.NewDec(1000),
-		/* fluctuationLimitRatio */ sdk.ZeroDec(),
-		/* maxOracleSpreadRatio */ sdk.ZeroDec(),
-		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-	)
+	pool := &types.VPool{
+		Pair:                   common.Pair_BTC_NUSD,
+		TradeLimitRatio:        sdk.ZeroDec(),
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1000),
+		FluctuationLimitRatio:  sdk.ZeroDec(),
+		MaxOracleSpreadRatio:   sdk.ZeroDec(),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	}
 	vpoolKeeper.savePool(ctx, pool)
 
 	t.Log("query reserve assets")
 	resp, err := queryServer.ReserveAssets(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryReserveAssetsRequest{
-			Pair: common.PairBTCStable.String(),
+			Pair: common.Pair_BTC_NUSD.String(),
 		},
 	)
 
@@ -51,30 +52,30 @@ func TestQueryReserveAssets(t *testing.T) {
 func TestQueryAllPools(t *testing.T) {
 	t.Log("initialize vpoolkeeper")
 	vpoolKeeper, mocks, ctx := getKeeper(t)
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pair := common.MustNewAssetPair("foo:bar")
-	pool := types.NewPool(
-		/* pair */ pair,
-		/* tradeLimitRatio */ sdk.ZeroDec(),
-		/* quoteAmount */ sdk.NewDec(1_000_000), // 1e6
-		/* baseAmount */ sdk.NewDec(1000), // 1e3
-		/* fluctuationLimitRatio */ sdk.ZeroDec(),
-		/* maxOracleSpreadRatio */ sdk.ZeroDec(),
-		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
-	)
+	pair := common.Pair_BTC_NUSD
+	pool := &types.VPool{
+		Pair:                   pair,
+		TradeLimitRatio:        sdk.ZeroDec(),
+		QuoteAssetReserve:      sdk.NewDec(1_000_000),
+		BaseAssetReserve:       sdk.NewDec(1000),
+		FluctuationLimitRatio:  sdk.ZeroDec(),
+		MaxOracleSpreadRatio:   sdk.ZeroDec(),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	}
 	vpoolKeeper.CreatePool(
 		ctx, pair, pool.TradeLimitRatio, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.FluctuationLimitRatio, pool.MaxOracleSpreadRatio, pool.MaintenanceMarginRatio, pool.MaxLeverage)
 
 	t.Log("query reserve assets and prices for the pair")
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
 	indexPrice := sdk.NewDec(25_000)
 	mocks.mockPricefeedKeeper.EXPECT().
 		GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom()).
-		Return(
-			pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: indexPrice},
-			nil)
+		Return(pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: indexPrice}, nil)
 	resp, err := queryServer.AllPools(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryAllPoolsRequest{},
@@ -86,8 +87,9 @@ func TestQueryAllPools(t *testing.T) {
 		Pair:          pool.Pair.String(),
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
-		TwapMark:      "",
+		TwapMark:      markPriceWanted.String(),
 		SwapInvariant: sdk.NewInt(1_000_000_000), // 1e6 * 1e3
+		BlockNumber:   2,
 	}
 	require.NoError(t, err)
 	assert.EqualValues(t, pool.Pair, resp.Pools[0].Pair)

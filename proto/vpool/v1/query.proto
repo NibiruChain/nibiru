@@ -4,7 +4,7 @@ package nibiru.vpool.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "vpool/v1/vpool.proto";
+import "vpool/v1/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
@@ -49,12 +49,10 @@ message QueryReserveAssetsResponse {
 
 // ---------------------------------------- QueryAllPools
 
-message QueryAllPoolsRequest {
-
-}
+message QueryAllPoolsRequest { }
 
 message QueryAllPoolsResponse {
-  repeated Pool pools = 1;
+  repeated VPool pools = 1;
   repeated PoolPrices prices = 2 [
     (gogoproto.nullable) = false
   ];

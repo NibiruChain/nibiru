@@ -34,32 +34,32 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 			continue
 		}
 
-		markTWAP, err := k.VpoolKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair)
+		markPrice, err := k.VpoolKeeper.GetSpotTWAP(ctx, pairMetadata.Pair, params.TwapLookbackWindow)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
 		}
-		if markTWAP.Price.IsZero() {
+		if markPrice.IsZero() {
 			ctx.Logger().Error("mark price is zero", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
 
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-		fundingRate := markTWAP.Price.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
+		fundingRate := markPrice.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
 		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
 		cumulativeFundingRate := fundingRate
-		if len(pairMetadata.CumulativePremiumFractions) > 0 {
-			cumulativeFundingRate = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(fundingRate)
+		if len(pairMetadata.CumulativeFundingRates) > 0 {
+			cumulativeFundingRate = pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1].Add(fundingRate)
 		}
 
-		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, cumulativeFundingRate)
+		pairMetadata.CumulativeFundingRates = append(pairMetadata.CumulativeFundingRates, cumulativeFundingRate)
 		k.PairMetadataState(ctx).Set(pairMetadata)
 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                  pairMetadata.Pair.String(),
-			MarkPrice:             markTWAP.Price,
+			MarkPrice:             markPrice,
 			IndexPrice:            indexTWAP,
 			LatestFundingRate:     fundingRate,
 			CumulativeFundingRate: cumulativeFundingRate,

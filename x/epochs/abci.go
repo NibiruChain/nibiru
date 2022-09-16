@@ -15,18 +15,25 @@ import (
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 	k.IterateEpochInfo(ctx, func(index int64, epochInfo types.EpochInfo) (stop bool) {
+		// If blocktimme < initial epoch start time, return
+		if ctx.BlockTime().Before(epochInfo.StartTime) {
+			return false
+		}
+
 		logger := k.Logger(ctx)
 
-		// Epoch has not started yet, and the current block time >= initial epoch start time.
-		shouldInitialEpochStart := !epochInfo.EpochCountingStarted && !epochInfo.StartTime.After(ctx.BlockTime())
+		// Epoch has not started yet
+		shouldInitialEpochStart := !epochInfo.EpochCountingStarted
 
 		epochEndTime := epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 		// StartTime is set to a pinpointed timestamp that is after the default value of CurrentEpochStartTime (=0).
-		shouldEpochStart := (!epochInfo.StartTime.After(ctx.BlockTime()) && ctx.BlockTime().After(epochEndTime)) || shouldInitialEpochStart
+		shouldEpochStart := shouldInitialEpochStart || ctx.BlockTime().After(epochEndTime)
 
 		if !shouldEpochStart {
 			return false
 		}
+
+		// we deduced that a new epoch tick should happen
 		epochInfo.CurrentEpochStartHeight = ctx.BlockHeight()
 
 		if shouldInitialEpochStart {

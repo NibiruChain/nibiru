@@ -63,7 +63,7 @@ type PricefeedKeeper interface {
 	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
 	) (pftypes.CurrentPrice, error)
 	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
-	GetRawPrices(ctx sdk.Context, marketId string) pftypes.PostedPrices
+	// TODO unused
 	IsActivePair(ctx sdk.Context, pairID string) bool
 	// Returns the pairs from the x/pricefeed params
 	GetPairs(ctx sdk.Context) common.AssetPairs
@@ -243,21 +243,24 @@ type VpoolKeeper interface {
 		pair common.AssetPair,
 	) (price sdk.Dec, err error)
 
-	/* Retrieves the base asset's price from PricefeedKeeper (oracle).
-	The price is denominated in quote asset, so # of quote asset to buy one base asset.
+	/* Returns the twap of the spot price (y/x).
 
 	args:
 	  - ctx: cosmos-sdk context
-	  - pair: token pair
+	  - pair: the token pair
+	  - direction: add or remove
+	  - baseAssetAmount: amount of base asset to add or remove
+	  - lookbackInterval: how far back to calculate TWAP
 
 	ret:
-	  - price: price as sdk.Dec
+	  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
 	  - err: error
 	*/
-	GetUnderlyingPrice(
+	GetSpotTWAP(
 		ctx sdk.Context,
 		pair common.AssetPair,
-	) (price sdk.Dec, err error)
+		lookbackInterval time.Duration,
+	) (quoteAssetAmount sdk.Dec, err error)
 
 	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec
@@ -265,9 +268,6 @@ type VpoolKeeper interface {
 	// ExistsPool returns true if pool exists, false if not.
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
-
-	// GetCurrentTWAP fetches the TWAP for the specified token pair / pool
-	GetCurrentTWAP(ctx sdk.Context, pair common.AssetPair) (vpooltypes.CurrentTWAP, error)
 }
 
 type EpochKeeper interface {

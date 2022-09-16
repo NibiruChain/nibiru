@@ -130,7 +130,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, err
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
 		Price:     spotPrice,
 		Timestamp: ctx.BlockHeader().Time,
@@ -245,7 +245,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
 		Price:     spotPrice,
 		Timestamp: ctx.BlockHeader().Time,
@@ -273,22 +273,15 @@ args:
 ret:
   - err: error if any
 */
-func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.Pool) error {
+func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.VPool) error {
 	if pool.FluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
 		return nil
 	}
 
-	latestSnapshot, counter, err := k.getLatestReserveSnapshot(ctx, pool.Pair)
+	latestSnapshot, err := k.GetLatestReserveSnapshot(ctx, pool.Pair)
 	if err != nil {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
-	}
-
-	if latestSnapshot.BlockNumber == ctx.BlockHeight() && counter > 0 {
-		latestSnapshot, err = k.getSnapshot(ctx, pool.Pair, counter-1)
-		if err != nil {
-			return fmt.Errorf("error getting snapshot number %d from pair %s", counter-1, pool.Pair)
-		}
 	}
 
 	if isOverFluctuationLimit(pool, latestSnapshot) {
@@ -311,7 +304,7 @@ args:
 ret:
   - bool: true if the fluctuation limit is violated. false otherwise
 */
-func isOverFluctuationLimit(pool *types.Pool, snapshot types.ReserveSnapshot) bool {
+func isOverFluctuationLimit(pool *types.VPool, snapshot types.ReserveSnapshot) bool {
 	if pool.FluctuationLimitRatio.IsZero() {
 		return false
 	}
@@ -347,7 +340,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	oraclePrice, err := k.GetUnderlyingPrice(ctx, pair)
+	indexPrice, err := k.pricefeedKeeper.GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom())
 	if err != nil {
 		panic(err)
 	}
@@ -357,7 +350,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
+	return spotPrice.Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
 
 /*

@@ -39,9 +39,9 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(false)
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(false)
 
-				pos := types.ZeroPosition(ctx, common.PairBTCStable, sample.AccAddress())
+				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
 
 				_, err := k.calcFreeCollateral(ctx, *pos)
 
@@ -54,10 +54,10 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.PairBTCStable).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
 
-				pos := types.ZeroPosition(ctx, common.PairBTCStable, sample.AccAddress())
+				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
 
 				freeCollateral, err := k.calcFreeCollateral(ctx, *pos)
 
@@ -148,27 +148,27 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 			k, mocks, ctx := getKeeper(t)
 
 			pos := types.Position{
-				TraderAddress:                       sample.AccAddress().String(),
-				Pair:                                common.PairBTCStable,
-				Size_:                               tc.positionSize,
-				Margin:                              sdk.NewDec(100),
-				OpenNotional:                        sdk.NewDec(1000),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				TraderAddress:                  sample.AccAddress().String(),
+				Pair:                           common.Pair_BTC_NUSD,
+				Size_:                          tc.positionSize,
+				Margin:                         sdk.NewDec(100),
+				OpenNotional:                   sdk.NewDec(1000),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			}
 
 			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.PairBTCStable).Return(true)
-			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.PairBTCStable).Return(sdk.MustNewDecFromStr("0.0625"))
+			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
+			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 				ctx,
-				common.PairBTCStable,
+				common.Pair_BTC_NUSD,
 				tc.vpoolDirection,
 				sdk.OneDec(),
 			).Return(tc.positionNotional, nil)
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
 				ctx,
-				common.PairBTCStable,
+				common.Pair_BTC_NUSD,
 				tc.vpoolDirection,
 				sdk.OneDec(),
 				15*time.Minute,

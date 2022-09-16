@@ -50,6 +50,11 @@ MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit lia
 GENESIS_COINS="1000000000unibi,10000000000000unusd"
 CHAIN_DIR="$HOME/.nibid"
 
+SEDOPTION=
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SEDOPTION="''"
+fi
+
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" > /dev/null; then
     echo_error "Terminating $BINARY..."
@@ -110,7 +115,7 @@ fi
 
 # Enable API Server
 echo_info "Enabling API server"
-if sed -i '' '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
+if sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
   echo_success "Successfully enabled API server"
 else
   echo_error "Failed to enable API server"
@@ -118,7 +123,7 @@ fi
 
 # Enable Swagger Docs
 echo_info "Enabling Swagger Docs"
-if sed -i '' 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
+if sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
   echo_success "Successfully enabled Swagger Docs"
 else
   echo_error "Failed to enable Swagger Docs"
@@ -126,7 +131,7 @@ fi
 
 # Enable CORS for localnet
 echo_info "Enabling CORS"
-if sed -i '' 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
+if sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
   echo_success "Successfully enabled CORS"
 else
   echo_error "Failed to enable CORS"
@@ -189,9 +194,9 @@ add_genesis_param '.app_state.perp.params.partial_liquidation_ratio = "0.25"'
 add_genesis_param '.app_state.perp.params.funding_rate_interval = "30 min"'
 add_genesis_param '.app_state.perp.params.twap_lookback_window = "900s"'
 add_genesis_param '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}'
-add_genesis_param '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]'
+add_genesis_param '.app_state.perp.pair_metadata[0].cumulative_funding_rates = ["0"]'
 add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}'
-add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]'
+add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_funding_rates = ["0"]'
 
 # x/pricefeed
 nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl

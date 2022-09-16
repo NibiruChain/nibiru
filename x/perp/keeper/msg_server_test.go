@@ -31,37 +31,37 @@ func TestMsgServerAddMargin(t *testing.T) {
 	}{
 		{
 			name:        "trader not enough funds",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 999)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.Pair_BTC_NUSD,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
-			margin:      sdk.NewInt64Coin(common.DenomStable, 1000),
+			margin:      sdk.NewInt64Coin(common.DenomNUSD, 1000),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:            "no initial position",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1000)),
 			initialPosition: nil,
-			margin:          sdk.NewInt64Coin(common.DenomStable, 1000),
+			margin:          sdk.NewInt64Coin(common.DenomNUSD, 1000),
 			expectedErr:     types.ErrPositionNotFound,
 		},
 		{
 			name:        "success",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1000)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.Pair_BTC_NUSD,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
-			margin:      sdk.NewInt64Coin(common.DenomStable, 1000),
+			margin:      sdk.NewInt64Coin(common.DenomNUSD, 1000),
 			expectedErr: nil,
 		},
 	}
@@ -76,7 +76,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
 				ctx,
-				common.PairBTCStable,
+				common.Pair_BTC_NUSD,
 				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.NewDec(1_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000),
@@ -86,8 +86,8 @@ func TestMsgServerAddMargin(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("fund trader")
@@ -101,7 +101,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 
 			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
 				Sender:    traderAddr.String(),
-				TokenPair: common.PairBTCStable.String(),
+				TokenPair: common.Pair_BTC_NUSD.String(),
 				Margin:    tc.margin,
 			})
 
@@ -118,7 +118,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 				assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
 				assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
 			}
 		})
 	}
@@ -136,51 +136,51 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 	}{
 		{
 			name:       "position not enough margin",
-			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1000)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.Pair_BTC_NUSD,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
-			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
+			marginToRemove: sdk.NewInt64Coin(common.DenomNUSD, 1000),
 			expectedErr:    types.ErrFailedRemoveMarginCanCauseBadDebt,
 		},
 		{
 			name:            "no initial position",
-			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 0)),
+			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 0)),
 			initialPosition: nil,
-			marginToRemove:  sdk.NewInt64Coin(common.DenomStable, 1000),
+			marginToRemove:  sdk.NewInt64Coin(common.DenomNUSD, 1000),
 			expectedErr:     types.ErrPositionNotFound,
 		},
 		{
 			name:       "vault insufficient funds",
-			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 999)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.NewDec(1_000_000),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.Pair_BTC_NUSD,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.NewDec(1_000_000),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
-			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
+			marginToRemove: sdk.NewInt64Coin(common.DenomNUSD, 1000),
 			expectedErr:    sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:       "success",
-			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1000)),
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1000)),
 			initialPosition: &types.Position{
-				Pair:                                common.PairBTCStable,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.NewDec(1_000_000),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				Pair:                           common.Pair_BTC_NUSD,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.NewDec(1_000_000),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			},
-			marginToRemove: sdk.NewInt64Coin(common.DenomStable, 1000),
+			marginToRemove: sdk.NewInt64Coin(common.DenomNUSD, 1000),
 			expectedErr:    nil,
 		},
 	}
@@ -195,7 +195,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
 				ctx,
-				common.PairBTCStable,
+				common.Pair_BTC_NUSD,
 				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.NewDec(1_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000),
@@ -205,8 +205,8 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("fund vault")
@@ -222,7 +222,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 
 			resp, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
 				Sender:    traderAddr.String(),
-				TokenPair: common.PairBTCStable.String(),
+				TokenPair: common.Pair_BTC_NUSD.String(),
 				Margin:    tc.marginToRemove,
 			})
 
@@ -240,7 +240,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
 				assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
 			}
 		})
 	}
@@ -258,15 +258,15 @@ func TestMsgServerOpenPosition(t *testing.T) {
 	}{
 		{
 			name:        "trader not enough funds",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 999)),
-			pair:        common.PairBTCStable.String(),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 999)),
+			pair:        common.Pair_BTC_NUSD.String(),
 			sender:      sample.AccAddress().String(),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:        "success",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomStable, 1020)),
-			pair:        common.PairBTCStable.String(),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1020)),
+			pair:        common.Pair_BTC_NUSD.String(),
 			sender:      sample.AccAddress().String(),
 			expectedErr: nil,
 		},
@@ -281,7 +281,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
-				/* pair */ common.PairBTCStable,
+				/* pair */ common.Pair_BTC_NUSD,
 				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 				/* baseAssetReserve */ sdk.NewDec(1_000_000),
@@ -291,8 +291,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
@@ -326,7 +326,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(1000), resp.Position.Margin)
 				assert.EqualValues(t, sdk.NewDec(10_000), resp.Position.OpenNotional)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LastUpdateCumulativePremiumFraction)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
 				assert.EqualValues(t, sdk.NewDec(10_000), resp.ExchangedNotionalValue)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.ExchangedPositionSize)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
@@ -350,7 +350,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	}{
 		{
 			name:        "success",
-			pair:        common.PairBTCStable,
+			pair:        common.Pair_BTC_NUSD,
 			traderAddr:  sample.AccAddress(),
 			expectedErr: nil,
 		},
@@ -366,7 +366,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 
 			app.VpoolKeeper.CreatePool(
 				ctx,
-				common.PairBTCStable,
+				common.Pair_BTC_NUSD,
 				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 				/* baseAssetReserve */ sdk.NewDec(1_000_000),
@@ -376,19 +376,19 @@ func TestMsgServerClosePosition(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 
 			t.Log("create position")
 			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-				TraderAddress:                       tc.traderAddr.String(),
-				Pair:                                tc.pair,
-				Size_:                               sdk.OneDec(),
-				Margin:                              sdk.OneDec(),
-				OpenNotional:                        sdk.OneDec(),
-				LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-				BlockNumber:                         1,
+				TraderAddress:                  tc.traderAddr.String(),
+				Pair:                           tc.pair,
+				Size_:                          sdk.OneDec(),
+				Margin:                         sdk.OneDec(),
+				OpenNotional:                   sdk.OneDec(),
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    1,
 			}))
 			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
@@ -433,21 +433,21 @@ func TestMsgServerLiquidate(t *testing.T) {
 		},
 		{
 			name:        "invalid liquidator address",
-			pair:        common.PairBTCStable.String(),
+			pair:        common.Pair_BTC_NUSD.String(),
 			liquidator:  "foo",
 			trader:      sample.AccAddress().String(),
 			expectedErr: fmt.Errorf("decoding bech32 failed"),
 		},
 		{
 			name:        "invalid trader address",
-			pair:        common.PairBTCStable.String(),
+			pair:        common.Pair_BTC_NUSD.String(),
 			liquidator:  sample.AccAddress().String(),
 			trader:      "foo",
 			expectedErr: fmt.Errorf("decoding bech32 failed"),
 		},
 		{
 			name:        "success",
-			pair:        common.PairBTCStable.String(),
+			pair:        common.Pair_BTC_NUSD.String(),
 			liquidator:  sample.AccAddress().String(),
 			trader:      sample.AccAddress().String(),
 			expectedErr: nil,
@@ -463,7 +463,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
-				/* pair */ common.PairBTCStable,
+				/* pair */ common.Pair_BTC_NUSD,
 				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 				/* baseAssetReserve */ sdk.NewDec(1_000_000),
@@ -473,8 +473,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                       common.PairBTCStable,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                   common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
@@ -484,19 +484,18 @@ func TestMsgServerLiquidate(t *testing.T) {
 				t.Log("set pricefeed oracle price")
 				oracle := sample.AccAddress()
 				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-				_, err = app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
-				require.NoError(t, err)
+				require.NoError(t, app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
 				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 				t.Log("create position")
 				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-					TraderAddress:                       traderAddr.String(),
-					Pair:                                pair,
-					Size_:                               sdk.OneDec(),
-					Margin:                              sdk.OneDec(),
-					OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
-					LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                         1,
+					TraderAddress:                  traderAddr.String(),
+					Pair:                           pair,
+					Size_:                          sdk.OneDec(),
+					Margin:                         sdk.OneDec(),
+					OpenNotional:                   sdk.NewDec(2), // new spot price is 1, so position can be liquidated
+					LatestCumulativeFundingPayment: sdk.ZeroDec(),
+					BlockNumber:                    1,
 				}))
 				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 1))))
 			}
