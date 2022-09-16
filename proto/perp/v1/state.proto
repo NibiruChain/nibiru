@@ -10,6 +10,32 @@ import "common/common.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
+enum Side {
+  SIDE_UNSPECIFIED = 0;
+  BUY = 1;
+  SELL = 2;
+}
+
+enum PnLCalcOption {
+  PNL_CALC_OPTION_UNSPECIFIED = 0;
+  SPOT_PRICE = 1;
+  TWAP = 2;
+  ORACLE = 3;
+}
+
+enum PnLPreferenceOption {
+  PNL_PREFERENCE_UNSPECIFIED = 0;
+  MAX = 1;
+  MIN = 2;
+}
+
+enum MarginCalculationPriceOption {
+  MARGIN_CALCULATION_PRICE_OPTION_UNSPECIFIED = 0;
+  SPOT = 1;
+  INDEX = 2;
+  MAX_PNL = 3;
+}
+
 message Params {
   // stopped identifies if the perp exchange is stopped or not
   bool stopped = 1;
@@ -53,19 +79,6 @@ message Params {
   ];
 }
 
-// GenesisState defines the perp module's genesis state.
-message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
-
-  repeated PairMetadata pair_metadata = 2;
-
-  repeated Position positions = 3;
-
-  repeated PrepaidBadDebt prepaid_bad_debts = 4;
-
-  repeated string whitelisted_addresses = 5;
-}
-
 // Position identifies and records information on a user's position on one of
 // the virtual liquidity pools.
 message Position {
@@ -103,6 +116,26 @@ message Position {
 
   // BlockNumber is the last block number when this position was updated.
   int64 block_number = 7;
+}
+
+message PairMetadata {
+  common.AssetPair pair = 1 [ (gogoproto.nullable) = false ];
+
+  // The historical list of cumulative funding rates for a given pair.
+  // Calculated once per epoch.
+  repeated string cumulative_funding_rates = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message PrepaidBadDebt {
+  string denom = 1;
+
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message PositionResp {
@@ -186,50 +219,4 @@ message LiquidateResp {
 
   // Position response from the close or open reverse position
   PositionResp position_resp = 5;
-}
-
-enum Side {
-  SIDE_UNSPECIFIED = 0;
-  BUY = 1;
-  SELL = 2;
-}
-
-enum PnLCalcOption {
-  PNL_CALC_OPTION_UNSPECIFIED = 0;
-  SPOT_PRICE = 1;
-  TWAP = 2;
-  ORACLE = 3;
-}
-
-enum PnLPreferenceOption {
-  PNL_PREFERENCE_UNSPECIFIED = 0;
-  MAX = 1;
-  MIN = 2;
-}
-
-enum MarginCalculationPriceOption {
-  MARGIN_CALCULATION_PRICE_OPTION_UNSPECIFIED = 0;
-  SPOT = 1;
-  INDEX = 2;
-  MAX_PNL = 3;
-}
-
-message PairMetadata {
-  common.AssetPair pair = 1 [ (gogoproto.nullable) = false ];
-
-  // The historical list of cumulative funding rates for a given pair.
-  // Calculated once per epoch.
-  repeated string cumulative_funding_rates = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-}
-
-message PrepaidBadDebt {
-  string denom = 1;
-
-  string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
 }
