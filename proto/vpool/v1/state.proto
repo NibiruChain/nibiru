@@ -28,6 +28,70 @@ enum TwapCalcOption {
   BASE_ASSET_SWAP = 3;
 }
 
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+}
+
+// A virtual pool used only for price discovery of perpetual futures contracts.
+// No real liquidity exists in this pool.
+message VPool {
+  // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+  common.AssetPair pair = 1 [
+    (gogoproto.nullable) = false
+  ];
+
+  // base asset is the crypto asset, e.g. BTC or ETH
+  string base_asset_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // quote asset is usually stablecoin, in our case NUSD
+  string quote_asset_reserve = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // ratio applied to reserves in order not to over trade
+  string trade_limit_ratio = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // percentage that a single open or close position can alter the reserve amounts
+  string fluctuation_limit_ratio = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // max_oracle_spread_ratio
+  string max_oracle_spread_ratio = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // maintenance_margin_ratio
+  string maintenance_margin_ratio = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // max_leverage
+  string max_leverage = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// CurrentTWAP states defines the numerator and denominator for the TWAP calculation
+message CurrentTWAP {
+  string pair_id = 1 [(gogoproto.customname) = "PairID"];
+  string numerator = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string denominator = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string price = 4 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+}
+
 // a snapshot of the vpool's reserves at a given point in time
 message ReserveSnapshot {
   string base_asset_reserve = 1 [
@@ -44,58 +108,6 @@ message ReserveSnapshot {
 
   int64 block_number = 4;
 }
-
-// A virtual pool used only for price discovery of perpetual futures contracts.
-// No real liquidity exists in this pool.
-message VPool {
-  // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
-  common.AssetPair pair = 1 [
-    (gogoproto.nullable) = false
-  ];
-
-  // base asset is the crypto asset, e.g. BTC or ETH
-  string base_asset_reserve = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false
-  ];
-
-  // quote asset is usually stablecoin, in our case NUSD
-  string quote_asset_reserve = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false
-  ];
-    
-  // ratio applied to reserves in order not to over trade
-  string trade_limit_ratio = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false
-  ];
-
-  // percentage that a single open or close position can alter the reserve amounts
-  string fluctuation_limit_ratio = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false
-  ];
-
-  // max_oracle_spread_ratio
-  string max_oracle_spread_ratio = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false
-  ];    
-  
-  // maintenance_margin_ratio
-  string maintenance_margin_ratio = 7 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // max_leverage
-  string max_leverage = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];    
-}
-
 
 // PoolPrices is a simple structure that displays a snapshot of the mark and index
 // prices for an asset. Empty strings for the indexPrice or twapMark fields 

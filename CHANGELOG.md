@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#880](https://github.com/NibiruChain/nibiru/pull/880) - refactor `PostRawPrice` return values
 * [#900](https://github.com/NibiruChain/nibiru/pull/900) - fix x/vpool twap calculation to be bounded in time
+* [#919](https://github.com/NibiruChain/nibiru/pull/919) - refactor(proto): vpool module files consistency
+  * MarkPriceChanged renamed to MarkPriceChangedEvent
 
 ### Improvements
 
