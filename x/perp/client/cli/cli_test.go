@@ -5,19 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
@@ -42,22 +40,25 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	const oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
-	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
-
-	pairs := common.AssetPairs{common.Pair_BTC_NUSD}
-	return &pftypes.GenesisState{
-		Params: pftypes.Params{Pairs: pairs},
-		PostedPrices: []pftypes.PostedPrice{
-			{
-				PairID: common.Pair_BTC_NUSD.String(),
-				Oracle: oracle.String(),
-				Price:  sdk.OneDec(),
-				Expiry: time.Now().Add(1 * time.Hour),
-			},
+	pairs := common.AssetPairs{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD}
+	defaultGenesis := simapp.PricefeedGenesis()
+	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
+	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
+		{
+			PairID: common.Pair_BTC_NUSD.String(),
+			Oracle: simapp.GenOracleAddress,
+			Price:  sdk.OneDec(),
+			Expiry: time.Now().Add(1 * time.Hour),
 		},
-		GenesisOracles: []string{oracle.String()},
-	}
+		{
+			PairID: common.Pair_ETH_NUSD.String(),
+			Oracle: simapp.GenOracleAddress,
+			Price:  sdk.OneDec(),
+			Expiry: time.Now().Add(1 * time.Hour),
+		},
+	}...)
+
+	return &defaultGenesis
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -137,18 +138,50 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(err)
 	user1 := sdk.AccAddress(info.GetPubKey().Address())
 
-	s.users = []sdk.AccAddress{user1}
+	info, _, err = val.ClientCtx.Keyring.
+		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.NoError(err)
+	user2 := sdk.AccAddress(info.GetPubKey().Address())
+
+	info, _, err = val.ClientCtx.Keyring.
+		NewMnemonic("user3", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.NoError(err)
+	user3 := sdk.AccAddress(info.GetPubKey().Address())
+
+	s.users = []sdk.AccAddress{user1, user2, user3}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomNIBI, 100_000_000),
-			sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
+			sdk.NewInt64Coin(common.DenomNIBI, 10_000_000),
+			sdk.NewInt64Coin(common.DenomUSDC, 10_000_000),
 			sdk.NewInt64Coin(common.DenomNUSD, 50_000_000),
 		),
 		val,
 		common.DenomNIBI,
 	)
-	s.NoError(err)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(user2,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(common.DenomNIBI, 1000),
+			sdk.NewInt64Coin(common.DenomUSDC, 1000),
+			sdk.NewInt64Coin(common.DenomNUSD, 100000),
+		),
+		val,
+		common.DenomNIBI,
+	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(user3,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(common.DenomNIBI, 1000),
+			sdk.NewInt64Coin(common.DenomUSDC, 1000),
+			sdk.NewInt64Coin(common.DenomNUSD, 49_000_000),
+		),
+		val,
+		common.DenomNIBI,
+	)
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -204,7 +237,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
-	s.EqualValues(sdk.NewDec(0), queryResp.MarginRatioIndex)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioIndex)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	args = []string{
@@ -292,7 +325,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("1000099.999999999999999651"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000843"), queryResp.UnrealizedPnl)
 	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
-	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.001)
+	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.008)
 
 	s.T().Log("F. Close position")
 	args = []string{
@@ -391,6 +424,79 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	}
 
 	s.Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+}
+
+func (s *IntegrationTestSuite) TestLiquidate() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+
+	args := []string{
+		"--from",
+		s.users[1].String(),
+		common.Pair_ETH_NUSD.String(),
+		s.users[1].String(),
+	}
+
+	// liquidate a position that does not exist
+	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	s.Contains(out.String(), "no position found")
+	if err != nil {
+		s.T().Logf("user liquidate error: %+v", err)
+	}
+
+	positionArgs := []string{
+		"--from",
+		s.users[1].String(),
+		"buy",
+		common.Pair_ETH_NUSD.String(),
+		"15",    // Leverage
+		"90000", // Quote asset amount
+		"0",
+	}
+
+	s.T().Log("opening a position with user 2....")
+	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(positionArgs, commonArgs...))
+	s.NoError(err)
+
+	// error : margin is higher than required maintenance margin ratio"
+	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	s.Contains(out.String(), "margin is higher than required maintenance margin ratio")
+	if err != nil {
+		s.T().Logf("user liquidate error: %+v", err)
+	}
+
+	positionArgs = []string{
+		"--from",
+		s.users[2].String(),
+		"sell",
+		common.Pair_ETH_NUSD.String(),
+		"15",       // Leverage
+		"45000000", // Quote asset amount
+		"0",
+	}
+
+	s.T().Log("opening a position with user 3....")
+	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(positionArgs, commonArgs...))
+	s.NoError(err)
+
+	height, err := s.network.LatestHeight()
+	s.Require().NoError(err)
+
+	_, err = s.network.WaitForHeight(height + 10)
+	s.Require().NoError(err)
+
+	// liquidate
+	args = []string{
+		"--from",
+		s.users[1].String(),
+		common.Pair_ETH_NUSD.String(),
+		s.users[1].String(),
+	}
+
+	s.T().Log("liquidating user 2....")
+	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
+	s.NotContains(out.String(), "fail")
+	s.NoError(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

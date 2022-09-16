@@ -26,11 +26,6 @@ import (
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
-const (
-	// oracleAddress = "nibi17ppzhnuv68felpv7p0ya5j2n0uvvngjuqtuq4l"
-	oracleAddress = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
-)
-
 type IntegrationTestSuite struct {
 	suite.Suite
 
@@ -40,29 +35,28 @@ type IntegrationTestSuite struct {
 
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
-	oracle := sdk.MustAccAddressFromBech32(oracleAddress)
-
 	pairs := common.AssetPairs{
 		common.Pair_NIBI_NUSD, common.Pair_USDC_NUSD,
 	}
-	return &pftypes.GenesisState{
-		Params: pftypes.Params{Pairs: pairs},
-		PostedPrices: []pftypes.PostedPrice{
-			{
-				PairID: common.Pair_NIBI_NUSD.String(),
-				Oracle: oracle.String(),
-				Price:  sdk.NewDec(10),
-				Expiry: time.Now().Add(1 * time.Hour),
-			},
-			{
-				PairID: common.Pair_USDC_NUSD.String(),
-				Oracle: oracle.String(),
-				Price:  sdk.OneDec(),
-				Expiry: time.Now().Add(1 * time.Hour),
-			},
+
+	defaultGenesis := simapp.PricefeedGenesis()
+	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
+	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
+		{
+			PairID: common.Pair_NIBI_NUSD.String(),
+			Oracle: simapp.GenOracleAddress,
+			Price:  sdk.NewDec(10),
+			Expiry: time.Now().Add(1 * time.Hour),
 		},
-		GenesisOracles: []string{oracle.String()},
-	}
+		{
+			PairID: common.Pair_USDC_NUSD.String(),
+			Oracle: simapp.GenOracleAddress,
+			Price:  sdk.OneDec(),
+			Expiry: time.Now().Add(1 * time.Hour),
+		},
+	}...)
+
+	return &defaultGenesis
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
