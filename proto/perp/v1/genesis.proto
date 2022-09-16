@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package nibiru.perp.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "common/common.proto";
+import "perp/v1/state.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
+
+// GenesisState defines the perp module's genesis state.
+message GenesisState {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+
+  repeated PairMetadata pair_metadata = 2;
+
+  repeated Position positions = 3;
+
+  repeated PrepaidBadDebt prepaid_bad_debts = 4;
+
+  repeated string whitelisted_addresses = 5;
+}
