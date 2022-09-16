@@ -22,6 +22,30 @@ func TestGetReserveSnapshotFailsIfNotSnapshotSavedBefore(t *testing.T) {
 	require.Error(t, err, types.ErrNoLastSnapshotSaved)
 }
 
+func TestGetReserveSnapshotMultiplePairs(t *testing.T) {
+	genesisTime := time.Now()
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+	)
+	ctx = ctx.WithBlockHeight(1).WithBlockTime(genesisTime)
+
+	vpoolKeeper.SaveSnapshot(ctx, common.Pair_BTC_NUSD, sdk.OneDec(), sdk.OneDec())
+	vpoolKeeper.SaveSnapshot(ctx, common.Pair_ETH_NUSD, sdk.NewDec(2), sdk.NewDec(2))
+	ctx = ctx.WithBlockHeight(2).WithBlockTime(genesisTime.Add(5 * time.Second))
+
+	snapshot, err := vpoolKeeper.GetLatestReserveSnapshot(ctx, common.Pair_BTC_NUSD)
+	require.NoError(t, err)
+	require.Equal(t,
+		types.ReserveSnapshot{
+			BaseAssetReserve:  sdk.OneDec(),
+			QuoteAssetReserve: sdk.OneDec(),
+			TimestampMs:       genesisTime.UnixMilli(),
+			BlockNumber:       1,
+		},
+		snapshot,
+	)
+}
+
 func TestSaveSnapshot(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
