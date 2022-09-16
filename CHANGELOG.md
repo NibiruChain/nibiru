@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#880](https://github.com/NibiruChain/nibiru/pull/880) - refactor `PostRawPrice` return values
 * [#900](https://github.com/NibiruChain/nibiru/pull/900) - fix x/vpool twap calculation to be bounded in time
+* [#919](https://github.com/NibiruChain/nibiru/pull/919) - refactor(proto): vpool module files consistency
+  * MarkPriceChanged renamed to MarkPriceChangedEvent
 
 ### Improvements
 
@@ -72,6 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#902](https://github.com/NibiruChain/nibiru/pull/902) - refactor(common): improve usability of `common.AssetPair`
 * [#913](https://github.com/NibiruChain/nibiru/pull/913) - chore(epochs): update x/epochs module
 * [#911](https://github.com/NibiruChain/nibiru/pull/911) - test(perp): add `MsgOpenPosition` simulation tests
+* [#917](https://github.com/NibiruChain/nibiru/pull/917) - refactor(proto): perp module files consistency
+* [#920](https://github.com/NibiruChain/nibiru/pull/920) - refactor(proto): pricefeed module files consistency
 
 ### Features
 
@@ -83,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks
 * [#874](https://github.com/NibiruChain/nibiru/pull/874) - fix --home issue with unsafe-reset-all command, updating tendermint to v0.34.21
 * [#892](https://github.com/NibiruChain/nibiru/pull/892) - chore: fix localnet script
+* [#925](https://github.com/NibiruChain/nibiru/pull/892) - fix(vpool): snapshot iteration
 
 ## v0.14.0
 

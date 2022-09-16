@@ -2,8 +2,7 @@ syntax = "proto3";
 package nibiru.vpool.v1;
 
 import "gogoproto/gogo.proto";
-import "vpool/v1/vpool.proto";
-import "vpool/v1/params.proto";
+import "vpool/v1/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
