@@ -746,12 +746,8 @@ func NewNibiruTestApp(
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// native x/
-		dexModule,
 		pricefeedModule,
 		epochsModule,
-		stablecoinModule,
-		lockupModule,
-		incentivizationModule,
 		// ibc
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
