@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
 
@@ -183,7 +181,6 @@ func initGenFiles(
 	bankGenState.Balances = append(bankGenState.Balances, genBalances...)
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
-	cfg.GenesisState = simapp.NewTestGenesisState(cfg.Codec, cfg.GenesisState)
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
 		return cfg, err
