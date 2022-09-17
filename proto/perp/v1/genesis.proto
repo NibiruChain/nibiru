@@ -19,6 +19,4 @@ message GenesisState {
   repeated Position positions = 3;
 
   repeated PrepaidBadDebt prepaid_bad_debts = 4;
-
-  repeated string whitelisted_addresses = 5;
 }
