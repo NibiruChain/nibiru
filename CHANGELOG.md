@@ -87,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks
 * [#874](https://github.com/NibiruChain/nibiru/pull/874) - fix --home issue with unsafe-reset-all command, updating tendermint to v0.34.21
 * [#892](https://github.com/NibiruChain/nibiru/pull/892) - chore: fix localnet script
-* [#925](https://github.com/NibiruChain/nibiru/pull/892) - fix(vpool): snapshot iteration
+* [#925](https://github.com/NibiruChain/nibiru/pull/925) - fix(vpool): snapshot iteration
+* [#930](https://github.com/NibiruChain/nibiru/pull/930) - fix(vpool): snapshot iteration on mark twap
 
 ## v0.14.0
 
