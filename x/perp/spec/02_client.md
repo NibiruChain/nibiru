@@ -3,13 +3,13 @@
 This page describes the message (`Msg`) structures and expected state transitions that these messages bring about when wrapped in transactions. These descriptions are accompanied by documentation for their corresponding CLI commands.
 
 - [OpenPosition](#openposition)
-  - [`OpenPosition` CLI command](#openposition-cli-command)
+  - [OpenPosition CLI command](#openposition-cli-command)
 - [ClosePosition](#closeposition)
-  - [`ClosePosition` CLI command](#closeposition-cli-command)
+  - [ClosePosition CLI command](#closeposition-cli-command)
 - [AddMargin](#addmargin)
-  - [`AddMargin` CLI command](#addmargin-cli-command)
+  - [AddMargin CLI command](#addmargin-cli-command)
 - [RemoveMargin](#removemargin)
-  - [`RemoveMargin` CLI command](#removemargin-cli-command)
+  - [RemoveMargin CLI command](#removemargin-cli-command)
 - [Liquidate](#liquidate)
   - [`Liquidate` CLI command](#liquidate-cli-command)
 
@@ -19,7 +19,7 @@ This page describes the message (`Msg`) structures and expected state transition
 
 `OpenPosition` defines a method for opening or altering a new position, which sends funds the vault to the trader, realizing any outstanding profits and losses (PnL), funding payments, and bad debt.
 
-### `OpenPosition` CLI command
+### OpenPosition CLI command
 
 ```sh
 nibid tx perp open-perp --vpool --side --margin --leverage --base-limit 
@@ -37,7 +37,7 @@ nibid tx perp open-perp --vpool --side --margin --leverage --base-limit
 
 `ClosePosition` defines a method for closing a trader's position, which sends funds the vault to the trader, realizing any outstanding profits and losses (PnL), funding payments, and bad debt.
 
-### `ClosePosition` CLI command
+### ClosePosition CLI command
 
 ```sh
 nibid tx perp close-perp [vpool] 
@@ -62,7 +62,7 @@ type MsgAddMargin struct {
 }
 ```
 
-### `AddMargin` CLI command
+### AddMargin CLI command
 
 ```sh
 nibid tx perp add-margin [vpool] [margin]
@@ -72,7 +72,7 @@ nibid tx perp add-margin [vpool] [margin]
 
 `RemoveMargin` further leverages a trader's position by removing some of the margin that backs it without altering its notional value. Removing margin decreases the margin ratio of the position and increases the risk of liquidation.
 
-### `RemoveMargin` CLI command
+### RemoveMargin CLI command
 
 ```sh
 nibid tx perp remove-margin [vpool] [margin]
@@ -88,8 +88,6 @@ nibid tx perp remove-margin atom:nusd 100nusd
 ## Liquidate
 
 `Liquidate` is a transaction that allows the caller to fully or partially liquidate an existing position.
-
-<!-- TODO extend liquidate description -->
 
 ### `Liquidate` CLI command
 

@@ -1,79 +1,60 @@
-# Concepts
+<!--
+order: 1
+-->
+# Concepts | x/perp                    <!-- omit in toc -->
 
-- [Perp Positions](#perp-positions)
 - [Mark Price and Index Price](#mark-price-and-index-price)
-  - [Mark Price](#mark-price)
-  - [Index Price](#index-price)
+    - [Mark Price](#mark-price)
+    - [Index Price](#index-price)
 - [Leverage and Perp Position Value](#leverage-and-perp-position-value)
-  - [Position Size](#position-size)
-  - [Position Notional Value](#position-notional-value)
-  - [Leverage](#leverage)
+    - [Position Size](#position-size)
+    - [Position Notional Value](#position-notional-value)
 - [Margin and Margin Ratio](#margin-and-margin-ratio)
-    - [Cross Margin versus Isolated Margin](#cross-margin-versus-isolated-margin)
+  - [Cross Margin versus Isolated Margin](#cross-margin-versus-isolated-margin)
 - [Funding Payments](#funding-payments)
+
 - [Liquidations](#liquidations)
 - [References](#references)
 
 ---
 
-## Perp Positions
+# Perp Positions
 
-A perpetual contract, or perp, is a type of crypto-native derivative that enables traders to speculate on price movements without holding the underlying asset. Nibiru allows traders to trade perps with leverage using stablecoins like USDC as collateral
-
----
+A perpetual contract, or perp, is a type of crypto-native derivative that enables traders to speculate on price movements without holding the underlying asset. Nibiru allows traders to trade perps with leverage using stablecoins like USDC as collateral.
 
 ## Mark Price and Index Price
 
-### Mark Price
+#### Mark Price
 
 The **mark price** is the value of the derivative asset (the perp) on the exchange. Mark price is used to calculate **profits and losses (PnL)** and determines whether a position has enough collateral backing it to stay "above water" or if it should be liquidated. The term "mark price" gets its name from the fact that it describes a position's **mark-to-market PnL**, the profit or loss to be realized over the contract period based on current market conditions (perps exchange price).
 
-### Index Price
+#### Index Price
 
-The value of a perp's underlying asset is referred to as the **index price**. For example, a BTC:USD perp has BTC as its **base asset** and dollar collateral such as USDC as could be its **quote asset**. The dollar value of BTC on spot exchanges is the index price of the BTC:USD perp. Thus we'd call BTC **"the underlying"**. Usually, the index price is taken as the average of spot prices across major exchanges and is provided by oracles.
-
----
+The value of a perp's underlying asset is referred to as the **index price**. For example, a BTC:USD perp has BTC as its **base asset** and dollar collateral such as USDC as could be its **quote asset**. The dollar value of BTC on spot exchanges is the index price of the BTC:USD perp. Thus we'd call BTC **"the underlying"**. Usually, the index price is taken as the average of spot prices across major exchanges.
 
 ## Leverage and Perp Position Value
 
-### Position Size
+#### Position Size
 
-Suppose a trader wants exposure to 5 ETH through the purchase of a perpetual contract. On **Nibi-Perps**, going long on 5 ETH means that the trader buys the ETH perp with a **position size** of 5.
+Suppose a trader wanted exposure to 5 ETH through the purchase of a perpetual contract. On Nibi-Perps, going long on 5 ETH means that the trader buys the ETH perp with a **position size** of 5. Position size is computed as the position notional mutlipled by the mark price of the asset.
 
-$$
-\begin{gather*}
-k = (x-\Delta{x})*(y+\Delta{y}) \\
-\Delta{y} = \text{margin}*\text{leverage} \\
-\Delta{x} = x - \frac{k}{y + \Delta{y}}
-\end{gather*}
-$$
+```go
+k = baseReserves * quoteReserves
+notionalDelta = margin * leverage // (leverage is negative if short)
+baseReservesAfterSwap = k / (quoteReserves + notionalDelta)
+position_size = baseReserves - baseReservesAfterSwap
+```
 
-where $x$ is the base asset, $y$ is the quote asset, and $\Delta{x}$ is your position size.
+#### Position Notional Value
 
-### Position Notional Value
+The notional value of the position, or **position notional**, is the total value a position controls  in units of the quote asset. Notional value expresses the value a derivatives contract theoretically controls. On Nibiru, it is defined more concretely by
 
-The notional value of the position, aka **position notional**, is the total value a position controls  in units of the quote asset. For example, if a trader was long 5 ETH, the position notional is how much USDC obtained from closing the position. It is defined concretely by
+```go
+positionNotional = abs(quoteReserves - k / (baseReserves + position_size))
+leverage = positionNotional / margin.
+```
 
-$$
-\begin{gather*}
-k = (x+\Delta{x})*(y-\Delta{y}) \\
-\Delta{x} = \text{currentPositionSize} \\
-\Delta{y} = y - \frac{k}{x + \Delta{x}} \\
-\Delta{y} = \text{positionNotional} \\
-\end{gather*}
-$$
-
-### Leverage
-
-Leverage is defined as
-
-$$
-\text{leverage} = \frac{\text{positionNotional}}{\text{margin}}
-$$
-
-Let's say that the mark price of **ETH** is \$3,000 and the trader has a position size of 5 which means they have a position notional of approximately \$15,000. And if the trader has 10x **leverage**, she must have put down \$1,500 as margin (**USDC** collateral backing the position).
-
----
+Let's say that the mark price of ether is \$3000 in our previous example. This implies that the trader with a long position of size 5 has a position notional of \$15,000. And if the trader has 10x **leverage**, for example, she must have put down \$1500 as margin (collateral backing the position).
 
 ## Margin and Margin Ratio
 
@@ -81,17 +62,17 @@ Let's say that the mark price of **ETH** is \$3,000 and the trader has a positio
 
 The margin ratio is defined by:
 
-$$
-\text{marginRatio} = \frac{\text{margin} + \text{unrealizedPnL}}{\text{positionNotional}}
-$$
+```
+marginRatio = (margin + unrealizedPnL) / positionNotional
+```
 
-Here, $\text{unrealizedPnL}$ is computed using either the instantaneous mark price or the 15 minute TWAP of mark price; the higher of the two values is used when evaluating liquidation conditions.
+Here, `unrealizedPnL` is computed using either the mark price or the 15 minute TWAP of mark price; the higher of the two values is used when evaluating liquidation conditions.
 
 When the virtual price is not within the spread tolerance to the index price, the margin ratio used is the highest value between a calculation with the index price (oracle based on underlying) and the mark price (derivative price).
 
 Another good way to think about margin ratio is as the inverse of a position's effective leverage. I.e. if a trader puts down $100 as margin with 5x leverage, the notional is \$500 and the margin ratio is 20%, which is equivalent ot `1 / leverage`.
 
-#### Cross Margin versus Isolated Margin
+### Cross Margin versus Isolated Margin
 
 - In a **cross margin** model, collateral is shared between open positions that use the same settlement currency. All open positions then have a combined margin ratio.
 - With an **isolated margin** model, the margin assigned to each open position is considered a separate collateral account.
@@ -100,7 +81,13 @@ Another good way to think about margin ratio is as the inverse of a position's e
 
 In future upgrade, we'd like to implement a cross margin model and allow traders to select whether to use cross or isolated margin in the trading app. This way, traders could elect to have profits from one position support losses in another.
 
----
+<!--  
+
+## Profits and Losses (PnL)
+
+- TODO Explain PnL calculation
+- TODO Q: When are PnL calculations completed?
+-->
 
 ## Funding Payments
 
@@ -124,7 +111,13 @@ Here, position size refers to amount of base asset represented by the derivative
 
 ---
 
-## Liquidations
+# Virtual Pools
+
+For information on the virtual pools, see the [`x/vpool` specification](../../vpool/README.md).
+
+---
+
+# Liquidations
 
 **Liquidate** is a function which closes a position and distributes assets based on a liquidation fee that goes to the liquidator and ecosystem fund. Liquidations prevent traders' accounts from falling into negative equity.
 
@@ -136,7 +129,7 @@ If this margin ratio is below the maintenance margin ratio, the liquidation mess
 
 ---
 
-## References
+# References
 
 - Index Price and Mark Price. BTSE. [[support.btse.com]](https://support.btse.com/en/support/solutions/articles/43000557589-index-price-and-mark-price)
 - Notional Value vs. Market Value: An Overview. Investopedia. [[investopedia.com]](https://www.investopedia.com/ask/answers/050615/what-difference-between-notional-value-and-market-value.asp)
