@@ -1,6 +1,12 @@
 # State
 
+- [Position](#position)
+- [PairMetadata](#pairmetadata)
+- [PrepaidBadDebt](#prepaidbaddebt)
+
 ## Position
+
+0x01 | Pair | 0xFF | Bech32Address | 0xFF -> Position
 
 |Attribute|Type|Description|
 |---|---|---|
@@ -14,12 +20,16 @@
 
 ## PairMetadata
 
+0x02 | Pair -> PairMetadata
+
 |Attribute|Type|Description|
 |---|---|---|
 |Pair|AssetPair|The market pair associated with this metadata|
 |CumulativeFundingRates|[]sdk.Dec|Historial list of funding rates for a given market. Calculated once per epoch.|
 
 ## PrepaidBadDebt
+
+0x04 | Denom -> Amount
 
 |Attribute|Type|Description|
 |---|---|---|
