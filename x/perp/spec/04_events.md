@@ -8,9 +8,9 @@ These are returned by ABCI methods such as CheckTx, DeliverTx, and Query.
 Events allow applications to associate metadata about ABCI method execution with
 the transactions and blocks this metadata relates to. Events returned via these
 ABCI methods do not impact Tendermint consensus in any way and instead exist to
-power subscriptions and queries of Tendermint state. 
+power subscriptions and queries of Tendermint state.
 
-For more information, see the [Tendermint Core ABCI methods and types specification](https://docs.tendermint.com/master/spec/abci/abci.html) 
+For more information, see the [Tendermint Core ABCI methods and types specification](https://docs.tendermint.com/master/spec/abci/abci.html)
 
 # Event Types                       <!-- omit in toc -->
 
@@ -18,7 +18,6 @@ For more information, see the [Tendermint Core ABCI methods and types specificat
 - [`nibiru.perp.v1.PositionLiquidatedEvent`](#nibiruperpv1positionliquidatedevent): Event emitted when a position is liquidated.
 - [`nibiru.perp.v1.PositionSettledEvent`](#nibiruperpv1positionsettledevent): Event emitted when a position is settled.
 - [`nibiru.perp.v1.FundingRateChangedEvent`](#nibiruperpv1fundingratechangedevent):
-
 
 ```ts
 interface Coin {
@@ -59,7 +58,7 @@ Corresponds to the proto message, `PositionLiquidatedEvent`.
 | block_time_ms (`int64`) | Block time in Unix milliseconds at which the position changed. |
 | exchanged_position_size (`Dec`) | magnitude of the change to the position size (base) |
 | exchanged_quote_amount (`Dec`) | magnitude of the change to the position notional (quote) |
-| fee_to_liquidator (`Coin`) | Transaction fee paid to the liquidator | 
+| fee_to_liquidator (`Coin`) | Transaction fee paid to the liquidator |
 | fee_to_ecosystem_fund (`Coin`) | Transaction fee paid to the Nibi-Perps Ecosystem Fund |
 | liquidator_address (`string`) | Address of the account that executed the tx |
 | mark_price (`Dec`) | Spot price of the virtual pool after liquidation |
@@ -84,7 +83,7 @@ Corresponds to the proto message, `PositionLiquidatedEvent`.
 | ---------------- | ----------  |
 | block_height (`int64`) | Block number at which the position changed |
 | block_time_ms (`int64`) | Block time in Unix milliseconds at which the position changed. |
-| cumulative_funding_rate (`Dec`) | Cumulative funding rate. The sum of the cumulative premium fractions (CFPs) for the pair. The funding payment paid by a user is the `(latestCPF - lastUpdateCPF) * positionSize`, where `lastUpdateCPF` is the last cumulative funding payment the position applied and `latestCPF` is the most recent CPF for the virtual pool. |
+| cumulative_funding_rate (`Dec`) | Cumulative funding rate. The sum of the cumulative funding rates (CFPs) for the pair. The funding payment paid by a user is the `(latestCPF - lastUpdateCPF) * positionSize`, where `lastUpdateCPF` is the last cumulative funding payment the position applied and `latestCPF` is the most recent CPF for the virtual pool. |
 | index_price (`Dec`) | Price of the "underlying" for the perpetual swap. |
 | latest_funding_rate (`Dec`) | Most recent value for the funding rate.  |
 | mark_price (`Dec`) | Instantaneous derivate price for the perp position. Equivalent to the quotient of the quote and base reserves. |
