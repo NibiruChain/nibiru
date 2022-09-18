@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -18,10 +19,6 @@ func (k Keeper) PositionsState(ctx sdk.Context) PositionsState {
 
 func (k Keeper) PairMetadataState(ctx sdk.Context) PairMetadataState {
 	return newPairMetadata(ctx, k.storeKey, k.cdc)
-}
-
-func (k Keeper) WhitelistState(ctx sdk.Context) WhitelistState {
-	return newWhitelist(ctx, k.storeKey, k.cdc)
 }
 
 func (k Keeper) PrepaidBadDebtState(ctx sdk.Context) PrepaidBadDebtState {
@@ -42,20 +39,14 @@ func newPositions(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) Posi
 	}
 }
 
-func (p PositionsState) keyFromType(position *types.Position) []byte {
-	return p.keyFromRaw(position.Pair, position.TraderAddress)
-}
-
-func (p PositionsState) keyFromRaw(pair common.AssetPair, address string) []byte {
+func (p PositionsState) keyFromRaw(pair common.AssetPair, traderAddr sdk.AccAddress) []byte {
 	buf := bytes.NewBufferString(pair.String())
-	buf.WriteByte(0xff) // required in case we have two pairs such as BTCUSD and BTCUSDT to avoid prefix overlaps.
-	buf.WriteString(address)
-	buf.WriteByte(0xff) // this might be not required, if bechified addresses are constant size.
+	buf.Write(address.MustLengthPrefix(traderAddr))
 	return buf.Bytes()
 }
 
 func (p PositionsState) Create(position *types.Position) error {
-	key := p.keyFromType(position)
+	key := p.keyFromRaw(position.Pair, sdk.MustAccAddressFromBech32(position.TraderAddress))
 	if p.positions.Has(key) {
 		return fmt.Errorf("already exists")
 	}
@@ -65,7 +56,7 @@ func (p PositionsState) Create(position *types.Position) error {
 }
 
 func (p PositionsState) Get(pair common.AssetPair, traderAddr sdk.AccAddress) (*types.Position, error) {
-	key := p.keyFromRaw(pair, traderAddr.String())
+	key := p.keyFromRaw(pair, traderAddr)
 	valueBytes := p.positions.Get(key)
 	if valueBytes == nil {
 		return nil, types.ErrPositionNotFound
@@ -78,7 +69,7 @@ func (p PositionsState) Get(pair common.AssetPair, traderAddr sdk.AccAddress) (*
 }
 
 func (p PositionsState) Update(position *types.Position) error {
-	key := p.keyFromType(position)
+	key := p.keyFromRaw(position.Pair, sdk.MustAccAddressFromBech32(position.TraderAddress))
 
 	if !p.positions.Has(key) {
 		return types.ErrPositionNotFound
@@ -89,7 +80,7 @@ func (p PositionsState) Update(position *types.Position) error {
 }
 
 func (p PositionsState) Set(position *types.Position) {
-	positionID := p.keyFromRaw(position.Pair, position.TraderAddress)
+	positionID := p.keyFromRaw(position.Pair, sdk.MustAccAddressFromBech32(position.TraderAddress))
 	p.positions.Set(positionID, p.cdc.MustMarshal(position))
 }
 
@@ -107,7 +98,7 @@ func (p PositionsState) Iterate(do func(position *types.Position) (stop bool)) {
 }
 
 func (p PositionsState) Delete(pair common.AssetPair, addr sdk.AccAddress) error {
-	primaryKey := p.keyFromRaw(pair, addr.String())
+	primaryKey := p.keyFromRaw(pair, addr)
 
 	if !p.positions.Has(primaryKey) {
 		return types.ErrPositionNotFound.Wrapf("in pair %s", pair)
@@ -177,39 +168,6 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 	}
 	// this should never fail
 	return pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1], nil
-}
-
-var whitelistNamespace = []byte{0x3}
-
-type WhitelistState struct {
-	whitelists sdk.KVStore
-	cdc        codec.BinaryCodec
-}
-
-func newWhitelist(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) WhitelistState {
-	return WhitelistState{
-		whitelists: prefix.NewStore(ctx.KVStore(key), whitelistNamespace),
-		cdc:        cdc,
-	}
-}
-
-func (w WhitelistState) IsWhitelisted(address sdk.AccAddress) bool {
-	return w.whitelists.Has(address)
-}
-
-func (w WhitelistState) Add(address sdk.AccAddress) {
-	w.whitelists.Set(address, []byte{})
-}
-
-func (w WhitelistState) Iterate(do func(addr sdk.AccAddress) (stop bool)) {
-	iter := w.whitelists.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		if !do(iter.Key()) {
-			break
-		}
-	}
 }
 
 var prepaidBadDebtNamespace = []byte{0x4}
