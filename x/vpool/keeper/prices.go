@@ -222,7 +222,8 @@ func (k Keeper) calcTwap(
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	iter := store.ReverseIterator(nil, nil)
+	iter := store.ReverseIterator(types.GetSnapshotKey(pair, 0), types.GetSnapshotKey(pair, uint64(ctx.BlockHeight()+1)))
+
 	defer iter.Close()
 
 	if !iter.Valid() {

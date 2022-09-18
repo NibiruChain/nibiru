@@ -418,6 +418,19 @@ func TestCalcTwap(t *testing.T) {
 				/* maxLeverage */ sdk.NewDec(15),
 			)
 
+			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
+			vpoolKeeper.CreatePool(
+				ctx,
+				tc.pair,
+				sdk.ZeroDec(),
+				sdk.NewDec(100),
+				sdk.OneDec(),
+				sdk.ZeroDec(),
+				sdk.OneDec(),
+				sdk.OneDec(),
+				/* maxLeverage */ sdk.NewDec(15),
+			)
+
 			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockHeight(snapshot.BlockNumber).WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
 				vpoolKeeper.SaveSnapshot(
