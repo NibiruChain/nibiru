@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	metrics "github.com/armon/go-metrics"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -85,6 +87,13 @@ func (k Keeper) OpenPosition(
 	if err = k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, *positionResp); err != nil {
 		return nil, err
 	}
+
+	telemetry.IncrCounterWithLabels([]string{"open_position"}, 1, []metrics.Label{
+		telemetry.NewLabel("pair", pair.String()),
+		telemetry.NewLabel("address", traderAddr.String()),
+		telemetry.NewLabel("size", positionResp.ExchangedPositionSize.String()),
+		telemetry.NewLabel("notional", positionResp.ExchangedNotionalValue.String()),
+	})
 
 	return positionResp, nil
 }
