@@ -32,15 +32,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, pbd := range genState.PrepaidBadDebts {
 		k.PrepaidBadDebtState(ctx).Set(pbd.Denom, pbd.Amount)
 	}
-
-	// set whitelist
-	for _, whitelist := range genState.WhitelistedAddresses {
-		addr, err := sdk.AccAddressFromBech32(whitelist)
-		if err != nil {
-			panic(err)
-		}
-		k.WhitelistState(ctx).Add(addr)
-	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -61,12 +52,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 			Denom:  denom,
 			Amount: amount,
 		})
-		return false
-	})
-
-	// export whitelist
-	k.WhitelistState(ctx).Iterate(func(addr sdk.AccAddress) (stop bool) {
-		genesis.WhitelistedAddresses = append(genesis.WhitelistedAddresses, addr.String())
 		return false
 	})
 
