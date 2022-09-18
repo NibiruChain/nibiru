@@ -3,12 +3,16 @@ order: 1
 -->
 # Concepts | x/perp                    <!-- omit in toc -->
 
-- [Perp Positions](#perp-positions)
-  - [Mark Price and Index Price](#mark-price-and-index-price)
-  - [Leverage and Perp Position Value](#leverage-and-perp-position-value)
-  - [Margin and Margin Ratio](#margin-and-margin-ratio)
-  - [Funding Payments](#funding-payments)
-- [Virtual Pools](#virtual-pools)
+- [Mark Price and Index Price](#mark-price-and-index-price)
+    - [Mark Price](#mark-price)
+    - [Index Price](#index-price)
+- [Leverage and Perp Position Value](#leverage-and-perp-position-value)
+    - [Position Size](#position-size)
+    - [Position Notional Value](#position-notional-value)
+- [Margin and Margin Ratio](#margin-and-margin-ratio)
+  - [Cross Margin versus Isolated Margin](#cross-margin-versus-isolated-margin)
+- [Funding Payments](#funding-payments)
+
 - [Liquidations](#liquidations)
 - [References](#references)
 
@@ -16,7 +20,7 @@ order: 1
 
 # Perp Positions
 
-A perpetual contract, or perp, is a type of crypto-native derivative that enables traders to speculate on price movements without holding the underlying asset. Nibiru allows traders to trade perps with leverage using stablecoins like USDC as collateral. 
+A perpetual contract, or perp, is a type of crypto-native derivative that enables traders to speculate on price movements without holding the underlying asset. Nibiru allows traders to trade perps with leverage using stablecoins like USDC as collateral.
 
 ## Mark Price and Index Price
 
@@ -26,15 +30,15 @@ The **mark price** is the value of the derivative asset (the perp) on the exchan
 
 #### Index Price
 
-The value of a perp's underlying asset is referred to as the **index price**. For example, a BTC:USD perp has BTC as its **base asset** and dollar collateral such as USDC as could be its **quote asset**. The dollar value of BTC on spot exchanges is the index price of the BTC:USD perp. Thus we'd call BTC **"the underlying"**. Usually, the index price is taken as the average of spot prices across major exchanges. 
+The value of a perp's underlying asset is referred to as the **index price**. For example, a BTC:USD perp has BTC as its **base asset** and dollar collateral such as USDC as could be its **quote asset**. The dollar value of BTC on spot exchanges is the index price of the BTC:USD perp. Thus we'd call BTC **"the underlying"**. Usually, the index price is taken as the average of spot prices across major exchanges.
 
 ## Leverage and Perp Position Value
 
 #### Position Size
 
-Suppose a trader wanted exposure to 5 ETH through the purchase of a perpetual contract. On Nibi-Perps, going long on 5 ETH means that the trader buys the ETH perp with a **position size** of 5. Position size is computed as the position notional mutlipled by the mark price of the asset. 
+Suppose a trader wanted exposure to 5 ETH through the purchase of a perpetual contract. On Nibi-Perps, going long on 5 ETH means that the trader buys the ETH perp with a **position size** of 5. Position size is computed as the position notional mutlipled by the mark price of the asset.
 
-```go 
+```go
 k = baseReserves * quoteReserves
 notionalDelta = margin * leverage // (leverage is negative if short)
 baseReservesAfterSwap = k / (quoteReserves + notionalDelta)
@@ -50,11 +54,11 @@ positionNotional = abs(quoteReserves - k / (baseReserves + position_size))
 leverage = positionNotional / margin.
 ```
 
-Let's say that the mark price of ether is \$3000 in our previous example. This implies that the trader with a long position of size 5 has a position notional of \$15,000. And if the trader has 10x **leverage**, for example, she must have put down \$1500 as margin (collateral backing the position). 
+Let's say that the mark price of ether is \$3000 in our previous example. This implies that the trader with a long position of size 5 has a position notional of \$15,000. And if the trader has 10x **leverage**, for example, she must have put down \$1500 as margin (collateral backing the position).
 
 ## Margin and Margin Ratio
 
-**Margin** is the amount of collateral used to back a position. Margin is expressed in units of the quote asset. At genesis, Nibi-Perps uses USDC as the primary quote asset. 
+**Margin** is the amount of collateral used to back a position. Margin is expressed in units of the quote asset. At genesis, Nibi-Perps uses USDC as the primary quote asset.
 
 The margin ratio is defined by:
 
@@ -68,14 +72,14 @@ When the virtual price is not within the spread tolerance to the index price, th
 
 Another good way to think about margin ratio is as the inverse of a position's effective leverage. I.e. if a trader puts down $100 as margin with 5x leverage, the notional is \$500 and the margin ratio is 20%, which is equivalent ot `1 / leverage`.
 
-#### Cross Margin versus Isolated Margin
+### Cross Margin versus Isolated Margin
 
 - In a **cross margin** model, collateral is shared between open positions that use the same settlement currency. All open positions then have a combined margin ratio.
-- With an **isolated margin** model, the margin assigned to each open position is considered a separate collateral account. 
+- With an **isolated margin** model, the margin assigned to each open position is considered a separate collateral account.
 
 **Current implementation**: Nibi-Perps uses isolated margin on each trading pair. This means that excess collateral on one position is not affected by a deficit on another (and vice versa). Positions are siloed in terms of liquidation risks, so an underwater ETH:USD position won't have any effect on an open ATOM:USD position, for instance.
 
-In future upgrade, we'd like to implement a cross margin model and allow traders to select whether to use cross or isolated margin in the trading app. This way, traders could elect to have profits from one position support losses in another. 
+In future upgrade, we'd like to implement a cross margin model and allow traders to select whether to use cross or isolated margin in the trading app. This way, traders could elect to have profits from one position support losses in another.
 
 <!--  
 
@@ -95,9 +99,9 @@ Longs and shorts are paid with the exact funding rate formula [used by FTX](http
 fundingRate = (markTWAP - indexTWAP) / fundingPaymentsPerDay
 ```
 
-In the initial version of Nibi-Perps, these payments will occur every half-hour, implying a `funding_payments_per_day` value of 48. This setup is analogous to a traditional future that expires once a day. If a perp trades consistently at 2% above its underlying index price, the funding payments would amount to 2% of the position size after a full day.   
+In the initial version of Nibi-Perps, these payments will occur every half-hour, implying a `funding_payments_per_day` value of 48. This setup is analogous to a traditional future that expires once a day. If a perp trades consistently at 2% above its underlying index price, the funding payments would amount to 2% of the position size after a full day.
 
-If the funding rate is positive, mark price > index price and longs pay shorts. Nibi-Perps automatically deducts the funding payment amount from the margin of the long positions. 
+If the funding rate is positive, mark price > index price and longs pay shorts. Nibi-Perps automatically deducts the funding payment amount from the margin of the long positions.
 
 ```go
 fundingPayment = positionSize * fundingRate

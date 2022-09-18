@@ -42,7 +42,6 @@ func TestGenesisState_Validate(t *testing.T) {
 						Amount: sdk.NewInt(10),
 					},
 				},
-				WhitelistedAddresses: []string{sample.AccAddress().String()},
 			},
 			wantErr: false,
 		},
@@ -60,10 +59,6 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
-		},
-		"bad whitelisted addr": {
-			g:       &GenesisState{Params: DefaultParams(), WhitelistedAddresses: []string{"bad"}},
 			wantErr: true,
 		},
 		"bad pair metadata": {

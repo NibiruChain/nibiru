@@ -51,11 +51,6 @@ func TestGenesis(t *testing.T) {
 			app.PerpKeeper.PrepaidBadDebtState(ctx).Set(fmt.Sprintf("%d", i), sdk.NewInt(int64(i)))
 		}
 
-		// whitelist some addrs
-		for i := 0; i < 5; i++ {
-			app.PerpKeeper.WhitelistState(ctx).Add(sample.AccAddress())
-		}
-
 		// export genesis
 		genState := perp.ExportGenesis(ctx, app.PerpKeeper)
 
