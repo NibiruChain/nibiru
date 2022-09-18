@@ -148,7 +148,6 @@ fi
 # Enable cosmos-sdk prometheus for localnet
 echo_info "Enabling Cosmos-SDK Prometheus"
 sed -i $SEDOPTION 's/enabled = .*/enabled = true/' $CHAIN_DIR/config/app.toml
-sed -i $SEDOPTION 's/enable-hostname = .*/enable-hostname = true/' $CHAIN_DIR/config/app.toml
 sed -i $SEDOPTION 's/prometheus-retention-time = .*/prometheus-retention-time = 60/' $CHAIN_DIR/config/app.toml
 
 echo_info "Adding genesis accounts..."

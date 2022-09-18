@@ -3,7 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -43,6 +45,22 @@ func (k Keeper) SaveSnapshot(
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
 	store.Set(types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())), k.codec.MustMarshal(snapshot))
+
+	telemetry.SetGaugeWithLabels([]string{"quote_asset_reserve"}, float32(quoteAssetReserve.MustFloat64()),
+		[]metrics.Label{
+			telemetry.NewLabel("pair", pair.String()),
+		},
+	)
+	telemetry.SetGaugeWithLabels([]string{"base_asset_reserve"}, float32(baseAssetReserve.MustFloat64()),
+		[]metrics.Label{
+			telemetry.NewLabel("pair", pair.String()),
+		},
+	)
+	telemetry.SetGaugeWithLabels([]string{"vpool_mark_price"}, float32(quoteAssetReserve.Quo(baseAssetReserve).MustFloat64()),
+		[]metrics.Label{
+			telemetry.NewLabel("pair", pair.String()),
+		},
+	)
 }
 
 // GetLatestReserveSnapshot returns the last snapshot that was saved
