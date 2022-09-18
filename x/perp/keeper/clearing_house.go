@@ -88,12 +88,12 @@ func (k Keeper) OpenPosition(
 		return nil, err
 	}
 
-	telemetry.IncrCounterWithLabels([]string{"open_position"}, 1, []metrics.Label{
-		telemetry.NewLabel("pair", pair.String()),
-		telemetry.NewLabel("address", traderAddr.String()),
-		telemetry.NewLabel("size", positionResp.ExchangedPositionSize.String()),
-		telemetry.NewLabel("notional", positionResp.ExchangedNotionalValue.String()),
-	})
+	telemetry.IncrCounterWithLabels([]string{"trading_volume"},
+		float32(positionResp.ExchangedNotionalValue.MustFloat64()),
+		[]metrics.Label{
+			telemetry.NewLabel("pair", pair.String()),
+		},
+	)
 
 	return positionResp, nil
 }
