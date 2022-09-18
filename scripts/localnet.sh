@@ -137,6 +137,20 @@ else
   echo_error "Failed to enable CORS"
 fi
 
+# Enable tendermint prometheus for localnet
+echo_info "Enabling Tendermint Prometheus"
+if sed -i $SEDOPTION 's/prometheus = .*/prometheus = true/' $CHAIN_DIR/config/config.toml; then
+  echo_success "Successfully enabled Tendermint Prometheus"
+else
+  echo_error "Failed to enable Tendermint Prometheus"
+fi
+
+# Enable cosmos-sdk prometheus for localnet
+echo_info "Enabling Cosmos-SDK Prometheus"
+sed -i $SEDOPTION 's/enabled = .*/enabled = true/' $CHAIN_DIR/config/app.toml
+sed -i $SEDOPTION 's/enable-hostname = .*/enable-hostname = true/' $CHAIN_DIR/config/app.toml
+sed -i $SEDOPTION 's/prometheus-retention-time = .*/prometheus-retention-time = 60/' $CHAIN_DIR/config/app.toml
+
 echo_info "Adding genesis accounts..."
 echo "$MNEMONIC" | $BINARY keys add validator --recover
 if $BINARY add-genesis-account $($BINARY keys show validator -a) $GENESIS_COINS; then
