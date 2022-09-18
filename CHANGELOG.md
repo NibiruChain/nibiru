@@ -78,7 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
 * [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
-* [#946](https://github.com/NibiruChain/nibiru/pull/946) - feat: add trading volume counter
+* [#946](https://github.com/NibiruChain/nibiru/pull/946) - feat(perp): add trading volume counter
+* [#946](https://github.com/NibiruChain/nibiru/pull/950) - feat(vpool): add gauge for vpool reserve assets and mark price
 
 ### Fixes
 
