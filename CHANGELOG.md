@@ -25,10 +25,10 @@ Types of changes (Stanzas):
 "Features" for new features.
 "Improvements" for changes in existing functionality.
 "Deprecated" for soon-to-be removed features.
-"Bug Fixes" for any bug fixes.
-"Client Breaking" for breaking CLI commands and REST routes used by end-users.
+"Fixes" for any bug fixes.
 "API Breaking" for breaking exported APIs used by developers building on SDK.
 "State Machine Breaking" for any changes that result in a different AppState given same genesisState and txList.
+
 Ref: https://keepachangelog.com/en/1.0.0/
 -->
 
@@ -40,10 +40,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-
-### CI
-
-* [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
 
 ### State Machine Breaking
 
@@ -81,6 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
+* [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
+* [#946](https://github.com/NibiruChain/nibiru/pull/946) - feat: add trading volume counter
 
 ### Fixes
 
