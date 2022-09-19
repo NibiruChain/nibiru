@@ -1,8 +1,6 @@
 package collections
 
 import (
-	"bytes"
-
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -46,27 +44,6 @@ func (c storeCodec) unmarshal(bytes []byte, o Object) {
 		panic(err)
 	}
 }
-
-// setObject is used when no object functionality is needed.
-// Essentially a null object useful for keysets.
-type setObject struct{}
-
-func (n setObject) String() string {
-	panic("must never be called")
-}
-
-func (n setObject) Marshal() ([]byte, error) {
-	return []byte{}, nil
-}
-
-func (n setObject) Unmarshal(b []byte) error {
-	if !bytes.Equal(b, []byte{}) {
-		panic("bad usage")
-	}
-	return nil
-}
-
-var _ Object = (*setObject)(nil)
 
 // TODO(mercilex): improve typeName api
 func typeName(o Object) string {

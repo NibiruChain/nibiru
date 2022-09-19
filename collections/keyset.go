@@ -1,11 +1,34 @@
 package collections
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 )
+
+// setObject is used when no object functionality is needed.
+// Essentially a null object useful for keysets.
+type setObject struct{}
+
+func (n setObject) String() string {
+	panic("must never be called")
+}
+
+func (n setObject) Marshal() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (n setObject) Unmarshal(b []byte) error {
+	if !bytes.Equal(b, []byte{}) {
+		panic("bad usage")
+	}
+	return nil
+}
+
+var _ Object = (*setObject)(nil)
 
 // KeySet wraps the default Map, but is used only for
 // keys.Key presence and ranging functionalities.
