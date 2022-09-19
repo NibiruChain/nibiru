@@ -22,3 +22,20 @@ func TestKeyset(t *testing.T) {
 	keyset.Delete(ctx, key)
 	require.False(t, keyset.Has(ctx, key))
 }
+
+func TestKeyset_Iterate(t *testing.T) {
+	sk, ctx, cdc := deps()
+	keyset := NewKeySet[keys.StringKey](cdc, sk, 0)
+	keyset.Insert(ctx, "a")
+	keyset.Insert(ctx, "aa")
+	keyset.Insert(ctx, "b")
+	keyset.Insert(ctx, "bb")
+
+	expectedKeys := []keys.StringKey{"a", "aa", "b", "bb"}
+
+	iter := keyset.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	defer iter.Close()
+	for i, o := range iter.Keys() {
+		require.Equal(t, expectedKeys[i], o)
+	}
+}
