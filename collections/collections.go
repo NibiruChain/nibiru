@@ -48,6 +48,7 @@ func (c storeCodec) unmarshal(bytes []byte, o Object) {
 }
 
 // setObject is used when no object functionality is needed.
+// Essentially a null object useful for keysets.
 type setObject struct{}
 
 func (n setObject) String() string {
