@@ -58,6 +58,10 @@ func (r Range[K]) Compile() (prefix []byte, start []byte, end []byte, order Orde
 	return
 }
 
+func (r Range[K]) Values() (prefix *K, start *Bound[K], end *Bound[K], order Order) {
+	return r.prefix, r.start, r.end, r.order
+}
+
 func (r Range[K]) compileStart() []byte {
 	bytes := r.start.value.KeyBytes()
 	// iterator start is inclusive by default
