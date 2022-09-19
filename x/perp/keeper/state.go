@@ -152,9 +152,9 @@ func (p PairMetadataState) GetAll() []*types.PairMetadata {
 	return allPairMetadata
 }
 
-// getLatestCumulativePremiumFraction returns the last cumulative premium fraction recorded for the
+// getLatestCumulativeFundingRate returns the last cumulative funding rate recorded for the
 // specific pair.
-func (k Keeper) getLatestCumulativePremiumFraction(
+func (k Keeper) getLatestCumulativeFundingRate(
 	ctx sdk.Context, pair common.AssetPair,
 ) (sdk.Dec, error) {
 	pairMetadata, err := k.PairMetadataState(ctx).Get(pair)
