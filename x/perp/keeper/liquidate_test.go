@@ -1,11 +1,12 @@
 package keeper_test
 
 import (
+	"testing"
+	"time"
+
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-	"testing"
-	"time"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
@@ -321,6 +322,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Check correctness of new position")
 			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(tokenPair, keys.String(traderAddr.String())))
+			require.NoError(t, err)
 			assert.Equal(t, tc.expectedPositionSize, newPosition.Size_)
 			assert.Equal(t, tc.expectedMarginRemaining, newPosition.Margin)
 

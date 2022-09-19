@@ -2,9 +2,10 @@ package perp_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 

@@ -29,7 +29,7 @@ func (q queryServer) QueryTraderPosition(
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	trader, err := sdk.AccAddressFromBech32(req.Trader)
+	_, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,29 @@ func (q queryServer) QueryTraderPosition(
 		return nil, err
 	}
 
-	position, err := q.k.Positions.Get(ctx, keys.Join(pair, keys.String(trader.String())))
+	return q.traderPosition(ctx, pair, req.Trader)
+}
+
+func (q queryServer) QueryTraderPositions(goCtx context.Context, req *types.QueryTraderPositionsRequest) (*types.QueryTraderPositionsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	rng := keys.NewRange[keys.Pair[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey]]]()
+	rng = rng.Prefix(keys.PairPrefix[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey]](keys.String(req.Trader)))
+
+	pks := q.k.Positions.Indexes.Address.Iterate(ctx, rng).Keys()
+	positions := make([]*types.QueryTraderPositionResponse, len(pks))
+	for i, pk := range pks {
+		posResp, err := q.traderPosition(ctx, pk.K1(), string(pk.K2()))
+		if err != nil {
+			return nil, err
+		}
+		positions[i] = posResp
+	}
+
+	return &types.QueryTraderPositionsResponse{Positions: positions}, nil
+}
+
+func (q queryServer) traderPosition(ctx sdk.Context, pair common.AssetPair, trader string) (*types.QueryTraderPositionResponse, error) {
+	position, err := q.k.Positions.Get(ctx, keys.Join(pair, keys.String(trader)))
 	if err != nil {
 		return nil, err
 	}

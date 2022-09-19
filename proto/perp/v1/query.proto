@@ -20,6 +20,10 @@ service Query {
     option (google.api.http).get = "/nibiru/perp/trader_position";
   }
 
+  rpc QueryTraderPositions(QueryTraderPositionsRequest) returns (QueryTraderPositionsResponse) {
+    option (google.api.http).get = "/nibiru/perp/v1/trader_positions";
+  }
+
   rpc FundingRates(QueryFundingRatesRequest)
       returns (QueryFundingRatesResponse) {
     option (google.api.http).get = "/nibiru/perp/funding_rates";
@@ -82,6 +86,14 @@ message QueryTraderPositionResponse {
 
   // BlockNumber is current block number at the time of query.
   int64 block_number = 7;
+}
+
+message QueryTraderPositionsRequest {
+  string trader = 1;
+}
+
+message QueryTraderPositionsResponse {
+  repeated QueryTraderPositionResponse positions = 2;
 }
 
 // ---------------------------------------- FundingPayments

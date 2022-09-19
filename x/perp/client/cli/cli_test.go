@@ -2,9 +2,10 @@ package cli_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
