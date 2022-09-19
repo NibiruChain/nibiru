@@ -24,14 +24,14 @@ type RemainingMarginWithFundingPayment struct {
 	*/
 	FundingPayment sdk.Dec
 
-	/* LatestCumulativePremiumFraction: latest cumulative premium fraction. Units are (margin units)/position size. */
-	LatestCumulativePremiumFraction sdk.Dec
+	/* LatestCumulativeFundingRate: latest cumulative funding rate from state. Units are (margin units)/(position units). */
+	LatestCumulativeFundingRate sdk.Dec
 }
 
 func (r RemainingMarginWithFundingPayment) String() string {
 	return fmt.Sprintf(
-		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativePremiumFraction: %s}",
-		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativePremiumFraction,
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativeFundingRate: %s}",
+		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativeFundingRate,
 	)
 }
 
@@ -40,8 +40,8 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	currentPosition types.Position,
 	marginDelta sdk.Dec,
 ) (remaining RemainingMarginWithFundingPayment, err error) {
-	remaining.LatestCumulativePremiumFraction, err = k.
-		getLatestCumulativePremiumFraction(ctx, currentPosition.Pair)
+	remaining.LatestCumulativeFundingRate, err = k.
+		getLatestCumulativeFundingRate(ctx, currentPosition.Pair)
 	if err != nil {
 		return remaining, err
 	}
@@ -49,7 +49,7 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	if currentPosition.Size_.IsZero() {
 		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
-		remaining.FundingPayment = (remaining.LatestCumulativePremiumFraction.
+		remaining.FundingPayment = (remaining.LatestCumulativeFundingRate.
 			Sub(currentPosition.LatestCumulativeFundingPayment)).
 			Mul(currentPosition.Size_)
 	}

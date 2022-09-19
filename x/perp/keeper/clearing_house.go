@@ -294,7 +294,7 @@ func (k Keeper) increasePosition(
 		Size_:                          currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                         remaining.Margin,
 		OpenNotional:                   currentPosition.OpenNotional.Add(increasedNotional),
-		LatestCumulativeFundingPayment: remaining.LatestCumulativePremiumFraction,
+		LatestCumulativeFundingPayment: remaining.LatestCumulativeFundingRate,
 		BlockNumber:                    ctx.BlockHeight(),
 	}
 
@@ -447,7 +447,7 @@ func (k Keeper) decreasePosition(
 		Size_:                          currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
 		Margin:                         remaining.Margin,
 		OpenNotional:                   remainOpenNotional,
-		LatestCumulativeFundingPayment: remaining.LatestCumulativePremiumFraction,
+		LatestCumulativeFundingPayment: remaining.LatestCumulativeFundingRate,
 		BlockNumber:                    ctx.BlockHeight(),
 	}
 
@@ -646,7 +646,7 @@ func (k Keeper) closePositionEntirely(
 		Size_:                          sdk.ZeroDec(),
 		Margin:                         sdk.ZeroDec(),
 		OpenNotional:                   sdk.ZeroDec(),
-		LatestCumulativeFundingPayment: remaining.LatestCumulativePremiumFraction,
+		LatestCumulativeFundingPayment: remaining.LatestCumulativeFundingRate,
 		BlockNumber:                    ctx.BlockHeight(),
 	}
 
