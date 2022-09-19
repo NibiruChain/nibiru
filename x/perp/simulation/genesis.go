@@ -13,7 +13,7 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-// RandomizedGenState generates a random GenesisState for bank
+// RandomizedGenState generates a random GenesisState for the perp module
 func RandomizedGenState(simState *module.SimulationState) {
 	vpoolGenesis := vpooltypes.GenesisState{
 		Vpools: []*vpooltypes.VPool{
