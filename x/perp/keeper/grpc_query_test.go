@@ -139,6 +139,91 @@ func TestQueryPosition(t *testing.T) {
 	}
 }
 
+func TestQueryTraderPositions(t *testing.T) {
+	traderAddr := sample.AccAddress()
+	t.Log("initialize app and keeper")
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+	perpKeeper := &nibiruApp.PerpKeeper
+	vpoolKeeper := &nibiruApp.VpoolKeeper
+	queryServer := keeper.NewQuerier(*perpKeeper)
+
+	t.Log("initialize vpool and pair")
+	vpoolKeeper.CreatePool(
+		ctx,
+		common.Pair_BTC_NUSD,
+		/* tradeLimitRatio */ sdk.OneDec(),
+		/* quoteReserve */ sdk.NewDec(1_000_000),
+		/* baseReserve */ sdk.NewDec(500_000),
+		/* fluctuationLimitRatio */ sdk.OneDec(),
+		/* maxOracleSpreadRatio */ sdk.OneDec(),
+		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+	)
+	vpoolKeeper.CreatePool(
+		ctx,
+		common.Pair_NIBI_NUSD,
+		/* tradeLimitRatio */ sdk.OneDec(),
+		/* quoteReserve */ sdk.NewDec(1_000_000),
+		/* baseReserve */ sdk.NewDec(500_000),
+		/* fluctuationLimitRatio */ sdk.OneDec(),
+		/* maxOracleSpreadRatio */ sdk.OneDec(),
+		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+	)
+	perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+		Pair: common.Pair_BTC_NUSD,
+		CumulativeFundingRates: []sdk.Dec{
+			sdk.ZeroDec(),
+		},
+	})
+	perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+		Pair: common.Pair_NIBI_NUSD,
+		CumulativeFundingRates: []sdk.Dec{
+			sdk.ZeroDec(),
+		},
+	})
+
+	t.Log("initialize position")
+	p1 := types.Position{
+		TraderAddress:                  traderAddr.String(),
+		Pair:                           common.Pair_BTC_NUSD,
+		Size_:                          sdk.NewDec(10),
+		OpenNotional:                   sdk.NewDec(10),
+		Margin:                         sdk.NewDec(1),
+		BlockNumber:                    1,
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
+	}
+	p2 := types.Position{
+		TraderAddress:                  traderAddr.String(),
+		Pair:                           common.Pair_NIBI_NUSD,
+		Size_:                          sdk.NewDec(10),
+		OpenNotional:                   sdk.NewDec(10),
+		Margin:                         sdk.NewDec(1),
+		BlockNumber:                    1,
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
+	}
+	p3 := types.Position{
+		TraderAddress:                  sample.AccAddress().String(),
+		Pair:                           common.Pair_NIBI_NUSD,
+		Size_:                          sdk.NewDec(10),
+		OpenNotional:                   sdk.NewDec(10),
+		Margin:                         sdk.NewDec(1),
+		BlockNumber:                    1,
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
+	}
+	setPosition(*perpKeeper, ctx, p1)
+	setPosition(*perpKeeper, ctx, p2)
+	setPosition(*perpKeeper, ctx, p3)
+
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
+
+	positions, err := queryServer.QueryTraderPositions(sdk.WrapSDKContext(ctx), &types.QueryTraderPositionsRequest{Trader: traderAddr.String()})
+	require.NoError(t, err)
+	require.Len(t, positions.Positions, 2)
+	require.Equal(t, positions.Positions[0].Position, &p1)
+	require.Equal(t, positions.Positions[1].Position, &p2)
+}
+
 func TestQueryFundingRates(t *testing.T) {
 	tests := []struct {
 		name                string
