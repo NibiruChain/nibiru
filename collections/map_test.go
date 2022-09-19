@@ -80,20 +80,16 @@ func TestMap_Iterate(t *testing.T) {
 		require.Equal(t, expectedObjs[len(expectedObjs)-1-i], o)
 	}
 
-	// test all keys and values
-	val, err := m.Get(ctx, "a")
-	require.NoError(t, err)
-	require.Equal(t, obj("a"), val)
+	// test key iteration
+	iterKey := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	defer iterKey.Close()
+	for i, o := range iterKey.Keys() {
+		require.Equal(t, expectedObjs[i].Key, o)
+	}
 
-	val, err = m.Get(ctx, "aa")
-	require.NoError(t, err)
-	require.Equal(t, obj("aa"), val)
-
-	val, err = m.Get(ctx, "b")
-	require.NoError(t, err)
-	require.Equal(t, obj("b"), val)
-
-	val, err = m.Get(ctx, "bb")
-	require.NoError(t, err)
-	require.Equal(t, obj("bb"), val)
+	iterValue := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	defer iterValue.Close()
+	for i, o := range iterValue.Values() {
+		require.Equal(t, expectedObjs[i].Value, o)
+	}
 }
