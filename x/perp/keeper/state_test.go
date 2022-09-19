@@ -74,7 +74,7 @@ func TestPairMetadata_GetAll(t *testing.T) {
 	}
 }
 
-func TestGetLatestCumulativePremiumFraction(t *testing.T) {
+func TestGetLatestCumulativeFundingRate(t *testing.T) {
 	testCases := []struct {
 		name string
 		test func()
@@ -93,11 +93,11 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 				}
 				keeper.PairMetadataState(ctx).Set(metadata)
 
-				latestCumulativePremiumFraction, err := keeper.
-					getLatestCumulativePremiumFraction(ctx, common.Pair_NIBI_NUSD)
+				latestCumulativeFundingRate, err := keeper.
+					getLatestCumulativeFundingRate(ctx, common.Pair_NIBI_NUSD)
 
 				require.NoError(t, err)
-				assert.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
+				assert.Equal(t, sdk.NewDec(2), latestCumulativeFundingRate)
 			},
 		},
 		{
@@ -108,7 +108,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 					Token0: "xxx",
 					Token1: "yyy",
 				}
-				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
+				lcpf, err := perpKeeper.getLatestCumulativeFundingRate(
 					ctx, vpool)
 				require.Error(t, err)
 				assert.EqualValues(t, sdk.Dec{}, lcpf)

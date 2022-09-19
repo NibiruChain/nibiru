@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
@@ -24,7 +25,28 @@ func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo
 	return epoch
 }
 
-// SetEpochInfo set epoch info.
+// AddEpochInfo adds a new epoch info. Will return an error if the epoch fails validation,
+// or re-uses an existing identifier.
+// This method also sets the start time if left unset, and sets the epoch start height.
+func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
+	if err := epoch.Validate(); err != nil {
+		return err
+	}
+	// Check if identifier already exists
+	if (k.GetEpochInfo(ctx, epoch.Identifier) != types.EpochInfo{}) {
+		return fmt.Errorf("epoch with identifier %s already exists", epoch.Identifier)
+	}
+
+	// Initialize empty and default epoch values
+	if epoch.StartTime.Equal(time.Time{}) {
+		epoch.StartTime = ctx.BlockTime()
+	}
+	epoch.CurrentEpochStartHeight = ctx.BlockHeight()
+	k.SetEpochInfo(ctx, epoch)
+	return nil
+}
+
+// setEpochInfo set epoch info.
 func (k Keeper) SetEpochInfo(ctx sdk.Context, epoch types.EpochInfo) {
 	store := ctx.KVStore(k.storeKey)
 	value, err := proto.Marshal(&epoch)
@@ -45,12 +67,7 @@ func (k Keeper) IterateEpochInfo(ctx sdk.Context, fn func(index int64, epochInfo
 	store := ctx.KVStore(k.storeKey)
 
 	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefixEpoch)
-	defer func(iterator sdk.Iterator) {
-		err := iterator.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(iterator)
+	defer iterator.Close()
 
 	i := int64(0)
 
@@ -69,6 +86,7 @@ func (k Keeper) IterateEpochInfo(ctx sdk.Context, fn func(index int64, epochInfo
 	}
 }
 
+// AllEpochInfos iterate through epochs to return all epochs info.
 func (k Keeper) AllEpochInfos(ctx sdk.Context) []types.EpochInfo {
 	epochs := []types.EpochInfo{}
 	k.IterateEpochInfo(ctx, func(index int64, epochInfo types.EpochInfo) (stop bool) {

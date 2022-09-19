@@ -42,31 +42,6 @@ func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, e
 }
 
 /*
-Retrieves the base asset's price from PricefeedKeeper (oracle).
-The price is denominated in quote asset, so # of quote asset to buy one base asset.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: token pair
-
-ret:
-  - price: price as sdk.Dec
-  - err: error
-*/
-func (k Keeper) GetUnderlyingPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
-	currentPrice, err := k.pricefeedKeeper.GetCurrentPrice(
-		ctx,
-		/* token0 */ pair.BaseDenom(),
-		/* token1 */ pair.QuoteDenom(),
-	)
-	if err != nil {
-		return sdk.OneDec().Neg(), err
-	}
-
-	return currentPrice.Price, nil
-}
-
-/*
 So how much stablecoin you would get if you sold baseAssetAmount amount of perpetual contracts.
 
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction.
@@ -122,6 +97,35 @@ func (k Keeper) GetQuoteAssetPrice(
 	}
 
 	return pool.GetBaseAmountByQuoteAmount(dir, quoteAmount)
+}
+
+/*
+Returns the twap of the spot price (y/x).
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: the token pair
+  - direction: add or remove
+  - baseAssetAmount: amount of base asset to add or remove
+  - lookbackInterval: how far back to calculate TWAP
+
+ret:
+  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
+  - err: error
+*/
+func (k Keeper) GetSpotTWAP(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	lookbackInterval time.Duration,
+) (quoteAssetAmount sdk.Dec, err error) {
+	return k.calcTwap(
+		ctx,
+		pair,
+		types.TwapCalcOption_SPOT,
+		types.Direction_DIRECTION_UNSPECIFIED, // unused
+		sdk.ZeroDec(),                         // unused
+		lookbackInterval,
+	)
 }
 
 /*
@@ -218,7 +222,8 @@ func (k Keeper) calcTwap(
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	iter := store.ReverseIterator(nil, nil)
+	iter := store.ReverseIterator(types.GetSnapshotKey(pair, 0), types.GetSnapshotKey(pair, uint64(ctx.BlockHeight()+1)))
+
 	defer iter.Close()
 
 	if !iter.Valid() {

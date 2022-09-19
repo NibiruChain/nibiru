@@ -27,13 +27,11 @@ func GetPoolKey(pair common.AssetPair) []byte {
 	return append(PoolKeyPrefix, []byte(pair.String())...)
 }
 
-// GetSnapshotKey returns the KVStore for the pool reserve snapshots.
+// GetSnapshotKey returns the composite key for the vpool snapshots.
+// Note that it's up to the caller to create the prefix store with SnapshotsPrefixKey
 func GetSnapshotKey(pair common.AssetPair, blockHeight uint64) []byte {
 	return append(
-		SnapshotsKeyPrefix,
-		append(
-			[]byte(pair.String()),
-			sdk.Uint64ToBigEndian(blockHeight)...,
-		)...,
+		[]byte(pair.String()),
+		sdk.Uint64ToBigEndian(blockHeight)...,
 	)
 }

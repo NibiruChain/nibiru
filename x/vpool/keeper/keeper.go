@@ -130,7 +130,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, err
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
 		Price:     spotPrice,
 		Timestamp: ctx.BlockHeader().Time,
@@ -245,7 +245,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, err
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChanged{
+	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
 		Price:     spotPrice,
 		Timestamp: ctx.BlockHeader().Time,
@@ -340,7 +340,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	oraclePrice, err := k.GetUnderlyingPrice(ctx, pair)
+	indexPrice, err := k.pricefeedKeeper.GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom())
 	if err != nil {
 		panic(err)
 	}
@@ -350,7 +350,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	return spotPrice.Sub(oraclePrice).Quo(oraclePrice).Abs().GTE(pool.MaxOracleSpreadRatio)
+	return spotPrice.Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
 
 /*

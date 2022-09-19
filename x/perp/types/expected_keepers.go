@@ -243,21 +243,24 @@ type VpoolKeeper interface {
 		pair common.AssetPair,
 	) (price sdk.Dec, err error)
 
-	/* Retrieves the base asset's price from PricefeedKeeper (oracle).
-	The price is denominated in quote asset, so # of quote asset to buy one base asset.
+	/* Returns the twap of the spot price (y/x).
 
 	args:
 	  - ctx: cosmos-sdk context
-	  - pair: token pair
+	  - pair: the token pair
+	  - direction: add or remove
+	  - baseAssetAmount: amount of base asset to add or remove
+	  - lookbackInterval: how far back to calculate TWAP
 
 	ret:
-	  - price: price as sdk.Dec
+	  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
 	  - err: error
 	*/
-	GetUnderlyingPrice(
+	GetSpotTWAP(
 		ctx sdk.Context,
 		pair common.AssetPair,
-	) (price sdk.Dec, err error)
+		lookbackInterval time.Duration,
+	) (quoteAssetAmount sdk.Dec, err error)
 
 	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec

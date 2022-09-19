@@ -53,14 +53,14 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 				)
-				premiumFractions := []sdk.Dec{sdk.ZeroDec()} // fPayment -> 0
+				fundingRates := []sdk.Dec{sdk.ZeroDec()} // fPayment -> 0
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair:                   pair,
-					CumulativeFundingRates: premiumFractions,
+					CumulativeFundingRates: fundingRates,
 				})
 
 				pos := &types.Position{
@@ -68,7 +68,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					Pair:                           pair,
 					Margin:                         sdk.NewDec(100),
 					Size_:                          sdk.NewDec(200),
-					LatestCumulativeFundingPayment: premiumFractions[0],
+					LatestCumulativeFundingPayment: fundingRates[0],
 				}
 
 				marginDelta := sdk.NewDec(-300)
@@ -82,7 +82,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				require.True(t, sdk.NewDec(200).Equal(remaining.BadDebt))
 				require.True(t, sdk.NewDec(0).Equal(remaining.FundingPayment))
 				require.True(t, sdk.NewDec(0).Equal(remaining.Margin))
-				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativePremiumFraction)
+				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativeFundingRate)
 			},
 		},
 		{
@@ -106,7 +106,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 				)
-				premiumFractions := []sdk.Dec{
+				fundingRates := []sdk.Dec{
 					sdk.MustNewDecFromStr("0.25"),
 					sdk.MustNewDecFromStr("0.5"),
 					sdk.MustNewDecFromStr("0.75"),
@@ -117,7 +117,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				perpKeeper := &nibiruApp.PerpKeeper
 				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
 					Pair:                   pair,
-					CumulativeFundingRates: premiumFractions,
+					CumulativeFundingRates: fundingRates,
 				})
 
 				pos := &types.Position{
@@ -125,14 +125,14 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					Pair:                           pair,
 					Margin:                         sdk.NewDec(100),
 					Size_:                          sdk.NewDec(200),
-					LatestCumulativeFundingPayment: premiumFractions[1],
+					LatestCumulativeFundingPayment: fundingRates[1],
 				}
 
 				marginDelta := sdk.NewDec(0)
 				remaining, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, *pos, marginDelta)
 				require.NoError(t, err)
-				require.EqualValues(t, sdk.MustNewDecFromStr("0.75"), remaining.LatestCumulativePremiumFraction)
+				require.EqualValues(t, sdk.MustNewDecFromStr("0.75"), remaining.LatestCumulativeFundingRate)
 				// FPayment
 				//   = (remaining.LatestCPF - pos.LatestCumulativeFundingPayment)
 				//      * pos.Size_
