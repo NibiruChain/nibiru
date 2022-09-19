@@ -15,10 +15,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
+// PositionsIndexes provides the indexes used py perp positions.
 type PositionsIndexes struct {
+	// Address tracks positions to the address owning the position.
 	Address *collections.MultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey], types.Position]
 }
 
+// IndexList implements the collections.Indexes interface.
 func (p PositionsIndexes) IndexList() []collections.Index[keys.Pair[common.AssetPair, keys.StringKey], types.Position] {
 	return []collections.Index[keys.Pair[common.AssetPair, keys.StringKey], types.Position]{p.Address}
 }
@@ -72,6 +75,7 @@ func NewKeeper(
 
 		Positions: collections.NewIndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes](cdc, storeKey, 3, PositionsIndexes{
 			Address: collections.NewMultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey]](func(v types.Position) keys.StringKey {
+				// this function returns an indexing key containing the trader address.
 				return keys.String(v.TraderAddress)
 			}),
 		}),
