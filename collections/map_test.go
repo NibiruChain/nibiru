@@ -59,7 +59,7 @@ func TestMap_Iterate(t *testing.T) {
 	sk, ctx, cdc := deps()
 	m := NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
 
-	objs := []KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{kv("a"), kv("aa"), kv("b"), kv("bb")}
+	expectedObjs := []KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{kv("a"), kv("aa"), kv("b"), kv("bb")}
 
 	m.Insert(ctx, "a", obj("a"))
 	m.Insert(ctx, "aa", obj("aa"))
@@ -70,17 +70,30 @@ func TestMap_Iterate(t *testing.T) {
 	iter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
 	defer iter.Close()
 	for i, o := range iter.KeyValues() {
-		require.Equal(t, objs[i], o)
+		require.Equal(t, expectedObjs[i], o)
 	}
 
 	// test iteration descending
 	dIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
 	defer dIter.Close()
 	for i, o := range iter.KeyValues() {
-		require.Equal(t, objs[len(objs)-1-i], o)
+		require.Equal(t, expectedObjs[len(expectedObjs)-1-i], o)
 	}
 
-	// test all keys
+	// test all keys and values
+	val, err := m.Get(ctx, "a")
+	require.NoError(t, err)
+	require.Equal(t, obj("a"), val)
 
-	// test all values
+	val, err = m.Get(ctx, "aa")
+	require.NoError(t, err)
+	require.Equal(t, obj("aa"), val)
+
+	val, err = m.Get(ctx, "b")
+	require.NoError(t, err)
+	require.Equal(t, obj("b"), val)
+
+	val, err = m.Get(ctx, "bb")
+	require.NoError(t, err)
+	require.Equal(t, obj("bb"), val)
 }
