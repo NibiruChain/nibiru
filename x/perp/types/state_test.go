@@ -116,7 +116,7 @@ func TestPairMetadata_Validate(t *testing.T) {
 			wantErr: true,
 		},
 
-		"invalid cumulative premium fraction": {
+		"invalid cumulative funding rate": {
 			p: &PairMetadata{
 				Pair:                   common.MustNewAssetPair("pair1:pair2"),
 				CumulativeFundingRates: []sdk.Dec{{}},

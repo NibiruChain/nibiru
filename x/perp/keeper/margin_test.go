@@ -19,18 +19,18 @@ import (
 
 func TestAddMarginSuccess(t *testing.T) {
 	tests := []struct {
-		name                            string
-		marginToAdd                     sdk.Coin
-		latestCumulativePremiumFraction sdk.Dec
-		initialPosition                 types.Position
+		name                        string
+		marginToAdd                 sdk.Coin
+		latestCumulativeFundingRate sdk.Dec
+		initialPosition             types.Position
 
 		expectedMargin         sdk.Dec
 		expectedFundingPayment sdk.Dec
 	}{
 		{
-			name:                            "add margin",
-			marginToAdd:                     sdk.NewInt64Coin(common.DenomNUSD, 100),
-			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
+			name:                        "add margin",
+			marginToAdd:                 sdk.NewInt64Coin(common.DenomNUSD, 100),
+			latestCumulativeFundingRate: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
 				TraderAddress:                  sample.AccAddress().String(),
 				Pair:                           common.Pair_BTC_NUSD,
@@ -81,7 +81,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				&types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
 					CumulativeFundingRates: []sdk.Dec{
-						tc.latestCumulativePremiumFraction,
+						tc.latestCumulativeFundingRate,
 					},
 				},
 			)
@@ -97,7 +97,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
 			assert.EqualValues(t, common.Pair_BTC_NUSD, resp.Position.Pair)
-			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LatestCumulativeFundingPayment)
+			assert.EqualValues(t, tc.latestCumulativeFundingRate, resp.Position.LatestCumulativeFundingPayment)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
 	}

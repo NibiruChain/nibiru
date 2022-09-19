@@ -7,7 +7,6 @@
   - [FundingRateChangedEvent](#fundingratechangedevent)
 
 ## Event Types
-
 - `nibiru.perp.v1.PositionChangedEvent`: Event omitted when a position changes
 - `nibiru.perp.v1.PositionLiquidatedEvent`: Event emitted when a position is liquidated.
 - `nibiru.perp.v1.PositionSettledEvent`: Event emitted when a position is settled.
@@ -70,7 +69,7 @@ Corresponds to the proto message, `PositionLiquidatedEvent`.
 | ---------------- | ----------  |
 | block_height (`int64`) | Block number at which the position changed |
 | block_time_ms (`int64`) | Block time in Unix milliseconds at which the position changed. |
-| cumulative_funding_rate (`Dec`) | Cumulative funding rate. The sum of the cumulative premium fractions (CFPs) for the pair. The funding payment paid by a user is the `(latestCPF - lastUpdateCPF) * positionSize`, where `lastUpdateCPF` is the last cumulative funding payment the position applied and `latestCPF` is the most recent CPF for the virtual pool. |
+| cumulative_funding_rate (`Dec`) | Cumulative funding rate. The sum of the cumulative funding rates (CFPs) for the pair. The funding payment paid by a user is the `(latestCPF - lastUpdateCPF) * positionSize`, where `lastUpdateCPF` is the last cumulative funding payment the position applied and `latestCPF` is the most recent CPF for the virtual pool. |
 | index_price (`Dec`) | Price of the "underlying" for the perpetual swap. |
 | latest_funding_rate (`Dec`) | Most recent value for the funding rate.  |
 | mark_price (`Dec`) | Instantaneous derivate price for the perp position. Equivalent to the quotient of the quote and base reserves. |
