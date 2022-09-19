@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -854,9 +856,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("set up initial position")
-			perpKeeper.PositionsState(ctx).Set(
-				&tc.initialPosition,
-			)
+			setPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("mock vpool")
 			mocks.mockVpoolKeeper.EXPECT().
@@ -1554,9 +1554,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 				BlockNumber:                    0,
 			}
-			perpKeeper.PositionsState(ctx).Set(
-				&currentPosition,
-			)
+			setPosition(perpKeeper, ctx, currentPosition)
 
 			t.Log("mock vpool")
 			mocks.mockVpoolKeeper.EXPECT().
@@ -1837,7 +1835,7 @@ func TestClosePosition(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
+			setPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -2005,7 +2003,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
+			setPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
 			perpKeeper.SetParams(ctx, types.DefaultParams())
@@ -2050,4 +2048,8 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.Nil(t, resp)
 		})
 	}
+}
+
+func setPosition(k Keeper, ctx sdk.Context, pos types.Position) {
+	k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
 }

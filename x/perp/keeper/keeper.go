@@ -3,6 +3,10 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -10,6 +14,14 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
+
+type PositionsIndexes struct {
+	Address *collections.MultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey], types.Position]
+}
+
+func (p PositionsIndexes) IndexList() []collections.Index[keys.Pair[common.AssetPair, keys.StringKey], types.Position] {
+	return []collections.Index[keys.Pair[common.AssetPair, keys.StringKey], types.Position]{p.Address}
+}
 
 type Keeper struct {
 	cdc           codec.BinaryCodec
@@ -21,6 +33,8 @@ type Keeper struct {
 	PricefeedKeeper types.PricefeedKeeper
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
+
+	Positions collections.IndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -55,6 +69,12 @@ func NewKeeper(
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
+
+		Positions: collections.NewIndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes](cdc, storeKey, 3, PositionsIndexes{
+			Address: collections.NewMultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey]](func(v types.Position) keys.StringKey {
+				return keys.String(v.TraderAddress)
+			}),
+		}),
 	}
 }
 

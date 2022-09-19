@@ -2,6 +2,7 @@ package perp_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -35,15 +36,16 @@ func TestGenesis(t *testing.T) {
 
 		// create some positions
 		for i := int64(0); i < 100; i++ {
-			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
+			addr := sample.AccAddress().String()
+			app.PerpKeeper.Positions.Insert(ctx, keys.Join(common.Pair_NIBI_NUSD, keys.String(addr)), types.Position{
+				TraderAddress:                  addr,
 				Pair:                           common.Pair_NIBI_NUSD,
 				Size_:                          sdk.NewDec(i + 1),
 				Margin:                         sdk.NewDec(i * 2),
 				OpenNotional:                   sdk.NewDec(i * 100),
 				LatestCumulativeFundingPayment: sdk.NewDec(5 * 100),
 				BlockNumber:                    i,
-			}))
+			})
 		}
 
 		// create some prepaid bad debt
@@ -60,6 +62,12 @@ func TestGenesis(t *testing.T) {
 
 		// export again to ensure they match
 		genStateAfterInit := perp.ExportGenesis(ctx, app.PerpKeeper)
-		require.Equal(t, genState, genStateAfterInit)
+		require.Equal(t, genState.Params, genStateAfterInit.Params)
+		require.Equal(t, genState.PairMetadata, genStateAfterInit.PairMetadata)
+		require.Equal(t, genState.PrepaidBadDebts, genStateAfterInit.PrepaidBadDebts)
+		require.Equal(t, len(genState.Positions), len(genStateAfterInit.Positions))
+		for i, pos := range genState.Positions {
+			require.Equalf(t, pos, genStateAfterInit.Positions[i], "%s <-> %s", pos, genStateAfterInit.Positions[i])
+		}
 	})
 }

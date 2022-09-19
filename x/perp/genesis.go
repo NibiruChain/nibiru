@@ -1,7 +1,8 @@
 package perp
 
 import (
-	"fmt"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -19,10 +20,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// create positions
 	for _, p := range genState.Positions {
-		err := k.PositionsState(ctx).Create(p)
-		if err != nil {
-			panic(fmt.Errorf("unable to re-create position %s: %w", p, err))
-		}
+		k.Positions.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), *p)
 	}
 
 	// set params
@@ -41,10 +39,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 
 	// export positions
-	k.PositionsState(ctx).Iterate(func(position *types.Position) (stop bool) {
-		genesis.Positions = append(genesis.Positions, position)
-		return false
-	})
+	positions := k.Positions.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]()).Values()
+	genesis.Positions = make([]*types.Position, len(positions))
+	for i, pos := range k.Positions.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]()).Values() {
+		p := pos
+		genesis.Positions[i] = &p
+	}
 
 	// export prepaid bad debt
 	k.PrepaidBadDebtState(ctx).Iterate(func(denom string, amount sdk.Int) (stop bool) {

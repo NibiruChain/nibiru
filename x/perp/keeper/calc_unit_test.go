@@ -28,7 +28,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 					Token0: "",
 					Token1: "",
 				}, alice)
-				_, err := k.calcFreeCollateral(ctx, *pos)
+				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
 				require.ErrorIs(t, err, common.ErrInvalidTokenPair)
@@ -43,7 +43,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 
 				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
 
-				_, err := k.calcFreeCollateral(ctx, *pos)
+				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
 				require.ErrorIs(t, err, types.ErrPairNotFound)
@@ -59,7 +59,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 
 				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
 
-				freeCollateral, err := k.calcFreeCollateral(ctx, *pos)
+				freeCollateral, err := k.calcFreeCollateral(ctx, pos)
 
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.ZeroDec(), freeCollateral)

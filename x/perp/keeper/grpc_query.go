@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -39,21 +41,21 @@ func (q queryServer) QueryTraderPosition(
 		return nil, err
 	}
 
-	position, err := q.k.PositionsState(ctx).Get(pair, trader)
+	position, err := q.k.Positions.Get(ctx, keys.Join(pair, keys.String(trader.String())))
 	if err != nil {
 		return nil, err
 	}
 
-	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	marginRatioMark, err := q.k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatioMark, err := q.k.GetMarginRatio(ctx, position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
 	}
-	marginRatioIndex, err := q.k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_INDEX)
+	marginRatioIndex, err := q.k.GetMarginRatio(ctx, position, types.MarginCalculationPriceOption_INDEX)
 	if err != nil {
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.
@@ -62,7 +64,7 @@ func (q queryServer) QueryTraderPosition(
 	}
 
 	return &types.QueryTraderPositionResponse{
-		Position:         position,
+		Position:         &position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
 		MarginRatioMark:  marginRatioMark,

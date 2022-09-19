@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
@@ -93,7 +96,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.PositionsState(ctx).Set(&position)
+			setPosition(perpKeeper, ctx, position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -180,7 +183,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee, feeToFund)
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.PositionsState(ctx).Get(common.Pair_BTC_NUSD, traderAddr)
+			newPosition, err := perpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
 			require.NoError(t, err)
 			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
 			assert.EqualValues(t, common.Pair_BTC_NUSD, newPosition.Pair)
@@ -266,7 +269,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.PositionsState(ctx).Set(&position)
+			setPosition(perpKeeper, ctx, position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -346,9 +349,9 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee.String(), feeToFund.String())
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.PositionsState(ctx).Get(common.Pair_BTC_NUSD, traderAddr)
-			require.ErrorIs(t, err, types.ErrPositionNotFound)
-			assert.Nil(t, newPosition)
+			newPosition, err := perpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
+			require.ErrorIs(t, err, collections.ErrNotFound)
+			assert.Empty(t, newPosition)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  common.Pair_BTC_NUSD.String(),
@@ -435,7 +438,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			perpKeeper.PositionsState(ctx).Set(&position)
+			setPosition(perpKeeper, ctx, position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -518,9 +521,9 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee.String(), feeToFund.String())
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.PositionsState(ctx).Get(common.Pair_BTC_NUSD, traderAddr)
-			require.ErrorIs(t, err, types.ErrPositionNotFound)
-			assert.Nil(t, newPosition)
+			newPosition, err := perpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
+			require.ErrorIs(t, err, collections.ErrNotFound)
+			assert.Empty(t, newPosition)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  common.Pair_BTC_NUSD.String(),
@@ -959,7 +962,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 				BlockNumber:                    ctx.BlockHeight(),
 			}
-			perpKeeper.PositionsState(ctx).Set(&position)
+			setPosition(perpKeeper, ctx, position)
 
 			t.Log("execute full liquidation")
 			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(

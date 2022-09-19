@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 	"time"
 
@@ -362,7 +363,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		common.Pair_ETH_NUSD.String(),
 	}
 	out, _ := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), "no position found")
+	s.Contains(out.String(), collections.ErrNotFound.Error())
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
@@ -439,7 +440,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	// liquidate a position that does not exist
 	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), "no position found")
+	s.Contains(out.String(), collections.ErrNotFound.Error())
 	if err != nil {
 		s.T().Logf("user liquidate error: %+v", err)
 	}

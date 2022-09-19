@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 	"time"
 
@@ -48,7 +49,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1000)),
 			initialPosition: nil,
 			margin:          sdk.NewInt64Coin(common.DenomNUSD, 1000),
-			expectedErr:     types.ErrPositionNotFound,
+			expectedErr:     collections.ErrNotFound,
 		},
 		{
 			name:        "success",
@@ -96,7 +97,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(tc.initialPosition))
+				setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
@@ -153,7 +154,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 0)),
 			initialPosition: nil,
 			marginToRemove:  sdk.NewInt64Coin(common.DenomNUSD, 1000),
-			expectedErr:     types.ErrPositionNotFound,
+			expectedErr:     collections.ErrNotFound,
 		},
 		{
 			name:       "vault insufficient funds",
@@ -215,7 +216,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(tc.initialPosition))
+				setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(ctx.BlockHeight() + 1)
@@ -381,7 +382,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			})
 
 			t.Log("create position")
-			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+			setPosition(app.PerpKeeper, ctx, types.Position{
 				TraderAddress:                  tc.traderAddr.String(),
 				Pair:                           tc.pair,
 				Size_:                          sdk.OneDec(),
@@ -389,7 +390,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				OpenNotional:                   sdk.OneDec(),
 				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 				BlockNumber:                    1,
-			}))
+			})
 			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
@@ -488,7 +489,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 				t.Log("create position")
-				require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
+				setPosition(app.PerpKeeper, ctx, types.Position{
 					TraderAddress:                  traderAddr.String(),
 					Pair:                           pair,
 					Size_:                          sdk.OneDec(),
@@ -496,7 +497,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 					OpenNotional:                   sdk.NewDec(2), // new spot price is 1, so position can be liquidated
 					LatestCumulativeFundingPayment: sdk.ZeroDec(),
 					BlockNumber:                    1,
-				}))
+				})
 				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 1))))
 			}
 

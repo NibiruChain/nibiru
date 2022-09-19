@@ -114,7 +114,7 @@ func TestQueryPosition(t *testing.T) {
 			})
 
 			t.Log("initialize position")
-			perpKeeper.PositionsState(ctx).Set(tc.initialPosition)
+			setPosition(*perpKeeper, ctx, *tc.initialPosition)
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
