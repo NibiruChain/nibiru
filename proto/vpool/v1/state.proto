@@ -94,6 +94,8 @@ message CurrentTWAP {
 
 // a snapshot of the vpool's reserves at a given point in time
 message ReserveSnapshot {
+  string pair = 5;
+
   string base_asset_reserve = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];

@@ -38,6 +38,21 @@ func TestGenesis(t *testing.T) {
 		},
 	}
 
+	//snapshots := []*types.ReserveSnapshot{
+	//	{
+	//		BaseAssetReserve:  sdk.NewDec(1_000_000),
+	//		QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+	//		TimestampMs:       123456,
+	//		BlockNumber:       1,
+	//	},
+	//	{
+	//		BaseAssetReserve:  sdk.NewDec(2_000_000),
+	//		QuoteAssetReserve: sdk.NewDec(50_000_000_000),
+	//		TimestampMs:       123456,
+	//		BlockNumber:       2,
+	//	},
+	//}
+
 	genesisState := types.GenesisState{Vpools: vpools}
 
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
