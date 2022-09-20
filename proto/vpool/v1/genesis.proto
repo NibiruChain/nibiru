@@ -10,4 +10,5 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 message GenesisState {
   repeated VPool vpools = 1;
   Params params = 2 [(gogoproto.nullable) = false];
+  repeated ReserveSnapshot snapshots = 3;
 }
