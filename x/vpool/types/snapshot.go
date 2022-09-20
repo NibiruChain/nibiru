@@ -14,7 +14,7 @@ func NewReserveSnapshot(
 	blockHeight int64,
 ) ReserveSnapshot {
 	return ReserveSnapshot{
-		Pair:              pair.String(),
+		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
 		TimestampMs:       blockTime.UnixMilli(),
