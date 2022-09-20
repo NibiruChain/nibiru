@@ -39,6 +39,7 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.NewDec(10),
 	)
 	expectedSnapshot := types.ReserveSnapshot{
+		Pair:              common.Pair_BTC_NUSD.String(),
 		BaseAssetReserve:  sdk.NewDec(10),
 		QuoteAssetReserve: sdk.NewDec(10),
 		TimestampMs:       ctx.BlockTime().UnixMilli(),
@@ -62,6 +63,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	)
 	require.NoError(t, err)
 	expectedSnapshot = types.ReserveSnapshot{
+		Pair:              common.Pair_BTC_NUSD.String(),
 		QuoteAssetReserve: sdk.NewDec(20),
 		BaseAssetReserve:  sdk.NewDec(5),
 		TimestampMs:       ctx.BlockTime().UnixMilli(),

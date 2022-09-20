@@ -35,6 +35,7 @@ func (k Keeper) SaveSnapshot(
 	baseAssetReserve sdk.Dec,
 ) {
 	snapshot := &types.ReserveSnapshot{
+		Pair:              pair.String(),
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
 		TimestampMs:       ctx.BlockTime().UnixMilli(),

@@ -7,7 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 )
 
-// Called every block to store a snapshot of the vpool.
+// EndBlocker Called every block to store a snapshot of the vpool.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	for _, pool := range k.GetAllPools(ctx) {
 		k.SaveSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
