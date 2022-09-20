@@ -38,11 +38,12 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.OneDec(),
 		sdk.NewDec(10),
 	)
-	expectedSnapshot := types.NewReserveSnapshot(
-		ctx,
+	expectedSnapshot := types.NewReserveSnapshotWithoutCtx(
 		common.Pair_BTC_NUSD,
 		sdk.NewDec(10),
 		sdk.NewDec(10),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
 	)
 
 	t.Log("run one block of 5 seconds")
