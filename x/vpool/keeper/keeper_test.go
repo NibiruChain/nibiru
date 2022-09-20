@@ -738,12 +738,6 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
 				MaxLeverage:            sdk.OneDec(),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
 		},
 		{
@@ -757,12 +751,6 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
 				MaxLeverage:            sdk.OneDec(),
-			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
 		},
