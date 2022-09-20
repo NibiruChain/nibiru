@@ -471,12 +471,13 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
+			snapshot: types.NewReserveSnapshotWithoutCtx(
+				common.Pair_BTC_NUSD,
+				sdk.OneDec(),
+				sdk.NewDec(1000),
+				time.Now(),
+				0,
+			),
 			isOverLimit: false,
 		},
 		{
