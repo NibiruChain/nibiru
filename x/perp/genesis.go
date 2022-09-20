@@ -1,9 +1,10 @@
 package perp
 
 import (
+	"log"
+
 	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/common"
-	"log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

@@ -1,9 +1,10 @@
 package keeper
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 )
@@ -46,8 +47,8 @@ func (k Keeper) IncrementBadDebt(ctx sdk.Context, denom string, amount sdk.Int) 
 }
 
 // DecrementBadDebt decrements the amount of bad debt prepaid by denom.
-//// The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
-//// debt balance to below zero will clip it at zero.
+// // The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
+// // debt balance to below zero will clip it at zero.
 func (k Keeper) DecrementBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
 	current := k.BadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
 		Denom:  denom,
