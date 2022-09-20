@@ -72,7 +72,7 @@ func TestGenesis(t *testing.T) {
 	exportedGenesis := vpool.ExportGenesis(ctx, k)
 	require.Len(t, exportedGenesis.Vpools, 2)
 
-	for _, exportedVpool := range exportedGenesis.Vpools {
-		require.Contains(t, genesisState.Vpools, exportedVpool)
+	for _, pool := range genesisState.Vpools {
+		require.Contains(t, exportedGenesis.Vpools, pool)
 	}
 }

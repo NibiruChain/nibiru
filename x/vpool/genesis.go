@@ -23,6 +23,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			vp.MaxLeverage,
 		)
 	}
+
+	for _, snapshot := range genState.Snapshots {
+		k.SaveSnapshot(ctx, snapshot)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
