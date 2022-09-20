@@ -1,8 +1,9 @@
 package types
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func NewReserveSnapshot(ctx sdk.Context, pair common.AssetPair, baseAssetReserve, quoteAssetReserve sdk.Dec) ReserveSnapshot {
