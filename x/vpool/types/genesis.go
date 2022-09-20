@@ -31,6 +31,12 @@ func (gs GenesisState) Validate() error {
 		vpools[pair] = struct{}{}
 	}
 
+	for _, snapshot := range gs.Snapshots {
+		if err := snapshot.Validate(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
