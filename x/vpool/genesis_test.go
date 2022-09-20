@@ -75,4 +75,8 @@ func TestGenesis(t *testing.T) {
 	for _, pool := range genesisState.Vpools {
 		require.Contains(t, exportedGenesis.Vpools, pool)
 	}
+
+	//for _, snapshot := range genesisState.Snapshots {
+	//	require.Contains(t, exportedGenesis.Snapshots, snapshot)
+	//}
 }

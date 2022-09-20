@@ -146,6 +146,40 @@ func TestGetSnapshot(t *testing.T) {
 	)
 }
 
+func TestGetAllSnapshots(t *testing.T) {
+	vpoolKeeper, ctx := VpoolKeeper(t,
+		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+	)
+
+	snapshots := []types.ReserveSnapshot{
+		types.NewReserveSnapshot(
+			common.Pair_BTC_NUSD,
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(60_000_000_000),
+			time.UnixMilli(123456),
+			1,
+		),
+		types.NewReserveSnapshot(
+			common.Pair_BTC_NUSD,
+			sdk.NewDec(2_000_000),
+			sdk.NewDec(50_000_000_000),
+			time.UnixMilli(223456),
+			2,
+		),
+	}
+
+	for _, snapshot := range snapshots {
+		vpoolKeeper.SaveSnapshot(ctx, snapshot)
+	}
+
+	savedSnapshots := vpoolKeeper.GetAllSnapshots(ctx)
+	require.Len(t, savedSnapshots, 2)
+
+	for _, snapshot := range snapshots {
+		require.Contains(t, savedSnapshots, snapshot)
+	}
+}
+
 func TestGetSnapshotPrice(t *testing.T) {
 	tests := []struct {
 		name              string
