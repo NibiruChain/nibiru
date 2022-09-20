@@ -453,9 +453,8 @@ func TestGetVpools(t *testing.T) {
 
 func TestIsOverFluctuationLimit(t *testing.T) {
 	tests := []struct {
-		name     string
-		pool     types.VPool
-		snapshot types.ReserveSnapshot
+		name string
+		pool types.VPool
 
 		isOverLimit bool
 	}{
@@ -471,13 +470,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			snapshot: types.NewReserveSnapshotWithoutCtx(
-				common.Pair_BTC_NUSD,
-				sdk.OneDec(),
-				sdk.NewDec(1000),
-				time.Now(),
-				0,
-			),
 			isOverLimit: false,
 		},
 		{
@@ -491,12 +483,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			isOverLimit: false,
 		},
@@ -512,12 +498,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
 			isOverLimit: false,
 		},
 		{
@@ -531,12 +511,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			isOverLimit: true,
 		},
@@ -552,12 +526,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
 			isOverLimit: true,
 		},
 	}
@@ -565,7 +533,14 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			assert.EqualValues(t, tc.isOverLimit, isOverFluctuationLimit(&tc.pool, tc.snapshot))
+			snapshot := types.NewReserveSnapshotWithoutCtx(
+				common.Pair_BTC_NUSD,
+				sdk.OneDec(),
+				sdk.NewDec(1000),
+				time.Now(),
+				0,
+			)
+			assert.EqualValues(t, tc.isOverLimit, isOverFluctuationLimit(&tc.pool, snapshot))
 		})
 	}
 }
