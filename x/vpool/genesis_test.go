@@ -2,6 +2,7 @@ package vpool_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/NibiruChain/nibiru/simapp"
 
@@ -38,22 +39,27 @@ func TestGenesis(t *testing.T) {
 		},
 	}
 
-	//snapshots := []*types.ReserveSnapshot{
-	//	{
-	//		BaseAssetReserve:  sdk.NewDec(1_000_000),
-	//		QuoteAssetReserve: sdk.NewDec(60_000_000_000),
-	//		TimestampMs:       123456,
-	//		BlockNumber:       1,
-	//	},
-	//	{
-	//		BaseAssetReserve:  sdk.NewDec(2_000_000),
-	//		QuoteAssetReserve: sdk.NewDec(50_000_000_000),
-	//		TimestampMs:       123456,
-	//		BlockNumber:       2,
-	//	},
-	//}
+	snapshots := []types.ReserveSnapshot{
+		types.NewReserveSnapshot(
+			common.Pair_BTC_NUSD,
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(60_000_000_000),
+			time.UnixMilli(123456),
+			1,
+		),
+		types.NewReserveSnapshot(
+			common.Pair_BTC_NUSD,
+			sdk.NewDec(2_000_000),
+			sdk.NewDec(50_000_000_000),
+			time.UnixMilli(223456),
+			2,
+		),
+	}
 
-	genesisState := types.GenesisState{Vpools: vpools}
+	genesisState := types.GenesisState{
+		Vpools:    vpools,
+		Snapshots: snapshots,
+	}
 
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	k := nibiruApp.VpoolKeeper
