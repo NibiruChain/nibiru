@@ -34,16 +34,15 @@ func (k Keeper) SaveSnapshot(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 ) {
-	snapshot := &types.ReserveSnapshot{
-		Pair:              pair.String(),
-		BaseAssetReserve:  baseAssetReserve,
-		QuoteAssetReserve: quoteAssetReserve,
-		TimestampMs:       ctx.BlockTime().UnixMilli(),
-		BlockNumber:       ctx.BlockHeight(),
-	}
+	snapshot := types.NewReserveSnapshot(
+		ctx,
+		pair,
+		baseAssetReserve,
+		quoteAssetReserve,
+	)
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	store.Set(types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())), k.codec.MustMarshal(snapshot))
+	store.Set(types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())), k.codec.MustMarshal(&snapshot))
 }
 
 // GetLatestReserveSnapshot returns the last snapshot that was saved
