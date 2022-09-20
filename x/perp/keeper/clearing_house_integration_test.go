@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -269,7 +271,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -503,7 +505,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -582,7 +584,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				baseLimit := sdk.NewDec(150)
 				resp, err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, trader, quote, leverage, baseLimit)
-				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
+				require.ErrorIs(t, err, collections.ErrNotFound)
 				require.Nil(t, resp)
 			},
 		},

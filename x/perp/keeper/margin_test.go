@@ -78,14 +78,12 @@ func TestAddMarginSuccess(t *testing.T) {
 			require.True(t, vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD))
 
 			t.Log("set pair metadata")
-			perpKeeper := &nibiruApp.PerpKeeper
-			perpKeeper.PairMetadataState(ctx).Set(
-				&types.PairMetadata{
-					Pair: common.Pair_BTC_NUSD,
-					CumulativeFundingRates: []sdk.Dec{
-						tc.latestCumulativeFundingRate,
-					},
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				Pair: common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{
+					tc.latestCumulativeFundingRate,
 				},
+			},
 			)
 
 			t.Log("establish initial position")
@@ -183,8 +181,7 @@ func TestRemoveMargin(t *testing.T) {
 				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                   pair,
 					CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 				})
@@ -199,6 +196,7 @@ func TestRemoveMargin(t *testing.T) {
 				)
 
 				t.Log("Open long position with 5x leverage")
+				perpKeeper := nibiruApp.PerpKeeper
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(5)

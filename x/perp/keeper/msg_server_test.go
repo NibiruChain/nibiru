@@ -87,7 +87,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -206,7 +206,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -292,7 +292,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -377,7 +377,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -474,7 +474,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})

@@ -103,7 +103,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("set pair metadata")
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
@@ -276,7 +276,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("set pair metadata")
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
@@ -445,7 +445,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("set pair metadata")
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
@@ -922,7 +922,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			newParams := types.DefaultParams()
 			newParams.LiquidationFeeRatio = tc.liquidationFee
 			perpKeeper.SetParams(ctx, newParams)
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case

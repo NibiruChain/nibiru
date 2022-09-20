@@ -110,7 +110,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				"hour",
 				15*time.Minute,
 			))
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   tokenPair,
 				CumulativeFundingRates: []sdk.Dec{sdk.OneDec()},
 			})
@@ -287,7 +287,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   tokenPair,
 				CumulativeFundingRates: []sdk.Dec{sdk.OneDec()},
 			})
@@ -375,4 +375,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 func setPosition(k perpkeeper.Keeper, ctx sdk.Context, pos types.Position) {
 	k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
+}
+
+func setPairMetadata(k perpkeeper.Keeper, ctx sdk.Context, pm types.PairMetadata) {
+	k.PairsMetadata.Insert(ctx, pm.Pair, pm)
 }

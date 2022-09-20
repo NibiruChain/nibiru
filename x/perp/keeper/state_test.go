@@ -46,34 +46,6 @@ func TestPrepaidBadDebtState(t *testing.T) {
 	assert.EqualValues(t, sdk.ZeroInt(), amount)
 }
 
-func TestPairMetadata_GetAll(t *testing.T) {
-	pairMetadatas := []*types.PairMetadata{
-		{
-			Pair: common.MustNewAssetPair("ubtc:unibi"),
-			CumulativeFundingRates: []sdk.Dec{
-				sdk.MustNewDecFromStr("1"),
-			},
-		},
-		{
-			Pair:                   common.MustNewAssetPair("ueth:unibi"),
-			CumulativeFundingRates: nil,
-		},
-	}
-
-	perpKeeper, _, ctx := getKeeper(t)
-
-	for _, m := range pairMetadatas {
-		perpKeeper.PairMetadataState(ctx).Set(m)
-	}
-
-	savedMetadata := perpKeeper.PairMetadataState(ctx).GetAll()
-	require.Len(t, savedMetadata, 2)
-
-	for _, sm := range savedMetadata {
-		require.Contains(t, pairMetadatas, sm)
-	}
-}
-
 func TestGetLatestCumulativeFundingRate(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -91,7 +63,7 @@ func TestGetLatestCumulativeFundingRate(t *testing.T) {
 						sdk.NewDec(2), // returns the latest from the list
 					},
 				}
-				keeper.PairMetadataState(ctx).Set(metadata)
+				setPairMetadata(keeper, ctx, *metadata)
 
 				latestCumulativeFundingRate, err := keeper.
 					getLatestCumulativeFundingRate(ctx, common.Pair_NIBI_NUSD)

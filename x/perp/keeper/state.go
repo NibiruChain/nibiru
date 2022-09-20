@@ -6,59 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 )
-
-func (k Keeper) PairMetadataState(ctx sdk.Context) PairMetadataState {
-	return newPairMetadata(ctx, k.storeKey, k.cdc)
-}
 
 func (k Keeper) PrepaidBadDebtState(ctx sdk.Context) PrepaidBadDebtState {
 	return newPrepaidBadDebtState(ctx, k.storeKey, k.cdc)
-}
-
-var pairMetadataNamespace = []byte{0x2}
-
-func newPairMetadata(ctx sdk.Context, key sdk.StoreKey, cdc codec.BinaryCodec) PairMetadataState {
-	store := ctx.KVStore(key)
-	return PairMetadataState{
-		pairsMetadata: prefix.NewStore(store, pairMetadataNamespace),
-		cdc:           cdc,
-	}
-}
-
-type PairMetadataState struct {
-	pairsMetadata sdk.KVStore
-	cdc           codec.BinaryCodec
-}
-
-func (p PairMetadataState) Get(pair common.AssetPair) (*types.PairMetadata, error) {
-	v := p.pairsMetadata.Get([]byte(pair.String()))
-	if v == nil {
-		return nil, types.ErrPairMetadataNotFound
-	}
-
-	pairMetadata := new(types.PairMetadata)
-	p.cdc.MustUnmarshal(v, pairMetadata)
-
-	return pairMetadata, nil
-}
-
-func (p PairMetadataState) Set(metadata *types.PairMetadata) {
-	p.pairsMetadata.Set([]byte(metadata.Pair.String()), p.cdc.MustMarshal(metadata))
-}
-
-func (p PairMetadataState) GetAll() []*types.PairMetadata {
-	iterator := p.pairsMetadata.Iterator(nil, nil)
-
-	var allPairMetadata []*types.PairMetadata
-	for ; iterator.Valid(); iterator.Next() {
-		var pairMetadata = new(types.PairMetadata)
-		p.cdc.MustUnmarshal(iterator.Value(), pairMetadata)
-		allPairMetadata = append(allPairMetadata, pairMetadata)
-	}
-
-	return allPairMetadata
 }
 
 // getLatestCumulativeFundingRate returns the last cumulative funding rate recorded for the
@@ -66,7 +17,7 @@ func (p PairMetadataState) GetAll() []*types.PairMetadata {
 func (k Keeper) getLatestCumulativeFundingRate(
 	ctx sdk.Context, pair common.AssetPair,
 ) (sdk.Dec, error) {
-	pairMetadata, err := k.PairMetadataState(ctx).Get(pair)
+	pairMetadata, err := k.PairsMetadata.Get(ctx, pair)
 	if err != nil {
 		k.Logger(ctx).Error(
 			err.Error(),

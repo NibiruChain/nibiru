@@ -45,13 +45,11 @@ func TestKeeperClosePosition(t *testing.T) {
 		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
-		perpKeeper := &nibiruApp.PerpKeeper
-		perpKeeper.PairMetadataState(ctx).Set(
-			&types.PairMetadata{
-				Pair: pair,
-				CumulativeFundingRates: []sdk.Dec{
-					sdk.MustNewDecFromStr("0.2")},
-			},
+		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			Pair: pair,
+			CumulativeFundingRates: []sdk.Dec{
+				sdk.MustNewDecFromStr("0.2")},
+		},
 		)
 
 		t.Log("open position for alice - long")
@@ -72,7 +70,7 @@ func TestKeeperClosePosition(t *testing.T) {
 
 		t.Log("open position for bob - long")
 		// force funding payments
-		perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 			Pair: pair,
 			CumulativeFundingRates: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},

@@ -119,7 +119,7 @@ func (q queryServer) FundingRates(
 		return nil, status.Errorf(codes.InvalidArgument, "invalid pair: %s", req.Pair)
 	}
 
-	pairMetadata, err := q.k.PairMetadataState(ctx).Get(assetPair)
+	pairMetadata, err := q.k.PairsMetadata.Get(ctx, assetPair)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}

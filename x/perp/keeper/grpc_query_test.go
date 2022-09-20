@@ -106,7 +106,7 @@ func TestQueryPosition(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
@@ -170,13 +170,13 @@ func TestQueryTraderPositions(t *testing.T) {
 		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 	)
-	perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair: common.Pair_BTC_NUSD,
 		CumulativeFundingRates: []sdk.Dec{
 			sdk.ZeroDec(),
 		},
 	})
-	perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair: common.Pair_NIBI_NUSD,
 		CumulativeFundingRates: []sdk.Dec{
 			sdk.ZeroDec(),
@@ -397,7 +397,7 @@ func TestQueryFundingRates(t *testing.T) {
 			queryServer := keeper.NewQuerier(nibiruApp.PerpKeeper)
 
 			t.Log("initialize pair metadata")
-			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(tc.initialPairMetadata)
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, *tc.initialPairMetadata)
 
 			t.Log("query funding payments")
 			resp, err := queryServer.FundingRates(sdk.WrapSDKContext(ctx), tc.query)

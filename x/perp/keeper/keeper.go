@@ -37,7 +37,8 @@ type Keeper struct {
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
 
-	Positions collections.IndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes]
+	Positions     collections.IndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes]
+	PairsMetadata collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -63,22 +64,21 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		ParamSubspace: paramSubspace,
-
-		AccountKeeper:   accountKeeper,
+		cdc:             cdc,
+		storeKey:        storeKey,
+		ParamSubspace:   paramSubspace,
 		BankKeeper:      bankKeeper,
+		AccountKeeper:   accountKeeper,
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
-
 		Positions: collections.NewIndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes](cdc, storeKey, 3, PositionsIndexes{
 			Address: collections.NewMultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey]](func(v types.Position) keys.StringKey {
 				// this function returns an indexing key containing the trader address.
 				return keys.String(v.TraderAddress)
 			}),
 		}),
+		PairsMetadata: collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 2),
 	}
 }
 
