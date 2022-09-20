@@ -696,9 +696,8 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 
 func TestGetMaintenanceMarginRatio(t *testing.T) {
 	tests := []struct {
-		name     string
-		pool     *types.VPool
-		snapshot types.ReserveSnapshot
+		name string
+		pool *types.VPool
 
 		expectedMaintenanceMarginRatio sdk.Dec
 	}{

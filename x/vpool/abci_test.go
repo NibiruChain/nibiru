@@ -62,11 +62,12 @@ func TestSnapshotUpdates(t *testing.T) {
 		false,
 	)
 	require.NoError(t, err)
-	expectedSnapshot = types.NewReserveSnapshot(
-		ctx,
+	expectedSnapshot = types.NewReserveSnapshotWithoutCtx(
 		common.Pair_BTC_NUSD,
 		sdk.NewDec(5),
 		sdk.NewDec(20),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
 	)
 
 	t.Log("run one block of 5 seconds")

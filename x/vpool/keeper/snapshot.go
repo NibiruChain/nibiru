@@ -34,11 +34,12 @@ func (k Keeper) SaveSnapshot(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 ) {
-	snapshot := types.NewReserveSnapshot(
-		ctx,
+	snapshot := types.NewReserveSnapshotWithoutCtx(
 		pair,
 		baseAssetReserve,
 		quoteAssetReserve,
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
 	)
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
