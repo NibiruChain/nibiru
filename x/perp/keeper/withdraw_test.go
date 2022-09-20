@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -83,15 +84,16 @@ func TestWithdraw(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.PrepaidBadDebtState(ctx).Set(denom, sdk.NewInt(tc.initialPrepaidBadDebt))
+			perpKeeper.BadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{Denom: denom, Amount: sdk.NewInt(tc.initialPrepaidBadDebt)})
 
 			t.Log("execute withdrawal")
 			err := perpKeeper.Withdraw(ctx, denom, receiver, sdk.NewInt(tc.amountToWithdraw))
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt := perpKeeper.PrepaidBadDebtState(ctx).Get(denom)
-			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Int64())
+			prepaidBadDebt, err := perpKeeper.BadDebt.Get(ctx, keys.String(denom))
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})
 	}
 }
@@ -151,15 +153,19 @@ func TestRealizeBadDebt(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.PrepaidBadDebtState(ctx).Set(denom, sdk.NewInt(tc.initialPrepaidBadDebt))
+			perpKeeper.BadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+				Denom:  denom,
+				Amount: sdk.NewInt(tc.initialPrepaidBadDebt),
+			})
 
 			t.Log("execute withdrawal")
 			err := perpKeeper.realizeBadDebt(ctx, denom, sdk.NewInt(tc.badDebtToRealize))
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt := perpKeeper.PrepaidBadDebtState(ctx).Get(denom)
-			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Int64())
+			prepaidBadDebt, err := perpKeeper.BadDebt.Get(ctx, keys.String(denom))
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})
 	}
 }

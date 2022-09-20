@@ -28,8 +28,9 @@ func (i *MultiIndex[IK, PK, V]) Delete(ctx sdk.Context, pk PK, v V) {
 	i.secondaryKeys.Delete(ctx, keys.Join(sk, pk))
 }
 
-func (i *MultiIndex[IK, PK, V]) Initialize(cdc codec.BinaryCodec, storeKey sdk.StoreKey, id uint8) {
-	i.secondaryKeys = NewKeySet[keys.Pair[IK, PK]](cdc, storeKey, id)
+func (i *MultiIndex[IK, PK, V]) Initialize(cdc codec.BinaryCodec, storeKey sdk.StoreKey, objectNamespace uint8, indexNamespace uint8) {
+	i.secondaryKeys = NewKeySet[keys.Pair[IK, PK]](cdc, storeKey, indexNamespace)
+	i.secondaryKeys.prefix = []byte{objectNamespace, indexNamespace}
 }
 
 func (i *MultiIndex[IK, PK, V]) Iterate(ctx sdk.Context, rng keys.Range[keys.Pair[IK, PK]]) IndexIterator[IK, PK] {

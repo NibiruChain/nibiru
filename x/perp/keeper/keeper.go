@@ -39,6 +39,7 @@ type Keeper struct {
 
 	Positions     collections.IndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes]
 	PairsMetadata collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
+	BadDebt       collections.Map[keys.StringKey, types.PrepaidBadDebt, *types.PrepaidBadDebt]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -72,13 +73,14 @@ func NewKeeper(
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
-		Positions: collections.NewIndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes](cdc, storeKey, 3, PositionsIndexes{
+		Positions: collections.NewIndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes](cdc, storeKey, 0, PositionsIndexes{
 			Address: collections.NewMultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey]](func(v types.Position) keys.StringKey {
 				// this function returns an indexing key containing the trader address.
 				return keys.String(v.TraderAddress)
 			}),
 		}),
-		PairsMetadata: collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 2),
+		PairsMetadata: collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
+		BadDebt:       collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
 	}
 }
 
@@ -87,12 +89,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetParams get all parameters as types.Params
-func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.ParamSubspace.GetParamSet(ctx, &params)
 	return params
 }
 
 // SetParams set the params
-func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.ParamSubspace.SetParamSet(ctx, &params)
 }

@@ -51,7 +51,10 @@ func TestGenesis(t *testing.T) {
 
 		// create some prepaid bad debt
 		for i := 0; i < 10; i++ {
-			app.PerpKeeper.PrepaidBadDebtState(ctx).Set(fmt.Sprintf("%d", i), sdk.NewInt(int64(i)))
+			app.PerpKeeper.BadDebt.Insert(ctx, keys.String(fmt.Sprintf("%d", i)), types.PrepaidBadDebt{
+				Denom:  fmt.Sprintf("%d", i),
+				Amount: sdk.NewInt(int64(i)),
+			})
 		}
 
 		// export genesis
@@ -64,7 +67,10 @@ func TestGenesis(t *testing.T) {
 		// export again to ensure they match
 		genStateAfterInit := perp.ExportGenesis(ctx, app.PerpKeeper)
 		require.Equal(t, genState.Params, genStateAfterInit.Params)
-		require.Equal(t, genState.PairMetadata, genStateAfterInit.PairMetadata)
+		for i, pm := range genState.PairMetadata {
+			require.Equal(t, pm, genStateAfterInit.PairMetadata[i])
+		}
+		require.Equalf(t, genState.PairMetadata, genStateAfterInit.PairMetadata, "%s <-> %s", genState.PairMetadata, genStateAfterInit.PairMetadata)
 		require.Equal(t, genState.PrepaidBadDebts, genStateAfterInit.PrepaidBadDebts)
 		require.Equal(t, len(genState.Positions), len(genStateAfterInit.Positions))
 		for i, pos := range genState.Positions {

@@ -25,7 +25,7 @@ type Index[PK keys.Key, V any] interface {
 	Delete(ctx sdk.Context, k PK, v V)
 	// Initialize is called by IndexedMap to initialize the Index.
 	// id is provided by the indexed map based
-	Initialize(cdc codec.BinaryCodec, storeKey sdk.StoreKey, id uint8)
+	Initialize(cdc codec.BinaryCodec, storeKey sdk.StoreKey, objectNamespace uint8, indexNamespace uint8)
 }
 
 func NewIndexedMap[K keys.Key, V any, PV interface {
@@ -35,7 +35,7 @@ func NewIndexedMap[K keys.Key, V any, PV interface {
 	m := NewMap[K, V, PV](cdc, sk, 0)
 	m.prefix = []byte{prefix, 0}
 	for i, index := range indexes.IndexList() {
-		index.Initialize(cdc, sk, uint8(i)+1)
+		index.Initialize(cdc, sk, prefix, uint8(i)+1)
 	}
 
 	return IndexedMap[K, V, PV, I]{

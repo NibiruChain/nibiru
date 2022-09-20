@@ -3,6 +3,7 @@ package perp
 import (
 	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/common"
+	"log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -15,8 +16,7 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// set pair metadata
 	for _, p := range genState.PairMetadata {
-		pm := *p
-		k.PairsMetadata.Insert(ctx, p.Pair, pm)
+		k.PairsMetadata.Insert(ctx, p.Pair, *p)
 	}
 
 	// create positions
@@ -29,7 +29,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set prepaid debt position
 	for _, pbd := range genState.PrepaidBadDebts {
-		k.PrepaidBadDebtState(ctx).Set(pbd.Denom, pbd.Amount)
+		k.BadDebt.Insert(ctx, keys.String(pbd.Denom), *pbd)
 	}
 }
 
@@ -48,18 +48,18 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// export prepaid bad debt
-	k.PrepaidBadDebtState(ctx).Iterate(func(denom string, amount sdk.Int) (stop bool) {
-		genesis.PrepaidBadDebts = append(genesis.PrepaidBadDebts, &types.PrepaidBadDebt{
-			Denom:  denom,
-			Amount: amount,
-		})
-		return false
-	})
+	pbd := k.BadDebt.Iterate(ctx, keys.NewRange[keys.StringKey]()).Values()
+	genesis.PrepaidBadDebts = make([]*types.PrepaidBadDebt, len(pbd))
+	for i, p := range pbd {
+		x := p
+		genesis.PrepaidBadDebts[i] = &x
+	}
 
 	// export pairMetadata
 	metadata := k.PairsMetadata.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
 	genesis.PairMetadata = make([]*types.PairMetadata, len(metadata))
 	for i, m := range metadata {
+		log.Print(m)
 		pm := m
 		genesis.PairMetadata[i] = &pm
 	}

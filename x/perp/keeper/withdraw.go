@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -43,7 +44,7 @@ func (k Keeper) Withdraw(
 		// and the balance of entire vault is not enough
 		// need money from PerpEF to pay first, and record this prepaidBadDebt
 		shortage := amountToWithdraw.Sub(vaultQuoteBalance.Amount)
-		k.PrepaidBadDebtState(ctx).Increment(denom, shortage)
+		k.IncrementBadDebt(ctx, denom, shortage)
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,
@@ -78,15 +79,21 @@ can consume the credit we have built before withdrawing more from the ecosystem 
 func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
 	err error,
 ) {
-	prepaidBadDebtBalance := k.PrepaidBadDebtState(ctx).Get(denom)
+	prepaidBadDebtBalance := k.BadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+		Denom:  denom,
+		Amount: sdk.ZeroInt(),
+	}).Amount
 
 	if prepaidBadDebtBalance.GTE(badDebtToRealize) {
 		// prepaidBadDebtBalance > totalBadDebt
-		k.PrepaidBadDebtState(ctx).Decrement(denom, badDebtToRealize)
+		k.DecrementBadDebt(ctx, denom, badDebtToRealize)
 	} else {
 		// totalBadDebt > prepaidBadDebtBalance
 
-		k.PrepaidBadDebtState(ctx).Set(denom, sdk.ZeroInt())
+		k.BadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+			Denom:  denom,
+			Amount: sdk.ZeroInt(),
+		})
 
 		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
 			/*from=*/ types.PerpEFModuleAccount,
