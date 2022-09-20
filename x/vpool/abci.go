@@ -1,6 +1,7 @@
 package vpool
 
 import (
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -10,7 +11,14 @@ import (
 // EndBlocker Called every block to store a snapshot of the vpool.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	for _, pool := range k.GetAllPools(ctx) {
-		k.SaveSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
+		snapshot := types.NewReserveSnapshot(
+			pool.Pair,
+			pool.BaseAssetReserve,
+			pool.QuoteAssetReserve,
+			ctx.BlockTime(),
+			ctx.BlockHeight(),
+		)
+		k.SaveSnapshot(ctx, snapshot)
 	}
 	return []abci.ValidatorUpdate{}
 }

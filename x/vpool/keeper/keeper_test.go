@@ -671,13 +671,25 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			vpoolKeeper.savePool(ctx, tc.pool)
 
 			t.Log("save snapshot 0")
+
 			ctx = ctx.WithBlockHeight(tc.prevSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
-			vpoolKeeper.SaveSnapshot(ctx, common.Pair_BTC_NUSD, tc.prevSnapshot.QuoteAssetReserve, tc.prevSnapshot.BaseAssetReserve)
+			snapshot := types.NewReserveSnapshot(
+				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(), ctx.BlockHeight(),
+			)
+			vpoolKeeper.SaveSnapshot(ctx, snapshot)
 
 			if tc.latestSnapshot != nil {
 				t.Log("save snapshot 1")
 				ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
-				vpoolKeeper.SaveSnapshot(ctx, common.Pair_BTC_NUSD, tc.latestSnapshot.QuoteAssetReserve, tc.latestSnapshot.BaseAssetReserve)
+
+				snapshot := types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					tc.latestSnapshot.BaseAssetReserve,
+					tc.latestSnapshot.QuoteAssetReserve,
+					ctx.BlockTime(),
+					ctx.BlockHeight(),
+				)
+				vpoolKeeper.SaveSnapshot(ctx, snapshot)
 			}
 
 			t.Log("check fluctuation limit")

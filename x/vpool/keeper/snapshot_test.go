@@ -28,9 +28,26 @@ func TestGetReserveSnapshotMultiplePairs(t *testing.T) {
 		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 	)
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(genesisTime)
+	snapshot := types.NewReserveSnapshot(
+		common.Pair_BTC_NUSD,
+		sdk.OneDec(),
+		sdk.OneDec(),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
+	)
+	vpoolKeeper.SaveSnapshot(ctx, snapshot)
 
-	vpoolKeeper.SaveSnapshot(ctx, common.Pair_BTC_NUSD, sdk.OneDec(), sdk.OneDec())
-	vpoolKeeper.SaveSnapshot(ctx, common.Pair_ETH_NUSD, sdk.NewDec(2), sdk.NewDec(2))
+	snapshot = types.NewReserveSnapshot(
+		common.Pair_ETH_NUSD,
+		sdk.NewDec(2),
+		sdk.NewDec(2),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
+	)
+	vpoolKeeper.SaveSnapshot(
+		ctx,
+		snapshot,
+	)
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(genesisTime.Add(5 * time.Second))
 
 	snapshot, err := vpoolKeeper.GetLatestReserveSnapshot(ctx, common.Pair_BTC_NUSD)
@@ -53,7 +70,8 @@ func TestSaveSnapshot(t *testing.T) {
 	)
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 
-	vpoolKeeper.SaveSnapshot(ctx, common.Pair_BTC_NUSD, sdk.OneDec(), sdk.OneDec())
+	snapshot := types.NewReserveSnapshot(common.Pair_BTC_NUSD, sdk.OneDec(), sdk.OneDec(), ctx.BlockTime(), ctx.BlockHeight())
+	vpoolKeeper.SaveSnapshot(ctx, snapshot)
 
 	snapshot, err := vpoolKeeper.GetLatestReserveSnapshot(ctx, common.Pair_BTC_NUSD)
 	require.NoError(t, err)
@@ -76,12 +94,14 @@ func TestGetSnapshot(t *testing.T) {
 
 	t.Log("Save snapshot 1")
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
-	vpoolKeeper.SaveSnapshot(
-		ctx,
+	snapshot := types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
 		sdk.OneDec(),
 		sdk.OneDec(),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
 	)
+	vpoolKeeper.SaveSnapshot(ctx, snapshot)
 
 	t.Log("Check snapshot 1")
 	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, 1)
@@ -99,11 +119,16 @@ func TestGetSnapshot(t *testing.T) {
 
 	t.Log("Save snapshot 2")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
-	vpoolKeeper.SaveSnapshot(
-		ctx,
+	snapshot = types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
 		sdk.NewDec(2),
 		sdk.NewDec(2),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
+	)
+	vpoolKeeper.SaveSnapshot(
+		ctx,
+		snapshot,
 	)
 
 	t.Log("Fetch snapshot 2")

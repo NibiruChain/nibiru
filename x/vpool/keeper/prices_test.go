@@ -447,11 +447,16 @@ func TestCalcTwap(t *testing.T) {
 
 			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockHeight(snapshot.BlockNumber).WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
+				snapshot := types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					snapshot.BaseAssetReserve,
+					snapshot.QuoteAssetReserve,
+					ctx.BlockTime(),
+					ctx.BlockHeight(),
+				)
 				vpoolKeeper.SaveSnapshot(
 					ctx,
-					tc.pair,
-					snapshot.QuoteAssetReserve,
-					snapshot.BaseAssetReserve,
+					snapshot,
 				)
 			}
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
