@@ -10,8 +10,8 @@ import (
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params: DefaultParams(),
-		Vpools: []*VPool{},
+		Vpools:    []*VPool{},
+		Snapshots: []ReserveSnapshot{},
 	}
 }
 
@@ -30,8 +30,8 @@ func (gs GenesisState) Validate() error {
 		}
 		vpools[pair] = struct{}{}
 	}
-	// validate params
-	return gs.Params.Validate()
+
+	return nil
 }
 
 func GetGenesisStateFromAppState(cdc codec.JSONCodec, appState map[string]json.RawMessage) *GenesisState {

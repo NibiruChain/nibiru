@@ -28,11 +28,6 @@ enum TwapCalcOption {
   BASE_ASSET_SWAP = 3;
 }
 
-// Params defines the parameters for the module.
-message Params {
-  option (gogoproto.goproto_stringer) = false;
-}
-
 // A virtual pool used only for price discovery of perpetual futures contracts.
 // No real liquidity exists in this pool.
 message VPool {
