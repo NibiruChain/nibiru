@@ -7,7 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
-func NewReserveSnapshotWithoutCtx(
+func NewReserveSnapshot(
 	pair common.AssetPair,
 	baseAssetReserve, quoteAssetReserve sdk.Dec,
 	blockTime time.Time,

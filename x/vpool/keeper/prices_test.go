@@ -242,21 +242,21 @@ func TestCalcTwap(t *testing.T) {
 			name: "spot price twap calc, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(90),
 					time.UnixMilli(10),
 					1,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(85),
 					time.UnixMilli(20),
 					2,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(95),
@@ -274,21 +274,21 @@ func TestCalcTwap(t *testing.T) {
 			name: "spot price twap calc, t=[11,35]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(90),
 					time.UnixMilli(10),
 					1,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(85),
 					time.UnixMilli(20),
 					2,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(95),
@@ -306,14 +306,14 @@ func TestCalcTwap(t *testing.T) {
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(30),
 					time.UnixMilli(10),
 					1,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.MustNewDecFromStr("7.5"),
 					sdk.NewDec(40),
@@ -333,14 +333,14 @@ func TestCalcTwap(t *testing.T) {
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
 					1,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(12),
 					sdk.NewDec(50),
@@ -360,14 +360,14 @@ func TestCalcTwap(t *testing.T) {
 			name: "base asset swap twap calc, add to pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
 					1,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(20),
 					sdk.NewDec(30),
@@ -387,14 +387,14 @@ func TestCalcTwap(t *testing.T) {
 			name: "base asset swap twap calc, remove from pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
 					1,
 				),
-				types.NewReserveSnapshotWithoutCtx(
+				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(8),
 					sdk.NewDec(75),

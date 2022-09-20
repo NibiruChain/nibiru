@@ -38,7 +38,7 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.OneDec(),
 		sdk.NewDec(10),
 	)
-	expectedSnapshot := types.NewReserveSnapshotWithoutCtx(
+	expectedSnapshot := types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
 		sdk.NewDec(10),
 		sdk.NewDec(10),
@@ -62,7 +62,7 @@ func TestSnapshotUpdates(t *testing.T) {
 		false,
 	)
 	require.NoError(t, err)
-	expectedSnapshot = types.NewReserveSnapshotWithoutCtx(
+	expectedSnapshot = types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
 		sdk.NewDec(5),
 		sdk.NewDec(20),

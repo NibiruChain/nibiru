@@ -34,7 +34,7 @@ func (k Keeper) SaveSnapshot(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 ) {
-	snapshot := types.NewReserveSnapshotWithoutCtx(
+	snapshot := types.NewReserveSnapshot(
 		pair,
 		baseAssetReserve,
 		quoteAssetReserve,

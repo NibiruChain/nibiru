@@ -36,7 +36,7 @@ func TestGetReserveSnapshotMultiplePairs(t *testing.T) {
 	snapshot, err := vpoolKeeper.GetLatestReserveSnapshot(ctx, common.Pair_BTC_NUSD)
 	require.NoError(t, err)
 	require.Equal(t,
-		types.NewReserveSnapshotWithoutCtx(
+		types.NewReserveSnapshot(
 			common.Pair_BTC_NUSD,
 			sdk.OneDec(),
 			sdk.OneDec(),
@@ -58,7 +58,7 @@ func TestSaveSnapshot(t *testing.T) {
 	snapshot, err := vpoolKeeper.GetLatestReserveSnapshot(ctx, common.Pair_BTC_NUSD)
 	require.NoError(t, err)
 	require.Equal(t,
-		types.NewReserveSnapshotWithoutCtx(
+		types.NewReserveSnapshot(
 			common.Pair_BTC_NUSD,
 			sdk.OneDec(),
 			sdk.OneDec(),
@@ -87,7 +87,7 @@ func TestGetSnapshot(t *testing.T) {
 	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, 1)
 	require.NoError(t, err)
 	require.Equal(t,
-		types.NewReserveSnapshotWithoutCtx(
+		types.NewReserveSnapshot(
 			common.Pair_BTC_NUSD,
 			sdk.OneDec(),
 			sdk.OneDec(),
@@ -110,7 +110,7 @@ func TestGetSnapshot(t *testing.T) {
 	snapshot, err = vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, 2)
 	require.NoError(t, err)
 	require.Equal(t,
-		types.NewReserveSnapshotWithoutCtx(
+		types.NewReserveSnapshot(
 			common.Pair_BTC_NUSD,
 			sdk.NewDec(2),
 			sdk.NewDec(2),
@@ -185,7 +185,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			snapshot := types.NewReserveSnapshotWithoutCtx(
+			snapshot := types.NewReserveSnapshot(
 				tc.pair,
 				tc.baseAssetReserve,
 				tc.quoteAssetReserve,
