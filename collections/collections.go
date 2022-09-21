@@ -48,7 +48,7 @@ func (c storeCodec) unmarshal(bytes []byte, o Object) {
 // TODO(mercilex): improve typeName api
 func typeName(o Object) string {
 	switch o.(type) {
-	case *setObject, setObject:
+	case *nilObject, nilObject:
 		return "no-op-object"
 	}
 	pm, ok := o.(proto.Message)
