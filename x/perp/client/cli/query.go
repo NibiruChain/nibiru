@@ -27,6 +27,7 @@ func GetQueryCmd() *cobra.Command {
 	cmds := []*cobra.Command{
 		CmdQueryParams(),
 		CmdQueryPosition(),
+		CmdQueryFundingRates(),
 	}
 	for _, cmd := range cmds {
 		perpQueryCmd.AddCommand(cmd)
