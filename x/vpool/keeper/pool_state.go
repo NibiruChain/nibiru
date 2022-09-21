@@ -32,7 +32,17 @@ func (k Keeper) CreatePool(
 		MaintenanceMarginRatio: maintenanceMarginRatio,
 		MaxLeverage:            maxLeverage,
 	})
-	k.SaveSnapshot(ctx, pair, quoteAssetReserve, baseAssetReserve)
+
+	k.SaveSnapshot(
+		ctx,
+		types.NewReserveSnapshot(
+			pair,
+			baseAssetReserve,
+			quoteAssetReserve,
+			ctx.BlockTime(),
+			ctx.BlockHeight(),
+		),
+	)
 }
 
 // getPool returns the pool from database
