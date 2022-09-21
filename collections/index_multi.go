@@ -63,6 +63,18 @@ func (i *MultiIndex[IK, PK, V]) Iterate(ctx sdk.Context, rng keys.Range[keys.Pai
 	}
 }
 
+// Search is a shortcut function to Iterate with keys.Range.Prefix(IK)
+// it allows to search for all primary keys which refer to objects
+// where the index key matches ik.
+func (i *MultiIndex[IK, PK, V]) Search(ctx sdk.Context, ik IK) IndexIterator[IK, PK] {
+	return i.Iterate(ctx, keys.NewRange[keys.Pair[IK, PK]]().Prefix(keys.PairPrefix[IK, PK](ik)))
+}
+
+// ReverseSearch searches for primary keys of object with index key ik in reverse order.
+func (i *MultiIndex[IK, PK, V]) ReverseSearch(ctx sdk.Context, ik IK) IndexIterator[IK, PK] {
+	return i.Iterate(ctx, keys.NewRange[keys.Pair[IK, PK]]().Prefix(keys.PairPrefix[IK, PK](ik)).Descending())
+}
+
 func NewMultiIndex[IK keys.Key, PK keys.Key, V any](indexFn func(V) IK) *MultiIndex[IK, PK, V] {
 	return &MultiIndex[IK, PK, V]{
 		indexFn: indexFn,
