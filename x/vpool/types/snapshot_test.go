@@ -1,11 +1,13 @@
 package types
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestSnapshotValidate(t *testing.T) {
@@ -93,5 +95,4 @@ func TestSnapshotValidate(t *testing.T) {
 			}
 		})
 	}
-
 }

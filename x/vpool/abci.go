@@ -1,9 +1,10 @@
 package vpool
 
 import (
-	"github.com/NibiruChain/nibiru/x/vpool/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 )
