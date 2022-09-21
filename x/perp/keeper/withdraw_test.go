@@ -170,3 +170,19 @@ func TestRealizeBadDebt(t *testing.T) {
 		})
 	}
 }
+
+func TestIncrementDecrementBadDebt(t *testing.T) {
+	k, _, ctx := getKeeper(t)
+	// increment on non-existing prepaid bad debt
+	bd := k.IncrementBadDebt(ctx, "unibi", sdk.NewInt(1000))
+	require.Equal(t, sdk.NewInt(1000), bd)
+	// increment on existing
+	bd = k.IncrementBadDebt(ctx, "unibi", sdk.NewInt(1000))
+	require.Equal(t, sdk.NewInt(2000), bd)
+	// decrement
+	bd = k.DecrementBadDebt(ctx, "unibi", sdk.NewInt(1000))
+	require.Equal(t, sdk.NewInt(1000), bd)
+	// decrement below zero
+	bd = k.DecrementBadDebt(ctx, "unibi", sdk.NewInt(2000))
+	require.Equal(t, sdk.ZeroInt(), bd)
+}

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -110,4 +111,22 @@ func (k Keeper) calcFreeCollateral(
 	maintenanceMarginRequirement := positionNotional.Mul(maintenanceMarginRatio)
 
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
+}
+
+// getLatestCumulativeFundingRate returns the last cumulative funding rate recorded for the
+// specific pair.
+func (k Keeper) getLatestCumulativeFundingRate(
+	ctx sdk.Context, pair common.AssetPair,
+) (sdk.Dec, error) {
+	pairMetadata, err := k.PairsMetadata.Get(ctx, pair)
+	if err != nil {
+		k.Logger(ctx).Error(
+			err.Error(),
+			"pair",
+			pair.String(),
+		)
+		return sdk.Dec{}, err
+	}
+	// this should never fail
+	return pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1], nil
 }
