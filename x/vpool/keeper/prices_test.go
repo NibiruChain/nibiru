@@ -242,24 +242,27 @@ func TestCalcTwap(t *testing.T) {
 			name: "spot price twap calc, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				{
-					QuoteAssetReserve: sdk.NewDec(90),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       10,
-					BlockNumber:       1,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(85),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       20,
-					BlockNumber:       2,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(95),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       30,
-					BlockNumber:       3,
-				},
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(90),
+					time.UnixMilli(10),
+					1,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(85),
+					time.UnixMilli(20),
+					2,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(95),
+					time.UnixMilli(30),
+					3,
+				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
 			currentBlockHeight: 3,
@@ -271,24 +274,27 @@ func TestCalcTwap(t *testing.T) {
 			name: "spot price twap calc, t=[11,35]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				{
-					QuoteAssetReserve: sdk.NewDec(90),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       10,
-					BlockNumber:       1,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(85),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       20,
-					BlockNumber:       2,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(95),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       30,
-					BlockNumber:       3,
-				},
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(90),
+					time.UnixMilli(10),
+					1,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(85),
+					time.UnixMilli(20),
+					2,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(95),
+					time.UnixMilli(30),
+					3,
+				),
 			},
 			currentBlockTime:   time.UnixMilli(35),
 			currentBlockHeight: 4,
@@ -300,18 +306,20 @@ func TestCalcTwap(t *testing.T) {
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				{
-					QuoteAssetReserve: sdk.NewDec(30),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       10,
-					BlockNumber:       1,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(40),
-					BaseAssetReserve:  sdk.MustNewDecFromStr("7.5"),
-					TimestampMs:       20,
-					BlockNumber:       2,
-				},
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(30),
+					time.UnixMilli(10),
+					1,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.MustNewDecFromStr("7.5"),
+					sdk.NewDec(40),
+					time.UnixMilli(20),
+					2,
+				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
 			currentBlockHeight: 3,
@@ -325,18 +333,20 @@ func TestCalcTwap(t *testing.T) {
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				{
-					QuoteAssetReserve: sdk.NewDec(60),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       10,
-					BlockNumber:       1,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(50),
-					BaseAssetReserve:  sdk.NewDec(12),
-					TimestampMs:       20,
-					BlockNumber:       2,
-				},
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(60),
+					time.UnixMilli(10),
+					1,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(12),
+					sdk.NewDec(50),
+					time.UnixMilli(20),
+					2,
+				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
 			currentBlockHeight: 3,
@@ -350,18 +360,20 @@ func TestCalcTwap(t *testing.T) {
 			name: "base asset swap twap calc, add to pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				{
-					QuoteAssetReserve: sdk.NewDec(60),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       10,
-					BlockNumber:       1,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(30),
-					BaseAssetReserve:  sdk.NewDec(20),
-					TimestampMs:       20,
-					BlockNumber:       2,
-				},
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(60),
+					time.UnixMilli(10),
+					1,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(20),
+					sdk.NewDec(30),
+					time.UnixMilli(20),
+					2,
+				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
 			currentBlockHeight: 3,
@@ -375,18 +387,20 @@ func TestCalcTwap(t *testing.T) {
 			name: "base asset swap twap calc, remove from pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
-				{
-					QuoteAssetReserve: sdk.NewDec(60),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       10,
-					BlockNumber:       1,
-				},
-				{
-					QuoteAssetReserve: sdk.NewDec(75),
-					BaseAssetReserve:  sdk.NewDec(8),
-					TimestampMs:       20,
-					BlockNumber:       2,
-				},
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(60),
+					time.UnixMilli(10),
+					1,
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(8),
+					sdk.NewDec(75),
+					time.UnixMilli(20),
+					2,
+				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
 			currentBlockHeight: 3,
@@ -433,11 +447,16 @@ func TestCalcTwap(t *testing.T) {
 
 			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockHeight(snapshot.BlockNumber).WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
+				snapshot := types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					snapshot.BaseAssetReserve,
+					snapshot.QuoteAssetReserve,
+					ctx.BlockTime(),
+					ctx.BlockHeight(),
+				)
 				vpoolKeeper.SaveSnapshot(
 					ctx,
-					tc.pair,
-					snapshot.QuoteAssetReserve,
-					snapshot.BaseAssetReserve,
+					snapshot,
 				)
 			}
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
