@@ -28,11 +28,6 @@ enum TwapCalcOption {
   BASE_ASSET_SWAP = 3;
 }
 
-// Params defines the parameters for the module.
-message Params {
-  option (gogoproto.goproto_stringer) = false;
-}
-
 // A virtual pool used only for price discovery of perpetual futures contracts.
 // No real liquidity exists in this pool.
 message VPool {
@@ -94,6 +89,8 @@ message CurrentTWAP {
 
 // a snapshot of the vpool's reserves at a given point in time
 message ReserveSnapshot {
+  common.AssetPair pair = 5 [(gogoproto.nullable) = false];
+
   string base_asset_reserve = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
