@@ -3,6 +3,7 @@ package collections
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
@@ -38,4 +39,20 @@ func TestKeyset_Iterate(t *testing.T) {
 	for i, o := range iter.Keys() {
 		require.Equal(t, expectedKeys[i], o)
 	}
+}
+
+func TestKeysetIterator(t *testing.T) {
+	sk, ctx, cdc := deps()
+
+	keyset := NewKeySet[keys.StringKey](cdc, sk, 0)
+	keyset.Insert(ctx, "a")
+
+	iter := keyset.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	defer iter.Close()
+
+	assert.True(t, iter.Valid())
+	assert.EqualValues(t, "a", iter.Key())
+
+	iter.Next()
+	assert.False(t, iter.Valid())
 }
