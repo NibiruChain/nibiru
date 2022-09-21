@@ -43,7 +43,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	// export positions
 	positions := k.Positions.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]()).Values()
 	genesis.Positions = make([]*types.Position, len(positions))
-	for i, pos := range k.Positions.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]()).Values() {
+	for i, pos := range positions {
 		p := pos
 		genesis.Positions[i] = &p
 	}
