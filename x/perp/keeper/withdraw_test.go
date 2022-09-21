@@ -85,14 +85,14 @@ func TestWithdraw(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.BadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{Denom: denom, Amount: sdk.NewInt(tc.initialPrepaidBadDebt)})
+			perpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{Denom: denom, Amount: sdk.NewInt(tc.initialPrepaidBadDebt)})
 
 			t.Log("execute withdrawal")
 			err := perpKeeper.Withdraw(ctx, denom, receiver, sdk.NewInt(tc.amountToWithdraw))
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt, err := perpKeeper.BadDebt.Get(ctx, keys.String(denom))
+			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, keys.String(denom))
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})
@@ -154,7 +154,7 @@ func TestRealizeBadDebt(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.BadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+			perpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
 				Denom:  denom,
 				Amount: sdk.NewInt(tc.initialPrepaidBadDebt),
 			})
@@ -164,7 +164,7 @@ func TestRealizeBadDebt(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt, err := perpKeeper.BadDebt.Get(ctx, keys.String(denom))
+			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, keys.String(denom))
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})

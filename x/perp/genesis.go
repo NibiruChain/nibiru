@@ -30,7 +30,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set prepaid debt position
 	for _, pbd := range genState.PrepaidBadDebts {
-		k.BadDebt.Insert(ctx, keys.String(pbd.Denom), *pbd)
+		k.PrepaidBadDebt.Insert(ctx, keys.String(pbd.Denom), *pbd)
 	}
 }
 
@@ -49,7 +49,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// export prepaid bad debt
-	pbd := k.BadDebt.Iterate(ctx, keys.NewRange[keys.StringKey]()).Values()
+	pbd := k.PrepaidBadDebt.Iterate(ctx, keys.NewRange[keys.StringKey]()).Values()
 	genesis.PrepaidBadDebts = make([]*types.PrepaidBadDebt, len(pbd))
 	for i, p := range pbd {
 		x := p

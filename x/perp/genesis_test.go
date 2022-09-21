@@ -51,7 +51,7 @@ func TestGenesis(t *testing.T) {
 
 		// create some prepaid bad debt
 		for i := 0; i < 10; i++ {
-			app.PerpKeeper.BadDebt.Insert(ctx, keys.String(fmt.Sprintf("%d", i)), types.PrepaidBadDebt{
+			app.PerpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(fmt.Sprintf("%d", i)), types.PrepaidBadDebt{
 				Denom:  fmt.Sprintf("%d", i),
 				Amount: sdk.NewInt(int64(i)),
 			})

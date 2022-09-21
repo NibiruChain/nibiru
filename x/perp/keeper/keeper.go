@@ -26,9 +26,9 @@ type Keeper struct {
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
 
-	Positions     collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position]
-	PairsMetadata collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
-	BadDebt       collections.Map[keys.StringKey, types.PrepaidBadDebt, *types.PrepaidBadDebt]
+	Positions      collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position]
+	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
+	PrepaidBadDebt collections.Map[keys.StringKey, types.PrepaidBadDebt, *types.PrepaidBadDebt]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -64,7 +64,7 @@ func NewKeeper(
 		EpochKeeper:     epochKeeper,
 		Positions:       collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position](cdc, storeKey, 0),
 		PairsMetadata:   collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
-		BadDebt:         collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
+		PrepaidBadDebt:  collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
 	}
 }
 

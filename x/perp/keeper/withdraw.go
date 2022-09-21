@@ -80,7 +80,7 @@ can consume the credit we have built before withdrawing more from the ecosystem 
 func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
 	err error,
 ) {
-	prepaidBadDebtBalance := k.BadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+	prepaidBadDebtBalance := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: sdk.ZeroInt(),
 	}).Amount
@@ -91,7 +91,7 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize s
 	} else {
 		// totalBadDebt > prepaidBadDebtBalance
 
-		k.BadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+		k.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
 			Denom:  denom,
 			Amount: sdk.ZeroInt(),
 		})

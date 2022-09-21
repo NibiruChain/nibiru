@@ -30,7 +30,7 @@ type RemainingMarginWithFundingPayment struct {
 
 func (r RemainingMarginWithFundingPayment) String() string {
 	return fmt.Sprintf(
-		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativeFundingRate: %s}",
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s, LatestCumulativeFundingRate: %s}",
 		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativeFundingRate,
 	)
 }
