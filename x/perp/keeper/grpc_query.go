@@ -44,22 +44,6 @@ func (q queryServer) QueryTraderPosition(
 	return q.traderPosition(ctx, pair, req.Trader)
 }
 
-func (q queryServer) QueryTraderPositions(goCtx context.Context, req *types.QueryTraderPositionsRequest) (*types.QueryTraderPositionsResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	pks := q.k.Positions.Indexes.Address.Match(ctx, keys.String(req.Trader)).Keys()
-	positions := make([]*types.QueryTraderPositionResponse, len(pks))
-	for i, pk := range pks {
-		posResp, err := q.traderPosition(ctx, pk.K1(), string(pk.K2()))
-		if err != nil {
-			return nil, err
-		}
-		positions[i] = posResp
-	}
-
-	return &types.QueryTraderPositionsResponse{Positions: positions}, nil
-}
-
 func (q queryServer) traderPosition(ctx sdk.Context, pair common.AssetPair, trader string) (*types.QueryTraderPositionResponse, error) {
 	position, err := q.k.Positions.Get(ctx, keys.Join(pair, keys.String(trader)))
 	if err != nil {

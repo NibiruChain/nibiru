@@ -15,17 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-// PositionsIndexes provides the indexes used py perp positions.
-type PositionsIndexes struct {
-	// Address tracks positions to the address owning the position.
-	Address *collections.MultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey], types.Position]
-}
-
-// IndexList implements the collections.Indexes interface.
-func (p PositionsIndexes) IndexList() []collections.Index[keys.Pair[common.AssetPair, keys.StringKey], types.Position] {
-	return []collections.Index[keys.Pair[common.AssetPair, keys.StringKey], types.Position]{p.Address}
-}
-
 type Keeper struct {
 	cdc           codec.BinaryCodec
 	storeKey      sdk.StoreKey
@@ -37,7 +26,7 @@ type Keeper struct {
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
 
-	Positions     collections.IndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes]
+	Positions     collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position]
 	PairsMetadata collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
 	BadDebt       collections.Map[keys.StringKey, types.PrepaidBadDebt, *types.PrepaidBadDebt]
 }
@@ -73,14 +62,9 @@ func NewKeeper(
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
-		Positions: collections.NewIndexedMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position, PositionsIndexes](cdc, storeKey, 0, PositionsIndexes{
-			Address: collections.NewMultiIndex[keys.StringKey, keys.Pair[common.AssetPair, keys.StringKey]](func(v types.Position) keys.StringKey {
-				// this function returns an indexing key containing the trader address.
-				return keys.String(v.TraderAddress)
-			}),
-		}),
-		PairsMetadata: collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
-		BadDebt:       collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
+		Positions:       collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position](cdc, storeKey, 0),
+		PairsMetadata:   collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
+		BadDebt:         collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
 	}
 }
 
