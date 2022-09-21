@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	wellknown "github.com/gogo/protobuf/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
@@ -55,11 +56,22 @@ func TestMap(t *testing.T) {
 	require.ErrorIs(t, err, ErrNotFound)
 }
 
-func TestMap_Iterate(t *testing.T) {
+func TestMapGetOrDefault(t *testing.T) {
+	sk, ctx, cdc := deps()
+	m := NewMap[keys.StringKey, wellknown.UInt64Value, *wellknown.UInt64Value](cdc, sk, 0)
+	assert.EqualValues(t, wellknown.UInt64Value{Value: 123}, m.GetOr(ctx, "foo", wellknown.UInt64Value{Value: 123}))
+
+	m.Insert(ctx, "foo", wellknown.UInt64Value{Value: 456})
+	assert.EqualValues(t, wellknown.UInt64Value{Value: 456}, m.GetOr(ctx, "foo", wellknown.UInt64Value{Value: 123}))
+}
+
+func TestMapIterate(t *testing.T) {
 	sk, ctx, cdc := deps()
 	m := NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
 
-	expectedObjs := []KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{kv("a"), kv("aa"), kv("b"), kv("bb")}
+	expectedObjs := []KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{
+		kv("a"), kv("aa"), kv("b"), kv("bb"),
+	}
 
 	m.Insert(ctx, "a", obj("a"))
 	m.Insert(ctx, "aa", obj("aa"))
@@ -74,22 +86,22 @@ func TestMap_Iterate(t *testing.T) {
 	}
 
 	// test iteration descending
-	dIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
-	defer dIter.Close()
-	for i, o := range iter.KeyValues() {
+	reverseIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]().Descending())
+	defer reverseIter.Close()
+	for i, o := range reverseIter.KeyValues() {
 		require.Equal(t, expectedObjs[len(expectedObjs)-1-i], o)
 	}
 
 	// test key iteration
-	iterKey := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
-	defer iterKey.Close()
-	for i, o := range iterKey.Keys() {
+	keyIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	defer keyIter.Close()
+	for i, o := range keyIter.Keys() {
 		require.Equal(t, expectedObjs[i].Key, o)
 	}
 
-	iterValue := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
-	defer iterValue.Close()
-	for i, o := range iterValue.Values() {
+	valIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	defer valIter.Close()
+	for i, o := range valIter.Values() {
 		require.Equal(t, expectedObjs[i].Value, o)
 	}
 }
