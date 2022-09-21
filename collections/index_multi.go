@@ -63,28 +63,44 @@ func (i *MultiIndex[IK, PK, V]) Iterate(ctx sdk.Context, rng keys.Range[keys.Pai
 	}
 }
 
-// Search is a shortcut function to Iterate with keys.Range.Prefix(IK)
-// it allows to search for all primary keys which refer to objects
-// where the index key matches ik.
-func (i *MultiIndex[IK, PK, V]) Search(ctx sdk.Context, ik IK) IndexIterator[IK, PK] {
+// Match matches and returns an iterator of all primary keys of objects containing
+// the index key provided to the function.
+func (i *MultiIndex[IK, PK, V]) Match(ctx sdk.Context, ik IK) IndexIterator[IK, PK] {
 	return i.Iterate(ctx, keys.NewRange[keys.Pair[IK, PK]]().Prefix(keys.PairPrefix[IK, PK](ik)))
 }
 
-// ReverseSearch searches for primary keys of object with index key ik in reverse order.
-func (i *MultiIndex[IK, PK, V]) ReverseSearch(ctx sdk.Context, ik IK) IndexIterator[IK, PK] {
+// ReverseMatch matches and returns a reverse iterator of all primary keys of objects
+// containing the index key provided to the function.
+func (i *MultiIndex[IK, PK, V]) ReverseMatch(ctx sdk.Context, ik IK) IndexIterator[IK, PK] {
 	return i.Iterate(ctx, keys.NewRange[keys.Pair[IK, PK]]().Prefix(keys.PairPrefix[IK, PK](ik)).Descending())
 }
 
+// NewMultiIndex instantiates a new MultiIndex instance.
+// Where IK is the indexing key.
+// PK is the primary key.
+// V is the object being indexed itself.
+// An index function is proved which given the object, returns the indexing key.
+// EXAMPLE:
+// Person {
+// ID: keys.Uint64 (PrimaryKey)
+// City: keys.String (IndexKey)
+// Cap: uint64
+// }
+// indexFn: func(object Person) keys.String { return person.City }
 func NewMultiIndex[IK keys.Key, PK keys.Key, V any](indexFn func(V) IK) *MultiIndex[IK, PK, V] {
 	return &MultiIndex[IK, PK, V]{
 		indexFn: indexFn,
 	}
 }
 
+// IndexIterator wraps a KeySetIterator but provides more
+// index iterator functionalities, such as getting the primary key only.
 type IndexIterator[IK keys.Key, PK keys.Key] struct {
 	ks KeySetIterator[keys.Pair[IK, PK]]
 }
 
+// Keys fully consumes the iterator and returns only
+// the primary keys which matched the query.
 func (i IndexIterator[IK, PK]) Keys() []PK {
 	keys := i.ks.Keys()
 	primaryKeys := make([]PK, len(keys))
@@ -94,14 +110,18 @@ func (i IndexIterator[IK, PK]) Keys() []PK {
 	return primaryKeys
 }
 
+// FullKeys fully consumes the iterator and returns
+// the keys.Pair containing both index key and primary key.
 func (i IndexIterator[IK, PK]) FullKeys() []keys.Pair[IK, PK] {
 	return i.ks.Keys()
 }
 
+// Key returns the iterator current primary key.
 func (i IndexIterator[IK, PK]) Key() PK {
 	return i.FullKey().K2()
 }
 
+// FullKey returns the iterator current index key + primary key.
 func (i IndexIterator[IK, PK]) FullKey() keys.Pair[IK, PK] {
 	return i.ks.Key()
 }
