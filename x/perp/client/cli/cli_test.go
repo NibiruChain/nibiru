@@ -107,7 +107,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
-	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
+	perpGenesis.PairMetadata = []perptypes.PairMetadata{
 		{
 			Pair: common.Pair_BTC_NUSD,
 			CumulativeFundingRates: []sdk.Dec{
