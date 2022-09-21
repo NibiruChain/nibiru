@@ -59,6 +59,14 @@ func NewAssetPair(pair string) (AssetPair, error) {
 			split[0], split[1])
 	}
 
+	// validate as denom
+	if err := sdk.ValidateDenom(split[0]); err != nil {
+		return AssetPair{}, err
+	}
+	if err := sdk.ValidateDenom(split[1]); err != nil {
+		return AssetPair{}, err
+	}
+
 	return AssetPair{Token0: split[0], Token1: split[1]}, nil
 }
 
@@ -174,20 +182,4 @@ func (pairs AssetPairs) MarshalJSON() ([]byte, error) {
 		return json.Marshal(assetPairsJSON(AssetPairs{}))
 	}
 	return json.Marshal(assetPairsJSON(pairs))
-}
-
-func ToSdkPointer(num interface{}) interface{} {
-	switch sdkType := num.(type) {
-	case sdk.Int:
-		pointer := new(sdk.Int)
-		*pointer = num.(sdk.Int)
-		return pointer
-	case sdk.Dec:
-		pointer := new(sdk.Dec)
-		*pointer = num.(sdk.Dec)
-		return pointer
-	default:
-		errMsg := fmt.Errorf("type passed must be sdk.Int or sdk.Dec, not %s", sdkType)
-		panic(errMsg)
-	}
 }
