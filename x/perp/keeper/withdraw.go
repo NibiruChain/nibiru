@@ -45,7 +45,7 @@ func (k Keeper) Withdraw(
 		// and the balance of entire vault is not enough
 		// need money from PerpEF to pay first, and record this prepaidBadDebt
 		shortage := amountToWithdraw.Sub(vaultQuoteBalance.Amount)
-		k.IncrementBadDebt(ctx, denom, shortage)
+		k.IncrementPrepaidBadDebt(ctx, denom, shortage)
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,
@@ -87,7 +87,7 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize s
 
 	if prepaidBadDebtBalance.GTE(badDebtToRealize) {
 		// prepaidBadDebtBalance > totalBadDebt
-		k.DecrementBadDebt(ctx, denom, badDebtToRealize)
+		k.DecrementPrepaidBadDebt(ctx, denom, badDebtToRealize)
 	} else {
 		// totalBadDebt > prepaidBadDebtBalance
 
@@ -111,11 +111,11 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize s
 	return nil
 }
 
-// IncrementBadDebt increases the bad debt for the provided denom.
+// IncrementPrepaidBadDebt increases the bad debt for the provided denom.
 // And returns the newest bad-debt amount.
 // If no prepaid bad debt for the given denom was recorded before
 // then it is set using the provided amount and the provided amount is returned.
-func (k Keeper) IncrementBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
+func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
 	current := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: sdk.ZeroInt(),
@@ -130,10 +130,10 @@ func (k Keeper) IncrementBadDebt(ctx sdk.Context, denom string, amount sdk.Int) 
 	return newBadDebt
 }
 
-// DecrementBadDebt decrements the amount of bad debt prepaid by denom.
+// DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
 // // The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
 // // debt balance to below zero will clip it at zero.
-func (k Keeper) DecrementBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
+func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
 	current := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: sdk.ZeroInt(),
