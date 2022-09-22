@@ -26,6 +26,10 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/liquidate";
   }
 
+  rpc MultiLiquidate(MsgMultiLiquidate) returns (MsgMultiLiquidateResponse) {
+    option (google.api.http).post = "/nibiru/perp/multiliquidate";
+  }
+
   rpc OpenPosition(MsgOpenPosition) returns (MsgOpenPositionResponse) {
     option (google.api.http).post = "/nibiru/perp/open_position";
   }
@@ -95,6 +99,25 @@ message MsgLiquidate {
 message MsgLiquidateResponse {
   cosmos.base.v1beta1.Coin fee_to_liquidator = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin fee_to_perp_ecosystem_fund = 2 [(gogoproto.nullable) = false];
+}
+
+message MsgMultiLiquidate {
+  message MultiLiquidation {
+    string token_pair = 2;
+    string trader = 3;
+  }
+  string sender = 1;
+  repeated MultiLiquidation liquidations = 2;
+}
+
+message MsgMultiLiquidateResponse {
+  message MultiLiquidateResponse {
+    oneof response {
+      string error = 1;
+      MsgLiquidateResponse liquidation = 2;
+    }
+  }
+  repeated MultiLiquidateResponse liquidation_responses = 1;
 }
 
 // -------------------------- OpenPosition --------------------------
