@@ -113,6 +113,9 @@ import (
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/NibiruChain/nibiru/client/docs/statik"
 )
 
 const (
