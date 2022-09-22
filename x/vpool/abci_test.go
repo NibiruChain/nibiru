@@ -38,12 +38,13 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.OneDec(),
 		sdk.NewDec(10),
 	)
-	expectedSnapshot := types.ReserveSnapshot{
-		BaseAssetReserve:  sdk.NewDec(10),
-		QuoteAssetReserve: sdk.NewDec(10),
-		TimestampMs:       ctx.BlockTime().UnixMilli(),
-		BlockNumber:       ctx.BlockHeight(),
-	}
+	expectedSnapshot := types.NewReserveSnapshot(
+		common.Pair_BTC_NUSD,
+		sdk.NewDec(10),
+		sdk.NewDec(10),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
+	)
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
@@ -61,12 +62,13 @@ func TestSnapshotUpdates(t *testing.T) {
 		false,
 	)
 	require.NoError(t, err)
-	expectedSnapshot = types.ReserveSnapshot{
-		QuoteAssetReserve: sdk.NewDec(20),
-		BaseAssetReserve:  sdk.NewDec(5),
-		TimestampMs:       ctx.BlockTime().UnixMilli(),
-		BlockNumber:       ctx.BlockHeight(),
-	}
+	expectedSnapshot = types.NewReserveSnapshot(
+		common.Pair_BTC_NUSD,
+		sdk.NewDec(5),
+		sdk.NewDec(20),
+		ctx.BlockTime(),
+		ctx.BlockHeight(),
+	)
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)

@@ -453,9 +453,8 @@ func TestGetVpools(t *testing.T) {
 
 func TestIsOverFluctuationLimit(t *testing.T) {
 	tests := []struct {
-		name     string
-		pool     types.VPool
-		snapshot types.ReserveSnapshot
+		name string
+		pool types.VPool
 
 		isOverLimit bool
 	}{
@@ -471,12 +470,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
 			isOverLimit: false,
 		},
 		{
@@ -490,12 +483,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			isOverLimit: false,
 		},
@@ -511,12 +498,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
 			isOverLimit: false,
 		},
 		{
@@ -530,12 +511,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			isOverLimit: true,
 		},
@@ -551,12 +526,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
 			isOverLimit: true,
 		},
 	}
@@ -564,7 +533,14 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			assert.EqualValues(t, tc.isOverLimit, isOverFluctuationLimit(&tc.pool, tc.snapshot))
+			snapshot := types.NewReserveSnapshot(
+				common.Pair_BTC_NUSD,
+				sdk.OneDec(),
+				sdk.NewDec(1000),
+				time.Now(),
+				0,
+			)
+			assert.EqualValues(t, tc.isOverLimit, isOverFluctuationLimit(&tc.pool, snapshot))
 		})
 	}
 }
@@ -592,12 +568,14 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
 				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
@@ -619,6 +597,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -641,6 +620,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
@@ -663,12 +643,14 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			prevSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
 				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
+				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
@@ -689,13 +671,25 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			vpoolKeeper.savePool(ctx, tc.pool)
 
 			t.Log("save snapshot 0")
+
 			ctx = ctx.WithBlockHeight(tc.prevSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
-			vpoolKeeper.SaveSnapshot(ctx, common.Pair_BTC_NUSD, tc.prevSnapshot.QuoteAssetReserve, tc.prevSnapshot.BaseAssetReserve)
+			snapshot := types.NewReserveSnapshot(
+				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(), ctx.BlockHeight(),
+			)
+			vpoolKeeper.SaveSnapshot(ctx, snapshot)
 
 			if tc.latestSnapshot != nil {
 				t.Log("save snapshot 1")
 				ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
-				vpoolKeeper.SaveSnapshot(ctx, common.Pair_BTC_NUSD, tc.latestSnapshot.QuoteAssetReserve, tc.latestSnapshot.BaseAssetReserve)
+
+				snapshot := types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					tc.latestSnapshot.BaseAssetReserve,
+					tc.latestSnapshot.QuoteAssetReserve,
+					ctx.BlockTime(),
+					ctx.BlockHeight(),
+				)
+				vpoolKeeper.SaveSnapshot(ctx, snapshot)
 			}
 
 			t.Log("check fluctuation limit")
@@ -714,9 +708,8 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 
 func TestGetMaintenanceMarginRatio(t *testing.T) {
 	tests := []struct {
-		name     string
-		pool     *types.VPool
-		snapshot types.ReserveSnapshot
+		name string
+		pool *types.VPool
 
 		expectedMaintenanceMarginRatio sdk.Dec
 	}{
@@ -732,12 +725,6 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
 				MaxLeverage:            sdk.OneDec(),
 			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
-			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
 		},
 		{
@@ -751,12 +738,6 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
 				MaxLeverage:            sdk.OneDec(),
-			},
-			snapshot: types.ReserveSnapshot{
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
 		},

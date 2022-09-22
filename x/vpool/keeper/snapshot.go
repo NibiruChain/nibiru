@@ -30,19 +30,10 @@ func (k Keeper) GetSnapshot(ctx sdk.Context, pair common.AssetPair, blockHeight 
 
 func (k Keeper) SaveSnapshot(
 	ctx sdk.Context,
-	pair common.AssetPair,
-	quoteAssetReserve sdk.Dec,
-	baseAssetReserve sdk.Dec,
+	snapshot types.ReserveSnapshot,
 ) {
-	snapshot := &types.ReserveSnapshot{
-		BaseAssetReserve:  baseAssetReserve,
-		QuoteAssetReserve: quoteAssetReserve,
-		TimestampMs:       ctx.BlockTime().UnixMilli(),
-		BlockNumber:       ctx.BlockHeight(),
-	}
-
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	store.Set(types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())), k.codec.MustMarshal(snapshot))
+	store.Set(types.GetSnapshotKey(snapshot.Pair, uint64(snapshot.BlockNumber)), k.codec.MustMarshal(&snapshot))
 }
 
 // GetLatestReserveSnapshot returns the last snapshot that was saved
@@ -60,6 +51,24 @@ func (k Keeper) GetLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair)
 	}
 
 	return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved
+}
+
+// GetAllSnapshots returns all pools that exist.
+func (k Keeper) GetAllSnapshots(ctx sdk.Context) []types.ReserveSnapshot {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.SnapshotsKeyPrefix)
+
+	var snapshots []types.ReserveSnapshot
+	for ; iterator.Valid(); iterator.Next() {
+		bz := iterator.Value()
+
+		var snapshot types.ReserveSnapshot
+		k.codec.MustUnmarshal(bz, &snapshot)
+
+		snapshots = append(snapshots, snapshot)
+	}
+
+	return snapshots
 }
 
 /*

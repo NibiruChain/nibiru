@@ -2,6 +2,7 @@ package vpool_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/NibiruChain/nibiru/simapp"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-// TODO: https://github.com/NibiruChain/nibiru/issues/475
 func TestGenesis(t *testing.T) {
 	vpools := []*types.VPool{
 		{
@@ -38,7 +38,34 @@ func TestGenesis(t *testing.T) {
 		},
 	}
 
-	genesisState := types.GenesisState{Vpools: vpools}
+	snapshots := []types.ReserveSnapshot{
+		types.NewReserveSnapshot(
+			common.Pair_BTC_NUSD,
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(60_000_000_000),
+			time.UnixMilli(123456),
+			1,
+		),
+		types.NewReserveSnapshot(
+			common.Pair_BTC_NUSD,
+			sdk.NewDec(2_000_000),
+			sdk.NewDec(50_000_000_000),
+			time.UnixMilli(223456),
+			2,
+		),
+		types.NewReserveSnapshot(
+			common.Pair_ETH_NUSD,
+			sdk.NewDec(1_000_000),
+			sdk.NewDec(50_000_000_000),
+			time.UnixMilli(223456),
+			2,
+		),
+	}
+
+	genesisState := types.GenesisState{
+		Vpools:    vpools,
+		Snapshots: snapshots,
+	}
 
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	k := nibiruApp.VpoolKeeper
@@ -50,8 +77,13 @@ func TestGenesis(t *testing.T) {
 
 	exportedGenesis := vpool.ExportGenesis(ctx, k)
 	require.Len(t, exportedGenesis.Vpools, 2)
+	require.Len(t, exportedGenesis.Snapshots, 5) // 3 from imported + 2 created when creating a pool
 
-	for _, exportedVpool := range exportedGenesis.Vpools {
-		require.Contains(t, genesisState.Vpools, exportedVpool)
+	for _, pool := range genesisState.Vpools {
+		require.Contains(t, exportedGenesis.Vpools, pool)
+	}
+
+	for _, snapshot := range genesisState.Snapshots {
+		require.Contains(t, exportedGenesis.Snapshots, snapshot)
 	}
 }
