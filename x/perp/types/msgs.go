@@ -14,6 +14,7 @@ var _ sdk.Msg = &MsgAddMargin{}
 var _ sdk.Msg = &MsgLiquidate{}
 var _ sdk.Msg = &MsgOpenPosition{}
 var _ sdk.Msg = &MsgClosePosition{}
+var _ sdk.Msg = &MsgMultiLiquidate{}
 
 // MsgRemoveMargin
 
@@ -152,6 +153,35 @@ func (m MsgLiquidate) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{signer}
+}
+
+// MsgMultiLiquidate
+
+func (m *MsgMultiLiquidate) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return err
+	}
+
+	for i, liquidation := range m.Liquidations {
+		if _, err := sdk.AccAddressFromBech32(liquidation.Trader); err != nil {
+			return fmt.Errorf("invalid liquidation at index %d: %w", i, err)
+		}
+
+		if _, err := common.NewAssetPair(liquidation.TokenPair); err != nil {
+			return fmt.Errorf("invalid liquidation at index %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func (m *MsgMultiLiquidate) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{addr}
 }
 
 // MsgClosePosition

@@ -23,6 +23,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgLiquidate{},
 		&MsgOpenPosition{},
 		&MsgClosePosition{},
+		&MsgMultiLiquidate{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
