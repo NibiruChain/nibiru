@@ -94,7 +94,7 @@ func (s VpoolCLISuite) TestGovAddVpool() {
 		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 	cmd := cli.CmdCreatePoolProposal()
-
+	flags.AddTxFlagsToCmd(cmd)
 	txResp, err := testutilcli.ExecTx(s.network, cmd, val.Address, args)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(0, txResp.Code)
@@ -103,8 +103,6 @@ func (s VpoolCLISuite) TestGovAddVpool() {
 	s.T().Log(`Check that proposal was correctly submitted with gov client
 $ nibid query gov proposal 1`)
 	// ----------------------------------------------------------------------
-	// the proposal tx won't be included until next block
-	// s.Assert().NoError(s.network.WaitForNextBlock())
 	proposalsQueryResp, err := govQueryClient.Proposals(
 		context.Background(), &govtypes.QueryProposalsRequest{},
 	)
@@ -136,7 +134,6 @@ $ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdDeposit(), val.Address, args)
 	s.Require().NoError(err)
 	s.Assert().EqualValues(0, txResp.Code)
-	// s.Assert().NoError(s.network.WaitForNextBlock())
 
 	proposalQueryResponse, err := govQueryClient.Proposal(
 		context.Background(), &govtypes.QueryProposalRequest{ProposalId: proposalId})
@@ -161,7 +158,6 @@ e.g. $ nibid tx gov vote 1 yes`)
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(0, txResp.Code)
 
-	// s.Assert().NoError(s.network.WaitForNextBlock())
 	s.Require().Eventuallyf(
 		func() bool {
 			proposalQueryResp, err := govQueryClient.Proposal(

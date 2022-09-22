@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -97,7 +96,6 @@ func CmdCreatePoolProposal() *cobra.Command {
 		},
 	}
 
-	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String(
 		/*name=*/ govcli.FlagDeposit,
 		/*defaultValue=*/ "",
