@@ -1,10 +1,62 @@
 package keys
 
+import (
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+// IteratorFromRange returns a sdk.Iterator given the range
+// and the sdk.KVStore to apply the iterator to.
+// prefixBytes MUST not be mutated.
+func IteratorFromRange[K Key](store sdk.KVStore, r Range[K]) (iter sdk.Iterator, prefixBytes []byte) {
+	pfx, start, end, order := r.RangeValues()
+	if pfx != nil {
+		prefixBytes = (*pfx).KeyBytes()
+		store = prefix.NewStore(store, prefixBytes)
+	}
+	var startBytes []byte // default is nil
+	if start != nil {
+		startBytes = start.value.KeyBytes()
+		// iterators are inclusive at start by default
+		// so if we want to make the iteration exclusive
+		// we extend by one byte.
+		if !start.inclusive {
+			startBytes = extendOneByte(startBytes)
+		}
+	}
+	var endBytes []byte // default is nil
+	if end != nil {
+		endBytes = end.value.KeyBytes()
+		// iterators are exclusive at end by default
+		// so if we want to make the iteration
+		// inclusive we need to extend by one byte.
+		if end.inclusive {
+			endBytes = extendOneByte(endBytes)
+		}
+	}
+
+	switch order {
+	case OrderAscending:
+		return store.Iterator(startBytes, endBytes), prefixBytes
+	case OrderDescending:
+		return store.ReverseIterator(startBytes, endBytes), prefixBytes
+	default:
+		panic("unrecognized order")
+	}
+}
+
+// Range defines an interface which instructs on how to iterate
+// over keys.
+type Range[K Key] interface {
+	// RangeValues returns the range instructions.
+	RangeValues() (prefix *K, start *Bound[K], end *Bound[K], order Order)
+}
+
 // NewRange returns a Range instance
 // which iterates over all keys in
 // ascending order.
-func NewRange[K Key]() Range[K] {
-	return Range[K]{
+func NewRange[K Key]() RawRange[K] {
+	return RawRange[K]{
 		prefix: nil,
 		start:  nil,
 		end:    nil,
@@ -12,8 +64,8 @@ func NewRange[K Key]() Range[K] {
 	}
 }
 
-// Range defines a range of keys.
-type Range[K Key] struct {
+// RawRange is a Range implementer.
+type RawRange[K Key] struct {
 	prefix *K
 	start  *Bound[K]
 	end    *Bound[K]
@@ -21,84 +73,33 @@ type Range[K Key] struct {
 }
 
 // Prefix sets a fixed prefix for the key range.
-func (r Range[K]) Prefix(key K) Range[K] {
+func (r RawRange[K]) Prefix(key K) RawRange[K] {
 	r.prefix = &key
 	return r
 }
 
 // Start sets the start range of the key.
-func (r Range[K]) Start(bound Bound[K]) Range[K] {
+func (r RawRange[K]) Start(bound Bound[K]) RawRange[K] {
 	r.start = &bound
 	return r
 }
 
 // End sets the end range of the key.
-func (r Range[K]) End(bound Bound[K]) Range[K] {
+func (r RawRange[K]) End(bound Bound[K]) RawRange[K] {
 	r.end = &bound
 	return r
 }
 
 // Descending sets the key range to be inverse.
-func (r Range[K]) Descending() Range[K] {
+func (r RawRange[K]) Descending() RawRange[K] {
 	r.order = OrderDescending
 	return r
 }
 
-func (r Range[K]) Compile() (prefix []byte, start []byte, end []byte, order Order) {
-	order = r.order
-	if r.prefix != nil {
-		prefix = (*r.prefix).KeyBytes()
-	}
-	if r.start != nil {
-		start = r.compileStart()
-	}
-	if r.end != nil {
-		end = r.compileEnd()
-	}
-	return
-}
-
-func (r Range[K]) compileStart() []byte {
-	bytes := r.start.value.KeyBytes()
-	// iterator start is inclusive by default
-	if r.start.inclusive {
-		return bytes
-	} else {
-		return extendOneByte(bytes)
-	}
-}
-
-func (r Range[K]) compileEnd() []byte {
-	bytes := r.end.value.KeyBytes()
-	// iterator end is exclusive by default
-	if !r.end.inclusive {
-		return bytes
-	} else {
-		return extendOneByte(bytes)
-	}
+func (r RawRange[K]) RangeValues() (prefix *K, start *Bound[K], end *Bound[K], order Order) {
+	return r.prefix, r.start, r.end, r.order
 }
 
 func extendOneByte(b []byte) []byte {
 	return append(b, 0)
-}
-
-type Bound[K Key] struct {
-	value     K
-	inclusive bool
-}
-
-// Inclusive creates a key Bound which is inclusive.
-func Inclusive[K Key](k K) Bound[K] {
-	return Bound[K]{
-		value:     k,
-		inclusive: true,
-	}
-}
-
-// Exclusive creates a key Bound which is exclusive.
-func Exclusive[K Key](k K) Bound[K] {
-	return Bound[K]{
-		value:     k,
-		inclusive: false,
-	}
 }

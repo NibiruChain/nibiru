@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
 
 ### State Machine Breaking
-
+* [#952](https://github.com/NibiruChain/nibiru/pull/952) - x/perp move state logic to collections
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
 * [#878](https://github.com/NibiruChain/nibiru/pull/878) - rename `PremiumFraction` to `FundingRate`
 * [#900](https://github.com/NibiruChain/nibiru/pull/900) - refactor x/vpool snapshot state management
@@ -83,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#920](https://github.com/NibiruChain/nibiru/pull/920) - refactor(proto): pricefeed module files consistency
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
 * [#932](https://github.com/NibiruChain/nibiru/pull/932) - refactor(perp): rename premium fraction to funding rate
+* [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
 
 ### Features
 

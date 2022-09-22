@@ -19,19 +19,17 @@ const (
 // x/perp module sentinel errors
 var (
 	ErrMarginHighEnough                  = sdkerrors.Register(ModuleName, 1, "margin is higher than required maintenance margin ratio")
-	ErrPositionNotFound                  = sdkerrors.Register(ModuleName, 2, "no position found")
-	ErrPairNotFound                      = sdkerrors.Register(ModuleName, 3, "pair doesn't have live vpool")
-	ErrPairMetadataNotFound              = sdkerrors.Register(ModuleName, 4, "pair doesn't have metadata")
-	ErrPositionZero                      = sdkerrors.Register(ModuleName, 5, "position is zero")
-	ErrFailedRemoveMarginCanCauseBadDebt = sdkerrors.Register(ModuleName, 7, "failed to remove margin; position would have bad debt if removed")
-	ErrQuoteAmountIsZero                 = sdkerrors.Register(ModuleName, 8, "quote amount cannot be zero")
-	ErrLeverageIsZero                    = sdkerrors.Register(ModuleName, 9, "leverage cannot be zero")
-	ErrMarginRatioTooLow                 = sdkerrors.Register(ModuleName, 10, "margin ratio did not meet maintenance margin ratio")
-	ErrLeverageIsTooHigh                 = sdkerrors.Register(ModuleName, 11, "leverage cannot be higher than vpool parameter")
+	ErrPairNotFound                      = sdkerrors.Register(ModuleName, 2, "pair doesn't have live vpool")
+	ErrPositionZero                      = sdkerrors.Register(ModuleName, 3, "position is zero")
+	ErrFailedRemoveMarginCanCauseBadDebt = sdkerrors.Register(ModuleName, 4, "failed to remove margin; position would have bad debt if removed")
+	ErrQuoteAmountIsZero                 = sdkerrors.Register(ModuleName, 5, "quote amount cannot be zero")
+	ErrLeverageIsZero                    = sdkerrors.Register(ModuleName, 6, "leverage cannot be zero")
+	ErrMarginRatioTooLow                 = sdkerrors.Register(ModuleName, 7, "margin ratio did not meet maintenance margin ratio")
+	ErrLeverageIsTooHigh                 = sdkerrors.Register(ModuleName, 8, "leverage cannot be higher than vpool parameter")
 )
 
-func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) *Position {
-	return &Position{
+func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) Position {
+	return Position{
 		TraderAddress:                  traderAddr.String(),
 		Pair:                           tokenPair,
 		Size_:                          sdk.ZeroDec(),

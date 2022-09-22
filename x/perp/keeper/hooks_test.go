@@ -104,7 +104,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			perpKeeper.AfterEpochEnd(ctx, "30 min", 1)
 
 			t.Log("assert PairMetadataState")
-			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.Pair_BTC_NUSD)
+			pair, err := perpKeeper.PairsMetadata.Get(ctx, common.Pair_BTC_NUSD)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedCumulativeFundingRates, pair.CumulativeFundingRates)
 
@@ -126,7 +126,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		FundingRateInterval:     "30 min",
 		TwapLookbackWindow:      15 * time.Minute,
 	})
-	k.PairMetadataState(ctx).Set(&types.PairMetadata{
+	setPairMetadata(k, ctx, types.PairMetadata{
 		Pair: common.Pair_BTC_NUSD,
 		// start with one entry to ensure we append
 		CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
