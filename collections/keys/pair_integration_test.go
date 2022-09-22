@@ -1,10 +1,12 @@
 package keys_test
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestPairRange(t *testing.T) {
