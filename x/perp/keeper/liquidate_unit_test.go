@@ -1039,6 +1039,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 		expectedExchangedNotionalValue sdk.Dec
 		expectedMarginToVault          sdk.Dec
 		expectedPositionRealizedPnl    sdk.Dec
+		expectedPositionMargin         sdk.Dec
 	}{
 		{
 			/*
@@ -1070,6 +1071,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			expectedExchangedNotionalValue: sdk.NewDec(20),
 			expectedMarginToVault:          sdk.NewDec(0),
 			expectedPositionRealizedPnl:    sdk.ZeroDec(),
+			expectedPositionMargin:         sdk.NewDec(8),
 		},
 		{
 			/*
@@ -1101,6 +1103,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			expectedExchangedNotionalValue: sdk.NewDec(20),
 			expectedMarginToVault:          sdk.ZeroDec(),
 			expectedPositionRealizedPnl:    sdk.ZeroDec(),
+			expectedPositionMargin:         sdk.NewDec(8),
 		},
 		{
 			/*
@@ -1135,6 +1138,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			expectedExchangedNotionalValue: sdk.NewDec(16),
 			expectedMarginToVault:          sdk.ZeroDec(),
 			expectedPositionRealizedPnl:    sdk.MustNewDecFromStr("-3.2"),
+			expectedPositionMargin:         sdk.MustNewDecFromStr("5.2"),
 		},
 		{
 			/*
@@ -1169,6 +1173,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			expectedExchangedNotionalValue: sdk.NewDec(24),
 			expectedMarginToVault:          sdk.ZeroDec(),
 			expectedPositionRealizedPnl:    sdk.MustNewDecFromStr("-4.8"),
+			expectedPositionMargin:         sdk.MustNewDecFromStr("2.8"),
 		},
 	}
 
@@ -1210,7 +1215,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			newParams.LiquidationFeeRatio = tc.liquidationFee
 			newParams.PartialLiquidationRatio = tc.partialLiquidationRatio
 			perpKeeper.SetParams(ctx, newParams)
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case
@@ -1273,7 +1278,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 				BlockNumber:                    ctx.BlockHeight(),
 			}
-			perpKeeper.PositionsState(ctx).Set(&position)
+			setPosition(perpKeeper, ctx, position)
 
 			t.Log("execute partial liquidation")
 			liquidationResp, err := perpKeeper.ExecutePartialLiquidation(
@@ -1309,6 +1314,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, common.Pair_BTC_NUSD, newPosition.Pair)
 			assert.True(t, newPosition.LatestCumulativeFundingPayment.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
+			assert.EqualValues(t, tc.expectedPositionMargin, newPosition.Margin)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  common.Pair_BTC_NUSD.String(),
