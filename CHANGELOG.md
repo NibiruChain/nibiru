@@ -54,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#894](https://github.com/NibiruChain/nibiru/pull/894) - add the collections package!
 * [#897](https://github.com/NibiruChain/nibiru/pull/897) - x/pricefeed - use collections.
 * [#933](https://github.com/NibiruChain/nibiru/pull/933) - refactor(perp): remove whitelist and simplify state keys
+* [#959](https://github.com/NibiruChain/nibiru/pull/959) - feat(vpool): complete genesis import export
+  * removed Params from genesis.
+  * added pair into ReserveSnapshot type.
+  * added validation of snapshots and snapshots in genesis.
 
 ### API Breaking
 
@@ -93,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#925](https://github.com/NibiruChain/nibiru/pull/925) - fix(vpool): snapshot iteration
 * [#930](https://github.com/NibiruChain/nibiru/pull/930) - fix(vpool): snapshot iteration on mark twap
 * [#911](https://github.com/NibiruChain/nibiru/pull/911) - fix(perp): handle issue where no vpool snapshots are found
+* [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
 
 ## v0.14.0
 
