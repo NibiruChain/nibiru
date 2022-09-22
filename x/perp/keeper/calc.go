@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -30,7 +32,7 @@ type RemainingMarginWithFundingPayment struct {
 
 func (r RemainingMarginWithFundingPayment) String() string {
 	return fmt.Sprintf(
-		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativeFundingRate: %s}",
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s, LatestCumulativeFundingRate: %s}",
 		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativeFundingRate,
 	)
 }
@@ -110,4 +112,22 @@ func (k Keeper) calcFreeCollateral(
 	maintenanceMarginRequirement := positionNotional.Mul(maintenanceMarginRatio)
 
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
+}
+
+// getLatestCumulativeFundingRate returns the last cumulative funding rate recorded for the
+// specific pair.
+func (k Keeper) getLatestCumulativeFundingRate(
+	ctx sdk.Context, pair common.AssetPair,
+) (sdk.Dec, error) {
+	pairMetadata, err := k.PairsMetadata.Get(ctx, pair)
+	if err != nil {
+		k.Logger(ctx).Error(
+			err.Error(),
+			"pair",
+			pair.String(),
+		)
+		return sdk.Dec{}, err
+	}
+	// this should never fail
+	return pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1], nil
 }

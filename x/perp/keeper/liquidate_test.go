@@ -4,6 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -106,7 +110,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				"hour",
 				15*time.Minute,
 			))
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   tokenPair,
 				CumulativeFundingRates: []sdk.Dec{sdk.OneDec()},
 			})
@@ -140,9 +144,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
-			require.ErrorIs(t, err, types.ErrPositionNotFound)
-			require.Nil(t, newPosition)
+			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(tokenPair, keys.String(traderAddr.String())))
+			require.ErrorIs(t, err, collections.ErrNotFound)
+			require.Empty(t, newPosition)
 
 			t.Log("Check correctness of liquidation fee distributions")
 			liquidatorBalance := nibiruApp.BankKeeper.GetBalance(
@@ -283,7 +287,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   tokenPair,
 				CumulativeFundingRates: []sdk.Dec{sdk.OneDec()},
 			})
@@ -317,7 +321,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, _ := nibiruApp.PerpKeeper.PositionsState(ctx).Get(tokenPair, traderAddr)
+			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(tokenPair, keys.String(traderAddr.String())))
+			require.NoError(t, err)
 			assert.Equal(t, tc.expectedPositionSize, newPosition.Size_)
 			assert.Equal(t, tc.expectedMarginRemaining, newPosition.Margin)
 
@@ -366,4 +371,12 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			})
 		})
 	}
+}
+
+func setPosition(k perpkeeper.Keeper, ctx sdk.Context, pos types.Position) {
+	k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
+}
+
+func setPairMetadata(k perpkeeper.Keeper, ctx sdk.Context, pm types.PairMetadata) {
+	k.PairsMetadata.Insert(ctx, pm.Pair, pm)
 }

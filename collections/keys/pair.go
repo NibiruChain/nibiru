@@ -39,6 +39,30 @@ type Pair[K1 Key, K2 Key] struct {
 	p2 *K2
 }
 
+// K1 returns the first part of the key,
+// if present. If the key is not present
+// the zero value is returned.
+func (t Pair[K1, K2]) K1() K1 {
+	if t.p1 != nil {
+		return *t.p1
+	} else {
+		var x K1
+		return x
+	}
+}
+
+// K2 returns the second part of the key,
+// if present, If the key is not present
+// the zero value is returned.
+func (t Pair[K1, K2]) K2() K2 {
+	if t.p2 != nil {
+		return *t.p2
+	} else {
+		var x K2
+		return x
+	}
+}
+
 func (t Pair[K1, K2]) fkb1(b []byte) (int, K1) {
 	var k1 K1
 	i, p1 := k1.FromKeyBytes(b)
