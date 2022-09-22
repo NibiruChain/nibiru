@@ -60,14 +60,8 @@ func NewAssetPair(pair string) (AssetPair, error) {
 	}
 
 	// validate as denom
-	if err := sdk.ValidateDenom(split[0]); err != nil {
-		return AssetPair{}, err
-	}
-	if err := sdk.ValidateDenom(split[1]); err != nil {
-		return AssetPair{}, err
-	}
-
-	return AssetPair{Token0: split[0], Token1: split[1]}, nil
+	ap := AssetPair{Token0: split[0], Token1: split[1]}
+	return ap, ap.Validate()
 }
 
 // MustNewAssetPair returns a new asset pair. It will panic if 'pair' is invalid.
