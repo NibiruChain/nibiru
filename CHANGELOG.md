@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
 
 ### Features
-
+* [#966](https://github.com/NibiruChain/nibiru/pull/966) - collections: add indexed map
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
 
