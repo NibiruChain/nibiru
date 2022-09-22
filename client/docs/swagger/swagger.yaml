@@ -1,0 +1,1402 @@
+swagger: '2.0'
+info:
+  title: Nibiru Chain - Query Services
+  description: A REST interface for state queries
+  version: 1.0.0
+paths:
+  /nibiru/perp/funding_rates:
+    get:
+      operationId: FundingRates
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              cumulative_funding_rates:
+                type: array
+                items:
+                  type: string
+                title: >-
+                  a historical list of cumulative funding rates, with the most
+                  recent one
+
+                  last
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair
+          description: the pair to query for.
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /nibiru/perp/params:
+    get:
+      summary: Parameters queries the parameters of the x/perp module.
+      operationId: PerpParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+                properties:
+                  stopped:
+                    type: boolean
+                    format: boolean
+                    title: stopped identifies if the perp exchange is stopped or not
+                  fee_pool_fee_ratio:
+                    type: string
+                    title: >-
+                      FeePoolFeeRatio is the ratio transferred to the the fee
+                      pool
+                  ecosystem_fund_fee_ratio:
+                    type: string
+                    description: >-
+                      EcosystemFundFeeRatio is the ratio transferred to the
+                      PerpEF.
+                  liquidation_fee_ratio:
+                    type: string
+                    description: >-
+                      LiquidationFeeRatio is the percentage of liquidated
+                      position that will be
+
+                      given to out as a reward. Half of the liquidation fee is
+                      given to the
+
+                      liquidator, and the other half is given to the ecosystem
+                      fund.
+                  partial_liquidation_ratio:
+                    type: string
+                    title: >-
+                      PartialLiquidationRatio is the share we try to liquidate
+                      if the margin is
+
+                      higher than liquidation fee
+                  funding_rate_interval:
+                    type: string
+                    title: >-
+                      specifies the interval on which the funding rate is
+                      updated
+                  twap_lookback_window:
+                    type: string
+                    title: amount of time to look back for TWAP calculations
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/perp/trader_position:
+    get:
+      operationId: QueryTraderPosition
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              position:
+                title: The position as it exists in the blockchain state
+                type: object
+                properties:
+                  trader_address:
+                    type: string
+                    title: address identifies the address owner of this position
+                  pair:
+                    title: pair identifies the pair associated with this position
+                    type: object
+                    properties:
+                      token0:
+                        type: string
+                      token1:
+                        type: string
+                  size:
+                    type: string
+                    description: Position size.
+                  margin:
+                    type: string
+                    description: Amount of margin remaining in the position.
+                  open_notional:
+                    type: string
+                    description: >-
+                      OpenNotional is the quote denom value of the position when
+                      opening.
+
+                      Used to calculate PnL.
+                  latest_cumulative_funding_payment:
+                    type: string
+                    description: >-
+                      The most recent cumulative funding payment this position
+                      has applied.
+
+                      Used to calculate the next funding payment.
+                  block_number:
+                    type: string
+                    format: int64
+                    description: >-
+                      BlockNumber is the last block number when this position
+                      was updated.
+                description: >-
+                  Position identifies and records information on a user's
+                  position on one of
+
+                  the virtual liquidity pools.
+              position_notional:
+                type: string
+                description: >-
+                  The position's current notional value, if it were to be
+                  entirely closed (in
+
+                  margin units).
+              unrealized_pnl:
+                type: string
+                description: The position's unrealized PnL.
+              margin_ratio_mark:
+                type: string
+                description: >-
+                  margin ratio of the position based on the mark price, mark
+                  TWAP. The higher
+
+                  value of the possible margin ratios (TWAP and instantaneous)
+                  is taken to be
+
+                  'marginRatioMark'. Calculated from margin, unrealized PnL, and
+                  position
+
+                  notional.
+              margin_ratio_index:
+                type: string
+                description: >-
+                  margin ratio of the position based on the index price.
+                  Calculated from
+
+                  margin, unrealized PnL, and position notional.
+              block_number:
+                type: string
+                format: int64
+                description: BlockNumber is current block number at the time of query.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: token_pair
+          in: query
+          required: false
+          type: string
+        - name: trader
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /nibiru/vpool/all_pools:
+    get:
+      summary: Queries all virtual pools.
+      operationId: AllPools
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              pools:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pair:
+                      title: always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+                      type: object
+                      properties:
+                        token0:
+                          type: string
+                        token1:
+                          type: string
+                    base_asset_reserve:
+                      type: string
+                      title: base asset is the crypto asset, e.g. BTC or ETH
+                    quote_asset_reserve:
+                      type: string
+                      title: quote asset is usually stablecoin, in our case NUSD
+                    trade_limit_ratio:
+                      type: string
+                      title: ratio applied to reserves in order not to over trade
+                    fluctuation_limit_ratio:
+                      type: string
+                      title: >-
+                        percentage that a single open or close position can
+                        alter the reserve amounts
+                    max_oracle_spread_ratio:
+                      type: string
+                      title: max_oracle_spread_ratio
+                    maintenance_margin_ratio:
+                      type: string
+                      title: maintenance_margin_ratio
+                    max_leverage:
+                      type: string
+                      title: max_leverage
+                  description: >-
+                    A virtual pool used only for price discovery of perpetual
+                    futures contracts.
+
+                    No real liquidity exists in this pool.
+              prices:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pair:
+                      type: string
+                      title: >-
+                        Pair identifier for the two assets. Always in format
+                        'base:quote'
+                    mark_price:
+                      type: string
+                      description: |-
+                        MarkPrice is the instantaneous price of the perp. 
+                        Equivalent to quoteAssetReserve / baseAssetReserve.
+                    index_price:
+                      type: string
+                      title: IndexPrice is the price of the "underlying" for the perp
+                    twap_mark:
+                      type: string
+                      description: TwapMark is the time-weighted average (mark) price.
+                    swap_invariant:
+                      type: string
+                      description: >-
+                        SwapInvariant is the product of the reserves, commonly
+                        referred to as "k".
+                    block_number:
+                      type: string
+                      format: int64
+                      title: The block number corresponding to each price
+                  description: >-
+                    PoolPrices is a simple structure that displays a snapshot of
+                    the mark and index
+
+                    prices for an asset. Empty strings for the indexPrice or
+                    twapMark fields 
+
+                    indicate that the price is currently unavailable.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/vpool/base_asset_price:
+    get:
+      summary: Queries prices
+      operationId: BaseAssetPrice
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              price_in_quote_denom:
+                type: string
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair
+          in: query
+          required: false
+          type: string
+        - name: direction
+          in: query
+          required: false
+          type: string
+          enum:
+            - DIRECTION_UNSPECIFIED
+            - ADD_TO_POOL
+            - REMOVE_FROM_POOL
+          default: DIRECTION_UNSPECIFIED
+        - name: base_asset_amount
+          description: base asset is the crypto asset, e.g. BTC or ETH.
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /nibiru/vpool/reserve_assets:
+    get:
+      summary: Queries the reserve assets in a given pool, identified by a token pair.
+      operationId: ReserveAssets
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              base_asset_reserve:
+                type: string
+                title: base asset is the crypto asset, e.g. BTC or ETH
+              quote_asset_reserve:
+                type: string
+                title: quote asset is usually stablecoin, in our case NUSD
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair
+          description: always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD.
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /nibiru/pricefeed/v1beta1/markets:
+    get:
+      summary: QueryMarkets queries all markets
+      operationId: QueryMarkets
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              markets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pair_id:
+                      type: string
+                    oracles:
+                      type: array
+                      items:
+                        type: string
+                    active:
+                      type: boolean
+                      format: boolean
+                  description: Market defines an asset in the pricefeed.
+            description: >-
+              QueryMarketsResponse is the response type for the Query/Pairs RPC
+              method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/pricefeed/v1beta1/oracles/{pair_id}:
+    get:
+      summary: QueryOracles queries all oracles for an asset pair
+      operationId: QueryOracles
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              oracles:
+                type: array
+                items:
+                  type: string
+                title: List of oracle addresses
+            description: >-
+              QueryOraclesResponse is the response type for the Query/Oracles
+              RPC method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/pricefeed/v1beta1/params:
+    get:
+      summary: QueryParams queries all parameters of the pricefeed module.
+      operationId: QueryParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                type: object
+                properties:
+                  pairs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token0:
+                          type: string
+                        token1:
+                          type: string
+                    title: |-
+                      Pairs is the list of valid trading pairs for the module.
+                      Add new trading pairs
+                  twap_lookback_window:
+                    type: string
+                    title: amount of time to look back for TWAP calculations
+                description: Params defines the parameters for the x/pricefeed module.
+            description: >-
+              QueryParamsResponse defines the response type for querying
+              x/pricefeed
+
+              parameters.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/pricefeed/v1beta1/prices:
+    get:
+      summary: QueryPrices queries all prices
+      operationId: QueryPrices
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              prices:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pair_id:
+                      type: string
+                    price:
+                      type: string
+                      title: most current price of the trading pair
+                    twap:
+                      type: string
+                      title: twap of the trading pair
+                  description: >-
+                    CurrentPriceResponse defines a current price for a
+                    particular 'PairID' in the pricefeed
+
+                    module.
+            description: >-
+              QueryPricesResponse is the response type for the Query/Prices RPC
+              method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/pricefeed/v1beta1/prices/{pair_id}:
+    get:
+      summary: QueryPrice queries price details for a pair
+      operationId: QueryPrice
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              price:
+                type: object
+                properties:
+                  pair_id:
+                    type: string
+                  price:
+                    type: string
+                    title: most current price of the trading pair
+                  twap:
+                    type: string
+                    title: twap of the trading pair
+                description: >-
+                  CurrentPriceResponse defines a current price for a particular
+                  'PairID' in the pricefeed
+
+                  module.
+            description: >-
+              QueryPriceResponse is the response type for the Query/Prices RPC
+              method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/pricefeed/v1beta1/rawprices/{pair_id}:
+    get:
+      summary: QueryRawPrices queries all raw prices for an asset pair
+      operationId: QueryRawPrices
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              raw_prices:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pair_id:
+                      type: string
+                    oracle_address:
+                      type: string
+                    price:
+                      type: string
+                    expiry:
+                      type: string
+                      format: date-time
+                  description: >-
+                    PostedPriceResponse defines a price for 'PairID' posted by a
+                    specific oracle.
+            description: >-
+              QueryRawPricesResponse is the response type for the
+              Query/RawPrices RPC
+
+              method.
+        default:
+          description: An unexpected error response
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+definitions:
+  google.protobuf.Any:
+    type: object
+    properties:
+      type_url:
+        type: string
+      value:
+        type: string
+        format: byte
+  grpc.gateway.runtime.Error:
+    type: object
+    properties:
+      error:
+        type: string
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: object
+          properties:
+            type_url:
+              type: string
+            value:
+              type: string
+              format: byte
+  nibiru.common.AssetPair:
+    type: object
+    properties:
+      token0:
+        type: string
+      token1:
+        type: string
+  nibiru.perp.v1.Params:
+    type: object
+    properties:
+      stopped:
+        type: boolean
+        format: boolean
+        title: stopped identifies if the perp exchange is stopped or not
+      fee_pool_fee_ratio:
+        type: string
+        title: FeePoolFeeRatio is the ratio transferred to the the fee pool
+      ecosystem_fund_fee_ratio:
+        type: string
+        description: EcosystemFundFeeRatio is the ratio transferred to the PerpEF.
+      liquidation_fee_ratio:
+        type: string
+        description: >-
+          LiquidationFeeRatio is the percentage of liquidated position that will
+          be
+
+          given to out as a reward. Half of the liquidation fee is given to the
+
+          liquidator, and the other half is given to the ecosystem fund.
+      partial_liquidation_ratio:
+        type: string
+        title: >-
+          PartialLiquidationRatio is the share we try to liquidate if the margin
+          is
+
+          higher than liquidation fee
+      funding_rate_interval:
+        type: string
+        title: specifies the interval on which the funding rate is updated
+      twap_lookback_window:
+        type: string
+        title: amount of time to look back for TWAP calculations
+  nibiru.perp.v1.Position:
+    type: object
+    properties:
+      trader_address:
+        type: string
+        title: address identifies the address owner of this position
+      pair:
+        title: pair identifies the pair associated with this position
+        type: object
+        properties:
+          token0:
+            type: string
+          token1:
+            type: string
+      size:
+        type: string
+        description: Position size.
+      margin:
+        type: string
+        description: Amount of margin remaining in the position.
+      open_notional:
+        type: string
+        description: |-
+          OpenNotional is the quote denom value of the position when opening.
+          Used to calculate PnL.
+      latest_cumulative_funding_payment:
+        type: string
+        description: |-
+          The most recent cumulative funding payment this position has applied.
+          Used to calculate the next funding payment.
+      block_number:
+        type: string
+        format: int64
+        description: BlockNumber is the last block number when this position was updated.
+    description: |-
+      Position identifies and records information on a user's position on one of
+      the virtual liquidity pools.
+  nibiru.perp.v1.QueryFundingRatesResponse:
+    type: object
+    properties:
+      cumulative_funding_rates:
+        type: array
+        items:
+          type: string
+        title: >-
+          a historical list of cumulative funding rates, with the most recent
+          one
+
+          last
+  nibiru.perp.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+        properties:
+          stopped:
+            type: boolean
+            format: boolean
+            title: stopped identifies if the perp exchange is stopped or not
+          fee_pool_fee_ratio:
+            type: string
+            title: FeePoolFeeRatio is the ratio transferred to the the fee pool
+          ecosystem_fund_fee_ratio:
+            type: string
+            description: EcosystemFundFeeRatio is the ratio transferred to the PerpEF.
+          liquidation_fee_ratio:
+            type: string
+            description: >-
+              LiquidationFeeRatio is the percentage of liquidated position that
+              will be
+
+              given to out as a reward. Half of the liquidation fee is given to
+              the
+
+              liquidator, and the other half is given to the ecosystem fund.
+          partial_liquidation_ratio:
+            type: string
+            title: >-
+              PartialLiquidationRatio is the share we try to liquidate if the
+              margin is
+
+              higher than liquidation fee
+          funding_rate_interval:
+            type: string
+            title: specifies the interval on which the funding rate is updated
+          twap_lookback_window:
+            type: string
+            title: amount of time to look back for TWAP calculations
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
+  nibiru.perp.v1.QueryTraderPositionResponse:
+    type: object
+    properties:
+      position:
+        title: The position as it exists in the blockchain state
+        type: object
+        properties:
+          trader_address:
+            type: string
+            title: address identifies the address owner of this position
+          pair:
+            title: pair identifies the pair associated with this position
+            type: object
+            properties:
+              token0:
+                type: string
+              token1:
+                type: string
+          size:
+            type: string
+            description: Position size.
+          margin:
+            type: string
+            description: Amount of margin remaining in the position.
+          open_notional:
+            type: string
+            description: >-
+              OpenNotional is the quote denom value of the position when
+              opening.
+
+              Used to calculate PnL.
+          latest_cumulative_funding_payment:
+            type: string
+            description: >-
+              The most recent cumulative funding payment this position has
+              applied.
+
+              Used to calculate the next funding payment.
+          block_number:
+            type: string
+            format: int64
+            description: >-
+              BlockNumber is the last block number when this position was
+              updated.
+        description: >-
+          Position identifies and records information on a user's position on
+          one of
+
+          the virtual liquidity pools.
+      position_notional:
+        type: string
+        description: >-
+          The position's current notional value, if it were to be entirely
+          closed (in
+
+          margin units).
+      unrealized_pnl:
+        type: string
+        description: The position's unrealized PnL.
+      margin_ratio_mark:
+        type: string
+        description: >-
+          margin ratio of the position based on the mark price, mark TWAP. The
+          higher
+
+          value of the possible margin ratios (TWAP and instantaneous) is taken
+          to be
+
+          'marginRatioMark'. Calculated from margin, unrealized PnL, and
+          position
+
+          notional.
+      margin_ratio_index:
+        type: string
+        description: |-
+          margin ratio of the position based on the index price. Calculated from
+          margin, unrealized PnL, and position notional.
+      block_number:
+        type: string
+        format: int64
+        description: BlockNumber is current block number at the time of query.
+  nibiru.vpool.v1.Direction:
+    type: string
+    enum:
+      - DIRECTION_UNSPECIFIED
+      - ADD_TO_POOL
+      - REMOVE_FROM_POOL
+    default: DIRECTION_UNSPECIFIED
+  nibiru.vpool.v1.PoolPrices:
+    type: object
+    properties:
+      pair:
+        type: string
+        title: Pair identifier for the two assets. Always in format 'base:quote'
+      mark_price:
+        type: string
+        description: |-
+          MarkPrice is the instantaneous price of the perp. 
+          Equivalent to quoteAssetReserve / baseAssetReserve.
+      index_price:
+        type: string
+        title: IndexPrice is the price of the "underlying" for the perp
+      twap_mark:
+        type: string
+        description: TwapMark is the time-weighted average (mark) price.
+      swap_invariant:
+        type: string
+        description: >-
+          SwapInvariant is the product of the reserves, commonly referred to as
+          "k".
+      block_number:
+        type: string
+        format: int64
+        title: The block number corresponding to each price
+    description: >-
+      PoolPrices is a simple structure that displays a snapshot of the mark and
+      index
+
+      prices for an asset. Empty strings for the indexPrice or twapMark fields 
+
+      indicate that the price is currently unavailable.
+  nibiru.vpool.v1.QueryAllPoolsResponse:
+    type: object
+    properties:
+      pools:
+        type: array
+        items:
+          type: object
+          properties:
+            pair:
+              title: always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+              type: object
+              properties:
+                token0:
+                  type: string
+                token1:
+                  type: string
+            base_asset_reserve:
+              type: string
+              title: base asset is the crypto asset, e.g. BTC or ETH
+            quote_asset_reserve:
+              type: string
+              title: quote asset is usually stablecoin, in our case NUSD
+            trade_limit_ratio:
+              type: string
+              title: ratio applied to reserves in order not to over trade
+            fluctuation_limit_ratio:
+              type: string
+              title: >-
+                percentage that a single open or close position can alter the
+                reserve amounts
+            max_oracle_spread_ratio:
+              type: string
+              title: max_oracle_spread_ratio
+            maintenance_margin_ratio:
+              type: string
+              title: maintenance_margin_ratio
+            max_leverage:
+              type: string
+              title: max_leverage
+          description: >-
+            A virtual pool used only for price discovery of perpetual futures
+            contracts.
+
+            No real liquidity exists in this pool.
+      prices:
+        type: array
+        items:
+          type: object
+          properties:
+            pair:
+              type: string
+              title: >-
+                Pair identifier for the two assets. Always in format
+                'base:quote'
+            mark_price:
+              type: string
+              description: |-
+                MarkPrice is the instantaneous price of the perp. 
+                Equivalent to quoteAssetReserve / baseAssetReserve.
+            index_price:
+              type: string
+              title: IndexPrice is the price of the "underlying" for the perp
+            twap_mark:
+              type: string
+              description: TwapMark is the time-weighted average (mark) price.
+            swap_invariant:
+              type: string
+              description: >-
+                SwapInvariant is the product of the reserves, commonly referred
+                to as "k".
+            block_number:
+              type: string
+              format: int64
+              title: The block number corresponding to each price
+          description: >-
+            PoolPrices is a simple structure that displays a snapshot of the
+            mark and index
+
+            prices for an asset. Empty strings for the indexPrice or twapMark
+            fields 
+
+            indicate that the price is currently unavailable.
+  nibiru.vpool.v1.QueryBaseAssetPriceResponse:
+    type: object
+    properties:
+      price_in_quote_denom:
+        type: string
+  nibiru.vpool.v1.QueryReserveAssetsResponse:
+    type: object
+    properties:
+      base_asset_reserve:
+        type: string
+        title: base asset is the crypto asset, e.g. BTC or ETH
+      quote_asset_reserve:
+        type: string
+        title: quote asset is usually stablecoin, in our case NUSD
+  nibiru.vpool.v1.VPool:
+    type: object
+    properties:
+      pair:
+        title: always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+        type: object
+        properties:
+          token0:
+            type: string
+          token1:
+            type: string
+      base_asset_reserve:
+        type: string
+        title: base asset is the crypto asset, e.g. BTC or ETH
+      quote_asset_reserve:
+        type: string
+        title: quote asset is usually stablecoin, in our case NUSD
+      trade_limit_ratio:
+        type: string
+        title: ratio applied to reserves in order not to over trade
+      fluctuation_limit_ratio:
+        type: string
+        title: >-
+          percentage that a single open or close position can alter the reserve
+          amounts
+      max_oracle_spread_ratio:
+        type: string
+        title: max_oracle_spread_ratio
+      maintenance_margin_ratio:
+        type: string
+        title: maintenance_margin_ratio
+      max_leverage:
+        type: string
+        title: max_leverage
+    description: >-
+      A virtual pool used only for price discovery of perpetual futures
+      contracts.
+
+      No real liquidity exists in this pool.
+  nibiru.pricefeed.v1.CurrentPriceResponse:
+    type: object
+    properties:
+      pair_id:
+        type: string
+      price:
+        type: string
+        title: most current price of the trading pair
+      twap:
+        type: string
+        title: twap of the trading pair
+    description: >-
+      CurrentPriceResponse defines a current price for a particular 'PairID' in
+      the pricefeed
+
+      module.
+  nibiru.pricefeed.v1.Market:
+    type: object
+    properties:
+      pair_id:
+        type: string
+      oracles:
+        type: array
+        items:
+          type: string
+      active:
+        type: boolean
+        format: boolean
+    description: Market defines an asset in the pricefeed.
+  nibiru.pricefeed.v1.Params:
+    type: object
+    properties:
+      pairs:
+        type: array
+        items:
+          type: object
+          properties:
+            token0:
+              type: string
+            token1:
+              type: string
+        title: |-
+          Pairs is the list of valid trading pairs for the module.
+          Add new trading pairs
+      twap_lookback_window:
+        type: string
+        title: amount of time to look back for TWAP calculations
+    description: Params defines the parameters for the x/pricefeed module.
+  nibiru.pricefeed.v1.PostedPriceResponse:
+    type: object
+    properties:
+      pair_id:
+        type: string
+      oracle_address:
+        type: string
+      price:
+        type: string
+      expiry:
+        type: string
+        format: date-time
+    description: >-
+      PostedPriceResponse defines a price for 'PairID' posted by a specific
+      oracle.
+  nibiru.pricefeed.v1.QueryMarketsResponse:
+    type: object
+    properties:
+      markets:
+        type: array
+        items:
+          type: object
+          properties:
+            pair_id:
+              type: string
+            oracles:
+              type: array
+              items:
+                type: string
+            active:
+              type: boolean
+              format: boolean
+          description: Market defines an asset in the pricefeed.
+    description: QueryMarketsResponse is the response type for the Query/Pairs RPC method.
+  nibiru.pricefeed.v1.QueryOraclesResponse:
+    type: object
+    properties:
+      oracles:
+        type: array
+        items:
+          type: string
+        title: List of oracle addresses
+    description: >-
+      QueryOraclesResponse is the response type for the Query/Oracles RPC
+      method.
+  nibiru.pricefeed.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        type: object
+        properties:
+          pairs:
+            type: array
+            items:
+              type: object
+              properties:
+                token0:
+                  type: string
+                token1:
+                  type: string
+            title: |-
+              Pairs is the list of valid trading pairs for the module.
+              Add new trading pairs
+          twap_lookback_window:
+            type: string
+            title: amount of time to look back for TWAP calculations
+        description: Params defines the parameters for the x/pricefeed module.
+    description: |-
+      QueryParamsResponse defines the response type for querying x/pricefeed
+      parameters.
+  nibiru.pricefeed.v1.QueryPriceResponse:
+    type: object
+    properties:
+      price:
+        type: object
+        properties:
+          pair_id:
+            type: string
+          price:
+            type: string
+            title: most current price of the trading pair
+          twap:
+            type: string
+            title: twap of the trading pair
+        description: >-
+          CurrentPriceResponse defines a current price for a particular 'PairID'
+          in the pricefeed
+
+          module.
+    description: QueryPriceResponse is the response type for the Query/Prices RPC method.
+  nibiru.pricefeed.v1.QueryPricesResponse:
+    type: object
+    properties:
+      prices:
+        type: array
+        items:
+          type: object
+          properties:
+            pair_id:
+              type: string
+            price:
+              type: string
+              title: most current price of the trading pair
+            twap:
+              type: string
+              title: twap of the trading pair
+          description: >-
+            CurrentPriceResponse defines a current price for a particular
+            'PairID' in the pricefeed
+
+            module.
+    description: QueryPricesResponse is the response type for the Query/Prices RPC method.
+  nibiru.pricefeed.v1.QueryRawPricesResponse:
+    type: object
+    properties:
+      raw_prices:
+        type: array
+        items:
+          type: object
+          properties:
+            pair_id:
+              type: string
+            oracle_address:
+              type: string
+            price:
+              type: string
+            expiry:
+              type: string
+              format: date-time
+          description: >-
+            PostedPriceResponse defines a price for 'PairID' posted by a
+            specific oracle.
+    description: |-
+      QueryRawPricesResponse is the response type for the Query/RawPrices RPC
+      method.
