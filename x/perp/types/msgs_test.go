@@ -321,3 +321,68 @@ func TestMsgLiquidate_ValidateBasic(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
+	type test struct {
+		msg     *MsgMultiLiquidate
+		wantErr bool
+	}
+
+	cases := map[string]test{
+		"success": {
+			msg: &MsgMultiLiquidate{
+				Sender: sample.AccAddress().String(),
+				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
+					{
+						TokenPair: common.Pair_BTC_NUSD.String(),
+						Trader:    sample.AccAddress().String(),
+					},
+				}},
+			wantErr: false,
+		},
+		"invalid token pair": {
+			msg: &MsgMultiLiquidate{
+				Sender: sample.AccAddress().String(),
+				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
+					{
+						TokenPair: common.Pair_BTC_NUSD.String(),
+						Trader:    sample.AccAddress().String(),
+					},
+					{
+						TokenPair: "invalid",
+						Trader:    sample.AccAddress().String(),
+					},
+				}},
+			wantErr: true,
+		},
+		"invalid liquidated address": {
+			msg: &MsgMultiLiquidate{
+				Sender: sample.AccAddress().String(),
+				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
+					{
+						TokenPair: common.Pair_BTC_NUSD.String(),
+						Trader:    sample.AccAddress().String(),
+					},
+					{
+						TokenPair: common.Pair_BTC_NUSD.String(),
+						Trader:    "invalid",
+					},
+				}},
+			wantErr: true,
+		},
+	}
+
+	for name, tc := range cases {
+		tc := tc
+		name := name
+		t.Run(name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if err != nil && tc.wantErr == false {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if err == nil && tc.wantErr == true {
+				t.Fatalf("expected error: %s", err)
+			}
+		})
+	}
+}

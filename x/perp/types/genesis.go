@@ -8,9 +8,9 @@ import (
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:          DefaultParams(),
-		PairMetadata:    []*PairMetadata(nil),
-		Positions:       []*Position(nil),
-		PrepaidBadDebts: []*PrepaidBadDebt(nil),
+		PairMetadata:    []PairMetadata{},
+		Positions:       []Position{},
+		PrepaidBadDebts: []PrepaidBadDebt{},
 	}
 }
 
@@ -23,7 +23,7 @@ func (gs GenesisState) Validate() error {
 
 	for i, pos := range gs.Positions {
 		if err := pos.Validate(); err != nil {
-			return fmt.Errorf("malformed genesis position %s at index %d: %w", pos, i, err)
+			return fmt.Errorf("malformed genesis position %s at index %d: %w", &pos, i, err)
 		}
 	}
 
