@@ -17,20 +17,17 @@ protoc_gen_gocosmos() {
 protoc_gen_gocosmos
 
 cosmos_sdk_dir=$(go list -f '{{ .Dir }}' -m github.com/cosmos/cosmos-sdk)
-proto_dirs=$(find ./proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
+proto_dirs=$(find ./proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | uniq | sort)
 for dir in $proto_dirs; do
   echo "generating $dir"
-  echo "$cosmos_sdk_dir"
   buf protoc \
     -I "proto" \
     -I "$cosmos_sdk_dir/third_party/proto" \
     -I "$cosmos_sdk_dir/proto" \
     --gocosmos_out=plugins=interfacetype+grpc,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:. \
     --grpc-gateway_out=logtostderr=true,allow_colon_final_segments=true:. \
-    $(find "${dir}" -maxdepth 1 -name '*.proto')
+    $(find "${dir}" -maxdepth 1 -name "*.proto")
 done
-
-pwd
 
 # command to generate docs using protoc-gen-doc
 #buf protoc \
@@ -47,4 +44,4 @@ pwd
 
 # move proto files to the right places
 cp -r github.com/NibiruChain/nibiru/* ./
-rm -rf github.com
+rm -rf github.com/

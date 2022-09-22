@@ -44,8 +44,6 @@ fi
 # Set localnet settings
 BINARY="nibid"
 CHAIN_ID="nibiru-localnet-0"
-RPC_PORT="26657"
-GRPC_PORT="9090"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 GENESIS_COINS="1000000000unibi,10000000000000unusd"
 CHAIN_DIR="$HOME/.nibid"
@@ -200,8 +198,7 @@ add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_funding_rates = [
 
 # x/pricefeed
 nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
-
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+add_genesis_param '.app_state.pricefeed.params.twap_lookback_window = "900s"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
