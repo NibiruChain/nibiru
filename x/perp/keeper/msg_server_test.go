@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/NibiruChain/nibiru/collections"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
@@ -523,7 +525,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-	pair := common.PairBTCStable
+	pair := common.Pair_BTC_NUSD
 	liquidator := sample.AccAddress()
 
 	atRiskTrader1 := sample.AccAddress()
@@ -533,7 +535,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	t.Log("create vpool")
 	app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
-		/* pair */ common.PairBTCStable,
+		/* pair */ pair,
 		/* tradeLimitRatio */ sdk.OneDec(),
 		/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 		/* baseAssetReserve */ sdk.NewDec(1_000_000),
@@ -542,50 +544,49 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 	)
-	app.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-		Pair:                       common.PairBTCStable,
-		CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+		Pair:                   pair,
+		CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 	})
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 	t.Log("set pricefeed oracle price")
 	oracle := sample.AccAddress()
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-	_, err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+	err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 	require.NoError(t, err)
 	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 	t.Log("create positions")
-	atRiskPosition1 := &types.Position{
-		TraderAddress:                       atRiskTrader1.String(),
-		Pair:                                pair,
-		Size_:                               sdk.OneDec(),
-		Margin:                              sdk.OneDec(),
-		OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
-		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		BlockNumber:                         1,
+	atRiskPosition1 := types.Position{
+		TraderAddress:                  atRiskTrader1.String(),
+		Pair:                           pair,
+		Size_:                          sdk.OneDec(),
+		Margin:                         sdk.OneDec(),
+		OpenNotional:                   sdk.NewDec(2),
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
 	}
-	atRiskPosition2 := &types.Position{
-		TraderAddress:                       atRiskTrader2.String(),
-		Pair:                                pair,
-		Size_:                               sdk.OneDec(),
-		Margin:                              sdk.OneDec(),
-		OpenNotional:                        sdk.NewDec(2), // new spot price is 1, so position can be liquidated
-		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		BlockNumber:                         1,
+	atRiskPosition2 := types.Position{
+		TraderAddress:                  atRiskTrader2.String(),
+		Pair:                           pair,
+		Size_:                          sdk.OneDec(),
+		Margin:                         sdk.OneDec(),
+		OpenNotional:                   sdk.NewDec(2), // new spot price is 1, so position can be liquidated
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
+		BlockNumber:                    1,
 	}
-	notAtRiskPosition := &types.Position{
-		TraderAddress:                       notAtRiskTrader.String(),
-		Pair:                                pair,
-		Size_:                               sdk.OneDec(),
-		Margin:                              sdk.OneDec(),
-		OpenNotional:                        sdk.MustNewDecFromStr("0.1"), // open price is lower than current price so no way trader gets liquidated
-		LastUpdateCumulativePremiumFraction: sdk.ZeroDec(),
-		BlockNumber:                         1,
+	notAtRiskPosition := types.Position{
+		TraderAddress:                  notAtRiskTrader.String(),
+		Pair:                           pair,
+		Size_:                          sdk.OneDec(),
+		Margin:                         sdk.OneDec(),
+		OpenNotional:                   sdk.MustNewDecFromStr("0.1"), // open price is lower than current price so no way trader gets liquidated
+		LatestCumulativeFundingPayment: sdk.ZeroDec(),
+		BlockNumber:                    1,
 	}
-	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(atRiskPosition1))
-	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(notAtRiskPosition))
-	require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(atRiskPosition2))
+	setPosition(app.PerpKeeper, ctx, atRiskPosition1)
+	setPosition(app.PerpKeeper, ctx, notAtRiskPosition)
+	setPosition(app.PerpKeeper, ctx, atRiskPosition2)
 
 	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
@@ -621,15 +622,15 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	// what we care about is that the first and third liquidations made some modifications at state
 	// and events levels, whilst the second (which failed) didn't.
 
-	assertNotLiquidated := func(old *types.Position) {
-		position, err := app.PerpKeeper.PositionsState(ctx).Get(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress))
+	assertNotLiquidated := func(old types.Position) {
+		position, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
 		require.NoError(t, err)
 		require.Equal(t, old, position)
 	}
 
-	assertLiquidated := func(old *types.Position) {
-		_, err := app.PerpKeeper.PositionsState(ctx).Get(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress))
-		require.ErrorIs(t, err, types.ErrPositionNotFound)
+	assertLiquidated := func(old types.Position) {
+		_, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
+		require.ErrorIs(t, err, collections.ErrNotFound)
 		// NOTE(mercilex): does not cover partial liquidation
 	}
 	assertNotLiquidated(notAtRiskPosition)
