@@ -3,6 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -43,7 +45,7 @@ func (k Keeper) Withdraw(
 		// and the balance of entire vault is not enough
 		// need money from PerpEF to pay first, and record this prepaidBadDebt
 		shortage := amountToWithdraw.Sub(vaultQuoteBalance.Amount)
-		k.PrepaidBadDebtState(ctx).Increment(denom, shortage)
+		k.IncrementPrepaidBadDebt(ctx, denom, shortage)
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,
@@ -78,15 +80,21 @@ can consume the credit we have built before withdrawing more from the ecosystem 
 func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
 	err error,
 ) {
-	prepaidBadDebtBalance := k.PrepaidBadDebtState(ctx).Get(denom)
+	prepaidBadDebtBalance := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+		Denom:  denom,
+		Amount: sdk.ZeroInt(),
+	}).Amount
 
 	if prepaidBadDebtBalance.GTE(badDebtToRealize) {
 		// prepaidBadDebtBalance > totalBadDebt
-		k.PrepaidBadDebtState(ctx).Decrement(denom, badDebtToRealize)
+		k.DecrementPrepaidBadDebt(ctx, denom, badDebtToRealize)
 	} else {
 		// totalBadDebt > prepaidBadDebtBalance
 
-		k.PrepaidBadDebtState(ctx).Set(denom, sdk.ZeroInt())
+		k.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+			Denom:  denom,
+			Amount: sdk.ZeroInt(),
+		})
 
 		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
 			/*from=*/ types.PerpEFModuleAccount,
@@ -101,4 +109,41 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize s
 	}
 
 	return nil
+}
+
+// IncrementPrepaidBadDebt increases the bad debt for the provided denom.
+// And returns the newest bad-debt amount.
+// If no prepaid bad debt for the given denom was recorded before
+// then it is set using the provided amount and the provided amount is returned.
+func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
+	current := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+		Denom:  denom,
+		Amount: sdk.ZeroInt(),
+	})
+
+	newBadDebt := current.Amount.Add(amount)
+	k.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+		Denom:  denom,
+		Amount: newBadDebt,
+	})
+
+	return newBadDebt
+}
+
+// DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
+// // The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
+// // debt balance to below zero will clip it at zero.
+func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
+	current := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+		Denom:  denom,
+		Amount: sdk.ZeroInt(),
+	})
+
+	newBadDebt := sdk.MaxInt(current.Amount.Sub(amount), sdk.ZeroInt())
+
+	k.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+		Denom:  denom,
+		Amount: newBadDebt,
+	})
+	return newBadDebt
 }

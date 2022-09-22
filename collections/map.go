@@ -1,8 +1,6 @@
 package collections
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,27 +85,11 @@ func newMapIterator[K keys.Key, V any, PV interface {
 	*V
 	Object
 }](cdc storeCodec, store sdk.KVStore, r keys.Range[K]) MapIterator[K, V, PV] {
-	pfx, start, end, order := r.Compile()
-
-	// if prefix is not nil then we replace the current store with a prefixed one
-	if pfx != nil {
-		store = prefix.NewStore(store, pfx)
-	}
-	switch order {
-	case keys.OrderAscending:
-		return MapIterator[K, V, PV]{
-			prefix: pfx,
-			cdc:    cdc,
-			iter:   store.Iterator(start, end),
-		}
-	case keys.OrderDescending:
-		return MapIterator[K, V, PV]{
-			prefix: pfx,
-			cdc:    cdc,
-			iter:   store.ReverseIterator(start, end),
-		}
-	default:
-		panic(fmt.Errorf("unrecognized order"))
+	iter, prefix := keys.IteratorFromRange(store, r)
+	return MapIterator[K, V, PV]{
+		prefix: prefix,
+		cdc:    cdc,
+		iter:   iter,
 	}
 }
 

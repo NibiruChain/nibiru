@@ -3,6 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -21,10 +23,8 @@ func (k Keeper) SettlePosition(
 		return sdk.NewCoins(), nil
 	}
 
-	if err = k.PositionsState(ctx).Delete(
-		currentPosition.Pair,
-		traderAddr,
-	); err != nil {
+	err = k.Positions.Delete(ctx, keys.Join(currentPosition.Pair, keys.String(currentPosition.TraderAddress)))
+	if err != nil {
 		return sdk.NewCoins(), nil
 	}
 

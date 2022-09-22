@@ -4,6 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -267,7 +271,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -278,7 +282,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
+				setPosition(nibiruApp.PerpKeeper, ctx, *tc.initialPosition)
 				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
@@ -304,7 +308,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPositionNotional, resp.PositionNotional)
 
 			t.Log("assert position in state")
-			position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(common.Pair_BTC_NUSD, traderAddr)
+			position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
 			require.NoError(t, err)
 			assert.EqualValues(t, common.Pair_BTC_NUSD, position.Pair)
 			assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
@@ -501,7 +505,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
-			nibiruApp.PerpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 			})
@@ -512,7 +516,7 @@ func TestOpenPositionError(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(tc.initialPosition)
+				setPosition(nibiruApp.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
@@ -580,7 +584,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				baseLimit := sdk.NewDec(150)
 				resp, err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, trader, quote, leverage, baseLimit)
-				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
+				require.ErrorIs(t, err, collections.ErrNotFound)
 				require.Nil(t, resp)
 			},
 		},

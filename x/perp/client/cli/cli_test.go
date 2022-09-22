@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -105,7 +107,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
-	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
+	perpGenesis.PairMetadata = []perptypes.PairMetadata{
 		{
 			Pair: common.Pair_BTC_NUSD,
 			CumulativeFundingRates: []sdk.Dec{
@@ -362,7 +364,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		common.Pair_ETH_NUSD.String(),
 	}
 	out, _ := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), "no position found")
+	s.Contains(out.String(), collections.ErrNotFound.Error())
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
@@ -439,7 +441,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	// liquidate a position that does not exist
 	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), "no position found")
+	s.Contains(out.String(), collections.ErrNotFound.Error())
 	if err != nil {
 		s.T().Logf("user liquidate error: %+v", err)
 	}

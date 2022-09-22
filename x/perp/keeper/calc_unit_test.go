@@ -28,7 +28,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 					Token0: "",
 					Token1: "",
 				}, alice)
-				_, err := k.calcFreeCollateral(ctx, *pos)
+				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
 				require.ErrorIs(t, err, common.ErrInvalidTokenPair)
@@ -43,7 +43,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 
 				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
 
-				_, err := k.calcFreeCollateral(ctx, *pos)
+				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
 				require.ErrorIs(t, err, types.ErrPairNotFound)
@@ -59,7 +59,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 
 				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
 
-				freeCollateral, err := k.calcFreeCollateral(ctx, *pos)
+				freeCollateral, err := k.calcFreeCollateral(ctx, pos)
 
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.ZeroDec(), freeCollateral)
@@ -178,6 +178,55 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFreeCollateral, freeCollateral)
+		})
+	}
+}
+
+func TestGetLatestCumulativeFundingRate(t *testing.T) {
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "happy path",
+			test: func() {
+				keeper, _, ctx := getKeeper(t)
+
+				metadata := &types.PairMetadata{
+					Pair: common.Pair_NIBI_NUSD,
+					CumulativeFundingRates: []sdk.Dec{
+						sdk.NewDec(1),
+						sdk.NewDec(2), // returns the latest from the list
+					},
+				}
+				setPairMetadata(keeper, ctx, *metadata)
+
+				latestCumulativeFundingRate, err := keeper.
+					getLatestCumulativeFundingRate(ctx, common.Pair_NIBI_NUSD)
+
+				require.NoError(t, err)
+				assert.Equal(t, sdk.NewDec(2), latestCumulativeFundingRate)
+			},
+		},
+		{
+			name: "uninitialized vpool has no metadata | fail",
+			test: func() {
+				perpKeeper, _, ctx := getKeeper(t)
+				vpool := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
+				lcpf, err := perpKeeper.getLatestCumulativeFundingRate(
+					ctx, vpool)
+				require.Error(t, err)
+				assert.EqualValues(t, sdk.Dec{}, lcpf)
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
 		})
 	}
 }

@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,8 +30,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					ctx, types.Position{
 						Pair: common.Pair_NIBI_NUSD,
 					}, marginDelta)
-				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPairMetadataNotFound.Error())
+				require.ErrorIs(t, err, collections.ErrNotFound)
 			},
 		},
 		{
@@ -57,8 +58,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                   pair,
 					CumulativeFundingRates: fundingRates,
 				})
@@ -114,8 +114,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                   pair,
 					CumulativeFundingRates: fundingRates,
 				})

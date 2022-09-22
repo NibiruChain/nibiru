@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -17,132 +20,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
-
-func TestGetAndSetPosition(t *testing.T) {
-	testCases := []struct {
-		name string
-		test func()
-	}{
-		{
-			name: "get - no positions set raises vpool not found error",
-			test: func() {
-				trader := sample.AccAddress()
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-				pair := common.MustNewAssetPair("osmo:nusd")
-
-				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, trader)
-				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
-			},
-		},
-		{
-			name: "set - creating position with set works and shows up in get",
-			test: func() {
-				vpoolPair := common.MustNewAssetPair("osmo:nusd")
-
-				traderAddr := sample.AccAddress()
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-
-				_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
-				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
-
-				dummyPosition := &types.Position{
-					TraderAddress: traderAddr.String(),
-					Pair:          vpoolPair,
-					Size_:         sdk.OneDec(),
-					Margin:        sdk.OneDec(),
-				}
-				nibiruApp.PerpKeeper.PositionsState(ctx).Set(dummyPosition)
-				outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
-				require.NoError(t, err)
-				require.EqualValues(t, dummyPosition, outPosition)
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
-}
-
-func TestDeletePosition(t *testing.T) {
-	testCases := []struct {
-		name string
-		test func()
-	}{
-		{
-			name: "set - creating position with set works and shows up in get",
-			test: func() {
-				vpoolPair := common.MustNewAssetPair("osmo:nusd")
-
-				traders := []sdk.AccAddress{
-					sample.AccAddress(), sample.AccAddress(),
-				}
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-
-				t.Log("vpool contains no positions to start")
-				for _, trader := range traders {
-					_, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, trader)
-					require.Error(t, err)
-					require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
-				}
-
-				var dummyPositions []*types.Position
-				for _, traderAddr := range traders {
-					dummyPosition := &types.Position{
-						TraderAddress: traderAddr.String(),
-						Pair:          vpoolPair,
-						Size_:         sdk.OneDec(),
-						Margin:        sdk.OneDec(),
-					}
-					nibiruApp.PerpKeeper.PositionsState(ctx).Set(dummyPosition)
-					outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traderAddr)
-					require.NoError(t, err)
-					require.EqualValues(t, dummyPosition, outPosition)
-					t.Logf("position created successfully on vpool, %v, for trader %v",
-						vpoolPair, traderAddr.String())
-					dummyPositions = append(dummyPositions, dummyPosition)
-				}
-
-				t.Log("attempt to clear all positions")
-
-				require.NoError(t,
-					nibiruApp.PerpKeeper.PositionsState(ctx).Delete(vpoolPair, traders[0]),
-				)
-
-				outPosition, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[0])
-				require.ErrorIs(t, err, types.ErrPositionNotFound)
-				require.Nil(t, outPosition)
-
-				outPosition, err = nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[1])
-				require.NoError(t, err)
-				require.EqualValues(t, dummyPositions[1], outPosition)
-				t.Log("trader 1 has a position and trader 0 does not.")
-
-				t.Log("clearing position of trader 1...")
-				require.NoError(t,
-					nibiruApp.PerpKeeper.PositionsState(ctx).Delete(vpoolPair, traders[1]),
-				)
-
-				outPosition, err = nibiruApp.PerpKeeper.PositionsState(ctx).Get(vpoolPair, traders[1])
-				require.ErrorIs(t, err, types.ErrPositionNotFound)
-				require.Nil(t, outPosition)
-				t.Log("Success, all trader positions have been cleared.")
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
-}
 
 func TestKeeperClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
@@ -168,13 +45,11 @@ func TestKeeperClosePosition(t *testing.T) {
 		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
-		perpKeeper := &nibiruApp.PerpKeeper
-		perpKeeper.PairMetadataState(ctx).Set(
-			&types.PairMetadata{
-				Pair: pair,
-				CumulativeFundingRates: []sdk.Dec{
-					sdk.MustNewDecFromStr("0.2")},
-			},
+		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			Pair: pair,
+			CumulativeFundingRates: []sdk.Dec{
+				sdk.MustNewDecFromStr("0.2")},
+		},
 		)
 
 		t.Log("open position for alice - long")
@@ -195,7 +70,7 @@ func TestKeeperClosePosition(t *testing.T) {
 
 		t.Log("open position for bob - long")
 		// force funding payments
-		perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 			Pair: pair,
 			CumulativeFundingRates: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},
@@ -223,9 +98,9 @@ func TestKeeperClosePosition(t *testing.T) {
 		require.True(t, posResp.BadDebt.IsZero())
 		require.True(t, !posResp.FundingPayment.IsZero() && posResp.FundingPayment.IsPositive())
 
-		position, err := nibiruApp.PerpKeeper.PositionsState(ctx).Get(pair, alice)
-		require.ErrorIs(t, err, types.ErrPositionNotFound)
-		require.Nil(t, position)
+		position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(pair, keys.String(alice.String())))
+		require.ErrorIs(t, err, collections.ErrNotFound)
+		require.Empty(t, position)
 
 		// this tests the following issue https://github.com/NibiruChain/nibiru/issues/645
 		// in which opening a position from the same address on the same pair

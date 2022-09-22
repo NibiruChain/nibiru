@@ -19,13 +19,13 @@ func TestGenesisState_Validate(t *testing.T) {
 		"success": {
 			g: &GenesisState{
 				Params: DefaultParams(),
-				PairMetadata: []*PairMetadata{
+				PairMetadata: []PairMetadata{
 					{
 						Pair:                   common.MustNewAssetPair("pair1:pair2"),
 						CumulativeFundingRates: []sdk.Dec{sdk.MustNewDecFromStr("0.1")},
 					},
 				},
-				Positions: []*Position{
+				Positions: []Position{
 					{
 						TraderAddress:                  sample.AccAddress().String(),
 						Pair:                           common.MustNewAssetPair("valid:pair"),
@@ -36,7 +36,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						BlockNumber:                    0,
 					},
 				},
-				PrepaidBadDebts: []*PrepaidBadDebt{
+				PrepaidBadDebts: []PrepaidBadDebt{
 					{
 						Denom:  "pair",
 						Amount: sdk.NewInt(10),
@@ -52,7 +52,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		"bad position": {
 			g: &GenesisState{
 				Params: DefaultParams(),
-				Positions: []*Position{
+				Positions: []Position{
 					{
 						TraderAddress: sample.AccAddress().String(),
 						Pair:          common.AssetPair{},
@@ -62,12 +62,12 @@ func TestGenesisState_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		"bad pair metadata": {
-			g:       &GenesisState{Params: DefaultParams(), PairMetadata: []*PairMetadata{{Pair: common.AssetPair{}}}},
+			g:       &GenesisState{Params: DefaultParams(), PairMetadata: []PairMetadata{{Pair: common.AssetPair{}}}},
 			wantErr: true,
 		},
 
 		"bad prepaid bad debt": {
-			g: &GenesisState{Params: DefaultParams(), PrepaidBadDebts: []*PrepaidBadDebt{{
+			g: &GenesisState{Params: DefaultParams(), PrepaidBadDebts: []PrepaidBadDebt{{
 				Denom:  ":invalid:Denom",
 				Amount: sdk.Int{},
 			}}},

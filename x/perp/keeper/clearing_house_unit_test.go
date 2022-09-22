@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -208,8 +210,8 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(200), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				perpKeeper.PairMetadataState(ctx).Set(
-					&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx,
+					types.PairMetadata{
 						Pair: common.Pair_BTC_NUSD,
 						CumulativeFundingRates: []sdk.Dec{
 							sdk.ZeroDec(),
@@ -285,7 +287,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(99), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
 					CumulativeFundingRates: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -363,7 +365,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
 					CumulativeFundingRates: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -439,7 +441,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(50), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
 					CumulativeFundingRates: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -515,7 +517,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(101), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
 					CumulativeFundingRates: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -594,7 +596,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(105), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
 					CumulativeFundingRates: []sdk.Dec{
 						sdk.ZeroDec(),
@@ -854,9 +856,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("set up initial position")
-			perpKeeper.PositionsState(ctx).Set(
-				&tc.initialPosition,
-			)
+			setPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("mock vpool")
 			mocks.mockVpoolKeeper.EXPECT().
@@ -879,7 +879,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			perpKeeper.PairMetadataState(ctx).Set(&tc.pairMetadata)
+			setPairMetadata(perpKeeper, ctx, tc.pairMetadata)
 
 			t.Log("close position")
 			resp, err := perpKeeper.closePositionEntirely(
@@ -1175,7 +1175,7 @@ func TestDecreasePosition(t *testing.T) {
 				).Return( /*baseAssetAmount=*/ tc.baseAssetLimit, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.ZeroDec(),
@@ -1554,9 +1554,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				LatestCumulativeFundingPayment: sdk.ZeroDec(),
 				BlockNumber:                    0,
 			}
-			perpKeeper.PositionsState(ctx).Set(
-				&currentPosition,
-			)
+			setPosition(perpKeeper, ctx, currentPosition)
 
 			t.Log("mock vpool")
 			mocks.mockVpoolKeeper.EXPECT().
@@ -1591,7 +1589,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			}
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
@@ -1644,7 +1642,7 @@ func TestTransferFee(t *testing.T) {
 		metadata := &types.PairMetadata{
 			Pair: pair,
 		}
-		perpKeeper.PairMetadataState(ctx).Set(metadata)
+		setPairMetadata(perpKeeper, ctx, *metadata)
 		trader = sample.AccAddress()
 		positionNotional = sdk.NewDec(5_000)
 		return perpKeeper, mocks, ctx, pair, trader, positionNotional
@@ -1837,7 +1835,7 @@ func TestClosePosition(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
+			setPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -1894,7 +1892,7 @@ func TestClosePosition(t *testing.T) {
 				Return(sdk.AccAddress{0x1, 0x2, 0x3})
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
@@ -2005,7 +2003,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			perpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
+			setPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
 			perpKeeper.SetParams(ctx, types.DefaultParams())
@@ -2032,7 +2030,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
@@ -2050,4 +2048,12 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.Nil(t, resp)
 		})
 	}
+}
+
+func setPosition(k Keeper, ctx sdk.Context, pos types.Position) {
+	k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
+}
+
+func setPairMetadata(k Keeper, ctx sdk.Context, pm types.PairMetadata) {
+	k.PairsMetadata.Insert(ctx, pm.Pair, pm)
 }

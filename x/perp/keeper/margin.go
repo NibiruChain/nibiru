@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -24,12 +26,12 @@ func (k Keeper) AddMargin(
 	}
 
 	// ------------- AddMargin -------------
-	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
+	position, err := k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 	if err != nil {
 		return nil, err
 	}
 
-	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(ctx, *position, margin.Amount.ToDec())
+	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(ctx, position, margin.Amount.ToDec())
 	if err != nil {
 		return nil, err
 	}
@@ -50,9 +52,9 @@ func (k Keeper) AddMargin(
 	position.Margin = remainingMargin.Margin
 	position.LatestCumulativeFundingPayment = remainingMargin.LatestCumulativeFundingRate
 	position.BlockNumber = ctx.BlockHeight()
-	k.PositionsState(ctx).Set(position)
+	k.Positions.Insert(ctx, keys.Join(position.Pair, keys.String(position.TraderAddress)), position)
 
-	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +88,7 @@ func (k Keeper) AddMargin(
 
 	return &types.MsgAddMarginResponse{
 		FundingPayment: remainingMargin.FundingPayment,
-		Position:       position,
+		Position:       &position,
 	}, nil
 }
 
@@ -111,51 +113,51 @@ ret:
 */
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, margin sdk.Coin,
-) (marginOut sdk.Coin, fundingPayment sdk.Dec, position *types.Position, err error) {
+) (marginOut sdk.Coin, fundingPayment sdk.Dec, position types.Position, err error) {
 	// validate vpool exists
 	if err = k.requireVpool(ctx, pair); err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
 	// ------------- RemoveMargin -------------
-	position, err = k.PositionsState(ctx).Get(pair, traderAddr)
+	position, err = k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
 	marginDelta := margin.Amount.Neg()
-	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(ctx, *position, marginDelta.ToDec())
+	remainingMargin, err := k.CalcRemainMarginWithFundingPayment(ctx, position, marginDelta.ToDec())
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 	if !remainingMargin.BadDebt.IsZero() {
-		return sdk.Coin{}, sdk.Dec{}, nil, types.ErrFailedRemoveMarginCanCauseBadDebt
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, types.ErrFailedRemoveMarginCanCauseBadDebt
 	}
 
 	position.Margin = remainingMargin.Margin
 	position.LatestCumulativeFundingPayment = remainingMargin.LatestCumulativeFundingRate
 
-	freeCollateral, err := k.calcFreeCollateral(ctx, *position)
+	freeCollateral, err := k.calcFreeCollateral(ctx, position)
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	} else if !freeCollateral.IsPositive() {
-		return sdk.Coin{}, sdk.Dec{}, nil, fmt.Errorf("not enough free collateral")
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, fmt.Errorf("not enough free collateral")
 	}
 
-	k.PositionsState(ctx).Set(position)
+	k.Positions.Insert(ctx, keys.Join(position.Pair, keys.String(position.TraderAddress)), position)
 
-	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
 	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
 	if err = k.Withdraw(ctx, pair.QuoteDenom(), traderAddr, margin.Amount); err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
 	if err = ctx.EventManager().EmitTypedEvent(
@@ -177,7 +179,7 @@ func (k Keeper) RemoveMargin(
 			LiquidationPenalty:    sdk.ZeroDec(),
 		},
 	); err != nil {
-		return sdk.Coin{}, sdk.Dec{}, nil, err
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
 	return margin, remainingMargin.FundingPayment, position, nil

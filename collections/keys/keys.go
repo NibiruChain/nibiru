@@ -8,7 +8,12 @@ import (
 type Order uint8
 
 const (
+	// OrderAscending defines an order going from the
+	// smallest key to the biggest key.
 	OrderAscending Order = iota
+	// OrderDescending defines an order going from the
+	// biggest key to the smallest. In the KVStore
+	// it equals to iterating in reverse.
 	OrderDescending
 )
 

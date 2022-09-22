@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -44,11 +47,11 @@ func (k Keeper) OpenPosition(
 	// require params
 	params := k.GetParams(ctx)
 
-	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
-	isNewPosition := errors.Is(err, types.ErrPositionNotFound)
+	position, err := k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
+	isNewPosition := errors.Is(err, collections.ErrNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-		k.PositionsState(ctx).Set(position)
+		k.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), position)
 	} else if err != nil && !isNewPosition {
 		return nil, err
 	}
@@ -60,7 +63,7 @@ func (k Keeper) OpenPosition(
 		// increase position case
 		positionResp, err = k.increasePosition(
 			ctx,
-			*position,
+			position,
 			side,
 			/* openNotional */ leverage.MulInt(quoteAssetAmount),
 			/* minPositionSize */ baseAmtLimit,
@@ -72,7 +75,7 @@ func (k Keeper) OpenPosition(
 		// everything else decreases the position
 		positionResp, err = k.openReversePosition(
 			ctx,
-			*position,
+			position,
 			/* quoteAssetAmount */ quoteAssetAmount.ToDec(),
 			/* leverage */ leverage,
 			/* baseAmtLimit */ baseAmtLimit,
@@ -126,7 +129,7 @@ func (k Keeper) afterPositionUpdate(
 ) (err error) {
 	// update position in state
 	if !positionResp.Position.Size_.IsZero() {
-		k.PositionsState(ctx).Set(positionResp.Position)
+		k.Positions.Insert(ctx, keys.Join(pair, keys.String(traderAddr.String())), *positionResp.Position)
 	}
 
 	if !positionResp.BadDebt.IsZero() {
@@ -525,7 +528,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		)
 		increasePositionResp, err := k.increasePosition(
 			ctx,
-			*newPosition,
+			newPosition,
 			sideToTake,
 			remainingReverseNotionalValue,
 			updatedBaseAmtLimit,
@@ -641,10 +644,8 @@ func (k Keeper) closePositionEntirely(
 		BlockNumber:                    ctx.BlockHeight(),
 	}
 
-	if err = k.PositionsState(ctx).Delete(
-		currentPosition.Pair,
-		trader,
-	); err != nil {
+	err = k.Positions.Delete(ctx, keys.Join(currentPosition.Pair, keys.String(trader.String())))
+	if err != nil {
 		return nil, err
 	}
 
@@ -665,14 +666,14 @@ ret:
   - err: error if any
 */
 func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
-	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
+	position, err := k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 	if err != nil {
 		return nil, err
 	}
 
 	positionResp, err := k.closePositionEntirely(
 		ctx,
-		*position,
+		position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ false,
 	)

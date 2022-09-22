@@ -3,6 +3,10 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -21,6 +25,10 @@ type Keeper struct {
 	PricefeedKeeper types.PricefeedKeeper
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
+
+	Positions      collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position]
+	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
+	PrepaidBadDebt collections.Map[keys.StringKey, types.PrepaidBadDebt, *types.PrepaidBadDebt]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -46,15 +54,17 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		ParamSubspace: paramSubspace,
-
-		AccountKeeper:   accountKeeper,
+		cdc:             cdc,
+		storeKey:        storeKey,
+		ParamSubspace:   paramSubspace,
 		BankKeeper:      bankKeeper,
+		AccountKeeper:   accountKeeper,
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
+		Positions:       collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position](cdc, storeKey, 0),
+		PairsMetadata:   collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
+		PrepaidBadDebt:  collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
 	}
 }
 
@@ -63,12 +73,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetParams get all parameters as types.Params
-func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.ParamSubspace.GetParamSet(ctx, &params)
 	return params
 }
 
 // SetParams set the params
-func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) {
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.ParamSubspace.SetParamSet(ctx, &params)
 }
