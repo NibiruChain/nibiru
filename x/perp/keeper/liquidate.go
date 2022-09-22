@@ -342,3 +342,53 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	return liquidationResponse, err
 }
+
+type MultiLiquidationRequest struct {
+	pair   common.AssetPair
+	trader sdk.AccAddress
+}
+
+type MultiLiquidationResponse struct {
+	success *types.MsgLiquidateResponse
+	error   error
+}
+
+func (m MultiLiquidationResponse) IntoMultiLiquidateResponse() *types.MsgMultiLiquidateResponse_MultiLiquidateResponse {
+	if m.success != nil {
+		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{
+			Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation{
+				Liquidation: m.success}}
+	} else {
+		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error{Error: m.error.Error()}}
+	}
+}
+
+func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, positions []MultiLiquidationRequest) []MultiLiquidationResponse {
+	liquidate := func(ctx sdk.Context, liquidator sdk.AccAddress, pair common.AssetPair, trader sdk.AccAddress) (*types.MsgLiquidateResponse, error) {
+		feeToLiquidator, feeToFund, err := k.Liquidate(ctx, liquidator, pair, trader)
+		if err != nil {
+			return nil, err
+		}
+
+		return &types.MsgLiquidateResponse{
+			FeeToLiquidator:        feeToLiquidator,
+			FeeToPerpEcosystemFund: feeToFund,
+		}, nil
+	}
+
+	resp := make([]MultiLiquidationResponse, len(positions))
+
+	for i, position := range positions {
+		cachedCtx, commit := ctx.CacheContext()
+		liq, err := liquidate(cachedCtx, liquidator, position.pair, position.trader)
+		if err != nil {
+			resp[i] = MultiLiquidationResponse{error: err}
+		} else {
+			resp[i] = MultiLiquidationResponse{success: liq}
+			ctx.EventManager().EmitEvents(cachedCtx.EventManager().Events())
+			commit()
+		}
+	}
+
+	return resp
+}

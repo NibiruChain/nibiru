@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#900](https://github.com/NibiruChain/nibiru/pull/900) - fix x/vpool twap calculation to be bounded in time
 * [#919](https://github.com/NibiruChain/nibiru/pull/919) - refactor(proto): vpool module files consistency
   * MarkPriceChanged renamed to MarkPriceChangedEvent
+* [#875](https://github.com/NibiruChain/nibiru/pull/875) - x/perp add MsgMultiLiquidate
 
 ### Improvements
 
