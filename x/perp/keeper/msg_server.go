@@ -35,7 +35,7 @@ func (m msgServer) RemoveMargin(ctx context.Context, msg *types.MsgRemoveMargin,
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      marginOut,
 		FundingPayment: fundingPayment,
-		Position:       position,
+		Position:       &position,
 	}, nil
 }
 

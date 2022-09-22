@@ -1,7 +1,8 @@
 package perp
 
 import (
-	"fmt"
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -14,15 +15,12 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// set pair metadata
 	for _, p := range genState.PairMetadata {
-		k.PairMetadataState(ctx).Set(p)
+		k.PairsMetadata.Insert(ctx, p.Pair, p)
 	}
 
 	// create positions
 	for _, p := range genState.Positions {
-		err := k.PositionsState(ctx).Create(p)
-		if err != nil {
-			panic(fmt.Errorf("unable to re-create position %s: %w", p, err))
-		}
+		k.Positions.Insert(ctx, keys.Join(p.Pair, keys.String(p.TraderAddress)), p)
 	}
 
 	// set params
@@ -30,7 +28,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set prepaid debt position
 	for _, pbd := range genState.PrepaidBadDebts {
-		k.PrepaidBadDebtState(ctx).Set(pbd.Denom, pbd.Amount)
+		k.PrepaidBadDebt.Insert(ctx, keys.String(pbd.Denom), pbd)
 	}
 }
 
@@ -41,23 +39,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 
 	// export positions
-	k.PositionsState(ctx).Iterate(func(position *types.Position) (stop bool) {
-		genesis.Positions = append(genesis.Positions, position)
-		return false
-	})
+	genesis.Positions = k.Positions.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]()).Values()
 
 	// export prepaid bad debt
-	k.PrepaidBadDebtState(ctx).Iterate(func(denom string, amount sdk.Int) (stop bool) {
-		genesis.PrepaidBadDebts = append(genesis.PrepaidBadDebts, &types.PrepaidBadDebt{
-			Denom:  denom,
-			Amount: amount,
-		})
-		return false
-	})
+	genesis.PrepaidBadDebts = k.PrepaidBadDebt.Iterate(ctx, keys.NewRange[keys.StringKey]()).Values()
 
 	// export pairMetadata
-	metadata := k.PairMetadataState(ctx).GetAll()
-	genesis.PairMetadata = metadata
+	genesis.PairMetadata = k.PairsMetadata.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
 
 	return genesis
 }

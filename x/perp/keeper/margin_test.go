@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -76,18 +78,16 @@ func TestAddMarginSuccess(t *testing.T) {
 			require.True(t, vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD))
 
 			t.Log("set pair metadata")
-			perpKeeper := &nibiruApp.PerpKeeper
-			perpKeeper.PairMetadataState(ctx).Set(
-				&types.PairMetadata{
-					Pair: common.Pair_BTC_NUSD,
-					CumulativeFundingRates: []sdk.Dec{
-						tc.latestCumulativeFundingRate,
-					},
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				Pair: common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{
+					tc.latestCumulativeFundingRate,
 				},
+			},
 			)
 
 			t.Log("establish initial position")
-			nibiruApp.PerpKeeper.PositionsState(ctx).Set(&tc.initialPosition)
+			setPosition(nibiruApp.PerpKeeper, ctx, tc.initialPosition)
 
 			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, common.Pair_BTC_NUSD, traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestRemoveMargin(t *testing.T) {
 				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
 
 				require.Error(t, err)
-				require.ErrorContains(t, err, types.ErrPositionNotFound.Error())
+				require.ErrorContains(t, err, collections.ErrNotFound.Error())
 			},
 		},
 		{
@@ -181,8 +181,7 @@ func TestRemoveMargin(t *testing.T) {
 				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper := &nibiruApp.PerpKeeper
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                   pair,
 					CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
 				})
@@ -197,6 +196,7 @@ func TestRemoveMargin(t *testing.T) {
 				)
 
 				t.Log("Open long position with 5x leverage")
+				perpKeeper := nibiruApp.PerpKeeper
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(5)
