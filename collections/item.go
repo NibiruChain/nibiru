@@ -47,12 +47,12 @@ func (i Item[V, PV]) getStore(ctx sdk.Context) sdk.KVStore {
 func (i Item[V, PV]) Get(ctx sdk.Context) (V, error) {
 	s := i.getStore(ctx)
 	bytes := s.Get(itemKey)
+
+	var v V
 	if bytes == nil {
-		var v V
 		return v, notFoundError(i.typeName, "item")
 	}
 
-	var v V
 	i.cdc.unmarshal(bytes, PV(&v))
 	return v, nil
 }
