@@ -41,6 +41,16 @@ func TestNewAssetPair_Constructor(t *testing.T) {
 			fmt.Sprintf("%s%s%s", "", common.PairSeparator, "eth"),
 			fmt.Errorf("empty token identifiers are not allowed"),
 		},
+		{
+			"invalid denom 1",
+			fmt.Sprintf("-invalid1%svalid", common.PairSeparator),
+			fmt.Errorf("invalid denom"),
+		},
+		{
+			"invalid denom 2",
+			fmt.Sprintf("valid%s-invalid2", common.PairSeparator),
+			fmt.Errorf("invalid denom"),
+		},
 	}
 
 	for _, tc := range tests {
