@@ -30,23 +30,10 @@ proto-gen:
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v "$(CURDIR)":/workspace --workdir /workspace $(containerProtoImage) \
 		sh ./scripts/protocgen.sh; fi
 
-proto-swagger-gen:
+proto-swagger-gen: statik
 	@echo "Generating Protobuf Swagger"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenSwagger}$$"; then docker start -a $(containerProtoGenSwagger); else docker run --name $(containerProtoGenSwagger) -v "$(CURDIR)":/workspace --workdir /workspace $(containerProtoImage) \
 		sh ./scripts/protoc-swagger-gen.sh; fi
-
-.PHONY: proto
-
-###############################################################################
-###                              Documentation                              ###
-###############################################################################
-
-statik: $(STATIK)
-$(STATIK):
-	@echo "Installing statik..."
-	@(cd /tmp && go get github.com/rakyll/statik@v0.1.6)
-
-update-swagger-docs: statik
 	$(BINDIR)/statik -src=client/docs/swagger -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
         echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
@@ -54,7 +41,17 @@ update-swagger-docs: statik
     else \
         echo "\033[92mSwagger docs are in sync\033[0m";\
     fi
-.PHONY: update-swagger-docs
+
+.PHONY: proto
+
+###############################################################################
+###                              DevTools                                   ###
+###############################################################################
+
+statik: $(STATIK)
+$(STATIK):
+	@echo "Installing statik..."
+	@(cd /tmp && go get github.com/rakyll/statik@v0.1.6)
 
 ###############################################################################
 ###                               Build Flags                               ###
