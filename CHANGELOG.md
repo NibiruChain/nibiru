@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
 
 ### State Machine Breaking
+* [#960](https://github.com/NibiruChain/nibiru/pull/960) - x/common validate asset pair denoms
 * [#952](https://github.com/NibiruChain/nibiru/pull/952) - x/perp move state logic to collections
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
 * [#878](https://github.com/NibiruChain/nibiru/pull/878) - rename `PremiumFraction` to `FundingRate`
