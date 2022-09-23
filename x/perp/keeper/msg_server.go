@@ -125,3 +125,22 @@ func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 		FeeToPerpEcosystemFund: feeToFund,
 	}, nil
 }
+
+func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiquidate) (*types.MsgMultiLiquidateResponse, error) {
+	positions := make([]MultiLiquidationRequest, len(req.Liquidations))
+	for i, pos := range req.Liquidations {
+		positions[i] = MultiLiquidationRequest{
+			pair:   common.MustNewAssetPair(pos.TokenPair),
+			trader: sdk.MustAccAddressFromBech32(pos.Trader),
+		}
+	}
+
+	resp := m.k.MultiLiquidate(sdk.UnwrapSDKContext(goCtx), sdk.MustAccAddressFromBech32(req.Sender), positions)
+
+	liqResp := make([]*types.MsgMultiLiquidateResponse_MultiLiquidateResponse, len(resp))
+	for i, r := range resp {
+		liqResp[i] = r.IntoMultiLiquidateResponse()
+	}
+
+	return &types.MsgMultiLiquidateResponse{LiquidationResponses: liqResp}, nil
+}
