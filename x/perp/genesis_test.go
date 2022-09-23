@@ -39,13 +39,13 @@ func TestGenesis(t *testing.T) {
 		for i := int64(0); i < 100; i++ {
 			addr := sample.AccAddress().String()
 			app.PerpKeeper.Positions.Insert(ctx, keys.Join(common.Pair_NIBI_NUSD, keys.String(addr)), types.Position{
-				TraderAddress:                  addr,
-				Pair:                           common.Pair_NIBI_NUSD,
-				Size_:                          sdk.NewDec(i + 1),
-				Margin:                         sdk.NewDec(i * 2),
-				OpenNotional:                   sdk.NewDec(i * 100),
-				LatestCumulativeFundingPayment: sdk.NewDec(5 * 100),
-				BlockNumber:                    i,
+				TraderAddress:                   addr,
+				Pair:                            common.Pair_NIBI_NUSD,
+				Size_:                           sdk.NewDec(i + 1),
+				Margin:                          sdk.NewDec(i * 2),
+				OpenNotional:                    sdk.NewDec(i * 100),
+				LatestCumulativePremiumFraction: sdk.NewDec(5 * 100),
+				BlockNumber:                     i,
 			})
 		}
 
