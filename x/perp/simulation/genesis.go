@@ -48,7 +48,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	perpGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
-		PairMetadata: []*types.PairMetadata{
+		PairMetadata: []types.PairMetadata{
 			{
 				Pair:                   common.Pair_BTC_NUSD,
 				CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
