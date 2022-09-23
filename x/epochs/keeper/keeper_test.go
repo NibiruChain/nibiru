@@ -36,3 +36,20 @@ func TestEpochLifeCycle(t *testing.T) {
 	require.Equal(t, "monthly", allEpochs[3].Identifier)
 	require.Equal(t, "week", allEpochs[4].Identifier)
 }
+
+func TestEpochExists(t *testing.T) {
+	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+
+	epochInfo := types.EpochInfo{
+		Identifier:            "monthly",
+		StartTime:             time.Time{},
+		Duration:              time.Hour * 24 * 30,
+		CurrentEpoch:          0,
+		CurrentEpochStartTime: time.Time{},
+		EpochCountingStarted:  false,
+	}
+	nibiruApp.EpochsKeeper.SetEpochInfo(ctx, epochInfo)
+
+	require.True(t, nibiruApp.EpochsKeeper.EpochExists(ctx, "monthly"))
+	require.False(t, nibiruApp.EpochsKeeper.EpochExists(ctx, "unexisting-epoch"))
+}
