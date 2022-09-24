@@ -65,5 +65,11 @@ func TestItFailsAddingEpochThatExists(t *testing.T) {
 		CurrentEpochStartTime: time.Time{},
 		EpochCountingStarted:  false,
 	}
-	nibiruApp.EpochsKeeper.UpsertEpochInfo(ctx, epochInfo)
+
+	err := nibiruApp.EpochsKeeper.AddEpochInfo(ctx, epochInfo)
+	require.NoError(t, err)
+
+	// It fails if we try to add it again.
+	err = nibiruApp.EpochsKeeper.AddEpochInfo(ctx, epochInfo)
+	require.Error(t, err)
 }
