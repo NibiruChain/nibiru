@@ -3,6 +3,9 @@ package keeper
 import (
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
@@ -18,7 +21,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		return
 	}
 
-	for _, pairMetadata := range k.PairMetadataState(ctx).GetAll() {
+	for _, pairMetadata := range k.PairsMetadata.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values() {
 		if !k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
@@ -46,7 +49,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-		fundingRate := markPrice.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
+		fundingRate := markPrice.Sub(indexTWAP).Quo(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
 		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
 		cumulativeFundingRate := fundingRate
@@ -55,7 +58,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ int64) 
 		}
 
 		pairMetadata.CumulativeFundingRates = append(pairMetadata.CumulativeFundingRates, cumulativeFundingRate)
-		k.PairMetadataState(ctx).Set(pairMetadata)
+		k.PairsMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                  pairMetadata.Pair.String(),

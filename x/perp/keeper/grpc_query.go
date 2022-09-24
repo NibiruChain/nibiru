@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,7 +29,7 @@ func (q queryServer) QueryTraderPosition(
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	trader, err := sdk.AccAddressFromBech32(req.Trader)
+	_, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
 	if err != nil {
 		return nil, err
 	}
@@ -39,21 +41,25 @@ func (q queryServer) QueryTraderPosition(
 		return nil, err
 	}
 
-	position, err := q.k.PositionsState(ctx).Get(pair, trader)
+	return q.traderPosition(ctx, pair, req.Trader)
+}
+
+func (q queryServer) traderPosition(ctx sdk.Context, pair common.AssetPair, trader string) (*types.QueryTraderPositionResponse, error) {
+	position, err := q.k.Positions.Get(ctx, keys.Join(pair, keys.String(trader)))
 	if err != nil {
 		return nil, err
 	}
 
-	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, *position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	marginRatioMark, err := q.k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatioMark, err := q.k.GetMarginRatio(ctx, position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
 	}
-	marginRatioIndex, err := q.k.GetMarginRatio(ctx, *position, types.MarginCalculationPriceOption_INDEX)
+	marginRatioIndex, err := q.k.GetMarginRatio(ctx, position, types.MarginCalculationPriceOption_INDEX)
 	if err != nil {
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.
@@ -62,7 +68,7 @@ func (q queryServer) QueryTraderPosition(
 	}
 
 	return &types.QueryTraderPositionResponse{
-		Position:         position,
+		Position:         &position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
 		MarginRatioMark:  marginRatioMark,
@@ -95,7 +101,7 @@ func (q queryServer) FundingRates(
 		return nil, status.Errorf(codes.InvalidArgument, "invalid pair: %s", req.Pair)
 	}
 
-	pairMetadata, err := q.k.PairMetadataState(ctx).Get(assetPair)
+	pairMetadata, err := q.k.PairsMetadata.Get(ctx, assetPair)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
