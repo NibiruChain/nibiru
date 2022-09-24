@@ -99,9 +99,17 @@ func (q queryServer) QueryPrices(goCtx context.Context, req *types.QueryPricesRe
 	var currentPrices types.CurrentPriceResponses
 	for _, currentPrice := range q.k.GetCurrentPrices(ctx) {
 		if currentPrice.PairID != "" {
+			tokens := strings.Split(currentPrice.PairID, common.PairSeparator)
+			token0, token1 := tokens[0], tokens[1]
+
+			twap, err := q.k.GetCurrentTWAP(ctx, token0, token1)
+			if err != nil {
+				return nil, err
+			}
 			currentPrices = append(currentPrices, types.CurrentPriceResponse{
 				PairID: currentPrice.PairID,
 				Price:  currentPrice.Price,
+				Twap:   twap,
 			})
 		}
 	}

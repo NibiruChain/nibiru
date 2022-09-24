@@ -303,12 +303,12 @@ func (s IntegrationTestSuite) TestPricesCmd() {
 				{
 					PairID: common.Pair_NIBI_NUSD.String(),
 					Price:  sdk.NewDec(10),
-					Twap:   sdk.ZeroDec(),
+					Twap:   sdk.NewDec(10),
 				},
 				{
 					PairID: common.Pair_USDC_NUSD.String(),
 					Price:  sdk.NewDec(1),
-					Twap:   sdk.ZeroDec(),
+					Twap:   sdk.NewDec(1),
 				},
 			},
 			respType: &pricefeedtypes.QueryPricesResponse{},
