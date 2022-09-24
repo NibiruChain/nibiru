@@ -85,6 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#920](https://github.com/NibiruChain/nibiru/pull/920) - refactor(proto): pricefeed module files consistency
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
 * [#932](https://github.com/NibiruChain/nibiru/pull/932) - refactor(perp): rename premium fraction to funding rate
+* [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
+* [#956](https://github.com/NibiruChain/nibiru/pull/956) - test(perp): partial liquidate unit test
 
 ### Features
 
@@ -92,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
 
 ### Fixes
-
+  
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks
 * [#874](https://github.com/NibiruChain/nibiru/pull/874) - fix --home issue with unsafe-reset-all command, updating tendermint to v0.34.21
 * [#892](https://github.com/NibiruChain/nibiru/pull/892) - chore: fix localnet script
