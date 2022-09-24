@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/simapp"
 

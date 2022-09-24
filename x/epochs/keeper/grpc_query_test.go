@@ -2,12 +2,14 @@ package keeper_test
 
 import (
 	gocontext "context"
-	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/epochs/keeper"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
