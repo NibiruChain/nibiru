@@ -70,11 +70,15 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 // - the current epoch start time plus the duration of the epoch
 func checkIfEpochShouldStart(epochInfo types.EpochInfo, ctx sdk.Context) bool {
 	// Epoch has not started yet
-	shouldInitialEpochStart := !epochInfo.EpochCountingStarted
+	if !epochInfo.EpochCountingStarted {
+		return true
+	}
 
 	epochEndTime := epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 	// StartTime is set to a pinpointed timestamp that is after the default value of CurrentEpochStartTime (=0).
-	shouldEpochStart := shouldInitialEpochStart || ctx.BlockTime().After(epochEndTime)
+	if ctx.BlockTime().After(epochEndTime) {
+		return true
+	}
 
-	return shouldEpochStart
+	return false
 }
