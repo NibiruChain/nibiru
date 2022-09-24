@@ -152,4 +152,13 @@ func TestQueryPrice(t *testing.T) {
 			Twap:   sdk.MustNewDecFromStr("23333.333333333333333333"),
 		},
 	}, *resp)
+
+	respQueryPrice, err := querier.QueryPrices(sdk.WrapSDKContext(ctx), &types.QueryPricesRequest{})
+	require.Nil(t, err)
+
+	assert.Equal(t, types.CurrentPriceResponse{
+		PairID: "ubtc:uusd",
+		Price:  sdk.NewDec(30_000),
+		Twap:   sdk.MustNewDecFromStr("23333.333333333333333333"),
+	}, respQueryPrice.Prices[0])
 }
