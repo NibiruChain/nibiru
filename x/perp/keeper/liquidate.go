@@ -3,6 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -34,14 +36,14 @@ func (k Keeper) Liquidate(
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	position, err := k.PositionsState(ctx).Get(pair, traderAddr)
+	position, err := k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	marginRatio, err := k.GetMarginRatio(
 		ctx,
-		*position,
+		position,
 		types.MarginCalculationPriceOption_MAX_PNL,
 	)
 	if err != nil {
@@ -50,7 +52,7 @@ func (k Keeper) Liquidate(
 
 	if k.VpoolKeeper.IsOverSpreadLimit(ctx, pair) {
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
-			ctx, *position, types.MarginCalculationPriceOption_INDEX)
+			ctx, position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
 			return sdk.Coin{}, sdk.Coin{}, err
 		}
@@ -67,16 +69,16 @@ func (k Keeper) Liquidate(
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
-		ctx, *position, types.MarginCalculationPriceOption_SPOT)
+		ctx, position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	var liquidationResponse types.LiquidateResp
 	if marginRatioBasedOnSpot.GTE(params.LiquidationFeeRatio) {
-		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidatorAddr, position)
+		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidatorAddr, &position)
 	} else {
-		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidatorAddr, position)
+		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
 	}
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -297,7 +299,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.PositionsState(ctx).Set(positionResp.Position)
+	k.Positions.Insert(ctx, keys.Join(positionResp.Position.Pair, keys.String(positionResp.Position.TraderAddress)), *positionResp.Position)
 
 	// Compute splits for the liquidation fee
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)
@@ -339,4 +341,54 @@ func (k Keeper) ExecutePartialLiquidation(
 	})
 
 	return liquidationResponse, err
+}
+
+type MultiLiquidationRequest struct {
+	pair   common.AssetPair
+	trader sdk.AccAddress
+}
+
+type MultiLiquidationResponse struct {
+	success *types.MsgLiquidateResponse
+	error   error
+}
+
+func (m MultiLiquidationResponse) IntoMultiLiquidateResponse() *types.MsgMultiLiquidateResponse_MultiLiquidateResponse {
+	if m.success != nil {
+		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{
+			Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation{
+				Liquidation: m.success}}
+	} else {
+		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error{Error: m.error.Error()}}
+	}
+}
+
+func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, positions []MultiLiquidationRequest) []MultiLiquidationResponse {
+	liquidate := func(ctx sdk.Context, liquidator sdk.AccAddress, pair common.AssetPair, trader sdk.AccAddress) (*types.MsgLiquidateResponse, error) {
+		feeToLiquidator, feeToFund, err := k.Liquidate(ctx, liquidator, pair, trader)
+		if err != nil {
+			return nil, err
+		}
+
+		return &types.MsgLiquidateResponse{
+			FeeToLiquidator:        feeToLiquidator,
+			FeeToPerpEcosystemFund: feeToFund,
+		}, nil
+	}
+
+	resp := make([]MultiLiquidationResponse, len(positions))
+
+	for i, position := range positions {
+		cachedCtx, commit := ctx.CacheContext()
+		liq, err := liquidate(cachedCtx, liquidator, position.pair, position.trader)
+		if err != nil {
+			resp[i] = MultiLiquidationResponse{error: err}
+		} else {
+			resp[i] = MultiLiquidationResponse{success: liq}
+			ctx.EventManager().EmitEvents(cachedCtx.EventManager().Events())
+			commit()
+		}
+	}
+
+	return resp
 }

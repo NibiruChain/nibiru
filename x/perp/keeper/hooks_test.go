@@ -63,13 +63,13 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			name:                           "calculate funding rate with higher index price",
 			markPrice:                      sdk.NewDec(19),
 			indexPrice:                     sdk.NewDec(462),
-			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("-18.458333333333333333")},
+			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("-0.039953102453102453")},
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
 				Pair:                  common.Pair_BTC_NUSD.String(),
 				MarkPrice:             sdk.NewDec(19),
 				IndexPrice:            sdk.NewDec(462),
-				LatestFundingRate:     sdk.MustNewDecFromStr("-18.458333333333333333"),
-				CumulativeFundingRate: sdk.MustNewDecFromStr("-18.458333333333333333"),
+				LatestFundingRate:     sdk.MustNewDecFromStr("-0.039953102453102453"),
+				CumulativeFundingRate: sdk.MustNewDecFromStr("-0.039953102453102453"),
 				BlockHeight:           1,
 				BlockTimeMs:           1,
 			},
@@ -78,13 +78,13 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			name:                           "calculate funding rate with higher mark price",
 			markPrice:                      sdk.NewDec(745),
 			indexPrice:                     sdk.NewDec(64),
-			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("28.375")},
+			expectedCumulativeFundingRates: []sdk.Dec{sdk.ZeroDec(), sdk.MustNewDecFromStr("0.443359375000000000")},
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
 				Pair:                  common.Pair_BTC_NUSD.String(),
 				MarkPrice:             sdk.NewDec(745),
 				IndexPrice:            sdk.NewDec(64),
-				LatestFundingRate:     sdk.MustNewDecFromStr("28.375"),
-				CumulativeFundingRate: sdk.MustNewDecFromStr("28.375"),
+				LatestFundingRate:     sdk.MustNewDecFromStr("0.443359375000000000"),
+				CumulativeFundingRate: sdk.MustNewDecFromStr("0.443359375000000000"),
 				BlockHeight:           1,
 				BlockTimeMs:           1,
 			},
@@ -104,7 +104,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			perpKeeper.AfterEpochEnd(ctx, "30 min", 1)
 
 			t.Log("assert PairMetadataState")
-			pair, err := perpKeeper.PairMetadataState(ctx).Get(common.Pair_BTC_NUSD)
+			pair, err := perpKeeper.PairsMetadata.Get(ctx, common.Pair_BTC_NUSD)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedCumulativeFundingRates, pair.CumulativeFundingRates)
 
@@ -126,7 +126,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		FundingRateInterval:     "30 min",
 		TwapLookbackWindow:      15 * time.Minute,
 	})
-	k.PairMetadataState(ctx).Set(&types.PairMetadata{
+	setPairMetadata(k, ctx, types.PairMetadata{
 		Pair: common.Pair_BTC_NUSD,
 		// start with one entry to ensure we append
 		CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
