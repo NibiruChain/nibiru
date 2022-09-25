@@ -20,17 +20,14 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 			return false
 		}
 
-		logger := k.Logger(ctx)
-
-		shouldEpochStart := checkIfEpochShouldStart(epochInfo, ctx)
-
-		if !shouldEpochStart {
+		if !shouldEpochStart(epochInfo, ctx) {
 			return false
 		}
 
 		// we deduced that a new epoch tick should happen
 		epochInfo.CurrentEpochStartHeight = ctx.BlockHeight()
 
+		logger := k.Logger(ctx)
 		if !epochInfo.EpochCountingStarted {
 			epochInfo.EpochCountingStarted = true
 			epochInfo.CurrentEpoch = 1
@@ -64,21 +61,17 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 	})
 }
 
-// checkIfEpochShouldStart checks if the epoch should start.
+// shouldEpochStart checks if the epoch should start.
 // an epoch is ready to start if:
 // - it has not yet been initialized.
-// - the current epoch start time plus the duration of the epoch
-func checkIfEpochShouldStart(epochInfo types.EpochInfo, ctx sdk.Context) bool {
+// - the current epoch end time is before the current block time
+func shouldEpochStart(epochInfo types.EpochInfo, ctx sdk.Context) bool {
 	// Epoch has not started yet
 	if !epochInfo.EpochCountingStarted {
 		return true
 	}
 
 	epochEndTime := epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
-	// StartTime is set to a pinpointed timestamp that is after the default value of CurrentEpochStartTime (=0).
-	if ctx.BlockTime().After(epochEndTime) {
-		return true
-	}
 
-	return false
+	return ctx.BlockTime().After(epochEndTime)
 }

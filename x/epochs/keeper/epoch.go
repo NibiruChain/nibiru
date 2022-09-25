@@ -29,10 +29,8 @@ func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo
 func (k Keeper) EpochExists(ctx sdk.Context, identifier string) bool {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(append(types.KeyPrefixEpoch, []byte(identifier)...))
-	if b == nil {
-		return false
-	}
-	return true
+
+	return b != nil
 }
 
 // AddEpochInfo adds a new epoch info. Will return an error if the epoch fails validation,
