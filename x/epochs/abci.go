@@ -24,7 +24,6 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 			return false
 		}
 
-		// we deduced that a new epoch tick should happen
 		epochInfo.CurrentEpochStartHeight = ctx.BlockHeight()
 
 		logger := k.Logger(ctx)
