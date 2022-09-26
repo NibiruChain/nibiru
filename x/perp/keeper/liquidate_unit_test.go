@@ -1020,3 +1020,319 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 		})
 	}
 }
+
+func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
+	tests := []struct {
+		name string
+
+		liquidationFee          sdk.Dec
+		partialLiquidationRatio sdk.Dec
+		initialPositionSize     sdk.Dec
+		initialMargin           sdk.Dec
+		initialOpenNotional     sdk.Dec
+
+		// amount of quote obtained by trading <initialPositionSize> base
+		baseAssetPriceInQuote sdk.Dec
+
+		expectedFundsToPerpEF          sdk.Int
+		expectedFundsToLiquidator      sdk.Int
+		expectedExchangedNotionalValue sdk.Dec
+		expectedMarginToVault          sdk.Dec
+		expectedPositionRealizedPnl    sdk.Dec
+		expectedPositionMargin         sdk.Dec
+	}{
+		{
+			/*
+				- long position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+
+				- no funding payment
+
+				- liquidation fee ratio is 0.1
+				- partial liquidation ratio is 0.2
+				- notional exchanged is 20 NUSD
+				- liquidator gets 20 NUSD * 0.1 / 2 =  1 NUSD
+				- ecosystem fund gets remaining = 1 NUSD
+			*/
+			name: "remaining margin more than liquidation fee",
+
+			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
+			partialLiquidationRatio: sdk.MustNewDecFromStr("0.2"),
+			initialPositionSize:     sdk.NewDec(100),
+			initialMargin:           sdk.NewDec(10),
+			initialOpenNotional:     sdk.NewDec(100),
+
+			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
+
+			expectedFundsToPerpEF:          sdk.NewInt(1),
+			expectedFundsToLiquidator:      sdk.NewInt(1),
+			expectedExchangedNotionalValue: sdk.NewDec(20),
+			expectedMarginToVault:          sdk.NewDec(0),
+			expectedPositionRealizedPnl:    sdk.ZeroDec(),
+			expectedPositionMargin:         sdk.NewDec(8),
+		},
+		{
+			/*
+				- short position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+
+				- no funding payment
+
+				- liquidation fee ratio is 0.1
+				- partial liquidation ratio is 0.2
+				- notional exchanged is 20 NUSD
+				- liquidator gets 20 NUSD * 0.1 / 2 =  1 NUSD
+				- ecosystem fund gets remaining = 1 NUSD
+			*/
+			name: "remaining margin more than liquidation fee",
+
+			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
+			partialLiquidationRatio: sdk.MustNewDecFromStr("0.2"),
+			initialPositionSize:     sdk.NewDec(-100),
+			initialMargin:           sdk.NewDec(10),
+			initialOpenNotional:     sdk.NewDec(100),
+
+			baseAssetPriceInQuote: sdk.NewDec(100), // no change in price
+
+			expectedFundsToPerpEF:          sdk.NewInt(1),
+			expectedFundsToLiquidator:      sdk.NewInt(1),
+			expectedExchangedNotionalValue: sdk.NewDec(20),
+			expectedMarginToVault:          sdk.ZeroDec(),
+			expectedPositionRealizedPnl:    sdk.ZeroDec(),
+			expectedPositionMargin:         sdk.NewDec(8),
+		},
+		{
+			/*
+				- long position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+				- BTC drops in price (1 BTC = 0.8 NUSD)
+				- position notional of 80 NUSD
+				- unrealized PnL of -20 NUSD
+
+				- no funding payment
+
+				- liquidation fee ratio is 0.1
+				- partial liquidation ration is 0.2
+				- notional exchanged is 16 NUSD
+				- liquidator gets 16 NUSD * 0.1 / 2 = 1 NUSD
+				- ecosystem fund gets 1 NUSD
+			*/
+			name: "position has + margin",
+
+			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
+			partialLiquidationRatio: sdk.MustNewDecFromStr("0.2"),
+			initialPositionSize:     sdk.NewDec(100),
+			initialMargin:           sdk.NewDec(10),
+			initialOpenNotional:     sdk.NewDec(100),
+
+			baseAssetPriceInQuote: sdk.NewDec(80), // price dropped
+
+			expectedFundsToPerpEF:          sdk.NewInt(1),
+			expectedFundsToLiquidator:      sdk.NewInt(1),
+			expectedExchangedNotionalValue: sdk.NewDec(16),
+			expectedMarginToVault:          sdk.ZeroDec(),
+			expectedPositionRealizedPnl:    sdk.MustNewDecFromStr("-3.2"),
+			expectedPositionMargin:         sdk.MustNewDecFromStr("5.2"),
+		},
+		{
+			/*
+				- short position
+				- open margin 10 NUSD, 10x leverage
+				- open notional and position notional of 100 NUSD
+				- position size 100 BTC (1 BTC = 1 NUSD)
+				- BTC increases in price (1 BTC = 1.2 NUSD)
+				- position notional of 120 NUSD
+				- unrealized PnL of -20 NUSD,
+
+				- no funding payment
+
+				- liquidation fee ratio is 0.1
+				- partial liquidation ratio is 0.2
+				- notional exchanged is 120*0.2 (partial liquidation ratio) = 24 NUSD
+				- liquidator gets 24 NUSD * 0.1 / 2 = 1 NUSD
+				- ecosystem fund gets 1 NUSD
+			*/
+			name: "position has + margin",
+
+			liquidationFee:          sdk.MustNewDecFromStr("0.1"),
+			partialLiquidationRatio: sdk.MustNewDecFromStr("0.2"),
+			initialPositionSize:     sdk.NewDec(-100),
+			initialMargin:           sdk.NewDec(10),
+			initialOpenNotional:     sdk.NewDec(100),
+
+			baseAssetPriceInQuote: sdk.NewDec(120), // price increased
+
+			expectedFundsToPerpEF:          sdk.NewInt(1),
+			expectedFundsToLiquidator:      sdk.NewInt(1),
+			expectedExchangedNotionalValue: sdk.NewDec(24),
+			expectedMarginToVault:          sdk.ZeroDec(),
+			expectedPositionRealizedPnl:    sdk.MustNewDecFromStr("-4.8"),
+			expectedPositionMargin:         sdk.MustNewDecFromStr("2.8"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Log("setup variables")
+			perpKeeper, mocks, ctx := getKeeper(t)
+			liquidatorAddr := sample.AccAddress()
+			traderAddr := sample.AccAddress()
+			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
+			if tc.initialPositionSize.IsNegative() {
+				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+			}
+
+			t.Log("mock bank keeper")
+			if tc.expectedFundsToPerpEF.IsPositive() {
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
+					ctx, types.VaultModuleAccount, types.PerpEFModuleAccount,
+					sdk.NewCoins(sdk.NewCoin("unusd", tc.expectedFundsToPerpEF)),
+				).Return(nil)
+			}
+
+			if tc.expectedFundsToLiquidator.IsPositive() {
+				mocks.mockAccountKeeper.
+					EXPECT().GetModuleAddress(types.VaultModuleAccount).
+					Return(authtypes.NewModuleAddress(types.VaultModuleAccount))
+				mocks.mockBankKeeper.
+					EXPECT().GetBalance(ctx, authtypes.NewModuleAddress(types.VaultModuleAccount), "unusd").
+					Return(sdk.NewCoin("unusd", sdk.NewInt(math.MaxInt64)))
+				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
+					ctx, types.VaultModuleAccount, liquidatorAddr,
+					sdk.NewCoins(sdk.NewCoin("unusd", tc.expectedFundsToLiquidator)),
+				).Return(nil)
+			}
+
+			t.Log("setup perp keeper params")
+			newParams := types.DefaultParams()
+			newParams.LiquidationFeeRatio = tc.liquidationFee
+			newParams.PartialLiquidationRatio = tc.partialLiquidationRatio
+			perpKeeper.SetParams(ctx, newParams)
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				Pair: common.Pair_BTC_NUSD,
+				CumulativeFundingRates: []sdk.Dec{
+					sdk.ZeroDec(), // zero funding payment for this test case
+				},
+			})
+
+			t.Log("mock vpool")
+			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).AnyTimes().Return(true)
+			mocks.mockVpoolKeeper.EXPECT().
+				GetBaseAssetPrice(
+					ctx,
+					common.Pair_BTC_NUSD,
+					baseAssetDirection,
+					/*baseAssetAmount=*/ tc.initialPositionSize.Mul(tc.partialLiquidationRatio),
+				).
+				Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
+
+			mocks.mockVpoolKeeper.EXPECT().
+				GetBaseAssetPrice(
+					ctx,
+					common.Pair_BTC_NUSD,
+					baseAssetDirection,
+					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
+				).
+				Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
+
+			if tc.initialPositionSize.IsNegative() {
+				mocks.mockVpoolKeeper.EXPECT().
+					SwapQuoteForBase(
+						ctx,
+						common.Pair_BTC_NUSD,
+						vpooltypes.Direction_ADD_TO_POOL,
+						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
+						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
+						/* skipFluctuationLimitCheck */ true,
+					).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
+			} else {
+				mocks.mockVpoolKeeper.EXPECT().
+					SwapQuoteForBase(
+						ctx,
+						common.Pair_BTC_NUSD,
+						vpooltypes.Direction_REMOVE_FROM_POOL,
+						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
+						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
+						/* skipFluctuationLimitCheck */ true,
+					).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
+			}
+
+			mocks.mockVpoolKeeper.EXPECT().
+				GetSpotPrice(ctx, common.Pair_BTC_NUSD).
+				Return(sdk.OneDec(), nil)
+
+			t.Log("create and set the initial position")
+			position := types.Position{
+				TraderAddress:                  traderAddr.String(),
+				Pair:                           common.Pair_BTC_NUSD,
+				Size_:                          tc.initialPositionSize,
+				Margin:                         tc.initialMargin,
+				OpenNotional:                   tc.initialOpenNotional,
+				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				BlockNumber:                    ctx.BlockHeight(),
+			}
+			setPosition(perpKeeper, ctx, position)
+
+			t.Log("execute partial liquidation")
+			liquidationResp, err := perpKeeper.ExecutePartialLiquidation(
+				ctx, liquidatorAddr, &position)
+			require.NoError(t, err)
+
+			t.Log("assert liquidation response fields")
+			assert.True(t, liquidationResp.BadDebt.IsZero())
+			assert.EqualValues(t, tc.expectedFundsToLiquidator, liquidationResp.FeeToLiquidator)
+			assert.EqualValues(t, tc.expectedFundsToPerpEF, liquidationResp.FeeToPerpEcosystemFund)
+			assert.EqualValues(t, liquidatorAddr.String(), liquidationResp.Liquidator)
+
+			t.Log("assert position response fields")
+			positionResp := liquidationResp.PositionResp
+			assert.EqualValues(t,
+				tc.expectedExchangedNotionalValue,
+				positionResp.ExchangedNotionalValue) // amount of quote exchanged
+			// Initial position size that is liquidated to be is sold back to to vpool
+			if tc.initialPositionSize.IsNegative() {
+				assert.EqualValues(t, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), positionResp.ExchangedPositionSize)
+			} else {
+				assert.EqualValues(t, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio).Neg(), positionResp.ExchangedPositionSize)
+			}
+			// ( oldMargin + unrealizedPnL - fundingPayment ) * -1
+			assert.True(t, tc.expectedMarginToVault.IsZero())
+			//assert.EqualValues(t, tc.expectedPositionBadDebt, positionResp.BadDebt)
+			assert.EqualValues(t, tc.expectedPositionRealizedPnl, positionResp.RealizedPnl)
+			assert.True(t, positionResp.FundingPayment.IsZero())
+
+			t.Log("assert new position fields")
+			newPosition := positionResp.Position
+			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
+			assert.EqualValues(t, common.Pair_BTC_NUSD, newPosition.Pair)
+			assert.True(t, newPosition.LatestCumulativeFundingPayment.IsZero())
+			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
+			assert.EqualValues(t, tc.expectedPositionMargin, newPosition.Margin)
+
+			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
+				Pair:                  common.Pair_BTC_NUSD.String(),
+				TraderAddress:         traderAddr.String(),
+				ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
+				ExchangedPositionSize: positionResp.ExchangedPositionSize,
+				LiquidatorAddress:     liquidatorAddr.String(),
+				FeeToLiquidator:       sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), tc.expectedFundsToLiquidator),
+				FeeToEcosystemFund:    sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), tc.expectedFundsToPerpEF),
+				BadDebt:               sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), sdk.ZeroInt()),
+				Margin:                sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), newPosition.Margin.RoundInt()),
+				PositionNotional:      positionResp.PositionNotional,
+				PositionSize:          newPosition.Size_,
+				UnrealizedPnl:         positionResp.UnrealizedPnlAfter,
+				MarkPrice:             sdk.OneDec(),
+				BlockHeight:           ctx.BlockHeight(),
+				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+			})
+		})
+	}
+}
