@@ -123,13 +123,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
+	perpGenesis.Params.WhitelistedLiquidators = []string{"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"} // address associated with mnemonic below
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	// set up pricefeed
 	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
-
+	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
 	s.NoError(err)
@@ -183,6 +184,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		val,
 		common.DenomNIBI,
 	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(
+		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
+		sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000)),
+		val, common.DenomNIBI)
 	s.Require().NoError(err)
 }
 
@@ -434,7 +441,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	args := []string{
 		"--from",
-		s.users[1].String(),
+		"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m",
 		common.Pair_ETH_NUSD.String(),
 		s.users[1].String(),
 	}
@@ -490,14 +497,14 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	// liquidate
 	args = []string{
 		"--from",
-		s.users[1].String(),
+		"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m",
 		common.Pair_ETH_NUSD.String(),
 		s.users[1].String(),
 	}
 
 	s.T().Log("liquidating user 2....")
 	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	s.NotContains(out.String(), "fail")
+	s.NotContains(out.String(), "fail", out.String())
 	s.NoError(err)
 }
 

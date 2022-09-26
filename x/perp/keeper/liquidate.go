@@ -31,6 +31,9 @@ func (k Keeper) Liquidate(
 	pair common.AssetPair,
 	traderAddr sdk.AccAddress,
 ) (feeToLiquidator sdk.Coin, feeToFund sdk.Coin, err error) {
+	if !k.canLiquidate(ctx, liquidatorAddr) {
+		return sdk.Coin{}, sdk.Coin{}, types.ErrUnauthorized.Wrapf("not allowed to liquidate: %s", traderAddr)
+	}
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -391,4 +394,15 @@ func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, posit
 	}
 
 	return resp
+}
+
+func (k Keeper) canLiquidate(ctx sdk.Context, addr sdk.AccAddress) bool {
+	addrStr := addr.String()
+	params := k.GetParams(ctx)
+	for _, whitelisted := range params.WhitelistedLiquidators {
+		if addrStr == whitelisted {
+			return true
+		}
+	}
+	return false
 }

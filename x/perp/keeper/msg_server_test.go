@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -428,28 +427,6 @@ func TestMsgServerLiquidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:       "invalid pair",
-			pair:       "foo",
-			liquidator: sample.AccAddress().String(),
-			trader:     sample.AccAddress().String(),
-
-			expectedErr: common.ErrInvalidTokenPair,
-		},
-		{
-			name:        "invalid liquidator address",
-			pair:        common.Pair_BTC_NUSD.String(),
-			liquidator:  "foo",
-			trader:      sample.AccAddress().String(),
-			expectedErr: fmt.Errorf("decoding bech32 failed"),
-		},
-		{
-			name:        "invalid trader address",
-			pair:        common.Pair_BTC_NUSD.String(),
-			liquidator:  sample.AccAddress().String(),
-			trader:      "foo",
-			expectedErr: fmt.Errorf("decoding bech32 failed"),
-		},
-		{
 			name:        "success",
 			pair:        common.Pair_BTC_NUSD.String(),
 			liquidator:  sample.AccAddress().String(),
@@ -462,6 +439,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
@@ -519,6 +497,12 @@ func TestMsgServerLiquidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator string) {
+	p := perpKeeper.GetParams(ctx)
+	p.WhitelistedLiquidators = []string{liquidator}
+	perpKeeper.SetParams(ctx, p)
 }
 
 func TestMsgServerMultiLiquidate(t *testing.T) {
@@ -590,6 +574,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 
 	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
+	setLiquidator(ctx, app.PerpKeeper, liquidator.String())
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
 		Liquidations: []*types.MsgMultiLiquidate_MultiLiquidation{

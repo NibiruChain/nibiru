@@ -177,6 +177,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				Return(nil)
 
 			t.Log("execute liquidation")
+			setLiquidator(ctx, perpKeeper, liquidatorAddr)
 			feeToLiquidator, feeToFund, err := perpKeeper.Liquidate(ctx, liquidatorAddr, common.Pair_BTC_NUSD, traderAddr)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedLiquidatorFee, feeToLiquidator)
@@ -343,6 +344,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			}
 
 			t.Log("execute liquidation")
+			setLiquidator(ctx, perpKeeper, liquidatorAddr)
 			feeToLiquidator, feeToFund, err := perpKeeper.Liquidate(ctx, liquidatorAddr, common.Pair_BTC_NUSD, traderAddr)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedLiquidatorFee, feeToLiquidator)
@@ -515,6 +517,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				Return(nil)
 
 			t.Log("execute liquidation")
+			setLiquidator(ctx, perpKeeper, liquidatorAddr)
 			feeToLiquidator, feeToFund, err := perpKeeper.Liquidate(ctx, liquidatorAddr, common.Pair_BTC_NUSD, traderAddr)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedLiquidatorFee, feeToLiquidator)
@@ -1335,4 +1338,10 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			})
 		})
 	}
+}
+
+func setLiquidator(ctx sdk.Context, k Keeper, addr sdk.AccAddress) {
+	p := k.GetParams(ctx)
+	p.WhitelistedLiquidators = []string{addr.String()}
+	k.SetParams(ctx, p)
 }
