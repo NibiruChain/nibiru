@@ -1345,4 +1345,3 @@ func setLiquidator(ctx sdk.Context, k Keeper, addr sdk.AccAddress) {
 	p.WhitelistedLiquidators = []string{addr.String()}
 	k.SetParams(ctx, p)
 }
-
