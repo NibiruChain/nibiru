@@ -53,6 +53,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 			&p.TwapLookbackWindow,
 			validateTwapLookbackWindow,
 		),
+		paramtypes.NewParamSetPair(
+			[]byte("WhitelistedLiquidators"),
+			&p.WhitelistedLiquidators,
+			validateAddress,
+		),
 	}
 }
 
@@ -165,6 +170,20 @@ func validateTwapLookbackWindow(i interface{}) error {
 	}
 	if val <= 0 {
 		return fmt.Errorf("twap lookback window must be positive, current value is %s", val.String())
+	}
+	return nil
+}
+
+func validateAddress(i interface{}) error {
+	val, ok := i.([]string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	for _, addr := range val {
+		_, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
