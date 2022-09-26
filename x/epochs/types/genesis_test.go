@@ -47,6 +47,41 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			errString: "epoch identifier should be unique",
 		},
+		{
+			name: "at least one invalid epochinfo",
+			genState: GenesisState{
+				Epochs: []EpochInfo{
+					{
+						Identifier:              "repeated",
+						StartTime:               time.Now(),
+						Duration:                10,
+						CurrentEpoch:            2,
+						CurrentEpochStartTime:   time.Now(),
+						EpochCountingStarted:    false,
+						CurrentEpochStartHeight: 1,
+					},
+					{
+						Identifier:              "someOther",
+						StartTime:               time.Now(),
+						Duration:                10,
+						CurrentEpoch:            2,
+						CurrentEpochStartTime:   time.Now(),
+						EpochCountingStarted:    false,
+						CurrentEpochStartHeight: 1,
+					},
+					{
+						Identifier:              "the invalid",
+						StartTime:               time.Now(),
+						Duration:                0,
+						CurrentEpoch:            2,
+						CurrentEpochStartTime:   time.Now(),
+						EpochCountingStarted:    false,
+						CurrentEpochStartHeight: 1,
+					},
+				},
+			},
+			errString: "epoch duration should NOT be 0",
+		},
 	}
 
 	for _, tc := range tests {
