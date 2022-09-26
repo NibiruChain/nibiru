@@ -4,10 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
