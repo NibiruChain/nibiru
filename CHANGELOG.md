@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#785](https://github.com/NibiruChain/nibiru/pull/785) - ci: create simulations job
 
 ### State Machine Breaking
+
+* [#977](https://github.com/NibiruChain/nibiru/pull/977) - x/perp add whitelisted liquidators
 * [#960](https://github.com/NibiruChain/nibiru/pull/960) - x/common validate asset pair denoms
 * [#952](https://github.com/NibiruChain/nibiru/pull/952) - x/perp move state logic to collections
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
@@ -86,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
 * [#932](https://github.com/NibiruChain/nibiru/pull/932) - refactor(perp): rename premium fraction to funding rate
 * [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
+* [#956](https://github.com/NibiruChain/nibiru/pull/956) - test(perp): partial liquidate unit test
 
 ### Features
 
@@ -100,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#925](https://github.com/NibiruChain/nibiru/pull/925) - fix(vpool): snapshot iteration
 * [#930](https://github.com/NibiruChain/nibiru/pull/930) - fix(vpool): snapshot iteration on mark twap
 * [#911](https://github.com/NibiruChain/nibiru/pull/911) - fix(perp): handle issue where no vpool snapshots are found
+* [#958](https://github.com/NibiruChain/nibiru/pull/930) - fix(pricefeed): add twap to prices query
 * [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
 * [#968](https://github.com/NibiruChain/nibiru/pull/968) - fix(perp): compute correct funding rate
 
