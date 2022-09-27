@@ -303,6 +303,23 @@ func TestCalcTwap(t *testing.T) {
 			expectedPrice:      sdk.MustNewDecFromStr("8.895833333333333333"),
 		},
 		{
+			name: "spot price twap calc, t=[10,10]",
+			pair: common.Pair_BTC_NUSD,
+			reserveSnapshots: []types.ReserveSnapshot{
+				{
+					QuoteAssetReserve: sdk.NewDec(90),
+					BaseAssetReserve:  sdk.NewDec(10),
+					TimestampMs:       10,
+					BlockNumber:       1,
+				},
+			},
+			currentBlockTime:   time.UnixMilli(10),
+			currentBlockHeight: 1,
+			lookbackInterval:   5 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_SPOT,
+			expectedPrice:      sdk.NewDec(9),
+		},
+		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
@@ -417,7 +434,7 @@ func TestCalcTwap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
-			ctx = ctx.WithBlockTime(time.UnixMilli(0)).WithBlockHeight(0)
+			ctx = ctx.WithBlockTime(time.UnixMilli(0)).WithBlockHeight(1)
 
 			t.Log("Create an empty pool for the first block")
 			vpoolKeeper.CreatePool(

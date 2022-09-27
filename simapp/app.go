@@ -314,8 +314,7 @@ func NewNibiruTestApp(
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
-	bApp := baseapp.NewBaseApp(
-		AppName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	bApp := baseapp.NewBaseApp(AppName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
@@ -748,6 +747,7 @@ func NewNibiruTestApp(
 		// native x/
 		pricefeedModule,
 		epochsModule,
+		perpModule,
 		// ibc
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
