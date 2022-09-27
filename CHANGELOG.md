@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
 * [#932](https://github.com/NibiruChain/nibiru/pull/932) - refactor(perp): rename premium fraction to funding rate
 * [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
+* [#976](https://github.com/NibiruChain/nibiru/pull/976) - refactor(epochs): refactor to increase readability and some tests
 
 ### Features
 
