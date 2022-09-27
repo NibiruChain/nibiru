@@ -5,9 +5,6 @@ import (
 	"time"
 )
 
-// DefaultIndex is the default capability global index.
-const DefaultIndex uint64 = 1
-
 func NewGenesisState(epochs []EpochInfo) *GenesisState {
 	return &GenesisState{Epochs: epochs}
 }
@@ -58,19 +55,18 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	// TODO: Epochs identifiers should be unique
 	epochIdentifiers := map[string]bool{}
 	for _, epoch := range gs.Epochs {
-		if epoch.Identifier == "" {
-			return errors.New("epoch identifier should NOT be empty")
-		}
 		if epochIdentifiers[epoch.Identifier] {
 			return errors.New("epoch identifier should be unique")
 		}
-		if epoch.Duration == 0 {
-			return errors.New("epoch duration should NOT be 0")
+
+		if err := epoch.Validate(); err != nil {
+			return err
 		}
+
 		epochIdentifiers[epoch.Identifier] = true
 	}
+
 	return nil
 }

@@ -61,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * removed Params from genesis.
   * added pair into ReserveSnapshot type.
   * added validation of snapshots and snapshots in genesis.
+* [#976](https://github.com/NibiruChain/nibiru/pull/976) - refactor(epochs): refactor to increase readability and some tests
+  * EpochInfo.CurrentEpoch changed from int64 to uint64.
 
 ### API Breaking
 
