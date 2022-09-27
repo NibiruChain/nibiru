@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#901](https://github.com/NibiruChain/nibiru/pull/901) - refactor(vpool): remove `GetUnderlyingPrice` method
 * [#902](https://github.com/NibiruChain/nibiru/pull/902) - refactor(common): improve usability of `common.AssetPair`
 * [#913](https://github.com/NibiruChain/nibiru/pull/913) - chore(epochs): update x/epochs module
+* [#911](https://github.com/NibiruChain/nibiru/pull/911) - test(perp): add `MsgOpenPosition` simulation tests
 * [#917](https://github.com/NibiruChain/nibiru/pull/917) - refactor(proto): perp module files consistency
 * [#920](https://github.com/NibiruChain/nibiru/pull/920) - refactor(proto): pricefeed module files consistency
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
@@ -101,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#892](https://github.com/NibiruChain/nibiru/pull/892) - chore: fix localnet script
 * [#925](https://github.com/NibiruChain/nibiru/pull/925) - fix(vpool): snapshot iteration
 * [#930](https://github.com/NibiruChain/nibiru/pull/930) - fix(vpool): snapshot iteration on mark twap
+* [#911](https://github.com/NibiruChain/nibiru/pull/911) - fix(perp): handle issue where no vpool snapshots are found
 * [#958](https://github.com/NibiruChain/nibiru/pull/930) - fix(pricefeed): add twap to prices query
 * [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
 * [#968](https://github.com/NibiruChain/nibiru/pull/968) - fix(perp): compute correct funding rate

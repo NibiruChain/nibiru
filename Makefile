@@ -139,10 +139,10 @@ test-sim-nondeterminism:
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
 
-test-sim-custom-genesis-fast:
-	@echo "Running custom genesis simulation..."
+test-sim-default-genesis-fast:
+	@echo "Running default genesis simulation..."
 	@go test -mod=readonly $(SIMAPP) -run TestFullAppSimulation  \
-		-Enabled=true -NumBlocks=100 -BlockSize=200 -Commit=true -Seed=99 -Period=5 -v -timeout 24h
+		-Enabled=true -NumBlocks=100 -BlockSize=200 -Commit=true -Seed=99 -Period=5 -v
 
 test-sim-custom-genesis-multi-seed: runsim
 	@echo "Running multi-seed custom genesis simulation..."
