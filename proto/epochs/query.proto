@@ -4,7 +4,7 @@ package nibiru.epochs.v1beta1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "epochs/genesis.proto";
+import "epochs/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/epochs/types";
 
@@ -27,4 +27,4 @@ message QueryEpochsInfoResponse {
 }
 
 message QueryCurrentEpochRequest { string identifier = 1; }
-message QueryCurrentEpochResponse { int64 current_epoch = 1; }
+message QueryCurrentEpochResponse { uint64 current_epoch = 1; }

@@ -282,7 +282,7 @@ func (m *QueryFundingRatesRequest) GetPair() string {
 type QueryFundingRatesResponse struct {
 	// a historical list of cumulative funding rates, with the most recent one
 	// last
-	CumulativePremiumFractions []github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,rep,name=cumulative_funding_rates,json=CumulativePremiumFractions,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"cumulative_funding_rates"`
+	CumulativeFundingRates []github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,rep,name=cumulative_funding_rates,json=cumulativeFundingRates,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"cumulative_funding_rates"`
 }
 
 func (m *QueryFundingRatesResponse) Reset()         { *m = QueryFundingRatesResponse{} }
@@ -750,12 +750,12 @@ func (m *QueryFundingRatesResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	_ = i
 	var l int
 	_ = l
-	if len(m.CumulativePremiumFractions) > 0 {
-		for iNdEx := len(m.CumulativePremiumFractions) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.CumulativeFundingRates) > 0 {
+		for iNdEx := len(m.CumulativeFundingRates) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size := m.CumulativePremiumFractions[iNdEx].Size()
+				size := m.CumulativeFundingRates[iNdEx].Size()
 				i -= size
-				if _, err := m.CumulativePremiumFractions[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+				if _, err := m.CumulativeFundingRates[iNdEx].MarshalTo(dAtA[i:]); err != nil {
 					return 0, err
 				}
 				i = encodeVarintQuery(dAtA, i, uint64(size))
@@ -858,8 +858,8 @@ func (m *QueryFundingRatesResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.CumulativePremiumFractions) > 0 {
-		for _, e := range m.CumulativePremiumFractions {
+	if len(m.CumulativeFundingRates) > 0 {
+		for _, e := range m.CumulativeFundingRates {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1474,7 +1474,7 @@ func (m *QueryFundingRatesResponse) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CumulativePremiumFractions", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CumulativeFundingRates", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1503,8 +1503,8 @@ func (m *QueryFundingRatesResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			var v github_com_cosmos_cosmos_sdk_types.Dec
-			m.CumulativePremiumFractions = append(m.CumulativePremiumFractions, v)
-			if err := m.CumulativePremiumFractions[len(m.CumulativePremiumFractions)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.CumulativeFundingRates = append(m.CumulativeFundingRates, v)
+			if err := m.CumulativeFundingRates[len(m.CumulativeFundingRates)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
