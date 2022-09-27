@@ -1,9 +1,10 @@
 package types
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestEpochInfo_Validate(t *testing.T) {
@@ -37,19 +38,6 @@ func TestEpochInfo_Validate(t *testing.T) {
 				CurrentEpochStartHeight: 1,
 			},
 			errString: "epoch duration should NOT be 0",
-		},
-		{
-			name: "current epoch negative",
-			epochInfo: EpochInfo{
-				Identifier:              "monthly",
-				StartTime:               time.Now(),
-				Duration:                10 * time.Minute,
-				CurrentEpoch:            -1,
-				CurrentEpochStartTime:   time.Now(),
-				EpochCountingStarted:    false,
-				CurrentEpochStartHeight: 1,
-			},
-			errString: "epoch CurrentEpoch must be non-negative",
 		},
 		{
 			name: "current epoch start height negative",

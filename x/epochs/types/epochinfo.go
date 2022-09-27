@@ -31,10 +31,6 @@ func (e *EpochInfo) Validate() error {
 		return errors.New("epoch duration should NOT be 0")
 	}
 
-	if e.CurrentEpoch < 0 {
-		return errors.New("epoch CurrentEpoch must be non-negative")
-	}
-
 	if e.CurrentEpochStartHeight < 0 {
 		return errors.New("epoch CurrentEpoch Start Height must be non-negative")
 	}

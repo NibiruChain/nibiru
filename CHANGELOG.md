@@ -61,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * removed Params from genesis.
   * added pair into ReserveSnapshot type.
   * added validation of snapshots and snapshots in genesis.
+* [#976](https://github.com/NibiruChain/nibiru/pull/976) - refactor(epochs): refactor to increase readability and some tests
+  * EpochInfo.CurrentEpoch changed from int64 to uint64.
 
 ### API Breaking
 
@@ -87,7 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
 * [#932](https://github.com/NibiruChain/nibiru/pull/932) - refactor(perp): rename premium fraction to funding rate
 * [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
-* [#976](https://github.com/NibiruChain/nibiru/pull/976) - refactor(epochs): refactor to increase readability and some tests
 * [#956](https://github.com/NibiruChain/nibiru/pull/956) - test(perp): partial liquidate unit test
 
 ### Features

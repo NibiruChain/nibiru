@@ -27,4 +27,4 @@ message QueryEpochsInfoResponse {
 }
 
 message QueryCurrentEpochRequest { string identifier = 1; }
-message QueryCurrentEpochResponse { int64 current_epoch = 1; }
+message QueryCurrentEpochResponse { uint64 current_epoch = 1; }

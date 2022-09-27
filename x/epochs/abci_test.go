@@ -23,7 +23,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	tests := []struct {
 		expCurrentEpochStartTime   time.Time
 		expCurrentEpochStartHeight int64
-		expCurrentEpoch            int64
+		expCurrentEpoch            uint64
 		expInitialEpochStartTime   time.Time
 		fn                         func()
 	}{
@@ -170,7 +170,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 
 	// epoch not started yet
 	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	require.Equal(t, epochInfo.CurrentEpoch, int64(0))
+	require.Equal(t, epochInfo.CurrentEpoch, uint64(0))
 	require.Equal(t, epochInfo.CurrentEpochStartHeight, initialBlockHeight)
 	require.Equal(t, epochInfo.CurrentEpochStartTime, time.Time{})
 	require.Equal(t, epochInfo.EpochCountingStarted, false)
@@ -181,7 +181,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 
 	// epoch not started yet
 	epochInfo = app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	require.Equal(t, epochInfo.CurrentEpoch, int64(0))
+	require.Equal(t, epochInfo.CurrentEpoch, uint64(0))
 	require.Equal(t, epochInfo.CurrentEpochStartHeight, initialBlockHeight)
 	require.Equal(t, epochInfo.CurrentEpochStartTime, time.Time{})
 	require.Equal(t, epochInfo.EpochCountingStarted, false)
@@ -192,7 +192,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 
 	// epoch started
 	epochInfo = app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	require.Equal(t, epochInfo.CurrentEpoch, int64(1))
+	require.Equal(t, epochInfo.CurrentEpoch, uint64(1))
 	require.Equal(t, epochInfo.CurrentEpochStartHeight, ctx.BlockHeight())
 	require.Equal(t, epochInfo.CurrentEpochStartTime.UTC().String(), now.Add(month).UTC().String())
 	require.Equal(t, epochInfo.EpochCountingStarted, true)

@@ -27,7 +27,7 @@ message EpochInfo {
   ];
 
   // The current epoch number, starting from 1.
-  int64 current_epoch = 4;
+  uint64 current_epoch = 4;
 
   // The start timestamp of the current epoch.
   google.protobuf.Timestamp current_epoch_start_time = 5 [
