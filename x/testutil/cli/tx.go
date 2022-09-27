@@ -55,13 +55,13 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 		return nil, fmt.Errorf("invalid network")
 	}
 
+	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, txSender))
+
 	options := execTxOptions{
 		fees:             sdk.NewCoins(sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10))),
 		skipConfirmation: true,
 		broadcastMode:    flags.BroadcastBlock,
 	}
-
-	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, txSender))
 
 	for _, o := range opt {
 		o(&options)
