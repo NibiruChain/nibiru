@@ -1,6 +1,7 @@
 package epochs_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/epochs"
+	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
@@ -21,7 +23,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	tests := []struct {
 		expCurrentEpochStartTime   time.Time
 		expCurrentEpochStartHeight int64
-		expCurrentEpoch            int64
+		expCurrentEpoch            uint64
 		expInitialEpochStartTime   time.Time
 		fn                         func()
 	}{
@@ -85,11 +87,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				numBlocksSinceStart, _ := app.EpochsKeeper.NumBlocksSinceEpochStart(ctx, "monthly")
+				numBlocksSinceStart, _ := NumBlocksSinceEpochStart(ctx, app.EpochsKeeper, "monthly")
 				require.Equal(t, int64(0), numBlocksSinceStart)
 				ctx = ctx.WithBlockHeight(4).WithBlockTime(now.Add(time.Hour * 24 * 33))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				numBlocksSinceStart, _ = app.EpochsKeeper.NumBlocksSinceEpochStart(ctx, "monthly")
+				numBlocksSinceStart, _ = NumBlocksSinceEpochStart(ctx, app.EpochsKeeper, "monthly")
 				require.Equal(t, int64(1), numBlocksSinceStart)
 			},
 		},
@@ -168,7 +170,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 
 	// epoch not started yet
 	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	require.Equal(t, epochInfo.CurrentEpoch, int64(0))
+	require.Equal(t, epochInfo.CurrentEpoch, uint64(0))
 	require.Equal(t, epochInfo.CurrentEpochStartHeight, initialBlockHeight)
 	require.Equal(t, epochInfo.CurrentEpochStartTime, time.Time{})
 	require.Equal(t, epochInfo.EpochCountingStarted, false)
@@ -179,7 +181,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 
 	// epoch not started yet
 	epochInfo = app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	require.Equal(t, epochInfo.CurrentEpoch, int64(0))
+	require.Equal(t, epochInfo.CurrentEpoch, uint64(0))
 	require.Equal(t, epochInfo.CurrentEpochStartHeight, initialBlockHeight)
 	require.Equal(t, epochInfo.CurrentEpochStartTime, time.Time{})
 	require.Equal(t, epochInfo.EpochCountingStarted, false)
@@ -190,7 +192,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 
 	// epoch started
 	epochInfo = app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	require.Equal(t, epochInfo.CurrentEpoch, int64(1))
+	require.Equal(t, epochInfo.CurrentEpoch, uint64(1))
 	require.Equal(t, epochInfo.CurrentEpochStartHeight, ctx.BlockHeight())
 	require.Equal(t, epochInfo.CurrentEpochStartTime.UTC().String(), now.Add(month).UTC().String())
 	require.Equal(t, epochInfo.EpochCountingStarted, true)
@@ -234,4 +236,16 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 
 	require.NotEqual(t, epochInfo.CurrentEpochStartHeight, int64(0))
+}
+
+// NumBlocksSinceEpochStart returns the number of blocks since the epoch started.
+// if the epoch started on block N, then calling this during block N (after BeforeEpochStart)
+// would return 0.
+// Calling it any point in block N+1 (assuming the epoch doesn't increment) would return 1.
+func NumBlocksSinceEpochStart(ctx sdk.Context, k keeper.Keeper, identifier string) (int64, error) {
+	epoch := k.GetEpochInfo(ctx, identifier)
+	if (epoch == types.EpochInfo{}) {
+		return 0, fmt.Errorf("epoch with identifier %s not found", identifier)
+	}
+	return ctx.BlockHeight() - epoch.CurrentEpochStartHeight, nil
 }
