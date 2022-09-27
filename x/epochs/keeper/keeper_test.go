@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
-func TestEpochLifeCycle(t *testing.T) {
+func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 
 	epochInfo := types.EpochInfo{
