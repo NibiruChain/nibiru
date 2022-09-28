@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -471,10 +472,7 @@ func TestCalcTwap(t *testing.T) {
 					ctx.BlockTime(),
 					ctx.BlockHeight(),
 				)
-				vpoolKeeper.SaveSnapshot(
-					ctx,
-					snapshot,
-				)
+				vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 			}
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
 			price, err := vpoolKeeper.calcTwap(ctx,

@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,10 +19,11 @@ func NewKeeper(
 	pricefeedKeeper types.PricefeedKeeper,
 ) Keeper {
 	return Keeper{
-		codec:           codec,
-		storeKey:        storeKey,
-		pricefeedKeeper: pricefeedKeeper,
-		Pools:           collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
+		codec:            codec,
+		storeKey:         storeKey,
+		pricefeedKeeper:  pricefeedKeeper,
+		Pools:            collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
+		ReserveSnapshots: collections.NewMap[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot](codec, storeKey, 1),
 	}
 }
 
@@ -30,7 +32,8 @@ type Keeper struct {
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
 
-	Pools collections.Map[common.AssetPair, types.VPool, *types.VPool]
+	Pools            collections.Map[common.AssetPair, types.VPool, *types.VPool]
+	ReserveSnapshots collections.Map[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot, *types.ReserveSnapshot]
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -283,11 +286,12 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) er
 		return nil
 	}
 
-	latestSnapshot, err := k.GetLatestReserveSnapshot(ctx, pool.Pair)
-	if err != nil {
+	it := k.ReserveSnapshots.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().Descending())
+	defer it.Close()
+	if !it.Valid() {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 	}
-
+	latestSnapshot := it.Value()
 	if isOverFluctuationLimit(pool, latestSnapshot) {
 		return types.ErrOverFluctuationLimit
 	}

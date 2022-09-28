@@ -21,7 +21,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			ctx.BlockTime(),
 			ctx.BlockHeight(),
 		)
-		k.SaveSnapshot(ctx, snapshot)
+		k.ReserveSnapshots.Insert(ctx, keys.Join(pool.Pair, keys.Uint64(uint64(ctx.BlockTime().UnixMilli()))), snapshot)
 	}
 	return []abci.ValidatorUpdate{}
 }

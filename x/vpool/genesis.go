@@ -27,17 +27,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, snapshot := range genState.Snapshots {
-		k.SaveSnapshot(ctx, snapshot)
+		k.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	snapshots := k.GetAllSnapshots(ctx)
-
-	var genState types.GenesisState
-	genState.Vpools = k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
-	genState.Snapshots = snapshots
-
-	return &genState
+	return &types.GenesisState{
+		Vpools:    k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values(),
+		Snapshots: k.ReserveSnapshots.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]()).Values(),
+	}
 }
