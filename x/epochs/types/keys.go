@@ -16,7 +16,3 @@ const (
 
 // KeyPrefixEpoch defines prefix key for storing epochs.
 var KeyPrefixEpoch = []byte{0x01}
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}
