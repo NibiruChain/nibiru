@@ -1,6 +1,8 @@
 package vpool
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
@@ -31,11 +33,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	pools := k.GetAllPools(ctx)
 	snapshots := k.GetAllSnapshots(ctx)
 
 	var genState types.GenesisState
-	genState.Vpools = pools
+	genState.Vpools = k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
 	genState.Snapshots = snapshots
 
 	return &genState

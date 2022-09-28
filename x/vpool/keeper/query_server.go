@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -36,7 +37,7 @@ func (q queryServer) ReserveAssets(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pool, err := q.getPool(ctx, tokenPair)
+	pool, err := q.Pools.Get(ctx, tokenPair)
 	if err != nil {
 		return nil, err
 	}
@@ -57,17 +58,18 @@ func (q queryServer) AllPools(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pools := q.GetAllPools(ctx)
 	if err != nil {
 		return nil, err
 	}
 	var pricesForPools []types.PoolPrices
-	for _, pool := range pools {
-		poolPrices, err := q.GetPoolPrices(ctx, *pool)
+	var pools []*types.VPool
+	for _, pool := range q.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values() {
+		poolPrices, err := q.GetPoolPrices(ctx, pool)
 		if err != nil {
 			return nil, err
 		}
 		pricesForPools = append(pricesForPools, poolPrices)
+		pools = append(pools, &pool)
 	}
 
 	return &types.QueryAllPoolsResponse{

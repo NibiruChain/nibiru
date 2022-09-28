@@ -15,7 +15,7 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	vpools := []*types.VPool{
+	vpools := []types.VPool{
 		{
 			Pair:                   common.MustNewAssetPair("BTC:NUSD"),
 			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1

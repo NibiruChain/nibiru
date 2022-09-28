@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,6 +21,7 @@ func NewKeeper(
 		codec:           codec,
 		storeKey:        storeKey,
 		pricefeedKeeper: pricefeedKeeper,
+		Pools:           collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
 	}
 }
 
@@ -27,6 +29,8 @@ type Keeper struct {
 	codec           codec.BinaryCodec
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
+
+	Pools collections.Map[common.AssetPair, types.VPool, *types.VPool]
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -70,7 +74,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
@@ -182,7 +186,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.ZeroDec(), nil
 	}
 
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
@@ -273,7 +277,7 @@ args:
 ret:
   - err: error if any
 */
-func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.VPool) error {
+func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) error {
 	if pool.FluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
 		return nil
@@ -304,7 +308,7 @@ args:
 ret:
   - bool: true if the fluctuation limit is violated. false otherwise
 */
-func isOverFluctuationLimit(pool *types.VPool, snapshot types.ReserveSnapshot) bool {
+func isOverFluctuationLimit(pool types.VPool, snapshot types.ReserveSnapshot) bool {
 	if pool.FluctuationLimitRatio.IsZero() {
 		return false
 	}
@@ -345,7 +349,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		panic(err)
 	}
@@ -365,7 +369,7 @@ ret:
   - sdk.Dec: The maintenance margin ratio for the pool
 */
 func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		panic(err)
 	}
@@ -385,7 +389,7 @@ ret:
   - sdk.Dec: The maintenance margin ratio for the pool
 */
 func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		panic(err)
 	}

@@ -28,7 +28,7 @@ ret:
   - err: error
 */
 func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
@@ -63,7 +63,7 @@ func (k Keeper) GetBaseAssetPrice(
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
@@ -91,7 +91,7 @@ func (k Keeper) GetQuoteAssetPrice(
 	dir types.Direction,
 	quoteAmount sdk.Dec,
 ) (baseAssetAmount sdk.Dec, err error) {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
