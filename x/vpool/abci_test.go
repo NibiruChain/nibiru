@@ -44,7 +44,6 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.NewDec(10),
 		sdk.NewDec(10),
 		ctx.BlockTime(),
-		ctx.BlockHeight(),
 	)
 
 	t.Log("run one block of 5 seconds")
@@ -68,7 +67,6 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.NewDec(5),
 		sdk.NewDec(20),
 		ctx.BlockTime(),
-		ctx.BlockHeight(),
 	)
 
 	t.Log("run one block of 5 seconds")

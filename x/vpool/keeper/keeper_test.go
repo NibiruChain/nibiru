@@ -540,7 +540,6 @@ func TestIsOverFluctuationLimit(t *testing.T) {
 				sdk.OneDec(),
 				sdk.NewDec(1000),
 				time.Now(),
-				0,
 			)
 			assert.EqualValues(t, tc.isOverLimit, isOverFluctuationLimit(tc.pool, snapshot))
 		})
@@ -574,14 +573,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
 				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
-				BlockNumber:       1,
 			},
 			ctxBlockHeight: 2,
 			expectedErr:    nil,
@@ -603,7 +600,6 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: nil,
 			ctxBlockHeight: 1,
@@ -626,7 +622,6 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: nil,
 			ctxBlockHeight: 1,
@@ -649,14 +644,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
 				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
-				BlockNumber:       1,
 			},
 			ctxBlockHeight: 2,
 			expectedErr:    nil,
@@ -674,22 +667,21 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 
 			t.Log("save snapshot 0")
 
-			ctx = ctx.WithBlockHeight(tc.prevSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
+			ctx = ctx.WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
 			snapshot := types.NewReserveSnapshot(
-				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(), ctx.BlockHeight(),
+				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(),
 			)
 			vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 
 			if tc.latestSnapshot != nil {
 				t.Log("save snapshot 1")
-				ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
+				ctx = ctx.WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
 
 				snapshot := types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					tc.latestSnapshot.BaseAssetReserve,
 					tc.latestSnapshot.QuoteAssetReserve,
 					ctx.BlockTime(),
-					ctx.BlockHeight(),
 				)
 				vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 			}

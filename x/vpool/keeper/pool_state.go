@@ -42,7 +42,6 @@ func (k Keeper) CreatePool(
 			baseAssetReserve,
 			quoteAssetReserve,
 			ctx.BlockTime(),
-			ctx.BlockHeight(),
 		),
 	)
 }

@@ -80,7 +80,6 @@ func TestGetSnapshotPrice(t *testing.T) {
 				tc.baseAssetReserve,
 				tc.quoteAssetReserve,
 				time.Now(),
-				1,
 			)
 
 			snapshotPriceOpts := snapshotPriceOptions{

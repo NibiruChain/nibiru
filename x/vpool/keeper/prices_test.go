@@ -249,21 +249,18 @@ func TestCalcTwap(t *testing.T) {
 					sdk.NewDec(10),
 					sdk.NewDec(90),
 					time.UnixMilli(10),
-					1,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(85),
 					time.UnixMilli(20),
-					2,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(95),
 					time.UnixMilli(30),
-					3,
 				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
@@ -281,21 +278,18 @@ func TestCalcTwap(t *testing.T) {
 					sdk.NewDec(10),
 					sdk.NewDec(90),
 					time.UnixMilli(10),
-					1,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(85),
 					time.UnixMilli(20),
-					2,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(10),
 					sdk.NewDec(95),
 					time.UnixMilli(30),
-					3,
 				),
 			},
 			currentBlockTime:   time.UnixMilli(35),
@@ -312,7 +306,6 @@ func TestCalcTwap(t *testing.T) {
 					QuoteAssetReserve: sdk.NewDec(90),
 					BaseAssetReserve:  sdk.NewDec(10),
 					TimestampMs:       10,
-					BlockNumber:       1,
 				},
 			},
 			currentBlockTime:   time.UnixMilli(10),
@@ -330,14 +323,12 @@ func TestCalcTwap(t *testing.T) {
 					sdk.NewDec(10),
 					sdk.NewDec(30),
 					time.UnixMilli(10),
-					1,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.MustNewDecFromStr("7.5"),
 					sdk.NewDec(40),
 					time.UnixMilli(20),
-					2,
 				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
@@ -357,14 +348,12 @@ func TestCalcTwap(t *testing.T) {
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
-					1,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(12),
 					sdk.NewDec(50),
 					time.UnixMilli(20),
-					2,
 				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
@@ -384,14 +373,12 @@ func TestCalcTwap(t *testing.T) {
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
-					1,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(20),
 					sdk.NewDec(30),
 					time.UnixMilli(20),
-					2,
 				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
@@ -411,14 +398,12 @@ func TestCalcTwap(t *testing.T) {
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
-					1,
 				),
 				types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					sdk.NewDec(8),
 					sdk.NewDec(75),
 					time.UnixMilli(20),
-					2,
 				),
 			},
 			currentBlockTime:   time.UnixMilli(30),
@@ -436,7 +421,7 @@ func TestCalcTwap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
-			ctx = ctx.WithBlockTime(time.UnixMilli(0)).WithBlockHeight(1)
+			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 
 			t.Log("Create an empty pool for the first block")
 			vpoolKeeper.CreatePool(
@@ -465,13 +450,12 @@ func TestCalcTwap(t *testing.T) {
 			)
 
 			for _, snapshot := range tc.reserveSnapshots {
-				ctx = ctx.WithBlockHeight(snapshot.BlockNumber).WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
+				ctx = ctx.WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
 				snapshot := types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					snapshot.BaseAssetReserve,
 					snapshot.QuoteAssetReserve,
 					ctx.BlockTime(),
-					ctx.BlockHeight(),
 				)
 				vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 			}
