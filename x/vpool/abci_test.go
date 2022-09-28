@@ -1,6 +1,7 @@
 package vpool_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
 
@@ -48,7 +49,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err := vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, uint64(ctx.BlockHeight()-1))
+	snapshot, err := vpoolKeeper.ReserveSnapshots.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.Uint64(uint64(expectedSnapshot.TimestampMs))))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
@@ -72,7 +73,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err = vpoolKeeper.GetSnapshot(ctx, common.Pair_BTC_NUSD, uint64(ctx.BlockHeight()-1))
+	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.Uint64(uint64(expectedSnapshot.TimestampMs))))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 }
