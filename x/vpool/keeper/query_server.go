@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

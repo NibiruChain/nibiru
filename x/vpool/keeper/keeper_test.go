@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
