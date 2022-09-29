@@ -118,6 +118,6 @@ func (q queryServer) FundingRates(
 	}
 
 	return &types.QueryFundingRatesResponse{
-		CumulativePremiumFractions: fundingRates,
+		CumulativeFundingRates: fundingRates,
 	}, nil
 }

@@ -396,7 +396,7 @@ func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	s.T().Log("get cumulative funding payments")
 	queryResp, err := testutilcli.QueryFundingRates(val.ClientCtx, common.Pair_BTC_NUSD)
 	s.NoError(err)
-	s.EqualValues([]sdk.Dec{sdk.ZeroDec(), sdk.OneDec(), sdk.NewDec(2)}, queryResp.CumulativePremiumFractions)
+	s.EqualValues([]sdk.Dec{sdk.ZeroDec(), sdk.OneDec(), sdk.NewDec(2)}, queryResp.CumulativeFundingRates)
 }
 
 func (s *IntegrationTestSuite) TestRemoveMargin() {

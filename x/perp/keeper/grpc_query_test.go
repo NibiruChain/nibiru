@@ -323,7 +323,7 @@ func TestQueryFundingRates(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Log("assert response")
-				assert.EqualValues(t, tc.expectedFundingRates, resp.CumulativePremiumFractions)
+				assert.EqualValues(t, tc.expectedFundingRates, resp.CumulativeFundingRates)
 			}
 		})
 	}
