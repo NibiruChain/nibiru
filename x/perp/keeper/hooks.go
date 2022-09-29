@@ -49,7 +49,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-		fundingRate := markPrice.Sub(indexTWAP).Quo(indexTWAP).QuoInt64(int64(intervalsPerDay))
+		fundingRate := markPrice.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
 		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
 		cumulativeFundingRate := fundingRate

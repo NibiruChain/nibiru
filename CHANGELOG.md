@@ -108,7 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#911](https://github.com/NibiruChain/nibiru/pull/911) - fix(perp): handle issue where no vpool snapshots are found
 * [#958](https://github.com/NibiruChain/nibiru/pull/930) - fix(pricefeed): add twap to prices query
 * [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
-* [#968](https://github.com/NibiruChain/nibiru/pull/968) - fix(perp): compute correct funding rate
 
 ## v0.14.0
 
