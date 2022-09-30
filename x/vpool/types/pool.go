@@ -180,3 +180,33 @@ func (p VPool) GetMarkPrice() sdk.Dec {
 
 	return p.QuoteAssetReserve.Quo(p.BaseAssetReserve)
 }
+
+/*
+IsOverFluctuationLimit compares the updated pool's spot price with the current spot price.
+
+If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
+
+args:
+  - pool: the updated vpool
+  - snapshot: the snapshot to compare against
+
+ret:
+  - bool: true if the fluctuation limit is violated. false otherwise
+*/
+func (p VPool) IsOverFluctuationLimit(snapshot ReserveSnapshot) bool {
+	if p.FluctuationLimitRatio.IsZero() {
+		return false
+	}
+
+	markPrice := p.GetMarkPrice()
+
+	lastPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
+	upperLimit := lastPrice.Mul(sdk.OneDec().Add(p.FluctuationLimitRatio))
+	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(p.FluctuationLimitRatio))
+
+	if markPrice.GT(upperLimit) || markPrice.LT(lowerLimit) {
+		return true
+	}
+
+	return false
+}

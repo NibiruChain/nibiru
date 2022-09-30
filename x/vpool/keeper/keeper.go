@@ -263,42 +263,11 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.VPool) e
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 	}
 
-	if isOverFluctuationLimit(pool, latestSnapshot) {
+	if pool.IsOverFluctuationLimit(latestSnapshot) {
 		return types.ErrOverFluctuationLimit
 	}
 
 	return nil
-}
-
-/*
-*
-isOverFluctuationLimit compares the updated pool's spot price with the current spot price.
-
-If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
-
-args:
-  - pool: the updated vpool
-  - snapshot: the snapshot to compare against
-
-ret:
-  - bool: true if the fluctuation limit is violated. false otherwise
-*/
-func isOverFluctuationLimit(pool *types.VPool, snapshot types.ReserveSnapshot) bool {
-	if pool.FluctuationLimitRatio.IsZero() {
-		return false
-	}
-
-	price := pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve)
-
-	lastPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
-	upperLimit := lastPrice.Mul(sdk.OneDec().Add(pool.FluctuationLimitRatio))
-	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(pool.FluctuationLimitRatio))
-
-	if price.GT(upperLimit) || price.LT(lowerLimit) {
-		return true
-	}
-
-	return false
 }
 
 /*
