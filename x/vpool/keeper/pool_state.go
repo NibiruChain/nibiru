@@ -83,7 +83,6 @@ func (k Keeper) updatePool(
 	updatedPool *types.VPool,
 	skipFluctuationCheck bool,
 ) (err error) {
-	// Check if its over Fluctuation Limit Ratio.
 	if !skipFluctuationCheck {
 		if err = k.checkFluctuationLimitRatio(ctx, updatedPool); err != nil {
 			return err

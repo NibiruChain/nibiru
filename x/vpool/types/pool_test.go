@@ -406,3 +406,64 @@ func TestPool_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestVPool_GetMarkPrice(t *testing.T) {
+	tests := []struct {
+		name          string
+		pool          VPool
+		expectedValue sdk.Dec
+	}{
+		{
+			"happy path",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+			},
+			sdk.MustNewDecFromStr("1000"),
+		},
+		{
+			"nil base",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.Dec{},
+				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+			},
+			sdk.ZeroDec(),
+		},
+		{
+			"zero base",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.ZeroDec(),
+				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+			},
+			sdk.ZeroDec(),
+		},
+		{
+			"nil quote",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteAssetReserve: sdk.Dec{},
+			},
+			sdk.ZeroDec(),
+		},
+		{
+			"zero quote",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteAssetReserve: sdk.ZeroDec(),
+			},
+			sdk.ZeroDec(),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			require.True(t, tc.expectedValue.Equal(tc.pool.GetMarkPrice()))
+		})
+	}
+}

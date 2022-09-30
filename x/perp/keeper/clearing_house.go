@@ -172,7 +172,7 @@ func (k Keeper) afterPositionUpdate(
 		return err
 	}
 
-	spotPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
+	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func (k Keeper) afterPositionUpdate(
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
 		BadDebt:               sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
 		LiquidationPenalty:    sdk.ZeroDec(),
-		SpotPrice:             spotPrice,
+		SpotPrice:             markPrice,
 		FundingPayment:        positionResp.FundingPayment,
 		BlockHeight:           ctx.BlockHeight(),
 		BlockTimeMs:           ctx.BlockTime().UnixMilli(),

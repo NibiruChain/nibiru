@@ -170,3 +170,13 @@ func (m *VPool) Validate() error {
 
 	return nil
 }
+
+// GetMarkPrice returns the price of the asset.
+func (p VPool) GetMarkPrice() sdk.Dec {
+	if p.BaseAssetReserve.IsNil() || p.BaseAssetReserve.IsZero() ||
+		p.QuoteAssetReserve.IsNil() || p.QuoteAssetReserve.IsZero() {
+		return sdk.ZeroDec()
+	}
+
+	return p.QuoteAssetReserve.Quo(p.BaseAssetReserve)
+}

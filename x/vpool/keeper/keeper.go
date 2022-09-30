@@ -227,8 +227,8 @@ func (k Keeper) SwapQuoteForBase(
 	})
 }
 
-// checkIfLimitIsViolated checks if the base limit is exceeded.
-// returns error when exceed.
+// checkIfLimitIsViolated checks if the limit is violated by the amount.
+// returns error if it does
 func checkIfLimitIsViolated(limit, amount sdk.Dec, dir types.Direction) error {
 	if !limit.IsZero() {
 		if dir == types.Direction_ADD_TO_POOL && amount.LT(limit) {
@@ -323,7 +323,7 @@ ret:
   - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
 */
 func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
-	markPrice, err := k.GetMarkPrice(ctx, pair)
+	pool, err := k.getPool(ctx, pair)
 	if err != nil {
 		panic(err)
 	}
@@ -333,12 +333,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	pool, err := k.getPool(ctx, pair)
-	if err != nil {
-		panic(err)
-	}
-
-	return markPrice.Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
+	return pool.GetMarkPrice().Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
 
 /*

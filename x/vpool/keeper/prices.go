@@ -24,7 +24,7 @@ args:
   - pair: the token pair to get price for
 
 ret:
-  - price: the price of the token pair as sdk.Dec
+  - price: the price of the token pair as sdk.dec
   - err: error
 */
 func (k Keeper) GetMarkPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
@@ -33,12 +33,7 @@ func (k Keeper) GetMarkPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, e
 		return sdk.ZeroDec(), err
 	}
 
-	if pool.BaseAssetReserve.IsNil() || pool.BaseAssetReserve.IsZero() ||
-		pool.QuoteAssetReserve.IsNil() || pool.QuoteAssetReserve.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
-	return pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve), nil
+	return pool.GetMarkPrice(), nil
 }
 
 /*
