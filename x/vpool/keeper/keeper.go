@@ -92,7 +92,7 @@ func (k Keeper) SwapBaseForQuote(
 			"quote amount %s is over trading limit", quoteAmt)
 	}
 
-	err = checkIfQuoteLimitIsExceeded(quoteLimit, quoteAmt, dir)
+	err = checkIfLimitIsViolated(quoteLimit, quoteAmt, dir)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
@@ -127,30 +127,6 @@ func (k Keeper) SwapBaseForQuote(
 		QuoteAmount: quoteAmt,
 		BaseAmount:  baseAmt,
 	})
-}
-
-// checkIfQuoteLimitIsExceeded checks if the quote limit is exceeded.
-// returns error when exceed.
-func checkIfQuoteLimitIsExceeded(quoteLimit sdk.Dec, quoteAmt sdk.Dec, dir types.Direction) error {
-	if !quoteLimit.IsZero() {
-		// if going long and the base amount retrieved from the pool is less than the limit
-		if dir == types.Direction_ADD_TO_POOL && quoteAmt.LT(quoteLimit) {
-			return types.ErrAssetFailsUserLimit.Wrapf(
-				"quote amount (%s) is less than selected limit (%s)",
-				quoteAmt.String(),
-				quoteLimit.String(),
-			)
-			// if going short and the base amount retrieved from the pool is greater than the limit
-		} else if dir == types.Direction_REMOVE_FROM_POOL && quoteAmt.GT(quoteLimit) {
-			return types.ErrAssetFailsUserLimit.Wrapf(
-				"quote amount (%s) is greater than selected limit (%s)",
-				quoteAmt.String(),
-				quoteLimit.String(),
-			)
-		}
-	}
-
-	return nil
 }
 
 /*
@@ -214,23 +190,9 @@ func (k Keeper) SwapQuoteForBase(
 			"base amount %s is over trading limit", baseAmt)
 	}
 
-	// check if base asset limit is violated
-	if !baseLimit.IsZero() {
-		// if going long and the base amount retrieved from the pool is less than the limit
-		if dir == types.Direction_ADD_TO_POOL && baseAmt.LT(baseLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"base amount (%s) is less than selected limit (%s)",
-				baseAmt.String(),
-				baseLimit.String(),
-			)
-			// if going short and the base amount retrieved from the pool is greater than the limit
-		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAmt.GT(baseLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"base amount (%s) is greater than selected limit (%s)",
-				baseAmt.String(),
-				baseLimit.String(),
-			)
-		}
+	err = checkIfLimitIsViolated(baseLimit, baseAmt, dir)
+	if err != nil {
+		return sdk.Dec{}, err
 	}
 
 	if dir == types.Direction_ADD_TO_POOL {
@@ -263,6 +225,28 @@ func (k Keeper) SwapQuoteForBase(
 		QuoteAmount: quoteAmt,
 		BaseAmount:  baseAmt,
 	})
+}
+
+// checkIfLimitIsViolated checks if the base limit is exceeded.
+// returns error when exceed.
+func checkIfLimitIsViolated(limit, amount sdk.Dec, dir types.Direction) error {
+	if !limit.IsZero() {
+		if dir == types.Direction_ADD_TO_POOL && amount.LT(limit) {
+			return types.ErrAssetFailsUserLimit.Wrapf(
+				"amount (%s) is less than selected limit (%s)",
+				amount.String(),
+				limit.String(),
+			)
+		} else if dir == types.Direction_REMOVE_FROM_POOL && amount.GT(limit) {
+			return types.ErrAssetFailsUserLimit.Wrapf(
+				"amount (%s) is greater than selected limit (%s)",
+				amount.String(),
+				limit.String(),
+			)
+		}
+	}
+
+	return nil
 }
 
 /*
