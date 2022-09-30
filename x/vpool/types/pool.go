@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -207,4 +206,20 @@ func (p VPool) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnap
 	}
 
 	return false
+}
+
+/*
+IsOverSpreadLimit compares the current mark price of the vpool
+to the underlying's index price.
+It panics if you provide it with a pair that doesn't exist in the state.
+
+args:
+  - indexPrice: the index price we want to compare.
+
+ret:
+  - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
+*/
+func (p VPool) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
+	return p.GetMarkPrice().Sub(indexPrice).
+		Quo(indexPrice).Abs().GTE(p.MaxOracleSpreadRatio)
 }

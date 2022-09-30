@@ -292,7 +292,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	return pool.GetMarkPrice().Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
+	return pool.IsOverSpreadLimit(indexPrice.Price)
 }
 
 /*
