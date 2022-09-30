@@ -118,6 +118,7 @@ func (p *VPool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
 	p.QuoteAssetReserve = p.QuoteAssetReserve.Sub(amount)
 }
 
+// ValidateReserves checks that reserves are positive.
 func (p *VPool) ValidateReserves() error {
 	if !p.QuoteAssetReserve.IsPositive() || !p.BaseAssetReserve.IsPositive() {
 		return ErrNonPositiveReserves.Wrap("pool: " + p.String())
@@ -130,6 +131,7 @@ func (m *VPool) Validate() error {
 	if err := m.Pair.Validate(); err != nil {
 		return fmt.Errorf("invalid asset pair: %w", err)
 	}
+
 	// trade limit ratio always between 0 and 1
 	if m.TradeLimitRatio.LT(sdk.ZeroDec()) || m.TradeLimitRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")

@@ -122,16 +122,17 @@ func (k Keeper) GetAllPools(ctx sdk.Context) []*types.VPool {
 // No error is returned if the prices don't exist, however.
 func (k Keeper) GetPoolPrices(
 	ctx sdk.Context, pool types.VPool,
-) (prices types.PoolPrices, err error) {
-	// Validation
+) (types.PoolPrices, error) {
 	if err := pool.Pair.Validate(); err != nil {
-		return prices, err
+		return types.PoolPrices{}, err
 	}
+
 	if !k.ExistsPool(ctx, pool.Pair) {
-		return prices, types.ErrPairNotSupported.Wrap(pool.Pair.String())
+		return types.PoolPrices{}, types.ErrPairNotSupported.Wrap(pool.Pair.String())
 	}
+
 	if err := pool.ValidateReserves(); err != nil {
-		return prices, err
+		return types.PoolPrices{}, err
 	}
 
 	indexPrice, err := k.pricefeedKeeper.GetCurrentPrice(ctx, pool.Pair.Token0, pool.Pair.Token1)

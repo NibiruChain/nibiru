@@ -61,12 +61,14 @@ func (q queryServer) AllPools(
 	if err != nil {
 		return nil, err
 	}
+
 	var pricesForPools []types.PoolPrices
 	for _, pool := range pools {
 		poolPrices, err := q.GetPoolPrices(ctx, *pool)
 		if err != nil {
 			return nil, err
 		}
+
 		pricesForPools = append(pricesForPools, poolPrices)
 	}
 
