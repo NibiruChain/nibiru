@@ -22,7 +22,7 @@ func (k Keeper) CreatePool(
 	maintenanceMarginRatio sdk.Dec,
 	maxLeverage sdk.Dec,
 ) {
-	k.savePool(ctx, &types.VPool{
+	k.savePool(ctx, types.VPool{
 		Pair:                   pair,
 		BaseAssetReserve:       baseAssetReserve,
 		QuoteAssetReserve:      quoteAssetReserve,
@@ -47,23 +47,24 @@ func (k Keeper) CreatePool(
 
 // getPool returns the pool from database
 func (k Keeper) getPool(ctx sdk.Context, pair common.AssetPair) (
-	*types.VPool, error,
+	types.VPool, error,
 ) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
 	if bz == nil {
-		return nil, fmt.Errorf("could not find vpool for pair %s", pair.String())
+		return types.VPool{}, fmt.Errorf("could not find vpool for pair %s", pair.String())
 	}
 
 	var pool types.VPool
 	k.codec.MustUnmarshal(bz, &pool)
-	return &pool, nil
+
+	return pool, nil
 }
 
 func (k Keeper) savePool(
 	ctx sdk.Context,
-	pool *types.VPool,
+	pool types.VPool,
 ) {
-	bz := k.codec.MustMarshal(pool)
+	bz := k.codec.MustMarshal(&pool)
 	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(pool.Pair), bz)
 }
 
@@ -80,7 +81,7 @@ ret:
 */
 func (k Keeper) updatePool(
 	ctx sdk.Context,
-	updatedPool *types.VPool,
+	updatedPool types.VPool,
 	skipFluctuationCheck bool,
 ) (err error) {
 	if !skipFluctuationCheck {
@@ -100,18 +101,18 @@ func (k Keeper) ExistsPool(ctx sdk.Context, pair common.AssetPair) bool {
 }
 
 // GetAllPools returns all pools that exist.
-func (k Keeper) GetAllPools(ctx sdk.Context) []*types.VPool {
+func (k Keeper) GetAllPools(ctx sdk.Context) []types.VPool {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, types.PoolKeyPrefix)
 
-	var pools []*types.VPool
+	var pools []types.VPool
 	for ; iterator.Valid(); iterator.Next() {
 		bz := iterator.Value()
 
 		var pool types.VPool
 		k.codec.MustUnmarshal(bz, &pool)
 
-		pools = append(pools, &pool)
+		pools = append(pools, pool)
 	}
 
 	return pools

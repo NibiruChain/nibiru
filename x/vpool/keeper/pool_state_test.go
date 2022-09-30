@@ -42,7 +42,7 @@ func TestCreatePool(t *testing.T) {
 func TestKeeper_GetAllPools(t *testing.T) {
 	vpoolKeeper, _, ctx := getKeeper(t)
 
-	var vpools = []*types.VPool{
+	var vpools = []types.VPool{
 		{
 			Pair:                   common.Pair_BTC_NUSD,
 			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1
@@ -109,7 +109,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 					QuoteAssetReserve: sdk.NewDec(-400),
 				}
 				vpoolKeeper, _, ctx := getKeeper(t)
-				vpoolKeeper.savePool(ctx, &vpool)
+				vpoolKeeper.savePool(ctx, vpool)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
 				require.ErrorContains(t, err, types.ErrNonPositiveReserves.Error())
 			},
