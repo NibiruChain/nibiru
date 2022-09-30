@@ -263,7 +263,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.VPool) e
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 	}
 
-	if pool.IsOverFluctuationLimit(latestSnapshot) {
+	if pool.IsOverFluctuationLimitInRelationWithSnapshot(latestSnapshot) {
 		return types.ErrOverFluctuationLimit
 	}
 

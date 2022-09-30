@@ -182,7 +182,7 @@ func (p VPool) GetMarkPrice() sdk.Dec {
 }
 
 /*
-IsOverFluctuationLimit compares the updated pool's spot price with the current spot price.
+IsOverFluctuationLimitInRelationWithSnapshot compares the updated pool's spot price with the current spot price.
 
 If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
 
@@ -193,7 +193,7 @@ args:
 ret:
   - bool: true if the fluctuation limit is violated. false otherwise
 */
-func (p VPool) IsOverFluctuationLimit(snapshot ReserveSnapshot) bool {
+func (p VPool) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnapshot) bool {
 	if p.FluctuationLimitRatio.IsZero() {
 		return false
 	}

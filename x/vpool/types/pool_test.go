@@ -559,7 +559,7 @@ func TestVPool_IsOverFluctuationLimit(t *testing.T) {
 				time.Now(),
 				0,
 			)
-			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimit(snapshot))
+			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimitInRelationWithSnapshot(snapshot))
 		})
 	}
 }
