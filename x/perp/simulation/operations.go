@@ -5,14 +5,12 @@ import (
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -20,21 +18,19 @@ const defaultWeight = 100
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simtypes.AppParams,
-	cdc codec.JSONCodec,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simulation.WeightedOperations {
+) simulation.WeightedOperations {
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			defaultWeight,
-			SimulateMsgOpenPosition(ak, bk, k),
+			SimulateMsgOpenPosition(ak, bk),
 		),
 	}
 }
 
-// SimulateMsgCreateBalancerPool generates a MsgCreatePool with random values.
-func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
+// SimulateMsgOpenPosition generates a MsgCreatePool with random values.
+func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {

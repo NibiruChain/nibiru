@@ -177,7 +177,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	markPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, position.Pair)
+	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, position.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -320,7 +320,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	markPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, currentPosition.Pair)
+	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, currentPosition.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}

@@ -96,22 +96,9 @@ func (k Keeper) SwapBaseForQuote(
 			"quote amount %s is over trading limit", quoteAmt)
 	}
 
-	if !quoteLimit.IsZero() {
-		// if going long and the base amount retrieved from the pool is less than the limit
-		if dir == types.Direction_ADD_TO_POOL && quoteAmt.LT(quoteLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"quote amount (%s) is less than selected limit (%s)",
-				quoteAmt.String(),
-				quoteLimit.String(),
-			)
-			// if going short and the base amount retrieved from the pool is greater than the limit
-		} else if dir == types.Direction_REMOVE_FROM_POOL && quoteAmt.GT(quoteLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"quote amount (%s) is greater than selected limit (%s)",
-				quoteAmt.String(),
-				quoteLimit.String(),
-			)
-		}
+	err = checkIfQuoteLimitIsExceeded(quoteLimit, quoteAmt, dir)
+	if err != nil {
+		return sdk.Dec{}, err
 	}
 
 	if dir == types.Direction_ADD_TO_POOL {
@@ -126,14 +113,14 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	spotPrice, err := k.GetSpotPrice(ctx, pair)
+	markPrice, err := k.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
-		Price:     spotPrice,
+		Price:     markPrice,
 		Timestamp: ctx.BlockHeader().Time,
 	}); err != nil {
 		return sdk.Dec{}, err
@@ -146,7 +133,32 @@ func (k Keeper) SwapBaseForQuote(
 	})
 }
 
+// checkIfQuoteLimitIsExceeded checks if the quote limit is exceeded.
+// returns error when exceed.
+func checkIfQuoteLimitIsExceeded(quoteLimit sdk.Dec, quoteAmt sdk.Dec, dir types.Direction) error {
+	if !quoteLimit.IsZero() {
+		// if going long and the base amount retrieved from the pool is less than the limit
+		if dir == types.Direction_ADD_TO_POOL && quoteAmt.LT(quoteLimit) {
+			return types.ErrAssetFailsUserLimit.Wrapf(
+				"quote amount (%s) is less than selected limit (%s)",
+				quoteAmt.String(),
+				quoteLimit.String(),
+			)
+			// if going short and the base amount retrieved from the pool is greater than the limit
+		} else if dir == types.Direction_REMOVE_FROM_POOL && quoteAmt.GT(quoteLimit) {
+			return types.ErrAssetFailsUserLimit.Wrapf(
+				"quote amount (%s) is greater than selected limit (%s)",
+				quoteAmt.String(),
+				quoteLimit.String(),
+			)
+		}
+	}
+
+	return nil
+}
+
 /*
+SwapQuoteForBase
 Trades quoteAssets in exchange for baseAssets.
 The quote asset is a stablecoin like NUSD.
 The base asset is a crypto asset like BTC or ETH.
@@ -241,14 +253,14 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	spotPrice, err := k.GetSpotPrice(ctx, pair)
+	markPrice, err := k.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
-		Price:     spotPrice,
+		Price:     markPrice,
 		Timestamp: ctx.BlockHeader().Time,
 	}); err != nil {
 		return sdk.Dec{}, err
@@ -324,7 +336,6 @@ func isOverFluctuationLimit(pool *types.VPool, snapshot types.ReserveSnapshot) b
 }
 
 /*
-*
 IsOverSpreadLimit compares the current spot price of the vpool (given by pair) to the underlying's index price (given by an oracle).
 It panics if you provide it with a pair that doesn't exist in the state.
 
@@ -336,7 +347,7 @@ ret:
   - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
 */
 func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
-	spotPrice, err := k.GetSpotPrice(ctx, pair)
+	markPrice, err := k.GetMarkPrice(ctx, pair)
 	if err != nil {
 		panic(err)
 	}
@@ -351,11 +362,10 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	return spotPrice.Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
+	return markPrice.Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
 }
 
 /*
-*
 GetMaintenanceMarginRatio returns the maintenance margin ratio for the pool from the asset pair.
 
 args:
@@ -375,7 +385,6 @@ func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair
 }
 
 /*
-*
 GetMaxLeverage returns the maximum leverage required to open a position in the pool.
 
 args:

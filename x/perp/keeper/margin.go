@@ -59,7 +59,7 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
+	spotPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (k Keeper) RemoveMargin(
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
-	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
+	spotPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
