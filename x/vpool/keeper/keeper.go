@@ -34,6 +34,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 /*
+SwapBaseForQuote
 Trades baseAssets in exchange for quoteAssets.
 The base asset is a crypto asset like BTC.
 The quote asset is a stablecoin like NUSD.
@@ -58,16 +59,16 @@ func (k Keeper) SwapBaseForQuote(
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
 ) (quoteAmt sdk.Dec, err error) {
+	if baseAmt.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
+
 	if !k.ExistsPool(ctx, pair) {
 		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
 	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
-	}
-
-	if baseAmt.IsZero() {
-		return sdk.ZeroDec(), nil
 	}
 
 	pool, err := k.getPool(ctx, pair)
