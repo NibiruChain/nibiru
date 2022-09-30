@@ -109,14 +109,9 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	markPrice, err := k.GetMarkPrice(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
 	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
-		Price:     markPrice,
+		Price:     pool.GetMarkPrice(),
 		Timestamp: ctx.BlockHeader().Time,
 	}); err != nil {
 		return sdk.Dec{}, err
