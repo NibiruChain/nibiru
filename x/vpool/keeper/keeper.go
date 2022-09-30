@@ -63,17 +63,13 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.ExistsPool(ctx, pair) {
-		return sdk.Dec{}, types.ErrPairNotSupported
-	}
-
 	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
 	if !pool.HasEnoughBaseReserve(baseAmt) {
@@ -183,21 +179,17 @@ func (k Keeper) SwapQuoteForBase(
 	baseLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
 ) (baseAmt sdk.Dec, err error) {
-	if !k.ExistsPool(ctx, pair) {
-		return sdk.Dec{}, types.ErrPairNotSupported
+	if quoteAmt.IsZero() {
+		return sdk.ZeroDec(), nil
 	}
 
 	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
-	if quoteAmt.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
 	pool, err := k.getPool(ctx, pair)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
 	// check trade limit ratio on quote in either direction
