@@ -194,7 +194,7 @@ func (m *MsgMultiLiquidate) GetSigners() []sdk.AccAddress {
 // MsgClosePosition
 
 func (m MsgClosePosition) Route() string { return RouterKey }
-func (m MsgClosePosition) Type() string  { return "liquidate_msg" }
+func (m MsgClosePosition) Type() string  { return "close_position_msg" }
 
 func (msg MsgClosePosition) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {

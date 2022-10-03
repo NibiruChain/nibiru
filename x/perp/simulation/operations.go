@@ -46,7 +46,7 @@ func WeightedOperations(
 	}
 }
 
-// SimulateMsgCreateBalancerPool generates a MsgCreatePool with random values.
+// SimulateMsgOpenPosition generates a MsgOpenPosition with random values.
 func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
@@ -95,7 +95,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 	}
 }
 
-// SimulateMsgCreateBalancerPool generates a MsgCreatePool with random values.
+// SimulateMsgClosePosition generates a MsgClosePosition with random values.
 func SimulateMsgClosePosition(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
