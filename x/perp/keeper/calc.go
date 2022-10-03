@@ -98,7 +98,7 @@ func (k Keeper) calcFreeCollateral(
 	}
 
 	positionNotional, unrealizedPnL, err := k.
-		getPreferencePositionNotionalAndUnrealizedPnL(
+		GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
 			pos,
 			types.PnLPreferenceOption_MIN,
