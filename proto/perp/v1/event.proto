@@ -212,17 +212,23 @@ message FundingRateChangedEvent {
       (gogoproto.nullable) = false
     ];
 
-    // The latest cumulative funding rate.
-    // The funding rate a position will pay is the difference between this value
-    // and the latest cumulative funding rate on the position.
-    string cumulative_funding_rate = 5 [
+    // The latest premium fraction just calculated.
+    string latest_premium_fraction = 5 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // The latest cumulative premium fraction.
+    // The funding payment a position will pay is the difference between this value
+    // and the latest cumulative premium fraction on the position, multiplied by the position size.
+    string cumulative_premium_fraction = 6 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
 
     // The block number at which the funding rate was calculated.
-    int64 block_height = 6;
+    int64 block_height = 7;
 
     // The block time in unix milliseconds at which the funding rate was calculated.
-    int64 block_time_ms = 7;
+    int64 block_time_ms = 8;
 }

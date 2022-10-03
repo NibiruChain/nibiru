@@ -21,19 +21,19 @@ func TestGenesisState_Validate(t *testing.T) {
 				Params: DefaultParams(),
 				PairMetadata: []PairMetadata{
 					{
-						Pair:                   common.MustNewAssetPair("pair1:pair2"),
-						CumulativeFundingRates: []sdk.Dec{sdk.MustNewDecFromStr("0.1")},
+						Pair:                       common.MustNewAssetPair("pair1:pair2"),
+						CumulativePremiumFractions: []sdk.Dec{sdk.MustNewDecFromStr("0.1")},
 					},
 				},
 				Positions: []Position{
 					{
-						TraderAddress:                  sample.AccAddress().String(),
-						Pair:                           common.MustNewAssetPair("valid:pair"),
-						Size_:                          sdk.MustNewDecFromStr("1000"),
-						Margin:                         sdk.MustNewDecFromStr("1000"),
-						OpenNotional:                   sdk.MustNewDecFromStr("1000"),
-						LatestCumulativeFundingPayment: sdk.MustNewDecFromStr("1"),
-						BlockNumber:                    0,
+						TraderAddress:                   sample.AccAddress().String(),
+						Pair:                            common.MustNewAssetPair("valid:pair"),
+						Size_:                           sdk.MustNewDecFromStr("1000"),
+						Margin:                          sdk.MustNewDecFromStr("1000"),
+						OpenNotional:                    sdk.MustNewDecFromStr("1000"),
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("1"),
+						BlockNumber:                     0,
 					},
 				},
 				PrepaidBadDebts: []PrepaidBadDebt{
