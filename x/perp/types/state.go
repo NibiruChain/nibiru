@@ -39,7 +39,7 @@ func (m *PairMetadata) Validate() error {
 		return err
 	}
 
-	for i, pf := range m.CumulativeFundingRates {
+	for i, pf := range m.CumulativePremiumFractions {
 		if pf.IsNil() {
 			return fmt.Errorf("invalid cumulative funding rate at index: %d", i)
 		}

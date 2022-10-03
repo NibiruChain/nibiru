@@ -47,7 +47,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 			Pair: pair,
-			CumulativeFundingRates: []sdk.Dec{
+			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.2")},
 		},
 		)
@@ -72,7 +72,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		// force funding payments
 		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 			Pair: pair,
-			CumulativeFundingRates: []sdk.Dec{
+			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},
 		})
 		bob := sample.AccAddress()
