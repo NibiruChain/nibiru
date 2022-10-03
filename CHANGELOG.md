@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * removed Params from genesis.
   * added pair into ReserveSnapshot type.
   * added validation of snapshots and snapshots in genesis.
+* [#975](https://github.com/NibiruChain/nibiru/pull/975) - fix(perp): funding payment calculations
 * [#976](https://github.com/NibiruChain/nibiru/pull/976) - refactor(epochs): refactor to increase readability and some tests
   * EpochInfo.CurrentEpoch changed from int64 to uint64.
 
@@ -90,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
 * [#932](https://github.com/NibiruChain/nibiru/pull/932) - refactor(perp): rename premium fraction to funding rate
 * [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
+* [#971](https://github.com/NibiruChain/nibiru/pull/971) - chore: use upstream 99designs/keyring module
 * [#964](https://github.com/NibiruChain/nibiru/pull/964) - test(vpool): refactor flaky vpool cli test
 * [#956](https://github.com/NibiruChain/nibiru/pull/956) - test(perp): partial liquidate unit test
 
@@ -108,7 +110,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#911](https://github.com/NibiruChain/nibiru/pull/911) - fix(perp): handle issue where no vpool snapshots are found
 * [#958](https://github.com/NibiruChain/nibiru/pull/930) - fix(pricefeed): add twap to prices query
 * [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
-* [#968](https://github.com/NibiruChain/nibiru/pull/968) - fix(perp): compute correct funding rate
 
 ## v0.14.0
 

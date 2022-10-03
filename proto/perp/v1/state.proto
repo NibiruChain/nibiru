@@ -111,9 +111,9 @@ message Position {
     (gogoproto.nullable) = false
   ];
 
-  // The most recent cumulative funding payment this position has applied.
+  // The most recent cumulative premium fraction this position has.
   // Used to calculate the next funding payment.
-  string latest_cumulative_funding_payment = 6 [
+  string latest_cumulative_premium_fraction = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -125,9 +125,11 @@ message Position {
 message PairMetadata {
   common.AssetPair pair = 1 [ (gogoproto.nullable) = false ];
 
-  // The historical list of cumulative funding rates for a given pair.
+  // The historical list of cumulative premium fractions for a given pair.
   // Calculated once per epoch.
-  repeated string cumulative_funding_rates = 2 [
+  // A premium fraction is the difference between mark and index, divided by the number of payments per day.
+  // (mark - index) / # payments in a day
+  repeated string cumulative_premium_fractions = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
