@@ -109,7 +109,6 @@ func SimulateMsgClosePosition(ak types.AccountKeeper, bk types.BankKeeper, k kee
 			TokenPair: pair,
 		}
 
-		spentCoins := sdk.NewCoins()
 		_, err := k.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(trader)))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
@@ -128,7 +127,7 @@ func SimulateMsgClosePosition(ak types.AccountKeeper, bk types.BankKeeper, k kee
 				AccountKeeper:   ak,
 				Bankkeeper:      bk,
 				ModuleName:      types.ModuleName,
-				CoinsSpentInMsg: spentCoins,
+				CoinsSpentInMsg: sdk.NewCoins(),
 			},
 		)
 	}
@@ -147,7 +146,6 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 
 		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomNUSD))
 		spentCoin := sdk.NewCoin(common.DenomNUSD, quoteAmt)
-		spentCoins := sdk.NewCoins(spentCoin)
 
 		msg := &types.MsgAddMargin{
 			Sender:    trader,
@@ -173,7 +171,7 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 				AccountKeeper:   ak,
 				Bankkeeper:      bk,
 				ModuleName:      types.ModuleName,
-				CoinsSpentInMsg: spentCoins,
+				CoinsSpentInMsg: sdk.NewCoins(spentCoin),
 			},
 		)
 	}
