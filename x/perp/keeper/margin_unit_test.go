@@ -958,7 +958,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 	}
 }
 
-func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
+func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 	// all tests are assumed long positions with positive pnl for ease of calculation
 	// short positions and negative pnl are implicitly correct because of
 	// TestGetPositionNotionalAndUnrealizedPnl
@@ -1116,7 +1116,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 			tc.setMocks(ctx, mocks)
 
 			positionalNotional, unrealizedPnl, err := perpKeeper.
-				getPreferencePositionNotionalAndUnrealizedPnL(
+				GetPreferencePositionNotionalAndUnrealizedPnL(
 					ctx,
 					tc.initPosition,
 					tc.pnlPreferenceOption,
