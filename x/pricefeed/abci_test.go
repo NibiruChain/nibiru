@@ -1,9 +1,10 @@
 package pricefeed_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/simapp"
 

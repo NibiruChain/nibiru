@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
+
+	testutilkeeper "github.com/NibiruChain/nibiru/x/pricefeed"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
 )
 
 func TestParamsQuery(t *testing.T) {

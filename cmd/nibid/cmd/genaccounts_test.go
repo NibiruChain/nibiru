@@ -3,10 +3,10 @@ package cmd_test
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
-	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -17,6 +17,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
+
+	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
 )
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})

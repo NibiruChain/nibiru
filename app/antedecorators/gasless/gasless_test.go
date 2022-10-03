@@ -1,8 +1,9 @@
 package gasless_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/simapp"
 

@@ -1,8 +1,9 @@
 package types
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"

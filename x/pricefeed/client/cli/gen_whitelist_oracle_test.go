@@ -3,8 +3,9 @@ package cli_test
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

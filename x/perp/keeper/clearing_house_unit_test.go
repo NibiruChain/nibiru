@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"fmt"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
+
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 

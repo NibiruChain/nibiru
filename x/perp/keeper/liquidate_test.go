@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
+
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"

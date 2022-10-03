@@ -2,9 +2,10 @@ package perp_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 

@@ -2,9 +2,10 @@ package app_test
 
 import (
 	"encoding/json"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"

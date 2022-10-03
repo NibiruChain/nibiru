@@ -2,26 +2,21 @@ package pricefeed_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
-
-	"github.com/NibiruChain/nibiru/simapp"
-
-	tmtypes "github.com/tendermint/tendermint/types"
-
-	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestGenesis_DefaultGenesis(t *testing.T) {
@@ -29,7 +24,7 @@ func TestGenesis_DefaultGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx := testutilkeeper.PricefeedKeeper(t)
+	k, ctx := pricefeed.PricefeedKeeper(t)
 	pricefeed.InitGenesis(ctx, k, genesisState)
 	got := pricefeed.ExportGenesis(ctx, k)
 	require.NotNil(t, got)

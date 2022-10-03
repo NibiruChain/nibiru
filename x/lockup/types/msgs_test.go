@@ -1,9 +1,10 @@
 package types
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

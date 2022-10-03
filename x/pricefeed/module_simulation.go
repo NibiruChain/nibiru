@@ -1,8 +1,9 @@
 package pricefeed
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"math/rand"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"

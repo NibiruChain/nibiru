@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	"io/ioutil"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
