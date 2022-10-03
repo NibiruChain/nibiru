@@ -142,20 +142,21 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 		trader := simAccount.Address.String()
 		pair := common.Pair_BTC_NUSD.String()
 
+		msg := &types.MsgAddMargin{}
+		_, err := k.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(trader)))
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
+		}
+
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
 		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomNUSD))
 		spentCoin := sdk.NewCoin(common.DenomNUSD, quoteAmt)
 
-		msg := &types.MsgAddMargin{
+		msg = &types.MsgAddMargin{
 			Sender:    trader,
 			TokenPair: pair,
 			Margin:    spentCoin,
-		}
-
-		_, err := k.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(trader)))
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
