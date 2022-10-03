@@ -180,13 +180,13 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went up in value, now its price is 1BTC=2NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(10),  // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100), // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
@@ -213,7 +213,7 @@ func TestIncreasePosition(t *testing.T) {
 				setPairMetadata(perpKeeper, ctx,
 					types.PairMetadata{
 						Pair: common.Pair_BTC_NUSD,
-						CumulativeFundingRates: []sdk.Dec{
+						CumulativePremiumFractions: []sdk.Dec{
 							sdk.ZeroDec(),
 							sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 						},
@@ -247,7 +247,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(150), resp.Position.Size_)        // 100 + 50
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -257,13 +257,13 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went down in value, now its price is 1.01BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(10),  // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100), // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
@@ -289,7 +289,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
@@ -322,7 +322,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(201), resp.Position.Size_)        // 100 + 101
 				assert.True(t, sdk.NewDec(18).Equal(resp.Position.Margin))         // 10(old) + 10(new) - 2(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -335,13 +335,13 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 10 NUSD at 10x leverage
 			// funding payment causes negative margin aka bad debt
 			initPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(110), // 110 BTC
-				Margin:                         sdk.NewDec(11),  // 11 NUSD
-				OpenNotional:                   sdk.NewDec(110), // 110 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(110), // 110 BTC
+				Margin:                          sdk.NewDec(11),  // 11 NUSD
+				OpenNotional:                    sdk.NewDec(110), // 110 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
@@ -367,7 +367,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.2"), // 0.2 NUSD / BTC
 					},
@@ -400,7 +400,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(220), resp.Position.Size_)        // 110 + 110
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 11(old) + 10(new) - 22(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(210), resp.Position.OpenNotional) // 100(old) + 100(new)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.2"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.2"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -411,13 +411,13 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went down in value, now its price is 2BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // -100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
@@ -443,7 +443,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
@@ -476,7 +476,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-300), resp.Position.Size_)       // -100 - 200
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new)  - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -487,13 +487,13 @@ func TestIncreasePosition(t *testing.T) {
 			// BTC went up in value, now its price is 0.99BTC=1NUSD
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // 100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // 100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
@@ -519,7 +519,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 					},
@@ -552,7 +552,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-199), resp.Position.Size_)       // -100 - 99
 				assert.EqualValues(t, sdk.NewDec(22), resp.Position.Margin)        // 10(old) + 10(new) - (-2)(funding payment)
 				assert.EqualValues(t, sdk.NewDec(200), resp.Position.OpenNotional) // 100(old) + 100(new)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -566,13 +566,13 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 105 NUSD at 10x leverage
 			// funding payment causes bad debt
 			initPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // 100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // 100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
@@ -598,7 +598,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: common.Pair_BTC_NUSD,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("-0.3"), // - 0.3 NUSD / BTC
 					},
@@ -631,7 +631,7 @@ func TestIncreasePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(-200), resp.Position.Size_)       // -100 + (-100)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)         // 10(old) + 10.5(new) - (30)(funding payment) --> zero margin left
 				assert.EqualValues(t, sdk.NewDec(205), resp.Position.OpenNotional) // 100(old) + 105(new)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.3"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.3"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			},
 		},
@@ -673,17 +673,17 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC doubles in value, now its price is 1 BTC = 2 NUSD
 			// user has position notional value of 200 NUSD and unrealized PnL of +100 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(10),  // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100), // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
@@ -703,17 +703,17 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC drops in value, now its price is 1 BTC = 1 NUSD
 			// user has position notional value of 100 NUSD and unrealized PnL of -5 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100),               // 100 BTC
-				Margin:                         sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
-				OpenNotional:                   sdk.NewDec(105),               // 105 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100),               // 100 BTC
+				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
+				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
@@ -733,17 +733,17 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC drops in value, now its price is 1 BTC = 1 NUSD
 			// user has position notional value of 100 NUSD and unrealized PnL of -50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(15),  // 15 NUSD
-				OpenNotional:                   sdk.NewDec(150), // 150 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(15),  // 15 NUSD
+				OpenNotional:                    sdk.NewDec(150), // 150 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
@@ -765,17 +765,17 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC drops in value, now its price is 1.5 BTC = 1 NUSD
 			// user has position notional value of 100 NUSD and unrealized PnL of +50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-150), // -150 BTC
-				Margin:                         sdk.NewDec(15),   // 15 NUSD
-				OpenNotional:                   sdk.NewDec(150),  // 150 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-150), // -150 BTC
+				Margin:                          sdk.NewDec(15),   // 15 NUSD
+				OpenNotional:                    sdk.NewDec(150),  // 150 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
@@ -795,17 +795,17 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC increases in value, now its price is 1.05 BTC = 1 NUSD
 			// user has position notional value of 105 NUSD and unrealized PnL of -5 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // -100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
@@ -825,17 +825,17 @@ func TestClosePositionEntirely(t *testing.T) {
 			// BTC increases in value, now its price is 1.5 BTC = 1 NUSD
 			// user has position notional value of 150 NUSD and unrealized PnL of -50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // -100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
@@ -905,8 +905,8 @@ func TestClosePositionEntirely(t *testing.T) {
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 			assert.EqualValues(t,
-				tc.pairMetadata.CumulativeFundingRates[len(tc.pairMetadata.CumulativeFundingRates)-1],
-				resp.Position.LatestCumulativeFundingPayment,
+				tc.pairMetadata.CumulativePremiumFractions[len(tc.pairMetadata.CumulativePremiumFractions)-1],
+				resp.Position.LatestCumulativePremiumFraction,
 			)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
@@ -945,13 +945,13 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of 50 NUSD, unrealized PnL of +50 NUSD
 			//   position notional value of 100 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(10),  // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100), // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
 			priorPositionNotional: sdk.NewDec(200),
@@ -980,13 +980,13 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -0.25 NUSD, unrealized PnL of -4.75 NUSD,
 			//   position notional value of 95 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(105),               // 105 BTC
-				Margin:                         sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
-				OpenNotional:                   sdk.NewDec(105),               // 105 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(105),               // 105 BTC
+				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
+				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
 			priorPositionNotional: sdk.NewDec(100),
@@ -1015,13 +1015,13 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -25 NUSD, unrealized PnL of -25 NUSD,
 			//   position notional value of 50 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(15),  // 15 NUSD
-				OpenNotional:                   sdk.NewDec(150), // 150 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(15),  // 15 NUSD
+				OpenNotional:                    sdk.NewDec(150), // 150 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:          vpooltypes.Direction_ADD_TO_POOL,
 			priorPositionNotional: sdk.NewDec(100),
@@ -1052,13 +1052,13 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of 0.25 NUSD, unrealized PnL of 4.75 NUSD,
 			//   position notional value of 95 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-105),              // -105 BTC
-				Margin:                         sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
-				OpenNotional:                   sdk.NewDec(105),               // 105 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-105),              // -105 BTC
+				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
+				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
 			priorPositionNotional: sdk.NewDec(100),
@@ -1087,13 +1087,13 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -0.25 NUSD, unrealized PnL of -4.75 NUSD
 			//   position notional value of 99.75 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // -100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
 			priorPositionNotional: sdk.NewDec(105),
@@ -1122,13 +1122,13 @@ func TestDecreasePosition(t *testing.T) {
 			// user ends up with realized PnL of -25 NUSD, unrealized PnL of -25 NUSD
 			//   position notional value of 75 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // -100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:          vpooltypes.Direction_REMOVE_FROM_POOL,
 			priorPositionNotional: sdk.NewDec(150),
@@ -1177,7 +1177,7 @@ func TestDecreasePosition(t *testing.T) {
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
@@ -1207,7 +1207,7 @@ func TestDecreasePosition(t *testing.T) {
 			assert.EqualValues(t, tc.expectedFinalPositionSize, resp.Position.Size_)
 			assert.EqualValues(t, tc.expectedFinalPositionMargin, resp.Position.Margin)
 			assert.EqualValues(t, tc.expectedFinalPositionOpenNotional, resp.Position.OpenNotional)
-			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativeFundingPayment)
+			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
 	}
@@ -1546,13 +1546,13 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 			t.Log("set up initial position")
 			currentPosition := types.Position{
-				TraderAddress:                  traderAddr.String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          tc.initialPositionSize,
-				Margin:                         tc.initialPositionMargin,
-				OpenNotional:                   tc.initialPositionOpenNotional,
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   traderAddr.String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           tc.initialPositionSize,
+				Margin:                          tc.initialPositionMargin,
+				OpenNotional:                    tc.initialPositionOpenNotional,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			}
 			setPosition(perpKeeper, ctx, currentPosition)
 
@@ -1591,7 +1591,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
 			})
@@ -1624,7 +1624,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				assert.EqualValues(t, tc.expectedPositionResp.Position.Size_, resp.Position.Size_)
 				assert.EqualValues(t, tc.expectedPositionResp.Position.Margin, resp.Position.Margin)
 				assert.EqualValues(t, tc.expectedPositionResp.Position.OpenNotional, resp.Position.OpenNotional)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 			}
 		})
@@ -1729,13 +1729,13 @@ func TestClosePosition(t *testing.T) {
 			// user ends up with realized PnL of +100 NUSD, unrealized PnL after of 0 NUSD,
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(10),  // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100), // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:        vpooltypes.Direction_ADD_TO_POOL,
 			newPositionNotional: sdk.NewDec(200),
@@ -1755,13 +1755,13 @@ func TestClosePosition(t *testing.T) {
 			// user ends up with realized PnL of -5 NUSD, unrealized PnL of 0 NUSD,
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(105),               // 105 BTC
-				Margin:                         sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
-				OpenNotional:                   sdk.NewDec(105),               // 105 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(105),               // 105 BTC
+				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
+				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:        vpooltypes.Direction_ADD_TO_POOL,
 			newPositionNotional: sdk.NewDec(100),
@@ -1783,13 +1783,13 @@ func TestClosePosition(t *testing.T) {
 			// user ends up with realized PnL of 5 NUSD, unrealized PnL of 0 NUSD,
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-105),              // -105 BTC
-				Margin:                         sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
-				OpenNotional:                   sdk.NewDec(105),               // 105 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-105),              // -105 BTC
+				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
+				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:        vpooltypes.Direction_REMOVE_FROM_POOL,
 			newPositionNotional: sdk.NewDec(100),
@@ -1809,13 +1809,13 @@ func TestClosePosition(t *testing.T) {
 			// user ends up with realized PnL of -5 NUSD, unrealized PnL of 0 NUSD
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // -100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:        vpooltypes.Direction_REMOVE_FROM_POOL,
 			newPositionNotional: sdk.NewDec(105),
@@ -1894,7 +1894,7 @@ func TestClosePosition(t *testing.T) {
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
 			})
@@ -1921,7 +1921,7 @@ func TestClosePosition(t *testing.T) {
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // alwayz zero
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
-			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativeFundingPayment)
+			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
@@ -1961,13 +1961,13 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			// user has position notional value of 100 NUSD and unrealized PnL of -50 NUSD
 			// user cannot close position due to bad debt
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(100), // 100 BTC
-				Margin:                         sdk.NewDec(15),  // 15 NUSD
-				OpenNotional:                   sdk.NewDec(150), // 150 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(15),  // 15 NUSD
+				OpenNotional:                    sdk.NewDec(150), // 150 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:        vpooltypes.Direction_ADD_TO_POOL,
 			newPositionNotional: sdk.NewDec(100),
@@ -1982,13 +1982,13 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			// user has position notional value of 150 NUSD and unrealized PnL of -50 NUSD
 			// user cannot close position due to bad debt
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(-100), // -100 BTC
-				Margin:                         sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                   sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    0,
+				TraderAddress:                   sample.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     0,
 			},
 			baseAssetDir:        vpooltypes.Direction_REMOVE_FROM_POOL,
 			newPositionNotional: sdk.NewDec(150),
@@ -2032,7 +2032,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
 				},
 			})

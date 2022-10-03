@@ -110,7 +110,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis.PairMetadata = []perptypes.PairMetadata{
 		{
 			Pair: common.Pair_BTC_NUSD,
-			CumulativeFundingRates: []sdk.Dec{
+			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 				sdk.NewDec(2),
@@ -118,7 +118,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 		{
 			Pair: common.Pair_ETH_NUSD,
-			CumulativeFundingRates: []sdk.Dec{
+			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
 		},
@@ -390,7 +390,7 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	s.NoError(err)
 }
 
-func (s *IntegrationTestSuite) TestQueryCumulativeFundingRates() {
+func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	val := s.network.Validators[0]
 
 	s.T().Log("get cumulative funding payments")

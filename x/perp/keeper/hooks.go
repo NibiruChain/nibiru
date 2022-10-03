@@ -37,37 +37,39 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		markPrice, err := k.VpoolKeeper.GetSpotTWAP(ctx, pairMetadata.Pair, params.TwapLookbackWindow)
+		markTwap, err := k.VpoolKeeper.GetSpotTWAP(ctx, pairMetadata.Pair, params.TwapLookbackWindow)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
 		}
-		if markPrice.IsZero() {
+		if markTwap.IsZero() {
 			ctx.Logger().Error("mark price is zero", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
 
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-		fundingRate := markPrice.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
+		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
+		premiumFraction := markTwap.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
 		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
-		cumulativeFundingRate := fundingRate
-		if len(pairMetadata.CumulativeFundingRates) > 0 {
-			cumulativeFundingRate = pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1].Add(fundingRate)
+		cumulativePremiumFraction := premiumFraction
+		if len(pairMetadata.CumulativePremiumFractions) > 0 {
+			cumulativePremiumFraction = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(premiumFraction)
 		}
 
-		pairMetadata.CumulativeFundingRates = append(pairMetadata.CumulativeFundingRates, cumulativeFundingRate)
+		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, cumulativePremiumFraction)
 		k.PairsMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
-			Pair:                  pairMetadata.Pair.String(),
-			MarkPrice:             markPrice,
-			IndexPrice:            indexTWAP,
-			LatestFundingRate:     fundingRate,
-			CumulativeFundingRate: cumulativeFundingRate,
-			BlockHeight:           ctx.BlockHeight(),
-			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+			Pair:                      pairMetadata.Pair.String(),
+			MarkPrice:                 markTwap,
+			IndexPrice:                indexTWAP,
+			LatestFundingRate:         premiumFraction.Quo(indexTWAP),
+			LatestPremiumFraction:     premiumFraction,
+			CumulativePremiumFraction: cumulativePremiumFraction,
+			BlockHeight:               ctx.BlockHeight(),
+			BlockTimeMs:               ctx.BlockTime().UnixMilli(),
 		}); err != nil {
 			ctx.Logger().Error("failed to emit FundingRateChangedEvent", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue

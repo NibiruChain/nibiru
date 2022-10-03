@@ -50,7 +50,7 @@ func (k Keeper) AddMargin(
 	}
 
 	position.Margin = remainingMargin.Margin
-	position.LatestCumulativeFundingPayment = remainingMargin.LatestCumulativeFundingRate
+	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	position.BlockNumber = ctx.BlockHeight()
 	k.Positions.Insert(ctx, keys.Join(position.Pair, keys.String(position.TraderAddress)), position)
 
@@ -135,7 +135,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	position.Margin = remainingMargin.Margin
-	position.LatestCumulativeFundingPayment = remainingMargin.LatestCumulativeFundingRate
+	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 
 	freeCollateral, err := k.calcFreeCollateral(ctx, position)
 	if err != nil {
