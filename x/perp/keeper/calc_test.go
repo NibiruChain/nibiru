@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/collections"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
@@ -38,7 +38,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutil.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -90,7 +90,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutil.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")

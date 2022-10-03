@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestSetCollRatio_Input(t *testing.T) {
@@ -82,7 +82,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			priceKeeper := &nibiruApp.PricefeedKeeper
 
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			oracles := []sdk.AccAddress{oracle}
 			pair := common.AssetPair{
 				Token0: common.DenomUSDC,
@@ -248,7 +248,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			))
 
 			// Set up markets for the pricefeed keeper.
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			oracles := []sdk.AccAddress{oracle}
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
@@ -339,7 +339,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 
 			// Set up markets for the pricefeed keeper.
 			pair := common.Pair_USDC_NUSD
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pricefeedParams := pftypes.Params{
 				Pairs: common.AssetPairs{pair},
@@ -393,7 +393,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 			))
 
 			// Set up markets for the pricefeed keeper.
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			pair := common.AssetPair{
 				Token0: common.DenomNUSD,
 				Token1: common.DenomUSDC}
@@ -521,7 +521,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			))
 
 			// Set up markets for the pricefeed keeper.
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			oracles := []sdk.AccAddress{oracle}
 			pairs := common.AssetPairs{
@@ -623,7 +623,7 @@ func TestRecollateralize(t *testing.T) {
 
 			expectedNeededUSD: sdk.NewDec(100_000),
 			msg: types.MsgRecollateralize{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Coll:    sdk.NewCoin(common.DenomUSDC, sdk.NewInt(100_000)),
 			},
 			response: &types.MsgRecollateralizeResponse{
@@ -656,7 +656,7 @@ func TestRecollateralize(t *testing.T) {
 
 			expectedNeededUSD: sdk.MustNewDecFromStr("150000.5"),
 			msg: types.MsgRecollateralize{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Coll:    sdk.NewCoin(common.DenomUSDC, sdk.NewInt(50_000)),
 			},
 			response: &types.MsgRecollateralizeResponse{
@@ -692,7 +692,7 @@ func TestRecollateralize(t *testing.T) {
 
 			// Since 'neededUSD' is
 			msg: types.MsgRecollateralize{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Coll:    sdk.NewCoin(common.DenomUSDC, sdk.NewInt(100)),
 			},
 			expectedPass: false,
@@ -719,7 +719,7 @@ func TestRecollateralize(t *testing.T) {
 
 			// Since 'neededUSD' is
 			msg: types.MsgRecollateralize{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Coll:    sdk.NewCoin(common.DenomUSDC, sdk.NewInt(200)),
 			},
 			expectedPass: false,
@@ -745,7 +745,7 @@ func TestRecollateralize(t *testing.T) {
 			),
 
 			msg: types.MsgRecollateralize{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Coll:    sdk.Coin{Denom: common.DenomUSDC, Amount: sdk.NewInt(-200)},
 			},
 			expectedPass: false,
@@ -770,7 +770,7 @@ func TestRecollateralize(t *testing.T) {
 				sdk.NewInt64Coin(common.DenomUSDC, 400),
 			),
 			msg: types.MsgRecollateralize{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Coll:    sdk.NewInt64Coin(common.DenomUSDC, 400),
 			},
 
@@ -804,7 +804,7 @@ func TestRecollateralize(t *testing.T) {
 			}
 
 			// Set up markets for the pricefeed keeper.
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			oracles := []sdk.AccAddress{oracle}
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
@@ -882,7 +882,7 @@ func TestRecollateralize_Short(t *testing.T) {
 			test: func() {
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				goCtx := sdk.WrapSDKContext(ctx)
-				sender := sample.AccAddress()
+				sender := testutil.AccAddress()
 				msg := &types.MsgRecollateralize{
 					Creator: sender.String(),
 					Coll:    sdk.NewInt64Coin(common.DenomUSDC, 100),
@@ -919,7 +919,7 @@ func TestBuyback_MsgFormat(t *testing.T) {
 			err:    fmt.Errorf("decoding bech32 failed: invalid separator index "),
 		}, {
 			name:   "valid creator address",
-			caller: sample.AccAddress().String(),
+			caller: testutil.AccAddress().String(),
 			err:    nil,
 		},
 	} {
@@ -983,7 +983,7 @@ func TestBuyback(t *testing.T) {
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.DenomNIBI, sdk.NewInt(100_000)),
 			},
 			response: &types.MsgBuybackResponse{
@@ -1019,7 +1019,7 @@ func TestBuyback(t *testing.T) {
 
 			expectedNeededUSD: sdk.MustNewDecFromStr("-234999.15"),
 			msg: types.MsgBuyback{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.DenomNIBI, sdk.NewInt(50_000)),
 			},
 			response: &types.MsgBuybackResponse{
@@ -1060,7 +1060,7 @@ func TestBuyback(t *testing.T) {
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.DenomNIBI, sdk.NewInt(200_000)),
 			},
 			response: &types.MsgBuybackResponse{
@@ -1089,7 +1089,7 @@ func TestBuyback(t *testing.T) {
 
 			expectedNeededUSD: sdk.NewDec(100_000),
 			msg: types.MsgBuyback{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.DenomNIBI, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
@@ -1115,7 +1115,7 @@ func TestBuyback(t *testing.T) {
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.DenomNIBI, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
@@ -1140,7 +1140,7 @@ func TestBuyback(t *testing.T) {
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.DenomNIBI, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
@@ -1165,7 +1165,7 @@ func TestBuyback(t *testing.T) {
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
 			msg: types.MsgBuyback{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Gov:     sdk.NewCoin(common.DenomNIBI, sdk.NewInt(100_000)),
 			},
 			response:     &types.MsgBuybackResponse{},
@@ -1201,7 +1201,7 @@ func TestBuyback(t *testing.T) {
 			}
 
 			// Set up markets for the pricefeed keeper.
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
 				{Token0: common.DenomUSDC, Token1: common.DenomNUSD},
@@ -1327,7 +1327,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 			))
 
 			// Set up markets for the pricefeed keeper.
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			priceExpiry := ctx.BlockTime().Add(time.Hour)
 			pairs := common.AssetPairs{
 				{Token0: common.DenomUSDC, Token1: common.DenomNUSD},

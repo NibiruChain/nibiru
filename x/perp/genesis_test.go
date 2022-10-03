@@ -2,6 +2,7 @@ package perp_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGenesis(t *testing.T) {
@@ -37,7 +37,7 @@ func TestGenesis(t *testing.T) {
 
 		// create some positions
 		for i := int64(0); i < 100; i++ {
-			addr := sample.AccAddress().String()
+			addr := testutil.AccAddress().String()
 			app.PerpKeeper.Positions.Insert(ctx, keys.Join(common.Pair_NIBI_NUSD, keys.String(addr)), types.Position{
 				TraderAddress:                   addr,
 				Pair:                            common.Pair_NIBI_NUSD,

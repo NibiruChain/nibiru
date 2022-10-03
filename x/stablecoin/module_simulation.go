@@ -1,6 +1,7 @@
 package stablecoin
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -12,12 +13,11 @@ import (
 
 	scsim "github.com/NibiruChain/nibiru/x/stablecoin/simulation"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 // avoid unused import issue
 var (
-	_ = sample.AccAddress
+	_ = testutil.AccAddress
 	_ = scsim.FindAccount
 	_ = simappparams.StakePerAccount
 	_ = simulation.MsgEntryKind

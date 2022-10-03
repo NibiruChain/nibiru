@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -15,8 +16,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 // ------------------------------------------------------------------
@@ -38,7 +37,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 			},
 		},
 	}
@@ -82,7 +81,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			name:     "Not able to mint because of no posted prices",
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000_000)),
 			},
 			govPrice:               sdk.MustNewDecFromStr("10"),
@@ -94,7 +93,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			name:     "Successful mint",
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000_000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
@@ -117,7 +116,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 
 			// We get module account, to create it.
 			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
@@ -227,7 +226,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				sdk.NewCoin(common.DenomNIBI, sdk.NewInt(0)),
 			),
 			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
@@ -243,7 +242,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				sdk.NewCoin(common.DenomNIBI, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
@@ -260,7 +259,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				sdk.NewCoin(common.DenomNIBI, sdk.NewInt(1)),
 			),
 			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
@@ -277,7 +276,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				sdk.NewCoin(common.DenomNIBI, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
@@ -295,7 +294,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 
 			// We get module account, to create it.
 			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
@@ -387,7 +386,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: types.MsgBurnStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 			},
 		},
 	}
@@ -420,7 +419,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			name:     "Not enough stable",
 			accFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 10)),
 			msgBurn: types.MsgBurnStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewInt64Coin(common.DenomNUSD, 9001),
 			},
 			msgResponse: &types.MsgBurnStableResponse{
@@ -443,7 +442,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				sdk.NewInt64Coin(common.DenomUSDC, 100000000),
 			),
 			msgBurn: types.MsgBurnStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.ZeroInt()),
 			},
 			msgResponse: &types.MsgBurnStableResponse{
@@ -461,7 +460,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 
 			// Set stablecoin params
 			collRatio := sdk.MustNewDecFromStr("0.9")
@@ -563,7 +562,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
 			),
 			msgBurn: types.MsgBurnStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewInt64Coin(common.DenomNUSD, 10_000_000),
 			},
 			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.DenomUSDC, 9000)),
@@ -583,7 +582,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
 			),
 			msgBurn: types.MsgBurnStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewInt64Coin(common.DenomNUSD, 10_000_000),
 			},
 			msgResponse: types.MsgBurnStableResponse{
@@ -608,7 +607,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 
 			// Set stablecoin params
 			collRatio := sdk.MustNewDecFromStr("0.9")

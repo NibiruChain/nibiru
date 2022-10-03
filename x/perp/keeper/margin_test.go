@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -15,8 +16,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestAddMarginSuccess(t *testing.T) {
@@ -34,7 +33,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			marginToAdd:                     sdk.NewInt64Coin(common.DenomNUSD, 100),
 			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
-				TraderAddress:                   sample.AccAddress().String(),
+				TraderAddress:                   testutilevents.AccAddress().String(),
 				Pair:                            common.Pair_BTC_NUSD,
 				Size_:                           sdk.NewDec(1_000),
 				Margin:                          sdk.NewDec(100),
@@ -115,7 +114,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(5)
 
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: common.DenomNUSD, Amount: removeAmt})
@@ -128,7 +127,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				t.Log("Setup vpool defined by pair")
@@ -158,7 +157,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")

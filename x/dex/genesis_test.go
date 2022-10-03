@@ -1,6 +1,7 @@
 package dex_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/simapp"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/dex"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 )
 
 func TestGenesis(t *testing.T) {
@@ -22,8 +22,8 @@ func TestGenesis(t *testing.T) {
 	got := dex.ExportGenesis(ctx, app.DexKeeper)
 	require.NotNil(t, got)
 
-	nullify.Fill(&genesisState)
-	nullify.Fill(got)
+	testutil.Fill(&genesisState)
+	testutil.Fill(got)
 
 	require.Equal(t, genesisState, *got)
 }

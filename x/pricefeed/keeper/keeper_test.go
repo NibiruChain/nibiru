@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestKeeper_SetGetPair(t *testing.T) {
@@ -47,7 +47,7 @@ func TestKeeper_GetPostRawPrice(t *testing.T) {
 	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
-	_, addrs := sample.PrivKeyAddressPairs(2)
+	_, addrs := testutil.PrivKeyAddressPairs(2)
 	pair := common.MustNewAssetPair("tst:usd")
 	params := types.Params{Pairs: common.AssetPairs{pair}}
 	keeper.SetParams(ctx, params)
@@ -107,7 +107,7 @@ func TestKeeper_PostRawPriceWrongOracle(t *testing.T) {
 	pair := common.MustNewAssetPair("tst:usd")
 
 	// Register addrs[1] as the oracle.
-	_, addrs := sample.PrivKeyAddressPairs(2)
+	_, addrs := testutil.PrivKeyAddressPairs(2)
 
 	params := types.Params{Pairs: common.AssetPairs{pair}}
 	keeper.SetParams(ctx, params)
@@ -136,7 +136,7 @@ func TestKeeper_PostRawPriceWrongOracles(t *testing.T) {
 	pair := common.MustNewAssetPair("tst:usd")
 	price := sdk.MustNewDecFromStr("0.1")
 
-	_, addrs := sample.PrivKeyAddressPairs(10)
+	_, addrs := testutil.PrivKeyAddressPairs(10)
 	params := types.Params{
 		Pairs: common.AssetPairs{pair},
 	}
@@ -160,7 +160,7 @@ func TestKeeper_PostRawPriceWrongOracles(t *testing.T) {
 
 // Test Setting the current price of an Asset
 func TestKeeper_GetSetCurrentPrice(t *testing.T) {
-	_, addrs := sample.PrivKeyAddressPairs(5)
+	_, addrs := testutil.PrivKeyAddressPairs(5)
 	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
@@ -221,7 +221,7 @@ func TestKeeper_GetSetCurrentPrice(t *testing.T) {
 }
 
 func TestGetCurrentTWAP(t *testing.T) {
-	_, addrs := sample.PrivKeyAddressPairs(5)
+	_, addrs := testutil.PrivKeyAddressPairs(5)
 	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 
@@ -259,7 +259,7 @@ func TestGetCurrentTWAP(t *testing.T) {
 }
 
 func TestKeeper_ExpiredGatherRawPrices(t *testing.T) {
-	_, oracles := sample.PrivKeyAddressPairs(5)
+	_, oracles := testutil.PrivKeyAddressPairs(5)
 	app, ctx := simapp.NewTestNibiruAppAndContext(true)
 	keeper := app.PricefeedKeeper
 

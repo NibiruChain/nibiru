@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgServer_LockTokens(t *testing.T) {
@@ -25,7 +25,7 @@ func TestMsgServer_LockTokens(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctx, _ := uncachedCtx.CacheContext()
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
 
@@ -45,7 +45,7 @@ func TestMsgServer_InitiateUnlock(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctx, _ := uncachedCtx.CacheContext()
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
 
@@ -71,7 +71,7 @@ func TestMsgServer_Unlock(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctx, _ := uncachedCtx.CacheContext()
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
 
@@ -106,7 +106,7 @@ func TestQueryServer_Lock(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctx, _ := uncachedCtx.CacheContext()
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
 
@@ -135,7 +135,7 @@ func TestQueryServer_LockedCoins(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctx, _ := uncachedCtx.CacheContext()
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins))
 
@@ -160,7 +160,7 @@ func TestQueryServer_LocksByAddress(t *testing.T) {
 	q := keeper.NewQueryServerImpl(app.LockupKeeper)
 	t.Run("success", func(t *testing.T) {
 		ctx, _ := uncachedCtx.CacheContext()
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		totalQuery := 50
 		totalFromQuery := sdk.NewCoins()
 		// create locks

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/simapp"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGetParams(t *testing.T) {
@@ -65,7 +65,7 @@ func TestWhitelistOracles(t *testing.T) {
 				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				pk := &nibiruApp.PricefeedKeeper
 
-				oracle := sample.AccAddress()
+				oracle := testutil.AccAddress()
 				paramsPairs := pk.GetParams(ctx).Pairs
 				for _, pair := range paramsPairs {
 					require.False(t, pk.IsWhitelistedOracle(ctx, pair.String(), oracle))
@@ -86,8 +86,8 @@ func TestWhitelistOracles(t *testing.T) {
 					require.EqualValues(t, []sdk.AccAddress(nil), pk.GetOraclesForPair(ctx, pair.String()))
 				}
 
-				oracleA := sample.AccAddress()
-				oracleB := sample.AccAddress()
+				oracleA := testutil.AccAddress()
+				oracleB := testutil.AccAddress()
 
 				wantOracles := []sdk.AccAddress{oracleA}
 				pk.WhitelistOracles(ctx, wantOracles)
@@ -137,7 +137,7 @@ func TestWhitelistOraclesForPairs(t *testing.T) {
 			pricefeedKeeper := &nibiruApp.PricefeedKeeper
 			pricefeedKeeper.SetParams(ctx, tc.startParams)
 
-			oracles := []sdk.AccAddress{sample.AccAddress(), sample.AccAddress()}
+			oracles := []sdk.AccAddress{testutil.AccAddress(), testutil.AccAddress()}
 			pricefeedKeeper.WhitelistOraclesForPairs(
 				ctx,
 				oracles,

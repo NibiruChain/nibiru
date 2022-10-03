@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -17,15 +18,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
 	tokenPair := common.MustNewAssetPair("BTC:NUSD")
 
-	traderAddr := sample.AccAddress()
+	traderAddr := testutilevents.AccAddress()
 
 	type test struct {
 		positionSide              types.Side
@@ -139,7 +138,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
 
 			t.Log("Liquidate the (entire) position")
-			liquidatorAddr := sample.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			liquidationResp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, positionResp.Position)
 			require.NoError(t, err)
 
@@ -187,7 +186,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	// constants for this suite
 	tokenPair := common.MustNewAssetPair("xxx:yyy")
 
-	traderAddr := sample.AccAddress()
+	traderAddr := testutilevents.AccAddress()
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.4")
 
 	testCases := []struct {
@@ -316,7 +315,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
 
 			t.Log("Liquidate the (partial) position")
-			liquidator := sample.AccAddress()
+			liquidator := testutilevents.AccAddress()
 			liquidationResp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, positionResp.Position)
 			require.NoError(t, err)
 

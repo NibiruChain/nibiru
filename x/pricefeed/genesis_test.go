@@ -2,6 +2,7 @@ package pricefeed_test
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 )
 
 func TestGenesis_DefaultGenesis(t *testing.T) {
@@ -38,8 +38,8 @@ func TestGenesis_DefaultGenesis(t *testing.T) {
 	assert.Empty(t, got.GenesisOracles)
 	assert.Empty(t, got.PostedPrices)
 
-	nullify.Fill(&genesisState)
-	nullify.Fill(got)
+	testutil.Fill(&genesisState)
+	testutil.Fill(got)
 
 	require.Equal(t, genesisState, *got)
 }

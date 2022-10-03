@@ -1,6 +1,7 @@
 package pricefeed_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -13,14 +14,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestTWAPriceUpdates(t *testing.T) {
 	var nibiruApp *simapp.NibiruTestApp
 	var ctx sdk.Context
 
-	oracle := sample.AccAddress()
+	oracle := testutil.AccAddress()
 	pair := common.AssetPair{
 		Token0: common.DenomUSDC,
 		Token1: common.DenomNUSD,

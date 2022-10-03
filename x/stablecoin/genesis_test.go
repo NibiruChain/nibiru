@@ -1,6 +1,7 @@
 package stablecoin_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/simapp"
@@ -11,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/nullify"
 )
 
 func TestGenesis(t *testing.T) {
@@ -26,6 +26,6 @@ func TestGenesis(t *testing.T) {
 	got := stablecoin.ExportGenesis(ctx, k)
 	require.NotNil(t, got)
 
-	nullify.Fill(&genesisState)
-	nullify.Fill(got)
+	testutil.Fill(&genesisState)
+	testutil.Fill(got)
 }

@@ -1,12 +1,11 @@
 package types
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGetPoolShareBaseDenom(t *testing.T) {
@@ -40,7 +39,7 @@ func TestGetAddress(t *testing.T) {
 		{
 			name: "valid address",
 			pool: Pool{
-				Address: sample.AccAddress().String(),
+				Address: testutil.AccAddress().String(),
 			},
 			expectPanic: false,
 		},
@@ -63,7 +62,7 @@ func TestGetAddress(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	poolAccountAddr := sample.AccAddress()
+	poolAccountAddr := testutil.AccAddress()
 	poolParams := PoolParams{
 		SwapFee: sdk.NewDecWithPrec(3, 2),
 		ExitFee: sdk.NewDecWithPrec(3, 2),

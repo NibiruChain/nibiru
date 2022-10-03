@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgServerAddMargin(t *testing.T) {
@@ -74,7 +74,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
-			traderAddr := sample.AccAddress()
+			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
@@ -193,7 +193,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
-			traderAddr := sample.AccAddress()
+			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
 			app.VpoolKeeper.CreatePool(
@@ -263,14 +263,14 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			name:        "trader not enough funds",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 999)),
 			pair:        common.Pair_BTC_NUSD.String(),
-			sender:      sample.AccAddress().String(),
+			sender:      testutil.AccAddress().String(),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:        "success",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1020)),
 			pair:        common.Pair_BTC_NUSD.String(),
-			sender:      sample.AccAddress().String(),
+			sender:      testutil.AccAddress().String(),
 			expectedErr: nil,
 		},
 	}
@@ -354,7 +354,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 		{
 			name:        "success",
 			pair:        common.Pair_BTC_NUSD,
-			traderAddr:  sample.AccAddress(),
+			traderAddr:  testutil.AccAddress(),
 			expectedErr: nil,
 		},
 	}
@@ -429,8 +429,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 		{
 			name:        "success",
 			pair:        common.Pair_BTC_NUSD.String(),
-			liquidator:  sample.AccAddress().String(),
-			trader:      sample.AccAddress().String(),
+			liquidator:  testutil.AccAddress().String(),
+			trader:      testutil.AccAddress().String(),
 			expectedErr: nil,
 		},
 	}
@@ -464,7 +464,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 			traderAddr, err2 := sdk.AccAddressFromBech32(tc.trader)
 			if err == nil && err2 == nil {
 				t.Log("set pricefeed oracle price")
-				oracle := sample.AccAddress()
+				oracle := testutil.AccAddress()
 				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 				require.NoError(t, app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
 				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
@@ -510,11 +510,11 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 	pair := common.Pair_BTC_NUSD
-	liquidator := sample.AccAddress()
+	liquidator := testutil.AccAddress()
 
-	atRiskTrader1 := sample.AccAddress()
-	notAtRiskTrader := sample.AccAddress()
-	atRiskTrader2 := sample.AccAddress()
+	atRiskTrader1 := testutil.AccAddress()
+	notAtRiskTrader := testutil.AccAddress()
+	atRiskTrader2 := testutil.AccAddress()
 
 	t.Log("create vpool")
 	app.VpoolKeeper.CreatePool(
@@ -535,7 +535,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 	t.Log("set pricefeed oracle price")
-	oracle := sample.AccAddress()
+	oracle := testutil.AccAddress()
 	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
 	err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 	require.NoError(t, err)

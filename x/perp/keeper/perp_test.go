@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestKeeperClosePosition(t *testing.T) {
@@ -55,7 +55,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		t.Log("open position for alice - long")
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
-		alice := sample.AccAddress()
+		alice := testutil.AccAddress()
 		err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
@@ -75,7 +75,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			CumulativePremiumFractions: []sdk.Dec{
 				sdk.MustNewDecFromStr("0.3")},
 		})
-		bob := sample.AccAddress()
+		bob := testutil.AccAddress()
 		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 62)))
 		require.NoError(t, err)

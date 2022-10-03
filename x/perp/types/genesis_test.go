@@ -1,12 +1,12 @@
 package types
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -27,7 +27,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				},
 				Positions: []Position{
 					{
-						TraderAddress:                   sample.AccAddress().String(),
+						TraderAddress:                   testutil.AccAddress().String(),
 						Pair:                            common.MustNewAssetPair("valid:pair"),
 						Size_:                           sdk.MustNewDecFromStr("1000"),
 						Margin:                          sdk.MustNewDecFromStr("1000"),
@@ -54,7 +54,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				Params: DefaultParams(),
 				Positions: []Position{
 					{
-						TraderAddress: sample.AccAddress().String(),
+						TraderAddress: testutil.AccAddress().String(),
 						Pair:          common.AssetPair{},
 					},
 				},

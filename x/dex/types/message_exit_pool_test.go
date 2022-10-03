@@ -1,12 +1,11 @@
 package types
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgExitPool_ValidateBasic(t *testing.T) {
@@ -24,7 +23,7 @@ func TestMsgExitPool_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgExitPool{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 			},
 		},
 	}

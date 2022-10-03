@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -250,8 +250,8 @@ func TestOpenPositionSuccess(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
 			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
-			traderAddr := sample.AccAddress()
-			oracle := sample.AccAddress()
+			traderAddr := testutil.AccAddress()
+			oracle := testutil.AccAddress()
 			exchangedSize := tc.expectedSize
 
 			t.Log("set pricefeed oracle")
@@ -485,8 +485,8 @@ func TestOpenPositionError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
 			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
-			traderAddr := sample.AccAddress()
-			oracle := sample.AccAddress()
+			traderAddr := testutil.AccAddress()
+			oracle := testutil.AccAddress()
 
 			t.Log("set pricefeed oracle")
 			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
@@ -539,7 +539,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 				pair := common.MustNewAssetPair("xxx:yyy")
 
-				trader := sample.AccAddress()
+				trader := testutil.AccAddress()
 
 				t.Log("open a position on invalid 'pair'")
 				side := types.Side_BUY
@@ -577,7 +577,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Attempt to open long position (expected unsuccessful)")
-				trader := sample.AccAddress()
+				trader := testutil.AccAddress()
 				side := types.Side_BUY
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)

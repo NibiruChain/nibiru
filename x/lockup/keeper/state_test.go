@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -13,12 +14,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestLockState(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
-	addr := sample.AccAddress()
+	addr := testutil.AccAddress()
 	lock := &types.Lock{
 		LockId:   0,
 		Owner:    addr.String(),

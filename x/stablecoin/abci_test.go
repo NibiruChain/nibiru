@@ -1,6 +1,7 @@
 package stablecoin_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 type test struct {
@@ -112,7 +112,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			ctx = ctx.WithBlockHeight(1)
 
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			pairs := common.AssetPairs{
 				common.Pair_USDC_NUSD,
 			}
@@ -152,7 +152,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	pricefeed.BeginBlocker(ctx, app.PricefeedKeeper)
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
-	oracle := sample.AccAddress()
+	oracle := testutil.AccAddress()
 	pairs := common.AssetPairs{
 		common.Pair_USDC_NUSD,
 	}

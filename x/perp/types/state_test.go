@@ -1,12 +1,12 @@
 package types
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestPosition_Validate(t *testing.T) {
@@ -18,7 +18,7 @@ func TestPosition_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			p: &Position{
-				TraderAddress:                   sample.AccAddress().String(),
+				TraderAddress:                   testutil.AccAddress().String(),
 				Pair:                            common.MustNewAssetPair("valid:pair"),
 				Size_:                           sdk.MustNewDecFromStr("1000"),
 				Margin:                          sdk.MustNewDecFromStr("1000"),
@@ -35,7 +35,7 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad pair": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.AssetPair{},
 			},
 			wantErr: true,
@@ -43,7 +43,7 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad size": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.MustNewAssetPair("valid:pair"),
 				Size_:         sdk.ZeroDec(),
 			},
@@ -52,7 +52,7 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad margin": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.MustNewAssetPair("valid:pair"),
 				Size_:         sdk.MustNewDecFromStr("1000"),
 				Margin:        sdk.MustNewDecFromStr("-1000"),
@@ -61,7 +61,7 @@ func TestPosition_Validate(t *testing.T) {
 		},
 		"bad open notional": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.MustNewAssetPair("valid:pair"),
 				Size_:         sdk.MustNewDecFromStr("1000"),
 				Margin:        sdk.MustNewDecFromStr("1000"),
@@ -72,7 +72,7 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad block number": {
 			p: &Position{
-				TraderAddress:                   sample.AccAddress().String(),
+				TraderAddress:                   testutil.AccAddress().String(),
 				Pair:                            common.MustNewAssetPair("valid:pair"),
 				Size_:                           sdk.MustNewDecFromStr("1000"),
 				Margin:                          sdk.MustNewDecFromStr("1000"),
@@ -140,7 +140,7 @@ func TestPairMetadata_Validate(t *testing.T) {
 
 func BenchmarkPosition_Validate(b *testing.B) {
 	t := &Position{
-		TraderAddress:                   sample.AccAddress().String(),
+		TraderAddress:                   testutil.AccAddress().String(),
 		Pair:                            common.MustNewAssetPair("valid:pair"),
 		Size_:                           sdk.MustNewDecFromStr("1000"),
 		Margin:                          sdk.MustNewDecFromStr("1000"),

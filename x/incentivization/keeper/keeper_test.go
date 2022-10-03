@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
@@ -61,7 +61,7 @@ func TestKeeper_CreateIncentivizationProgram(t *testing.T) {
 func TestKeeper_FundIncentivizationProgram(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app, ctx := simapp2.NewTestNibiruAppAndContext(false)
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		fundingAmount := sdk.NewCoins(sdk.NewInt64Coin("test", 100))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, fundingAmount))
 

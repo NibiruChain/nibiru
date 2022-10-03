@@ -1,6 +1,7 @@
 package pricefeed
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -12,12 +13,11 @@ import (
 
 	pricefeedsimulation "github.com/NibiruChain/nibiru/x/pricefeed/simulation"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 // avoid unused import issue
 var (
-	_ = sample.AccAddress
+	_ = testutil.AccAddress
 	_ = pricefeedsimulation.FindAccount
 	_ = simappparams.StakePerAccount
 	_ = simulation.MsgEntryKind

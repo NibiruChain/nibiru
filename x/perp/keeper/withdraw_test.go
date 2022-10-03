@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
@@ -11,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestWithdraw(t *testing.T) {
@@ -61,7 +61,7 @@ func TestWithdraw(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize variables")
 			perpKeeper, mocks, ctx := getKeeper(t)
-			receiver := sample.AccAddress()
+			receiver := testutil.AccAddress()
 			denom := "NUSD"
 
 			t.Log("mock account keeper")

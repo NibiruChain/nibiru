@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
 )
 
 func TestEndOfEpochTwapCalculation(t *testing.T) {

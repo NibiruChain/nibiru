@@ -3,11 +3,10 @@ package cmd_test
 import (
 	"context"
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -65,7 +64,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 		})
 	}
 
-	sampleAddr := sample.AccAddress()
+	sampleAddr := testutil.AccAddress()
 
 	testCases := []TestCase{
 		{

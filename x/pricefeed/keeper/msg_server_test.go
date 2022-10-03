@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 	"time"
 
@@ -11,14 +12,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestPostPrice(t *testing.T) {
 	k, ctx := testutilkeeper.PricefeedKeeper(t)
 	msgSrv := keeper.NewMsgServerImpl(k)
 
-	_, addrs := sample.PrivKeyAddressPairs(4)
+	_, addrs := testutil.PrivKeyAddressPairs(4)
 	authorizedOracles := addrs[:2]
 	unauthorizedAddrs := addrs[2:]
 

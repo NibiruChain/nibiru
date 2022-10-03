@@ -1,6 +1,7 @@
 package gasless_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/simapp"
@@ -12,10 +13,9 @@ import (
 	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 	types2 "github.com/NibiruChain/nibiru/app/antedecorators/types"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
-var oracleAddr = sample.AccAddress()
+var oracleAddr = testutil.AccAddress()
 
 type DecoratorWithNormalGasMeterCheck struct {
 	t *testing.T

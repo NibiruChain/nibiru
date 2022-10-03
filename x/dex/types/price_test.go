@@ -1,12 +1,11 @@
 package types
 
 import (
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestCalSpotPrice(t *testing.T) {
@@ -84,7 +83,7 @@ func TestCalSpotPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			poolAccountAddr := sample.AccAddress()
+			poolAccountAddr := testutil.AccAddress()
 			poolParams := PoolParams{
 				SwapFee: sdk.NewDecWithPrec(3, 2),
 				ExitFee: sdk.NewDecWithPrec(3, 2),
