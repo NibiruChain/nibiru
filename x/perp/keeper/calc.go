@@ -26,14 +26,14 @@ type RemainingMarginWithFundingPayment struct {
 	*/
 	FundingPayment sdk.Dec
 
-	/* LatestCumulativeFundingRate: latest cumulative funding rate from state. Units are (margin units)/(position units). */
-	LatestCumulativeFundingRate sdk.Dec
+	/* LatestCumulativePremiumFraction: latest cumulative funding rate from state. Units are (margin units)/(position units). */
+	LatestCumulativePremiumFraction sdk.Dec
 }
 
 func (r RemainingMarginWithFundingPayment) String() string {
 	return fmt.Sprintf(
-		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s, LatestCumulativeFundingRate: %s}",
-		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativeFundingRate,
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s, LatestCumulativePremiumFraction: %s}",
+		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativePremiumFraction,
 	)
 }
 
@@ -42,8 +42,8 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	currentPosition types.Position,
 	marginDelta sdk.Dec,
 ) (remaining RemainingMarginWithFundingPayment, err error) {
-	remaining.LatestCumulativeFundingRate, err = k.
-		getLatestCumulativeFundingRate(ctx, currentPosition.Pair)
+	remaining.LatestCumulativePremiumFraction, err = k.
+		getLatestCumulativePremiumFraction(ctx, currentPosition.Pair)
 	if err != nil {
 		return remaining, err
 	}
@@ -51,8 +51,8 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 	if currentPosition.Size_.IsZero() {
 		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
-		remaining.FundingPayment = (remaining.LatestCumulativeFundingRate.
-			Sub(currentPosition.LatestCumulativeFundingPayment)).
+		remaining.FundingPayment = (remaining.LatestCumulativePremiumFraction.
+			Sub(currentPosition.LatestCumulativePremiumFraction)).
 			Mul(currentPosition.Size_)
 	}
 
@@ -114,9 +114,9 @@ func (k Keeper) calcFreeCollateral(
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
 }
 
-// getLatestCumulativeFundingRate returns the last cumulative funding rate recorded for the
+// getLatestCumulativePremiumFraction returns the last cumulative funding rate recorded for the
 // specific pair.
-func (k Keeper) getLatestCumulativeFundingRate(
+func (k Keeper) getLatestCumulativePremiumFraction(
 	ctx sdk.Context, pair common.AssetPair,
 ) (sdk.Dec, error) {
 	pairMetadata, err := k.PairsMetadata.Get(ctx, pair)
@@ -129,5 +129,5 @@ func (k Keeper) getLatestCumulativeFundingRate(
 		return sdk.Dec{}, err
 	}
 	// this should never fail
-	return pairMetadata.CumulativeFundingRates[len(pairMetadata.CumulativeFundingRates)-1], nil
+	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }
