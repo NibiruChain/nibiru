@@ -38,17 +38,11 @@ func (i IndexerIterator[IK, PK]) Next()       { (KeySetIterator[keys.Pair[IK, PK
 func (i IndexerIterator[IK, PK]) Valid() bool { return (KeySetIterator[keys.Pair[IK, PK]])(i).Valid() }
 func (i IndexerIterator[IK, PK]) Close()      { (KeySetIterator[keys.Pair[IK, PK]])(i).Close() }
 
-// NewMultiIndex instantiates a new MultiIndex instance. Namespace must match the namespace provided
-// to the NewIndexedMap function. IndexID must be unique across every Indexer contained in the IndexersProvider
-// provided to the NewIndexedMap function. IndexID must be different from 0.
+// NewMultiIndex instantiates a new MultiIndex instance.
+// namespace is the unique storage namespace for the index.
 // getIndexingKeyFunc is a function which given the object returns the key we use to index the object.
-func NewMultiIndex[IK, PK keys.Key, V any](cdc codec.BinaryCodec, sk sdk.StoreKey, namespace uint8, indexID uint8, getIndexingKeyFunc func(v V) IK) MultiIndex[IK, PK, V] {
-	if indexID == 0 {
-		panic("invalid index id cannot be equal to 0")
-	}
+func NewMultiIndex[IK, PK keys.Key, V any](cdc codec.BinaryCodec, sk sdk.StoreKey, namespace uint8, getIndexingKeyFunc func(v V) IK) MultiIndex[IK, PK, V] {
 	ks := NewKeySet[keys.Pair[IK, PK]](cdc, sk, namespace)
-	ks.prefix = append(ks.prefix, indexID)
-
 	return MultiIndex[IK, PK, V]{
 		jointKeys:      ks,
 		getIndexingKey: getIndexingKeyFunc,
