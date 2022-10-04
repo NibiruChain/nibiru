@@ -50,7 +50,7 @@ func NewMultiIndex[IK, PK keys.Key, V any](cdc codec.BinaryCodec, sk sdk.StoreKe
 	ks.prefix = append(ks.prefix, indexID)
 
 	return MultiIndex[IK, PK, V]{
-		pkPointers:     ks,
+		jointKeys:      ks,
 		getIndexingKey: getIndexingKeyFunc,
 	}
 }
@@ -68,9 +68,9 @@ func NewMultiIndex[IK, PK keys.Key, V any](cdc codec.BinaryCodec, sk sdk.StoreKe
 // So if we want to get all the objects whose City is Milan
 // we prefix over keys.Pair[Milan, nil], and we get the respective primary keys: 0,1.
 type MultiIndex[IK, PK keys.Key, V any] struct {
-	// pkPointers is a KeySet of the joint indexing key and the primary key.
+	// jointKeys is a KeySet of the joint indexing key and the primary key.
 	// the generated keys always point to primary keys.
-	pkPointers KeySet[keys.Pair[IK, PK]]
+	jointKeys KeySet[keys.Pair[IK, PK]]
 	// getIndexingKey is a function which provided the object, returns the indexing key
 	getIndexingKey func(v V) IK
 }
@@ -78,18 +78,18 @@ type MultiIndex[IK, PK keys.Key, V any] struct {
 // Insert implements the Indexer interface.
 func (i MultiIndex[IK, PK, V]) Insert(ctx sdk.Context, pk PK, v V) {
 	indexingKey := i.getIndexingKey(v)
-	i.pkPointers.Insert(ctx, keys.Join(indexingKey, pk))
+	i.jointKeys.Insert(ctx, keys.Join(indexingKey, pk))
 }
 
 // Delete implements the Indexer interface.
 func (i MultiIndex[IK, PK, V]) Delete(ctx sdk.Context, pk PK, v V) {
 	indexingKey := i.getIndexingKey(v)
-	i.pkPointers.Delete(ctx, keys.Join(indexingKey, pk))
+	i.jointKeys.Delete(ctx, keys.Join(indexingKey, pk))
 }
 
 // Iterate iterates over the provided range.
 func (i MultiIndex[IK, PK, V]) Iterate(ctx sdk.Context, rng keys.Range[keys.Pair[IK, PK]]) IndexerIterator[IK, PK] {
-	iter := i.pkPointers.Iterate(ctx, rng)
+	iter := i.jointKeys.Iterate(ctx, rng)
 	return (IndexerIterator[IK, PK])(iter)
 }
 
