@@ -110,3 +110,70 @@ func (t Pair[K1, K2]) String() string {
 
 	return fmt.Sprintf("('%s', '%s')", p1, p2)
 }
+
+// PairRange implements the Range interface
+// to provide an easier way to range over Pair keys.
+type PairRange[K1, K2 Key] struct {
+	prefix *K1
+	start  *Bound[K2]
+	end    *Bound[K2]
+	order  Order
+}
+
+func (p PairRange[K1, K2]) Prefix(prefix K1) PairRange[K1, K2] {
+	p.prefix = &prefix
+	return p
+}
+
+func (p PairRange[K1, K2]) StartInclusive(start K2) PairRange[K1, K2] {
+	bound := Inclusive(start)
+	p.start = &bound
+	return p
+}
+
+func (p PairRange[K1, K2]) StartExclusive(start K2) PairRange[K1, K2] {
+	bound := Exclusive(start)
+	p.start = &bound
+	return p
+}
+
+func (p PairRange[K1, K2]) EndInclusive(end K2) PairRange[K1, K2] {
+	bound := Inclusive(end)
+	p.end = &bound
+	return p
+}
+
+func (p PairRange[K1, K2]) EndExclusive(end K2) PairRange[K1, K2] {
+	bound := Exclusive(end)
+	p.end = &bound
+	return p
+}
+
+func (p PairRange[K1, K2]) Descending() PairRange[K1, K2] {
+	p.order = OrderDescending
+	return p
+}
+
+func (p PairRange[K1, K2]) RangeValues() (prefix *Pair[K1, K2], start *Bound[Pair[K1, K2]], end *Bound[Pair[K1, K2]], order Order) {
+	if (p.end != nil || p.start != nil) && p.prefix == nil {
+		panic("invalid PairRange usage: if end or start are set, prefix must be set too")
+	}
+	if p.prefix != nil {
+		prefix = &Pair[K1, K2]{p1: p.prefix}
+	}
+	if p.start != nil {
+		start = &Bound[Pair[K1, K2]]{
+			value:     Pair[K1, K2]{p2: &p.start.value},
+			inclusive: p.start.inclusive,
+		}
+	}
+	if p.end != nil {
+		end = &Bound[Pair[K1, K2]]{
+			value:     Pair[K1, K2]{p2: &p.end.value},
+			inclusive: p.end.inclusive,
+		}
+	}
+
+	order = p.order
+	return
+}
