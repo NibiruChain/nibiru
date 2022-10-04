@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#964](https://github.com/NibiruChain/nibiru/pull/964) - test(vpool): refactor flaky vpool cli test
 * [#956](https://github.com/NibiruChain/nibiru/pull/956) - test(perp): partial liquidate unit test
 * [#980](https://github.com/NibiruChain/nibiru/pull/980) - test(perp): add `MsgClosePosition`, `MsgAddMargin`, and `MsgRemoveMargin` simulation tests
+* [#982](https://github.com/NibiruChain/nibiru/pull/982) - improvements for pricefeed genesis
 
 ### Features
 
