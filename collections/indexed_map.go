@@ -37,7 +37,6 @@ func NewIndexedMap[PK keys.Key, V any, PV interface {
 	Object
 }, I IndexersProvider[PK, V]](cdc codec.BinaryCodec, storeKey sdk.StoreKey, namespace uint8, indexers I) IndexedMap[PK, V, PV, I] {
 	m := NewMap[PK, V, PV](cdc, storeKey, namespace)
-	m.prefix = append(m.prefix, 0)
 	return IndexedMap[PK, V, PV, I]{
 		m:       m,
 		Indexes: indexers,

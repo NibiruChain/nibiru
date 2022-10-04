@@ -33,7 +33,7 @@ func (i indexes) IndexerList() []Indexer[keys.Uint64Key, person] {
 func TestIndexedMap(t *testing.T) {
 	sk, ctx, cdc := deps()
 	m := NewIndexedMap[keys.Uint64Key, person, *person, indexes](cdc, sk, 0, indexes{
-		City: NewMultiIndex[keys.StringKey, keys.Uint64Key, person](cdc, sk, 0, 1, func(v person) keys.StringKey {
+		City: NewMultiIndex[keys.StringKey, keys.Uint64Key, person](cdc, sk, 1, func(v person) keys.StringKey {
 			return v.City
 		}),
 	})

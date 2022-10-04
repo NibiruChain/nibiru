@@ -10,15 +10,9 @@ import (
 
 func TestMultiIndex(t *testing.T) {
 	sk, ctx, cdc := deps()
-	// test panics if indexID is zero
-	require.Panics(t, func() {
-		_ = NewMultiIndex[keys.StringKey, keys.Uint64Key, person](cdc, sk, 0, 0, func(v person) keys.StringKey {
-			return v.City
-		})
-	})
 
 	// test insertions
-	im := NewMultiIndex[keys.StringKey, keys.Uint64Key, person](cdc, sk, 0, 1, func(v person) keys.StringKey {
+	im := NewMultiIndex[keys.StringKey, keys.Uint64Key, person](cdc, sk, 0, func(v person) keys.StringKey {
 		return v.City
 	})
 	persons := []person{
@@ -62,7 +56,7 @@ func TestMultiIndex(t *testing.T) {
 func TestIndexerIterator(t *testing.T) {
 	sk, ctx, cdc := deps()
 	// test insertions
-	im := NewMultiIndex[keys.StringKey, keys.Uint64Key, person](cdc, sk, 0, 1, func(v person) keys.StringKey {
+	im := NewMultiIndex[keys.StringKey, keys.Uint64Key, person](cdc, sk, 0, func(v person) keys.StringKey {
 		return v.City
 	})
 
