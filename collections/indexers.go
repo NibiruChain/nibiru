@@ -7,6 +7,37 @@ import (
 	"github.com/NibiruChain/nibiru/collections/keys"
 )
 
+// IndexerIterator wraps a KeySetIterator to provide more useful functionalities
+// around index key iteration.
+type IndexerIterator[IK, PK keys.Key] KeySetIterator[keys.Pair[IK, PK]]
+
+// FullKey returns the iterator current key composed of both indexing key and primary key.
+func (i IndexerIterator[IK, PK]) FullKey() keys.Pair[IK, PK] {
+	return (KeySetIterator[keys.Pair[IK, PK]])(i).Key()
+}
+
+// FullKeys fully consumes the iterator and returns the set of joined indexing key and primary key found.
+func (i IndexerIterator[IK, PK]) FullKeys() []keys.Pair[IK, PK] {
+	return (KeySetIterator[keys.Pair[IK, PK]])(i).Keys()
+}
+
+// PrimaryKey returns the iterator current primary key
+func (i IndexerIterator[IK, PK]) PrimaryKey() PK { return i.FullKey().K2() }
+
+// PrimaryKeys fully consumes the iterator and returns the set of primary keys found.
+func (i IndexerIterator[IK, PK]) PrimaryKeys() []PK {
+	ks := i.FullKeys()
+	pks := make([]PK, len(ks))
+	for i, k := range ks {
+		pks[i] = k.K2()
+	}
+	return pks
+}
+
+func (i IndexerIterator[IK, PK]) Next()       { (KeySetIterator[keys.Pair[IK, PK]])(i).Next() }
+func (i IndexerIterator[IK, PK]) Valid() bool { return (KeySetIterator[keys.Pair[IK, PK]])(i).Valid() }
+func (i IndexerIterator[IK, PK]) Close()      { (KeySetIterator[keys.Pair[IK, PK]])(i).Close() }
+
 // NewMultiIndex instantiates a new MultiIndex instance. Namespace must match the namespace provided
 // to the NewIndexedMap function. IndexID must be unique across every Indexer contained in the IndexersProvider
 // provided to the NewIndexedMap function. IndexID must be different from 0.
@@ -72,34 +103,3 @@ func (i MultiIndex[IK, PK, V]) ExactMatch(ctx sdk.Context, ik IK) IndexerIterato
 func (i MultiIndex[IK, PK, V]) ReverseExactMatch(ctx sdk.Context, ik IK) IndexerIterator[IK, PK] {
 	return i.Iterate(ctx, keys.PairRange[IK, PK]{}.Prefix(ik).Descending())
 }
-
-// IndexerIterator wraps a KeySetIterator to provide more useful functionalities
-// around index key iteration.
-type IndexerIterator[IK, PK keys.Key] KeySetIterator[keys.Pair[IK, PK]]
-
-// FullKey returns the iterator current key composed of both indexing key and primary key.
-func (i IndexerIterator[IK, PK]) FullKey() keys.Pair[IK, PK] {
-	return (KeySetIterator[keys.Pair[IK, PK]])(i).Key()
-}
-
-// FullKeys fully consumes the iterator and returns the set of joined indexing key and primary key found.
-func (i IndexerIterator[IK, PK]) FullKeys() []keys.Pair[IK, PK] {
-	return (KeySetIterator[keys.Pair[IK, PK]])(i).Keys()
-}
-
-// PrimaryKey returns the iterator current primary key
-func (i IndexerIterator[IK, PK]) PrimaryKey() PK { return i.FullKey().K2() }
-
-// PrimaryKeys fully consumes the iterator and returns the set of primary keys found.
-func (i IndexerIterator[IK, PK]) PrimaryKeys() []PK {
-	ks := i.FullKeys()
-	pks := make([]PK, len(ks))
-	for i, k := range ks {
-		pks[i] = k.K2()
-	}
-	return pks
-}
-
-func (i IndexerIterator[IK, PK]) Next()       { (KeySetIterator[keys.Pair[IK, PK]])(i).Next() }
-func (i IndexerIterator[IK, PK]) Valid() bool { return (KeySetIterator[keys.Pair[IK, PK]])(i).Valid() }
-func (i IndexerIterator[IK, PK]) Close()      { (KeySetIterator[keys.Pair[IK, PK]])(i).Close() }
