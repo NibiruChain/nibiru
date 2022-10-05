@@ -113,6 +113,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#958](https://github.com/NibiruChain/nibiru/pull/930) - fix(pricefeed): add twap to prices query
 * [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
 
+### Documentation
+
+* [#984](https://github.com/NibiruChain/nibiru/pull/984) - docs(vpool): Added vpool spec.
+
 ## v0.14.0
 
 ### API Breaking
