@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +14,6 @@ import (
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/mock"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestKeeper_GetStableMarketCap(t *testing.T) {
@@ -35,7 +36,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
-	poolAccountAddr := sample.AccAddress()
+	poolAccountAddr := testutil.AccAddress()
 	poolParams := dextypes.PoolParams{
 		SwapFee: sdktypes.NewDecWithPrec(3, 2),
 		ExitFee: sdktypes.NewDecWithPrec(3, 2),
@@ -71,7 +72,7 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
-	poolAccountAddr := sample.AccAddress()
+	poolAccountAddr := testutil.AccAddress()
 	poolParams := dextypes.PoolParams{
 		SwapFee: sdktypes.NewDecWithPrec(3, 2),
 		ExitFee: sdktypes.NewDecWithPrec(3, 2),

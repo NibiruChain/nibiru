@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -11,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestCheckBalances(t *testing.T) {
@@ -56,7 +57,7 @@ func TestCheckBalances(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			// fund user account
-			sender := sample.AccAddress()
+			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
