@@ -3,10 +3,10 @@ package types
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgMintStable_ValidateBasic(t *testing.T) {
@@ -24,7 +24,7 @@ func TestMsgMintStable_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgMintStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 			},
 		},
 	}
@@ -55,7 +55,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 		}, {
 			name: "Valid MsgBurn.Creator address",
 			msgBurn: MsgBurnStable{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 			},
 		},
 	}
@@ -86,7 +86,7 @@ func TestMsgRecollateralize_ValidateBasic(t *testing.T) {
 		}, {
 			name: "Valid MsgBurn.Creator address",
 			msg: MsgRecollateralize{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 			},
 		},
 	}

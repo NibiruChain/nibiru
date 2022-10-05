@@ -3,11 +3,11 @@ package types
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgSwapAssets_ValidateBasic(t *testing.T) {
@@ -29,7 +29,7 @@ func TestMsgSwapAssets_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid pool id",
 			msg: MsgSwapAssets{
-				Sender:        sample.AccAddress().String(),
+				Sender:        testutil.AccAddress().String(),
 				PoolId:        0,
 				TokenIn:       sdk.NewInt64Coin("foo", 1),
 				TokenOutDenom: "bar",
@@ -39,7 +39,7 @@ func TestMsgSwapAssets_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid tokens in",
 			msg: MsgSwapAssets{
-				Sender:        sample.AccAddress().String(),
+				Sender:        testutil.AccAddress().String(),
 				PoolId:        1,
 				TokenIn:       sdk.NewInt64Coin("foo", 0),
 				TokenOutDenom: "bar",
@@ -49,7 +49,7 @@ func TestMsgSwapAssets_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid token out denom",
 			msg: MsgSwapAssets{
-				Sender:        sample.AccAddress().String(),
+				Sender:        testutil.AccAddress().String(),
 				PoolId:        1,
 				TokenIn:       sdk.NewInt64Coin("foo", 1),
 				TokenOutDenom: "",
@@ -59,7 +59,7 @@ func TestMsgSwapAssets_ValidateBasic(t *testing.T) {
 		{
 			name: "valid message",
 			msg: MsgSwapAssets{
-				Sender:        sample.AccAddress().String(),
+				Sender:        testutil.AccAddress().String(),
 				PoolId:        1,
 				TokenIn:       sdk.NewInt64Coin("foo", 1),
 				TokenOutDenom: "bar",

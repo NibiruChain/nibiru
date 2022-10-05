@@ -3,19 +3,20 @@ package keeper
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
-		traderAddr := sample.AccAddress()
+		traderAddr := testutil.AccAddress()
 		pair := common.MustNewAssetPair("LUNA:UST")
 
 		dep.mockVpoolKeeper.
@@ -49,7 +50,7 @@ func TestSettlePosition(t *testing.T) {
 
 	t.Run("success - settlement price not zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
-		traderAddr := sample.AccAddress()
+		traderAddr := testutil.AccAddress()
 		pair := common.MustNewAssetPair("LUNA:UST") // memeing
 
 		dep.mockVpoolKeeper.
@@ -89,7 +90,7 @@ func TestSettlePosition(t *testing.T) {
 
 	t.Run("position size is zero", func(t *testing.T) {
 		k, _, ctx := getKeeper(t)
-		traderAddr := sample.AccAddress()
+		traderAddr := testutil.AccAddress()
 		pair := common.MustNewAssetPair("LUNA:UST")
 
 		pos := types.Position{

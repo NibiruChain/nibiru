@@ -3,19 +3,18 @@ package gasless_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	types3 "github.com/cosmos/cosmos-sdk/x/bank/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 	types2 "github.com/NibiruChain/nibiru/app/antedecorators/types"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
-var oracleAddr = sample.AccAddress()
+var oracleAddr = testutil.AccAddress()
 
 type DecoratorWithNormalGasMeterCheck struct {
 	t *testing.T
@@ -57,7 +56,7 @@ type TxWithoutPostPriceMsg struct{}
 
 func (tx TxWithoutPostPriceMsg) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{
-		&types3.MsgSend{},
+		&banktypes.MsgSend{},
 	}
 }
 
