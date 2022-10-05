@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/collections"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
@@ -15,32 +17,30 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestAddMarginSuccess(t *testing.T) {
 	tests := []struct {
-		name                        string
-		marginToAdd                 sdk.Coin
-		latestCumulativeFundingRate sdk.Dec
-		initialPosition             types.Position
+		name                            string
+		marginToAdd                     sdk.Coin
+		latestCumulativePremiumFraction sdk.Dec
+		initialPosition                 types.Position
 
 		expectedMargin         sdk.Dec
 		expectedFundingPayment sdk.Dec
 	}{
 		{
-			name:                        "add margin",
-			marginToAdd:                 sdk.NewInt64Coin(common.DenomNUSD, 100),
-			latestCumulativeFundingRate: sdk.MustNewDecFromStr("0.001"),
+			name:                            "add margin",
+			marginToAdd:                     sdk.NewInt64Coin(common.DenomNUSD, 100),
+			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(1_000),
-				Margin:                         sdk.NewDec(100),
-				OpenNotional:                   sdk.NewDec(500),
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    1,
+				TraderAddress:                   testutilevents.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(1_000),
+				Margin:                          sdk.NewDec(100),
+				OpenNotional:                    sdk.NewDec(500),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     1,
 			},
 
 			expectedMargin:         sdk.NewDec(199),
@@ -80,8 +80,8 @@ func TestAddMarginSuccess(t *testing.T) {
 			t.Log("set pair metadata")
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
-					tc.latestCumulativeFundingRate,
+				CumulativePremiumFractions: []sdk.Dec{
+					tc.latestCumulativePremiumFraction,
 				},
 			},
 			)
@@ -97,7 +97,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
 			assert.EqualValues(t, common.Pair_BTC_NUSD, resp.Position.Pair)
-			assert.EqualValues(t, tc.latestCumulativeFundingRate, resp.Position.LatestCumulativeFundingPayment)
+			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LatestCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
 	}
@@ -115,7 +115,7 @@ func TestRemoveMargin(t *testing.T) {
 				removeAmt := sdk.NewInt(5)
 
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: common.DenomNUSD, Amount: removeAmt})
@@ -128,7 +128,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				t.Log("Setup vpool defined by pair")
@@ -158,7 +158,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -182,8 +182,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-					Pair:                   pair,
-					CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
+					Pair:                       pair,
+					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 				})
 
 				t.Log("increment block height and time for twap calculation")
@@ -218,7 +218,7 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(300), position.OpenNotional)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("299.910026991902429271"), position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
-				assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativePremiumFraction)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,

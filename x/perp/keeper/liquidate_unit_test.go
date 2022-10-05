@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
 
@@ -15,8 +17,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -84,8 +84,8 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
-			traderAddr := sample.AccAddress()
-			liquidatorAddr := sample.AccAddress()
+			traderAddr := testutilevents.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
 
 			t.Log("set position")
@@ -105,7 +105,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			t.Log("set pair metadata")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -191,7 +191,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPositionSize, newPosition.Size_)
 			assert.EqualValues(t, tc.expectedPositionMargin, newPosition.Margin)
 			assert.EqualValues(t, tc.expectedPositionOpenNotional, newPosition.OpenNotional)
-			assert.True(t, newPosition.LatestCumulativeFundingPayment.IsZero())
+			assert.True(t, newPosition.LatestCumulativePremiumFraction.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
@@ -258,8 +258,8 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
-			traderAddr := sample.AccAddress()
-			liquidatorAddr := sample.AccAddress()
+			traderAddr := testutilevents.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
 
 			t.Log("set position")
@@ -279,7 +279,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			t.Log("set pair metadata")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -428,8 +428,8 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
-			traderAddr := sample.AccAddress()
-			liquidatorAddr := sample.AccAddress()
+			traderAddr := testutilevents.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
 
 			t.Log("set position")
@@ -449,7 +449,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			t.Log("set pair metadata")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -584,7 +584,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 			name: "vpool does not exist - error",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				liquidator := sample.AccAddress()
+				liquidator := testutilevents.AccAddress()
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(false)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
@@ -608,7 +608,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 			name: "healthy liquidation",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				liquidator := sample.AccAddress()
+				liquidator := testutilevents.AccAddress()
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
 
@@ -888,8 +888,8 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("setup variables")
 			perpKeeper, mocks, ctx := getKeeper(t)
-			liquidatorAddr := sample.AccAddress()
-			traderAddr := sample.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
+			traderAddr := testutilevents.AccAddress()
 			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
 			if tc.initialPositionSize.IsNegative() {
 				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
@@ -927,7 +927,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, newParams)
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case
 				},
 			})
@@ -957,13 +957,13 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("create and set the initial position")
 			position := types.Position{
-				TraderAddress:                  traderAddr.String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          tc.initialPositionSize,
-				Margin:                         tc.initialMargin,
-				OpenNotional:                   tc.initialOpenNotional,
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    ctx.BlockHeight(),
+				TraderAddress:                   traderAddr.String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           tc.initialPositionSize,
+				Margin:                          tc.initialMargin,
+				OpenNotional:                    tc.initialOpenNotional,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     ctx.BlockHeight(),
 			}
 			setPosition(perpKeeper, ctx, position)
 
@@ -1000,7 +1000,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			assert.True(t, newPosition.Size_.IsZero())        // always zero
 			assert.True(t, newPosition.Margin.IsZero())       // always zero
 			assert.True(t, newPosition.OpenNotional.IsZero()) // always zero
-			assert.True(t, newPosition.LatestCumulativeFundingPayment.IsZero())
+			assert.True(t, newPosition.LatestCumulativePremiumFraction.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
@@ -1185,8 +1185,8 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("setup variables")
 			perpKeeper, mocks, ctx := getKeeper(t)
-			liquidatorAddr := sample.AccAddress()
-			traderAddr := sample.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
+			traderAddr := testutilevents.AccAddress()
 			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
 			if tc.initialPositionSize.IsNegative() {
 				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
@@ -1220,7 +1220,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			perpKeeper.SetParams(ctx, newParams)
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(), // zero funding payment for this test case
 				},
 			})
@@ -1273,13 +1273,13 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("create and set the initial position")
 			position := types.Position{
-				TraderAddress:                  traderAddr.String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          tc.initialPositionSize,
-				Margin:                         tc.initialMargin,
-				OpenNotional:                   tc.initialOpenNotional,
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    ctx.BlockHeight(),
+				TraderAddress:                   traderAddr.String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           tc.initialPositionSize,
+				Margin:                          tc.initialMargin,
+				OpenNotional:                    tc.initialOpenNotional,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     ctx.BlockHeight(),
 			}
 			setPosition(perpKeeper, ctx, position)
 
@@ -1315,7 +1315,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			newPosition := positionResp.Position
 			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
 			assert.EqualValues(t, common.Pair_BTC_NUSD, newPosition.Pair)
-			assert.True(t, newPosition.LatestCumulativeFundingPayment.IsZero())
+			assert.True(t, newPosition.LatestCumulativePremiumFraction.IsZero())
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 			assert.EqualValues(t, tc.expectedPositionMargin, newPosition.Margin)
 

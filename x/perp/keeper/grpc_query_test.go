@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestQueryPosition(t *testing.T) {
@@ -31,12 +32,12 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "positive PnL",
 			initialPosition: &types.Position{
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(10),
-				OpenNotional:                   sdk.NewDec(10),
-				Margin:                         sdk.NewDec(1),
-				BlockNumber:                    1,
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(10),
+				OpenNotional:                    sdk.NewDec(10),
+				Margin:                          sdk.NewDec(1),
+				BlockNumber:                     1,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(1_000_000),
 			baseAssetReserve:  sdk.NewDec(500_000),
@@ -48,12 +49,12 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "negative PnL, positive margin ratio",
 			initialPosition: &types.Position{
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(10),
-				OpenNotional:                   sdk.NewDec(10),
-				Margin:                         sdk.NewDec(1),
-				BlockNumber:                    1,
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(10),
+				OpenNotional:                    sdk.NewDec(10),
+				Margin:                          sdk.NewDec(1),
+				BlockNumber:                     1,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(1_000_000),
 			baseAssetReserve:  sdk.NewDec(1_000_000),
@@ -65,12 +66,12 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "negative PnL, negative margin ratio",
 			initialPosition: &types.Position{
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(10),
-				OpenNotional:                   sdk.NewDec(10),
-				Margin:                         sdk.NewDec(1),
-				BlockNumber:                    1,
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(10),
+				OpenNotional:                    sdk.NewDec(10),
+				Margin:                          sdk.NewDec(1),
+				BlockNumber:                     1,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(500_000),
 			baseAssetReserve:  sdk.NewDec(1_000_000),
@@ -85,7 +86,7 @@ func TestQueryPosition(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize trader address")
-			traderAddr := sample.AccAddress()
+			traderAddr := testutil.AccAddress()
 			tc.initialPosition.TraderAddress = traderAddr.String()
 
 			t.Log("initialize app and keeper")
@@ -108,7 +109,7 @@ func TestQueryPosition(t *testing.T) {
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			})
@@ -153,7 +154,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "empty string pair",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			},
@@ -166,7 +167,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "pair metadata not found",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			},
@@ -179,7 +180,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "returns single funding payment",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 				},
 			},
@@ -195,7 +196,7 @@ func TestQueryFundingRates(t *testing.T) {
 			name: "truncates to 48 funding payments",
 			initialPairMetadata: &types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{
+				CumulativePremiumFractions: []sdk.Dec{
 					sdk.ZeroDec(),
 					sdk.NewDec(1),
 					sdk.NewDec(2),

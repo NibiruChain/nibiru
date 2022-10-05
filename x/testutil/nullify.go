@@ -1,5 +1,5 @@
 // Package nullify provides methods to init nil values structs for test assertion.
-package nullify
+package testutil
 
 import (
 	"reflect"

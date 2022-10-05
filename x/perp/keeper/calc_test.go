@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/simapp"
@@ -12,7 +14,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
@@ -38,7 +39,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutil.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -59,16 +60,16 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-					Pair:                   pair,
-					CumulativeFundingRates: fundingRates,
+					Pair:                       pair,
+					CumulativePremiumFractions: fundingRates,
 				})
 
 				pos := &types.Position{
-					TraderAddress:                  trader.String(),
-					Pair:                           pair,
-					Margin:                         sdk.NewDec(100),
-					Size_:                          sdk.NewDec(200),
-					LatestCumulativeFundingPayment: fundingRates[0],
+					TraderAddress:                   trader.String(),
+					Pair:                            pair,
+					Margin:                          sdk.NewDec(100),
+					Size_:                           sdk.NewDec(200),
+					LatestCumulativePremiumFraction: fundingRates[0],
 				}
 
 				marginDelta := sdk.NewDec(-300)
@@ -82,7 +83,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				require.True(t, sdk.NewDec(200).Equal(remaining.BadDebt))
 				require.True(t, sdk.NewDec(0).Equal(remaining.FundingPayment))
 				require.True(t, sdk.NewDec(0).Equal(remaining.Margin))
-				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativeFundingRate)
+				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativePremiumFraction)
 			},
 		},
 		{
@@ -90,7 +91,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
-				trader := sample.AccAddress()
+				trader := testutil.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -115,25 +116,25 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-					Pair:                   pair,
-					CumulativeFundingRates: fundingRates,
+					Pair:                       pair,
+					CumulativePremiumFractions: fundingRates,
 				})
 
 				pos := &types.Position{
-					TraderAddress:                  trader.String(),
-					Pair:                           pair,
-					Margin:                         sdk.NewDec(100),
-					Size_:                          sdk.NewDec(200),
-					LatestCumulativeFundingPayment: fundingRates[1],
+					TraderAddress:                   trader.String(),
+					Pair:                            pair,
+					Margin:                          sdk.NewDec(100),
+					Size_:                           sdk.NewDec(200),
+					LatestCumulativePremiumFraction: fundingRates[1],
 				}
 
 				marginDelta := sdk.NewDec(0)
 				remaining, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, *pos, marginDelta)
 				require.NoError(t, err)
-				require.EqualValues(t, sdk.MustNewDecFromStr("0.75"), remaining.LatestCumulativeFundingRate)
+				require.EqualValues(t, sdk.MustNewDecFromStr("0.75"), remaining.LatestCumulativePremiumFraction)
 				// FPayment
-				//   = (remaining.LatestCPF - pos.LatestCumulativeFundingPayment)
+				//   = (remaining.LatestCPF - pos.LatestCumulativePremiumFraction)
 				//      * pos.Size_
 				//   = (0.75 - 0.5) * 200
 				//   = 50

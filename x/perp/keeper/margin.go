@@ -50,7 +50,7 @@ func (k Keeper) AddMargin(
 	}
 
 	position.Margin = remainingMargin.Margin
-	position.LatestCumulativeFundingPayment = remainingMargin.LatestCumulativeFundingRate
+	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	position.BlockNumber = ctx.BlockHeight()
 	k.Positions.Insert(ctx, keys.Join(position.Pair, keys.String(position.TraderAddress)), position)
 
@@ -135,7 +135,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	position.Margin = remainingMargin.Margin
-	position.LatestCumulativeFundingPayment = remainingMargin.LatestCumulativeFundingRate
+	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 
 	freeCollateral, err := k.calcFreeCollateral(ctx, position)
 	if err != nil {
@@ -200,7 +200,7 @@ func (k Keeper) GetMarginRatio(
 
 	switch priceOption {
 	case types.MarginCalculationPriceOption_MAX_PNL:
-		positionNotional, unrealizedPnL, err = k.getPreferencePositionNotionalAndUnrealizedPnL(
+		positionNotional, unrealizedPnL, err = k.GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
 			position,
 			types.PnLPreferenceOption_MAX,
@@ -385,7 +385,7 @@ Returns:
     For LONG positions, this is positionNotional - openNotional
     For SHORT positions, this is openNotional - positionNotional
 */
-func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
+func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
 	position types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,

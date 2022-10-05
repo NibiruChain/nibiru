@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
@@ -19,7 +21,6 @@ import (
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
@@ -44,7 +45,7 @@ func SetupNibiruTestingApp() (
 	if err != nil {
 		return nil, defaultGenesis
 	}
-	oracle := sample.AccAddress()
+	oracle := testutil.AccAddress()
 	nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedtypes.Params{
 		Pairs: common.AssetPairs{pair},
 	})
@@ -223,8 +224,8 @@ func (suite IBCTestSuite) TestSendPacketRecvPacket() {
 	suite.SetupTest()
 
 	t.Log("create packet")
-	sender := sample.AccAddress().String()
-	receiver := sample.AccAddress().String()
+	sender := testutil.AccAddress().String()
+	receiver := testutil.AccAddress().String()
 	coin := sdk.NewInt64Coin("unibi", 1000)
 	timeoutHeight := ibcclienttypes.NewHeight(1000, 1000)
 	path := suite.path

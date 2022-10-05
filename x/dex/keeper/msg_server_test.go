@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -15,9 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil/events"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestCreatePool(t *testing.T) {
@@ -173,13 +173,13 @@ func TestCreatePool(t *testing.T) {
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())
-				events.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
+				testutil.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
 				})
 			} else {
 				require.NoError(t, err)
-				events.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
+				testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
 				})
@@ -301,12 +301,12 @@ func TestMsgServerJoinPool(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
-			poolAddr := sample.AccAddress()
+			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
-			joinerAddr := sample.AccAddress()
+			joinerAddr := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
@@ -329,7 +329,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				PoolSharesOut: resp.NumPoolSharesOut,
 				RemCoins:      resp.RemainingCoins,
 			}
-			events.RequireHasTypedEvent(t, ctx, expectedEvent)
+			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -428,12 +428,12 @@ func TestMsgServerExitPool(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
-			poolAddr := sample.AccAddress()
+			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
-			sender := sample.AccAddress()
+			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 
@@ -461,7 +461,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				TokensOut:    resp.TokensOut,
 			}
 
-			events.RequireHasTypedEvent(t, ctx, expectedEvent)
+			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -632,7 +632,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 			// fund pool account
-			poolAddr := sample.AccAddress()
+			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			require.NoError(t,
@@ -646,7 +646,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			// fund user account
-			sender := sample.AccAddress()
+			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
@@ -667,7 +667,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 				)
 
 				// check events
-				events.RequireHasTypedEvent(t, ctx, &types.EventAssetsSwapped{
+				testutil.RequireHasTypedEvent(t, ctx, &types.EventAssetsSwapped{
 					Address:  sender.String(),
 					PoolId:   1,
 					TokenIn:  tc.tokenIn,
