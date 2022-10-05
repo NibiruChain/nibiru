@@ -201,8 +201,8 @@ func (p VPool) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnap
 	}
 
 	markPrice := p.GetMarkPrice()
-	snapshotUpperLimit := snapshot.GetUpperLimit(p.FluctuationLimitRatio)
-	snapshotLowerLimit := snapshot.GetLowerLimit(p.FluctuationLimitRatio)
+	snapshotUpperLimit := snapshot.GetUpperMarkPriceFluctuationLimit(p.FluctuationLimitRatio)
+	snapshotLowerLimit := snapshot.GetLowerMarkPriceFluctuationLimit(p.FluctuationLimitRatio)
 
 	if markPrice.GT(snapshotUpperLimit) || markPrice.LT(snapshotLowerLimit) {
 		return true
