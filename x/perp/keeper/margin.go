@@ -200,7 +200,7 @@ func (k Keeper) GetMarginRatio(
 
 	switch priceOption {
 	case types.MarginCalculationPriceOption_MAX_PNL:
-		positionNotional, unrealizedPnL, err = k.getPreferencePositionNotionalAndUnrealizedPnL(
+		positionNotional, unrealizedPnL, err = k.GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
 			position,
 			types.PnLPreferenceOption_MAX,
@@ -385,7 +385,7 @@ Returns:
     For LONG positions, this is positionNotional - openNotional
     For SHORT positions, this is openNotional - positionNotional
 */
-func (k Keeper) getPreferencePositionNotionalAndUnrealizedPnL(
+func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
 	position types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,
