@@ -3,11 +3,11 @@ package types
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestValidateBasic(t *testing.T) {
@@ -40,7 +40,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "invalid swap fee, too small",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("-0.003"),
 					ExitFee: sdk.MustNewDecFromStr("0.003"),
@@ -61,7 +61,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "invalid swap fee, too large",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("1.1"),
 					ExitFee: sdk.MustNewDecFromStr("0.003"),
@@ -82,7 +82,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "invalid exit fee, too small",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.003"),
 					ExitFee: sdk.MustNewDecFromStr("-0.003"),
@@ -103,7 +103,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "invalid exit fee, too large",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.003"),
 					ExitFee: sdk.MustNewDecFromStr("1.1"),
@@ -124,7 +124,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "too few assets",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.003"),
 					ExitFee: sdk.MustNewDecFromStr("0.003"),
@@ -141,7 +141,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "too many assets",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.003"),
 					ExitFee: sdk.MustNewDecFromStr("0.003"),
@@ -166,7 +166,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "invalid token weight",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.003"),
 					ExitFee: sdk.MustNewDecFromStr("0.003"),
@@ -187,7 +187,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			name: "valid create pool message",
 			msg: MsgCreatePool{
-				Creator: sample.AccAddress().String(),
+				Creator: testutil.AccAddress().String(),
 				PoolParams: &PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.003"),
 					ExitFee: sdk.MustNewDecFromStr("0.003"),

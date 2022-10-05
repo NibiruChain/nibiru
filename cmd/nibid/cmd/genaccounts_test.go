@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -18,6 +17,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
+
+	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
 )
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
@@ -65,7 +66,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 		})
 	}
 
-	sampleAddr := sample.AccAddress()
+	sampleAddr := testutil.AccAddress()
 
 	testCases := []TestCase{
 		{

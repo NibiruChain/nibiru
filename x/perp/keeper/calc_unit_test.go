@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -23,7 +24,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			name: "invalid token pair - error",
 			test: func() {
 				k, _, ctx := getKeeper(t)
-				alice := sample.AccAddress()
+				alice := testutil.AccAddress()
 				pos := types.ZeroPosition(ctx, common.AssetPair{
 					Token0: "",
 					Token1: "",
@@ -41,7 +42,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(false)
 
-				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
+				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, testutil.AccAddress())
 
 				_, err := k.calcFreeCollateral(ctx, pos)
 
@@ -57,7 +58,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
 
-				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
+				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, testutil.AccAddress())
 
 				freeCollateral, err := k.calcFreeCollateral(ctx, pos)
 
@@ -148,7 +149,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 			k, mocks, ctx := getKeeper(t)
 
 			pos := types.Position{
-				TraderAddress:                   sample.AccAddress().String(),
+				TraderAddress:                   testutil.AccAddress().String(),
 				Pair:                            common.Pair_BTC_NUSD,
 				Size_:                           tc.positionSize,
 				Margin:                          sdk.NewDec(100),

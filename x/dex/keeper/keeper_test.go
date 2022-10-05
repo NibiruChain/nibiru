@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -13,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
@@ -317,7 +318,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
-	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
+	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
@@ -337,7 +338,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 
 func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
-	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
+	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
@@ -361,7 +362,7 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 
 func TestNewPoolTooManyAssets(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
-	userAddr, err := sdk.AccAddressFromBech32(sample.AccAddress().String())
+	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
@@ -517,12 +518,12 @@ func TestJoinPool(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
-			poolAddr := sample.AccAddress()
+			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
-			joinerAddr := sample.AccAddress()
+			joinerAddr := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn)
@@ -629,12 +630,12 @@ func TestExitPool(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
-			poolAddr := sample.AccAddress()
+			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
-			sender := sample.AccAddress()
+			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 

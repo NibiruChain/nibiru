@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,8 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -113,7 +113,7 @@ func TestGetMarginRatio(t *testing.T) {
 		{
 			name: "margin without price changes",
 			position: types.Position{
-				TraderAddress:                   sample.AccAddress().String(),
+				TraderAddress:                   testutilevents.AccAddress().String(),
 				Pair:                            common.Pair_BTC_NUSD,
 				Size_:                           sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(10),
@@ -126,7 +126,7 @@ func TestGetMarginRatio(t *testing.T) {
 		{
 			name: "margin with price changes",
 			position: types.Position{
-				TraderAddress:                   sample.AccAddress().String(),
+				TraderAddress:                   testutilevents.AccAddress().String(),
 				Pair:                            common.Pair_BTC_NUSD,
 				Size_:                           sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(10),
@@ -188,7 +188,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.AssetPair{
 					Token0: "osmo",
 					Token1: "nusd",
@@ -227,7 +227,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
@@ -296,7 +296,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
@@ -393,7 +393,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
@@ -451,7 +451,7 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.AssetPair{
 					Token0: "uosmo",
 					Token1: "unusd",
@@ -493,7 +493,7 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				pair := common.MustNewAssetPair("uosmo:unusd")
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
@@ -564,7 +564,7 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				pair := common.MustNewAssetPair("uosmo:unusd")
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
@@ -650,7 +650,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -673,7 +673,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -696,7 +696,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -720,7 +720,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -744,7 +744,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -769,7 +769,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -794,7 +794,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -817,7 +817,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; negative pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -840,7 +840,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -864,7 +864,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; negative pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -888,7 +888,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -913,7 +913,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -973,7 +973,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 		{
 			name: "max pnl, pick spot price",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -1007,7 +1007,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 		{
 			name: "max pnl, pick twap",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -1041,7 +1041,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 		{
 			name: "min pnl, pick spot price",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -1075,7 +1075,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 		{
 			name: "min pnl, pick twap",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),

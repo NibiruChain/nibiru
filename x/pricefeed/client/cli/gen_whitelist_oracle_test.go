@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -17,7 +19,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
@@ -70,17 +71,17 @@ func TestAddGenesisWhitelistOracleCmd(t *testing.T) {
 	testCases := []TestCase{
 		{
 			name:        "add single oracle",
-			oracles:     sample.AccAddress().String(),
+			oracles:     testutil.AccAddress().String(),
 			expectError: false,
 		},
 		{
 			name:        "add multiple oracles",
-			oracles:     fmt.Sprintf("%s,%s", sample.AccAddress().String(), sample.AccAddress().String()),
+			oracles:     fmt.Sprintf("%s,%s", testutil.AccAddress().String(), testutil.AccAddress().String()),
 			expectError: false,
 		},
 		{
 			name:        "repeated oracle addresses",
-			oracles:     fmt.Sprintf("%[1]s,%[1]s", sample.AccAddress().String()),
+			oracles:     fmt.Sprintf("%[1]s,%[1]s", testutil.AccAddress().String()),
 			expectError: true,
 		},
 		{

@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	testutilkeeper "github.com/NibiruChain/nibiru/x/pricefeed"
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,8 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilkeeper "github.com/NibiruChain/nibiru/x/testutil/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestParamsQuery(t *testing.T) {
@@ -33,7 +34,7 @@ func TestOraclesQuery(t *testing.T) {
 	params := types.Params{Pairs: pairs}
 	pfKeeper.SetParams(ctx, params)
 
-	_, addrs := sample.PrivKeyAddressPairs(3)
+	_, addrs := testutil.PrivKeyAddressPairs(3)
 	oracleA, oracleB, oracleC := addrs[0], addrs[1], addrs[2]
 
 	t.Log("whitelist oracles A, B on pair 2")
@@ -71,7 +72,7 @@ func TestMarketsQuery(t *testing.T) {
 	pfKeeper.SetParams(ctx, params)
 
 	t.Log("Give pairs 2 and 3 distinct oracles")
-	oracle2, oracle3 := sample.AccAddress(), sample.AccAddress()
+	oracle2, oracle3 := testutil.AccAddress(), testutil.AccAddress()
 	pfKeeper.OraclesStore().AddOracles(ctx, pairs[2], []sdk.AccAddress{oracle2})
 	pfKeeper.OraclesStore().AddOracles(ctx, pairs[3], []sdk.AccAddress{oracle3})
 
@@ -120,7 +121,7 @@ func TestQueryPrice(t *testing.T) {
 		TwapLookbackWindow: time.Minute * 15,
 	})
 
-	oracle := sample.AccAddress()
+	oracle := testutil.AccAddress()
 	pfKeeper.WhitelistOraclesForPairs(ctx, []sdk.AccAddress{oracle}, []common.AssetPair{pair})
 
 	// first block

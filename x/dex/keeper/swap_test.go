@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -13,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestSwapExactAmountIn(t *testing.T) {
@@ -181,7 +182,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
 
 			// fund pool account
-			poolAddr := sample.AccAddress()
+			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			require.NoError(t,
@@ -195,7 +196,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, tc.initialPool)
 
 			// fund user account
-			sender := sample.AccAddress()
+			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets

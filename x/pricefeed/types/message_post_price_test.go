@@ -3,10 +3,10 @@ package types
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgPostPrice_ValidateBasic(t *testing.T) {
@@ -24,7 +24,7 @@ func TestMsgPostPrice_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgPostPrice{
-				Oracle: sample.AccAddress().String(),
+				Oracle: testutil.AccAddress().String(),
 			},
 		},
 	}

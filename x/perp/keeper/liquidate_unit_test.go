@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
 
@@ -15,8 +17,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -84,8 +84,8 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
-			traderAddr := sample.AccAddress()
-			liquidatorAddr := sample.AccAddress()
+			traderAddr := testutilevents.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
 
 			t.Log("set position")
@@ -258,8 +258,8 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
-			traderAddr := sample.AccAddress()
-			liquidatorAddr := sample.AccAddress()
+			traderAddr := testutilevents.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
 
 			t.Log("set position")
@@ -428,8 +428,8 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
-			traderAddr := sample.AccAddress()
-			liquidatorAddr := sample.AccAddress()
+			traderAddr := testutilevents.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
 
 			t.Log("set position")
@@ -584,7 +584,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 			name: "vpool does not exist - error",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				liquidator := sample.AccAddress()
+				liquidator := testutilevents.AccAddress()
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(false)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
@@ -608,7 +608,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 			name: "healthy liquidation",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				liquidator := sample.AccAddress()
+				liquidator := testutilevents.AccAddress()
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
 
@@ -888,8 +888,8 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("setup variables")
 			perpKeeper, mocks, ctx := getKeeper(t)
-			liquidatorAddr := sample.AccAddress()
-			traderAddr := sample.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
+			traderAddr := testutilevents.AccAddress()
 			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
 			if tc.initialPositionSize.IsNegative() {
 				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
@@ -1185,8 +1185,8 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("setup variables")
 			perpKeeper, mocks, ctx := getKeeper(t)
-			liquidatorAddr := sample.AccAddress()
-			traderAddr := sample.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
+			traderAddr := testutilevents.AccAddress()
 			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
 			if tc.initialPositionSize.IsNegative() {
 				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL

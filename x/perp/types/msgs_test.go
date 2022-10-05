@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgAddMargin_ValidateBasic(t *testing.T) {
@@ -20,7 +21,7 @@ func TestMsgAddMargin_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"ok": {
 			msg: &MsgAddMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
 				Margin:    sdk.NewInt64Coin("NUSD", 100),
 			},
@@ -44,7 +45,7 @@ func TestMsgAddMargin_ValidateBasic(t *testing.T) {
 		},
 		"invalid token pair": {
 			msg: &MsgAddMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI-NUSD",
 				Margin:    sdk.NewInt64Coin("NUSD", 100),
 			},
@@ -52,7 +53,7 @@ func TestMsgAddMargin_ValidateBasic(t *testing.T) {
 		},
 		"invalid margin amount": {
 			msg: &MsgAddMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
 				Margin:    sdk.NewInt64Coin("NUSD", 0),
 			},
@@ -60,7 +61,7 @@ func TestMsgAddMargin_ValidateBasic(t *testing.T) {
 		},
 		"invalid margin denom": {
 			msg: &MsgAddMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
 				Margin:    sdk.NewInt64Coin("USDC", 100),
 			},
@@ -91,7 +92,7 @@ func TestMsgRemoveMargin_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"ok": {
 			msg: &MsgRemoveMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
 				Margin:    sdk.NewInt64Coin("NUSD", 100),
 			},
@@ -115,7 +116,7 @@ func TestMsgRemoveMargin_ValidateBasic(t *testing.T) {
 		},
 		"invalid token pair": {
 			msg: &MsgRemoveMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI-NUSD",
 				Margin:    sdk.NewInt64Coin("NUSD", 100),
 			},
@@ -123,7 +124,7 @@ func TestMsgRemoveMargin_ValidateBasic(t *testing.T) {
 		},
 		"invalid margin amount": {
 			msg: &MsgRemoveMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
 				Margin:    sdk.NewInt64Coin("NUSD", 0),
 			},
@@ -131,7 +132,7 @@ func TestMsgRemoveMargin_ValidateBasic(t *testing.T) {
 		},
 		"invalid margin denom": {
 			msg: &MsgRemoveMargin{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
 				Margin:    sdk.NewInt64Coin("USDC", 100),
 			},
@@ -162,7 +163,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"ok": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress().String(),
+				Sender:               testutil.AccAddress().String(),
 				TokenPair:            "NIBI:NUSD",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -174,7 +175,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 
 		"invalid side": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress().String(),
+				Sender:               testutil.AccAddress().String(),
 				TokenPair:            "NIBI:NUSD",
 				Side:                 3,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -185,7 +186,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid side 2": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress().String(),
+				Sender:               testutil.AccAddress().String(),
 				TokenPair:            "NIBI:NUSD",
 				Side:                 Side_SIDE_UNSPECIFIED,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -207,7 +208,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid leverage": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress().String(),
+				Sender:               testutil.AccAddress().String(),
 				TokenPair:            "NIBI:NUSD",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(100),
@@ -218,7 +219,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid quote asset amount": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress().String(),
+				Sender:               testutil.AccAddress().String(),
 				TokenPair:            "NIBI:NUSD",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(0),
@@ -229,7 +230,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid token pair": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress().String(),
+				Sender:               testutil.AccAddress().String(),
 				TokenPair:            "NIBI-NUSD",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(0),
@@ -240,7 +241,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 		},
 		"invalid base asset amount limit": {
 			msg: &MsgOpenPosition{
-				Sender:               sample.AccAddress().String(),
+				Sender:               testutil.AccAddress().String(),
 				TokenPair:            "NIBI:NUSD",
 				Side:                 Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(0),
@@ -275,23 +276,23 @@ func TestMsgLiquidate_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"ok": {
 			msg: &MsgLiquidate{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
-				Trader:    sample.AccAddress().String(),
+				Trader:    testutil.AccAddress().String(),
 			},
 			wantErr: false,
 		},
 		"invalid pair": {
 			msg: &MsgLiquidate{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "xxx:yyy:zzz",
-				Trader:    sample.AccAddress().String(),
+				Trader:    testutil.AccAddress().String(),
 			},
 			wantErr: true,
 		},
 		"invalid trader": {
 			msg: &MsgLiquidate{
-				Sender:    sample.AccAddress().String(),
+				Sender:    testutil.AccAddress().String(),
 				TokenPair: "NIBI:NUSD",
 				Trader:    "",
 			},
@@ -301,7 +302,7 @@ func TestMsgLiquidate_ValidateBasic(t *testing.T) {
 			msg: &MsgLiquidate{
 				Sender:    "",
 				TokenPair: "NIBI:NUSD",
-				Trader:    sample.AccAddress().String(),
+				Trader:    testutil.AccAddress().String(),
 			},
 			wantErr: true,
 		},
@@ -331,37 +332,37 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			msg: &MsgMultiLiquidate{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
 						TokenPair: common.Pair_BTC_NUSD.String(),
-						Trader:    sample.AccAddress().String(),
+						Trader:    testutil.AccAddress().String(),
 					},
 				}},
 			wantErr: false,
 		},
 		"invalid token pair": {
 			msg: &MsgMultiLiquidate{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
 						TokenPair: common.Pair_BTC_NUSD.String(),
-						Trader:    sample.AccAddress().String(),
+						Trader:    testutil.AccAddress().String(),
 					},
 					{
 						TokenPair: "invalid",
-						Trader:    sample.AccAddress().String(),
+						Trader:    testutil.AccAddress().String(),
 					},
 				}},
 			wantErr: true,
 		},
 		"invalid liquidated address": {
 			msg: &MsgMultiLiquidate{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
 						TokenPair: common.Pair_BTC_NUSD.String(),
-						Trader:    sample.AccAddress().String(),
+						Trader:    testutil.AccAddress().String(),
 					},
 					{
 						TokenPair: common.Pair_BTC_NUSD.String(),

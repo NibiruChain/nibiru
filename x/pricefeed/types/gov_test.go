@@ -5,18 +5,19 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMarshalAddOracleProposal(t *testing.T) {
 	t.Log("load example json as bytes")
-	_, oracles := sample.PrivKeyAddressPairs(4)
+	_, oracles := testutil.PrivKeyAddressPairs(4)
 	proposal := AddOracleProposal{
 		Title:       "Cataclysm-004",
 		Description: "Whitelists Delphi to post prices for OHM and BTC",

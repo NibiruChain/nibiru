@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -14,7 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestParamsQuery(t *testing.T) {
@@ -39,7 +40,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 			name: "correct fetch pool",
 			existingPool: types.Pool{
 				Id:      1,
-				Address: sample.AccAddress().String(),
+				Address: testutil.AccAddress().String(),
 				PoolParams: types.PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.03"),
 					ExitFee: sdk.MustNewDecFromStr("0.03"),
@@ -286,7 +287,7 @@ func TestQueryNumPools(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
-			sender := sample.AccAddress()
+			sender := testutil.AccAddress()
 			// need funds to create pools
 			require.NoError(t, simapp.FundAccount(
 				app.BankKeeper,
@@ -331,7 +332,7 @@ func TestQueryPoolParams(t *testing.T) {
 			name: "successful fetch pool params",
 			existingPool: types.Pool{
 				Id:      1,
-				Address: sample.AccAddress().String(),
+				Address: testutil.AccAddress().String(),
 				PoolParams: types.PoolParams{
 					SwapFee: sdk.MustNewDecFromStr("0.03"),
 					ExitFee: sdk.MustNewDecFromStr("0.03"),

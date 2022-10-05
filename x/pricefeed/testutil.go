@@ -1,4 +1,4 @@
-package keeper
+package pricefeed
 
 import (
 	"testing"
@@ -18,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
-// NOTE This should be inside the x/pricefeed/keeper module, not here.
 func PricefeedKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)

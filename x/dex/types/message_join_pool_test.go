@@ -3,10 +3,10 @@ package types
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgJoinPool_ValidateBasic(t *testing.T) {
@@ -24,7 +24,7 @@ func TestMsgJoinPool_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address",
 			msg: MsgJoinPool{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 			},
 		},
 	}

@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgCreateIncentivizationProgram_ValidateBasic(t *testing.T) {
@@ -15,7 +15,7 @@ func TestMsgCreateIncentivizationProgram_ValidateBasic(t *testing.T) {
 		msg     *MsgCreateIncentivizationProgram
 		wantErr string
 	}
-	validAddr := sample.AccAddress().String()
+	validAddr := testutil.AccAddress().String()
 	validDenom := "denom"
 	validDuration := 48 * time.Hour
 	validTime := time.Now()
@@ -142,14 +142,14 @@ func TestMsgFundIncentivizationProgram_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			msg: &MsgFundIncentivizationProgram{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 				Id:     0,
 				Funds:  sdk.NewCoins(sdk.NewInt64Coin("test", 1000)),
 			},
 		},
 		"invalid funds": {
 			msg: &MsgFundIncentivizationProgram{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 				Id:     0,
 				Funds: sdk.Coins{sdk.Coin{
 					Denom:  "dKSAODKOASKDOASKD_CDSADC_SA",
@@ -160,7 +160,7 @@ func TestMsgFundIncentivizationProgram_ValidateBasic(t *testing.T) {
 		},
 		"zero funds": {
 			msg: &MsgFundIncentivizationProgram{
-				Sender: sample.AccAddress().String(),
+				Sender: testutil.AccAddress().String(),
 				Id:     0,
 			},
 			wantErr: "no funding provided",

@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -13,7 +15,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/lockup/keeper"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestCreateLock(t *testing.T) {
@@ -28,7 +29,7 @@ func TestCreateLock(t *testing.T) {
 		{
 			name:                "happy path",
 			accountInitialFunds: sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
-			ownerAddr:           sample.AccAddress(),
+			ownerAddr:           testutil.AccAddress(),
 			coins:               sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
 			duration:            24 * time.Hour,
 			shouldErr:           false,
@@ -36,7 +37,7 @@ func TestCreateLock(t *testing.T) {
 		{
 			name:                "not enough funds",
 			accountInitialFunds: sdk.NewCoins(sdk.NewInt64Coin("foo", 99)),
-			ownerAddr:           sample.AccAddress(),
+			ownerAddr:           testutil.AccAddress(),
 			coins:               sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
 			duration:            24 * time.Hour,
 			shouldErr:           true,
@@ -70,7 +71,7 @@ func TestCreateLock(t *testing.T) {
 func TestLockupKeeper_InitiateUnlocking(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(false)
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
@@ -97,7 +98,7 @@ func TestLockupKeeper_InitiateUnlocking(t *testing.T) {
 	})
 	t.Run("err already unlocking", func(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(false)
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
@@ -121,7 +122,7 @@ func TestLockupKeeper_InitiateUnlocking(t *testing.T) {
 func TestLockupKeeper_UnlockTokens(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(true)
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
@@ -155,7 +156,7 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 
 	t.Run("lock not matured", func(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(true)
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(1000)))
 
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
@@ -173,7 +174,7 @@ func TestLockupKeeper_UnlockTokens(t *testing.T) {
 func TestLockupKeeper_AccountLockedCoins(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(true)
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 		// 1st lock
@@ -199,7 +200,7 @@ func TestLockupKeeper_AccountLockedCoins(t *testing.T) {
 func TestLockupKeeper_AccountUnlockedCoins(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(false)
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 		// 1st lock
@@ -231,7 +232,7 @@ func TestLockupKeeper_LockedCoins(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		// 1st lock which will become unlocked
 		coinsThatUnlock := sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1000)))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coinsThatUnlock))
@@ -262,7 +263,7 @@ func TestLockupKeeper_UnlockAvailableCoins(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		// lock some coins
 		coins1 := sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1000)))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, coins1))
@@ -294,7 +295,7 @@ func TestLockupKeeper_LocksByDenomUnlockingAfter(t *testing.T) {
 		app, _ := simapp2.NewTestNibiruAppAndContext(false)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now().UTC()})
 
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		locked := sdk.Coins{sdk.NewInt64Coin("atom", 100)}
 		unlocked := sdk.Coins{sdk.NewInt64Coin("atom", 50)}
 

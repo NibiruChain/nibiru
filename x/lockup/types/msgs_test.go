@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestMsgLockTokens_ValidateBasic(t *testing.T) {
@@ -16,7 +16,7 @@ func TestMsgLockTokens_ValidateBasic(t *testing.T) {
 		wantErr string
 	}
 
-	validAddr := sample.AccAddress().String()
+	validAddr := testutil.AccAddress().String()
 	validDuration := 1 * time.Hour
 	validCoins := sdk.NewCoins(sdk.NewInt64Coin("test", 100))
 
@@ -88,7 +88,7 @@ func TestMsgInitiateUnlock_ValidateBasic(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			msg: &MsgInitiateUnlock{
-				Owner:  sample.AccAddress().String(),
+				Owner:  testutil.AccAddress().String(),
 				LockId: 0,
 			},
 		},

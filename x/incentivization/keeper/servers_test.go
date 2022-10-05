@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -12,8 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 
 	"github.com/NibiruChain/nibiru/x/incentivization/keeper"
 	"github.com/NibiruChain/nibiru/x/incentivization/types"
@@ -25,7 +25,7 @@ func TestMsgServer_CreateIncentivizationProgram(t *testing.T) {
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		funds := sdk.NewCoins(sdk.NewInt64Coin("test", 1000))
 		require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, addr, funds))
 
@@ -60,7 +60,7 @@ func TestMsgServer_FundIncentivizationProgram(t *testing.T) {
 		s := keeper.NewMsgServer(app.IncentivizationKeeper)
 		ctx := app.NewContext(false, tmproto.Header{Time: time.Now()})
 
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		// create program
 		lockDuration := keeper.MinLockupDuration
 		creationResp, err := s.CreateIncentivizationProgram(sdk.WrapSDKContext(ctx), &types.MsgCreateIncentivizationProgram{
