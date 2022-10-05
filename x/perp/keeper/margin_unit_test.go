@@ -374,7 +374,7 @@ func TestRemoveMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
@@ -550,7 +550,7 @@ func TestAddMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
@@ -620,7 +620,7 @@ func TestAddMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.OneDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
