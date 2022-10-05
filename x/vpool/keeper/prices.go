@@ -97,7 +97,7 @@ func (k Keeper) GetQuoteAssetPrice(
 }
 
 /*
-GetSpotTWAP
+GetMarkPriceTWAP
 Returns the twap of the spot price (y/x).
 
 args:
@@ -111,7 +111,7 @@ ret:
   - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
   - err: error
 */
-func (k Keeper) GetSpotTWAP(
+func (k Keeper) GetMarkPriceTWAP(
 	ctx sdk.Context,
 	pair common.AssetPair,
 	lookbackInterval time.Duration,

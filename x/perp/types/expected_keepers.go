@@ -97,7 +97,7 @@ type VpoolKeeper interface {
 		pair common.AssetPair,
 	) (price sdk.Dec, err error)
 
-	GetSpotTWAP(
+	GetMarkPriceTWAP(
 		ctx sdk.Context,
 		pair common.AssetPair,
 		lookbackInterval time.Duration,
