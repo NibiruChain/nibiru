@@ -59,7 +59,7 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	spotPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
+	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (k Keeper) AddMargin(
 			UnrealizedPnlAfter:    unrealizedPnl,
 			BadDebt:               sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when adding margin
 			FundingPayment:        remainingMargin.FundingPayment,
-			SpotPrice:             spotPrice,
+			SpotPrice:             markPrice,
 			BlockHeight:           ctx.BlockHeight(),
 			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 			LiquidationPenalty:    sdk.ZeroDec(),
