@@ -1864,7 +1864,7 @@ func TestClosePosition(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
-				GetSpotPrice(
+				GetMarkPrice(
 					ctx,
 					tc.initialPosition.Pair,
 				).Return(
