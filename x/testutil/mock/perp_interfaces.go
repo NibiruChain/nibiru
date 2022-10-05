@@ -391,6 +391,20 @@ func (mr *MockVpoolKeeperMockRecorder) ExistsPool(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsPool", reflect.TypeOf((*MockVpoolKeeper)(nil).ExistsPool), arg0, arg1)
 }
 
+// GetAllPools mocks base method.
+func (m *MockVpoolKeeper) GetAllPools(arg0 types2.Context) []*types1.VPool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllPools", arg0)
+	ret0, _ := ret[0].([]*types1.VPool)
+	return ret0
+}
+
+// GetAllPools indicates an expected call of GetAllPools.
+func (mr *MockVpoolKeeperMockRecorder) GetAllPools(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPools", reflect.TypeOf((*MockVpoolKeeper)(nil).GetAllPools), arg0)
+}
+
 // GetBaseAssetPrice mocks base method.
 func (m *MockVpoolKeeper) GetBaseAssetPrice(arg0 types2.Context, arg1 common.AssetPair, arg2 types1.Direction, arg3 types2.Dec) (types2.Dec, error) {
 	m.ctrl.T.Helper()

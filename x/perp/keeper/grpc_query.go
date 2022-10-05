@@ -23,6 +23,32 @@ func NewQuerier(k Keeper) types.QueryServer {
 
 var _ types.QueryServer = queryServer{}
 
+func (q queryServer) QueryTraderPositions(
+	goCtx context.Context, req *types.QueryTraderPositionsRequest,
+) (*types.QueryTraderPositionsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	_, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pools := q.k.VpoolKeeper.GetAllPools(ctx)
+
+	var positions []*types.QueryTraderPositionResponse
+	for _, pool := range pools {
+		position, _ := q.traderPosition(ctx, pool.Pair, req.Trader)
+		positions = append(positions, position)
+	}
+
+	return &types.QueryTraderPositionsResponse{
+		Positions: positions,
+	}, nil
+}
+
 func (q queryServer) QueryTraderPosition(
 	goCtx context.Context, req *types.QueryTraderPositionRequest,
 ) (*types.QueryTraderPositionResponse, error) {

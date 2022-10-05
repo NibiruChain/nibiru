@@ -27,6 +27,7 @@ func GetQueryCmd() *cobra.Command {
 	cmds := []*cobra.Command{
 		CmdQueryParams(),
 		CmdQueryPosition(),
+		CmdQueryPositions(),
 		CmdQueryFundingRates(),
 	}
 	for _, cmd := range cmds {
@@ -93,6 +94,42 @@ func CmdQueryPosition() *cobra.Command {
 				cmd.Context(), &types.QueryTraderPositionRequest{
 					Trader:    trader.String(),
 					TokenPair: tokenPair.String(),
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryPositions() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "trader-positions [trader]",
+		Short: "trader's positions",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			trader, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return fmt.Errorf("invalid trader address: %w", err)
+			}
+
+			res, err := queryClient.QueryTraderPositions(
+				cmd.Context(), &types.QueryTraderPositionsRequest{
+					Trader: trader.String(),
 				},
 			)
 			if err != nil {
