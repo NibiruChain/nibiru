@@ -81,6 +81,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		tc := testCase
 		t.Run(name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			t.Log("create vpool")
@@ -256,6 +257,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
