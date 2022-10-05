@@ -299,20 +299,14 @@ func TestCalcTwap(t *testing.T) {
 			expectedPrice:      sdk.MustNewDecFromStr("8.895833333333333333"),
 		},
 		{
-			name: "spot price twap calc, t=[10,10]",
-			pair: common.Pair_BTC_NUSD,
-			reserveSnapshots: []types.ReserveSnapshot{
-				{
-					QuoteAssetReserve: sdk.NewDec(90),
-					BaseAssetReserve:  sdk.NewDec(10),
-					TimestampMs:       10,
-				},
-			},
-			currentBlockTime:   time.UnixMilli(10),
+			name:               "spot price twap calc, t=[0,0]",
+			pair:               common.Pair_BTC_NUSD,
+			reserveSnapshots:   []types.ReserveSnapshot{},
+			currentBlockTime:   time.UnixMilli(0),
 			currentBlockHeight: 1,
-			lookbackInterval:   5 * time.Millisecond,
+			lookbackInterval:   0 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_SPOT,
-			expectedPrice:      sdk.NewDec(9),
+			expectedPrice:      sdk.NewDec(100),
 		},
 		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
