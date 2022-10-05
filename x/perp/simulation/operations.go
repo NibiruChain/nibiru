@@ -19,7 +19,7 @@ import (
 const defaultWeight = 100
 
 // WeightedOperations returns all the operations from the module with their respective weights
-func WeightedOperations(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper, ) simulation.WeightedOperations {
+func WeightedOperations(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simulation.WeightedOperations {
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			defaultWeight,
