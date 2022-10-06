@@ -24,12 +24,12 @@ func (q queryServer) ModuleAccounts(
 	var moduleAccountsWithBalances []utiltypes.AccountWithBalance
 	for _, acc := range utiltypes.ModuleAccounts {
 		balances := q.k.GetAllBalances(sdkContext, acc.Account)
-		acc := utiltypes.AccountWithBalance{
+		accWithBalance := utiltypes.AccountWithBalance{
 			Name:    acc.Name,
 			Address: acc.Account.String(),
 			Balance: balances,
 		}
-		moduleAccountsWithBalances = append(moduleAccountsWithBalances, acc)
+		moduleAccountsWithBalances = append(moduleAccountsWithBalances, accWithBalance)
 	}
 
 	return &utiltypes.QueryModuleAccountsResponse{}, nil
