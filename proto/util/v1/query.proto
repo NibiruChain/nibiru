@@ -23,6 +23,7 @@ service Query {
 message QueryModuleAccountsRequest {}
 
 message QueryModuleAccountsResponse {
+  repeated AccountWithBalance accounts = 1;
 }
 
 message AccountWithBalance {
