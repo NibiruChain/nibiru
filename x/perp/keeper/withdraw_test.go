@@ -5,8 +5,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
@@ -86,14 +84,14 @@ func TestWithdraw(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{Denom: denom, Amount: sdk.NewInt(tc.initialPrepaidBadDebt)})
+			perpKeeper.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{Denom: denom, Amount: sdk.NewInt(tc.initialPrepaidBadDebt)})
 
 			t.Log("execute withdrawal")
 			err := perpKeeper.Withdraw(ctx, denom, receiver, sdk.NewInt(tc.amountToWithdraw))
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, keys.String(denom))
+			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, denom)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})
@@ -155,7 +153,7 @@ func TestRealizeBadDebt(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+			perpKeeper.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
 				Denom:  denom,
 				Amount: sdk.NewInt(tc.initialPrepaidBadDebt),
 			})
@@ -165,7 +163,7 @@ func TestRealizeBadDebt(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, keys.String(denom))
+			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, denom)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/coll"
 
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
@@ -28,7 +29,7 @@ type Keeper struct {
 
 	Positions      collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position]
 	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
-	PrepaidBadDebt collections.Map[keys.StringKey, types.PrepaidBadDebt, *types.PrepaidBadDebt]
+	PrepaidBadDebt coll.Map[string, types.PrepaidBadDebt]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -64,7 +65,7 @@ func NewKeeper(
 		EpochKeeper:     epochKeeper,
 		Positions:       collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position](cdc, storeKey, 0),
 		PairsMetadata:   collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
-		PrepaidBadDebt:  collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
+		PrepaidBadDebt:  coll.NewMap[string, types.PrepaidBadDebt](storeKey, 2, coll.Keys.String, coll.NewProtoCodec[types.PrepaidBadDebt](cdc)),
 	}
 }
 

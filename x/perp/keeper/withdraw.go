@@ -3,8 +3,6 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
-
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -80,7 +78,7 @@ can consume the credit we have built before withdrawing more from the ecosystem 
 func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
 	err error,
 ) {
-	prepaidBadDebtBalance := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+	prepaidBadDebtBalance := k.PrepaidBadDebt.GetOr(ctx, denom, types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: sdk.ZeroInt(),
 	}).Amount
@@ -91,7 +89,7 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize s
 	} else {
 		// totalBadDebt > prepaidBadDebtBalance
 
-		k.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+		k.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
 			Denom:  denom,
 			Amount: sdk.ZeroInt(),
 		})
@@ -116,13 +114,13 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize s
 // If no prepaid bad debt for the given denom was recorded before
 // then it is set using the provided amount and the provided amount is returned.
 func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
-	current := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+	current := k.PrepaidBadDebt.GetOr(ctx, denom, types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: sdk.ZeroInt(),
 	})
 
 	newBadDebt := current.Amount.Add(amount)
-	k.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+	k.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: newBadDebt,
 	})
@@ -134,14 +132,14 @@ func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sd
 // // The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
 // // debt balance to below zero will clip it at zero.
 func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
-	current := k.PrepaidBadDebt.GetOr(ctx, keys.String(denom), types.PrepaidBadDebt{
+	current := k.PrepaidBadDebt.GetOr(ctx, denom, types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: sdk.ZeroInt(),
 	})
 
 	newBadDebt := sdk.MaxInt(current.Amount.Sub(amount), sdk.ZeroInt())
 
-	k.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+	k.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
 		Denom:  denom,
 		Amount: newBadDebt,
 	})

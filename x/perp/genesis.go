@@ -1,6 +1,7 @@
 package perp
 
 import (
+	"github.com/NibiruChain/nibiru/coll"
 	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -28,7 +29,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// set prepaid debt position
 	for _, pbd := range genState.PrepaidBadDebts {
-		k.PrepaidBadDebt.Insert(ctx, keys.String(pbd.Denom), pbd)
+		k.PrepaidBadDebt.Insert(ctx, pbd.Denom, pbd)
 	}
 }
 
@@ -42,7 +43,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Positions = k.Positions.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]()).Values()
 
 	// export prepaid bad debt
-	genesis.PrepaidBadDebts = k.PrepaidBadDebt.Iterate(ctx, keys.NewRange[keys.StringKey]()).Values()
+	genesis.PrepaidBadDebts = k.PrepaidBadDebt.Iterate(ctx, coll.Range[string]{}).Values()
 
 	// export pairMetadata
 	genesis.PairMetadata = k.PairsMetadata.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
