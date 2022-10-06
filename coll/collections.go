@@ -4,15 +4,27 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"strconv"
+	"time"
 )
 
 var ErrNotFound = errors.New("collections: not found")
 
 type keys struct {
-	String KeyEncoder[string]
+	String     KeyEncoder[string]
+	AccAddress KeyEncoder[sdk.AccAddress]
+	Time       KeyEncoder[time.Time]
+	Uint64     KeyEncoder[uint64]
 }
 
-var Keys = keys{String: stringKey{}}
+// Keys is a helper struct that groups together all available key encoder types.
+var Keys = keys{
+	String:     stringKey{},
+	AccAddress: accAddressKey{},
+	Time:       timeKey{},
+	Uint64:     uint64Key{},
+}
 
 type stringKey struct{}
 
@@ -34,6 +46,32 @@ func (stringKey) KeyDecode(b []byte) (int, string) {
 		}
 	}
 	panic(fmt.Errorf("string is not null terminated: %s", b))
+}
+
+type uint64Key struct{}
+
+func (uint64Key) Stringify(u uint64) string        { return strconv.FormatUint(u, 10) }
+func (uint64Key) KeyEncode(u uint64) []byte        { return sdk.Uint64ToBigEndian(u) }
+func (uint64Key) KeyDecode(b []byte) (int, uint64) { return 8, sdk.BigEndianToUint64(b) }
+
+type timeKey struct{}
+
+func (timeKey) Stringify(t time.Time) string { return t.String() }
+func (timeKey) KeyEncode(t time.Time) []byte { return Keys.Uint64.KeyEncode(uint64(t.UnixMilli())) }
+func (timeKey) KeyDecode(b []byte) (int, time.Time) {
+	i, u := Keys.Uint64.KeyDecode(b)
+	return i, time.UnixMilli(int64(u))
+}
+
+type accAddressKey struct{}
+
+func (accAddressKey) Stringify(addr sdk.AccAddress) string { return addr.String() }
+func (accAddressKey) KeyEncode(addr sdk.AccAddress) []byte {
+	return Keys.String.KeyEncode(addr.String())
+}
+func (accAddressKey) KeyDecode(b []byte) (int, sdk.AccAddress) {
+	i, s := Keys.String.KeyDecode(b)
+	return i, sdk.MustAccAddressFromBech32(s)
 }
 
 func (stringKey) Stringify(s string) string {
