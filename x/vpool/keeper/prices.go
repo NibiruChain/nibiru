@@ -3,7 +3,8 @@ package keeper
 import (
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -28,7 +29,7 @@ ret:
   - err: error
 */
 func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
@@ -63,7 +64,7 @@ func (k Keeper) GetBaseAssetPrice(
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
@@ -91,7 +92,7 @@ func (k Keeper) GetQuoteAssetPrice(
 	dir types.Direction,
 	quoteAmount sdk.Dec,
 ) (baseAssetAmount sdk.Dec, err error) {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
@@ -219,61 +220,80 @@ func (k Keeper) calcTwap(
 	lookbackInterval time.Duration,
 ) (price sdk.Dec, err error) {
 	// earliest timestamp we'll look back until
-	lowerLimitTimestampMs := ctx.BlockTime().Add(-lookbackInterval).UnixMilli()
+	lowerLimitTimestampMs := ctx.BlockTime().Add(-1 * lookbackInterval).UnixMilli()
 
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	iter := store.ReverseIterator(types.GetSnapshotKey(pair, 0), types.GetSnapshotKey(pair, uint64(ctx.BlockHeight()+1)))
-
+	prefix := keys.PairPrefix[common.AssetPair, keys.Uint64Key](pair)
+	end := keys.PairSuffix[common.AssetPair, keys.Uint64Key](keys.Uint64(uint64(ctx.BlockTime().UnixMilli())))
+	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
+		Prefix(prefix).
+		End(keys.Inclusive(end)).
+		Descending()
+	iter := k.ReserveSnapshots.Iterate(ctx, rng)
 	defer iter.Close()
 
-	if !iter.Valid() {
+	var snapshots []types.ReserveSnapshot
+	for ; iter.Valid(); iter.Next() {
+		s := iter.Value()
+		snapshots = append(snapshots, s)
+		if s.TimestampMs <= lowerLimitTimestampMs {
+			break
+		}
+	}
+
+	if len(snapshots) == 0 {
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
 
-	var cumulativePrice sdk.Dec = sdk.ZeroDec()
-	var cumulativePeriodMs int64 = 0
-	var prevTimestampMs int64 = ctx.BlockTime().UnixMilli()
-	var currentSnapshot types.ReserveSnapshot
-	var currentPrice sdk.Dec = sdk.ZeroDec()
+	return calcTwap(ctx, snapshots, lowerLimitTimestampMs, twapCalcOption, direction, assetAmount)
+}
 
-	for ; iter.Valid(); iter.Next() {
-		k.codec.MustUnmarshal(iter.Value(), &currentSnapshot)
-
-		currentPrice, err = getPriceWithSnapshot(
-			currentSnapshot,
+// calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
+// Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
+func calcTwap(ctx sdk.Context, snapshots []types.ReserveSnapshot, lowerLimitTimestampMs int64, twapCalcOption types.TwapCalcOption, direction types.Direction, assetAmt sdk.Dec) (sdk.Dec, error) {
+	// circuit-breaker when there's only one snapshot to process
+	if len(snapshots) == 1 {
+		return getPriceWithSnapshot(
+			snapshots[0],
 			snapshotPriceOptions{
-				pair:           pair,
+				pair:           snapshots[0].Pair,
 				twapCalcOption: twapCalcOption,
 				direction:      direction,
-				assetAmount:    assetAmount,
+				assetAmount:    assetAmt,
+			},
+		)
+	}
+
+	prevTimestampMs := ctx.BlockTime().UnixMilli()
+	cumulativePrice := sdk.ZeroDec()
+	cumulativePeriodMs := int64(0)
+
+	for _, s := range snapshots {
+		sPrice, err := getPriceWithSnapshot(
+			s,
+			snapshotPriceOptions{
+				pair:           s.Pair,
+				twapCalcOption: twapCalcOption,
+				direction:      direction,
+				assetAmount:    assetAmt,
 			},
 		)
 		if err != nil {
 			return sdk.Dec{}, err
 		}
-
 		var timeElapsedMs int64
-		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
-			// current snapshot is below the lower limit
+		if s.TimestampMs <= lowerLimitTimestampMs {
+			// if we're at a snapshot below lowerLimitTimestamp, then consider that price as starting from the lower limit timestamp
 			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
 		} else {
-			timeElapsedMs = prevTimestampMs - currentSnapshot.TimestampMs
+			timeElapsedMs = prevTimestampMs - s.TimestampMs
 		}
-		cumulativePrice = cumulativePrice.Add(currentPrice.MulInt64(timeElapsedMs))
+		cumulativePrice = cumulativePrice.Add(sPrice.MulInt64(timeElapsedMs))
 		cumulativePeriodMs += timeElapsedMs
-
-		// end early if we're already beyond the lower limit timestamp
-		if currentSnapshot.TimestampMs <= lowerLimitTimestampMs {
+		if s.TimestampMs <= lowerLimitTimestampMs {
 			break
 		}
-
-		prevTimestampMs = currentSnapshot.TimestampMs
+		prevTimestampMs = s.TimestampMs
 	}
-
-	if cumulativePeriodMs <= 0 {
-		return currentPrice, nil
-	}
-
-	// definition of TWAP
-	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
+	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
+	return twap, nil
 }

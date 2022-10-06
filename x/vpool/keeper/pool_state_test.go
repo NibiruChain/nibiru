@@ -39,43 +39,6 @@ func TestCreatePool(t *testing.T) {
 	require.False(t, notExist)
 }
 
-func TestKeeper_GetAllPools(t *testing.T) {
-	vpoolKeeper, _, ctx := getKeeper(t)
-
-	var vpools = []*types.VPool{
-		{
-			Pair:                   common.Pair_BTC_NUSD,
-			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1
-			QuoteAssetReserve:      sdk.NewDec(30_000_000_000), // 30,000
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-		},
-		{
-			Pair:                   common.Pair_ETH_NUSD,
-			BaseAssetReserve:       sdk.NewDec(2_000_000),      // 1
-			QuoteAssetReserve:      sdk.NewDec(60_000_000_000), // 30,000
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-		},
-	}
-
-	for _, vpool := range vpools {
-		vpoolKeeper.savePool(ctx, vpool)
-	}
-
-	pools := vpoolKeeper.GetAllPools(ctx)
-	require.Len(t, pools, 2)
-	for _, pool := range pools {
-		require.Contains(t, vpools, pool)
-	}
-}
-
 func TestGetPoolPrices_SetupErrors(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -109,7 +72,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 					QuoteAssetReserve: sdk.NewDec(-400),
 				}
 				vpoolKeeper, _, ctx := getKeeper(t)
-				vpoolKeeper.savePool(ctx, &vpool)
+				vpoolKeeper.Pools.Insert(ctx, vpool.Pair, vpool)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
 				require.ErrorContains(t, err, types.ErrNonPositiveReserves.Error())
 			},

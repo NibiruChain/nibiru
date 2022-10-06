@@ -33,7 +33,7 @@ func TestQueryReserveAssets(t *testing.T) {
 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
 	}
-	vpoolKeeper.savePool(ctx, pool)
+	vpoolKeeper.Pools.Insert(ctx, pool.Pair, *pool)
 
 	t.Log("query reserve assets")
 	resp, err := queryServer.ReserveAssets(

@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"fmt"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -22,7 +23,7 @@ func (k Keeper) CreatePool(
 	maintenanceMarginRatio sdk.Dec,
 	maxLeverage sdk.Dec,
 ) {
-	k.savePool(ctx, &types.VPool{
+	k.Pools.Insert(ctx, pair, types.VPool{
 		Pair:                   pair,
 		BaseAssetReserve:       baseAssetReserve,
 		QuoteAssetReserve:      quoteAssetReserve,
@@ -33,38 +34,16 @@ func (k Keeper) CreatePool(
 		MaxLeverage:            maxLeverage,
 	})
 
-	k.SaveSnapshot(
+	k.ReserveSnapshots.Insert(
 		ctx,
+		keys.Join(pair, keys.Uint64(uint64(ctx.BlockTime().UnixMilli()))),
 		types.NewReserveSnapshot(
 			pair,
 			baseAssetReserve,
 			quoteAssetReserve,
 			ctx.BlockTime(),
-			ctx.BlockHeight(),
 		),
 	)
-}
-
-// getPool returns the pool from database
-func (k Keeper) getPool(ctx sdk.Context, pair common.AssetPair) (
-	*types.VPool, error,
-) {
-	bz := ctx.KVStore(k.storeKey).Get(types.GetPoolKey(pair))
-	if bz == nil {
-		return nil, fmt.Errorf("could not find vpool for pair %s", pair.String())
-	}
-
-	var pool types.VPool
-	k.codec.MustUnmarshal(bz, &pool)
-	return &pool, nil
-}
-
-func (k Keeper) savePool(
-	ctx sdk.Context,
-	pool *types.VPool,
-) {
-	bz := k.codec.MustMarshal(pool)
-	ctx.KVStore(k.storeKey).Set(types.GetPoolKey(pool.Pair), bz)
 }
 
 /*
@@ -80,7 +59,7 @@ ret:
 */
 func (k Keeper) updatePool(
 	ctx sdk.Context,
-	updatedPool *types.VPool,
+	updatedPool types.VPool,
 	skipFluctuationCheck bool,
 ) (err error) {
 	// Check if its over Fluctuation Limit Ratio.
@@ -90,32 +69,15 @@ func (k Keeper) updatePool(
 		}
 	}
 
-	k.savePool(ctx, updatedPool)
+	k.Pools.Insert(ctx, updatedPool.Pair, updatedPool)
 
 	return nil
 }
 
 // ExistsPool returns true if pool exists, false if not.
 func (k Keeper) ExistsPool(ctx sdk.Context, pair common.AssetPair) bool {
-	return ctx.KVStore(k.storeKey).Has(types.GetPoolKey(pair))
-}
-
-// GetAllPools returns all pools that exist.
-func (k Keeper) GetAllPools(ctx sdk.Context) []*types.VPool {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.PoolKeyPrefix)
-
-	var pools []*types.VPool
-	for ; iterator.Valid(); iterator.Next() {
-		bz := iterator.Value()
-
-		var pool types.VPool
-		k.codec.MustUnmarshal(bz, &pool)
-
-		pools = append(pools, &pool)
-	}
-
-	return pools
+	_, err := k.Pools.Get(ctx, pair)
+	return err == nil
 }
 
 // GetPoolPrices returns the mark price, twap (mark) price, and index price for a vpool.

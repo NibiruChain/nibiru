@@ -17,7 +17,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			genesis: &GenesisState{
-				Vpools: []*VPool{
+				Vpools: []VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -44,7 +44,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		"invalid vpool": {
 			genesis: &GenesisState{
-				Vpools: []*VPool{
+				Vpools: []VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -71,7 +71,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		"duplicate vpool": {
 			genesis: &GenesisState{
-				Vpools: []*VPool{
+				Vpools: []VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -108,7 +108,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		"invalid snapshot": {
 			genesis: &GenesisState{
-				Vpools: []*VPool{
+				Vpools: []VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -136,7 +136,6 @@ func TestGenesisState_Validate(t *testing.T) {
 						BaseAssetReserve:  sdk.OneDec(),
 						QuoteAssetReserve: sdk.OneDec(),
 						TimestampMs:       -1,
-						BlockNumber:       0,
 					},
 				},
 			},

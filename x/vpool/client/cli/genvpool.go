@@ -62,7 +62,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 			}
 
 			vPoolGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
-			vPoolGenState.Vpools = append(vPoolGenState.Vpools, vPool)
+			vPoolGenState.Vpools = append(vPoolGenState.Vpools, *vPool)
 
 			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
 			if err != nil {
