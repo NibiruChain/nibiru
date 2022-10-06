@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### State Machine Breaking
 
+* [#978](https://github.com/NibiruChain/nibiru/pull/978) - x/vpool move state logic to collections
 * [#977](https://github.com/NibiruChain/nibiru/pull/977) - x/perp add whitelisted liquidators
 * [#960](https://github.com/NibiruChain/nibiru/pull/960) - x/common validate asset pair denoms
 * [#952](https://github.com/NibiruChain/nibiru/pull/952) - x/perp move state logic to collections
@@ -72,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#919](https://github.com/NibiruChain/nibiru/pull/919) - refactor(proto): vpool module files consistency
   * MarkPriceChanged renamed to MarkPriceChangedEvent
 * [#875](https://github.com/NibiruChain/nibiru/pull/875) - x/perp add MsgMultiLiquidate
+* [#979](https://github.com/NibiruChain/nibiru/pull/979) - refactor and clean VPool.
 
 ### Improvements
 

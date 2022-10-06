@@ -10,7 +10,7 @@ import (
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Vpools:    []*VPool{},
+		Vpools:    []VPool{},
 		Snapshots: []ReserveSnapshot{},
 	}
 }

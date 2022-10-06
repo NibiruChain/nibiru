@@ -15,7 +15,7 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	vpools := []*types.VPool{
+	vpools := []types.VPool{
 		{
 			Pair:                   common.MustNewAssetPair("BTC:NUSD"),
 			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1
@@ -44,21 +44,18 @@ func TestGenesis(t *testing.T) {
 			sdk.NewDec(1_000_000),
 			sdk.NewDec(60_000_000_000),
 			time.UnixMilli(123456),
-			1,
 		),
 		types.NewReserveSnapshot(
 			common.Pair_BTC_NUSD,
 			sdk.NewDec(2_000_000),
 			sdk.NewDec(50_000_000_000),
 			time.UnixMilli(223456),
-			2,
 		),
 		types.NewReserveSnapshot(
 			common.Pair_ETH_NUSD,
 			sdk.NewDec(1_000_000),
 			sdk.NewDec(50_000_000_000),
 			time.UnixMilli(223456),
-			2,
 		),
 	}
 

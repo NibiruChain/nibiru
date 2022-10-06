@@ -81,6 +81,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		tc := testCase
 		t.Run(name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			t.Log("create vpool")
@@ -160,7 +161,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
@@ -256,6 +257,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -350,7 +352,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),

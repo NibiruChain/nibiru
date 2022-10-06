@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -12,11 +14,11 @@ import (
 )
 
 type queryServer struct {
-	Keeper
+	k Keeper
 }
 
-func NewQuerier(k Keeper) queryServer {
-	return queryServer{Keeper: k}
+func NewQuerier(k Keeper) types.QueryServer {
+	return queryServer{k: k}
 }
 
 var _ types.QueryServer = queryServer{}
@@ -36,7 +38,7 @@ func (q queryServer) ReserveAssets(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pool, err := q.getPool(ctx, tokenPair)
+	pool, err := q.k.Pools.Get(ctx, tokenPair)
 	if err != nil {
 		return nil, err
 	}
@@ -57,17 +59,16 @@ func (q queryServer) AllPools(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pools := q.GetAllPools(ctx)
-	if err != nil {
-		return nil, err
-	}
+	var pools []types.VPool
 	var pricesForPools []types.PoolPrices
-	for _, pool := range pools {
-		poolPrices, err := q.GetPoolPrices(ctx, *pool)
+	for _, pool := range q.k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values() {
+		poolPrices, err := q.k.GetPoolPrices(ctx, pool)
 		if err != nil {
 			return nil, err
 		}
+
 		pricesForPools = append(pricesForPools, poolPrices)
+		pools = append(pools, pool)
 	}
 
 	return &types.QueryAllPoolsResponse{
@@ -91,7 +92,7 @@ func (q queryServer) BaseAssetPrice(
 		return nil, err
 	}
 
-	priceInQuoteDenom, err := q.GetBaseAssetPrice(
+	priceInQuoteDenom, err := q.k.GetBaseAssetPrice(
 		ctx,
 		pair,
 		req.Direction,
