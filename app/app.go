@@ -3,10 +3,13 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/util/types"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/NibiruChain/nibiru/x/util"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -164,6 +167,7 @@ var (
 		epochs.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		vpool.AppModuleBasic{},
+		util.AppModule{},
 	)
 
 	// module account permissions
@@ -495,6 +499,7 @@ func NewNibiruApp(
 	vpoolModule := vpool.NewAppModule(
 		appCodec, app.vpoolKeeper, app.pricefeedKeeper,
 	)
+	utilModule := util.NewAppModule(app.bankKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -523,6 +528,7 @@ func NewNibiruApp(
 		epochsModule,
 		vpoolModule,
 		perpModule,
+		utilModule,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -557,6 +563,7 @@ func NewNibiruApp(
 		epochstypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
+		utiltypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -583,6 +590,7 @@ func NewNibiruApp(
 		pricefeedtypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
+		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -615,6 +623,7 @@ func NewNibiruApp(
 		epochstypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
+		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,

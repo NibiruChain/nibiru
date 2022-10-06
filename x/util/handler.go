@@ -12,7 +12,7 @@ import (
 // NewHandler ...
 func NewHandler() sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
+		errMsg := fmt.Sprintf("unrecognized %s message type: %T", utiltypes.ModuleName, msg)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 	}
 }
