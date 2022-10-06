@@ -179,7 +179,7 @@ e.g. $ nibid tx gov vote 1 yes`)
 	found := false
 	for _, pool := range vpoolsQueryResp.Pools {
 		if pool.Pair.String() == proposal.Pair {
-			s.Assert().EqualValues(&vpooltypes.VPool{
+			s.Assert().EqualValues(vpooltypes.VPool{
 				Pair:                   common.MustNewAssetPair(proposal.Pair),
 				BaseAssetReserve:       proposal.BaseAssetReserve,
 				QuoteAssetReserve:      proposal.QuoteAssetReserve,

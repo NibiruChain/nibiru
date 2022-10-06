@@ -2,6 +2,9 @@ package types
 
 import (
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -403,6 +406,160 @@ func TestPool_Validate(t *testing.T) {
 			} else if err != nil && !tc.expectErr {
 				t.Fatal("unexpected error")
 			}
+		})
+	}
+}
+
+func TestVPool_GetMarkPrice(t *testing.T) {
+	tests := []struct {
+		name          string
+		pool          VPool
+		expectedValue sdk.Dec
+	}{
+		{
+			"happy path",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+			},
+			sdk.MustNewDecFromStr("1000"),
+		},
+		{
+			"nil base",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.Dec{},
+				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+			},
+			sdk.ZeroDec(),
+		},
+		{
+			"zero base",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.ZeroDec(),
+				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+			},
+			sdk.ZeroDec(),
+		},
+		{
+			"nil quote",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteAssetReserve: sdk.Dec{},
+			},
+			sdk.ZeroDec(),
+		},
+		{
+			"zero quote",
+			VPool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteAssetReserve: sdk.ZeroDec(),
+			},
+			sdk.ZeroDec(),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			require.True(t, tc.expectedValue.Equal(tc.pool.GetMarkPrice()))
+		})
+	}
+}
+
+func TestVPool_IsOverFluctuationLimit(t *testing.T) {
+	tests := []struct {
+		name string
+		pool VPool
+
+		isOverLimit bool
+	}{
+		{
+			name: "zero fluctuation limit ratio",
+			pool: VPool{
+				Pair:                   common.Pair_BTC_NUSD,
+				QuoteAssetReserve:      sdk.OneDec(),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.ZeroDec(),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+			isOverLimit: false,
+		},
+		{
+			name: "lower limit of fluctuation limit",
+			pool: VPool{
+				Pair:                   common.Pair_BTC_NUSD,
+				QuoteAssetReserve:      sdk.NewDec(999),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+			isOverLimit: false,
+		},
+		{
+			name: "upper limit of fluctuation limit",
+			pool: VPool{
+				Pair:                   common.Pair_BTC_NUSD,
+				QuoteAssetReserve:      sdk.NewDec(1001),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+			isOverLimit: false,
+		},
+		{
+			name: "under fluctuation limit",
+			pool: VPool{
+				Pair:                   common.Pair_BTC_NUSD,
+				QuoteAssetReserve:      sdk.NewDec(998),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+			isOverLimit: true,
+		},
+		{
+			name: "over fluctuation limit",
+			pool: VPool{
+				Pair:                   common.Pair_BTC_NUSD,
+				QuoteAssetReserve:      sdk.NewDec(1002),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+			isOverLimit: true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			snapshot := NewReserveSnapshot(
+				common.Pair_BTC_NUSD,
+				sdk.OneDec(),
+				sdk.NewDec(1000),
+				time.Now(),
+			)
+			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimitInRelationWithSnapshot(snapshot))
 		})
 	}
 }

@@ -234,7 +234,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx,
 					pair,
@@ -305,7 +305,7 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
 					Return(sdk.NewDec(1000), nil).Times(2)
@@ -374,7 +374,7 @@ func TestRemoveMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
@@ -498,7 +498,7 @@ func TestAddMargin(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
@@ -550,7 +550,7 @@ func TestAddMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
@@ -569,7 +569,7 @@ func TestAddMargin(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
@@ -620,7 +620,7 @@ func TestAddMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.OneDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),

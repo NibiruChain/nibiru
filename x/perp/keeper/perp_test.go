@@ -4,29 +4,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
-
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
-
-	"github.com/cosmos/cosmos-sdk/simapp"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestKeeperClosePosition(t *testing.T) {
 	// TODO(mercilex): simulate funding payments
 	t.Run("success", func(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
-		nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+		nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+		ctx = ctx.WithBlockTime(time.Now())
 		pair := common.MustNewAssetPair("xxx:yyy")
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -54,7 +49,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		)
 
 		t.Log("open position for alice - long")
-		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Minute))
 
 		alice := testutil.AccAddress()
 		err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,

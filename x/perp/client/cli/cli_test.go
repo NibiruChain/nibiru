@@ -81,7 +81,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []*vpooltypes.VPool{
+	vpoolGenesis.Vpools = []vpooltypes.VPool{
 		{
 			Pair:                   common.Pair_BTC_NUSD,
 			BaseAssetReserve:       sdk.NewDec(10_000_000),
