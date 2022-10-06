@@ -265,8 +265,9 @@ func calcTwap(ctx sdk.Context, snapshots []types.ReserveSnapshot, lowerLimitTime
 
 	prevTimestampMs := ctx.BlockTime().UnixMilli()
 	cumulativePrice := sdk.ZeroDec()
+	cumulativePeriodMs := int64(0)
 
-	for i, s := range snapshots {
+	for _, s := range snapshots {
 		sPrice, err := getPriceWithSnapshot(
 			s,
 			snapshotPriceOptions{
@@ -279,15 +280,20 @@ func calcTwap(ctx sdk.Context, snapshots []types.ReserveSnapshot, lowerLimitTime
 		if err != nil {
 			return sdk.Dec{}, err
 		}
-		var startTimestampMs int64
-		if i == len(snapshots)-1 {
-			// if we're at the oldest snapshot, then consider that price as starting from the lower limit timestamp
-			startTimestampMs = lowerLimitTimestampMs
+		var timeElapsedMs int64
+		if s.TimestampMs <= lowerLimitTimestampMs {
+			// if we're at a snapshot below lowerLimitTimestamp, then consider that price as starting from the lower limit timestamp
+			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
 		} else {
-			startTimestampMs = s.TimestampMs
+			timeElapsedMs = prevTimestampMs - s.TimestampMs
 		}
-		cumulativePrice = cumulativePrice.Add(sPrice.MulInt64(prevTimestampMs - startTimestampMs))
+		cumulativePrice = cumulativePrice.Add(sPrice.MulInt64(timeElapsedMs))
+		cumulativePeriodMs += timeElapsedMs
+		if s.TimestampMs <= lowerLimitTimestampMs {
+			break
+		}
 		prevTimestampMs = s.TimestampMs
 	}
-	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - lowerLimitTimestampMs), nil
+	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
+	return twap, nil
 }
