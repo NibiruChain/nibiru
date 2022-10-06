@@ -119,6 +119,7 @@ func (p *VPool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
 	p.QuoteAssetReserve = p.QuoteAssetReserve.Sub(amount)
 }
 
+// ValidateReserves checks that reserves are positive.
 func (p *VPool) ValidateReserves() error {
 	if !p.QuoteAssetReserve.IsPositive() || !p.BaseAssetReserve.IsPositive() {
 		return ErrNonPositiveReserves.Wrap("pool: " + p.String())
@@ -131,6 +132,7 @@ func (m *VPool) Validate() error {
 	if err := m.Pair.Validate(); err != nil {
 		return fmt.Errorf("invalid asset pair: %w", err)
 	}
+
 	// trade limit ratio always between 0 and 1
 	if m.TradeLimitRatio.LT(sdk.ZeroDec()) || m.TradeLimitRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")
@@ -169,4 +171,58 @@ func (m *VPool) Validate() error {
 	}
 
 	return nil
+}
+
+// GetMarkPrice returns the price of the asset.
+func (p VPool) GetMarkPrice() sdk.Dec {
+	if p.BaseAssetReserve.IsNil() || p.BaseAssetReserve.IsZero() ||
+		p.QuoteAssetReserve.IsNil() || p.QuoteAssetReserve.IsZero() {
+		return sdk.ZeroDec()
+	}
+
+	return p.QuoteAssetReserve.Quo(p.BaseAssetReserve)
+}
+
+/*
+IsOverFluctuationLimitInRelationWithSnapshot compares the updated pool's spot price with the current spot price.
+
+If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
+
+args:
+  - pool: the updated vpool
+  - snapshot: the snapshot to compare against
+
+ret:
+  - bool: true if the fluctuation limit is violated. false otherwise
+*/
+func (p VPool) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnapshot) bool {
+	if p.FluctuationLimitRatio.IsZero() {
+		return false
+	}
+
+	markPrice := p.GetMarkPrice()
+	snapshotUpperLimit := snapshot.GetUpperMarkPriceFluctuationLimit(p.FluctuationLimitRatio)
+	snapshotLowerLimit := snapshot.GetLowerMarkPriceFluctuationLimit(p.FluctuationLimitRatio)
+
+	if markPrice.GT(snapshotUpperLimit) || markPrice.LT(snapshotLowerLimit) {
+		return true
+	}
+
+	return false
+}
+
+/*
+IsOverSpreadLimit compares the current mark price of the vpool
+to the underlying's index price.
+It panics if you provide it with a pair that doesn't exist in the state.
+
+args:
+  - indexPrice: the index price we want to compare.
+
+ret:
+  - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
+*/
+func (p VPool) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
+	return p.GetMarkPrice().Sub(indexPrice).
+		Quo(indexPrice).Abs().GTE(p.MaxOracleSpreadRatio)
 }

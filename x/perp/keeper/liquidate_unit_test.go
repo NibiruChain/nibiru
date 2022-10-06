@@ -116,7 +116,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 
 			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
-			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
+			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetTWAP(
@@ -289,7 +289,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
 			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
-			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
+			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetTWAP(
@@ -459,7 +459,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
 			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
-			mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
+			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetTWAP(
@@ -952,7 +952,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 					/* skipFluctuationLimitCheck */ true,
 				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
 			mocks.mockVpoolKeeper.EXPECT().
-				GetSpotPrice(ctx, common.Pair_BTC_NUSD).
+				GetMarkPrice(ctx, common.Pair_BTC_NUSD).
 				Return(sdk.OneDec(), nil)
 
 			t.Log("create and set the initial position")
@@ -1268,7 +1268,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			}
 
 			mocks.mockVpoolKeeper.EXPECT().
-				GetSpotPrice(ctx, common.Pair_BTC_NUSD).
+				GetMarkPrice(ctx, common.Pair_BTC_NUSD).
 				Return(sdk.OneDec(), nil)
 
 			t.Log("create and set the initial position")

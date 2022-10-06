@@ -161,7 +161,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
@@ -352,7 +352,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),

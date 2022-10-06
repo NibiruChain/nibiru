@@ -69,9 +69,9 @@ message PositionChangedEvent {
       (gogoproto.nullable) = false
     ];
 
-    // Spot price, synonymous with mark price in this context, is the quotient of 
+    // Mark price, synonymous with mark price in this context, is the quotient of
     // the quote reserves and base reserves 
-    string spot_price = 12 [
+    string mark_price = 12 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];

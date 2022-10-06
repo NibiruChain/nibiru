@@ -235,7 +235,7 @@ func TestRemoveMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
-						SpotPrice:             sdk.MustNewDecFromStr("1.00060009"),
+						MarkPrice:             sdk.MustNewDecFromStr("1.00060009"),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),

@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestGetSpotPrice(t *testing.T) {
+func TestGetMarkPrice(t *testing.T) {
 	tests := []struct {
 		name              string
 		pair              common.AssetPair
@@ -57,7 +57,7 @@ func TestGetSpotPrice(t *testing.T) {
 				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
 			)
 
-			price, err := vpoolKeeper.GetSpotPrice(ctx, tc.pair)
+			price, err := vpoolKeeper.GetMarkPrice(ctx, tc.pair)
 			require.NoError(t, err)
 			require.EqualValues(t, tc.expectedPrice, price)
 		})

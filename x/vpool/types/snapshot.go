@@ -42,3 +42,24 @@ func (s ReserveSnapshot) Validate() error {
 
 	return nil
 }
+
+// GetUpperMarkPriceFluctuationLimit returns the maximum limit price based on the fluctuationLimitRatio
+func (s ReserveSnapshot) GetUpperMarkPriceFluctuationLimit(fluctuationLimitRatio sdk.Dec) sdk.Dec {
+	return s.getMarkPrice().Mul(sdk.OneDec().Add(fluctuationLimitRatio))
+}
+
+// GetLowerMarkPriceFluctuationLimit returns the minimum limit price based on the fluctuationLimitRatio
+func (s ReserveSnapshot) GetLowerMarkPriceFluctuationLimit(fluctuationLimitRatio sdk.Dec) sdk.Dec {
+	return s.getMarkPrice().Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+}
+
+// getMarkPrice returns the price of the mark price at the moment of the snapshot.
+// It is the equivalent of getMarkPrice from VPool
+func (s ReserveSnapshot) getMarkPrice() sdk.Dec {
+	if s.BaseAssetReserve.IsNil() || s.BaseAssetReserve.IsZero() ||
+		s.QuoteAssetReserve.IsNil() || s.QuoteAssetReserve.IsZero() {
+		return sdk.ZeroDec()
+	}
+
+	return s.QuoteAssetReserve.Quo(s.BaseAssetReserve)
+}

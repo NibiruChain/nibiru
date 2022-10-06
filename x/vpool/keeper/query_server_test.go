@@ -23,7 +23,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pool := &types.VPool{
+	pool := types.VPool{
 		Pair:                   common.Pair_BTC_NUSD,
 		TradeLimitRatio:        sdk.ZeroDec(),
 		QuoteAssetReserve:      sdk.NewDec(1_000_000),
@@ -33,7 +33,7 @@ func TestQueryReserveAssets(t *testing.T) {
 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
 	}
-	vpoolKeeper.Pools.Insert(ctx, pool.Pair, *pool)
+	vpoolKeeper.Pools.Insert(ctx, pool.Pair, pool)
 
 	t.Log("query reserve assets")
 	resp, err := queryServer.ReserveAssets(

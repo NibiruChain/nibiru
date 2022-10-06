@@ -172,7 +172,7 @@ func (k Keeper) afterPositionUpdate(
 		return err
 	}
 
-	spotPrice, err := k.VpoolKeeper.GetSpotPrice(ctx, pair)
+	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func (k Keeper) afterPositionUpdate(
 		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
 		BadDebt:               sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
 		LiquidationPenalty:    sdk.ZeroDec(),
-		SpotPrice:             spotPrice,
+		MarkPrice:             markPrice,
 		FundingPayment:        positionResp.FundingPayment,
 		BlockHeight:           ctx.BlockHeight(),
 		BlockTimeMs:           ctx.BlockTime().UnixMilli(),
@@ -621,7 +621,7 @@ func (k Keeper) closePositionEntirely(
 		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
-	ExchangedNotionalValue, err := k.VpoolKeeper.SwapBaseForQuote(
+	exchangedNotionalValue, err := k.VpoolKeeper.SwapBaseForQuote(
 		ctx,
 		currentPosition.Pair,
 		baseAssetDirection,
@@ -633,7 +633,7 @@ func (k Keeper) closePositionEntirely(
 		return nil, err
 	}
 
-	positionResp.ExchangedNotionalValue = ExchangedNotionalValue
+	positionResp.ExchangedNotionalValue = exchangedNotionalValue
 	positionResp.Position = &types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
