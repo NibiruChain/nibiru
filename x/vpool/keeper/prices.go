@@ -12,7 +12,7 @@ import (
 )
 
 /*
-GetSpotPrice retrieves the price of the base asset denominated in quote asset.
+GetMarkPrice retrieves the price of the base asset denominated in quote asset.
 
 The convention is the amount of quote assets required to buy one base asset.
 
@@ -25,24 +25,20 @@ args:
   - pair: the token pair to get price for
 
 ret:
-  - price: the price of the token pair as sdk.Dec
+  - price: the price of the token pair as sdk.dec
   - err: error
 */
-func (k Keeper) GetSpotPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
+func (k Keeper) GetMarkPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
 
-	if pool.BaseAssetReserve.IsNil() || pool.BaseAssetReserve.IsZero() ||
-		pool.QuoteAssetReserve.IsNil() || pool.QuoteAssetReserve.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
-	return pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve), nil
+	return pool.GetMarkPrice(), nil
 }
 
 /*
+GetBaseAssetPrice
 So how much stablecoin you would get if you sold baseAssetAmount amount of perpetual contracts.
 
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction.
@@ -73,6 +69,7 @@ func (k Keeper) GetBaseAssetPrice(
 }
 
 /*
+GetQuoteAssetPrice
 Returns the amount of base assets required to achieve a move of quoteAmount in a direction.
 e.g. if removing <quoteAmount> quote assets from the pool, returns the amount of base assets do so.
 
@@ -101,6 +98,7 @@ func (k Keeper) GetQuoteAssetPrice(
 }
 
 /*
+GetMarkPriceTWAP
 Returns the twap of the spot price (y/x).
 
 args:
@@ -114,7 +112,7 @@ ret:
   - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
   - err: error
 */
-func (k Keeper) GetSpotTWAP(
+func (k Keeper) GetMarkPriceTWAP(
 	ctx sdk.Context,
 	pair common.AssetPair,
 	lookbackInterval time.Duration,
@@ -130,6 +128,7 @@ func (k Keeper) GetSpotTWAP(
 }
 
 /*
+GetBaseAssetTWAP
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction,
 based on historical snapshots.
 e.g. if removing <baseAssetAmount> base assets from the pool, returns the amount of quote assets do so.
@@ -158,39 +157,6 @@ func (k Keeper) GetBaseAssetTWAP(
 		types.TwapCalcOption_BASE_ASSET_SWAP,
 		direction,
 		baseAssetAmount,
-		lookbackInterval,
-	)
-}
-
-/*
-Returns the amount of base assets required to achieve a move of quoteAssetAmount in a direction,
-based on historical snapshots.
-e.g. if removing <quoteAssetAmount> quote assets from the pool, returns the amount of base assets do so.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: the token pair
-  - direction: add or remove
-  - quoteAssetAmount: amount of base asset to add or remove
-  - lookbackInterval: how far back to calculate TWAP
-
-ret:
-  - baseAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
-  - err: error
-*/
-func (k Keeper) GetQuoteAssetTWAP(
-	ctx sdk.Context,
-	pair common.AssetPair,
-	direction types.Direction,
-	quoteAssetAmount sdk.Dec,
-	lookbackInterval time.Duration,
-) (baseAssetAmount sdk.Dec, err error) {
-	return k.calcTwap(
-		ctx,
-		pair,
-		types.TwapCalcOption_QUOTE_ASSET_SWAP,
-		direction,
-		quoteAssetAmount,
 		lookbackInterval,
 	)
 }

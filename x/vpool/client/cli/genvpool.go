@@ -62,7 +62,7 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 			}
 
 			vPoolGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
-			vPoolGenState.Vpools = append(vPoolGenState.Vpools, *vPool)
+			vPoolGenState.Vpools = append(vPoolGenState.Vpools, vPool)
 
 			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
 			if err != nil {
@@ -87,46 +87,46 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func parseVpoolParams(args []string) (*types.VPool, error) {
+func parseVpoolParams(args []string) (types.VPool, error) {
 	vPair, err := common.NewAssetPair(args[0])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 
 	baseAsset, err := sdk.NewDecFromStr(args[1])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 	quoteAsset, err := sdk.NewDecFromStr(args[2])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 	tradeLimit, err := sdk.NewDecFromStr(args[3])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 
 	fluctuationLimitRatio, err := sdk.NewDecFromStr(args[4])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 
 	maxOracleSpread, err := sdk.NewDecFromStr(args[5])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 
 	maintenanceMarginRatio, err := sdk.NewDecFromStr(args[6])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 
 	maxLeverage, err := sdk.NewDecFromStr(args[7])
 	if err != nil {
-		return nil, err
+		return types.VPool{}, err
 	}
 
-	vPool := &types.VPool{
+	vPool := types.VPool{
 		Pair:                   vPair,
 		TradeLimitRatio:        tradeLimit,
 		QuoteAssetReserve:      quoteAsset,
