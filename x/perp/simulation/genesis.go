@@ -16,7 +16,7 @@ import (
 // RandomizedGenState generates a random GenesisState for the perp module
 func RandomizedGenState(simState *module.SimulationState) {
 	vpoolGenesis := vpooltypes.GenesisState{
-		Vpools: []*vpooltypes.VPool{
+		Vpools: []vpooltypes.VPool{
 			{
 				Pair:                   common.Pair_BTC_NUSD,
 				TradeLimitRatio:        sdk.OneDec(),
