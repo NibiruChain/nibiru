@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -13,7 +15,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/lockup"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestAppModule_ExportGenesis_ImportGenesis(t *testing.T) {
@@ -25,7 +26,7 @@ func TestAppModule_ExportGenesis_ImportGenesis(t *testing.T) {
 	ctx, _ := ctxUncached.CacheContext()
 	var locks []*types.Lock
 	for i := 0; i < 100; i++ {
-		addr := sample.AccAddress()
+		addr := testutil.AccAddress()
 		coins := sdk.NewCoins(
 			sdk.NewInt64Coin("test", 1+int64(i)*100),
 		)

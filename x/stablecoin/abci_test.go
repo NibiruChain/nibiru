@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/pricefeed"
 	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 type test struct {
@@ -112,7 +113,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			ctx = ctx.WithBlockHeight(1)
 
-			oracle := sample.AccAddress()
+			oracle := testutil.AccAddress()
 			pairs := common.AssetPairs{
 				common.Pair_USDC_NUSD,
 			}
@@ -152,7 +153,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	pricefeed.BeginBlocker(ctx, app.PricefeedKeeper)
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
-	oracle := sample.AccAddress()
+	oracle := testutil.AccAddress()
 	pairs := common.AssetPairs{
 		common.Pair_USDC_NUSD,
 	}
