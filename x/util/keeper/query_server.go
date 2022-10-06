@@ -2,9 +2,11 @@ package keeper
 
 import (
 	"context"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/util/types"
+	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 )
 
 type queryServer struct {
@@ -23,14 +25,17 @@ func (q queryServer) ModuleAccounts(
 
 	var moduleAccountsWithBalances []utiltypes.AccountWithBalance
 	for _, acc := range utiltypes.ModuleAccounts {
-		balances := q.k.GetAllBalances(sdkContext, acc.Account)
+		account := types.NewModuleAddress(acc)
+
+		balances := q.k.GetAllBalances(sdkContext, account)
+
 		accWithBalance := utiltypes.AccountWithBalance{
-			Name:    acc.Name,
-			Address: acc.Account.String(),
+			Name:    acc,
+			Address: account.String(),
 			Balance: balances,
 		}
 		moduleAccountsWithBalances = append(moduleAccountsWithBalances, accWithBalance)
 	}
 
-	return &utiltypes.QueryModuleAccountsResponse{}, nil
+	return &utiltypes.QueryModuleAccountsResponse{Accounts: moduleAccountsWithBalances}, nil
 }

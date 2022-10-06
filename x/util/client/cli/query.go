@@ -2,10 +2,12 @@ package cli
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/util/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

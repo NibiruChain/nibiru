@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/util/types"
+	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 )
 
 // NewHandler ...

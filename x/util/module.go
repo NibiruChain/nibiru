@@ -2,7 +2,6 @@ package util
 
 import (
 	"encoding/json"
-	"github.com/NibiruChain/nibiru/x/util/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -14,8 +13,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/NibiruChain/nibiru/x/util/client/cli"
 	"github.com/NibiruChain/nibiru/x/util/keeper"
-	"github.com/NibiruChain/nibiru/x/util/types"
+	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 )
 
 var (

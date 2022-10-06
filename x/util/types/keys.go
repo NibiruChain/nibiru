@@ -1,4 +1,4 @@
-package utiltypes
+package types
 
 const (
 	ModuleName = "util"

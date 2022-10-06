@@ -1,10 +1,14 @@
-package utiltypes
+package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"github.com/NibiruChain/nibiru/x/common"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+)
 
-var ModuleAccounts = []struct {
-	Name    string
-	Account sdk.AccAddress
-}{
-	{},
+var ModuleAccounts = []string{
+	perptypes.ModuleName,
+	perptypes.VaultModuleAccount,
+	perptypes.PerpEFModuleAccount,
+	perptypes.FeePoolModuleAccount,
+	common.TreasuryPoolModuleAccount,
 }

@@ -3,13 +3,10 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/util/types"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/NibiruChain/nibiru/x/util"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -112,6 +109,8 @@ import (
 	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/util"
+	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"

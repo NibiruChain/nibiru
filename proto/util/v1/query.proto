@@ -23,7 +23,7 @@ service Query {
 message QueryModuleAccountsRequest {}
 
 message QueryModuleAccountsResponse {
-  repeated AccountWithBalance accounts = 1;
+  repeated AccountWithBalance accounts = 1 [(gogoproto.nullable) = false];
 }
 
 message AccountWithBalance {
