@@ -280,6 +280,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
@@ -440,6 +441,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -508,6 +510,7 @@ func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator string)
 
 func TestMsgServerMultiLiquidate(t *testing.T) {
 	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	ctx = ctx.WithBlockTime(time.Now())
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 	pair := common.Pair_BTC_NUSD

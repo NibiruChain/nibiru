@@ -1,75 +1,11 @@
 package keeper
 
 import (
-	"fmt"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
-
-// GetSnapshot returns the snapshot saved by counter num
-func (k Keeper) GetSnapshot(ctx sdk.Context, pair common.AssetPair, blockHeight uint64) (
-	snapshot types.ReserveSnapshot, err error,
-) {
-	bz := prefix.NewStore(
-		ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix,
-	).Get(types.GetSnapshotKey(pair, blockHeight))
-
-	if bz == nil {
-		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
-			Wrap(fmt.Sprintf("snapshot at blockHeight %d was not found", blockHeight))
-	}
-
-	k.codec.MustUnmarshal(bz, &snapshot)
-
-	return snapshot, nil
-}
-
-func (k Keeper) SaveSnapshot(
-	ctx sdk.Context,
-	snapshot types.ReserveSnapshot,
-) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	store.Set(types.GetSnapshotKey(snapshot.Pair, uint64(snapshot.BlockNumber)), k.codec.MustMarshal(&snapshot))
-}
-
-// GetLatestReserveSnapshot returns the last snapshot that was saved
-func (k Keeper) GetLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair) (
-	snapshot types.ReserveSnapshot, err error,
-) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	iter := store.ReverseIterator(types.GetSnapshotKey(pair, 0), types.GetSnapshotKey(pair, uint64(ctx.BlockHeight()+1)))
-
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		k.codec.MustUnmarshal(iter.Value(), &snapshot)
-		return snapshot, nil
-	}
-
-	return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved
-}
-
-// GetAllSnapshots returns all pools that exist.
-func (k Keeper) GetAllSnapshots(ctx sdk.Context) []types.ReserveSnapshot {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.SnapshotsKeyPrefix)
-
-	var snapshots []types.ReserveSnapshot
-	for ; iterator.Valid(); iterator.Next() {
-		bz := iterator.Value()
-
-		var snapshot types.ReserveSnapshot
-		k.codec.MustUnmarshal(bz, &snapshot)
-
-		snapshots = append(snapshots, snapshot)
-	}
-
-	return snapshots
-}
 
 /*
 An object parameter for getPriceWithSnapshot().

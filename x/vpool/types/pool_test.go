@@ -558,7 +558,6 @@ func TestVPool_IsOverFluctuationLimit(t *testing.T) {
 				sdk.OneDec(),
 				sdk.NewDec(1000),
 				time.Now(),
-				0,
 			)
 			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimitInRelationWithSnapshot(snapshot))
 		})

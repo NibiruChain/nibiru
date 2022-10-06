@@ -136,7 +136,6 @@ func TestGenesisState_Validate(t *testing.T) {
 						BaseAssetReserve:  sdk.OneDec(),
 						QuoteAssetReserve: sdk.OneDec(),
 						TimestampMs:       -1,
-						BlockNumber:       0,
 					},
 				},
 			},

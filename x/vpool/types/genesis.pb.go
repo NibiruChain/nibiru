@@ -26,7 +26,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // GenesisState defines the vpool module's genesis state.
 type GenesisState struct {
 	Vpools    []VPool           `protobuf:"bytes,1,rep,name=vpools,proto3" json:"vpools"`
-	Snapshots []ReserveSnapshot `protobuf:"bytes,3,rep,name=snapshots,proto3" json:"snapshots"`
+	Snapshots []ReserveSnapshot `protobuf:"bytes,2,rep,name=snapshots,proto3" json:"snapshots"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -132,7 +132,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
 	}
 	if len(m.Vpools) > 0 {
@@ -253,7 +253,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 3:
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Snapshots", wireType)
 			}

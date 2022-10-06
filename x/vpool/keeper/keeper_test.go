@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -196,7 +198,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				assert.EqualValuesf(t, tc.expectedBaseAmount, baseAmt, "base amount mismatch")
 
 				t.Log("assert vpool")
-				pool, err := vpoolKeeper.getPool(ctx, common.Pair_BTC_NUSD)
+				pool, err := vpoolKeeper.Pools.Get(ctx, common.Pair_BTC_NUSD)
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve, "pool quote asset reserve mismatch")
 				assert.EqualValuesf(t, tc.expectedBaseReserve, pool.BaseAssetReserve, "pool base asset reserve mismatch")
@@ -388,7 +390,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 					"expected %s; got %s", tc.expectedQuoteAssetAmount.String(), quoteAssetAmount.String())
 
 				t.Log("assert pool")
-				pool, err := vpoolKeeper.getPool(ctx, common.Pair_BTC_NUSD)
+				pool, err := vpoolKeeper.Pools.Get(ctx, common.Pair_BTC_NUSD)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 				assert.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
@@ -425,7 +427,7 @@ func TestGetVpools(t *testing.T) {
 		sdk.MustNewDecFromStr("15"),
 	)
 
-	pools := vpoolKeeper.GetAllPools(ctx)
+	pools := vpoolKeeper.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
 
 	require.EqualValues(t, 2, len(pools))
 
@@ -478,14 +480,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
 				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
-				BlockNumber:       1,
 			},
 			ctxBlockHeight: 2,
 			expectedErr:    nil,
@@ -507,7 +507,6 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: nil,
 			ctxBlockHeight: 1,
@@ -530,7 +529,6 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: nil,
 			ctxBlockHeight: 1,
@@ -553,14 +551,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       0,
-				BlockNumber:       0,
 			},
 			latestSnapshot: &types.ReserveSnapshot{
 				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				TimestampMs:       1,
-				BlockNumber:       1,
 			},
 			ctxBlockHeight: 2,
 			expectedErr:    nil,
@@ -574,28 +570,27 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 			)
 
-			vpoolKeeper.savePool(ctx, tc.pool)
+			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
 			t.Log("save snapshot 0")
 
-			ctx = ctx.WithBlockHeight(tc.prevSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
+			ctx = ctx.WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
 			snapshot := types.NewReserveSnapshot(
-				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(), ctx.BlockHeight(),
+				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(),
 			)
-			vpoolKeeper.SaveSnapshot(ctx, snapshot)
+			vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 
 			if tc.latestSnapshot != nil {
 				t.Log("save snapshot 1")
-				ctx = ctx.WithBlockHeight(tc.latestSnapshot.BlockNumber).WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
+				ctx = ctx.WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
 
 				snapshot := types.NewReserveSnapshot(
 					common.Pair_BTC_NUSD,
 					tc.latestSnapshot.BaseAssetReserve,
 					tc.latestSnapshot.QuoteAssetReserve,
 					ctx.BlockTime(),
-					ctx.BlockHeight(),
 				)
-				vpoolKeeper.SaveSnapshot(ctx, snapshot)
+				vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 			}
 
 			t.Log("check fluctuation limit")
@@ -655,7 +650,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 			)
-			vpoolKeeper.savePool(ctx, tc.pool)
+			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
 			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, vpoolKeeper.GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD))
 		})
@@ -691,7 +686,7 @@ func TestGetMaxLeverage(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
 				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
 			)
-			vpoolKeeper.savePool(ctx, tc.pool)
+			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
 			assert.EqualValues(t, tc.expectedMaxLeverage, vpoolKeeper.GetMaxLeverage(ctx, common.Pair_BTC_NUSD))
 		})

@@ -13,14 +13,12 @@ func NewReserveSnapshot(
 	pair common.AssetPair,
 	baseAssetReserve, quoteAssetReserve sdk.Dec,
 	blockTime time.Time,
-	blockHeight int64,
 ) ReserveSnapshot {
 	return ReserveSnapshot{
 		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
 		TimestampMs:       blockTime.UnixMilli(),
-		BlockNumber:       blockHeight,
 	}
 }
 
@@ -40,10 +38,6 @@ func (s ReserveSnapshot) Validate() error {
 
 	if s.TimestampMs < 0 {
 		return fmt.Errorf("timestamp from snapshot cannot be negative: %d", s.TimestampMs)
-	}
-
-	if s.BlockNumber < 0 {
-		return fmt.Errorf("blocknumber from snapshot cannot be negative: %d", s.BlockNumber)
 	}
 
 	return nil

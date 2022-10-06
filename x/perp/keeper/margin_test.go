@@ -158,6 +158,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				ctx = ctx.WithBlockTime(time.Now())
 				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("xxx:yyy")
 
