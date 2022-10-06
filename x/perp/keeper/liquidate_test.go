@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+
 	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/collections/keys"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
@@ -17,15 +19,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
 	tokenPair := common.MustNewAssetPair("BTC:NUSD")
 
-	traderAddr := sample.AccAddress()
+	traderAddr := testutilevents.AccAddress()
 
 	type test struct {
 		positionSide              types.Side
@@ -81,6 +81,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 		tc := testCase
 		t.Run(name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			t.Log("create vpool")
@@ -139,7 +140,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
 
 			t.Log("Liquidate the (entire) position")
-			liquidatorAddr := sample.AccAddress()
+			liquidatorAddr := testutilevents.AccAddress()
 			liquidationResp, err := nibiruApp.PerpKeeper.ExecuteFullLiquidation(ctx, liquidatorAddr, positionResp.Position)
 			require.NoError(t, err)
 
@@ -160,7 +161,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),
@@ -187,7 +188,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	// constants for this suite
 	tokenPair := common.MustNewAssetPair("xxx:yyy")
 
-	traderAddr := sample.AccAddress()
+	traderAddr := testutilevents.AccAddress()
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.4")
 
 	testCases := []struct {
@@ -256,6 +257,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -316,7 +318,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
 
 			t.Log("Liquidate the (partial) position")
-			liquidator := sample.AccAddress()
+			liquidator := testutilevents.AccAddress()
 			liquidationResp, err := nibiruApp.PerpKeeper.ExecutePartialLiquidation(ctx, liquidator, positionResp.Position)
 			require.NoError(t, err)
 
@@ -350,7 +352,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetSpotPrice(ctx, tokenPair)
+			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair.String(),

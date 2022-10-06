@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### State Machine Breaking
 
+* [#978](https://github.com/NibiruChain/nibiru/pull/978) - x/vpool move state logic to collections
 * [#977](https://github.com/NibiruChain/nibiru/pull/977) - x/perp add whitelisted liquidators
 * [#960](https://github.com/NibiruChain/nibiru/pull/960) - x/common validate asset pair denoms
 * [#952](https://github.com/NibiruChain/nibiru/pull/952) - x/perp move state logic to collections
@@ -72,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#919](https://github.com/NibiruChain/nibiru/pull/919) - refactor(proto): vpool module files consistency
   * MarkPriceChanged renamed to MarkPriceChangedEvent
 * [#875](https://github.com/NibiruChain/nibiru/pull/875) - x/perp add MsgMultiLiquidate
+* [#979](https://github.com/NibiruChain/nibiru/pull/979) - refactor and clean VPool.
 
 ### Improvements
 
@@ -94,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#971](https://github.com/NibiruChain/nibiru/pull/971) - chore: use upstream 99designs/keyring module
 * [#964](https://github.com/NibiruChain/nibiru/pull/964) - test(vpool): refactor flaky vpool cli test
 * [#956](https://github.com/NibiruChain/nibiru/pull/956) - test(perp): partial liquidate unit test
+* [#981](https://github.com/NibiruChain/nibiru/pull/981) - chore(testutil): clean up x/testutil packages
 * [#980](https://github.com/NibiruChain/nibiru/pull/980) - test(perp): add `MsgClosePosition`, `MsgAddMargin`, and `MsgRemoveMargin` simulation tests
 * [#982](https://github.com/NibiruChain/nibiru/pull/982) - improvements for pricefeed genesis
 
