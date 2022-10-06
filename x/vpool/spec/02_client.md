@@ -2,10 +2,12 @@
 
 This page describes the queries structure of the module. These descriptions are accompanied by the documentation for their corresponding CLI commands.
 
-
-- [OpenPosition](#openposition)
-  - [OpenPosition CLI command](#openposition-cli-command)
-
+- [GetVpoolReserveAssets](#getvpoolreserveassets)
+  - [GetVpoolReserveAssets CLI command](#getvpoolreserveassets-cli-command)
+- [GetVpools](#getvpools)
+  - [GetVpools CLI command](#getvpools-cli-command)
+- [GetBaseAssetPrice](#getbaseassetprice)
+  - [GetBaseAssetPrice CLI command](#getbaseassetprice-cli-command)
 
 ---
 
@@ -20,10 +22,9 @@ It returns the base and quote reserves for the pool.
 nibid q vpool reserve-assets --pair
 ```
 
-| Flag | Description |
-| ---  | -------     |
-| `pair` | Identifier for the virtual pool.
-
+| Flag   | Description                      |
+| ------ | -------------------------------- |
+| `pair` | Identifier for the virtual pool. |
 
 ---
 
@@ -50,8 +51,8 @@ It returns the base and quote reserves for the pool.
 nibid q vpool prices --pair --direction --base-asset-amount
 ```
 
-| Flag | Description |
-| ---  | -------     |
-| `pair` | Identifier for the virtual pool.
-| `direction` | Either `add` or `remove`.
-| `base-asset-amount` | The amount to swap in base unit
+| Flag                | Description                      |
+| ------------------- | -------------------------------- |
+| `pair`              | Identifier for the virtual pool. |
+| `direction`         | Either `add` or `remove`.        |
+| `base-asset-amount` | The amount to swap in base unit  |
