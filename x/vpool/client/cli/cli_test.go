@@ -68,7 +68,7 @@ func (s *VpoolCLISuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s VpoolCLISuite) TestGovAddVpool() {
+func (s *VpoolCLISuite) TestGovAddVpool() {
 	s.Require().Len(s.network.Validators, 1)
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
@@ -211,7 +211,7 @@ e.g. $ nibid tx gov vote 1 yes`)
 	s.Require().True(found, "pool does not exist")
 }
 
-func (s VpoolCLISuite) TestGetPrices() {
+func (s *VpoolCLISuite) TestGetPrices() {
 	val := s.network.Validators[0]
 
 	s.T().Log("check vpool balances")

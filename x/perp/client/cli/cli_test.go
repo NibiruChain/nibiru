@@ -472,7 +472,6 @@ func (s *IntegrationTestSuite) TestAddMargin() {
 
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
-
 			s.T().Log("adding margin on user 2....")
 			out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(tc.args, commonArgs...))
 			if err != nil {
