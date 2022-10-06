@@ -1,7 +1,9 @@
 package vpool
 
 import (
+	"github.com/NibiruChain/nibiru/coll"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"time"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -28,7 +30,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, snapshot := range genState.Snapshots {
-		k.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
+		// TODO snapshot.TimestampMs can just be time...
+		k.ReserveSnapshots.Insert(ctx, coll.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 	}
 }
 
@@ -36,6 +39,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	return &types.GenesisState{
 		Vpools:    k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values(),
-		Snapshots: k.ReserveSnapshots.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]()).Values(),
+		Snapshots: k.ReserveSnapshots.Iterate(ctx, coll.PairRange[common.AssetPair, time.Time]{}).Values(),
 	}
 }

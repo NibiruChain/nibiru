@@ -1,9 +1,8 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/coll"
 	"time"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -222,13 +221,13 @@ func (k Keeper) calcTwap(
 	// earliest timestamp we'll look back until
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-1 * lookbackInterval).UnixMilli()
 
-	prefix := keys.PairPrefix[common.AssetPair, keys.Uint64Key](pair)
-	end := keys.PairSuffix[common.AssetPair, keys.Uint64Key](keys.Uint64(uint64(ctx.BlockTime().UnixMilli())))
-	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
-		Prefix(prefix).
-		End(keys.Inclusive(end)).
-		Descending()
-	iter := k.ReserveSnapshots.Iterate(ctx, rng)
+	iter := k.ReserveSnapshots.Iterate(
+		ctx,
+		coll.PairRange[common.AssetPair, time.Time]{}.
+			Prefix(pair).
+			EndInclusive(ctx.BlockTime()).
+			Descending(),
+	)
 	defer iter.Close()
 
 	var snapshots []types.ReserveSnapshot

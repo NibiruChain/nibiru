@@ -65,7 +65,7 @@ func NewKeeper(
 		EpochKeeper:     epochKeeper,
 		Positions:       collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position](cdc, storeKey, 0),
 		PairsMetadata:   collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
-		PrepaidBadDebt:  coll.NewMap[string, types.PrepaidBadDebt](storeKey, 2, coll.Keys.String, coll.NewProtoCodec[types.PrepaidBadDebt](cdc)),
+		PrepaidBadDebt:  coll.NewMap[string, types.PrepaidBadDebt](storeKey, 2, coll.Keys.String, coll.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
 	}
 }
 

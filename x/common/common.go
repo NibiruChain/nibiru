@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/coll"
 	"strings"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
@@ -117,6 +118,19 @@ func (m AssetPair) KeyBytes() []byte {
 func (m AssetPair) FromKeyBytes(b []byte) (int, keys.Key) {
 	i, s := keys.String("").FromKeyBytes(b)
 	return i, MustNewAssetPair(string(s.(keys.StringKey)))
+}
+
+var AssetPairKeyEncoder = assetPairKeyEncoder{}
+
+type assetPairKeyEncoder struct{}
+
+func (assetPairKeyEncoder) Stringify(a AssetPair) string { return a.String() }
+func (assetPairKeyEncoder) KeyEncode(a AssetPair) []byte {
+	return coll.Keys.String.KeyEncode(a.String())
+}
+func (assetPairKeyEncoder) KeyDecode(b []byte) (int, AssetPair) {
+	i, s := coll.Keys.String.KeyDecode(b)
+	return i, MustNewAssetPair(s)
 }
 
 //-----------------------------------------------------------------------------

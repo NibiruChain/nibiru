@@ -2,10 +2,10 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/coll"
+	"time"
 
 	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -20,11 +20,15 @@ func NewKeeper(
 	pricefeedKeeper types.PricefeedKeeper,
 ) Keeper {
 	return Keeper{
-		codec:            codec,
-		storeKey:         storeKey,
-		pricefeedKeeper:  pricefeedKeeper,
-		Pools:            collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
-		ReserveSnapshots: collections.NewMap[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot](codec, storeKey, 1),
+		codec:           codec,
+		storeKey:        storeKey,
+		pricefeedKeeper: pricefeedKeeper,
+		Pools:           collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
+		ReserveSnapshots: coll.NewMap[coll.Pair[common.AssetPair, time.Time], types.ReserveSnapshot](
+			storeKey, 1,
+			coll.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, coll.Keys.Time),
+			coll.ProtoValueEncoder[types.ReserveSnapshot](codec),
+		),
 	}
 }
 
@@ -34,7 +38,7 @@ type Keeper struct {
 	pricefeedKeeper types.PricefeedKeeper
 
 	Pools            collections.Map[common.AssetPair, types.VPool, *types.VPool]
-	ReserveSnapshots collections.Map[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot, *types.ReserveSnapshot]
+	ReserveSnapshots coll.Map[coll.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -287,7 +291,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) er
 		return nil
 	}
 
-	it := k.ReserveSnapshots.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().Descending())
+	it := k.ReserveSnapshots.Iterate(ctx, coll.PairRange[common.AssetPair, time.Time]{}.Descending())
 	defer it.Close()
 	if !it.Valid() {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
