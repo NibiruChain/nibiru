@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -24,13 +26,13 @@ type RemainingMarginWithFundingPayment struct {
 	*/
 	FundingPayment sdk.Dec
 
-	/* LatestCumulativePremiumFraction: latest cumulative premium fraction. Units are (margin units)/position size. */
+	/* LatestCumulativePremiumFraction: latest cumulative funding rate from state. Units are (margin units)/(position units). */
 	LatestCumulativePremiumFraction sdk.Dec
 }
 
 func (r RemainingMarginWithFundingPayment) String() string {
 	return fmt.Sprintf(
-		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, BadDebt: %s, LatestCumulativePremiumFraction: %s}",
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s, LatestCumulativePremiumFraction: %s}",
 		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativePremiumFraction,
 	)
 }
@@ -50,7 +52,7 @@ func (k Keeper) CalcRemainMarginWithFundingPayment(
 		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
 		remaining.FundingPayment = (remaining.LatestCumulativePremiumFraction.
-			Sub(currentPosition.LatestCumulativeFundingPayment)).
+			Sub(currentPosition.LatestCumulativePremiumFraction)).
 			Mul(currentPosition.Size_)
 	}
 
@@ -96,7 +98,7 @@ func (k Keeper) calcFreeCollateral(
 	}
 
 	positionNotional, unrealizedPnL, err := k.
-		getPreferencePositionNotionalAndUnrealizedPnL(
+		GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
 			pos,
 			types.PnLPreferenceOption_MIN,
@@ -110,4 +112,22 @@ func (k Keeper) calcFreeCollateral(
 	maintenanceMarginRequirement := positionNotional.Mul(maintenanceMarginRatio)
 
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
+}
+
+// getLatestCumulativePremiumFraction returns the last cumulative funding rate recorded for the
+// specific pair.
+func (k Keeper) getLatestCumulativePremiumFraction(
+	ctx sdk.Context, pair common.AssetPair,
+) (sdk.Dec, error) {
+	pairMetadata, err := k.PairsMetadata.Get(ctx, pair)
+	if err != nil {
+		k.Logger(ctx).Error(
+			err.Error(),
+			"pair",
+			pair.String(),
+		)
+		return sdk.Dec{}, err
+	}
+	// this should never fail
+	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
 }

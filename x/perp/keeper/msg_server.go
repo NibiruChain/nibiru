@@ -35,7 +35,7 @@ func (m msgServer) RemoveMargin(ctx context.Context, msg *types.MsgRemoveMargin,
 	return &types.MsgRemoveMarginResponse{
 		MarginOut:      marginOut,
 		FundingPayment: fundingPayment,
-		Position:       position,
+		Position:       &position,
 	}, nil
 }
 
@@ -100,20 +100,11 @@ func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 ) (*types.MsgLiquidateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	liquidatorAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+	liquidatorAddr := sdk.MustAccAddressFromBech32(msg.Sender)
 
-	traderAddr, err := sdk.AccAddressFromBech32(msg.Trader)
-	if err != nil {
-		return nil, err
-	}
+	traderAddr := sdk.MustAccAddressFromBech32(msg.Trader)
 
-	pair, err := common.NewAssetPair(msg.TokenPair)
-	if err != nil {
-		return nil, err
-	}
+	pair := common.MustNewAssetPair(msg.TokenPair)
 
 	feeToLiquidator, feeToFund, err := m.k.Liquidate(ctx, liquidatorAddr, pair, traderAddr)
 	if err != nil {
@@ -124,4 +115,23 @@ func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 		FeeToLiquidator:        feeToLiquidator,
 		FeeToPerpEcosystemFund: feeToFund,
 	}, nil
+}
+
+func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiquidate) (*types.MsgMultiLiquidateResponse, error) {
+	positions := make([]MultiLiquidationRequest, len(req.Liquidations))
+	for i, pos := range req.Liquidations {
+		positions[i] = MultiLiquidationRequest{
+			pair:   common.MustNewAssetPair(pos.TokenPair),
+			trader: sdk.MustAccAddressFromBech32(pos.Trader),
+		}
+	}
+
+	resp := m.k.MultiLiquidate(sdk.UnwrapSDKContext(goCtx), sdk.MustAccAddressFromBech32(req.Sender), positions)
+
+	liqResp := make([]*types.MsgMultiLiquidateResponse_MultiLiquidateResponse, len(resp))
+	for i, r := range resp {
+		liqResp[i] = r.IntoMultiLiquidateResponse()
+	}
+
+	return &types.MsgMultiLiquidateResponse{LiquidationResponses: liqResp}, nil
 }

@@ -3,10 +3,11 @@ package types
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestPosition_Validate(t *testing.T) {
@@ -18,13 +19,13 @@ func TestPosition_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			p: &Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.MustNewAssetPair("valid:pair"),
-				Size_:                          sdk.MustNewDecFromStr("1000"),
-				Margin:                         sdk.MustNewDecFromStr("1000"),
-				OpenNotional:                   sdk.MustNewDecFromStr("1000"),
-				LatestCumulativeFundingPayment: sdk.MustNewDecFromStr("1"),
-				BlockNumber:                    0,
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            common.MustNewAssetPair("valid:pair"),
+				Size_:                           sdk.MustNewDecFromStr("1000"),
+				Margin:                          sdk.MustNewDecFromStr("1000"),
+				OpenNotional:                    sdk.MustNewDecFromStr("1000"),
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("1"),
+				BlockNumber:                     0,
 			},
 			wantErr: false,
 		},
@@ -35,7 +36,7 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad pair": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.AssetPair{},
 			},
 			wantErr: true,
@@ -43,7 +44,7 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad size": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.MustNewAssetPair("valid:pair"),
 				Size_:         sdk.ZeroDec(),
 			},
@@ -52,7 +53,7 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad margin": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.MustNewAssetPair("valid:pair"),
 				Size_:         sdk.MustNewDecFromStr("1000"),
 				Margin:        sdk.MustNewDecFromStr("-1000"),
@@ -61,7 +62,7 @@ func TestPosition_Validate(t *testing.T) {
 		},
 		"bad open notional": {
 			p: &Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutil.AccAddress().String(),
 				Pair:          common.MustNewAssetPair("valid:pair"),
 				Size_:         sdk.MustNewDecFromStr("1000"),
 				Margin:        sdk.MustNewDecFromStr("1000"),
@@ -72,13 +73,13 @@ func TestPosition_Validate(t *testing.T) {
 
 		"bad block number": {
 			p: &Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.MustNewAssetPair("valid:pair"),
-				Size_:                          sdk.MustNewDecFromStr("1000"),
-				Margin:                         sdk.MustNewDecFromStr("1000"),
-				OpenNotional:                   sdk.MustNewDecFromStr("1000"),
-				LatestCumulativeFundingPayment: sdk.MustNewDecFromStr("1"),
-				BlockNumber:                    -1,
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            common.MustNewAssetPair("valid:pair"),
+				Size_:                           sdk.MustNewDecFromStr("1000"),
+				Margin:                          sdk.MustNewDecFromStr("1000"),
+				OpenNotional:                    sdk.MustNewDecFromStr("1000"),
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("1"),
+				BlockNumber:                     -1,
 			},
 			wantErr: true,
 		},
@@ -106,8 +107,8 @@ func TestPairMetadata_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			p: &PairMetadata{
-				Pair:                   common.MustNewAssetPair("pair1:pair2"),
-				CumulativeFundingRates: []sdk.Dec{sdk.MustNewDecFromStr("0.1")},
+				Pair:                       common.MustNewAssetPair("pair1:pair2"),
+				CumulativePremiumFractions: []sdk.Dec{sdk.MustNewDecFromStr("0.1")},
 			},
 		},
 
@@ -116,10 +117,10 @@ func TestPairMetadata_Validate(t *testing.T) {
 			wantErr: true,
 		},
 
-		"invalid cumulative premium fraction": {
+		"invalid cumulative funding rate": {
 			p: &PairMetadata{
-				Pair:                   common.MustNewAssetPair("pair1:pair2"),
-				CumulativeFundingRates: []sdk.Dec{{}},
+				Pair:                       common.MustNewAssetPair("pair1:pair2"),
+				CumulativePremiumFractions: []sdk.Dec{{}},
 			},
 			wantErr: true,
 		},
@@ -140,13 +141,13 @@ func TestPairMetadata_Validate(t *testing.T) {
 
 func BenchmarkPosition_Validate(b *testing.B) {
 	t := &Position{
-		TraderAddress:                  sample.AccAddress().String(),
-		Pair:                           common.MustNewAssetPair("valid:pair"),
-		Size_:                          sdk.MustNewDecFromStr("1000"),
-		Margin:                         sdk.MustNewDecFromStr("1000"),
-		OpenNotional:                   sdk.MustNewDecFromStr("1000"),
-		LatestCumulativeFundingPayment: sdk.MustNewDecFromStr("1"),
-		BlockNumber:                    0,
+		TraderAddress:                   testutil.AccAddress().String(),
+		Pair:                            common.MustNewAssetPair("valid:pair"),
+		Size_:                           sdk.MustNewDecFromStr("1000"),
+		Margin:                          sdk.MustNewDecFromStr("1000"),
+		OpenNotional:                    sdk.MustNewDecFromStr("1000"),
+		LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("1"),
+		BlockNumber:                     0,
 	}
 
 	for i := 0; i < b.N; i++ {

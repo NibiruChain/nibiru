@@ -1,66 +1,11 @@
 package keeper
 
 import (
-	"fmt"
-
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
-
-// GetSnapshot returns the snapshot saved by counter num
-func (k Keeper) GetSnapshot(ctx sdk.Context, pair common.AssetPair, blockHeight uint64) (
-	snapshot types.ReserveSnapshot, err error,
-) {
-	bz := prefix.NewStore(
-		ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix,
-	).Get(types.GetSnapshotKey(pair, blockHeight))
-
-	if bz == nil {
-		return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved.
-			Wrap(fmt.Sprintf("snapshot at blockHeight %d was not found", blockHeight))
-	}
-
-	k.codec.MustUnmarshal(bz, &snapshot)
-
-	return snapshot, nil
-}
-
-func (k Keeper) SaveSnapshot(
-	ctx sdk.Context,
-	pair common.AssetPair,
-	quoteAssetReserve sdk.Dec,
-	baseAssetReserve sdk.Dec,
-) {
-	snapshot := &types.ReserveSnapshot{
-		BaseAssetReserve:  baseAssetReserve,
-		QuoteAssetReserve: quoteAssetReserve,
-		TimestampMs:       ctx.BlockTime().UnixMilli(),
-		BlockNumber:       ctx.BlockHeight(),
-	}
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	store.Set(types.GetSnapshotKey(pair, uint64(ctx.BlockHeight())), k.codec.MustMarshal(snapshot))
-}
-
-// GetLatestReserveSnapshot returns the last snapshot that was saved
-func (k Keeper) GetLatestReserveSnapshot(ctx sdk.Context, pair common.AssetPair) (
-	snapshot types.ReserveSnapshot, err error,
-) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SnapshotsKeyPrefix)
-	iter := store.ReverseIterator(types.GetSnapshotKey(pair, 0), types.GetSnapshotKey(pair, uint64(ctx.BlockHeight()+1)))
-
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		k.codec.MustUnmarshal(iter.Value(), &snapshot)
-		return snapshot, nil
-	}
-
-	return types.ReserveSnapshot{}, types.ErrNoLastSnapshotSaved
-}
 
 /*
 An object parameter for getPriceWithSnapshot().

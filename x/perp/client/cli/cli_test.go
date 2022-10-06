@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -79,7 +81,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []*vpooltypes.VPool{
+	vpoolGenesis.Vpools = []vpooltypes.VPool{
 		{
 			Pair:                   common.Pair_BTC_NUSD,
 			BaseAssetReserve:       sdk.NewDec(10_000_000),
@@ -105,10 +107,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
-	perpGenesis.PairMetadata = []*perptypes.PairMetadata{
+	perpGenesis.PairMetadata = []perptypes.PairMetadata{
 		{
 			Pair: common.Pair_BTC_NUSD,
-			CumulativeFundingRates: []sdk.Dec{
+			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 				sdk.NewDec(2),
@@ -116,18 +118,19 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 		{
 			Pair: common.Pair_ETH_NUSD,
-			CumulativeFundingRates: []sdk.Dec{
+			CumulativePremiumFractions: []sdk.Dec{
 				sdk.ZeroDec(),
 			},
 		},
 	}
+	perpGenesis.Params.WhitelistedLiquidators = []string{"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"} // address associated with mnemonic below
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	// set up pricefeed
 	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
-
+	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
 	s.NoError(err)
@@ -181,6 +184,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		val,
 		common.DenomNIBI,
 	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(
+		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
+		sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000)),
+		val, common.DenomNIBI)
 	s.Require().NoError(err)
 }
 
@@ -362,7 +371,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		common.Pair_ETH_NUSD.String(),
 	}
 	out, _ := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), "no position found")
+	s.Contains(out.String(), collections.ErrNotFound.Error())
 }
 
 func (s *IntegrationTestSuite) TestGetPrices() {
@@ -381,7 +390,7 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	s.NoError(err)
 }
 
-func (s *IntegrationTestSuite) TestQueryCumulativeFundingRates() {
+func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	val := s.network.Validators[0]
 
 	s.T().Log("get cumulative funding payments")
@@ -432,14 +441,14 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	args := []string{
 		"--from",
-		s.users[1].String(),
+		"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m",
 		common.Pair_ETH_NUSD.String(),
 		s.users[1].String(),
 	}
 
 	// liquidate a position that does not exist
 	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), "no position found")
+	s.Contains(out.String(), collections.ErrNotFound.Error())
 	if err != nil {
 		s.T().Logf("user liquidate error: %+v", err)
 	}
@@ -488,14 +497,14 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	// liquidate
 	args = []string{
 		"--from",
-		s.users[1].String(),
+		"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m",
 		common.Pair_ETH_NUSD.String(),
 		s.users[1].String(),
 	}
 
 	s.T().Log("liquidating user 2....")
 	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	s.NotContains(out.String(), "fail")
+	s.NotContains(out.String(), "fail", out.String())
 	s.NoError(err)
 }
 

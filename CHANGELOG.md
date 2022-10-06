@@ -47,12 +47,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### State Machine Breaking
 
+* [#978](https://github.com/NibiruChain/nibiru/pull/978) - x/vpool move state logic to collections
+* [#977](https://github.com/NibiruChain/nibiru/pull/977) - x/perp add whitelisted liquidators
+* [#960](https://github.com/NibiruChain/nibiru/pull/960) - x/common validate asset pair denoms
+* [#952](https://github.com/NibiruChain/nibiru/pull/952) - x/perp move state logic to collections
 * [#872](https://github.com/NibiruChain/nibiru/pull/872) - x/perp remove module balances from genesis
 * [#878](https://github.com/NibiruChain/nibiru/pull/878) - rename `PremiumFraction` to `FundingRate`
 * [#900](https://github.com/NibiruChain/nibiru/pull/900) - refactor x/vpool snapshot state management
 * [#904](https://github.com/NibiruChain/nibiru/pull/904) - refactor: change Pool name to VPool in vpool module
 * [#894](https://github.com/NibiruChain/nibiru/pull/894) - add the collections package!
 * [#897](https://github.com/NibiruChain/nibiru/pull/897) - x/pricefeed - use collections.
+* [#933](https://github.com/NibiruChain/nibiru/pull/933) - refactor(perp): remove whitelist and simplify state keys
+* [#959](https://github.com/NibiruChain/nibiru/pull/959) - feat(vpool): complete genesis import export
+  * removed Params from genesis.
+  * added pair into ReserveSnapshot type.
+  * added validation of snapshots and snapshots in genesis.
+* [#975](https://github.com/NibiruChain/nibiru/pull/975) - fix(perp): funding payment calculations
+* [#976](https://github.com/NibiruChain/nibiru/pull/976) - refactor(epochs): refactor to increase readability and some tests
+  * EpochInfo.CurrentEpoch changed from int64 to uint64.
 
 ### API Breaking
 
@@ -60,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#900](https://github.com/NibiruChain/nibiru/pull/900) - fix x/vpool twap calculation to be bounded in time
 * [#919](https://github.com/NibiruChain/nibiru/pull/919) - refactor(proto): vpool module files consistency
   * MarkPriceChanged renamed to MarkPriceChangedEvent
+* [#875](https://github.com/NibiruChain/nibiru/pull/875) - x/perp add MsgMultiLiquidate
+* [#979](https://github.com/NibiruChain/nibiru/pull/979) - refactor and clean VPool.
 
 ### Improvements
 
@@ -73,12 +87,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#901](https://github.com/NibiruChain/nibiru/pull/901) - refactor(vpool): remove `GetUnderlyingPrice` method
 * [#902](https://github.com/NibiruChain/nibiru/pull/902) - refactor(common): improve usability of `common.AssetPair`
 * [#913](https://github.com/NibiruChain/nibiru/pull/913) - chore(epochs): update x/epochs module
+* [#911](https://github.com/NibiruChain/nibiru/pull/911) - test(perp): add `MsgOpenPosition` simulation tests
 * [#917](https://github.com/NibiruChain/nibiru/pull/917) - refactor(proto): perp module files consistency
 * [#920](https://github.com/NibiruChain/nibiru/pull/920) - refactor(proto): pricefeed module files consistency
 * [#926](https://github.com/NibiruChain/nibiru/pull/926) - feat: use spot twap for funding rate calculation
+* [#932](https://github.com/NibiruChain/nibiru/pull/932) - refactor(perp): rename premium fraction to funding rate
+* [#963](https://github.com/NibiruChain/nibiru/pull/963) - test: add collections api tests
+* [#971](https://github.com/NibiruChain/nibiru/pull/971) - chore: use upstream 99designs/keyring module
+* [#964](https://github.com/NibiruChain/nibiru/pull/964) - test(vpool): refactor flaky vpool cli test
+* [#956](https://github.com/NibiruChain/nibiru/pull/956) - test(perp): partial liquidate unit test
+* [#981](https://github.com/NibiruChain/nibiru/pull/981) - chore(testutil): clean up x/testutil packages
+* [#980](https://github.com/NibiruChain/nibiru/pull/980) - test(perp): add `MsgClosePosition`, `MsgAddMargin`, and `MsgRemoveMargin` simulation tests
 
 ### Features
-
+* [#966](https://github.com/NibiruChain/nibiru/pull/966) - collections: add indexed map
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
 
@@ -87,7 +109,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks
 * [#874](https://github.com/NibiruChain/nibiru/pull/874) - fix --home issue with unsafe-reset-all command, updating tendermint to v0.34.21
 * [#892](https://github.com/NibiruChain/nibiru/pull/892) - chore: fix localnet script
-* [#925](https://github.com/NibiruChain/nibiru/pull/892) - fix(vpool): snapshot iteration
+* [#925](https://github.com/NibiruChain/nibiru/pull/925) - fix(vpool): snapshot iteration
+* [#930](https://github.com/NibiruChain/nibiru/pull/930) - fix(vpool): snapshot iteration on mark twap
+* [#911](https://github.com/NibiruChain/nibiru/pull/911) - fix(perp): handle issue where no vpool snapshots are found
+* [#958](https://github.com/NibiruChain/nibiru/pull/930) - fix(pricefeed): add twap to prices query
+* [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
 
 ## v0.14.0
 

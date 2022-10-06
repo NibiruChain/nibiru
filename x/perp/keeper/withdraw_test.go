@@ -3,13 +3,16 @@ package keeper
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestWithdraw(t *testing.T) {
@@ -59,7 +62,7 @@ func TestWithdraw(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize variables")
 			perpKeeper, mocks, ctx := getKeeper(t)
-			receiver := sample.AccAddress()
+			receiver := testutil.AccAddress()
 			denom := "NUSD"
 
 			t.Log("mock account keeper")
@@ -83,15 +86,16 @@ func TestWithdraw(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.PrepaidBadDebtState(ctx).Set(denom, sdk.NewInt(tc.initialPrepaidBadDebt))
+			perpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{Denom: denom, Amount: sdk.NewInt(tc.initialPrepaidBadDebt)})
 
 			t.Log("execute withdrawal")
 			err := perpKeeper.Withdraw(ctx, denom, receiver, sdk.NewInt(tc.amountToWithdraw))
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt := perpKeeper.PrepaidBadDebtState(ctx).Get(denom)
-			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Int64())
+			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, keys.String(denom))
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})
 	}
 }
@@ -151,15 +155,35 @@ func TestRealizeBadDebt(t *testing.T) {
 			}
 
 			t.Log("initial prepaid bad debt")
-			perpKeeper.PrepaidBadDebtState(ctx).Set(denom, sdk.NewInt(tc.initialPrepaidBadDebt))
+			perpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(denom), types.PrepaidBadDebt{
+				Denom:  denom,
+				Amount: sdk.NewInt(tc.initialPrepaidBadDebt),
+			})
 
 			t.Log("execute withdrawal")
 			err := perpKeeper.realizeBadDebt(ctx, denom, sdk.NewInt(tc.badDebtToRealize))
 			require.NoError(t, err)
 
 			t.Log("assert new prepaid bad debt")
-			prepaidBadDebt := perpKeeper.PrepaidBadDebtState(ctx).Get(denom)
-			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Int64())
+			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, keys.String(denom))
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
 		})
 	}
+}
+
+func TestIncrementDecrementBadDebt(t *testing.T) {
+	k, _, ctx := getKeeper(t)
+	// increment on non-existing prepaid bad debt
+	bd := k.IncrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(1000))
+	require.Equal(t, sdk.NewInt(1000), bd)
+	// increment on existing
+	bd = k.IncrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(1000))
+	require.Equal(t, sdk.NewInt(2000), bd)
+	// decrement
+	bd = k.DecrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(1000))
+	require.Equal(t, sdk.NewInt(1000), bd)
+	// decrement below zero
+	bd = k.DecrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(2000))
+	require.Equal(t, sdk.ZeroInt(), bd)
 }

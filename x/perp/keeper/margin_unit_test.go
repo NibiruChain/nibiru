@@ -6,6 +6,10 @@ import (
 	"testing"
 	"time"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/golang/mock/gomock"
@@ -15,8 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil/events"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -111,12 +113,12 @@ func TestGetMarginRatio(t *testing.T) {
 		{
 			name: "margin without price changes",
 			position: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(10),
-				OpenNotional:                   sdk.NewDec(10),
-				Margin:                         sdk.NewDec(1),
-				LatestCumulativeFundingPayment: sdk.OneDec(),
+				TraderAddress:                   testutilevents.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(10),
+				OpenNotional:                    sdk.NewDec(10),
+				Margin:                          sdk.NewDec(1),
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			},
 			newPrice:            sdk.MustNewDecFromStr("10"),
 			expectedMarginRatio: sdk.MustNewDecFromStr("0.1"),
@@ -124,12 +126,12 @@ func TestGetMarginRatio(t *testing.T) {
 		{
 			name: "margin with price changes",
 			position: types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          sdk.NewDec(10),
-				OpenNotional:                   sdk.NewDec(10),
-				Margin:                         sdk.NewDec(1),
-				LatestCumulativeFundingPayment: sdk.OneDec(),
+				TraderAddress:                   testutilevents.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           sdk.NewDec(10),
+				OpenNotional:                    sdk.NewDec(10),
+				Margin:                          sdk.NewDec(1),
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			},
 			newPrice:            sdk.MustNewDecFromStr("12"),
 			expectedMarginRatio: sdk.MustNewDecFromStr("0.25"),
@@ -161,9 +163,9 @@ func TestGetMarginRatio(t *testing.T) {
 				).
 				Return(tc.newPrice, nil)
 
-			perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-				Pair:                   common.Pair_BTC_NUSD,
-				CumulativeFundingRates: []sdk.Dec{sdk.OneDec()},
+			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				Pair:                       common.Pair_BTC_NUSD,
+				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
 			})
 
 			marginRatio, err := perpKeeper.GetMarginRatio(
@@ -186,7 +188,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.AssetPair{
 					Token0: "osmo",
 					Token1: "nusd",
@@ -196,22 +198,22 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockPricefeedKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: pair,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 						sdk.MustNewDecFromStr("0.1")},
 				})
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                  traderAddr.String(),
-					Pair:                           pair,
-					Size_:                          sdk.NewDec(1_000),
-					OpenNotional:                   sdk.NewDec(1000),
-					Margin:                         sdk.NewDec(500),
-					LatestCumulativeFundingPayment: sdk.MustNewDecFromStr("0.1"),
-					BlockNumber:                    ctx.BlockHeight(),
+				setPosition(perpKeeper, ctx, types.Position{
+					TraderAddress:                   traderAddr.String(),
+					Pair:                            pair,
+					Size_:                           sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(1000),
+					Margin:                          sdk.NewDec(500),
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
+					BlockNumber:                     ctx.BlockHeight(),
 				})
 
 				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.NewCoin(pair.QuoteDenom(), sdk.NewInt(600)))
@@ -225,14 +227,14 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx,
 					pair,
@@ -264,22 +266,22 @@ func TestRemoveMargin(t *testing.T) {
 				).Return(sdk.NewInt64Coin(pair.QuoteDenom(), 0))
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: pair,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 					},
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                  traderAddr.String(),
-					Pair:                           pair,
-					Size_:                          sdk.NewDec(1_000),
-					OpenNotional:                   sdk.NewDec(1_000),
-					Margin:                         sdk.NewDec(500),
-					LatestCumulativeFundingPayment: sdk.ZeroDec(),
-					BlockNumber:                    ctx.BlockHeight(),
+				setPosition(perpKeeper, ctx, types.Position{
+					TraderAddress:                   traderAddr.String(),
+					Pair:                            pair,
+					Size_:                           sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(1_000),
+					Margin:                          sdk.NewDec(500),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     ctx.BlockHeight(),
 				})
 
 				t.Log("Attempt to RemoveMargin when the vault lacks funds")
@@ -294,7 +296,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
@@ -303,7 +305,7 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
 					Return(sdk.NewDec(1000), nil).Times(2)
@@ -326,22 +328,22 @@ func TestRemoveMargin(t *testing.T) {
 				).Return(nil)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: pair,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.ZeroDec(),
 					},
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                  traderAddr.String(),
-					Pair:                           pair,
-					Size_:                          sdk.NewDec(1_000),
-					OpenNotional:                   sdk.NewDec(1_000),
-					Margin:                         sdk.NewDec(500),
-					LatestCumulativeFundingPayment: sdk.ZeroDec(),
-					BlockNumber:                    ctx.BlockHeight(),
+				setPosition(perpKeeper, ctx, types.Position{
+					TraderAddress:                   traderAddr.String(),
+					Pair:                            pair,
+					Size_:                           sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(1_000),
+					Margin:                          sdk.NewDec(500),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     ctx.BlockHeight(),
 				})
 
 				t.Log("'RemoveMargin' from the position")
@@ -356,7 +358,7 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(1000), position.OpenNotional)
 				assert.EqualValues(t, sdk.NewDec(1000), position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
-				assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativePremiumFraction)
 
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireHasTypedEvent(t, ctx,
@@ -372,14 +374,14 @@ func TestRemoveMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
 					},
 				)
 
-				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
+				pos, err := perpKeeper.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
@@ -391,7 +393,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
@@ -399,22 +401,22 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair: pair,
-					CumulativeFundingRates: []sdk.Dec{
+					CumulativePremiumFractions: []sdk.Dec{
 						sdk.OneDec(),
 					},
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                  traderAddr.String(),
-					Pair:                           pair,
-					Size_:                          sdk.NewDec(500),
-					OpenNotional:                   sdk.NewDec(500),
-					Margin:                         sdk.NewDec(500),
-					LatestCumulativeFundingPayment: sdk.ZeroDec(),
-					BlockNumber:                    ctx.BlockHeight(),
+				setPosition(perpKeeper, ctx, types.Position{
+					TraderAddress:                   traderAddr.String(),
+					Pair:                            pair,
+					Size_:                           sdk.NewDec(500),
+					OpenNotional:                    sdk.NewDec(500),
+					Margin:                          sdk.NewDec(500),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     ctx.BlockHeight(),
 				})
 
 				t.Log("'RemoveMargin' from the position")
@@ -422,7 +424,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				require.ErrorIs(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt)
 
-				pos, err := perpKeeper.PositionsState(ctx).Get(pair, traderAddr)
+				pos, err := perpKeeper.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Size_.String())
@@ -449,7 +451,7 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				pair := common.AssetPair{
 					Token0: "uosmo",
 					Token1: "unusd",
@@ -457,21 +459,21 @@ func TestAddMargin(t *testing.T) {
 				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-					Pair:                   pair,
-					CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+					Pair:                       pair,
+					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 				})
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("set a position")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                  traderAddr.String(),
-					Pair:                           pair,
-					Size_:                          sdk.NewDec(1_000),
-					OpenNotional:                   sdk.NewDec(1_000),
-					Margin:                         sdk.NewDec(500),
-					LatestCumulativeFundingPayment: sdk.ZeroDec(),
-					BlockNumber:                    ctx.BlockHeight(),
+				setPosition(perpKeeper, ctx, types.Position{
+					TraderAddress:                   traderAddr.String(),
+					Pair:                            pair,
+					Size_:                           sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(1_000),
+					Margin:                          sdk.NewDec(500),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     ctx.BlockHeight(),
 				})
 
 				t.Log("mock bankkeeper not enough funds")
@@ -491,28 +493,28 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				pair := common.MustNewAssetPair("uosmo:unusd")
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-					Pair:                   pair,
-					CumulativeFundingRates: []sdk.Dec{sdk.ZeroDec()},
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+					Pair:                       pair,
+					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 				})
 
 				t.Log("set position")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                  traderAddr.String(),
-					Pair:                           pair,
-					Size_:                          sdk.NewDec(1_000),
-					OpenNotional:                   sdk.NewDec(1_000),
-					Margin:                         sdk.NewDec(500),
-					LatestCumulativeFundingPayment: sdk.ZeroDec(),
-					BlockNumber:                    1,
+				setPosition(perpKeeper, ctx, types.Position{
+					TraderAddress:                   traderAddr.String(),
+					Pair:                            pair,
+					Size_:                           sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(1_000),
+					Margin:                          sdk.NewDec(500),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     1,
 				})
 
 				t.Log("mock bankKeeper")
@@ -531,7 +533,7 @@ func TestAddMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.Size_)
 				assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
 				assert.EqualValues(t, pair, resp.Position.Pair)
-				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
 				t.Log("Verify correct events emitted")
@@ -548,7 +550,7 @@ func TestAddMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.ZeroDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
@@ -562,28 +564,28 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				pair := common.MustNewAssetPair("uosmo:unusd")
-				traderAddr := sample.AccAddress()
+				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
-				mocks.mockVpoolKeeper.EXPECT().GetSpotPrice(ctx, pair).Return(sdk.OneDec(), nil)
+				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
-				perpKeeper.PairMetadataState(ctx).Set(&types.PairMetadata{
-					Pair:                   pair,
-					CumulativeFundingRates: []sdk.Dec{sdk.MustNewDecFromStr("0.001")},
+				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+					Pair:                       pair,
+					CumulativePremiumFractions: []sdk.Dec{sdk.MustNewDecFromStr("0.001")},
 				})
 
 				t.Log("set position")
-				perpKeeper.PositionsState(ctx).Set(&types.Position{
-					TraderAddress:                  traderAddr.String(),
-					Pair:                           pair,
-					Size_:                          sdk.NewDec(1_000),
-					OpenNotional:                   sdk.NewDec(1_000),
-					Margin:                         sdk.NewDec(500),
-					LatestCumulativeFundingPayment: sdk.ZeroDec(),
-					BlockNumber:                    1,
+				setPosition(perpKeeper, ctx, types.Position{
+					TraderAddress:                   traderAddr.String(),
+					Pair:                            pair,
+					Size_:                           sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(1_000),
+					Margin:                          sdk.NewDec(500),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     1,
 				})
 
 				mocks.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(
@@ -601,7 +603,7 @@ func TestAddMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.NewDec(1_000), resp.Position.Size_)
 				assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
 				assert.EqualValues(t, pair, resp.Position.Pair)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("0.001"), resp.Position.LatestCumulativeFundingPayment)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("0.001"), resp.Position.LatestCumulativePremiumFraction)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
 				t.Log("Verify correct events emitted")
@@ -618,7 +620,7 @@ func TestAddMargin(t *testing.T) {
 						UnrealizedPnlAfter:    sdk.ZeroDec(),
 						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:        sdk.OneDec(),
-						SpotPrice:             sdk.OneDec(),
+						MarkPrice:             sdk.OneDec(),
 						BlockHeight:           ctx.BlockHeight(),
 						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 						LiquidationPenalty:    sdk.ZeroDec(),
@@ -648,7 +650,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -671,7 +673,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -694,7 +696,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -718,7 +720,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -742,7 +744,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; positive pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -767,7 +769,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -792,7 +794,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -815,7 +817,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; negative pnl; spot price calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -838,7 +840,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -862,7 +864,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; negative pnl; twap calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -886,7 +888,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "short position; positive pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -911,7 +913,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
@@ -956,7 +958,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 	}
 }
 
-func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
+func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 	// all tests are assumed long positions with positive pnl for ease of calculation
 	// short positions and negative pnl are implicitly correct because of
 	// TestGetPositionNotionalAndUnrealizedPnl
@@ -971,7 +973,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "max pnl, pick spot price",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -1005,7 +1007,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "max pnl, pick twap",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -1039,7 +1041,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "min pnl, pick spot price",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -1073,7 +1075,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 		{
 			name: "min pnl, pick twap",
 			initPosition: types.Position{
-				TraderAddress: sample.AccAddress().String(),
+				TraderAddress: testutilevents.AccAddress().String(),
 				Pair:          common.Pair_BTC_NUSD,
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
@@ -1114,7 +1116,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnl(t *testing.T) {
 			tc.setMocks(ctx, mocks)
 
 			positionalNotional, unrealizedPnl, err := perpKeeper.
-				getPreferencePositionNotionalAndUnrealizedPnL(
+				GetPreferencePositionNotionalAndUnrealizedPnL(
 					ctx,
 					tc.initPosition,
 					tc.pnlPreferenceOption,

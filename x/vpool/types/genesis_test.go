@@ -17,7 +17,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			genesis: &GenesisState{
-				Vpools: []*VPool{
+				Vpools: []VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -39,13 +39,12 @@ func TestGenesisState_Validate(t *testing.T) {
 						MaxLeverage:            sdk.MustNewDecFromStr("10"),
 					},
 				},
-				Params: Params{},
 			},
 			wantErr: false,
 		},
 		"invalid vpool": {
 			genesis: &GenesisState{
-				Vpools: []*VPool{
+				Vpools: []VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -67,13 +66,12 @@ func TestGenesisState_Validate(t *testing.T) {
 						MaxLeverage:            sdk.MustNewDecFromStr("0"),
 					},
 				},
-				Params: Params{},
 			},
 			wantErr: true,
 		},
 		"duplicate vpool": {
 			genesis: &GenesisState{
-				Vpools: []*VPool{
+				Vpools: []VPool{
 					{
 						Pair:                   common.MustNewAssetPair("btc:usd"),
 						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
@@ -105,7 +103,41 @@ func TestGenesisState_Validate(t *testing.T) {
 						MaxLeverage:            sdk.MustNewDecFromStr("10"),
 					},
 				},
-				Params: Params{},
+			},
+			wantErr: true,
+		},
+		"invalid snapshot": {
+			genesis: &GenesisState{
+				Vpools: []VPool{
+					{
+						Pair:                   common.MustNewAssetPair("btc:usd"),
+						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
+						QuoteAssetReserve:      sdk.MustNewDecFromStr("100000"),
+						TradeLimitRatio:        sdk.MustNewDecFromStr("0.5"),
+						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
+						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.5"),
+						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
+						MaxLeverage:            sdk.MustNewDecFromStr("10"),
+					},
+					{
+						Pair:                   common.MustNewAssetPair("eth:usd"),
+						BaseAssetReserve:       sdk.MustNewDecFromStr("100000"),
+						QuoteAssetReserve:      sdk.MustNewDecFromStr("100000"),
+						TradeLimitRatio:        sdk.MustNewDecFromStr("0.5"),
+						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
+						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.5"),
+						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
+						MaxLeverage:            sdk.MustNewDecFromStr("10"),
+					},
+				},
+				Snapshots: []ReserveSnapshot{
+					{
+						Pair:              common.Pair_ETH_NUSD,
+						BaseAssetReserve:  sdk.OneDec(),
+						QuoteAssetReserve: sdk.OneDec(),
+						TimestampMs:       -1,
+					},
+				},
 			},
 			wantErr: true,
 		},

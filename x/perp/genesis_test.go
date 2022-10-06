@@ -5,6 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 )
 
 func TestGenesis(t *testing.T) {
@@ -35,25 +38,24 @@ func TestGenesis(t *testing.T) {
 
 		// create some positions
 		for i := int64(0); i < 100; i++ {
-			require.NoError(t, app.PerpKeeper.PositionsState(ctx).Create(&types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_NIBI_NUSD,
-				Size_:                          sdk.NewDec(i + 1),
-				Margin:                         sdk.NewDec(i * 2),
-				OpenNotional:                   sdk.NewDec(i * 100),
-				LatestCumulativeFundingPayment: sdk.NewDec(5 * 100),
-				BlockNumber:                    i,
-			}))
+			addr := testutil.AccAddress().String()
+			app.PerpKeeper.Positions.Insert(ctx, keys.Join(common.Pair_NIBI_NUSD, keys.String(addr)), types.Position{
+				TraderAddress:                   addr,
+				Pair:                            common.Pair_NIBI_NUSD,
+				Size_:                           sdk.NewDec(i + 1),
+				Margin:                          sdk.NewDec(i * 2),
+				OpenNotional:                    sdk.NewDec(i * 100),
+				LatestCumulativePremiumFraction: sdk.NewDec(5 * 100),
+				BlockNumber:                     i,
+			})
 		}
 
 		// create some prepaid bad debt
 		for i := 0; i < 10; i++ {
-			app.PerpKeeper.PrepaidBadDebtState(ctx).Set(fmt.Sprintf("%d", i), sdk.NewInt(int64(i)))
-		}
-
-		// whitelist some addrs
-		for i := 0; i < 5; i++ {
-			app.PerpKeeper.WhitelistState(ctx).Add(sample.AccAddress())
+			app.PerpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(fmt.Sprintf("%d", i)), types.PrepaidBadDebt{
+				Denom:  fmt.Sprintf("%d", i),
+				Amount: sdk.NewInt(int64(i)),
+			})
 		}
 
 		// export genesis
@@ -65,6 +67,15 @@ func TestGenesis(t *testing.T) {
 
 		// export again to ensure they match
 		genStateAfterInit := perp.ExportGenesis(ctx, app.PerpKeeper)
-		require.Equal(t, genState, genStateAfterInit)
+		require.Equal(t, genState.Params, genStateAfterInit.Params)
+		for i, pm := range genState.PairMetadata {
+			require.Equal(t, pm, genStateAfterInit.PairMetadata[i])
+		}
+		require.Equalf(t, genState.PairMetadata, genStateAfterInit.PairMetadata, "%s <-> %s", genState.PairMetadata, genStateAfterInit.PairMetadata)
+		require.Equal(t, genState.PrepaidBadDebts, genStateAfterInit.PrepaidBadDebts)
+		require.Equal(t, len(genState.Positions), len(genStateAfterInit.Positions))
+		for i, pos := range genState.Positions {
+			require.Equalf(t, pos, genStateAfterInit.Positions[i], "%s <-> %s", pos, genStateAfterInit.Positions[i])
+		}
 	})
 }

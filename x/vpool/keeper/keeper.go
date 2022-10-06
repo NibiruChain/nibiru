@@ -3,6 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -17,9 +20,11 @@ func NewKeeper(
 	pricefeedKeeper types.PricefeedKeeper,
 ) Keeper {
 	return Keeper{
-		codec:           codec,
-		storeKey:        storeKey,
-		pricefeedKeeper: pricefeedKeeper,
+		codec:            codec,
+		storeKey:         storeKey,
+		pricefeedKeeper:  pricefeedKeeper,
+		Pools:            collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
+		ReserveSnapshots: collections.NewMap[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot](codec, storeKey, 1),
 	}
 }
 
@@ -27,6 +32,9 @@ type Keeper struct {
 	codec           codec.BinaryCodec
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
+
+	Pools            collections.Map[common.AssetPair, types.VPool, *types.VPool]
+	ReserveSnapshots collections.Map[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot, *types.ReserveSnapshot]
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -34,6 +42,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 /*
+SwapBaseForQuote
 Trades baseAssets in exchange for quoteAssets.
 The base asset is a crypto asset like BTC.
 The quote asset is a stablecoin like NUSD.
@@ -58,21 +67,17 @@ func (k Keeper) SwapBaseForQuote(
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
 ) (quoteAmt sdk.Dec, err error) {
-	if !k.ExistsPool(ctx, pair) {
-		return sdk.Dec{}, types.ErrPairNotSupported
+	if baseAmt.IsZero() {
+		return sdk.ZeroDec(), nil
 	}
 
 	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
-	if baseAmt.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
 	if !pool.HasEnoughBaseReserve(baseAmt) {
@@ -95,22 +100,9 @@ func (k Keeper) SwapBaseForQuote(
 			"quote amount %s is over trading limit", quoteAmt)
 	}
 
-	if !quoteLimit.IsZero() {
-		// if going long and the base amount retrieved from the pool is less than the limit
-		if dir == types.Direction_ADD_TO_POOL && quoteAmt.LT(quoteLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"quote amount (%s) is less than selected limit (%s)",
-				quoteAmt.String(),
-				quoteLimit.String(),
-			)
-			// if going short and the base amount retrieved from the pool is greater than the limit
-		} else if dir == types.Direction_REMOVE_FROM_POOL && quoteAmt.GT(quoteLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"quote amount (%s) is greater than selected limit (%s)",
-				quoteAmt.String(),
-				quoteLimit.String(),
-			)
-		}
+	err = checkIfLimitIsViolated(quoteLimit, quoteAmt, dir)
+	if err != nil {
+		return sdk.Dec{}, err
 	}
 
 	if dir == types.Direction_ADD_TO_POOL {
@@ -125,14 +117,9 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	spotPrice, err := k.GetSpotPrice(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
 	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
-		Price:     spotPrice,
+		Price:     pool.GetMarkPrice(),
 		Timestamp: ctx.BlockHeader().Time,
 	}); err != nil {
 		return sdk.Dec{}, err
@@ -146,6 +133,7 @@ func (k Keeper) SwapBaseForQuote(
 }
 
 /*
+SwapQuoteForBase
 Trades quoteAssets in exchange for baseAssets.
 The quote asset is a stablecoin like NUSD.
 The base asset is a crypto asset like BTC or ETH.
@@ -170,21 +158,17 @@ func (k Keeper) SwapQuoteForBase(
 	baseLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
 ) (baseAmt sdk.Dec, err error) {
-	if !k.ExistsPool(ctx, pair) {
-		return sdk.Dec{}, types.ErrPairNotSupported
+	if quoteAmt.IsZero() {
+		return sdk.ZeroDec(), nil
 	}
 
 	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
-	if quoteAmt.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
 	// check trade limit ratio on quote in either direction
@@ -209,23 +193,9 @@ func (k Keeper) SwapQuoteForBase(
 			"base amount %s is over trading limit", baseAmt)
 	}
 
-	// check if base asset limit is violated
-	if !baseLimit.IsZero() {
-		// if going long and the base amount retrieved from the pool is less than the limit
-		if dir == types.Direction_ADD_TO_POOL && baseAmt.LT(baseLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"base amount (%s) is less than selected limit (%s)",
-				baseAmt.String(),
-				baseLimit.String(),
-			)
-			// if going short and the base amount retrieved from the pool is greater than the limit
-		} else if dir == types.Direction_REMOVE_FROM_POOL && baseAmt.GT(baseLimit) {
-			return sdk.Dec{}, types.ErrAssetFailsUserLimit.Wrapf(
-				"base amount (%s) is greater than selected limit (%s)",
-				baseAmt.String(),
-				baseLimit.String(),
-			)
-		}
+	err = checkIfLimitIsViolated(baseLimit, baseAmt, dir)
+	if err != nil {
+		return sdk.Dec{}, err
 	}
 
 	if dir == types.Direction_ADD_TO_POOL {
@@ -240,14 +210,9 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	spotPrice, err := k.GetSpotPrice(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
 	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
 		Pair:      pair.String(),
-		Price:     spotPrice,
+		Price:     pool.GetMarkPrice(),
 		Timestamp: ctx.BlockHeader().Time,
 	}); err != nil {
 		return sdk.Dec{}, err
@@ -258,6 +223,28 @@ func (k Keeper) SwapQuoteForBase(
 		QuoteAmount: quoteAmt,
 		BaseAmount:  baseAmt,
 	})
+}
+
+// checkIfLimitIsViolated checks if the limit is violated by the amount.
+// returns error if it does
+func checkIfLimitIsViolated(limit, amount sdk.Dec, dir types.Direction) error {
+	if !limit.IsZero() {
+		if dir == types.Direction_ADD_TO_POOL && amount.LT(limit) {
+			return types.ErrAssetFailsUserLimit.Wrapf(
+				"amount (%s) is less than selected limit (%s)",
+				amount.String(),
+				limit.String(),
+			)
+		} else if dir == types.Direction_REMOVE_FROM_POOL && amount.GT(limit) {
+			return types.ErrAssetFailsUserLimit.Wrapf(
+				"amount (%s) is greater than selected limit (%s)",
+				amount.String(),
+				limit.String(),
+			)
+		}
+	}
+
+	return nil
 }
 
 /*
@@ -273,18 +260,19 @@ args:
 ret:
   - err: error if any
 */
-func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.VPool) error {
+func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) error {
 	if pool.FluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
 		return nil
 	}
 
-	latestSnapshot, err := k.GetLatestReserveSnapshot(ctx, pool.Pair)
-	if err != nil {
+	it := k.ReserveSnapshots.Iterate(ctx, keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().Descending())
+	defer it.Close()
+	if !it.Valid() {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
 	}
-
-	if isOverFluctuationLimit(pool, latestSnapshot) {
+	latestSnapshot := it.Value()
+	if pool.IsOverFluctuationLimitInRelationWithSnapshot(latestSnapshot) {
 		return types.ErrOverFluctuationLimit
 	}
 
@@ -292,38 +280,6 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool *types.VPool) e
 }
 
 /*
-*
-isOverFluctuationLimit compares the updated pool's spot price with the current spot price.
-
-If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
-
-args:
-  - pool: the updated vpool
-  - snapshot: the snapshot to compare against
-
-ret:
-  - bool: true if the fluctuation limit is violated. false otherwise
-*/
-func isOverFluctuationLimit(pool *types.VPool, snapshot types.ReserveSnapshot) bool {
-	if pool.FluctuationLimitRatio.IsZero() {
-		return false
-	}
-
-	price := pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve)
-
-	lastPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
-	upperLimit := lastPrice.Mul(sdk.OneDec().Add(pool.FluctuationLimitRatio))
-	lowerLimit := lastPrice.Mul(sdk.OneDec().Sub(pool.FluctuationLimitRatio))
-
-	if price.GT(upperLimit) || price.LT(lowerLimit) {
-		return true
-	}
-
-	return false
-}
-
-/*
-*
 IsOverSpreadLimit compares the current spot price of the vpool (given by pair) to the underlying's index price (given by an oracle).
 It panics if you provide it with a pair that doesn't exist in the state.
 
@@ -332,10 +288,10 @@ args:
   - pair: the asset pair
 
 ret:
-  - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
+  - bool: whether the price has deviated from the oracle price beyond a spread ratio
 */
 func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
-	spotPrice, err := k.GetSpotPrice(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		panic(err)
 	}
@@ -345,16 +301,10 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	pool, err := k.getPool(ctx, pair)
-	if err != nil {
-		panic(err)
-	}
-
-	return spotPrice.Sub(indexPrice.Price).Quo(indexPrice.Price).Abs().GTE(pool.MaxOracleSpreadRatio)
+	return pool.IsOverSpreadLimit(indexPrice.Price)
 }
 
 /*
-*
 GetMaintenanceMarginRatio returns the maintenance margin ratio for the pool from the asset pair.
 
 args:
@@ -365,7 +315,7 @@ ret:
   - sdk.Dec: The maintenance margin ratio for the pool
 */
 func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		panic(err)
 	}
@@ -374,7 +324,6 @@ func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair
 }
 
 /*
-*
 GetMaxLeverage returns the maximum leverage required to open a position in the pool.
 
 args:
@@ -385,7 +334,7 @@ ret:
   - sdk.Dec: The maintenance margin ratio for the pool
 */
 func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
-	pool, err := k.getPool(ctx, pair)
+	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		panic(err)
 	}

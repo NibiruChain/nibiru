@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/sample"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -23,12 +24,12 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			name: "invalid token pair - error",
 			test: func() {
 				k, _, ctx := getKeeper(t)
-				alice := sample.AccAddress()
+				alice := testutil.AccAddress()
 				pos := types.ZeroPosition(ctx, common.AssetPair{
 					Token0: "",
 					Token1: "",
 				}, alice)
-				_, err := k.calcFreeCollateral(ctx, *pos)
+				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
 				require.ErrorIs(t, err, common.ErrInvalidTokenPair)
@@ -41,9 +42,9 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(false)
 
-				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
+				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, testutil.AccAddress())
 
-				_, err := k.calcFreeCollateral(ctx, *pos)
+				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
 				require.ErrorIs(t, err, types.ErrPairNotFound)
@@ -57,9 +58,9 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
 
-				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, sample.AccAddress())
+				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, testutil.AccAddress())
 
-				freeCollateral, err := k.calcFreeCollateral(ctx, *pos)
+				freeCollateral, err := k.calcFreeCollateral(ctx, pos)
 
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.ZeroDec(), freeCollateral)
@@ -148,13 +149,13 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 			k, mocks, ctx := getKeeper(t)
 
 			pos := types.Position{
-				TraderAddress:                  sample.AccAddress().String(),
-				Pair:                           common.Pair_BTC_NUSD,
-				Size_:                          tc.positionSize,
-				Margin:                         sdk.NewDec(100),
-				OpenNotional:                   sdk.NewDec(1000),
-				LatestCumulativeFundingPayment: sdk.ZeroDec(),
-				BlockNumber:                    1,
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            common.Pair_BTC_NUSD,
+				Size_:                           tc.positionSize,
+				Margin:                          sdk.NewDec(100),
+				OpenNotional:                    sdk.NewDec(1000),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				BlockNumber:                     1,
 			}
 
 			t.Log("mock vpool keeper")
@@ -178,6 +179,55 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFreeCollateral, freeCollateral)
+		})
+	}
+}
+
+func TestGetLatestCumulativePremiumFraction(t *testing.T) {
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "happy path",
+			test: func() {
+				keeper, _, ctx := getKeeper(t)
+
+				metadata := &types.PairMetadata{
+					Pair: common.Pair_NIBI_NUSD,
+					CumulativePremiumFractions: []sdk.Dec{
+						sdk.NewDec(1),
+						sdk.NewDec(2), // returns the latest from the list
+					},
+				}
+				setPairMetadata(keeper, ctx, *metadata)
+
+				latestCumulativePremiumFraction, err := keeper.
+					getLatestCumulativePremiumFraction(ctx, common.Pair_NIBI_NUSD)
+
+				require.NoError(t, err)
+				assert.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)
+			},
+		},
+		{
+			name: "uninitialized vpool has no metadata | fail",
+			test: func() {
+				perpKeeper, _, ctx := getKeeper(t)
+				vpool := common.AssetPair{
+					Token0: "xxx",
+					Token1: "yyy",
+				}
+				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
+					ctx, vpool)
+				require.Error(t, err)
+				assert.EqualValues(t, sdk.Dec{}, lcpf)
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
 		})
 	}
 }

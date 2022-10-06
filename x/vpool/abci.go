@@ -4,13 +4,24 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/common"
+
+	"github.com/NibiruChain/nibiru/x/vpool/types"
+
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 )
 
-// Called every block to store a snapshot of the vpool.
+// EndBlocker Called every block to store a snapshot of the vpool.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
-	for _, pool := range k.GetAllPools(ctx) {
-		k.SaveSnapshot(ctx, pool.Pair, pool.QuoteAssetReserve, pool.BaseAssetReserve)
+	for _, pool := range k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values() {
+		snapshot := types.NewReserveSnapshot(
+			pool.Pair,
+			pool.BaseAssetReserve,
+			pool.QuoteAssetReserve,
+			ctx.BlockTime(),
+		)
+		k.ReserveSnapshots.Insert(ctx, keys.Join(pool.Pair, keys.Uint64(uint64(ctx.BlockTime().UnixMilli()))), snapshot)
 	}
 	return []abci.ValidatorUpdate{}
 }
