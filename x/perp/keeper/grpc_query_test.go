@@ -119,9 +119,9 @@ func TestQueryPosition(t *testing.T) {
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
-			resp, err := queryServer.QueryTraderPosition(
+			resp, err := queryServer.QueryPosition(
 				sdk.WrapSDKContext(ctx),
-				&types.QueryTraderPositionRequest{
+				&types.QueryPositionRequest{
 					Trader:    traderAddr.String(),
 					TokenPair: common.Pair_BTC_NUSD.String(),
 				},
@@ -158,9 +158,9 @@ func TestQueryPositions(t *testing.T) {
 				},
 				{
 					Pair:                            common.Pair_ETH_NUSD,
-					Size_:                           sdk.NewDec(20),
-					OpenNotional:                    sdk.NewDec(42),
-					Margin:                          sdk.NewDec(2),
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(10),
+					Margin:                          sdk.NewDec(1),
 					BlockNumber:                     1,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
@@ -173,6 +173,8 @@ func TestQueryPositions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize trader address")
 			traderAddr := testutil.AccAddress()
+
+			tc.Positions[0].TraderAddress = traderAddr.String()
 			tc.Positions[0].TraderAddress = traderAddr.String()
 
 			t.Log("initialize app and keeper")
@@ -216,17 +218,36 @@ func TestQueryPositions(t *testing.T) {
 					sdk.ZeroDec(),
 				},
 			})
+			vpoolKeeper.CreatePool(
+				ctx,
+				common.Pair_NIBI_NUSD,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
+				/* baseReserve */ sdk.MustNewDecFromStr("100000"),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+			)
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				Pair: common.Pair_NIBI_NUSD,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			})
 
 			t.Log("initialize position")
 			for _, position := range tc.Positions {
-				setPosition(*perpKeeper, ctx, *position)
+				currentPosition := position
+				currentPosition.TraderAddress = traderAddr.String()
+				setPosition(*perpKeeper, ctx, *currentPosition)
 			}
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
-			resp, err := queryServer.QueryTraderPositions(
+			resp, err := queryServer.QueryPositions(
 				sdk.WrapSDKContext(ctx),
-				&types.QueryTraderPositionsRequest{
+				&types.QueryPositionsRequest{
 					Trader: traderAddr.String(),
 				},
 			)

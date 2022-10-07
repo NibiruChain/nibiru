@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 
@@ -23,9 +24,9 @@ func NewQuerier(k Keeper) types.QueryServer {
 
 var _ types.QueryServer = queryServer{}
 
-func (q queryServer) QueryTraderPositions(
-	goCtx context.Context, req *types.QueryTraderPositionsRequest,
-) (*types.QueryTraderPositionsResponse, error) {
+func (q queryServer) QueryPositions(
+	goCtx context.Context, req *types.QueryPositionsRequest,
+) (*types.QueryPositionsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -37,21 +38,25 @@ func (q queryServer) QueryTraderPositions(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	pools := q.k.VpoolKeeper.GetAllPools(ctx)
+	var positions []*types.QueryPositionResponse
 
-	var positions []*types.QueryTraderPositionResponse
+	fmt.Println(pools)
 	for _, pool := range pools {
-		position, _ := q.traderPosition(ctx, pool.Pair, req.Trader)
-		positions = append(positions, position)
+		position, err := q.position(ctx, pool.Pair, req.Trader)
+		fmt.Println(position, err)
+		if err == nil {
+			positions = append(positions, position)
+		}
 	}
 
-	return &types.QueryTraderPositionsResponse{
+	return &types.QueryPositionsResponse{
 		Positions: positions,
 	}, nil
 }
 
-func (q queryServer) QueryTraderPosition(
-	goCtx context.Context, req *types.QueryTraderPositionRequest,
-) (*types.QueryTraderPositionResponse, error) {
+func (q queryServer) QueryPosition(
+	goCtx context.Context, req *types.QueryPositionRequest,
+) (*types.QueryPositionResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -67,10 +72,10 @@ func (q queryServer) QueryTraderPosition(
 		return nil, err
 	}
 
-	return q.traderPosition(ctx, pair, req.Trader)
+	return q.position(ctx, pair, req.Trader)
 }
 
-func (q queryServer) traderPosition(ctx sdk.Context, pair common.AssetPair, trader string) (*types.QueryTraderPositionResponse, error) {
+func (q queryServer) position(ctx sdk.Context, pair common.AssetPair, trader string) (*types.QueryPositionResponse, error) {
 	position, err := q.k.Positions.Get(ctx, keys.Join(pair, keys.String(trader)))
 	if err != nil {
 		return nil, err
@@ -93,7 +98,7 @@ func (q queryServer) traderPosition(ctx sdk.Context, pair common.AssetPair, trad
 		marginRatioIndex = sdk.Dec{}
 	}
 
-	return &types.QueryTraderPositionResponse{
+	return &types.QueryPositionResponse{
 		Position:         &position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
