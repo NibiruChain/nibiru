@@ -1,17 +1,3 @@
 # `x/vpool`
 
----
-
-
-<!-- 
-
-Outline for concepts.md
-
-# Concepts | x/vpool
-
-- TODO describe virtual reserves
-- TODO describe constant-product curve
-- TODO describe slippage
-- TODO Explain base ammount limit
-
--->
+Please refer to our [GitBook](https://docs.nibiru.fi/module-reference/vpool).
