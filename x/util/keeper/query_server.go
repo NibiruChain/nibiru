@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"context"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 )
