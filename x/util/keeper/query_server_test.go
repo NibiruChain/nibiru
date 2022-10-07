@@ -1,12 +1,14 @@
 package keeper_test
 
 import (
+	"testing"
+
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/util/keeper"
 	"github.com/NibiruChain/nibiru/x/util/types"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestQueryServer_ModuleAccounts(t *testing.T) {
