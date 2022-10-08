@@ -119,9 +119,9 @@ func TestQueryPosition(t *testing.T) {
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
-			resp, err := queryServer.QueryTraderPosition(
+			resp, err := queryServer.QueryPosition(
 				sdk.WrapSDKContext(ctx),
-				&types.QueryTraderPositionRequest{
+				&types.QueryPositionRequest{
 					Trader:    traderAddr.String(),
 					TokenPair: common.Pair_BTC_NUSD.String(),
 				},
@@ -136,6 +136,125 @@ func TestQueryPosition(t *testing.T) {
 			assert.Equal(t, tc.expectedMarginRatio, resp.MarginRatioMark)
 			// assert.Equal(t, tc.expectedMarginRatioIndex, resp.MarginRatioIndex)
 			// TODO https://github.com/NibiruChain/nibiru/issues/809
+		})
+	}
+}
+
+func TestQueryPositions(t *testing.T) {
+	tests := []struct {
+		name      string
+		Positions []*types.Position
+	}{
+		{
+			name: "positive PnL",
+			Positions: []*types.Position{
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(10),
+					Margin:                          sdk.NewDec(1),
+					BlockNumber:                     1,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					Pair:                            common.Pair_ETH_NUSD,
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(10),
+					Margin:                          sdk.NewDec(1),
+					BlockNumber:                     1,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Log("initialize trader address")
+			traderAddr := testutil.AccAddress()
+
+			tc.Positions[0].TraderAddress = traderAddr.String()
+			tc.Positions[0].TraderAddress = traderAddr.String()
+
+			t.Log("initialize app and keeper")
+			nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+			perpKeeper := &nibiruApp.PerpKeeper
+			vpoolKeeper := &nibiruApp.VpoolKeeper
+			queryServer := keeper.NewQuerier(*perpKeeper)
+
+			t.Log("initialize vpool and pair")
+			vpoolKeeper.CreatePool(
+				ctx,
+				common.Pair_BTC_NUSD,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
+				/* baseReserve */ sdk.MustNewDecFromStr("100000"),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+			)
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				Pair: common.Pair_BTC_NUSD,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			})
+			vpoolKeeper.CreatePool(
+				ctx,
+				common.Pair_ETH_NUSD,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
+				/* baseReserve */ sdk.MustNewDecFromStr("100000"),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+			)
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				Pair: common.Pair_ETH_NUSD,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			})
+			vpoolKeeper.CreatePool(
+				ctx,
+				common.Pair_NIBI_NUSD,
+				/* tradeLimitRatio */ sdk.OneDec(),
+				/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
+				/* baseReserve */ sdk.MustNewDecFromStr("100000"),
+				/* fluctuationLimitRatio */ sdk.OneDec(),
+				/* maxOracleSpreadRatio */ sdk.OneDec(),
+				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
+				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+			)
+			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				Pair: common.Pair_NIBI_NUSD,
+				CumulativePremiumFractions: []sdk.Dec{
+					sdk.ZeroDec(),
+				},
+			})
+
+			t.Log("initialize position")
+			for _, position := range tc.Positions {
+				currentPosition := position
+				currentPosition.TraderAddress = traderAddr.String()
+				setPosition(*perpKeeper, ctx, *currentPosition)
+			}
+
+			t.Log("query position")
+			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
+			resp, err := queryServer.QueryPositions(
+				sdk.WrapSDKContext(ctx),
+				&types.QueryPositionsRequest{
+					Trader: traderAddr.String(),
+				},
+			)
+			require.NoError(t, err)
+
+			t.Log("assert response")
+			assert.Equal(t, len(tc.Positions), len(resp.Positions))
 		})
 	}
 }
