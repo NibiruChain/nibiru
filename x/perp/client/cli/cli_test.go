@@ -488,7 +488,7 @@ func (s *IntegrationTestSuite) TestAddMargin() {
 				s.EqualValues(tc.expectedCode, 0)
 
 				// query trader position
-				queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, pair, s.users[2])
+				queryResp, err := testutilcli.QueryPosition(val.ClientCtx, pair, s.users[2])
 				s.NoError(err)
 
 				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
