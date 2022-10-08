@@ -40,7 +40,6 @@ func (q queryServer) QueryPositions(
 	pools := q.k.VpoolKeeper.GetAllPools(ctx)
 	var positions []*types.QueryPositionResponse
 
-	fmt.Println(pools)
 	for _, pool := range pools {
 		position, err := q.position(ctx, pool.Pair, req.Trader)
 		fmt.Println(position, err)
