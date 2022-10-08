@@ -15,10 +15,15 @@ service Query {
     option (google.api.http).get = "/nibiru/perp/params";
   }
 
-  rpc QueryTraderPosition(QueryTraderPositionRequest)
-      returns (QueryTraderPositionResponse) {
-    option (google.api.http).get = "/nibiru/perp/trader_position";
+  rpc QueryPosition(QueryPositionRequest)
+      returns (QueryPositionResponse) {
+    option (google.api.http).get = "/nibiru/perp/position";
   }
+
+  rpc QueryPositions(QueryPositionsRequest)
+      returns (QueryPositionsResponse) {
+    option (google.api.http).get = "/nibiru/perp/positions";
+  }  
 
   rpc FundingRates(QueryFundingRatesRequest)
       returns (QueryFundingRatesResponse) {
@@ -37,17 +42,28 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-// ---------------------------------------- TraderPosition
+// ---------------------------------------- Positions
+message QueryPositionsRequest {
+  string trader = 1;  
+}
 
-// QueryTraderPositionRequest is the request type for the position of the x/perp
+message QueryPositionsResponse {
+  repeated QueryPositionResponse positions = 1;
+}
+
+// ---------------------------------------- Position
+
+// QueryPositionRequest is the request type for the position of the x/perp
 // module account.
-message QueryTraderPositionRequest {
+message QueryPositionRequest {
   string token_pair = 1;
 
   string trader = 2;
 }
 
-message QueryTraderPositionResponse {
+
+
+message QueryPositionResponse {
   // The position as it exists in the blockchain state
   Position position = 1;
 

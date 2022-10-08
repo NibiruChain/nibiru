@@ -211,7 +211,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(60_000_000_000), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("A. check trader has no existing positions")
-	_, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
+	_, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
 	s.Error(err, "no position found")
 
 	s.T().Log("B. open position")
@@ -235,7 +235,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(60_001_000_000), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("B. check vpool balances")
-	queryResp, err := testutilcli.QueryTraderPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
+	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -262,7 +262,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 
 	s.T().Log("C. check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -296,7 +296,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(60_002_999_900), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("D. Check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -323,7 +323,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NotContains(res.String(), "fail")
 
 	s.T().Log("E. Check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
 	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -346,7 +346,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 
 	s.T().Log("F. check trader position")
-	queryResp, err = testutilcli.QueryTraderPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
 
 	s.T().Logf("query response: %+v", queryResp)
 	s.Error(err)
@@ -361,7 +361,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	user := s.users[0]
 
 	// verify trader has no position (empty)
-	_, err := testutilcli.QueryTraderPosition(val.ClientCtx, common.Pair_ETH_NUSD, user)
+	_, err := testutilcli.QueryPosition(val.ClientCtx, common.Pair_ETH_NUSD, user)
 	s.Error(err, "no position found")
 
 	// close position should produce error

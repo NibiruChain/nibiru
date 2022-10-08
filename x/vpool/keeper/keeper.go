@@ -341,3 +341,16 @@ func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
 
 	return pool.MaxLeverage
 }
+
+/*
+GetAllPools returns an array of all the pools
+
+args:
+  - ctx: the cosmos-sdk context
+
+ret:
+  - []types.VPool: All defined vpool
+*/
+func (k Keeper) GetAllPools(ctx sdk.Context) []types.VPool {
+	return k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
+}
