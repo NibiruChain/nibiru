@@ -374,22 +374,6 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.Contains(out.String(), collections.ErrNotFound.Error())
 }
 
-func (s *IntegrationTestSuite) TestGetPrices() {
-	val := s.network.Validators[0]
-
-	s.T().Log("check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_ETH_NUSD)
-	s.NoError(err)
-	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
-
-	s.T().Log("check prices")
-	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.Pair_ETH_NUSD, "add", "100")
-	s.T().Logf("priceInfo: %+v", priceInfo)
-	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
-	s.NoError(err)
-}
-
 func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	val := s.network.Validators[0]
 
@@ -433,6 +417,84 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	}
 
 	s.Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+}
+
+func (s *IntegrationTestSuite) TestAddMargin() {
+	val := s.network.Validators[0]
+	pair := common.Pair_ETH_NUSD
+
+	// Open a new position
+	s.T().Log("opening a position with user 2....")
+	args := []string{
+		"--from",
+		s.users[2].String(),
+		"buy",
+		pair.String(),
+		"10",    // Leverage
+		"10000", // Quote asset amount
+		"0.0000001",
+	}
+
+	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	if err != nil {
+		s.T().Logf("user2 open position err: %+v", err)
+	}
+	s.Require().NoError(err)
+
+	testCases := []struct {
+		name           string
+		args           []string
+		expectedCode   uint32
+		expectedMargin sdk.Dec
+	}{
+		{
+			name: "PASS: add margin to correct position",
+			args: []string{
+				"--from",
+				s.users[2].String(),
+				pair.String(),
+				fmt.Sprintf("%s%s", "10000", pair.Token1),
+			},
+			expectedCode:   0,
+			expectedMargin: sdk.NewDec(20_000),
+		},
+		{
+			name: "FAIL: position not found",
+			args: []string{
+				"--from",
+				s.users[2].String(),
+				common.Pair_BTC_NUSD.String(),
+				fmt.Sprintf("%s%s", "10000", pair.Token1),
+			},
+			expectedCode: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			s.T().Log("adding margin on user 2....")
+			out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(tc.args, commonArgs...))
+			if err != nil {
+				s.T().Logf("user 2 add margin err: %+v", err)
+			}
+			s.Require().NoError(err)
+
+			var tx sdk.TxResponse
+			val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), &tx)
+
+			if tc.expectedCode != 0 {
+				s.EqualValues(tc.expectedCode, tx.Code)
+			} else {
+				s.EqualValues(tc.expectedCode, 0)
+
+				// query trader position
+				queryResp, err := testutilcli.QueryPosition(val.ClientCtx, pair, s.users[2])
+				s.NoError(err)
+
+				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
+			}
+		})
+	}
 }
 
 func (s *IntegrationTestSuite) TestLiquidate() {
