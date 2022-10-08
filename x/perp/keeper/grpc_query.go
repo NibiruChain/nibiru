@@ -42,7 +42,6 @@ func (q queryServer) QueryPositions(
 
 	for _, pool := range pools {
 		position, err := q.position(ctx, pool.Pair, req.Trader)
-		fmt.Println(position, err)
 		if err == nil {
 			positions = append(positions, position)
 		}
