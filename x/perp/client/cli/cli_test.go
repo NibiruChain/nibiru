@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/coll"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -371,7 +371,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 		common.Pair_ETH_NUSD.String(),
 	}
 	out, _ := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), collections.ErrNotFound.Error())
+	s.Contains(out.String(), coll.ErrNotFound.Error())
 }
 
 func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
@@ -510,7 +510,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	// liquidate a position that does not exist
 	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
-	s.Contains(out.String(), collections.ErrNotFound.Error())
+	s.Contains(out.String(), coll.ErrNotFound.Error())
 	if err != nil {
 		s.T().Logf("user liquidate error: %+v", err)
 	}

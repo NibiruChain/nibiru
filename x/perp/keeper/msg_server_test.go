@@ -4,11 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/coll"
+
 	"github.com/NibiruChain/nibiru/x/testutil"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
-
-	"github.com/NibiruChain/nibiru/collections"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
@@ -52,7 +50,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1000)),
 			initialPosition: nil,
 			margin:          sdk.NewInt64Coin(common.DenomNUSD, 1000),
-			expectedErr:     collections.ErrNotFound,
+			expectedErr:     coll.ErrNotFound,
 		},
 		{
 			name:        "success",
@@ -157,7 +155,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 0)),
 			initialPosition: nil,
 			marginToRemove:  sdk.NewInt64Coin(common.DenomNUSD, 1000),
-			expectedErr:     collections.ErrNotFound,
+			expectedErr:     coll.ErrNotFound,
 		},
 		{
 			name:       "vault insufficient funds",
@@ -612,14 +610,14 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	// and events levels, whilst the second (which failed) didn't.
 
 	assertNotLiquidated := func(old types.Position) {
-		position, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
+		position, err := app.PerpKeeper.Positions.Get(ctx, coll.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
 		require.NoError(t, err)
 		require.Equal(t, old, position)
 	}
 
 	assertLiquidated := func(old types.Position) {
-		_, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
-		require.ErrorIs(t, err, collections.ErrNotFound)
+		_, err := app.PerpKeeper.Positions.Get(ctx, coll.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
+		require.ErrorIs(t, err, coll.ErrNotFound)
 		// NOTE(mercilex): does not cover partial liquidation
 	}
 	assertNotLiquidated(notAtRiskPosition)

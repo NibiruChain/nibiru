@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/coll"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/simapp"
 
@@ -31,7 +31,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					ctx, types.Position{
 						Pair: common.Pair_NIBI_NUSD,
 					}, marginDelta)
-				require.ErrorIs(t, err, collections.ErrNotFound)
+				require.ErrorIs(t, err, coll.ErrNotFound)
 			},
 		},
 		{
