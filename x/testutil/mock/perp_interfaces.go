@@ -307,6 +307,20 @@ func (mr *MockVpoolKeeperMockRecorder) ExistsPool(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsPool", reflect.TypeOf((*MockVpoolKeeper)(nil).ExistsPool), arg0, arg1)
 }
 
+// GetAllPools mocks base method.
+func (m *MockVpoolKeeper) GetAllPools(arg0 types2.Context) []types1.VPool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllPools", arg0)
+	ret0, _ := ret[0].([]types1.VPool)
+	return ret0
+}
+
+// GetAllPools indicates an expected call of GetAllPools.
+func (mr *MockVpoolKeeperMockRecorder) GetAllPools(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPools", reflect.TypeOf((*MockVpoolKeeper)(nil).GetAllPools), arg0)
+}
+
 // GetBaseAssetPrice mocks base method.
 func (m *MockVpoolKeeper) GetBaseAssetPrice(arg0 types2.Context, arg1 common.AssetPair, arg2 types1.Direction, arg3 types2.Dec) (types2.Dec, error) {
 	m.ctrl.T.Helper()
@@ -366,6 +380,21 @@ func (mr *MockVpoolKeeperMockRecorder) GetMarkPrice(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMarkPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMarkPrice), arg0, arg1)
 }
 
+// GetMarkPriceTWAP mocks base method.
+func (m *MockVpoolKeeper) GetMarkPriceTWAP(arg0 types2.Context, arg1 common.AssetPair, arg2 time.Duration) (types2.Dec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMarkPriceTWAP", arg0, arg1, arg2)
+	ret0, _ := ret[0].(types2.Dec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMarkPriceTWAP indicates an expected call of GetMarkPriceTWAP.
+func (mr *MockVpoolKeeperMockRecorder) GetMarkPriceTWAP(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMarkPriceTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMarkPriceTWAP), arg0, arg1, arg2)
+}
+
 // GetMaxLeverage mocks base method.
 func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types2.Context, arg1 common.AssetPair) types2.Dec {
 	m.ctrl.T.Helper()
@@ -408,21 +437,6 @@ func (m *MockVpoolKeeper) GetSettlementPrice(arg0 types2.Context, arg1 common.As
 func (mr *MockVpoolKeeperMockRecorder) GetSettlementPrice(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSettlementPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetSettlementPrice), arg0, arg1)
-}
-
-// GetSpotTWAP mocks base method.
-func (m *MockVpoolKeeper) GetMarkPriceTWAP(arg0 types2.Context, arg1 common.AssetPair, arg2 time.Duration) (types2.Dec, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMarkPriceTWAP", arg0, arg1, arg2)
-	ret0, _ := ret[0].(types2.Dec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSpotTWAP indicates an expected call of GetSpotTWAP.
-func (mr *MockVpoolKeeperMockRecorder) GetSpotTWAP(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMarkPriceTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMarkPriceTWAP), arg0, arg1, arg2)
 }
 
 // IsOverSpreadLimit mocks base method.

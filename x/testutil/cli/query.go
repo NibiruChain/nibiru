@@ -115,20 +115,20 @@ func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction st
 	return queryResp, nil
 }
 
-func QueryTraderPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (perptypes.QueryTraderPositionResponse, error) {
+func QueryPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (perptypes.QueryPositionResponse, error) {
 	out, err := clitestutil.ExecTestCLICmd(
 		ctx,
 		perpcli.CmdQueryPosition(),
 		[]string{trader.String(), pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
 	)
 	if err != nil {
-		return perptypes.QueryTraderPositionResponse{}, err
+		return perptypes.QueryPositionResponse{}, err
 	}
 
-	var queryResp perptypes.QueryTraderPositionResponse
+	var queryResp perptypes.QueryPositionResponse
 	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
 	if err != nil {
-		return perptypes.QueryTraderPositionResponse{}, err
+		return perptypes.QueryPositionResponse{}, err
 	}
 
 	return queryResp, nil

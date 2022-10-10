@@ -39,7 +39,23 @@ func (s *VpoolCLISuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
+	encodingConfig := simapp.MakeTestEncodingConfig()
 	genesisState := simapp.NewTestGenesisStateFromDefault()
+	vpoolGenesis := vpooltypes.DefaultGenesis()
+	vpoolGenesis.Vpools = []vpooltypes.VPool{
+		{
+			Pair:                   common.Pair_ETH_NUSD,
+			BaseAssetReserve:       sdk.NewDec(10_000_000),
+			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
+	}
+	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
+
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
@@ -52,7 +68,7 @@ func (s *VpoolCLISuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s VpoolCLISuite) TestGovAddVpool() {
+func (s *VpoolCLISuite) TestGovAddVpool() {
 	s.Require().Len(s.network.Validators, 1)
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
@@ -193,6 +209,22 @@ e.g. $ nibid tx gov vote 1 yes`)
 		}
 	}
 	s.Require().True(found, "pool does not exist")
+}
+
+func (s *VpoolCLISuite) TestGetPrices() {
+	val := s.network.Validators[0]
+
+	s.T().Log("check vpool balances")
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_ETH_NUSD)
+	s.NoError(err)
+	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
+
+	s.T().Log("check prices")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.Pair_ETH_NUSD, "add", "100")
+	s.T().Logf("priceInfo: %+v", priceInfo)
+	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
+	s.NoError(err)
 }
 
 func TestVpoolCLISuite(t *testing.T) {
