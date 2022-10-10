@@ -5,7 +5,6 @@ import (
 	"github.com/NibiruChain/nibiru/coll"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -23,7 +22,7 @@ func NewKeeper(
 		codec:           codec,
 		storeKey:        storeKey,
 		pricefeedKeeper: pricefeedKeeper,
-		Pools:           collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
+		Pools:           coll.NewMap[common.AssetPair, types.VPool](storeKey, 0, common.AssetPairKeyEncoder, coll.ProtoValueEncoder[types.VPool](codec)),
 		ReserveSnapshots: coll.NewMap[coll.Pair[common.AssetPair, time.Time], types.ReserveSnapshot](
 			storeKey, 1,
 			coll.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, coll.Keys.Time),
@@ -37,7 +36,7 @@ type Keeper struct {
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
 
-	Pools            collections.Map[common.AssetPair, types.VPool, *types.VPool]
+	Pools            coll.Map[common.AssetPair, types.VPool]
 	ReserveSnapshots coll.Map[coll.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
 }
 
@@ -356,5 +355,5 @@ ret:
   - []types.VPool: All defined vpool
 */
 func (k Keeper) GetAllPools(ctx sdk.Context) []types.VPool {
-	return k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
+	return k.Pools.Iterate(ctx, coll.Range[common.AssetPair]{}).Values()
 }

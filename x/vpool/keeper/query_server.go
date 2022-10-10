@@ -2,8 +2,7 @@ package keeper
 
 import (
 	"context"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/coll"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -61,7 +60,7 @@ func (q queryServer) AllPools(
 
 	var pools []types.VPool
 	var pricesForPools []types.PoolPrices
-	for _, pool := range q.k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values() {
+	for _, pool := range q.k.Pools.Iterate(ctx, coll.Range[common.AssetPair]{}).Values() {
 		poolPrices, err := q.k.GetPoolPrices(ctx, pool)
 		if err != nil {
 			return nil, err
