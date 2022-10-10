@@ -2,11 +2,9 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/coll"
 	"sort"
 	"time"
-
-	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -27,11 +25,10 @@ type (
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
-		RawPrices     collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice, *types.PostedPrice]
-		CurrentPrices collections.Map[common.AssetPair, types.CurrentPrice, *types.CurrentPrice]
+		RawPrices     coll.Map[coll.Pair[common.AssetPair, sdk.AccAddress], types.PostedPrice]
+		CurrentPrices coll.Map[common.AssetPair, types.CurrentPrice]
 		// PriceSnapshots maps types.PriceSnapshot to the common.AssetPair of the snapshot and the creation timestamp as keys.Uint64Key.
-		// TODO(mercilex): maybe it's worth to create a keys.Timestamp key?
-		PriceSnapshots collections.Map[keys.Pair[common.AssetPair, keys.Uint64Key], types.PriceSnapshot, *types.PriceSnapshot]
+		PriceSnapshots coll.Map[coll.Pair[common.AssetPair, time.Time], types.PriceSnapshot]
 	}
 )
 
@@ -54,9 +51,15 @@ func NewKeeper(
 		memKey:     memKey,
 		paramstore: ps,
 
-		CurrentPrices:  collections.NewMap[common.AssetPair, types.CurrentPrice](cdc, storeKey, 0),
-		RawPrices:      collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.PostedPrice](cdc, storeKey, 1),
-		PriceSnapshots: collections.NewMap[keys.Pair[common.AssetPair, keys.Uint64Key], types.PriceSnapshot](cdc, storeKey, 2),
+		CurrentPrices: coll.NewMap[common.AssetPair, types.CurrentPrice](storeKey, 0, common.AssetPairKeyEncoder, coll.ProtoValueEncoder[types.CurrentPrice](cdc)),
+		RawPrices: coll.NewMap[coll.Pair[common.AssetPair, sdk.AccAddress], types.PostedPrice](storeKey, 1,
+			coll.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, coll.Keys.AccAddress),
+			coll.ProtoValueEncoder[types.PostedPrice](cdc),
+		),
+		PriceSnapshots: coll.NewMap[coll.Pair[common.AssetPair, time.Time]](
+			storeKey, 2,
+			coll.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, coll.Keys.Time),
+			coll.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 	}
 }
 
@@ -120,7 +123,7 @@ func (k Keeper) PostRawPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
-	k.RawPrices.Insert(ctx, keys.Join(pair, keys.String(oracle.String())), newPostedPrice)
+	k.RawPrices.Insert(ctx, coll.Join(pair, oracle), newPostedPrice)
 	return nil
 }
 
@@ -182,7 +185,7 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 	k.CurrentPrices.Insert(ctx, assetPair, currentPrice)
 
 	// Update the TWAP prices
-	k.PriceSnapshots.Insert(ctx, keys.Join(assetPair, keys.Uint64(uint64(ctx.BlockTime().UnixMilli()))), types.PriceSnapshot{
+	k.PriceSnapshots.Insert(ctx, coll.Join(assetPair, ctx.BlockTime()), types.PriceSnapshot{
 		PairId:      pairID,
 		Price:       currentPrice.Price,
 		TimestampMs: ctx.BlockTime().UnixMilli(),
@@ -293,18 +296,13 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 		inverseIsActive = true
 	}
 
-	// traverse snapshots of the pair in reverse order from currentTime - TWAPLookBackWindow => now
-	pair := keys.PairPrefix[common.AssetPair, keys.Uint64Key](assetPair)                  // only current AssetPair
-	fromTime := ctx.BlockTime().Add(-1 * k.GetParams(ctx).TwapLookbackWindow).UnixMilli() // earliest timestamp aka current time - TWAPLookBackWindow
-	toTime := ctx.BlockTime().UnixMilli()                                                 // current time
-	start := keys.PairSuffix[common.AssetPair](keys.Uint64(uint64(fromTime)))             // this turns it into a suffix
-	end := keys.PairSuffix[common.AssetPair](keys.Uint64(uint64(toTime)))
-	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
-		Prefix(pair).
-		Start(keys.Inclusive(start)).
-		End(keys.Exclusive(end)) // current block shouldn't have a snapshot until EndBlock is run
-
-	snapshots := k.PriceSnapshots.Iterate(ctx, rng).Values()
+	snapshots := k.PriceSnapshots.Iterate(
+		ctx,
+		coll.PairRange[common.AssetPair, time.Time]{}.
+			Prefix(assetPair).                                                           // only results of provided asset pair
+			StartInclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)). // start from earliest timestamp which is current time - twap lockback window
+			EndExclusive(ctx.BlockTime()),                                               // end at current time - exclusive
+	).Values()
 	if len(snapshots) == 0 {
 		// if there are no snapshots, return -1 for the price
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
@@ -345,7 +343,7 @@ func calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (sdk.Dec, error)
 
 // GetCurrentPrices returns all current price objects from the store
 func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
-	return k.CurrentPrices.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
+	return k.CurrentPrices.Iterate(ctx, coll.Range[common.AssetPair]{}).Values()
 }
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
@@ -357,10 +355,5 @@ func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices
 			Use pair, %v, instead`, pair.Inverse().String(), pairStr))
 	}
 
-	prefix := keys.PairPrefix[common.AssetPair, keys.StringKey](pair)
-	return k.
-		RawPrices.
-		Iterate(ctx,
-			keys.NewRange[keys.Pair[common.AssetPair, keys.StringKey]]().Prefix(prefix),
-		).Values()
+	return k.RawPrices.Iterate(ctx, coll.PairRange[common.AssetPair, sdk.AccAddress]{}.Prefix(pair)).Values()
 }
