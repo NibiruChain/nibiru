@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -22,7 +22,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		return
 	}
 
-	for _, pairMetadata := range k.PairsMetadata.Iterate(ctx, coll.Range[common.AssetPair]{}).Values() {
+	for _, pairMetadata := range k.PairsMetadata.Iterate(ctx, collections.Range[common.AssetPair]{}).Values() {
 		if !k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue

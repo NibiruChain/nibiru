@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -26,9 +26,9 @@ type Keeper struct {
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
 
-	Positions      coll.Map[coll.Pair[common.AssetPair, sdk.AccAddress], types.Position]
-	PairsMetadata  coll.Map[common.AssetPair, types.PairMetadata]
-	PrepaidBadDebt coll.Map[string, types.PrepaidBadDebt]
+	Positions      collections.Map[collections.Pair[common.AssetPair, sdk.AccAddress], types.Position]
+	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata]
+	PrepaidBadDebt collections.Map[string, types.PrepaidBadDebt]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -62,13 +62,13 @@ func NewKeeper(
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
-		Positions: coll.NewMap(
+		Positions: collections.NewMap(
 			storeKey, 0,
-			coll.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, coll.Keys.AccAddress),
-			coll.ProtoValueEncoder[types.Position](cdc),
+			collections.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, collections.Keys.AccAddress),
+			collections.ProtoValueEncoder[types.Position](cdc),
 		),
-		PairsMetadata:  coll.NewMap[common.AssetPair, types.PairMetadata](storeKey, 1, common.AssetPairKeyEncoder, coll.ProtoValueEncoder[types.PairMetadata](cdc)),
-		PrepaidBadDebt: coll.NewMap[string, types.PrepaidBadDebt](storeKey, 2, coll.Keys.String, coll.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
+		PairsMetadata:  collections.NewMap[common.AssetPair, types.PairMetadata](storeKey, 1, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
+		PrepaidBadDebt: collections.NewMap[string, types.PrepaidBadDebt](storeKey, 2, collections.Keys.String, collections.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
 	}
 }
 

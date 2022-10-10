@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,11 +23,11 @@ func NewKeeper(
 		codec:           codec,
 		storeKey:        storeKey,
 		pricefeedKeeper: pricefeedKeeper,
-		Pools:           coll.NewMap[common.AssetPair, types.VPool](storeKey, 0, common.AssetPairKeyEncoder, coll.ProtoValueEncoder[types.VPool](codec)),
-		ReserveSnapshots: coll.NewMap[coll.Pair[common.AssetPair, time.Time], types.ReserveSnapshot](
+		Pools:           collections.NewMap[common.AssetPair, types.VPool](storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.VPool](codec)),
+		ReserveSnapshots: collections.NewMap[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot](
 			storeKey, 1,
-			coll.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, coll.Keys.Time),
-			coll.ProtoValueEncoder[types.ReserveSnapshot](codec),
+			collections.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, collections.Keys.Time),
+			collections.ProtoValueEncoder[types.ReserveSnapshot](codec),
 		),
 	}
 }
@@ -37,8 +37,8 @@ type Keeper struct {
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
 
-	Pools            coll.Map[common.AssetPair, types.VPool]
-	ReserveSnapshots coll.Map[coll.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
+	Pools            collections.Map[common.AssetPair, types.VPool]
+	ReserveSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -270,7 +270,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) er
 		return nil
 	}
 
-	it := k.ReserveSnapshots.Iterate(ctx, coll.PairRange[common.AssetPair, time.Time]{}.Descending())
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Descending())
 	defer it.Close()
 	if !it.Valid() {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
@@ -356,5 +356,5 @@ ret:
   - []types.VPool: All defined vpool
 */
 func (k Keeper) GetAllPools(ctx sdk.Context) []types.VPool {
-	return k.Pools.Iterate(ctx, coll.Range[common.AssetPair]{}).Values()
+	return k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 }

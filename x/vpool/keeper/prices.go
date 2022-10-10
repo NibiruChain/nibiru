@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -190,7 +190,7 @@ func (k Keeper) calcTwap(
 
 	iter := k.ReserveSnapshots.Iterate(
 		ctx,
-		coll.PairRange[common.AssetPair, time.Time]{}.
+		collections.PairRange[common.AssetPair, time.Time]{}.
 			Prefix(pair).
 			EndInclusive(ctx.BlockTime()).
 			Descending(),

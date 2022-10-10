@@ -1,7 +1,7 @@
 package perp
 
 import (
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +20,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// create positions
 	for _, p := range genState.Positions {
-		k.Positions.Insert(ctx, coll.Join(p.Pair, sdk.MustAccAddressFromBech32(p.TraderAddress)), p)
+		k.Positions.Insert(ctx, collections.Join(p.Pair, sdk.MustAccAddressFromBech32(p.TraderAddress)), p)
 	}
 
 	// set params
@@ -39,13 +39,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 
 	// export positions
-	genesis.Positions = k.Positions.Iterate(ctx, coll.PairRange[common.AssetPair, sdk.AccAddress]{}).Values()
+	genesis.Positions = k.Positions.Iterate(ctx, collections.PairRange[common.AssetPair, sdk.AccAddress]{}).Values()
 
 	// export prepaid bad debt
-	genesis.PrepaidBadDebts = k.PrepaidBadDebt.Iterate(ctx, coll.Range[string]{}).Values()
+	genesis.PrepaidBadDebts = k.PrepaidBadDebt.Iterate(ctx, collections.Range[string]{}).Values()
 
 	// export pairMetadata
-	genesis.PairMetadata = k.PairsMetadata.Iterate(ctx, coll.Range[common.AssetPair]{}).Values()
+	genesis.PairMetadata = k.PairsMetadata.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 
 	return genesis
 }

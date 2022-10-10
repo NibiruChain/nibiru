@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/coll"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -108,29 +106,16 @@ func (pair AssetPair) Validate() error {
 	return nil
 }
 
-var (
-	_ keys.Key = (*AssetPair)(nil)
-)
-
-func (m AssetPair) KeyBytes() []byte {
-	return keys.String(m.String()).KeyBytes()
-}
-
-func (m AssetPair) FromKeyBytes(b []byte) (int, keys.Key) {
-	i, s := keys.String("").FromKeyBytes(b)
-	return i, MustNewAssetPair(string(s.(keys.StringKey)))
-}
-
 var AssetPairKeyEncoder = assetPairKeyEncoder{}
 
 type assetPairKeyEncoder struct{}
 
 func (assetPairKeyEncoder) Stringify(a AssetPair) string { return a.String() }
 func (assetPairKeyEncoder) KeyEncode(a AssetPair) []byte {
-	return coll.Keys.String.KeyEncode(a.String())
+	return collections.Keys.String.KeyEncode(a.String())
 }
 func (assetPairKeyEncoder) KeyDecode(b []byte) (int, AssetPair) {
-	i, s := coll.Keys.String.KeyDecode(b)
+	i, s := collections.Keys.String.KeyDecode(b)
 	return i, MustNewAssetPair(s)
 }
 

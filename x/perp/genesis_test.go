@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
@@ -39,7 +39,7 @@ func TestGenesis(t *testing.T) {
 		// create some positions
 		for i := int64(0); i < 100; i++ {
 			addr := testutil.AccAddress()
-			app.PerpKeeper.Positions.Insert(ctx, coll.Join(common.Pair_NIBI_NUSD, addr), types.Position{
+			app.PerpKeeper.Positions.Insert(ctx, collections.Join(common.Pair_NIBI_NUSD, addr), types.Position{
 				TraderAddress:                   addr.String(),
 				Pair:                            common.Pair_NIBI_NUSD,
 				Size_:                           sdk.NewDec(i + 1),

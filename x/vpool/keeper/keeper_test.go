@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -427,7 +427,7 @@ func TestGetVpools(t *testing.T) {
 		sdk.MustNewDecFromStr("15"),
 	)
 
-	pools := vpoolKeeper.Pools.Iterate(ctx, coll.Range[common.AssetPair]{}).Values()
+	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 
 	require.EqualValues(t, 2, len(pools))
 
@@ -578,7 +578,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			snapshot := types.NewReserveSnapshot(
 				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(),
 			)
-			vpoolKeeper.ReserveSnapshots.Insert(ctx, coll.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
+			vpoolKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 
 			if tc.latestSnapshot != nil {
 				t.Log("save snapshot 1")
@@ -590,7 +590,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 					tc.latestSnapshot.QuoteAssetReserve,
 					ctx.BlockTime(),
 				)
-				vpoolKeeper.ReserveSnapshots.Insert(ctx, coll.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
+				vpoolKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 			}
 
 			t.Log("check fluctuation limit")

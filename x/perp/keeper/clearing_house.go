@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -46,11 +46,11 @@ func (k Keeper) OpenPosition(
 	// require params
 	params := k.GetParams(ctx)
 
-	position, err := k.Positions.Get(ctx, coll.Join(pair, traderAddr))
-	isNewPosition := errors.Is(err, coll.ErrNotFound)
+	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	isNewPosition := errors.Is(err, collections.ErrNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-		k.Positions.Insert(ctx, coll.Join(pair, traderAddr), position)
+		k.Positions.Insert(ctx, collections.Join(pair, traderAddr), position)
 	} else if err != nil && !isNewPosition {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (k Keeper) afterPositionUpdate(
 ) (err error) {
 	// update position in state
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, coll.Join(pair, traderAddr), *positionResp.Position)
+		k.Positions.Insert(ctx, collections.Join(pair, traderAddr), *positionResp.Position)
 	}
 
 	if !positionResp.BadDebt.IsZero() {
@@ -643,7 +643,7 @@ func (k Keeper) closePositionEntirely(
 		BlockNumber:                     ctx.BlockHeight(),
 	}
 
-	err = k.Positions.Delete(ctx, coll.Join(currentPosition.Pair, trader))
+	err = k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, trader))
 	if err != nil {
 		return nil, err
 	}
@@ -665,7 +665,7 @@ ret:
   - err: error if any
 */
 func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
-	position, err := k.Positions.Get(ctx, coll.Join(pair, traderAddr))
+	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
 		return nil, err
 	}

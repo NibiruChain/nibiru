@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -94,8 +94,8 @@ func TestKeeperClosePosition(t *testing.T) {
 		require.True(t, posResp.BadDebt.IsZero())
 		require.True(t, !posResp.FundingPayment.IsZero() && posResp.FundingPayment.IsPositive())
 
-		position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, coll.Join(pair, alice))
-		require.ErrorIs(t, err, coll.ErrNotFound)
+		position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, collections.Join(pair, alice))
+		require.ErrorIs(t, err, collections.ErrNotFound)
 		require.Empty(t, position)
 
 		// this tests the following issue https://github.com/NibiruChain/nibiru/issues/645

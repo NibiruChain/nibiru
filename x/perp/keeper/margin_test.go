@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
@@ -150,7 +150,7 @@ func TestRemoveMargin(t *testing.T) {
 				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
 
 				require.Error(t, err)
-				require.ErrorContains(t, err, coll.ErrNotFound.Error())
+				require.ErrorContains(t, err, collections.ErrNotFound.Error())
 			},
 		},
 		{

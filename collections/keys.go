@@ -1,4 +1,4 @@
-package coll
+package collections
 
 import (
 	"fmt"

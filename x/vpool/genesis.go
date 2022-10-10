@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -32,14 +32,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	for _, snapshot := range genState.Snapshots {
 		// TODO snapshot.TimestampMs can just be time...
-		k.ReserveSnapshots.Insert(ctx, coll.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
+		k.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	return &types.GenesisState{
-		Vpools:    k.Pools.Iterate(ctx, coll.Range[common.AssetPair]{}).Values(),
-		Snapshots: k.ReserveSnapshots.Iterate(ctx, coll.PairRange[common.AssetPair, time.Time]{}).Values(),
+		Vpools:    k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values(),
+		Snapshots: k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}).Values(),
 	}
 }

@@ -1,59 +1,75 @@
 package collections
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
-// Object defines an object which can marshal and unmarshal itself to and from bytes.
-type Object interface {
-	// Marshal marshals the object into bytes.
-	Marshal() (b []byte, err error)
-	// Unmarshal populates the object from bytes.
-	Unmarshal(b []byte) error
+// ErrNotFound is returned when an object is not found.
+var ErrNotFound = errors.New("collections: not found")
+
+// KeyEncoder defines a generic interface which is implemented
+// by types that are capable of encoding and decoding collections keys.
+type KeyEncoder[T any] interface {
+	// KeyEncode encodes the type T into bytes.
+	KeyEncode(key T) []byte
+	// KeyDecode decodes the given bytes back into T.
+	// And it also must return the bytes of the buffer which were read.
+	KeyDecode(b []byte) (int, T)
+	// Stringify returns a string representation of T.
+	Stringify(key T) string
 }
 
-// storeCodec implements only the subset of functionalities
-// required for the ser/de at state layer.
-// It respects cosmos-sdk guarantees around interface unpacking.
-type storeCodec struct {
-	ir codectypes.InterfaceRegistry
+// ValueEncoder defines a generic interface which is implemented
+// by types that are capable of encoding and decoding collection values.
+type ValueEncoder[T any] interface {
+	// ValueEncode encodes the value T into bytes.
+	ValueEncode(value T) []byte
+	// ValueDecode returns the type T given its bytes representation.
+	ValueDecode(b []byte) T
+	// Stringify returns a string representation of T.
+	Stringify(value T) string
+	// Name returns the name of the object.
+	Name() string
 }
 
-func newStoreCodec(cdc codec.BinaryCodec) storeCodec {
-	return storeCodec{ir: cdc.(*codec.ProtoCodec).InterfaceRegistry()}
-}
-
-func (c storeCodec) marshal(o Object) []byte {
-	bytes, err := o.Marshal()
-	if err != nil {
-		panic(err)
-	}
-	return bytes
-}
-
-func (c storeCodec) unmarshal(bytes []byte, o Object) {
-	err := o.Unmarshal(bytes)
-	if err != nil {
-		panic(err)
-	}
-	err = codectypes.UnpackInterfaces(o, c.ir)
-	if err != nil {
-		panic(err)
+// ProtoValueEncoder returns a protobuf value encoder given the codec.BinaryCodec.
+// It's used to convert a specific protobuf object into bytes representation and convert
+// the protobuf object bytes representation into the concrete object.
+func ProtoValueEncoder[V any, PV interface {
+	*V
+	codec.ProtoMarshaler
+}](cdc codec.BinaryCodec) ValueEncoder[V] {
+	return protoValueEncoder[V, PV]{
+		cdc: cdc,
 	}
 }
 
-// TODO(mercilex): improve typeName api
-func typeName(o Object) string {
-	switch o.(type) {
-	case *nilObject, nilObject:
-		return "no-op-object"
+type protoValueEncoder[V any, PV interface {
+	*V
+	codec.ProtoMarshaler
+}] struct {
+	cdc codec.BinaryCodec
+}
+
+func (p protoValueEncoder[V, PV]) Name() string               { return proto.MessageName(PV(new(V))) }
+func (p protoValueEncoder[V, PV]) ValueEncode(value V) []byte { return p.cdc.MustMarshal(PV(&value)) }
+func (p protoValueEncoder[V, PV]) Stringify(v V) string       { return PV(&v).String() }
+func (p protoValueEncoder[V, PV]) ValueDecode(b []byte) V {
+	v := PV(new(V))
+	p.cdc.MustUnmarshal(b, v)
+	return *v
+}
+
+func validString[T ~string](s T) error {
+	for i, c := range s {
+		if c == 0 {
+			return fmt.Errorf("invalid null character at index %d: %s", i, s)
+		}
 	}
-	pm, ok := o.(proto.Message)
-	if !ok {
-		return "unknown"
-	}
-	return proto.MessageName(pm)
+	return nil
 }

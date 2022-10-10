@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 	"time"
 
@@ -25,10 +25,10 @@ type (
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
-		RawPrices     coll.Map[coll.Pair[common.AssetPair, sdk.AccAddress], types.PostedPrice]
-		CurrentPrices coll.Map[common.AssetPair, types.CurrentPrice]
+		RawPrices     collections.Map[collections.Pair[common.AssetPair, sdk.AccAddress], types.PostedPrice]
+		CurrentPrices collections.Map[common.AssetPair, types.CurrentPrice]
 		// PriceSnapshots maps types.PriceSnapshot to the common.AssetPair of the snapshot and the creation timestamp as keys.Uint64Key.
-		PriceSnapshots coll.Map[coll.Pair[common.AssetPair, time.Time], types.PriceSnapshot]
+		PriceSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.PriceSnapshot]
 	}
 )
 
@@ -51,15 +51,15 @@ func NewKeeper(
 		memKey:     memKey,
 		paramstore: ps,
 
-		CurrentPrices: coll.NewMap[common.AssetPair, types.CurrentPrice](storeKey, 0, common.AssetPairKeyEncoder, coll.ProtoValueEncoder[types.CurrentPrice](cdc)),
-		RawPrices: coll.NewMap[coll.Pair[common.AssetPair, sdk.AccAddress], types.PostedPrice](storeKey, 1,
-			coll.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, coll.Keys.AccAddress),
-			coll.ProtoValueEncoder[types.PostedPrice](cdc),
+		CurrentPrices: collections.NewMap[common.AssetPair, types.CurrentPrice](storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.CurrentPrice](cdc)),
+		RawPrices: collections.NewMap[collections.Pair[common.AssetPair, sdk.AccAddress], types.PostedPrice](storeKey, 1,
+			collections.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, collections.Keys.AccAddress),
+			collections.ProtoValueEncoder[types.PostedPrice](cdc),
 		),
-		PriceSnapshots: coll.NewMap[coll.Pair[common.AssetPair, time.Time]](
+		PriceSnapshots: collections.NewMap[collections.Pair[common.AssetPair, time.Time]](
 			storeKey, 2,
-			coll.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, coll.Keys.Time),
-			coll.ProtoValueEncoder[types.PriceSnapshot](cdc)),
+			collections.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, collections.Keys.Time),
+			collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 	}
 }
 
@@ -123,7 +123,7 @@ func (k Keeper) PostRawPrice(
 
 	// Sets the raw price for a single oracle instead of an array of all oracle's raw prices
 	newPostedPrice := types.NewPostedPrice(pair, oracle, price, expiry)
-	k.RawPrices.Insert(ctx, coll.Join(pair, oracle), newPostedPrice)
+	k.RawPrices.Insert(ctx, collections.Join(pair, oracle), newPostedPrice)
 	return nil
 }
 
@@ -185,7 +185,7 @@ func (k Keeper) GatherRawPrices(ctx sdk.Context, token0 string, token1 string) e
 	k.CurrentPrices.Insert(ctx, assetPair, currentPrice)
 
 	// Update the TWAP prices
-	k.PriceSnapshots.Insert(ctx, coll.Join(assetPair, ctx.BlockTime()), types.PriceSnapshot{
+	k.PriceSnapshots.Insert(ctx, collections.Join(assetPair, ctx.BlockTime()), types.PriceSnapshot{
 		PairId:      pairID,
 		Price:       currentPrice.Price,
 		TimestampMs: ctx.BlockTime().UnixMilli(),
@@ -298,7 +298,7 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 
 	snapshots := k.PriceSnapshots.Iterate(
 		ctx,
-		coll.PairRange[common.AssetPair, time.Time]{}.
+		collections.PairRange[common.AssetPair, time.Time]{}.
 			Prefix(assetPair).                                                           // only results of provided asset pair
 			StartInclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)). // start from earliest timestamp which is current time - twap lockback window
 			EndExclusive(ctx.BlockTime()),                                               // end at current time - exclusive
@@ -343,7 +343,7 @@ func calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (sdk.Dec, error)
 
 // GetCurrentPrices returns all current price objects from the store
 func (k Keeper) GetCurrentPrices(ctx sdk.Context) types.CurrentPrices {
-	return k.CurrentPrices.Iterate(ctx, coll.Range[common.AssetPair]{}).Values()
+	return k.CurrentPrices.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 }
 
 // GetRawPrices fetches the set of all prices posted by oracles for an asset
@@ -355,5 +355,5 @@ func (k Keeper) GetRawPrices(ctx sdk.Context, pairStr string) types.PostedPrices
 			Use pair, %v, instead`, pair.Inverse().String(), pairStr))
 	}
 
-	return k.RawPrices.Iterate(ctx, coll.PairRange[common.AssetPair, sdk.AccAddress]{}.Prefix(pair)).Values()
+	return k.RawPrices.Iterate(ctx, collections.PairRange[common.AssetPair, sdk.AccAddress]{}.Prefix(pair)).Values()
 }

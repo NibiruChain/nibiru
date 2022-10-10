@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -73,7 +73,7 @@ func (q queryServer) QueryPosition(
 }
 
 func (q queryServer) position(ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress) (*types.QueryPositionResponse, error) {
-	position, err := q.k.Positions.Get(ctx, coll.Join(pair, trader))
+	position, err := q.k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package coll
+package collections
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -33,19 +33,42 @@ func (r Range[K]) Prefix(key K) Range[K] {
 	return r
 }
 
-// Start sets the start range of the key.
-func (r Range[K]) Start(bound Bound[K]) Range[K] {
-	r.start = &bound
+// StartInclusive makes the range contain only keys which are bigger or equal to the provided start K.
+func (r Range[K]) StartInclusive(start K) Range[K] {
+	r.start = &Bound[K]{
+		value:     start,
+		inclusive: true,
+	}
 	return r
 }
 
-// End sets the end range of the key.
-func (r Range[K]) End(bound Bound[K]) Range[K] {
-	r.end = &bound
+// StartExclusive makes the range contain only keys which are bigger to the provided start K.
+func (r Range[K]) StartExclusive(start K) Range[K] {
+	r.start = &Bound[K]{
+		value:     start,
+		inclusive: false,
+	}
 	return r
 }
 
-// Descending sets the key range to be inverse.
+// EndInclusive makes the range contain only keys which are smaller or equal to the provided end K.
+func (r Range[K]) EndInclusive(end K) Range[K] {
+	r.end = &Bound[K]{
+		value:     end,
+		inclusive: true,
+	}
+	return r
+}
+
+// EndExclusive makes the range contain only keys which are smaller to the provided end K.
+func (r Range[K]) EndExclusive(end K) Range[K] {
+	r.end = &Bound[K]{
+		value:     end,
+		inclusive: false,
+	}
+	return r
+}
+
 func (r Range[K]) Descending() Range[K] {
 	r.order = OrderDescending
 	return r

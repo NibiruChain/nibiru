@@ -1,4 +1,4 @@
-package keys
+package collections
 
 import (
 	"bytes"
@@ -8,10 +8,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUint64(t *testing.T) {
+	t.Run("bijectivity", func(t *testing.T) {
+		key := uint64(0x0123456789ABCDEF)
+		bytes := uint64Key{}.KeyEncode(key)
+		idx, result := uint64Key{}.KeyDecode(bytes)
+		require.Equalf(t, key, result, "%d <-> %d", key, result)
+		require.Equal(t, 8, idx)
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		var k uint64
+		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, uint64Key{}.KeyEncode(k))
+	})
+}
+
 func TestStringKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		x := StringKey("test")
-		i, b := x.FromKeyBytes(x.KeyBytes())
+		x := "test"
+		i, b := stringKey{}.KeyDecode(stringKey{}.KeyEncode(x))
 		require.Equal(t, x, b)
 		require.Equal(t, 5, i)
 	})
@@ -20,29 +35,29 @@ func TestStringKey(t *testing.T) {
 		// invalid string key
 		require.Panics(t, func() {
 			invalid := []byte{0x1, 0x0, 0x3}
-			StringKey(invalid).KeyBytes()
+			stringKey{}.KeyEncode(string(invalid))
 		})
 		// invalid bytes do not end with 0x0
 		require.Panics(t, func() {
-			StringKey("").FromKeyBytes([]byte{0x1, 0x2})
+			stringKey{}.KeyDecode([]byte{0x1, 0x2})
 		})
 		// invalid size
 		require.Panics(t, func() {
-			StringKey("").FromKeyBytes([]byte{1})
+			stringKey{}.KeyDecode([]byte{0x1})
 		})
 	})
 
 	t.Run("proper ordering", func(t *testing.T) {
-		stringKeys := []StringKey{
+		stringKeys := []string{
 			"a", "aa", "b", "c", "dd",
-			"1", "2", "3", "55", StringKey([]byte{1}),
+			"1", "2", "3", "55", string([]byte{1}),
 		}
 
 		strings := make([]string, len(stringKeys))
 		bytesStringKeys := make([][]byte, len(stringKeys))
-		for i, stringKey := range stringKeys {
-			strings[i] = string(stringKey)
-			bytesStringKeys[i] = stringKey.KeyBytes()
+		for i, sk := range stringKeys {
+			strings[i] = sk
+			bytesStringKeys[i] = stringKey{}.KeyEncode(sk)
 		}
 
 		sort.Strings(strings)

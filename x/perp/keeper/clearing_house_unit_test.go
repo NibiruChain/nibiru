@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/coll"
+	"github.com/NibiruChain/nibiru/collections"
 
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
@@ -2051,7 +2051,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 }
 
 func setPosition(k Keeper, ctx sdk.Context, pos types.Position) {
-	k.Positions.Insert(ctx, coll.Join(pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress)), pos)
+	k.Positions.Insert(ctx, collections.Join(pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress)), pos)
 }
 
 func setPairMetadata(k Keeper, ctx sdk.Context, pm types.PairMetadata) {
