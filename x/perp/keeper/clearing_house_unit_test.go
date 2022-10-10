@@ -1864,7 +1864,7 @@ func TestClosePosition(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
-				GetSpotPrice(
+				GetMarkPrice(
 					ctx,
 					tc.initialPosition.Pair,
 				).Return(
@@ -1935,7 +1935,7 @@ func TestClosePosition(t *testing.T) {
 				UnrealizedPnlAfter:    sdk.ZeroDec(),
 				BadDebt:               sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), sdk.ZeroInt()),
 				LiquidationPenalty:    sdk.ZeroDec(),
-				SpotPrice:             tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
+				MarkPrice:             tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
 				FundingPayment:        sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
 				TransactionFee:        sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
 				BlockHeight:           ctx.BlockHeight(),
