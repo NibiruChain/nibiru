@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"testing"
-	"time"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 
@@ -455,11 +454,9 @@ func TestGetVpools(t *testing.T) {
 
 func TestCheckFluctuationLimitRatio(t *testing.T) {
 	tests := []struct {
-		name           string
-		pool           types.VPool
-		prevSnapshot   *types.ReserveSnapshot
-		latestSnapshot *types.ReserveSnapshot
-		ctxBlockHeight int64
+		name              string
+		pool              types.VPool
+		existingSnapshots []types.ReserveSnapshot
 
 		expectedErr error
 	}{
@@ -475,20 +472,21 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			prevSnapshot: &types.ReserveSnapshot{
-				Pair:              common.Pair_BTC_NUSD,
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
+			existingSnapshots: []types.ReserveSnapshot{
+				{
+					Pair:              common.Pair_BTC_NUSD,
+					QuoteAssetReserve: sdk.NewDec(1000),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
+				{
+					Pair:              common.Pair_BTC_NUSD,
+					QuoteAssetReserve: sdk.NewDec(1002),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       1,
+				},
 			},
-			latestSnapshot: &types.ReserveSnapshot{
-				Pair:              common.Pair_BTC_NUSD,
-				QuoteAssetReserve: sdk.NewDec(1002),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       1,
-			},
-			ctxBlockHeight: 2,
-			expectedErr:    nil,
+			expectedErr: nil,
 		},
 		{
 			name: "uses previous snapshot - results in error",
@@ -502,15 +500,15 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			prevSnapshot: &types.ReserveSnapshot{
-				Pair:              common.Pair_BTC_NUSD,
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
+			existingSnapshots: []types.ReserveSnapshot{
+				{
+					Pair:              common.Pair_BTC_NUSD,
+					QuoteAssetReserve: sdk.NewDec(1000),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
 			},
-			latestSnapshot: nil,
-			ctxBlockHeight: 1,
-			expectedErr:    types.ErrOverFluctuationLimit,
+			expectedErr: types.ErrOverFluctuationLimit,
 		},
 		{
 			name: "only one snapshot - no error",
@@ -524,15 +522,15 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			prevSnapshot: &types.ReserveSnapshot{
-				Pair:              common.Pair_BTC_NUSD,
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
+			existingSnapshots: []types.ReserveSnapshot{
+				{
+					Pair:              common.Pair_BTC_NUSD,
+					QuoteAssetReserve: sdk.NewDec(1000),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
 			},
-			latestSnapshot: nil,
-			ctxBlockHeight: 1,
-			expectedErr:    nil,
+			expectedErr: nil,
 		},
 		{
 			name: "zero fluctuation limit - no error",
@@ -546,20 +544,61 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			prevSnapshot: &types.ReserveSnapshot{
-				Pair:              common.Pair_BTC_NUSD,
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       0,
+			existingSnapshots: []types.ReserveSnapshot{
+				{
+					Pair:              common.Pair_BTC_NUSD,
+					QuoteAssetReserve: sdk.NewDec(1000),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
+				{
+					Pair:              common.Pair_BTC_NUSD,
+					QuoteAssetReserve: sdk.NewDec(1002),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       1,
+				},
 			},
-			latestSnapshot: &types.ReserveSnapshot{
-				Pair:              common.Pair_BTC_NUSD,
-				QuoteAssetReserve: sdk.NewDec(1002),
-				BaseAssetReserve:  sdk.OneDec(),
-				TimestampMs:       1,
+			expectedErr: nil,
+		},
+		{
+			name: "multiple pools - no overlap",
+			pool: types.VPool{
+				Pair:                   common.Pair_BTC_NUSD,
+				QuoteAssetReserve:      sdk.NewDec(1000),
+				BaseAssetReserve:       sdk.OneDec(),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+				TradeLimitRatio:        sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			ctxBlockHeight: 2,
-			expectedErr:    nil,
+			existingSnapshots: []types.ReserveSnapshot{
+				{
+					Pair:              common.Pair_BTC_NUSD,
+					QuoteAssetReserve: sdk.NewDec(1000),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
+				{
+					Pair:              common.Pair_ETH_NUSD,
+					QuoteAssetReserve: sdk.NewDec(2000),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
+				{
+					Pair:              common.Pair_NIBI_NUSD,
+					QuoteAssetReserve: sdk.NewDec(2000),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
+				{
+					Pair:              common.Pair_USDC_NUSD,
+					QuoteAssetReserve: sdk.OneDec(),
+					BaseAssetReserve:  sdk.OneDec(),
+					TimestampMs:       0,
+				},
+			},
+			expectedErr: nil,
 		},
 	}
 
@@ -572,29 +611,11 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
-			t.Log("save snapshot 0")
-
-			ctx = ctx.WithBlockTime(time.UnixMilli(tc.prevSnapshot.TimestampMs))
-			snapshot := types.NewReserveSnapshot(
-				common.Pair_BTC_NUSD, tc.prevSnapshot.BaseAssetReserve, tc.prevSnapshot.QuoteAssetReserve, ctx.BlockTime(),
-			)
-			vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
-
-			if tc.latestSnapshot != nil {
-				t.Log("save snapshot 1")
-				ctx = ctx.WithBlockTime(time.UnixMilli(tc.latestSnapshot.TimestampMs))
-
-				snapshot := types.NewReserveSnapshot(
-					common.Pair_BTC_NUSD,
-					tc.latestSnapshot.BaseAssetReserve,
-					tc.latestSnapshot.QuoteAssetReserve,
-					ctx.BlockTime(),
-				)
+			for _, snapshot := range tc.existingSnapshots {
 				vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
 			}
 
 			t.Log("check fluctuation limit")
-			ctx = ctx.WithBlockHeight(tc.ctxBlockHeight)
 			err := vpoolKeeper.checkFluctuationLimitRatio(ctx, tc.pool)
 
 			t.Log("check error if any")
