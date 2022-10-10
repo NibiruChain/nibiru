@@ -99,12 +99,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#981](https://github.com/NibiruChain/nibiru/pull/981) - chore(testutil): clean up x/testutil packages
 * [#980](https://github.com/NibiruChain/nibiru/pull/980) - test(perp): add `MsgClosePosition`, `MsgAddMargin`, and `MsgRemoveMargin` simulation tests
 * [#987](https://github.com/NibiruChain/nibiru/pull/987) - feat: create a query that directly returns all module accounts without pagination or iteration
+* [#989](https://github.com/NibiruChain/nibiru/pull/989) - test(perp): cli test for AddMargin
 
 ### Features
 
 * [#966](https://github.com/NibiruChain/nibiru/pull/966) - collections: add indexed map
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
+* [#985](https://github.com/NibiruChain/nibiru/pull/985) - query all active positions for a trader
 
 ### Fixes
 
@@ -175,7 +177,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#811](https://github.com/NibiruChain/nibiru/pull/811) Return the index twap in `QueryPrice` cmd
 * [#813](https://github.com/NibiruChain/nibiru/pull/813) - (vpool): Expose mark price, mark TWAP, index price, and k (swap invariant) in the all-pools query
 * [#816](https://github.com/NibiruChain/nibiru/pull/816) - Remove tobin tax from x/oracle
-* [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryTraderPosition
+* [#810](https://github.com/NibiruChain/nibiru/pull/810) - feat(x/perp): expose 'marginRatioIndex' and block number on QueryPosition
 * [#832](https://github.com/NibiruChain/nibiru/pull/832) - x/oracle app wiring
 
 ### Documentation
