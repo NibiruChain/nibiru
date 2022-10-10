@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/coll"
 
 	"github.com/NibiruChain/nibiru/collections"

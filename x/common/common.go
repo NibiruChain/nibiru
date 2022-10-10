@@ -3,8 +3,9 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/coll"
 	"strings"
+
+	"github.com/NibiruChain/nibiru/coll"
 
 	"github.com/NibiruChain/nibiru/collections/keys"
 

@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/coll"
 	"time"
+
+	"github.com/NibiruChain/nibiru/coll"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

@@ -3,6 +3,7 @@ package coll
 import (
 	"errors"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
