@@ -6,10 +6,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
+
+// WeightedOperations returns all the operations from the module with their respective weights
+func WeightedOperations(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simulation.WeightedOperations {
+	return simulation.WeightedOperations{
+		simulation.NewWeightedOperation(
+			100,
+			SimulateMsgPostPrice(ak, bk, k),
+		),
+	}
+}
 
 func SimulateMsgPostPrice(
 	ak types.AccountKeeper,
