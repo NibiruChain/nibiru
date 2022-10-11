@@ -110,7 +110,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, ValAddrs[0], Addrs[1])
+	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, ValAddrs[0], Addrs[1])
 
 	// empty request
 	_, err := querier.FeederDelegation(ctx, nil)

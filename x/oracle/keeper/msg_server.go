@@ -154,7 +154,7 @@ func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDel
 	}
 
 	// Set the delegation
-	ms.SetFeederDelegation(ctx, operatorAddr, delegateAddr)
+	ms.Keeper.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

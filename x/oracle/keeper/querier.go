@@ -92,7 +92,7 @@ func (q querier) FeederDelegation(c context.Context, req *types.QueryFeederDeleg
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryFeederDelegationResponse{
-		FeederAddr: q.GetFeederDelegation(ctx, valAddr).String(),
+		FeederAddr: q.Keeper.FeederDelegations.GetOr(ctx, valAddr, sdk.AccAddress(valAddr)).String(),
 	}, nil
 }
 

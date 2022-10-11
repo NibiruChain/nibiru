@@ -46,7 +46,7 @@ func TestDecodeDistributionStore(t *testing.T) {
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
 			{Key: []byte{0x1, 0x2, 0x3, 0x4, 0x5}, Value: erBytes},
-			{Key: types.FeederDelegationKey, Value: feederAddr.Bytes()},
+			{Key: []byte{0x2, 0x3, 0x4, 0x5, 0x6}, Value: feederAddr.Bytes()},
 			{Key: types.MissCounterKey, Value: cdc.MustMarshal(&gogotypes.UInt64Value{Value: missCounter})},
 			{Key: types.AggregateExchangeRatePrevoteKey, Value: cdc.MustMarshal(&aggregatePrevote)},
 			{Key: types.AggregateExchangeRateVoteKey, Value: cdc.MustMarshal(&aggregateVote)},

@@ -24,7 +24,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.SetFeederDelegation(ctx, voter, feeder)
+		keeper.FeederDelegations.Insert(ctx, voter, feeder)
 	}
 
 	for _, ex := range data.ExchangeRates {
@@ -87,13 +87,12 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	params := keeper.GetParams(ctx)
 	feederDelegations := []types.FeederDelegation{}
-	keeper.IterateFeederDelegations(ctx, func(valAddr sdk.ValAddress, feederAddr sdk.AccAddress) (stop bool) {
+	for _, kv := range keeper.FeederDelegations.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		feederDelegations = append(feederDelegations, types.FeederDelegation{
-			FeederAddress:    feederAddr.String(),
-			ValidatorAddress: valAddr.String(),
+			FeederAddress:    kv.Value.String(),
+			ValidatorAddress: kv.Key.String(),
 		})
-		return false
-	})
+	}
 
 	exchangeRates := []types.ExchangeRateTuple{}
 	for _, er := range keeper.ExchangeRates.Iterate(ctx, collections.Range[string]{}).KeyValues() {
