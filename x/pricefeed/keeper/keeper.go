@@ -2,9 +2,10 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/tendermint/tendermint/libs/log"
 
