@@ -34,6 +34,7 @@ type Keeper struct {
 	ExchangeRates     collections.Map[string, sdk.Dec]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
+	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -63,6 +64,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		ExchangeRates:     collections.NewMap[string, sdk.Dec](storeKey, 1, collections.Keys.String, collections.DecValueEncoder),
 		FeederDelegations: collections.NewMap[sdk.ValAddress, sdk.AccAddress](storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		Prevotes:          collections.NewMap[sdk.ValAddress, types.AggregateExchangeRatePrevote](storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
+		Votes:             collections.NewMap[sdk.ValAddress, types.AggregateExchangeRateVote](storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
 	}
 }
 
@@ -114,50 +116,6 @@ func (k Keeper) IterateMissCounters(ctx sdk.Context,
 		k.cdc.MustUnmarshal(iter.Value(), &missCounter)
 
 		if handler(operator, missCounter.Value) {
-			break
-		}
-	}
-}
-
-//-----------------------------------
-// AggregateExchangeRateVote logic
-
-// GetAggregateExchangeRateVote retrieves an oracle prevote from the store
-func (k Keeper) GetAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress) (aggregateVote types.AggregateExchangeRateVote, err error) {
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetAggregateExchangeRateVoteKey(voter))
-	if b == nil {
-		err = sdkerrors.Wrap(types.ErrNoAggregateVote, voter.String())
-		return
-	}
-	k.cdc.MustUnmarshal(b, &aggregateVote)
-	return
-}
-
-// SetAggregateExchangeRateVote adds an oracle aggregate prevote to the store
-func (k Keeper) SetAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress, vote types.AggregateExchangeRateVote) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&vote)
-	store.Set(types.GetAggregateExchangeRateVoteKey(voter), bz)
-}
-
-// DeleteAggregateExchangeRateVote deletes an oracle prevote from the store
-func (k Keeper) DeleteAggregateExchangeRateVote(ctx sdk.Context, voter sdk.ValAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAggregateExchangeRateVoteKey(voter))
-}
-
-// IterateAggregateExchangeRateVotes iterates rate over prevotes in the store
-func (k Keeper) IterateAggregateExchangeRateVotes(ctx sdk.Context, handler func(voterAddr sdk.ValAddress, aggregateVote types.AggregateExchangeRateVote) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.AggregateExchangeRateVoteKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		voterAddr := sdk.ValAddress(iter.Key()[2:])
-
-		var aggregateVote types.AggregateExchangeRateVote
-		k.cdc.MustUnmarshal(iter.Value(), &aggregateVote)
-		if handler(voterAddr, aggregateVote) {
 			break
 		}
 	}

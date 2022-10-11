@@ -38,7 +38,9 @@ func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorsPerformance map[
 		return false
 	}
 
-	k.IterateAggregateExchangeRateVotes(ctx, aggregateHandler)
+	for _, vote := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+		aggregateHandler(vote.Key, vote.Value)
+	}
 
 	// sort created ballot
 	for pair, ballot := range ballots {
@@ -62,10 +64,12 @@ func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
 	}
 
 	// Clear all aggregate votes
-	k.IterateAggregateExchangeRateVotes(ctx, func(voterAddr sdk.ValAddress, aggregateVote types.AggregateExchangeRateVote) (stop bool) {
-		k.DeleteAggregateExchangeRateVote(ctx, voterAddr)
-		return false
-	})
+	for _, voteKey := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Keys() {
+		err := k.Votes.Delete(ctx, voteKey)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 // ApplyWhitelist updates the whitelist by detecting possible changes between

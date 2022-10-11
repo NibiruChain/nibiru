@@ -55,7 +55,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.SetAggregateExchangeRateVote(ctx, valAddr, av)
+		keeper.Votes.Insert(ctx, valAddr, av)
 	}
 
 	if len(data.Pairs) > 0 {
@@ -108,12 +108,6 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		return false
 	})
 
-	aggregateExchangeRateVotes := []types.AggregateExchangeRateVote{}
-	keeper.IterateAggregateExchangeRateVotes(ctx, func(_ sdk.ValAddress, aggregateVote types.AggregateExchangeRateVote) bool {
-		aggregateExchangeRateVotes = append(aggregateExchangeRateVotes, aggregateVote)
-		return false
-	})
-
 	pairs := []types.Pair{}
 	keeper.IteratePairs(ctx, func(pair string) (stop bool) {
 		pairs = append(pairs, types.Pair{Name: pair})
@@ -131,7 +125,7 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		feederDelegations,
 		missCounters,
 		keeper.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
-		aggregateExchangeRateVotes,
+		keeper.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
 		pairs,
 		pairRewards,
 	)

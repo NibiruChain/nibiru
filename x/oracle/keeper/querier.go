@@ -152,7 +152,7 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	vote, err := q.GetAggregateExchangeRateVote(ctx, valAddr)
+	vote, err := q.Keeper.Votes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -164,15 +164,5 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 
 // AggregateVotes queries aggregate votes of all validators
 func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var votes []types.AggregateExchangeRateVote
-	q.IterateAggregateExchangeRateVotes(ctx, func(_ sdk.ValAddress, vote types.AggregateExchangeRateVote) bool {
-		votes = append(votes, vote)
-		return false
-	})
-
-	return &types.QueryAggregateVotesResponse{
-		AggregateVotes: votes,
-	}, nil
+	return &types.QueryAggregateVotesResponse{AggregateVotes: q.Keeper.Votes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
 }
