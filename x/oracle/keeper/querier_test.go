@@ -130,9 +130,9 @@ func TestQueryAggregatePrevote(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[0], prevote1)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[0], prevote1)
 	prevote2 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[1], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[1], prevote2)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[1], prevote2)
 
 	// validator 0 address params
 	res, err := querier.AggregatePrevote(ctx, &types.QueryAggregatePrevoteRequest{
@@ -159,11 +159,11 @@ func TestQueryAggregatePrevotes(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[0], prevote1)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[0], prevote1)
 	prevote2 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[1], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[1], prevote2)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[1], prevote2)
 	prevote3 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[2], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[2], prevote3)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[2], prevote3)
 
 	expectedPrevotes := []types.AggregateExchangeRatePrevote{prevote1, prevote2, prevote3}
 	sort.SliceStable(expectedPrevotes, func(i, j int) bool {

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -51,13 +52,14 @@ func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorsPerformance map[
 // ClearBallots clears all tallied prevotes and votes from the store
 func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
-	k.IterateAggregateExchangeRatePrevotes(ctx, func(voterAddr sdk.ValAddress, aggregatePrevote types.AggregateExchangeRatePrevote) (stop bool) {
-		if ctx.BlockHeight() > int64(aggregatePrevote.SubmitBlock+votePeriod) {
-			k.DeleteAggregateExchangeRatePrevote(ctx, voterAddr)
+	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+		if ctx.BlockHeight() > int64(prevote.Value.SubmitBlock+votePeriod) {
+			err := k.Prevotes.Delete(ctx, prevote.Key)
+			if err != nil {
+				panic(err)
+			}
 		}
-
-		return false
-	})
+	}
 
 	// Clear all aggregate votes
 	k.IterateAggregateExchangeRateVotes(ctx, func(voterAddr sdk.ValAddress, aggregateVote types.AggregateExchangeRateVote) (stop bool) {
