@@ -12,6 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	testutil "github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -75,4 +76,10 @@ func TestSnapshotUpdates(t *testing.T) {
 	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.Uint64(uint64(expectedSnapshot.TimestampMs))))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
+
+	testutil.RequireContainsTypedEvent(t, ctx, &types.ReserveSnapshotSavedEvent{
+		Pair:         expectedSnapshot.Pair.String(),
+		QuoteReserve: expectedSnapshot.QuoteAssetReserve,
+		BaseReserve:  expectedSnapshot.BaseAssetReserve,
+	})
 }
