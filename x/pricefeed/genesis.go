@@ -14,8 +14,6 @@ import (
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
-	k.ActivePairsStore().
-		AddActivePairs(ctx, genState.Params.Pairs)
 	k.WhitelistOracles(ctx, common.StringsToAddrs(genState.GenesisOracles...))
 
 	// If posted prices are not expired, set them in the store
@@ -52,12 +50,24 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
+
 	var postedPrices []types.PostedPrice
+	var genesisOracles []string
+	exists := make(map[string]bool)
 	for _, assetPair := range k.GetPairs(ctx) {
 		pp := k.GetRawPrices(ctx, assetPair.String())
 		postedPrices = append(postedPrices, pp...)
+
+		for _, oracle := range k.GetOraclesForPair(ctx, assetPair.String()) {
+			if _, found := exists[oracle.String()]; !found {
+				genesisOracles = append(genesisOracles, oracle.String())
+				exists[oracle.String()] = true
+			}
+		}
 	}
+
 	genesis.PostedPrices = postedPrices
+	genesis.GenesisOracles = genesisOracles
 
 	return genesis
 }
