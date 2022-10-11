@@ -74,3 +74,12 @@ func (accAddressKey) KeyDecode(b []byte) (int, sdk.AccAddress) {
 func (stringKey) Stringify(s string) string {
 	return s
 }
+
+func validString(s string) error {
+	for i, c := range s {
+		if c == 0 {
+			return fmt.Errorf("invalid null character at index %d: %s", i, s)
+		}
+	}
+	return nil
+}

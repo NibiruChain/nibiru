@@ -11,8 +11,7 @@ import (
 func TestUint64(t *testing.T) {
 	t.Run("bijectivity", func(t *testing.T) {
 		key := uint64(0x0123456789ABCDEF)
-		bytes := uint64Key{}.KeyEncode(key)
-		idx, result := uint64Key{}.KeyDecode(bytes)
+		idx, result := uint64Key{}.KeyDecode(uint64Key{}.KeyEncode(key))
 		require.Equalf(t, key, result, "%d <-> %d", key, result)
 		require.Equal(t, 8, idx)
 	})
