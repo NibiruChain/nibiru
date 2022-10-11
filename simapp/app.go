@@ -748,6 +748,7 @@ func NewNibiruTestApp(
 		pricefeedModule,
 		epochsModule,
 		perpModule,
+		vpoolModule,
 		// ibc
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),

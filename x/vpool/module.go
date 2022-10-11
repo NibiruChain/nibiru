@@ -193,6 +193,7 @@ func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes
 
 // RegisterStoreDecoder registers a decoder for group module's types
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[types.ModuleName] = simulation.NewDecodeStore(am.cdc)
 }
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
