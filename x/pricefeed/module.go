@@ -188,18 +188,7 @@ const (
 
 // GenerateGenesisState creates a randomized GenState of the module
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	pricefeedGenesis := types.DefaultGenesis()
-	for _, acc := range simState.Accounts {
-		pricefeedGenesis.GenesisOracles = append(pricefeedGenesis.GenesisOracles, acc.Address.String())
-	}
-
-	bz, err := json.MarshalIndent(pricefeedGenesis, "", " ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Selected randomly generated pricefeed state:\n%s\n", bz)
-
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(pricefeedGenesis)
+	simulation.RandomizedGenState(simState)
 }
 
 // ProposalContents doesn't return any content functions for governance proposals
