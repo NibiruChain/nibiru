@@ -35,7 +35,18 @@ type Keeper struct {
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
 	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
 	// TODO(mercilex): use asset pair
-	Pairs collections.KeySet[string]
+	Pairs         collections.KeySet[string]
+	PairRewards   collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
+	PairRewardsID collections.Sequence
+}
+
+type PairRewardsIndexes struct {
+	// RewardsByPair is the index that maps rewards associated with specific pairs.
+	RewardsByPair collections.MultiIndex[string, uint64, types.PairReward]
+}
+
+func (p PairRewardsIndexes) IndexerList() []collections.Indexer[uint64, types.PairReward] {
+	return []collections.Indexer[uint64, types.PairReward]{p.RewardsByPair}
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -63,11 +74,20 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		StakingKeeper:     stakingKeeper,
 		distrName:         distrName,
 		ExchangeRates:     collections.NewMap[string, sdk.Dec](storeKey, 1, collections.Keys.String, collections.DecValueEncoder),
-		FeederDelegations: collections.NewMap[sdk.ValAddress, sdk.AccAddress](storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
+		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap[sdk.ValAddress, uint64](storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
-		Prevotes:          collections.NewMap[sdk.ValAddress, types.AggregateExchangeRatePrevote](storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
-		Votes:             collections.NewMap[sdk.ValAddress, types.AggregateExchangeRateVote](storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
-		Pairs:             collections.NewKeySet[string](storeKey, 6, collections.Keys.String),
+		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
+		Votes:             collections.NewMap(storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
+		Pairs:             collections.NewKeySet(storeKey, 6, collections.Keys.String),
+		PairRewards: collections.NewIndexedMap(
+			storeKey, 7,
+			collections.Keys.Uint64, collections.ProtoValueEncoder[types.PairReward](cdc),
+			PairRewardsIndexes{
+				RewardsByPair: collections.NewMultiIndex(storeKey, 8, collections.Keys.String, collections.Keys.Uint64, func(v types.PairReward) string {
+					return v.Pair
+				}),
+			}),
+		PairRewardsID: collections.NewSequence(storeKey, 9),
 	}
 }
 

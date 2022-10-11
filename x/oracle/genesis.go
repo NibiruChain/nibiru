@@ -69,9 +69,13 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	}
 
 	for _, pr := range data.PairRewards {
-		keeper.SetPairReward(ctx, &pr)
+		keeper.PairRewards.Insert(ctx, pr.Id, pr)
 	}
 
+	// set last ID based on the last pair reward
+	if len(data.PairRewards) != 0 {
+		keeper.PairRewardsID.Set(ctx, data.PairRewards[len(data.PairRewards)-1].Id)
+	}
 	keeper.SetParams(ctx, data.Params)
 
 	// check if the module account exists
@@ -112,12 +116,6 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		pairs = append(pairs, types.Pair{Name: p})
 	}
 
-	pairRewards := []types.PairReward{}
-	keeper.IterateAllPairRewards(ctx, func(rewards *types.PairReward) (stop bool) {
-		pairRewards = append(pairRewards, *rewards)
-		return false
-	})
-
 	return types.NewGenesisState(params,
 		exchangeRates,
 		feederDelegations,
@@ -125,6 +123,6 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		keeper.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
 		keeper.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
 		pairs,
-		pairRewards,
+		keeper.PairRewards.Iterate(ctx, collections.Range[uint64]{}).Values(),
 	)
 }
