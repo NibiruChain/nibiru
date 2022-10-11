@@ -2,10 +2,11 @@ package keeper_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections"
 	"math"
 	"sort"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 

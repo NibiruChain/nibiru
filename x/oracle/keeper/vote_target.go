@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/collections"
 )
 
 // IsVoteTarget returns existence of a pair in the voting target list

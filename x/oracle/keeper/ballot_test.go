@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 

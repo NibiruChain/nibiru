@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/collections"
 
 	gogotypes "github.com/gogo/protobuf/types"

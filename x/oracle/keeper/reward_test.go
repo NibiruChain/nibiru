@@ -29,7 +29,6 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 		QuoDec(sdk.NewDec(int64(periods))).
 		QuoDec(sdk.NewDec(int64(validators)))
 	keeper.AllocateRewards(t, input, common.Pair_NIBI_NUSD.String(), sdk.NewCoins(rewards), periods)
-	keeper.AllocateRewards(t, input, "somepairwhichwedon'tsurelyvoteon", sdk.NewCoins(rewards), periods) // totally unrelated pair
 
 	for i := uint64(1); i <= periods; i++ {
 		for valIndex := 0; valIndex < validators; valIndex++ {

@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"

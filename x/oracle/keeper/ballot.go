@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
 	"sort"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 

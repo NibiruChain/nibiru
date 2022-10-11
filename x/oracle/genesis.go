@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
