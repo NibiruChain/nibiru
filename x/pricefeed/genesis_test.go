@@ -60,6 +60,14 @@ func TestGenesis_TestGenesis(t *testing.T) {
 	// prices are only posted for PairGovStable and PairCollStable
 	assert.NotEmpty(t, k.GetRawPrices(ctx, params.Pairs[0].String()))
 	assert.NotEmpty(t, k.GetRawPrices(ctx, params.Pairs[1].String()))
+
+	// export genesis
+	genState := pricefeed.ExportGenesis(ctx, k)
+	assert.Equal(t, pfGenesisState.GenesisOracles, genState.GenesisOracles)
+	assert.Equal(t, pfGenesisState.Params, genState.Params)
+	for i, postedPrice := range pfGenesisState.PostedPrices {
+		assert.True(t, postedPrice.Equal(genState.PostedPrices[i]))
+	}
 }
 
 func TestGenesisState_Validate(t *testing.T) {
