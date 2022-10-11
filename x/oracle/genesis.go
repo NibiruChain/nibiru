@@ -37,7 +37,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.SetMissCounter(ctx, operator, mc.MissCounter)
+		keeper.MissCounters.Insert(ctx, operator, mc.MissCounter)
 	}
 
 	for _, ap := range data.AggregateExchangeRatePrevotes {
@@ -100,13 +100,12 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	}
 
 	missCounters := []types.MissCounter{}
-	keeper.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter uint64) (stop bool) {
+	for _, mc := range keeper.MissCounters.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		missCounters = append(missCounters, types.MissCounter{
-			ValidatorAddress: operator.String(),
-			MissCounter:      missCounter,
+			ValidatorAddress: mc.Key.String(),
+			MissCounter:      mc.Value,
 		})
-		return false
-	})
+	}
 
 	pairs := []types.Pair{}
 	for _, p := range keeper.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {

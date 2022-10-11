@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var Uint64ValueEncoder = uint64Value{}
+
 var DecValueEncoder = decValueEncoder{}
 
 type valAddressKeyEncoder struct{}

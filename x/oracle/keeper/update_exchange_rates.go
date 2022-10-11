@@ -77,7 +77,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		}
 
 		// Increase miss counter
-		k.SetMissCounter(ctx, claim.ValAddress, k.GetMissCounter(ctx, claim.ValAddress)+1)
+		k.MissCounters.Insert(ctx, claim.ValAddress, k.MissCounters.GetOr(ctx, claim.ValAddress, 0)+1)
 		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
 	}
 

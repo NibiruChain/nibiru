@@ -51,47 +51,6 @@ func TestParams(t *testing.T) {
 	require.Equal(t, storedParams, newParams)
 }
 
-func TestMissCounter(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// Test default getters and setters
-	counter := input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
-	require.Equal(t, uint64(0), counter)
-
-	missCounter := uint64(10)
-	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[0], missCounter)
-	counter = input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
-	require.Equal(t, missCounter, counter)
-
-	input.OracleKeeper.DeleteMissCounter(input.Ctx, ValAddrs[0])
-	counter = input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
-	require.Equal(t, uint64(0), counter)
-}
-
-func TestIterateMissCounters(t *testing.T) {
-	input := CreateTestInput(t)
-
-	// Test default getters and setters
-	counter := input.OracleKeeper.GetMissCounter(input.Ctx, ValAddrs[0])
-	require.Equal(t, uint64(0), counter)
-
-	missCounter := uint64(10)
-	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[1], missCounter)
-
-	var operators []sdk.ValAddress
-	var missCounters []uint64
-	input.OracleKeeper.IterateMissCounters(input.Ctx, func(delegator sdk.ValAddress, missCounter uint64) (stop bool) {
-		operators = append(operators, delegator)
-		missCounters = append(missCounters, missCounter)
-		return false
-	})
-
-	require.Equal(t, 1, len(operators))
-	require.Equal(t, 1, len(missCounters))
-	require.Equal(t, ValAddrs[1], operators[0])
-	require.Equal(t, missCounter, missCounters[0])
-}
-
 func TestValidateFeeder(t *testing.T) {
 	// initial setup
 	input := CreateTestInput(t)

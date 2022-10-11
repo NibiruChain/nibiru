@@ -109,7 +109,7 @@ func (q querier) MissCounter(c context.Context, req *types.QueryMissCounterReque
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryMissCounterResponse{
-		MissCounter: q.GetMissCounter(ctx, valAddr),
+		MissCounter: q.MissCounters.GetOr(ctx, valAddr, 0),
 	}, nil
 }
 

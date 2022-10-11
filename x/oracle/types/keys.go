@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
 const (
@@ -35,15 +34,9 @@ const (
 // - 0x06<pair_Bytes>: sdk.Dec
 var (
 	// Keys for store prefixes
-	MissCounterKey        = []byte{0x03} // prefix for each key to a miss counter
 	PairRewardsKey        = []byte{0x07} // prefix for each key to a pair's rewards
 	PairRewardsCounterKey = []byte{0x08} // prefix for the singleton of pair rewards ID.
 )
-
-// GetMissCounterKey - stored by *Validator* address
-func GetMissCounterKey(v sdk.ValAddress) []byte {
-	return append(MissCounterKey, address.MustLengthPrefix(v)...)
-}
 
 // GetPairRewardsKey returns the primary key for the PairRewards object.
 func GetPairRewardsKey(pair string, id uint64) []byte {

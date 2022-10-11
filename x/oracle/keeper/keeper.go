@@ -6,8 +6,6 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	gogotypes "github.com/gogo/protobuf/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -33,6 +31,7 @@ type Keeper struct {
 	// TODO(mercilex): use asset pair
 	ExchangeRates     collections.Map[string, sdk.Dec]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
+	MissCounters      collections.Map[sdk.ValAddress, uint64]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
 	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
 	// TODO(mercilex): use asset pair
@@ -65,6 +64,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		distrName:         distrName,
 		ExchangeRates:     collections.NewMap[string, sdk.Dec](storeKey, 1, collections.Keys.String, collections.DecValueEncoder),
 		FeederDelegations: collections.NewMap[sdk.ValAddress, sdk.AccAddress](storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
+		MissCounters:      collections.NewMap[sdk.ValAddress, uint64](storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
 		Prevotes:          collections.NewMap[sdk.ValAddress, types.AggregateExchangeRatePrevote](storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap[sdk.ValAddress, types.AggregateExchangeRateVote](storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
 		Pairs:             collections.NewKeySet[string](storeKey, 6, collections.Keys.String),
@@ -74,54 +74,6 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-//-----------------------------------
-// Miss counter logic
-
-// GetMissCounter retrieves the # of vote periods missed in this oracle slash window
-func (k Keeper) GetMissCounter(ctx sdk.Context, operator sdk.ValAddress) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetMissCounterKey(operator))
-	if bz == nil {
-		// By default the counter is zero
-		return 0
-	}
-
-	var missCounter gogotypes.UInt64Value
-	k.cdc.MustUnmarshal(bz, &missCounter)
-	return missCounter.Value
-}
-
-// SetMissCounter updates the # of vote periods missed in this oracle slash window
-func (k Keeper) SetMissCounter(ctx sdk.Context, operator sdk.ValAddress, missCounter uint64) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: missCounter})
-	store.Set(types.GetMissCounterKey(operator), bz)
-}
-
-// DeleteMissCounter removes miss counter for the validator
-func (k Keeper) DeleteMissCounter(ctx sdk.Context, operator sdk.ValAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetMissCounterKey(operator))
-}
-
-// IterateMissCounters iterates over the miss counters and performs a callback function.
-func (k Keeper) IterateMissCounters(ctx sdk.Context,
-	handler func(operator sdk.ValAddress, missCounter uint64) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.MissCounterKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		operator := sdk.ValAddress(iter.Key()[2:])
-
-		var missCounter gogotypes.UInt64Value
-		k.cdc.MustUnmarshal(iter.Value(), &missCounter)
-
-		if handler(operator, missCounter.Value) {
-			break
-		}
-	}
 }
 
 // ValidateFeeder return the given feeder is allowed to feed the message or not
