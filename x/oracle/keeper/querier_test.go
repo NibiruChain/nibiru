@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 	"testing"
 
@@ -231,11 +232,13 @@ func TestQueryVoteTargets(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	// clear pairs
-	input.OracleKeeper.ClearPairs(input.Ctx)
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
 
 	voteTargets := []string{"denom", "denom2", "denom3"}
 	for _, target := range voteTargets {
-		input.OracleKeeper.SetPair(input.Ctx, target)
+		input.OracleKeeper.Pairs.Insert(input.Ctx, target)
 	}
 
 	res, err := querier.VoteTargets(ctx, &types.QueryVoteTargetsRequest{})

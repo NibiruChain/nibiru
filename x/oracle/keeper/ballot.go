@@ -92,9 +92,11 @@ func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTa
 	}
 
 	if updateRequired {
-		k.ClearPairs(ctx)
+		for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
+			k.Pairs.Delete(ctx, p)
+		}
 		for _, pair := range whitelist {
-			k.SetPair(ctx, pair.Name)
+			k.Pairs.Insert(ctx, pair.Name)
 		}
 	}
 }

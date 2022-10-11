@@ -35,6 +35,8 @@ type Keeper struct {
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
 	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
+	// TODO(mercilex): use asset pair
+	Pairs collections.KeySet[string]
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -65,6 +67,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		FeederDelegations: collections.NewMap[sdk.ValAddress, sdk.AccAddress](storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		Prevotes:          collections.NewMap[sdk.ValAddress, types.AggregateExchangeRatePrevote](storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap[sdk.ValAddress, types.AggregateExchangeRateVote](storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
+		Pairs:             collections.NewKeySet[string](storeKey, 6, collections.Keys.String),
 	}
 }
 
@@ -118,44 +121,6 @@ func (k Keeper) IterateMissCounters(ctx sdk.Context,
 		if handler(operator, missCounter.Value) {
 			break
 		}
-	}
-}
-
-// PairExists return tobin tax for the pair
-// TODO(mercilex): use AssetPair
-func (k Keeper) PairExists(ctx sdk.Context, pair string) bool {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetPairKey(pair))
-	return bz != nil
-}
-
-// SetPair updates tobin tax for the pair
-// TODO(mercilex): use AssetPair
-func (k Keeper) SetPair(ctx sdk.Context, pair string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetPairKey(pair), []byte{})
-}
-
-// IteratePairs iterates rate over tobin taxes in the store
-func (k Keeper) IteratePairs(ctx sdk.Context, handler func(pair string) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PairsKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		pair := types.ExtractPairFromPairKey(iter.Key())
-		if handler(pair) {
-			break
-		}
-	}
-}
-
-// ClearPairs clears tobin taxes
-func (k Keeper) ClearPairs(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.PairsKey)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		store.Delete(iter.Key())
 	}
 }
 

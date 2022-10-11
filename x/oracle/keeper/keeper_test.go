@@ -14,23 +14,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-/* TODO(mercilex): this test is currently not valid. https://github.com/NibiruChain/nibiru/issues/805
-func TestRewardPool(t *testing.T) {
-	input := CreateTestInput(t)
-
-	fees := sdk.NewCoins(sdk.NewCoin(common.DenomColl, sdk.NewInt(1000)))
-	acc := input.AccountKeeper.GetModuleAccount(input.Ctx, types.ModuleName)
-	err := FundAccount(input, acc.GetAddress(), fees)
-	if err != nil {
-		panic(err) // never occurs
-	}
-
-	KFees := input.OracleKeeper.AccrueVotePeriodPairRewards(input.Ctx, common.DenomColl)
-	require.Equal(t, fees[0], KFees)
-}
-
-*/
-
 func TestParams(t *testing.T) {
 	input := CreateTestInput(t)
 
@@ -107,34 +90,6 @@ func TestIterateMissCounters(t *testing.T) {
 	require.Equal(t, 1, len(missCounters))
 	require.Equal(t, ValAddrs[1], operators[0])
 	require.Equal(t, missCounter, missCounters[0])
-}
-
-func TestPairGetSetIterate(t *testing.T) {
-	input := CreateTestInput(t)
-
-	pairs := []string{
-		common.Pair_BTC_NUSD.String(),
-		common.Pair_NIBI_NUSD.String(),
-		common.Pair_USDC_NUSD.String(),
-		common.Pair_ETH_NUSD.String(),
-	}
-
-	for _, pair := range pairs {
-		input.OracleKeeper.SetPair(input.Ctx, pair)
-		exists := input.OracleKeeper.PairExists(input.Ctx, pair)
-		require.True(t, exists)
-	}
-
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		require.Contains(t, pairs, pair)
-		return false
-	})
-
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	for _, pair := range pairs {
-		exists := input.OracleKeeper.PairExists(input.Ctx, pair)
-		require.False(t, exists)
-	}
 }
 
 func TestValidateFeeder(t *testing.T) {

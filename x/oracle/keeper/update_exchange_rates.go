@@ -34,10 +34,9 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	}
 
 	pairsMap := make(map[string]struct{})
-	k.IteratePairs(ctx, func(pair string) bool {
-		pairsMap[pair] = struct{}{}
-		return false
-	})
+	for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
+		pairsMap[p] = struct{}{}
+	}
 
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
 		err := k.ExchangeRates.Delete(ctx, key)

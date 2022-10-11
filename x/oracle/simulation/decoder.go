@@ -38,7 +38,9 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			cdc.MustUnmarshal(kvB.Value, &voteB)
 			return fmt.Sprintf("%v\n%v", voteA, voteB)
 		case 6:
-			return fmt.Sprintf("%s\n%s", types.ExtractPairFromPairKey(kvA.Key), types.ExtractPairFromPairKey(kvB.Key))
+			_, a := collections.Keys.String.KeyDecode(kvA.Key[1:])
+			_, b := collections.Keys.String.KeyDecode(kvB.Key[1:])
+			return fmt.Sprintf("%s\n%s", a, b)
 		default:
 			panic(fmt.Sprintf("invalid oracle key prefix %X", kvA.Key[:1]))
 		}

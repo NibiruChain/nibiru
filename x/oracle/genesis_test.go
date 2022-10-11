@@ -19,8 +19,8 @@ func TestExportInitGenesis(t *testing.T) {
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, "pair1:pair2", sdk.NewDec(123))
 	input.OracleKeeper.Prevotes.Insert(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{123}, keeper.ValAddrs[0], uint64(2)))
 	input.OracleKeeper.Votes.Insert(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "foo", ExchangeRate: sdk.NewDec(123)}}, keeper.ValAddrs[0]))
-	input.OracleKeeper.SetPair(input.Ctx, "pair1:pair1")
-	input.OracleKeeper.SetPair(input.Ctx, "pair2:pair2")
+	input.OracleKeeper.Pairs.Insert(input.Ctx, "pair1:pair1")
+	input.OracleKeeper.Pairs.Insert(input.Ctx, "pair2:pair2")
 	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], 10)
 	input.OracleKeeper.SetPairReward(input.Ctx, &types.PairReward{
 		Pair: "pair1:pair2",

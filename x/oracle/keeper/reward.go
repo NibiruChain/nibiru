@@ -11,7 +11,7 @@ import (
 
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
 	// check if pair exists
-	if !k.PairExists(ctx, pair) {
+	if !k.Pairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
 	}
 
