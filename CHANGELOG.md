@@ -105,8 +105,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#966](https://github.com/NibiruChain/nibiru/pull/966) - collections: add indexed map
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
-* [#861](https://github.com/NibiruChain/nibiru/pull/861) - query cumulative funding payments
-* [#985](https://github.com/NibiruChain/nibiru/pull/985) - query all active positions for a trader
+* [#861](https://github.com/NibiruChain/nibiru/pull/861) - feat: query cumulative funding payments
+* [#985](https://github.com/NibiruChain/nibiru/pull/985) - feat: query all active positions for a trader
+* [#997](https://github.com/NibiruChain/nibiru/pull/997) - feat: emit `ReserveSnapshotSavedEvent` in vpool EndBlocker
 
 ### Fixes
 
