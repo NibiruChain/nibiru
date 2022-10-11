@@ -5,6 +5,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -79,5 +80,16 @@ func TestAccAddressKey(t *testing.T) {
 		i, b := accAddressKey{}.KeyDecode(accAddressKey{}.KeyEncode(address))
 		require.Equal(t, address, b)
 		require.Equal(t, len(address.String())+1, i) // len bech32 plus 0x0 byte
+	})
+}
+
+func TestTimeKey(t *testing.T) {
+	// TODO mercilex buggy? Probably it saves a milliseconds that discards precission, but if we compare back what we got
+	// is not the same as the start.
+	t.Run("bijective", func(t *testing.T) {
+		time := time.Now()
+		i, b := timeKey{}.KeyDecode(timeKey{}.KeyEncode(time))
+		require.Equal(t, time.UnixMilli(), b.UnixMilli())
+		require.Equal(t, 8, i) // len bech32 plus 0x0 byte
 	})
 }
