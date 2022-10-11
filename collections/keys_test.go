@@ -2,6 +2,7 @@ package collections
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"sort"
 	"testing"
 
@@ -69,5 +70,14 @@ func TestStringKey(t *testing.T) {
 			got := string(b[:len(b)-1]) // removes null termination
 			require.Equal(t, expected, got)
 		}
+	})
+}
+
+func TestAccAddressKey(t *testing.T) {
+	t.Run("bijective", func(t *testing.T) {
+		address := testutil.AccAddress()
+		i, b := accAddressKey{}.KeyDecode(accAddressKey{}.KeyEncode(address))
+		require.Equal(t, address, b)
+		require.Equal(t, len(address.String())+1, i) // len bech32 plus 0x0 byte
 	})
 }
