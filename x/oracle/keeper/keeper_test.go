@@ -16,62 +16,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-func TestExchangeRate(t *testing.T) {
-	input := CreateTestInput(t)
-
-	pairCollRate := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(int64(6))
-	btcStableRate := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
-
-	// Set & get rates
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_USDC_NUSD.String(), pairCollRate)
-	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_USDC_NUSD.String())
-	require.NoError(t, err)
-	require.Equal(t, pairCollRate, rate)
-
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), btcStableRate)
-	rate, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
-	require.NoError(t, err)
-	require.Equal(t, btcStableRate, rate)
-
-	input.OracleKeeper.DeleteExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
-	require.Error(t, err)
-
-	numExchangeRates := 0
-	handler := func(_ string, exchangeRate sdk.Dec) (stop bool) {
-		numExchangeRates = numExchangeRates + 1
-		return false
-	}
-	input.OracleKeeper.IterateExchangeRates(input.Ctx, handler)
-
-	require.True(t, numExchangeRates == 1)
-}
-
-func TestIterateExchangeRates(t *testing.T) {
-	input := CreateTestInput(t)
-
-	collStablePrice := sdk.NewDecWithPrec(839, int64(OracleDecPrecision)).MulInt64(int64(6))
-	ethStablePrice := sdk.NewDecWithPrec(4995, int64(OracleDecPrecision)).MulInt64(int64(6))
-	btcStablePrice := sdk.NewDecWithPrec(2838, int64(OracleDecPrecision)).MulInt64(int64(6))
-
-	// Set & get rates
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_USDC_NUSD.String(), collStablePrice)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), ethStablePrice)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), btcStablePrice)
-
-	input.OracleKeeper.IterateExchangeRates(input.Ctx, func(pair string, rate sdk.Dec) (stop bool) {
-		switch pair {
-		case common.Pair_USDC_NUSD.String():
-			require.Equal(t, collStablePrice, rate)
-		case common.Pair_ETH_NUSD.String():
-			require.Equal(t, ethStablePrice, rate)
-		case common.Pair_BTC_NUSD.String():
-			require.Equal(t, btcStablePrice, rate)
-		}
-		return false
-	})
-}
-
 /* TODO(mercilex): this test is currently not valid. https://github.com/NibiruChain/nibiru/issues/805
 func TestRewardPool(t *testing.T) {
 	input := CreateTestInput(t)
@@ -88,23 +32,6 @@ func TestRewardPool(t *testing.T) {
 }
 
 */
-
-func TestKeeper_ClearExchangeRates(t *testing.T) {
-	i := CreateTestInput(t)
-	i.OracleKeeper.SetExchangeRate(i.Ctx, "nibi:usd", sdk.MustNewDecFromStr("1.5"))
-	i.OracleKeeper.SetExchangeRate(i.Ctx, "btc:usd", sdk.MustNewDecFromStr("100000.5"))
-	i.OracleKeeper.SetExchangeRate(i.Ctx, "eth:usd", sdk.MustNewDecFromStr("10000.5"))
-
-	i.OracleKeeper.ClearExchangeRates(i.Ctx)
-
-	found := false
-	i.OracleKeeper.IterateExchangeRates(i.Ctx, func(_ string, _ sdk.Dec) (stop bool) {
-		found = true
-		return
-	})
-
-	require.False(t, found)
-}
 
 func TestParams(t *testing.T) {
 	input := CreateTestInput(t)

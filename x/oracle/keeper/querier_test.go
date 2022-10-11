@@ -31,7 +31,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -71,8 +71,8 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
@@ -89,9 +89,9 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_NIBI_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	res, err := querier.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)

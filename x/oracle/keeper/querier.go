@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -44,7 +45,7 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	exchangeRate, err := q.GetExchangeRate(ctx, req.Pair)
+	exchangeRate, err := q.Keeper.ExchangeRates.Get(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
@@ -57,28 +58,19 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates types.ExchangeRateTuples
-	q.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
+	for _, er := range q.Keeper.ExchangeRates.Iterate(ctx, collections.Range[string]{}).KeyValues() {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
-			Pair:         pair,
-			ExchangeRate: rate,
+			Pair:         er.Key,
+			ExchangeRate: er.Value,
 		})
-		return false
-	})
+	}
 
 	return &types.QueryExchangeRatesResponse{ExchangeRates: exchangeRates}, nil
 }
 
 // Actives queries all pairs for which exchange rates exist
 func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var pairs []string
-	q.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
-		pairs = append(pairs, pair)
-		return false
-	})
-
-	return &types.QueryActivesResponse{Actives: pairs}, nil
+	return &types.QueryActivesResponse{Actives: q.Keeper.ExchangeRates.Iterate(sdk.UnwrapSDKContext(c), collections.Range[string]{}).Keys()}, nil
 }
 
 // VoteTargets queries the voting target list on current vote period

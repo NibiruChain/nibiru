@@ -3,6 +3,7 @@ package simulation
 import (
 	"bytes"
 	"fmt"
+	"github.com/NibiruChain/nibiru/collections"
 
 	gogotypes "github.com/gogo/protobuf/types"
 
@@ -18,11 +19,8 @@ import (
 func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
-		case bytes.Equal(kvA.Key[:1], types.ExchangeRateKey):
-			var exchangeRateA, exchangeRateB sdk.DecProto
-			cdc.MustUnmarshal(kvA.Value, &exchangeRateA)
-			cdc.MustUnmarshal(kvB.Value, &exchangeRateB)
-			return fmt.Sprintf("%v\n%v", exchangeRateA, exchangeRateB)
+		case kvA.Key[0] == 1:
+			return fmt.Sprintf("%v\n%v", collections.DecValueEncoder.ValueDecode(kvA.Value), collections.DecValueEncoder.ValueDecode(kvB.Value))
 		case bytes.Equal(kvA.Key[:1], types.FeederDelegationKey):
 			return fmt.Sprintf("%v\n%v", sdk.AccAddress(kvA.Value), sdk.AccAddress(kvB.Value))
 		case bytes.Equal(kvA.Key[:1], types.MissCounterKey):

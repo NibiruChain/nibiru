@@ -45,7 +45,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.Error(t, err)
 
 	// Case 2.
@@ -82,7 +82,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	rate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.NoError(t, err)
 	require.Equal(t, randomExchangeRate, rate)
 
@@ -113,14 +113,14 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.Error(t, err)
 }
 
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String(), randomExchangeRate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_NIBI_NUSD.String(), randomExchangeRate)
 
 	// Account 1, pair gov stable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -128,7 +128,7 @@ func TestOracleDrop(t *testing.T) {
 	// Immediately swap halt after an illiquid oracle vote
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_NIBI_NUSD.String())
 	require.Error(t, err)
 }
 
@@ -230,13 +230,13 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 0, int(input.Ctx.BlockHeight()))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.NoError(t, err)
 }
 
@@ -447,9 +447,9 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	gotGovStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String())
+	gotGovStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_NIBI_NUSD.String())
 	require.NoError(t, err)
-	gotEthStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String())
+	gotEthStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_ETH_NUSD.String())
 	require.NoError(t, err)
 
 	require.Equal(t, govStableRate1, gotGovStableRate)
@@ -547,7 +547,7 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_NIBI_NUSD.String())
 	require.Error(t, err)
 }
 

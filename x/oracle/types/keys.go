@@ -35,7 +35,6 @@ const (
 // - 0x06<pair_Bytes>: sdk.Dec
 var (
 	// Keys for store prefixes
-	ExchangeRateKey                 = []byte{0x01} // prefix for each key to a rate
 	FeederDelegationKey             = []byte{0x02} // prefix for each key to a feeder delegation
 	MissCounterKey                  = []byte{0x03} // prefix for each key to a miss counter
 	AggregateExchangeRatePrevoteKey = []byte{0x04} // prefix for each key to an aggregate prevote
@@ -44,11 +43,6 @@ var (
 	PairRewardsKey                  = []byte{0x07} // prefix for each key to a pair's rewards
 	PairRewardsCounterKey           = []byte{0x08} // prefix for the singleton of pair rewards ID.
 )
-
-// GetExchangeRateKey - stored by *pair*
-func GetExchangeRateKey(pair string) []byte {
-	return append(ExchangeRateKey, append([]byte(pair), 0x00)...)
-}
 
 // GetFeederDelegationKey - stored by *Validator* address
 func GetFeederDelegationKey(v sdk.ValAddress) []byte {

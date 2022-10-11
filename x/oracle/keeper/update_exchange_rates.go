@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,7 +39,12 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		return false
 	})
 
-	k.ClearExchangeRates(ctx)
+	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
+		err := k.ExchangeRates.Delete(ctx, key)
+		if err != nil {
+			panic(err)
+		}
+	}
 	// Organize votes to ballot by pair
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
@@ -53,7 +59,13 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
 
 		// Set the exchange rate, emit ABCI event
-		k.SetExchangeRateWithEvent(ctx, pair, exchangeRate)
+		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+				sdk.NewAttribute(types.AttributeKeyPair, pair),
+				sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
+			),
+		)
 	}
 
 	//---------------------------
