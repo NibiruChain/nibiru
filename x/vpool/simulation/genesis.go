@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
@@ -20,8 +21,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			{
 				Pair:                   common.Pair_BTC_NUSD,
 				TradeLimitRatio:        sdk.OneDec(),
-				QuoteAssetReserve:      sdk.NewDec(10e12),
-				BaseAssetReserve:       sdk.NewDec(10e12),
+				QuoteAssetReserve:      sdk.NewDec(10e6).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e6))),
+				BaseAssetReserve:       sdk.NewDec(10e6).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e6))),
 				FluctuationLimitRatio:  sdk.OneDec(),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -36,12 +37,4 @@ func RandomizedGenState(simState *module.SimulationState) {
 	}
 	fmt.Printf("Selected randomly generated vpools:\n%s\n", vpoolGenesisBytes)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&vpoolGenesis)
-
-	// pricefeedGenesis := pricefeedtypes.DefaultGenesis()
-	// pricefeedGenesisBytes, err := json.MarshalIndent(&pricefeedGenesis, "", " ")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Printf("Selected randomly generated pricefeed genesis:\n%s\n", pricefeedGenesisBytes)
-	// simState.GenState[pricefeedtypes.ModuleName] = simState.Cdc.MustMarshalJSON(pricefeedGenesis)
 }
