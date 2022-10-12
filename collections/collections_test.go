@@ -3,6 +3,8 @@ package collections
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/require"
+	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -11,6 +13,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	db "github.com/tendermint/tm-db"
 )
+
+func assertBijective[T any](t *testing.T, encoder KeyEncoder[T], key T) {
+	encodedKey := encoder.KeyEncode(key)
+	read, decodedKey := encoder.KeyDecode(encodedKey)
+	require.Equal(t, len(encodedKey), read, "encoded key and read bytes must have same size")
+	require.Equal(t, key, decodedKey, "encoding and decoding produces different keys")
+}
 
 func deps() (sdk.StoreKey, sdk.Context, codec.BinaryCodec) {
 	sk := sdk.NewKVStoreKey("mock")

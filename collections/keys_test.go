@@ -3,19 +3,17 @@ package collections
 import (
 	"bytes"
 	"github.com/NibiruChain/nibiru/x/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	tmtime "github.com/tendermint/tendermint/types/time"
 	"sort"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestUint64(t *testing.T) {
 	t.Run("bijectivity", func(t *testing.T) {
-		key := uint64(0x0123456789ABCDEF)
-		idx, result := uint64Key{}.KeyDecode(uint64Key{}.KeyEncode(key))
-		require.Equalf(t, key, result, "%d <-> %d", key, result)
-		require.Equal(t, 8, idx)
+		assertBijective[uint64](t, uint64Key{}, uint64(0x0123456789ABCDEF))
 	})
 
 	t.Run("empty", func(t *testing.T) {
@@ -26,10 +24,7 @@ func TestUint64(t *testing.T) {
 
 func TestStringKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		x := "test"
-		i, b := stringKey{}.KeyDecode(stringKey{}.KeyEncode(x))
-		require.Equal(t, x, b)
-		require.Equal(t, 5, i)
+		assertBijective[string](t, stringKey{}, "test")
 	})
 
 	t.Run("panics", func(t *testing.T) {
@@ -76,10 +71,7 @@ func TestStringKey(t *testing.T) {
 
 func TestAccAddressKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		address := testutil.AccAddress()
-		i, b := accAddressKey{}.KeyDecode(accAddressKey{}.KeyEncode(address))
-		require.Equal(t, address, b)
-		require.Equal(t, len(address.String())+1, i) // len bech32 plus 0x0 byte
+		assertBijective[sdk.AccAddress](t, accAddressKey{}, testutil.AccAddress())
 	})
 }
 
@@ -87,9 +79,7 @@ func TestTimeKey(t *testing.T) {
 	// TODO mercilex buggy? Probably it saves a milliseconds that discards precission, but if we compare back what we got
 	// is not the same as the start.
 	t.Run("bijective", func(t *testing.T) {
-		time := time.Now()
-		i, b := timeKey{}.KeyDecode(timeKey{}.KeyEncode(time))
-		require.Equal(t, time.UnixMilli(), b.UnixMilli())
-		require.Equal(t, 8, i) // len bech32 plus 0x0 byte
+		key := tmtime.Now()
+		assertBijective[time.Time](t, timeKey{}, key)
 	})
 }
