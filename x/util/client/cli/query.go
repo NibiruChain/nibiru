@@ -22,7 +22,7 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	for _, cmd := range []*cobra.Command{
-		CmdQueryParams(),
+		CmdQueryModuleAccounts(),
 	} {
 		queryCmd.AddCommand(cmd)
 	}
@@ -30,7 +30,7 @@ func GetQueryCmd() *cobra.Command {
 	return queryCmd
 }
 
-func CmdQueryParams() *cobra.Command {
+func CmdQueryModuleAccounts() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "module-accounts",
 		Short: "shows all the module accounts in the blockchain",
