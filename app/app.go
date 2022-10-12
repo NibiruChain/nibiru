@@ -109,6 +109,8 @@ import (
 	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	"github.com/NibiruChain/nibiru/x/util"
+	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
@@ -164,6 +166,7 @@ var (
 		epochs.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		vpool.AppModuleBasic{},
+		util.AppModule{},
 	)
 
 	// module account permissions
@@ -495,6 +498,7 @@ func NewNibiruApp(
 	vpoolModule := vpool.NewAppModule(
 		appCodec, app.vpoolKeeper, app.pricefeedKeeper,
 	)
+	utilModule := util.NewAppModule(app.bankKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -523,6 +527,7 @@ func NewNibiruApp(
 		epochsModule,
 		vpoolModule,
 		perpModule,
+		utilModule,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -557,6 +562,7 @@ func NewNibiruApp(
 		epochstypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
+		utiltypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -583,6 +589,7 @@ func NewNibiruApp(
 		pricefeedtypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
+		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -615,6 +622,7 @@ func NewNibiruApp(
 		epochstypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
+		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
