@@ -54,10 +54,13 @@ func (uint64Key) KeyDecode(b []byte) (int, uint64) { return 8, sdk.BigEndianToUi
 type timeKey struct{}
 
 func (timeKey) Stringify(t time.Time) string { return t.String() }
-func (timeKey) KeyEncode(t time.Time) []byte { return Keys.Uint64.KeyEncode(uint64(t.UnixMilli())) }
+func (timeKey) KeyEncode(t time.Time) []byte { return sdk.FormatTimeBytes(t) }
 func (timeKey) KeyDecode(b []byte) (int, time.Time) {
-	i, u := Keys.Uint64.KeyDecode(b)
-	return i, time.UnixMilli(int64(u))
+	time, err := sdk.ParseTimeBytes(b)
+	if err != nil {
+		panic(err)
+	}
+	return len(b), time
 }
 
 type accAddressKey struct{}
@@ -73,4 +76,13 @@ func (accAddressKey) KeyDecode(b []byte) (int, sdk.AccAddress) {
 
 func (stringKey) Stringify(s string) string {
 	return s
+}
+
+func validString(s string) error {
+	for i, c := range s {
+		if c == 0 {
+			return fmt.Errorf("invalid null character at index %d: %s", i, s)
+		}
+	}
+	return nil
 }

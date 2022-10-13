@@ -2,11 +2,8 @@ package collections
 
 import (
 	"errors"
-	"fmt"
-
-	"github.com/gogo/protobuf/proto"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/gogo/protobuf/proto"
 )
 
 // ErrNotFound is returned when an object is not found.
@@ -63,13 +60,4 @@ func (p protoValueEncoder[V, PV]) ValueDecode(b []byte) V {
 	v := PV(new(V))
 	p.cdc.MustUnmarshal(b, v)
 	return *v
-}
-
-func validString[T ~string](s T) error {
-	for i, c := range s {
-		if c == 0 {
-			return fmt.Errorf("invalid null character at index %d: %s", i, s)
-		}
-	}
-	return nil
 }

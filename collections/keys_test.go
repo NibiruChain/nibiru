@@ -2,19 +2,18 @@ package collections
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/x/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	tmtime "github.com/tendermint/tendermint/types/time"
 	"sort"
 	"testing"
-
-	"github.com/stretchr/testify/require"
+	"time"
 )
 
 func TestUint64(t *testing.T) {
 	t.Run("bijectivity", func(t *testing.T) {
-		key := uint64(0x0123456789ABCDEF)
-		bytes := uint64Key{}.KeyEncode(key)
-		idx, result := uint64Key{}.KeyDecode(bytes)
-		require.Equalf(t, key, result, "%d <-> %d", key, result)
-		require.Equal(t, 8, idx)
+		assertBijective[uint64](t, uint64Key{}, uint64(0x0123456789ABCDEF))
 	})
 
 	t.Run("empty", func(t *testing.T) {
@@ -25,10 +24,7 @@ func TestUint64(t *testing.T) {
 
 func TestStringKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		x := "test"
-		i, b := stringKey{}.KeyDecode(stringKey{}.KeyEncode(x))
-		require.Equal(t, x, b)
-		require.Equal(t, 5, i)
+		assertBijective[string](t, stringKey{}, "test")
 	})
 
 	t.Run("panics", func(t *testing.T) {
@@ -70,5 +66,20 @@ func TestStringKey(t *testing.T) {
 			got := string(b[:len(b)-1]) // removes null termination
 			require.Equal(t, expected, got)
 		}
+	})
+}
+
+func TestAccAddressKey(t *testing.T) {
+	t.Run("bijective", func(t *testing.T) {
+		assertBijective[sdk.AccAddress](t, accAddressKey{}, testutil.AccAddress())
+	})
+}
+
+func TestTimeKey(t *testing.T) {
+	// TODO mercilex buggy? Probably it saves a milliseconds that discards precission, but if we compare back what we got
+	// is not the same as the start.
+	t.Run("bijective", func(t *testing.T) {
+		key := tmtime.Now()
+		assertBijective[time.Time](t, timeKey{}, key)
 	})
 }
