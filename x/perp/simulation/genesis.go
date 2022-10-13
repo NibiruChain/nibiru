@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -36,15 +35,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 	}
 	fmt.Printf("Selected randomly generated vpools:\n%s\n", vpools)
 	simState.GenState[vpooltypes.ModuleName] = simState.Cdc.MustMarshalJSON(&vpoolGenesis)
-
-	pricefeedGenesis := pricefeedtypes.DefaultGenesis()
-
-	pricefeedGenesisBytes, err := json.MarshalIndent(&pricefeedGenesis, "", " ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Selected randomly generated pricefeed genesis:\n%s\n", pricefeedGenesisBytes)
-	simState.GenState[pricefeedtypes.ModuleName] = simState.Cdc.MustMarshalJSON(pricefeedGenesis)
 
 	perpGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
