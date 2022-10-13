@@ -1,6 +1,7 @@
-package collections
+package collections_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,21 +13,21 @@ type person struct {
 }
 
 type indexes struct {
-	City MultiIndex[string, uint64, person]
+	City collections.MultiIndex[string, uint64, person]
 }
 
-func (i indexes) IndexerList() []Indexer[uint64, person] {
-	return []Indexer[uint64, person]{i.City}
+func (i indexes) IndexerList() []collections.Indexer[uint64, person] {
+	return []collections.Indexer[uint64, person]{i.City}
 }
 
 func TestIndexedMap(t *testing.T) {
 	sk, ctx, _ := deps()
-	m := NewIndexedMap[uint64, person, indexes](
+	m := collections.NewIndexedMap[uint64, person, indexes](
 		sk, 0,
-		uint64Key{}, jsonValue[person]{},
+		collections.Keys.Uint64, jsonValue[person]{},
 		indexes{
-			City: NewMultiIndex[string, uint64, person](sk, 1,
-				stringKey{}, uint64Key{},
+			City: collections.NewMultiIndex[string, uint64, person](sk, 1,
+				collections.Keys.String, collections.Keys.Uint64,
 				func(v person) string {
 					return v.City
 				}),
@@ -63,6 +64,6 @@ func TestIndexedMap(t *testing.T) {
 	p = m.GetOr(ctx, 10, person{10, "sf"})
 	require.Equal(t, p, person{10, "sf"})
 
-	persons := m.Iterate(ctx, Range[uint64]{}).Values()
+	persons := m.Iterate(ctx, collections.Range[uint64]{}).Values()
 	require.Equal(t, []person{{1, "new york"}, {2, "new york"}}, persons)
 }

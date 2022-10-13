@@ -1,6 +1,7 @@
-package collections
+package collections_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,7 +10,7 @@ import (
 func TestRangeBounds(t *testing.T) {
 	sk, ctx, _ := deps()
 
-	ks := NewKeySet[uint64](sk, 0, Keys.Uint64)
+	ks := collections.NewKeySet[uint64](sk, 0, collections.Keys.Uint64)
 
 	ks.Insert(ctx, 1)
 	ks.Insert(ctx, 2)
@@ -19,14 +20,14 @@ func TestRangeBounds(t *testing.T) {
 	ks.Insert(ctx, 6)
 
 	// let's range (1-5]; expected: 2..5
-	result := ks.Iterate(ctx, Range[uint64]{}.StartExclusive(1).EndInclusive(5)).Keys()
+	result := ks.Iterate(ctx, collections.Range[uint64]{}.StartExclusive(1).EndInclusive(5)).Keys()
 	require.Equal(t, []uint64{2, 3, 4, 5}, result)
 
 	// let's range [1-5); expected 1..4
-	result = ks.Iterate(ctx, Range[uint64]{}.StartInclusive(1).EndExclusive(5)).Keys()
+	result = ks.Iterate(ctx, collections.Range[uint64]{}.StartInclusive(1).EndExclusive(5)).Keys()
 	require.Equal(t, []uint64{1, 2, 3, 4}, result)
 
 	// let's range [1-5) descending; expected 4..1
-	result = ks.Iterate(ctx, Range[uint64]{}.StartInclusive(1).EndExclusive(5).Descending()).Keys()
+	result = ks.Iterate(ctx, collections.Range[uint64]{}.StartInclusive(1).EndExclusive(5).Descending()).Keys()
 	require.Equal(t, []uint64{4, 3, 2, 1}, result)
 }

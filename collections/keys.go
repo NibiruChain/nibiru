@@ -56,11 +56,11 @@ type timeKey struct{}
 func (timeKey) Stringify(t time.Time) string { return t.String() }
 func (timeKey) Encode(t time.Time) []byte    { return sdk.FormatTimeBytes(t) }
 func (timeKey) Decode(b []byte) (int, time.Time) {
-	time, err := sdk.ParseTimeBytes(b)
+	t, err := sdk.ParseTimeBytes(b)
 	if err != nil {
 		panic(err)
 	}
-	return len(b), time
+	return len(b), t
 }
 
 type accAddressKey struct{}

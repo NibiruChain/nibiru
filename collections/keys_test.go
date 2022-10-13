@@ -1,7 +1,8 @@
-package collections
+package collections_test
 
 import (
 	"bytes"
+	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 	"testing"
 	"time"
@@ -15,33 +16,33 @@ import (
 
 func TestUint64(t *testing.T) {
 	t.Run("bijectivity", func(t *testing.T) {
-		assertBijective[uint64](t, uint64Key{}, uint64(0x0123456789ABCDEF))
+		assertBijective[uint64](t, collections.Keys.Uint64, uint64(0x0123456789ABCDEF))
 	})
 
 	t.Run("empty", func(t *testing.T) {
 		var k uint64
-		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, uint64Key{}.Encode(k))
+		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, collections.Keys.Uint64.Encode(k))
 	})
 }
 
 func TestStringKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		assertBijective[string](t, stringKey{}, "test")
+		assertBijective[string](t, collections.Keys.String, "test")
 	})
 
 	t.Run("panics", func(t *testing.T) {
 		// invalid string key
 		require.Panics(t, func() {
 			invalid := []byte{0x1, 0x0, 0x3}
-			stringKey{}.Encode(string(invalid))
+			collections.Keys.String.Encode(string(invalid))
 		})
 		// invalid bytes do not end with 0x0
 		require.Panics(t, func() {
-			stringKey{}.Decode([]byte{0x1, 0x2})
+			collections.Keys.String.Decode([]byte{0x1, 0x2})
 		})
 		// invalid size
 		require.Panics(t, func() {
-			stringKey{}.Decode([]byte{0x1})
+			collections.Keys.String.Decode([]byte{0x1})
 		})
 	})
 
@@ -55,7 +56,7 @@ func TestStringKey(t *testing.T) {
 		bytesStringKeys := make([][]byte, len(stringKeys))
 		for i, sk := range stringKeys {
 			strings[i] = sk
-			bytesStringKeys[i] = stringKey{}.Encode(sk)
+			bytesStringKeys[i] = collections.Keys.String.Encode(sk)
 		}
 
 		sort.Strings(strings)
@@ -73,13 +74,13 @@ func TestStringKey(t *testing.T) {
 
 func TestAccAddressKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		assertBijective[sdk.AccAddress](t, accAddressKey{}, testutil.AccAddress())
+		assertBijective[sdk.AccAddress](t, collections.Keys.AccAddress, testutil.AccAddress())
 	})
 }
 
 func TestTimeKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
 		key := tmtime.Now()
-		assertBijective[time.Time](t, timeKey{}, key)
+		assertBijective[time.Time](t, collections.Keys.Time, key)
 	})
 }

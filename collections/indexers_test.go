@@ -1,6 +1,7 @@
-package collections
+package collections_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,9 +9,9 @@ import (
 
 func TestMultiIndex(t *testing.T) {
 	sk, ctx, _ := deps()
-	im := NewMultiIndex[string, uint64, person](
+	im := collections.NewMultiIndex[string, uint64, person](
 		sk, 0,
-		stringKey{}, uint64Key{},
+		collections.Keys.String, collections.Keys.Uint64,
 		func(v person) string { return v.City },
 	)
 	// test insertions
@@ -47,7 +48,7 @@ func TestMultiIndex(t *testing.T) {
 	require.Equal(t, []uint64{1}, ks)
 
 	// test iteration
-	iter := im.Iterate(ctx, PairRange[string, uint64]{}.Descending())
+	iter := im.Iterate(ctx, collections.PairRange[string, uint64]{}.Descending())
 	fk := iter.FullKey()
 	require.Equal(t, fk.K1(), "new york")
 	require.Equal(t, fk.K2(), uint64(2))
@@ -56,19 +57,19 @@ func TestMultiIndex(t *testing.T) {
 func TestIndexerIterator(t *testing.T) {
 	sk, ctx, _ := deps()
 	// test insertions
-	im := NewMultiIndex[string, uint64, person](
+	im := collections.NewMultiIndex[string, uint64, person](
 		sk, 0,
-		stringKey{}, uint64Key{},
+		collections.Keys.String, collections.Keys.Uint64,
 		func(v person) string { return v.City },
 	)
 
 	im.Insert(ctx, 0, person{ID: 0, City: "milan"})
 	im.Insert(ctx, 1, person{ID: 1, City: "milan"})
 
-	iter := im.Iterate(ctx, PairRange[string, uint64]{})
+	iter := im.Iterate(ctx, collections.PairRange[string, uint64]{})
 	defer iter.Close()
 
-	require.Equal(t, Join[string, uint64]("milan", 0), iter.FullKey())
+	require.Equal(t, collections.Join[string, uint64]("milan", 0), iter.FullKey())
 	require.Equal(t, uint64(0), iter.PrimaryKey())
 
 	// test next

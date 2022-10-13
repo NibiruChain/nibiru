@@ -1,6 +1,7 @@
-package collections
+package collections_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,7 @@ import (
 
 func TestKeySet(t *testing.T) {
 	sk, ctx, _ := deps()
-	keyset := NewKeySet[string](sk, 0, stringKey{})
+	keyset := collections.NewKeySet[string](sk, 0, collections.Keys.String)
 
 	// test insert and get
 	key := "hi"
@@ -23,7 +24,7 @@ func TestKeySet(t *testing.T) {
 
 func TestKeySet_Iterate(t *testing.T) {
 	sk, ctx, _ := deps()
-	keyset := NewKeySet[string](sk, 0, stringKey{})
+	keyset := collections.NewKeySet[string](sk, 0, collections.Keys.String)
 	keyset.Insert(ctx, "a")
 	keyset.Insert(ctx, "aa")
 	keyset.Insert(ctx, "b")
@@ -31,7 +32,7 @@ func TestKeySet_Iterate(t *testing.T) {
 
 	expectedKeys := []string{"a", "aa", "b", "bb"}
 
-	iter := keyset.Iterate(ctx, Range[string]{})
+	iter := keyset.Iterate(ctx, collections.Range[string]{})
 	defer iter.Close()
 	for i, o := range iter.Keys() {
 		require.Equal(t, expectedKeys[i], o)
@@ -41,10 +42,10 @@ func TestKeySet_Iterate(t *testing.T) {
 func TestKeysetIterator(t *testing.T) {
 	sk, ctx, _ := deps()
 
-	keyset := NewKeySet[string](sk, 0, stringKey{})
+	keyset := collections.NewKeySet[string](sk, 0, collections.Keys.String)
 	keyset.Insert(ctx, "a")
 
-	iter := keyset.Iterate(ctx, Range[string]{})
+	iter := keyset.Iterate(ctx, collections.Range[string]{})
 	defer iter.Close()
 
 	assert.True(t, iter.Valid())

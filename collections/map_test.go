@@ -1,6 +1,7 @@
-package collections
+package collections_test
 
 import (
+	"github.com/NibiruChain/nibiru/collections"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func TestUpstreamIterAssertions(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	sk, ctx, _ := deps()
-	m := NewMap[string, string](sk, 0, stringKey{}, stringValue{})
+	m := collections.NewMap[string, string](sk, 0, collections.Keys.String, stringValue{})
 
 	key := "id"
 	expected := "test"
@@ -35,16 +36,16 @@ func TestMap(t *testing.T) {
 	err = m.Delete(ctx, key)
 	require.NoError(t, err)
 	_, err = m.Get(ctx, key)
-	require.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, collections.ErrNotFound)
 
 	// test delete errors not exist
 	err = m.Delete(ctx, key)
-	require.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, collections.ErrNotFound)
 }
 
 func TestMapGetOrDefault(t *testing.T) {
 	sk, ctx, _ := deps()
-	m := NewMap[string, string](sk, 0, stringKey{}, stringValue{})
+	m := collections.NewMap[string, string](sk, 0, collections.Keys.String, stringValue{})
 	assert.EqualValues(t, "default", m.GetOr(ctx, "foo", "default"))
 
 	m.Insert(ctx, "foo", "not-default")
@@ -52,16 +53,16 @@ func TestMapGetOrDefault(t *testing.T) {
 }
 
 func TestMapIterate(t *testing.T) {
-	kv := func(o string) KeyValue[string, string] {
-		return KeyValue[string, string]{
+	kv := func(o string) collections.KeyValue[string, string] {
+		return collections.KeyValue[string, string]{
 			Key:   o,
 			Value: o,
 		}
 	}
 	sk, ctx, _ := deps()
-	m := NewMap[string, string](sk, 0, stringKey{}, stringValue{})
+	m := collections.NewMap[string, string](sk, 0, collections.Keys.String, stringValue{})
 
-	expectedObjs := []KeyValue[string, string]{
+	expectedObjs := []collections.KeyValue[string, string]{
 		kv("a"), kv("aa"), kv("b"), kv("bb"),
 	}
 
@@ -71,27 +72,27 @@ func TestMapIterate(t *testing.T) {
 	m.Insert(ctx, "bb", "bb")
 
 	// test iteration ascending
-	iter := m.Iterate(ctx, Range[string]{})
+	iter := m.Iterate(ctx, collections.Range[string]{})
 	defer iter.Close()
 	for i, o := range iter.KeyValues() {
 		require.Equal(t, expectedObjs[i], o)
 	}
 
 	// test iteration descending
-	reverseIter := m.Iterate(ctx, Range[string]{}.Descending())
+	reverseIter := m.Iterate(ctx, collections.Range[string]{}.Descending())
 	defer reverseIter.Close()
 	for i, o := range reverseIter.KeyValues() {
 		require.Equal(t, expectedObjs[len(expectedObjs)-1-i], o)
 	}
 
 	// test key iteration
-	keyIter := m.Iterate(ctx, Range[string]{})
+	keyIter := m.Iterate(ctx, collections.Range[string]{})
 	defer keyIter.Close()
 	for i, o := range keyIter.Keys() {
 		require.Equal(t, expectedObjs[i].Key, o)
 	}
 
-	valIter := m.Iterate(ctx, Range[string]{})
+	valIter := m.Iterate(ctx, collections.Range[string]{})
 	defer valIter.Close()
 	for i, o := range valIter.Values() {
 		require.Equal(t, expectedObjs[i].Value, o)
