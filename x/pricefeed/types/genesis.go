@@ -6,8 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
 
 // DefaultIndex is the default capability global index
@@ -16,8 +14,9 @@ const DefaultIndex uint64 = 1
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:       DefaultParams(),
-		PostedPrices: []PostedPrice{},
+		Params:         DefaultParams(),
+		PostedPrices:   []PostedPrice{},
+		GenesisOracles: []string{},
 	}
 }
 
@@ -51,9 +50,13 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	var pairs common.AssetPairs = gs.Params.Pairs // needed for Contains method
+	contains := make(map[string]bool)
+	for _, pair := range gs.Params.Pairs {
+		contains[pair.String()] = true
+	}
+
 	for _, postedPrice := range gs.PostedPrices {
-		if !pairs.Contains(common.MustNewAssetPair(postedPrice.PairID)) {
+		if !contains[postedPrice.PairID] {
 			return fmt.Errorf(
 				"pair of posted price, %s, which must be in the genesis params",
 				postedPrice.PairID)
