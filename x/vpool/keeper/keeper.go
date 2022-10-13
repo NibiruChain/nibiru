@@ -270,7 +270,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) er
 		return nil
 	}
 
-	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Descending())
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
 	defer it.Close()
 	if !it.Valid() {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
