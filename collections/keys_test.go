@@ -2,13 +2,15 @@ package collections
 
 import (
 	"bytes"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	tmtime "github.com/tendermint/tendermint/types/time"
 	"sort"
 	"testing"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	tmtime "github.com/tendermint/tendermint/types/time"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestUint64(t *testing.T) {
@@ -18,7 +20,7 @@ func TestUint64(t *testing.T) {
 
 	t.Run("empty", func(t *testing.T) {
 		var k uint64
-		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, uint64Key{}.KeyEncode(k))
+		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, uint64Key{}.Encode(k))
 	})
 }
 
@@ -31,15 +33,15 @@ func TestStringKey(t *testing.T) {
 		// invalid string key
 		require.Panics(t, func() {
 			invalid := []byte{0x1, 0x0, 0x3}
-			stringKey{}.KeyEncode(string(invalid))
+			stringKey{}.Encode(string(invalid))
 		})
 		// invalid bytes do not end with 0x0
 		require.Panics(t, func() {
-			stringKey{}.KeyDecode([]byte{0x1, 0x2})
+			stringKey{}.Decode([]byte{0x1, 0x2})
 		})
 		// invalid size
 		require.Panics(t, func() {
-			stringKey{}.KeyDecode([]byte{0x1})
+			stringKey{}.Decode([]byte{0x1})
 		})
 	})
 
@@ -53,7 +55,7 @@ func TestStringKey(t *testing.T) {
 		bytesStringKeys := make([][]byte, len(stringKeys))
 		for i, sk := range stringKeys {
 			strings[i] = sk
-			bytesStringKeys[i] = stringKey{}.KeyEncode(sk)
+			bytesStringKeys[i] = stringKey{}.Encode(sk)
 		}
 
 		sort.Strings(strings)
@@ -76,8 +78,6 @@ func TestAccAddressKey(t *testing.T) {
 }
 
 func TestTimeKey(t *testing.T) {
-	// TODO mercilex buggy? Probably it saves a milliseconds that discards precission, but if we compare back what we got
-	// is not the same as the start.
 	t.Run("bijective", func(t *testing.T) {
 		key := tmtime.Now()
 		assertBijective[time.Time](t, timeKey{}, key)

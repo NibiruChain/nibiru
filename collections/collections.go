@@ -2,8 +2,6 @@ package collections
 
 import (
 	"errors"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/gogo/protobuf/proto"
 )
 
 // ErrNotFound is returned when an object is not found.
@@ -12,11 +10,11 @@ var ErrNotFound = errors.New("collections: not found")
 // KeyEncoder defines a generic interface which is implemented
 // by types that are capable of encoding and decoding collections keys.
 type KeyEncoder[T any] interface {
-	// KeyEncode encodes the type T into bytes.
-	KeyEncode(key T) []byte
-	// KeyDecode decodes the given bytes back into T.
+	// Encode encodes the type T into bytes.
+	Encode(key T) []byte
+	// Decode decodes the given bytes back into T.
 	// And it also must return the bytes of the buffer which were read.
-	KeyDecode(b []byte) (int, T)
+	Decode(b []byte) (int, T)
 	// Stringify returns a string representation of T.
 	Stringify(key T) string
 }
@@ -32,32 +30,4 @@ type ValueEncoder[T any] interface {
 	Stringify(value T) string
 	// Name returns the name of the object.
 	Name() string
-}
-
-// ProtoValueEncoder returns a protobuf value encoder given the codec.BinaryCodec.
-// It's used to convert a specific protobuf object into bytes representation and convert
-// the protobuf object bytes representation into the concrete object.
-func ProtoValueEncoder[V any, PV interface {
-	*V
-	codec.ProtoMarshaler
-}](cdc codec.BinaryCodec) ValueEncoder[V] {
-	return protoValueEncoder[V, PV]{
-		cdc: cdc,
-	}
-}
-
-type protoValueEncoder[V any, PV interface {
-	*V
-	codec.ProtoMarshaler
-}] struct {
-	cdc codec.BinaryCodec
-}
-
-func (p protoValueEncoder[V, PV]) Name() string               { return proto.MessageName(PV(new(V))) }
-func (p protoValueEncoder[V, PV]) ValueEncode(value V) []byte { return p.cdc.MustMarshal(PV(&value)) }
-func (p protoValueEncoder[V, PV]) Stringify(v V) string       { return PV(&v).String() }
-func (p protoValueEncoder[V, PV]) ValueDecode(b []byte) V {
-	v := PV(new(V))
-	p.cdc.MustUnmarshal(b, v)
-	return *v
 }

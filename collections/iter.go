@@ -82,12 +82,12 @@ func iteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], v
 	pfx, start, end, order := r.RangeValues()
 	var prefixBytes []byte
 	if pfx != nil {
-		prefixBytes = kc.KeyEncode(*pfx)
+		prefixBytes = kc.Encode(*pfx)
 		s = prefix.NewStore(s, prefixBytes)
 	}
 	var startBytes []byte // default is nil
 	if start != nil {
-		startBytes = kc.KeyEncode(start.value)
+		startBytes = kc.Encode(start.value)
 		// iterators are inclusive at start by default
 		// so if we want to make the iteration exclusive
 		// we extend by one byte.
@@ -97,7 +97,7 @@ func iteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], v
 	}
 	var endBytes []byte // default is nil
 	if end != nil {
-		endBytes = kc.KeyEncode(end.value)
+		endBytes = kc.Encode(end.value)
 		// iterators are exclusive at end by default
 		// so if we want to make the iteration
 		// inclusive we need to extend by one byte.
@@ -145,7 +145,7 @@ func (i Iterator[K, V]) Value() V {
 
 func (i Iterator[K, V]) Key() K {
 	rawKey := append(i.prefixBytes, i.iter.Key()...)
-	_, c := i.kc.KeyDecode(rawKey) // todo(mercilex): can we assert safety here?
+	_, c := i.kc.Decode(rawKey) // todo(mercilex): can we assert safety here?
 	return c
 }
 

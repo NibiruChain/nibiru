@@ -111,11 +111,11 @@ var AssetPairKeyEncoder = assetPairKeyEncoder{}
 type assetPairKeyEncoder struct{}
 
 func (assetPairKeyEncoder) Stringify(a AssetPair) string { return a.String() }
-func (assetPairKeyEncoder) KeyEncode(a AssetPair) []byte {
-	return collections.Keys.String.KeyEncode(a.String())
+func (assetPairKeyEncoder) Encode(a AssetPair) []byte {
+	return collections.Keys.String.Encode(a.String())
 }
-func (assetPairKeyEncoder) KeyDecode(b []byte) (int, AssetPair) {
-	i, s := collections.Keys.String.KeyDecode(b)
+func (assetPairKeyEncoder) Decode(b []byte) (int, AssetPair) {
+	i, s := collections.Keys.String.Decode(b)
 	return i, MustNewAssetPair(s)
 }
 

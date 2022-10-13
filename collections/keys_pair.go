@@ -39,27 +39,27 @@ func (p pairKeyEncoder[K1, K2]) Stringify(key Pair[K1, K2]) string {
 	return s.String()
 }
 
-// KeyEncode encodes the Pair.
+// Encode encodes the Pair.
 // If both parts of the keys are present, then the byte version of K1 and K2 are joined together.
 // If only the first part is present then
-func (p pairKeyEncoder[K1, K2]) KeyEncode(key Pair[K1, K2]) []byte {
+func (p pairKeyEncoder[K1, K2]) Encode(key Pair[K1, K2]) []byte {
 	if key.k1 != nil && key.k2 != nil {
-		return append(p.kc1.KeyEncode(*key.k1), p.kc2.KeyEncode(*key.k2)...)
+		return append(p.kc1.Encode(*key.k1), p.kc2.Encode(*key.k2)...)
 	} else if key.k1 != nil && key.k2 == nil {
-		return p.kc1.KeyEncode(*key.k1)
+		return p.kc1.Encode(*key.k1)
 	} else if key.k1 == nil && key.k2 != nil {
-		return p.kc2.KeyEncode(*key.k2)
+		return p.kc2.Encode(*key.k2)
 	} else {
 		panic("empty Pair key")
 	}
 }
 
-// KeyDecode decodes the Pair. It assumes that the provided bytes contain both the K1 and K2 part.
-func (p pairKeyEncoder[K1, K2]) KeyDecode(b []byte) (int, Pair[K1, K2]) {
+// Decode decodes the Pair. It assumes that the provided bytes contain both the K1 and K2 part.
+func (p pairKeyEncoder[K1, K2]) Decode(b []byte) (int, Pair[K1, K2]) {
 	// NOTE(mercilex): is it always safe to assume that when we get a part
 	// of the key it's going to always contain the full key and not only a part?
-	i1, k1 := p.kc1.KeyDecode(b)
-	i2, k2 := p.kc2.KeyDecode(b[i1:])
+	i1, k1 := p.kc1.Decode(b)
+	i2, k2 := p.kc2.Decode(b[i1:])
 	return i1 + i2, Pair[K1, K2]{
 		k1: &k1,
 		k2: &k2,
