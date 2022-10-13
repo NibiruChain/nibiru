@@ -70,9 +70,9 @@ func (s KeySetIterator[K]) Keys() []K { return (Iterator[K, setObject])(s).Keys(
 // it also implements the ValueEncoder interface for itself.
 type setObject struct{}
 
-func (s setObject) ValueEncode(_ setObject) []byte { return []byte{} }
+func (s setObject) Encode(_ setObject) []byte { return []byte{} }
 
-func (s setObject) ValueDecode(b []byte) setObject {
+func (s setObject) Decode(b []byte) setObject {
 	if !bytes.Equal(b, []byte{}) {
 		panic(fmt.Sprintf("invalid bytes: %s", b))
 	}

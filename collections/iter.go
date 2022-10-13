@@ -140,7 +140,7 @@ func (i Iterator[K, V]) Next() { i.iter.Next() }
 func (i Iterator[K, V]) Valid() bool { return i.iter.Valid() }
 
 func (i Iterator[K, V]) Value() V {
-	return i.vc.ValueDecode(i.iter.Value())
+	return i.vc.Decode(i.iter.Value())
 }
 
 func (i Iterator[K, V]) Key() K {

@@ -22,10 +22,10 @@ type KeyEncoder[T any] interface {
 // ValueEncoder defines a generic interface which is implemented
 // by types that are capable of encoding and decoding collection values.
 type ValueEncoder[T any] interface {
-	// ValueEncode encodes the value T into bytes.
-	ValueEncode(value T) []byte
-	// ValueDecode returns the type T given its bytes representation.
-	ValueDecode(b []byte) T
+	// Encode encodes the value T into bytes.
+	Encode(value T) []byte
+	// Decode returns the type T given its bytes representation.
+	Decode(b []byte) T
 	// Stringify returns a string representation of T.
 	Stringify(value T) string
 	// Name returns the name of the object.

@@ -27,7 +27,7 @@ func NewMap[K, V any](sk sdk.StoreKey, prefix uint8, kc KeyEncoder[K], vc ValueE
 }
 
 func (m Map[K, V]) Insert(ctx sdk.Context, k K, v V) {
-	m.getStore(ctx).Set(m.kc.Encode(k), m.vc.ValueEncode(v))
+	m.getStore(ctx).Set(m.kc.Encode(k), m.vc.Encode(v))
 }
 
 func (m Map[K, V]) Get(ctx sdk.Context, k K) (v V, err error) {
@@ -35,7 +35,7 @@ func (m Map[K, V]) Get(ctx sdk.Context, k K) (v V, err error) {
 	if vBytes == nil {
 		return v, fmt.Errorf("%w: '%s' with key %s", ErrNotFound, m.typeName, m.kc.Stringify(k))
 	}
-	return m.vc.ValueDecode(vBytes), nil
+	return m.vc.Decode(vBytes), nil
 }
 
 func (m Map[K, V]) GetOr(ctx sdk.Context, key K, def V) (v V) {

@@ -24,10 +24,10 @@ type protoValueEncoder[V any, PV interface {
 	cdc codec.BinaryCodec
 }
 
-func (p protoValueEncoder[V, PV]) Name() string               { return proto.MessageName(PV(new(V))) }
-func (p protoValueEncoder[V, PV]) ValueEncode(value V) []byte { return p.cdc.MustMarshal(PV(&value)) }
-func (p protoValueEncoder[V, PV]) Stringify(v V) string       { return PV(&v).String() }
-func (p protoValueEncoder[V, PV]) ValueDecode(b []byte) V {
+func (p protoValueEncoder[V, PV]) Name() string          { return proto.MessageName(PV(new(V))) }
+func (p protoValueEncoder[V, PV]) Encode(value V) []byte { return p.cdc.MustMarshal(PV(&value)) }
+func (p protoValueEncoder[V, PV]) Stringify(v V) string  { return PV(&v).String() }
+func (p protoValueEncoder[V, PV]) Decode(b []byte) V {
 	v := PV(new(V))
 	p.cdc.MustUnmarshal(b, v)
 	return *v
