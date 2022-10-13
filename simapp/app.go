@@ -965,7 +965,7 @@ func (app *NibiruTestApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
    This is provided for compatibility between protobuf and amino implementations. */
 
 func (app *NibiruTestApp) GetTxConfig() client.TxConfig {
-	return nibiapp.MakeTestEncodingConfig().TxConfig
+	return MakeTestEncodingConfig().TxConfig
 }
 
 // ------------------------------------------------------------------------
@@ -1012,10 +1012,10 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
+	paramsKeeper.Subspace(perptypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
-	paramsKeeper.Subspace(perptypes.ModuleName)
 
 	return paramsKeeper
 }
