@@ -5,26 +5,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type Order uint8
+type order uint8
 
 const OrderAscending = 0
 const OrderDescending = 1
 
-type Bound[K any] struct {
+type bound[K any] struct {
 	value     K
 	inclusive bool
 }
 
 type Ranger[K any] interface {
-	RangeValues() (prefix *K, start *Bound[K], end *Bound[K], order Order)
+	RangeValues() (prefix *K, start *bound[K], end *bound[K], order order)
 }
 
 // Range is a Ranger implementer.
 type Range[K any] struct {
 	prefix *K
-	start  *Bound[K]
-	end    *Bound[K]
-	order  Order
+	start  *bound[K]
+	end    *bound[K]
+	order  order
 }
 
 // Prefix sets a fixed prefix for the key range.
@@ -35,7 +35,7 @@ func (r Range[K]) Prefix(key K) Range[K] {
 
 // StartInclusive makes the range contain only keys which are bigger or equal to the provided start K.
 func (r Range[K]) StartInclusive(start K) Range[K] {
-	r.start = &Bound[K]{
+	r.start = &bound[K]{
 		value:     start,
 		inclusive: true,
 	}
@@ -44,7 +44,7 @@ func (r Range[K]) StartInclusive(start K) Range[K] {
 
 // StartExclusive makes the range contain only keys which are bigger to the provided start K.
 func (r Range[K]) StartExclusive(start K) Range[K] {
-	r.start = &Bound[K]{
+	r.start = &bound[K]{
 		value:     start,
 		inclusive: false,
 	}
@@ -53,7 +53,7 @@ func (r Range[K]) StartExclusive(start K) Range[K] {
 
 // EndInclusive makes the range contain only keys which are smaller or equal to the provided end K.
 func (r Range[K]) EndInclusive(end K) Range[K] {
-	r.end = &Bound[K]{
+	r.end = &bound[K]{
 		value:     end,
 		inclusive: true,
 	}
@@ -62,7 +62,7 @@ func (r Range[K]) EndInclusive(end K) Range[K] {
 
 // EndExclusive makes the range contain only keys which are smaller to the provided end K.
 func (r Range[K]) EndExclusive(end K) Range[K] {
-	r.end = &Bound[K]{
+	r.end = &bound[K]{
 		value:     end,
 		inclusive: false,
 	}
@@ -74,7 +74,7 @@ func (r Range[K]) Descending() Range[K] {
 	return r
 }
 
-func (r Range[K]) RangeValues() (prefix *K, start *Bound[K], end *Bound[K], order Order) {
+func (r Range[K]) RangeValues() (prefix *K, start *bound[K], end *bound[K], order order) {
 	return r.prefix, r.start, r.end, r.order
 }
 

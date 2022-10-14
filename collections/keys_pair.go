@@ -115,9 +115,9 @@ func (p Pair[K1, K2]) K1() (k1 K1) {
 // to provide an easier way to range over Pair keys.
 type PairRange[K1, K2 any] struct {
 	prefix *K1
-	start  *Bound[K2]
-	end    *Bound[K2]
-	order  Order
+	start  *bound[K2]
+	end    *bound[K2]
+	order  order
 }
 
 // Prefix makes the range contain only keys starting with the given k1 prefix.
@@ -128,7 +128,7 @@ func (p PairRange[K1, K2]) Prefix(prefix K1) PairRange[K1, K2] {
 
 // StartInclusive makes the range contain only keys which are bigger or equal to the provided start K2.
 func (p PairRange[K1, K2]) StartInclusive(start K2) PairRange[K1, K2] {
-	p.start = &Bound[K2]{
+	p.start = &bound[K2]{
 		value:     start,
 		inclusive: true,
 	}
@@ -137,7 +137,7 @@ func (p PairRange[K1, K2]) StartInclusive(start K2) PairRange[K1, K2] {
 
 // StartExclusive makes the range contain only keys which are bigger to the provided start K2.
 func (p PairRange[K1, K2]) StartExclusive(start K2) PairRange[K1, K2] {
-	p.start = &Bound[K2]{
+	p.start = &bound[K2]{
 		value:     start,
 		inclusive: false,
 	}
@@ -146,7 +146,7 @@ func (p PairRange[K1, K2]) StartExclusive(start K2) PairRange[K1, K2] {
 
 // EndInclusive makes the range contain only keys which are smaller or equal to the provided end K2.
 func (p PairRange[K1, K2]) EndInclusive(end K2) PairRange[K1, K2] {
-	p.end = &Bound[K2]{
+	p.end = &bound[K2]{
 		value:     end,
 		inclusive: true,
 	}
@@ -155,7 +155,7 @@ func (p PairRange[K1, K2]) EndInclusive(end K2) PairRange[K1, K2] {
 
 // EndExclusive makes the range contain only keys which are smaller to the provided end K2.
 func (p PairRange[K1, K2]) EndExclusive(end K2) PairRange[K1, K2] {
-	p.end = &Bound[K2]{
+	p.end = &bound[K2]{
 		value:     end,
 		inclusive: false,
 	}
@@ -180,7 +180,7 @@ func (p PairRange[K1, K2]) Descending() PairRange[K1, K2] {
 // Pair["new york", "person0"]
 // doing: PairRange[string, string].Prefix("milan").StartInclusive("person1").EndExclusive("person3")
 // returns: Pair["milan", "person1"], Pair["milan", "person2"]
-func (p PairRange[K1, K2]) RangeValues() (prefix *Pair[K1, K2], start *Bound[Pair[K1, K2]], end *Bound[Pair[K1, K2]], order Order) {
+func (p PairRange[K1, K2]) RangeValues() (prefix *Pair[K1, K2], start *bound[Pair[K1, K2]], end *bound[Pair[K1, K2]], order order) {
 	if (p.end != nil || p.start != nil) && p.prefix == nil {
 		panic("invalid PairRange usage: if end or start are set, prefix must be set too")
 	}
@@ -188,13 +188,13 @@ func (p PairRange[K1, K2]) RangeValues() (prefix *Pair[K1, K2], start *Bound[Pai
 		prefix = &Pair[K1, K2]{k1: p.prefix}
 	}
 	if p.start != nil {
-		start = &Bound[Pair[K1, K2]]{
+		start = &bound[Pair[K1, K2]]{
 			value:     Pair[K1, K2]{k2: &p.start.value},
 			inclusive: p.start.inclusive,
 		}
 	}
 	if p.end != nil {
-		end = &Bound[Pair[K1, K2]]{
+		end = &bound[Pair[K1, K2]]{
 			value:     Pair[K1, K2]{k2: &p.end.value},
 			inclusive: p.end.inclusive,
 		}
