@@ -7,6 +7,12 @@ import (
 // ErrNotFound is returned when an object is not found.
 var ErrNotFound = errors.New("collections: not found")
 
+// Namespace defines a storage namespace which must be unique in a single module
+// for all the different storage layer types: Map, Sequence, KeySet, Item, MultiIndex, IndexedMap
+type Namespace uint8
+
+func (n Namespace) Prefix() []byte { return []byte{uint8(n)} }
+
 // KeyEncoder defines a generic interface which is implemented
 // by types that are capable of encoding and decoding collections keys.
 type KeyEncoder[T any] interface {

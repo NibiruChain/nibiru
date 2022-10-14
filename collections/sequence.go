@@ -16,9 +16,9 @@ type Sequence struct {
 }
 
 // NewSequence instantiates a new sequence object.
-func NewSequence(sk sdk.StoreKey, prefix uint8) Sequence {
+func NewSequence(sk sdk.StoreKey, namespace Namespace) Sequence {
 	return Sequence{
-		sequence: NewItem[uint64](sk, prefix, uint64Value{}),
+		sequence: NewItem[uint64](sk, namespace, uint64Value{}),
 	}
 }
 

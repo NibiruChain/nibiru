@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmtime "github.com/tendermint/tendermint/types/time"
-
-	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestUint64(t *testing.T) {
@@ -73,7 +73,7 @@ func TestStringKey(t *testing.T) {
 
 func TestAccAddressKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		assertBijective[sdk.AccAddress](t, AccAddressKeyEncoder, testutil.AccAddress())
+		assertBijective[sdk.AccAddress](t, AccAddressKeyEncoder, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 	})
 }
 
