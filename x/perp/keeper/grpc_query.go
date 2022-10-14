@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -29,7 +29,7 @@ func (q queryServer) QueryPositions(
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	_, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
+	traderAddr, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (q queryServer) QueryPositions(
 	var positions []*types.QueryPositionResponse
 
 	for _, pool := range pools {
-		position, err := q.position(ctx, pool.Pair, req.Trader)
+		position, err := q.position(ctx, pool.Pair, traderAddr)
 		if err == nil {
 			positions = append(positions, position)
 		}
@@ -57,7 +57,7 @@ func (q queryServer) QueryPosition(
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	_, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
+	traderAddr, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
 	if err != nil {
 		return nil, err
 	}
@@ -69,11 +69,11 @@ func (q queryServer) QueryPosition(
 		return nil, err
 	}
 
-	return q.position(ctx, pair, req.Trader)
+	return q.position(ctx, pair, traderAddr)
 }
 
-func (q queryServer) position(ctx sdk.Context, pair common.AssetPair, trader string) (*types.QueryPositionResponse, error) {
-	position, err := q.k.Positions.Get(ctx, keys.Join(pair, keys.String(trader)))
+func (q queryServer) position(ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress) (*types.QueryPositionResponse, error) {
+	position, err := q.k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
 		return nil, err
 	}

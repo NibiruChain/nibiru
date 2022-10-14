@@ -3,23 +3,9 @@ package collections
 import (
 	"testing"
 
-	wellknown "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
 )
-
-func obj(o string) wellknown.BytesValue {
-	return wellknown.BytesValue{Value: []byte(o)}
-}
-
-func kv(o string) KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue] {
-	return KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{
-		Key:   keys.StringKey(o),
-		Value: wellknown.BytesValue{Value: []byte(o)},
-	}
-}
 
 func TestUpstreamIterAssertions(t *testing.T) {
 	// ugly but asserts upstream behavior
@@ -33,11 +19,11 @@ func TestUpstreamIterAssertions(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	sk, ctx, cdc := deps()
-	m := NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
+	sk, ctx, _ := deps()
+	m := NewMap[string, string](sk, 0, StringKeyEncoder, stringValue{})
 
-	key := keys.String("id")
-	expected := obj("test")
+	key := "id"
+	expected := "test"
 
 	// test insert and get
 	m.Insert(ctx, key, expected)
@@ -57,49 +43,55 @@ func TestMap(t *testing.T) {
 }
 
 func TestMapGetOrDefault(t *testing.T) {
-	sk, ctx, cdc := deps()
-	m := NewMap[keys.StringKey, wellknown.UInt64Value, *wellknown.UInt64Value](cdc, sk, 0)
-	assert.EqualValues(t, wellknown.UInt64Value{Value: 123}, m.GetOr(ctx, "foo", wellknown.UInt64Value{Value: 123}))
+	sk, ctx, _ := deps()
+	m := NewMap[string, string](sk, 0, StringKeyEncoder, stringValue{})
+	assert.EqualValues(t, "default", m.GetOr(ctx, "foo", "default"))
 
-	m.Insert(ctx, "foo", wellknown.UInt64Value{Value: 456})
-	assert.EqualValues(t, wellknown.UInt64Value{Value: 456}, m.GetOr(ctx, "foo", wellknown.UInt64Value{Value: 123}))
+	m.Insert(ctx, "foo", "not-default")
+	assert.EqualValues(t, "not-default", m.GetOr(ctx, "foo", "default"))
 }
 
 func TestMapIterate(t *testing.T) {
-	sk, ctx, cdc := deps()
-	m := NewMap[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue](cdc, sk, 0)
+	kv := func(o string) KeyValue[string, string] {
+		return KeyValue[string, string]{
+			Key:   o,
+			Value: o,
+		}
+	}
+	sk, ctx, _ := deps()
+	m := NewMap[string, string](sk, 0, StringKeyEncoder, stringValue{})
 
-	expectedObjs := []KeyValue[keys.StringKey, wellknown.BytesValue, *wellknown.BytesValue]{
+	expectedObjs := []KeyValue[string, string]{
 		kv("a"), kv("aa"), kv("b"), kv("bb"),
 	}
 
-	m.Insert(ctx, "a", obj("a"))
-	m.Insert(ctx, "aa", obj("aa"))
-	m.Insert(ctx, "b", obj("b"))
-	m.Insert(ctx, "bb", obj("bb"))
+	m.Insert(ctx, "a", "a")
+	m.Insert(ctx, "aa", "aa")
+	m.Insert(ctx, "b", "b")
+	m.Insert(ctx, "bb", "bb")
 
 	// test iteration ascending
-	iter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	iter := m.Iterate(ctx, Range[string]{})
 	defer iter.Close()
 	for i, o := range iter.KeyValues() {
 		require.Equal(t, expectedObjs[i], o)
 	}
 
 	// test iteration descending
-	reverseIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]().Descending())
+	reverseIter := m.Iterate(ctx, Range[string]{}.Descending())
 	defer reverseIter.Close()
 	for i, o := range reverseIter.KeyValues() {
 		require.Equal(t, expectedObjs[len(expectedObjs)-1-i], o)
 	}
 
 	// test key iteration
-	keyIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	keyIter := m.Iterate(ctx, Range[string]{})
 	defer keyIter.Close()
 	for i, o := range keyIter.Keys() {
 		require.Equal(t, expectedObjs[i].Key, o)
 	}
 
-	valIter := m.Iterate(ctx, keys.NewRange[keys.StringKey]())
+	valIter := m.Iterate(ctx, Range[string]{})
 	defer valIter.Close()
 	for i, o := range valIter.Values() {
 		require.Equal(t, expectedObjs[i].Value, o)

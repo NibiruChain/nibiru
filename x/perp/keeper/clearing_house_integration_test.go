@@ -4,11 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
-
 	"github.com/NibiruChain/nibiru/collections"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -309,7 +307,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPositionNotional, resp.PositionNotional)
 
 			t.Log("assert position in state")
-			position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
+			position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, traderAddr))
 			require.NoError(t, err)
 			assert.EqualValues(t, common.Pair_BTC_NUSD, position.Pair)
 			assert.EqualValues(t, traderAddr.String(), position.TraderAddress)

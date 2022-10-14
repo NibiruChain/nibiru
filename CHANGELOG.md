@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### State Machine Breaking
 
+* [#991](https://github.com/NibiruChain/nibiru/pull/991) - collections refactoring of keys and values
 * [#978](https://github.com/NibiruChain/nibiru/pull/978) - x/vpool move state logic to collections
 * [#977](https://github.com/NibiruChain/nibiru/pull/977) - x/perp add whitelisted liquidators
 * [#960](https://github.com/NibiruChain/nibiru/pull/960) - x/common validate asset pair denoms

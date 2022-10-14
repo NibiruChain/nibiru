@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
-	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
@@ -145,7 +145,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(tokenPair, keys.String(traderAddr.String())))
+			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, collections.Join(tokenPair, traderAddr))
 			require.ErrorIs(t, err, collections.ErrNotFound)
 			require.Empty(t, newPosition)
 
@@ -323,7 +323,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("Check correctness of new position")
-			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, keys.Join(tokenPair, keys.String(traderAddr.String())))
+			newPosition, err := nibiruApp.PerpKeeper.Positions.Get(ctx, collections.Join(tokenPair, traderAddr))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedPositionSize, newPosition.Size_)
 			assert.Equal(t, tc.expectedMarginRemaining, newPosition.Margin)
@@ -376,7 +376,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 }
 
 func setPosition(k perpkeeper.Keeper, ctx sdk.Context, pos types.Position) {
-	k.Positions.Insert(ctx, keys.Join(pos.Pair, keys.String(pos.TraderAddress)), pos)
+	k.Positions.Insert(ctx, collections.Join(pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress)), pos)
 }
 
 func setPairMetadata(k perpkeeper.Keeper, ctx sdk.Context, pm types.PairMetadata) {
