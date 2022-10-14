@@ -15,33 +15,33 @@ import (
 
 func TestUint64(t *testing.T) {
 	t.Run("bijectivity", func(t *testing.T) {
-		assertBijective[uint64](t, Keys.Uint64, uint64(0x0123456789ABCDEF))
+		assertBijective[uint64](t, Uint64KeyEncoder, uint64(0x0123456789ABCDEF))
 	})
 
 	t.Run("empty", func(t *testing.T) {
 		var k uint64
-		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, Keys.Uint64.Encode(k))
+		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, Uint64KeyEncoder.Encode(k))
 	})
 }
 
 func TestStringKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		assertBijective[string](t, Keys.String, "test")
+		assertBijective[string](t, StringKeyEncoder, "test")
 	})
 
 	t.Run("panics", func(t *testing.T) {
 		// invalid string key
 		require.Panics(t, func() {
 			invalid := []byte{0x1, 0x0, 0x3}
-			Keys.String.Encode(string(invalid))
+			StringKeyEncoder.Encode(string(invalid))
 		})
 		// invalid bytes do not end with 0x0
 		require.Panics(t, func() {
-			Keys.String.Decode([]byte{0x1, 0x2})
+			StringKeyEncoder.Decode([]byte{0x1, 0x2})
 		})
 		// invalid size
 		require.Panics(t, func() {
-			Keys.String.Decode([]byte{0x1})
+			StringKeyEncoder.Decode([]byte{0x1})
 		})
 	})
 
@@ -55,7 +55,7 @@ func TestStringKey(t *testing.T) {
 		bytesStringKeys := make([][]byte, len(stringKeys))
 		for i, sk := range stringKeys {
 			strings[i] = sk
-			bytesStringKeys[i] = Keys.String.Encode(sk)
+			bytesStringKeys[i] = StringKeyEncoder.Encode(sk)
 		}
 
 		sort.Strings(strings)
@@ -73,13 +73,13 @@ func TestStringKey(t *testing.T) {
 
 func TestAccAddressKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		assertBijective[sdk.AccAddress](t, Keys.AccAddress, testutil.AccAddress())
+		assertBijective[sdk.AccAddress](t, AccAddressKeyEncoder, testutil.AccAddress())
 	})
 }
 
 func TestTimeKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
 		key := tmtime.Now()
-		assertBijective[time.Time](t, Keys.Time, key)
+		assertBijective[time.Time](t, TimeKeyEncoder, key)
 	})
 }

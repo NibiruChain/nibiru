@@ -10,7 +10,7 @@ func TestPairKeyEncoder(t *testing.T) {
 	// we only care about bijectivity
 	// as Pair is strictly K1, K2 implementation reliant.
 
-	enc := PairKeyEncoder[string, string](Keys.String, Keys.String)
+	enc := PairKeyEncoder[string, string](StringKeyEncoder, StringKeyEncoder)
 
 	t.Run("encode both - bijectivity", func(t *testing.T) {
 		key := Join("k1", "k2")
@@ -22,12 +22,12 @@ func TestPairKeyEncoder(t *testing.T) {
 
 	t.Run("encode partial - k1", func(t *testing.T) {
 		key := PairPrefix[string, string]("k1")
-		require.Equal(t, Keys.String.Encode("k1"), enc.Encode(key))
+		require.Equal(t, StringKeyEncoder.Encode("k1"), enc.Encode(key))
 	})
 
 	t.Run("encode partial - k2", func(t *testing.T) {
 		key := PairSuffix[string, string]("k2")
-		require.Equal(t, Keys.String.Encode("k2"), enc.Encode(key))
+		require.Equal(t, StringKeyEncoder.Encode("k2"), enc.Encode(key))
 	})
 
 	t.Run("empty panics", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestPairRange(t *testing.T) {
 	ks := NewKeySet[Pair[string, uint64]](
 		sk,
 		0,
-		PairKeyEncoder[string, uint64](Keys.String, Keys.Uint64),
+		PairKeyEncoder[string, uint64](StringKeyEncoder, Uint64KeyEncoder),
 	)
 	items := []Pair[string, uint64]{
 		Join("a", uint64(0)),

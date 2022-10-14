@@ -26,7 +26,7 @@ func NewKeeper(
 		Pools:           collections.NewMap[common.AssetPair, types.VPool](storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.VPool](codec)),
 		ReserveSnapshots: collections.NewMap[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot](
 			storeKey, 1,
-			collections.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, collections.Keys.Time),
+			collections.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
 			collections.ProtoValueEncoder[types.ReserveSnapshot](codec),
 		),
 	}

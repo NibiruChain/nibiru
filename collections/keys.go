@@ -8,20 +8,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type keys struct {
-	String     KeyEncoder[string]
-	AccAddress KeyEncoder[sdk.AccAddress]
-	Time       KeyEncoder[time.Time]
-	Uint64     KeyEncoder[uint64]
-}
-
-// Keys is a helper struct that groups together all available key encoder types.
-var Keys = keys{
-	String:     stringKey{},
-	AccAddress: accAddressKey{},
-	Time:       timeKey{},
-	Uint64:     uint64Key{},
-}
+var (
+	// StringKeyEncoder can be used to encode string keys.
+	StringKeyEncoder = stringKey{}
+	// AccAddressKeyEncoder can be used to encode sdk.AccAddress keys.
+	AccAddressKeyEncoder = accAddressKey{}
+	// TimeKeyEncoder can be used to encode time.Time keys.
+	TimeKeyEncoder = timeKey{}
+	// Uint64KeyEncoder can be used to encode uint64 keys.
+	Uint64KeyEncoder = uint64Key{}
+)
 
 type stringKey struct{}
 
@@ -67,10 +63,10 @@ type accAddressKey struct{}
 
 func (accAddressKey) Stringify(addr sdk.AccAddress) string { return addr.String() }
 func (accAddressKey) Encode(addr sdk.AccAddress) []byte {
-	return Keys.String.Encode(addr.String())
+	return StringKeyEncoder.Encode(addr.String())
 }
 func (accAddressKey) Decode(b []byte) (int, sdk.AccAddress) {
-	i, s := Keys.String.Decode(b)
+	i, s := StringKeyEncoder.Decode(b)
 	return i, sdk.MustAccAddressFromBech32(s)
 }
 

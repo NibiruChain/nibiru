@@ -52,12 +52,12 @@ func NewKeeper(
 
 		CurrentPrices: collections.NewMap[common.AssetPair, types.CurrentPrice](storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.CurrentPrice](cdc)),
 		RawPrices: collections.NewMap[collections.Pair[common.AssetPair, sdk.AccAddress], types.PostedPrice](storeKey, 1,
-			collections.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, collections.Keys.AccAddress),
+			collections.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, collections.AccAddressKeyEncoder),
 			collections.ProtoValueEncoder[types.PostedPrice](cdc),
 		),
 		PriceSnapshots: collections.NewMap[collections.Pair[common.AssetPair, time.Time]](
 			storeKey, 2,
-			collections.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, collections.Keys.Time),
+			collections.PairKeyEncoder[common.AssetPair, time.Time](common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
 			collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 func TestKeySet(t *testing.T) {
 	sk, ctx, _ := deps()
-	keyset := NewKeySet[string](sk, 0, Keys.String)
+	keyset := NewKeySet[string](sk, 0, StringKeyEncoder)
 
 	// test insert and get
 	key := "hi"
@@ -23,7 +23,7 @@ func TestKeySet(t *testing.T) {
 
 func TestKeySet_Iterate(t *testing.T) {
 	sk, ctx, _ := deps()
-	keyset := NewKeySet[string](sk, 0, Keys.String)
+	keyset := NewKeySet[string](sk, 0, StringKeyEncoder)
 	keyset.Insert(ctx, "a")
 	keyset.Insert(ctx, "aa")
 	keyset.Insert(ctx, "b")
@@ -41,7 +41,7 @@ func TestKeySet_Iterate(t *testing.T) {
 func TestKeysetIterator(t *testing.T) {
 	sk, ctx, _ := deps()
 
-	keyset := NewKeySet[string](sk, 0, Keys.String)
+	keyset := NewKeySet[string](sk, 0, StringKeyEncoder)
 	keyset.Insert(ctx, "a")
 
 	iter := keyset.Iterate(ctx, Range[string]{})
