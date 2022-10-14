@@ -20,7 +20,7 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch kvA.Key[0] {
 		case 1:
-			return fmt.Sprintf("%v\n%v", collections.DecValueEncoder.ValueDecode(kvA.Value), collections.DecValueEncoder.ValueDecode(kvB.Value))
+			return fmt.Sprintf("%v\n%v", collections.DecValueEncoder.Decode(kvA.Value), collections.DecValueEncoder.Decode(kvB.Value))
 		case 2:
 			return fmt.Sprintf("%v\n%v", sdk.AccAddress(kvA.Value), sdk.AccAddress(kvB.Value))
 		case 3:
@@ -39,8 +39,8 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			cdc.MustUnmarshal(kvB.Value, &voteB)
 			return fmt.Sprintf("%v\n%v", voteA, voteB)
 		case 6:
-			_, a := collections.Keys.String.KeyDecode(kvA.Key[1:])
-			_, b := collections.Keys.String.KeyDecode(kvB.Key[1:])
+			_, a := collections.StringKeyEncoder.Decode(kvA.Key[1:])
+			_, b := collections.StringKeyEncoder.Decode(kvB.Key[1:])
 			return fmt.Sprintf("%s\n%s", a, b)
 		default:
 			panic(fmt.Sprintf("invalid oracle key prefix %X", kvA.Key[:1]))

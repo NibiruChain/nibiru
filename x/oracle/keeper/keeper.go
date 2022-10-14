@@ -74,17 +74,17 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
 		distrName:         distrName,
-		ExchangeRates:     collections.NewMap[string, sdk.Dec](storeKey, 1, collections.Keys.String, collections.DecValueEncoder),
+		ExchangeRates:     collections.NewMap(storeKey, 1, collections.StringKeyEncoder, collections.DecValueEncoder),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
-		MissCounters:      collections.NewMap[sdk.ValAddress, uint64](storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
+		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap(storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
-		Pairs:             collections.NewKeySet(storeKey, 6, collections.Keys.String),
+		Pairs:             collections.NewKeySet(storeKey, 6, collections.StringKeyEncoder),
 		PairRewards: collections.NewIndexedMap(
 			storeKey, 7,
-			collections.Keys.Uint64, collections.ProtoValueEncoder[types.PairReward](cdc),
+			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.PairReward](cdc),
 			PairRewardsIndexes{
-				RewardsByPair: collections.NewMultiIndex(storeKey, 8, collections.Keys.String, collections.Keys.Uint64, func(v types.PairReward) string {
+				RewardsByPair: collections.NewMultiIndex(storeKey, 8, collections.StringKeyEncoder, collections.Uint64KeyEncoder, func(v types.PairReward) string {
 					return v.Pair
 				}),
 			}),
