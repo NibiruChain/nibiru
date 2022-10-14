@@ -1,10 +1,11 @@
 package collections
 
 import (
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	"github.com/gogo/protobuf/types"
-	"testing"
 )
 
 func TestProtoValueEncoder(t *testing.T) {
