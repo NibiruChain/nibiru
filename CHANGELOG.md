@@ -123,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#961](https://github.com/NibiruChain/nibiru/pull/961) - fix(perp): wire the funding rate query
 * [#993](https://github.com/NibiruChain/nibiru/pull/993) - fix(vpool): fluctuation limit check
 * [#1000](https://github.com/NibiruChain/nibiru/pull/1000) - chore: bump cosmos-sdk to v0.45.9 to fix ibc bug
+* [#1002](https://github.com/NibiruChain/nibiru/pull/1002) - fix: update go.mod dependencies to fix the protocgen script
 
 ## v0.14.0
 

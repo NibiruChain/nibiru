@@ -2,6 +2,8 @@
 
 set -eo pipefail
 
+nibiru_chain_version=v0.45.9
+
 protoc_gen_gocosmos() {
   if ! grep "github.com/gogo/protobuf => github.com/regen-network/protobuf" go.mod &>/dev/null; then
     echo -e "\tPlease run this command from somewhere inside the cosmos-sdk folder."
@@ -10,8 +12,9 @@ protoc_gen_gocosmos() {
 
   # get protoc executions
   go get github.com/regen-network/cosmos-proto/protoc-gen-gocosmos@latest 2>/dev/null
+
   # get cosmos sdk from github
-  go get github.com/cosmos/cosmos-sdk@v0.45.6 2>/dev/null
+  go get github.com/cosmos/cosmos-sdk@$nibiru_chain_version 2>/dev/null
 }
 
 protoc_gen_gocosmos
@@ -20,7 +23,6 @@ cosmos_sdk_dir=$(go list -f '{{ .Dir }}' -m github.com/cosmos/cosmos-sdk)
 proto_dirs=$(find ./proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
 for dir in $proto_dirs; do
   echo "generating $dir"
-  echo "$cosmos_sdk_dir"
   buf protoc \
     -I "proto" \
     -I "$cosmos_sdk_dir/third_party/proto" \
@@ -29,8 +31,6 @@ for dir in $proto_dirs; do
     --grpc-gateway_out=logtostderr=true,allow_colon_final_segments=true:. \
     $(find "${dir}" -maxdepth 1 -name '*.proto')
 done
-
-pwd
 
 # command to generate docs using protoc-gen-doc
 #buf protoc \
