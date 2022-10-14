@@ -23,10 +23,10 @@ func TestIndexedMap(t *testing.T) {
 	sk, ctx, _ := deps()
 	m := NewIndexedMap[uint64, person, indexes](
 		sk, 0,
-		uint64Key{}, jsonValue[person]{},
+		Keys.Uint64, jsonValue[person]{},
 		indexes{
 			City: NewMultiIndex[string, uint64, person](sk, 1,
-				stringKey{}, uint64Key{},
+				Keys.String, Keys.Uint64,
 				func(v person) string {
 					return v.City
 				}),

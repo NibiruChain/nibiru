@@ -46,7 +46,7 @@ func (s Sequence) Set(ctx sdk.Context, u uint64) {
 // uint64Value implements a ValueEncoder for uint64
 type uint64Value struct{}
 
-func (u uint64Value) ValueEncode(value uint64) []byte { return sdk.Uint64ToBigEndian(value) }
-func (u uint64Value) ValueDecode(b []byte) uint64     { return sdk.BigEndianToUint64(b) }
-func (u uint64Value) Stringify(value uint64) string   { return strconv.FormatUint(value, 10) }
-func (u uint64Value) Name() string                    { return "uint64" }
+func (u uint64Value) Encode(value uint64) []byte    { return sdk.Uint64ToBigEndian(value) }
+func (u uint64Value) Decode(b []byte) uint64        { return sdk.BigEndianToUint64(b) }
+func (u uint64Value) Stringify(value uint64) string { return strconv.FormatUint(value, 10) }
+func (u uint64Value) Name() string                  { return "uint64" }

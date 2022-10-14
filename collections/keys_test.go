@@ -2,44 +2,46 @@ package collections
 
 import (
 	"bytes"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	tmtime "github.com/tendermint/tendermint/types/time"
 	"sort"
 	"testing"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	tmtime "github.com/tendermint/tendermint/types/time"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestUint64(t *testing.T) {
 	t.Run("bijectivity", func(t *testing.T) {
-		assertBijective[uint64](t, uint64Key{}, uint64(0x0123456789ABCDEF))
+		assertBijective[uint64](t, Keys.Uint64, uint64(0x0123456789ABCDEF))
 	})
 
 	t.Run("empty", func(t *testing.T) {
 		var k uint64
-		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, uint64Key{}.KeyEncode(k))
+		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, Keys.Uint64.Encode(k))
 	})
 }
 
 func TestStringKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		assertBijective[string](t, stringKey{}, "test")
+		assertBijective[string](t, Keys.String, "test")
 	})
 
 	t.Run("panics", func(t *testing.T) {
 		// invalid string key
 		require.Panics(t, func() {
 			invalid := []byte{0x1, 0x0, 0x3}
-			stringKey{}.KeyEncode(string(invalid))
+			Keys.String.Encode(string(invalid))
 		})
 		// invalid bytes do not end with 0x0
 		require.Panics(t, func() {
-			stringKey{}.KeyDecode([]byte{0x1, 0x2})
+			Keys.String.Decode([]byte{0x1, 0x2})
 		})
 		// invalid size
 		require.Panics(t, func() {
-			stringKey{}.KeyDecode([]byte{0x1})
+			Keys.String.Decode([]byte{0x1})
 		})
 	})
 
@@ -53,7 +55,7 @@ func TestStringKey(t *testing.T) {
 		bytesStringKeys := make([][]byte, len(stringKeys))
 		for i, sk := range stringKeys {
 			strings[i] = sk
-			bytesStringKeys[i] = stringKey{}.KeyEncode(sk)
+			bytesStringKeys[i] = Keys.String.Encode(sk)
 		}
 
 		sort.Strings(strings)
@@ -71,15 +73,13 @@ func TestStringKey(t *testing.T) {
 
 func TestAccAddressKey(t *testing.T) {
 	t.Run("bijective", func(t *testing.T) {
-		assertBijective[sdk.AccAddress](t, accAddressKey{}, testutil.AccAddress())
+		assertBijective[sdk.AccAddress](t, Keys.AccAddress, testutil.AccAddress())
 	})
 }
 
 func TestTimeKey(t *testing.T) {
-	// TODO mercilex buggy? Probably it saves a milliseconds that discards precission, but if we compare back what we got
-	// is not the same as the start.
 	t.Run("bijective", func(t *testing.T) {
 		key := tmtime.Now()
-		assertBijective[time.Time](t, timeKey{}, key)
+		assertBijective[time.Time](t, Keys.Time, key)
 	})
 }

@@ -25,14 +25,14 @@ var Keys = keys{
 
 type stringKey struct{}
 
-func (stringKey) KeyEncode(s string) []byte {
+func (stringKey) Encode(s string) []byte {
 	if err := validString(s); err != nil {
 		panic(fmt.Errorf("invalid StringKey: %w", err))
 	}
 	return append([]byte(s), 0) // null terminate it for safe prefixing
 }
 
-func (stringKey) KeyDecode(b []byte) (int, string) {
+func (stringKey) Decode(b []byte) (int, string) {
 	l := len(b)
 	if l < 2 {
 		panic("invalid StringKey bytes")
@@ -47,30 +47,30 @@ func (stringKey) KeyDecode(b []byte) (int, string) {
 
 type uint64Key struct{}
 
-func (uint64Key) Stringify(u uint64) string        { return strconv.FormatUint(u, 10) }
-func (uint64Key) KeyEncode(u uint64) []byte        { return sdk.Uint64ToBigEndian(u) }
-func (uint64Key) KeyDecode(b []byte) (int, uint64) { return 8, sdk.BigEndianToUint64(b) }
+func (uint64Key) Stringify(u uint64) string     { return strconv.FormatUint(u, 10) }
+func (uint64Key) Encode(u uint64) []byte        { return sdk.Uint64ToBigEndian(u) }
+func (uint64Key) Decode(b []byte) (int, uint64) { return 8, sdk.BigEndianToUint64(b) }
 
 type timeKey struct{}
 
 func (timeKey) Stringify(t time.Time) string { return t.String() }
-func (timeKey) KeyEncode(t time.Time) []byte { return sdk.FormatTimeBytes(t) }
-func (timeKey) KeyDecode(b []byte) (int, time.Time) {
-	time, err := sdk.ParseTimeBytes(b)
+func (timeKey) Encode(t time.Time) []byte    { return sdk.FormatTimeBytes(t) }
+func (timeKey) Decode(b []byte) (int, time.Time) {
+	t, err := sdk.ParseTimeBytes(b)
 	if err != nil {
 		panic(err)
 	}
-	return len(b), time
+	return len(b), t
 }
 
 type accAddressKey struct{}
 
 func (accAddressKey) Stringify(addr sdk.AccAddress) string { return addr.String() }
-func (accAddressKey) KeyEncode(addr sdk.AccAddress) []byte {
-	return Keys.String.KeyEncode(addr.String())
+func (accAddressKey) Encode(addr sdk.AccAddress) []byte {
+	return Keys.String.Encode(addr.String())
 }
-func (accAddressKey) KeyDecode(b []byte) (int, sdk.AccAddress) {
-	i, s := Keys.String.KeyDecode(b)
+func (accAddressKey) Decode(b []byte) (int, sdk.AccAddress) {
+	i, s := Keys.String.Decode(b)
 	return i, sdk.MustAccAddressFromBech32(s)
 }
 
