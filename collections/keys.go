@@ -10,13 +10,13 @@ import (
 
 var (
 	// StringKeyEncoder can be used to encode string keys.
-	StringKeyEncoder = stringKey{}
+	StringKeyEncoder KeyEncoder[string] = stringKey{}
 	// AccAddressKeyEncoder can be used to encode sdk.AccAddress keys.
-	AccAddressKeyEncoder = accAddressKey{}
+	AccAddressKeyEncoder KeyEncoder[sdk.AccAddress] = accAddressKey{}
 	// TimeKeyEncoder can be used to encode time.Time keys.
-	TimeKeyEncoder = timeKey{}
+	TimeKeyEncoder KeyEncoder[time.Time] = timeKey{}
 	// Uint64KeyEncoder can be used to encode uint64 keys.
-	Uint64KeyEncoder = uint64Key{}
+	Uint64KeyEncoder KeyEncoder[uint64] = uint64Key{}
 )
 
 type stringKey struct{}

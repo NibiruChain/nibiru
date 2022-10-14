@@ -106,7 +106,7 @@ func (pair AssetPair) Validate() error {
 	return nil
 }
 
-var AssetPairKeyEncoder = assetPairKeyEncoder{}
+var AssetPairKeyEncoder collections.KeyEncoder[AssetPair] = assetPairKeyEncoder{}
 
 type assetPairKeyEncoder struct{}
 
