@@ -1,6 +1,8 @@
 package collections
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -169,7 +171,10 @@ func (i Iterator[K, V]) Value() V {
 // Key returns the current sdk.Iterator decoded key.
 func (i Iterator[K, V]) Key() K {
 	rawKey := append(i.prefixBytes, i.iter.Key()...)
-	_, c := i.kc.Decode(rawKey) // todo(mercilex): can we assert safety here?
+	read, c := i.kc.Decode(rawKey)
+	if read != len(rawKey) {
+		panic(fmt.Sprintf("key decoder didn't fully consume the key: %T %x %d", i.kc, rawKey, read))
+	}
 	return c
 }
 
