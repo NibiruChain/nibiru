@@ -1,7 +1,6 @@
-package collections_test
+package collections
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	"github.com/gogo/protobuf/types"
@@ -15,6 +14,6 @@ func TestProtoValueEncoder(t *testing.T) {
 		registry := testdata.NewTestInterfaceRegistry()
 		cdc := codec.NewProtoCodec(registry)
 
-		assertValueBijective[types.BytesValue](t, collections.ProtoValueEncoder[types.BytesValue](cdc), protoType)
+		assertValueBijective[types.BytesValue](t, ProtoValueEncoder[types.BytesValue](cdc), protoType)
 	})
 }

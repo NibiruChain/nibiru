@@ -1,9 +1,7 @@
-package collections_test
+package collections
 
 import (
 	"testing"
-
-	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,7 +9,7 @@ import (
 
 func TestItemEmpty(t *testing.T) {
 	sk, ctx, _ := deps()
-	item := collections.NewItem[string](sk, 0, stringValue{})
+	item := NewItem[string](sk, 0, stringValue{})
 
 	val, err := item.Get(ctx)
 	assert.EqualValues(t, "", val)
@@ -20,7 +18,7 @@ func TestItemEmpty(t *testing.T) {
 
 func TestItemGetOr(t *testing.T) {
 	sk, ctx, _ := deps()
-	item := collections.NewItem[string](sk, 0, stringValue{})
+	item := NewItem[string](sk, 0, stringValue{})
 
 	val := item.GetOr(ctx, "default")
 	assert.EqualValues(t, "default", val)
@@ -28,7 +26,7 @@ func TestItemGetOr(t *testing.T) {
 
 func TestItemSetAndGet(t *testing.T) {
 	sk, ctx, _ := deps()
-	item := collections.NewItem[string](sk, 0, stringValue{})
+	item := NewItem[string](sk, 0, stringValue{})
 	item.Set(ctx, "bar")
 	val, err := item.Get(ctx)
 	require.Nil(t, err)

@@ -1,4 +1,4 @@
-package collections_test
+package collections
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
