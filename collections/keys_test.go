@@ -2,10 +2,11 @@ package collections_test
 
 import (
 	"bytes"
-	"github.com/NibiruChain/nibiru/collections"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

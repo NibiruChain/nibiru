@@ -1,8 +1,9 @@
 package collections_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

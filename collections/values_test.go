@@ -1,12 +1,14 @@
 package collections_test
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/x/common"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestProtoValueEncoder(t *testing.T) {

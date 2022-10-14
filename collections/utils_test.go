@@ -3,8 +3,9 @@ package collections_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/collections"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/stretchr/testify/require"
 )
