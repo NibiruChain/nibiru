@@ -5,6 +5,7 @@ vue/dist
 release/
 .idea/
 .vscode/
+.fleet/
 .DS_Store
 data
 build

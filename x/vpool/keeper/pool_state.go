@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -36,7 +36,7 @@ func (k Keeper) CreatePool(
 
 	k.ReserveSnapshots.Insert(
 		ctx,
-		keys.Join(pair, keys.Uint64(uint64(ctx.BlockTime().UnixMilli()))),
+		collections.Join(pair, ctx.BlockTime()),
 		types.NewReserveSnapshot(
 			pair,
 			baseAssetReserve,

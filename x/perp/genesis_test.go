@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/collections"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
@@ -38,9 +38,9 @@ func TestGenesis(t *testing.T) {
 
 		// create some positions
 		for i := int64(0); i < 100; i++ {
-			addr := testutil.AccAddress().String()
-			app.PerpKeeper.Positions.Insert(ctx, keys.Join(common.Pair_NIBI_NUSD, keys.String(addr)), types.Position{
-				TraderAddress:                   addr,
+			addr := testutil.AccAddress()
+			app.PerpKeeper.Positions.Insert(ctx, collections.Join(common.Pair_NIBI_NUSD, addr), types.Position{
+				TraderAddress:                   addr.String(),
 				Pair:                            common.Pair_NIBI_NUSD,
 				Size_:                           sdk.NewDec(i + 1),
 				Margin:                          sdk.NewDec(i * 2),
@@ -52,7 +52,7 @@ func TestGenesis(t *testing.T) {
 
 		// create some prepaid bad debt
 		for i := 0; i < 10; i++ {
-			app.PerpKeeper.PrepaidBadDebt.Insert(ctx, keys.String(fmt.Sprintf("%d", i)), types.PrepaidBadDebt{
+			app.PerpKeeper.PrepaidBadDebt.Insert(ctx, fmt.Sprintf("%d", i), types.PrepaidBadDebt{
 				Denom:  fmt.Sprintf("%d", i),
 				Amount: sdk.NewInt(int64(i)),
 			})

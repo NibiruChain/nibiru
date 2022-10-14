@@ -1,24 +1,21 @@
 package collections
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
 )
 
 // IndexerIterator wraps a KeySetIterator to provide more useful functionalities
 // around index key iteration.
-type IndexerIterator[IK, PK keys.Key] KeySetIterator[keys.Pair[IK, PK]]
+type IndexerIterator[IK, PK any] KeySetIterator[Pair[IK, PK]]
 
 // FullKey returns the iterator current key composed of both indexing key and primary key.
-func (i IndexerIterator[IK, PK]) FullKey() keys.Pair[IK, PK] {
-	return (KeySetIterator[keys.Pair[IK, PK]])(i).Key()
+func (i IndexerIterator[IK, PK]) FullKey() Pair[IK, PK] {
+	return (KeySetIterator[Pair[IK, PK]])(i).Key()
 }
 
 // FullKeys fully consumes the iterator and returns the set of joined indexing key and primary key found.
-func (i IndexerIterator[IK, PK]) FullKeys() []keys.Pair[IK, PK] {
-	return (KeySetIterator[keys.Pair[IK, PK]])(i).Keys()
+func (i IndexerIterator[IK, PK]) FullKeys() []Pair[IK, PK] {
+	return (KeySetIterator[Pair[IK, PK]])(i).Keys()
 }
 
 // PrimaryKey returns the iterator current primary key
@@ -34,15 +31,18 @@ func (i IndexerIterator[IK, PK]) PrimaryKeys() []PK {
 	return pks
 }
 
-func (i IndexerIterator[IK, PK]) Next()       { (KeySetIterator[keys.Pair[IK, PK]])(i).Next() }
-func (i IndexerIterator[IK, PK]) Valid() bool { return (KeySetIterator[keys.Pair[IK, PK]])(i).Valid() }
-func (i IndexerIterator[IK, PK]) Close()      { (KeySetIterator[keys.Pair[IK, PK]])(i).Close() }
+func (i IndexerIterator[IK, PK]) Next()       { (KeySetIterator[Pair[IK, PK]])(i).Next() }
+func (i IndexerIterator[IK, PK]) Valid() bool { return (KeySetIterator[Pair[IK, PK]])(i).Valid() }
+func (i IndexerIterator[IK, PK]) Close()      { (KeySetIterator[Pair[IK, PK]])(i).Close() }
 
 // NewMultiIndex instantiates a new MultiIndex instance.
 // namespace is the unique storage namespace for the index.
 // getIndexingKeyFunc is a function which given the object returns the key we use to index the object.
-func NewMultiIndex[IK, PK keys.Key, V any](cdc codec.BinaryCodec, sk sdk.StoreKey, namespace uint8, getIndexingKeyFunc func(v V) IK) MultiIndex[IK, PK, V] {
-	ks := NewKeySet[keys.Pair[IK, PK]](cdc, sk, namespace)
+func NewMultiIndex[IK, PK any, V any](
+	sk sdk.StoreKey, namespace Namespace,
+	indexKeyEncoder KeyEncoder[IK], primaryKeyEncoder KeyEncoder[PK],
+	getIndexingKeyFunc func(v V) IK) MultiIndex[IK, PK, V] {
+	ks := NewKeySet[Pair[IK, PK]](sk, namespace, PairKeyEncoder[IK, PK](indexKeyEncoder, primaryKeyEncoder))
 	return MultiIndex[IK, PK, V]{
 		jointKeys:      ks,
 		getIndexingKey: getIndexingKeyFunc,
@@ -57,14 +57,14 @@ func NewMultiIndex[IK, PK keys.Key, V any](cdc codec.BinaryCodec, sk sdk.StoreKe
 // Person2 { ID: 1, City: Milan }
 // Both can be indexed with the secondary key "Milan".
 // The key generated are, respectively:
-// keys.Pair[Milan, 0]
-// keys.Pair[Milan, 1]
+// Pair[Milan, 0]
+// Pair[Milan, 1]
 // So if we want to get all the objects whose City is Milan
-// we prefix over keys.Pair[Milan, nil], and we get the respective primary keys: 0,1.
-type MultiIndex[IK, PK keys.Key, V any] struct {
+// we prefix over Pair[Milan, nil], and we get the respective primary keys: 0,1.
+type MultiIndex[IK, PK, V any] struct {
 	// jointKeys is a KeySet of the joint indexing key and the primary key.
 	// the generated keys always point to primary keys.
-	jointKeys KeySet[keys.Pair[IK, PK]]
+	jointKeys KeySet[Pair[IK, PK]]
 	// getIndexingKey is a function which provided the object, returns the indexing key
 	getIndexingKey func(v V) IK
 }
@@ -72,17 +72,17 @@ type MultiIndex[IK, PK keys.Key, V any] struct {
 // Insert implements the Indexer interface.
 func (i MultiIndex[IK, PK, V]) Insert(ctx sdk.Context, pk PK, v V) {
 	indexingKey := i.getIndexingKey(v)
-	i.jointKeys.Insert(ctx, keys.Join(indexingKey, pk))
+	i.jointKeys.Insert(ctx, Join(indexingKey, pk))
 }
 
 // Delete implements the Indexer interface.
 func (i MultiIndex[IK, PK, V]) Delete(ctx sdk.Context, pk PK, v V) {
 	indexingKey := i.getIndexingKey(v)
-	i.jointKeys.Delete(ctx, keys.Join(indexingKey, pk))
+	i.jointKeys.Delete(ctx, Join(indexingKey, pk))
 }
 
 // Iterate iterates over the provided range.
-func (i MultiIndex[IK, PK, V]) Iterate(ctx sdk.Context, rng keys.Range[keys.Pair[IK, PK]]) IndexerIterator[IK, PK] {
+func (i MultiIndex[IK, PK, V]) Iterate(ctx sdk.Context, rng Ranger[Pair[IK, PK]]) IndexerIterator[IK, PK] {
 	iter := i.jointKeys.Iterate(ctx, rng)
 	return (IndexerIterator[IK, PK])(iter)
 }
@@ -90,10 +90,10 @@ func (i MultiIndex[IK, PK, V]) Iterate(ctx sdk.Context, rng keys.Range[keys.Pair
 // ExactMatch returns an iterator of all the primary keys of objects which contain
 // the provided indexing key ik.
 func (i MultiIndex[IK, PK, V]) ExactMatch(ctx sdk.Context, ik IK) IndexerIterator[IK, PK] {
-	return i.Iterate(ctx, keys.PairRange[IK, PK]{}.Prefix(ik))
+	return i.Iterate(ctx, PairRange[IK, PK]{}.Prefix(ik))
 }
 
 // ReverseExactMatch works in the same way as ExactMatch, but the iteration happens in reverse.
 func (i MultiIndex[IK, PK, V]) ReverseExactMatch(ctx sdk.Context, ik IK) IndexerIterator[IK, PK] {
-	return i.Iterate(ctx, keys.PairRange[IK, PK]{}.Prefix(ik).Descending())
+	return i.Iterate(ctx, PairRange[IK, PK]{}.Prefix(ik).Descending())
 }

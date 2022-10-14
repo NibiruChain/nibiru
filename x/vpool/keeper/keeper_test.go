@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -426,7 +427,7 @@ func TestGetVpools(t *testing.T) {
 		sdk.MustNewDecFromStr("15"),
 	)
 
-	pools := vpoolKeeper.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
+	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 
 	require.EqualValues(t, 2, len(pools))
 
@@ -612,7 +613,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
 			for _, snapshot := range tc.existingSnapshots {
-				vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
+				vpoolKeeper.ReserveSnapshots.Insert(ctx, collections.Join[common.AssetPair, time.Time](snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 			}
 
 			t.Log("check fluctuation limit")

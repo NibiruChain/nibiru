@@ -4,11 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
-
-	"github.com/NibiruChain/nibiru/collections/keys"
-
 	"github.com/NibiruChain/nibiru/collections"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
@@ -612,13 +610,13 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	// and events levels, whilst the second (which failed) didn't.
 
 	assertNotLiquidated := func(old types.Position) {
-		position, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
+		position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
 		require.NoError(t, err)
 		require.Equal(t, old, position)
 	}
 
 	assertLiquidated := func(old types.Position) {
-		_, err := app.PerpKeeper.Positions.Get(ctx, keys.Join(old.Pair, keys.String(old.TraderAddress)))
+		_, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
 		require.ErrorIs(t, err, collections.ErrNotFound)
 		// NOTE(mercilex): does not cover partial liquidation
 	}

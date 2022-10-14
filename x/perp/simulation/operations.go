@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -103,7 +104,7 @@ func SimulateMsgClosePosition(ak types.AccountKeeper, bk types.BankKeeper, k kee
 			TokenPair: pair,
 		}
 
-		_, err := k.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(trader)))
+		_, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
@@ -137,7 +138,7 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 		pair := common.Pair_BTC_NUSD.String()
 
 		msg := &types.MsgAddMargin{}
-		_, err := k.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(trader)))
+		_, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
@@ -183,7 +184,7 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		msg := &types.MsgRemoveMargin{}
 
-		position, err := k.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(trader)))
+		position, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}

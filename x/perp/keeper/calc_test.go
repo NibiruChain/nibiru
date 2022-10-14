@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
-
 	"github.com/NibiruChain/nibiru/collections"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/simapp"
 

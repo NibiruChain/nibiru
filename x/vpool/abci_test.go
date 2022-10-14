@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +50,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err := vpoolKeeper.ReserveSnapshots.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.Uint64(uint64(expectedSnapshot.TimestampMs))))
+	snapshot, err := vpoolKeeper.ReserveSnapshots.Get(ctx, collections.Join(common.Pair_BTC_NUSD, time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
@@ -73,7 +73,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.Uint64(uint64(expectedSnapshot.TimestampMs))))
+	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx, collections.Join(common.Pair_BTC_NUSD, time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 

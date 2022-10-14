@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -26,7 +26,7 @@ func (k Keeper) AddMargin(
 	}
 
 	// ------------- AddMargin -------------
-	position, err := k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
+	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (k Keeper) AddMargin(
 	position.Margin = remainingMargin.Margin
 	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 	position.BlockNumber = ctx.BlockHeight()
-	k.Positions.Insert(ctx, keys.Join(position.Pair, keys.String(position.TraderAddress)), position)
+	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
 	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
@@ -120,7 +120,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// ------------- RemoveMargin -------------
-	position, err = k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
+	position, err = k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
@@ -144,7 +144,7 @@ func (k Keeper) RemoveMargin(
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, fmt.Errorf("not enough free collateral")
 	}
 
-	k.Positions.Insert(ctx, keys.Join(position.Pair, keys.String(position.TraderAddress)), position)
+	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
 	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {

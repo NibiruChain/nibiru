@@ -3,33 +3,32 @@ package collections
 import (
 	"testing"
 
-	wellknown "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestItemEmpty(t *testing.T) {
-	sk, ctx, cdc := deps()
-	item := NewItem[wellknown.BytesValue](cdc, sk, 0)
+	sk, ctx, _ := deps()
+	item := NewItem[string](sk, 0, stringValue{})
 
 	val, err := item.Get(ctx)
-	assert.EqualValues(t, wellknown.BytesValue{}, val)
+	assert.EqualValues(t, "", val)
 	assert.Error(t, err)
 }
 
-func TestItemGetWithDefault(t *testing.T) {
-	sk, ctx, cdc := deps()
-	item := NewItem[wellknown.BytesValue](cdc, sk, 0)
+func TestItemGetOr(t *testing.T) {
+	sk, ctx, _ := deps()
+	item := NewItem[string](sk, 0, stringValue{})
 
-	val := item.GetOr(ctx, wellknown.BytesValue{Value: []byte("foo")})
-	assert.EqualValues(t, wellknown.BytesValue{Value: []byte("foo")}, val)
+	val := item.GetOr(ctx, "default")
+	assert.EqualValues(t, "default", val)
 }
 
 func TestItemSetAndGet(t *testing.T) {
-	sk, ctx, cdc := deps()
-	item := NewItem[wellknown.BytesValue](cdc, sk, 0)
-	item.Set(ctx, wellknown.BytesValue{Value: []byte("bar")})
+	sk, ctx, _ := deps()
+	item := NewItem[string](sk, 0, stringValue{})
+	item.Set(ctx, "bar")
 	val, err := item.Get(ctx)
 	require.Nil(t, err)
-	require.EqualValues(t, wellknown.BytesValue{Value: []byte("bar")}, val)
+	require.EqualValues(t, "bar", val)
 }

@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -39,7 +39,7 @@ func (k Keeper) Liquidate(
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	position, err := k.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
+	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -302,7 +302,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Mul(params.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.
 		Sub(liquidationFeeAmount)
-	k.Positions.Insert(ctx, keys.Join(positionResp.Position.Pair, keys.String(positionResp.Position.TraderAddress)), *positionResp.Position)
+	k.Positions.Insert(ctx, collections.Join(positionResp.Position.Pair, traderAddr), *positionResp.Position)
 
 	// Compute splits for the liquidation fee
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)

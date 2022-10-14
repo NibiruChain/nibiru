@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,11 +20,15 @@ func NewKeeper(
 	pricefeedKeeper types.PricefeedKeeper,
 ) Keeper {
 	return Keeper{
-		codec:            codec,
-		storeKey:         storeKey,
-		pricefeedKeeper:  pricefeedKeeper,
-		Pools:            collections.NewMap[common.AssetPair, types.VPool](codec, storeKey, 0),
-		ReserveSnapshots: collections.NewMap[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot](codec, storeKey, 1),
+		codec:           codec,
+		storeKey:        storeKey,
+		pricefeedKeeper: pricefeedKeeper,
+		Pools:           collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.VPool](codec)),
+		ReserveSnapshots: collections.NewMap(
+			storeKey, 1,
+			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
+			collections.ProtoValueEncoder[types.ReserveSnapshot](codec),
+		),
 	}
 }
 
@@ -33,8 +37,8 @@ type Keeper struct {
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
 
-	Pools            collections.Map[common.AssetPair, types.VPool, *types.VPool]
-	ReserveSnapshots collections.Map[keys.Pair[common.AssetPair, keys.Uint64Key], types.ReserveSnapshot, *types.ReserveSnapshot]
+	Pools            collections.Map[common.AssetPair, types.VPool]
+	ReserveSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -266,10 +270,7 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) er
 		return nil
 	}
 
-	rng := keys.NewRange[keys.Pair[common.AssetPair, keys.Uint64Key]]().
-		Prefix(keys.PairPrefix[common.AssetPair, keys.Uint64Key](pool.Pair)).
-		Descending()
-	it := k.ReserveSnapshots.Iterate(ctx, rng)
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
 	defer it.Close()
 	if !it.Valid() {
 		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
@@ -355,5 +356,5 @@ ret:
   - []types.VPool: All defined vpool
 */
 func (k Keeper) GetAllPools(ctx sdk.Context) []types.VPool {
-	return k.Pools.Iterate(ctx, keys.NewRange[common.AssetPair]()).Values()
+	return k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 }
