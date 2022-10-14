@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/collections"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -381,7 +381,7 @@ func TestRemoveMargin(t *testing.T) {
 					},
 				)
 
-				pos, err := perpKeeper.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
+				pos, err := perpKeeper.Positions.Get(ctx, collections.Join(pair, traderAddr))
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(400).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(1000).String(), pos.Size_.String())
@@ -424,7 +424,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				require.ErrorIs(t, err, types.ErrFailedRemoveMarginCanCauseBadDebt)
 
-				pos, err := perpKeeper.Positions.Get(ctx, keys.Join(pair, keys.String(traderAddr.String())))
+				pos, err := perpKeeper.Positions.Get(ctx, collections.Join(pair, traderAddr))
 				require.NoError(t, err)
 				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Margin.String())
 				assert.EqualValues(t, sdk.NewDec(500).String(), pos.Size_.String())

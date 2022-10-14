@@ -1,59 +1,39 @@
 package collections
 
 import (
-	"github.com/gogo/protobuf/proto"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"errors"
 )
 
-// Object defines an object which can marshal and unmarshal itself to and from bytes.
-type Object interface {
-	// Marshal marshals the object into bytes.
-	Marshal() (b []byte, err error)
-	// Unmarshal populates the object from bytes.
-	Unmarshal(b []byte) error
+// ErrNotFound is returned when an object is not found.
+var ErrNotFound = errors.New("collections: not found")
+
+// Namespace defines a storage namespace which must be unique in a single module
+// for all the different storage layer types: Map, Sequence, KeySet, Item, MultiIndex, IndexedMap
+type Namespace uint8
+
+func (n Namespace) Prefix() []byte { return []byte{uint8(n)} }
+
+// KeyEncoder defines a generic interface which is implemented
+// by types that are capable of encoding and decoding collections keys.
+type KeyEncoder[T any] interface {
+	// Encode encodes the type T into bytes.
+	Encode(key T) []byte
+	// Decode decodes the given bytes back into T.
+	// And it also must return the bytes of the buffer which were read.
+	Decode(b []byte) (int, T)
+	// Stringify returns a string representation of T.
+	Stringify(key T) string
 }
 
-// storeCodec implements only the subset of functionalities
-// required for the ser/de at state layer.
-// It respects cosmos-sdk guarantees around interface unpacking.
-type storeCodec struct {
-	ir codectypes.InterfaceRegistry
-}
-
-func newStoreCodec(cdc codec.BinaryCodec) storeCodec {
-	return storeCodec{ir: cdc.(*codec.ProtoCodec).InterfaceRegistry()}
-}
-
-func (c storeCodec) marshal(o Object) []byte {
-	bytes, err := o.Marshal()
-	if err != nil {
-		panic(err)
-	}
-	return bytes
-}
-
-func (c storeCodec) unmarshal(bytes []byte, o Object) {
-	err := o.Unmarshal(bytes)
-	if err != nil {
-		panic(err)
-	}
-	err = codectypes.UnpackInterfaces(o, c.ir)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// TODO(mercilex): improve typeName api
-func typeName(o Object) string {
-	switch o.(type) {
-	case *nilObject, nilObject:
-		return "no-op-object"
-	}
-	pm, ok := o.(proto.Message)
-	if !ok {
-		return "unknown"
-	}
-	return proto.MessageName(pm)
+// ValueEncoder defines a generic interface which is implemented
+// by types that are capable of encoding and decoding collection values.
+type ValueEncoder[T any] interface {
+	// Encode encodes the value T into bytes.
+	Encode(value T) []byte
+	// Decode returns the type T given its bytes representation.
+	Decode(b []byte) T
+	// Stringify returns a string representation of T.
+	Stringify(value T) string
+	// Name returns the name of the object.
+	Name() string
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections/keys"
+	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -451,7 +451,7 @@ func TestCalcTwap(t *testing.T) {
 					snapshot.QuoteAssetReserve,
 					ctx.BlockTime(),
 				)
-				vpoolKeeper.ReserveSnapshots.Insert(ctx, keys.Join(snapshot.Pair, keys.Uint64(uint64(snapshot.TimestampMs))), snapshot)
+				vpoolKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 			}
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
 			price, err := vpoolKeeper.calcTwap(ctx,

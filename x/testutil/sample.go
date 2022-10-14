@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Returns a sample account address (sdk.AccAddress)
+// AccAddress Returns a sample account address (sdk.AccAddress)
 // Note that AccAddress().String() can be used to get a string representation.
 func AccAddress() sdk.AccAddress {
 	pk := ed25519.GenPrivKey().PubKey()
@@ -16,7 +16,7 @@ func AccAddress() sdk.AccAddress {
 	return sdk.AccAddress(addr)
 }
 
-// PrivKeyAddressPairsFromRand generates (deterministically) a total of n private keys and addresses.
+// PrivKeyAddressPairs generates (deterministically) a total of n private keys and addresses.
 func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
 	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
 	keys = make([]cryptotypes.PrivKey, n)

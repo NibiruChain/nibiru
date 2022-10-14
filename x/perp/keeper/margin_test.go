@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
-
 	"github.com/NibiruChain/nibiru/collections"
+
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 

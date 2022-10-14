@@ -17,5 +17,10 @@ func deps() (sdk.StoreKey, sdk.Context, codec.BinaryCodec) {
 	if err := ms.LoadLatestVersion(); err != nil {
 		panic(err)
 	}
-	return sk, sdk.Context{}.WithMultiStore(ms).WithGasMeter(sdk.NewGasMeter(1_000_000_000)), codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
+
+	return sk,
+		sdk.Context{}.
+			WithMultiStore(ms).
+			WithGasMeter(sdk.NewGasMeter(1_000_000_000)),
+		codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 }

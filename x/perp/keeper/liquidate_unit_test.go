@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
-
 	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
+
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -184,7 +183,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee, feeToFund)
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
+			newPosition, err := perpKeeper.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, traderAddr))
 			require.NoError(t, err)
 			assert.EqualValues(t, traderAddr.String(), newPosition.TraderAddress)
 			assert.EqualValues(t, common.Pair_BTC_NUSD, newPosition.Pair)
@@ -351,7 +350,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee.String(), feeToFund.String())
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
+			newPosition, err := perpKeeper.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, traderAddr))
 			require.ErrorIs(t, err, collections.ErrNotFound)
 			assert.Empty(t, newPosition)
 
@@ -524,7 +523,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPerpEFFee.String(), feeToFund.String())
 
 			t.Log("assert new position and event")
-			newPosition, err := perpKeeper.Positions.Get(ctx, keys.Join(common.Pair_BTC_NUSD, keys.String(traderAddr.String())))
+			newPosition, err := perpKeeper.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, traderAddr))
 			require.ErrorIs(t, err, collections.ErrNotFound)
 			assert.Empty(t, newPosition)
 

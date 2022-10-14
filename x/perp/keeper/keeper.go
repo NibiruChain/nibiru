@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/NibiruChain/nibiru/collections"
-	"github.com/NibiruChain/nibiru/collections/keys"
+
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -26,9 +26,9 @@ type Keeper struct {
 	VpoolKeeper     types.VpoolKeeper
 	EpochKeeper     types.EpochKeeper
 
-	Positions      collections.Map[keys.Pair[common.AssetPair, keys.StringKey], types.Position, *types.Position]
-	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata, *types.PairMetadata]
-	PrepaidBadDebt collections.Map[keys.StringKey, types.PrepaidBadDebt, *types.PrepaidBadDebt]
+	Positions      collections.Map[collections.Pair[common.AssetPair, sdk.AccAddress], types.Position]
+	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata]
+	PrepaidBadDebt collections.Map[string, types.PrepaidBadDebt]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -62,9 +62,13 @@ func NewKeeper(
 		PricefeedKeeper: priceKeeper,
 		VpoolKeeper:     vpoolKeeper,
 		EpochKeeper:     epochKeeper,
-		Positions:       collections.NewMap[keys.Pair[common.AssetPair, keys.StringKey], types.Position](cdc, storeKey, 0),
-		PairsMetadata:   collections.NewMap[common.AssetPair, types.PairMetadata](cdc, storeKey, 1),
-		PrepaidBadDebt:  collections.NewMap[keys.StringKey, types.PrepaidBadDebt](cdc, storeKey, 2),
+		Positions: collections.NewMap(
+			storeKey, 0,
+			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.AccAddressKeyEncoder),
+			collections.ProtoValueEncoder[types.Position](cdc),
+		),
+		PairsMetadata:  collections.NewMap(storeKey, 1, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
+		PrepaidBadDebt: collections.NewMap(storeKey, 2, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
 	}
 }
 
