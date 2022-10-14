@@ -106,16 +106,16 @@ func (pair AssetPair) Validate() error {
 	return nil
 }
 
-var AssetPairKeyEncoder = assetPairKeyEncoder{}
+var AssetPairKeyEncoder collections.KeyEncoder[AssetPair] = assetPairKeyEncoder{}
 
 type assetPairKeyEncoder struct{}
 
 func (assetPairKeyEncoder) Stringify(a AssetPair) string { return a.String() }
 func (assetPairKeyEncoder) Encode(a AssetPair) []byte {
-	return collections.Keys.String.Encode(a.String())
+	return collections.StringKeyEncoder.Encode(a.String())
 }
 func (assetPairKeyEncoder) Decode(b []byte) (int, AssetPair) {
-	i, s := collections.Keys.String.Decode(b)
+	i, s := collections.StringKeyEncoder.Decode(b)
 	return i, MustNewAssetPair(s)
 }
 

@@ -20,7 +20,7 @@ func TestUpstreamIterAssertions(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	sk, ctx, _ := deps()
-	m := NewMap[string, string](sk, 0, Keys.String, stringValue{})
+	m := NewMap[string, string](sk, 0, StringKeyEncoder, stringValue{})
 
 	key := "id"
 	expected := "test"
@@ -44,7 +44,7 @@ func TestMap(t *testing.T) {
 
 func TestMapGetOrDefault(t *testing.T) {
 	sk, ctx, _ := deps()
-	m := NewMap[string, string](sk, 0, Keys.String, stringValue{})
+	m := NewMap[string, string](sk, 0, StringKeyEncoder, stringValue{})
 	assert.EqualValues(t, "default", m.GetOr(ctx, "foo", "default"))
 
 	m.Insert(ctx, "foo", "not-default")
@@ -59,7 +59,7 @@ func TestMapIterate(t *testing.T) {
 		}
 	}
 	sk, ctx, _ := deps()
-	m := NewMap[string, string](sk, 0, Keys.String, stringValue{})
+	m := NewMap[string, string](sk, 0, StringKeyEncoder, stringValue{})
 
 	expectedObjs := []KeyValue[string, string]{
 		kv("a"), kv("aa"), kv("b"), kv("bb"),

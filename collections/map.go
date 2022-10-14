@@ -17,11 +17,11 @@ type Map[K, V any] struct {
 	typeName string
 }
 
-func NewMap[K, V any](sk sdk.StoreKey, prefix uint8, kc KeyEncoder[K], vc ValueEncoder[V]) Map[K, V] {
+func NewMap[K, V any](sk sdk.StoreKey, namespace Namespace, kc KeyEncoder[K], vc ValueEncoder[V]) Map[K, V] {
 	return Map[K, V]{
 		kc:     kc,
 		vc:     vc,
-		prefix: []byte{prefix},
+		prefix: namespace.Prefix(),
 		sk:     sk,
 	}
 }

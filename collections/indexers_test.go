@@ -10,7 +10,7 @@ func TestMultiIndex(t *testing.T) {
 	sk, ctx, _ := deps()
 	im := NewMultiIndex[string, uint64, person](
 		sk, 0,
-		Keys.String, Keys.Uint64,
+		StringKeyEncoder, Uint64KeyEncoder,
 		func(v person) string { return v.City },
 	)
 	// test insertions
@@ -58,7 +58,7 @@ func TestIndexerIterator(t *testing.T) {
 	// test insertions
 	im := NewMultiIndex[string, uint64, person](
 		sk, 0,
-		Keys.String, Keys.Uint64,
+		StringKeyEncoder, Uint64KeyEncoder,
 		func(v person) string { return v.City },
 	)
 

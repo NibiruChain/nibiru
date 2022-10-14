@@ -64,11 +64,11 @@ func NewKeeper(
 		EpochKeeper:     epochKeeper,
 		Positions: collections.NewMap(
 			storeKey, 0,
-			collections.PairKeyEncoder[common.AssetPair, sdk.AccAddress](common.AssetPairKeyEncoder, collections.Keys.AccAddress),
+			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.AccAddressKeyEncoder),
 			collections.ProtoValueEncoder[types.Position](cdc),
 		),
-		PairsMetadata:  collections.NewMap[common.AssetPair, types.PairMetadata](storeKey, 1, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
-		PrepaidBadDebt: collections.NewMap[string, types.PrepaidBadDebt](storeKey, 2, collections.Keys.String, collections.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
+		PairsMetadata:  collections.NewMap(storeKey, 1, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
+		PrepaidBadDebt: collections.NewMap(storeKey, 2, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
 	}
 }
 

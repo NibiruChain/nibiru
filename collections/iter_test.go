@@ -9,7 +9,7 @@ import (
 func TestRangeBounds(t *testing.T) {
 	sk, ctx, _ := deps()
 
-	ks := NewKeySet[uint64](sk, 0, Keys.Uint64)
+	ks := NewKeySet[uint64](sk, 0, Uint64KeyEncoder)
 
 	ks.Insert(ctx, 1)
 	ks.Insert(ctx, 2)

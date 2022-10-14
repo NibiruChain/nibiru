@@ -16,14 +16,8 @@ type KeySet[K any] Map[K, setObject]
 type KeySetIterator[K any] Iterator[K, setObject]
 
 // NewKeySet instantiates a new KeySet.
-func NewKeySet[K any](sk sdk.StoreKey, prefix uint8, keyEncoder KeyEncoder[K]) KeySet[K] {
-	return KeySet[K]{
-		kc:       keyEncoder,
-		vc:       setObject{},
-		prefix:   []byte{prefix},
-		sk:       sk,
-		typeName: setObject{}.Name(),
-	}
+func NewKeySet[K any](sk sdk.StoreKey, namespace Namespace, keyEncoder KeyEncoder[K]) KeySet[K] {
+	return (KeySet[K])(NewMap[K, setObject](sk, namespace, keyEncoder, setObject{}))
 }
 
 // Has reports whether the key K is present or not in the set.
