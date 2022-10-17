@@ -44,11 +44,13 @@ func RandomizedGenState(simState *module.SimulationState) {
 				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
 			},
 		},
+		Positions:       []types.Position{},
+		PrepaidBadDebts: []types.PrepaidBadDebt{},
 	}
 	perpGenesisBytes, err := json.MarshalIndent(&perpGenesis, "", " ")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Selected randomly generated perp genesis:\n%s\n", perpGenesisBytes)
+	fmt.Printf("Generated perp genesis:\n%s\n", perpGenesisBytes)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&perpGenesis)
 }
