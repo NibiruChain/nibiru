@@ -9,33 +9,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // RandomizedGenState generates a random GenesisState for the perp module
 func RandomizedGenState(simState *module.SimulationState) {
-	vpoolGenesis := vpooltypes.GenesisState{
-		Vpools: []vpooltypes.VPool{
-			{
-				Pair:                   common.Pair_BTC_NUSD,
-				TradeLimitRatio:        sdk.OneDec(),
-				QuoteAssetReserve:      sdk.NewDec(10e12),
-				BaseAssetReserve:       sdk.NewDec(10e12),
-				FluctuationLimitRatio:  sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.NewDec(10),
-			},
-		},
-	}
-
-	vpools, err := json.MarshalIndent(&vpoolGenesis.Vpools, "", " ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Selected randomly generated vpools:\n%s\n", vpools)
-	simState.GenState[vpooltypes.ModuleName] = simState.Cdc.MustMarshalJSON(&vpoolGenesis)
-
 	perpGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 		PairMetadata: []types.PairMetadata{
