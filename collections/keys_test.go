@@ -83,3 +83,9 @@ func TestTimeKey(t *testing.T) {
 		assertBijective[time.Time](t, TimeKeyEncoder, key)
 	})
 }
+
+func TestValAddressKey(t *testing.T) {
+	t.Run("bijective", func(t *testing.T) {
+		assertBijective(t, ValAddressKeyEncoder, sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()))
+	})
+}

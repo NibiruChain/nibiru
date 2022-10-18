@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -45,7 +47,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidVotes := input.OracleKeeper.MinValidPerWindow(input.Ctx).MulInt64(votePeriodsPerWindow).TruncateInt64()
 	// Case 1, no slash
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
@@ -53,7 +55,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	require.Equal(t, amt, validator.GetBondedTokens())
 
 	// Case 2, slash
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, amt.Sub(slashFraction.MulInt(amt).TruncateInt()), validator.GetBondedTokens())
@@ -66,7 +68,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Tokens = amt
 	input.StakingKeeper.SetValidator(input.Ctx, validator)
 
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, amt, validator.Tokens)
@@ -79,7 +81,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Tokens = amt
 	input.StakingKeeper.SetValidator(input.Ctx, validator)
 
-	input.OracleKeeper.SetMissCounter(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keeper.ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	validator, _ = input.StakingKeeper.GetValidator(input.Ctx, keeper.ValAddrs[0])
 	require.Equal(t, amt, validator.Tokens)
@@ -90,7 +92,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.Whitelist = types3.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.SetPair(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
 	votePeriodsPerWindow := types.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -109,7 +111,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-		require.Equal(t, i+1, input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
 	}
 
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[1])
@@ -147,7 +149,7 @@ func TestWhitelistSlashing(t *testing.T) {
 		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-		require.Equal(t, i+1, input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
+		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
 	}
 
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[0])
@@ -173,8 +175,10 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.Pair_NIBI_NUSD.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
 	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
@@ -182,9 +186,9 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 }
 
 func TestAbstainSlashing(t *testing.T) {
@@ -194,8 +198,10 @@ func TestAbstainSlashing(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.Pair_NIBI_NUSD.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
 	votePeriodsPerWindow := types.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
@@ -213,7 +219,7 @@ func TestAbstainSlashing(t *testing.T) {
 		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-		require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
+		require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
 	}
 
 	validator := input.StakingKeeper.Validator(input.Ctx, keeper.ValAddrs[1])
