@@ -13,27 +13,16 @@ import (
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
 
-	pairsMap := make(map[string]struct{})
-	for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
-		pairsMap[p] = struct{}{}
-	}
+	pairsMap := k.getPairsMap(ctx)
 
-	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
-		err := k.ExchangeRates.Delete(ctx, key)
-		if err != nil {
-			panic(err)
-		}
-	}
+	k.resetExchangeRates(ctx)
 
 	validatorPerformanceMap := k.getValidatorPerformanceMap(ctx)
-	// Organize votes to ballot by pair
-	// NOTE: **Filter out inactive or jailed validators**
-	// NOTE: **Make abstain votes to have zero vote power**
-	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorPerformanceMap)
-	// remove ballots which are not passing
-	RemoveInvalidBallots(ctx, k, pairsMap, pairBallotMap)
-	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 
+	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorPerformanceMap)
+	k.RemoveInvalidBallots(ctx, pairsMap, pairBallotMap)
+
+	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 	params := k.GetParams(ctx)
 	for pair, ballot := range pairBallotMap {
 		sort.Sort(ballot)
@@ -73,6 +62,26 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 
 	// Update vote targets
 	k.ApplyWhitelist(ctx, params.Whitelist, pairsMap)
+}
+
+// getPairsMap returns a map containing all the pairs as the key.
+func (k Keeper) getPairsMap(ctx sdk.Context) map[string]struct{} {
+	pairsMap := make(map[string]struct{})
+	for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
+		pairsMap[p] = struct{}{}
+	}
+
+	return pairsMap
+}
+
+// resetExchangeRates removes all exchange rates from the state
+func (k Keeper) resetExchangeRates(ctx sdk.Context) {
+	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
+		err := k.ExchangeRates.Delete(ctx, key)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 // getValidatorPerformanceMap returns a map [address]ValidatorPerformance excluding validators that are not bonded.

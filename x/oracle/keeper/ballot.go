@@ -11,15 +11,19 @@ import (
 )
 
 // OrganizeBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
+//
+// NOTE: **Filter out inactive or jailed validators**
+// NOTE: **Make abstain votes to have zero vote power**
 func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorsPerformance map[string]types.ValidatorPerformance) (ballots map[string]types.ExchangeRateBallot) {
 	ballots = map[string]types.ExchangeRateBallot{}
 
-	// Organize aggregate votes
-	aggregateHandler := func(voterAddr sdk.ValAddress, vote types.AggregateExchangeRateVote) (stop bool) {
+	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+		voterAddr, vote := value.Key, value.Value
+
 		// organize ballot only for the active validators
-		if claim, ok := validatorsPerformance[vote.Voter]; ok {
+		if validatorPerformance, ok := validatorsPerformance[vote.Voter]; ok {
 			for _, tuple := range vote.ExchangeRateTuples {
-				power := claim.Power
+				power := validatorPerformance.Power
 				if !tuple.ExchangeRate.IsPositive() {
 					// Make the power of abstain vote zero
 					power = 0
@@ -35,12 +39,6 @@ func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorsPerformance map[
 				)
 			}
 		}
-
-		return false
-	}
-
-	for _, vote := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
-		aggregateHandler(vote.Key, vote.Value)
 	}
 
 	// sort created ballot

@@ -164,6 +164,6 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	f.Fuzz(&voteMap)
 
 	require.NotPanics(t, func() {
-		keeper.RemoveInvalidBallots(input.Ctx, input.OracleKeeper, voteTargets, voteMap)
+		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteTargets, voteMap)
 	})
 }
