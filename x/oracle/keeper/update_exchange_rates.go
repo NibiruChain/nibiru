@@ -12,27 +12,6 @@ import (
 
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
-	params := k.GetParams(ctx)
-	// Build claim map over all validators in active set
-	validatorPerformanceMap := make(map[string]types.ValidatorPerformance)
-
-	maxValidators := k.StakingKeeper.MaxValidators(ctx)
-	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
-	defer iterator.Close()
-
-	powerReduction := k.StakingKeeper.PowerReduction(ctx)
-
-	i := 0
-	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
-		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
-
-		// Exclude not bonded validator
-		if validator.IsBonded() {
-			valAddr := validator.GetOperator()
-			validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
-			i++
-		}
-	}
 
 	pairsMap := make(map[string]struct{})
 	for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
@@ -45,6 +24,8 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 			panic(err)
 		}
 	}
+
+	validatorPerformanceMap := k.getValidatorPerformanceMap(ctx)
 	// Organize votes to ballot by pair
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
@@ -52,6 +33,8 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	// remove ballots which are not passing
 	RemoveInvalidBallots(ctx, k, pairsMap, pairBallotMap)
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+
+	params := k.GetParams(ctx)
 	for pair, ballot := range pairBallotMap {
 		sort.Sort(ballot)
 
@@ -90,4 +73,31 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 
 	// Update vote targets
 	k.ApplyWhitelist(ctx, params.Whitelist, pairsMap)
+}
+
+// getValidatorPerformanceMap returns a map [address]ValidatorPerformance excluding validators that are not bonded.
+func (k Keeper) getValidatorPerformanceMap(ctx sdk.Context) map[string]types.ValidatorPerformance {
+	validatorPerformanceMap := make(map[string]types.ValidatorPerformance)
+
+	maxValidators := k.StakingKeeper.MaxValidators(ctx)
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
+
+	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	defer iterator.Close()
+
+	i := 0
+	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
+		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
+
+		// exclude not bonded
+		if !validator.IsBonded() {
+			continue
+		}
+
+		valAddr := validator.GetOperator()
+		validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
+		i++
+	}
+
+	return validatorPerformanceMap
 }
