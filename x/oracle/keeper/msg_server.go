@@ -46,8 +46,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 		return nil, sdkerrors.Wrap(types.ErrInvalidHash, err.Error())
 	}
 
-	aggregatePrevote := types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight()))
-	ms.SetAggregateExchangeRatePrevote(ctx, valAddr, aggregatePrevote)
+	ms.Keeper.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -83,7 +82,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	params := ms.GetParams(ctx)
 
-	aggregatePrevote, err := ms.GetAggregateExchangeRatePrevote(ctx, valAddr)
+	aggregatePrevote, err := ms.Keeper.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
 	}
@@ -115,8 +114,8 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 	}
 
 	// Move aggregate prevote to aggregate vote with given exchange rates
-	ms.SetAggregateExchangeRateVote(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
-	ms.DeleteAggregateExchangeRatePrevote(ctx, valAddr)
+	ms.Keeper.Votes.Insert(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
+	_ = ms.Keeper.Prevotes.Delete(ctx, valAddr)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -154,7 +153,7 @@ func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDel
 	}
 
 	// Set the delegation
-	ms.SetFeederDelegation(ctx, operatorAddr, delegateAddr)
+	ms.Keeper.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

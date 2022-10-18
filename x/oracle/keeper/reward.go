@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -11,7 +10,7 @@ import (
 
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
 	// check if pair exists
-	if !k.PairExists(ctx, pair) {
+	if !k.Pairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
 	}
 
@@ -21,86 +20,15 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair s
 		votePeriodCoins[i] = newCoin
 	}
 
-	k.CreatePairReward(ctx, &types.PairReward{
+	id := k.PairRewardsID.Next(ctx)
+	k.PairRewards.Insert(ctx, id, types.PairReward{
 		Pair:        pair,
+		Id:          id,
 		VotePeriods: votePeriods,
 		Coins:       votePeriodCoins,
 	})
 
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, funderModule, types.ModuleName, totalCoins)
-}
-
-func (k Keeper) CreatePairReward(ctx sdk.Context, rewards *types.PairReward) {
-	rewards.Id = k.NextPairRewardKey(ctx)
-	k.SetPairReward(ctx, rewards)
-}
-
-func (k Keeper) DeletePairReward(ctx sdk.Context, pair string, id uint64) error {
-	pk := types.GetPairRewardsKey(pair, id)
-	store := ctx.KVStore(k.storeKey)
-	if !store.Has(pk) {
-		return fmt.Errorf("unknown pair rewards key: %s %d", pair, id)
-	}
-
-	store.Delete(pk)
-	return nil
-}
-
-func (k Keeper) IteratePairRewards(ctx sdk.Context, pair string, do func(rewards *types.PairReward) (stop bool)) {
-	pfx := types.GetPairRewardsPrefixKey(pair)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), pfx)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		rewards := new(types.PairReward)
-		k.cdc.MustUnmarshal(iter.Value(), rewards)
-		if do(rewards) {
-			break
-		}
-	}
-}
-
-func (k Keeper) IterateAllPairRewards(ctx sdk.Context, do func(rewards *types.PairReward) (stop bool)) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PairRewardsKey)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		rewards := new(types.PairReward)
-		k.cdc.MustUnmarshal(iter.Value(), rewards)
-		if do(rewards) {
-			break
-		}
-	}
-}
-
-func (k Keeper) GetPairReward(ctx sdk.Context, pair string, id uint64) (*types.PairReward, error) {
-	pk := types.GetPairRewardsKey(pair, id)
-	v := ctx.KVStore(k.storeKey).Get(pk)
-	if v == nil {
-		return nil, fmt.Errorf("not found")
-	}
-	r := new(types.PairReward)
-	k.cdc.MustUnmarshal(v, r)
-	return r, nil
-}
-
-func (k Keeper) SetPairReward(ctx sdk.Context, rewards *types.PairReward) {
-	pk := types.GetPairRewardsKey(rewards.Pair, rewards.Id)
-	ctx.KVStore(k.storeKey).Set(pk, k.cdc.MustMarshal(rewards))
-}
-
-func (k Keeper) NextPairRewardKey(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	if v := store.Get(types.PairRewardsCounterKey); v != nil {
-		id := sdk.BigEndianToUint64(v)
-		store.Set(types.PairRewardsCounterKey, sdk.Uint64ToBigEndian(id+1))
-		return id
-	} else {
-		store.Set(types.PairRewardsCounterKey, sdk.Uint64ToBigEndian(1))
-		return 0
-	}
 }
 
 // RewardBallotWinners implements at the end of every VotePeriod,
@@ -169,27 +97,25 @@ func (k Keeper) RewardBallotWinners(
 // If the distribution period count drops to 0: the reward instance is removed.
 // TODO(mercilex): don't like API name
 func (k Keeper) AccrueVotePeriodPairRewards(ctx sdk.Context, pair string) sdk.Coins {
-	var pairRewards []*types.PairReward
-	k.IteratePairRewards(ctx, pair, func(rewards *types.PairReward) (stop bool) {
-		pairRewards = append(pairRewards, rewards)
-		return false
-	})
-
 	coins := sdk.NewCoins()
 	// iterate over
-	for _, r := range pairRewards {
+	for _, rewardID := range k.PairRewards.Indexes.RewardsByPair.ExactMatch(ctx, pair).PrimaryKeys() {
+		r, err := k.PairRewards.Get(ctx, rewardID)
+		if err != nil {
+			panic(err)
+		}
 		// add coin rewards
 		coins = coins.Add(r.Coins...)
 		// update pair reward distribution count
 		// if vote period == 0, then delete
 		r.VotePeriods -= 1
 		if r.VotePeriods == 0 {
-			err := k.DeletePairReward(ctx, r.Pair, r.Id)
+			err := k.PairRewards.Delete(ctx, rewardID)
 			if err != nil {
 				panic(err)
 			}
 		} else {
-			k.SetPairReward(ctx, r)
+			k.PairRewards.Insert(ctx, rewardID, r)
 		}
 	}
 

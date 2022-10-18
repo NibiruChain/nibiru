@@ -3,6 +3,8 @@ package keeper
 import (
 	"sort"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -33,12 +35,16 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	}
 
 	pairsMap := make(map[string]struct{})
-	k.IteratePairs(ctx, func(pair string) bool {
-		pairsMap[pair] = struct{}{}
-		return false
-	})
+	for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
+		pairsMap[p] = struct{}{}
+	}
 
-	k.ClearExchangeRates(ctx)
+	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
+		err := k.ExchangeRates.Delete(ctx, key)
+		if err != nil {
+			panic(err)
+		}
+	}
 	// Organize votes to ballot by pair
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
@@ -53,7 +59,13 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
 
 		// Set the exchange rate, emit ABCI event
-		k.SetExchangeRateWithEvent(ctx, pair, exchangeRate)
+		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+				sdk.NewAttribute(types.AttributeKeyPair, pair),
+				sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
+			),
+		)
 	}
 
 	//---------------------------
@@ -66,7 +78,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		}
 
 		// Increase miss counter
-		k.SetMissCounter(ctx, claim.ValAddress, k.GetMissCounter(ctx, claim.ValAddress)+1)
+		k.MissCounters.Insert(ctx, claim.ValAddress, k.MissCounters.GetOr(ctx, claim.ValAddress, 0)+1)
 		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
 	}
 
