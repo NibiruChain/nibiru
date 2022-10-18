@@ -137,7 +137,6 @@ func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiqu
 }
 
 func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDonateToEcosystemFund) (*types.MsgDonateToEcosystemFundResponse, error) {
-
 	if err := m.k.BankKeeper.SendCoinsFromAccountToModule(
 		sdk.UnwrapSDKContext(ctx),
 		sdk.MustAccAddressFromBech32(msg.Sender),
