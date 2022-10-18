@@ -2,6 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/collections"
 )
 
 // SlashAndResetMissCounters do slash any operator who over criteria & clear all operators miss counter to zero
@@ -19,7 +21,9 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 	slashFraction := k.SlashFraction(ctx)
 	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 
-	k.IterateMissCounters(ctx, func(operator sdk.ValAddress, missCounter uint64) bool {
+	for _, mc := range k.MissCounters.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+		operator := mc.Key
+		missCounter := mc.Value
 		// Calculate valid vote rate; (SlashWindow - MissCounter)/SlashWindow
 		validVoteRate := sdk.NewDecFromInt(
 			sdk.NewInt(int64(votePeriodsPerWindow - missCounter))).
@@ -43,7 +47,9 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 			}
 		}
 
-		k.DeleteMissCounter(ctx, operator)
-		return false
-	})
+		err := k.MissCounters.Delete(ctx, operator)
+		if err != nil {
+			panic(err)
+		}
+	}
 }

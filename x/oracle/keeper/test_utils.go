@@ -239,7 +239,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	keeper.SetParams(ctx, defaults)
 
 	for _, pair := range defaults.Whitelist {
-		keeper.SetPair(ctx, pair.Name)
+		keeper.Pairs.Insert(ctx, pair.Name)
 	}
 
 	return TestInput{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}

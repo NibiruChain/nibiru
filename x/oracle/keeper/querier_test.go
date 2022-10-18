@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"bytes"
 	"sort"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 
@@ -31,7 +32,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -51,7 +52,7 @@ func TestQueryMissCounter(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	missCounter := uint64(1)
-	input.OracleKeeper.SetMissCounter(input.Ctx, ValAddrs[0], missCounter)
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], missCounter)
 
 	// empty request
 	_, err := querier.MissCounter(ctx, nil)
@@ -71,8 +72,8 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
@@ -89,9 +90,9 @@ func TestQueryActives(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String(), rate)
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_NIBI_NUSD.String(), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD.String(), rate)
 
 	res, err := querier.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
@@ -110,7 +111,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	input.OracleKeeper.SetFeederDelegation(input.Ctx, ValAddrs[0], Addrs[1])
+	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, ValAddrs[0], Addrs[1])
 
 	// empty request
 	_, err := querier.FeederDelegation(ctx, nil)
@@ -130,9 +131,9 @@ func TestQueryAggregatePrevote(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[0], prevote1)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[0], prevote1)
 	prevote2 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[1], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[1], prevote2)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[1], prevote2)
 
 	// validator 0 address params
 	res, err := querier.AggregatePrevote(ctx, &types.QueryAggregatePrevoteRequest{
@@ -159,17 +160,15 @@ func TestQueryAggregatePrevotes(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[0], prevote1)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[0], prevote1)
 	prevote2 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[1], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[1], prevote2)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[1], prevote2)
 	prevote3 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[2], 0)
-	input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[2], prevote3)
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[2], prevote3)
 
 	expectedPrevotes := []types.AggregateExchangeRatePrevote{prevote1, prevote2, prevote3}
 	sort.SliceStable(expectedPrevotes, func(i, j int) bool {
-		addr1, _ := sdk.ValAddressFromBech32(expectedPrevotes[i].Voter)
-		addr2, _ := sdk.ValAddressFromBech32(expectedPrevotes[j].Voter)
-		return bytes.Compare(addr1, addr2) == -1
+		return expectedPrevotes[i].Voter <= expectedPrevotes[j].Voter
 	})
 
 	res, err := querier.AggregatePrevotes(ctx, &types.QueryAggregatePrevotesRequest{})
@@ -183,9 +182,9 @@ func TestQueryAggregateVote(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[0])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[0], vote1)
+	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[0], vote1)
 	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[1])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[1], vote2)
+	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[1], vote2)
 
 	// empty request
 	_, err := querier.AggregateVote(ctx, nil)
@@ -212,17 +211,15 @@ func TestQueryAggregateVotes(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[0])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[0], vote1)
+	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[0], vote1)
 	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[1])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[1], vote2)
+	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[1], vote2)
 	vote3 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[2])
-	input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[2], vote3)
+	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[2], vote3)
 
 	expectedVotes := []types.AggregateExchangeRateVote{vote1, vote2, vote3}
 	sort.SliceStable(expectedVotes, func(i, j int) bool {
-		addr1, _ := sdk.ValAddressFromBech32(expectedVotes[i].Voter)
-		addr2, _ := sdk.ValAddressFromBech32(expectedVotes[j].Voter)
-		return bytes.Compare(addr1, addr2) == -1
+		return expectedVotes[i].Voter <= expectedVotes[j].Voter
 	})
 
 	res, err := querier.AggregateVotes(ctx, &types.QueryAggregateVotesRequest{})
@@ -236,11 +233,13 @@ func TestQueryVoteTargets(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	// clear pairs
-	input.OracleKeeper.ClearPairs(input.Ctx)
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
 
 	voteTargets := []string{"denom", "denom2", "denom3"}
 	for _, target := range voteTargets {
-		input.OracleKeeper.SetPair(input.Ctx, target)
+		input.OracleKeeper.Pairs.Insert(input.Ctx, target)
 	}
 
 	res, err := querier.VoteTargets(ctx, &types.QueryVoteTargetsRequest{})

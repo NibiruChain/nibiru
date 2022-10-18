@@ -17,6 +17,8 @@ var (
 	TimeKeyEncoder KeyEncoder[time.Time] = timeKey{}
 	// Uint64KeyEncoder can be used to encode uint64 keys.
 	Uint64KeyEncoder KeyEncoder[uint64] = uint64Key{}
+	// ValAddressKeyEncoder can be used to encode sdk.ValAddress keys.
+	ValAddressKeyEncoder KeyEncoder[sdk.ValAddress] = valAddressKeyEncoder{}
 )
 
 type stringKey struct{}
@@ -69,6 +71,21 @@ func (accAddressKey) Decode(b []byte) (int, sdk.AccAddress) {
 	i, s := StringKeyEncoder.Decode(b)
 	return i, sdk.MustAccAddressFromBech32(s)
 }
+
+type valAddressKeyEncoder struct{}
+
+func (v valAddressKeyEncoder) Encode(key sdk.ValAddress) []byte {
+	return StringKeyEncoder.Encode(key.String())
+}
+func (v valAddressKeyEncoder) Decode(b []byte) (int, sdk.ValAddress) {
+	r, s := StringKeyEncoder.Decode(b)
+	valAddr, err := sdk.ValAddressFromBech32(s)
+	if err != nil {
+		panic(err)
+	}
+	return r, valAddr
+}
+func (v valAddressKeyEncoder) Stringify(key sdk.ValAddress) string { return key.String() }
 
 func (stringKey) Stringify(s string) string {
 	return s
