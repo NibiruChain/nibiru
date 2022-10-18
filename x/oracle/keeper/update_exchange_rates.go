@@ -42,7 +42,11 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 }
 
 // countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
-func (k Keeper) countVotesAndUpdateExchangeRates(ctx sdk.Context, pairBallotMap map[string]types.ExchangeRateBallot, validatorPerformanceMap map[string]types.ValidatorPerformance) {
+func (k Keeper) countVotesAndUpdateExchangeRates(
+	ctx sdk.Context,
+	pairBallotMap map[string]types.ExchangeRateBallot,
+	validatorPerformanceMap map[string]types.ValidatorPerformance,
+) {
 	params := k.GetParams(ctx)
 
 	for pair, ballot := range pairBallotMap {

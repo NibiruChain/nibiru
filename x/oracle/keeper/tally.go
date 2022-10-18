@@ -9,31 +9,37 @@ import (
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
-func Tally(pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.ValidatorPerformance) (weightedMedian sdk.Dec) {
-	sort.Sort(pb)
+func Tally(
+	ballot types.ExchangeRateBallot,
+	rewardBand sdk.Dec,
+	validatorPerformanceMap map[string]types.ValidatorPerformance,
+) sdk.Dec {
+	sort.Sort(ballot)
 
-	weightedMedian = pb.WeightedMedianWithAssertion()
-	standardDeviation := pb.StandardDeviation(weightedMedian)
+	weightedMedian := ballot.WeightedMedianWithAssertion()
+	standardDeviation := ballot.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 
 	if standardDeviation.GT(rewardSpread) {
 		rewardSpread = standardDeviation
 	}
 
-	for _, vote := range pb {
+	for _, vote := range ballot {
 		// Filter ballot winners & abstain voters
 		if (vote.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
 			vote.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))) ||
 			!vote.ExchangeRate.IsPositive() {
+
 			key := vote.Voter.String()
-			claim := validatorClaimMap[key]
+			// TODO: WTF is this? Mutating a map in Tally without no reason?
+			claim := validatorPerformanceMap[key]
 			claim.Weight += vote.Power
 			claim.WinCount++
-			validatorClaimMap[key] = claim
+			validatorPerformanceMap[key] = claim
 		}
 	}
 
-	return
+	return weightedMedian
 }
 
 // ballot for the asset is passing the threshold amount of voting power
