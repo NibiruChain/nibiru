@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"sort"
-
 	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,34 +12,18 @@ import (
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
 
-	// we get all needed maps to perform our voting calculations
 	pairsMap := k.getPairsMap(ctx)
 	validatorPerformanceMap := k.getValidatorPerformanceMap(ctx)
 
 	k.resetExchangeRates(ctx)
 
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-	params := k.GetParams(ctx)
 	pairBallotMap := k.getPairBallotMap(ctx, validatorPerformanceMap, pairsMap)
-
-	for pair, ballot := range pairBallotMap {
-		sort.Sort(ballot)
-
-		// Get weighted median of cross exchange rates
-		exchangeRate := Tally(ballot, params.RewardBand, validatorPerformanceMap)
-
-		// Set the exchange rate, emit ABCI event
-		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-				sdk.NewAttribute(types.AttributeKeyPair, pair),
-				sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
-			),
-		)
-	}
+	k.countVotesAndUpdateExchangeRates(ctx, pairBallotMap, validatorPerformanceMap)
 
 	//---------------------------
 	// Do miss counting & slashing
+	params := k.GetParams(ctx)
 	voteTargetsLen := len(pairsMap)
 	for _, claim := range validatorPerformanceMap {
 		// Skip abstain & valid voters
@@ -57,6 +39,25 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.rewardBallotWinners(ctx, pairsMap, validatorPerformanceMap)
 	k.clearBallots(ctx, params.VotePeriod)
 	k.applyWhitelist(ctx, params.Whitelist, pairsMap)
+}
+
+// countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
+func (k Keeper) countVotesAndUpdateExchangeRates(ctx sdk.Context, pairBallotMap map[string]types.ExchangeRateBallot, validatorPerformanceMap map[string]types.ValidatorPerformance) {
+	params := k.GetParams(ctx)
+
+	for pair, ballot := range pairBallotMap {
+		// Get weighted median of cross exchange rates
+		exchangeRate := Tally(ballot, params.RewardBand, validatorPerformanceMap)
+
+		// Set the exchange rate, emit ABCI event
+		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+				sdk.NewAttribute(types.AttributeKeyPair, pair),
+				sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
+			),
+		)
+	}
 }
 
 // getPairBallotMap returns a map of pairs and ballots excluding invalid Ballots.

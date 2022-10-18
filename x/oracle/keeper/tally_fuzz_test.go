@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -74,8 +73,6 @@ func TestFuzz_Tally(t *testing.T) {
 				ballot = append(ballot, types.NewBallotVoteForTally(rate, c.RandString(), addr, power))
 			}
 
-			sort.Sort(ballot)
-
 			*e = ballot
 		},
 	)
@@ -141,7 +138,6 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 					ballot = append(ballot, types.NewBallotVoteForTally(rate, pair, addr, power))
 				}
 
-				sort.Sort(ballot)
 				(*e)[pair] = ballot
 			}
 		},

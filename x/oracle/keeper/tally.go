@@ -2,16 +2,17 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"sort"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
-// CONTRACT: pb must be sorted
 func Tally(pb types.ExchangeRateBallot, rewardBand sdk.Dec, validatorClaimMap map[string]types.ValidatorPerformance) (weightedMedian sdk.Dec) {
-	weightedMedian = pb.WeightedMedianWithAssertion()
+	sort.Sort(pb)
 
+	weightedMedian = pb.WeightedMedianWithAssertion()
 	standardDeviation := pb.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 
