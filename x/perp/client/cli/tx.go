@@ -47,9 +47,6 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
-				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			var side types.Side
 			switch args[0] {
 			case "buy":
@@ -87,7 +84,7 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -108,9 +105,6 @@ func ClosePositionCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
-				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			msg := &types.MsgClosePosition{
 				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
@@ -119,11 +113,8 @@ func ClosePositionCmd() *cobra.Command {
 				return err
 			}
 
-			err = tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
-			if err != nil {
-				return err
-			}
-			return nil
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+
 		},
 	}
 
@@ -152,9 +143,6 @@ func RemoveMarginCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
-				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			marginToRemove, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
 				return err
@@ -169,7 +157,7 @@ func RemoveMarginCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -194,9 +182,6 @@ func AddMarginCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
-				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			marginToAdd, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
 				return err
@@ -211,7 +196,7 @@ func AddMarginCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -236,9 +221,6 @@ func LiquidateCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
-				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			traderAddr, err := sdk.AccAddressFromBech32(args[1])
 			if err != nil {
 				return err
@@ -253,7 +235,7 @@ func LiquidateCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
