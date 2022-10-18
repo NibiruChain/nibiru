@@ -260,7 +260,7 @@ func DonateToEcosystemFundCmd() *cobra.Command {
 				return err
 			}
 
-			donation, err := sdk.ParseCoinNormalized(args[1])
+			donation, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return err
 			}

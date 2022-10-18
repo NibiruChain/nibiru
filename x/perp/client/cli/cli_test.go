@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -568,6 +569,34 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
 	s.NotContains(out.String(), "fail", out.String())
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+
+	args := []string{
+		"--from",
+		"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m",
+		"100unusd",
+	}
+
+	// liquidate a position that does not exist
+	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.DonateToEcosystemFundCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.network.WaitForNextBlock())
+
+	resp := new(sdk.Coin)
+	s.Require().NoError(
+		testutilcli.ExecQuery(
+			s.network,
+			bankcli.GetBalancesCmd(),
+			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"},
+			resp,
+		),
+	)
+	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
