@@ -103,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#987](https://github.com/NibiruChain/nibiru/pull/987) - feat: create a query that directly returns all module accounts without pagination or iteration
 * [#982](https://github.com/NibiruChain/nibiru/pull/982) - improvements for pricefeed genesis
 * [#989](https://github.com/NibiruChain/nibiru/pull/989) - test(perp): cli test for AddMargin
+* [#1001](https://github.com/NibiruChain/nibiru/pull/1001) - chore(deps): bump github.com/spf13/cobra from 1.5.0 to 1.6.0
 
 ### Features
 
