@@ -10,25 +10,25 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
+// UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
 
+	// we get all needed maps to perform our voting calculations
 	pairsMap := k.getPairsMap(ctx)
+	validatorPerformanceMap := k.getValidatorPerformanceMap(ctx)
 
 	k.resetExchangeRates(ctx)
 
-	validatorPerformanceMap := k.getValidatorPerformanceMap(ctx)
-
-	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorPerformanceMap)
-	k.RemoveInvalidBallots(ctx, pairsMap, pairBallotMap)
-
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 	params := k.GetParams(ctx)
+	pairBallotMap := k.getPairBallotMap(ctx, validatorPerformanceMap, pairsMap)
+
 	for pair, ballot := range pairBallotMap {
 		sort.Sort(ballot)
 
 		// Get weighted median of cross exchange rates
-		exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
+		exchangeRate := Tally(ballot, params.RewardBand, validatorPerformanceMap)
 
 		// Set the exchange rate, emit ABCI event
 		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
@@ -54,14 +54,17 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
 	}
 
-	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(ctx, pairsMap, validatorPerformanceMap)
+	k.rewardBallotWinners(ctx, pairsMap, validatorPerformanceMap)
+	k.clearBallots(ctx, params.VotePeriod)
+	k.applyWhitelist(ctx, params.Whitelist, pairsMap)
+}
 
-	// Clear the ballot
-	k.ClearBallots(ctx, params.VotePeriod)
+// getPairBallotMap returns a map of pairs and ballots excluding invalid Ballots.
+func (k Keeper) getPairBallotMap(ctx sdk.Context, validatorPerformanceMap map[string]types.ValidatorPerformance, pairsMap map[string]struct{}) map[string]types.ExchangeRateBallot {
+	pairBallotMap := k.mapBallotByPair(ctx, validatorPerformanceMap)
+	k.RemoveInvalidBallots(ctx, pairsMap, pairBallotMap)
 
-	// Update vote targets
-	k.ApplyWhitelist(ctx, params.Whitelist, pairsMap)
+	return pairBallotMap
 }
 
 // getPairsMap returns a map containing all the pairs as the key.

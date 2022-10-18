@@ -10,11 +10,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// OrganizeBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
+// mapBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
 //
 // NOTE: **Filter out inactive or jailed validators**
 // NOTE: **Make abstain votes to have zero vote power**
-func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorsPerformance map[string]types.ValidatorPerformance) (ballots map[string]types.ExchangeRateBallot) {
+func (k Keeper) mapBallotByPair(ctx sdk.Context, validatorsPerformance map[string]types.ValidatorPerformance) (ballots map[string]types.ExchangeRateBallot) {
 	ballots = map[string]types.ExchangeRateBallot{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
@@ -50,8 +50,8 @@ func (k Keeper) OrganizeBallotByPair(ctx sdk.Context, validatorsPerformance map[
 	return
 }
 
-// ClearBallots clears all tallied prevotes and votes from the store
-func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
+// clearBallots clears all tallied prevotes and votes from the store
+func (k Keeper) clearBallots(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
 	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		if ctx.BlockHeight() > int64(prevote.Value.SubmitBlock+votePeriod) {
@@ -71,9 +71,9 @@ func (k Keeper) ClearBallots(ctx sdk.Context, votePeriod uint64) {
 	}
 }
 
-// ApplyWhitelist updates the whitelist by detecting possible changes between
+// applyWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) ApplyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTargets map[string]struct{}) {
+func (k Keeper) applyWhitelist(ctx sdk.Context, whitelist types.PairList, voteTargets map[string]struct{}) {
 	// check is there any update in whitelist params
 	updateRequired := false
 	// fast path

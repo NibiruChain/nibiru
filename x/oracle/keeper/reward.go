@@ -31,10 +31,10 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair s
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, funderModule, types.ModuleName, totalCoins)
 }
 
-// RewardBallotWinners implements at the end of every VotePeriod,
+// rewardBallotWinners implements at the end of every VotePeriod,
 // give out a portion of spread fees collected in the oracle reward pool
 // to the oracle voters that voted faithfully.
-func (k Keeper) RewardBallotWinners(
+func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
 	voteTargets map[string]struct{},
 	ballotWinners map[string]types.ValidatorPerformance,

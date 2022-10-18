@@ -4,16 +4,13 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -86,8 +83,6 @@ func TestFuzz_Tally(t *testing.T) {
 	// set random pairs and validators
 	f.Fuzz(&validators)
 
-	input, _ := setup(t)
-
 	claimMap := map[string]types.ValidatorPerformance{}
 	f.Fuzz(&claimMap)
 
@@ -98,7 +93,7 @@ func TestFuzz_Tally(t *testing.T) {
 	f.Fuzz(&rewardBand)
 
 	require.NotPanics(t, func() {
-		keeper.Tally(input.Ctx, ballot, rewardBand, claimMap)
+		keeper.Tally(ballot, rewardBand, claimMap)
 	})
 }
 
