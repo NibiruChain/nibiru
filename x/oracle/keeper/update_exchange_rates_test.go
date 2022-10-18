@@ -6,6 +6,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
@@ -45,7 +47,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.Error(t, err)
 
 	// Case 2.
@@ -82,7 +84,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	rate, err := input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	rate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.NoError(t, err)
 	require.Equal(t, randomExchangeRate, rate)
 
@@ -113,14 +115,14 @@ func TestOracleThreshold(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	require.Error(t, err)
 }
 
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	input.OracleKeeper.SetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String(), randomExchangeRate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_NIBI_NUSD.String(), randomExchangeRate)
 
 	// Account 1, pair gov stable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -128,7 +130,7 @@ func TestOracleDrop(t *testing.T) {
 	// Immediately swap halt after an illiquid oracle vote
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_NIBI_NUSD.String())
 	require.Error(t, err)
 }
 
@@ -230,13 +232,13 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 0, int(input.Ctx.BlockHeight()))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_BTC_NUSD.String())
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.NoError(t, err)
 }
 
@@ -270,8 +272,10 @@ func TestOracleRewardBand(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear pairs to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.Pair_NIBI_NUSD.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
 	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
@@ -287,9 +291,9 @@ func TestOracleRewardBand(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// Account 1 will miss the vote due to raward band condition
 	// Account 1, govstable
@@ -303,9 +307,9 @@ func TestOracleRewardBand(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 }
 
 /* TODO(Mercilex): not appliable right now: https://github.com/NibiruChain/nibiru/issues/805
@@ -447,9 +451,9 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	gotGovStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String())
+	gotGovStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_NIBI_NUSD.String())
 	require.NoError(t, err)
-	gotEthStableRate, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_ETH_NUSD.String())
+	gotEthStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_ETH_NUSD.String())
 	require.NoError(t, err)
 
 	require.Equal(t, govStableRate1, gotGovStableRate)
@@ -483,8 +487,10 @@ func TestVoteTargets(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.Pair_NIBI_NUSD.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
 	// govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -494,9 +500,9 @@ func TestVoteTargets(t *testing.T) {
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
 	// no missing current
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(0), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
+	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// vote targets are {govstable, btcstable}
 	require.Equal(t, []string{common.Pair_BTC_NUSD.String(), common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
@@ -512,14 +518,14 @@ func TestVoteTargets(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// btcstable must be deleted
 	require.Equal(t, []string{common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
 
-	exists := input.OracleKeeper.PairExists(input.Ctx, common.Pair_BTC_NUSD.String())
+	exists := input.OracleKeeper.Pairs.Has(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.False(t, exists)
 
 	// change govstable
@@ -533,21 +539,23 @@ func TestVoteTargets(t *testing.T) {
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[0]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[1]))
-	require.Equal(t, uint64(1), input.OracleKeeper.GetMissCounter(input.Ctx, keeper.ValAddrs[2]))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
+	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 }
 
 func TestAbstainWithSmallStakingPower(t *testing.T) {
 	input, h := setupWithSmallVotingPower(t)
 
 	// clear tobin tax to reset vote targets
-	input.OracleKeeper.ClearPairs(input.Ctx)
-	input.OracleKeeper.SetPair(input.Ctx, common.Pair_NIBI_NUSD.String())
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
+	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.GetExchangeRate(input.Ctx, common.Pair_NIBI_NUSD.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_NIBI_NUSD.String())
 	require.Error(t, err)
 }
 

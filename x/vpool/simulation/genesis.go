@@ -21,8 +21,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			{
 				Pair:                   common.Pair_BTC_NUSD,
 				TradeLimitRatio:        sdk.OneDec(),
-				QuoteAssetReserve:      sdk.NewDec(10e6).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e6))),
-				BaseAssetReserve:       sdk.NewDec(10e6).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e6))),
+				QuoteAssetReserve:      sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e6))),
+				BaseAssetReserve:       sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e6))),
 				FluctuationLimitRatio:  sdk.OneDec(),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

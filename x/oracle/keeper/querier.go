@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -44,7 +46,7 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	exchangeRate, err := q.GetExchangeRate(ctx, req.Pair)
+	exchangeRate, err := q.Keeper.ExchangeRates.Get(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
@@ -57,28 +59,19 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates types.ExchangeRateTuples
-	q.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
+	for _, er := range q.Keeper.ExchangeRates.Iterate(ctx, collections.Range[string]{}).KeyValues() {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
-			Pair:         pair,
-			ExchangeRate: rate,
+			Pair:         er.Key,
+			ExchangeRate: er.Value,
 		})
-		return false
-	})
+	}
 
 	return &types.QueryExchangeRatesResponse{ExchangeRates: exchangeRates}, nil
 }
 
 // Actives queries all pairs for which exchange rates exist
 func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var pairs []string
-	q.IterateExchangeRates(ctx, func(pair string, rate sdk.Dec) (stop bool) {
-		pairs = append(pairs, pair)
-		return false
-	})
-
-	return &types.QueryActivesResponse{Actives: pairs}, nil
+	return &types.QueryActivesResponse{Actives: q.Keeper.ExchangeRates.Iterate(sdk.UnwrapSDKContext(c), collections.Range[string]{}).Keys()}, nil
 }
 
 // VoteTargets queries the voting target list on current vote period
@@ -100,7 +93,7 @@ func (q querier) FeederDelegation(c context.Context, req *types.QueryFeederDeleg
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryFeederDelegationResponse{
-		FeederAddr: q.GetFeederDelegation(ctx, valAddr).String(),
+		FeederAddr: q.Keeper.FeederDelegations.GetOr(ctx, valAddr, sdk.AccAddress(valAddr)).String(),
 	}, nil
 }
 
@@ -117,7 +110,7 @@ func (q querier) MissCounter(c context.Context, req *types.QueryMissCounterReque
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryMissCounterResponse{
-		MissCounter: q.GetMissCounter(ctx, valAddr),
+		MissCounter: q.MissCounters.GetOr(ctx, valAddr, 0),
 	}, nil
 }
 
@@ -133,7 +126,7 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	prevote, err := q.GetAggregateExchangeRatePrevote(ctx, valAddr)
+	prevote, err := q.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -145,17 +138,7 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 
 // AggregatePrevotes queries aggregate prevotes of all validators
 func (q querier) AggregatePrevotes(c context.Context, _ *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var prevotes []types.AggregateExchangeRatePrevote
-	q.IterateAggregateExchangeRatePrevotes(ctx, func(_ sdk.ValAddress, prevote types.AggregateExchangeRatePrevote) bool {
-		prevotes = append(prevotes, prevote)
-		return false
-	})
-
-	return &types.QueryAggregatePrevotesResponse{
-		AggregatePrevotes: prevotes,
-	}, nil
+	return &types.QueryAggregatePrevotesResponse{AggregatePrevotes: q.Prevotes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
 }
 
 // AggregateVote queries an aggregate vote of a validator
@@ -170,7 +153,7 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	vote, err := q.GetAggregateExchangeRateVote(ctx, valAddr)
+	vote, err := q.Keeper.Votes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -182,15 +165,5 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 
 // AggregateVotes queries aggregate votes of all validators
 func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	var votes []types.AggregateExchangeRateVote
-	q.IterateAggregateExchangeRateVotes(ctx, func(_ sdk.ValAddress, vote types.AggregateExchangeRateVote) bool {
-		votes = append(votes, vote)
-		return false
-	})
-
-	return &types.QueryAggregateVotesResponse{
-		AggregateVotes: votes,
-	}, nil
+	return &types.QueryAggregateVotesResponse{AggregateVotes: q.Keeper.Votes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
 }

@@ -104,7 +104,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		exchangeRatesStr = strings.TrimRight(exchangeRatesStr, ",")
 		voteHash := types.GetAggregateVoteHash(salt, exchangeRatesStr, address)
 
-		feederAddr := k.GetFeederDelegation(ctx, address)
+		feederAddr := k.FeederDelegations.GetOr(ctx, address, sdk.AccAddress(address))
 		feederSimAccount, _ := simtypes.FindAccount(accs, feederAddr)
 
 		feederAccount := ak.GetAccount(ctx, feederAddr)
@@ -165,7 +165,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 		}
 
 		// get prevote
-		prevote, err := k.GetAggregateExchangeRatePrevote(ctx, address)
+		prevote, err := k.Prevotes.Get(ctx, address)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "prevote not found"), nil, nil
 		}
@@ -175,7 +175,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "reveal period of submitted vote do not match with registered prevote"), nil, nil
 		}
 
-		feederAddr := k.GetFeederDelegation(ctx, address)
+		feederAddr := k.FeederDelegations.GetOr(ctx, address, sdk.AccAddress(address))
 		feederSimAccount, _ := simtypes.FindAccount(accs, feederAddr)
 		feederAccount := ak.GetAccount(ctx, feederAddr)
 		spendableCoins := bk.SpendableCoins(ctx, feederAddr)

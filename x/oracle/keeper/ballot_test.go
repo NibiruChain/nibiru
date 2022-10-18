@@ -4,6 +4,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/collections"
+
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/stretchr/testify/require"
@@ -43,7 +45,7 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	for i := range btcBallot {
-		input.OracleKeeper.SetAggregateExchangeRateVote(
+		input.OracleKeeper.Votes.Insert(
 			input.Ctx,
 			ValAddrs[i],
 			types.NewAggregateExchangeRateVote(
@@ -114,13 +116,13 @@ func TestClearBallots(t *testing.T) {
 	}
 
 	for i := range btcBallot {
-		input.OracleKeeper.SetAggregateExchangeRatePrevote(input.Ctx, ValAddrs[i], types.AggregateExchangeRatePrevote{
+		input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[i], types.AggregateExchangeRatePrevote{
 			Hash:        "",
 			Voter:       ValAddrs[i].String(),
 			SubmitBlock: uint64(input.Ctx.BlockHeight()),
 		})
 
-		input.OracleKeeper.SetAggregateExchangeRateVote(input.Ctx, ValAddrs[i],
+		input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[i],
 			types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
 				{Pair: btcBallot[i].Pair, ExchangeRate: btcBallot[i].ExchangeRate},
 				{Pair: ethBallot[i].Pair, ExchangeRate: ethBallot[i].ExchangeRate},
@@ -129,27 +131,14 @@ func TestClearBallots(t *testing.T) {
 
 	input.OracleKeeper.ClearBallots(input.Ctx, 5)
 
-	prevoteCounter := 0
-	voteCounter := 0
-	input.OracleKeeper.IterateAggregateExchangeRatePrevotes(input.Ctx, func(_ sdk.ValAddress, _ types.AggregateExchangeRatePrevote) bool {
-		prevoteCounter++
-		return false
-	})
-	input.OracleKeeper.IterateAggregateExchangeRateVotes(input.Ctx, func(_ sdk.ValAddress, _ types.AggregateExchangeRateVote) bool {
-		voteCounter++
-		return false
-	})
+	prevoteCounter := len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
+	voteCounter := len(input.OracleKeeper.Votes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 
 	require.Equal(t, prevoteCounter, 3)
 	require.Equal(t, voteCounter, 0)
 
 	input.OracleKeeper.ClearBallots(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
-
-	prevoteCounter = 0
-	input.OracleKeeper.IterateAggregateExchangeRatePrevotes(input.Ctx, func(_ sdk.ValAddress, _ types.AggregateExchangeRatePrevote) bool {
-		prevoteCounter++
-		return false
-	})
+	prevoteCounter = len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	require.Equal(t, prevoteCounter, 0)
 }
 
@@ -166,9 +155,11 @@ func TestApplyWhitelist(t *testing.T) {
 	}
 
 	// prepare test by resetting the genesis pairs
-	input.OracleKeeper.ClearPairs(input.Ctx)
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	}
 	for _, p := range whitelist {
-		input.OracleKeeper.SetPair(input.Ctx, p.Name)
+		input.OracleKeeper.Pairs.Insert(input.Ctx, p.Name)
 	}
 
 	voteTargets := map[string]struct{}{
@@ -179,11 +170,9 @@ func TestApplyWhitelist(t *testing.T) {
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs := types.PairList{}
-
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		gotPairs = append(gotPairs, types.Pair{Name: pair})
-		return false
-	})
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		gotPairs = append(gotPairs, types.Pair{Name: p})
+	}
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i].Name < whitelist[j].Name
@@ -195,11 +184,9 @@ func TestApplyWhitelist(t *testing.T) {
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = types.PairList{}
-
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		gotPairs = append(gotPairs, types.Pair{Name: pair})
-		return false
-	})
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		gotPairs = append(gotPairs, types.Pair{Name: p})
+	}
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i].Name < whitelist[j].Name
@@ -212,11 +199,9 @@ func TestApplyWhitelist(t *testing.T) {
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = types.PairList{}
-
-	input.OracleKeeper.IteratePairs(input.Ctx, func(pair string) (stop bool) {
-		gotPairs = append(gotPairs, types.Pair{Name: pair})
-		return false
-	})
+	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		gotPairs = append(gotPairs, types.Pair{Name: p})
+	}
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i].Name < whitelist[j].Name
