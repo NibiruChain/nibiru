@@ -104,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#982](https://github.com/NibiruChain/nibiru/pull/982) - improvements for pricefeed genesis
 * [#989](https://github.com/NibiruChain/nibiru/pull/989) - test(perp): cli test for AddMargin
 * [#1001](https://github.com/NibiruChain/nibiru/pull/1001) - chore(deps): bump github.com/spf13/cobra from 1.5.0 to 1.6.0
+* [#1013](https://github.com/NibiruChain/nibiru/pull/1013) - test(vpool): more calc twap tests and documentation
 
 ### Features
 

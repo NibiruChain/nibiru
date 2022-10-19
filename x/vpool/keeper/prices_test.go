@@ -407,7 +407,7 @@ func TestCalcTwap(t *testing.T) {
 			expectedPrice:      sdk.MustNewDecFromStr("2.5"),
 		},
 		{
-			name: "Error: quote asset amount = asset reserve",
+			name: "Error: quote asset reserve = asset amount",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
