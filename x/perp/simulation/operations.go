@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 
 	"github.com/NibiruChain/nibiru/collections"
@@ -15,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 const defaultWeight = 100
@@ -24,7 +26,7 @@ func WeightedOperations(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Ke
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			defaultWeight,
-			SimulateMsgOpenPosition(ak, bk),
+			SimulateMsgOpenPosition(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			33,
@@ -42,7 +44,7 @@ func WeightedOperations(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Ke
 }
 
 // SimulateMsgOpenPosition generates a MsgOpenPosition with random values.
-func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
+func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
@@ -50,8 +52,13 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper) simtyp
 		fundAccountWithTokens(ctx, simAccount.Address, bk)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomNUSD))
-		leverage := simtypes.RandomDecAmount(r, sdk.NewDec(9)).Add(sdk.OneDec()) // between [1, 10]
+		pools := k.VpoolKeeper.GetAllPools(ctx)
+		pool := pools[rand.Intn(len(pools))]
+
+		maxQuote := getMaxQuoteForPool(pool)
+		quoteAmt, _ := simtypes.RandPositiveInt(r, sdk.MinInt(sdk.Int(maxQuote), spendableCoins.AmountOf(common.DenomNUSD)))
+
+		leverage := simtypes.RandomDecAmount(r, pool.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
 		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomNUSD, quoteAmt.Add(feesAmt)))
@@ -88,6 +95,44 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper) simtyp
 
 		return opMsg, futureOps, err
 	}
+}
+
+/*
+getMaxQuoteForPool computes the maximum quote the user can swap considering the max fluctuation ratio and  trade limit
+ratio.
+
+Fluctuation limit ratio:
+------------------------
+
+	Considering a xy=k pool, the price evolution for a swap of quote=q can be written as:
+
+		price_evolution = (1 + q/quoteAssetReserve) ** 2
+
+	which means that the trade will be under the fluctuation limit l if:
+
+			abs(price_evolution - 1) <= l
+	<=>		sqrt(1-l) * quoteAssetReserve < q < sqrt(l+1) * quoteAssetReserve
+
+	In our case we only care about the right part since q is always positive (short/long would be the sign).
+
+
+Trade limit ratio:
+------------------
+
+	The maximum quote amount considering the trade limit ratio is set at:
+
+	 	q <= QuoteAssetReserve * tl
+
+		with tl the trade limit ratio.
+
+*/
+func getMaxQuoteForPool(pool pooltypes.VPool) sdk.Dec {
+	ratioFloat := math.Sqrt(pool.FluctuationLimitRatio.Add(sdk.OneDec()).MustFloat64())
+	maxQuoteFluctationLimit := sdk.MustNewDecFromStr(fmt.Sprintf("%f", ratioFloat)).Mul(pool.QuoteAssetReserve)
+
+	maxQuoteTradeLimit := pool.QuoteAssetReserve.Mul(pool.TradeLimitRatio)
+
+	return sdk.MinDec(maxQuoteTradeLimit, maxQuoteFluctationLimit)
 }
 
 // SimulateMsgClosePosition generates a MsgClosePosition with random values.
@@ -192,10 +237,14 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		//simple calculation, might still fail due to funding rate or unrealizedPnL
 		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, position.GetPair())
 		maintenanceMarginRequirement := position.OpenNotional.Mul(maintenanceMarginRatio)
+		maxMarginToRemove := position.Margin.Sub(maintenanceMarginRequirement).Quo(sdk.NewDec(2))
 
-		maxMarginToRemove := position.Margin.Sub(maintenanceMarginRequirement)
+		if maxMarginToRemove.TruncateInt().LT(sdk.OneInt()) {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "margin too tight"), nil, nil
+		}
 
 		marginToRemove, _ := simtypes.RandPositiveInt(r, maxMarginToRemove.TruncateInt())
+
 		expectedCoin := sdk.NewCoin(common.DenomNUSD, marginToRemove)
 
 		msg = &types.MsgRemoveMargin{
