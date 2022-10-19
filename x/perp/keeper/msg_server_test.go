@@ -1,14 +1,9 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
-
-	"github.com/NibiruChain/nibiru/collections"
-
-	"github.com/NibiruChain/nibiru/x/testutil"
-
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,9 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/collections"
+	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestMsgServerAddMargin(t *testing.T) {
@@ -71,7 +69,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
@@ -190,7 +188,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
@@ -277,7 +275,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -362,7 +360,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
@@ -438,7 +436,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
@@ -507,7 +505,7 @@ func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator string)
 }
 
 func TestMsgServerMultiLiquidate(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 	ctx = ctx.WithBlockTime(time.Now())
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -623,4 +621,61 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	assertNotLiquidated(notAtRiskPosition)
 	assertLiquidated(atRiskPosition1)
 	assertLiquidated(atRiskPosition2)
+}
+
+func TestMsgServerDonateToEcosystemFund(t *testing.T) {
+	tests := []struct {
+		name string
+
+		sender       sdk.AccAddress
+		initialFunds sdk.Coins
+		donation     sdk.Coin
+
+		expectedErr error
+	}{
+		{
+			name:         "not enough funds",
+			sender:       testutil.AccAddress(),
+			initialFunds: sdk.NewCoins(),
+			donation:     sdk.NewInt64Coin(common.DenomNUSD, 100),
+			expectedErr:  fmt.Errorf("insufficient funds"),
+		},
+		{
+			name:         "success",
+			sender:       testutil.AccAddress(),
+			initialFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1e6)),
+			donation:     sdk.NewInt64Coin(common.DenomNUSD, 100),
+			expectedErr:  nil,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
+
+			resp, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
+				Sender:   tc.sender.String(),
+				Donation: tc.donation,
+			})
+
+			if tc.expectedErr != nil {
+				require.ErrorContains(t, err, tc.expectedErr.Error())
+				require.Nil(t, resp)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				assert.EqualValues(t,
+					tc.donation,
+					app.BankKeeper.GetBalance(
+						ctx,
+						app.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
+						common.DenomNUSD,
+					),
+				)
+			}
+		})
+	}
 }

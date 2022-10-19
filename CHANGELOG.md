@@ -112,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - feat: query cumulative funding payments
 * [#985](https://github.com/NibiruChain/nibiru/pull/985) - feat: query all active positions for a trader
 * [#997](https://github.com/NibiruChain/nibiru/pull/997) - feat: emit `ReserveSnapshotSavedEvent` in vpool EndBlocker
+* [#1011](https://github.com/NibiruChain/nibiru/pull/1011) - feat(perp): add DonateToEF cli command
 
 ### Fixes
 

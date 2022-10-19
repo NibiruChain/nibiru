@@ -30,6 +30,7 @@ func GetTxCmd() *cobra.Command {
 		LiquidateCmd(),
 		OpenPositionCmd(),
 		ClosePositionCmd(),
+		DonateToEcosystemFundCmd(),
 	)
 
 	return txCmd
@@ -45,9 +46,6 @@ func OpenPositionCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
-				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			var side types.Side
 			switch args[0] {
@@ -86,7 +84,7 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -107,9 +105,6 @@ func ClosePositionCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
-				WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			msg := &types.MsgClosePosition{
 				Sender:    clientCtx.GetFromAddress().String(),
 				TokenPair: args[0],
@@ -118,11 +113,7 @@ func ClosePositionCmd() *cobra.Command {
 				return err
 			}
 
-			err = tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
-			if err != nil {
-				return err
-			}
-			return nil
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -151,9 +142,6 @@ func RemoveMarginCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
-				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			marginToRemove, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
 				return err
@@ -168,7 +156,7 @@ func RemoveMarginCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -193,9 +181,6 @@ func AddMarginCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
-				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			marginToAdd, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
 				return err
@@ -210,7 +195,7 @@ func AddMarginCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -235,9 +220,6 @@ func LiquidateCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
-				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
-
 			traderAddr, err := sdk.AccAddressFromBech32(args[1])
 			if err != nil {
 				return err
@@ -252,7 +234,45 @@ func LiquidateCmd() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func DonateToEcosystemFundCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "donate-ef [amount]",
+		Short: "Donates <amount> of coins to the Ecosystem Fund.",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp donate-ef 100unusd
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			donation, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgDonateToEcosystemFund{
+				Sender:   clientCtx.GetFromAddress().String(),
+				Donation: donation,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 

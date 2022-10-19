@@ -38,6 +38,9 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/close_position";
   }
 
+  rpc DonateToEcosystemFund(MsgDonateToEcosystemFund) returns (MsgDonateToEcosystemFundResponse) {
+    option (google.api.http).post = "/nibiru/perp/donate_to_ecosystem_fund";
+  }
 }
 
 // -------------------------- RemoveMargin --------------------------
@@ -216,4 +219,19 @@ message MsgClosePositionResponse {
   string margin_to_trader = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];
+}
+
+// -------------------------- DonateToEcosystemFund --------------------------
+
+message MsgDonateToEcosystemFund {
+  string sender = 1;
+
+  // donation to the EF
+  cosmos.base.v1beta1.Coin donation = 2 [
+    (gogoproto.moretags) = "yaml:\"donation\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgDonateToEcosystemFundResponse {
 }

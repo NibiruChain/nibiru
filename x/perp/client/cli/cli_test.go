@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -151,7 +152,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(err)
 	user3 := sdk.AccAddress(info.GetPubKey().Address())
 
-	s.users = []sdk.AccAddress{user1, user2, user3}
+	info, _, err = val.ClientCtx.Keyring.
+		NewMnemonic("user4", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
+	s.NoError(err)
+	user4 := sdk.AccAddress(info.GetPubKey().Address())
+
+	s.users = []sdk.AccAddress{user1, user2, user3, user4}
 
 	_, err = testutilcli.FillWalletFromValidator(user1,
 		sdk.NewCoins(
@@ -180,6 +186,17 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			sdk.NewInt64Coin(common.DenomNIBI, 1000),
 			sdk.NewInt64Coin(common.DenomUSDC, 1000),
 			sdk.NewInt64Coin(common.DenomNUSD, 49_000_000),
+		),
+		val,
+		common.DenomNIBI,
+	)
+	s.Require().NoError(err)
+
+	_, err = testutilcli.FillWalletFromValidator(user4,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(common.DenomNIBI, 1000),
+			sdk.NewInt64Coin(common.DenomUSDC, 1000),
+			sdk.NewInt64Coin(common.DenomNUSD, 100000),
 		),
 		val,
 		common.DenomNIBI,
@@ -399,10 +416,8 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"0.0000001",
 	}
 	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user1 open position err: %+v", err)
-	}
 	s.NoError(err)
+
 	// Remove margin to trigger bad debt on user 1
 	s.T().Log("removing margin on user 1....")
 	args = []string{
@@ -412,22 +427,19 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		fmt.Sprintf("%s%s", "100", common.DenomNUSD), // Amount
 	}
 	out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.RemoveMarginCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user1 remove margin err: %+v", err)
-	}
-
+	s.NoError(err)
 	s.Contains(out.String(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 }
 
-func (s *IntegrationTestSuite) TestAddMargin() {
+func (s *IntegrationTestSuite) TestX_AddMargin() {
 	val := s.network.Validators[0]
 	pair := common.Pair_ETH_NUSD
 
 	// Open a new position
-	s.T().Log("opening a position with user 2....")
+	s.T().Log("opening a position with user 3....")
 	args := []string{
 		"--from",
-		s.users[2].String(),
+		s.users[3].String(),
 		"buy",
 		pair.String(),
 		"10",    // Leverage
@@ -436,9 +448,6 @@ func (s *IntegrationTestSuite) TestAddMargin() {
 	}
 
 	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
-	if err != nil {
-		s.T().Logf("user2 open position err: %+v", err)
-	}
 	s.Require().NoError(err)
 
 	testCases := []struct {
@@ -451,7 +460,7 @@ func (s *IntegrationTestSuite) TestAddMargin() {
 			name: "PASS: add margin to correct position",
 			args: []string{
 				"--from",
-				s.users[2].String(),
+				s.users[3].String(),
 				pair.String(),
 				fmt.Sprintf("%s%s", "10000", pair.Token1),
 			},
@@ -462,7 +471,7 @@ func (s *IntegrationTestSuite) TestAddMargin() {
 			name: "FAIL: position not found",
 			args: []string{
 				"--from",
-				s.users[2].String(),
+				s.users[3].String(),
 				common.Pair_BTC_NUSD.String(),
 				fmt.Sprintf("%s%s", "10000", pair.Token1),
 			},
@@ -472,26 +481,22 @@ func (s *IntegrationTestSuite) TestAddMargin() {
 
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
-			s.T().Log("adding margin on user 2....")
+			s.T().Log("adding margin on user 3....")
 			out, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.AddMarginCmd(), append(tc.args, commonArgs...))
-			if err != nil {
-				s.T().Logf("user 2 add margin err: %+v", err)
-			}
 			s.Require().NoError(err)
 
 			var tx sdk.TxResponse
 			val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), &tx)
 
-			if tc.expectedCode != 0 {
-				s.EqualValues(tc.expectedCode, tx.Code)
-			} else {
-				s.EqualValues(tc.expectedCode, 0)
+			s.EqualValues(tc.expectedCode, tx.Code)
 
+			if tc.expectedCode == 0 {
 				// query trader position
-				queryResp, err := testutilcli.QueryPosition(val.ClientCtx, pair, s.users[2])
+				queryResp, err := testutilcli.QueryPosition(val.ClientCtx, pair, s.users[3])
 				s.NoError(err)
 
 				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
+				s.T().Logf(queryResp.Position.String())
 			}
 		})
 	}
@@ -568,6 +573,33 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	out, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.LiquidateCmd(), append(args, commonArgs...))
 	s.NotContains(out.String(), "fail", out.String())
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
+	// Set up the user accounts
+	val := s.network.Validators[0]
+
+	args := []string{
+		"--from",
+		"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m",
+		"100unusd",
+	}
+
+	s.T().Logf("donate to ecosystem fund")
+	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.DonateToEcosystemFundCmd(), append(args, commonArgs...))
+	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
+
+	resp := new(sdk.Coin)
+	s.Require().NoError(
+		testutilcli.ExecQuery(
+			s.network,
+			bankcli.GetBalancesCmd(),
+			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"},
+			resp,
+		),
+	)
+	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
