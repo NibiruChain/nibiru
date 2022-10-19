@@ -68,9 +68,9 @@ func (k Keeper) getPairBallotMapAndPairsMap(
 ) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
 	pairBallotMap := k.mapBallotByPair(ctx, validatorPerformanceMap)
 
-	pairsMap := k.RemoveInvalidBallots(ctx, pairBallotMap)
+	updatedPairBallotMap, pairsMap := k.RemoveInvalidBallots(ctx, pairBallotMap)
 
-	return pairBallotMap, pairsMap
+	return updatedPairBallotMap, pairsMap
 }
 
 // getPairsMap returns a map containing all the pairs as the key.

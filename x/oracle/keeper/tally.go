@@ -51,7 +51,10 @@ func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) bo
 // RemoveInvalidBallots removes the ballots which have not reached the vote threshold
 // or which are not part of the vote targets anymore: example when params change during a vote period
 // but some votes were already made.
-func (k Keeper) RemoveInvalidBallots(ctx sdk.Context, voteMap map[string]types.ExchangeRateBallot) map[string]struct{} {
+func (k Keeper) RemoveInvalidBallots(
+	ctx sdk.Context,
+	voteMap map[string]types.ExchangeRateBallot,
+) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
 	voteTargets := k.getPairsMap(ctx)
 
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
@@ -75,5 +78,5 @@ func (k Keeper) RemoveInvalidBallots(ctx sdk.Context, voteMap map[string]types.E
 		}
 	}
 
-	return voteTargets
+	return voteMap, voteTargets
 }
