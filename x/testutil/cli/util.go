@@ -225,7 +225,7 @@ func writeFile(name string, dir string, contents []byte) error {
 // Used for cli tests.
 func FillWalletFromValidator(
 	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
-) (sdk.AccAddress, error) {
+) error {
 	rawResp, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
@@ -236,9 +236,9 @@ func FillWalletFromValidator(
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(feesDenom, 10)),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return addr, txOK(val.ClientCtx.Codec, rawResp.Bytes())
+	return txOK(val.ClientCtx.Codec, rawResp.Bytes())
 }
 
 func txOK(cdc codec.Codec, txBytes []byte) error {

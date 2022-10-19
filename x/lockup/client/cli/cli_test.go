@@ -54,10 +54,18 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.userWithLock = info.GetAddress()
 
 	// fill wallet
-	_, err = testutilcli.FillWalletFromValidator(s.userWithLock,
-		sdk.NewCoins(sdk.NewInt64Coin("ATOM", 20000), sdk.NewInt64Coin("OSMO", 20000), sdk.NewInt64Coin("unibi", 1_000_000)),
-		val, s.cfg.BondDenom)
-	require.NoError(s.T(), err)
+	s.NoError(
+		testutilcli.FillWalletFromValidator(
+			s.userWithLock,
+			sdk.NewCoins(
+				sdk.NewInt64Coin("ATOM", 20000),
+				sdk.NewInt64Coin("OSMO", 20000),
+				sdk.NewInt64Coin("unibi", 1_000_000),
+			),
+			val,
+			s.cfg.BondDenom,
+		),
+	)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {

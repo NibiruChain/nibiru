@@ -419,12 +419,12 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 	gasFeeToken := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1000))
 	for _, oracleName := range []string{"genOracle", "wrongOracle"} {
-		_, err = testutilcli.FillWalletFromValidator(
+		s.NoError(testutilcli.FillWalletFromValidator(
 			/*addr=*/ s.oracleMap[oracleName],
 			/*balance=*/ gasFeeToken,
 			/*Validator=*/ val,
-			/*feesDenom=*/ s.cfg.BondDenom)
-		s.Require().NoError(err)
+			/*feesDenom=*/ s.cfg.BondDenom),
+		)
 	}
 
 	commonArgs := []string{
@@ -588,20 +588,11 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	s.Require().Len(s.network.Validators, 1)
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
-	oracleKeyringInfo, _, err := val.ClientCtx.Keyring.NewMnemonic(
-		/* uid */ "delphi-oracle",
-		/* language */ keyring.English,
-		/* hdPath */ sdk.FullFundraiserPath,
-		/* bip39Passphrase */ "",
-		/* algo */ hd.Secp256k1,
-	)
-	s.Require().NoError(err)
 
 	s.T().Log("Fill oracle wallet to pay gas on post price")
 	gasTokens := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
-	oracle := sdk.AccAddress(oracleKeyringInfo.GetPubKey().Address())
-	_, err = testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom)
-	s.Require().NoError(err)
+	oracle := testutilcli.NewAccount(s.network, "delphi-oracle")
+	s.NoError(testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom))
 
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")

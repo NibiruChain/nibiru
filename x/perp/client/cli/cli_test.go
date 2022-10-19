@@ -5,19 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/stretchr/testify/suite"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
@@ -44,9 +42,9 @@ type IntegrationTestSuite struct {
 // NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
 func NewPricefeedGen() *pftypes.GenesisState {
 	pairs := common.AssetPairs{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD}
-	defaultGenesis := simapp.PricefeedGenesis()
-	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
-	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
+	pfGenesis := simapp.PricefeedGenesis()
+	pfGenesis.Params.Pairs = append(pfGenesis.Params.Pairs, pairs...)
+	pfGenesis.PostedPrices = append(pfGenesis.PostedPrices, []pftypes.PostedPrice{
 		{
 			PairID: common.Pair_BTC_NUSD.String(),
 			Oracle: simapp.GenOracleAddress,
@@ -61,7 +59,7 @@ func NewPricefeedGen() *pftypes.GenesisState {
 		},
 	}...)
 
-	return &defaultGenesis
+	return &pfGenesis
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -133,81 +131,72 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-	_, err := s.network.WaitForHeight(1)
-	s.NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 
-	val := s.network.Validators[0]
-	info, _, err := val.ClientCtx.Keyring.
-		NewMnemonic("user1", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.NoError(err)
-	user1 := sdk.AccAddress(info.GetPubKey().Address())
-
-	info, _, err = val.ClientCtx.Keyring.
-		NewMnemonic("user2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.NoError(err)
-	user2 := sdk.AccAddress(info.GetPubKey().Address())
-
-	info, _, err = val.ClientCtx.Keyring.
-		NewMnemonic("user3", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.NoError(err)
-	user3 := sdk.AccAddress(info.GetPubKey().Address())
-
-	info, _, err = val.ClientCtx.Keyring.
-		NewMnemonic("user4", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.NoError(err)
-	user4 := sdk.AccAddress(info.GetPubKey().Address())
-
+	user1 := testutilcli.NewAccount(s.network, "user1")
+	user2 := testutilcli.NewAccount(s.network, "user2")
+	user3 := testutilcli.NewAccount(s.network, "user3")
+	user4 := testutilcli.NewAccount(s.network, "user4")
 	s.users = []sdk.AccAddress{user1, user2, user3, user4}
 
-	_, err = testutilcli.FillWalletFromValidator(user1,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomNIBI, 10_000_000),
-			sdk.NewInt64Coin(common.DenomUSDC, 10_000_000),
-			sdk.NewInt64Coin(common.DenomNUSD, 50_000_000),
-		),
-		val,
-		common.DenomNIBI,
-	)
-	s.Require().NoError(err)
+	val := s.network.Validators[0]
 
-	_, err = testutilcli.FillWalletFromValidator(user2,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomNIBI, 1000),
-			sdk.NewInt64Coin(common.DenomUSDC, 1000),
-			sdk.NewInt64Coin(common.DenomNUSD, 100000),
+	s.Require().NoError(
+		testutilcli.FillWalletFromValidator(user1,
+			sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomNIBI, 10_000_000),
+				sdk.NewInt64Coin(common.DenomUSDC, 10_000_000),
+				sdk.NewInt64Coin(common.DenomNUSD, 50_000_000),
+			),
+			val,
+			common.DenomNIBI,
 		),
-		val,
-		common.DenomNIBI,
 	)
-	s.Require().NoError(err)
 
-	_, err = testutilcli.FillWalletFromValidator(user3,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomNIBI, 1000),
-			sdk.NewInt64Coin(common.DenomUSDC, 1000),
-			sdk.NewInt64Coin(common.DenomNUSD, 49_000_000),
+	s.Require().NoError(
+		testutilcli.FillWalletFromValidator(user2,
+			sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomNIBI, 1000),
+				sdk.NewInt64Coin(common.DenomUSDC, 1000),
+				sdk.NewInt64Coin(common.DenomNUSD, 100000),
+			),
+			val,
+			common.DenomNIBI,
 		),
-		val,
-		common.DenomNIBI,
 	)
-	s.Require().NoError(err)
 
-	_, err = testutilcli.FillWalletFromValidator(user4,
-		sdk.NewCoins(
-			sdk.NewInt64Coin(common.DenomNIBI, 1000),
-			sdk.NewInt64Coin(common.DenomUSDC, 1000),
-			sdk.NewInt64Coin(common.DenomNUSD, 100000),
+	s.Require().NoError(
+		testutilcli.FillWalletFromValidator(user3,
+			sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomNIBI, 1000),
+				sdk.NewInt64Coin(common.DenomUSDC, 1000),
+				sdk.NewInt64Coin(common.DenomNUSD, 49_000_000),
+			),
+			val,
+			common.DenomNIBI,
 		),
-		val,
-		common.DenomNIBI,
 	)
-	s.Require().NoError(err)
 
-	_, err = testutilcli.FillWalletFromValidator(
-		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
-		sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000)),
-		val, common.DenomNIBI)
-	s.Require().NoError(err)
+	s.Require().NoError(
+		testutilcli.FillWalletFromValidator(user4,
+			sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomNIBI, 1000),
+				sdk.NewInt64Coin(common.DenomUSDC, 1000),
+				sdk.NewInt64Coin(common.DenomNUSD, 100000),
+			),
+			val,
+			common.DenomNIBI,
+		),
+	)
+
+	s.Require().NoError(
+		testutilcli.FillWalletFromValidator(
+			sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
+			sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000)),
+			val,
+			common.DenomNIBI,
+		),
+	)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -217,7 +206,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
-
 	user := s.users[0]
 
 	s.T().Log("A. check vpool balances")
@@ -228,8 +216,10 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(60_000_000_000), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("A. check trader has no existing positions")
-	_, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
+	resp, err := testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
 	s.Error(err, "no position found")
+	s.T().Log(err)
+	s.T().Log(resp.String())
 
 	s.T().Log("B. open position")
 	args := []string{
@@ -576,18 +566,11 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 }
 
 func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
-	// Set up the user accounts
-	val := s.network.Validators[0]
-
-	args := []string{
-		"--from",
-		"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m",
-		"100unusd",
-	}
-
 	s.T().Logf("donate to ecosystem fund")
-	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.DonateToEcosystemFundCmd(), append(args, commonArgs...))
+	out, err := testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
 	s.Require().NoError(err)
+	s.Require().EqualValues(abcitypes.CodeTypeOK, out.Code)
+
 	s.Require().NoError(s.network.WaitForNextBlock())
 
 	resp := new(sdk.Coin)
