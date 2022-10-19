@@ -13,7 +13,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
 
 	pairsMap := k.getPairsMap(ctx)
-	validatorPerformanceMap := k.getValidatorPerformanceMap(ctx)
+	validatorPerformanceMap := k.buildEmptyValidatorPerformanceMap(ctx)
 
 	k.resetExchangeRates(ctx)
 
@@ -92,8 +92,9 @@ func (k Keeper) resetExchangeRates(ctx sdk.Context) {
 	}
 }
 
-// getValidatorPerformanceMap returns a map [address]ValidatorPerformance excluding validators that are not bonded.
-func (k Keeper) getValidatorPerformanceMap(ctx sdk.Context) map[string]types.ValidatorPerformance {
+// buildEmptyValidatorPerformanceMap creates a new map of validators and their performance, excluding validators that are
+// not bonded.
+func (k Keeper) buildEmptyValidatorPerformanceMap(ctx sdk.Context) map[string]types.ValidatorPerformance {
 	validatorPerformanceMap := make(map[string]types.ValidatorPerformance)
 
 	maxValidators := k.StakingKeeper.MaxValidators(ctx)
@@ -112,7 +113,7 @@ func (k Keeper) getValidatorPerformanceMap(ctx sdk.Context) map[string]types.Val
 		}
 
 		valAddr := validator.GetOperator()
-		validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
+		validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(validator.GetConsensusPower(powerReduction), valAddr)
 		i++
 	}
 

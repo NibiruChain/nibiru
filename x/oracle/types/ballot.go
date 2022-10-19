@@ -165,11 +165,11 @@ type ValidatorPerformance struct {
 }
 
 // NewValidatorPerformance generates a ValidatorPerformance instance.
-func NewValidatorPerformance(power, weight, winCount int64, recipient sdk.ValAddress) ValidatorPerformance {
+func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPerformance {
 	return ValidatorPerformance{
 		Power:      power,
-		Weight:     weight,
-		WinCount:   winCount,
+		Weight:     0,
+		WinCount:   0,
 		ValAddress: recipient,
 	}
 }
