@@ -159,7 +159,7 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 			cmd := cli.CmdQueryPrice()
 			queryResp := new(pricefeedtypes.QueryPriceResponse)
 			err := testutilcli.ExecQuery(
-				s.network, cmd,
+				s.network.Validators[0].ClientCtx, cmd,
 				append(tc.args, fmt.Sprintf("--%s=json", tmcli.OutputFlag)),
 				queryResp,
 			)
@@ -219,7 +219,7 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 			cmd := cli.CmdQueryRawPrices()
 			queryResp := new(pricefeedtypes.QueryRawPricesResponse)
 			err := testutilcli.ExecQuery(
-				s.network, cmd,
+				s.network.Validators[0].ClientCtx, cmd,
 				append(tc.args, fmt.Sprintf("--%s=json", tmcli.OutputFlag)),
 				queryResp,
 			)
@@ -738,7 +738,7 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	cmd = cli.CmdQueryParams()
 	args = []string{}
 	queryResp := &pricefeedtypes.QueryParamsResponse{}
-	s.Require().NoError(testutilcli.ExecQuery(s.network, cmd, args, queryResp))
+	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cmd, args, queryResp))
 	proposalPairs := common.NewAssetPairs(proposal.Pairs...)
 	expectedPairs := append(pricefeedtypes.DefaultPairs, proposalPairs...)
 	s.Assert().EqualValues(expectedPairs, queryResp.Params.Pairs)
@@ -750,7 +750,7 @@ func (s IntegrationTestSuite) TestX_CmdAddOracleProposalAndVote() {
 	for _, pair := range proposalPairs {
 		args = []string{pair.String()}
 		queryResp := &pricefeedtypes.QueryOraclesResponse{}
-		s.Assert().NoError(testutilcli.ExecQuery(s.network, cmd, args, queryResp))
+		s.Assert().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cmd, args, queryResp))
 		for _, proposalOracle := range proposal.Oracles {
 			s.Assert().Contains(queryResp.Oracles, proposalOracle)
 		}

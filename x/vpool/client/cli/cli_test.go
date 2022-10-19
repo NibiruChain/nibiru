@@ -190,7 +190,7 @@ e.g. $ nibid tx gov vote 1 yes`)
 	// ----------------------------------------------------------------------
 	s.Require().NoError(s.network.WaitForNextBlock())
 	vpoolsQueryResp := &vpooltypes.QueryAllPoolsResponse{}
-	s.Require().NoError(testutilcli.ExecQuery(s.network, cli.CmdGetVpools(), []string{}, vpoolsQueryResp))
+	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetVpools(), []string{}, vpoolsQueryResp))
 
 	found := false
 	for _, pool := range vpoolsQueryResp.Pools {

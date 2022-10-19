@@ -222,17 +222,15 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log(resp.String())
 
 	s.T().Log("B. open position")
-	args := []string{
-		"--from",
-		user.String(),
+	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"buy",
 		common.Pair_BTC_NUSD.String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "1000000", // 10^6 uNUSD
-		/* baseAssetLimit */ "1",
-	}
-	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+		/* baseAssetLimit */ "1"},
+	)
 	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("B. check vpool balance after open position")
 	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_BTC_NUSD)
@@ -241,10 +239,10 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.NewDec(60_001_000_000), reserveAssets.QuoteAssetReserve)
 
-	s.T().Log("B. check vpool balances")
+	s.T().Log("B. check trader position")
 	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
-	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
+	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.Pair_BTC_NUSD, queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("166.663888935184413593"), queryResp.Position.Size_)
@@ -256,22 +254,20 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioIndex)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
-	args = []string{
-		"--from",
-		user.String(),
+	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"buy",
 		common.Pair_BTC_NUSD.String(),
 		/* leverage */ "2",
 		/* quoteAmt */ "1000000", // 10^6 uNUSD
 		/* baseAmtLimit */ "0",
-	}
-	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	})
 	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("C. check trader position")
 	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
-	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
+	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.Pair_BTC_NUSD, queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503125"), queryResp.Position.Size_)
@@ -282,30 +278,27 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatioMark)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
-	args = []string{
-		"--from",
-		user.String(),
+	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"sell",
 		common.Pair_BTC_NUSD.String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "100", // 100 uNUSD
 		/* baseAssetLimit */ "1",
-	}
-	res, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	})
 	s.NoError(err)
-	s.NotContains(res.String(), "fail")
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("D. Check vpool after opening reverse position")
 	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_BTC_NUSD)
-	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.NoError(err)
+	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.NewDec(60_002_999_900), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("D. Check trader position")
 	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
-	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
+	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.Pair_BTC_NUSD, queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737846"), queryResp.Position.Size_)
@@ -316,23 +309,20 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatioMark)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
-	args = []string{
-		"--from",
-		user.String(),
+	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"sell",
 		common.Pair_BTC_NUSD.String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "4000000", // 4*10^6 uNUSD
 		/* baseAssetLimit */ "0",
-	}
-	res, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.OpenPositionCmd(), append(args, commonArgs...))
+	})
 	s.NoError(err)
-	s.NotContains(res.String(), "fail")
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("E. Check trader position")
 	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
-	s.T().Logf("query response: %+v", queryResp)
 	s.NoError(err)
+	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.Pair_BTC_NUSD, queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
@@ -344,19 +334,16 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.008)
 
 	s.T().Log("F. Close position")
-	args = []string{
-		"--from",
-		user.String(),
+	txResp, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
 		common.Pair_BTC_NUSD.String(),
-	}
-	_, err = sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.ClosePositionCmd(), append(args, commonArgs...))
+	})
 	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
-
-	s.T().Logf("query response: %+v", queryResp)
 	s.Error(err)
+	s.T().Logf("query response: %+v", queryResp)
 
 	status, ok := status.FromError(err)
 	s.True(ok)
@@ -576,7 +563,7 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 	resp := new(sdk.Coin)
 	s.Require().NoError(
 		testutilcli.ExecQuery(
-			s.network,
+			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
 			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"},
 			resp,
