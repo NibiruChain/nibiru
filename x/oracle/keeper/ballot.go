@@ -12,9 +12,11 @@ import (
 
 // mapBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
 //
-// NOTE: **Filter out inactive or jailed validators**
 // NOTE: **Make abstain votes to have zero vote power**
-func (k Keeper) mapBallotByPair(ctx sdk.Context, validatorsPerformance map[string]types.ValidatorPerformance) (ballots map[string]types.ExchangeRateBallot) {
+func (k Keeper) mapBallotByPair(
+	ctx sdk.Context,
+	validatorsPerformance map[string]types.ValidatorPerformance,
+) (ballots map[string]types.ExchangeRateBallot) {
 	ballots = map[string]types.ExchangeRateBallot{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {

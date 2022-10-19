@@ -12,13 +12,12 @@ import (
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
 
-	pairsMap := k.getPairsMap(ctx)
-	validatorPerformanceMap := k.buildEmptyValidatorPerformanceMap(ctx)
-
 	k.resetExchangeRates(ctx)
 
+	validatorPerformanceMap := k.buildEmptyValidatorPerformanceMap(ctx)
+
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-	pairBallotMap := k.getPairBallotMap(ctx, validatorPerformanceMap, pairsMap)
+	pairBallotMap, pairsMap := k.getPairBallotMapAndPairsMap(ctx, validatorPerformanceMap)
 	k.countVotesAndUpdateExchangeRates(ctx, pairBallotMap, validatorPerformanceMap)
 
 	//---------------------------
@@ -64,12 +63,17 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	}
 }
 
-// getPairBallotMap returns a map of pairs and ballots excluding invalid Ballots.
-func (k Keeper) getPairBallotMap(ctx sdk.Context, validatorPerformanceMap map[string]types.ValidatorPerformance, pairsMap map[string]struct{}) map[string]types.ExchangeRateBallot {
+// getPairBallotMapAndPairsMap returns a map of pairs and ballots excluding invalid Ballots and a map with all the pairs.
+func (k Keeper) getPairBallotMapAndPairsMap(
+	ctx sdk.Context,
+	validatorPerformanceMap map[string]types.ValidatorPerformance,
+) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
+	pairsMap := k.getPairsMap(ctx)
 	pairBallotMap := k.mapBallotByPair(ctx, validatorPerformanceMap)
+
 	k.RemoveInvalidBallots(ctx, pairsMap, pairBallotMap)
 
-	return pairBallotMap
+	return pairBallotMap, pairsMap
 }
 
 // getPairsMap returns a map containing all the pairs as the key.
@@ -113,7 +117,9 @@ func (k Keeper) buildEmptyValidatorPerformanceMap(ctx sdk.Context) map[string]ty
 		}
 
 		valAddr := validator.GetOperator()
-		validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(validator.GetConsensusPower(powerReduction), valAddr)
+		validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(
+			validator.GetConsensusPower(powerReduction), valAddr,
+		)
 		i++
 	}
 
