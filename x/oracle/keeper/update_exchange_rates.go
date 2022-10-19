@@ -11,13 +11,11 @@ import (
 // UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
-
 	k.resetExchangeRates(ctx)
 
 	validatorPerformanceMap := k.buildEmptyValidatorPerformanceMap(ctx)
-
-	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
 	pairBallotMap, pairsMap := k.getPairBallotMapAndPairsMap(ctx, validatorPerformanceMap)
+
 	k.countVotesAndUpdateExchangeRates(ctx, pairBallotMap, validatorPerformanceMap)
 
 	//---------------------------
@@ -68,10 +66,9 @@ func (k Keeper) getPairBallotMapAndPairsMap(
 	ctx sdk.Context,
 	validatorPerformanceMap map[string]types.ValidatorPerformance,
 ) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
-	pairsMap := k.getPairsMap(ctx)
 	pairBallotMap := k.mapBallotByPair(ctx, validatorPerformanceMap)
 
-	k.RemoveInvalidBallots(ctx, pairsMap, pairBallotMap)
+	pairsMap := k.RemoveInvalidBallots(ctx, pairBallotMap)
 
 	return pairBallotMap, pairsMap
 }

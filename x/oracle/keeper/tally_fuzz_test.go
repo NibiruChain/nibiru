@@ -151,10 +151,14 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
 
+	for k, _ := range voteTargets {
+		input.OracleKeeper.Pairs.Insert(input.Ctx, k)
+	}
+
 	voteMap := map[string]types.ExchangeRateBallot{}
 	f.Fuzz(&voteMap)
 
 	require.NotPanics(t, func() {
-		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteTargets, voteMap)
+		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteMap)
 	})
 }
