@@ -581,10 +581,9 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 		"100unusd",
 	}
 
-	// liquidate a position that does not exist
+	s.T().Logf("donate to ecosystem fund")
 	_, err := sdktestutilcli.ExecTestCLICmd(val.ClientCtx, cli.DonateToEcosystemFundCmd(), append(args, commonArgs...))
 	s.Require().NoError(err)
-
 	s.Require().NoError(s.network.WaitForNextBlock())
 
 	resp := new(sdk.Coin)
