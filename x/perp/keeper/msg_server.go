@@ -135,3 +135,16 @@ func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiqu
 
 	return &types.MsgMultiLiquidateResponse{LiquidationResponses: liqResp}, nil
 }
+
+func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDonateToEcosystemFund) (*types.MsgDonateToEcosystemFundResponse, error) {
+	if err := m.k.BankKeeper.SendCoinsFromAccountToModule(
+		sdk.UnwrapSDKContext(ctx),
+		sdk.MustAccAddressFromBech32(msg.Sender),
+		types.PerpEFModuleAccount,
+		sdk.NewCoins(msg.Donation),
+	); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgDonateToEcosystemFundResponse{}, nil
+}
