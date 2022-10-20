@@ -97,23 +97,23 @@ func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
 func (m MsgOpenPosition) Route() string { return RouterKey }
 func (m MsgOpenPosition) Type() string  { return "open_position_msg" }
 
-func (msg *MsgOpenPosition) ValidateBasic() error {
-	if msg.Side != Side_SELL && msg.Side != Side_BUY {
+func (m *MsgOpenPosition) ValidateBasic() error {
+	if m.Side != Side_SELL && m.Side != Side_BUY {
 		return fmt.Errorf("invalid side")
 	}
-	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(m.TokenPair); err != nil {
 		return err
 	}
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return err
 	}
-	if !msg.Leverage.IsPositive() {
+	if !m.Leverage.IsPositive() {
 		return fmt.Errorf("leverage must always be greater than zero")
 	}
-	if msg.BaseAssetAmountLimit.IsNegative() {
+	if m.BaseAssetAmountLimit.IsNegative() {
 		return fmt.Errorf("base asset amount limit must not be negative")
 	}
-	if !msg.QuoteAssetAmount.IsPositive() {
+	if !m.QuoteAssetAmount.IsPositive() {
 		return fmt.Errorf("quote asset amount must be always greater than zero")
 	}
 
@@ -137,14 +137,14 @@ func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
 func (m MsgLiquidate) Route() string { return RouterKey }
 func (m MsgLiquidate) Type() string  { return "liquidate_msg" }
 
-func (msg MsgLiquidate) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgLiquidate) ValidateBasic() (err error) {
+	if _, err = sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
-	if _, err = sdk.AccAddressFromBech32(msg.Trader); err != nil {
+	if _, err = sdk.AccAddressFromBech32(m.Trader); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid trader address (%s)", err)
 	}
-	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(m.TokenPair); err != nil {
 		return err
 	}
 	return nil
@@ -196,11 +196,11 @@ func (m *MsgMultiLiquidate) GetSigners() []sdk.AccAddress {
 func (m MsgClosePosition) Route() string { return RouterKey }
 func (m MsgClosePosition) Type() string  { return "close_position_msg" }
 
-func (msg MsgClosePosition) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgClosePosition) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
-	if _, err := common.NewAssetPair(msg.TokenPair); err != nil {
+	if _, err := common.NewAssetPair(m.TokenPair); err != nil {
 		return err
 	}
 	return nil
@@ -211,6 +211,33 @@ func (m MsgClosePosition) GetSignBytes() []byte {
 }
 
 func (m MsgClosePosition) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+// MsgDonateToEcosystemFund
+
+func (m MsgDonateToEcosystemFund) Route() string { return RouterKey }
+func (m MsgDonateToEcosystemFund) Type() string  { return "donate_to_ef_msg" }
+
+func (m MsgDonateToEcosystemFund) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if m.Donation.IsNil() || m.Donation.IsNegative() {
+		return fmt.Errorf("invalid donation amount: %s", m.Donation.String())
+	}
+	return nil
+}
+
+func (m MsgDonateToEcosystemFund) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgDonateToEcosystemFund) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)
