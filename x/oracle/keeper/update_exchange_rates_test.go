@@ -486,7 +486,6 @@ func TestVoteTargets(t *testing.T) {
 	params.Whitelist = types.PairList{{Name: common.Pair_NIBI_NUSD.String()}, {Name: common.Pair_BTC_NUSD.String()}}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
-	// clear tobin tax to reset vote targets
 	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
 		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
 	}

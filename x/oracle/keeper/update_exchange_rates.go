@@ -61,22 +61,20 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	}
 }
 
-// getPairBallotMapAndPairsMap returns a map of pairs and ballots excluding invalid Ballots and a map with all the pairs.
+// getPairBallotMapAndPairsMap returns a map of pairs and ballots excluding invalid Ballots and a map with all whitelisted pairs.
 func (k Keeper) getPairBallotMapAndPairsMap(
 	ctx sdk.Context,
 	validatorPerformanceMap map[string]types.ValidatorPerformance,
 ) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
 	pairBallotMap := k.mapBallotByPair(ctx, validatorPerformanceMap)
 
-	updatedPairBallotMap, pairsMap := k.RemoveInvalidBallots(ctx, pairBallotMap)
-
-	return updatedPairBallotMap, pairsMap
+	return k.RemoveInvalidBallots(ctx, pairBallotMap)
 }
 
 // getPairsMap returns a map containing all the pairs as the key.
 func (k Keeper) getPairsMap(ctx sdk.Context) map[string]struct{} {
 	pairsMap := make(map[string]struct{})
-	for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
+	for _, p := range k.GetVoteTargets(ctx) {
 		pairsMap[p] = struct{}{}
 	}
 
