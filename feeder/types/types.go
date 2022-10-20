@@ -10,8 +10,8 @@ import (
 
 // Params is the x/oracle specific subset of parameters required for price feeding.
 type Params struct {
-	// Symbols are the symbols we need to provide prices for.
-	Symbols []common.AssetPair
+	// Pairs are the symbols we need to provide prices for.
+	Pairs []common.AssetPair
 	// VotePeriodBlocks is how
 	VotePeriodBlocks uint64
 }
@@ -23,43 +23,11 @@ type VotingPeriod struct {
 	Height uint64
 }
 
-// ValidatorSet is a helper type containing the active validator set.
-type ValidatorSet map[string]struct{}
-
-func (v ValidatorSet) Has(val types.ValAddress) bool {
-	_, has := v[val.String()]
-	return has
-}
-
-func (v ValidatorSet) Remove(val types.ValAddress) {
-	s := val.String()
-	if _, exists := v[s]; !exists {
-		panic("trying to Remove validator which is not part of the current set: " + s)
-	}
-	delete(v, val.String())
-}
-
-func (v ValidatorSet) Insert(val types.ValAddress) {
-	s := val.String()
-	if _, exists := v[s]; exists {
-		panic("trying to Insert validator which is already part of the current set: " + s)
-	}
-	v[val.String()] = struct{}{}
-}
-
-// ValidatorSetChanges contains
-// the validator set updates.
-type ValidatorSetChanges struct {
-	// In contains validators which joined the active set.
-	In []types.ValAddress
-	// Out contains validators which exited the active set.
-	Out []types.ValAddress
-}
-
 // EventsStream defines the asynchronous stream
 // of events required by the feeder's Loop function.
+// EventsStream must handle failures by itself.
 //
-//go:generate mockgen --destination ./mocks/feeder/types/events_stream.go . EventsStream
+//go:generate mockgen --destination ../mocks/feeder/types/events_stream.go . EventsStream
 type EventsStream interface {
 	// ParamsUpdate signals a new Params update.
 	// EventsStream must provide, on startup, the
@@ -68,18 +36,14 @@ type EventsStream interface {
 	// VotingPeriodStarted signals a new x/oracle
 	// voting period has just started.
 	VotingPeriodStarted() <-chan VotingPeriod
-	// ValidatorSetChanged signals a change in the validator set.
-	// EventsStream must provide, on startup,
-	// the initial ValidatorSetChanges.
-	ValidatorSetChanged() <-chan ValidatorSetChanges
 	// Close shuts down the EventsStream.
 	Close()
 }
 
 // Price defines the price of a symbol.
 type Price struct {
-	// Symbol defines the symbol we're posting prices for.
-	Symbol common.AssetPair
+	// Pair defines the symbol we're posting prices for.
+	Pair common.AssetPair
 	// Price defines the symbol's price.
 	Price float64
 	// Source defines the source which is providing the prices.
@@ -91,11 +55,12 @@ type Price struct {
 
 // PriceProvider defines an exchange API
 // which provides prices for the given assets.
+// PriceProvider must handle failures by itself.
 //
-//go:generate mockgen --destination ./mocks/feeder/types/price_provider.go . PriceProvider
+//go:generate mockgen --destination ../mocks/feeder/types/price_provider.go . PriceProvider
 type PriceProvider interface {
 	// GetPrice returns the Price for the given symbol.
-	// Price.Symbol, Price.Source must always be non-empty.
+	// Price.Pair, Price.Source must always be non-empty.
 	// If there are errors whilst fetching prices, then
 	// Price.Valid must be set to false.
 	GetPrice(symbol common.AssetPair) Price
@@ -105,8 +70,9 @@ type PriceProvider interface {
 
 // PricePoster defines the validator oracle client,
 // which sends new prices.
+// PricePoster must handle failures by itself.
 //
-//go:generate mockgen --destination ./mocks/feeder/types/price_poster.go . PricePoster
+//go:generate mockgen --destination ../mocks/feeder/types/price_poster.go . PricePoster
 type PricePoster interface {
 	// Whoami returns the validator address the PricePoster
 	// is sending prices for.

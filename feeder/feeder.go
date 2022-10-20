@@ -30,8 +30,7 @@ type Feeder struct {
 	stop chan struct{}
 	done chan struct{}
 
-	validatorSet types.ValidatorSet
-	params       types.Params
+	params types.Params
 
 	votingPeriodContext *votingPeriodContext
 
@@ -46,23 +45,11 @@ func Run(stream types.EventsStream, poster types.PricePoster, provider types.Pri
 		log:                 log,
 		stop:                make(chan struct{}),
 		done:                make(chan struct{}),
-		validatorSet:        make(types.ValidatorSet),
 		params:              types.Params{},
 		votingPeriodContext: nil,
 		eventsStream:        stream,
 		pricePoster:         poster,
 		priceProvider:       provider,
-	}
-
-	// init val set
-	select {
-	case initValidators := <-stream.ValidatorSetChanged():
-		if len(initValidators.In) == 0 || len(initValidators.Out) != 0 {
-			panic("initial validator set change must contain only the current active validators")
-		}
-		f.handleValidatorSetChanges(initValidators)
-	case <-time.After(InitTimeout):
-		panic("init timeout deadline exceeded")
 	}
 
 	// init params
@@ -88,9 +75,6 @@ func (f *Feeder) loop() {
 		select {
 		case <-f.stop:
 			return
-		case vs := <-f.eventsStream.ValidatorSetChanged():
-			f.log.Info().Interface("changes", vs).Msg("validator set changed")
-			f.handleValidatorSetChanges(vs)
 		case params := <-f.eventsStream.ParamsUpdate():
 			f.log.Info().Interface("changes", params).Msg("params changed")
 			f.handleParamsUpdate(params)
@@ -98,15 +82,6 @@ func (f *Feeder) loop() {
 			f.log.Info().Interface("voting-period", vp).Msg("new voting period")
 			f.handleVotingPeriod(vp)
 		}
-	}
-}
-
-func (f *Feeder) handleValidatorSetChanges(vs types.ValidatorSetChanges) {
-	for _, in := range vs.In {
-		f.validatorSet.Insert(in)
-	}
-	for _, out := range vs.Out {
-		f.validatorSet.Remove(out)
 	}
 }
 
@@ -141,18 +116,9 @@ func (f *Feeder) endLastVotingPeriod() {
 }
 
 func (f *Feeder) startNewVotingPeriod(vp types.VotingPeriod) {
-	/*
-		TODO(testinginprod): we need to refine this logic, other implementers did not handle this case as far as i can see.
-		if !f.validatorSet.Has(f.pricePoster.Whoami()) {
-			f.log.Info().
-				Uint64("voting-period-start-height", vp.Height).
-				Uint64("voting-period-block-duration", f.params.VotePeriodBlocks).
-				Msg("skipping vote period, not part of the current validator set")
-		}
-	*/
 	// gather prices
-	prices := make([]types.Price, len(f.params.Symbols))
-	for i, p := range f.params.Symbols {
+	prices := make([]types.Price, len(f.params.Pairs))
+	for i, p := range f.params.Pairs {
 		price := f.priceProvider.GetPrice(p)
 		if !price.Valid {
 			f.log.Err(fmt.Errorf("no valid price")).Str("asset", p.String()).Str("source", price.Source)
