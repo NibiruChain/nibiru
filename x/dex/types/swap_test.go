@@ -14,6 +14,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 		tokenIn          sdk.Coin
 		tokenOutDenom    string
 		expectedTokenOut sdk.Coin
+		shouldError      bool
 	}{
 		{
 			name: "simple swap",
@@ -104,12 +105,38 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			// solved with wolfram alpha (https://www.wolframalpha.com/input?i=23318504+-+%283498723457*23318504%29%2F+%283498723457%2B5844683*%281-0.0003%29%29)
 			expectedTokenOut: sdk.NewInt64Coin("bbb", 38877),
 		},
+		{
+			name: "swap with very low output token amount",
+			pool: Pool{
+				PoolParams: PoolParams{
+					SwapFee: sdk.MustNewDecFromStr("0.0003"),
+				},
+				PoolAssets: []PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("aaa", 100),
+						Weight: sdk.OneInt(),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bbb", 100),
+						Weight: sdk.OneInt(),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+			},
+			tokenIn:       sdk.NewInt64Coin("aaa", 1),
+			tokenOutDenom: "bbb",
+			shouldError:   true,
+		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			tokenOut, err := tc.pool.CalcOutAmtGivenIn(tc.tokenIn, tc.tokenOutDenom)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedTokenOut, tokenOut)
+			if tc.shouldError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedTokenOut, tokenOut)
+			}
 		})
 	}
 }
