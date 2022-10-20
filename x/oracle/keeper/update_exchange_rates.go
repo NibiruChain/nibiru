@@ -14,14 +14,14 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.resetExchangeRates(ctx)
 
 	validatorPerformanceMap := k.buildEmptyValidatorPerformanceMap(ctx)
-	pairBallotMap, pairsMap := k.getPairBallotMapAndPairsMap(ctx, validatorPerformanceMap)
+	pairBallotMap, whitelistedPairsMap := k.getPairBallotMapAndWhitelistedPairsMap(ctx, validatorPerformanceMap)
 
 	k.countVotesAndUpdateExchangeRates(ctx, pairBallotMap, validatorPerformanceMap)
 
 	//---------------------------
 	// Do miss counting & slashing
 	params := k.GetParams(ctx)
-	voteTargetsLen := len(pairsMap)
+	voteTargetsLen := len(whitelistedPairsMap)
 	for _, claim := range validatorPerformanceMap {
 		// Skip abstain & valid voters
 		if int(claim.WinCount) == voteTargetsLen {
@@ -33,9 +33,9 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
 	}
 
-	k.rewardBallotWinners(ctx, pairsMap, validatorPerformanceMap)
+	k.rewardBallotWinners(ctx, whitelistedPairsMap, validatorPerformanceMap)
 	k.clearBallots(ctx, params.VotePeriod)
-	k.applyWhitelist(ctx, params.Whitelist, pairsMap)
+	k.applyWhitelist(ctx, params.Whitelist, whitelistedPairsMap)
 }
 
 // countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
@@ -61,8 +61,9 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	}
 }
 
-// getPairBallotMapAndPairsMap returns a map of pairs and ballots excluding invalid Ballots and a map with all whitelisted pairs.
-func (k Keeper) getPairBallotMapAndPairsMap(
+// getPairBallotMapAndWhitelistedPairsMap returns a map of pairs and ballots excluding invalid Ballots
+// and a map with all whitelisted pairs.
+func (k Keeper) getPairBallotMapAndWhitelistedPairsMap(
 	ctx sdk.Context,
 	validatorPerformanceMap map[string]types.ValidatorPerformance,
 ) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
@@ -71,10 +72,10 @@ func (k Keeper) getPairBallotMapAndPairsMap(
 	return k.RemoveInvalidBallots(ctx, pairBallotMap)
 }
 
-// getPairsMap returns a map containing all the pairs as the key.
-func (k Keeper) getPairsMap(ctx sdk.Context) map[string]struct{} {
+// getWhitelistedPairsMap returns a map containing all the pairs as the key.
+func (k Keeper) getWhitelistedPairsMap(ctx sdk.Context) map[string]struct{} {
 	pairsMap := make(map[string]struct{})
-	for _, p := range k.GetVoteTargets(ctx) {
+	for _, p := range k.GetWhitelistedPairs(ctx) {
 		pairsMap[p] = struct{}{}
 	}
 

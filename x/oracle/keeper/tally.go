@@ -9,11 +9,7 @@ import (
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
-func Tally(
-	ballot types.ExchangeRateBallot,
-	rewardBand sdk.Dec,
-	validatorPerformanceMap map[string]types.ValidatorPerformance,
-) sdk.Dec {
+func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) sdk.Dec {
 	sort.Sort(ballot)
 
 	weightedMedian := ballot.WeightedMedianWithAssertion()
@@ -42,8 +38,8 @@ func Tally(
 	return weightedMedian
 }
 
-// ballot for the asset is passing the threshold amount of voting power
-func ballotIsPassing(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) bool {
+// ballotIsPassingThreshold ballot for the asset is passing the threshold amount of voting power
+func ballotIsPassingThreshold(ballot types.ExchangeRateBallot, thresholdVotes sdk.Int) bool {
 	ballotPower := sdk.NewInt(ballot.Power())
 	return !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
 }
@@ -55,28 +51,28 @@ func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
 	voteMap map[string]types.ExchangeRateBallot,
 ) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
-	voteTargets := k.getPairsMap(ctx)
+	whitelistedPairsMap := k.getWhitelistedPairsMap(ctx)
 
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
 	voteThreshold := k.VoteThreshold(ctx)
 	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
 
 	for pair, ballot := range voteMap {
-		// If pair is not in the voteTargets, or the ballot for it has failed, then skip
+		// If pair is not whitelisted, or the ballot for it has failed, then skip
 		// and remove it from voteMap for iteration efficiency
-		if _, exists := voteTargets[pair]; !exists {
+		if _, exists := whitelistedPairsMap[pair]; !exists {
 			delete(voteMap, pair)
 			continue
 		}
 
 		// If the ballot is not passed, remove it from the voteTargets array
 		// to prevent slashing validators who did valid vote.
-		if !ballotIsPassing(ballot, thresholdVotes) {
-			delete(voteTargets, pair)
+		if !ballotIsPassingThreshold(ballot, thresholdVotes) {
+			delete(whitelistedPairsMap, pair)
 			delete(voteMap, pair)
 			continue
 		}
 	}
 
-	return voteMap, voteTargets
+	return voteMap, whitelistedPairsMap
 }

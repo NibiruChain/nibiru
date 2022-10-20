@@ -504,7 +504,7 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// vote targets are {govstable, btcstable}
-	require.Equal(t, []string{common.Pair_BTC_NUSD.String(), common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
+	require.Equal(t, []string{common.Pair_BTC_NUSD.String(), common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 
 	// delete btcstable
 	params.Whitelist = types.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
@@ -522,7 +522,7 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// btcstable must be deleted
-	require.Equal(t, []string{common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
+	require.Equal(t, []string{common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 
 	exists := input.OracleKeeper.Pairs.Has(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.False(t, exists)

@@ -11,6 +11,7 @@ import (
 )
 
 // mapBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
+// and removes any votes that are not part of the validator performance map.
 //
 // NOTE: **Make abstain votes to have zero vote power**
 func (k Keeper) mapBallotByPair(
