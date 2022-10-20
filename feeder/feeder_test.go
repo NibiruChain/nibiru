@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -13,12 +12,7 @@ import (
 	mock_feeder "github.com/NibiruChain/nibiru/feeder/mocks/feeder/types"
 	"github.com/NibiruChain/nibiru/feeder/types"
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil"
 )
-
-func valAddr() sdk.ValAddress {
-	return sdk.ValAddress(testutil.AccAddress())
-}
 
 func TestRun(t *testing.T) {
 	ctrl := gomock.NewController(t)
