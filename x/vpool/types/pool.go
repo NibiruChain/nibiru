@@ -95,9 +95,9 @@ func (p *VPool) GetQuoteAmountByBaseAmount(
 	}
 
 	quoteAssetsAfter := invariant.Quo(baseAssetsAfter)
-	quoteAssetsTransferred := quoteAssetsAfter.Sub(p.QuoteAssetReserve).Abs()
+	quoteAmount = quoteAssetsAfter.Sub(p.QuoteAssetReserve).Abs()
 
-	return quoteAssetsTransferred, nil
+	return quoteAmount, nil
 }
 
 // IncreaseBaseAssetReserve increases the quote reserve by amount
