@@ -18,9 +18,9 @@ var (
 type votingPeriodContext struct {
 	height                     uint64
 	votingPeriodDurationBlocks uint64
-	cancelSendPrices           func()
+	cancelSendPrices           func() // signals cancel send prices for types.PricePoster
 	pricePosterCtx             context.Context
-	sendPricesDone             chan struct{}
+	sendPricesDone             chan struct{} // response given by types.PricePoster to signal if prices were sent correctly.
 }
 
 // Feeder is the price feeder.
@@ -129,14 +129,14 @@ func (f *Feeder) startNewVotingPeriod(vp types.VotingPeriod) {
 
 	// send prices asynchronously and non-blocking
 	ctx, cancel := context.WithCancel(context.Background())
-	done := f.pricePoster.SendPrices(ctx, prices)
+	asyncSendPriceResponse := f.pricePoster.SendPrices(ctx, prices)
 
 	f.votingPeriodContext = &votingPeriodContext{
 		height:                     vp.Height,
 		votingPeriodDurationBlocks: f.params.VotePeriodBlocks,
 		cancelSendPrices:           cancel,
 		pricePosterCtx:             ctx,
-		sendPricesDone:             done,
+		sendPricesDone:             asyncSendPriceResponse,
 	}
 }
 
