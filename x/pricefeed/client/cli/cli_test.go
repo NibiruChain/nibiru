@@ -127,8 +127,8 @@ func (s IntegrationTestSuite) TestGetPriceCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err)
-				s.Assert().EqualValues(tc.expectedPrice, queryResp.Price.Price)
-				s.Assert().EqualValues(tc.args[0], queryResp.Price.PairID)
+				s.EqualValues(tc.expectedPrice, queryResp.Price.Price)
+				s.EqualValues(tc.args[0], queryResp.Price.PairID)
 			}
 		})
 	}
@@ -183,10 +183,10 @@ func (s IntegrationTestSuite) TestGetRawPricesCmd() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(len(queryResp.RawPrices), 1)
-				s.Assert().Equal(tc.expectedPrice, queryResp.RawPrices[0].Price)
-				s.Assert().Equal(genOracleAddress, queryResp.RawPrices[0].OracleAddress)
+				s.Equal(tc.expectedPrice, queryResp.RawPrices[0].Price)
+				s.Equal(genOracleAddress, queryResp.RawPrices[0].OracleAddress)
 				// The initial prices are valid for one hour
-				s.Assert().True(expireWithinHours(queryResp.RawPrices[0].GetExpiry(), 1))
+				s.True(expireWithinHours(queryResp.RawPrices[0].GetExpiry(), 1))
 			}
 		})
 	}
@@ -224,9 +224,9 @@ func (s IntegrationTestSuite) TestPairsCmd() {
 			var queryResp pricefeedtypes.QueryMarketsResponse
 			s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdQueryMarkets(), nil, &queryResp))
 
-			s.Assert().Equal(len(tc.expectedMarkets), len(queryResp.Markets))
+			s.Equal(len(tc.expectedMarkets), len(queryResp.Markets))
 			for _, market := range queryResp.Markets {
-				s.Assert().Contains(tc.expectedMarkets, market)
+				s.Contains(tc.expectedMarkets, market)
 			}
 		})
 	}
@@ -264,9 +264,9 @@ func (s IntegrationTestSuite) TestCurrentPricesCmd() {
 			var queryResp pricefeedtypes.QueryPricesResponse
 			s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdQueryPrices(), nil, &queryResp))
 
-			s.Assert().Equal(len(tc.expectedPrices), len(queryResp.Prices))
+			s.Equal(len(tc.expectedPrices), len(queryResp.Prices))
 			for _, price := range queryResp.Prices {
-				s.Assert().Contains(tc.expectedPrices, price)
+				s.Contains(tc.expectedPrices, price)
 			}
 		})
 	}
@@ -274,11 +274,9 @@ func (s IntegrationTestSuite) TestCurrentPricesCmd() {
 
 func (s IntegrationTestSuite) TestGetOraclesCmd() {
 	testCases := []struct {
-		name string
-		args []string
-
+		name            string
+		args            []string
 		expectedOracles []string
-		expectErr       bool
 	}{
 		{
 			name: "Get the USDC oracles",
@@ -299,7 +297,6 @@ func (s IntegrationTestSuite) TestGetOraclesCmd() {
 			args: []string{
 				"invalid:pair",
 			},
-			expectErr:       true,
 			expectedOracles: []string{},
 		},
 	}
@@ -309,14 +306,8 @@ func (s IntegrationTestSuite) TestGetOraclesCmd() {
 
 		s.Run(tc.name, func() {
 			var queryResp pricefeedtypes.QueryOraclesResponse
-			err := testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdQueryOracles(), tc.args, &queryResp)
-
-			if tc.expectErr {
-				s.Require().Error(err)
-			} else {
-				s.Require().NoError(err)
-				s.Assert().Equal(tc.expectedOracles, queryResp.Oracles)
-			}
+			s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdQueryOracles(), tc.args, &queryResp))
+			s.Equal(tc.expectedOracles, queryResp.Oracles)
 		})
 	}
 }
@@ -420,15 +411,16 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 
 			bankBalanceStart := queryBankBalance(clientCtx, s, s.oracleMap[tc.from])
 
-			txResp, err := testutilcli.ExecTx(s.network, cli.CmdPostPrice(), s.oracleMap[tc.from], tc.args)
+			txResp, err := testutilcli.ExecTx(s.network, cli.CmdPostPrice(), s.oracleMap[tc.from], tc.args, testutilcli.WithTxCanFail(true))
 			s.Require().NoError(err)
-			s.Assert().Equal(tc.expectedCode, txResp.Code)
+			s.Equal(tc.expectedCode, txResp.Code)
 
 			bankBalanceEnd := queryBankBalance(clientCtx, s, s.oracleMap[tc.from])
 			s.Require().EqualValues(
-				tc.expectedFeePaid,
+				tc.expectedFeePaid.Int64(),
 				bankBalanceStart.Balances.AmountOf(common.DenomNIBI).
-					Sub(bankBalanceEnd.Balances.AmountOf(common.DenomNIBI)),
+					Sub(bankBalanceEnd.Balances.AmountOf(common.DenomNIBI)).
+					Int64(),
 			)
 
 			for pairID, price := range tc.expectedPriceForPair {
@@ -437,12 +429,12 @@ func (s IntegrationTestSuite) TestSetPriceCmd() {
 				found := false
 				for _, rawPrice := range currentPrice.RawPrices {
 					if rawPrice.OracleAddress == s.oracleMap[tc.from].String() {
-						s.Assert().Equal(price, rawPrice.Price)
+						s.Equal(price, rawPrice.Price)
 						found = true
 						break
 					}
 				}
-				s.Assert().True(found)
+				s.True(found)
 			}
 		})
 	}
@@ -474,12 +466,12 @@ func (s IntegrationTestSuite) TestGetParamsCmd() {
 		s.Run(tc.name, func() {
 			var queryResp pricefeedtypes.QueryParamsResponse
 			s.Require().NoError(testutilcli.ExecQuery(val.ClientCtx, cli.CmdQueryParams(), nil, &queryResp))
-			s.Assert().Equal(tc.expectedParams, queryResp.Params)
+			s.Equal(tc.expectedParams, queryResp.Params)
 		})
 	}
 }
 
-func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
+func (s IntegrationTestSuite) TestX_AddOracleProposalAndVote() {
 	s.T().Log("Create oracle account")
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
@@ -522,14 +514,14 @@ func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
 	flags.AddTxFlagsToCmd(cmd)
 	txResp, err := testutilcli.ExecTx(s.network, cmd, val.Address, args)
 	s.Require().NoError(err)
-	s.Assert().EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	// ----------------------------------------------------------------------
 	s.T().Log(`Check that proposal was correctly submitted with gov client
 	$ nibid query gov proposal 1`)
 	// ----------------------------------------------------------------------
 	// the proposal tx won't be included until next block
-	s.Assert().NoError(s.network.WaitForNextBlock())
+	s.NoError(s.network.WaitForNextBlock())
 
 	govQueryClient := govtypes.NewQueryClient(clientCtx)
 	proposalsQueryResponse, err := govQueryClient.Proposals(
@@ -538,12 +530,12 @@ func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
 		},
 	)
 	s.Require().NoError(err)
-	s.Assert().NotEmpty(proposalsQueryResponse.Proposals)
-	s.Assert().Equalf(
+	s.NotEmpty(proposalsQueryResponse.Proposals)
+	s.Equalf(
 		govtypes.StatusDepositPeriod,
 		proposalsQueryResponse.Proposals[0].Status,
 		"proposal should be in deposit period as it hasn't passed min deposit")
-	s.Assert().EqualValues(
+	s.EqualValues(
 		sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)),
 		proposalsQueryResponse.Proposals[0].TotalDeposit,
 	)
@@ -569,7 +561,7 @@ func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
 	s.Require().NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-	s.Assert().NoError(s.network.WaitForNextBlock())
+	s.NoError(s.network.WaitForNextBlock())
 
 	proposalsQueryResponse, err = govQueryClient.Proposals(
 		context.Background(), &govtypes.QueryProposalsRequest{
@@ -577,7 +569,7 @@ func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
 		},
 	)
 	s.Require().NoError(err)
-	s.Assert().Equalf(
+	s.Equalf(
 		govtypes.StatusVotingPeriod,
 		proposalsQueryResponse.Proposals[0].Status,
 		"proposal should be in voting period since min deposit has been met",
@@ -596,7 +588,7 @@ func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
 
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdVote(), val.Address, args)
 	s.Require().NoError(err)
-	s.Assert().EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.Require().Eventuallyf(func() bool {
 		proposalsQueryResponse, err = govQueryClient.Proposals(
@@ -612,7 +604,7 @@ func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
 	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdQueryParams(), nil, &queryResp))
 	proposalPairs := common.NewAssetPairs(proposal.Pairs...)
 	expectedPairs := append(pricefeedtypes.DefaultPairs, proposalPairs...)
-	s.Assert().EqualValues(expectedPairs, queryResp.Params.Pairs)
+	s.EqualValues(expectedPairs, queryResp.Params.Pairs)
 
 	// ----------------------------------------------------------------------
 	s.T().Log("verify that the oracle was whitelisted")
@@ -620,9 +612,9 @@ func (s IntegrationTestSuite) TestAddOracleProposalAndVote() {
 	for _, pair := range proposalPairs {
 		args = []string{pair.String()}
 		var queryResp pricefeedtypes.QueryOraclesResponse
-		s.Assert().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdQueryOracles(), args, &queryResp))
+		s.NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdQueryOracles(), args, &queryResp))
 		for _, proposedOracle := range proposal.Oracles {
-			s.Assert().Contains(queryResp.Oracles, proposedOracle)
+			s.Contains(queryResp.Oracles, proposedOracle)
 		}
 	}
 }
