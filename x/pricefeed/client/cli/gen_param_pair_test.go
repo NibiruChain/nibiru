@@ -2,11 +2,9 @@ package cli_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -66,17 +64,14 @@ func TestAddPriceFeedParamPair(t *testing.T) {
 
 			serverCtx := server.NewContext(viper.New(), cfg, logger)
 
-			cmd := cli.AddPriceFeedParamPairs("home")
+			cmd := cli.AddPriceFeedParamPairs(home)
+			cmd.SetArgs([]string{tc.pairName})
 			_, out := testutil.ApplyMockIO(cmd)
 			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home).WithOutput(out)
 
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
-
-			cmd.SetArgs([]string{
-				tc.pairName,
-				fmt.Sprintf("--%s=home", flags.FlagHome)})
 
 			if tc.expectError {
 				require.Error(t, cmd.ExecuteContext(ctx))
