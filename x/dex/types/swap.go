@@ -47,6 +47,11 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string) (
 		/*yPrior=*/ poolAssetOut.Token.Amount.ToDec(),
 		/*yWeight=*/ poolAssetOut.Weight.ToDec(),
 	).TruncateInt()
+
+	if tokenAmountOut.IsZero() {
+		return tokenOut, fmt.Errorf("tokenIn (%s) must be higher to perform a swap", tokenIn.Denom)
+	}
+
 	return sdk.NewCoin(tokenOutDenom, tokenAmountOut), nil
 }
 
