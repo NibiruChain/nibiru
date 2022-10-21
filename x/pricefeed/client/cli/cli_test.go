@@ -508,7 +508,6 @@ func (s IntegrationTestSuite) TestX_AddOracleProposalAndVote() {
 	args := []string{
 		proposalFile.Name(),
 		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 	cmd := cli.CmdAddOracleProposal()
 	flags.AddTxFlagsToCmd(cmd)
@@ -555,7 +554,6 @@ func (s IntegrationTestSuite) TestX_AddOracleProposalAndVote() {
 	args = []string{
 		/*proposal-id=*/ strconv.Itoa(int(proposalsQueryResponse.Proposals[0].ProposalId)),
 		/*deposit=*/ govDepositParams.DepositParams.MinDeposit.String(),
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdDeposit(), val.Address, args)
 	s.Require().NoError(err)
@@ -583,7 +581,6 @@ func (s IntegrationTestSuite) TestX_AddOracleProposalAndVote() {
 	args = []string{
 		/*proposal-id=*/ strconv.Itoa(int(proposalsQueryResponse.Proposals[0].ProposalId)),
 		/*option=*/ "yes",
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdVote(), val.Address, args)

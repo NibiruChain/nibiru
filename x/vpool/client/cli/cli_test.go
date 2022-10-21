@@ -102,7 +102,6 @@ func (s *IntegrationTestSuite) TestGovAddVpool() {
 	args := []string{
 		proposalFile.Name(),
 		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 	cmd := cli.CmdCreatePoolProposal()
 	flags.AddTxFlagsToCmd(cmd)
@@ -147,7 +146,6 @@ $ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
 	args = []string{
 		/*proposal-id=*/ strconv.Itoa(int(proposalId)),
 		/*deposit=*/ govDepositParams.DepositParams.MinDeposit.String(),
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdDeposit(), val.Address, args)
 	s.Require().NoError(err)
@@ -174,7 +172,6 @@ e.g. $ nibid tx gov vote 1 yes`)
 	args = []string{
 		/*proposal-id=*/ strconv.Itoa(int(proposalId)),
 		/*option=*/ "yes",
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdVote(), val.Address, args)
