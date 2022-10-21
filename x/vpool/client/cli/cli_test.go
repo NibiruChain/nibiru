@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"testing"
 	"time"
-
-	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
@@ -15,22 +14,24 @@ import (
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/suite"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-type VpoolCLISuite struct {
+type IntegrationTestSuite struct {
 	suite.Suite
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 }
 
-func (s *VpoolCLISuite) SetupSuite() {
+func (s *IntegrationTestSuite) SetupSuite() {
 	if testing.Short() {
 		s.T().Skip("skipping integration test suite")
 	}
@@ -57,19 +58,16 @@ func (s *VpoolCLISuite) SetupSuite() {
 	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
-
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-	_, err := s.network.WaitForHeight(1)
-	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 }
 
-func (s *VpoolCLISuite) TearDownSuite() {
+func (s *IntegrationTestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
 
-func (s *VpoolCLISuite) TestGovAddVpool() {
-	s.Require().Len(s.network.Validators, 1)
+func (s *IntegrationTestSuite) TestGovAddVpool() {
 	val := s.network.Validators[0]
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
 	govQueryClient := govtypes.NewQueryClient(clientCtx)
@@ -89,12 +87,9 @@ func (s *VpoolCLISuite) TestGovAddVpool() {
 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
 	}
-	proposalJSONString := val.ClientCtx.Codec.MustMarshalJSON(proposal)
-	proposalJSON := sdktestutil.WriteToNewTempFile(
-		s.T(), string(proposalJSONString),
-	)
-	contents, err := ioutil.ReadFile(proposalJSON.Name())
-	s.Assert().NoError(err)
+	proposalFile := sdktestutil.WriteToNewTempFile(s.T(), string(val.ClientCtx.Codec.MustMarshalJSON(proposal)))
+	contents, err := ioutil.ReadFile(proposalFile.Name())
+	s.Require().NoError(err)
 
 	s.T().Log("Unmarshal json bytes into proposal object; check validity")
 	proposal = &vpooltypes.CreatePoolProposal{}
@@ -105,59 +100,69 @@ func (s *VpoolCLISuite) TestGovAddVpool() {
 	s.T().Log("Submit proposal and unmarshal tx response")
 	// ----------------------------------------------------------------------
 	args := []string{
-		proposalJSON.Name(),
+		proposalFile.Name(),
 		fmt.Sprintf("--%s=1000unibi", govcli.FlagDeposit),
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 	cmd := cli.CmdCreatePoolProposal()
 	flags.AddTxFlagsToCmd(cmd)
 	txResp, err := testutilcli.ExecTx(s.network, cmd, val.Address, args)
 	s.Require().NoError(err)
-	s.Assert().EqualValues(0, txResp.Code)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	// ----------------------------------------------------------------------
 	s.T().Log(`Check that proposal was correctly submitted with gov client
 $ nibid query gov proposal 1`)
 	// ----------------------------------------------------------------------
 	proposalsQueryResp, err := govQueryClient.Proposals(
-		context.Background(), &govtypes.QueryProposalsRequest{},
+		context.Background(), &govtypes.QueryProposalsRequest{
+			Depositor: val.Address.String(),
+		},
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(proposalsQueryResp.Proposals)
 
-	proposalId := proposalsQueryResp.Proposals[0].ProposalId
-	s.Require().GreaterOrEqual(proposalId, uint64(1), "first proposal should have proposal ID of at least 1")
-	s.Assert().Equalf(
+	s.Equalf(
 		govtypes.StatusDepositPeriod,
 		proposalsQueryResp.Proposals[0].Status,
 		"proposal should be in deposit period as it hasn't passed min deposit")
-	s.Assert().EqualValues(
+	s.EqualValues(
 		sdk.NewCoins(sdk.NewInt64Coin("unibi", 1000)),
-		proposalsQueryResp.Proposals[0].TotalDeposit)
+		proposalsQueryResp.Proposals[0].TotalDeposit,
+	)
 
 	// ----------------------------------------------------------------------
 	s.T().Log(`Move proposal to vote status by meeting min deposit
 $ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
 	// ----------------------------------------------------------------------
 	govDepositParams, err := govQueryClient.Params(
-		context.Background(), &govtypes.QueryParamsRequest{ParamsType: govtypes.ParamDeposit})
-	s.Assert().NoError(err)
+		context.Background(),
+		&govtypes.QueryParamsRequest{
+			ParamsType: govtypes.ParamDeposit,
+		},
+	)
+	s.NoError(err)
+
+	proposalId := proposalsQueryResp.Proposals[0].ProposalId
 	args = []string{
-		/*proposal-id=*/ fmt.Sprint(proposalId),
+		/*proposal-id=*/ strconv.Itoa(int(proposalId)),
 		/*deposit=*/ govDepositParams.DepositParams.MinDeposit.String(),
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdDeposit(), val.Address, args)
 	s.Require().NoError(err)
-	s.Assert().EqualValues(0, txResp.Code)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	proposalQueryResponse, err := govQueryClient.Proposal(
-		context.Background(), &govtypes.QueryProposalRequest{ProposalId: proposalId})
+		context.Background(),
+		&govtypes.QueryProposalRequest{
+			ProposalId: proposalId,
+		},
+	)
 	s.Require().NoError(err)
-	s.Assert().Equalf(
+	s.Equalf(
 		govtypes.StatusVotingPeriod,
 		proposalQueryResponse.Proposal.Status,
-		"proposal should be in voting period since min deposit has been met")
+		"proposal should be in voting period since min deposit has been met",
+	)
 
 	// ----------------------------------------------------------------------
 	s.T().Log(`Vote on the proposal.
@@ -165,14 +170,13 @@ $ nibid tx gov vote [proposal-id] [option] [flags]
 e.g. $ nibid tx gov vote 1 yes`)
 	// ----------------------------------------------------------------------
 	args = []string{
-		/*proposal-id=*/ fmt.Sprint(proposalId),
+		/*proposal-id=*/ strconv.Itoa(int(proposalId)),
 		/*option=*/ "yes",
-		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 	}
 
 	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdVote(), val.Address, args)
-	s.Assert().NoError(err)
-	s.Assert().EqualValues(0, txResp.Code)
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.Require().Eventuallyf(
 		func() bool {
@@ -189,13 +193,14 @@ e.g. $ nibid tx gov vote 1 yes`)
 	s.T().Log("verify that the new proposed pool exists")
 	// ----------------------------------------------------------------------
 	s.Require().NoError(s.network.WaitForNextBlock())
+
 	vpoolsQueryResp := &vpooltypes.QueryAllPoolsResponse{}
-	s.Require().NoError(testutilcli.ExecQuery(s.network, cli.CmdGetVpools(), []string{}, vpoolsQueryResp))
+	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetVpools(), nil, vpoolsQueryResp))
 
 	found := false
 	for _, pool := range vpoolsQueryResp.Pools {
 		if pool.Pair.String() == proposal.Pair {
-			s.Assert().EqualValues(vpooltypes.VPool{
+			s.EqualValues(vpooltypes.VPool{
 				Pair:                   common.MustNewAssetPair(proposal.Pair),
 				BaseAssetReserve:       proposal.BaseAssetReserve,
 				QuoteAssetReserve:      proposal.QuoteAssetReserve,
@@ -208,10 +213,10 @@ e.g. $ nibid tx gov vote 1 yes`)
 			found = true
 		}
 	}
-	s.Require().True(found, "pool does not exist")
+	s.True(found, "pool does not exist")
 }
 
-func (s *VpoolCLISuite) TestGetPrices() {
+func (s *IntegrationTestSuite) TestGetPrices() {
 	val := s.network.Validators[0]
 
 	s.T().Log("check vpool balances")
@@ -227,6 +232,6 @@ func (s *VpoolCLISuite) TestGetPrices() {
 	s.NoError(err)
 }
 
-func TestVpoolCLISuite(t *testing.T) {
-	suite.Run(t, new(VpoolCLISuite))
+func TestIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
 }

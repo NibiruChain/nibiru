@@ -54,10 +54,18 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.userWithLock = info.GetAddress()
 
 	// fill wallet
-	_, err = testutilcli.FillWalletFromValidator(s.userWithLock,
-		sdk.NewCoins(sdk.NewInt64Coin("ATOM", 20000), sdk.NewInt64Coin("OSMO", 20000), sdk.NewInt64Coin("unibi", 1_000_000)),
-		val, s.cfg.BondDenom)
-	require.NoError(s.T(), err)
+	s.NoError(
+		testutilcli.FillWalletFromValidator(
+			s.userWithLock,
+			sdk.NewCoins(
+				sdk.NewInt64Coin("ATOM", 20000),
+				sdk.NewInt64Coin("OSMO", 20000),
+				sdk.NewInt64Coin("unibi", 1_000_000),
+			),
+			val,
+			s.cfg.BondDenom,
+		),
+	)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -79,7 +87,7 @@ func (s *IntegrationTestSuite) TestLockupCLI() {
 	s.T().Log("testing query lock")
 	queryLockArgs := []string{"0"}
 	queryLockResponse := new(types.QueryLockResponse)
-	require.NoError(s.T(), testutilcli.ExecQuery(s.network, cli.GetQueryLockCmd(), queryLockArgs, queryLockResponse))
+	require.NoError(s.T(), testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.GetQueryLockCmd(), queryLockArgs, queryLockResponse))
 	require.Equal(s.T(), 10*time.Second, queryLockResponse.Lock.Duration)
 	require.Equal(s.T(), s.userWithLock.String(), queryLockResponse.Lock.Owner)
 	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("ATOM", 1000)), queryLockResponse.Lock.Coins)
@@ -97,7 +105,7 @@ func (s *IntegrationTestSuite) TestLockupCLI() {
 	s.T().Log("testing query locks by address")
 	queryLocksByAddressArgs := []string{s.userWithLock.String()}
 	queryLocksByAddressResp := new(types.QueryLocksByAddressResponse)
-	require.NoError(s.T(), testutilcli.ExecQuery(s.network, cli.GetQueryLocksByAddressCmd(), queryLocksByAddressArgs, queryLocksByAddressResp))
+	require.NoError(s.T(), testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.GetQueryLocksByAddressCmd(), queryLocksByAddressArgs, queryLocksByAddressResp))
 	require.Len(s.T(), queryLocksByAddressResp.Locks, 2)
 	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("ATOM", 1000)), queryLocksByAddressResp.Locks[0].Coins)
 	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("OSMO", 1000)), queryLocksByAddressResp.Locks[1].Coins)
@@ -106,7 +114,7 @@ func (s *IntegrationTestSuite) TestLockupCLI() {
 	s.T().Log("testing query locked coins")
 	queryLockedCoinsArgs := []string{s.userWithLock.String()}
 	queryLockedCoinsResp := new(types.QueryLockedCoinsResponse)
-	require.NoError(s.T(), testutilcli.ExecQuery(s.network, cli.GetQueryLockedCoinsCmd(), queryLockedCoinsArgs, queryLockedCoinsResp))
+	require.NoError(s.T(), testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.GetQueryLockedCoinsCmd(), queryLockedCoinsArgs, queryLockedCoinsResp))
 	require.Equal(s.T(), sdk.NewCoins(sdk.NewInt64Coin("ATOM", 1000), sdk.NewInt64Coin("OSMO", 1000)), queryLockedCoinsResp.LockedCoins)
 
 	// test initiate unlock
