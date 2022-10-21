@@ -2,13 +2,12 @@ package cli_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -60,21 +59,19 @@ func TestAddPriceFeedParamPair(t *testing.T) {
 			require.NoError(t, err)
 
 			appCodec := simapp.MakeTestEncodingConfig().Marshaler
-			err = genutiltest.ExecInitCmd(
-				testModuleBasicManager, home, appCodec)
+			err = genutiltest.ExecInitCmd(testModuleBasicManager, home, appCodec)
 			require.NoError(t, err)
 
 			serverCtx := server.NewContext(viper.New(), cfg, logger)
-			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
+
+			cmd := cli.AddPriceFeedParamPairs(home)
+			cmd.SetArgs([]string{tc.pairName})
+			_, out := testutil.ApplyMockIO(cmd)
+			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home).WithOutput(out)
 
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
-
-			cmd := cli.AddPriceFeedParamPairs("home")
-			cmd.SetArgs([]string{
-				tc.pairName,
-				fmt.Sprintf("--%s=home", flags.FlagHome)})
 
 			if tc.expectError {
 				require.Error(t, cmd.ExecuteContext(ctx))
