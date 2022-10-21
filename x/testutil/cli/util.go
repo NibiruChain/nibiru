@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -223,7 +225,7 @@ func writeFile(name string, dir string, contents []byte) error {
 // Used for cli tests.
 func FillWalletFromValidator(
 	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
-) (sdk.AccAddress, error) {
+) error {
 	rawResp, err := banktestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
@@ -234,9 +236,9 @@ func FillWalletFromValidator(
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(feesDenom, 10)),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return addr, txOK(val.ClientCtx.Codec, rawResp.Bytes())
+	return txOK(val.ClientCtx.Codec, rawResp.Bytes())
 }
 
 func txOK(cdc codec.Codec, txBytes []byte) error {
@@ -247,4 +249,32 @@ func txOK(cdc codec.Codec, txBytes []byte) error {
 	}
 
 	return nil
+}
+
+/*
+Creates a new account with a random mnemonic, stores the mnemonic in the keyring, and returns the address.
+
+args:
+  - network: the network in which to create the account and key
+  - uid: a unique identifier to ensure duplicate accounts are not created
+
+ret:
+  - addr: the address of the new account
+*/
+func NewAccount(network *Network, uid string) sdk.AccAddress {
+	val := network.Validators[0]
+
+	// create a new user address
+	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
+		/* uid */ uid,
+		/* language */ keyring.English,
+		/* hdPath */ sdk.FullFundraiserPath,
+		/* big39Passphrase */ "",
+		/* algo */ hd.Secp256k1,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return sdk.AccAddress(info.GetPubKey().Address())
 }

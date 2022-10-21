@@ -45,7 +45,7 @@ func WithQueryEncodingType(e EncodingType) ExecQueryOption {
 }
 
 // ExecQuery executes a CLI query onto the provided Network.
-func ExecQuery(network *Network, cmd *cobra.Command, args []string, result codec.ProtoMarshaler, opts ...ExecQueryOption) error {
+func ExecQuery(clientCtx client.Context, cmd *cobra.Command, args []string, result codec.ProtoMarshaler, opts ...ExecQueryOption) error {
 	var options queryOptions
 	for _, o := range opts {
 		o(&options)
@@ -58,11 +58,6 @@ func ExecQuery(network *Network, cmd *cobra.Command, args []string, result codec
 	default:
 		return fmt.Errorf("unknown query encoding type %d", options.outputEncoding)
 	}
-	if len(network.Validators) == 0 {
-		return fmt.Errorf("invalid network")
-	}
-
-	clientCtx := network.Validators[0].ClientCtx
 
 	resultRaw, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
 	if err != nil {
@@ -79,114 +74,52 @@ func ExecQuery(network *Network, cmd *cobra.Command, args []string, result codec
 	}
 }
 
-func QueryVpoolReserveAssets(ctx client.Context, pair common.AssetPair,
-) (vpooltypes.QueryReserveAssetsResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(
-		ctx,
-		vpoolcli.CmdGetVpoolReserveAssets(),
-		[]string{pair.String(),
-			fmt.Sprintf("--%s=json", tmcli.OutputFlag)})
-	if err != nil {
-		return vpooltypes.QueryReserveAssetsResponse{}, err
-	}
-
+func QueryVpoolReserveAssets(clientCtx client.Context, pair common.AssetPair,
+) (*vpooltypes.QueryReserveAssetsResponse, error) {
 	var queryResp vpooltypes.QueryReserveAssetsResponse
-	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
-	if err != nil {
-		return vpooltypes.QueryReserveAssetsResponse{}, err
+	if err := ExecQuery(clientCtx, vpoolcli.CmdGetVpoolReserveAssets(), []string{pair.String()}, &queryResp); err != nil {
+		return nil, err
 	}
-
-	return queryResp, nil
+	return &queryResp, nil
 }
 
-func QueryBaseAssetPrice(ctx client.Context, pair common.AssetPair, direction string, amount string) (vpooltypes.QueryBaseAssetPriceResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(
-		ctx,
-		vpoolcli.CmdGetBaseAssetPrice(),
-		[]string{pair.String(), direction, amount, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
-	)
-	if err != nil {
-		return vpooltypes.QueryBaseAssetPriceResponse{}, err
-	}
-
+func QueryBaseAssetPrice(clientCtx client.Context, pair common.AssetPair, direction string, amount string) (*vpooltypes.QueryBaseAssetPriceResponse, error) {
 	var queryResp vpooltypes.QueryBaseAssetPriceResponse
-	ctx.Codec.MustUnmarshalJSON(out.Bytes(), &queryResp)
-
-	return queryResp, nil
+	if err := ExecQuery(clientCtx, vpoolcli.CmdGetBaseAssetPrice(), []string{pair.String(), direction, amount}, &queryResp); err != nil {
+		return nil, err
+	}
+	return &queryResp, nil
 }
 
-func QueryPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (perptypes.QueryPositionResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(
-		ctx,
-		perpcli.CmdQueryPosition(),
-		[]string{trader.String(), pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
-	)
-	if err != nil {
-		return perptypes.QueryPositionResponse{}, err
-	}
-
+func QueryPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (*perptypes.QueryPositionResponse, error) {
 	var queryResp perptypes.QueryPositionResponse
-	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
-	if err != nil {
-		return perptypes.QueryPositionResponse{}, err
+	if err := ExecQuery(ctx, perpcli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
+		return nil, err
 	}
-
-	return queryResp, nil
+	return &queryResp, nil
 }
 
-func QueryFundingRates(ctx client.Context, pair common.AssetPair) (perptypes.QueryFundingRatesResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(
-		ctx,
-		perpcli.CmdQueryFundingRates(),
-		[]string{pair.String(), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
-	)
-	if err != nil {
-		return perptypes.QueryFundingRatesResponse{}, err
-	}
-
+func QueryFundingRates(clientCtx client.Context, pair common.AssetPair) (*perptypes.QueryFundingRatesResponse, error) {
 	var queryResp perptypes.QueryFundingRatesResponse
-	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
-	if err != nil {
-		return perptypes.QueryFundingRatesResponse{}, err
+	if err := ExecQuery(clientCtx, perpcli.CmdQueryFundingRates(), []string{pair.String()}, &queryResp); err != nil {
+		return nil, err
 	}
-
-	return queryResp, nil
+	return &queryResp, nil
 }
 
-func QueryPrice(ctx client.Context, pairID string) (pricefeedtypes.QueryPriceResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(
-		ctx,
-		pricefeedcli.CmdQueryPrice(),
-		[]string{pairID, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
-	)
-	if err != nil {
-		return pricefeedtypes.QueryPriceResponse{}, err
-	}
-
+func QueryPrice(clientCtx client.Context, pairID string) (*pricefeedtypes.QueryPriceResponse, error) {
 	var queryResp pricefeedtypes.QueryPriceResponse
-	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
-	if err != nil {
-		return pricefeedtypes.QueryPriceResponse{}, err
+	if err := ExecQuery(clientCtx, pricefeedcli.CmdQueryPrice(), []string{pairID}, &queryResp); err != nil {
+		return nil, err
 	}
-
-	return queryResp, nil
+	return &queryResp, nil
 }
 
-func QueryRawPrice(ctx client.Context, pairID string) (pricefeedtypes.QueryRawPricesResponse, error) {
-	out, err := clitestutil.ExecTestCLICmd(
-		ctx,
-		pricefeedcli.CmdQueryRawPrices(),
-		[]string{pairID, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
-	)
-	if err != nil {
-		return pricefeedtypes.QueryRawPricesResponse{}, err
-	}
-
+func QueryRawPrice(clientCtx client.Context, pairID string) (*pricefeedtypes.QueryRawPricesResponse, error) {
 	var queryResp pricefeedtypes.QueryRawPricesResponse
-	err = ctx.Codec.UnmarshalJSON(out.Bytes(), &queryResp)
-	if err != nil {
-		return pricefeedtypes.QueryRawPricesResponse{}, err
+	if err := ExecQuery(clientCtx, pricefeedcli.CmdQueryRawPrices(), []string{pairID}, &queryResp); err != nil {
+		return nil, err
 	}
 
-	return queryResp, nil
+	return &queryResp, nil
 }
