@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
@@ -43,11 +44,18 @@ func WithTxCanFail(canFail bool) ExecTxOption {
 	}
 }
 
+func WithKeyringBackend(keyringBackend string) ExecTxOption {
+	return func(options *execTxOptions) {
+		options.keyringBackend = keyringBackend
+	}
+}
+
 type execTxOptions struct {
 	fees             sdk.Coins
 	skipConfirmation bool
 	broadcastMode    string
 	canFail          bool
+	keyringBackend   string
 }
 
 func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args []string, opt ...ExecTxOption) (*sdk.TxResponse, error) {
@@ -61,6 +69,8 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 		fees:             sdk.NewCoins(sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10))),
 		skipConfirmation: true,
 		broadcastMode:    flags.BroadcastBlock,
+		canFail:          false,
+		keyringBackend:   keyring.BackendTest,
 	}
 
 	for _, o := range opt {
@@ -69,6 +79,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, options.broadcastMode))
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFees, options.fees))
+	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, options.keyringBackend))
 	switch options.skipConfirmation {
 	case true:
 		args = append(args, fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation))
