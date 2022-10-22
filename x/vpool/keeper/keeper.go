@@ -122,9 +122,9 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
-		Pair:      pair.String(),
-		Price:     pool.GetMarkPrice(),
-		Timestamp: ctx.BlockHeader().Time,
+		Pair:           pair.String(),
+		Price:          pool.GetMarkPrice(),
+		BlockTimestamp: ctx.BlockTime(),
 	}); err != nil {
 		return sdk.Dec{}, err
 	}
@@ -215,9 +215,9 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
-		Pair:      pair.String(),
-		Price:     pool.GetMarkPrice(),
-		Timestamp: ctx.BlockHeader().Time,
+		Pair:           pair.String(),
+		Price:          pool.GetMarkPrice(),
+		BlockTimestamp: ctx.BlockTime(),
 	}); err != nil {
 		return sdk.Dec{}, err
 	}
