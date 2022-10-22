@@ -25,9 +25,12 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		k.ReserveSnapshots.Insert(ctx, collections.Join(pool.Pair, ctx.BlockTime()), snapshot)
 
 		_ = ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
-			Pair:         snapshot.Pair.String(),
-			QuoteReserve: snapshot.QuoteAssetReserve,
-			BaseReserve:  snapshot.BaseAssetReserve,
+			Pair:           snapshot.Pair.String(),
+			QuoteReserve:   snapshot.QuoteAssetReserve,
+			BaseReserve:    snapshot.BaseAssetReserve,
+			MarkPrice:      snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve),
+			BlockHeight:    ctx.BlockHeight(),
+			BlockTimestamp: ctx.BlockTime(),
 		})
 	}
 	return []abci.ValidatorUpdate{}
