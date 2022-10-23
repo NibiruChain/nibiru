@@ -12,4 +12,6 @@ jobs:
   unit-tests:
     runs-on: ubuntu-20.04
     steps:
-      - run: 'echo "unit-tests skipped since Golang files were not changed."'
+      - name: skip-tests
+        run: |
+          echo "unit-tests skipped since Golang files were not changed."
