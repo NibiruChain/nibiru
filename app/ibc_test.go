@@ -28,11 +28,8 @@ func init() {
 	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
 }
 
-/*
-SetupTestingApp returns the TestingApp and default genesis state used to
-
-	initialize the testing app.
-*/
+// SetupTestingApp returns the TestingApp and default genesis state used to
+// initialize the testing app.
 func SetupNibiruTestingApp() (
 	testingApp ibctesting.TestingApp,
 	defaultGenesis map[string]json.RawMessage,
@@ -70,7 +67,7 @@ func SetupNibiruTestingApp() (
 	return nibiruApp, genesisState
 }
 
-// IBCTestSuite is a testing suite to test keeper functions.
+// IBCTestSuite is a testing suite to IBC-related functions.
 type IBCTestSuite struct {
 	suite.Suite
 
@@ -198,6 +195,7 @@ func (suite IBCTestSuite) TestClient_BeginBlocker() {
 	}
 }
 
+// Returns a default packet for an IBC fungible token transfer
 func NewPacket(
 	path *ibctesting.Path,
 	sender string, receiver string,
@@ -219,6 +217,7 @@ func NewPacket(
 	return packet
 }
 
+// Sends packets for fungible token transfers between two chains
 func (suite IBCTestSuite) TestSendPacketRecvPacket() {
 	t := suite.T()
 	suite.SetupTest()
@@ -249,8 +248,4 @@ func (suite IBCTestSuite) TestSendPacketRecvPacket() {
 	t.Log("updating the client should not cause any problems.")
 	err = path.EndpointB.UpdateClient()
 	suite.Assert().NoError(err)
-}
-
-func (suite IBCTestSuite) TestConsensusAfterClientUpgrade() {
-	// TODO test: https://github.com/NibiruChain/nibiru/issues/581
 }
