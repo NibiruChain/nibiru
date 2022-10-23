@@ -1,0 +1,17 @@
+# skip-unit-tests.yml runs when unit-tests.yml is skipped
+name: Unit Tests
+
+on:
+  pull_request:
+    # paths-ignore makes the action run when the given paths are unchanged
+    # See "Handling skipped but required checks" in 
+    # https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks#handling-skipped-but-required-checks
+    paths-ignore: ["**.go", "**.proto", "go.mod", "go.sum"]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: skip-tests
+        run: |
+          echo "unit-tests skipped since Golang files were not changed."
