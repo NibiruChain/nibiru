@@ -218,3 +218,133 @@ func TestValidateBasic(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgExitPool_ValidateBasic(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  MsgExitPool
+		err  error
+	}{
+		{
+			name: "invalid address",
+			msg: MsgExitPool{
+				Sender: "invalid_address",
+			},
+			err: sdkerrors.ErrInvalidAddress,
+		}, {
+			name: "valid address",
+			msg: MsgExitPool{
+				Sender: testutil.AccAddress().String(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.msg.ValidateBasic()
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestMsgJoinPool_ValidateBasic(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  MsgJoinPool
+		err  error
+	}{
+		{
+			name: "invalid address",
+			msg: MsgJoinPool{
+				Sender: "invalid_address",
+			},
+			err: sdkerrors.ErrInvalidAddress,
+		}, {
+			name: "valid address",
+			msg: MsgJoinPool{
+				Sender: testutil.AccAddress().String(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.msg.ValidateBasic()
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestMsgSwapAssets_ValidateBasic(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  MsgSwapAssets
+		err  error
+	}{
+		{
+			name: "invalid address",
+			msg: MsgSwapAssets{
+				Sender:        "invalid_address",
+				PoolId:        1,
+				TokenIn:       sdk.NewInt64Coin("foo", 1),
+				TokenOutDenom: "bar",
+			},
+			err: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid pool id",
+			msg: MsgSwapAssets{
+				Sender:        testutil.AccAddress().String(),
+				PoolId:        0,
+				TokenIn:       sdk.NewInt64Coin("foo", 1),
+				TokenOutDenom: "bar",
+			},
+			err: ErrInvalidPoolId,
+		},
+		{
+			name: "invalid tokens in",
+			msg: MsgSwapAssets{
+				Sender:        testutil.AccAddress().String(),
+				PoolId:        1,
+				TokenIn:       sdk.NewInt64Coin("foo", 0),
+				TokenOutDenom: "bar",
+			},
+			err: ErrInvalidTokenIn,
+		},
+		{
+			name: "invalid token out denom",
+			msg: MsgSwapAssets{
+				Sender:        testutil.AccAddress().String(),
+				PoolId:        1,
+				TokenIn:       sdk.NewInt64Coin("foo", 1),
+				TokenOutDenom: "",
+			},
+			err: ErrInvalidTokenOutDenom,
+		},
+		{
+			name: "valid message",
+			msg: MsgSwapAssets{
+				Sender:        testutil.AccAddress().String(),
+				PoolId:        1,
+				TokenIn:       sdk.NewInt64Coin("foo", 1),
+				TokenOutDenom: "bar",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.msg.ValidateBasic()
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
