@@ -14,7 +14,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		err := k.EvaluateCollRatio(ctx)
 
 		params := k.GetParams(ctx)
-		params.IsCollateralRatioValid = err == nil
+		params.IsCollateralRatioValid = (err == nil)
 
 		k.SetParams(ctx, params)
 	}
