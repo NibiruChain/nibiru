@@ -5,7 +5,7 @@ on:
 
 jobs:
   unit-tests:
-    runs-on: self-hosted
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
 
