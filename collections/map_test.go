@@ -36,10 +36,14 @@ func TestMap(t *testing.T) {
 	require.NoError(t, err)
 	_, err = m.Get(ctx, key)
 	require.ErrorIs(t, err, ErrNotFound)
+	require.ErrorContains(t, err, "test string") // assert value name is correctly reported
+	require.ErrorContains(t, err, "id")          // assert key is correctly reported
 
 	// test delete errors not exist
 	err = m.Delete(ctx, key)
 	require.ErrorIs(t, err, ErrNotFound)
+	require.ErrorContains(t, err, "test string")
+	require.ErrorContains(t, err, "id") // assert key is correctly reported
 }
 
 func TestMapGetOrDefault(t *testing.T) {
