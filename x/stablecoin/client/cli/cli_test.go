@@ -8,8 +8,6 @@ import (
 	"github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -87,7 +85,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
-	s.Require().NoError(err)
+	s.NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -97,21 +95,17 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s IntegrationTestSuite) TestMintStableCmd() {
 	val := s.network.Validators[0]
+	minter := testutilcli.NewAccount(s.network, "minter2")
 
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic("minter2", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
-	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
-
-	_, err = testutilcli.FillWalletFromValidator(
-		minterAddr,
+	s.NoError(testutilcli.FillWalletFromValidator(
+		minter,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(common.DenomNIBI, 100_000_000),
 			sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
 		),
 		val,
 		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
+	))
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
@@ -151,21 +145,21 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
-				s.Require().NoError(err, out.String())
-				s.Require().NoError(
+				s.NoError(err, out.String())
+				s.NoError(
 					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
-				s.Require().NoError(err)
+				s.NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
-				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
-				s.Require().NoError(err)
+				resp, err := banktestutil.QueryBalancesExec(clientCtx, minter)
+				s.NoError(err)
 
 				var balRes banktypes.QueryAllBalancesResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
-				s.Require().NoError(err)
+				s.NoError(err)
 
 				s.Require().Equal(
 					balRes.Balances.AmountOf(common.DenomNUSD), tc.expectedStable)
@@ -176,24 +170,18 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 
 func (s IntegrationTestSuite) TestBurnStableCmd() {
 	val := s.network.Validators[0]
-
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
-		"burn", keyring.English, sdk.FullFundraiserPath, "", hd.Secp256k1)
-	s.Require().NoError(err)
-	minterAddr := sdk.AccAddress(info.GetPubKey().Address())
-	_, err = testutilcli.FillWalletFromValidator(
-		minterAddr,
+	burner := testutilcli.NewAccount(s.network, "burn")
+	s.NoError(testutilcli.FillWalletFromValidator(
+		burner,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
 			sdk.NewInt64Coin(common.DenomNUSD, 50_000_000),
 		),
 		val,
 		s.cfg.BondDenom,
-	)
-	s.Require().NoError(err)
+	))
 
-	err = s.network.WaitForNextBlock()
-	s.Require().NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 
 	defaultBondCoinsString := sdk.NewCoins(sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10))).String()
 	commonArgs := []string{
@@ -254,23 +242,23 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
-				s.Require().NoError(err, out.String())
-				s.Require().NoError(
+				s.NoError(err, out.String())
+				s.NoError(
 					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType),
 					out.String(),
 				)
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
-				s.Require().NoError(err)
+				s.NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
-				resp, err := banktestutil.QueryBalancesExec(clientCtx, minterAddr)
-				s.Require().NoError(err)
+				resp, err := banktestutil.QueryBalancesExec(clientCtx, burner)
+				s.NoError(err)
 
 				var balRes banktypes.QueryAllBalancesResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
-				s.Require().NoError(err)
+				s.NoError(err)
 
 				s.Require().Equal(
 					tc.expectedColl, balRes.Balances.AmountOf(common.DenomUSDC))
@@ -282,9 +270,9 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				// Query treasury pool balance
 				resp, err = banktestutil.QueryBalancesExec(
 					clientCtx, types.NewModuleAddress(common.TreasuryPoolModuleAccount))
-				s.Require().NoError(err)
+				s.NoError(err)
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
-				s.Require().NoError(err)
+				s.NoError(err)
 
 				s.Require().Equal(
 					tc.expectedTreasury, balRes.Balances)
@@ -293,9 +281,9 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				resp, err = banktestutil.QueryBalancesExec(
 					clientCtx,
 					types.NewModuleAddress(stabletypes.StableEFModuleAccount))
-				s.Require().NoError(err)
+				s.NoError(err)
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
-				s.Require().NoError(err)
+				s.NoError(err)
 
 				s.Require().Equal(
 					tc.expectedEf, balRes.Balances)

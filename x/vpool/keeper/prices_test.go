@@ -240,6 +240,40 @@ func TestCalcTwap(t *testing.T) {
 		expectedPrice      sdk.Dec
 		expectedErr        error
 	}{
+		// snapshot quote asset reserve at t = 0: 100
+		// snapshot base asset reserve at t = 0: 1
+		// expected price: ((95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 10) + 100/1 * (10 - 5)) / (5 + 10 + 10 + 5)
+		{
+			name: "spot price twap calc, t=[5,35]",
+			pair: common.Pair_BTC_NUSD,
+			reserveSnapshots: []types.ReserveSnapshot{
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(90),
+					time.UnixMilli(10),
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(85),
+					time.UnixMilli(20),
+				),
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(95),
+					time.UnixMilli(30),
+				),
+			},
+			currentBlockTime:   time.UnixMilli(35),
+			currentBlockHeight: 3,
+			lookbackInterval:   30 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_SPOT,
+			expectedPrice:      sdk.MustNewDecFromStr("24.083333333333333333"),
+		},
+
+		// expected price: (95/10 * (30 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 10)) / (10 + 10)
 		{
 			name: "spot price twap calc, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
@@ -269,6 +303,8 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_SPOT,
 			expectedPrice:      sdk.MustNewDecFromStr("8.75"),
 		},
+
+		// expected price: (95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 11)) / (5 + 10 + 9)
 		{
 			name: "spot price twap calc, t=[11,35]",
 			pair: common.Pair_BTC_NUSD,
@@ -298,6 +334,10 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_SPOT,
 			expectedPrice:      sdk.MustNewDecFromStr("8.895833333333333333"),
 		},
+
+		// base asset reserve at t = 0: 1
+		// quote asset reserve at t = 0: 100
+		// expected price: 100/1
 		{
 			name:               "spot price twap calc, t=[0,0]",
 			pair:               common.Pair_BTC_NUSD,
@@ -308,6 +348,10 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_SPOT,
 			expectedPrice:      sdk.NewDec(100),
 		},
+
+		// k: 30 * 100 = 300
+		// asset amount : 10
+		// expected price: ((7.5 - 300/(40 + 10)) * (30 - 20) + (10 - 300/(30 + 10)) * (20 - 10)) / (10 + 10)
 		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
@@ -333,6 +377,10 @@ func TestCalcTwap(t *testing.T) {
 			assetAmount:        sdk.NewDec(10),
 			expectedPrice:      sdk.NewDec(2),
 		},
+
+		// k: 60 * 100 = 600
+		// asset amount: 10
+		// expected price: ((12 - 600/(50 - 10)) * (30 - 20) + (10 - 600/(60 - 10)) * (20 - 10)) / (10 + 10)
 		{
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
@@ -359,6 +407,29 @@ func TestCalcTwap(t *testing.T) {
 			expectedPrice:      sdk.MustNewDecFromStr("2.5"),
 		},
 		{
+			name: "Error: quote asset reserve = asset amount",
+			pair: common.Pair_BTC_NUSD,
+			reserveSnapshots: []types.ReserveSnapshot{
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(20),
+					time.UnixMilli(20),
+				),
+			},
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
+			direction:          types.Direction_REMOVE_FROM_POOL,
+			assetAmount:        sdk.NewDec(20),
+			expectedErr:        types.ErrQuoteReserveAtZero,
+		},
+
+		// k: 60 * 100 = 600
+		// asset amount: 10
+		// expected price: ((60 - 600/(10 + 10)) * (20 - 10) + (30 - 600/(20 + 10)) * (30 - 20)) / (10 + 10)
+		{
 			name: "base asset swap twap calc, add to pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
 			reserveSnapshots: []types.ReserveSnapshot{
@@ -383,6 +454,10 @@ func TestCalcTwap(t *testing.T) {
 			assetAmount:        sdk.NewDec(10),
 			expectedPrice:      sdk.NewDec(20),
 		},
+
+		// k: 60 * 100 = 600
+		// asset amount: 10
+		// expected price: ((60 - 600/(10 - 2)) * (20 - 10) + (75 - 600/(8 - 2)) * (30 - 20)) / (10 + 10)
 		{
 			name: "base asset swap twap calc, remove from pool, t=[10,30]",
 			pair: common.Pair_BTC_NUSD,
@@ -407,6 +482,25 @@ func TestCalcTwap(t *testing.T) {
 			direction:          types.Direction_REMOVE_FROM_POOL,
 			assetAmount:        sdk.NewDec(2),
 			expectedPrice:      sdk.NewDec(20),
+		},
+		{
+			name: "Error: base asset reserve = asset amount",
+			pair: common.Pair_BTC_NUSD,
+			reserveSnapshots: []types.ReserveSnapshot{
+				types.NewReserveSnapshot(
+					common.Pair_BTC_NUSD,
+					sdk.NewDec(10),
+					sdk.NewDec(60),
+					time.UnixMilli(20),
+				),
+			},
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
+			direction:          types.Direction_REMOVE_FROM_POOL,
+			assetAmount:        sdk.NewDec(10),
+			expectedErr:        types.ErrBaseReserveAtZero,
 		},
 	}
 
@@ -461,7 +555,7 @@ func TestCalcTwap(t *testing.T) {
 				tc.assetAmount,
 				tc.lookbackInterval,
 			)
-			require.NoError(t, err)
+			require.ErrorIs(t, err, tc.expectedErr)
 			require.EqualValuesf(t, tc.expectedPrice, price,
 				"expected %s, got %s", tc.expectedPrice.String(), price.String())
 		})

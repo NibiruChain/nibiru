@@ -4,7 +4,9 @@ name: Linter
 on:
   push:
     branches: ["master"]
+    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
   pull_request:
+    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
 permissions:
   contents: read
