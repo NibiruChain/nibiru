@@ -61,11 +61,11 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 
 	if len(data.Pairs) > 0 {
 		for _, tt := range data.Pairs {
-			keeper.Pairs.Insert(ctx, tt.Name)
+			keeper.Pairs.Insert(ctx, tt)
 		}
 	} else {
 		for _, item := range data.Params.Whitelist {
-			keeper.Pairs.Insert(ctx, item.Name)
+			keeper.Pairs.Insert(ctx, item)
 		}
 	}
 
@@ -112,10 +112,8 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		})
 	}
 
-	pairs := []types.Pair{}
-	for _, p := range keeper.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
-		pairs = append(pairs, types.Pair{Name: p})
-	}
+	var pairs []string
+	pairs = append(pairs, keeper.Pairs.Iterate(ctx, collections.Range[string]{}).Keys()...)
 
 	return types.NewGenesisState(params,
 		exchangeRates,

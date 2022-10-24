@@ -145,13 +145,9 @@ func TestClearBallots(t *testing.T) {
 func TestApplyWhitelist(t *testing.T) {
 	input := CreateTestInput(t)
 
-	whitelist := types.PairList{
-		types.Pair{
-			Name: "nibi:usd",
-		},
-		types.Pair{
-			Name: "btc:usd",
-		},
+	whitelist := []string{
+		"nibi:usd",
+		"btc:usd",
 	}
 
 	// prepare test by resetting the genesis pairs
@@ -159,7 +155,7 @@ func TestApplyWhitelist(t *testing.T) {
 		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
 	}
 	for _, p := range whitelist {
-		input.OracleKeeper.Pairs.Insert(input.Ctx, p.Name)
+		input.OracleKeeper.Pairs.Insert(input.Ctx, p)
 	}
 
 	voteTargets := map[string]struct{}{
@@ -169,42 +165,36 @@ func TestApplyWhitelist(t *testing.T) {
 	// no updates case
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
 
-	gotPairs := types.PairList{}
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		gotPairs = append(gotPairs, types.Pair{Name: p})
-	}
+	var gotPairs []string
+	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
-		return whitelist[i].Name < whitelist[j].Name
+		return whitelist[i] < whitelist[j]
 	})
 	require.Equal(t, whitelist, gotPairs)
 
 	// len update (fast path)
-	whitelist = append(whitelist, types.Pair{Name: "nibi:eth"})
+	whitelist = append(whitelist, "nibi:eth")
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
 
-	gotPairs = types.PairList{}
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		gotPairs = append(gotPairs, types.Pair{Name: p})
-	}
+	gotPairs = []string{}
+	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
-		return whitelist[i].Name < whitelist[j].Name
+		return whitelist[i] < whitelist[j]
 	})
 	require.Equal(t, whitelist, gotPairs)
 
 	// diff update (slow path)
-	voteTargets["nibi:eth"] = struct{}{}         // add previous pair
-	whitelist[0] = types.Pair{Name: "nibi:usdt"} // update first pair
+	voteTargets["nibi:eth"] = struct{}{} // add previous pair
+	whitelist[0] = "nibi:usdt"           // update first pair
 	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
 
-	gotPairs = types.PairList{}
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		gotPairs = append(gotPairs, types.Pair{Name: p})
-	}
+	gotPairs = []string{}
+	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
-		return whitelist[i].Name < whitelist[j].Name
+		return whitelist[i] < whitelist[j]
 	})
 	require.Equal(t, whitelist, gotPairs)
 }
