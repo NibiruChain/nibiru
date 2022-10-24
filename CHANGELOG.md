@@ -107,9 +107,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1013](https://github.com/NibiruChain/nibiru/pull/1013) - test(vpool): more calc twap tests and documentation
 * [#1012](https://github.com/NibiruChain/nibiru/pull/1012) - test(vpool): make vpool simulation with random parameters
 * [#1015](https://github.com/NibiruChain/nibiru/pull/1015) - feat(dex): throw error when swap output amount is less than 1
+* [#1018](https://github.com/NibiruChain/nibiru/pull/1018) - chore(dex): refactor to match best practice
 
 ### Features
-* [1010](https://github.com/NibiruChain/nibiru/pull/1010) - feeder: initialize oracle feeder core logic
+
+* [#1019](https://github.com/NibiruChain/nibiru/pull/1019) - add fields to the snapshot reserve event
+* [#1010](https://github.com/NibiruChain/nibiru/pull/1010) - feeder: initialize oracle feeder core logic
 * [#966](https://github.com/NibiruChain/nibiru/pull/966) - collections: add indexed map
 * [#852](https://github.com/NibiruChain/nibiru/pull/852) - feat(genesis): add cli command to add pairs at genesis
 * [#861](https://github.com/NibiruChain/nibiru/pull/861) - feat: query cumulative funding payments
@@ -119,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+* [#1017](https://github.com/NibiruChain/nibiru/pull/1017) - collections: correctly reports value type and key in case of not found errors.
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks
 * [#874](https://github.com/NibiruChain/nibiru/pull/874) - fix --home issue with unsafe-reset-all command, updating tendermint to v0.34.21
 * [#892](https://github.com/NibiruChain/nibiru/pull/892) - chore: fix localnet script

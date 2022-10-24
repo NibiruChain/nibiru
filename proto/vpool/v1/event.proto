@@ -21,6 +21,20 @@ message ReserveSnapshotSavedEvent {
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
     ];
+
+    // MarkPrice at the end of the block. 
+    // (instantaneous) markPrice := quoteReserve / baseReserve 
+    string mark_price = 4 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+    int64 block_height = 5;
+     
+    google.protobuf.Timestamp block_timestamp = 6 [
+      (gogoproto.stdtime) = true,
+      (gogoproto.nullable) = false
+    ];
 }
 
 message SwapQuoteForBaseEvent {
@@ -58,7 +72,7 @@ message MarkPriceChangedEvent {
         (gogoproto.nullable) = false
     ];
 
-    google.protobuf.Timestamp timestamp = 3 [
+    google.protobuf.Timestamp block_timestamp = 3 [
       (gogoproto.stdtime) = true,
       (gogoproto.nullable) = false
     ];
