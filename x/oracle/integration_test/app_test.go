@@ -28,9 +28,9 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[oracletypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := oracletypes.DefaultGenesisState()
-		gs.Params.Whitelist = oracletypes.PairList{
-			oracletypes.Pair{Name: "nibi:usdc"},
-			oracletypes.Pair{Name: "btc:usdc"},
+		gs.Params.Whitelist = []string{
+			"nibi:usdc",
+			"btc:usdc",
 		}
 
 		return gs

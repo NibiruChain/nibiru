@@ -53,7 +53,7 @@ func TestParamsEqual(t *testing.T) {
 
 	// empty name
 	p10 := types.DefaultParams()
-	p10.Whitelist[0].Name = ""
+	p10.Whitelist[0] = ""
 	err = p10.Validate()
 	require.Error(t, err)
 
@@ -85,17 +85,9 @@ func TestValidate(t *testing.T) {
 			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(-1, 2)))
 			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(101, 2)))
 		case bytes.Equal(types.KeyWhitelist, pair.Key):
-			require.NoError(t, pair.ValidatorFn(types.PairList{
-				{
-					Name: "BTC:USDT",
-				},
-			}))
+			require.NoError(t, pair.ValidatorFn([]string{"BTC:USDT"}))
 			require.Error(t, pair.ValidatorFn("invalid"))
-			require.Error(t, pair.ValidatorFn(types.PairList{
-				{
-					Name: "",
-				},
-			}))
+			require.Error(t, pair.ValidatorFn([]string{""}))
 		}
 	}
 }

@@ -25,14 +25,14 @@ func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 }
 
 // Whitelist returns the pair list that can be activated
-func (k Keeper) Whitelist(ctx sdk.Context) (res types.PairList) {
+func (k Keeper) Whitelist(ctx sdk.Context) (res []string) {
 	k.paramSpace.Get(ctx, types.KeyWhitelist, &res)
 	return
 }
 
 // SetWhitelist store new whitelist to param store
 // this function is only for test purpose
-func (k Keeper) SetWhitelist(ctx sdk.Context, whitelist types.PairList) {
+func (k Keeper) SetWhitelist(ctx sdk.Context, whitelist []string) {
 	k.paramSpace.Set(ctx, types.KeyWhitelist, whitelist)
 }
 

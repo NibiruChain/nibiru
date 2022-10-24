@@ -22,10 +22,8 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  repeated Pair whitelist                  = 4 [
-    (gogoproto.moretags)     = "yaml:\"whitelist\"",
-    (gogoproto.castrepeated) = "PairList",
-    (gogoproto.nullable)     = false
+  repeated string whitelist                  = 4 [
+    (gogoproto.moretags)     = "yaml:\"whitelist\""
   ];
   string slash_fraction = 5 [
     (gogoproto.moretags)   = "yaml:\"slash_fraction\"",
@@ -38,15 +36,6 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-}
-
-// Pair is the object that holds configuration of each pair.
-message Pair {
-  option (gogoproto.equal)            = false;
-  option (gogoproto.goproto_getters)  = false;
-  option (gogoproto.goproto_stringer) = false;
-
-  string name      = 1 [(gogoproto.moretags) = "yaml:\"name\""];
 }
 
 // struct for aggregate prevoting on the ExchangeRateVote.
