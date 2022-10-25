@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package nibiru.dex.v1;
 
-import "dex/v1/params.proto";
 import "dex/v1/pool.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
@@ -115,31 +114,4 @@ message MsgSwapAssetsResponse {
     (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
-}
-
-message EventPoolJoined {
-  string address = 1;
-  uint64 pool_id = 2;
-  repeated cosmos.base.v1beta1.Coin tokens_in = 3 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin pool_shares_out = 4 [(gogoproto.nullable) = false];
-  repeated cosmos.base.v1beta1.Coin rem_coins = 5 [(gogoproto.nullable) = false];
-}
-
-message EventPoolCreated {
-  string creator = 1;
-  uint64 pool_id = 2;
-}
-
-message EventPoolExited {
-  string address = 1;
-  uint64 pool_id = 2;
-  cosmos.base.v1beta1.Coin pool_shares_in = 3 [(gogoproto.nullable) = false];
-  repeated cosmos.base.v1beta1.Coin tokens_out = 4 [(gogoproto.nullable) = false];
-}
-
-message EventAssetsSwapped {
-  string address = 1;
-  uint64 pool_id = 2;
-  cosmos.base.v1beta1.Coin token_in = 3 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin token_out = 4 [(gogoproto.nullable) = false];
 }
