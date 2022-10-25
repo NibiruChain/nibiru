@@ -90,7 +90,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types3.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
@@ -171,7 +171,7 @@ func TestWhitelistSlashing(t *testing.T) {
 func TestNotPassedBallotSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types3.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
@@ -194,7 +194,7 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 func TestAbstainSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types3.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
