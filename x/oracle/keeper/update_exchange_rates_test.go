@@ -268,7 +268,7 @@ func TestOracleRewardDistribution(t *testing.T) {
 func TestOracleRewardBand(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear pairs to reset vote targets
@@ -483,7 +483,7 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 func TestVoteTargets(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = types.PairList{{Name: common.Pair_NIBI_NUSD.String()}, {Name: common.Pair_BTC_NUSD.String()}}
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String(), common.Pair_BTC_NUSD.String()}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
@@ -508,7 +508,7 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, []string{common.Pair_BTC_NUSD.String(), common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetVoteTargets(input.Ctx))
 
 	// delete btcstable
-	params.Whitelist = types.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// govstable, missing
@@ -529,7 +529,7 @@ func TestVoteTargets(t *testing.T) {
 	require.False(t, exists)
 
 	// change govstable
-	params.Whitelist = types.PairList{{Name: common.Pair_NIBI_NUSD.String()}}
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// govstable, no missing

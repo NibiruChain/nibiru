@@ -23,6 +23,8 @@ func NewMap[K, V any](sk sdk.StoreKey, namespace Namespace, kc KeyEncoder[K], vc
 		vc:     vc,
 		prefix: namespace.Prefix(),
 		sk:     sk,
+		//nolint
+		typeName: vc.(ValueEncoder[V]).Name(), // go1.19 compiler bug
 	}
 }
 

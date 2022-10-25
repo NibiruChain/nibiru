@@ -72,14 +72,19 @@ func TestSnapshotUpdates(t *testing.T) {
 	)
 
 	t.Log("run one block of 5 seconds")
-	runBlock(5 * time.Second)
+	ctxAtSnapshot := sdk.Context(ctx) // manually copy ctx before the time skip
+	timeSkipDuration := 5 * time.Second
+	runBlock(timeSkipDuration) // increments ctx.blockHeight and ctx.BlockTime
 	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx, collections.Join(common.Pair_BTC_NUSD, time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	testutil.RequireContainsTypedEvent(t, ctx, &types.ReserveSnapshotSavedEvent{
-		Pair:         expectedSnapshot.Pair.String(),
-		QuoteReserve: expectedSnapshot.QuoteAssetReserve,
-		BaseReserve:  expectedSnapshot.BaseAssetReserve,
+		Pair:           expectedSnapshot.Pair.String(),
+		QuoteReserve:   expectedSnapshot.QuoteAssetReserve,
+		BaseReserve:    expectedSnapshot.BaseAssetReserve,
+		MarkPrice:      snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve),
+		BlockHeight:    ctxAtSnapshot.BlockHeight(),
+		BlockTimestamp: ctxAtSnapshot.BlockTime(),
 	})
 }
