@@ -115,7 +115,6 @@ Fluctuation limit ratio:
 
 	In our case we only care about the right part since q is always positive (short/long would be the sign).
 
-
 Trade limit ratio:
 ------------------
 
@@ -124,7 +123,6 @@ Trade limit ratio:
 	 	q <= QuoteAssetReserve * tl
 
 		with tl the trade limit ratio.
-
 */
 func getMaxQuoteForPool(pool pooltypes.VPool) sdk.Dec {
 	ratioFloat := math.Sqrt(pool.FluctuationLimitRatio.Add(sdk.OneDec()).MustFloat64())
