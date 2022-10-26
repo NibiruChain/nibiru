@@ -18,24 +18,25 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 
 	k.countVotesAndUpdateExchangeRates(ctx, pairBallotMap, validatorPerformanceMap)
 
-	//---------------------------
-	// Do miss counting & slashing
+	k.registerMissedVotes(ctx, whitelistedPairsMap, validatorPerformanceMap)
+
 	params := k.GetParams(ctx)
-	voteTargetsLen := len(whitelistedPairsMap)
-	for _, claim := range validatorPerformanceMap {
-		// Skip abstain & valid voters
-		if int(claim.WinCount) == voteTargetsLen {
-			continue
-		}
-
-		// Increase miss counter
-		k.MissCounters.Insert(ctx, claim.ValAddress, k.MissCounters.GetOr(ctx, claim.ValAddress, 0)+1)
-		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
-	}
-
 	k.rewardBallotWinners(ctx, whitelistedPairsMap, validatorPerformanceMap)
 	k.clearBallots(ctx, params.VotePeriod)
 	k.applyWhitelist(ctx, params.Whitelist, whitelistedPairsMap)
+}
+
+// registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.
+func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairsMap map[string]struct{}, validatorPerformanceMap map[string]types.ValidatorPerformance) {
+	whitelistedPairsLen := len(whitelistedPairsMap)
+	for _, validatorPerformance := range validatorPerformanceMap {
+		if int(validatorPerformance.WinCount) == whitelistedPairsLen {
+			continue
+		}
+
+		k.MissCounters.Insert(ctx, validatorPerformance.ValAddress, k.MissCounters.GetOr(ctx, validatorPerformance.ValAddress, 0)+1)
+		k.Logger(ctx).Info("vote miss", "validator", validatorPerformance.ValAddress.String())
+	}
 }
 
 // countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
