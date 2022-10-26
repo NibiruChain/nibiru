@@ -173,3 +173,13 @@ func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPer
 		ValAddress: recipient,
 	}
 }
+
+// GetValidatorWeightSum returns the sum of the weight of all the validators included in the map
+func GetValidatorWeightSum(validatorList map[string]ValidatorPerformance) int64 {
+	ballotPowerSum := int64(0)
+	for _, winner := range validatorList {
+		ballotPowerSum += winner.Weight
+	}
+
+	return ballotPowerSum
+}

@@ -36,25 +36,19 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair s
 // to the oracle voters that voted faithfully.
 func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
-	voteTargets map[string]struct{},
+	whitelistedPairs map[string]struct{},
 	ballotWinners map[string]types.ValidatorPerformance,
 ) {
-	rewardPair := make([]string, len(voteTargets))
+	rewardPair := make([]string, len(whitelistedPairs))
 
 	i := 0
-	for pair := range voteTargets {
+	for pair := range whitelistedPairs {
 		rewardPair[i] = pair
 		i++
 	}
 
-	// Sum weight of the claims
-	ballotPowerSum := int64(0)
-	for _, winner := range ballotWinners {
-		ballotPowerSum += winner.Weight
-	}
-
-	// Exit if the ballot is empty
-	if ballotPowerSum == 0 {
+	validatorsWeightSum := types.GetValidatorWeightSum(ballotWinners)
+	if validatorsWeightSum == 0 {
 		return
 	}
 
@@ -76,7 +70,7 @@ func (k Keeper) rewardBallotWinners(
 		receiverVal := k.StakingKeeper.Validator(ctx, winner.ValAddress)
 
 		// Reflects contribution
-		rewardCoins, _ := periodRewards.MulDec(sdk.NewDec(winner.Weight).QuoInt64(ballotPowerSum)).TruncateDecimal()
+		rewardCoins, _ := periodRewards.MulDec(sdk.NewDec(winner.Weight).QuoInt64(validatorsWeightSum)).TruncateDecimal()
 
 		// In case absence of the validator, we just skip distribution
 		if receiverVal != nil && !rewardCoins.IsZero() {
