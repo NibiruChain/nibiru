@@ -109,6 +109,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1015](https://github.com/NibiruChain/nibiru/pull/1015) - feat(dex): throw error when swap output amount is less than 1
 * [#1018](https://github.com/NibiruChain/nibiru/pull/1018) - chore(dex): refactor to match best practice
 * [#1024](https://github.com/NibiruChain/nibiru/pull/1024) - refactor(oracle): remove Pair and PairList
+* [#1034](https://github.com/NibiruChain/nibiru/pull/1034) - refactor(proto): use proto-typed events x/dex
+* [#1035](https://github.com/NibiruChain/nibiru/pull/1035) - refactor(proto): use proto-typed events for epochs
 
 ### Features
 
@@ -122,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1011](https://github.com/NibiruChain/nibiru/pull/1011) - feat(perp): add DonateToEF cli command
 
 ### Fixes
-
+* [#1023](https://github.com/NibiruChain/nibiru/pull/1023) - collections: golang compiler bug
 * [#1017](https://github.com/NibiruChain/nibiru/pull/1017) - collections: correctly reports value type and key in case of not found errors.
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks
 * [#874](https://github.com/NibiruChain/nibiru/pull/874) - fix --home issue with unsafe-reset-all command, updating tendermint to v0.34.21

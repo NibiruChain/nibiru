@@ -9,6 +9,6 @@ on:
 
 jobs:
   changelog:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: dangoslen/changelog-enforcer@v3

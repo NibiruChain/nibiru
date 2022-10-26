@@ -19,11 +19,12 @@ type Map[K, V any] struct {
 
 func NewMap[K, V any](sk sdk.StoreKey, namespace Namespace, kc KeyEncoder[K], vc ValueEncoder[V]) Map[K, V] {
 	return Map[K, V]{
-		kc:       kc,
-		vc:       vc,
-		prefix:   namespace.Prefix(),
-		sk:       sk,
-		typeName: vc.Name(),
+		kc:     kc,
+		vc:     vc,
+		prefix: namespace.Prefix(),
+		sk:     sk,
+		//nolint
+		typeName: vc.(ValueEncoder[V]).Name(), // go1.19 compiler bug
 	}
 }
 
