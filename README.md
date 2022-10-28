@@ -8,25 +8,26 @@
 -->
 
 [![Nibiru Test workflow][go-unit-tests-badge]][go-unit-tests-workflow]
+[![Nibiru Test workflow][go-integration-tests-badge]][go-integration-tests-workflow]
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
-[<img align="right" alt="Nibiru Telegram" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/telegram.svg" />][nibiru-telegram]
 [<img align="right" alt="Personal Website" width="22px" src="https://raw.githubusercontent.com/iconic/open-iconic/master/svg/globe.svg" />][nibiru-website]
 [<img align="right" alt="Nibiru Discord" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@v3/icons/discord.svg" />][nibiru-discord]
 [<img align="right" alt="Nibiru Medium Blog" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/medium.svg" />][nibiru-medium]
+<!-- [<img align="right" alt="Nibiru Telegram" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/telegram.svg" />][nibiru-telegram] -->
 
 **Nibiru Chain** is a proof-of-stake blockchain and member of a family of interconnected blockchains that comprise the Cosmos Ecosystem. Nibiru powers three main decentralized applications:
 
-- **Nibiru Perpetuals Exchange**: On the perps exchange, users can take leveraged exposure and trade on a plethora of assets: completely on-chain, completely non-custodially, and with minimal gas fees.
-- **Nibiru AMM**: An automated market maker for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
-- **Nibiru Stablecoin**: Nibiru employs a two-token economic model, where NIBI is the governance and utility token for the protocol and NUSD is a capital-efficient, partially collateralized algorithmic stablecoin created by the protocol.
+- **Nibi-Perps** - Perpetuals Exchange: On the perps exchange, users can take leveraged exposure and trade on a plethora of assets: completely on-chain, completely non-custodially, and with minimal gas fees.
+- **Nibi-Swap** - Spot AMM: An automated market maker for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
+- **NUSD Stablecoin**: Nibiru employs a two-token economic model, where NIBI is the governance and utility token for the protocol and NUSD is a capital-efficient, partially collateralized algorithmic stablecoin created by the protocol.
 
-Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo], accurately prices assets using a system of front-run resistant oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  
+Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo], accurately prices assets using a system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  
 
-### ⚙️ — Documentation
+## ⚙️ — Documentation
 
 Conceptual and technical documentation can be found in the [Nibiru docs](https://docs.nibiru.io). Each module also contains a detailed specification in its "spec" directory (e.g. [`x/stablecoin/spec`](https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin/spec)).
 
-### 💬 — Community
+## 💬 — Community
 
 If you have questions or concerns, feel free to connect with a developer or community member in the [Nibiru discord][nibiru-discord]. We also have active communities on Twitter and Telegram.
 
@@ -53,19 +54,31 @@ Recommended minimum specs:
 - 2CPU, 4GB RAM, 100GB SSD
 - Unix system: MacOS or Ubuntu 18+
 
-## Developing on the chain locally
+## Nibid CLI
 
-### Single Node
+To simply access the `nibid` CLI, run:
 
-On a fresh clone of the repo, simply run `make localnet` and open another terminal.  
+```bash
+make install
+```
 
-### Generate the protobufs
+Usage instructions for the `nibid` CLI are available at [docs.nibiru.fi/dev/cli](https://docs.nibiru.fi/dev/cli/) and the [Nibiru Module Reference](https://docs.nibiru.fi/dev/x/).
+
+## Running a Local Node
+
+On a fresh clone of the repo, simply run:
+```bash
+make localnet
+``` 
+and open another terminal.  
+
+## Generate the protobufs
 
 ```bash
 make proto-gen
 ```
 
-# Linter
+## Linter
 
 We use the [golangci-lint](https://golangci-lint.run/) linter. Install it and run
 
@@ -75,7 +88,7 @@ golangci-lint run
 
 at the root directory. You can also install the VSCode or Goland IDE plugins.
 
-### Multiple Nodes
+## Multiple Nodes
 
 Run the following commands to set up a local network of Docker containers running the chain.
 
@@ -87,17 +100,19 @@ make localnet-start
 
 ## License
 
-Copyright © Nibiru Labs, Inc. All rights reserved.
+Copyright © Nibi, Inc. All rights reserved.
 
-Licensed under the [Apache v2 License](LICENSE.md).
+Licensed under the [MIT License](./LICENSE.md).
 
-[nibiru-medium]: example.com
-[nibiru-telegram]: example.com
-[nibiru-website]: https://github.com/NibiruChain
-[license-badge]: https://img.shields.io/badge/License-Apache_2.0-blue.svg
+[nibiru-medium]: https://blog.nibiru.fi
+<!-- [nibiru-telegram]: example.com -->
+[nibiru-website]: https://docs.nibiru.fi
+[license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [cosmos-sdk-repo]: https://github.com/cosmos/cosmos-sdk
-[go-unit-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml/badge.svg
+[go-unit-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/unit-tests.yml/badge.svg
 [go-unit-tests-workflow]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml
+[go-integration-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/integration-tests.yml/badge.svg
+[go-integration-tests-workflow]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml
 [nibiru-twitter]: https://twitter.com/NibiruChain
 [nibiru-discord]: https://discord.com/invite/pgArXgAxDD
 
