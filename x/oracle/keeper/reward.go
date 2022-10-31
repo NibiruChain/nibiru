@@ -44,15 +44,8 @@ func (k Keeper) rewardBallotWinners(
 		return
 	}
 
-	rewardPair := make([]string, len(whitelistedPairs))
-	i := 0
-	for pair := range whitelistedPairs {
-		rewardPair[i] = pair
-		i++
-	}
-
 	var periodRewards sdk.DecCoins
-	for _, pair := range rewardPair {
+	for pair := range whitelistedPairs {
 		rewardsForPair := k.AccrueVotePeriodPairRewards(ctx, pair)
 
 		// return if there's no rewards to give out
