@@ -15,7 +15,7 @@ args:
   - tokensIn: the tokens to add to the pool
 
 ret:
-  - numShares: the number of LP shares given to the user for the deposit
+  - out: the tokens to swap before joining the pool
   - remCoins: the number of coins remaining after the deposit
   - err: error if any
 */
@@ -27,47 +27,47 @@ func (pool *Pool) SwapForSwapAndJoin(tokensIn sdk.Coins) (
 		return
 	}
 
-	var x sdk.Int
+	var xAmt sdk.Int
+	var yAmt sdk.Int
 	var xDenom string
-	var y sdk.Int
 
 	// check who's x and y (x/)
 	if len(tokensIn) == 1 {
-		x = tokensIn[0].Amount
+		xAmt = tokensIn[0].Amount
 		xDenom = tokensIn[0].Denom
 
-		y = sdk.ZeroInt()
+		yAmt = sdk.ZeroInt()
 	} else {
 		// 2 assets
 		poolLiquidity := pool.PoolBalances()
 
-		s0 := tokensIn[0].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom).ToDec())
-		s1 := tokensIn[1].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[1].Denom).ToDec())
+		sharePctX := tokensIn[0].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom).ToDec())
+		sharePctY := tokensIn[1].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[1].Denom).ToDec())
 
-		if s0.GTE(s1) {
-			x = tokensIn[0].Amount
-			y = tokensIn[1].Amount
+		if sharePctX.GTE(sharePctY) {
+			xAmt = tokensIn[0].Amount
+			yAmt = tokensIn[1].Amount
 
 			xDenom = tokensIn[0].Denom
 		} else {
-			x = tokensIn[1].Amount
-			y = tokensIn[0].Amount
+			xAmt = tokensIn[1].Amount
+			yAmt = tokensIn[0].Amount
 
 			xDenom = tokensIn[1].Denom
 		}
 	}
 
 	xIndex, xPoolAsset, err := pool.getPoolAssetAndIndex(xDenom)
-	lx := xPoolAsset.Token.Amount
-	ly := pool.PoolAssets[1-xIndex].Token.Amount
+	liquidityX := xPoolAsset.Token.Amount
+	liquidityY := pool.PoolAssets[1-xIndex].Token.Amount
 
 	// x'=\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x;\:x'=-\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x
-	k := lx.Mul(ly)
+	invariant := liquidityX.Mul(liquidityY)
 
 	xSwap := sdk.NewInt(
 		int64(math.Sqrt(
-			(x.Mul(k).Add(k.Mul(lx))).ToDec().Quo(
-				y.Add(ly).ToDec()).MustFloat64()))).Sub(lx)
+			(xAmt.Mul(invariant).Add(invariant.Mul(liquidityX))).ToDec().Quo(
+				yAmt.Add(liquidityY).ToDec()).MustFloat64()))).Sub(liquidityX)
 
 	return sdk.NewCoin(pool.PoolAssets[xIndex].Token.Denom, xSwap), err
 }
