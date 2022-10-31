@@ -308,7 +308,7 @@ func TestSwapForSwapAndJoin(t *testing.T) {
 					require.NoError(t, err)
 					otherDenom := pool.PoolAssets[1-index].Token.Denom
 
-					tokenOut, err := pool.CalcOutAmtGivenIn(swapCoin, otherDenom)
+					tokenOut, err := pool.CalcOutAmtGivenIn(swapCoin, otherDenom, false)
 					require.NoError(t, err)
 
 					err = pool.ApplySwap(swapCoin, tokenOut)

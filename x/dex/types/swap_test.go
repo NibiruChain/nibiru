@@ -130,7 +130,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tokenOut, err := tc.pool.CalcOutAmtGivenIn(tc.tokenIn, tc.tokenOutDenom)
+			tokenOut, err := tc.pool.CalcOutAmtGivenIn(tc.tokenIn, tc.tokenOutDenom, false)
 			if tc.shouldError {
 				require.Error(t, err)
 			} else {
