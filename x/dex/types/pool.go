@@ -142,6 +142,10 @@ func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 	otherDenom := pool.PoolAssets[1-index].Token.Denom
 	tokenOut, err := pool.CalcOutAmtGivenIn(swapToken, otherDenom)
 
+	if err != nil {
+		return
+	}
+
 	err = pool.ApplySwap(swapToken, tokenOut)
 
 	if err != nil {
