@@ -133,7 +133,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 	}
 }
 
-func TestSwapNumShare(t *testing.T) {
+func TestSwapForSwapAndJoin(t *testing.T) {
 	for _, tc := range []struct {
 		name             string
 		poolAssets       []PoolAsset
@@ -296,20 +296,20 @@ func TestSwapNumShare(t *testing.T) {
 				TotalWeight: sdk.NewInt(2 << 30),
 				TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
 			}
-			swapCoin, err := pool.SwapNumShare(tc.tokensIn)
+			swapCoin, err := pool.SwapForSwapAndJoin(tc.tokensIn)
 			if tc.err == nil {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.expectedX0Denom, swapCoin.Denom)
 				require.EqualValues(t, tc.expectedX0Amount, swapCoin.Amount.Int64())
 
 				if swapCoin.Amount.GT(sdk.ZeroInt()) {
-
 					index, _, err := pool.getPoolAssetAndIndex(swapCoin.Denom)
 
 					require.NoError(t, err)
 					otherDenom := pool.PoolAssets[1-index].Token.Denom
 
 					tokenOut, err := pool.CalcOutAmtGivenIn(swapCoin, otherDenom)
+					require.NoError(t, err)
 
 					err = pool.ApplySwap(swapCoin, tokenOut)
 					require.NoError(t, err)
@@ -326,6 +326,7 @@ func TestSwapNumShare(t *testing.T) {
 					}
 
 					_, remCoins, err := pool.numSharesOutFromTokensIn(tokensIn)
+					require.NoError(t, err)
 
 					// Because of rounding errors, we might receive remcoins up to ~ly/lx
 					_, assetX, _ := pool.getPoolAssetAndIndex(swapCoin.Denom)
@@ -335,7 +336,6 @@ func TestSwapNumShare(t *testing.T) {
 
 					require.LessOrEqual(t, remCoins.AmountOf(swapCoin.Denom).Int64(), maxError.TruncateInt64())
 				}
-
 			} else {
 				require.Error(t, err)
 			}

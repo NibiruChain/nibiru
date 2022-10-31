@@ -312,7 +312,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 			resp, err := msgServer.JoinPool(
 				sdk.WrapSDKContext(ctx),
-				types.NewMsgJoinPool(joinerAddr.String(), tc.initialPool.Id, tc.tokensIn),
+				types.NewMsgJoinPool(joinerAddr.String(), tc.initialPool.Id, tc.tokensIn, false),
 			)
 
 			require.NoError(t, err)
