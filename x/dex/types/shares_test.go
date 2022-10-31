@@ -2,7 +2,6 @@ package types
 
 import (
 	"errors"
-	fmt "fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -202,7 +201,7 @@ func TestSwapNumShare(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 43),
 			),
 			expectedX0Denom:  "aaa",
-			expectedX0Amount: 29,
+			expectedX0Amount: 27,
 		},
 		{
 			name: "tokens bbb need to be swapped",
@@ -222,7 +221,7 @@ func TestSwapNumShare(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 101),
 			),
 			expectedX0Denom:  "bbb",
-			expectedX0Amount: 29,
+			expectedX0Amount: 27,
 		},
 		{
 			name: "single asset join, aaa",
@@ -241,7 +240,7 @@ func TestSwapNumShare(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 928),
 			),
 			expectedX0Denom:  "aaa",
-			expectedX0Amount: 751,
+			expectedX0Amount: 286,
 		},
 		{
 			name: "single asset join, bbb",
@@ -260,7 +259,7 @@ func TestSwapNumShare(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 928),
 			),
 			expectedX0Denom:  "bbb",
-			expectedX0Amount: 566,
+			expectedX0Amount: 388,
 		},
 
 		{
@@ -312,6 +311,9 @@ func TestSwapNumShare(t *testing.T) {
 
 					tokenOut, err := pool.CalcOutAmtGivenIn(swapCoin, otherDenom)
 
+					err = pool.ApplySwap(swapCoin, tokenOut)
+					require.NoError(t, err)
+
 					tokensIn := sdk.Coins{
 						{
 							Denom:  swapCoin.Denom,
@@ -319,16 +321,19 @@ func TestSwapNumShare(t *testing.T) {
 						},
 						{
 							Denom:  otherDenom,
-							Amount: tokenOut.Amount.Add(tc.tokensIn.AmountOfNoDenomValidation(otherDenom)),
+							Amount: tc.tokensIn.AmountOfNoDenomValidation(otherDenom).Add(tokenOut.Amount),
 						},
 					}
 
-					fmt.Println("tokensIn", tokensIn)
+					_, remCoins, err := pool.numSharesOutFromTokensIn(tokensIn)
 
-					numShares, remCoins, err := pool.numSharesOutFromTokensIn(tokensIn)
-					fmt.Println(numShares, remCoins)
+					// Because of rounding errors, we might receive remcoins up to ~ly/lx
+					_, assetX, _ := pool.getPoolAssetAndIndex(swapCoin.Denom)
+					_, assetY, _ := pool.getPoolAssetAndIndex(otherDenom)
 
-					require.LessOrEqual(t, remCoins.AmountOf(swapCoin.Denom).Int64(), int64(1))
+					maxError := assetX.Token.Amount.ToDec().Quo(assetY.Token.Amount.ToDec())
+
+					require.LessOrEqual(t, remCoins.AmountOf(swapCoin.Denom).Int64(), maxError.TruncateInt64())
 				}
 
 			} else {

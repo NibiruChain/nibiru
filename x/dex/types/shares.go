@@ -27,16 +27,16 @@ func (pool *Pool) SwapNumShare(tokensIn sdk.Coins) (
 		return
 	}
 
-	var x0 sdk.Int
-	var x0Denom string
-	var x1 sdk.Int
+	var x sdk.Int
+	var xDenom string
+	var y sdk.Int
 
-	// check who's x0 and x1 (x0/)
+	// check who's x and y (x/)
 	if len(tokensIn) == 1 {
-		x0 = tokensIn[0].Amount
-		x0Denom = tokensIn[0].Denom
+		x = tokensIn[0].Amount
+		xDenom = tokensIn[0].Denom
 
-		x1 = sdk.ZeroInt()
+		y = sdk.ZeroInt()
 	} else {
 		// 2 assets
 		poolLiquidity := pool.PoolBalances()
@@ -45,36 +45,33 @@ func (pool *Pool) SwapNumShare(tokensIn sdk.Coins) (
 		s1 := tokensIn[1].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[1].Denom).ToDec())
 
 		if s0.GTE(s1) {
-			x0 = tokensIn[0].Amount
-			x1 = tokensIn[1].Amount
+			x = tokensIn[0].Amount
+			y = tokensIn[1].Amount
 
-			x0Denom = tokensIn[0].Denom
+			xDenom = tokensIn[0].Denom
 
 		} else {
-			x0 = tokensIn[1].Amount
-			x1 = tokensIn[0].Amount
+			x = tokensIn[1].Amount
+			y = tokensIn[0].Amount
 
-			x0Denom = tokensIn[1].Denom
+			xDenom = tokensIn[1].Denom
 		}
 
 	}
 
-	x0Index, l0, err := pool.getPoolAssetAndIndex(x0Denom)
-	l1 := pool.PoolAssets[1-x0Index].Token.Amount
+	xIndex, xPoolAsset, err := pool.getPoolAssetAndIndex(xDenom)
+	lx := xPoolAsset.Token.Amount
+	ly := pool.PoolAssets[1-xIndex].Token.Amount
 
-	Q := x1.Mul(l0.Token.Amount).Sub(x0.Mul(l1))
-	k := l0.Token.Amount.Mul(l1)
+	// x'=\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x;\:x'=-\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x
+	k := lx.Mul(ly)
 
-	// delta = Q**2 + 4 * k**2
-	// xn0 = (-(Q + 2*k) + sqrt(delta)) / (2 * l1)
-	delta := Q.Mul(Q).Add(sdk.NewInt(4).Mul(k.Mul(k))).Int64()
+	xSwap := sdk.NewInt(
+		int64(math.Sqrt(
+			(x.Mul(k).Add(k.Mul(lx))).ToDec().Quo(
+				y.Add(ly).ToDec()).MustFloat64()))).Sub(lx)
 
-	floatNum := math.Sqrt(float64(delta))
-	sqrtDelta := sdk.NewDec(int64(floatNum))
-
-	xn0 := sdk.NewInt(-1).Mul(Q.Add(sdk.NewInt(2).Mul(k))).ToDec().Add(sqrtDelta).Quo((sdk.NewInt(2).Mul(l1)).ToDec())
-
-	return sdk.NewCoin(pool.PoolAssets[x0Index].Token.Denom, xn0.TruncateInt()), err
+	return sdk.NewCoin(pool.PoolAssets[xIndex].Token.Denom, xSwap), err
 }
 
 /*
