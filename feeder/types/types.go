@@ -63,7 +63,7 @@ type PriceProvider interface {
 	// Price.Pair, Price.Source must always be non-empty.
 	// If there are errors whilst fetching prices, then
 	// Price.Valid must be set to false.
-	GetPrice(symbol common.AssetPair) Price
+	GetPrice(pair common.AssetPair) Price
 	// Close shuts down the PriceProvider.
 	Close()
 }
