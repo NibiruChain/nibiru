@@ -39,17 +39,16 @@ func (k Keeper) rewardBallotWinners(
 	whitelistedPairs map[string]struct{},
 	ballotWinners map[string]types.ValidatorPerformance,
 ) {
-	rewardPair := make([]string, len(whitelistedPairs))
+	validatorsWeightSum := types.GetValidatorWeightSum(ballotWinners)
+	if validatorsWeightSum == 0 {
+		return
+	}
 
+	rewardPair := make([]string, len(whitelistedPairs))
 	i := 0
 	for pair := range whitelistedPairs {
 		rewardPair[i] = pair
 		i++
-	}
-
-	validatorsWeightSum := types.GetValidatorWeightSum(ballotWinners)
-	if validatorsWeightSum == 0 {
-		return
 	}
 
 	var periodRewards sdk.DecCoins
