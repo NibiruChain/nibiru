@@ -73,11 +73,13 @@ func ExecMsgJoinPool(
 	poolId uint64,
 	sender fmt.Stringer,
 	tokensIn string,
+	useAllCoins string,
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{
 		fmt.Sprintf("--%s=%d", cli.FlagPoolId, poolId),
 		fmt.Sprintf("--%s=%s", cli.FlagTokensIn, tokensIn),
+		fmt.Sprintf("--%s=%s", cli.FlagUseAllCoins, useAllCoins),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, sender.String()),
 		fmt.Sprintf("--%s=%d", flags.FlagGas, 300000),
 	}

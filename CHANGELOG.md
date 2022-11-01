@@ -123,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#985](https://github.com/NibiruChain/nibiru/pull/985) - feat: query all active positions for a trader
 * [#997](https://github.com/NibiruChain/nibiru/pull/997) - feat: emit `ReserveSnapshotSavedEvent` in vpool EndBlocker
 * [#1011](https://github.com/NibiruChain/nibiru/pull/1011) - feat(perp): add DonateToEF cli command
+* [#1038](https://github.com/NibiruChain/nibiru/pull/1038) - feat(dex): add single asset join
 
 ### Fixes
 * [#1023](https://github.com/NibiruChain/nibiru/pull/1023) - collections: golang compiler bug

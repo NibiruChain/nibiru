@@ -526,7 +526,136 @@ func TestJoinPool(t *testing.T) {
 			joinerAddr := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
-			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn)
+			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, false)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedFinalPool, pool)
+			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
+			require.Equal(t, tc.expectedRemCoins, remCoins)
+		})
+	}
+}
+
+func TestJoinPoolAllAssets(t *testing.T) {
+	const shareDenom = "nibiru/pool/1"
+
+	tests := []struct {
+		name                     string
+		joinerInitialFunds       sdk.Coins
+		initialPool              types.Pool
+		tokensIn                 sdk.Coins
+		expectedNumSharesOut     sdk.Coin
+		expectedRemCoins         sdk.Coins
+		expectedJoinerFinalFunds sdk.Coins
+		expectedFinalPool        types.Pool
+	}{
+		{
+			name: "join with all assets",
+			joinerInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 100),
+				),
+				/*shares=*/ 100),
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			expectedNumSharesOut:     sdk.NewInt64Coin(shareDenom, 100),
+			expectedRemCoins:         sdk.NewCoins(),
+			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 200),
+					sdk.NewInt64Coin("foo", 200),
+				),
+				/*shares=*/ 200),
+		},
+		{
+			name: "join with some assets, none remaining",
+			joinerInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 100),
+				),
+				/*shares=*/ 100),
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 50),
+			),
+			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 50),
+			expectedRemCoins:     sdk.NewCoins(),
+			expectedJoinerFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(shareDenom, 50),
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 50),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 150),
+					sdk.NewInt64Coin("foo", 150),
+				),
+				/*shares=*/ 150),
+		},
+		{
+			name: "join with some assets, but swap done",
+			joinerInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 100),
+				),
+				/*shares=*/ 100),
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 75),
+			),
+			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 61),
+			expectedRemCoins:     sdk.NewCoins(),
+			expectedJoinerFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(shareDenom, 50),
+				sdk.NewInt64Coin("bar", 35),
+				sdk.NewInt64Coin("foo", 35),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 150),
+					sdk.NewInt64Coin("foo", 175),
+				),
+				/*shares=*/ 161),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+
+			poolAddr := testutil.AccAddress()
+			tc.initialPool.Address = poolAddr.String()
+			tc.expectedFinalPool.Address = poolAddr.String()
+			app.DexKeeper.SetPool(ctx, tc.initialPool)
+
+			joinerAddr := testutil.AccAddress()
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
+
+			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, true)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFinalPool, pool)
 			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)

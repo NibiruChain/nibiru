@@ -79,7 +79,7 @@ func (k Keeper) SwapExactAmountIn(
 	}
 
 	// calculate tokenOut and validate
-	tokenOut, err = pool.CalcOutAmtGivenIn(tokenIn, tokenOutDenom)
+	tokenOut, err = pool.CalcOutAmtGivenIn(tokenIn, tokenOutDenom, false)
 	if err != nil {
 		return sdk.Coin{}, err
 	}

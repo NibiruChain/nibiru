@@ -195,7 +195,7 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 		s.Run(tc.name, func() {
 			ctx := val.ClientCtx
 
-			out, err := ExecMsgJoinPool(ctx, tc.poolId, val.Address, tc.tokensIn)
+			out, err := ExecMsgJoinPool(ctx, tc.poolId, val.Address, tc.tokensIn, "false")
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {

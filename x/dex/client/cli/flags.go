@@ -11,6 +11,9 @@ const (
 	// FlagPoolId Will be parsed to uint64.
 	FlagPoolId = "pool-id"
 
+	// FlagUseAllCoins Will be parsed to uint64.
+	FlagUseAllCoins = "use-all-coins"
+
 	// FlagTokensIn Will be parsed to []sdk.Coin.
 	FlagTokensIn = "tokens-in"
 
@@ -43,6 +46,7 @@ func FlagSetJoinPool() *flag.FlagSet {
 
 	fs.Uint64(FlagPoolId, 0, "The id of pool")
 	fs.StringArray(FlagTokensIn, []string{""}, "Amount of each denom to send into the pool (specify multiple denoms with: --tokens-in=1uusdc --tokens-in=1unusd)")
+	fs.Bool(FlagUseAllCoins, false, "Whether to use all the tokens in tokens-in to maximize shares out with a swap first")
 	return fs
 }
 

@@ -77,6 +77,7 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 		sender,
 		msg.PoolId,
 		msg.TokensIn,
+		msg.UseAllCoins,
 	)
 	if err != nil {
 		return nil, err

@@ -56,6 +56,8 @@ message MsgJoinPool {
     (gogoproto.moretags) = "yaml:\"tokens_in\"",
     (gogoproto.nullable) = false
   ];
+
+  bool use_all_coins = 4 [(gogoproto.moretags) = "yaml:\"use_all_coins\""];  
 }
 
 /*

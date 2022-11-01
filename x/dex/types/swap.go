@@ -16,12 +16,13 @@ Only supports single asset swaps.
 args:
   - tokenIn: the amount of tokens to swap
   - tokenOutDenom: the target token denom
+  - noFee: whether we want to bypass swap fee (for single asset join)
 
 ret:
   - tokenOut: the tokens received from the swap
   - err: error if any
 */
-func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string) (
+func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee bool) (
 	tokenOut sdk.Coin, err error,
 ) {
 	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
@@ -34,7 +35,13 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string) (
 		return tokenOut, err
 	}
 
-	tokenAmountInAfterFee := tokenIn.Amount.ToDec().Mul(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
+	var tokenAmountInAfterFee sdk.Dec
+	if noFee {
+		tokenAmountInAfterFee = tokenIn.Amount.ToDec()
+	} else {
+		tokenAmountInAfterFee = tokenIn.Amount.ToDec().Mul(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
+	}
+
 	poolTokenInBalance := poolAssetIn.Token.Amount.ToDec()
 	poolTokenInBalancePostSwap := poolTokenInBalance.Add(tokenAmountInAfterFee)
 
