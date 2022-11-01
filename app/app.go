@@ -3,10 +3,15 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/NibiruChain/nibiru/app/wasmconfig"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -167,6 +172,7 @@ var (
 		perp.AppModuleBasic{},
 		vpool.AppModuleBasic{},
 		util.AppModule{},
+		wasm.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -255,6 +261,10 @@ type NibiruApp struct {
 	pricefeedKeeper pricefeedkeeper.Keeper
 	vpoolKeeper     vpoolkeeper.Keeper
 
+	// WASM keepers
+	wasmKeeper       wasm.Keeper
+	scopedWasmKeeper capabilitykeeper.ScopedKeeper
+
 	// the module manager
 	mm *module.Manager
 
@@ -274,12 +284,57 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
+// this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
+var (
+	// If EnabledSpecificProposals is "", and this is "true", then enable all x/wasm proposals.
+	// If EnabledSpecificProposals is "", and this is not "true", then disable all x/wasm proposals.
+	ProposalsEnabled = "true"
+	// If set to non-empty string it must be comma-separated list of values that are all a subset
+	// of "EnableAllProposals" (takes precedence over ProposalsEnabled)
+	// https://github.com/CosmWasm/wasmd/blob/02a54d33ff2c064f3539ae12d75d027d9c665f05/x/wasm/internal/types/proposal.go#L28-L34
+	EnableSpecificProposals = ""
+)
+
+// GetEnabledProposals parses the ProposalsEnabled / EnableSpecificProposals values to
+// produce a list of enabled proposals to pass into wasmd app.
+func GetEnabledProposals() []wasm.ProposalType {
+	if EnableSpecificProposals == "" {
+		if ProposalsEnabled == "true" {
+			return wasm.EnableAllProposals
+		}
+		return wasm.DisableAllProposals
+	}
+	chunks := strings.Split(EnableSpecificProposals, ",")
+	proposals, err := wasm.ConvertToProposals(chunks)
+	if err != nil {
+		panic(err)
+	}
+	return proposals
+}
+
+// GetWasmOpts build wasm options
+func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
+	var wasmOpts []wasm.Option
+	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	}
+
+	return wasmOpts
+}
+
 // NewNibiruApp returns a reference to an initialized NibiruApp.
 func NewNibiruApp(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint,
+	logger log.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	loadLatest bool,
+	skipUpgradeHeights map[int64]bool,
+	homePath string,
+	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
-	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
+	appOpts servertypes.AppOptions,
+	wasmConfig *wasmconfig.Config,
+	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -313,6 +368,7 @@ func NewNibiruApp(
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
 		vpooltypes.StoreKey,
+		wasm.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 
@@ -431,6 +487,33 @@ func NewNibiruApp(
 		app.scopedIBCKeeper,
 	)
 
+	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
+
+	wasmDir := filepath.Join(homePath, "data") // TODO: parametrize
+
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	supportedFeatures := "iterator,staking,stargate"
+	app.wasmKeeper = wasm.NewKeeper(
+		appCodec,
+		keys[wasm.StoreKey],
+		app.GetSubspace(wasm.ModuleName),
+		app.accountKeeper,
+		app.bankKeeper,
+		app.stakingKeeper,
+		app.distrKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		scopedWasmKeeper,
+		app.transferKeeper,
+		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		wasmDir,
+		wasmConfig.ToWasmConfig(),
+		supportedFeatures,
+		GetWasmOpts(appOpts)...,
+	)
+
 	// register the proposal types
 
 	govRouter := govtypes.NewRouter()
@@ -467,9 +550,12 @@ func NewNibiruApp(
 	/* Create IBC module and a static IBC router */
 	ibcRouter := porttypes.NewRouter()
 	/* Add an ibc-transfer module route, then set it and seal it. */
-	ibcRouter.AddRoute(
-		/* module    */ ibctransfertypes.ModuleName,
-		/* ibcModule */ transferIBCModule)
+	ibcRouter.
+		AddRoute(
+			/* module    */ ibctransfertypes.ModuleName,
+			/* ibcModule */ transferIBCModule).
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
+
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
 	app.ibcKeeper.SetRouter(ibcRouter)
@@ -478,6 +564,11 @@ func NewNibiruApp(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
 		app.accountKeeper, app.bankKeeper, &app.stakingKeeper, govRouter,
 	)
+
+	//enabledProposals := GetEnabledProposals()
+	//if len(enabledProposals) != 0 {
+	//	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, enabledProposals))
+	//}
 
 	// -------------------------- Module Options --------------------------
 
@@ -533,6 +624,8 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
 		transferModule,
+
+		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -566,6 +659,7 @@ func NewNibiruApp(
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
@@ -593,6 +687,7 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -626,6 +721,7 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -688,8 +784,10 @@ func NewNibiruApp(
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
-		PricefeedKeeper: app.pricefeedKeeper,
-		IBCKeeper:       app.ibcKeeper,
+		PricefeedKeeper:   app.pricefeedKeeper,
+		IBCKeeper:         app.ibcKeeper,
+		TxCounterStoreKey: keys[wasm.StoreKey],
+		WasmConfig:        wasmConfig.ToWasmConfig(),
 	})
 
 	if err != nil {
@@ -720,6 +818,8 @@ func NewNibiruApp(
 		*/
 		app.capabilityKeeper.Seal()
 	}
+
+	app.scopedWasmKeeper = scopedWasmKeeper
 
 	return app
 }
@@ -927,6 +1027,8 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
+
+	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper
 }

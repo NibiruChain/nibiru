@@ -11,6 +11,9 @@ import (
 
 	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
 	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
+
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type AnteHandlerOptions struct {
@@ -18,6 +21,9 @@ type AnteHandlerOptions struct {
 	IBCKeeper *ibckeeper.Keeper
 
 	PricefeedKeeper pricefeedkeeper.Keeper
+
+	TxCounterStoreKey sdk.StoreKey
+	WasmConfig        wasmTypes.WasmConfig
 }
 
 /*
@@ -44,6 +50,8 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
+		wasmkeeper.NewCountTXDecorator(options.TxCounterStoreKey),
 		ante.NewRejectExtensionOptionsDecorator(),
 		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
