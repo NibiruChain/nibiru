@@ -132,10 +132,16 @@ func CmdJoinPool() *cobra.Command {
 				tokensIn = tokensIn.Add(parsed...)
 			}
 
+			useAllCoins, err := flagSet.GetBool(FlagUseAllCoins)
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgJoinPool(
 				/*sender=*/ clientCtx.GetFromAddress().String(),
 				poolId,
 				tokensIn,
+				useAllCoins,
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, flagSet, msg)
@@ -147,6 +153,7 @@ func CmdJoinPool() *cobra.Command {
 
 	_ = cmd.MarkFlagRequired(FlagPoolId)
 	_ = cmd.MarkFlagRequired(FlagTokensIn)
+	_ = cmd.MarkFlagRequired(FlagUseAllCoins)
 
 	return cmd
 }
