@@ -51,11 +51,12 @@ func (msg *MsgExitPool) ValidateBasic() error {
 
 var _ sdk.Msg = &MsgJoinPool{}
 
-func NewMsgJoinPool(sender string, poolId uint64, tokensIn sdk.Coins) *MsgJoinPool {
+func NewMsgJoinPool(sender string, poolId uint64, tokensIn sdk.Coins, useAllCoins bool) *MsgJoinPool {
 	return &MsgJoinPool{
-		Sender:   sender,
-		PoolId:   poolId,
-		TokensIn: tokensIn,
+		Sender:      sender,
+		PoolId:      poolId,
+		TokensIn:    tokensIn,
+		UseAllCoins: useAllCoins,
 	}
 }
 
