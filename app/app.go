@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
@@ -334,7 +333,7 @@ func NewNibiruApp(
 	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
-	wasmConfig *wasmconfig.Config,
+	wasmConfig *WasmConfig,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
 	appCodec := encodingConfig.Marshaler

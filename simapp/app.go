@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm"
-	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	"io"
 	"net/http"
 	"os"
@@ -322,7 +321,7 @@ func NewNibiruTestApp(
 	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
-	wasmConfig *wasmconfig.Config,
+	wasmConfig *nibiapp.WasmConfig,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruTestApp {
 	appCodec := encodingConfig.Marshaler

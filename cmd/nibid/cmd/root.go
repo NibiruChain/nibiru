@@ -32,7 +32,6 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 )
@@ -98,7 +97,7 @@ func initAppConfig() (string, interface{}) {
 	type CustomAppConfig struct {
 		serverconfig.Config
 
-		WASMConfig wasmconfig.Config `mapstructure:"wasm"`
+		WasmConfig app.WasmConfig `mapstructure:"wasm"`
 	}
 
 	// Optionally allow the chain developer to overwrite the SDK's default
@@ -118,10 +117,10 @@ func initAppConfig() (string, interface{}) {
 
 	customAppConfig := CustomAppConfig{
 		Config:     *srvCfg,
-		WASMConfig: *wasmconfig.DefaultConfig(),
+		WasmConfig: *app.DefaultWasmConfig(),
 	}
 
-	customAppTemplate := serverconfig.DefaultConfigTemplate + wasmconfig.DefaultConfigTemplate
+	customAppTemplate := serverconfig.DefaultConfigTemplate + app.DefaultWasmConfigTemplate
 
 	return customAppTemplate, customAppConfig
 }
@@ -179,7 +178,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 // Implements the servertypes.ModuleInitFlags interface
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
-	wasmconfig.AddConfigFlags(startCmd)
+	app.AddConfigFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
@@ -271,7 +270,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		a.encCfg,
 		appOpts,
-		wasmconfig.GetConfig(appOpts),
+		app.GetWasmConfig(appOpts),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -299,13 +298,13 @@ func (a appCreator) appExport(
 	}
 
 	if height != -1 {
-		nibiruApp = app.NewNibiruApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts, wasmconfig.DefaultConfig())
+		nibiruApp = app.NewNibiruApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts, app.DefaultWasmConfig())
 
 		if err := nibiruApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		nibiruApp = app.NewNibiruApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts, wasmconfig.DefaultConfig())
+		nibiruApp = app.NewNibiruApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts, app.DefaultWasmConfig())
 	}
 
 	return nibiruApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
