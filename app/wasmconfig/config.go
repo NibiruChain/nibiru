@@ -54,7 +54,6 @@ func DefaultConfig() *Config {
 
 // GetConfig load config values from the app options
 func GetConfig(appOpts servertypes.AppOptions) *Config {
-	print(appOpts)
 	return &Config{
 		ContractQueryGasLimit:      cast.ToUint64(appOpts.Get("wasm.contract-query-gas-limit")),
 		ContractSimulationGasLimit: cast.ToUint64(appOpts.Get("wasm.contract-simulation-gas-limit")),
@@ -77,3 +76,21 @@ func AddConfigFlags(startCmd *cobra.Command) {
 	startCmd.Flags().Bool(flagContractDebugMode, DefaultContractDebugMode, "The flag to specify whether print contract logs or not")
 	startCmd.Flags().Uint32(flagContractMemoryCacheSize, DefaultContractMemoryCacheSize, "Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
 }
+
+// DefaultConfigTemplate default config template for wasm module
+const DefaultConfigTemplate = `
+[wasm]
+# The maximum gas amount can be spent for contract query.
+# The contract query will invoke contract execution vm,
+# so we need to restrict the max usage to prevent DoS attack
+contract-query-gas-limit = "{{ .WASMConfig.ContractQueryGasLimit }}"
+
+# The maximum gas amount can be used in a tx simulation call.
+contract-simulation-gas-limit= "{{ .WASMConfig.ContractSimulationGasLimit }}"
+
+# The flag to specify whether print contract logs or not
+contract-debug-mode = "{{ .WASMConfig.ContractDebugMode }}"
+
+# The WASM VM memory cache size in MiB not bytes
+contract-memory-cache-size = "{{ .WASMConfig.ContractMemoryCacheSize }}"
+`

@@ -25,7 +25,7 @@ Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo], accurately prices assets
 
 ## ⚙️ — Documentation
 
-Conceptual and technical documentation can be found in the [Nibiru docs](https://docs.nibiru.io). Each module also contains a detailed specification in its "spec" directory (e.g. [`x/stablecoin/spec`](https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin/spec)).
+Conceptual and technical documentation can be found in the [Nibiru docs](https://docs.nibiru.fi). Each module also contains a detailed specification in its "spec" directory (e.g. [`x/stablecoin/spec`](https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin/spec)).
 
 ## 💬 — Community
 
