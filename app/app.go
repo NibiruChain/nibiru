@@ -190,6 +190,7 @@ var (
 		perptypes.FeePoolModuleAccount:   {},
 		epochstypes.ModuleName:           {},
 		common.TreasuryPoolModuleAccount: {},
+		wasm.ModuleName:                  {},
 	}
 )
 

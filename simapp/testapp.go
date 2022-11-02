@@ -2,6 +2,7 @@ package simapp
 
 import (
 	"encoding/json"
+	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	"os"
 	"path/filepath"
 	"time"
@@ -65,6 +66,7 @@ func NewTestNibiruAppWithGenesis(gen GenesisState) *NibiruTestApp {
 		/*invCheckPeriod=*/ 0,
 		/*encodingConfig=*/ encoding,
 		/*appOpts=*/ simapp.EmptyAppOptions{},
+		wasmconfig.DefaultConfig(),
 	)
 
 	stateBytes, err := json.MarshalIndent(gen, "", " ")

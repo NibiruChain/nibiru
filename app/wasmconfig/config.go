@@ -10,8 +10,8 @@ import (
 
 // config default values
 const (
-	DefaultContractQueryGasLimit      = uint64(3_000)
-	DefaultContractSimulationGasLimit = uint64(50_000)
+	DefaultContractQueryGasLimit      = uint64(3_000_000)
+	DefaultContractSimulationGasLimit = uint64(50_000_000)
 	DefaultContractDebugMode          = false
 	DefaultContractMemoryCacheSize    = uint32(2048)
 )
