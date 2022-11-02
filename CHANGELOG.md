@@ -125,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#997](https://github.com/NibiruChain/nibiru/pull/997) - feat: emit `ReserveSnapshotSavedEvent` in vpool EndBlocker
 * [#1011](https://github.com/NibiruChain/nibiru/pull/1011) - feat(perp): add DonateToEF cli command
 * [#1038](https://github.com/NibiruChain/nibiru/pull/1038) - feat(dex): add single asset join
+* [#1044](https://github.com/NibiruChain/nibiru/pull/1044) - feat(wasm): cosmwasm module integration
 
 ### Fixes
 * [#1023](https://github.com/NibiruChain/nibiru/pull/1023) - collections: golang compiler bug
