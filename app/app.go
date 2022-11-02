@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	"github.com/prometheus/client_golang/prometheus"
@@ -103,6 +102,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"

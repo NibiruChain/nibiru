@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -33,6 +32,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 )

@@ -2,7 +2,6 @@ package simapp
 
 import (
 	"encoding/json"
-	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	"os"
 	"path/filepath"
 	"time"
@@ -16,6 +15,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
+	"github.com/NibiruChain/nibiru/app/wasmconfig"
 	"github.com/NibiruChain/nibiru/x/common"
 	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
