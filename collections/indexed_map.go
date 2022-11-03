@@ -93,8 +93,7 @@ func (i IndexedMap[PK, V, I]) Delete(ctx sdk.Context, key PK) error {
 }
 
 // Iterate iterates over the underlying store containing the concrete objects.
-// The range provided filters over the primary keys.
-func (i IndexedMap[PK, V, I]) Iterate(ctx sdk.Context, rng Range[PK]) Iterator[PK, V] {
+func (i IndexedMap[PK, V, I]) Iterate(ctx sdk.Context, rng Ranger[PK]) Iterator[PK, V] {
 	return i.m.Iterate(ctx, rng)
 }
 
