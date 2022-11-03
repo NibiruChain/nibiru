@@ -2,9 +2,75 @@ package types
 
 import (
 	"errors"
+	math "math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+/*
+For 2 asset pools, swap first to maximize the amount of tokens deposited in the pool.
+A user can deposit either one or 2 tokens, and we will swap first the biggest individual share and then join the pool.
+
+args:
+  - tokensIn: the tokens to add to the pool
+
+ret:
+  - out: the tokens to swap before joining the pool
+  - remCoins: the number of coins remaining after the deposit
+  - err: error if any
+*/
+func (pool *Pool) SwapForSwapAndJoin(tokensIn sdk.Coins) (
+	out sdk.Coin, err error,
+) {
+	if len(pool.PoolAssets) != 2 {
+		err = errors.New("swap and add tokens to pool only available for 2 assets pool")
+		return
+	}
+
+	var xAmt sdk.Int
+	var yAmt sdk.Int
+	var xDenom string
+
+	// check who's x and y (x/)
+	if len(tokensIn) == 1 {
+		xAmt = tokensIn[0].Amount
+		xDenom = tokensIn[0].Denom
+
+		yAmt = sdk.ZeroInt()
+	} else {
+		// 2 assets
+		poolLiquidity := pool.PoolBalances()
+
+		sharePctX := tokensIn[0].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom).ToDec())
+		sharePctY := tokensIn[1].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[1].Denom).ToDec())
+
+		if sharePctX.GTE(sharePctY) {
+			xAmt = tokensIn[0].Amount
+			yAmt = tokensIn[1].Amount
+
+			xDenom = tokensIn[0].Denom
+		} else {
+			xAmt = tokensIn[1].Amount
+			yAmt = tokensIn[0].Amount
+
+			xDenom = tokensIn[1].Denom
+		}
+	}
+
+	xIndex, xPoolAsset, err := pool.getPoolAssetAndIndex(xDenom)
+	liquidityX := xPoolAsset.Token.Amount
+	liquidityY := pool.PoolAssets[1-xIndex].Token.Amount
+
+	// x'=\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x;\:x'=-\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x
+	invariant := liquidityX.Mul(liquidityY)
+
+	xSwap := sdk.NewInt(
+		int64(math.Sqrt(
+			(xAmt.Mul(invariant).Add(invariant.Mul(liquidityX))).ToDec().Quo(
+				yAmt.Add(liquidityY).ToDec()).MustFloat64()))).Sub(liquidityX)
+
+	return sdk.NewCoin(pool.PoolAssets[xIndex].Token.Denom, xSwap), err
+}
 
 /*
 Takes a pool and the amount of tokens desired to add to the pool,

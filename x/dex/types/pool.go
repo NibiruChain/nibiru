@@ -111,6 +111,65 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 }
 
 /*
+Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
+We compute the swap and then join the pool.
+
+args:
+  - tokensIn: the tokens to add to the pool
+
+ret:
+  - numShares: the number of LP shares given to the user for the deposit
+  - remCoins: the number of coins remaining after the deposit
+  - err: error if any
+*/
+func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
+	numShares sdk.Int, remCoins sdk.Coins, err error,
+) {
+	swapToken, err := pool.SwapForSwapAndJoin(tokensIn)
+	if err != nil {
+		return
+	}
+	if swapToken.Amount.LT(sdk.OneInt()) {
+		return pool.AddTokensToPool(tokensIn)
+	}
+
+	index, _, err := pool.getPoolAssetAndIndex(swapToken.Denom)
+
+	if err != nil {
+		return
+	}
+
+	otherDenom := pool.PoolAssets[1-index].Token.Denom
+	tokenOut, err := pool.CalcOutAmtGivenIn(
+		/*tokenIn=*/ swapToken,
+		/*tokenOutDenom=*/ otherDenom,
+		/*noFee=*/ true,
+	)
+
+	if err != nil {
+		return
+	}
+
+	err = pool.ApplySwap(swapToken, tokenOut)
+
+	if err != nil {
+		return
+	}
+
+	tokensIn = sdk.Coins{
+		{
+			Denom:  swapToken.Denom,
+			Amount: tokensIn.AmountOfNoDenomValidation(swapToken.Denom).Sub(swapToken.Amount),
+		},
+		{
+			Denom:  otherDenom,
+			Amount: tokensIn.AmountOfNoDenomValidation(otherDenom).Add(tokenOut.Amount),
+		},
+	}.Sort()
+	return pool.AddTokensToPool(tokensIn)
+}
+
+/*
 Fetch the pool's address as an sdk.Address.
 */
 func (pool Pool) GetAddress() (addr sdk.AccAddress) {

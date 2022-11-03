@@ -436,6 +436,7 @@ func (k Keeper) JoinPool(
 	joinerAddr sdk.AccAddress,
 	poolId uint64,
 	tokensIn sdk.Coins,
+	shouldSwap bool,
 ) (pool types.Pool, numSharesOut sdk.Coin, remCoins sdk.Coins, err error) {
 	pool, _ = k.FetchPool(ctx, poolId)
 
@@ -445,7 +446,12 @@ func (k Keeper) JoinPool(
 
 	poolAddr := pool.GetAddress()
 
-	numShares, remCoins, err := pool.AddTokensToPool(tokensIn)
+	var numShares sdk.Int
+	if !shouldSwap {
+		numShares, remCoins, err = pool.AddTokensToPool(tokensIn)
+	} else {
+		numShares, remCoins, err = pool.AddAllTokensToPool(tokensIn)
+	}
 	if err != nil {
 		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
