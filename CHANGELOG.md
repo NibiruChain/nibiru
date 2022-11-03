@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### API Breaking
 
+* [#1046](https://github.com/NibiruChain/nibiru/pull/1046) - remove: feeder
 * [#880](https://github.com/NibiruChain/nibiru/pull/880) - refactor `PostRawPrice` return values
 * [#900](https://github.com/NibiruChain/nibiru/pull/900) - fix x/vpool twap calculation to be bounded in time
 * [#919](https://github.com/NibiruChain/nibiru/pull/919) - refactor(proto): vpool module files consistency
@@ -114,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+* [#1032](https://github.com/NibiruChain/nibiru/pull/1032) - feeder: add price provide API and bitfinex price source
 * [#1019](https://github.com/NibiruChain/nibiru/pull/1019) - add fields to the snapshot reserve event
 * [#1010](https://github.com/NibiruChain/nibiru/pull/1010) - feeder: initialize oracle feeder core logic
 * [#966](https://github.com/NibiruChain/nibiru/pull/966) - collections: add indexed map
@@ -122,6 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#985](https://github.com/NibiruChain/nibiru/pull/985) - feat: query all active positions for a trader
 * [#997](https://github.com/NibiruChain/nibiru/pull/997) - feat: emit `ReserveSnapshotSavedEvent` in vpool EndBlocker
 * [#1011](https://github.com/NibiruChain/nibiru/pull/1011) - feat(perp): add DonateToEF cli command
+* [#1038](https://github.com/NibiruChain/nibiru/pull/1038) - feat(dex): add single asset join
 
 ### Fixes
 * [#1023](https://github.com/NibiruChain/nibiru/pull/1023) - collections: golang compiler bug

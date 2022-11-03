@@ -249,7 +249,7 @@ func (k queryServer) EstimateSwapExactAmountIn(
 		return nil, err
 	}
 
-	tokenOut, err := pool.CalcOutAmtGivenIn(req.TokenIn, req.TokenOutDenom)
+	tokenOut, err := pool.CalcOutAmtGivenIn(req.TokenIn, req.TokenOutDenom, false)
 	if err != nil {
 		return nil, err
 	}
