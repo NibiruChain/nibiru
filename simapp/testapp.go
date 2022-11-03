@@ -2,10 +2,11 @@ package simapp
 
 import (
 	"encoding/json"
-	"github.com/NibiruChain/nibiru/app"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
