@@ -96,8 +96,6 @@ func initAppConfig() (string, interface{}) {
 
 	type CustomAppConfig struct {
 		serverconfig.Config
-
-		WasmConfig app.WasmConfig `mapstructure:"wasm"`
 	}
 
 	// Optionally allow the chain developer to overwrite the SDK's default
@@ -116,11 +114,10 @@ func initAppConfig() (string, interface{}) {
 	srvCfg.MinGasPrices = "0unibi"
 
 	customAppConfig := CustomAppConfig{
-		Config:     *srvCfg,
-		WasmConfig: *app.DefaultWasmConfig(),
+		Config: *srvCfg,
 	}
 
-	customAppTemplate := serverconfig.DefaultConfigTemplate + app.DefaultWasmConfigTemplate
+	customAppTemplate := serverconfig.DefaultConfigTemplate
 
 	return customAppTemplate, customAppConfig
 }
@@ -178,7 +175,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 // Implements the servertypes.ModuleInitFlags interface
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
-	app.AddConfigFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {
@@ -270,7 +266,6 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		a.encCfg,
 		appOpts,
-		app.GetWasmConfig(appOpts),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -298,13 +293,13 @@ func (a appCreator) appExport(
 	}
 
 	if height != -1 {
-		nibiruApp = app.NewNibiruApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts, app.DefaultWasmConfig())
+		nibiruApp = app.NewNibiruApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 
 		if err := nibiruApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		nibiruApp = app.NewNibiruApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts, app.DefaultWasmConfig())
+		nibiruApp = app.NewNibiruApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 	}
 
 	return nibiruApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)

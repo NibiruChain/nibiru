@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -67,7 +65,6 @@ func NewTestNibiruAppWithGenesis(gen GenesisState) *NibiruTestApp {
 		/*invCheckPeriod=*/ 0,
 		/*encodingConfig=*/ encoding,
 		/*appOpts=*/ simapp.EmptyAppOptions{},
-		app.DefaultWasmConfig(),
 	)
 
 	stateBytes, err := json.MarshalIndent(gen, "", " ")

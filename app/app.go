@@ -3,14 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -286,34 +284,6 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
-// this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
-var (
-	// If EnabledSpecificProposals is "", and this is "true", then enable all x/wasm proposals.
-	// If EnabledSpecificProposals is "", and this is not "true", then disable all x/wasm proposals.
-	ProposalsEnabled = "true"
-	// If set to non-empty string it must be comma-separated list of values that are all a subset
-	// of "EnableAllProposals" (takes precedence over ProposalsEnabled)
-	// https://github.com/CosmWasm/wasmd/blob/02a54d33ff2c064f3539ae12d75d027d9c665f05/x/wasm/internal/types/proposal.go#L28-L34
-	EnableSpecificProposals = ""
-)
-
-// GetEnabledProposals parses the ProposalsEnabled / EnableSpecificProposals values to
-// produce a list of enabled proposals to pass into wasmd app.
-func GetEnabledProposals() []wasm.ProposalType {
-	if EnableSpecificProposals == "" {
-		if ProposalsEnabled == "true" {
-			return wasm.EnableAllProposals
-		}
-		return wasm.DisableAllProposals
-	}
-	chunks := strings.Split(EnableSpecificProposals, ",")
-	proposals, err := wasm.ConvertToProposals(chunks)
-	if err != nil {
-		panic(err)
-	}
-	return proposals
-}
-
 // GetWasmOpts build wasm options
 func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
 	var wasmOpts []wasm.Option
@@ -335,7 +305,6 @@ func NewNibiruApp(
 	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
-	wasmConfig *WasmConfig,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
 	appCodec := encodingConfig.Marshaler
@@ -491,7 +460,11 @@ func NewNibiruApp(
 
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 
-	wasmDir := filepath.Join(homePath, "data") // TODO: parametrize
+	wasmDir := filepath.Join(homePath, "data")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
@@ -511,7 +484,7 @@ func NewNibiruApp(
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasmConfig.ToWasmConfig(),
+		wasmConfig,
 		supportedFeatures,
 		GetWasmOpts(appOpts)...,
 	)
@@ -789,7 +762,7 @@ func NewNibiruApp(
 		PricefeedKeeper:   app.pricefeedKeeper,
 		IBCKeeper:         app.ibcKeeper,
 		TxCounterStoreKey: keys[wasm.StoreKey],
-		WasmConfig:        wasmConfig.ToWasmConfig(),
+		WasmConfig:        wasmConfig,
 	})
 
 	if err != nil {
@@ -997,15 +970,6 @@ func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 
 	staticServer := http.FileServer(statikFS)
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
-}
-
-// GetMaccPerms returns a copy of the module account permissions
-func GetMaccPerms() map[string][]string {
-	dupMaccPerms := make(map[string][]string)
-	for k, v := range maccPerms {
-		dupMaccPerms[k] = v
-	}
-	return dupMaccPerms
 }
 
 // initParamsKeeper init params vpoolkeeper and its subspaces

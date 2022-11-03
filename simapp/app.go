@@ -322,7 +322,6 @@ func NewNibiruTestApp(
 	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
-	wasmConfig *nibiapp.WasmConfig,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruTestApp {
 	appCodec := encodingConfig.Marshaler
@@ -509,7 +508,11 @@ func NewNibiruTestApp(
 
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
 
-	wasmDir := filepath.Join(homePath, "data") // TODO: parametrize
+	wasmDir := filepath.Join(homePath, "data")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
@@ -530,7 +533,7 @@ func NewNibiruTestApp(
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasmConfig.ToWasmConfig(),
+		wasmConfig,
 		supportedFeatures,
 		wasmOpts...,
 	)
@@ -827,7 +830,7 @@ func NewNibiruTestApp(
 		PricefeedKeeper:   app.PricefeedKeeper,
 		IBCKeeper:         app.IBCKeeper,
 		TxCounterStoreKey: keys[wasm.StoreKey],
-		WasmConfig:        wasmConfig.ToWasmConfig(),
+		WasmConfig:        wasmConfig,
 	})
 
 	if err != nil {
